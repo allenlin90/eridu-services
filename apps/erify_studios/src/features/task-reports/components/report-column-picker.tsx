@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Loader2, Search, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Loader2, Search, X } from 'lucide-react';
 import * as React from 'react';
 
 import type {
@@ -33,10 +33,13 @@ const LARGE_SCOPE_TEMPLATE_THRESHOLD = 10;
 const DEFAULT_EXPANDED_TEMPLATE_COUNT = 3;
 
 const SYSTEM_COLUMNS = [
+  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_ID, label: 'Show ID' },
   { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_NAME, label: 'Show Name' },
+  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_EXTERNAL_ID, label: 'Show External ID' },
   { key: TASK_REPORT_SYSTEM_COLUMN.CLIENT_NAME, label: 'Client Name' },
   { key: TASK_REPORT_SYSTEM_COLUMN.START_TIME, label: 'Start Time' },
   { key: TASK_REPORT_SYSTEM_COLUMN.END_TIME, label: 'End Time' },
+  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_STANDARD_NAME, label: 'Show Standard' },
   { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_TYPE_NAME, label: 'Show Type' },
   { key: TASK_REPORT_SYSTEM_COLUMN.STUDIO_ROOM_NAME, label: 'Room' },
 ];
@@ -72,6 +75,7 @@ export function ReportColumnPicker({
   const [expandedTemplateById, setExpandedTemplateById] = React.useState<Record<string, boolean>>({});
   const sources = React.useMemo(() => sourcesData?.sources ?? [], [sourcesData?.sources]);
   const sharedFields = React.useMemo(() => sourcesData?.shared_fields ?? [], [sourcesData?.shared_fields]);
+  const systemColumnMap = React.useMemo(() => new Map(SYSTEM_COLUMNS.map((column) => [column.key, column])), []);
 
   const selectedColumnKeys = React.useMemo(() => {
     return new Set(selectedColumns.map((column) => column.key));
@@ -91,6 +95,18 @@ export function ReportColumnPicker({
     return selectedColumnKeys.has(fieldKey);
   }, [selectedColumnKeys]);
   const isAtLimit = selectedColumns.length >= MAX_COLUMNS;
+
+  const moveSelectedColumn = React.useCallback((index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= selectedColumns.length) {
+      return;
+    }
+
+    const next = [...selectedColumns];
+    const [moved] = next.splice(index, 1);
+    next.splice(targetIndex, 0, moved);
+    onChange(next);
+  }, [onChange, selectedColumns]);
 
   const toggleColumn = React.useCallback((
     fieldKey: string,
@@ -235,6 +251,43 @@ export function ReportColumnPicker({
   const totalCustomFieldCount = sortedSources.reduce((total, source) => (
     total + source.fields.filter((field) => !field.standard).length
   ), 0);
+  const selectedColumnDescriptors = selectedColumns.map((column) => {
+    const systemColumn = systemColumnMap.get(column.key);
+    if (systemColumn) {
+      return {
+        ...column,
+        groupLabel: 'System',
+        detail: column.key,
+      };
+    }
+
+    const sharedField = sharedFields.find((field) => field.key === column.key);
+    if (sharedField) {
+      return {
+        ...column,
+        groupLabel: 'Shared',
+        detail: `${sharedField.type} · ${sharedField.key}`,
+      };
+    }
+
+    const templateField = sortedSources
+      .flatMap((source) => source.fields.map((field) => ({ source, field })))
+      .find(({ field }) => field.key === column.key);
+
+    if (templateField) {
+      return {
+        ...column,
+        groupLabel: templateField.source.template_name,
+        detail: `${templateField.field.type} · ${templateField.field.field_key}`,
+      };
+    }
+
+    return {
+      ...column,
+      groupLabel: 'Unavailable',
+      detail: column.key,
+    };
+  });
 
   const hasAnyVisibleColumns = (
     filteredSystemColumns.length > 0
@@ -339,8 +392,9 @@ export function ReportColumnPicker({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2">
-        <div className="text-sm font-medium">
-          Selected Columns
+        <div>
+          <div className="text-sm font-medium">Selected Columns</div>
+          <div className="text-xs text-muted-foreground">Column order is preserved in the results table and CSV export.</div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={isAtLimit ? 'destructive' : 'outline'}>
@@ -359,6 +413,63 @@ export function ReportColumnPicker({
           </Button>
         </div>
       </div>
+
+      {selectedColumnDescriptors.length > 0 && (
+        <div className="space-y-2 rounded-md border p-3">
+          {selectedColumnDescriptors.map((column, index) => (
+            <div
+              key={column.key}
+              className="flex flex-col gap-3 rounded-md border bg-muted/20 px-3 py-3 md:flex-row md:items-center md:justify-between"
+            >
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-medium">{column.label}</div>
+                  <Badge variant="outline">{column.groupLabel}</Badge>
+                  <Badge variant="secondary">
+                    #
+                    {index + 1}
+                  </Badge>
+                </div>
+                <div className="text-xs text-muted-foreground break-all">{column.detail}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => moveSelectedColumn(index, 'up')}
+                  disabled={index === 0}
+                  aria-label={`Move ${column.label} up`}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => moveSelectedColumn(index, 'down')}
+                  disabled={index === selectedColumnDescriptors.length - 1}
+                  aria-label={`Move ${column.label} down`}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive"
+                  onClick={() => onChange(selectedColumns.filter((item) => item.key !== column.key))}
+                  aria-label={`Remove ${column.label}`}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {selectedColumns.length >= SOFT_WARNING_THRESHOLD && (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">

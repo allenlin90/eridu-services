@@ -1,11 +1,15 @@
+import { format } from 'date-fns';
 import { RefreshCw, Trash2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import type { TaskReportDefinition } from '@eridu/api-types/task-management';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@eridu/ui';
 
 import { useDeleteTaskReportDefinition } from '../hooks/use-delete-task-report-definition';
 import { useTaskReportDefinitions } from '../hooks/use-task-report-definitions';
+
+import { DeleteConfirmDialog } from '@/features/admin/components';
 
 type TaskReportDefinitionsViewerProps = {
   studioId: string;
@@ -28,6 +32,7 @@ export function TaskReportDefinitionsViewer({
   onCreateNew,
   onOpenBuilder,
 }: TaskReportDefinitionsViewerProps) {
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const { data, isLoading, isFetching, isError, refetch } = useTaskReportDefinitions({
     studioId,
     query: { page, limit, search },
@@ -44,9 +49,28 @@ export function TaskReportDefinitionsViewer({
     return `${total} saved definition${total === 1 ? '' : 's'}`;
   }, [total]);
 
+  const formatScopeSummary = (definition: TaskReportDefinition) => {
+    const summary = [];
+    const { scope, columns } = definition.definition;
+
+    if (scope.date_from && scope.date_to) {
+      summary.push(`${format(new Date(`${scope.date_from}T00:00:00`), 'PP')} - ${format(new Date(`${scope.date_to}T00:00:00`), 'PP')}`);
+    }
+    if (scope.client_id?.length) {
+      summary.push(`${scope.client_id.length} client filter${scope.client_id.length === 1 ? '' : 's'}`);
+    }
+    if (scope.source_templates?.length) {
+      summary.push(`${scope.source_templates.length} template${scope.source_templates.length === 1 ? '' : 's'}`);
+    }
+    summary.push(`${columns.length} column${columns.length === 1 ? '' : 's'}`);
+
+    return summary;
+  };
+
   const handleDelete = async (definitionId: string, definitionName: string) => {
     try {
       await deleteMutation.mutateAsync(definitionId);
+      setPendingDelete(null);
       toast.success('Report definition deleted');
     } catch (error) {
       console.error(error);
@@ -106,27 +130,32 @@ export function TaskReportDefinitionsViewer({
                 {definition.description && (
                   <p className="text-sm text-muted-foreground">{definition.description}</p>
                 )}
+                <div className="flex flex-wrap gap-2">
+                  {formatScopeSummary(definition).map((item) => (
+                    <span key={item} className="rounded-full border bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground">
+                      {item}
+                    </span>
+                  ))}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {definition.definition.columns.length}
-                  {' '}
-                  columns · updated
+                  Updated
                   {' '}
                   {new Date(definition.updated_at).toLocaleString()}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={() => onOpenBuilder(definition.id)}
                 >
-                  Open Builder
+                  Open & Run
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 text-destructive"
-                  onClick={() => void handleDelete(definition.id, definition.name)}
+                  onClick={() => setPendingDelete({ id: definition.id, name: definition.name })}
                   disabled={deleteMutation.isPending}
                   aria-label={`Delete report definition ${definition.name}`}
                 >
@@ -165,6 +194,24 @@ export function TaskReportDefinitionsViewer({
           Next
         </Button>
       </div>
+
+      <DeleteConfirmDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDelete(null);
+          }
+        }}
+        title={pendingDelete ? `Delete "${pendingDelete.name}"?` : 'Delete report definition?'}
+        description="This saved definition will be removed from the Task Reports landing page. Existing generated exports are not affected."
+        isLoading={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!pendingDelete) {
+            return;
+          }
+          void handleDelete(pendingDelete.id, pendingDelete.name);
+        }}
+      />
     </div>
   );
 }

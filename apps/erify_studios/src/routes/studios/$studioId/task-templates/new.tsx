@@ -166,6 +166,7 @@ export function TaskTemplateBuilderPage() {
         onCancel={handleCancel}
         errors={errors}
         sharedFields={sharedFieldsResponse?.shared_fields ?? []}
+        studioId={studioId}
       />
     </PageLayout>
   );

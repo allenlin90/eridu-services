@@ -12,8 +12,10 @@ describe('reportViewFilters', () => {
         availableClients={['Client A']}
         availableStatuses={['Completed']}
         availableRooms={['Room A']}
+        availableAssignees={['Manager A']}
         showStatusFilter={false}
         showRoomFilter={false}
+        showAssigneeFilter={false}
         showClientFilter
       />,
     );
@@ -31,12 +33,15 @@ describe('reportViewFilters', () => {
         availableClients={['Client A']}
         availableStatuses={['Completed']}
         availableRooms={['Room A']}
+        availableAssignees={['Manager A']}
         showStatusFilter
         showRoomFilter
+        showAssigneeFilter
         showClientFilter
       />,
     );
 
+    expect(screen.getByText('Assignee')).toBeInTheDocument();
     expect(screen.getByText('Client')).toBeInTheDocument();
     expect(screen.getByText('Status')).toBeInTheDocument();
     expect(screen.getByText('Room')).toBeInTheDocument();

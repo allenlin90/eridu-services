@@ -172,6 +172,12 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="rounded-md border bg-muted/30 px-3 py-3 text-sm">
+            <div className="font-semibold">How this catalog is used</div>
+            <div className="mt-1 text-muted-foreground">
+              Create shared fields here first, then template authors can insert them into task templates. Report builders will group canonical shared keys into one cross-template column instead of treating each template field separately.
+            </div>
+          </div>
           {!isStudioAdmin && (
             <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
               You have read-only access. Only studio admins can create or update shared fields.
@@ -187,7 +193,7 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
               </div>
               {groupedFields[category].length === 0 && (
                 <div className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
-                  No shared fields in this category.
+                  No shared fields in this category yet. Template authors will not see insert shortcuts until at least one active shared field exists.
                 </div>
               )}
               {groupedFields[category].map((field) => {

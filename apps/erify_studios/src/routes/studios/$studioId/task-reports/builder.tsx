@@ -1,6 +1,7 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -16,10 +17,12 @@ import {
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
+import { taskReportResultKeys } from '@/features/task-reports/api/keys';
 import { ReportBuilder } from '@/features/task-reports/components/report-builder';
 import { ReportResultTable } from '@/features/task-reports/components/report-result-table';
 import { useTaskReportDefinition } from '@/features/task-reports/hooks/use-task-report-definition';
 import { useTaskReportDefinitionMutations } from '@/features/task-reports/hooks/use-task-report-definition-mutations';
+import { buildTaskReportResultCacheKey } from '@/features/task-reports/lib/build-task-report-result-cache-key';
 
 const taskReportBuilderSearchSchema = z.object({
   definition_id: z.string().optional().catch(undefined),
@@ -58,15 +61,41 @@ function BuilderWorkspace({
   isSavingDefinition,
   onCancel,
 }: BuilderWorkspaceProps) {
+  const queryClient = useQueryClient();
   const [draftScope, setDraftScope] = useState<TaskReportScope | null>(initialScope);
   const [draftColumns, setDraftColumns] = useState<TaskReportSelectedColumn[]>(initialColumns);
-  const [reportResult, setReportResult] = useState<TaskReportResult | null>(null);
+  const [activeResultCacheKey, setActiveResultCacheKey] = useState<string | null>(null);
+
+  const currentResultCacheKey = useMemo(() => {
+    return buildTaskReportResultCacheKey({
+      definitionId,
+      scope: draftScope,
+      columns: draftColumns,
+    });
+  }, [definitionId, draftColumns, draftScope]);
+
+  const currentResultQueryKey = useMemo(
+    () => taskReportResultKeys.forScope(studioId, currentResultCacheKey),
+    [currentResultCacheKey, studioId],
+  );
+  const { data: cachedResult } = useQuery<TaskReportResult | null>({
+    queryKey: currentResultQueryKey,
+    queryFn: async () => null,
+    enabled: false,
+    initialData: () => queryClient.getQueryData<TaskReportResult>(currentResultQueryKey) ?? null,
+  });
+
+  const reportResult = activeResultCacheKey
+    ? queryClient.getQueryData<TaskReportResult>(
+      taskReportResultKeys.forScope(studioId, activeResultCacheKey),
+    ) ?? null
+    : null;
 
   if (reportResult) {
     return (
       <ReportResultTable
         result={reportResult}
-        onBack={() => setReportResult(null)}
+        onBack={() => setActiveResultCacheKey(null)}
       />
     );
   }
@@ -84,7 +113,15 @@ function BuilderWorkspace({
       onSaveDefinition={onSaveDefinition}
       isSavingDefinition={isSavingDefinition}
       onCancel={onCancel}
-      onRunSuccess={(result) => setReportResult(result)}
+      cachedResult={cachedResult}
+      onOpenCachedResult={() => setActiveResultCacheKey(currentResultCacheKey)}
+      onRunSuccess={(result) => {
+        queryClient.setQueryData(
+          taskReportResultKeys.forScope(studioId, currentResultCacheKey),
+          result,
+        );
+        setActiveResultCacheKey(currentResultCacheKey);
+      }}
     />
   );
 }
@@ -101,7 +138,12 @@ function TaskReportBuilderPage() {
   });
   const { createMutation, updateMutation } = useTaskReportDefinitionMutations({ studioId });
 
-  const workspaceKey = definitionId ? `definition:${definitionId}` : 'definition:new';
+  const resolvedDefinitionId = definition ? definitionId ?? null : null;
+  const workspaceKey = resolvedDefinitionId
+    ? `definition:${resolvedDefinitionId}`
+    : definitionId
+      ? `definition:recovery:${definitionId}`
+      : 'definition:new';
   const initialScope = definition?.definition.scope ?? null;
   const initialColumns = definition?.definition.columns ?? [];
   const initialDefinitionName = definition?.name;
@@ -131,8 +173,8 @@ function TaskReportBuilderPage() {
       },
     };
 
-    if (definitionId) {
-      await updateMutation.mutateAsync({ definitionId, payload });
+    if (resolvedDefinitionId) {
+      await updateMutation.mutateAsync({ definitionId: resolvedDefinitionId, payload });
       toast.success('Report definition saved.');
       return;
     }
@@ -189,8 +231,29 @@ function TaskReportBuilderPage() {
           </div>
         )}
         {definitionId && isDefinitionError && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Failed to load the selected definition. You can still build a report manually.
+          <div className="space-y-3 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div>
+              Failed to load the selected definition. You can still rebuild the report as a new draft.
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void navigate({
+                    to: '/studios/$studioId/task-reports/builder',
+                    params: { studioId },
+                    search: {},
+                    replace: true,
+                  });
+                }}
+              >
+                Start as New Report
+              </Button>
+              <Button variant="ghost" size="sm" onClick={navigateToDefinitions}>
+                Back to Definitions
+              </Button>
+            </div>
           </div>
         )}
         {definitionId && definition && (
@@ -205,7 +268,7 @@ function TaskReportBuilderPage() {
               <BuilderWorkspace
                 key={workspaceKey}
                 studioId={studioId}
-                definitionId={definitionId ?? null}
+                definitionId={resolvedDefinitionId}
                 initialScope={initialScope}
                 initialColumns={initialColumns}
                 initialDefinitionName={initialDefinitionName}

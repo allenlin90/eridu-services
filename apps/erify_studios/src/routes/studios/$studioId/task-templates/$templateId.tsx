@@ -165,6 +165,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
         onCancel={handleCancel}
         errors={errors}
         sharedFields={sharedFieldsResponse?.shared_fields ?? []}
+        studioId={studioId}
       />
     </PageLayout>
   );

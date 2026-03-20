@@ -1,9 +1,10 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Download } from 'lucide-react';
+import { format } from 'date-fns';
+import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Download, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { TaskReportResult } from '@eridu/api-types/task-management';
-import { Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
 import { useIsMobile } from '@eridu/ui/hooks/use-mobile';
 import { cn } from '@eridu/ui/lib/utils';
 
@@ -33,18 +34,32 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
   const [sortConfig, setSortConfig] = useState<{ column: string | null; dir: SortDirection }>({ column: 'start_time', dir: 'desc' });
 
   const parentRef = useRef<HTMLDivElement>(null);
-  const selectedColumnKeys = useMemo(() => new Set(columns.map((column) => column.key)), [columns]);
+  const canFilterByClient = useMemo(() => rows.some((row) => Boolean(row.client_name ?? row.client_id)), [rows]);
+  const canFilterByStatus = useMemo(() => rows.some((row) => Boolean(row.show_status_name ?? row.show_status_id)), [rows]);
+  const canFilterByRoom = useMemo(() => rows.some((row) => Boolean(row.studio_room_name ?? row.studio_room_id)), [rows]);
+  const canFilterByAssignee = useMemo(() => rows.some((row) => Boolean(row.assignee_name ?? row.assignee ?? row.assignee_id)), [rows]);
 
-  const canFilterByClient = selectedColumnKeys.has('client_name') || selectedColumnKeys.has('client_id');
-  const canFilterByStatus = selectedColumnKeys.has('show_status_name') || selectedColumnKeys.has('show_status_id');
-  const canFilterByRoom = selectedColumnKeys.has('studio_room_name') || selectedColumnKeys.has('studio_room_id');
-
-  const availableClients = useMemo(() => Array.from(new Set(rows.map((r) => r.client_name).filter(Boolean))), [rows]);
-  const availableStatuses = useMemo(() => Array.from(new Set(rows.map((r) => r.show_status_name ?? r.show_status_id).filter(Boolean))), [rows]);
-  const availableRooms = useMemo(() => Array.from(new Set(rows.map((r) => r.studio_room_name).filter(Boolean))), [rows]);
+  const availableClients = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.client_name ?? r.client_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    [rows],
+  );
+  const availableStatuses = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.show_status_name ?? r.show_status_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    [rows],
+  );
+  const availableRooms = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.studio_room_name ?? r.studio_room_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    [rows],
+  );
+  const availableAssignees = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.assignee_name ?? r.assignee ?? r.assignee_id).filter((value): value is string => typeof value === 'string' && value.length > 0))),
+    [rows],
+  );
 
   const filteredRows = useMemo(() => filterRows(rows, columns, filters), [rows, columns, filters]);
+  const sortedAllRows = useMemo(() => sortRows(rows, sortConfig.column, sortConfig.dir), [rows, sortConfig]);
   const sortedRows = useMemo(() => sortRows(filteredRows, sortConfig.column, sortConfig.dir), [filteredRows, sortConfig]);
+  const hasActiveFilters = Object.values(filters).some((value) => Boolean(value));
 
   useEffect(() => {
     setFilters((prev) => {
@@ -63,32 +78,39 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
         delete next.studio_room_id;
         changed = true;
       }
+      if ((!canFilterByAssignee || availableAssignees.length === 0) && next.assignee) {
+        delete next.assignee;
+        changed = true;
+      }
 
       return changed ? next : prev;
     });
   }, [
     availableClients.length,
+    availableAssignees.length,
     availableRooms.length,
     availableStatuses.length,
+    canFilterByAssignee,
     canFilterByClient,
     canFilterByRoom,
     canFilterByStatus,
   ]);
 
-  const handleExportCsv = () => {
-    if (!sortedRows.length || !columns.length)
+  const downloadCsv = (exportRows: Record<string, unknown>[], variant: 'visible' | 'full') => {
+    if (!exportRows.length || !columns.length)
       return;
 
-    const csvContent = serializeCsv(sortedRows, columns);
+    const csvContent = serializeCsv(exportRows, columns);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `task-report-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `task-report-${variant}-${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleSort = (key: string) => {
@@ -137,9 +159,34 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
     ? rowVirtualizer.getTotalSize() - (virtualItems[virtualItems.length - 1]?.end ?? 0)
     : 0;
 
-  const renderCellValue = (value: unknown) => {
+  const renderCellValue = (value: unknown, type: string | undefined) => {
     if (value === null || value === undefined)
       return <span className="text-muted-foreground">-</span>;
+    if ((type === 'url' || type === 'file') && typeof value === 'string' && /^https?:\/\//i.test(value)) {
+      return (
+        <a
+          href={value}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex max-w-full items-center gap-1 break-all text-primary underline underline-offset-2"
+        >
+          <span>{value}</span>
+          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+        </a>
+      );
+    }
+    if (type === 'date' && typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return format(parsed, 'PP');
+      }
+    }
+    if (type === 'datetime' && typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return format(parsed, 'PPp');
+      }
+    }
     if (typeof value === 'boolean')
       return value ? 'Yes' : 'No';
     if (Array.isArray(value))
@@ -151,19 +198,85 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Builder
         </Button>
-        <Button onClick={handleExportCsv} variant="outline" size="sm" disabled={sortedRows.length === 0}>
-          <Download className="mr-2 w-4 h-4" />
-          Export CSV (
-          {sortedRows.length}
-          {' '}
-          rows)
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={() => downloadCsv(sortedRows, 'visible')} variant="outline" size="sm" disabled={sortedRows.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export Visible CSV
+          </Button>
+          <Button onClick={() => downloadCsv(sortedAllRows, 'full')} variant="outline" size="sm" disabled={sortedAllRows.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export Full CSV
+          </Button>
+        </div>
       </div>
+
+      <Card className="bg-muted/30">
+        <CardContent className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <div className="text-sm font-medium">
+              Generated
+              {' '}
+              {format(new Date(result.generated_at), 'PPp')}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {sortedRows.length}
+              {' visible · '}
+              {rows.length}
+              {' total rows · '}
+              {columns.length}
+              {' columns'}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline">
+              Sort:
+              {' '}
+              {sortConfig.column ?? 'none'}
+              {' '}
+              {sortConfig.column ? `(${sortConfig.dir})` : ''}
+            </Badge>
+            <Badge variant={result.warnings.length > 0 ? 'secondary' : 'outline'}>
+              {result.warnings.length}
+              {' '}
+              warning
+              {result.warnings.length === 1 ? '' : 's'}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {result.warnings.length > 0 && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm text-amber-950">Report Warnings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-amber-950">
+            {result.warnings.slice(0, 3).map((warning) => (
+              <div
+                key={`${warning.code}-${warning.show_id ?? 'global'}-${warning.column_key ?? 'column'}-${warning.message}`}
+                className="rounded-md border border-amber-200 bg-white/70 px-3 py-2"
+              >
+                {warning.message}
+              </div>
+            ))}
+            {result.warnings.length > 3 && (
+              <div className="text-xs text-amber-900/80">
+                {result.warnings.length - 3}
+                {' '}
+                more warning
+                {result.warnings.length - 3 === 1 ? '' : 's'}
+                {' '}
+                are attached to this result set.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <ReportViewFilters
         filters={filters}
@@ -171,21 +284,19 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
         availableClients={availableClients}
         availableRooms={availableRooms}
         availableStatuses={availableStatuses}
+        availableAssignees={availableAssignees}
+        showAssigneeFilter={canFilterByAssignee}
         showClientFilter={canFilterByClient}
         showRoomFilter={canFilterByRoom}
         showStatusFilter={canFilterByStatus}
+        onClear={() => setFilters({})}
       />
       <Card>
         <CardHeader className="border-b px-4 py-2">
           <CardTitle className="flex items-center justify-between text-sm">
             <span>Report Results</span>
             <span className="text-xs font-normal text-muted-foreground">
-              {sortedRows.length}
-              {' visible · '}
-              {rows.length}
-              {' total rows · '}
-              {columns.length}
-              {' columns'}
+              {hasActiveFilters ? 'Filtered view' : 'All generated rows'}
             </span>
           </CardTitle>
         </CardHeader>
@@ -241,17 +352,13 @@ export function ReportResultTable({ result, onBack }: ReportResultTableProps) {
                         return (
                           <TableCell
                             key={col.key}
-                            className={cn('text-sm max-w-[300px] truncate', frozenClasses)}
+                            className={cn('text-sm align-top', frozenClasses)}
                             title={String(row[col.key] ?? '')}
                             style={shouldFreeze ? { left: leftOffset, minWidth: FROZEN_COLUMN_WIDTH[col.key as keyof typeof FROZEN_COLUMN_WIDTH] } : undefined}
                           >
-                            {col.key === 'show_name' && row._has_duplicate_source && (
-                              <span
-                                className="mr-2 inline-block w-2 h-2 rounded-full bg-amber-500"
-                                title="Multiple tasks matched this show template. Showing the most recent."
-                              />
-                            )}
-                            {renderCellValue(row[col.key])}
+                            <div className={cn(col.type === 'url' || col.type === 'file' ? 'max-w-[320px] whitespace-normal' : 'max-w-[320px] truncate')}>
+                              {renderCellValue(row[col.key], col.type)}
+                            </div>
                           </TableCell>
                         );
                       })}

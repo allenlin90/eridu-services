@@ -14,7 +14,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { AlertCircle, ChevronDown, ChevronsUpDown, CircleHelp, Copy, Plus, Trash2 } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { AlertCircle, ChevronDown, ChevronsUpDown, Copy, Plus, Trash2 } from 'lucide-react';
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -40,9 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
 } from '@eridu/ui';
 
 import { LivePreview } from './live-preview';
@@ -59,6 +57,7 @@ export type TaskTemplateBuilderProps = {
   isSaving?: boolean;
   errors?: Record<string, string[]>;
   sharedFields?: SharedField[];
+  studioId?: string;
 };
 
 const DEFAULT_LOOP_DURATION_MIN = 15;
@@ -179,6 +178,7 @@ export function TaskTemplateBuilder({
   isSaving,
   errors,
   sharedFields = EMPTY_SHARED_FIELDS,
+  studioId,
 }: TaskTemplateBuilderProps) {
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [isHeaderOpen, setIsHeaderOpen] = useState(true);
@@ -251,6 +251,37 @@ export function TaskTemplateBuilder({
 
     return moderationLoops[0]?.id;
   }, [isModerationMode, moderationLoops, selectedSharedFieldLoopId]);
+  const sharedFieldInsertionPreview = useMemo(() => {
+    const selectedField = activeSharedFields.find((field) => field.key === resolvedSharedFieldKey);
+    if (!selectedField) {
+      return null;
+    }
+
+    if (!isModerationMode || !resolvedSharedFieldLoopId) {
+      return {
+        title: 'Canonical shared field',
+        description: `Adds the shared key "${selectedField.key}" directly. This field stays aligned with studio reporting and can merge across templates.`,
+      };
+    }
+
+    const previewKey = createUniqueSharedFieldKey(
+      selectedField.key,
+      new Set(template.items.map((item) => item.key)),
+      resolvedSharedFieldLoopId,
+    );
+
+    if (previewKey === selectedField.key) {
+      return {
+        title: 'Canonical shared field',
+        description: `Adds the canonical key "${selectedField.key}" to this loop. Report exports can still treat it as the shared studio field.`,
+      };
+    }
+
+    return {
+      title: 'Loop-local copy',
+      description: `Adds "${previewKey}" to the selected loop. It keeps the shared field label and type, but it will not merge into the canonical report column "${selectedField.key}".`,
+    };
+  }, [activeSharedFields, isModerationMode, resolvedSharedFieldKey, resolvedSharedFieldLoopId, template.items]);
 
   // Defer the template for heavy rendering (preview)
   const deferredTemplate = useDeferredValue(template);
@@ -572,77 +603,99 @@ export function TaskTemplateBuilder({
           </Button>
         </div>
 
-        {activeSharedFields.length > 0 && (
-          <div className="rounded-md border bg-muted/20 p-3">
-            <div className="flex flex-col gap-2 md:flex-row md:items-end">
-              <div className="grid flex-1 gap-1.5">
-                <Label className="text-xs">Insert Shared Field</Label>
-                <Select value={resolvedSharedFieldKey} onValueChange={setSelectedSharedFieldKey}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select shared field" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeSharedFields.map((field) => (
-                      <SelectItem key={field.key} value={field.key}>
-                        {field.label}
-                        {' '}
-                        (
-                        {field.key}
-                        {' · '}
-                        {field.type}
-                        )
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {isModerationMode && moderationLoops.length > 0 && (
-                <div className="grid gap-1.5 md:w-56">
-                  <Label className="text-xs">Target Loop</Label>
-                  <Select value={resolvedSharedFieldLoopId} onValueChange={setSelectedSharedFieldLoopId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select loop" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {moderationLoops.map((loop) => (
-                        <SelectItem key={loop.id} value={loop.id}>
-                          {loop.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+        {activeSharedFields.length === 0
+          ? (
+              <div className="rounded-md border border-dashed bg-muted/20 p-4">
+                <div className="text-sm font-semibold">No active shared fields yet</div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  Shared fields power consistent cross-template report columns such as GMV, URLs, and status checkpoints. Create them first, then return here to insert them into the template.
                 </div>
-              )}
-              <Button
-                variant="outline"
-                onClick={addSharedField}
-                disabled={!resolvedSharedFieldKey}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Shared Field
-              </Button>
-            </div>
-            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-              <span>Add shared fields quickly across your template, including loop-based moderation workflows.</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
+                {studioId
+                  ? (
+                      <div className="mt-3">
+                        <Button asChild variant="outline" size="sm">
+                          <Link to="/studios/$studioId/settings/shared-fields" params={{ studioId }}>
+                            Open Shared Fields Settings
+                          </Link>
+                        </Button>
+                      </div>
+                    )
+                  : null}
+              </div>
+            )
+          : null}
+
+        {activeSharedFields.length > 0
+          ? (
+              <div className="rounded-md border bg-muted/20 p-3">
+                <div className="flex flex-col gap-2 md:flex-row md:items-end">
+                  <div className="grid flex-1 gap-1.5">
+                    <Label className="text-xs">Insert Shared Field</Label>
+                    <Select value={resolvedSharedFieldKey} onValueChange={setSelectedSharedFieldKey}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select shared field" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeSharedFields.map((field) => (
+                          <SelectItem key={field.key} value={field.key}>
+                            {field.label}
+                            {' '}
+                            (
+                            {field.key}
+                            {' · '}
+                            {field.type}
+                            )
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isModerationMode && moderationLoops.length > 0 && (
+                    <div className="grid gap-1.5 md:w-56">
+                      <Label className="text-xs">Target Loop</Label>
+                      <Select value={resolvedSharedFieldLoopId} onValueChange={setSelectedSharedFieldLoopId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select loop" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {moderationLoops.map((loop) => (
+                            <SelectItem key={loop.id} value={loop.id}>
+                              {loop.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    aria-label="Shared field insertion details"
+                    variant="outline"
+                    onClick={addSharedField}
+                    disabled={!resolvedSharedFieldKey}
                   >
-                    <CircleHelp className="h-3.5 w-3.5" />
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Shared Field
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-72 text-xs">
-                  Shared-field type stays locked. Canonical shared merge behavior applies only to the exact shared key (`standard: true`). Repeated loop insertions use unique loop-scoped keys.
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        )}
+                </div>
+                {sharedFieldInsertionPreview
+                  ? (
+                      <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        <div className="rounded-md border bg-background/70 px-3 py-2">
+                          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Insertion preview</div>
+                          <div className="mt-1 text-sm font-medium">{sharedFieldInsertionPreview.title}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">{sharedFieldInsertionPreview.description}</div>
+                        </div>
+                        <div className="rounded-md border bg-background/70 px-3 py-2">
+                          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Authoring rule</div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            Shared fields always keep the studio-managed label and type. Use canonical shared keys for cross-template reporting, and use loop-local copies only when repeated loop slots need separate answers.
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  : null}
+              </div>
+            )
+          : null}
 
         <div className="flex-1 min-h-0 overflow-visible lg:overflow-y-auto lg:pr-2">
           {isModerationMode

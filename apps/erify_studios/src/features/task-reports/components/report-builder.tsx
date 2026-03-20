@@ -1,10 +1,11 @@
+import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 
 import type { TaskReportPreflightResponse, TaskReportResult, TaskReportScope, TaskReportSelectedColumn } from '@eridu/api-types/task-management';
 import { TASK_REPORT_SYSTEM_COLUMN } from '@eridu/api-types/task-management';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '@eridu/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '@eridu/ui';
 
 import { useTaskReportMutations } from '../hooks/use-task-report-mutations';
 import { useTaskReportSources } from '../hooks/use-task-report-sources';
@@ -29,6 +30,8 @@ type ReportBuilderProps = {
   }) => Promise<void>;
   isSavingDefinition?: boolean;
   onCancel?: () => void;
+  cachedResult?: TaskReportResult | null;
+  onOpenCachedResult?: () => void;
   onRunSuccess?: (result: TaskReportResult) => void;
 };
 
@@ -44,6 +47,8 @@ export function ReportBuilder({
   onSaveDefinition,
   isSavingDefinition = false,
   onCancel,
+  cachedResult,
+  onOpenCachedResult,
   onRunSuccess,
 }: ReportBuilderProps) {
   const [definitionName, setDefinitionName] = React.useState(initialDefinitionName ?? '');
@@ -110,6 +115,44 @@ export function ReportBuilder({
     && Boolean(preflightData)
     && preflightData.show_count > 0
     && preflightData.within_limit;
+  const hasSelectedColumns = draftColumns.length > 0;
+  const hasCompatibleSelection = hasSelectedColumns && incompatibleColumns.length === 0;
+  const preflightState = !preflightData
+    ? 'idle'
+    : preflightData.show_count === 0
+      ? 'empty'
+      : preflightData.within_limit
+        ? 'ready'
+        : 'over_limit';
+
+  const steps = [
+    {
+      title: 'Scope',
+      description: hasRequiredScope ? 'Date range selected' : 'Date range required',
+      state: hasRequiredScope ? 'complete' : 'current',
+    },
+    {
+      title: 'Columns',
+      description: hasCompatibleSelection ? `${draftColumns.length} selected` : hasSelectedColumns ? 'Resolve conflicts' : 'Pick report fields',
+      state: hasCompatibleSelection ? 'complete' : hasRequiredScope ? 'current' : 'upcoming',
+    },
+    {
+      title: 'Preflight',
+      description: preflightState === 'ready'
+        ? `${preflightData?.show_count ?? 0} shows ready`
+        : preflightState === 'over_limit'
+          ? 'Scope too large'
+          : preflightState === 'empty'
+            ? 'No matching shows'
+            : 'Confirm before run',
+      state: canRun ? 'complete' : hasCompatibleSelection ? 'current' : 'upcoming',
+    },
+    {
+      title: 'Save',
+      description: 'Optional preset',
+      state: 'optional',
+    },
+  ] as const;
 
   const handlePreflightClick = async () => {
     if (!draftScope || draftColumns.length === 0 || incompatibleColumns.length > 0)
@@ -190,38 +233,79 @@ export function ReportBuilder({
     }
   };
 
+  const cachedResultAvailable = Boolean(cachedResult && onOpenCachedResult);
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Report Definition</CardTitle>
+          <CardTitle>Build Report</CardTitle>
           <CardDescription>
-            Save this report setup so you can reopen it from Task Reports anytime.
+            Set the reporting scope first, choose columns second, then preflight before you run. Saving a reusable definition is optional.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="report-definition-name">Definition Name</Label>
-            <Input
-              id="report-definition-name"
-              value={definitionName}
-              onChange={(event) => setDefinitionName(event.target.value)}
-              placeholder="e.g. Weekly moderation report"
-              maxLength={200}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="report-definition-description">Description (optional)</Label>
-            <Textarea
-              id="report-definition-description"
-              value={definitionDescription}
-              onChange={(event) => setDefinitionDescription(event.target.value)}
-              placeholder="Explain when this report should be used"
-              maxLength={500}
-            />
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {steps.map((step, index) => (
+              <div key={step.title} className="rounded-md border px-3 py-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Step
+                    {' '}
+                    {index + 1}
+                  </span>
+                  <Badge
+                    variant={
+                      step.state === 'complete'
+                        ? 'default'
+                        : step.state === 'optional'
+                          ? 'secondary'
+                          : 'outline'
+                    }
+                  >
+                    {step.state === 'complete'
+                      ? 'Ready'
+                      : step.state === 'optional'
+                        ? 'Optional'
+                        : step.state === 'current'
+                          ? 'In Progress'
+                          : 'Pending'}
+                  </Badge>
+                </div>
+                <div className="text-sm font-semibold">{step.title}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{step.description}</div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
+
+      {cachedResultAvailable
+        ? (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Last Generated Result Available</CardTitle>
+                <CardDescription>
+                  Reopen the cached result for this exact scope and column set without rerunning the report.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Generated
+                  {' '}
+                  <strong>{format(new Date(cachedResult!.generated_at), 'PPp')}</strong>
+                  {' · '}
+                  {cachedResult!.row_count}
+                  {' '}
+                  rows
+                </div>
+                <Button variant="outline" size="sm" onClick={onOpenCachedResult!}>
+                  View Cached Result
+                </Button>
+              </CardContent>
+            </Card>
+          )
+        : null}
 
       <Card>
         <CardHeader>
@@ -263,117 +347,169 @@ export function ReportBuilder({
         </CardContent>
       </Card>
 
-      {incompatibleColumns.length > 0 && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <div className="font-semibold mb-2">Definition Conflict Detected</div>
-          <div className="mb-3">
-            Some selected columns are not available in the current scope. Remove or replace them before preflight/run.
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {incompatibleColumns.map((column) => (
-              <Button
-                key={column.key}
-                variant="outline"
-                size="sm"
-                className="h-7"
-                onClick={() => {
-                  setDraftColumns(draftColumns.filter((item) => item.key !== column.key));
-                }}
-              >
-                Remove:
-                {' '}
-                {column.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {preflightData && preflightData.show_count > 0 && (
-        <Card className="bg-muted/50">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Preflight Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm pb-3">
-            This report will process exactly
-            {' '}
-            <strong>{preflightData.show_count}</strong>
-            {' '}
-            shows and
-            {' '}
-            <strong>{preflightData.task_count}</strong>
-            {' '}
-            tasks.
-          </CardContent>
-        </Card>
-      )}
-
-      {preflightData?.show_count === 0 && (
-        <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3 text-sm text-destructive">
-          <div className="font-semibold mb-1">No Matches Found</div>
-          <div>The selected scope results in 0 shows. Please adjust your filters.</div>
-        </div>
-      )}
+      {incompatibleColumns.length > 0
+        ? (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div className="font-semibold mb-2">Definition Conflict Detected</div>
+              <div className="mb-3">
+                Some selected columns are not available in the current scope. Remove or replace them before preflight/run.
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {incompatibleColumns.map((column) => (
+                  <Button
+                    key={column.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-7"
+                    onClick={() => {
+                      setDraftColumns(draftColumns.filter((item) => item.key !== column.key));
+                    }}
+                  >
+                    Remove:
+                    {' '}
+                    {column.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )
+        : null}
 
       <Card>
         <CardHeader>
-          <CardTitle>3. Review & Actions</CardTitle>
+          <CardTitle>3. Preflight & Run</CardTitle>
           <CardDescription>
-            Save this definition for reuse, then preflight and run your report.
+            Preflight gives you a durable scope check before report generation. Run is enabled only after a successful preflight.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 lg:grid-cols-2">
-            <div className="space-y-3 rounded-md border p-3">
-              <div>
-                <div className="text-sm font-semibold">Definition Actions</div>
-                <div className="text-xs text-muted-foreground">
-                  Keep this setup for future runs or return to the definitions list.
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  variant="secondary"
-                  disabled={!canSaveDefinition}
-                  onClick={() => void handleSaveDefinition()}
-                  className="sm:flex-1"
-                >
-                  {isSavingDefinition && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {definitionId ? 'Save Definition' : 'Save as Definition'}
-                </Button>
-                <Button variant="outline" onClick={onCancel} disabled={isPending} className="sm:flex-1">
-                  Cancel
-                </Button>
-              </div>
-            </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              disabled={!canPreflight}
+              onClick={() => void handlePreflightClick()}
+              className="sm:flex-1"
+            >
+              {preflightMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Preflight Scope
+            </Button>
+            <Button
+              disabled={!canRun}
+              onClick={() => void handleRunClick()}
+              className="sm:flex-1"
+            >
+              {runMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Run Report
+            </Button>
+          </div>
 
-            <div className="space-y-3 rounded-md border p-3">
-              <div>
-                <div className="text-sm font-semibold">Run Actions</div>
-                <div className="text-xs text-muted-foreground">
-                  Always run preflight first. Run stays disabled until preflight succeeds.
+          {preflightState === 'idle' && hasCompatibleSelection
+            ? (
+                <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                  Preflight this scope to confirm row volume before generating the report.
                 </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  variant="outline"
-                  disabled={!canPreflight}
-                  onClick={() => void handlePreflightClick()}
-                  className="sm:flex-1"
-                >
-                  {preflightMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Preflight
-                </Button>
-                <Button
-                  disabled={!canRun}
-                  onClick={() => void handleRunClick()}
-                  className="sm:flex-1"
-                >
-                  {runMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Run Report
-                </Button>
-              </div>
-            </div>
+              )
+            : null}
+
+          {preflightState === 'ready' && preflightData
+            ? (
+                <Card className="border-emerald-200 bg-emerald-50/70">
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-sm text-emerald-900">Preflight Passed</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 pb-3 text-sm text-emerald-950">
+                    <div>
+                      This run will process
+                      {' '}
+                      <strong>{preflightData.show_count}</strong>
+                      {' '}
+                      shows and
+                      {' '}
+                      <strong>{preflightData.task_count}</strong>
+                      {' '}
+                      tasks.
+                    </div>
+                    <div className="text-xs text-emerald-900/80">
+                      Scope is valid. You can run immediately or save this setup as a reusable definition first.
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            : null}
+
+          {preflightState === 'empty'
+            ? (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <div className="mb-1 font-semibold">No Matches Found</div>
+                  <div>The selected scope results in 0 shows. Adjust the date range or narrow filters before you run again.</div>
+                </div>
+              )
+            : null}
+
+          {preflightState === 'over_limit' && preflightData
+            ? (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <div className="mb-1 font-semibold">Scope Too Large</div>
+                  <div>
+                    Preflight found
+                    {' '}
+                    <strong>{preflightData.task_count}</strong>
+                    {' '}
+                    tasks, which exceeds the limit of
+                    {' '}
+                    <strong>{preflightData.limit}</strong>
+                    .
+                  </div>
+                  <div className="mt-2 text-xs text-destructive/90">
+                    Narrow the date range, source templates, or other filters before preflighting again.
+                  </div>
+                </div>
+              )
+            : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>4. Save Definition (Optional)</CardTitle>
+          <CardDescription>
+            Save this report setup if you want to rerun or tweak it later from the Task Reports landing page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="report-definition-name">Definition Name</Label>
+            <Input
+              id="report-definition-name"
+              value={definitionName}
+              onChange={(event) => setDefinitionName(event.target.value)}
+              placeholder="e.g. Weekly moderation report"
+              maxLength={200}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="report-definition-description">Description (optional)</Label>
+            <Textarea
+              id="report-definition-description"
+              value={definitionDescription}
+              onChange={(event) => setDefinitionDescription(event.target.value)}
+              placeholder="Explain when this report should be used"
+              maxLength={500}
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="secondary"
+              disabled={!canSaveDefinition}
+              onClick={() => void handleSaveDefinition()}
+              className="sm:flex-1"
+            >
+              {isSavingDefinition && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {definitionId ? 'Save Definition' : 'Save as Definition'}
+            </Button>
+            <Button variant="outline" onClick={onCancel} disabled={isPending} className="sm:flex-1">
+              Back to Definitions
+            </Button>
           </div>
         </CardContent>
       </Card>

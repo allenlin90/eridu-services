@@ -54,4 +54,15 @@ describe('filterRows', () => {
 
     expect(filtered).toEqual([{ show_name: 'Show B', client_id: 'client_2', studio_room_id: 'room_2', show_status_id: 'status_2' }]);
   });
+
+  it('filters assignee using display name when available', () => {
+    const rows = [
+      { show_name: 'Show A', assignee_name: 'Alice' },
+      { show_name: 'Show B', assignee_name: 'Bob' },
+    ];
+
+    const filtered = filterRows(rows, columns, { assignee: 'Bob' });
+
+    expect(filtered).toEqual([{ show_name: 'Show B', assignee_name: 'Bob' }]);
+  });
 });

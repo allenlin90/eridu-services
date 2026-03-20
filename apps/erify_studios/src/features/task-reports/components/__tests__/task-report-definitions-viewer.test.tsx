@@ -19,6 +19,10 @@ vi.mock('../../hooks/use-delete-task-report-definition', () => ({
   })),
 }));
 
+vi.mock('@/features/admin/components', () => ({
+  DeleteConfirmDialog: () => null,
+}));
+
 describe('taskReportDefinitionsViewer', () => {
   it('invokes create and open callbacks from viewer actions', async () => {
     const user = userEvent.setup();
@@ -68,7 +72,9 @@ describe('taskReportDefinitionsViewer', () => {
     await user.click(screen.getByRole('button', { name: /Build New Report/i }));
     expect(onCreateNew).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByRole('button', { name: /Open Builder/i }));
+    expect(screen.getByText('Mar 1, 2026 - Mar 7, 2026')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Open & Run/i }));
     expect(onOpenBuilder).toHaveBeenCalledWith('trdef_1');
   });
 });
