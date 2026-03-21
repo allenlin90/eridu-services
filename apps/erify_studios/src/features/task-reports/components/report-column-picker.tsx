@@ -102,6 +102,7 @@ export function ReportColumnPicker({
   const sources = React.useMemo(() => sourcesData?.sources ?? [], [sourcesData?.sources]);
   const sharedFields = React.useMemo(() => sourcesData?.shared_fields ?? [], [sourcesData?.shared_fields]);
   const systemColumnMap = React.useMemo(() => new Map(SYSTEM_COLUMNS.map((column) => [column.key, column])), []);
+  const sharedFieldByKey = React.useMemo(() => new Map(sharedFields.map((f) => [f.key, f])), [sharedFields]);
 
   const selectedColumnKeys = React.useMemo(() => {
     return new Set(selectedColumns.map((column) => column.key));
@@ -175,7 +176,41 @@ export function ReportColumnPicker({
     });
   }, [sources]);
 
+  const templateFieldByKey = React.useMemo(() => {
+    const map = new Map<string, { source: (typeof sortedSources)[number]; field: (typeof sortedSources)[number]['fields'][number] }>();
+    for (const source of sortedSources) {
+      for (const field of source.fields) {
+        map.set(field.key, { source, field });
+      }
+    }
+    return map;
+  }, [sortedSources]);
+
+  const selectedColumnDescriptors = React.useMemo(() => selectedColumns.map((column): SelectedColumnDescriptor => {
+    const systemColumn = systemColumnMap.get(column.key);
+    if (systemColumn) {
+      return { ...column, groupLabel: 'System', detail: column.key };
+    }
+
+    const sharedField = sharedFieldByKey.get(column.key);
+    if (sharedField) {
+      return { ...column, groupLabel: 'Shared', detail: `${sharedField.type} · ${sharedField.key}` };
+    }
+
+    const templateField = templateFieldByKey.get(column.key);
+    if (templateField) {
+      return {
+        ...column,
+        groupLabel: templateField.source.template_name,
+        detail: `${templateField.field.type} · ${templateField.field.field_key}`,
+      };
+    }
+
+    return { ...column, groupLabel: 'Unavailable', detail: column.key };
+  }), [selectedColumns, systemColumnMap, sharedFieldByKey, templateFieldByKey]);
+
   const templatesSignature = sortedSources.map((source) => source.template_id).join('|');
+  // Reset expansion to defaults only when the template list itself changes.
   React.useEffect(() => {
     if (sortedSources.length === 0) {
       setExpandedTemplateById({});
@@ -192,12 +227,27 @@ export function ReportColumnPicker({
       for (const templateId of defaultExpandedSourceIds) {
         next[templateId] = true;
       }
-      for (const selectedTemplateId of selectedTemplateIds) {
-        next[selectedTemplateId] = true;
-      }
       return next;
     });
-  }, [templatesSignature, selectedTemplateIds, sortedSources]);
+  }, [templatesSignature, sortedSources]);
+
+  // Additively expand templates that have selected columns — never collapses manual choices.
+  React.useEffect(() => {
+    if (selectedTemplateIds.size === 0) {
+      return;
+    }
+    setExpandedTemplateById((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const templateId of selectedTemplateIds) {
+        if (!next[templateId]) {
+          next[templateId] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [selectedTemplateIds]);
 
   if (isLoading) {
     return (
@@ -293,43 +343,6 @@ export function ReportColumnPicker({
   const totalCustomFieldCount = sortedSources.reduce((total, source) => (
     total + source.fields.filter((field) => !field.standard).length
   ), 0);
-  const selectedColumnDescriptors = selectedColumns.map((column) => {
-    const systemColumn = systemColumnMap.get(column.key);
-    if (systemColumn) {
-      return {
-        ...column,
-        groupLabel: 'System',
-        detail: column.key,
-      };
-    }
-
-    const sharedField = sharedFields.find((field) => field.key === column.key);
-    if (sharedField) {
-      return {
-        ...column,
-        groupLabel: 'Shared',
-        detail: `${sharedField.type} · ${sharedField.key}`,
-      };
-    }
-
-    const templateField = sortedSources
-      .flatMap((source) => source.fields.map((field) => ({ source, field })))
-      .find(({ field }) => field.key === column.key);
-
-    if (templateField) {
-      return {
-        ...column,
-        groupLabel: templateField.source.template_name,
-        detail: `${templateField.field.type} · ${templateField.field.field_key}`,
-      };
-    }
-
-    return {
-      ...column,
-      groupLabel: 'Unavailable',
-      detail: column.key,
-    };
-  });
 
   const hasAnyVisibleColumns = (
     filteredSystemColumns.length > 0

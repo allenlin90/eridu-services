@@ -139,6 +139,13 @@ function createUniqueSharedFieldKey(
   usedKeys: Set<string>,
   targetLoopId?: string,
 ): string {
+  // Always prefer the canonical shared key first — even in moderation mode.
+  // Only fall back to a loop-scoped variant when the canonical key is already taken.
+  if (!usedKeys.has(sharedKey)) {
+    usedKeys.add(sharedKey);
+    return sharedKey;
+  }
+
   const preferredBase = targetLoopId ? `${sharedKey}_${targetLoopId}` : sharedKey;
   const normalizedBase = preferredBase.slice(0, 50);
 
@@ -397,7 +404,7 @@ export function TaskTemplateBuilder({
       type: selectedField.type,
       standard: isCanonicalSharedKey ? true : undefined,
       label: selectedField.label,
-      description: selectedField.description,
+      description: selectedField.description ?? undefined,
       required: true,
       ...(targetLoopId ? { group: targetLoopId } : {}),
     };

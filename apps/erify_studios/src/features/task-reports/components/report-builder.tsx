@@ -159,17 +159,21 @@ export function ReportBuilder({
     if (!draftScope || draftColumns.length === 0 || incompatibleColumns.length > 0)
       return;
 
-    const res = await preflightMutation.mutateAsync(draftScope);
-    setPreflightData(res);
-    if (res.show_count === 0) {
-      toast.warning('The selected scope results in 0 shows. Please adjust filters.');
-    }
-    if (!res.within_limit) {
-      if (res.show_count > res.limit) {
-        toast.error(`The selected scope includes ${res.show_count} shows (limit: ${res.limit}). Narrow the filters and preflight again.`);
-      } else {
-        toast.error(`The selected scope exceeds the limit (${res.limit} tasks). Narrow the filters and preflight again.`);
+    try {
+      const res = await preflightMutation.mutateAsync(draftScope);
+      setPreflightData(res);
+      if (res.show_count === 0) {
+        toast.warning('The selected scope results in 0 shows. Please adjust filters.');
       }
+      if (!res.within_limit) {
+        if (res.show_count > res.limit) {
+          toast.error(`The selected scope includes ${res.show_count} shows (limit: ${res.limit}). Narrow the filters and preflight again.`);
+        } else {
+          toast.error(`The selected scope exceeds the limit (${res.limit} tasks). Narrow the filters and preflight again.`);
+        }
+      }
+    } catch {
+      // onError in mutation config handles user-facing feedback
     }
   };
 
@@ -185,14 +189,18 @@ export function ReportBuilder({
       return;
     }
 
-    const result = await runMutation.mutateAsync({
-      scope: draftScope,
-      columns: draftColumns,
-      definition_id: definitionId || undefined,
-    });
+    try {
+      const result = await runMutation.mutateAsync({
+        scope: draftScope,
+        columns: draftColumns,
+        definition_id: definitionId || undefined,
+      });
 
-    // Switch to view
-    onRunSuccess?.(result);
+      // Switch to view
+      onRunSuccess?.(result);
+    } catch {
+      // onError in mutation config handles user-facing feedback
+    }
   };
 
   const handleSaveDefinition = async () => {
