@@ -21,6 +21,7 @@ import * as React from 'react';
 import type {
   TaskReportScope,
   TaskReportSelectedColumn,
+  TaskReportSourcesResponse,
 } from '@eridu/api-types/task-management';
 import { TASK_REPORT_SYSTEM_COLUMN } from '@eridu/api-types/task-management';
 import {
@@ -42,6 +43,7 @@ type ReportColumnPickerProps = {
   scope: TaskReportScope | null;
   selectedColumns: TaskReportSelectedColumn[];
   onChange: (columns: TaskReportSelectedColumn[]) => void;
+  sourcesData?: TaskReportSourcesResponse;
 };
 
 type SelectedColumnDescriptor = TaskReportSelectedColumn & {
@@ -89,18 +91,30 @@ export function ReportColumnPicker({
   scope,
   selectedColumns,
   onChange,
+  sourcesData: propSourcesData,
 }: ReportColumnPickerProps) {
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-  const { data: sourcesData, isLoading, isError } = useTaskReportSources(studioId, scope);
+  // When propSourcesData is provided by the parent, skip the internal fetch to avoid a duplicate request.
+  const { data: fetchedSourcesData, isLoading, isError } = useTaskReportSources(
+    studioId,
+    propSourcesData !== undefined ? null : scope,
+  );
+  const activeSourcesData = propSourcesData ?? fetchedSourcesData;
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showSelectedOnly, setShowSelectedOnly] = React.useState(false);
   const [showTemplatesWithSelectedColumnsOnly, setShowTemplatesWithSelectedColumnsOnly] = React.useState(false);
   const [expandedTemplateById, setExpandedTemplateById] = React.useState<Record<string, boolean>>({});
-  const sources = React.useMemo(() => sourcesData?.sources ?? [], [sourcesData?.sources]);
-  const sharedFields = React.useMemo(() => sourcesData?.shared_fields ?? [], [sourcesData?.shared_fields]);
+  const sources = React.useMemo(() => {
+    const raw = activeSourcesData?.sources ?? [];
+    // When sources are passed from the parent (unfiltered by source_templates), apply the filter client-side.
+    if (!propSourcesData || !scope?.source_templates?.length)
+      return raw;
+    return raw.filter((s) => scope.source_templates!.includes(s.template_id));
+  }, [activeSourcesData, propSourcesData, scope]);
+  const sharedFields = React.useMemo(() => activeSourcesData?.shared_fields ?? [], [activeSourcesData?.shared_fields]);
   const systemColumnMap = React.useMemo(() => new Map(SYSTEM_COLUMNS.map((column) => [column.key, column])), []);
   const sharedFieldByKey = React.useMemo(() => new Map(sharedFields.map((f) => [f.key, f])), [sharedFields]);
 
@@ -258,7 +272,7 @@ export function ReportColumnPicker({
     );
   }
 
-  if (isError || !sourcesData) {
+  if (isError || !activeSourcesData) {
     return (
       <div className="flex h-32 items-center justify-center text-destructive">
         Failed to load report sources. Please adjust your scope or try again.

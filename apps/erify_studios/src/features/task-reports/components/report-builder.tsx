@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -7,11 +8,15 @@ import type { TaskReportPreflightResponse, TaskReportResult, TaskReportScope, Ta
 import { TASK_REPORT_SYSTEM_COLUMN } from '@eridu/api-types/task-management';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '@eridu/ui';
 
+import { getStudioClients } from '../api/get-studio-clients';
 import { useTaskReportMutations } from '../hooks/use-task-report-mutations';
 import { useTaskReportSources } from '../hooks/use-task-report-sources';
 
 import { ReportColumnPicker } from './report-column-picker';
 import { ReportScopeFilters } from './report-scope-filters';
+
+import { getShowStandards } from '@/features/show-standards/api/get-show-standards';
+import { getShowTypes } from '@/features/show-types/api/get-show-types';
 
 type ReportBuilderProps = {
   studioId: string;
@@ -63,7 +68,19 @@ export function ReportBuilder({
     return Object.keys(rest).length > 0 ? rest : null;
   }, [draftScope]);
   const { data: sourceDataForTemplateLookup } = useTaskReportSources(studioId, scopeForTemplateLookup);
-  const { data: sourceDataForScope } = useTaskReportSources(studioId, draftScope);
+  // Derive the source-templates-filtered view client-side to avoid a second network request.
+  const sourceDataForScope = React.useMemo(() => {
+    if (!sourceDataForTemplateLookup)
+      return undefined;
+    if (!draftScope?.source_templates?.length)
+      return sourceDataForTemplateLookup;
+    return {
+      ...sourceDataForTemplateLookup,
+      sources: sourceDataForTemplateLookup.sources.filter((s) =>
+        draftScope.source_templates!.includes(s.template_id),
+      ),
+    };
+  }, [sourceDataForTemplateLookup, draftScope]);
 
   // Clear preflight status if scope or columns change
   React.useEffect(() => {
@@ -83,6 +100,24 @@ export function ReportBuilder({
       value: source.template_id,
     }));
   }, [sourceDataForTemplateLookup?.sources]);
+
+  const { data: showTypesData } = useQuery({
+    queryKey: ['show-types', 'list', studioId, 'report-scope'],
+    queryFn: ({ signal }) => getShowTypes({ limit: 200 }, studioId, { signal }),
+  });
+  const showTypeOptions = (showTypesData?.data ?? []).map((item) => ({ label: item.name, value: item.id }));
+
+  const { data: showStandardsData } = useQuery({
+    queryKey: ['show-standards', 'list', studioId, 'report-scope'],
+    queryFn: ({ signal }) => getShowStandards({ limit: 200 }, studioId, { signal }),
+  });
+  const showStandardOptions = (showStandardsData?.data ?? []).map((item) => ({ label: item.name, value: item.id }));
+
+  const { data: clientsData } = useQuery({
+    queryKey: ['studio-clients', studioId, 'report-scope'],
+    queryFn: ({ signal }) => getStudioClients(studioId, { limit: 200 }, { signal }),
+  });
+  const clientOptions = (clientsData?.data ?? []).map((item) => ({ label: item.name, value: item.id }));
 
   const incompatibleColumns = React.useMemo(() => {
     if (!hasRequiredScope || !sourceDataForScope) {
@@ -335,6 +370,9 @@ export function ReportBuilder({
             studioId={studioId}
             scope={draftScope}
             sourceTemplateOptions={sourceTemplateOptions}
+            showTypeOptions={showTypeOptions}
+            showStandardOptions={showStandardOptions}
+            clientOptions={clientOptions}
             onChange={setDraftScope}
           />
         </CardContent>
@@ -355,6 +393,7 @@ export function ReportBuilder({
                   scope={draftScope}
                   selectedColumns={draftColumns}
                   onChange={setDraftColumns}
+                  sourcesData={sourceDataForTemplateLookup}
                 />
               )
             : (

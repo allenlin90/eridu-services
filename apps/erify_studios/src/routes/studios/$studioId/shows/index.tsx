@@ -315,6 +315,7 @@ function ShowTaskReadinessSection({
         date_to: showScopeDateBounds.date_to,
       }),
     enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
+    refetchOnWindowFocus: false,
   });
   const prevRefreshSignal = useRef(refreshSignal);
   useEffect(() => {

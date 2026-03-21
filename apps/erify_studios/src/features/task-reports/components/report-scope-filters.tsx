@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
@@ -7,11 +6,7 @@ import type { TaskReportScope } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 import { Button, DatePickerWithRange, Label } from '@eridu/ui';
 
-import { getStudioClients } from '../api/get-studio-clients';
-
 import { MultiSelect } from '@/components/task-templates/shared/multi-select';
-import { getShowStandards } from '@/features/show-standards/api/get-show-standards';
-import { getShowTypes } from '@/features/show-types/api/get-show-types';
 
 type SelectOption = {
   label: string;
@@ -22,6 +17,9 @@ type ReportScopeFiltersProps = {
   studioId: string;
   scope: TaskReportScope | null;
   sourceTemplateOptions: SelectOption[];
+  showTypeOptions: SelectOption[];
+  showStandardOptions: SelectOption[];
+  clientOptions: SelectOption[];
   onChange: (scope: TaskReportScope | null) => void;
 };
 
@@ -55,9 +53,11 @@ function parseLocalDate(value?: string): Date | undefined {
 }
 
 export function ReportScopeFilters({
-  studioId,
   scope,
   sourceTemplateOptions,
+  showTypeOptions,
+  showStandardOptions,
+  clientOptions,
   onChange,
 }: ReportScopeFiltersProps) {
   const currentScope: TaskReportScope = scope || { submitted_statuses: [...DEFAULT_SUBMITTED_STATUSES] };
@@ -93,23 +93,6 @@ export function ReportScopeFilters({
     onChange(Object.keys(next).length > 0 ? next : null);
   };
 
-  const { data: showTypesData } = useQuery({
-    queryKey: ['show-types', 'list', studioId, 'report-scope'],
-    queryFn: ({ signal }) => getShowTypes({ limit: 200 }, studioId, { signal }),
-  });
-  const showTypeOptions = (showTypesData?.data || []).map((item) => ({ label: item.name, value: item.id }));
-
-  const { data: showStandardsData } = useQuery({
-    queryKey: ['show-standards', 'list', studioId, 'report-scope'],
-    queryFn: ({ signal }) => getShowStandards({ limit: 200 }, studioId, { signal }),
-  });
-  const showStandardOptions = (showStandardsData?.data || []).map((item) => ({ label: item.name, value: item.id }));
-
-  const { data: clientsData } = useQuery({
-    queryKey: ['studio-clients', studioId, 'report-scope'],
-    queryFn: ({ signal }) => getStudioClients(studioId, { limit: 200 }, { signal }),
-  });
-  const clientOptions = (clientsData?.data || []).map((item) => ({ label: item.name, value: item.id }));
   const hasActiveFilters = Boolean(
     currentScope.date_from
     || currentScope.date_to

@@ -23,7 +23,11 @@ import {
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { taskReportResultKeys } from '@/features/task-reports/api/keys';
+import { getShowStandards } from '@/features/show-standards/api/get-show-standards';
+import { getShowTypes } from '@/features/show-types/api/get-show-types';
+import { getStudioClients } from '@/features/task-reports/api/get-studio-clients';
+import { getTaskReportDefinition } from '@/features/task-reports/api/get-task-report-definition';
+import { taskReportDefinitionKeys, taskReportResultKeys } from '@/features/task-reports/api/keys';
 import { ReportBuilder } from '@/features/task-reports/components/report-builder';
 import { useTaskReportDefinition } from '@/features/task-reports/hooks/use-task-report-definition';
 import { useTaskReportDefinitionMutations } from '@/features/task-reports/hooks/use-task-report-definition-mutations';
@@ -36,6 +40,26 @@ const taskReportBuilderSearchSchema = z.object({
 export const Route = createFileRoute('/studios/$studioId/task-reports/builder')({
   component: TaskReportBuilderPage,
   validateSearch: (search) => taskReportBuilderSearchSchema.parse(search),
+  loader: ({ context: { queryClient }, params: { studioId }, search }) => {
+    if (search.definition_id) {
+      void queryClient.prefetchQuery({
+        queryKey: taskReportDefinitionKeys.detail(studioId, search.definition_id),
+        queryFn: ({ signal }) => getTaskReportDefinition(studioId, search.definition_id!, { signal }),
+      });
+    }
+    void queryClient.prefetchQuery({
+      queryKey: ['show-types', 'list', studioId, 'report-scope'],
+      queryFn: ({ signal }) => getShowTypes({ limit: 200 }, studioId, { signal }),
+    });
+    void queryClient.prefetchQuery({
+      queryKey: ['show-standards', 'list', studioId, 'report-scope'],
+      queryFn: ({ signal }) => getShowStandards({ limit: 200 }, studioId, { signal }),
+    });
+    void queryClient.prefetchQuery({
+      queryKey: ['studio-clients', studioId, 'report-scope'],
+      queryFn: ({ signal }) => getStudioClients(studioId, { limit: 200 }, { signal }),
+    });
+  },
 });
 
 type BuilderWorkspaceProps = {
