@@ -315,6 +315,9 @@ function ShowTaskReadinessSection({
         date_to: showScopeDateBounds.date_to,
       }),
     enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
+    // Prevent a spurious GET /studio-shows?page=1&limit=1 every time the user
+    // switches back to this tab — the scope-total counter only needs to refresh
+    // on explicit user actions (date change, task save), not on window focus.
     refetchOnWindowFocus: false,
   });
   const prevRefreshSignal = useRef(refreshSignal);

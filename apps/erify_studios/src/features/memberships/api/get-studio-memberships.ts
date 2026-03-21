@@ -13,10 +13,11 @@ export type GetStudioMembershipsParams = {
 export async function getStudioMemberships(
   studioId: string,
   params: GetStudioMembershipsParams,
+  options?: { signal?: AbortSignal },
 ): Promise<MembershipsResponse> {
   const response = await apiClient.get<MembershipsResponse>(
     `/studios/${studioId}/studio-memberships`,
-    { params },
+    { params, signal: options?.signal },
   );
   return response.data;
 }
@@ -30,7 +31,7 @@ export function useStudioMembershipsQuery(
 ) {
   return useQuery({
     queryKey: ['studio-memberships', 'list', studioId, params],
-    queryFn: () => getStudioMemberships(studioId, params),
+    queryFn: ({ signal }) => getStudioMemberships(studioId, params, { signal }),
     placeholderData: (previousData: MembershipsResponse | undefined) => previousData,
     enabled: Boolean(studioId) && (options?.enabled ?? true),
   });

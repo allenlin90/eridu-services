@@ -15,15 +15,17 @@ export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
   loader: ({ context: { queryClient }, params: { studioId, showId } }) => {
     void queryClient.prefetchQuery({
       queryKey: showTasksKeys.list(studioId, showId),
-      queryFn: () => getShowTasks(studioId, showId),
+      queryFn: ({ signal }) => getShowTasks(studioId, showId, { signal }),
     });
     void queryClient.prefetchQuery({
       queryKey: studioShowKeys.detail(studioId, showId),
       queryFn: () => getStudioShow(studioId, showId),
     });
+    // Key must stay structurally identical to the params object in useStudioMembershipsQuery
+    // when memberSearch is empty ('') — i.e. { limit: 50 } (name omitted ≡ name: undefined after TQ normalization).
     void queryClient.prefetchQuery({
       queryKey: ['studio-memberships', 'list', studioId, { limit: 50 }],
-      queryFn: () => getStudioMemberships(studioId, { limit: 50 }),
+      queryFn: ({ signal }) => getStudioMemberships(studioId, { limit: 50 }, { signal }),
     });
   },
 });
