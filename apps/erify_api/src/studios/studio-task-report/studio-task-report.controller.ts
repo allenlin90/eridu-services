@@ -8,10 +8,11 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { STUDIO_ROLE, type StudioRole } from '@eridu/api-types/memberships';
 import {
   taskReportDefinitionSchema,
   taskReportPreflightResponseSchema,
@@ -22,7 +23,7 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 
 import { BaseStudioController } from '../base-studio.controller';
 
-import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
+import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
@@ -30,7 +31,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import {
   CreateTaskReportDefinitionDto,
   ListTaskReportDefinitionsQueryDto,
-  TaskReportPreflightDto,
+  TaskReportPreflightQueryDto,
   TaskReportRunDto,
   TaskReportSourcesQueryDto,
   UpdateTaskReportDefinitionDto,
@@ -55,11 +56,10 @@ export class StudioTaskReportController extends BaseStudioController {
   @ZodPaginatedResponse(taskReportDefinitionSchema)
   async listDefinitions(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
-    @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTaskReportDefinitionsQueryDto,
   ) {
     const pagination = this.toPaginationQuery(query);
-    const { data, total } = await this.taskReportDefinitionService.listDefinitions(studioUid, user.ext_id, {
+    const { data, total } = await this.taskReportDefinitionService.listDefinitions(studioUid, {
       skip: pagination.skip,
       take: pagination.take,
       search: query.search,
@@ -72,10 +72,9 @@ export class StudioTaskReportController extends BaseStudioController {
   @ZodResponse(taskReportDefinitionSchema)
   async getDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
-    @CurrentUser() user: AuthenticatedUser,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
   ) {
-    return this.taskReportDefinitionService.getDefinition(studioUid, user.ext_id, definitionUid);
+    return this.taskReportDefinitionService.getDefinition(studioUid, definitionUid);
   }
 
   @Post('task-report-definitions')
@@ -93,10 +92,11 @@ export class StudioTaskReportController extends BaseStudioController {
   async updateDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() request: AuthenticatedRequest,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
     @Body() payload: UpdateTaskReportDefinitionDto,
   ) {
-    return this.taskReportDefinitionService.updateDefinition(studioUid, user.ext_id, definitionUid, payload);
+    return this.taskReportDefinitionService.updateDefinition(studioUid, user.ext_id, request.studioMembership!.role as StudioRole, definitionUid, payload);
   }
 
   @Delete('task-report-definitions/:definitionId')
@@ -104,9 +104,10 @@ export class StudioTaskReportController extends BaseStudioController {
   async deleteDefinition(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() request: AuthenticatedRequest,
     @Param('definitionId', new UidValidationPipe(TaskReportDefinitionService.UID_PREFIX, 'TaskReportDefinition')) definitionUid: string,
   ) {
-    return this.taskReportDefinitionService.deleteDefinition(studioUid, user.ext_id, definitionUid);
+    return this.taskReportDefinitionService.deleteDefinition(studioUid, user.ext_id, request.studioMembership!.role as StudioRole, definitionUid);
   }
 
   @Get('task-report-sources')
@@ -118,13 +119,13 @@ export class StudioTaskReportController extends BaseStudioController {
     return this.taskReportScopeService.getSources(studioUid, query);
   }
 
-  @Post('task-reports/preflight')
+  @Get('task-reports/preflight')
   @ZodResponse(taskReportPreflightResponseSchema)
   async preflight(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
-    @Body() payload: TaskReportPreflightDto,
+    @Query() query: TaskReportPreflightQueryDto,
   ) {
-    return this.taskReportScopeService.preflight(studioUid, payload);
+    return this.taskReportScopeService.preflight(studioUid, { scope: query });
   }
 
   @Post('task-reports/run')

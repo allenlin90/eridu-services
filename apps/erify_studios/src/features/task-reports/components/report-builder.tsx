@@ -159,9 +159,7 @@ export function ReportBuilder({
     if (!draftScope || draftColumns.length === 0 || incompatibleColumns.length > 0)
       return;
 
-    const res = await preflightMutation.mutateAsync({
-      scope: draftScope,
-    });
+    const res = await preflightMutation.mutateAsync(draftScope);
     setPreflightData(res);
     if (res.show_count === 0) {
       toast.warning('The selected scope results in 0 shows. Please adjust filters.');

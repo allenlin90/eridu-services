@@ -29,7 +29,7 @@ In scope:
 6. client-side view filters (client, status, assignee, room, search) shown only when matching row metadata exists, plus a `Clear view filters` utility and simple asc/desc column sort on the cached dataset
 7. TanStack Query cache for last N generated datasets (instant switching), plus a builder affordance to reopen the last cached result for the same scope + columns
 8. client-side CSV export from cached JSON (full dataset, one flat file)
-9. saved definitions as the landing view (personal presets) with explicit builder save actions (`Save as Definition` / `Save Definition`)
+9. saved definitions as the landing view (studio-shared — all permitted roles can view/run; creator or ADMIN can modify/delete) with explicit builder save actions (`Save as Definition` / `Save Definition`)
 
 Out of scope:
 
@@ -58,7 +58,7 @@ Rationale:
 
 ```mermaid
 flowchart TD
-    START([Open Task Reports]) --> LANDING[Definition List<br/>personal presets]
+    START([Open Task Reports]) --> LANDING[Definition List<br/>studio-shared]
     LANDING -->|New report| FILTER[Set Scope Filters<br/>date range + multi-select filters]
     LANDING -->|Open definition| LOAD[Load Definition<br/>pre-fill scope + columns]
     LOAD --> PREFILLED{Override scope?}
@@ -93,13 +93,13 @@ flowchart TD
 
 Steps:
 
-1. Open `Task Reports` — lands on the **definition list** (personal presets)
+1. Open `Task Reports` — lands on the **definition list** (studio-shared — all permitted roles see all definitions)
 2. Open an existing definition (pre-fills scope + columns) or start new
 3. **Set scope filters** — one required date-range picker plus compoundable multi-select filters (`client`, `show standard`, `show type`, `submitted statuses`, `source templates`). These determine what data the BE generates. `date_from` + `date_to` are **mandatory** for source discovery, preflight, and run. `Reset all filters` restores defaults.
 4. **Discover columns** — BE returns contextual catalog from tasks on filtered shows
 5. **Select columns** — defines the target table schema
 6. **Save definition** (optional) — enter definition name/description and save via `Save as Definition` (new) or `Save Definition` (existing)
-7. **Preflight check** — FE calls `POST /task-reports/preflight` and shows scope summary: *"487 shows, 1,204 tasks"*. `task_count` reflects only reportable submitted tasks (same eligibility as run: task must have template + snapshot references). Over-limit scopes are blocked when either show-count (row volume) or task-count exceeds the limit. Run is enabled only after a successful preflight.
+7. **Preflight check** — FE calls `GET /task-reports/preflight` (query params, same parsing as source discovery) and shows scope summary: *"487 shows, 1,204 tasks"*. `task_count` reflects only reportable submitted tasks (same eligibility as run: task must have template + snapshot references). Over-limit scopes are blocked when either show-count (row volume) or task-count exceeds the limit. Run is enabled only after a successful preflight.
 8. **Run report** — BE generates show-centric table, returns full JSON inline
 9. **FE caches** the result in TanStack Query (last N datasets cached) and surfaces a "View cached result" affordance when scope + columns match
 10. **Review table** — strictly one row per show, all columns pre-merged by BE. Duplicates resolved by latest-wins; multi-target tasks merge into each show's row.
@@ -138,7 +138,7 @@ sequenceDiagram
     end
 
     Note over FE: Preflight check — confirm scope size
-    FE->>BE: POST /task-reports/preflight { scope }
+    FE->>BE: GET /task-reports/preflight?date_from=...&...
     BE-->>FE: { show_count: 487, task_count: 1204,<br/>within_limit: true }
     FE->>Mgr: "487 shows, 1,204 tasks — Confirm?"
     Mgr->>FE: Confirm
@@ -710,7 +710,7 @@ For current MVP-sized datasets, main-thread CSV serialization is acceptable.
 
 **Preflight step** (before generation):
 
-The manager clicks **Preflight Scope** to call `POST /task-reports/preflight`. The response includes `show_count`, `task_count`, and `within_limit`. The UI shows a summary card:
+The manager clicks **Preflight Scope** to call `GET /task-reports/preflight`. The response includes `show_count`, `task_count`, and `within_limit`. The UI shows a summary card:
 
 - *"487 shows, 1,204 tasks — scope ready"* when `within_limit` is true.
 - `task_count` is already run-eligible scope size (submitted tasks with template + snapshot); FE should not apply extra client-side eligibility filtering.

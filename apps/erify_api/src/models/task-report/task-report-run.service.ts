@@ -354,6 +354,7 @@ export class TaskReportRunService {
           code: 'DUPLICATE_SOURCE',
           message: `Multiple submitted tasks found for show ${showUid} and template ${templateUid}; latest values were used.`,
           show_id: showUid,
+          template_id: templateUid,
         };
       });
   }

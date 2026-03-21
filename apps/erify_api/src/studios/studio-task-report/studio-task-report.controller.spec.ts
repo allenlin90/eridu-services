@@ -6,14 +6,13 @@ import {
   getTaskReportSourcesQuerySchema,
   listTaskReportDefinitionsQuerySchema,
   taskReportDefinitionSchema,
-  taskReportPreflightRequestSchema,
   taskReportRunRequestSchema,
   updateTaskReportDefinitionSchema,
 } from '@eridu/api-types/task-management';
 
 import { StudioTaskReportController } from './studio-task-report.controller';
 
-import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
+import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { TaskReportDefinitionService } from '@/models/task-report/task-report-definition.service';
 import { TaskReportRunService } from '@/models/task-report/task-report-run.service';
 import { TaskReportScopeService } from '@/models/task-report/task-report-scope.service';
@@ -36,6 +35,9 @@ describe('studioTaskReportController', () => {
     email: 'user@eridu.com',
     payload: {} as AuthenticatedUser['payload'],
   };
+  const mockRequest = {
+    studioMembership: { role: 'manager' },
+  } as unknown as AuthenticatedRequest;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -81,7 +83,7 @@ describe('studioTaskReportController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('delegates definition list endpoint', async () => {
+  it('delegates definition list endpoint without user filter', async () => {
     const query = listTaskReportDefinitionsQuerySchema.parse({
       page: 1,
       limit: 20,
@@ -102,17 +104,17 @@ describe('studioTaskReportController', () => {
       total: 1,
     });
 
-    const result = await controller.listDefinitions('std_123', user, query);
+    const result = await controller.listDefinitions('std_123', query);
     expect(result.data).toEqual([definition]);
     expect(result.meta.total).toBe(1);
-    expect(definitionService.listDefinitions).toHaveBeenCalledWith('std_123', 'ext_1', {
+    expect(definitionService.listDefinitions).toHaveBeenCalledWith('std_123', {
       skip: 0,
       take: 20,
       search: query.search,
     });
   });
 
-  it('delegates definition detail endpoint', async () => {
+  it('delegates definition detail endpoint without user filter', async () => {
     const definition = taskReportDefinitionSchema.parse({
       id: 'trd_1',
       name: 'Weekly',
@@ -125,8 +127,8 @@ describe('studioTaskReportController', () => {
     });
     definitionService.getDefinition.mockResolvedValue(definition);
 
-    await expect(controller.getDefinition('std_123', user, 'trd_123')).resolves.toEqual(definition);
-    expect(definitionService.getDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'trd_123');
+    await expect(controller.getDefinition('std_123', 'trd_123')).resolves.toEqual(definition);
+    expect(definitionService.getDefinition).toHaveBeenCalledWith('std_123', 'trd_123');
   });
 
   it('delegates definition create endpoint', async () => {
@@ -150,7 +152,7 @@ describe('studioTaskReportController', () => {
     expect(definitionService.createDefinition).toHaveBeenCalledWith('std_123', 'ext_1', payload);
   });
 
-  it('delegates definition update endpoint', async () => {
+  it('delegates definition update endpoint with studio role', async () => {
     const payload = updateTaskReportDefinitionSchema.parse({ name: 'Weekly review v2' });
     const definition = taskReportDefinitionSchema.parse({
       id: 'trd_1',
@@ -164,15 +166,15 @@ describe('studioTaskReportController', () => {
     });
     definitionService.updateDefinition.mockResolvedValue(definition);
 
-    await expect(controller.updateDefinition('std_123', user, 'trd_123', payload)).resolves.toEqual(definition);
-    expect(definitionService.updateDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'trd_123', payload);
+    await expect(controller.updateDefinition('std_123', user, mockRequest, 'trd_123', payload)).resolves.toEqual(definition);
+    expect(definitionService.updateDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'manager', 'trd_123', payload);
   });
 
-  it('delegates definition delete endpoint', async () => {
+  it('delegates definition delete endpoint with studio role', async () => {
     definitionService.deleteDefinition.mockResolvedValue(undefined);
 
-    await expect(controller.deleteDefinition('std_123', user, 'trd_123')).resolves.toBeUndefined();
-    expect(definitionService.deleteDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'trd_123');
+    await expect(controller.deleteDefinition('std_123', user, mockRequest, 'trd_123')).resolves.toBeUndefined();
+    expect(definitionService.deleteDefinition).toHaveBeenCalledWith('std_123', 'ext_1', 'manager', 'trd_123');
   });
 
   it('delegates sources endpoint', async () => {
@@ -190,12 +192,10 @@ describe('studioTaskReportController', () => {
   });
 
   it('delegates preflight endpoint', async () => {
-    const payload = taskReportPreflightRequestSchema.parse({
-      scope: {
-        date_from: '2026-03-01',
-        date_to: '2026-03-31',
-        show_ids: ['show_1'],
-      },
+    const query = getTaskReportSourcesQuerySchema.parse({
+      date_from: '2026-03-01',
+      date_to: '2026-03-31',
+      show_ids: 'show_1',
     });
     scopeService.preflight.mockResolvedValue({
       show_count: 12,
@@ -204,13 +204,13 @@ describe('studioTaskReportController', () => {
       limit: 10000,
     });
 
-    await expect(controller.preflight('std_123', payload)).resolves.toEqual({
+    await expect(controller.preflight('std_123', query)).resolves.toEqual({
       show_count: 12,
       task_count: 40,
       within_limit: true,
       limit: 10000,
     });
-    expect(scopeService.preflight).toHaveBeenCalledWith('std_123', payload);
+    expect(scopeService.preflight).toHaveBeenCalledWith('std_123', { scope: query });
   });
 
   it('delegates run endpoint', async () => {

@@ -45,7 +45,28 @@ export const sharedFieldCategorySchema = z.enum(['metric', 'evidence', 'status']
 
 export type SharedFieldCategory = z.infer<typeof sharedFieldCategorySchema>;
 
-const reservedSharedFieldKeys = new Set<string>(Object.values(TASK_REPORT_SYSTEM_COLUMN));
+/**
+ * View-filter metadata keys injected into every result row by the run pipeline.
+ * These occupy the same namespace as user-selectable columns, so shared field
+ * keys must not collide with them. Keep this list in sync with the metadata
+ * keys written by `TaskReportRunService.buildRows()`.
+ */
+export const TASK_REPORT_VIEW_FILTER_KEYS = {
+  CLIENT_ID: 'client_id',
+  STUDIO_ROOM_ID: 'studio_room_id',
+  STUDIO_ROOM_NAME: 'studio_room_name',
+  SHOW_STATUS_ID: 'show_status_id',
+  SHOW_STATUS_NAME: 'show_status_name',
+  ASSIGNEE_ID: 'assignee_id',
+  ASSIGNEE_NAME: 'assignee_name',
+  ASSIGNEE_IDS: 'assignee_ids',
+  ASSIGNEE_NAMES: 'assignee_names',
+} as const;
+
+const reservedSharedFieldKeys = new Set<string>([
+  ...Object.values(TASK_REPORT_SYSTEM_COLUMN),
+  ...Object.values(TASK_REPORT_VIEW_FILTER_KEYS),
+]);
 
 export const sharedFieldKeySchema = z
   .string()
@@ -53,7 +74,7 @@ export const sharedFieldKeySchema = z
   .max(50)
   .regex(/^[a-z][a-z0-9_]*$/)
   .refine((key) => !reservedSharedFieldKeys.has(key), {
-    message: 'Shared field key cannot use reserved report system column keys',
+    message: 'Shared field key cannot use reserved report column or view-filter keys',
   });
 
 /**
@@ -251,6 +272,7 @@ export const taskReportWarningSchema = z.object({
   code: z.string(),
   message: z.string(),
   show_id: z.string().startsWith(UID_PREFIXES.SHOW).optional(),
+  template_id: z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE).optional(),
   column_key: z.string().optional(),
 });
 

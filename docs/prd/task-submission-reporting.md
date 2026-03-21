@@ -85,7 +85,7 @@ flowchart LR
     G -->|CSV| H[Serialize + Download]
     C -.-> S{Save Definition?}
     P -.-> S
-    S -->|Yes| I[Store as named<br/>personal preset]
+    S -->|Yes| I[Store as named<br/>studio-shared definition]
     I -.->|Rerun anytime| P
 ```
 
@@ -94,7 +94,7 @@ Steps:
 1. **Filter shows** (scope filters) — set date range, client, show standard, show type, and other show-level attributes. These scope filters shape the contextual column catalog. `date_from` + `date_to` are **mandatory** for source discovery, preflight, and run.
 2. **Discover columns** — the BE returns which task templates/snapshots have submitted tasks for those filtered shows, plus their field catalogs. Columns are contextual — bound to the actual tasks on the selected shows.
 3. **Select columns** — pick system columns (show id, show name, show external id, client name, start/end time, show standard, show type, room) and task-content columns from the discovered catalog. This defines the target table schema. Hard cap: 50 columns. Soft warning at 30+ for table readability (the export is the primary deliverable — wide tables are best reviewed in the spreadsheet).
-4. **Save definition** (optional) — save the scope filters + column selection as a named personal preset. Saving can happen before or after preflight/run. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
+4. **Save definition** (optional) — save the scope filters + column selection as a named studio-shared definition. Saving can happen before or after preflight/run. Definitions can store a default date preset (`this_week`, `this_month`, or absolute dates) that pre-fills on load.
 5. **Preflight check** — before generating, the FE requests a count summary (`show_count`, `task_count`). The manager sees the scope size and run stays disabled until preflight succeeds. Over-limit scopes are blocked with guidance.
 6. **Run report** — triggers BE to join submitted task data across matching shows into a flat table JSON with show-centric rows. The full result is returned inline — no server-side storage.
 7. **Review + view filters** — FE caches and renders the flat table. Managers apply client-side view filters (by client, show status, assignee, room) and column sorting (asc/desc on any column) to focus on subsets — all instant, no server round-trip. These filters are driven by per-row metadata returned with the result, not by whether those columns are visible in the table. If scope + columns match a cached result, the builder offers a "View cached result" shortcut.
@@ -193,19 +193,20 @@ When scope includes many client-dedicated moderation templates and loop-heavy sc
 7. Each row also includes hidden metadata used by client-side view filters: client/status/room ids and names, plus assignee ids and names. Assignee metadata may be multi-value because one show row can merge submitted tasks from different assignees.
 8. If a saved definition contains columns that are incompatible with the current scope (missing/renamed/misaligned sources), preflight/run is blocked with an explicit conflict summary until the user resolves those columns.
 
-### Saved definitions (personal presets)
+### Saved definitions (studio-shared)
 
 1. Managers can save a named definition containing scope filters, selected columns, and optional description metadata.
-2. Definitions function as **personal presets** — like Google Sheets filter views. Each manager creates definitions reflecting their review needs.
-3. Definitions can store a default date preset (`this_week`, `this_month`, or explicit dates) that pre-fills the date range on load. Before source/preflight/run requests are sent, the FE resolves to explicit `date_from` + `date_to`.
-4. Builder save UX exposes explicit actions:
+2. Definitions are **studio-shared** — all studio members with report access (`ADMIN`, `MANAGER`, `MODERATION_MANAGER`) can view and run any definition in the studio. This mirrors Google Sheets filter views where all editors see the same saved views.
+3. **Permission model**: the definition creator or a studio `ADMIN` can update or delete a definition. Other roles can view and run but not modify definitions they didn't create.
+4. Definitions can store a default date preset (`this_week`, `this_month`, or explicit dates) that pre-fills the date range on load. Before source/preflight/run requests are sent, the FE resolves to explicit `date_from` + `date_to`.
+5. Builder save UX exposes explicit actions:
    - `Save as Definition` for new drafts
    - `Save Definition` when editing an existing definition
    - clearing an existing description is supported by saving with an empty description field
-5. Save is blocked until the definition has a name, a valid date range, and at least one compatible selected column.
-6. Definitions can be **cloned and edited** — a "Clone" action creates a copy with a new name for the manager to customize.
-7. The definition list is the **landing view** of the Task Reports page — managers open a definition and run it, rather than building from scratch each time.
-8. Definitions are persisted as JSON only; the backend does not store generated results.
+6. Save is blocked until the definition has a name, a valid date range, and at least one compatible selected column.
+7. Definition clone is deferred to Phase 2. See [Phase 2 deliverables](#phase-2-polish--advanced-table-ux).
+8. The definition list is the **landing view** of the Task Reports page — managers open a definition and run it, rather than building from scratch each time.
+9. Definitions are persisted as JSON only; the backend does not store generated results.
 
 ### Client-side caching and view filters
 
@@ -302,7 +303,8 @@ fields across templates            (e.g., one "GMV" column)
 To enable this:
 
 1. **Shared fields** — a studio-scoped list of field definitions stored in `Studio.metadata.shared_fields[]`. Managed by ADMIN via a settings endpoint. `GET /studios/:studioId/settings/shared-fields` is readable by ADMIN and MANAGER so template authors can load the picker; create/update management stays ADMIN-only. Keys are immutable once created; fields can be deactivated but not deleted.
-   - Shared-field key validation rejects reserved system-column keys to avoid collisions with built-in report columns.
+   - Shared-field key validation rejects reserved system-column keys and view-filter metadata keys (`assignee_id`, `studio_room_id`, etc.) to avoid collisions with built-in report columns and row metadata.
+   - **Deactivation behavior**: setting `is_active: false` prevents the field from being selected when creating new template snapshots or new definitions. However, deactivated fields still appear in the report column picker if they exist in scoped snapshots — historical data is never hidden from reports.
 2. **`standard` flag on field items** — `FieldItemBaseSchema` gains an optional `standard: boolean` property. Fields marked `standard: true` use their `key` directly as the report column key (no template prefix). All other fields (the majority) remain template-scoped with `{template_uid}:{field.key}`.
 3. **Cross-template merging** — when generating a report, shared fields from different templates merge into one column because they share the same key. Custom fields remain template-scoped — this is the expected behavior.
 4. **Template rebuild (alpha-phase migration)** — the system is in alpha testing, not yet in real operational usage. The ~30 existing moderation templates are rebuilt from the current Google Sheets source with correct shared field keys from the start:
@@ -332,7 +334,7 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 - [ ] Running a report returns the full result inline. The FE caches it for instant re-access.
 - [ ] Client-side view filters (client, status, assignee) and column sorting (asc/desc) slice the cached table instantly without server round-trips.
 - [ ] A saved definition pre-fills scope filters and columns. Running it generates fresh data.
-- [ ] Definitions can be cloned and edited to create variations.
+- [ ] *(Deferred to Phase 2)* Definitions can be cloned and edited to create variations.
 - [ ] Switching between recently generated datasets (e.g., different weeks) is instant from cache.
 - [ ] Export always produces one flat CSV file — no multi-file splitting regardless of template mix.
 - [ ] Only show-targeted tasks appear in results; non-show tasks are excluded.
@@ -340,7 +342,7 @@ This is a **requirement for MVP** — without it, the reporting engine cannot pr
 - [ ] The table shows row count and generation timestamp for sanity checking.
 - [ ] Preflight `task_count` uses the same reportable-task scope as run (submitted + has template + has snapshot), so unsnapshotted tasks do not falsely block generation.
 - [ ] Studio ADMIN can create and manage shared fields in studio settings. Keys, types, and categories are immutable after creation.
-- [ ] Shared-field key creation rejects reserved system-column keys (`show_name`, `client_name`, etc.) to prevent collisions with built-in report columns.
+- [ ] Shared-field key creation rejects reserved system-column keys (`show_name`, `client_name`, etc.) and view-filter metadata keys (`assignee_id`, `studio_room_id`, etc.) to prevent collisions with built-in report columns and row metadata.
 - [ ] Studio MANAGER can read the shared-field catalog in template create/edit flows, but cannot create or update shared fields.
 - [ ] After shared fields are created/updated in settings, template create/edit pages reflect the latest shared-field options without manual hard refresh.
 - [ ] If shared fields fail to load on template create/edit pages, an explicit warning is shown (no silent disappearance of shared-field insertion UI).
@@ -364,7 +366,7 @@ The engine is intentionally unopinionated about what the submitted fields mean. 
 - **Show-first workflow.** Managers think in terms of "which shows" first. The column catalog is contextual — only columns from tasks that exist on the filtered shows are offered.
 - **Two-level filtering.** Scope filters (server-side) define what data is generated. View filters (client-side) slice the cached dataset for focused review. This mirrors the Google Sheets pattern of one sheet per time range with filter views per client/status.
 - **No server-side result storage.** The generated result is returned inline and cached on the client. Generation is fast (< 1s typical for 500–1000 shows). Re-running is cheap. Server-side result persistence adds complexity (staleness tracking, cleanup jobs, result CRUD) without proportional benefit at this scale.
-- **Definition as personal preset.** Definitions are like Google Sheets filter views — each manager saves their preferred scope + columns. The definition list is the landing page. Date presets pre-fill but can be overridden.
+- **Studio-shared definitions.** Definitions are visible to all studio members with report access — like Google Sheets filter views where all editors see the same saved views. The definition creator or a studio ADMIN can modify or delete; all permitted roles can view and run. The definition list is the landing page. Date presets pre-fill but can be overridden.
 - **Flat materialized table with strict one-row-per-show.** The BE produces a joined table — exactly one row per show, with all task data merged in. Custom fields from different templates appear as separate columns on the same row. No multi-row expansion, no multi-file export splitting. Column metadata tracks template origin for display grouping.
 - **Preflight count before generation.** The FE requests a lightweight count (`show_count`, `task_count`) before triggering full generation. This lets the manager confirm scope size, prevents wasted generation on over-broad filters, and enforces the row cap before any heavy query runs.
 - **Date presets are optional in definitions.** `this_week`, `this_month`, or absolute dates. The FE always shows the date picker pre-filled from the definition's default. Managers can override before running.
@@ -404,7 +406,7 @@ sequenceDiagram
 
     Manager->>FE: Open Task Reports
     FE->>BE: GET /task-report-definitions
-    BE->>DB: Query definitions (studioId, createdById)
+    BE->>DB: Query definitions (studioId)
     DB-->>BE: [] (empty)
     BE-->>FE: [] (no definitions)
     FE-->>Manager: "Create your first report" prompt
@@ -424,7 +426,7 @@ sequenceDiagram
     BE-->>FE: Saved definition
 
     Manager->>FE: Click "Preflight Scope"
-    FE->>BE: POST /task-reports/preflight { scope }
+    FE->>BE: GET /task-reports/preflight?date_from=...&...
     BE->>DB: COUNT shows + tasks matching scope
     DB-->>BE: { show_count: 487, task_count: 1204 }
     BE-->>FE: Preflight summary
@@ -460,7 +462,7 @@ sequenceDiagram
     Manager->>FE: Open Task Reports
     FE->>BE: GET /task-report-definitions
     BE-->>FE: [{ uid, name: "Weekly Premium Review", definition: {...} }, ...]
-    FE-->>Manager: Definition list (personal presets)
+    FE-->>Manager: Definition list (studio-shared)
 
     Manager->>FE: Open "Weekly Premium Review"
     FE-->>FE: Pre-fill form from definition<br/>(scope: this_week + premium, columns: gmv, views, notes)
@@ -592,7 +594,7 @@ graph TB
 | # | Deliverable | Details |
 |---|-------------|---------|
 | 11 | Contextual source catalog | `GET /task-report-sources` — returns templates/snapshots with submitted tasks for filtered shows, field catalogs, shared fields deduplication |
-| 12 | Definition CRUD | `TaskReportDefinition` model + 5 endpoints. Personal presets with scope + columns + optional date presets. |
+| 12 | Definition CRUD | `TaskReportDefinition` model + 5 endpoints. Studio-shared definitions with scope + columns + optional date presets. Creator or ADMIN can modify/delete; all permitted roles can view and run. |
 | 13 | Cross-doc updates | Update authorization skill, role matrix, route access config, api-types — all items from BE design §4.6.6 |
 | 14 | Error contract | Structured error responses per BE design §11.1 — designed alongside the feature, not after |
 

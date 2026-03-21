@@ -1,13 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import type { TaskReportPreflightRequest, TaskReportRunRequest } from '@eridu/api-types/task-management';
+import type { TaskReportRunRequest, TaskReportScope } from '@eridu/api-types/task-management';
 
 import { preflightTaskReport, runTaskReport } from '../api';
 
 export function useTaskReportMutations(studioId: string) {
   const preflightMutation = useMutation({
-    mutationFn: (payload: TaskReportPreflightRequest) => preflightTaskReport(studioId, payload),
+    mutationFn: (scope: TaskReportScope) => preflightTaskReport(studioId, scope),
     onError: (error) => {
       toast.error('Failed to preflight report scope.');
       console.error(error);

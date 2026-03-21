@@ -14,6 +14,11 @@ describe('taskReportDefinitionService', () => {
     show_standard_id: ['shsd_1'],
   };
 
+  const defaultDefinition = {
+    scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] as ('REVIEW' | 'COMPLETED' | 'CLOSED')[] },
+    columns: [{ key: 'gmv', label: 'GMV' }],
+  };
+
   let service: TaskReportDefinitionService;
   let repository: jest.Mocked<TaskReportDefinitionRepository>;
   let userService: jest.Mocked<UserService>;
@@ -59,7 +64,7 @@ describe('taskReportDefinitionService', () => {
     jest.clearAllMocks();
   });
 
-  it('lists definitions with api serialization', async () => {
+  it('lists all studio definitions without creator filter', async () => {
     repository.findPaginated.mockResolvedValue({
       data: [
         {
@@ -68,13 +73,10 @@ describe('taskReportDefinitionService', () => {
           studioId: 1n,
           name: 'Weekly',
           description: 'Desc',
-          definition: {
-            scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-            columns: [{ key: 'gmv', label: 'GMV' }],
-          },
+          definition: defaultDefinition,
           metadata: {},
-          createdById: null,
-          createdBy: null,
+          createdById: 201n,
+          createdBy: { uid: 'user_other' },
           createdAt: new Date('2026-03-01T00:00:00.000Z'),
           updatedAt: new Date('2026-03-02T00:00:00.000Z'),
           deletedAt: null,
@@ -83,27 +85,27 @@ describe('taskReportDefinitionService', () => {
       total: 1,
     });
 
-    const result = await service.listDefinitions('std_1', 'ext_1', { skip: 0, take: 20, search: 'week' });
+    const result = await service.listDefinitions('std_1', { skip: 0, take: 20, search: 'week' });
     expect(result.total).toBe(1);
     expect(result.data[0]).toMatchObject({
       id: 'trd_1',
       name: 'Weekly',
       description: 'Desc',
-      created_by_id: null,
+      created_by_id: 'user_other',
     });
+    expect(repository.findPaginated).toHaveBeenCalledWith(
+      expect.not.objectContaining({ createdById: expect.anything() }),
+    );
   });
 
-  it('gets one definition in studio scope', async () => {
+  it('gets one definition in studio scope without creator filter', async () => {
     repository.findByUidInStudio.mockResolvedValue({
       id: 1n,
       uid: 'trd_1',
       studioId: 1n,
       name: 'Weekly',
       description: null,
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
       metadata: {},
       createdById: null,
       createdBy: null,
@@ -112,10 +114,11 @@ describe('taskReportDefinitionService', () => {
       deletedAt: null,
     });
 
-    await expect(service.getDefinition('std_1', 'ext_1', 'trd_1')).resolves.toMatchObject({
+    await expect(service.getDefinition('std_1', 'trd_1')).resolves.toMatchObject({
       id: 'trd_1',
       name: 'Weekly',
     });
+    expect(repository.findByUidInStudio).toHaveBeenCalledWith('std_1', 'trd_1');
   });
 
   it('creates definition with generated uid', async () => {
@@ -125,10 +128,7 @@ describe('taskReportDefinitionService', () => {
       studioId: 1n,
       name: 'Weekly',
       description: null,
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
       metadata: {},
       createdById: null,
       createdBy: null,
@@ -139,10 +139,7 @@ describe('taskReportDefinitionService', () => {
 
     const result = await service.createDefinition('std_1', 'ext_1', {
       name: 'Weekly',
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
     });
 
     expect(result.id).toBe('trd_generated');
@@ -153,20 +150,17 @@ describe('taskReportDefinitionService', () => {
     }));
   });
 
-  it('updates existing definition', async () => {
+  it('allows creator to update their own definition', async () => {
     repository.findByUidInStudio.mockResolvedValue({
       id: 1n,
       uid: 'trd_1',
       studioId: 1n,
       name: 'Weekly',
       description: null,
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
       metadata: {},
-      createdById: null,
-      createdBy: null,
+      createdById: 101n,
+      createdBy: { uid: 'user_1' },
       createdAt: new Date('2026-03-01T00:00:00.000Z'),
       updatedAt: new Date('2026-03-01T00:00:00.000Z'),
       deletedAt: null,
@@ -177,21 +171,73 @@ describe('taskReportDefinitionService', () => {
       studioId: 1n,
       name: 'Weekly v2',
       description: null,
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
       metadata: {},
-      createdById: null,
-      createdBy: null,
+      createdById: 101n,
+      createdBy: { uid: 'user_1' },
       createdAt: new Date('2026-03-01T00:00:00.000Z'),
       updatedAt: new Date('2026-03-03T00:00:00.000Z'),
       deletedAt: null,
     });
 
-    const result = await service.updateDefinition('std_1', 'ext_1', 'trd_1', { name: 'Weekly v2' });
+    const result = await service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { name: 'Weekly v2' });
     expect(result.name).toBe('Weekly v2');
     expect(repository.updateInStudio).toHaveBeenCalledWith(expect.objectContaining({ id: 1n }));
+  });
+
+  it('allows admin to update any definition', async () => {
+    repository.findByUidInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Weekly',
+      description: null,
+      definition: defaultDefinition,
+      metadata: {},
+      createdById: 999n,
+      createdBy: { uid: 'user_other' },
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+      deletedAt: null,
+    });
+    repository.updateInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Admin updated',
+      description: null,
+      definition: defaultDefinition,
+      metadata: {},
+      createdById: 999n,
+      createdBy: { uid: 'user_other' },
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-03T00:00:00.000Z'),
+      deletedAt: null,
+    });
+
+    const result = await service.updateDefinition('std_1', 'ext_1', 'admin', 'trd_1', { name: 'Admin updated' });
+    expect(result.name).toBe('Admin updated');
+  });
+
+  it('rejects non-creator non-admin from updating', async () => {
+    repository.findByUidInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Weekly',
+      description: null,
+      definition: defaultDefinition,
+      metadata: {},
+      createdById: 999n,
+      createdBy: { uid: 'user_other' },
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+      deletedAt: null,
+    });
+
+    await expect(
+      service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { name: 'Hijack' }),
+    ).rejects.toThrow('Only the definition creator or a studio admin can modify this definition');
   });
 
   it('clears description when update payload sets description to null', async () => {
@@ -201,13 +247,10 @@ describe('taskReportDefinitionService', () => {
       studioId: 1n,
       name: 'Weekly',
       description: 'Old description',
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
       metadata: {},
-      createdById: null,
-      createdBy: null,
+      createdById: 101n,
+      createdBy: { uid: 'user_1' },
       createdAt: new Date('2026-03-01T00:00:00.000Z'),
       updatedAt: new Date('2026-03-01T00:00:00.000Z'),
       deletedAt: null,
@@ -218,19 +261,16 @@ describe('taskReportDefinitionService', () => {
       studioId: 1n,
       name: 'Weekly',
       description: null,
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
       metadata: {},
-      createdById: null,
-      createdBy: null,
+      createdById: 101n,
+      createdBy: { uid: 'user_1' },
       createdAt: new Date('2026-03-01T00:00:00.000Z'),
       updatedAt: new Date('2026-03-03T00:00:00.000Z'),
       deletedAt: null,
     });
 
-    await service.updateDefinition('std_1', 'ext_1', 'trd_1', { description: null });
+    await service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { description: null });
 
     expect(repository.updateInStudio).toHaveBeenCalledWith(expect.objectContaining({
       id: 1n,
@@ -240,20 +280,17 @@ describe('taskReportDefinitionService', () => {
     }));
   });
 
-  it('soft deletes existing definition', async () => {
+  it('allows creator to soft delete their own definition', async () => {
     repository.findByUidInStudio.mockResolvedValue({
       id: 1n,
       uid: 'trd_1',
       studioId: 1n,
       name: 'Weekly',
       description: null,
-      definition: {
-        scope: { ...defaultReportScope, submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] },
-        columns: [{ key: 'gmv', label: 'GMV' }],
-      },
+      definition: defaultDefinition,
       metadata: {},
-      createdById: null,
-      createdBy: null,
+      createdById: 101n,
+      createdBy: { uid: 'user_1' },
       createdAt: new Date('2026-03-01T00:00:00.000Z'),
       updatedAt: new Date('2026-03-01T00:00:00.000Z'),
       deletedAt: null,
@@ -266,21 +303,64 @@ describe('taskReportDefinitionService', () => {
       description: null,
       definition: {},
       metadata: {},
-      createdById: null,
+      createdById: 101n,
       createdAt: new Date('2026-03-01T00:00:00.000Z'),
       updatedAt: new Date('2026-03-01T00:00:00.000Z'),
       deletedAt: new Date('2026-03-05T00:00:00.000Z'),
     });
 
-    await service.deleteDefinition('std_1', 'ext_1', 'trd_1');
+    await service.deleteDefinition('std_1', 'ext_1', 'manager', 'trd_1');
     expect(repository.softDeleteById).toHaveBeenCalledWith(1n);
+  });
+
+  it('allows admin to delete any definition', async () => {
+    repository.findByUidInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Weekly',
+      description: null,
+      definition: defaultDefinition,
+      metadata: {},
+      createdById: 999n,
+      createdBy: { uid: 'user_other' },
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+      deletedAt: null,
+    });
+    repository.softDeleteById.mockResolvedValue({} as any);
+
+    await service.deleteDefinition('std_1', 'ext_1', 'admin', 'trd_1');
+    expect(repository.softDeleteById).toHaveBeenCalledWith(1n);
+  });
+
+  it('rejects non-creator non-admin from deleting', async () => {
+    repository.findByUidInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Weekly',
+      description: null,
+      definition: defaultDefinition,
+      metadata: {},
+      createdById: 999n,
+      createdBy: { uid: 'user_other' },
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+      deletedAt: null,
+    });
+
+    await expect(
+      service.deleteDefinition('std_1', 'ext_1', 'manager', 'trd_1'),
+    ).rejects.toThrow('Only the definition creator or a studio admin can modify this definition');
   });
 
   it('rejects when authenticated user profile is missing', async () => {
     userService.getUserByExtId.mockResolvedValueOnce(null);
 
-    await expect(service.listDefinitions('std_1', 'ext_missing', {})).rejects.toThrow(
-      'Authenticated user profile was not found',
-    );
+    await expect(service.createDefinition('std_1', 'ext_missing', {
+      name: 'Test',
+      definition: defaultDefinition,
+    })).rejects.toThrow('Authenticated user profile was not found');
   });
 });

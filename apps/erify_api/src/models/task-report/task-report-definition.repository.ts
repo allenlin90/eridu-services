@@ -28,7 +28,6 @@ export class TaskReportDefinitionRepository extends BaseRepository<
 
   async findPaginated(params: {
     studioUid: string;
-    createdById: bigint;
     skip?: number;
     take?: number;
     search?: string;
@@ -36,11 +35,10 @@ export class TaskReportDefinitionRepository extends BaseRepository<
       data: TaskReportDefinitionWithCreator[];
       total: number;
     }> {
-    const { studioUid, createdById, skip, take, search } = params;
+    const { studioUid, skip, take, search } = params;
 
     const where: Prisma.TaskReportDefinitionWhereInput = {
       studio: { uid: studioUid },
-      createdById,
       deletedAt: null,
       ...(search
         ? {
@@ -77,13 +75,11 @@ export class TaskReportDefinitionRepository extends BaseRepository<
 
   async findByUidInStudio(
     studioUid: string,
-    createdById: bigint,
     definitionUid: string,
   ): Promise<TaskReportDefinitionWithCreator | null> {
     return this.prisma.taskReportDefinition.findFirst({
       where: {
         uid: definitionUid,
-        createdById,
         deletedAt: null,
         studio: { uid: studioUid },
       },

@@ -110,6 +110,8 @@ export class TaskReportScopeService {
     }
 
     return {
+      // FE is responsible for display ordering (e.g. by submitted_task_count DESC).
+      // BE returns sources in deterministic insertion order (by template UID).
       sources: [...sourceMap.values()]
         .map((source) => ({
           template_id: source.template_id,
@@ -117,10 +119,7 @@ export class TaskReportScopeService {
           task_type: source.task_type,
           submitted_task_count: source.submitted_task_count,
           fields: [...source.fieldsByKey.values()],
-        }))
-        // Sort after aggregation (not DB-level) because this list is assembled from
-        // merged in-memory structures; this guarantees deterministic API output.
-        .sort((a, b) => a.template_name.localeCompare(b.template_name)),
+        })),
       shared_fields: studioSharedFields
         .filter((field) => standardFieldKeys.has(field.key))
         .sort((a, b) => a.key.localeCompare(b.key)),

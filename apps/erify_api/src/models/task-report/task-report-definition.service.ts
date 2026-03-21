@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { STUDIO_ROLE, type StudioRole } from '@eridu/api-types/memberships';
 import type {
   CreateTaskReportDefinitionInput,
   TaskReportDefinition,
@@ -34,17 +35,15 @@ export class TaskReportDefinitionService extends BaseModelService {
   }
 
   /**
-   * List saved definitions for the current studio context.
+   * List all saved definitions visible to the studio.
+   * Definitions are studio-shared — all authorized roles can view.
    */
   async listDefinitions(
     studioUid: string,
-    actorExtId: string,
     params: { skip?: number; take?: number; search?: string },
   ): Promise<{ data: TaskReportDefinition[]; total: number }> {
-    const actor = await this.resolveActorUser(actorExtId);
     const { data, total } = await this.taskReportDefinitionRepository.findPaginated({
       studioUid,
-      createdById: actor.id,
       skip: params.skip,
       take: params.take,
       search: params.search,
@@ -59,9 +58,8 @@ export class TaskReportDefinitionService extends BaseModelService {
   /**
    * Get one saved definition by external definition uid.
    */
-  async getDefinition(studioUid: string, actorExtId: string, definitionUid: string): Promise<TaskReportDefinition> {
-    const actor = await this.resolveActorUser(actorExtId);
-    const definition = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, actor.id, definitionUid);
+  async getDefinition(studioUid: string, definitionUid: string): Promise<TaskReportDefinition> {
+    const definition = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, definitionUid);
     if (!definition) {
       throw HttpError.notFound('Task report definition', definitionUid);
     }
@@ -92,18 +90,22 @@ export class TaskReportDefinitionService extends BaseModelService {
 
   /**
    * Update mutable metadata/payload of an existing definition.
+   * Permission: creator can update their own; ADMIN can update any.
    */
   async updateDefinition(
     studioUid: string,
     actorExtId: string,
+    actorRole: StudioRole,
     definitionUid: string,
     payload: UpdateTaskReportDefinitionInput,
   ): Promise<TaskReportDefinition> {
     const actor = await this.resolveActorUser(actorExtId);
-    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, actor.id, definitionUid);
+    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, definitionUid);
     if (!existing) {
       throw HttpError.notFound('Task report definition', definitionUid);
     }
+
+    this.assertCanModify(existing, actor.id, actorRole);
 
     const updated = await this.taskReportDefinitionRepository.updateInStudio({
       id: existing.id,
@@ -118,15 +120,22 @@ export class TaskReportDefinitionService extends BaseModelService {
   }
 
   /**
-   * Delete an existing saved definition.
+   * Soft-delete an existing saved definition.
+   * Permission: creator can delete their own; ADMIN can delete any.
    */
-  async deleteDefinition(studioUid: string, actorExtId: string, definitionUid: string): Promise<void> {
+  async deleteDefinition(
+    studioUid: string,
+    actorExtId: string,
+    actorRole: StudioRole,
+    definitionUid: string,
+  ): Promise<void> {
     const actor = await this.resolveActorUser(actorExtId);
-    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, actor.id, definitionUid);
+    const existing = await this.taskReportDefinitionRepository.findByUidInStudio(studioUid, definitionUid);
     if (!existing) {
       throw HttpError.notFound('Task report definition', definitionUid);
     }
 
+    this.assertCanModify(existing, actor.id, actorRole);
     await this.taskReportDefinitionRepository.softDeleteById(existing.id);
   }
 
@@ -142,6 +151,24 @@ export class TaskReportDefinitionService extends BaseModelService {
       created_at: row.createdAt.toISOString(),
       updated_at: row.updatedAt.toISOString(),
     };
+  }
+
+  /**
+   * Verify the actor can modify (update/delete) the definition.
+   * Creator can modify their own; ADMIN can modify any definition in the studio.
+   */
+  private assertCanModify(
+    definition: TaskReportDefinitionWithCreator,
+    actorId: bigint,
+    actorRole: StudioRole,
+  ): void {
+    if (actorRole === STUDIO_ROLE.ADMIN) {
+      return;
+    }
+
+    if (definition.createdById !== actorId) {
+      throw HttpError.forbidden('Only the definition creator or a studio admin can modify this definition');
+    }
   }
 
   private async resolveActorUser(actorExtId: string) {

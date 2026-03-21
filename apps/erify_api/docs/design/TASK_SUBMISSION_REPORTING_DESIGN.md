@@ -23,7 +23,7 @@ This design must fit the current task architecture:
 ## 2. Goals
 
 1. Show-first workflow — managers filter shows, then discover available columns contextually.
-2. Persist reusable report definitions (personal presets) with optional date presets as JSON only.
+2. Persist reusable report definitions (studio-shared) with optional date presets as JSON only. All permitted roles can view and run any definition; only the creator or ADMIN can modify/delete.
 3. Resolve selected fields against immutable task snapshots.
 4. Generate flat table JSON inline — returned in the API response, not stored server-side.
 5. Reuse existing task/show/client relations instead of introducing a parallel reporting store.
@@ -689,9 +689,11 @@ Access:
 
 Purpose:
 
-- persist named JSON definitions (personal presets) with scope filters + columns,
+- persist named JSON definitions (studio-shared) with scope filters + columns,
+- all permitted roles can view and run any definition in the studio,
+- creator or ADMIN can update/delete; other roles get 403 on modify attempts,
 - support repeated manager workflows and cross-device definition sync,
-- clone is just POST with pre-filled body from an existing definition.
+- clone (deferred to Phase 2) is just POST with pre-filled body from an existing definition.
 
 ### 8.4 Report execution (generate + return inline)
 
@@ -741,19 +743,18 @@ The full result is returned in the response body. No `result_uid` — the result
 
 ### 8.5 Preflight count
 
-`POST /studios/:studioId/task-reports/preflight`
+`GET /studios/:studioId/task-reports/preflight`
 
 Access:
 
 - `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
-Purpose: lightweight count query before full generation. The FE calls this before `POST /run` so the manager can confirm scope size and the guardrail can be enforced early — before any heavy extraction work.
+Purpose: lightweight count query before full generation. The FE calls this before `POST /run` so the manager can confirm scope size and the guardrail can be enforced early — before any heavy extraction work. Uses GET with query params (same parsing as source discovery) since it's a read-only count operation.
 
-**Request shape** (same scope as `/run`):
+**Request shape** (query params, same scope as `/run`):
 
 ```text
-scope { date_preset?, date_from?, date_to?, show_standard_id?, show_type_id?, submitted_statuses? }
-source_templates[]?
+?date_from=...&date_to=...&show_standard_id=...&show_type_id=...&submitted_statuses=...&source_templates=...
 ```
 
 **Response shape:**
@@ -1134,7 +1135,7 @@ Deferred hardening options:
 
 1. shared fields settings endpoint (`GET` readable by ADMIN + MANAGER; `POST/PATCH` ADMIN-only) stored in `Studio.metadata`
 2. Layer 1 (show scope resolution) as a shared internal service used by preflight, sources, and run
-3. preflight count endpoint (`POST /task-reports/preflight`) — lightweight scope validation before generation
+3. preflight count endpoint (`GET /task-reports/preflight`) — lightweight scope validation before generation (GET with query params)
 4. contextual source catalog endpoint (templates/snapshots with submitted tasks for filtered shows)
 5. report generation endpoint (`POST /task-reports/run`) with Layer 2 (task extraction + row construction), date preset resolution, comprehensive scope filters, `TaskTarget` join, internal batch processing, flat table generation, and inline response
 6. saved definition CRUD with date presets and scope filter persistence

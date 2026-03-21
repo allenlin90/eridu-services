@@ -196,6 +196,7 @@ describe('taskReportRunService', () => {
     expect(result.warnings[0]).toMatchObject({
       code: 'DUPLICATE_SOURCE',
       show_id: 'show_1',
+      template_id: 'ttpl_1',
     });
     expect(result.column_map).toEqual({
       'gmv': null,
@@ -630,5 +631,67 @@ describe('taskReportRunService', () => {
       assignee_id: null,
       assignee_name: null,
     });
+  });
+
+  it('populates multiple show rows for a single multi-target task without false duplicate warning', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fi_1',
+          key: 'gmv',
+          type: 'number',
+          standard: true,
+          label: 'GMV',
+        },
+      ],
+      metadata: {},
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 2,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow({ uid: 'show_1', name: 'Show 1' }),
+      createScopedShow({ uid: 'show_2', name: 'Show 2' }),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        uid: 'task_multi',
+        snapshotSchema,
+        content: { gmv: 500 },
+        targetShowUids: ['show_1', 'show_2'],
+        assigneeUid: 'user_1',
+        assigneeName: 'Alice',
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([
+      {
+        key: 'gmv',
+        type: 'number',
+        category: 'metric',
+        label: 'GMV',
+        is_active: true,
+      },
+    ]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [
+        { key: 'show_name', label: 'Show Name' },
+        { key: 'gmv', label: 'GMV' },
+      ],
+    }));
+
+    expect(result.row_count).toBe(2);
+    expect(result.rows[0]).toMatchObject({ show_name: 'Show 1', gmv: 500 });
+    expect(result.rows[1]).toMatchObject({ show_name: 'Show 2', gmv: 500 });
+    expect(result.warnings).toEqual([]);
   });
 });
