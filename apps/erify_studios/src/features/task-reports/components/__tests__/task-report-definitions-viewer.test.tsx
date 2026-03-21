@@ -44,6 +44,7 @@ describe('taskReportDefinitionsViewer', () => {
               },
               columns: [{ key: 'gmv', label: 'GMV', type: 'number' }],
             },
+            version: 1,
             created_at: '2026-03-10T00:00:00.000Z',
             updated_at: '2026-03-10T00:00:00.000Z',
           },

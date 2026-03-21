@@ -75,7 +75,7 @@ describe('taskReportDefinitionService', () => {
           description: 'Desc',
           definition: defaultDefinition,
           metadata: {},
-      version: 1,
+          version: 1,
           createdById: 201n,
           createdBy: { uid: 'user_other' },
           createdAt: new Date('2026-03-01T00:00:00.000Z'),
@@ -185,9 +185,12 @@ describe('taskReportDefinitionService', () => {
       deletedAt: null,
     });
 
-    const result = await service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { name: 'Weekly v2' });
+    const result = await service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { name: 'Weekly v2', version: 1 });
     expect(result.name).toBe('Weekly v2');
-    expect(repository.updateInStudio).toHaveBeenCalledWith(expect.objectContaining({ id: 1n }));
+    expect(repository.updateInStudio).toHaveBeenCalledWith(expect.objectContaining({
+      id: 1n,
+      data: expect.objectContaining({ version: { increment: 1 } }),
+    }));
   });
 
   it('allows admin to update any definition', async () => {
@@ -222,7 +225,7 @@ describe('taskReportDefinitionService', () => {
       deletedAt: null,
     });
 
-    const result = await service.updateDefinition('std_1', 'ext_1', 'admin', 'trd_1', { name: 'Admin updated' });
+    const result = await service.updateDefinition('std_1', 'ext_1', 'admin', 'trd_1', { name: 'Admin updated', version: 1 });
     expect(result.name).toBe('Admin updated');
   });
 
@@ -244,8 +247,30 @@ describe('taskReportDefinitionService', () => {
     });
 
     await expect(
-      service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { name: 'Hijack' }),
+      service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { name: 'Hijack', version: 1 }),
     ).rejects.toThrow('Only the definition creator or a studio admin can modify this definition');
+  });
+
+  it('rejects update when version does not match (optimistic locking)', async () => {
+    repository.findByUidInStudio.mockResolvedValue({
+      id: 1n,
+      uid: 'trd_1',
+      studioId: 1n,
+      name: 'Weekly',
+      description: null,
+      definition: defaultDefinition,
+      metadata: {},
+      version: 3,
+      createdById: 101n,
+      createdBy: { uid: 'user_1' },
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+      deletedAt: null,
+    });
+
+    await expect(
+      service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { name: 'Stale update', version: 1 }),
+    ).rejects.toThrow('Version mismatch. Expected 1, but definition is at version 3');
   });
 
   it('clears description when update payload sets description to null', async () => {
@@ -280,7 +305,7 @@ describe('taskReportDefinitionService', () => {
       deletedAt: null,
     });
 
-    await service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { description: null });
+    await service.updateDefinition('std_1', 'ext_1', 'manager', 'trd_1', { description: null, version: 1 });
 
     expect(repository.updateInStudio).toHaveBeenCalledWith(expect.objectContaining({
       id: 1n,

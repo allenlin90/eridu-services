@@ -92,6 +92,7 @@ describe('studioTaskReportController', () => {
     const definition = taskReportDefinitionSchema.parse({
       id: 'trd_1',
       name: 'Weekly',
+      version: 1,
       definition: {
         scope: defaultScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
@@ -118,6 +119,7 @@ describe('studioTaskReportController', () => {
     const definition = taskReportDefinitionSchema.parse({
       id: 'trd_1',
       name: 'Weekly',
+      version: 1,
       definition: {
         scope: defaultScope,
         columns: [{ key: 'gmv', label: 'GMV' }],
@@ -142,6 +144,7 @@ describe('studioTaskReportController', () => {
     const definition = taskReportDefinitionSchema.parse({
       id: 'trd_1',
       name: 'Weekly review',
+      version: 1,
       definition: payload.definition,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -153,10 +156,11 @@ describe('studioTaskReportController', () => {
   });
 
   it('delegates definition update endpoint with studio role', async () => {
-    const payload = updateTaskReportDefinitionSchema.parse({ name: 'Weekly review v2' });
+    const payload = updateTaskReportDefinitionSchema.parse({ name: 'Weekly review v2', version: 1 });
     const definition = taskReportDefinitionSchema.parse({
       id: 'trd_1',
       name: 'Weekly review v2',
+      version: 2,
       definition: {
         scope: defaultScope,
         columns: [{ key: 'gmv', label: 'GMV' }],

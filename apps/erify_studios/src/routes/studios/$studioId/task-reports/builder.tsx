@@ -170,11 +170,12 @@ function TaskReportBuilderPage() {
       columns: input.columns,
     };
 
-    if (resolvedDefinitionId) {
+    if (resolvedDefinitionId && definition) {
       const updatePayload: UpdateTaskReportDefinitionInput = {
         name: input.name,
         description: input.description,
         definition: definitionPayload,
+        version: definition.version,
       };
       await updateMutation.mutateAsync({ definitionId: resolvedDefinitionId, payload: updatePayload });
       toast.success('Report definition saved.');

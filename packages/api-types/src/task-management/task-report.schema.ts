@@ -304,7 +304,7 @@ export const taskReportResultSchema = z.object({
 export type TaskReportResult = z.infer<typeof taskReportResultSchema>;
 
 /**
- * Saved personal report definition (preset) metadata and payload.
+ * Saved report definition (studio-shared preset) metadata and payload.
  */
 export const taskReportDefinitionSchema = z.object({
   id: z.string().min(1),
@@ -314,7 +314,8 @@ export const taskReportDefinitionSchema = z.object({
     scope: taskReportScopeSchema,
     columns: z.array(taskReportSelectedColumnSchema).min(1).max(50),
   }),
-  // Definitions are personal presets — only creator tracking is supported in MVP.
+  version: z.number().int().positive(),
+  // Definitions are studio-shared — only creator tracking is supported in MVP.
   // updated_by_id is intentionally omitted (no updater relation in the DB model).
   created_by_id: z.string().min(1).nullable().optional(),
   created_at: z.iso.datetime(),
@@ -344,6 +345,7 @@ export const updateTaskReportDefinitionSchema = createTaskReportDefinitionSchema
   .partial()
   .extend({
     description: z.string().max(500).nullable().optional(),
+    version: z.number().int().positive(),
   })
   .refine(
     (data) => data.name !== undefined || data.description !== undefined || data.definition !== undefined,

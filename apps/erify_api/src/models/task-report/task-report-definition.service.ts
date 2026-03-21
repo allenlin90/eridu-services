@@ -107,12 +107,19 @@ export class TaskReportDefinitionService extends BaseModelService {
 
     this.assertCanModify(existing, actor.id, actorRole);
 
+    if (existing.version !== payload.version) {
+      throw HttpError.conflict(
+        `Version mismatch. Expected ${payload.version}, but definition is at version ${existing.version}`,
+      );
+    }
+
     const updated = await this.taskReportDefinitionRepository.updateInStudio({
       id: existing.id,
       data: {
         ...(payload.name !== undefined ? { name: payload.name } : {}),
         ...(payload.description !== undefined ? { description: payload.description ?? null } : {}),
         ...(payload.definition !== undefined ? { definition: payload.definition } : {}),
+        version: { increment: 1 },
       },
     });
 
@@ -147,6 +154,7 @@ export class TaskReportDefinitionService extends BaseModelService {
       name: row.name,
       description: row.description,
       definition: row.definition as TaskReportDefinition['definition'],
+      version: row.version,
       created_by_id: row.createdBy?.uid ?? null,
       created_at: row.createdAt.toISOString(),
       updated_at: row.updatedAt.toISOString(),
