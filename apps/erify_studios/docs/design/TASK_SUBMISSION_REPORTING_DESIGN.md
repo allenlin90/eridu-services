@@ -15,7 +15,7 @@ Primary user outcomes:
 3. slice and sort the generated table by client, status, or any column — all client-side,
 4. export a reusable spreadsheet — no CSV files are generated or stored server-side.
 
-> **Design principle: strong semantics, flexible operations.** The FE surfaces a semantic standardization layer — shared fields with fixed keys, types, and categories that merge across templates — while keeping custom fields template-scoped. This gives managers clean cross-template columns for KPIs, QC evidence, and compliance indicators without constraining how templates are designed or how operators submit data. See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).
+> **Design principle: strong semantics, flexible operations.** The FE surfaces a semantic standardization layer — shared fields with fixed keys, types, and categories that merge across templates — while keeping custom fields template-scoped. This gives managers clean cross-template columns for KPIs, QC evidence, and compliance indicators without constraining how templates are designed or how operators submit data. See feature doc [Key Product Decisions](../../../../docs/features/task-submission-reporting.md#key-product-decisions).
 
 ## 2. Scope
 

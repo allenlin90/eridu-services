@@ -22,3 +22,4 @@ When a feature ships:
 | --- | --- | --- |
 | [RBAC Roles](./rbac-roles.md) | Phase 4 | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
 | [Creator Mapping](./creator-mapping.md) | Phase 4 | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md), [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) |
+| [Task Submission Reporting](./task-submission-reporting.md) | Phase 4 | [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |

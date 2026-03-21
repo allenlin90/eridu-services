@@ -42,5 +42,5 @@ App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design*
 ## Current Phase State
 
 - Phase 1–3: ✅ Closed. Summarized in [Phase 3](./roadmap/PHASE_3.md).
-- Phase 4: ✅ Closed. Creator mapping + RBAC roles delivered and deployed to `master`. See [Phase 4](./roadmap/PHASE_4.md).
-- Phase 5: 🚧 Active. Economics baseline endpoints and task submission reporting are the promoted workstreams. See [Phase 5](./roadmap/PHASE_5.md).
+- Phase 4: 🚧 Reopened. Economics baseline is the active workstream. Task submission reporting shipped. See [Phase 4](./roadmap/PHASE_4.md).
+- Phase 5: Placeholder. Scope TBD after Phase 4 economics ships. See [Phase 5](./roadmap/PHASE_5.md).

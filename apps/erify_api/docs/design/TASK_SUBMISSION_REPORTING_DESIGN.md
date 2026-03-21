@@ -28,7 +28,7 @@ This design must fit the current task architecture:
 4. Generate flat table JSON inline — returned in the API response, not stored server-side.
 5. Reuse existing task/show/client relations instead of introducing a parallel reporting store.
 6. Keep the BE stateless for results — the FE owns caching and view-layer filtering.
-7. **Strong semantics, flexible operations** — standardize a small canonical set of shared fields for cross-template reporting without constraining template design or operator workflows. Reporting standardization is an engineering best-practice layer, not an operational constraint. (See PRD [Design Principles](../../../../docs/prd/task-submission-reporting.md#design-principles).)
+7. **Strong semantics, flexible operations** — standardize a small canonical set of shared fields for cross-template reporting without constraining template design or operator workflows. Reporting standardization is an engineering best-practice layer, not an operational constraint. (See feature doc [Key Product Decisions](../../../../docs/features/task-submission-reporting.md#key-product-decisions).)
 
 ## 3. Non-Goals
 
