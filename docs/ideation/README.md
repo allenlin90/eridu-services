@@ -34,10 +34,9 @@ docs/features/<feature>.md        ← promoted to feature doc, ideation doc dele
 | [erify_studios Route Query Optimization](./erify-studios-route-query-optimization.md) | `erify_studios` query audit                         | 4+ initial route requests, deep-link loading churn, or route-loader standardization         | [task reports builder](../../apps/erify_studios/src/routes/studios/$studioId/task-reports/builder.tsx), [shows route](../../apps/erify_studios/src/routes/studios/$studioId/shows/index.tsx) |
 | [JSON Schema for Document-Based Records](./document-record-json-schema.md)            | Task template + task report definition schema audit | Non-HTTP validation needs, schema-versioned JSON docs, or more `z.any()` document contracts | [task template schema](../../packages/api-types/src/task-management/task-template.schema.ts), [task report schema](../../packages/api-types/src/task-management/task-report.schema.ts)       |
 | [Full Frontend i18n Standardization](./frontend-i18n-paraglide.md)                    | Tech debt audit for Paraglide usage                 | Official multi-region support requirement or UI audit/polish phase                          | [i18n skill](../../.agent/skills/frontend-i18n/SKILL.md)                                                                                                                                     |
-| [erify_studios console.error Cleanup](./studios-console-error-cleanup.md)             | PR #16 task reporting review                        | UI polish pass, Sentry integration, or mutateAsync → mutate refactor                       | [report-builder.tsx](../../apps/erify_studios/src/features/task-reports/components/report-builder.tsx), [definitions-viewer.tsx](../../apps/erify_studios/src/features/task-reports/components/task-report-definitions-viewer.tsx) |
 
 ## Dropped / Promoted Topics
 
-| Topic        | Disposition | Date | Notes |
-| ------------ | ----------- | ---- | ----- |
-| *(none yet)* |             |      |       |
+| Topic                                 | Disposition | Date       | Notes                                                                        |
+| ------------------------------------- | ----------- | ---------- | ---------------------------------------------------------------------------- |
+| `erify_studios` console.error Cleanup | Implemented | 2026-03-21 | Removed `mutateAsync` try/catch `console.error` usage across `erify_studios` |

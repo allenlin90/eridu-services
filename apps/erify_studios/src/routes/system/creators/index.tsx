@@ -64,8 +64,8 @@ function CreatorsList() {
     try {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
-    } catch (error) {
-      console.error('Failed to delete creator:', error);
+    } catch {
+      // Global mutation error handler already shows user-facing feedback.
     }
   };
 

@@ -72,8 +72,7 @@ export function TaskReportDefinitionsViewer({
       await deleteMutation.mutateAsync(definitionId);
       setPendingDelete(null);
       toast.success('Report definition deleted');
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error(`Failed to delete "${definitionName}"`);
     }
   };
