@@ -549,6 +549,7 @@ model TaskReportDefinition {
   description String?
   definition  Json
   metadata    Json      @default("{}")
+  version     Int       @default(1)
   createdById BigInt?   @map("created_by_id")
   createdBy   User?     @relation("TaskReportDefinitionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now()) @map("created_at")

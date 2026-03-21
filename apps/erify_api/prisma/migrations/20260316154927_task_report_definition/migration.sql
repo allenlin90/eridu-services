@@ -7,6 +7,7 @@ CREATE TABLE "task_report_definitions" (
     "description" TEXT,
     "definition" JSONB NOT NULL,
     "metadata" JSONB NOT NULL DEFAULT '{}',
+    "version" INTEGER NOT NULL DEFAULT 1,
     "created_by_id" BIGINT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
