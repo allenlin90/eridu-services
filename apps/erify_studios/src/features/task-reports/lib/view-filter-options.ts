@@ -1,28 +1,9 @@
+import { readStringValues } from './filter-rows';
+
 export type ViewFilterOption = {
   value: string;
   label: string;
 };
-
-function readStringValues(...values: unknown[]): string[] {
-  const result: string[] = [];
-
-  for (const value of values) {
-    if (typeof value === 'string' && value.length > 0) {
-      result.push(value);
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (typeof item === 'string' && item.length > 0) {
-          result.push(item);
-        }
-      }
-    }
-  }
-
-  return result;
-}
 
 function readOptions(preferredValues: unknown[], fallbackValues: unknown[]): ViewFilterOption[] {
   const labels = readStringValues(...preferredValues);

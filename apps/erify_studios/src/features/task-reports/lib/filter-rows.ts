@@ -25,7 +25,7 @@ export type TaskReportViewFilters = {
   search?: string;
 };
 
-function readStringValues(...values: unknown[]): string[] {
+export function readStringValues(...values: unknown[]): string[] {
   const result: string[] = [];
 
   for (const value of values) {

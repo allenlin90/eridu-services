@@ -8,7 +8,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBo
 import { useIsMobile } from '@eridu/ui/hooks/use-mobile';
 import { cn } from '@eridu/ui/lib/utils';
 
-import { filterRows, type TaskReportViewFilters } from '../lib/filter-rows';
+import { filterRows, readStringValues, type TaskReportViewFilters } from '../lib/filter-rows';
 import { serializeCsv } from '../lib/serialize-csv';
 import { type SortDirection, sortRows } from '../lib/sort-rows';
 import { buildViewFilterOptions } from '../lib/view-filter-options';
@@ -26,27 +26,6 @@ const FROZEN_COLUMN_WIDTH: Record<(typeof FROZEN_COLUMN_PRIORITY)[number], numbe
   start_time: 180,
 };
 
-function readStringFilterValues(...values: unknown[]): string[] {
-  const result: string[] = [];
-
-  for (const value of values) {
-    if (typeof value === 'string' && value.length > 0) {
-      result.push(value);
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (typeof item === 'string' && item.length > 0) {
-          result.push(item);
-        }
-      }
-    }
-  }
-
-  return result;
-}
-
 export function ReportResultTable({ result }: ReportResultTableProps) {
   const { columns, rows } = result;
   const isMobile = useIsMobile();
@@ -56,19 +35,19 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
 
   const parentRef = useRef<HTMLDivElement>(null);
   const canFilterByClient = useMemo(
-    () => rows.some((row) => readStringFilterValues(row.client_name, row.client_id).length > 0),
+    () => rows.some((row) => readStringValues(row.client_name, row.client_id).length > 0),
     [rows],
   );
   const canFilterByStatus = useMemo(
-    () => rows.some((row) => readStringFilterValues(row.show_status_name, row.show_status_id).length > 0),
+    () => rows.some((row) => readStringValues(row.show_status_name, row.show_status_id).length > 0),
     [rows],
   );
   const canFilterByRoom = useMemo(
-    () => rows.some((row) => readStringFilterValues(row.studio_room_name, row.studio_room_id).length > 0),
+    () => rows.some((row) => readStringValues(row.studio_room_name, row.studio_room_id).length > 0),
     [rows],
   );
   const canFilterByAssignee = useMemo(
-    () => rows.some((row) => readStringFilterValues(
+    () => rows.some((row) => readStringValues(
       row.assignee_name,
       row.assignee,
       row.assignee_id,
