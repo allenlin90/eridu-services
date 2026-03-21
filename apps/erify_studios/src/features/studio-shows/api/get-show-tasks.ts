@@ -8,7 +8,14 @@ export const showTasksKeys = {
   list: (studioId: string, showId: string) => [...showTasksKeys.lists(), studioId, showId] as const,
 };
 
-export async function getShowTasks(studioId: string, showId: string): Promise<TaskWithRelationsDto[]> {
-  const response = await apiClient.get<TaskWithRelationsDto[]>(`/studios/${studioId}/shows/${showId}/tasks`);
+export async function getShowTasks(
+  studioId: string,
+  showId: string,
+  options?: { signal?: AbortSignal },
+): Promise<TaskWithRelationsDto[]> {
+  const response = await apiClient.get<TaskWithRelationsDto[]>(
+    `/studios/${studioId}/shows/${showId}/tasks`,
+    { signal: options?.signal },
+  );
   return response.data;
 }

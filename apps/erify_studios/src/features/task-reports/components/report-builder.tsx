@@ -367,7 +367,6 @@ export function ReportBuilder({
         </CardHeader>
         <CardContent>
           <ReportScopeFilters
-            studioId={studioId}
             scope={draftScope}
             sourceTemplateOptions={sourceTemplateOptions}
             showTypeOptions={showTypeOptions}

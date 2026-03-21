@@ -55,7 +55,7 @@ describe('reportScopeFilters', () => {
 
     render(
       <ReportScopeFilters
-        studioId="std_1"
+
         scope={{ submitted_statuses: [TASK_STATUS.REVIEW, TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED] }}
         sourceTemplateOptions={[]}
         showTypeOptions={SHOW_TYPE_OPTIONS}
@@ -87,7 +87,7 @@ describe('reportScopeFilters', () => {
 
     render(
       <ReportScopeFilters
-        studioId="std_1"
+
         scope={{
           date_from: '2026-03-01',
           date_to: '2026-03-07',

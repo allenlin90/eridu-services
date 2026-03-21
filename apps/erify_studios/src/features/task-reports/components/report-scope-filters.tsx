@@ -14,7 +14,6 @@ type SelectOption = {
 };
 
 type ReportScopeFiltersProps = {
-  studioId: string;
   scope: TaskReportScope | null;
   sourceTemplateOptions: SelectOption[];
   showTypeOptions: SelectOption[];
