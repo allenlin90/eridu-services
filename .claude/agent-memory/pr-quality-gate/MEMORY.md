@@ -75,17 +75,21 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 - Per-field cache invalidation: when user selects new file or clears a field, `delete uploadedFileCacheRef.current[key]` is called synchronously before setting new pending state.
 - `handleFormChange` wrapper pattern warning: wrapping `useDebounceCallback` result in an inline arrow function creates a new function reference each render. JsonForm's `onChange` useEffect dep on this unstable ref causes form.watch() subscription churn on every parent re-render. Should use `useCallback` for stable identity.
 
-### Task Reporting Feature Patterns (feat/task-submission-reporting) — MERGED
+### Task Reporting Feature Patterns (feat/task-submission-reporting) — MERGED (final state after df5d5cd4)
 - `TaskReportDefinition` Prisma model has `version` field (added in fix commit). Optimistic lock check is in service layer (`existing.version !== payload.version` → 409 conflict). `version: { increment: 1 }` is passed inside `data` to repository. CORRECT.
+- `TaskReportDefinitionRepository` now uses `txHost.tx` via `delegate` getter for all write operations. Matches established pattern in creator/shift/show repositories. CLS module is global — no local module import needed.
 - `TaskReportScopeRepository` uses `this.prisma` directly (not `txHost`) — intentional. Read-only analytics class, never participates in transactions.
 - `TaskReportDefinitionRepository.updateInStudio()` accepts `Prisma.TaskReportDefinitionUpdateInput` in its params type — acceptable. Service never imports Prisma; passes plain-compatible object.
 - `TaskReportScopeRepository` exported types contain `Prisma.JsonValue` — services use via `Awaited<ReturnType<...>>` inference without importing `Prisma` directly. Accepted pattern.
-- `readStringValues` is still present in both `filter-rows.ts` (exported) and used (not re-declared) in `report-result-table.tsx` via import. `view-filter-options.ts` imports from `filter-rows.ts`. The duplication concern was resolved — only one definition.
+- `getTaskReportSourcesQuerySchema` uses `superRefine` + typed `.transform()` instead of inner `.parse()`. Correct — inner Zod parse inside a transform bypasses ZodValidationPipe and exposes raw ZodError to caller.
+- `sharedFieldsListSchema` in `StudioService` uses `safeParse` + `HttpError.internalServerError()` — keeps error propagation in the service layer. CORRECT.
+- `readStringValues` only definition is in `filter-rows.ts` (exported). `view-filter-options.ts` imports from `filter-rows.ts`. No duplication.
 - `TASK_REPORT_SYSTEM_COLUMN.SHOW_ID` = `'show_id'` (plain string, not BigInt). Intentional — show UIDs safe to expose.
 - `studioMembership!.role as StudioRole` — established pattern; guard guarantees membership exists.
 - `eslint-disable-next-line react-hooks/incompatible-library` above `useVirtualizer` — standard TanStack Virtual suppression.
 - `enforcePreflightLimit` makes 2 parallel COUNT queries before extraction — intentional Layer 1 guardrail. Show-exceeds branch checked first; task-exceeds falls through. When BOTH exceed, only the show message is shown (asymmetric). Known deferred follow-up.
-- FE does NOT handle 409 conflict response for optimistic lock violations on definition updates. When two managers update the same definition concurrently, the second will get a raw API error rather than a user-friendly "definition was updated, please reload" message. Flagged as warning in PR review; deferred to follow-up.
+- 409 conflict on definition update now handled in FE `useTaskReportDefinitionMutations.updateMutation.onError` with specific "reload" message. FIXED in df5d5cd4.
+- `console.error` removed from mutation hook `onError` callbacks. Two `console.error` calls remain in COMPONENT-LEVEL try/catch blocks (`report-builder.tsx:247`, `task-report-definitions-viewer.tsx:76`). These are inside `handleSaveDefinition` and `handleDelete` respectively — pre-pattern, non-blocking. Acceptable for now.
 - `date_preset` accepted in API scope but never resolved to a date range on the backend. FE resolves preset to explicit dates before sending request. Intentional per PRD.
 - `parseDateBoundary` in `TaskReportScopeService` uses local-tz parse (`new Date(\`\${date}T00:00:00\`)`). Intentional — matches existing show/task filtering behavior. See `combineDateAndTime` pattern note above for context.
 - `sortedAllRows` (pre-filter sorted rows) is used for CSV export; `sortedRows` (post-filter) is used for the visible table. This is correct — CSV exports all rows regardless of view filters.
