@@ -23,7 +23,7 @@ This design must fit the current task architecture:
 ## 2. Goals
 
 1. Show-first workflow — managers filter shows, then discover available columns contextually.
-2. Persist reusable report definitions (personal presets) with optional date presets as JSON only.
+2. Persist reusable report definitions (studio-shared) with optional date presets as JSON only. All permitted roles can view and run any definition; only the creator or ADMIN can modify/delete.
 3. Resolve selected fields against immutable task snapshots.
 4. Generate flat table JSON inline — returned in the API response, not stored server-side.
 5. Reuse existing task/show/client relations instead of introducing a parallel reporting store.
@@ -45,9 +45,13 @@ These are non-negotiable constraints. Any implementation that violates these is 
 
 1. **One row per show.** `rows[]` length always equals show count. No exceptions — duplicates use latest-wins merge, multi-target tasks merge into each target show's row. The row contract is deterministic: given the same scope and column selection, the same rows are produced.
 2. **Shared field keys, types, and categories are immutable after creation.** `key`, `type`, and `category` cannot be changed, renamed, or reused. If the key is wrong, create a new one; the old key stays reserved forever.
-3. **Snapshots are the sole runtime source of truth.** The report engine reads `standard: true` and field definitions from `snapshot.schema.items[]`, never from `Studio.metadata`. Shared field management is a design-time activity (template authoring); the report engine has zero dependency on mutable live config.
+3. **Snapshots are the runtime source of truth for data extraction.** The report engine always resolves selected fields from `snapshot.schema.items[]` + `task.content` — this is the only way to preserve historical fidelity across template versions.
+   - In this phase, **shared field `category` metadata is sourced from `Studio.metadata.shared_fields[]`** at runtime to support FE grouping in the column picker and column descriptors. This is an accepted tradeoff because shared fields are rarely changed and only admin-managed.
+   - **Impact**: changing a shared field's label/category in studio settings can affect future `shared_fields[]` metadata and report column descriptors, but it does not change how values are extracted/merged (the merge key is still the snapshot field `key` when `standard: true`).
+   - **Follow-up (optional hardening)**: persist shared-field category into snapshot schema when `standard: true` so the reporting engine can become fully snapshot-driven for metadata as well.
 4. **Scope resolution is shared across `/sources`, `/preflight`, and `/run`.** All three endpoints use `TaskReportScopeService` (Layer 1). The same scope input must produce the same resolved show set and task count across all three. If scope resolution diverges between endpoints, the preflight contract is broken.
 5. **`column_map` is presentation metadata only.** It maps columns to their source `template_uid` for display grouping (column headers, visual organization). It does not drive export splitting, row expansion, or any structural transformation. Export is always one flat file.
+6. **Preflight task counts must match run eligibility.** `task_count` only includes submitted tasks that can actually be processed in run (`templateId` and `snapshotId` are both non-null). Unsnapshotted tasks are excluded from both.
 
 ## 4. Key Design Decisions
 
@@ -71,14 +75,14 @@ Template-based source selection is allowed, but only as a convenience that resol
 
 The BE produces a **flat, show-centric table** returned directly in the API response:
 
-- `rows[]` — strictly **one row per show**. Each row is a flat JSON object keyed by column identifiers, with all selected columns merged from the show's submitted tasks. If columns cannot be consolidated (e.g., custom fields from different templates), they appear as separate columns on the same row — never as separate rows.
+- `rows[]` — strictly **one row per show**. Each row is a flat JSON object keyed by column identifiers, with all selected columns merged from the show's submitted tasks. Each row also includes hidden view-filter metadata for client, show status, room, and assignees so the FE can filter cached results without requiring those values as visible columns. If columns cannot be consolidated (e.g., custom fields from different templates), they appear as separate columns on the same row — never as separate rows.
 - `columns[]` — ordered column descriptors including system columns (show metadata) and task-content columns. Each column records its source template for metadata.
 - `column_map` — maps each column to its source `template_uid` for display grouping and column origin metadata.
 
 This means:
 
 - **Display**: FE receives a ready-to-render table — no client-side merge needed. One row = one show, always.
-- **View filters**: FE applies client-side filters (client, status) and simple asc/desc column sorting on the cached result — no server round-trip.
+- **View filters**: FE applies client-side filters (client, status, assignee, room) and simple asc/desc column sorting on the cached result — no server round-trip. The BE includes the needed ids/names on every row, and assignee metadata may be multi-value because one show row can merge tasks from multiple assignees.
 - **Export**: All columns export into **one flat file** (CSV or single XLSX sheet). No multi-file splitting — all columns (system + shared fields + custom) appear in one table.
 - **Transformation**: The flat rows are easily convertible to 2D arrays for tabular rendering and serialization.
 
@@ -151,6 +155,8 @@ Filters are split into scope (server) and view (client):
 
 This mirrors the Google Sheets workflow: one sheet per time range (scope), filter views per client/status (view).
 
+The FE should render labels from the `*_name` metadata, but keep `*_id` fields as the selected value whenever they exist. That preserves exact filtering for non-unique display names while still showing readable option labels.
+
 ### 4.5 Single-file export
 
 Export always produces **one flat file** — one CSV or one XLSX sheet. No multi-file splitting, no partition-based sheet separation.
@@ -215,9 +221,23 @@ Shared fields are stored in `Studio.metadata.shared_fields[]` — an array of fi
 
 ```typescript
 const sharedFieldCategoryEnum = z.enum(['metric', 'evidence', 'status']);
+const reservedSystemColumnKeys = new Set([
+  'show_id',
+  'show_name',
+  'show_external_id',
+  'client_name',
+  'studio_room_name',
+  'show_standard_name',
+  'show_type_name',
+  'start_time',
+  'end_time',
+]);
 
 const sharedFieldSchema = z.object({
-  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/),  // snake_case, immutable
+  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/)
+    .refine((key) => !reservedSystemColumnKeys.has(key), {
+      message: 'Shared field key cannot use reserved report system column keys',
+    }),                                                        // snake_case, immutable, non-colliding
   type: FieldTypeEnum,                                          // immutable
   category: sharedFieldCategoryEnum,                            // immutable
   label: z.string().min(1).max(200),                            // editable (display only)
@@ -230,15 +250,17 @@ const sharedFieldsListSchema = z.array(sharedFieldSchema)
     { message: 'Shared field keys must be unique' });
 ```
 
+Runtime behavior for malformed stored config: if `Studio.metadata.shared_fields` exists but does not match this schema, settings endpoints fail fast with an error (no silent fallback to `[]`). Missing `shared_fields` defaults to an empty list.
+
 **Management endpoint:**
 
 ```
-GET  /studios/:studioId/settings/shared-fields     → list all shared fields
+GET  /studios/:studioId/settings/shared-fields     → list all shared fields (ADMIN + MANAGER read)
 POST /studios/:studioId/settings/shared-fields     → create a new shared field (key + type immutable after creation)
 PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active only
 ```
 
-No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker.
+No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker. Reserved system-column keys are also blocked (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`) to prevent collisions with built-in report columns.
 
 **Immutability rules:**
 
@@ -258,7 +280,7 @@ No DELETE — keys are reserved forever once created. Deactivate via `is_active:
 | Role | Shared fields | Template editor | Report builder |
 |------|--------------|-----------------|----------------|
 | **ADMIN** | Create, update label, deactivate | Select shared fields when building templates | Full access |
-| **MANAGER** | Read only (cannot create or modify) | Select shared fields when building templates | Full access |
+| **MANAGER** | Read only (`GET` catalog access; cannot create or modify) | Select shared fields when building templates | Full access |
 | **MODERATION_MANAGER** | No access | No access (cannot edit templates) | Full access |
 | **Operator / Moderator** | No access | No access | No access |
 
@@ -330,7 +352,7 @@ This feature extends the existing task template and studio management systems. T
 | **Task template design** (if exists) | Template editor gains shared fields picker; `FieldItemBaseSchema` adds `standard` property |
 | **Studio management** | New settings section for shared fields; `Studio.metadata` schema extends |
 | **`erify-authorization` skill** | ADMIN scope gains "manage shared fields"; MANAGER scope gains "read shared fields" |
-| **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared fields row for ADMIN |
+| **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared-field management row for ADMIN and shared-field catalog read for MANAGER template authoring |
 | **`studio-route-access.ts`** | Add `sharedFields` key for ADMIN |
 | **`@eridu/api-types`** | Add `sharedFieldSchema`, update `FieldItemBaseSchema`, add settings endpoint schemas |
 
@@ -464,6 +486,8 @@ erDiagram
         String name
         Json definition "scope + columns"
         BigInt createdById FK
+        Json metadata "audit notes and editor context"
+        DateTime updatedAt
         DateTime deletedAt
     }
 
@@ -500,8 +524,8 @@ Suggested fields:
 - `name String`
 - `description String?`
 - `definition Json`
+- `metadata Json` (audit notes / editor context)
 - `createdById BigInt?`
-- `updatedById BigInt?`
 - `createdAt DateTime`
 - `updatedAt DateTime`
 - `deletedAt DateTime?`
@@ -535,6 +559,7 @@ Key request concepts (run report):
 Key response concepts (inline result):
 
 - `rows[]`: strictly one row per show — all task data merged into a single flat row
+- hidden row metadata: `client_id`, `client_name`, `show_status_id`, `show_status_name`, `studio_room_id`, `studio_room_name`, `assignee_ids`, `assignee_names`, plus scalar assignee fields when exactly one unique assignee exists
 - `columns[]`: ordered column descriptors with source metadata
 - `column_map`: maps each column to its source `template_uid` (for display grouping, not export splitting)
 - `warnings[]`: duplicate-source flags, version notes
@@ -560,7 +585,7 @@ Purpose:
 sequenceDiagram
     participant FE as erify_studios
     participant Ctrl as StudioTaskReportController
-    participant QS as TaskReportQueryService
+    participant QS as TaskReportRunService
     participant TaskRepo as TaskRepository
     participant DB as PostgreSQL
 
@@ -585,7 +610,7 @@ sequenceDiagram
     DB-->>TaskRepo: snapshot schemas
     TaskRepo-->>QS: schemas
 
-    Note over QS: 4. Build field catalog per template,<br/>deduplicate standard fields
+    Note over QS: 4. Build field catalog per template,<br/>deduplicate standard fields,<br/>sort templates deterministically
     QS->>QS: buildSourceCatalog(templates, schemas)
     Note over QS: For each template:<br/>- extract schema.items[]<br/>- classify standard vs custom<br/>- count submitted tasks<br/>Deduplicate standard fields across templates
 
@@ -617,7 +642,9 @@ sources[]:
   task_type            — from schema.metadata.task_type
   submitted_task_count — number of submitted tasks for this template in scope
   fields[]:
-    key                — field key (used in column selection)
+    key                — selectable column key sent to run API
+                         (standard: {field_key}, custom: {template_uid}:{field_key})
+    field_key          — raw field key from template snapshot schema
     label              — user-facing label
     type               — field type (text, number, checkbox, etc.)
     standard           — true if this is a standard field
@@ -632,6 +659,8 @@ shared_fields[]:      — deduplicated list of shared fields across all sources
 
 Shared fields appear both in their source template's `fields[]` (for completeness) and in the top-level `shared_fields[]` (for the FE to render the merged "Shared Fields" group in the column picker, sub-grouped by category).
 
+`sources[]` order is deterministic and applied **after in-memory aggregation** (alphabetical by `template_name`). This is intentional: the final payload is a merged projection from grouped task rows + snapshot parsing, so DB ordering alone cannot guarantee stable final order.
+
 ### 8.2 Shared fields settings
 
 ```
@@ -640,7 +669,9 @@ POST /studios/:studioId/settings/shared-fields       → create a new shared fie
 PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active
 ```
 
-Access: **`ADMIN` only** — managers and moderation managers cannot create or modify shared fields.
+Access:
+- `GET`: **`ADMIN` + `MANAGER`** so task-template authors can load the shared-field picker
+- `POST` / `PATCH`: **`ADMIN` only**
 
 This is a studio settings endpoint, not a reporting endpoint. It extends the existing studio management surface. See §4.6.2 for storage details and immutability rules.
 
@@ -658,9 +689,11 @@ Access:
 
 Purpose:
 
-- persist named JSON definitions (personal presets) with scope filters + columns,
+- persist named JSON definitions (studio-shared) with scope filters + columns,
+- all permitted roles can view and run any definition in the studio,
+- creator or ADMIN can update/delete; other roles get 403 on modify attempts,
 - support repeated manager workflows and cross-device definition sync,
-- clone is just POST with pre-filled body from an existing definition.
+- clone (deferred to Phase 2) is just POST with pre-filled body from an existing definition.
 
 ### 8.4 Report execution (generate + return inline)
 
@@ -710,26 +743,25 @@ The full result is returned in the response body. No `result_uid` — the result
 
 ### 8.5 Preflight count
 
-`POST /studios/:studioId/task-reports/preflight`
+`GET /studios/:studioId/task-reports/preflight`
 
 Access:
 
 - `ADMIN`, `MANAGER`, `MODERATION_MANAGER`
 
-Purpose: lightweight count query before full generation. The FE calls this before `POST /run` so the manager can confirm scope size and the guardrail can be enforced early — before any heavy extraction work.
+Purpose: lightweight count query before full generation. The FE calls this before `POST /run` so the manager can confirm scope size and the guardrail can be enforced early — before any heavy extraction work. Uses GET with query params (same parsing as source discovery) since it's a read-only count operation.
 
-**Request shape** (same scope as `/run`):
+**Request shape** (query params, same scope as `/run`):
 
 ```text
-scope { date_preset?, date_from?, date_to?, show_standard_id?, show_type_id?, submitted_statuses? }
-source_templates[]?
+?date_from=...&date_to=...&show_standard_id=...&show_type_id=...&submitted_statuses=...&source_templates=...
 ```
 
 **Response shape:**
 
 ```text
 show_count       — number of shows matching scope
-task_count       — number of submitted tasks on those shows
+task_count       — number of reportable submitted tasks on those shows (must have templateId + snapshotId)
 within_limit     — boolean (task_count <= studio row cap)
 limit            — the studio's configured row cap (default 10,000)
 ```
@@ -755,7 +787,7 @@ This separation ensures the preflight count, source catalog, and full generation
 sequenceDiagram
     participant FE as erify_studios
     participant Ctrl as StudioTaskReportController
-    participant QS as TaskReportQueryService
+    participant QS as TaskReportRunService
     participant Repo as TaskRepository
     participant DB as PostgreSQL
 
@@ -834,11 +866,12 @@ Select only what the client needs:
 - snapshot version/schema,
 - `content`,
 - show metadata via `targets` → `Show`: UID/name/external ID/start/end,
-- client name (via show → client),
-- studio room name (via show → studio room),
+- client UID/name (via show → client),
+- studio room UID/name (via show → studio room),
+- show status UID/name (via show → show status),
 - show standard name (via show → show standard),
 - show type name (via show → show type),
-- assignee name,
+- assignee UID/name,
 - creator names if needed for system columns.
 
 The `TaskTarget` join is the path to show data. Use a targeted include:
@@ -909,7 +942,7 @@ If a single task has multiple show-type targets (rare but structurally possible 
 
 ### 9.6 Internal batch processing
 
-The report generation endpoint does **not** expose pagination to the client. The `TaskReportQueryService` iterates all matching tasks internally:
+The report generation endpoint does **not** expose pagination to the client. The `TaskReportRunService` iterates all matching tasks internally:
 
 - Internal batch size: `200` rows per iteration (not configurable by client).
 - Uses `skip`/`take` with the standard Prisma offset pattern.
@@ -935,7 +968,7 @@ graph TB
     subgraph "task-report module"
         Ctrl[StudioTaskReportController<br/>HTTP transport:<br/>preflight, sources, run, CRUD]
         SS[TaskReportScopeService<br/>Layer 1 — scope resolution<br/>shared by preflight/sources/run]
-        QS[TaskReportQueryService<br/>Layer 2 — extraction + rows<br/>run endpoint only]
+        QS[TaskReportRunService<br/>Layer 2 — extraction + rows<br/>run endpoint only]
         DS[TaskReportDefinitionService<br/>Definition CRUD]
         DR[TaskReportDefinitionRepository<br/>Prisma persistence]
         subgraph "lib/ — portable, zero framework imports"
@@ -971,7 +1004,7 @@ Recommended module split:
 
 - `StudioTaskReportController` for studio-scoped HTTP surface (preflight, sources, run, definition CRUD)
 - `TaskReportScopeService` for **Layer 1** — show scope resolution, shared by preflight/sources/run
-- `TaskReportQueryService` for **Layer 2** — task extraction + row construction (orchestration)
+- `TaskReportRunService` for **Layer 2** — task extraction + row construction (orchestration)
 - `TaskReportDefinitionService` for CRUD on saved definitions
 - `TaskReportDefinitionRepository` for definition persistence
 - extend `TaskRepository` with lean report-query helpers as needed
@@ -983,7 +1016,7 @@ src/models/task-report/
   ├── task-report.module.ts                 # NestJS wiring
   ├── task-report.controller.ts             # HTTP transport (preflight, sources, run, CRUD)
   ├── task-report-scope.service.ts          # Layer 1 — scope resolution (NestJS-coupled)
-  ├── task-report-query.service.ts          # Layer 2 — extraction + row construction (NestJS-coupled)
+  ├── task-report-run.service.ts            # Layer 2 — extraction + row construction (NestJS-coupled)
   ├── task-report-definition.service.ts     # Definition CRUD (NestJS-coupled)
   ├── task-report-definition.repository.ts  # Definition persistence (Prisma-coupled)
   ├── schemas/                              # Zod + payload types
@@ -1086,13 +1119,23 @@ Risk: without server-side caching, the same report scope generates redundantly a
 
 Mitigation: generation is fast (< 1s typical). The FE caches recently generated results in TanStack Query. IndexedDB can be added for cross-session persistence. If generation cost becomes a concern, add server-side result storage as an optimization — the API contract is the same either way.
 
+### 12.8 Shared fields metadata write race (known issue, accepted for MVP)
+
+Risk: shared fields settings currently use a read-modify-write flow on `Studio.metadata.shared_fields[]`. Concurrent ADMIN writes can cause last-write-wins behavior and lost updates.
+
+Mitigation (current): accepted operational risk for MVP because updates are rare and only a small number of studio admins can modify shared fields concurrently.
+
+Deferred hardening options:
+- move shared fields to a dedicated normalized table/model with DB-level constraints, or
+- add optimistic concurrency (compare-and-swap on `updatedAt` with retry/conflict response).
+
 ## 13. Rollout Recommendation
 
 ### Milestone BE-1 (Core workflow)
 
-1. shared fields settings endpoint (`GET/POST/PATCH /settings/shared-fields`) — ADMIN-only, stored in `Studio.metadata`
+1. shared fields settings endpoint (`GET` readable by ADMIN + MANAGER; `POST/PATCH` ADMIN-only) stored in `Studio.metadata`
 2. Layer 1 (show scope resolution) as a shared internal service used by preflight, sources, and run
-3. preflight count endpoint (`POST /task-reports/preflight`) — lightweight scope validation before generation
+3. preflight count endpoint (`GET /task-reports/preflight`) — lightweight scope validation before generation (GET with query params)
 4. contextual source catalog endpoint (templates/snapshots with submitted tasks for filtered shows)
 5. report generation endpoint (`POST /task-reports/run`) with Layer 2 (task extraction + row construction), date preset resolution, comprehensive scope filters, `TaskTarget` join, internal batch processing, flat table generation, and inline response
 6. saved definition CRUD with date presets and scope filter persistence

@@ -41,6 +41,14 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
+  taskReports: [
+    STUDIO_ROLE.MODERATION_MANAGER,
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  sharedFields: [
+    STUDIO_ROLE.ADMIN,
+  ],
   creatorMapping: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.TALENT_MANAGER,
@@ -58,5 +66,5 @@ export function hasStudioRouteAccess(
     return false;
   }
 
-  return STUDIO_ROUTE_ACCESS[routeKey].includes(role);
+  return (STUDIO_ROUTE_ACCESS[routeKey] as readonly StudioRole[]).includes(role);
 }

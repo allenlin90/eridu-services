@@ -15,12 +15,17 @@ export type GetShowTypesParams = {
   id?: string;
 };
 
+type GetShowTypesOptions = {
+  signal?: AbortSignal;
+};
+
 export async function getShowTypes(
   params: GetShowTypesParams,
   studioId?: string,
+  options?: GetShowTypesOptions,
 ): Promise<ShowTypesResponse> {
   const endpoint = studioId ? `/studios/${studioId}/show-types` : '/admin/show-types';
-  const response = await apiClient.get<ShowTypesResponse>(endpoint, { params });
+  const response = await apiClient.get<ShowTypesResponse>(endpoint, { params, signal: options?.signal });
   return response.data;
 }
 

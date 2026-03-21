@@ -96,6 +96,17 @@ Neither `StudioShift` nor `StudioShiftBlock` has a `version Int @default(1)` col
 
 ---
 
+## Deferred: Studio shared-fields metadata write race (March 2026)
+
+Shared fields settings currently persist to `Studio.metadata.shared_fields` using a read-modify-write flow. Concurrent `ADMIN` updates can overwrite each other (last-write-wins), causing lost updates.
+
+**Risk**: Low for current MVP usage — updates are rare and limited to a small set of studio admins.
+**Action**: Move shared fields to a dedicated normalized model/table with DB-level constraints or add optimistic concurrency control on metadata writes when the settings surface expands.
+**Tracked**: March 2026 — task submission reporting shared-fields settings rollout.
+**Canonical design reference**: `apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md` section `12.8 Shared fields metadata write race (known issue, accepted for MVP)`.
+
+---
+
 ## Related Documentation
 
 - [Schema Patterns](./schema-patterns.md) — Three-tier schema architecture

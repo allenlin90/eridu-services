@@ -5,7 +5,7 @@ Design/proposal/in-progress documents for `erify_studios`.
 ## Index
 
 1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md)
-2. [Task Submission Reporting & Export](./TASK_SUBMISSION_REPORTING_DESIGN.md) — 📐 Planned manager-facing submitted-task reporting/export
+2. [Task Submission Reporting & Export](./TASK_SUBMISSION_REPORTING_DESIGN.md) — 🚧 In progress (viewer/builder split, studio-scoped filters, definition save flow, shared-field integration)
 3. ~~Show Readiness Triage Panel~~ — implemented; dedicated design file is not retained in this folder
 
 ## Note

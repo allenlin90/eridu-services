@@ -87,8 +87,9 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
 3. Read local patterns in the target module before changing code.
 4. Implement minimal change set first; avoid broad refactors unless requested.
 5. For PWA work in frontend apps, follow `.agent/workflows/pwa-migration.md` in addition to feature-specific skills.
-6. Verify each impacted workspace (`.agent/workflows/verification.md`).
-7. For feature/refactor/behavior changes, run knowledge sync (`.agent/workflows/knowledge-sync.md`).
+6. For UI/UX redesign or route layout quality passes, follow `.agent/workflows/ui-ux-pro-max.md` (workflow, not skill).
+7. Verify each impacted workspace (`.agent/workflows/verification.md`).
+8. For feature/refactor/behavior changes, run knowledge sync (`.agent/workflows/knowledge-sync.md`).
 
 ## Verification Checklist (Mandatory)
 Run for every changed workspace/package:

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { TemplateSchema, type TemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
+import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import type { GetTaskTemplateResponse } from '@/features/task-templates/api/get-task-template';
 import { useTaskTemplate } from '@/features/task-templates/hooks/use-task-template';
 import { useUpdateTaskTemplate } from '@/features/task-templates/hooks/use-update-task-template';
@@ -67,6 +68,10 @@ type TaskTemplateFormProps = {
 function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
   const navigate = Route.useNavigate();
   const { templateId } = Route.useParams();
+  const {
+    data: sharedFieldsResponse,
+    isError: isSharedFieldsError,
+  } = useStudioSharedFields({ studioId });
 
   const { mutate: updateTemplate, isPending: isSaving } = useUpdateTaskTemplate({
     studioId,
@@ -146,6 +151,12 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
         </span>
       )}
     >
+      {isSharedFieldsError && (
+        <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="font-semibold">Shared fields unavailable</div>
+          <div>Failed to load studio shared fields. Shared-field insertion is temporarily unavailable on this page.</div>
+        </div>
+      )}
       <TaskTemplateBuilder
         template={template}
         onChange={handleTemplateChange}
@@ -153,6 +164,8 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
         onSave={onSave}
         onCancel={handleCancel}
         errors={errors}
+        sharedFields={sharedFieldsResponse?.shared_fields ?? []}
+        studioId={studioId}
       />
     </PageLayout>
   );

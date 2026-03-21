@@ -83,6 +83,11 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
                   <Badge variant="outline" className="text-[10px] h-5 px-1.5 uppercase">
                     {item.type}
                   </Badge>
+                  {item.standard && (
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                      Shared
+                    </Badge>
+                  )}
                   <span className={`font-mono text-[10px] ${errors?.key ? 'text-destructive font-bold' : ''}`}>{item.key}</span>
                   {item.required && (
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5 text-zinc-400">

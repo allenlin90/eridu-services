@@ -6,6 +6,16 @@ import {
   studioApiResponseSchema,
   updateStudioInputSchema,
 } from '@eridu/api-types/studios';
+import type {
+  CreateSharedFieldInput,
+  SharedFieldsResponse,
+  UpdateSharedFieldInput,
+} from '@eridu/api-types/task-management';
+import {
+  createSharedFieldSchema as createSharedFieldSettingsSchema,
+  sharedFieldsResponseSchema as sharedFieldsSettingsResponseSchema,
+  updateSharedFieldSchema as updateSharedFieldSettingsSchema,
+} from '@eridu/api-types/task-management';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { StudioService } from '@/models/studio/studio.service';
@@ -65,6 +75,9 @@ export class CreateStudioCoreDto extends createZodDto(createStudioCoreSchema) {}
 export class UpdateStudioDto extends createZodDto(updateStudioSchema) {}
 export class UpdateStudioCoreDto extends createZodDto(updateStudioCoreSchema) {}
 export class StudioDto extends createZodDto(studioDto) {}
+export class CreateSharedFieldDto extends createZodDto(createSharedFieldSettingsSchema) {}
+export class UpdateSharedFieldDto extends createZodDto(updateSharedFieldSettingsSchema) {}
+export class SharedFieldsResponseDto extends createZodDto(sharedFieldsSettingsResponseSchema) {}
 
 // Studio list filter schema
 export const listStudiosFilterSchema = z.object({
@@ -108,3 +121,7 @@ export type UpdateStudioPayload = {
   address?: string;
   metadata?: Record<string, any>;
 };
+
+export type CreateSharedFieldPayload = CreateSharedFieldInput;
+export type UpdateSharedFieldPayload = UpdateSharedFieldInput;
+export type SharedFieldsResponsePayload = SharedFieldsResponse;

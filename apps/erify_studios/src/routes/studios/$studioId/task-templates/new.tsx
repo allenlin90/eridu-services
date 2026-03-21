@@ -7,6 +7,7 @@ import { useDebounceCallback } from 'usehooks-ts';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { TemplateSchema, type TemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
+import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import { useCreateTaskTemplate } from '@/features/task-templates/hooks/use-create-task-template';
 import { formatZodErrors } from '@/lib/zod-utils';
 
@@ -19,6 +20,10 @@ export const Route = createFileRoute('/studios/$studioId/task-templates/new')({
 export function TaskTemplateBuilderPage() {
   const { studioId } = Route.useParams();
   const navigate = Route.useNavigate();
+  const {
+    data: sharedFieldsResponse,
+    isError: isSharedFieldsError,
+  } = useStudioSharedFields({ studioId });
 
   const { mutate: createTemplate, isPending: isSaving } = useCreateTaskTemplate({
     studioId,
@@ -147,6 +152,12 @@ export function TaskTemplateBuilderPage() {
         </span>
       )}
     >
+      {isSharedFieldsError && (
+        <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="font-semibold">Shared fields unavailable</div>
+          <div>Failed to load studio shared fields. Shared-field insertion is temporarily unavailable on this page.</div>
+        </div>
+      )}
       <TaskTemplateBuilder
         template={template}
         onChange={handleTemplateChange}
@@ -154,6 +165,8 @@ export function TaskTemplateBuilderPage() {
         onSave={onSave}
         onCancel={handleCancel}
         errors={errors}
+        sharedFields={sharedFieldsResponse?.shared_fields ?? []}
+        studioId={studioId}
       />
     </PageLayout>
   );

@@ -135,7 +135,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(5); // Dashboard + System + Studio Common + Studio Admin + Creators
+    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + Studio Common + Studio Manager + Studio Admin + Creators
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -187,8 +187,8 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[3]).toEqual(expect.objectContaining({
-      title: 'Studio Admin',
-      url: '/studios/studio-1/admin',
+      title: 'Studio Manager',
+      url: '/studios/studio-1/review-queue',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
@@ -204,6 +204,19 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[4]).toEqual(expect.objectContaining({
+      title: 'Studio Admin',
+      url: '/studios/studio-1/settings/shared-fields',
+      icon: expect.any(Function),
+      isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Shared Fields',
+          url: '/studios/studio-1/settings/shared-fields',
+        }),
+      ]),
+    }));
+
+    expect(result.current.navMain[5]).toEqual(expect.objectContaining({
       title: 'Creators',
       url: '/studios/studio-1/creator-mapping',
       icon: expect.any(Function),

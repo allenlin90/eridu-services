@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import type { TaskStatus } from '@prisma/client';
 
-import { TASK_TYPE, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import {
+  type SharedField,
+  TASK_TYPE,
+  TemplateSchemaValidator,
+} from '@eridu/api-types/task-management';
 
 import type {
   CreateTaskTemplatePayload,
@@ -12,6 +16,7 @@ import { TaskTemplateRepository } from './task-template.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { StudioService } from '@/models/studio/studio.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
@@ -21,6 +26,7 @@ export class TaskTemplateService extends BaseModelService {
 
   constructor(
     private readonly taskTemplateRepository: TaskTemplateRepository,
+    private readonly studioService: StudioService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -47,8 +53,9 @@ export class TaskTemplateService extends BaseModelService {
 
   async create(payload: CreateTaskTemplatePayload): ReturnType<TaskTemplateRepository['create']> {
     const schemaWithTaskType = this.withTaskTypeInSchema(payload.currentSchema, payload.taskType);
+    const sharedFieldsByKey = await this.getSharedFieldsByKey(payload.studioId);
 
-    this.validateSchema(schemaWithTaskType);
+    this.validateSchema(schemaWithTaskType, sharedFieldsByKey);
 
     const data = {
       name: payload.name,
@@ -64,8 +71,9 @@ export class TaskTemplateService extends BaseModelService {
 
   async createTemplateWithSnapshot(payload: CreateTaskTemplatePayload): ReturnType<TaskTemplateRepository['create']> {
     const schemaWithTaskType = this.withTaskTypeInSchema(payload.currentSchema, payload.taskType);
+    const sharedFieldsByKey = await this.getSharedFieldsByKey(payload.studioId);
 
-    this.validateSchema(schemaWithTaskType);
+    this.validateSchema(schemaWithTaskType, sharedFieldsByKey);
 
     const version = payload.version ?? 1;
     const uid = payload.uid ?? this.generateTaskTemplateUid();
@@ -109,9 +117,10 @@ export class TaskTemplateService extends BaseModelService {
         : (payload.taskType
             ? this.withTaskTypeInSchema(existing.currentSchema, payload.taskType)
             : null);
+      const sharedFieldsByKey = await this.getSharedFieldsByKey(studioId);
 
       if (nextSchema) {
-        this.validateSchema(nextSchema);
+        this.validateSchema(nextSchema, sharedFieldsByKey);
       }
 
       const params = {
@@ -155,7 +164,10 @@ export class TaskTemplateService extends BaseModelService {
     }
   }
 
-  validateSchema(schema: CreateTaskTemplatePayload['currentSchema']): void {
+  validateSchema(
+    schema: CreateTaskTemplatePayload['currentSchema'],
+    sharedFieldsByKey: ReadonlyMap<string, SharedField> = new Map(),
+  ): void {
     const result = TemplateSchemaValidator.safeParse(schema);
 
     if (!result.success) {
@@ -223,6 +235,21 @@ export class TaskTemplateService extends BaseModelService {
 
     // Additional business rules
     for (const item of result.data.items) {
+      if (item.standard) {
+        const sharedField = sharedFieldsByKey.get(item.key);
+        if (!sharedField) {
+          throw HttpError.badRequest(
+            `Shared field key "${item.key}" is not configured in studio settings`,
+          );
+        }
+
+        if (sharedField.type !== item.type) {
+          throw HttpError.badRequest(
+            `Shared field "${item.key}" must use type "${sharedField.type}"`,
+          );
+        }
+      }
+
       // Validate require_reason rule usage
       if (item.validation?.require_reason) {
         if (Array.isArray(item.validation.require_reason)) {
@@ -283,6 +310,11 @@ export class TaskTemplateService extends BaseModelService {
         }
       }
     }
+  }
+
+  private async getSharedFieldsByKey(studioId: string): Promise<ReadonlyMap<string, SharedField>> {
+    const sharedFields = await this.studioService.getSharedFields(studioId);
+    return new Map(sharedFields.map((field) => [field.key, field]));
   }
 
   async findOne(...args: Parameters<TaskTemplateRepository['findOne']>): ReturnType<TaskTemplateRepository['findOne']> {

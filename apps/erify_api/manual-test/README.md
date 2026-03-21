@@ -125,6 +125,12 @@ pnpm run manual:auth:test-me -- --token=<JWT_TOKEN>
    pnpm run db:seed
    ```
 
+   Seed now includes:
+   - Non-empty baseline task templates (`items[]` schema + `metadata.task_type`)
+   - A small report-ready dataset (seed shows + submitted tasks) for quick Task Report checks
+
+   Keep using `manual:schedule:*` scripts for full local E2E validation of schedule upload/validate/publish flows and larger data volumes.
+
 2. **Auth Service**: Start the eridu_auth service (required for JWT authentication flow)
 
    ```bash

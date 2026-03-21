@@ -27,6 +27,12 @@ export const FieldItemBaseSchema = z
       .max(50)
       .regex(/^[a-z][a-z0-9_]*$/, 'Must be snake_case (English)'),
     type: FieldTypeEnum,
+    standard: z
+      .boolean()
+      .optional()
+      .describe(
+        'True if this field uses a shared field key. Shared fields merge across templates in reports.',
+      ),
     label: z.string().min(1).max(200).describe('User-facing label text'),
     description: z.string().max(500).optional(),
     group: z.string().optional().describe('Loop / visual grouping identifier'),

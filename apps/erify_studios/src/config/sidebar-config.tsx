@@ -150,16 +150,16 @@ function getStudioCommonItems(
 }
 
 /**
- * Generates elevated studio navigation items (manager/admin routes).
+ * Generates manager workspace navigation items.
  */
-function getStudioAdminItems(
+function getStudioManagerItems(
   studioId: string,
   role: string,
 ): SidebarNavItem['items'] {
-  const adminItems: SidebarNavItem['items'] = [];
+  const managerItems: SidebarNavItem['items'] = [];
 
   if (hasStudioRouteAccess(role as StudioRole, 'reviewQueue')) {
-    adminItems.push({
+    managerItems.push({
       title: 'Review Queue',
       url: `/studios/${studioId}/review-queue`,
       icon: ClipboardCheck,
@@ -167,7 +167,7 @@ function getStudioAdminItems(
   }
 
   if (hasStudioRouteAccess(role as StudioRole, 'shifts')) {
-    adminItems.push({
+    managerItems.push({
       title: 'Shift Schedule',
       url: `/studios/${studioId}/shifts`,
       icon: CalendarDays,
@@ -175,7 +175,7 @@ function getStudioAdminItems(
   }
 
   if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
-    adminItems.push({
+    managerItems.push({
       title: 'Shows',
       url: `/studios/${studioId}/shows`,
       icon: Clapperboard,
@@ -183,10 +183,38 @@ function getStudioAdminItems(
   }
 
   if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
-    adminItems.push({
+    managerItems.push({
       title: 'Task Templates',
       url: `/studios/${studioId}/task-templates`,
       icon: ClipboardCheck,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'taskReports')) {
+    managerItems.push({
+      title: 'Task Reports',
+      url: `/studios/${studioId}/task-reports`,
+      icon: ClipboardCheck,
+    });
+  }
+
+  return managerItems;
+}
+
+/**
+ * Generates admin-only studio navigation items.
+ */
+function getStudioAdminItems(
+  studioId: string,
+  role: string,
+): SidebarNavItem['items'] {
+  const adminItems: SidebarNavItem['items'] = [];
+
+  if (hasStudioRouteAccess(role as StudioRole, 'sharedFields')) {
+    adminItems.push({
+      title: 'Shared Fields',
+      url: `/studios/${studioId}/settings/shared-fields`,
+      icon: Settings,
     });
   }
 
@@ -258,6 +286,7 @@ export function useSidebarConfig(
     }
     if (activeStudio) {
       const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
+      const studioManagerItems = buildActiveItems(getStudioManagerItems(activeStudio.studio.uid, activeStudio.role));
       const studioAdminItems = buildActiveItems(getStudioAdminItems(activeStudio.studio.uid, activeStudio.role));
       const studioCreatorItems = buildActiveItems(getStudioCreatorItems(activeStudio.studio.uid, activeStudio.role));
 
@@ -269,10 +298,20 @@ export function useSidebarConfig(
         items: studioCommonItems,
       });
 
+      if (studioManagerItems.length > 0) {
+        navItems.push({
+          title: 'Studio Manager',
+          url: studioManagerItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
+          icon: Settings,
+          isActive: studioManagerItems.some((item) => item.isActive),
+          items: studioManagerItems,
+        });
+      }
+
       if (studioAdminItems.length > 0) {
         navItems.push({
           title: 'Studio Admin',
-          url: `/studios/${activeStudio.studio.uid}/admin`,
+          url: studioAdminItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
           icon: ShieldCheck,
           isActive: studioAdminItems.some((item) => item.isActive),
           items: studioAdminItems,

@@ -60,6 +60,11 @@ Read this skill for current `erify_api` authorization behavior first. Load the p
 @StudioProtected([STUDIO_ROLE.ADMIN])
 ```
 
+Reporting shared-fields settings endpoints use an explicit split:
+- `GET /studios/:studioId/settings/shared-fields`: `@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])`
+- `POST /studios/:studioId/settings/shared-fields`: `@StudioProtected([STUDIO_ROLE.ADMIN])`
+- `PATCH /studios/:studioId/settings/shared-fields/:key`: `@StudioProtected([STUDIO_ROLE.ADMIN])`
+
 > `getAllAndOverride` means method-level `@StudioProtected` always wins over class-level. The class sets the default; methods narrow or expand as needed.
 
 ## Core Principles

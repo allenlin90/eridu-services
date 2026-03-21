@@ -145,6 +145,73 @@ Use text labels only for dropdown menu items where needed for mobile action menu
 
 ---
 
+## 📊 Task Report Key Contracts
+
+### Source-scope vs run-scope
+
+`@eridu/api-types/task-management` exports **two** scope schemas:
+
+| Schema                         | Date range                                                       | Used by                                                |
+| ------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------ |
+| `taskReportScopeSchema`        | **Required** (`date_from` + `date_to` each separately validated) | Preflight and run endpoints                            |
+| `taskReportSourcesScopeSchema` | Optional                                                         | Source discovery endpoint (`GET /task-report-sources`) |
+
+The split lets the column picker populate before the user commits to a date range. `GetTaskReportSourcesQuery` transforms to the looser schema internally via `safeParse`. `TaskReportSourcesScope` is exported as the resulting type.
+
+### Exported types
+
+- `TaskReportColumn` — inferred from `taskReportColumnSchema`; use this instead of `TaskReportSelectedColumn` in `filter-rows.ts` and `serialize-csv.ts`.
+- `TaskReportSourcesScope` — inferred from `taskReportSourcesScopeSchema`; use for the sources query hook signature.
+
+### Definition schema notes
+
+- `updated_by_id` has been **intentionally removed** from `taskReportDefinitionSchema`. Definitions are personal presets — only creator tracking is supported in MVP. No `updated_by` relation exists in the DB model.
+
+### View-filter field naming convention
+
+`TaskReportViewFilters` in `filter-rows.ts` uses **name-preferred, id-fallback** fields:
+
+```ts
+{
+  client_id?: string;          // legacy compat
+  client_name?: string;        // preferred — exact match against system-column value
+  show_status_id?: string;     // legacy compat
+  show_status_name?: string;   // preferred
+  studio_room_id?: string;     // legacy compat
+  studio_room_name?: string;   // preferred
+  assignee?: string;
+  search?: string;
+}
+```
+
+When populating view-filter state from result rows, prefer setting `*_name` over `*_id` so the filter matches the actual string values returned in the flat row. The `_id` fields remain for backward compatibility.
+
+### Guardrails (2026-03-20)
+
+- Preflight `task_count` must match run eligibility: count only submitted tasks with both `templateId` and `snapshotId` (unsnapshotted tasks are excluded from both preflight and run).
+- Shared-field keys must not collide with report system column keys (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`).
+
+---
+
+## 📊 Task Report Stress Simulation Seed
+
+Use this when validating task-report column picker UX against high-noise real-world conditions (many brands/templates + loop-heavy moderation schemas):
+
+```bash
+pnpm --filter erify_api db:seed:report-simulation
+```
+
+What it adds (idempotent upserts):
+- 30 client-dedicated moderation templates (`ttpl_seed_report_sim_*`)
+- 8 loops/template, 20 fields per loop
+- 30-brand scoped shows and >100 submitted tasks per simulation template
+
+Why:
+- Reproduces noisy column-selection conditions where template-scoped custom fields can overwhelm the picker.
+- Validates collapse/search/selected-only workflows before production rollout.
+
+---
+
 ## 🔐 Adding Authentication to Endpoints
 
 ### Public Endpoint (no auth)

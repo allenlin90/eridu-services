@@ -99,6 +99,25 @@ const payload = {
 };
 ```
 
+### 6. Shared Fields Insertion (Studio Settings Integration)
+
+Task template authors can insert studio-managed shared fields directly from the builder.
+
+- Source endpoint: `GET /studios/:studioId/settings/shared-fields`
+- Read access: `ADMIN` and `MANAGER` can load the shared-field catalog for template authoring.
+- Canonical shared-field insertion uses exact shared key/type and sets `standard: true`.
+- Repeated insertions (for loop-specific moderation data collection) should generate unique keys and be treated as loop-scoped template fields unless the key is exactly the canonical shared key.
+- UI must lock shared-field `key`/`type` editing (label/description remain editable).
+- Only active shared fields (`is_active: true`) should appear in the insertion picker.
+- Template create/edit pages must revalidate shared fields on mount (`refetchOnMount: 'always'`) to avoid stale picker options after settings updates.
+- Shared-field settings mutations must invalidate shared-field query keys so downstream routes immediately observe updates.
+- If shared fields fail to load, template pages must show a visible warning that shared-field insertion is temporarily unavailable.
+- Admin-only settings shortcuts must not be shown to manager users; non-admin authors should see guidance to ask a studio admin to create shared fields when the catalog is empty.
+
+This keeps template payloads compatible with backend validation that enforces:
+- `standard: true` key must exist in studio shared fields
+- shared-field type must match studio shared-field type exactly
+
 ## Checklist
 
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
@@ -107,4 +126,7 @@ const payload = {
 - [ ] `@dnd-kit` items have stable `id` from `crypto.randomUUID()`
 - [ ] Payload is transformed before API submission (empty options filtered)
 - [ ] `require_reason` operators match field type (number/date/select/multiselect)
+- [ ] Shared-field insertions use `standard: true` with locked key/type semantics
+- [ ] Shared-field queries are revalidated on template page mount and invalidated after settings mutations
+- [ ] Shared-field load failures are explicitly surfaced in template create/edit UI
 - [ ] No duplicate validation logic between frontend and backend

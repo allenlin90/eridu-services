@@ -178,6 +178,22 @@ function VirtualList({ items }: { items: Item[] }) {
 }
 ```
 
+### 7c. High-Noise Selection Panels (Template/Field Catalogs)
+
+When a picker can include thousands of options (for example, report columns across many client-dedicated templates), apply progressive disclosure before considering full virtualization:
+
+1. **Telemetry first**: show counts for templates, submitted records, and option totals so users understand scale.
+2. **Collapse by default**: if template groups exceed a threshold (for example `>10`), collapse groups and expand only top-N by relevance (for example highest submitted volume).
+3. **Narrowing controls**: include
+   - text search across group + option metadata (`name`, `key`, `label`, `type`)
+   - `Selected only` mode
+   - `Groups with selection` mode
+4. **Bulk visibility controls**: explicit `Expand all` / `Collapse all` actions for power users.
+5. **Keep canonical options visible**: shared/cross-template options should remain in a dedicated section and not be hidden by template collapse.
+6. **Selection guardrails**: enforce hard caps and show soft warnings when UX/readability degrades at higher counts.
+
+This pattern reduces initial DOM/render load and user cognitive load while preserving access to the full catalog.
+
 ### 7b. Image Optimization
 
 ```tsx

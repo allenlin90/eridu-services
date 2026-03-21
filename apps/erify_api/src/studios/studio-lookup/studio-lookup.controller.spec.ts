@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 
 import { StudioLookupController } from './studio-lookup.controller';
 
+import { ClientService } from '@/models/client/client.service';
 import { PlatformService } from '@/models/platform/platform.service';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
@@ -10,6 +11,7 @@ import { ShowTypeService } from '@/models/show-type/show-type.service';
 
 describe('studioLookupController', () => {
   let controller: StudioLookupController;
+  let clientService: jest.Mocked<ClientService>;
   let showTypeService: jest.Mocked<ShowTypeService>;
   let showStandardService: jest.Mocked<ShowStandardService>;
   let showStatusService: jest.Mocked<ShowStatusService>;
@@ -19,6 +21,10 @@ describe('studioLookupController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StudioLookupController],
       providers: [
+        {
+          provide: ClientService,
+          useValue: { listClients: jest.fn() },
+        },
         {
           provide: ShowTypeService,
           useValue: { listShowTypes: jest.fn() },
@@ -39,6 +45,7 @@ describe('studioLookupController', () => {
     }).compile();
 
     controller = module.get<StudioLookupController>(StudioLookupController);
+    clientService = module.get(ClientService);
     showTypeService = module.get(ShowTypeService);
     showStandardService = module.get(ShowStandardService);
     showStatusService = module.get(ShowStatusService);
@@ -60,6 +67,23 @@ describe('studioLookupController', () => {
     } as any);
 
     expect(showTypeService.listShowTypes).toHaveBeenCalled();
+  });
+
+  it('should list studio clients', async () => {
+    clientService.listClients.mockResolvedValue({ data: [], total: 0 } as any);
+
+    await controller.getClients('std_1', {
+      page: 1,
+      limit: 100,
+      take: 100,
+      skip: 0,
+      sort: 'desc',
+      name: undefined,
+      include_deleted: false,
+      uid: undefined,
+    } as any);
+
+    expect(clientService.listClients).toHaveBeenCalled();
   });
 
   it('should list studio show standards', async () => {

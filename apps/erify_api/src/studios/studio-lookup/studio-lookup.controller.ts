@@ -12,6 +12,8 @@ import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { ClientService } from '@/models/client/client.service';
+import { clientDto, ListClientsQueryDto } from '@/models/client/schemas/client.schema';
 import { PlatformService } from '@/models/platform/platform.service';
 import { ListPlatformsQueryDto, platformDto } from '@/models/platform/schemas/platform.schema';
 import { ListShowStandardsQueryDto, showStandardDto } from '@/models/show-standard/schemas/show-standard.schema';
@@ -30,6 +32,7 @@ const DEFAULT_LOOKUP_LIMIT = 200;
 @Controller('studios/:studioId')
 export class StudioLookupController extends BaseStudioController {
   constructor(
+    private readonly clientService: ClientService,
     private readonly showTypeService: ShowTypeService,
     private readonly showStandardService: ShowStandardService,
     private readonly showStatusService: ShowStatusService,
@@ -70,6 +73,19 @@ export class StudioLookupController extends BaseStudioController {
       name: query.name,
       uid: query.uid,
       include_deleted: query.include_deleted,
+    });
+    return this.createPaginatedResponse(data, total, query);
+  }
+
+  @Get('clients')
+  @ZodPaginatedResponse(clientDto)
+  async getClients(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Query() query: ListClientsQueryDto,
+  ) {
+    const { data, total } = await this.clientService.listClients({
+      ...query,
+      include_deleted: false,
     });
     return this.createPaginatedResponse(data, total, query);
   }

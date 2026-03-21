@@ -15,12 +15,17 @@ export type GetShowStandardsParams = {
   id?: string;
 };
 
+type GetShowStandardsOptions = {
+  signal?: AbortSignal;
+};
+
 export async function getShowStandards(
   params: GetShowStandardsParams,
   studioId?: string,
+  options?: GetShowStandardsOptions,
 ): Promise<ShowStandardsResponse> {
   const endpoint = studioId ? `/studios/${studioId}/show-standards` : '/admin/show-standards';
-  const response = await apiClient.get<ShowStandardsResponse>(endpoint, { params });
+  const response = await apiClient.get<ShowStandardsResponse>(endpoint, { params, signal: options?.signal });
   return response.data;
 }
 
