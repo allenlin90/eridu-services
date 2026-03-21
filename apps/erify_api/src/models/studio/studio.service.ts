@@ -112,7 +112,7 @@ export class StudioService extends BaseModelService {
       throw HttpError.conflict(`Shared field key "${payload.key}" already exists`);
     }
 
-    const nextFields = sharedFieldsListSchema.parse([
+    const nextFieldsResult = sharedFieldsListSchema.safeParse([
       ...sharedFields,
       {
         key: payload.key,
@@ -123,6 +123,10 @@ export class StudioService extends BaseModelService {
         is_active: payload.is_active ?? true,
       },
     ]);
+    if (!nextFieldsResult.success) {
+      throw HttpError.internalServerError('Failed to construct shared fields list');
+    }
+    const nextFields = nextFieldsResult.data;
 
     await this.studioRepository.replaceMetadataByUid(
       studioUid,
@@ -150,11 +154,15 @@ export class StudioService extends BaseModelService {
     const existingField = sharedFields[fieldIndex];
     const updatedField: SharedField = { ...existingField, ...payload };
 
-    const nextFields = sharedFieldsListSchema.parse([
+    const nextFieldsResult = sharedFieldsListSchema.safeParse([
       ...sharedFields.slice(0, fieldIndex),
       updatedField,
       ...sharedFields.slice(fieldIndex + 1),
     ]);
+    if (!nextFieldsResult.success) {
+      throw HttpError.internalServerError('Failed to construct shared fields list');
+    }
+    const nextFields = nextFieldsResult.data;
 
     await this.studioRepository.replaceMetadataByUid(
       studioUid,

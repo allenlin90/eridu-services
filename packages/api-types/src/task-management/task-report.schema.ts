@@ -383,7 +383,7 @@ function normalizeStringArray(value: string | string[] | undefined): string[] | 
 /**
  * Query parser for source discovery endpoint.
  * Supports comma-separated and repeated query params for array filters.
- * Date range is mandatory through `taskReportScopeSchema` parse.
+ * Date range is required — validated via superRefine before normalization.
  */
 export const getTaskReportSourcesQuerySchema = z
   .object({
@@ -397,15 +397,26 @@ export const getTaskReportSourcesQuerySchema = z
     submitted_statuses: z.union([z.string(), z.array(z.string())]).optional(),
     source_templates: z.union([z.string(), z.array(z.string())]).optional(),
   })
-  .transform((query) => taskReportScopeSchema.parse({
+  .superRefine((query, ctx) => {
+    if (!query.date_from) {
+      ctx.addIssue({ code: 'custom', path: ['date_from'], message: 'date_from and date_to are required' });
+    }
+    if (!query.date_to) {
+      ctx.addIssue({ code: 'custom', path: ['date_to'], message: 'date_from and date_to are required' });
+    }
+    if (query.date_from && query.date_to && query.date_from > query.date_to) {
+      ctx.addIssue({ code: 'custom', path: ['date_from'], message: 'date_from must be before or equal to date_to' });
+    }
+  })
+  .transform((query): TaskReportScope => ({
     date_preset: query.date_preset,
-    date_from: query.date_from,
-    date_to: query.date_to,
+    date_from: query.date_from!,
+    date_to: query.date_to!,
     client_id: normalizeStringArray(query.client_id),
     show_standard_id: normalizeStringArray(query.show_standard_id),
     show_type_id: normalizeStringArray(query.show_type_id),
     show_ids: normalizeStringArray(query.show_ids),
-    submitted_statuses: normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault],
+    submitted_statuses: (normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault]) as TaskReportScope['submitted_statuses'],
     source_templates: normalizeStringArray(query.source_templates),
   }));
 

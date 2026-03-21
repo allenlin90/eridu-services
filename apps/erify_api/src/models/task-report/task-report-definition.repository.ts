@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, TaskReportDefinition } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
@@ -22,8 +24,15 @@ export class TaskReportDefinitionRepository extends BaseRepository<
   Prisma.TaskReportDefinitionUpdateInput,
   Prisma.TaskReportDefinitionWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
     super(new PrismaModelWrapper(prisma.taskReportDefinition));
+  }
+
+  private get delegate() {
+    return this.txHost.tx.taskReportDefinition;
   }
 
   async findPaginated(params: {
@@ -51,7 +60,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
     };
 
     const [data, total] = await Promise.all([
-      this.prisma.taskReportDefinition.findMany({
+      this.delegate.findMany({
         where,
         skip,
         take,
@@ -67,7 +76,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
           },
         },
       }),
-      this.prisma.taskReportDefinition.count({ where }),
+      this.delegate.count({ where }),
     ]);
 
     return { data, total };
@@ -77,7 +86,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
     studioUid: string,
     definitionUid: string,
   ): Promise<TaskReportDefinitionWithCreator | null> {
-    return this.prisma.taskReportDefinition.findFirst({
+    return this.delegate.findFirst({
       where: {
         uid: definitionUid,
         deletedAt: null,
@@ -101,7 +110,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
     description: string | null;
     definition: Prisma.InputJsonValue;
   }): Promise<TaskReportDefinitionWithCreator> {
-    return this.prisma.taskReportDefinition.create({
+    return this.delegate.create({
       data: {
         uid: params.uid,
         name: params.name,
@@ -128,7 +137,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
     id: bigint;
     data: Prisma.TaskReportDefinitionUpdateInput;
   }): Promise<TaskReportDefinitionWithCreator> {
-    return this.prisma.taskReportDefinition.update({
+    return this.delegate.update({
       where: { id: params.id },
       data: params.data,
       include: {
@@ -142,7 +151,7 @@ export class TaskReportDefinitionRepository extends BaseRepository<
   }
 
   async softDeleteById(id: bigint) {
-    return this.prisma.taskReportDefinition.update({
+    return this.delegate.update({
       where: { id },
       data: { deletedAt: new Date() },
     });

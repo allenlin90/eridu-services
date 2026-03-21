@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 import type { CreateTaskReportDefinitionInput, UpdateTaskReportDefinitionInput } from '@eridu/api-types/task-management';
 
@@ -35,6 +37,13 @@ export function useTaskReportDefinitionMutations({
     onSuccess: (definition) => {
       queryClient.setQueryData(taskReportDefinitionKeys.detail(studioId, definition.id), definition);
       void queryClient.invalidateQueries({ queryKey: taskReportDefinitionKeys.lists(studioId) });
+    },
+    onError: (error: AxiosError) => {
+      if (error.response?.status === 409) {
+        toast.error('This report definition was updated by another user. Please reload to see the latest version.');
+      } else {
+        toast.error('Failed to update report definition.');
+      }
     },
   });
 
