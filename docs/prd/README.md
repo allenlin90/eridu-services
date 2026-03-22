@@ -29,3 +29,8 @@ PRDs are **phase-scoped and transient**:
 | PRD | Workstream | Status |
 | --- | --- | --- |
 | [Show Economics](./show-economics.md) | P&L baseline — creator cost + shift cost endpoints | Active |
+| [Studio Member Roster](./studio-member-roster.md) | Studio operator governance — L-side labor cost inputs (`baseHourlyRate`) | Active |
+| [Studio Creator Roster](./studio-creator-roster.md) | Studio operator governance — L-side creator cost defaults | Active |
+| [P&L Revenue Workflow](./pnl-revenue-workflow.md) | P&L revenue ("P") side — GMV/sales inputs, commission cost activation, contribution margin | Active |
+| [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | Active |
+| [Creator Availability Hardening](./creator-availability-hardening.md) | Dual-mode availability endpoint — overlap + roster conflict enforcement | Active (depends on creator roster) |
