@@ -82,6 +82,6 @@ describe('scheduleSnapshotsList', () => {
     render(<ScheduleSnapshotsList />);
 
     const schedulesLink = screen.getByText('Schedules').closest('a');
-    expect(schedulesLink).toHaveAttribute('data-search', JSON.stringify({ page: 1, pageSize: 10 }));
+    expect(schedulesLink).toHaveAttribute('data-search', JSON.stringify({ page: 1, limit: 10 }));
   });
 });

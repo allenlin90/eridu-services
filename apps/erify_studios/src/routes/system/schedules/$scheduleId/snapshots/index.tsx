@@ -18,7 +18,7 @@ import { adminApi } from '@/lib/api/admin';
 
 const snapshotsSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
-  pageSize: z.coerce.number().int().min(10).max(100).catch(10),
+  limit: z.coerce.number().int().min(10).max(100).catch(10),
 });
 
 export const Route = createFileRoute('/system/schedules/$scheduleId/snapshots/')({
@@ -84,7 +84,7 @@ export function ScheduleSnapshotsList() {
             <BreadcrumbItem>
               <Link
                 to="/system/schedules"
-                search={{ page: 1, pageSize: 10 }}
+                search={{ page: 1, limit: 10 }}
                 className="hover:text-foreground transition-colors"
               >
                 Schedules
@@ -94,7 +94,7 @@ export function ScheduleSnapshotsList() {
             <BreadcrumbItem>
               <Link
                 to="/system/schedules"
-                search={{ page: 1, pageSize: 10 }}
+                search={{ page: 1, limit: 10 }}
                 className="hover:text-foreground transition-colors"
               >
                 Schedule Details

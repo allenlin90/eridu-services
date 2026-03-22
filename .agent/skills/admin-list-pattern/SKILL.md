@@ -113,7 +113,7 @@ async getResources(@Query() query: ListResourceQueryDto) {
 
 ### 1. Route Search Schema
 
-Ensure the `Route` search schema includes the filter field.
+Ensure the `Route` search schema includes the filter field. Always use `limit` (not `pageSize`) as the URL param name.
 
 ```typescript
 const searchSchema = z.object({
@@ -122,6 +122,8 @@ const searchSchema = z.object({
   name: z.string().optional().catch(undefined),
 });
 ```
+
+> **`limit` vs `pageSize`**: `limit` is the URL param used in route schemas and navigation objects. TanStack Table's `PaginationState` type uses `pageSize` internally — this appears as `pagination.pageSize` in feature hooks and `paginationState={{ pageSize }}` in `DataTable` props. Do not rename those: `useTableUrlState` bridges the two by reading `limit` from the URL and returning TanStack's `PaginationState`. See `table-view-pattern` for the full breakdown.
 
 ### 2. DataTable Configuration
 

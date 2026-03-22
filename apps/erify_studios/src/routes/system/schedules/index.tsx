@@ -93,7 +93,7 @@ function SchedulesList() {
                 navigate({
                   to: '/system/schedules/$scheduleId/snapshots',
                   params: { scheduleId: schedule.id },
-                  search: { page: 1, pageSize: 10 },
+                  search: { page: 1, limit: 10 },
                 });
               }}
             >

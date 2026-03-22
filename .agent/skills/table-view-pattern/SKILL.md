@@ -241,6 +241,35 @@ Use `useTableUrlState` for:
 
 Do not fork a second URL-state abstraction for table pages unless the shared hook is demonstrably insufficient.
 
+#### `limit` vs `pageSize` — which to use where
+
+These are two different things and must not be confused:
+
+| Context | Field name | Why |
+|---------|-----------|-----|
+| Route search schema (`z.object`) | `limit` | URL param; what the backend and URL contract use |
+| TanStack Table `PaginationState` | `pageSize` | Library convention; `DataTable` and `DataTablePagination` props use this |
+| `useTableUrlState` return value | `pagination.pageSize` | The hook maps `limit` → TanStack's `PaginationState`; callers read `pagination.pageSize` |
+
+**Rule**: Use `limit` in any route `validateSearch` schema and in hardcoded `search={{ ... }}` navigation objects. Do **not** rename `pagination.pageSize` when passing `paginationState` to `DataTable` or `DataTablePagination` — that field name is TanStack Table's convention, not ours.
+
+```typescript
+// ✅ Route schema: use limit
+const searchSchema = z.object({
+  page: z.coerce.number().int().min(1).catch(1),
+  limit: z.coerce.number().int().min(10).max(100).catch(10),
+});
+
+// ✅ Navigate: use limit
+navigate({ to: '/system/foo', search: { page: 1, limit: 10 } });
+
+// ✅ DataTable prop: pageSize is TanStack Table's PaginationState — keep it
+paginationState={{ pageIndex: pagination.pageIndex, pageSize: pagination.pageSize }}
+
+// ✅ API call: read limit from TanStack's pageSize
+limit: pagination.pageSize
+```
+
 ### Local interaction state
 Keep this local and keyed by stable ids:
 - selected row id

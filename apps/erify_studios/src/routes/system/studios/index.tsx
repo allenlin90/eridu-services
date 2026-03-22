@@ -103,7 +103,7 @@ export function StudiosList() {
                 navigate({
                   to: '/system/studios/$studioId/studio-rooms',
                   params: { studioId: studio.id },
-                  search: { page: 1, pageSize: 10 },
+                  search: { page: 1, limit: 10 },
                 });
               }}
             >

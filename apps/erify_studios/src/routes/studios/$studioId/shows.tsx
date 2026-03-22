@@ -5,7 +5,7 @@ import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 
 const showsSearchSchema = z.looseObject({
   page: z.coerce.number().int().min(1).catch(1),
-  pageSize: z.coerce.number().int().min(1).catch(10),
+  limit: z.coerce.number().int().min(1).catch(10),
   sortBy: z.string().optional().catch(undefined),
   sortOrder: z.enum(['asc', 'desc']).optional().catch(undefined),
   search: z.string().optional().catch(undefined),
