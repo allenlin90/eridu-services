@@ -13,7 +13,7 @@ import {
   showWithRelationsSchema,
 } from '@/models/show/schemas/show.schema';
 import { showCreatorWithRelationsSchema } from '@/models/show-creator/schemas/show-creator.schema';
-import { createShowPlatformSchema, showPlatformWithRelationsSchema } from '@/models/show-platform/schemas/show-platform.schema';
+import { createShowPlatformSchema, showPlatformSchema } from '@/models/show-platform/schemas/show-platform.schema';
 
 // Extended schema for show orchestration with creator and platform assignments
 export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
@@ -147,11 +147,16 @@ const transformUpdateShowWithAssignmentsSchema
     };
   });
 
+// Slim platform shape matching showWithAssignmentsInclude select ({ uid, name } only)
+const showPlatformWithSlimPlatformSchema = showPlatformSchema.extend({
+  platform: z.object({ uid: z.string(), name: z.string() }).optional(),
+});
+
 // Extended schema for show with all relations including creators and platforms
 export const showWithAllRelationsSchema = showWithRelationsSchema.extend({
   showCreators: z.array(showCreatorWithRelationsSchema.omit({ show: true })).optional(),
   showPlatforms: z
-    .array(showPlatformWithRelationsSchema.omit({ show: true }))
+    .array(showPlatformWithSlimPlatformSchema)
     .optional(),
 });
 
