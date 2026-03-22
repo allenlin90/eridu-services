@@ -114,7 +114,21 @@ export function ReportColumnPicker({
       return raw;
     return raw.filter((s) => scope.source_templates!.includes(s.template_id));
   }, [activeSourcesData, propSourcesData, scope]);
-  const sharedFields = React.useMemo(() => activeSourcesData?.shared_fields ?? [], [activeSourcesData?.shared_fields]);
+  const sharedFields = React.useMemo(() => {
+    const raw = activeSourcesData?.shared_fields ?? [];
+    // Keep shared fields aligned with selected templates when parent-injected sources are unfiltered.
+    if (!propSourcesData || !scope?.source_templates?.length)
+      return raw;
+    const sharedFieldKeysInScope = new Set<string>();
+    for (const source of sources) {
+      for (const field of source.fields) {
+        if (field.standard) {
+          sharedFieldKeysInScope.add(field.key);
+        }
+      }
+    }
+    return raw.filter((sharedField) => sharedFieldKeysInScope.has(sharedField.key));
+  }, [activeSourcesData?.shared_fields, propSourcesData, scope, sources]);
   const systemColumnMap = React.useMemo(() => new Map(SYSTEM_COLUMNS.map((column) => [column.key, column])), []);
   const sharedFieldByKey = React.useMemo(() => new Map(sharedFields.map((f) => [f.key, f])), [sharedFields]);
 

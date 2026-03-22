@@ -146,6 +146,24 @@ describe('reportBuilder', () => {
     expect(runButton).toBeDisabled();
   });
 
+  it('treats shared fields as incompatible when source template filter excludes matching templates', () => {
+    renderWithQueryClient(
+      <ReportBuilderHarness
+        initialScope={{
+          date_from: '2026-03-01',
+          date_to: '2026-03-07',
+          source_templates: ['ttpl_00000000000000000099'],
+          submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+        }}
+        initialColumns={[{ key: 'gmv', label: 'GMV', type: 'number' }]}
+      />,
+    );
+
+    expect(screen.getByText('Definition Conflict Detected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Preflight/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Run Report/i })).toBeDisabled();
+  });
+
   it('runs preflight when scope has required dates and selected columns are compatible', async () => {
     const user = userEvent.setup();
     mockPreflightMutateAsync.mockResolvedValueOnce({

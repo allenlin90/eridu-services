@@ -74,10 +74,22 @@ export function ReportBuilder({
       return undefined;
     if (!draftScope?.source_templates?.length)
       return sourceDataForTemplateLookup;
+    const filteredSources = sourceDataForTemplateLookup.sources.filter((source) =>
+      draftScope.source_templates!.includes(source.template_id),
+    );
+    const sharedFieldKeysInScope = new Set<string>();
+    for (const source of filteredSources) {
+      for (const field of source.fields) {
+        if (field.standard) {
+          sharedFieldKeysInScope.add(field.key);
+        }
+      }
+    }
     return {
       ...sourceDataForTemplateLookup,
-      sources: sourceDataForTemplateLookup.sources.filter((s) =>
-        draftScope.source_templates!.includes(s.template_id),
+      sources: filteredSources,
+      shared_fields: sourceDataForTemplateLookup.shared_fields.filter((sharedField) =>
+        sharedFieldKeysInScope.has(sharedField.key),
       ),
     };
   }, [sourceDataForTemplateLookup, draftScope]);
