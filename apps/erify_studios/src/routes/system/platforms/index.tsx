@@ -57,8 +57,8 @@ function PlatformsList() {
     try {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
-    } catch (error) {
-      console.error('Failed to delete platform:', error);
+    } catch {
+      // Global mutation error handler already shows user-facing feedback.
     }
   };
 

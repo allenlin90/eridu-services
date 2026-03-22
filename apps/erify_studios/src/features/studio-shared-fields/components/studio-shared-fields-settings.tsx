@@ -120,8 +120,7 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
         description: '',
       });
       toast.success('Shared field created');
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error('Failed to create shared field');
     }
   };
@@ -157,8 +156,7 @@ export function StudioSharedFieldsSettings({ studioId }: StudioSharedFieldsSetti
         return next;
       });
       toast.success(`Updated "${field.key}"`);
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error(`Failed to update "${field.key}"`);
     }
   };

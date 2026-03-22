@@ -64,8 +64,8 @@ function ShowStandardsList() {
     try {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
-    } catch (error) {
-      console.error('Failed to delete show standard:', error);
+    } catch {
+      // Global mutation error handler already shows user-facing feedback.
     }
   };
 

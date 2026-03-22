@@ -243,8 +243,7 @@ export function ReportBuilder({
         scope: draftScope,
         columns: draftColumns,
       });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error('Failed to save report definition.');
     }
   };
