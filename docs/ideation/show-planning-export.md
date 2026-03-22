@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from planning/reporting exploration
 > **Origin**: Operations workflow ideation for Google Sheets replacement (2026-03-21)
-> **Related**: [Task submission reporting PRD](../../docs/prd/task-submission-reporting.md), [Task reporting BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [Task reporting FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [Business domain](../../docs/domain/BUSINESS.md), [Studio shift/show workflow notes](../../apps/erify_studios/docs/STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
+> **Related**: [Task submission reporting feature](../features/task-submission-reporting.md), [Task reporting BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [Task reporting FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [Business domain](../../docs/domain/BUSINESS.md), [Studio shift/show workflow notes](../../apps/erify_studios/docs/STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
 
 ## What
 

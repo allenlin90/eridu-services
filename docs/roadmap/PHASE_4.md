@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: ✅ Completed (creator mapping + assignment delivered; economics redesign deferred to next phase)
+> **Status**: 🚧 Active (reopened for economics baseline)
 > **Primary tracker**: This file (`PHASE_4.md`)
 
 ## Goal
@@ -52,6 +52,23 @@ PRDs for this phase have been deleted per lifecycle rules. Shipped behavior is o
 - Economics redesign/implementation (moved to [Phase 5](./PHASE_5.md) planning scope).
 - Ticketing/material management and unrelated backlog tracks (see [Phase 5](./PHASE_5.md)).
 - Advanced profit engine and complex compensation policies.
+
+## Phase 4 Reopened Scope (2026-03-21)
+
+Phase 4 is reopened to complete its original P&L economics goal. Task submission reporting was shipped during the interim.
+
+### Economics Baseline (Active)
+
+Deliver show-level and grouped economics endpoints for baseline variable cost visibility (creator costs + shift labor costs).
+
+- PRD: [show-economics.md](../prd/show-economics.md)
+- Status: 🚧 In Progress
+
+### Task Submission Reporting & Export (Shipped)
+
+- Status: ✅ Shipped (PR #16, commit `831b58ca`, 2026-03-21)
+- Feature doc: [task-submission-reporting.md](../features/task-submission-reporting.md)
+- Canonical docs: [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
 
 ## Definition of Done (Phase 4)
 

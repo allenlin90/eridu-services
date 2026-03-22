@@ -24,9 +24,8 @@ PRDs are **phase-scoped and transient**:
 
 > PRDs own pre-ship intent. App-local docs own post-ship behavior.
 
-## Phase 5 PRDs
+## Phase 4 PRDs (Reopened)
 
 | PRD | Workstream | Status |
 | --- | --- | --- |
 | [Show Economics](./show-economics.md) | P&L baseline — creator cost + shift cost endpoints | Active |
-| [Task Submission Reporting & Export](./task-submission-reporting.md) | Submitted-task review, manager reporting, and client-side export | Active |
