@@ -179,7 +179,7 @@ export const showWithAssignmentsInclude = {
       },
     },
   },
-} as const;
+} as const satisfies Prisma.ShowInclude;
 
 // Extended output schema for orchestration service
 export const showWithAssignmentsDto = showWithAllRelationsSchema.transform(
