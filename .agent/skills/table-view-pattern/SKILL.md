@@ -233,7 +233,7 @@ Build table UX around stale-while-revalidate rather than assuming every interact
 
 ### URL state
 Use `useTableUrlState` for:
-- page / pageSize
+- page / limit
 - sortBy / sortOrder
 - search
 - date ranges

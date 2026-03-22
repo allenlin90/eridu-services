@@ -5,7 +5,7 @@ import { useTableUrlState } from '../use-table-url-state';
 
 // Mock dependencies
 const mockNavigate = vi.fn();
-let mockSearch: Record<string, unknown> = { page: 2, pageSize: 20, sortBy: 'name', sortOrder: 'desc' as const };
+let mockSearch: Record<string, unknown> = { page: 2, limit: 20, sortBy: 'name', sortOrder: 'desc' as const };
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mockNavigate,
@@ -15,7 +15,7 @@ vi.mock('@tanstack/react-router', () => ({
 describe('useTableUrlState', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
-    mockSearch = { page: 2, pageSize: 20, sortBy: 'name', sortOrder: 'desc' as const };
+    mockSearch = { page: 2, limit: 20, sortBy: 'name', sortOrder: 'desc' as const };
   });
 
   describe('initialization', () => {
@@ -51,6 +51,18 @@ describe('useTableUrlState', () => {
         pageSize: 10,
       });
       expect(result.current.sorting).toEqual([]);
+    });
+
+    it('falls back to pageSize when limit is absent (backward compat)', () => {
+      mockSearch = { page: 1, pageSize: 25 };
+      const { result } = renderHook(() =>
+        useTableUrlState({ from: '/test' }),
+      );
+
+      expect(result.current.pagination).toEqual({
+        pageIndex: 0,
+        pageSize: 25,
+      });
     });
   });
 
