@@ -117,8 +117,8 @@ Ensure the `Route` search schema includes the filter field.
 
 ```typescript
 const searchSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  limit: z.number().int().min(10).max(100).catch(10),
+  page: z.coerce.number().int().min(1).catch(1),
+  limit: z.coerce.number().int().min(10).max(100).catch(10),
   name: z.string().optional().catch(undefined),
 });
 ```
