@@ -8,8 +8,6 @@ import * as React from 'react';
 export type TableUrlState = {
   page?: number;
   limit?: number;
-  /** @deprecated Use `limit` instead. Kept for backward-compat with old bookmarks. */
-  pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
@@ -75,7 +73,7 @@ export type TableUrlStateOptions<TRoute extends string> = {
 function urlToPagination(searchParams: TableUrlState): PaginationState {
   return {
     pageIndex: Math.max(0, (searchParams.page || 1) - 1),
-    pageSize: searchParams.limit ?? searchParams.pageSize ?? 10,
+    pageSize: searchParams.limit ?? 10,
   };
 }
 
@@ -270,7 +268,7 @@ export function useTableUrlState<TRoute extends string>(
   // Convert URL params to table state
   const pagination: PaginationState = React.useMemo(
     () => urlToPagination(searchParams),
-    [searchParams.page, searchParams.limit, searchParams.pageSize],
+    [searchParams.page, searchParams.limit],
   );
 
   const sorting: SortingState = React.useMemo(

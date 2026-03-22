@@ -53,9 +53,7 @@ describe('useTableUrlState', () => {
       expect(result.current.sorting).toEqual([]);
     });
 
-    it('falls back to pageSize when limit is absent (one-cycle backward compat)', () => {
-      // urlToPagination still reads pageSize as a fallback so old bookmarked URLs
-      // work for one page load before paginationToUrl clears it on the next nav.
+    it('ignores legacy pageSize when limit is absent', () => {
       mockSearch = { page: 1, pageSize: 25 };
       const { result } = renderHook(() =>
         useTableUrlState({ from: '/test' }),
@@ -63,7 +61,7 @@ describe('useTableUrlState', () => {
 
       expect(result.current.pagination).toEqual({
         pageIndex: 0,
-        pageSize: 25,
+        pageSize: 10,
       });
     });
 
@@ -81,7 +79,7 @@ describe('useTableUrlState', () => {
         }),
       );
 
-      // Extract the search updater and verify it sets pageSize to undefined
+      // Extract the search updater and verify it deletes the legacy key.
       const callArg = mockNavigate.mock.calls[0][0] as { search: (prev: Record<string, unknown>) => Record<string, unknown> };
       const prev = { page: 1, limit: 20, pageSize: 25 };
       const next = callArg.search(prev);
