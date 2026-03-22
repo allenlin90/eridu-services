@@ -307,13 +307,13 @@ function ShowTaskReadinessSection({
     refetch: refetchShowsScope,
   } = useQuery({
     queryKey: ['studio-shows', 'scope-total', studioId, showScopeDateBounds.date_from, showScopeDateBounds.date_to, refreshSignal],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       getStudioShows(studioId, {
         page: 1,
         limit: 1,
         date_from: showScopeDateBounds.date_from,
         date_to: showScopeDateBounds.date_to,
-      }),
+      }, { signal }),
     enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
     // Prevent a spurious GET /studio-shows?page=1&limit=1 every time the user
     // switches back to this tab — the scope-total counter only needs to refresh

@@ -74,7 +74,7 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
       needs_attention: needsAttention,
       ...filters,
     }),
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       getStudioShows(studioId, {
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
@@ -85,7 +85,7 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
         planning_date_to: planningDateTo,
         needs_attention: needsAttention,
         ...filters,
-      }),
+      }, { signal }),
     refetchOnWindowFocus: false,
   });
 

@@ -94,7 +94,7 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: studioTasksKeys.list(studioId, params),
-    queryFn: () => getStudioTasks(studioId, params),
+    queryFn: ({ signal }) => getStudioTasks(studioId, params, { signal }),
     enabled: !!studioId,
     gcTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,

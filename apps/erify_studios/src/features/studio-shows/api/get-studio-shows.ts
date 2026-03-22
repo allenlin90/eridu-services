@@ -41,7 +41,14 @@ type StudioShowsResponse = {
   };
 };
 
-export async function getStudioShows(studioId: string, params: GetStudioShowsParams): Promise<StudioShowsResponse> {
-  const response = await apiClient.get<StudioShowsResponse>(`/studios/${studioId}/shows`, { params });
+export async function getStudioShows(
+  studioId: string,
+  params: GetStudioShowsParams,
+  options?: { signal?: AbortSignal },
+): Promise<StudioShowsResponse> {
+  const response = await apiClient.get<StudioShowsResponse>(`/studios/${studioId}/shows`, {
+    params,
+    signal: options?.signal,
+  });
   return response.data;
 }

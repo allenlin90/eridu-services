@@ -23,9 +23,11 @@ export const studioShiftsKeys = {
 export async function getStudioShifts(
   studioId: string,
   params: GetStudioShiftsParams,
+  options?: { signal?: AbortSignal },
 ): Promise<StudioShiftsResponse> {
   const response = await apiClient.get<StudioShiftsResponse>(`/studios/${studioId}/shifts`, {
     params,
+    signal: options?.signal,
   });
   return response.data;
 }
@@ -33,9 +35,11 @@ export async function getStudioShifts(
 export async function getDutyManager(
   studioId: string,
   time?: string,
+  options?: { signal?: AbortSignal },
 ): Promise<StudioShift | null> {
   const response = await apiClient.get<StudioShift | null>(`/studios/${studioId}/shifts/duty-manager`, {
     params: time ? { time } : undefined,
+    signal: options?.signal,
   });
   return response.data;
 }

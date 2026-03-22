@@ -39,7 +39,7 @@ export function useStudioShifts(
 
   return useQuery({
     queryKey: studioShiftsKeys.list(studioId, queryParams),
-    queryFn: () => getStudioShifts(studioId, queryParams),
+    queryFn: ({ signal }) => getStudioShifts(studioId, queryParams, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }
@@ -53,7 +53,7 @@ export function useDutyManager(
 ) {
   return useQuery({
     queryKey: studioShiftsKeys.dutyManager(studioId, time),
-    queryFn: () => getDutyManager(studioId, time),
+    queryFn: ({ signal }) => getDutyManager(studioId, time, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }
@@ -76,8 +76,11 @@ export function useMyShifts(
 
   return useQuery({
     queryKey: myShiftsKeys.list(queryParams),
-    queryFn: () => getMyShifts(queryParams),
+    queryFn: ({ signal }) => getMyShifts(queryParams, { signal }),
     enabled: options?.enabled ?? true,
+    staleTime: 5 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 }
 
@@ -92,7 +95,7 @@ export function useShiftCalendar(
 
   return useQuery({
     queryKey: shiftCalendarKeys.detail(studioId, queryParams),
-    queryFn: () => getShiftCalendar(studioId, queryParams),
+    queryFn: ({ signal }) => getShiftCalendar(studioId, queryParams, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }
@@ -108,7 +111,7 @@ export function useShiftAlignment(
 
   return useQuery({
     queryKey: shiftAlignmentKeys.detail(studioId, queryParams),
-    queryFn: () => getShiftAlignment(studioId, queryParams),
+    queryFn: ({ signal }) => getShiftAlignment(studioId, queryParams, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }

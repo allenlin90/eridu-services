@@ -26,6 +26,7 @@ import { BaseStudioController } from '../base-studio.controller';
 import type { AuthenticatedRequest } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -118,6 +119,7 @@ export class StudioTaskController extends BaseStudioController {
   @ApiOperation({ summary: 'List studio tasks with filters (review queue support)' })
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Get()
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(taskWithRelationsDto)
   async listTasks(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

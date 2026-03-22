@@ -560,8 +560,16 @@ async list(
 | List/index with infinite scroll | Any mutation (POST, PATCH, DELETE) |
 | Search / autocomplete on keystroke | Auth endpoints (login, refresh) |
 | Rapid pagination (prev/next) | Single-resource GET by ID |
+| Internal-tool read endpoints that mount together on the same route (list + scope counts + lookups) | Rarely-hit settings/detail reads |
 
 **Never skip throttling entirely** — always opt into a named profile. `@SkipThrottle()` without a profile replacement removes all rate limiting and should not appear in production code.
+
+For `erify_studios`, this means a 429 spike should usually be solved by:
+1. reducing frontend remount/refetch churn,
+2. forwarding `AbortSignal` so abandoned reads are canceled,
+3. opting high-frequency read endpoints into `readBurst`.
+
+Do not bypass throttling based on browser `Origin`; that header is not a trusted server-side identity signal in this stack.
 
 ---
 

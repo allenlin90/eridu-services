@@ -38,7 +38,11 @@ export const studioTasksKeys = {
 export async function getStudioTasks(
   studioId: string,
   params: GetStudioTasksParams,
+  options?: { signal?: AbortSignal },
 ): Promise<StudioTasksResponse> {
-  const response = await apiClient.get<StudioTasksResponse>(`/studios/${studioId}/tasks`, { params });
+  const response = await apiClient.get<StudioTasksResponse>(`/studios/${studioId}/tasks`, {
+    params,
+    signal: options?.signal,
+  });
   return response.data;
 }

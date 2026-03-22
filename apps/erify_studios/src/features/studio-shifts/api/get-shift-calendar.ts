@@ -13,10 +13,11 @@ export const shiftCalendarKeys = {
 export async function getShiftCalendar(
   studioId: string,
   params: StudioShiftCalendarQueryParams,
+  options?: { signal?: AbortSignal },
 ): Promise<StudioShiftCalendarResponse> {
   const response = await apiClient.get<StudioShiftCalendarResponse>(
     `/studios/${studioId}/shift-calendar`,
-    { params },
+    { params, signal: options?.signal },
   );
   return response.data;
 }

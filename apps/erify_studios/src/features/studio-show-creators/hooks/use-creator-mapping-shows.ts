@@ -75,7 +75,7 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
       date_to: scopeDateBounds.date_to,
       ...filters,
     }),
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       getStudioShows(studioId, {
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
@@ -83,7 +83,7 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
         date_from: scopeDateBounds.date_from,
         date_to: scopeDateBounds.date_to,
         ...filters,
-      }),
+      }, { signal }),
     refetchOnWindowFocus: false,
   });
 

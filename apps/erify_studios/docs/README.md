@@ -18,6 +18,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 6. [Studio Shift Schedule Features and Workflows](./STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
 7. [Phase 4 P&L Frontend](./PHASE_4_PNL_FRONTEND.md)
 8. [PWA Shell Runbook](./PWA_SHELL_RUNBOOK.md)
+9. [Studios Internal Read Traffic Hardening](./STUDIOS_INTERNAL_READ_TRAFFIC.md)
 
 ## Design Docs
 

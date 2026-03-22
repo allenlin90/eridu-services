@@ -79,7 +79,7 @@ describe('useCreatorMappingShows', () => {
       }),
     ]);
 
-    await queryOptions.queryFn();
+    await queryOptions.queryFn({ signal: undefined } as never);
 
     expect(mockGetStudioShows).toHaveBeenCalledWith(
       'std_1',
@@ -91,6 +91,7 @@ describe('useCreatorMappingShows', () => {
         creator_name: 'alice',
         show_status_name: 'LIVE',
       }),
+      { signal: undefined },
     );
   });
 
@@ -105,11 +106,12 @@ describe('useCreatorMappingShows', () => {
     const queryOptions = mockUseQuery.mock.calls[0][0] as {
       queryFn: () => Promise<unknown>;
     };
-    await queryOptions.queryFn();
+    await queryOptions.queryFn({ signal: undefined } as never);
 
     expect(mockGetStudioShows).toHaveBeenCalledWith(
       'std_1',
       expect.objectContaining({ has_creators: false }),
+      { signal: undefined },
     );
   });
 });

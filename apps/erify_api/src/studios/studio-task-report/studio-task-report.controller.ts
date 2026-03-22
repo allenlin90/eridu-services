@@ -26,6 +26,7 @@ import { BaseStudioController } from '../base-studio.controller';
 import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -53,6 +54,7 @@ export class StudioTaskReportController extends BaseStudioController {
   }
 
   @Get('task-report-definitions')
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(taskReportDefinitionSchema)
   async listDefinitions(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,
@@ -111,6 +113,7 @@ export class StudioTaskReportController extends BaseStudioController {
   }
 
   @Get('task-report-sources')
+  @ReadBurstThrottle()
   @ZodResponse(taskReportSourcesResponseSchema)
   async getSources(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioUid: string,

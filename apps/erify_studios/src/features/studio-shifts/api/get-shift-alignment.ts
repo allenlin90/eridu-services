@@ -13,10 +13,11 @@ export const shiftAlignmentKeys = {
 export async function getShiftAlignment(
   studioId: string,
   params: StudioShiftAlignmentQueryParams,
+  options?: { signal?: AbortSignal },
 ): Promise<StudioShiftAlignmentResponse> {
   const response = await apiClient.get<StudioShiftAlignmentResponse>(
     `/studios/${studioId}/shift-alignment`,
-    { params },
+    { params, signal: options?.signal },
   );
   return response.data;
 }

@@ -7,6 +7,7 @@ import { MeShiftsService } from './shifts.service';
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { BaseController } from '@/lib/controllers/base.controller';
 import { ZodPaginatedResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import {
   ListMyStudioShiftsQueryDto,
   studioShiftDto,
@@ -19,6 +20,7 @@ export class MeShiftsController extends BaseController {
   }
 
   @Get()
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(studioShiftDto)
   async listShifts(
     @CurrentUser() user: AuthenticatedUser,

@@ -64,6 +64,13 @@ Studios page spacing consistency (2026-03-06):
 - `system/*` keeps shared `AdminLayout` pattern.
 - Different route sets may use different shared layouts, but each set should avoid per-page wrapper duplication.
 
+Studios internal-read traffic policy (2026-03-22):
+- Canonical doc: `apps/erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md`
+- `erify_studios` no longer treats all queries as instantly stale by default; ordinary interactive reads use a short warm cache instead of `staleTime: 0`.
+- `/me/*` operational reads keep shorter freshness and still refetch on focus/reconnect.
+- Navigation-heavy reads must forward TanStack Query `signal` to Axios fetchers so abandoned route transitions cancel in-flight requests.
+- Backend protection stays enabled; high-frequency internal GET endpoints should opt into `@ReadBurstThrottle()` instead of bypassing rate limiting by `Origin`.
+
 ## Critical Skills Clarifications
 
 ### service-pattern-nestjs (PRIMARY)

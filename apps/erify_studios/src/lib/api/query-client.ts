@@ -1,6 +1,28 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+const INTERACTIVE_READ_STALE_TIME_MS = 20 * 1000;
+const RATE_LIMIT_TOAST_DEDUPE_MS = 5 * 1000;
+
+let lastRateLimitToastAt = 0;
+
+function isCanceledError(error: unknown) {
+  return typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && error.code === 'ERR_CANCELED';
+}
+
+function isRateLimitedError(error: unknown) {
+  return typeof error === 'object'
+    && error !== null
+    && 'response' in error
+    && typeof error.response === 'object'
+    && error.response !== null
+    && 'status' in error.response
+    && error.response.status === 429;
+}
+
 declare module '@tanstack/react-query' {
   // eslint-disable-next-line -- TanStack query module augmentation requires interface
   interface Register {
@@ -26,8 +48,8 @@ declare module '@tanstack/react-query' {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data is instantly considered stale. This ensures revalidation on mount/focus.
-      staleTime: 0,
+      // Keep interactive reads warm across route transitions to avoid burst refetches.
+      staleTime: INTERACTIVE_READ_STALE_TIME_MS,
 
       // Keeps data in cache for instant UI rendering while background fetch runs
       gcTime: 30 * 60 * 1000,
@@ -42,8 +64,8 @@ export const queryClient = new QueryClient({
         return failureCount < 2;
       },
 
-      // Refetch on window focus in production
-      refetchOnWindowFocus: import.meta.env.PROD,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
 
       // default behavior is refetchOnMount: true (when stale), keeping implicit to ensure stale-while-revalidate mechanism
 
@@ -58,6 +80,19 @@ export const queryClient = new QueryClient({
   // Global query error handler
   queryCache: new QueryCache({
     onError: (error) => {
+      if (isCanceledError(error)) {
+        return;
+      }
+
+      if (isRateLimitedError(error)) {
+        const now = Date.now();
+        if (now - lastRateLimitToastAt >= RATE_LIMIT_TOAST_DEDUPE_MS) {
+          lastRateLimitToastAt = now;
+          toast.error('Too many background requests. Wait a few seconds or refresh.');
+        }
+        return;
+      }
+
       // Log errors for monitoring
       console.error('Query error:', error);
 

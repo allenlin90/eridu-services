@@ -191,6 +191,20 @@ useInfiniteQuery({
 - ✅ Always destructure `signal` from `queryFn` context — even if the fetcher signature is optional, pass it through
 - ✅ API fetchers must accept `options?: { signal?: AbortSignal }` and forward to `apiClient.get/post`
 - ✅ This prevents stale responses from appearing after a user navigates away mid-request
+- ✅ For navigation-heavy internal-tool reads, cancellation is required even when the request is "just a GET" — otherwise route switches still consume backend throttle budget after the user leaves
+
+### Internal Read Freshness Policy
+
+`erify_studios` uses tiered query freshness instead of `staleTime: 0` everywhere:
+
+- **Interactive reads** (default list/detail navigation): short warm cache, currently `20s`
+- **Operational reads** (for example `/me/*` task/shift views): shorter freshness, currently `5s`, with focus/reconnect refetch enabled
+- **Lookup/reference reads**: long stale window, often `1h`
+
+Rules:
+- Do not set global `staleTime: 0` for internal-tool apps with route churn unless you have measured that the extra remount traffic is acceptable.
+- Prefer explicit manual refresh or mutation invalidation over always-refetch-on-focus for ordinary studio admin pages.
+- If a query is mounted during navigation and the user can leave before it completes, combine this freshness policy with `AbortSignal` forwarding.
 
 ### Query Key Memoization
 

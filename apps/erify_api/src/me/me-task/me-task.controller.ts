@@ -7,6 +7,7 @@ import { MeTaskService } from './me-task.service';
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { BaseController } from '@/lib/controllers/base.controller';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   ListMyTasksQueryDto,
@@ -29,6 +30,7 @@ export class MeTaskController extends BaseController {
   }
 
   @Get()
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(taskWithRelationsDto)
   async listTasks(
     @CurrentUser() user: AuthenticatedUser,
