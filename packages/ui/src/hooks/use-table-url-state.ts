@@ -81,14 +81,11 @@ function urlToPagination(searchParams: TableUrlState): PaginationState {
 
 /**
  * Convert PaginationState to URL params.
- * Explicitly sets pageSize to undefined so TanStack Router evicts any legacy
- * ?pageSize= param from the URL on the next navigation.
  */
-function paginationToUrl(pagination: PaginationState): Pick<TableUrlState, 'page' | 'limit' | 'pageSize'> {
+function paginationToUrl(pagination: PaginationState): Pick<TableUrlState, 'page' | 'limit'> {
   return {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
-    pageSize: undefined,
   };
 }
 
@@ -350,10 +347,12 @@ export function useTableUrlState<TRoute extends string>(
     (updater: PaginationState | ((old: PaginationState) => PaginationState)) => {
       const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
       navigate({
-        search: (prev) => ({
-          ...prev,
-          ...paginationToUrl(newPagination),
-        }),
+        search: (prev) => {
+          const next = { ...prev, ...paginationToUrl(newPagination) };
+          // Delete legacy pageSize so it is never re-serialised to the URL.
+          delete (next as Record<string, unknown>).pageSize;
+          return next;
+        },
       });
     },
     [navigate, pagination],

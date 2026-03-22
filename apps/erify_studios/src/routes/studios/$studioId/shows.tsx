@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 
-const showsSearchSchema = z.looseObject({
+const showsSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   limit: z.coerce.number().int().min(1).catch(10),
   sortBy: z.string().optional().catch(undefined),
