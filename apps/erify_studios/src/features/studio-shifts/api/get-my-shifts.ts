@@ -19,9 +19,13 @@ export const myShiftsKeys = {
   list: (filters?: unknown) => [...myShiftsKeys.lists(), filters] as const,
 };
 
-export async function getMyShifts(params: GetMyShiftsParams): Promise<StudioShiftsResponse> {
+export async function getMyShifts(
+  params: GetMyShiftsParams,
+  options?: { signal?: AbortSignal },
+): Promise<StudioShiftsResponse> {
   const response = await apiClient.get<StudioShiftsResponse>('/me/shifts', {
     params,
+    signal: options?.signal,
   });
   return response.data;
 }

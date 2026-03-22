@@ -6,6 +6,7 @@ import { BaseStudioController } from '../base-studio.controller';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -28,6 +29,7 @@ export class ShiftCalendarController extends BaseStudioController {
   }
 
   @Get('shift-calendar')
+  @ReadBurstThrottle()
   @ZodResponse(shiftCalendarDto)
   async showCalendar(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -37,6 +39,7 @@ export class ShiftCalendarController extends BaseStudioController {
   }
 
   @Get('shift-alignment')
+  @ReadBurstThrottle()
   @ZodResponse(shiftAlignmentDto)
   async showAlignment(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

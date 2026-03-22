@@ -19,6 +19,7 @@ import { BaseStudioController } from '../base-studio.controller';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   CreateSharedFieldDto,
@@ -36,6 +37,7 @@ export class StudioSharedFieldsController extends BaseStudioController {
 
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Get()
+  @ReadBurstThrottle()
   @ZodResponse(sharedFieldsResponseSchema)
   async listSharedFields(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

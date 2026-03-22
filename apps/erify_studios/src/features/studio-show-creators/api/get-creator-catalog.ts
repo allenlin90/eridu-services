@@ -18,10 +18,11 @@ export const creatorCatalogKeys = {
 export async function getCreatorCatalog(
   studioId: string,
   query: CreatorCatalogQuery,
+  options?: { signal?: AbortSignal },
 ): Promise<StudioCreatorCatalogItem[]> {
   const response = await apiClient.get<StudioCreatorCatalogItem[]>(
     `/studios/${studioId}/creators/catalog`,
-    { params: query },
+    { params: query, signal: options?.signal },
   );
   return response.data;
 }
@@ -33,7 +34,7 @@ export function useCreatorCatalogQuery(
 ) {
   return useQuery({
     queryKey: creatorCatalogKeys.list(studioId, query),
-    queryFn: () => getCreatorCatalog(studioId, query),
+    queryFn: ({ signal }) => getCreatorCatalog(studioId, query, { signal }),
     enabled: enabled && Boolean(studioId),
     placeholderData: keepPreviousData,
   });

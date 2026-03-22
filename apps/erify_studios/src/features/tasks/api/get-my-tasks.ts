@@ -11,7 +11,10 @@ export const myTasksKeys = {
   list: (filters?: ListMyTasksQuery) => [...myTasksKeys.lists(), filters] as const,
 };
 
-export async function getMyTasks(query: ListMyTasksQuery): Promise<MyTasksResponse> {
+export async function getMyTasks(
+  query: ListMyTasksQuery,
+  options?: { signal?: AbortSignal },
+): Promise<MyTasksResponse> {
   const {
     studio_id,
     status,
@@ -58,6 +61,8 @@ export async function getMyTasks(query: ListMyTasksQuery): Promise<MyTasksRespon
   searchParams.append('page', page.toString());
   searchParams.append('limit', limit.toString());
 
-  const response = await apiClient.get<MyTasksResponse>(`/me/tasks?${searchParams.toString()}`);
+  const response = await apiClient.get<MyTasksResponse>(`/me/tasks?${searchParams.toString()}`, {
+    signal: options?.signal,
+  });
   return response.data;
 }

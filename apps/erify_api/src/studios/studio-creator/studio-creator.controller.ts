@@ -26,6 +26,7 @@ import {
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
@@ -47,6 +48,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @Get('availability')
+  @ReadBurstThrottle()
   @ZodResponse(z.array(studioCreatorAvailabilityItemApiSchema))
   async availability(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -57,6 +59,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @Get('catalog')
+  @ReadBurstThrottle()
   @ZodResponse(z.array(studioCreatorCatalogItemApiSchema))
   async catalog(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -67,6 +70,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @Get('roster')
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(studioCreatorRosterItemApiSchema)
   async roster(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

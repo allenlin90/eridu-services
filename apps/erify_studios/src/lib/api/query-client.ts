@@ -1,5 +1,24 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { toast } from 'sonner';
+
+const INTERACTIVE_READ_STALE_TIME_MS = 20 * 1000;
+const RATE_LIMIT_TOAST_DEDUPE_MS = 5 * 1000;
+
+// Module-level singleton — intentional for dedup across the app lifetime.
+// Tests that cover the 429 toast path should call vi.resetModules() or
+// import query-client in an isolated module scope to avoid bleed between suites.
+let lastRateLimitToastAt = 0;
+
+function isRateLimitedError(error: unknown) {
+  return typeof error === 'object'
+    && error !== null
+    && 'response' in error
+    && typeof error.response === 'object'
+    && error.response !== null
+    && 'status' in error.response
+    && error.response.status === 429;
+}
 
 declare module '@tanstack/react-query' {
   // eslint-disable-next-line -- TanStack query module augmentation requires interface
@@ -26,8 +45,8 @@ declare module '@tanstack/react-query' {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data is instantly considered stale. This ensures revalidation on mount/focus.
-      staleTime: 0,
+      // Keep interactive reads warm across route transitions to avoid burst refetches.
+      staleTime: INTERACTIVE_READ_STALE_TIME_MS,
 
       // Keeps data in cache for instant UI rendering while background fetch runs
       gcTime: 30 * 60 * 1000,
@@ -42,8 +61,11 @@ export const queryClient = new QueryClient({
         return failureCount < 2;
       },
 
-      // Refetch on window focus in production
-      refetchOnWindowFocus: import.meta.env.PROD,
+      // Intentionally disabled globally for erify_studios (internal-tool app).
+      // Route churn with staleTime: 0 caused 429 bursts on every tab switch.
+      // Operational reads (/me/*) opt back in per-hook where near-real-time matters.
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
 
       // default behavior is refetchOnMount: true (when stale), keeping implicit to ensure stale-while-revalidate mechanism
 
@@ -58,6 +80,19 @@ export const queryClient = new QueryClient({
   // Global query error handler
   queryCache: new QueryCache({
     onError: (error) => {
+      if (axios.isCancel(error)) {
+        return;
+      }
+
+      if (isRateLimitedError(error)) {
+        const now = Date.now();
+        if (now - lastRateLimitToastAt >= RATE_LIMIT_TOAST_DEDUPE_MS) {
+          lastRateLimitToastAt = now;
+          toast.error('Too many background requests. Wait a few seconds or refresh.');
+        }
+        return;
+      }
+
       // Log errors for monitoring
       console.error('Query error:', error);
 

@@ -10,6 +10,7 @@ import { BaseStudioController } from '../base-studio.controller';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ClientService } from '@/models/client/client.service';
@@ -42,6 +43,7 @@ export class StudioLookupController extends BaseStudioController {
   }
 
   @Get('show-lookups')
+  @ReadBurstThrottle()
   @ZodResponse(studioShowLookupsDto)
   async getShowLookups(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
@@ -62,6 +64,7 @@ export class StudioLookupController extends BaseStudioController {
   }
 
   @Get('show-types')
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(showTypeDto)
   async getShowTypes(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
@@ -78,6 +81,7 @@ export class StudioLookupController extends BaseStudioController {
   }
 
   @Get('clients')
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(clientDto)
   async getClients(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
@@ -91,6 +95,7 @@ export class StudioLookupController extends BaseStudioController {
   }
 
   @Get('show-standards')
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(showStandardDto)
   async getShowStandards(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
@@ -107,6 +112,7 @@ export class StudioLookupController extends BaseStudioController {
   }
 
   @Get('show-statuses')
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(showStatusDto)
   async getShowStatuses(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
@@ -120,6 +126,7 @@ export class StudioLookupController extends BaseStudioController {
   }
 
   @Get('platforms')
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(platformDto)
   async getPlatforms(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,

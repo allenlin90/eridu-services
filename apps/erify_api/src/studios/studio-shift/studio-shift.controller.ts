@@ -17,6 +17,7 @@ import { BaseStudioController } from '../base-studio.controller';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -37,6 +38,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Get()
+  @ReadBurstThrottle()
   @ZodPaginatedResponse(studioShiftDto)
   async index(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

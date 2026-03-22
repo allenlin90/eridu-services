@@ -20,10 +20,11 @@ export const creatorAvailabilityKeys = {
 export async function getCreatorAvailability(
   studioId: string,
   query: CreatorAvailabilityQuery,
+  options?: { signal?: AbortSignal },
 ): Promise<StudioCreatorAvailabilityItem[]> {
   const response = await apiClient.get<StudioCreatorAvailabilityItem[]>(
     `/studios/${studioId}/creators/availability`,
-    { params: query },
+    { params: query, signal: options?.signal },
   );
   return response.data;
 }
@@ -35,7 +36,7 @@ export function useCreatorAvailabilityQuery(
 ) {
   return useQuery({
     queryKey: creatorAvailabilityKeys.list(studioId, query),
-    queryFn: () => getCreatorAvailability(studioId, query),
+    queryFn: ({ signal }) => getCreatorAvailability(studioId, query, { signal }),
     enabled: enabled && Boolean(studioId && query.date_from && query.date_to),
     placeholderData: keepPreviousData,
   });
