@@ -224,7 +224,15 @@ export class TaskTemplateRepository extends BaseRepository<
         skip,
         take,
         orderBy,
-        include: {
+        select: {
+          id: true,
+          uid: true,
+          name: true,
+          description: true,
+          isActive: true,
+          version: true,
+          createdAt: true,
+          updatedAt: true,
           studio: {
             select: {
               uid: true,
@@ -242,7 +250,7 @@ export class TaskTemplateRepository extends BaseRepository<
 
     const templateIds = templates.map((t) => t.id);
 
-    const [totalTaskCounts, activeTaskCounts, lastUsedGroup] = await Promise.all([
+    const [totalTaskCounts, activeTaskCounts, lastUsedGroup, taskTypeRows] = await Promise.all([
       this.prisma.task.groupBy({
         by: ['templateId'],
         where: { templateId: { in: templateIds } },
@@ -261,6 +269,15 @@ export class TaskTemplateRepository extends BaseRepository<
         where: { templateId: { in: templateIds } },
         _max: { createdAt: true },
       }),
+      this.prisma.$queryRaw<Array<{ template_id: bigint; task_type: string | null }>>(
+        Prisma.sql`
+          SELECT
+            tt.id AS template_id,
+            tt.current_schema #>> '{metadata,task_type}' AS task_type
+          FROM task_templates tt
+          WHERE tt.id IN (${Prisma.join(templateIds)})
+        `,
+      ),
     ]);
 
     const distinctShowRows = await this.prisma.$queryRaw<Array<{ template_id: bigint; show_count: bigint }>>(
@@ -283,6 +300,7 @@ export class TaskTemplateRepository extends BaseRepository<
     const activeTaskCountMap = new Map(activeTaskCounts.map((row) => [row.templateId, row._count._all]));
     const lastUsedMap = new Map(lastUsedGroup.map((row) => [row.templateId, row._max.createdAt]));
     const showCountMap = new Map(distinctShowRows.map((row) => [row.template_id, Number(row.show_count)]));
+    const taskTypeMap = new Map(taskTypeRows.map((row) => [row.template_id, row.task_type]));
 
     let data = templates.map((template) => ({
       id: template.uid,
@@ -290,7 +308,7 @@ export class TaskTemplateRepository extends BaseRepository<
       studio_name: template.studio.name,
       name: template.name,
       description: template.description,
-      task_type: ((template.currentSchema as { metadata?: { task_type?: string } })?.metadata?.task_type ?? 'OTHER'),
+      task_type: taskTypeMap.get(template.id) ?? 'OTHER',
       is_active: template.isActive,
       version: template.version,
       created_at: template.createdAt.toISOString(),
