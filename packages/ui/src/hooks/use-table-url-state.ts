@@ -7,6 +7,8 @@ import * as React from 'react';
  */
 export type TableUrlState = {
   page?: number;
+  limit?: number;
+  /** @deprecated Use `limit` instead. Kept for backward-compat with old bookmarks. */
   pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -73,17 +75,17 @@ export type TableUrlStateOptions<TRoute extends string> = {
 function urlToPagination(searchParams: TableUrlState): PaginationState {
   return {
     pageIndex: Math.max(0, (searchParams.page || 1) - 1),
-    pageSize: searchParams.pageSize || 10,
+    pageSize: searchParams.limit ?? searchParams.pageSize ?? 10,
   };
 }
 
 /**
  * Convert PaginationState to URL params
  */
-function paginationToUrl(pagination: PaginationState): Pick<TableUrlState, 'page' | 'pageSize'> {
+function paginationToUrl(pagination: PaginationState): Pick<TableUrlState, 'page' | 'limit'> {
   return {
     page: pagination.pageIndex + 1,
-    pageSize: pagination.pageSize,
+    limit: pagination.pageSize,
   };
 }
 
@@ -268,7 +270,7 @@ export function useTableUrlState<TRoute extends string>(
   // Convert URL params to table state
   const pagination: PaginationState = React.useMemo(
     () => urlToPagination(searchParams),
-    [searchParams.page, searchParams.pageSize],
+    [searchParams.page, searchParams.limit, searchParams.pageSize],
   );
 
   const sorting: SortingState = React.useMemo(
@@ -286,6 +288,7 @@ export function useTableUrlState<TRoute extends string>(
   const dynamicFilterEntries = React.useMemo(() => {
     const reservedKeys = [
       'page',
+      'limit',
       'pageSize',
       'sortBy',
       'sortOrder',

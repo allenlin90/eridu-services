@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const studioTaskSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
-  pageSize: z.coerce.number().int().min(10).max(100).catch(10),
+  limit: z.coerce.number().int().min(10).max(100).catch(10),
   description: z.string().optional().catch(undefined),
   client_name: z.string().optional().catch(undefined),
   assignee_name: z.string().optional().catch(undefined),
