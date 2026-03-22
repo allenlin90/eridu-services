@@ -31,7 +31,6 @@ import {
   normalizeScopeDate,
   parseScopeDateAsLocal,
 } from '@/features/studio-shows/utils/show-scope.utils';
-import { hasLegacyPageSizeParam } from '@/lib/legacy-page-size-url';
 import { resolveUpdater } from '@/lib/table-state.utils';
 
 const creatorMappingRouteApi = getRouteApi('/studios/$studioId/creator-mapping');
@@ -111,14 +110,6 @@ function CreatorMappingPage() {
       replace: options?.replace ?? true,
     });
   }, [navigate, studioId]);
-
-  useEffect(() => {
-    if (!hasLegacyPageSizeParam(window.location.search)) {
-      return;
-    }
-
-    updateSearch((previous) => previous, { replace: true });
-  }, [updateSearch]);
 
   useEffect(() => {
     if (search.date_from && search.date_to) {

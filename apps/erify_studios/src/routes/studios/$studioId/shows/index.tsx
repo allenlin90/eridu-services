@@ -40,7 +40,6 @@ import {
   parseScopeDateAsLocal,
   toShowScopeDateTimeBounds,
 } from '@/features/studio-shows/utils/show-scope.utils';
-import { hasLegacyPageSizeParam } from '@/lib/legacy-page-size-url';
 import { resolveUpdater } from '@/lib/table-state.utils';
 
 export const Route = createFileRoute('/studios/$studioId/shows/')({
@@ -127,14 +126,6 @@ function StudioShowsPage() {
       replace: options?.replace ?? true,
     });
   }, [navigate, studioId]);
-
-  useEffect(() => {
-    if (!hasLegacyPageSizeParam(window.location.search)) {
-      return;
-    }
-
-    updateSearch((previous) => previous, { replace: true });
-  }, [updateSearch]);
 
   useEffect(() => {
     if (search.date_from && search.date_to) {
