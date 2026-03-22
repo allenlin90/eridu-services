@@ -4,9 +4,11 @@ import type { ShowInclude, ShowWithPayload } from './schemas/show.schema';
 import {
   CreateShowDto,
   ListShowsQueryDto,
+  showDtoListInclude,
   UpdateShowDto,
 } from './schemas/show.schema';
 import { ShowRepository } from './show.repository';
+import { SHOW_UID_PREFIX } from './show-uid.util';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
@@ -14,7 +16,7 @@ import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class ShowService extends BaseModelService {
-  static readonly UID_PREFIX = 'show';
+  static readonly UID_PREFIX = SHOW_UID_PREFIX;
   protected readonly uidPrefix = ShowService.UID_PREFIX;
 
   constructor(
@@ -130,16 +132,7 @@ export class ShowService extends BaseModelService {
     query: ListShowsQueryDto,
     include?: Parameters<ShowRepository['findPaginated']>[1],
   ): ReturnType<ShowRepository['findPaginated']> {
-    const defaultInclude = {
-      client: true,
-      studio: true,
-      studioRoom: true,
-      showType: true,
-      showStatus: true,
-      showStandard: true,
-    };
-
-    return this.showRepository.findPaginated(query, include ?? defaultInclude);
+    return this.showRepository.findPaginated(query, include ?? showDtoListInclude);
   }
 
   async updateShowFromDto<T extends Parameters<ShowRepository['update']>[2]>(

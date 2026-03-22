@@ -6,17 +6,11 @@ import { showApiResponseSchema } from '@eridu/api-types/shows';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
-import { clientSchema } from '@/models/client/schemas/client.schema';
-import { ShowService } from '@/models/show/show.service';
-import { showStandardSchema } from '@/models/show-standard/schemas/show-standard.schema';
+import { SHOW_UID_PREFIX } from '@/models/show/show-uid.util';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
-import { showStatusSchema } from '@/models/show-status/schemas/show-status.schema';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
-import { showTypeSchema } from '@/models/show-type/schemas/show-type.schema';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
-import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
-import { studioRoomSchema } from '@/models/studio-room/schemas/studio-room.schema';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 
 // Re-exported Prisma types for service consumption (schemas CAN import Prisma)
@@ -51,10 +45,41 @@ export type UpdateShowPayload = {
   showStandardId?: string;
 };
 
+const showClientRelationSchema = z.object({
+  uid: z.string().startsWith(ClientService.UID_PREFIX),
+  name: z.string(),
+});
+
+const showStudioRelationSchema = z.object({
+  uid: z.string().startsWith(StudioService.UID_PREFIX),
+  name: z.string(),
+});
+
+const showStudioRoomRelationSchema = z.object({
+  uid: z.string().startsWith(StudioRoomService.UID_PREFIX),
+  name: z.string(),
+});
+
+const showTypeRelationSchema = z.object({
+  uid: z.string().startsWith(ShowTypeService.UID_PREFIX),
+  name: z.string(),
+});
+
+const showStatusRelationSchema = z.object({
+  uid: z.string().startsWith(ShowStatusService.UID_PREFIX),
+  name: z.string(),
+  systemKey: z.string().nullable().optional(),
+});
+
+const showStandardRelationSchema = z.object({
+  uid: z.string().startsWith(ShowStandardService.UID_PREFIX),
+  name: z.string(),
+});
+
 // Internal schema for database entity
 export const showSchema = z.object({
   id: z.bigint(),
-  uid: z.string().startsWith(ShowService.UID_PREFIX),
+  uid: z.string().startsWith(SHOW_UID_PREFIX),
   clientId: z.bigint(),
   studioId: z.bigint().nullable(),
   studioRoomId: z.bigint().nullable(),
@@ -170,13 +195,61 @@ export const updateShowSchema = z
 
 // Schema for Show with relations (used in admin endpoints)
 export const showWithRelationsSchema = showSchema.extend({
-  client: clientSchema.optional(),
-  studio: studioSchema.nullable().optional(),
-  studioRoom: studioRoomSchema.nullable().optional(),
-  showType: showTypeSchema.optional(),
-  showStatus: showStatusSchema.optional(),
-  showStandard: showStandardSchema.optional(),
+  client: showClientRelationSchema.optional(),
+  studio: showStudioRelationSchema.nullable().optional(),
+  studioRoom: showStudioRoomRelationSchema.nullable().optional(),
+  showType: showTypeRelationSchema.optional(),
+  showStatus: showStatusRelationSchema.optional(),
+  showStandard: showStandardRelationSchema.optional(),
 });
+
+export const showDtoListInclude = {
+  client: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
+  studio: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
+  studioRoom: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
+  showType: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
+  showStatus: {
+    select: {
+      uid: true,
+      name: true,
+      systemKey: true,
+    },
+  },
+  showStandard: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
+} as const satisfies Prisma.ShowInclude;
+
+export const creatorShowDtoInclude = {
+  client: showDtoListInclude.client,
+  studioRoom: showDtoListInclude.studioRoom,
+  showType: showDtoListInclude.showType,
+  showStatus: showDtoListInclude.showStatus,
+  showStandard: showDtoListInclude.showStandard,
+} as const satisfies Prisma.ShowInclude;
 
 // API output schema (transforms to snake_case)
 // Uses shared schema from @eridu/api-types for consistency
