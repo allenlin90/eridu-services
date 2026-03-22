@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { StudioCreatorApiModule } from './studio-creator/studio-creator.module';
+import { StudioEconomicsModule } from './studio-economics/studio-economics.module';
 import { StudioLookupModule } from './studio-lookup/studio-lookup.module';
 import { StudioMembershipModule } from './studio-membership/studio-membership.module';
 import { StudioSettingsModule } from './studio-settings/studio-settings.module';
@@ -21,6 +22,7 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
     StudioTaskModule,
     StudioTaskReportModule,
     StudioShowModule,
+    StudioEconomicsModule,
   ],
   exports: [
     StudioTaskTemplateModule,

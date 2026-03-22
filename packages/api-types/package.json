@@ -13,6 +13,10 @@
       "types": "./dist/clients/index.d.ts",
       "default": "./dist/clients/index.js"
     },
+    "./economics": {
+      "types": "./dist/economics/index.d.ts",
+      "default": "./dist/economics/index.js"
+    },
     "./constants": {
       "types": "./dist/constants.d.ts",
       "default": "./dist/constants.js"
