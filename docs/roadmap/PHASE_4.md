@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active (reopened for economics baseline)
+> **Status**: 🚧 Active (economics baseline shipped; extended scope in planning)
 > **Primary tracker**: This file (`PHASE_4.md`)
 
 ## Goal
@@ -49,20 +49,49 @@ PRDs for this phase have been deleted per lifecycle rules. Shipped behavior is o
 
 ## Out of Scope for Phase 4
 
-- Economics redesign/implementation (moved to [Phase 5](./PHASE_5.md) planning scope).
 - Ticketing/material management and unrelated backlog tracks (see [Phase 5](./PHASE_5.md)).
-- Advanced profit engine and complex compensation policies.
+- Advanced profit engine and complex compensation policies (tiered/volume commission, bonus, OT).
+- Creator HR & operations (HRMS, platform API integrations, fixed cost tracking) — deferred to Phase 5.
+- Full-text search, admin UX searchability refactor — deferred to Phase 5.
 
 ## Phase 4 Reopened Scope (2026-03-21)
 
 Phase 4 is reopened to complete its original P&L economics goal. Task submission reporting was shipped during the interim.
 
-### Economics Baseline (Active)
+### Economics Baseline (Shipped)
 
 Deliver show-level and grouped economics endpoints for baseline variable cost visibility (creator costs + shift labor costs).
 
 - PRD: [show-economics.md](../prd/show-economics.md)
-- Status: 🚧 In Progress
+- Status: ✅ Shipped (commit `8de31ffe`, 2026-03-22, branch `feat/show-economics-baseline`)
+- Endpoints:
+  - `GET /studios/:studioId/shows/:showId/economics` — single show variable cost breakdown
+  - `GET /studios/:studioId/economics` — grouped economics (by show / schedule / client)
+- Creator costs resolve `ShowCreator` overrides → `Creator` defaults; `COMMISSION`/`HYBRID` yield `null` computed cost (revenue side deferred to ideation).
+- Shift costs are proportionally attributed by block overlap with show time window.
+
+### Resolved from Ideation (2026-03-22)
+
+Items resolved during the Phase 4 reopen window without full PRD promotion:
+
+| Topic | Disposition | Commit / PR | Notes |
+| ----- | ----------- | ----------- | ----- |
+| Frontend API Contract Consistency (`pageSize` → `limit`) | ✅ Implemented | PRs #21, #23 (`cfd80c14`, `38b3c32c`) | All 15 `erify_studios` search schemas and `useTableUrlState` migrated; `pageSize` backcompat removed. |
+| API Read-Path Optimization (show / task-template slice) | ✅ Partial slice shipped | PR #22 (`a06ddcac`) | Show DTO includes slimmed, studio task-summary and single-show query shaped, admin template blob-read reduced. Full ideation remains active. |
+| Studios Internal Read Burst Hardening | ✅ Implemented | PR #24 (`7def7a50`) | Request deduplication, `axios.isCancel()` guard, `refetchOnWindowFocus` disabled globally; rationale in `STUDIOS_INTERNAL_READ_TRAFFIC.md`. |
+
+### Extended Scope (2026-03-22) — Active PRDs
+
+Phase 4 expanded to cover full P&L operator foundations. Six new workstreams promoted from ideation:
+
+| Workstream | PRD | Status | L-side Hook |
+| ---------- | --- | ------ | ----------- |
+| Studio member roster + helper eligibility gating | [studio-member-roster.md](../prd/studio-member-roster.md) | 🔲 Planned | `StudioMembership.baseHourlyRate` → shift labor cost |
+| Studio creator roster CRUD | [studio-creator-roster.md](../prd/studio-creator-roster.md) | 🔲 Planned | `Creator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback |
+| P&L revenue workflow (GMV/sales input) | [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md) | 🔲 Planned (open design Qs) | Activates COMMISSION/HYBRID creator cost computation |
+| Show planning export with cost preview | [show-planning-export.md](../prd/show-planning-export.md) | 🔲 Planned | `estimated_total_cost` column from economics |
+| Creator availability hardening (strict mode) | [creator-availability-hardening.md](../prd/creator-availability-hardening.md) | 🔲 Planned (depends on creator roster) | Conflict enforcement: overlap, roster state, inactive |
+| Sidebar redesign (erify_studios) | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔲 Planned | — |
 
 ### Task Submission Reporting & Export (Shipped)
 
@@ -72,6 +101,13 @@ Deliver show-level and grouped economics endpoints for baseline variable cost vi
 
 ## Definition of Done (Phase 4)
 
-- Mapping/assignment flow is stable and merged-ready.
-- Creator mapping PRD intent and BE/FE design docs are synced and traceable by route/contract.
-- Economics work is explicitly deferred to next phase redesign and tracked in Phase 5 backlog.
+- Mapping/assignment flow is stable and merged-ready. ✅
+- Creator mapping PRD intent and BE/FE design docs are synced and traceable by route/contract. ✅
+- Economics baseline (variable cost side) shipped: per-show and grouped endpoints. ✅
+- Studio member roster with `baseHourlyRate` editing and helper eligibility gating implemented.
+- Studio creator roster CRUD with compensation defaults implemented.
+- P&L revenue workflow design questions resolved and GMV/sales input shipped.
+- Show planning export (pre-show, with cost column) shipped.
+- Creator availability strict-mode endpoint (overlap + roster conflict) shipped.
+- Sidebar redesigned to function-based groups in `erify_studios`.
+- Revenue side of P&L (COMMISSION/HYBRID cost activation) tracked in [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md).
