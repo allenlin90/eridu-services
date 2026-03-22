@@ -20,7 +20,7 @@ export function useStudioShow({
 }: UseStudioShowProps) {
   return useQuery({
     queryKey: studioShowKeys.detail(studioId, showId),
-    queryFn: () => getStudioShow(studioId, showId),
+    queryFn: ({ signal }) => getStudioShow(studioId, showId, { signal }),
     enabled: enabled && !!studioId && !!showId,
     initialData,
     initialDataUpdatedAt,

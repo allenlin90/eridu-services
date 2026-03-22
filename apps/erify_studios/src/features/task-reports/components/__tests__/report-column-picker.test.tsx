@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { TaskReportSelectedColumn, TaskReportSourcesResponse } from '@eridu/api-types/task-management';
+import type { TaskReportScope, TaskReportSelectedColumn, TaskReportSourcesResponse } from '@eridu/api-types/task-management';
 
 import { ReportColumnPicker } from '../report-column-picker';
 
@@ -36,6 +36,10 @@ function buildTemplateSource(index: number) {
 function renderPicker(
   data: TaskReportSourcesResponse,
   selectedColumns: TaskReportSelectedColumn[] = [],
+  options?: {
+    scope?: TaskReportScope | null;
+    sourcesData?: TaskReportSourcesResponse;
+  },
 ) {
   const onChange = vi.fn();
   mockUseTaskReportSources.mockReturnValue({
@@ -47,9 +51,10 @@ function renderPicker(
   render(
     <ReportColumnPicker
       studioId="std_00000000000000000001"
-      scope={{ date_from: '2026-03-01', date_to: '2026-03-07', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] }}
+      scope={options?.scope ?? { date_from: '2026-03-01', date_to: '2026-03-07', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] }}
       selectedColumns={selectedColumns}
       onChange={onChange}
+      sourcesData={options?.sourcesData}
     />,
   );
 
@@ -124,5 +129,45 @@ describe('reportColumnPicker', () => {
     );
     expect(screen.getByLabelText('Template 2 Custom')).toBeInTheDocument();
     expect(screen.queryByLabelText('Template 1 Custom')).not.toBeInTheDocument();
+  });
+
+  it('filters shared fields by selected source templates when sources data is injected by parent', () => {
+    const templateOne = buildTemplateSource(1);
+    const data: TaskReportSourcesResponse = {
+      shared_fields: [
+        { key: 'gmv', label: 'GMV', type: 'number', category: 'metric', is_active: true },
+      ],
+      sources: [{
+        ...templateOne,
+        fields: [
+          ...templateOne.fields,
+          {
+            key: 'gmv',
+            field_key: 'gmv',
+            label: 'GMV',
+            type: 'number',
+            standard: true,
+            source_template_id: templateOne.template_id,
+            source_template_name: templateOne.template_name,
+          },
+        ],
+      }],
+    };
+
+    renderPicker(
+      data,
+      [],
+      {
+        scope: {
+          date_from: '2026-03-01',
+          date_to: '2026-03-07',
+          source_templates: ['ttpl_00000000000000000099'],
+          submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+        },
+        sourcesData: data,
+      },
+    );
+
+    expect(screen.queryByLabelText('GMV')).not.toBeInTheDocument();
   });
 });

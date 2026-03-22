@@ -356,6 +356,76 @@ export function useUpdateMyTask() {
 
 ---
 
+## Route Loader Prefetch Pattern
+
+`erify_studios` uses TanStack Router with `queryClient` threaded into the router context, enabling route-level prefetching before components mount.
+
+### Setup
+
+`queryClient` (singleton from `apps/erify_studios/src/lib/api/query-client.ts`) is passed directly into the router context:
+
+```typescript
+// router.tsx
+import { queryClient } from '@/lib/api';
+
+export const router = createRouter({
+  context: { auth: undefined!, queryClient },
+});
+```
+
+The root route context type includes `QueryClient`:
+
+```typescript
+// routes/__root.tsx
+createRootRouteWithContext<{ auth: Session; queryClient: QueryClient }>()
+```
+
+### Loader Pattern
+
+Use `void queryClient.prefetchQuery(...)` in route `loader` functions to start fetches on navigation, before components mount. This is non-blocking — navigation proceeds immediately while fetches run in parallel.
+
+```typescript
+export const Route = createFileRoute('/studios/$studioId/task-reports/builder')({
+  component: TaskReportBuilderPage,
+  validateSearch: ...,
+  loader: ({ context: { queryClient }, params: { studioId }, search }) => {
+    // Prefetch optional deep-link data
+    if (search.definition_id) {
+      void queryClient.prefetchQuery({
+        queryKey: taskReportDefinitionKeys.detail(studioId, search.definition_id),
+        queryFn: ({ signal }) => getTaskReportDefinition(studioId, search.definition_id!, { signal }),
+      });
+    }
+    // Prefetch lookup data — warm before ReportScopeFilters renders
+    void queryClient.prefetchQuery({
+      queryKey: ['show-types', 'list', studioId, 'report-scope'],
+      queryFn: ({ signal }) => getShowTypes({ limit: 200 }, studioId, { signal }),
+    });
+  },
+});
+```
+
+**Rules:**
+- Use `void prefetchQuery` (not `await ensureQueryData`) to avoid blocking navigation
+- Match query keys exactly to what the component's `useQuery` calls use — mismatches silently skip the warm cache
+- Prefer prefetching critical page data (show detail, task list, first-page lookups) over optional supplementary data
+- Component hooks still fire as normal; they find warm cache and skip the loading state
+
+### Query Lifting for Prefetch Compatibility
+
+To make a component's queries prefetchable via a route loader, lift them from the child component up to the page/route level and pass results as props.
+
+Example: `ReportScopeFilters` originally fetched show types, show standards, and clients internally. These were moved to `ReportBuilder` (the parent) so the route loader can warm all three caches before the component tree renders. `ReportScopeFilters` now accepts `showTypeOptions`, `showStandardOptions`, and `clientOptions` as props.
+
+**When to lift:**
+- A filter/lookup component fetches reference data that is the same for all users in a studio
+- The data should be warm by the time the user sees the filter UI
+- The parent route already knows all parameters needed for the query
+
+**Canonical implementation:** [report-builder.tsx](../../../apps/erify_studios/src/features/task-reports/components/report-builder.tsx), [report-scope-filters.tsx](../../../apps/erify_studios/src/features/task-reports/components/report-scope-filters.tsx)
+
+---
+
 ## Related Skills
 
 - [frontend-state-management](../frontend-state-management/SKILL.md) - State management patterns

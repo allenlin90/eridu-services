@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { useEffect, useState } from 'react';
@@ -59,7 +60,7 @@ function RootLayout() {
   );
 }
 
-export const Route = createRootRouteWithContext<{ auth: Session }>()({
+export const Route = createRootRouteWithContext<{ auth: Session; queryClient: QueryClient }>()({
   component: RootLayout,
   notFoundComponent: NotFoundPage,
 });

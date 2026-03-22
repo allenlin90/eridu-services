@@ -1,6 +1,9 @@
 import { createFileRoute, useLocation } from '@tanstack/react-router';
 
+import { getStudioMemberships } from '@/features/memberships/api/get-studio-memberships';
+import { getShowTasks, showTasksKeys } from '@/features/studio-shows/api/get-show-tasks';
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
+import { getStudioShow, studioShowKeys } from '@/features/studio-shows/api/get-studio-show';
 import { ShowHeaderSection } from '@/features/tasks/components/studio-show-tasks-page/show-header-section';
 import { TasksDialogs } from '@/features/tasks/components/studio-show-tasks-page/tasks-dialogs';
 import { TasksTableSection } from '@/features/tasks/components/studio-show-tasks-page/tasks-table-section';
@@ -9,6 +12,22 @@ import { useStudioShowTasksPageController } from '@/features/tasks/hooks/use-stu
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
   component: StudioShowTasksPage,
+  loader: ({ context: { queryClient }, params: { studioId, showId } }) => {
+    void queryClient.prefetchQuery({
+      queryKey: showTasksKeys.list(studioId, showId),
+      queryFn: ({ signal }) => getShowTasks(studioId, showId, { signal }),
+    });
+    void queryClient.prefetchQuery({
+      queryKey: studioShowKeys.detail(studioId, showId),
+      queryFn: ({ signal }) => getStudioShow(studioId, showId, { signal }),
+    });
+    // Key must stay structurally identical to the params object in useStudioMembershipsQuery
+    // when memberSearch is empty ('') — i.e. { limit: 50 } (name omitted ≡ name: undefined after TQ normalization).
+    void queryClient.prefetchQuery({
+      queryKey: ['studio-memberships', 'list', studioId, { limit: 50 }],
+      queryFn: ({ signal }) => getStudioMemberships(studioId, { limit: 50 }, { signal }),
+    });
+  },
 });
 
 function StudioShowTasksPage() {

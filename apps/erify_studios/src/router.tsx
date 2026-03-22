@@ -2,6 +2,7 @@ import { createRouter } from '@tanstack/react-router';
 
 import { RouteError } from '@/components/route-error';
 import { RoutePending } from '@/components/route-pending';
+import { queryClient } from '@/lib/api';
 import { routeTree } from '@/routeTree.gen';
 
 declare module '@tanstack/react-router' {
@@ -18,6 +19,7 @@ export const router = createRouter({
   defaultPendingComponent: RoutePending,
   context: {
     auth: undefined!, // Will be set by root route's beforeLoad
+    queryClient,
   },
 });
 

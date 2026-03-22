@@ -1,16 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 
 import { ReportScopeFilters } from '../report-scope-filters';
-
-const mockUseQuery = vi.fn();
-
-vi.mock('@tanstack/react-query', () => ({
-  useQuery: (params: unknown) => mockUseQuery(params),
-}));
 
 vi.mock('@eridu/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@eridu/ui')>();
@@ -39,56 +33,34 @@ vi.mock('@/components/task-templates/shared/multi-select', () => ({
   ),
 }));
 
+const SHOW_TYPE_OPTIONS = [
+  { label: 'BAU', value: 'sht_1' },
+  { label: 'Campaign', value: 'sht_2' },
+];
+
+const SHOW_STANDARD_OPTIONS = [
+  { label: 'Standard', value: 'shsd_1' },
+  { label: 'Premium', value: 'shsd_2' },
+];
+
+const CLIENT_OPTIONS = [
+  { label: 'Nike', value: 'client_1' },
+  { label: 'Adidas', value: 'client_2' },
+];
+
 describe('reportScopeFilters', () => {
-  beforeEach(() => {
-    mockUseQuery.mockReset();
-    mockUseQuery.mockImplementation(({ queryKey }: { queryKey: unknown[] }) => {
-      if (queryKey[0] === 'show-types') {
-        return {
-          data: {
-            data: [
-              { id: 'sht_1', name: 'BAU' },
-              { id: 'sht_2', name: 'Campaign' },
-            ],
-          },
-        };
-      }
-
-      if (queryKey[0] === 'show-standards') {
-        return {
-          data: {
-            data: [
-              { id: 'shsd_1', name: 'Standard' },
-              { id: 'shsd_2', name: 'Premium' },
-            ],
-          },
-        };
-      }
-
-      if (queryKey[0] === 'studio-clients') {
-        return {
-          data: {
-            data: [
-              { id: 'client_1', name: 'Nike' },
-              { id: 'client_2', name: 'Adidas' },
-            ],
-          },
-        };
-      }
-
-      return { data: undefined };
-    });
-  });
-
   it('emits multi-selected values for client/show-standard/show-type filters', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
     render(
       <ReportScopeFilters
-        studioId="std_1"
+
         scope={{ submitted_statuses: [TASK_STATUS.REVIEW, TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED] }}
         sourceTemplateOptions={[]}
+        showTypeOptions={SHOW_TYPE_OPTIONS}
+        showStandardOptions={SHOW_STANDARD_OPTIONS}
+        clientOptions={CLIENT_OPTIONS}
         onChange={onChange}
       />,
     );
@@ -115,7 +87,7 @@ describe('reportScopeFilters', () => {
 
     render(
       <ReportScopeFilters
-        studioId="std_1"
+
         scope={{
           date_from: '2026-03-01',
           date_to: '2026-03-07',
@@ -129,6 +101,9 @@ describe('reportScopeFilters', () => {
           { label: 'Template 1', value: 'ttpl_1' },
           { label: 'Template 2', value: 'ttpl_2' },
         ]}
+        showTypeOptions={SHOW_TYPE_OPTIONS}
+        showStandardOptions={SHOW_STANDARD_OPTIONS}
+        clientOptions={CLIENT_OPTIONS}
         onChange={onChange}
       />,
     );
