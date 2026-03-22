@@ -23,6 +23,7 @@
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                             | ✅         | Task-as-Form architecture, API surface, workflows   |
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
+| [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                               | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries |
 | [Phase 4 P&L Backend](./PHASE_4_PNL_BACKEND.md)                                     | ⏳ Phase 4 | Creator mapping contracts, assignment foundation, economics API plan |
 | [DB Migration Policy](../../../docs/engineering/DB_MIGRATION_POLICY.md)                 | ✅ Ops     | Canonical migration governance, tool-first generation, and branch-local scoping rule |
 
