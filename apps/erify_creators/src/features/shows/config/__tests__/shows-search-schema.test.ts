@@ -42,6 +42,14 @@ describe('showsSearchSchema', () => {
     });
   });
 
+  it('strips unknown keys including legacy pageSize', () => {
+    const parsed = showsSearchSchema.parse({ page: '1', limit: '20', pageSize: '25' });
+
+    expect(parsed).not.toHaveProperty('pageSize');
+    expect(parsed.limit).toBe(20);
+    expect(shouldNormalizeShowsSearch(parsed)).toBe(false);
+  });
+
   it('does not normalize when limit is already present', () => {
     const parsed = showsSearchSchema.parse({ page: '2', limit: '50' });
 

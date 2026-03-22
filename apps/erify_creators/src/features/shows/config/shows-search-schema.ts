@@ -5,7 +5,7 @@ const DEFAULT_LIMIT = 10;
 const MIN_LIMIT = 10;
 const MAX_LIMIT = 100;
 
-export const showsSearchSchema = z.looseObject({
+export const showsSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(DEFAULT_PAGE),
   limit: z.coerce.number().int().min(MIN_LIMIT).max(MAX_LIMIT).optional().catch(undefined),
   sortBy: z.string().optional().catch(undefined),

@@ -113,8 +113,8 @@ describe('useShowsTableState', () => {
     expect(mockNavigate).toHaveBeenCalled();
   });
 
-  it('triggers normalization when search needs it', () => {
-    mockUseSearch.mockReturnValue({ page: 1, pageSize: 10 });
+  it('triggers normalization when limit is absent', () => {
+    mockUseSearch.mockReturnValue({ page: 1 });
 
     renderHook(() => useShowsTableState());
 
