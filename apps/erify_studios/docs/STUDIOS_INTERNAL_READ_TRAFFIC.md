@@ -7,7 +7,7 @@ Reduce easy-to-trigger `429 Too Many Requests` failures during normal `erify_stu
 ## What Shipped
 
 - `erify_studios` default TanStack Query policy now keeps interactive reads warm for `20s` instead of treating all cached data as instantly stale.
-- Global query defaults no longer refetch on window focus or reconnect for normal interactive reads.
+- Global query defaults no longer refetch on window focus or reconnect for normal interactive reads. This is intentional for an internal-tool app where route churn under `staleTime: 0` caused 429 bursts on every tab switch. Pages that need near-real-time data opt in per-hook (see `/me/*` below).
 - `429` query failures now surface a single deduped user-facing message instead of repeated generic query-error noise.
 - Aborted route-change requests are treated as expected cancellations, not errors.
 - Priority studios and `/me` read fetchers now accept `AbortSignal` and forward it to Axios so route changes cancel in-flight requests.

@@ -1,17 +1,14 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 const INTERACTIVE_READ_STALE_TIME_MS = 20 * 1000;
 const RATE_LIMIT_TOAST_DEDUPE_MS = 5 * 1000;
 
+// Module-level singleton — intentional for dedup across the app lifetime.
+// Tests that cover the 429 toast path should call vi.resetModules() or
+// import query-client in an isolated module scope to avoid bleed between suites.
 let lastRateLimitToastAt = 0;
-
-function isCanceledError(error: unknown) {
-  return typeof error === 'object'
-    && error !== null
-    && 'code' in error
-    && error.code === 'ERR_CANCELED';
-}
 
 function isRateLimitedError(error: unknown) {
   return typeof error === 'object'
@@ -64,6 +61,9 @@ export const queryClient = new QueryClient({
         return failureCount < 2;
       },
 
+      // Intentionally disabled globally for erify_studios (internal-tool app).
+      // Route churn with staleTime: 0 caused 429 bursts on every tab switch.
+      // Operational reads (/me/*) opt back in per-hook where near-real-time matters.
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
 
@@ -80,7 +80,7 @@ export const queryClient = new QueryClient({
   // Global query error handler
   queryCache: new QueryCache({
     onError: (error) => {
-      if (isCanceledError(error)) {
+      if (axios.isCancel(error)) {
         return;
       }
 
