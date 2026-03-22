@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  resolveShowsLimit,
   shouldNormalizeShowsSearch,
   showsSearchSchema,
   toCanonicalShowsSearch,
@@ -18,40 +17,38 @@ describe('showsSearchSchema', () => {
 
     expect(parsed.page).toBe(2);
     expect(parsed.limit).toBe(20);
-    expect(resolveShowsLimit(parsed)).toBe(20);
     expect(shouldNormalizeShowsSearch(parsed)).toBe(false);
   });
 
-  it('accepts legacy pageSize and normalizes to limit', () => {
-    const legacy = showsSearchSchema.parse({
-      page: '3',
-      pageSize: '30',
-      sortBy: 'start_time',
-      sortOrder: 'asc',
-    });
-
-    expect(resolveShowsLimit(legacy)).toBe(30);
-    expect(shouldNormalizeShowsSearch(legacy)).toBe(true);
-
-    expect(toCanonicalShowsSearch(legacy)).toMatchObject({
-      page: 3,
-      limit: 30,
-      pageSize: undefined,
-      sortBy: 'start_time',
-      sortOrder: 'asc',
-    });
-  });
-
-  it('defaults to limit=10 when neither limit nor pageSize is provided', () => {
+  it('defaults to limit=10 when limit is not provided', () => {
     const parsed = showsSearchSchema.parse({});
 
     expect(parsed.page).toBe(1);
-    expect(resolveShowsLimit(parsed)).toBe(10);
+    expect(parsed.limit).toBeUndefined();
     expect(shouldNormalizeShowsSearch(parsed)).toBe(true);
     expect(toCanonicalShowsSearch(parsed)).toMatchObject({
       page: 1,
       limit: 10,
-      pageSize: undefined,
+    });
+  });
+
+  it('normalizes missing limit to default via toCanonicalShowsSearch', () => {
+    const parsed = showsSearchSchema.parse({ page: '3' });
+
+    expect(shouldNormalizeShowsSearch(parsed)).toBe(true);
+    expect(toCanonicalShowsSearch(parsed)).toMatchObject({
+      page: 3,
+      limit: 10,
+    });
+  });
+
+  it('does not normalize when limit is already present', () => {
+    const parsed = showsSearchSchema.parse({ page: '2', limit: '50' });
+
+    expect(shouldNormalizeShowsSearch(parsed)).toBe(false);
+    expect(toCanonicalShowsSearch(parsed)).toMatchObject({
+      page: 2,
+      limit: 50,
     });
   });
 });

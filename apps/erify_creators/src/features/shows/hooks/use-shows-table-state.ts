@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
-  resolveShowsLimit,
   shouldNormalizeShowsSearch,
   type ShowsSearch,
   toCanonicalShowsSearch,
@@ -53,7 +52,7 @@ export function useShowsTableState(): UseShowsTableStateReturn {
     });
   }, [navigate, needsNormalization]);
 
-  const limit = resolveShowsLimit(search);
+  const limit = search.limit ?? 10;
 
   const pagination = useMemo<PaginationState>(() => ({
     pageIndex: Math.max((search.page ?? 1) - 1, 0),

@@ -53,7 +53,9 @@ describe('useTableUrlState', () => {
       expect(result.current.sorting).toEqual([]);
     });
 
-    it('falls back to pageSize when limit is absent (backward compat)', () => {
+    it('falls back to pageSize when limit is absent (one-cycle backward compat)', () => {
+      // urlToPagination still reads pageSize as a fallback so old bookmarked URLs
+      // work for one page load before paginationToUrl clears it on the next nav.
       mockSearch = { page: 1, pageSize: 25 };
       const { result } = renderHook(() =>
         useTableUrlState({ from: '/test' }),
@@ -63,6 +65,28 @@ describe('useTableUrlState', () => {
         pageIndex: 0,
         pageSize: 25,
       });
+    });
+
+    it('paginationToUrl evicts legacy pageSize from URL', () => {
+      mockSearch = { page: 1, limit: 20 };
+      const { result } = renderHook(() =>
+        useTableUrlState({ from: '/test' }),
+      );
+
+      result.current.onPaginationChange({ pageIndex: 0, pageSize: 20 });
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          search: expect.any(Function),
+        }),
+      );
+
+      // Extract the search updater and verify it sets pageSize to undefined
+      const callArg = mockNavigate.mock.calls[0][0] as { search: (prev: Record<string, unknown>) => Record<string, unknown> };
+      const prev = { page: 1, limit: 20, pageSize: 25 };
+      const next = callArg.search(prev);
+      expect(next.pageSize).toBeUndefined();
+      expect(next.limit).toBe(20);
     });
   });
 

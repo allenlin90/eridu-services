@@ -80,12 +80,15 @@ function urlToPagination(searchParams: TableUrlState): PaginationState {
 }
 
 /**
- * Convert PaginationState to URL params
+ * Convert PaginationState to URL params.
+ * Explicitly sets pageSize to undefined so TanStack Router evicts any legacy
+ * ?pageSize= param from the URL on the next navigation.
  */
-function paginationToUrl(pagination: PaginationState): Pick<TableUrlState, 'page' | 'limit'> {
+function paginationToUrl(pagination: PaginationState): Pick<TableUrlState, 'page' | 'limit' | 'pageSize'> {
   return {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
+    pageSize: undefined,
   };
 }
 

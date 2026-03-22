@@ -247,11 +247,13 @@ These are two different things and must not be confused:
 
 | Context | Field name | Why |
 |---------|-----------|-----|
-| Route search schema (`z.object`) | `limit` | URL param; what the backend and URL contract use |
+| Route search schema (`z.object`) | `limit` | Canonical URL param; what the backend and URL contract use |
 | TanStack Table `PaginationState` | `pageSize` | Library convention; `DataTable` and `DataTablePagination` props use this |
 | `useTableUrlState` return value | `pagination.pageSize` | The hook maps `limit` → TanStack's `PaginationState`; callers read `pagination.pageSize` |
 
 **Rule**: Use `limit` in any route `validateSearch` schema and in hardcoded `search={{ ... }}` navigation objects. Do **not** rename `pagination.pageSize` when passing `paginationState` to `DataTable` or `DataTablePagination` — that field name is TanStack Table's convention, not ours.
+
+`pageSize` **never appears as a URL param** — it only exists as TanStack Table's internal `PaginationState` field. The mapping from TanStack Table's `pagination.pageSize` → `limit` happens at the `useTableUrlState` hook boundary: `paginationToUrl` writes `limit` and explicitly sets `pageSize: undefined` to evict any legacy `?pageSize=` param from the URL on navigation.
 
 ```typescript
 // ✅ Route schema: use limit
@@ -268,6 +270,9 @@ paginationState={{ pageIndex: pagination.pageIndex, pageSize: pagination.pageSiz
 
 // ✅ API call: read limit from TanStack's pageSize
 limit: pagination.pageSize
+
+// ❌ Never write pageSize as a URL param
+navigate({ search: { pageSize: 20 } })  // wrong — use limit
 ```
 
 ### Local interaction state
