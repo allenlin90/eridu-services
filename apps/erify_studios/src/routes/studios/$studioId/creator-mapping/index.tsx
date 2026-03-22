@@ -117,10 +117,7 @@ function CreatorMappingPage() {
       return;
     }
 
-    updateSearch((previous) => ({
-      ...previous,
-      limit: previous.limit,
-    }), { replace: true });
+    updateSearch((previous) => previous, { replace: true });
   }, [updateSearch]);
 
   useEffect(() => {
