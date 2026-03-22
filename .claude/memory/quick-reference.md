@@ -73,6 +73,25 @@ export class WidgetService extends BaseModelService {
 
 ---
 
+## ⚡ Backend Read-Path Shaping
+
+For backend performance refactors on existing endpoints:
+
+- Keep generic repository methods flexible and caller-driven.
+- Let the service own the default include/select shape for generic endpoint reads.
+- Put shared DTO-shaped include constants next to the DTO transform schema when multiple call sites serialize the same response shape.
+- Let endpoint-specific repository methods use lean DTO-shaped projections when they already serve one response contract.
+- Keep JSONB/document blobs out of list queries unless the response explicitly needs the full blob.
+
+Canonical references:
+
+- `apps/erify_api/docs/READ_PATH_OPTIMIZATION.md`
+- `.agent/skills/api-performance-optimization/SKILL.md`
+- `apps/erify_api/src/models/show/schemas/show.schema.ts`
+- `apps/erify_api/src/models/task-template/task-template.repository.ts`
+
+---
+
 ## 🎨 Creating a New React Feature
 
 ```bash

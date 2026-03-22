@@ -8,6 +8,7 @@ import {
   createShowObjectSchema,
   createShowSchema,
   showDto,
+  showDtoListInclude,
   showWithRelationsSchema,
 } from '@/models/show/schemas/show.schema';
 import { showCreatorWithRelationsSchema } from '@/models/show-creator/schemas/show-creator.schema';
@@ -152,6 +153,33 @@ export const showWithAllRelationsSchema = showWithRelationsSchema.extend({
     .array(showPlatformWithRelationsSchema.omit({ show: true }))
     .optional(),
 });
+
+export const showWithAssignmentsInclude = {
+  ...showDtoListInclude,
+  showCreators: {
+    where: { deletedAt: null },
+    include: {
+      creator: {
+        select: {
+          uid: true,
+          name: true,
+          aliasName: true,
+        },
+      },
+    },
+  },
+  showPlatforms: {
+    where: { deletedAt: null },
+    include: {
+      platform: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.ShowInclude;
 
 // Extended output schema for orchestration service
 export const showWithAssignmentsDto = showWithAllRelationsSchema.transform(

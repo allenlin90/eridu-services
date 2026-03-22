@@ -4,7 +4,10 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma, Show } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
+import {
+  ListShowsQueryDto,
+  showWithTaskSummaryInclude,
+} from '@/models/show/schemas/show.schema';
 import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ShowWhereInput
@@ -466,43 +469,7 @@ export class ShowRepository extends BaseRepository<
         skip: query.skip,
         take: query.take,
         orderBy: { startTime: 'desc' },
-        include: {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-          showCreators: {
-            where: {
-              deletedAt: null,
-              creator: { deletedAt: null },
-            },
-            include: {
-              creator: {
-                select: {
-                  uid: true,
-                  name: true,
-                  aliasName: true,
-                },
-              },
-            },
-          },
-          taskTargets: {
-            where: {
-              deletedAt: null,
-              task: { deletedAt: null },
-            },
-            include: {
-              task: {
-                select: {
-                  status: true,
-                  assigneeId: true,
-                },
-              },
-            },
-          },
-        },
+        include: showWithTaskSummaryInclude,
       }),
     ]);
 

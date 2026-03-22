@@ -4,6 +4,7 @@ import type { Show } from '@prisma/client';
 
 import {
   CreateShowWithAssignmentsDto,
+  showWithAssignmentsInclude,
   UpdateShowWithAssignmentsDto,
 } from './schemas/show-orchestration.schema';
 
@@ -403,22 +404,7 @@ export class ShowOrchestrationService {
   }
 
   private getDefaultIncludes(): ShowInclude {
-    return {
-      client: true,
-      studio: true,
-      studioRoom: true,
-      showType: true,
-      showStatus: true,
-      showStandard: true,
-      showCreators: {
-        include: { creator: true },
-        where: { deletedAt: null },
-      },
-      showPlatforms: {
-        include: { platform: true },
-        where: { deletedAt: null },
-      },
-    };
+    return showWithAssignmentsInclude;
   }
 
   /**

@@ -30,6 +30,20 @@ prisma.task.findMany({
 - If the full entity is needed (e.g. for internal processing) → `include: true` is acceptable.
 - Never include deeply nested relations speculatively "just in case".
 
+### Reusable pattern: shared DTO-shaped include constants
+
+When multiple endpoints serialize the same base DTO, define one shared include constant close to the DTO transform and reuse it instead of repeating inline relation trees.
+
+Canonical examples:
+- `showDtoListInclude` in `apps/erify_api/src/models/show/schemas/show.schema.ts`
+- `showWithTaskSummaryInclude` in `apps/erify_api/src/models/show/schemas/show.schema.ts`
+- `showWithAssignmentsInclude` in `apps/erify_api/src/show-orchestration/schemas/show-orchestration.schema.ts`
+
+Use this pattern when:
+- the response shape is already stable,
+- multiple services/repositories need the same relation projection,
+- broad `include: true` trees would otherwise drift across call sites.
+
 > See [`references/01-lean-select.md`](references/01-lean-select.md) for audit checklist and before/after examples.
 
 ---
@@ -60,6 +74,11 @@ const tasks = await prisma.task.findMany({
 ```
 
 For complex multi-table aggregations (counts by group, distinct joins), use `$queryRaw` with typed return — see the `task-template.repository.ts` `findPaginatedAdminWithUsage` method as the canonical example.
+
+If you only need one nested JSONB value from a document column, prefer a narrow raw projection over loading the whole blob into the list query.
+
+Canonical example:
+- `current_schema #>> '{metadata,task_type}'` projection in `apps/erify_api/src/models/task-template/task-template.repository.ts`
 
 > See [`references/02-aggregation-strategy.md`](references/02-aggregation-strategy.md) for groupBy vs $queryRaw decision rules.
 
@@ -184,6 +203,19 @@ const templates = await prisma.taskTemplate.findMany({
   // currentSchema omitted — fetched only on detail view
 });
 ```
+
+### Generic vs endpoint-specific query boundaries
+
+Use this boundary when optimizing existing reads:
+
+- Generic repository methods stay flexible and caller-driven.
+- Service layer owns the default include/select shape for generic endpoint reads.
+- Endpoint-specific repository methods may be tightened to the DTO they serve.
+
+Canonical examples:
+- Generic service-owned shape: `ShowService.getPaginatedShows()` in `apps/erify_api/src/models/show/show.service.ts`
+- Endpoint-specific repository shape: `ShowRepository.findPaginatedWithTaskSummary()` in `apps/erify_api/src/models/show/show.repository.ts`
+- Endpoint-specific repository shape: `TaskTemplateRepository.findPaginatedAdminWithUsage()` in `apps/erify_api/src/models/task-template/task-template.repository.ts`
 
 ---
 

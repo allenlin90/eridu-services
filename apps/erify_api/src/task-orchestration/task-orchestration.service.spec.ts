@@ -7,6 +7,7 @@ import { TaskGenerationProcessor } from './task-generation-processor.service';
 import { TaskOrchestrationService } from './task-orchestration.service';
 
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
+import { showDtoListInclude } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
@@ -206,6 +207,19 @@ describe('taskOrchestrationService', () => {
 
       expect(result[0].type).toBe(TaskType.SETUP);
       expect(result[1].type).toBe(TaskType.ACTIVE);
+    });
+  });
+
+  describe('getStudioShow', () => {
+    it('loads show details with DTO-shaped includes', async () => {
+      const show = { uid: 'show_1', studioId: BigInt(1) };
+      showService.getShowById.mockResolvedValue(show as any);
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+
+      const result = await service.getStudioShow('std_1', 'show_1');
+
+      expect(showService.getShowById).toHaveBeenCalledWith('show_1', showDtoListInclude);
+      expect(result).toBe(show);
     });
   });
 

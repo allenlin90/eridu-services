@@ -3,6 +3,7 @@ import type {
   ListShowsQueryDto,
   UpdateShowDto,
 } from './schemas/show.schema';
+import { showDtoListInclude } from './schemas/show.schema';
 import { ShowRepository } from './show.repository';
 import { ShowService } from './show.service';
 
@@ -570,14 +571,7 @@ describe('showService', () => {
       expect(result.total).toBe(1);
       expect(showRepositoryMock.findPaginated).toHaveBeenCalledWith(
         query,
-        {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        },
+        showDtoListInclude,
       );
     });
 
@@ -603,14 +597,7 @@ describe('showService', () => {
 
       expect(showRepositoryMock.findPaginated).toHaveBeenCalledWith(
         query,
-        {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        },
+        showDtoListInclude,
       );
     });
 
@@ -636,14 +623,7 @@ describe('showService', () => {
 
       expect(showRepositoryMock.findPaginated).toHaveBeenCalledWith(
         query,
-        {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        },
+        showDtoListInclude,
       );
     });
 
@@ -669,14 +649,7 @@ describe('showService', () => {
 
       expect(showRepositoryMock.findPaginated).toHaveBeenCalledWith(
         query,
-        {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        },
+        showDtoListInclude,
       );
     });
 
@@ -702,14 +675,7 @@ describe('showService', () => {
 
       expect(showRepositoryMock.findPaginated).toHaveBeenCalledWith(
         query,
-        {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        },
+        showDtoListInclude,
       );
     });
 
@@ -735,14 +701,7 @@ describe('showService', () => {
 
       expect(showRepositoryMock.findPaginated).toHaveBeenCalledWith(
         query,
-        {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        },
+        showDtoListInclude,
       );
     });
 
@@ -768,14 +727,7 @@ describe('showService', () => {
 
       expect(showRepositoryMock.findPaginated).toHaveBeenCalledWith(
         query,
-        {
-          client: true,
-          studio: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        },
+        showDtoListInclude,
       );
     });
   });

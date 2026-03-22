@@ -20,6 +20,7 @@ import type {
   CreateShowWithAssignmentsDto,
   UpdateShowWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
+import { showWithAssignmentsInclude } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 
@@ -231,15 +232,7 @@ describe('showOrchestrationService', () => {
 
       expect(showService.getActiveShows).toHaveBeenCalledWith({
         ...params,
-        include: expect.objectContaining({
-          client: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-          showCreators: expect.any(Object),
-          showPlatforms: expect.any(Object),
-        }),
+        include: showWithAssignmentsInclude,
       });
       expect(result).toEqual(mockShows);
     });

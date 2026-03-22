@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { CreatorService } from '@/models/creator/creator.service';
-import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
+import {
+  creatorShowDtoInclude,
+  ListShowsQueryDto,
+} from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 
 @Injectable()
@@ -183,20 +186,6 @@ export class ShowsService {
    * Builds the include clause for show queries with all related entities.
    */
   private buildShowInclude() {
-    return {
-      client: true,
-      studioRoom: true,
-      showType: true,
-      showStatus: true,
-      showStandard: true,
-      showPlatforms: {
-        include: {
-          platform: true,
-        },
-        where: {
-          deletedAt: null,
-        },
-      },
-    } as const;
+    return creatorShowDtoInclude;
   }
 }

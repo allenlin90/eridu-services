@@ -6,7 +6,10 @@ import type { Creator, Show } from '@prisma/client';
 import { ShowsService } from './shows.service';
 
 import { CreatorService } from '@/models/creator/creator.service';
-import type { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
+import {
+  creatorShowDtoInclude,
+  type ListShowsQueryDto,
+} from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 
 describe('showsService', () => {
@@ -192,13 +195,7 @@ describe('showsService', () => {
           take: params.take,
           orderBy: { startTime: 'asc' },
         },
-        expect.objectContaining({
-          client: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        }),
+        creatorShowDtoInclude,
       );
       expect(mockShowService.countShows).toHaveBeenCalledWith({
         deletedAt: null,
@@ -362,13 +359,7 @@ describe('showsService', () => {
           },
           take: 1,
         },
-        expect.objectContaining({
-          client: true,
-          studioRoom: true,
-          showType: true,
-          showStatus: true,
-          showStandard: true,
-        }),
+        creatorShowDtoInclude,
       );
       expect(result).toEqual(mockShowWithRelations);
     });
