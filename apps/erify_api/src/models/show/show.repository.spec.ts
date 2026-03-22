@@ -2,6 +2,7 @@ import type { TransactionHost } from '@nestjs-cls/transactional';
 
 import { ShowRepository } from './show.repository';
 
+import { showWithTaskSummaryInclude } from '@/models/show/schemas/show.schema';
 import type { PrismaService } from '@/prisma/prisma.service';
 
 function createPrismaShowDelegateMock() {
@@ -202,5 +203,19 @@ describe('showRepository', () => {
     const creatorNameFilter = where.AND?.find((clause) => clause.showCreators?.some?.creator?.name?.contains === 'alice');
     expect(creatorExistsFilter?.showCreators?.some).toBeDefined();
     expect(creatorNameFilter?.showCreators?.some?.creator?.name?.contains).toBe('alice');
+  });
+
+  it('uses DTO-shaped includes for studio task-summary queries', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      include: showWithTaskSummaryInclude,
+    }));
   });
 });

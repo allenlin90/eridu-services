@@ -251,6 +251,39 @@ export const creatorShowDtoInclude = {
   showStandard: showDtoListInclude.showStandard,
 } as const satisfies Prisma.ShowInclude;
 
+export const showWithTaskSummaryInclude = {
+  ...showDtoListInclude,
+  showCreators: {
+    where: {
+      deletedAt: null,
+      creator: { deletedAt: null },
+    },
+    include: {
+      creator: {
+        select: {
+          uid: true,
+          name: true,
+          aliasName: true,
+        },
+      },
+    },
+  },
+  taskTargets: {
+    where: {
+      deletedAt: null,
+      task: { deletedAt: null },
+    },
+    include: {
+      task: {
+        select: {
+          status: true,
+          assigneeId: true,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.ShowInclude;
+
 // API output schema (transforms to snake_case)
 // Uses shared schema from @eridu/api-types for consistency
 export const showDto = showWithRelationsSchema
