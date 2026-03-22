@@ -10,7 +10,7 @@ type UseShowTasksProps = {
 export function useShowTasks({ studioId, showId }: UseShowTasksProps) {
   return useQuery({
     queryKey: showTasksKeys.list(studioId, showId),
-    queryFn: () => getShowTasks(studioId, showId),
+    queryFn: ({ signal }) => getShowTasks(studioId, showId, { signal }),
     refetchOnWindowFocus: false,
     enabled: !!studioId && !!showId,
   });

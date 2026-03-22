@@ -19,7 +19,7 @@ export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
     });
     void queryClient.prefetchQuery({
       queryKey: studioShowKeys.detail(studioId, showId),
-      queryFn: () => getStudioShow(studioId, showId),
+      queryFn: ({ signal }) => getStudioShow(studioId, showId, { signal }),
     });
     // Key must stay structurally identical to the params object in useStudioMembershipsQuery
     // when memberSearch is empty ('') — i.e. { limit: 50 } (name omitted ≡ name: undefined after TQ normalization).
