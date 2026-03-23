@@ -58,12 +58,14 @@ PRDs for this phase have been deleted per lifecycle rules. Shipped behavior is o
 
 Phase 4 is reopened to complete its original P&L economics goal. Task submission reporting was shipped during the interim.
 
-### Economics Baseline (Shipped)
+### Economics Baseline (Developed — Pending Merge)
 
 Deliver show-level and grouped economics endpoints for baseline variable cost visibility (creator costs + shift labor costs).
 
 - Feature doc: [show-economics.md](../features/show-economics.md) (PRD promoted per lifecycle)
-- Status: ✅ Shipped (commit `8de31ffe`, 2026-03-22, branch `feat/show-economics-baseline`)
+- Status: ✅ Developed (commit `8de31ffe`, 2026-03-22)
+- **Branch**: `feat/show-economics-baseline` — 1 commit ahead of `master`, not yet merged
+- **Merge target**: Must be merged to `master` before Wave 2 (Show Planning Export depends on economics endpoints)
 - Endpoints:
   - `GET /studios/:studioId/shows/:showId/economics` — single show variable cost breakdown
   - `GET /studios/:studioId/economics` — grouped economics (by show / schedule / client)
@@ -95,34 +97,30 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 ### Implementation Sequencing
 
-#### Pre-Implementation Gates (Wave 0)
+#### Pre-Implementation Gates
 
-Before any workstream begins:
-
-1. **Economics merge verification** — Confirm `feat/show-economics-baseline` (commit `8de31ffe`) is merged to `master`. All extended-scope PRDs depend on the economics service, repository, and API types introduced in that branch.
-2. **Prisma migration planning** — `StudioMembership` needs two new fields for the member roster PRD:
-   - `isHelper Boolean @default(false) @map("is_helper")` — helper eligibility gating
-   - `version Int @default(1)` — optimistic concurrency for rate updates (consistent with `StudioCreator` which already has `version`)
-3. **Financial arithmetic decision** — Decide whether to adopt `big.js` (or equivalent) for all economics arithmetic. Not blocking for roster workstreams (read/write rates), but blocking for revenue × commission multiplication chains in Wave 3.
+| Gate | Blocks | Status |
+| --- | --- | --- |
+| **Prisma migration** — add `isHelper` + `version` to `StudioMembership` | Wave 1: Studio Member Roster | 🔲 Pending |
+| **Economics merge** — merge `feat/show-economics-baseline` (`8de31ffe`) to `master` | Wave 2: Show Planning Export | 🔲 Pending (1 commit ahead of master) |
+| **Financial arithmetic decision** — adopt `big.js` or accept floating-point risk | Wave 3: P&L Revenue Workflow | 🔲 Pending |
 
 #### Dependency Graph
 
 ```
-Economics on master (gate)
+Wave 1 (no economics dependency — can start now):
+    ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
+    ├─► Studio Creator Roster ─────────────────────── (StudioCreator model complete)
+    └─► Studio Member Roster ──────────────────────── (needs isHelper + version migration)
+
+Economics merged to master (gate for Wave 2):
     │
-    ├─► Wave 1: Sidebar Redesign ──────────────────────── (FE-only, no deps)
-    │
-    ├─► Wave 1: Studio Creator Roster ─────────────────── (StudioCreator model complete)
-    │       │
-    │       └─► Wave 2: Creator Availability Hardening ── (needs roster state for NOT_IN_ROSTER)
-    │
-    ├─► Wave 1: Studio Member Roster ──────────────────── (needs isHelper + version migration)
-    │
-    ├─► Wave 2: Show Planning Export ──────────────────── (needs economics on master)
-    │
-    └─► Wave 3: P&L Revenue Workflow ──────────────────── (needs design Q resolution + big.js)
-            │
-            └─► Removes @preview markers, activates COMMISSION/HYBRID cost computation
+    ├─► Wave 2: Show Planning Export ──────────────── (needs economics endpoints)
+    └─► Wave 2: Creator Availability Hardening ────── (needs creator roster from Wave 1)
+
+Design Qs resolved + big.js adopted (gate for Wave 3):
+    └─► Wave 3: P&L Revenue Workflow ──────────────── (needs design Q resolution + big.js)
+            └─► Removes @preview markers, activates COMMISSION/HYBRID
 ```
 
 #### Wave 1 — Foundation (parallel, no inter-dependencies)
@@ -151,6 +149,22 @@ Economics on master (gate)
 | **P&L Revenue Workflow** | L    | 4 design Qs must be resolved first. `big.js` adoption. Schema migration for GMV/net_sales. Revenue input UI. Removes `@preview` markers. Activates COMMISSION/HYBRID cost computation. |
 
 **Milestone 3**: Full P&L visible for shows with revenue data; economics endpoints no longer `@preview`.
+
+### PR Plan
+
+Each workstream ships as a separate PR for focused review. Order follows dependency graph.
+
+| # | PR | Branch | Gate |
+| --- | --- | --- | --- |
+| 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | None — can merge now |
+| 1a | Sidebar redesign | `feat/sidebar-redesign` | None |
+| 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None |
+| 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (isHelper + version) |
+| 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) |
+| 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1b merged (creator roster state) |
+| 3 | P&L revenue workflow | `feat/pnl-revenue-workflow` | Design Qs resolved + big.js adopted |
+
+PRs 1a/1b/1c can be developed and reviewed in parallel. PRs 2a/2b wait for their respective gates.
 
 ### Risks & Open Items
 
