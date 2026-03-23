@@ -24,8 +24,17 @@ PRDs are **phase-scoped and transient**:
 
 > PRDs own pre-ship intent. App-local docs own post-ship behavior.
 
-## Phase 4 PRDs (Reopened)
+## Phase 4 PRDs (Reopened — Extended Scope)
 
-| PRD | Workstream | Status |
-| --- | --- | --- |
-| [Show Economics](./show-economics.md) | P&L baseline — creator cost + shift cost endpoints | Active |
+Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4.md#implementation-sequencing).
+
+| PRD | Workstream | Wave | Status |
+| --- | --- | --- | --- |
+| ~~[Show Economics](./show-economics.md)~~ | P&L baseline — creator cost + shift cost endpoints | — | ✅ Shipped → [feature doc](../features/show-economics.md) |
+| [Studio Member Roster](./studio-member-roster.md) | Studio operator governance — L-side labor cost inputs (`baseHourlyRate`) | 1 | Active |
+| [Studio Creator Roster](./studio-creator-roster.md) | Studio operator governance — L-side creator cost defaults | 1 | Active |
+| [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active |
+| [Creator Availability Hardening](./creator-availability-hardening.md) | Dual-mode availability endpoint — overlap + roster conflict enforcement | 2 | Active (depends on creator roster) |
+| [P&L Revenue Workflow](./pnl-revenue-workflow.md) | P&L revenue ("P") side — GMV/sales inputs, commission cost activation, contribution margin | 3 | Active (4 open design Qs) |
+
+Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1).
