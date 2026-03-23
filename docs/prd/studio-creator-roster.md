@@ -67,7 +67,9 @@ Updating these defaults directly changes the economics baseline for all shows th
 
 `FIXED`-type creators with an updated `defaultRate` will see an immediate change in baseline cost projections for future shows without per-show overrides. `COMMISSION` and `HYBRID` types require revenue inputs (tracked in the P&L Revenue Workflow PRD).
 
-## Routes
+## API Contract
+
+### Routes
 
 | Method | Route | Description | Access |
 | --- | --- | --- | --- |
@@ -76,6 +78,68 @@ Updating these defaults directly changes the economics baseline for all shows th
 | `PATCH` | `/studios/:studioId/creators/:creatorId` | Update compensation defaults or active status | ADMIN only |
 
 Route guards: all routes use `@StudioProtected`. Write routes require `ADMIN` role.
+
+### Response DTO (GET list)
+
+```json
+{
+  "creator_id": "crt_abc123",
+  "name": "Creator Name",
+  "is_active": true,
+  "default_rate": 500.00,
+  "default_rate_type": "FIXED",
+  "default_commission_rate": null,
+  "version": 2,
+  "created_at": "2026-02-01T10:00:00Z"
+}
+```
+
+### Request DTO (POST — add from catalog)
+
+```json
+{
+  "creator_id": "crt_abc123",
+  "default_rate": 500.00,
+  "default_rate_type": "FIXED",
+  "default_commission_rate": null
+}
+```
+
+### Request DTO (PATCH — update defaults)
+
+All fields optional except `version` (required for optimistic concurrency).
+
+```json
+{
+  "default_rate": 600.00,
+  "default_rate_type": "FIXED",
+  "default_commission_rate": null,
+  "is_active": true,
+  "version": 2
+}
+```
+
+### Error Codes
+
+| Code | HTTP Status | Condition |
+| --- | --- | --- |
+| `CREATOR_NOT_FOUND` | 404 | Creator ID does not exist in system catalog |
+| `CREATOR_ALREADY_IN_ROSTER` | 409 | Creator already has an active roster entry in this studio |
+| `VERSION_CONFLICT` | 409 | PATCH `version` does not match current record |
+
+All error codes to be defined in `@eridu/api-types`.
+
+### Validation Rules
+
+- `default_rate`: non-negative decimal (`>= 0`). Zero is valid (unpaid/test scenarios).
+- `default_rate_type`: enum — `FIXED`, `COMMISSION`, `HYBRID`.
+- `default_commission_rate`: non-negative decimal when `default_rate_type` is `COMMISSION` or `HYBRID`; null when `FIXED`. Percentage value (e.g., `15.0` = 15%).
+
+### Edge Cases
+
+- **Duplicate add**: POST with a `creator_id` that already exists in the studio roster returns 409 `CREATOR_ALREADY_IN_ROSTER`.
+- **Re-add after deactivation**: POST with a deactivated creator ID restores the roster entry (sets `is_active=true`) with the newly specified compensation defaults.
+- **Rate change cascade**: updating `defaultRate` immediately changes the economics baseline for all shows relying on the fallback. Existing `ShowCreator` overrides are not affected.
 
 ## Frontend Route
 

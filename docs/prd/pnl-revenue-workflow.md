@@ -56,13 +56,15 @@ Key questions unanswered today:
 - Full revenue audit trail / correction history
 - Fixed cost lines (rent, equipment) in the P&L model
 
-## Open Design Questions
+## Open Design Questions (Wave 3 Gate)
 
-These must be resolved before technical design begins. They are documented here to ensure implementation is not started without explicit decisions.
+These must be resolved before technical design begins. Implementation is blocked until all four decisions are recorded. Recommended decisions are provided below — confirm or override before Wave 3 starts.
+
+> **Sequencing note**: These questions should be resolved during Wave 1/2 implementation so Wave 3 can start without delay.
 
 ### 1. Revenue data model: `ShowPlatform` extension vs. `ShowPlatformMetrics` table
 
-**Option A — Extend `ShowPlatform`**: add `gmv` and `net_sales` typed columns directly.
+**Option A — Extend `ShowPlatform`** (recommended): add `gmv` and `netSales` typed columns directly.
 - Pro: simple, no join needed, consistent with existing `viewerCount` approach.
 - Con: no support for corrections over time, no audit trail for revenue updates, `ShowPlatform` conflates stream configuration with financial outcomes.
 
@@ -70,31 +72,32 @@ These must be resolved before technical design begins. They are documented here 
 - Pro: clean separation of stream configuration vs. financial data; corrections are modeled as new records or updates to a dedicated financial record; enables future audit trail.
 - Con: additional join in economics queries; more migration surface area.
 
-**Decision required from product/engineering before implementation.**
+**Recommended decision**: Option A. MVP scope does not require revenue correction history. The `metadata` field on `ShowPlatform` can hold an optional `revenue_notes` string for free-text context. If audit trail becomes a hard requirement, Option B can be migrated to without breaking the API contract.
 
 ### 2. Platform-specific metric differences
 
 Different platforms report different revenue signals: TikTok has gifting revenue, YouTube has super chats and channel memberships, Shopee has ad revenue and commission. Some of these do not map to a simple GMV + net sales model.
 
-**Options**: typed columns per known platform type vs. a `metadata: Json` overflow field for platform-specific signals.
-
-**Decision required from product: which platform-specific metrics must be queryable vs. which can live in metadata.**
+**Recommended decision**: typed columns for `gmv` and `net_sales` (universal across platforms). Platform-specific breakdowns (gifting, super chats, ad revenue) stored in `ShowPlatform.metadata` JSON. These platform-specific signals are informational, not queryable in economics aggregation. If a specific platform metric becomes a business-critical query dimension, promote it to a typed column in a future migration.
 
 ### 3. Revenue input workflow
 
 Who enters revenue and when?
 
-- **Post-show manual entry** (simplest): studio admin enters GMV/sales figures after a show concludes.
-- **Real-time entry**: operator enters running totals during the show.
-- **Platform API import** (out of scope for this PRD but the model must not preclude it).
-
-**Decision required: post-show manual entry is the assumed workflow for this PRD. Confirm before technical design.**
+**Recommended decision**: **Post-show manual entry** (confirmed as MVP workflow). Studio ADMIN enters GMV/sales figures after a show concludes. The data model must not preclude future platform API import, but automated ingestion is out of scope. Real-time entry adds complexity (partial data, race conditions) without clear product value for v1.
 
 ### 4. Numerical precision
 
 Current economics calculations use standard JavaScript `number` arithmetic for financial values. Before P&L is treated as production-grade financial reporting, all financial arithmetic (rates, costs, revenue, margins) must be computed using `big.js`-backed helpers to eliminate floating-point accumulation errors.
 
-**Decision required: confirm `big.js` adoption mandate as a blocking prerequisite for this PRD, or explicitly accept floating-point risk as a deferred debt item.**
+**Recommended decision**: Adopt `big.js` as a **blocking prerequisite** for this PRD. Install as a workspace-level dependency. Migrate all economics service arithmetic (existing cost calculations + new revenue/margin calculations) to `big.js` in a preparatory PR before the revenue workflow implementation. This prevents introducing precision debt on production financial data.
+
+## Backwards Compatibility
+
+- Shows without revenue input continue to work unchanged — commission costs remain `null`, contribution margin is `null`.
+- The `@preview` markers are removed only after the revenue input workflow is live and validated, not merely after the data model is deployed.
+- Revenue-absent shows in economics responses include `compensation_type` indicator so consumers can distinguish "FIXED with no revenue needed" from "COMMISSION with revenue pending".
+- Grouped economics endpoint aggregation handles mixed shows (some with revenue, some without) — null revenue shows are excluded from margin aggregation, not treated as zero.
 
 ## Acceptance Criteria
 

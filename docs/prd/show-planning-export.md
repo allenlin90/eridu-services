@@ -67,6 +67,10 @@ This feature is intentionally **upstream from task submission reporting**:
 
 6. **Paginated JSON response** — the same endpoint with `format=json` (default) returns paginated rows for in-app table display before download. Response shape follows existing paginated list conventions.
 
+7. **Date range cap** — maximum date range is 90 days per export request. Requests exceeding 90 days return 400 with a clear error. This bounds the economics computation cost per request.
+
+8. **Soft-deleted show exclusion** — shows with `deletedAt` set are excluded from export results regardless of status filter. Only active (non-deleted) shows appear in planning exports.
+
 ### Not a Task-Report Extension
 
 This feature reads from **normalized show relations** (pre-execution planning data), not from task snapshots or submission records. The task-report engine's domain concepts (task content columns, shared-field merge, snapshot schemas) must not be imported or coupled into this feature.
@@ -135,6 +139,54 @@ Listed in the sidebar under the **Reports** group alongside Task Reports. See `a
 - **Normalized data source** — reads from live show relations, not cached snapshots. Export reflects current DB state at generation time.
 - **Economics cost is informational** — null cost is not an error state. The export is useful for assignment verification even without cost data.
 - **Format toggle on same endpoint** — `format=csv` vs. `format=json` on the same route rather than separate endpoints, keeping the filter/scope logic shared.
+
+## API Contract
+
+### JSON Response Shape
+
+Standard paginated response following existing list conventions:
+
+```json
+{
+  "data": [
+    {
+      "show_id": "show_abc123",
+      "show_name": "Evening Stream",
+      "client_name": "Acme Corp",
+      "status": "scheduled",
+      "standard": "Standard A",
+      "type": "Live",
+      "room": "Studio 1",
+      "start_time": "2026-04-01T19:00:00Z",
+      "end_time": "2026-04-01T22:00:00Z",
+      "assigned_creators": "Alice, Bob, Charlie",
+      "estimated_total_cost": 1500.00
+    }
+  ],
+  "meta": {
+    "total": 42,
+    "page": 1,
+    "limit": 20,
+    "total_pages": 3
+  }
+}
+```
+
+### CSV Format
+
+- Column headers use `snake_case` matching the JSON field names.
+- `estimated_total_cost`: `null` in JSON renders as empty string in CSV.
+- `assigned_creators`: comma-separated names, quoted in CSV to avoid delimiter conflicts.
+- Date fields in ISO 8601 format.
+- UTF-8 encoding with BOM for Excel compatibility.
+
+### Error Codes
+
+| Code | HTTP Status | Condition |
+| --- | --- | --- |
+| `DATE_RANGE_REQUIRED` | 400 | `date_from` or `date_to` missing |
+| `DATE_RANGE_EXCEEDED` | 400 | Date range exceeds 90-day cap |
+| `INVALID_DATE_FORMAT` | 400 | Date params not valid ISO date |
 
 ## Design Reference
 

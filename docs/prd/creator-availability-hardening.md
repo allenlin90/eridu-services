@@ -107,6 +107,44 @@ The `OVERLAP` check (requirement 3) can be implemented independently of the rost
 - **First conflict wins** — priority order for `conflict_reason` is: overlap > not in roster > inactive. Only the highest-priority reason is returned to keep the contract simple.
 - **No hard-block on discovery** — conflicted creators are still returned in `strict=true` responses with `is_conflicted=true`. The UI decides whether to visually disable, warn, or hard-block the action. The assignment endpoint is the authoritative enforcement point.
 
+## API Contract
+
+### Strict-Mode Response DTO
+
+When `strict=true`, each creator entry in the response includes conflict metadata:
+
+```json
+{
+  "creator_id": "crt_abc123",
+  "name": "Creator Name",
+  "is_conflicted": true,
+  "conflict_reason": "OVERLAP",
+  "conflicting_show_id": "show_xyz789"
+}
+```
+
+When `is_conflicted=false`, `conflict_reason` and `conflicting_show_id` are omitted (not present in response).
+
+### `include_inactive` Behavior
+
+- Default (`include_inactive=false`): inactive/deleted roster creators are excluded from the response entirely — they do not count toward pagination totals.
+- `include_inactive=true`: inactive creators are included with `conflict_reason: "INACTIVE"` and `is_conflicted: true`. They appear in the response and count toward totals.
+
+### Error Codes (Assignment Endpoint)
+
+| Code | HTTP Status | Condition |
+| --- | --- | --- |
+| `CREATOR_OVERLAP_CONFLICT` | 409 | Creator already assigned to show with overlapping time window |
+| `CREATOR_NOT_IN_ROSTER` | 422 | Creator not in studio roster (enforced after creator roster PRD ships) |
+
+These are distinct from 403 (authorization) and 404 (not found). Defined in `@eridu/api-types`.
+
+### Edge Cases
+
+- **Same-show re-assignment**: a creator already assigned to the target show is **not** flagged as an overlap conflict. Re-assignment with different compensation terms is an update operation handled by the existing assignment endpoint.
+- **Show without times**: if the target show has no `startTime`/`endTime`, overlap detection is skipped (no time window to compare). The creator is returned as non-conflicted for the overlap rule.
+- **Multiple overlaps**: if a creator overlaps with more than one show, `conflicting_show_id` returns the first overlapping show found (deterministic by earliest `startTime`).
+
 ## Design Reference
 
 - Backend API design: `apps/erify_api/docs/design/` (to be created at implementation)

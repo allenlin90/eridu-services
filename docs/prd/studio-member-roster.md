@@ -70,7 +70,9 @@ This PRD's primary economics value: studio operators maintain accurate labor cos
 
 Rate change behavior: updating `baseHourlyRate` affects **future** shift cost projections only. Historical `calculatedCost` values on completed shifts are not retroactively updated.
 
-## Routes
+## API Contract
+
+### Routes
 
 | Method | Route | Description | Access |
 | --- | --- | --- | --- |
@@ -80,6 +82,75 @@ Rate change behavior: updating `baseHourlyRate` affects **future** shift cost pr
 | `DELETE` | `/studios/:studioId/members/:membershipId` | Soft-deactivate (remove) a member | ADMIN only |
 
 Route guards: all routes use `@StudioProtected`. Write routes require `ADMIN` role. Read routes allow `ADMIN` and `MANAGER`.
+
+### Response DTO (GET list)
+
+```json
+{
+  "membership_id": "mem_abc123",
+  "user_id": "user_xyz789",
+  "user_name": "Jane Doe",
+  "user_email": "jane@example.com",
+  "role": "MANAGER",
+  "base_hourly_rate": 25.00,
+  "is_helper": true,
+  "version": 3,
+  "created_at": "2026-01-15T08:00:00Z"
+}
+```
+
+### Request DTO (POST — add member)
+
+```json
+{
+  "email": "jane@example.com",
+  "role": "MANAGER",
+  "base_hourly_rate": 25.00,
+  "is_helper": false
+}
+```
+
+### Request DTO (PATCH — update member)
+
+All fields optional except `version` (required for optimistic concurrency).
+
+```json
+{
+  "role": "ADMIN",
+  "base_hourly_rate": 30.00,
+  "is_helper": true,
+  "version": 3
+}
+```
+
+Stale `version` returns 409 Conflict. This prevents concurrent overwrites of financial data (`baseHourlyRate`).
+
+### Error Codes
+
+| Code | HTTP Status | Condition |
+| --- | --- | --- |
+| `MEMBER_NOT_HELPER_ELIGIBLE` | 422 | Task helper assignment attempted for member with `is_helper=false` |
+| `SELF_DEMOTION_NOT_ALLOWED` | 422 | ADMIN attempts to demote their own membership |
+| `USER_NOT_FOUND` | 404 | Email lookup returns no matching user in system catalog |
+| `MEMBER_ALREADY_EXISTS` | 409 | Email already has an active membership in this studio |
+| `VERSION_CONFLICT` | 409 | PATCH `version` does not match current record |
+
+All error codes to be defined in `@eridu/api-types`.
+
+### Edge Cases
+
+- **Duplicate invite**: POST with an email that already has an active membership returns 409 `MEMBER_ALREADY_EXISTS` (idempotent-safe — not a server error).
+- **Rate change effect**: updating `baseHourlyRate` affects **future** shift cost projections only. Historical `calculatedCost` values on completed shifts are immutable. Economics uses the rate at shift computation time, not retroactively.
+- **Re-invite after removal**: POST with an email of a soft-deleted member restores the membership (clears `deletedAt`) with the newly specified role and rate.
+
+### Schema Migration Required
+
+`StudioMembership` needs two new fields (consistent with `StudioCreator` which already has `version`):
+
+```prisma
+isHelper  Boolean @default(false) @map("is_helper")
+version   Int     @default(1)
+```
 
 ## Frontend Route
 
