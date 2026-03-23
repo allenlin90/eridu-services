@@ -79,7 +79,7 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 | Feature | PRD | BE Design | FE Design |
 | --- | --- | --- | --- |
 | Creator mapping | Shipped → [feature doc](../features/creator-mapping.md) | Covered in phase-level BE doc | Covered in phase-level FE doc |
-| Economics baseline | Shipped → [feature doc](../features/show-economics.md) | TBD (create with merge PR) | TBD (create with merge PR) |
+| Economics baseline | Deferred → [feature doc](../features/show-economics.md) | TBD (after cost model review) | TBD (after cost model review) |
 | Studio member roster | [PRD](../prd/studio-member-roster.md) | TBD (create with PR #1c) | TBD (create with PR #1c) |
 | Studio creator roster | [PRD](../prd/studio-creator-roster.md) | TBD (create with PR #1b) | TBD (create with PR #1b) |
 | Show planning export | [PRD](../prd/show-planning-export.md) | TBD (create with PR #2a) | TBD (create with PR #2a) |
@@ -98,19 +98,22 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 
 Phase 4 is reopened to complete its original P&L economics goal. Task submission reporting was shipped during the interim.
 
-### Economics Baseline (Developed — Pending Merge)
+### Economics Baseline (Developed — Deferred)
 
 Deliver show-level and grouped economics endpoints for baseline variable cost visibility (creator costs + shift labor costs).
 
 - Feature doc: [show-economics.md](../features/show-economics.md) (PRD promoted per lifecycle)
-- Status: ✅ Developed (commit `8de31ffe`, 2026-03-22)
+- Status: ⏸️ Developed but **merge deferred** (commit `8de31ffe`, 2026-03-22)
 - **Branch**: `feat/show-economics-baseline` — 1 commit ahead of `master`, not yet merged
-- **Merge target**: Must be merged to `master` before Wave 2 (Show Planning Export depends on economics endpoints)
 - Endpoints:
   - `GET /studios/:studioId/shows/:showId/economics` — single show variable cost breakdown
   - `GET /studios/:studioId/economics` — grouped economics (by show / schedule / client)
-- Creator costs resolve `ShowCreator` overrides → `Creator` defaults; `COMMISSION`/`HYBRID` yield `null` computed cost (revenue side deferred to ideation).
+- Creator costs resolve `ShowCreator` overrides → `Creator` defaults; `COMMISSION`/`HYBRID` yield `null` computed cost.
 - Shift costs are proportionally attributed by block overlap with show time window.
+
+**Why deferred**: The current cost model covers fixed rate, hourly rate, commission, and hybrid compensation types. However, real operations may require additional cost components not yet modeled — bonus, OT, special allowances, ad-hoc arrangements. The economics service needs a cost model review before merging to ensure the computation architecture can accommodate these components without a rewrite. This review will happen after both studio rosters (Wave 1) ship, when the data input layer is stable.
+
+**Merge target**: After Wave 1 completes, review cost model requirements, then merge (potentially with revisions) before Wave 2.
 
 ### Resolved from Ideation (2026-03-22)
 
@@ -121,6 +124,20 @@ Items resolved during the Phase 4 reopen window without full PRD promotion:
 | Frontend API Contract Consistency (`pageSize` → `limit`) | ✅ Implemented           | PRs #21, #23 (`cfd80c14`, `38b3c32c`) | All 15 `erify_studios` search schemas and `useTableUrlState` migrated; `pageSize` backcompat removed.                                        |
 | API Read-Path Optimization (show / task-template slice)  | ✅ Partial slice shipped | PR #22 (`a06ddcac`)                   | Show DTO includes slimmed, studio task-summary and single-show query shaped, admin template blob-read reduced. Full ideation remains active. |
 | Studios Internal Read Burst Hardening                    | ✅ Implemented           | PR #24 (`7def7a50`)                   | Request deduplication, `axios.isCancel()` guard, `refetchOnWindowFocus` disabled globally; rationale in `STUDIOS_INTERNAL_READ_TRAFFIC.md`.  |
+
+### Pre-Development: Task Template Migration (2026-03-23)
+
+The app is still in alpha test and cannot be used for real operations because the task submission reporting and export feature requires task templates with shared fields to produce meaningful output. A previous migration was run but did not create templates for existing workflows.
+
+**Task**: Re-run the task template migration with production-equivalent data:
+1. Export sample data from staging (or provide representative examples)
+2. Parse and compare against existing schema and shared field definitions
+3. Create task templates that match actual operational workflows
+4. Validate that task submission reporting produces correct output with the migrated templates
+
+**Status**: 🔲 Pending — details and gaps to be discussed during processing. This is a prerequisite for the app to be operationally usable, independent of the P&L feature work.
+
+**Sequencing**: Can run in parallel with Wave 1. No dependency on roster PRDs or economics.
 
 ### Extended Scope (2026-03-22) — Active PRDs
 
@@ -142,19 +159,26 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 | Gate | Blocks | Status |
 | --- | --- | --- |
 | **Prisma migration** — add `isHelper` + `version` to `StudioMembership` | Wave 1: Studio Member Roster | 🔲 Pending |
-| **Economics merge** — merge `feat/show-economics-baseline` (`8de31ffe`) to `master` | Wave 2: Show Planning Export | 🔲 Pending (1 commit ahead of master) |
+| **Economics cost model review** — review cost components (bonus, OT, allowances) and revise economics service if needed | Wave 2: Show Planning Export | ⏸️ Deferred to after Wave 1 |
+| **Economics merge** — merge `feat/show-economics-baseline` (with potential revisions) to `master` | Wave 2: Show Planning Export | ⏸️ Deferred to after cost model review |
 | **Financial arithmetic decision** — adopt `big.js` or accept floating-point risk | Wave 3: P&L Revenue Workflow | 🔲 Pending |
 
 #### Dependency Graph
 
 ```
-Wave 1 (no economics dependency — can start now):
+Pre-dev (parallel with Wave 1):
+    └─► Task Template Migration ─────────────────── (staging data → templates + shared fields)
+
+Wave 1 (can start now):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
     ├─► Studio Creator Roster ─────────────────────── (StudioCreator model complete)
     └─► Studio Member Roster ──────────────────────── (needs isHelper + version migration)
 
+Post-Wave 1: Economics cost model review
+    └─► Decide additional cost components (bonus, OT, allowances)
+    └─► Revise and merge feat/show-economics-baseline
+
 Economics merged to master (gate for Wave 2):
-    │
     ├─► Wave 2: Show Planning Export ──────────────── (needs economics endpoints)
     └─► Wave 2: Creator Availability Hardening ────── (needs creator roster from Wave 1)
 
@@ -196,27 +220,30 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 
 | # | PR | Branch | Gate | Deliverables |
 | --- | --- | --- | --- | --- |
-| 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | None — can merge now | Code + BE/FE design docs |
+| P | Task template migration | `feat/task-template-migration` | Staging data samples | Migration script + validation |
 | 1a | Sidebar redesign | `feat/sidebar-redesign` | None | Code + update skills/memory referencing sidebar |
 | 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None | PRD review → BE/FE design → code + tests |
 | 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (isHelper + version) | PRD review → BE/FE design → code + tests |
+| R | Economics cost model review | — | Wave 1 complete | Review cost components, revise economics service |
+| 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | Cost model review done | Code (potentially revised) + BE/FE design docs |
 | 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) | PRD review → BE/FE design → code + tests |
 | 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1b merged (creator roster state) | PRD review → BE/FE design → code + tests |
 | 3 | P&L revenue workflow | `feat/pnl-revenue-workflow` | Design Qs resolved + big.js adopted | PRD review → BE/FE design → code + tests |
 
-PRs 1a/1b/1c can be developed and reviewed in parallel. PRs 2a/2b wait for their respective gates.
+PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b/1c can be developed and reviewed in parallel. Economics merge (PR #0) waits for cost model review after Wave 1. PRs 2a/2b wait for their respective gates.
 
 Per-PR workflow: review PRD → create `apps/erify_api/docs/design/<FEATURE>_DESIGN.md` + `apps/erify_studios/docs/design/<FEATURE>_DESIGN.md` → implement → post-ship knowledge-sync.
 
 ### Risks & Open Items
 
-| Item                                                              | Risk                                 | Mitigation                                                   |
-| ----------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------ |
-| P&L Revenue Workflow has 4 unresolved design questions            | High — blocks Wave 3 entirely        | Resolve during Wave 1 so Wave 3 can start without delay      |
-| Show Planning Export per-show economics batch cost                | Medium — performance at scale        | Define cap (max 90-day range) and batch computation strategy |
-| Member roster helper eligibility touches task assignment path     | Medium — regression risk             | Dedicated tests for assignment with `isHelper=false`         |
-| Economics FE gap — no frontend pages consume shipped BE endpoints | Medium — invisible to operators      | Consider lightweight economics summary page in Wave 2        |
-| No financial arithmetic library — JS `Number` with `.toFixed(2)`  | Medium — floating-point accumulation | Adopt `big.js` before Wave 3 revenue workflow                |
+| Item | Risk | Mitigation |
+| --- | --- | --- |
+| Economics cost model may need rework for bonus/OT/allowances | High — could require architecture changes | Review after Wave 1 when roster data layer is stable; revise before merge |
+| P&L Revenue Workflow has 4 unresolved design questions | High — blocks Wave 3 entirely | Resolve during Wave 1 so Wave 3 can start without delay |
+| Task template migration depends on staging data availability | Medium — blocks operational readiness | Export samples early; can proceed with representative examples |
+| Show Planning Export per-show economics batch cost | Medium — performance at scale | Define cap (max 90-day range) and batch computation strategy |
+| Member roster helper eligibility touches task assignment path | Medium — regression risk | Dedicated tests for assignment with `isHelper=false` |
+| No financial arithmetic library — JS `Number` with `.toFixed(2)` | Medium — floating-point accumulation | Adopt `big.js` before Wave 3 revenue workflow |
 
 ### Task Submission Reporting & Export (Shipped)
 
