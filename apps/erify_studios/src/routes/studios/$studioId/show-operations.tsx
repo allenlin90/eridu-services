@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 
-const showsSearchSchema = z.object({
+const showOperationsSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   limit: z.coerce.number().int().min(1).catch(10),
   sortBy: z.string().optional().catch(undefined),
@@ -20,20 +20,20 @@ const showsSearchSchema = z.object({
   platform_name: z.string().optional().catch(undefined),
 });
 
-export const Route = createFileRoute('/studios/$studioId/shows')({
-  validateSearch: (search) => showsSearchSchema.parse(search),
-  component: RouteComponent,
+export const Route = createFileRoute('/studios/$studioId/show-operations')({
+  validateSearch: (search) => showOperationsSearchSchema.parse(search),
+  component: ShowOperationsRoute,
 });
 
-function RouteComponent() {
+function ShowOperationsRoute() {
   const { studioId } = Route.useParams();
 
   return (
     <StudioRouteGuard
       studioId={studioId}
       routeKey="shows"
-      deniedTitle="Shows Access Required"
-      deniedDescription="Only studio admins and managers can access shows."
+      deniedTitle="Show Operations Access Required"
+      deniedDescription="Only studio admins and managers can access show operations."
     >
       <Outlet />
     </StudioRouteGuard>

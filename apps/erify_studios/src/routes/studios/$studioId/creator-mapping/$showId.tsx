@@ -63,7 +63,7 @@ function ShowCreatorMappingPage() {
           <div className="flex min-w-0 items-center gap-4">
             {backToTasks
               ? (
-                  <Link to="/studios/$studioId/shows/$showId/tasks" params={{ studioId, showId }}>
+                  <Link to="/studios/$studioId/show-operations/$showId/tasks" params={{ studioId, showId }}>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <ArrowLeft className="h-4 w-4" />
                     </Button>

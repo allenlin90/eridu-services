@@ -29,7 +29,7 @@ export function ShowHeaderSection({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <Link to="/studios/$studioId/shows" params={{ studioId }}>
+          <Link to="/studios/$studioId/show-operations" params={{ studioId }}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>

@@ -10,7 +10,7 @@ import { TasksTableSection } from '@/features/tasks/components/studio-show-tasks
 import { TasksToolbarActions } from '@/features/tasks/components/studio-show-tasks-page/tasks-toolbar-actions';
 import { useStudioShowTasksPageController } from '@/features/tasks/hooks/use-studio-show-tasks-page-controller';
 
-export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
+export const Route = createFileRoute('/studios/$studioId/show-operations/$showId/tasks')({
   component: StudioShowTasksPage,
   loader: ({ context: { queryClient }, params: { studioId, showId } }) => {
     void queryClient.prefetchQuery({

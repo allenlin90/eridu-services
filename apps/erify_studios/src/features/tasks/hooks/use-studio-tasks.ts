@@ -30,7 +30,7 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     columnFilters,
     onColumnFiltersChange,
   } = useTableUrlState({
-    from: '/studios/$studioId/review-queue',
+    from: '/studios/$studioId/task-review',
     searchColumnId: 'description',
     dateColumnId: 'due_date',
     paramNames: {

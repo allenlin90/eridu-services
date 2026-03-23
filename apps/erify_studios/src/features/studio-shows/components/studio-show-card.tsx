@@ -115,7 +115,7 @@ export function StudioShowCard({ show, studioId, isSelected, onSelect }: StudioS
             <span>{allComplete ? 'Complete' : 'In Progress'}</span>
           </div>
           <Link
-            to="/studios/$studioId/shows/$showId/tasks"
+            to="/studios/$studioId/show-operations/$showId/tasks"
             params={{ studioId, showId: show.id }}
             state={{
               show: {

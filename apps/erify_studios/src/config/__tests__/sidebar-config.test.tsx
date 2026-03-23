@@ -188,30 +188,34 @@ describe('useSidebarConfig', () => {
 
     expect(result.current.navMain[3]).toEqual(expect.objectContaining({
       title: 'Studio Manager',
-      url: '/studios/studio-1/review-queue',
+      url: '/studios/studio-1/task-review',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
-          title: 'Review Queue',
-          url: '/studios/studio-1/review-queue',
+          title: 'Task Review',
+          url: '/studios/studio-1/task-review',
         }),
         expect.objectContaining({
           title: 'Shift Schedule',
           url: '/studios/studio-1/shifts',
+        }),
+        expect.objectContaining({
+          title: 'Show Operations',
+          url: '/studios/studio-1/show-operations',
         }),
       ]),
     }));
 
     expect(result.current.navMain[4]).toEqual(expect.objectContaining({
       title: 'Studio Admin',
-      url: '/studios/studio-1/settings/shared-fields',
+      url: '/studios/studio-1/shared-fields',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
           title: 'Shared Fields',
-          url: '/studios/studio-1/settings/shared-fields',
+          url: '/studios/studio-1/shared-fields',
         }),
       ]),
     }));

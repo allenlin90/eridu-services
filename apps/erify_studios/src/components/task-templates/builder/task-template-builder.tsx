@@ -626,7 +626,7 @@ export function TaskTemplateBuilder({
                         {canManageSharedFields
                           ? (
                               <Button asChild variant="outline" size="sm">
-                                <Link to="/studios/$studioId/settings/shared-fields" params={{ studioId }}>
+                                <Link to="/studios/$studioId/shared-fields" params={{ studioId }}>
                                   Open Shared Fields Settings
                                 </Link>
                               </Button>
