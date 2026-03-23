@@ -89,10 +89,10 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 
 ## Out of Scope for Phase 4
 
-- Ticketing/material management and unrelated backlog tracks (see [Phase 5](./PHASE_5.md)).
-- Advanced profit engine and complex compensation policies (tiered/volume commission, bonus, OT).
-- Creator HR & operations (HRMS, platform API integrations, fixed cost tracking) — deferred to Phase 5.
-- Full-text search, admin UX searchability refactor — deferred to Phase 5.
+- Ticketing, material management, inventory — [Phase 5 Track B](./PHASE_5.md#track-b-operations-expansion-ticketing-materials-inventory).
+- Advanced compensation engine (bonus, OT, tiered/volume commission) — [Phase 5 Track A](./PHASE_5.md#track-a-pl-revenue-side-p-side-completion).
+- Creator HR & operations (HRMS, platform API integrations, fixed cost tracking) — [Phase 5 Track A](./PHASE_5.md#track-a-pl-revenue-side-p-side-completion).
+- Full-text search, admin UX searchability refactor — Phase 5 (either track).
 
 ## Phase 4 Reopened Scope (2026-03-21)
 
