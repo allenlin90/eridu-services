@@ -23,7 +23,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 2. **ADMIN and MANAGER are operationally equivalent**: both can manage shifts, shows, tasks, templates. The only ADMIN-exclusive action is studio membership management (not a frontend route — handled via admin API).
 3. **TALENT_MANAGER has a focused scope**: creator catalog/roster reads and show creator assignment. No task ops, shift ops, or template access.
 4. **DESIGNER and MODERATION_MANAGER are member-level**: access is limited to their own tasks and shifts.
-5. **Single-purpose routes**: shows route = task ops only; creator-mapping route = creator assignment only.
+5. **Single-purpose routes**: show-operations route = task ops only; creator-mapping route = creator assignment only.
 
 ## Route Access Matrix
 
@@ -32,12 +32,12 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/dashboard` | View | View | View | View | View | View |
 | `/studios/:studioId/my-tasks` | View/Execute | View/Execute | View/Execute | View/Execute | View/Execute | View/Execute |
 | `/studios/:studioId/my-shifts` | View | View | View | View | View | View |
-| `/studios/:studioId/review-queue` | View/Review | View/Review | No access | No access | No access | No access |
+| `/studios/:studioId/task-review` | View/Review | View/Review | No access | No access | No access | No access |
 | `/studios/:studioId/shifts` | View + Manage | View + Manage | No access | No access | No access | No access |
-| `/studios/:studioId/shows` | View + Manage | View + Manage | No access | No access | No access | No access |
-| `/studios/:studioId/shows/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
+| `/studios/:studioId/show-operations` | View + Manage | View + Manage | No access | No access | No access | No access |
+| `/studios/:studioId/show-operations/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-templates` | View + Manage | View + Manage | No access | No access | No access | No access |
-| `/studios/:studioId/settings/shared-fields` | View + Manage | No access | No access | No access | No access | No access |
+| `/studios/:studioId/shared-fields` | View + Manage | No access | No access | No access | No access | No access |
 | `/studios/:studioId/creator-mapping` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 | `/studios/:studioId/creator-mapping/:showId` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 
@@ -46,7 +46,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | Section | Shown to |
 |---------|----------|
 | Studio Common (Dashboard, My Tasks, My Shifts) | All roles |
-| Studio Admin (Review Queue, Shift Schedule, Shows, Task Templates) | ADMIN, MANAGER |
+| Studio Admin (Task Review, Shift Schedule, Show Operations, Task Templates) | ADMIN, MANAGER |
 | Creators (Creator Mapping) | ADMIN, MANAGER, TALENT_MANAGER |
 
 ## Dashboard View (All Studio Roles)
@@ -83,7 +83,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | Create/update/delete shift | Yes | Yes | No | No | No | No |
 | Assign/unset duty manager | Yes | Yes | No | No | No | No |
 
-## Shows View (`/shows`, ADMIN + MANAGER — task ops only)
+## Show Operations View (`/show-operations`, ADMIN + MANAGER — task ops only)
 
 ### Use Cases
 
@@ -97,7 +97,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 
 | Function | ADMIN | MANAGER | TALENT_MANAGER |
 | -------- | ----- | ------- | -------------- |
-| Access shows route | Yes | Yes | No |
+| Access show-operations route | Yes | Yes | No |
 | Generate/assign tasks | Yes | Yes | No |
 | Navigate to creator mapping from tasks view | Yes | Yes | No |
 
@@ -118,7 +118,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | Read shared-field catalog in builder | Yes | Yes | No |
 | Manage shared-field settings | Yes | No | No |
 
-## Shared Fields Settings View (`/settings/shared-fields`, ADMIN only)
+## Shared Fields Settings View (`/shared-fields`, ADMIN only)
 
 ### Use Cases
 

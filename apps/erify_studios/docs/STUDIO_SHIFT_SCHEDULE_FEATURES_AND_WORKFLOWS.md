@@ -139,9 +139,9 @@ Delivered:
   - Task-readiness risks: no tasks, unassigned tasks, missing `SETUP`/`CLOSURE`, and missing moderation task on premium shows.
   - Backend risk-bucketing uses a fixed operational-day boundary (`06:00`) for consistency across orchestration reports.
 - Frontend admin planning cards now consume these endpoints on dedicated surfaces:
-  - `/studios/:studioId/shows` for date-range task-readiness summary warnings.
+  - `/studios/:studioId/show-operations` for date-range task-readiness summary warnings.
   - `/studios/:studioId/shifts` for shift cost snapshot.
-- `/studios/:studioId/shows` Show Readiness panel supports date-range querying and uses an admin triage layout:
+- `/studios/:studioId/show-operations` Show Readiness panel supports date-range querying and uses an admin triage layout:
   - top summary highlights scope coverage, attention rate, and the current primary action
   - action buckets split follow-up into task-plan gaps, assignment workload, and missing required coverage
   - per-bucket drill-down popovers expose affected show names, timing, and issue tags without leaving the page
@@ -232,7 +232,7 @@ Pending scope:
 - Dashboard pagination controls now hide the rows-per-page selector on mobile to avoid action-row overflow while preserving next/previous actions.
 - Refactored dashboard/calendar shift timeline handling into shared utilities (`sortShiftsByFirstBlockStart`, `getShiftFirstBlockStartMs`) and replaced repeated hardcoded member/query fetch limits with named constants.
 - Added backend orchestration services/modules and studio routes for `shift-calendar` and `shift-alignment`, including typed query/response schemas and service/controller tests.
-- Added frontend API hooks for `shift-calendar`/`shift-alignment` and admin planning cards on dedicated surfaces: `/studios/:studioId/shows` (risk warning summary) and `/studios/:studioId/shifts` (cost snapshot).
+- Added frontend API hooks for `shift-calendar`/`shift-alignment` and admin planning cards on dedicated surfaces: `/studios/:studioId/show-operations` (risk warning summary) and `/studios/:studioId/shifts` (cost snapshot).
 - Shift cost snapshot card now includes an inline date-range picker + reset action, eliminating manual URL edits for planning window changes.
 - Extracted shared date helpers (`addDays`, `fromLocalDateInput`, date param resolver) into `shift-date.utils` and reused across dashboard/shifts/my-shifts routes.
 - Shift calendar now supports quick jump-to-date and debounced range updates to reduce noisy refetches during navigation.
@@ -341,7 +341,7 @@ Pending scope:
 
 ### Future Integration TODOs
 
-1. **Show alignment orchestration** — baseline planning warning summary is implemented in `/studios/:studioId/shows`; pending dedicated report/drill-down views.
+1. **Show alignment orchestration** — baseline planning warning summary is implemented in `/studios/:studioId/show-operations`; pending dedicated report/drill-down views.
 2. **Financial aggregation** — baseline planning cost snapshot is implemented in `/studios/:studioId/shifts`; pending richer report views.
 3. **Calendar event interactivity** — Admin: click → edit dialog. Member: click → read-only detail popover. Deferred to Phase 4 planning.
 4. **Member availability** — members set availability for admin reference.

@@ -32,8 +32,8 @@ Define frontend route/UI behavior for Phase 4 mapping, economics, roster managem
 
 | Route | Purpose | Access | Status |
 | --- | --- | --- | --- |
-| `/studios/$studioId/shows` | Show list with assignment entry points | ADMIN, MANAGER | ✅ Shipped |
-| `/studios/$studioId/shows/$showId/tasks` | Task assignment and execution workflow | ADMIN, MANAGER | ✅ Shipped |
+| `/studios/$studioId/show-operations` | Show operations workspace for readiness, task generation, and assignment entry points | ADMIN, MANAGER | ✅ Shipped |
+| `/studios/$studioId/show-operations/$showId/tasks` | Task assignment and execution workflow | ADMIN, MANAGER | ✅ Shipped |
 | `/studios/$studioId/creator-mapping` | Creator mapping show list with scope + creator-centric filters | ADMIN, MANAGER, TALENT_MANAGER | ✅ Shipped |
 | `/studios/$studioId/creator-mapping/$showId` | Creator mapping workflow (show-level add/remove) | ADMIN, MANAGER, TALENT_MANAGER | ✅ Shipped |
 | `/system/creators` | System creator management baseline | System admin only | ✅ Shipped |
@@ -48,6 +48,7 @@ Implemented UI additions:
 - Creator picker currently uses a loose availability discovery endpoint (search-first); strict overlap enforcement in Wave 2.
 - Compensation input fields in assignment flows where needed by economics.
 - Creator mapping detail route uses the same page-shell style as show task management for consistent single-show operations.
+- Studio operations routes now use intent-specific frontend slugs: `/show-operations`, `/task-review`, and `/shared-fields`.
 
 ### Studio Member Roster (Wave 1)
 
@@ -112,7 +113,7 @@ Current role-based groups → function-based groups:
 | Group | Items | New Route Access Keys |
 | --- | --- | --- |
 | **My Workspace** | (renamed from "Studio Common") | — |
-| **Operations** | Shows, Shift Schedule, Review Queue | — |
+| **Operations** | Show Operations, Shift Schedule, Task Review | — |
 | **Reports** | Task Reports, Show Planning Export | `showPlanningExport` |
 | **Creators** | Creator Mapping, Creator Roster | `creatorRoster` |
 | **Finance** | Economics (conditional — shown when at least one item ships) | `economics` |

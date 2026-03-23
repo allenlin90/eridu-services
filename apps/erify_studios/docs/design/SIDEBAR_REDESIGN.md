@@ -36,9 +36,9 @@ Source file: `apps/erify_studios/src/config/sidebar-config.tsx`
 - Label: `"Studio Manager"` — misleading; implies this section is only for MANAGER role, but ADMIN also uses it; groups execution management and admin tooling together
 - Icon: `Settings`
 - Items:
-  - Review Queue — `ClipboardCheck`
+  - Task Review — `ClipboardCheck`
   - Shift Schedule — `CalendarDays`
-  - Shows — `Clapperboard`
+  - Show Operations — `Clapperboard`
   - Task Templates — `ClipboardCheck`
   - Task Reports — `ClipboardCheck`
 - Access: MANAGER, ADMIN (varies by item)
@@ -62,7 +62,7 @@ Source file: `apps/erify_studios/src/config/sidebar-config.tsx`
 ### Problem Summary
 
 1. **"Studio Common" vs. "Studio Manager" vs. "Studio Admin"** is role-based labeling, not function-based. Users see "Studio Manager" items they cannot access (the group is filtered, not the label). This confuses new users about the product structure.
-2. **"Studio Manager" mixes execution and output**: Shows, Shift Schedule, and Review Queue are operational execution tools. Task Reports is an output/analysis tool. These should not share a group.
+2. **"Studio Manager" mixes execution and output**: Show Operations, Shift Schedule, and Task Review are operational execution tools. Task Reports is an output/analysis tool. These should not share a group.
 3. **"Studio Admin" has one item** — not worth its own group once more admin items are added.
 4. **No home for Finance/P&L** — economics UI has no group.
 
@@ -88,9 +88,9 @@ Groups are reorganized by **function** (what you do) not by **role** (who you ar
 - Label: `"Operations"` — execution-focused; split from "Studio Manager"
 - Icon: `Clapperboard`
 - Items:
-  - Shows — `Clapperboard`
+  - Show Operations — `Clapperboard`
   - Shift Schedule — `CalendarDays`
-  - Review Queue — `ClipboardCheck`
+  - Task Review — `ClipboardCheck`
 - Access: MANAGER, ADMIN (unchanged per item)
 - Note: Task Templates moves to Studio Settings (it is a configuration item, not an execution item)
 
@@ -137,6 +137,7 @@ Groups are reorganized by **function** (what you do) not by **role** (who you ar
   - Members: ADMIN, MANAGER (new `members` key — MANAGER read-only, enforced in component)
   - Shared Fields: ADMIN (unchanged)
   - Task Templates: MANAGER, ADMIN (unchanged)
+- Note: current shipped frontend slug is `/studios/$studioId/shared-fields`; a nested `/settings/*` layout can be introduced later when more settings surfaces exist.
 
 ---
 
@@ -199,6 +200,10 @@ Role-based access remains enforced via `hasStudioRouteAccess`; it just does not 
 ### Task Templates move
 
 Task Templates moves from "Studio Manager" (execution) to "Studio Settings" (configuration). A task template is a definition artifact, not a daily operational item. It belongs alongside Shared Fields under configuration.
+
+### Shared Fields route flattening
+
+`/studios/$studioId/shared-fields` is clearer than a nested `/settings/shared-fields` slug while shared fields remain the only settings surface. If a multi-page settings area ships later, the frontend can reintroduce a dedicated settings layout without changing the backend shared-fields API endpoints.
 
 ### Finance group deferral
 

@@ -1,18 +1,18 @@
 # Show Readiness
 
-> Studio shows readiness triage panel and Issues filter on `/studios/:studioId/shows`.
+> Studio show readiness triage panel and Issues filter on `/studios/:studioId/show-operations`.
 
 ## Implementation
 
 - Panel component: [show-readiness-triage-panel.tsx](../src/features/studio-shows/components/show-readiness/show-readiness-triage-panel.tsx)
 - View-model utils: [show-readiness.utils.ts](../src/features/studio-shows/utils/show-readiness.utils.ts)
 - Scope datetime bounds: [show-scope.utils.ts](../src/features/studio-shows/utils/show-scope.utils.ts)
-- Route integration: [shows/index.tsx](../src/routes/studios/$studioId/shows/index.tsx) — `ShowTaskReadinessSection`
+- Route integration: [index.tsx](../src/routes/studios/$studioId/show-operations/index.tsx) — `ShowTaskReadinessSection`
 - Backend orchestration: [task-orchestration.service.ts](../../erify_api/src/task-orchestration/task-orchestration.service.ts) — `getStudioShowsWithTaskSummary`
 
 ## What it does
 
-The readiness panel on the studio shows page:
+The readiness panel on the studio show operations page:
 
 1. Summarises scope health — X of Y shows need attention, % ready progress bar
 2. Groups issues into three priority buckets:
