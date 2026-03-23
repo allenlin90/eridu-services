@@ -95,7 +95,7 @@ eridu_auth (JWT 15min) → erify_api (JWKS verify) → React (Better Auth client
 
 ### Studio-Scoped Pattern
 ```typescript
-// Route: /studios/:studioId/tasks
+// Route: /studios/:studioId/show-operations
 @StudioProtected([ADMIN, MANAGER])  // Auto-validates membership
 method(@StudioParam() studioUid: string) {
   // studioUid already validated by guard

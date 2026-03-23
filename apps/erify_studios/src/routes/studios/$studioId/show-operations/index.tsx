@@ -42,10 +42,10 @@ import {
 } from '@/features/studio-shows/utils/show-scope.utils';
 import { resolveUpdater } from '@/lib/table-state.utils';
 
-export const Route = createFileRoute('/studios/$studioId/shows/')({
-  component: StudioShowsPage,
+export const Route = createFileRoute('/studios/$studioId/show-operations/')({
+  component: StudioShowOperationsPage,
 });
-const showsRouteApi = getRouteApi('/studios/$studioId/shows');
+const showOperationsRouteApi = getRouteApi('/studios/$studioId/show-operations');
 
 type ScopeRange = {
   date_from?: string;
@@ -104,10 +104,10 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 const QUICK_FILTER_COLUMNS: string[] = [];
 const FEATURED_FILTER_COLUMNS = ['has_tasks', 'client_name', 'show_status_name'];
 
-function StudioShowsPage() {
-  const { studioId } = showsRouteApi.useParams();
-  const search = showsRouteApi.useSearch();
-  const navigate = showsRouteApi.useNavigate();
+function StudioShowOperationsPage() {
+  const { studioId } = showOperationsRouteApi.useParams();
+  const search = showOperationsRouteApi.useSearch();
+  const navigate = showOperationsRouteApi.useNavigate();
   const isNeedsAttentionActive = search.needs_attention === true || search.needs_attention === 'true';
   const [isReadinessSnapshotVisible, setIsReadinessSnapshotVisible] = useState(true);
   const [snapshotRefreshSignal, setSnapshotRefreshSignal] = useState(0);
@@ -120,7 +120,7 @@ function StudioShowsPage() {
     options?: { replace?: boolean },
   ) => {
     void navigate({
-      to: '/studios/$studioId/shows',
+      to: '/studios/$studioId/show-operations',
       params: { studioId },
       search: updater,
       replace: options?.replace ?? true,
@@ -185,8 +185,8 @@ function StudioShowsPage() {
 
   return (
     <PageLayout
-      title="Shows"
-      description="Monitor task progress and assignments across all your studio shows."
+      title="Show Operations"
+      description="Generate tasks, review readiness, and assign work across studio shows."
     >
       <div className="space-y-4">
         <Card>

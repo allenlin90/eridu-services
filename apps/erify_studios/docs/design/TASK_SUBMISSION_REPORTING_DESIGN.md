@@ -402,7 +402,7 @@ This grouping mirrors how shared fields appear in the column picker (§5.2), pro
 
 **File locations (current implementation):**
 - Settings UI: `src/features/studio-shared-fields/components/studio-shared-fields-settings.tsx`
-- Settings route: `src/routes/studios/$studioId/settings/shared-fields.tsx`
+- Settings route: `src/routes/studios/$studioId/shared-fields.tsx`
 - Template builder consumption: `src/routes/studios/$studioId/task-templates/new.tsx` and `src/routes/studios/$studioId/task-templates/$templateId.tsx`
 
 ### 5.5 Export UX

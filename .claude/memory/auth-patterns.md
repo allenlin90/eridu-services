@@ -149,7 +149,9 @@ interface StudioMembership {
 
 ### Phase 4 Role/Route Notes (current)
 
-- Studio review queue route: `/studios/:studioId/review-queue` (replaces legacy `/tasks?status=REVIEW` route)
+- Studio task review route: `/studios/:studioId/task-review` (replaces legacy `/tasks?status=REVIEW` route)
+- Studio task-planning route: `/studios/:studioId/show-operations`
+- Studio shared-fields route: `/studios/:studioId/shared-fields`
 - Creator mapping routes (fully implemented):
   - `/studios/$studioId/creator-mapping` (mapping list with bulk assign entry point)
   - `/studios/$studioId/creator-mapping/$showId` (show-level creator add/remove)

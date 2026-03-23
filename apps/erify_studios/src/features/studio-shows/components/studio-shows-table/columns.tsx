@@ -19,7 +19,7 @@ function ShowNameCell({ show }: { show: StudioShow }) {
   return (
     <div className="flex flex-col gap-1 pr-4">
       <Link
-        to="/studios/$studioId/shows/$showId/tasks"
+        to="/studios/$studioId/show-operations/$showId/tasks"
         params={{ studioId: actualStudioId, showId: show.id }}
         state={{
           show: {

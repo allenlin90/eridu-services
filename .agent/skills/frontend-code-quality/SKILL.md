@@ -280,6 +280,7 @@ This applies everywhere in JSX — component slots, list renders, and inline con
 - Use one shared access hook (`useStudioAccess`) and one reusable guard component (`StudioRouteGuard`) for protected route UIs.
 - Do not duplicate `profile?.studio_memberships?.find(...)` role checks in each route page.
 - Sidebar visibility must be derived from the same policy map so navigation and route access stay aligned.
+- When renaming a protected studio route, update the route file path, sidebar item URL/title, typed `Link`/`navigate`/`useTableUrlState` targets, and regenerate `src/routeTree.gen.ts` in the same change.
 
 ### Route Layout Responsibilities
 

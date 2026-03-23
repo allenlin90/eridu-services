@@ -251,10 +251,16 @@ Studio-scoped views accessible to studio members:
 - `/studios/:studioId` - Studio dashboard and context
 - `/studios/:studioId/dashboard` - Studio overview
 - `/studios/:studioId/my-tasks` - Personal task queue for the current user
+- `/studios/:studioId/my-shifts` - Personal shift schedule for the current user
+- `/studios/:studioId/task-review` - Studio task review workspace for admins and managers
 - `/studios/:studioId/shifts` - Studio shift schedule
-- `/studios/:studioId/shows` - Shows assigned to this studio
+- `/studios/:studioId/show-operations` - Show operations workspace for task generation, readiness, and assignment
+- `/studios/:studioId/show-operations/:showId/tasks` - Per-show task management workflow
+- `/studios/:studioId/creator-mapping` - Creator assignment workspace across studio shows
+- `/studios/:studioId/creator-mapping/:showId` - Per-show creator mapping workflow
 - `/studios/:studioId/task-templates` - Task template list (infinite scroll)
-- `/studios/:studioId/tasks` - Task management (bulk generate, execute, moderate)
+- `/studios/:studioId/task-reports` - Studio task reporting workspace
+- `/studios/:studioId/shared-fields` - Shared field settings for task-template reporting
 
 #### System Routes (`/system`)
 

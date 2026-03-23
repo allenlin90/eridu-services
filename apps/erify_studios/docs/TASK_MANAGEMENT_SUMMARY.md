@@ -1,6 +1,6 @@
 # Task Management — UI/UX Summary
 
-> **TLDR**: Frontend UI for task management across 10+ screens. Admin workflows: template library, bulk task generation, assignment dialogs, review queue. Operator workflows: "My Tasks" with filter bar, task execution sheet (JsonForm with auto-save), status actions. Studio context persisted via `TeamSwitcher`.
+> **TLDR**: Frontend UI for task management across 10+ screens. Admin workflows: template library, show operations, assignment dialogs, task review. Operator workflows: "My Tasks" with filter bar, task execution sheet (JsonForm with auto-save), status actions. Studio context persisted via `TeamSwitcher`.
 
 > **Quick-reference** for the Task Management frontend UI/UX system.
 
@@ -21,13 +21,13 @@
 | ----- | ---------------------- | ----------------------------------------- | ------------ | ------- |
 | 3.1   | Template Library       | `/studios/$studioId/task-templates`       | Admin        | ✅       |
 | 3.2   | Create/Edit Template   | Dialog/sheet                              | Admin        | ✅       |
-| 3.3   | Shows List             | `/studios/$studioId/shows`                | Admin        | ✅       |
+| 3.3   | Show Operations        | `/studios/$studioId/show-operations`      | Admin        | ✅       |
 | 3.3.1 | Bulk Generation Dialog | Dialog                                    | Admin        | ✅       |
 | 3.3.2 | Assignment Dialog      | Dialog                                    | Admin        | ✅       |
-| 3.3.3 | Show Detail / Tasks    | `/studios/$studioId/shows/$showUid/tasks` | Admin        | ✅       |
+| 3.3.3 | Show Detail / Tasks    | `/studios/$studioId/show-operations/$showUid/tasks` | Admin        | ✅       |
 | 3.4   | My Tasks               | `/studios/$studioId/my-tasks`             | All          | ✅       |
 | 3.5   | Task Execution Sheet   | Sheet overlay                             | Operator     | ✅       |
-| 3.6   | Task Review Queue      | `/studios/$studioId/review-queue`         | Admin/Manager| ✅       |
+| 3.6   | Task Review            | `/studios/$studioId/task-review`          | Admin/Manager| ✅       |
 | 3.7   | All Tasks Dashboard    | Studio-scoped                             | Admin        | Planned |
 | 3.8   | System Tasks           | `/system/tasks`                           | System Admin | ✅       |
 | 3.9   | System Show Statuses   | `/system/show-statuses`                   | System Admin | ✅      |
@@ -50,13 +50,13 @@ Show detail → inline assignee dropdown on task card → PATCH `/tasks/:taskUid
 My Tasks → tap card → Task Execution Sheet (JsonForm) → auto-save on field change (300ms debounce) → status actions (`Start Task` / `Submit for Review` / `Report Blocker`)
 
 ### 5. Review (Admin)
-Review Queue → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, Block
+Task Review → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, Block
 
 ### 6. Moderation Loop Execution (Moderator)
 My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress block** → navigate loops via Previous/Next → auto-save per field → Submit for Review when done. See [MODERATION_WORKFLOW.md](./MODERATION_WORKFLOW.md) for full data contract and business rules.
 
 ### 7. Shows Issues Triage (Admin)
-Shows list → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
+Show Operations → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
 - show has no tasks
 - show has unassigned tasks
 - show is missing required baseline task types (`SETUP`, `CLOSURE`)
@@ -70,7 +70,7 @@ Readiness scope totals should be refreshed by query-key changes (for example `re
 ## Navigation & Studio Context
 
 - **Studio Switcher**: `TeamSwitcher` from `@eridu/ui` — maps `studio_memberships` from `/me/profile`
-- **Sidebar Nav**: Dashboard, My Tasks (all roles) + Shows, Task Templates (admin only)
+- **Sidebar Nav**: Dashboard, My Tasks (all roles) + Show Operations, Task Review, Task Templates (admin/manager only)
 - **Active Studio**: persisted in `localStorage`, auto-initializes, invalidates queries on switch
 - **Role-Based Access**: admin sees Shows + Templates nav items; non-admin sees only Dashboard + My Tasks
 
@@ -146,11 +146,11 @@ Readiness scope totals should be refreshed by query-key changes (for example `re
 ## Implementation Status
 
 ✅ Template library (cards, search, infinite scroll), create/edit dialog
-✅ Shows list (data table, filters, bulk actions bar), generation & assignment dialogs
+✅ Show Operations (data table, filters, bulk actions bar), generation & assignment dialogs
 ✅ Show detail with task cards and inline reassignment
 ✅ My Tasks (filter bar, task cards, progress bars, urgency borders, show-start-date filter)
 ✅ Task Execution Sheet (JsonForm, auto-save, rejection banner, status actions, IndexedDB draft persistence)
-✅ Review Queue (per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
+✅ Task Review (per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
 ✅ System Tasks (cross-studio list, detail dialog, reassignment)
 ✅ Moderation loop workflow (loop-based template builder, loop progress block, live loop detection, per-loop field filtering)
 

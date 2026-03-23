@@ -3,20 +3,20 @@ import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { studioTaskSearchSchema } from '@/features/tasks/config/studio-task-search-schema';
 
-export const Route = createFileRoute('/studios/$studioId/review-queue')({
-  component: StudioReviewQueueLayout,
+export const Route = createFileRoute('/studios/$studioId/task-review')({
+  component: StudioTaskReviewLayout,
   validateSearch: (search) => studioTaskSearchSchema.parse(search),
 });
 
-function StudioReviewQueueLayout() {
+function StudioTaskReviewLayout() {
   const { studioId } = Route.useParams();
 
   return (
     <StudioRouteGuard
       studioId={studioId}
       routeKey="reviewQueue"
-      deniedTitle="Review Queue Access Required"
-      deniedDescription="Only studio managers and admins can access the review queue."
+      deniedTitle="Task Review Access Required"
+      deniedDescription="Only studio managers and admins can access task review."
     >
       <Outlet />
     </StudioRouteGuard>

@@ -9,11 +9,11 @@ import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dia
 import { studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
 
-export const Route = createFileRoute('/studios/$studioId/review-queue/')({
-  component: StudioReviewQueuePage,
+export const Route = createFileRoute('/studios/$studioId/task-review/')({
+  component: StudioTaskReviewPage,
 });
 
-function StudioReviewQueuePage() {
+function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
   const { tableProps, toolbarProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
     studioId,
@@ -24,8 +24,8 @@ function StudioReviewQueuePage() {
 
   return (
     <PageLayout
-      title="Review Queue"
-      description="Review submitted tasks and manage task actions across the studio."
+      title="Task Review"
+      description="Review submitted tasks and manage studio task actions."
     >
       <div className="space-y-4">
         <DataTable

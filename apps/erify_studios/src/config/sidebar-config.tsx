@@ -160,8 +160,8 @@ function getStudioManagerItems(
 
   if (hasStudioRouteAccess(role as StudioRole, 'reviewQueue')) {
     managerItems.push({
-      title: 'Review Queue',
-      url: `/studios/${studioId}/review-queue`,
+      title: 'Task Review',
+      url: `/studios/${studioId}/task-review`,
       icon: ClipboardCheck,
     });
   }
@@ -176,8 +176,8 @@ function getStudioManagerItems(
 
   if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
     managerItems.push({
-      title: 'Shows',
-      url: `/studios/${studioId}/shows`,
+      title: 'Show Operations',
+      url: `/studios/${studioId}/show-operations`,
       icon: Clapperboard,
     });
   }
@@ -213,7 +213,7 @@ function getStudioAdminItems(
   if (hasStudioRouteAccess(role as StudioRole, 'sharedFields')) {
     adminItems.push({
       title: 'Shared Fields',
-      url: `/studios/${studioId}/settings/shared-fields`,
+      url: `/studios/${studioId}/shared-fields`,
       icon: Settings,
     });
   }

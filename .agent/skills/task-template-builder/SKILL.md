@@ -104,6 +104,7 @@ const payload = {
 Task template authors can insert studio-managed shared fields directly from the builder.
 
 - Source endpoint: `GET /studios/:studioId/settings/shared-fields`
+- Admin shortcut route in `erify_studios`: `/studios/$studioId/shared-fields`
 - Read access: `ADMIN` and `MANAGER` can load the shared-field catalog for template authoring.
 - Canonical shared-field insertion uses exact shared key/type and sets `standard: true`.
 - Repeated insertions (for loop-specific moderation data collection) should generate unique keys and be treated as loop-scoped template fields unless the key is exactly the canonical shared key.
