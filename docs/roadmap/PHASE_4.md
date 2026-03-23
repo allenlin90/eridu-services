@@ -5,7 +5,14 @@
 
 ## Goal
 
-Deliver full P&L operator foundations: creator mapping + assignment, variable cost visibility (economics baseline), studio-managed rosters for accurate cost inputs, show planning export, and revenue workflow to complete the P&L model.
+Build the P&L system on existing entities, focusing on the **L-side** (labor and creator costs). This phase is a portfolio of features that collectively deliver cost visibility and accurate cost input management for studio operators.
+
+Key outcomes:
+- Studio operators can manage labor rates and creator compensation defaults without system-admin intervention.
+- Variable cost visibility (creator costs + shift labor) is surfaced via economics endpoints.
+- Pre-show planning exports include estimated cost data.
+- Creator assignment correctness is enforced (overlap + roster conflicts).
+- Revenue inputs (P-side) complete the full P&L model.
 
 ## Phase 4 Baseline
 
@@ -38,14 +45,47 @@ Deliver full P&L operator foundations: creator mapping + assignment, variable co
 - `metadata` is not a compensation rule engine and must not store executable bonus logic.
 - Complex compensation (bonus, post-show adjustments, tiered/volume commission, hybrid rule sets) is explicitly deferred.
 
-## Canonical Specs (Shipped — App-Local Docs)
+## Documentation Structure
 
-PRDs for this phase have been deleted per lifecycle rules. Shipped behavior is owned by app-local docs.
+Phase 4 is a **portfolio of features**, each with its own PRD and per-feature design docs. Phase-level docs serve as indexes and cross-cutting references.
 
-| Scope                            | Backend Doc                                                                       | Frontend Doc                                                                                           |
-| -------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Roles & authorization foundation | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
-| Creator mapping & assignment     | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)        | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
+### Doc Flow (per feature)
+
+```
+docs/prd/<feature>.md                          ← PRD: user stories, ACs, product rules
+    ↓
+apps/erify_api/docs/design/<FEATURE>_DESIGN.md  ← BE design: data model, service, repo, controller
+apps/erify_studios/docs/design/<FEATURE>_DESIGN.md ← FE design: routes, components, queries, state
+    ↓
+Implementation PR (code + tests)
+    ↓
+Post-ship: promote PRD → docs/features/, update phase-level index, run knowledge-sync
+```
+
+Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existing [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) as its design doc. Post-ship must update related skills/memory that reference sidebar structure.
+
+### Phase-Level Reference Docs
+
+| Scope | Doc | Purpose |
+| --- | --- | --- |
+| Phase roadmap & sequencing | This file (`PHASE_4.md`) | Portfolio tracker, wave plan, PR plan |
+| BE index across all features | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md) | API contract summary, authorization matrix, architecture rules |
+| FE index across all features | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) | Route plan, sidebar spec, UX rules, query key conventions |
+| Authorization foundation | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) | Guard patterns, role hierarchy |
+| Role use cases | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) | Per-role view access |
+
+### Per-Feature Design Docs (created with each PR)
+
+| Feature | PRD | BE Design | FE Design |
+| --- | --- | --- | --- |
+| Creator mapping | Shipped → [feature doc](../features/creator-mapping.md) | Covered in phase-level BE doc | Covered in phase-level FE doc |
+| Economics baseline | Shipped → [feature doc](../features/show-economics.md) | TBD (create with merge PR) | TBD (create with merge PR) |
+| Studio member roster | [PRD](../prd/studio-member-roster.md) | TBD (create with PR #1c) | TBD (create with PR #1c) |
+| Studio creator roster | [PRD](../prd/studio-creator-roster.md) | TBD (create with PR #1b) | TBD (create with PR #1b) |
+| Show planning export | [PRD](../prd/show-planning-export.md) | TBD (create with PR #2a) | TBD (create with PR #2a) |
+| Creator availability hardening | [PRD](../prd/creator-availability-hardening.md) | TBD (create with PR #2b) | TBD (create with PR #2b) |
+| P&L revenue workflow | [PRD](../prd/pnl-revenue-workflow.md) | TBD (create with PR #3) | TBD (create with PR #3) |
+| Sidebar redesign | N/A (simple config) | N/A | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) |
 
 ## Out of Scope for Phase 4
 
@@ -152,19 +192,21 @@ Design Qs resolved + big.js adopted (gate for Wave 3):
 
 ### PR Plan
 
-Each workstream ships as a separate PR for focused review. Order follows dependency graph.
+Each feature ships as a separate PR with its own design docs. Order follows dependency graph.
 
-| # | PR | Branch | Gate |
-| --- | --- | --- | --- |
-| 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | None — can merge now |
-| 1a | Sidebar redesign | `feat/sidebar-redesign` | None |
-| 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None |
-| 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (isHelper + version) |
-| 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) |
-| 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1b merged (creator roster state) |
-| 3 | P&L revenue workflow | `feat/pnl-revenue-workflow` | Design Qs resolved + big.js adopted |
+| # | PR | Branch | Gate | Deliverables |
+| --- | --- | --- | --- | --- |
+| 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | None — can merge now | Code + BE/FE design docs |
+| 1a | Sidebar redesign | `feat/sidebar-redesign` | None | Code + update skills/memory referencing sidebar |
+| 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None | PRD review → BE/FE design → code + tests |
+| 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (isHelper + version) | PRD review → BE/FE design → code + tests |
+| 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) | PRD review → BE/FE design → code + tests |
+| 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1b merged (creator roster state) | PRD review → BE/FE design → code + tests |
+| 3 | P&L revenue workflow | `feat/pnl-revenue-workflow` | Design Qs resolved + big.js adopted | PRD review → BE/FE design → code + tests |
 
 PRs 1a/1b/1c can be developed and reviewed in parallel. PRs 2a/2b wait for their respective gates.
+
+Per-PR workflow: review PRD → create `apps/erify_api/docs/design/<FEATURE>_DESIGN.md` + `apps/erify_studios/docs/design/<FEATURE>_DESIGN.md` → implement → post-ship knowledge-sync.
 
 ### Risks & Open Items
 

@@ -238,7 +238,7 @@ netSales  Decimal? @map("net_sales") @db.Decimal(12, 2)
 
 - Product intent:
   - Creator mapping: shipped (PRD deleted per lifecycle)
-  - Economics baseline: [show-economics.md](../../../docs/prd/show-economics.md) (shipped — pending promotion to features)
+  - Economics baseline: [show-economics.md](../../../docs/features/show-economics.md) (shipped)
   - Studio member roster: [studio-member-roster.md](../../../docs/prd/studio-member-roster.md)
   - Studio creator roster: [studio-creator-roster.md](../../../docs/prd/studio-creator-roster.md)
   - Show planning export: [show-planning-export.md](../../../docs/prd/show-planning-export.md)
