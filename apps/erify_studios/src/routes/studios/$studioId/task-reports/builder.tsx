@@ -3,7 +3,6 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 import type {
   CreateTaskReportDefinitionInput,
@@ -29,22 +28,21 @@ import { getStudioClients } from '@/features/task-reports/api/get-studio-clients
 import { getTaskReportDefinition } from '@/features/task-reports/api/get-task-report-definition';
 import { taskReportDefinitionKeys, taskReportResultKeys } from '@/features/task-reports/api/keys';
 import { ReportBuilder } from '@/features/task-reports/components/report-builder';
+import { parseTaskReportBuilderSearch } from '@/features/task-reports/config/task-report-builder-search-schema';
 import { useTaskReportDefinition } from '@/features/task-reports/hooks/use-task-report-definition';
 import { useTaskReportDefinitionMutations } from '@/features/task-reports/hooks/use-task-report-definition-mutations';
 import { buildTaskReportResultCacheKey } from '@/features/task-reports/lib/build-task-report-result-cache-key';
 
-const taskReportBuilderSearchSchema = z.object({
-  definition_id: z.string().optional().catch(undefined),
-});
-
 export const Route = createFileRoute('/studios/$studioId/task-reports/builder')({
   component: TaskReportBuilderPage,
-  validateSearch: (search) => taskReportBuilderSearchSchema.parse(search),
+  validateSearch: (search) => parseTaskReportBuilderSearch(search),
   loader: ({ context: { queryClient }, params: { studioId }, search }) => {
-    if (search.definition_id) {
+    const normalizedSearch = parseTaskReportBuilderSearch(search);
+
+    if (normalizedSearch.definition_id) {
       void queryClient.prefetchQuery({
-        queryKey: taskReportDefinitionKeys.detail(studioId, search.definition_id),
-        queryFn: ({ signal }) => getTaskReportDefinition(studioId, search.definition_id!, { signal }),
+        queryKey: taskReportDefinitionKeys.detail(studioId, normalizedSearch.definition_id),
+        queryFn: ({ signal }) => getTaskReportDefinition(studioId, normalizedSearch.definition_id!, { signal }),
       });
     }
     void queryClient.prefetchQuery({

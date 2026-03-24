@@ -81,6 +81,8 @@ export function getStudioTaskTemplateColumns(studioId: string): ColumnDef<Studio
       enableHiding: false,
     },
     {
+      // Hidden column required by DataTableToolbar to wire the is_active filter
+      // (the toolbar reads column filters from the table instance).
       id: 'is_active',
       accessorFn: (row) => String(row.is_active),
       header: () => null,
