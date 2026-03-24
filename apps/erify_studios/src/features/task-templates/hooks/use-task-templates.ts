@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { TASK_TEMPLATE_KIND, TASK_TYPE, type TaskTemplateKind, type TaskType } from '@eridu/api-types/task-management';
 import { useTableUrlState } from '@eridu/ui';
@@ -85,11 +85,11 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps) {
     [data?.data],
   );
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: taskTemplateQueryKeys.listPrefix(studioId),
     });
-  };
+  }, [queryClient, studioId]);
 
   return {
     data: rows,
