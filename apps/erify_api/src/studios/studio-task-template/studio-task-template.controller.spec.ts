@@ -60,9 +60,12 @@ describe('studioTaskTemplateController', () => {
         limit: 10,
         skip: 0,
         take: 10,
-        sort: 'desc',
+        sort: 'updated_at:desc',
         name: 'test',
         uid: 'ttpl_123',
+        taskType: 'ACTIVE',
+        templateKind: 'moderation',
+        isActive: true,
         includeDeleted: false,
       };
 
@@ -75,9 +78,12 @@ describe('studioTaskTemplateController', () => {
         take: 10,
         name: 'test',
         uid: 'ttpl_123',
+        taskType: 'ACTIVE',
+        templateKind: 'moderation',
+        isActive: true,
         includeDeleted: false,
         studioUid: studioId,
-        orderBy: 'desc',
+        sort: 'updated_at:desc',
       });
     });
   });

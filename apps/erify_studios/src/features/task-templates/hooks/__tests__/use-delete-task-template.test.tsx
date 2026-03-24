@@ -5,14 +5,12 @@ import { useDeleteTaskTemplate } from '../use-delete-task-template';
 
 const mockUseMutation = vi.fn();
 const mockRemoveQueries = vi.fn();
-const mockSetQueriesData = vi.fn();
 const mockInvalidateQueries = vi.fn();
 
 vi.mock('@tanstack/react-query', () => ({
   useMutation: (options: any) => mockUseMutation(options),
   useQueryClient: () => ({
     removeQueries: mockRemoveQueries,
-    setQueriesData: mockSetQueriesData,
     invalidateQueries: mockInvalidateQueries,
   }),
 }));
@@ -27,7 +25,7 @@ describe('useDeleteTaskTemplate', () => {
     mockInvalidateQueries.mockResolvedValue(undefined);
   });
 
-  it('removes target item from active caches and invalidates inactive prefixes', () => {
+  it('removes detail cache and invalidates list prefixes', () => {
     const mockMutate = vi.fn();
 
     mockUseMutation.mockReturnValue({
@@ -53,27 +51,11 @@ describe('useDeleteTaskTemplate', () => {
     expect(mockRemoveQueries).toHaveBeenCalledWith({
       queryKey: ['task-templates', 'detail', 's1', 'ttpl_1'],
     });
-    expect(mockSetQueriesData).toHaveBeenCalledWith(
-      {
-        queryKey: ['task-templates', 'list', 's1'],
-        type: 'active',
-      },
-      expect.any(Function),
-    );
-    expect(mockSetQueriesData).toHaveBeenCalledWith(
-      {
-        queryKey: ['task-templates', 'list', 's1', 'all-picker'],
-        type: 'active',
-      },
-      expect.any(Function),
-    );
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ['task-templates', 'list', 's1'],
-      type: 'inactive',
     });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ['task-templates', 'list', 's1', 'all-picker'],
-      type: 'inactive',
     });
   });
 });

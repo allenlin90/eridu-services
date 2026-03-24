@@ -129,11 +129,19 @@ Items resolved during the Phase 4 reopen window without full PRD promotion:
 
 The app is still in alpha test and cannot be used for real operations because the task submission reporting and export feature requires task templates with shared fields to produce meaningful output. A previous migration was run but did not create templates for existing workflows.
 
-**Task**: Re-run the task template migration with production-equivalent data:
-1. Export sample data from staging (or provide representative examples)
-2. Parse and compare against existing schema and shared field definitions
-3. Create task templates that match actual operational workflows
-4. Validate that task submission reporting produces correct output with the migrated templates
+**Task**: Re-run the task template migration with production-equivalent data and reduce manager confusion in the template surface:
+1. Export the real moderator worksheet CSV used operationally
+2. Run a local dry-run/apply rebuild from CSV before touching production
+3. Recreate moderation templates with loop-indexed shared fields (`gmv_l1`, `ctr_l1`, etc.) up to the highest loop observed in source
+4. Hard-reset alpha-era task templates in the target studio as part of the rebuild flow when existing records are disposable
+5. Validate that task submission reporting produces correct output with the rebuilt templates
+6. Redesign the studio task-template list into a filtered paginated table so managers can distinguish moderation vs. standard templates quickly
+
+Implementation note: the real worksheet includes a small number of `Loop0` setup rows (`Server URL`, `stream key`). The rebuild flow normalizes those setup rows into loop 1 instead of failing the import, while still rejecting any other unsupported `Loop0` usage.
+
+**Reset policy**: Existing alpha templates may be hard-reset per studio before rebuild. This cleanup deletes the selected task templates, their snapshots, and any tasks bound to those templates. No retroactive preservation is promised for pre-migration alpha task history tied to reset templates. Shared fields are not part of the reset.
+
+**Workflow doc**: [task-template-migration.md](../workflows/task-template-migration.md)
 
 **Status**: 🔲 Pending — details and gaps to be discussed during processing. This is a prerequisite for the app to be operationally usable, independent of the P&L feature work.
 

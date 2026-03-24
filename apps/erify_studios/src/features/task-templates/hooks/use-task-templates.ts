@@ -1,102 +1,116 @@
-import type { InfiniteData } from '@tanstack/react-query';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo } from 'react';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 
-import type { TaskTemplateDto } from '@eridu/api-types/task-management';
-import { useTableUrlState, type UseTableUrlStateReturn } from '@eridu/ui';
+import { TASK_TEMPLATE_KIND, TASK_TYPE, type TaskTemplateKind, type TaskType } from '@eridu/api-types/task-management';
+import { useTableUrlState } from '@eridu/ui';
 
-import { getTaskTemplates, type GetTaskTemplatesResponse } from '../api/get-task-templates';
+import { getTaskTemplates } from '../api/get-task-templates';
 import { taskTemplateQueryKeys } from '../api/task-template-query-keys';
+import type { StudioTaskTemplateListRow } from '../lib/studio-task-template-list-row';
+import { toStudioTaskTemplateListRow } from '../lib/studio-task-template-list-row';
 
-import { compactInfiniteTaskTemplatePages } from './task-template-cache-utils';
+const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
+const VALID_TEMPLATE_KINDS = new Set(Object.values(TASK_TEMPLATE_KIND));
 
 type UseTaskTemplatesProps = {
   studioId: string;
 };
 
-type UseTaskTemplatesReturn = {
-  tableState: UseTableUrlStateReturn;
-  templates: TaskTemplateDto[];
-  total: number;
-  isLoading: boolean;
-  isFetching: boolean;
-  isError: boolean;
-  isFetchingNextPage: boolean;
-  hasNextPage: boolean;
-  fetchNextPage: () => void;
-  refetch: () => void;
-};
-
-export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTemplatesReturn {
+export function useTaskTemplates({ studioId }: UseTaskTemplatesProps) {
   const queryClient = useQueryClient();
-  const tableState = useTableUrlState({
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+    columnFilters,
+    onColumnFiltersChange,
+  } = useTableUrlState({
     from: '/studios/$studioId/task-templates',
     searchColumnId: 'name',
-    defaultSorting: [{ id: 'updatedAt', desc: true }],
+    defaultSorting: [{ id: 'updated_at', desc: true }],
   });
 
-  const { columnFilters } = tableState;
+  const search = columnFilters.find((filter) => filter.id === 'name')?.value as string | undefined;
+  const taskTypeValue = columnFilters.find((filter) => filter.id === 'task_type')?.value as string | undefined;
+  const templateKindValue = columnFilters.find((filter) => filter.id === 'template_kind')?.value as string | undefined;
+  const isActiveValue = columnFilters.find((filter) => filter.id === 'is_active')?.value as string | undefined;
 
-  // Extract search query from columnFilters
-  const searchQuery = (columnFilters.find((f) => f.id === 'name')?.value as string) || '';
-  const listQueryKey = useMemo(
-    () => taskTemplateQueryKeys.list(studioId, { search: searchQuery }),
-    [studioId, searchQuery],
+  const taskType = taskTypeValue && VALID_TASK_TYPES.has(taskTypeValue as TaskType)
+    ? taskTypeValue as TaskType
+    : undefined;
+  const templateKind = templateKindValue && VALID_TEMPLATE_KINDS.has(templateKindValue as TaskTemplateKind)
+    ? templateKindValue as TaskTemplateKind
+    : undefined;
+  const isActive = isActiveValue === 'true'
+    ? true
+    : isActiveValue === 'false'
+      ? false
+      : undefined;
+
+  const queryParams = useMemo(
+    () => ({
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+      name: search,
+      task_type: taskType,
+      template_kind: templateKind,
+      is_active: isActive,
+      sort: 'updated_at:desc' as const,
+    }),
+    [isActive, pagination.pageIndex, pagination.pageSize, search, taskType, templateKind],
   );
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isFetching,
-    isError,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: listQueryKey,
-    queryFn: ({ pageParam, signal }) =>
-      getTaskTemplates(studioId, {
-        limit: 10,
-        name: searchQuery,
-        page: pageParam,
-      }, { signal }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => (lastPage.meta.page < lastPage.meta.totalPages ? lastPage.meta.page + 1 : undefined),
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: taskTemplateQueryKeys.list(studioId, {
+      search,
+      taskType,
+      templateKind,
+      isActive,
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+      sort: 'updated_at:desc',
+    }),
+    queryFn: ({ signal }) => getTaskTemplates(studioId, queryParams, { signal }),
+    placeholderData: keepPreviousData,
   });
 
-  useEffect(() => () => {
-    queryClient.setQueryData<InfiniteData<GetTaskTemplatesResponse>>(
-      listQueryKey,
-      compactInfiniteTaskTemplatePages,
-    );
-  }, [listQueryKey, queryClient]);
+  useEffect(() => {
+    if (data?.meta?.totalPages !== undefined) {
+      setPageCount(data.meta.totalPages);
+    }
+  }, [data?.meta?.totalPages, setPageCount]);
 
-  const refetchWithCompaction = useCallback(() => {
-    queryClient.setQueryData<InfiniteData<GetTaskTemplatesResponse>>(
-      listQueryKey,
-      compactInfiniteTaskTemplatePages,
-    );
-    void refetch();
-  }, [listQueryKey, queryClient, refetch]);
-
-  const templates = useMemo(
-    () => data?.pages.flatMap((page) => page.data) ?? [],
-    [data],
+  const rows = useMemo<StudioTaskTemplateListRow[]>(
+    () => data?.data.map(toStudioTaskTemplateListRow) ?? [],
+    [data?.data],
   );
 
-  const total = data?.pages[0]?.meta.total ?? 0;
+  const handleRefresh = () => {
+    void queryClient.invalidateQueries({
+      queryKey: taskTemplateQueryKeys.listPrefix(studioId),
+    });
+  };
 
   return {
-    tableState,
-    templates,
-    total,
+    data: rows,
     isLoading,
     isFetching,
-    isError,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetch: refetchWithCompaction,
+    pagination: data?.meta
+      ? {
+          pageIndex: data.meta.page - 1,
+          pageSize: data.meta.limit,
+          total: data.meta.total,
+          pageCount: data.meta.totalPages,
+        }
+      : {
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+          total: 0,
+          pageCount: 0,
+        },
+    onPaginationChange,
+    columnFilters,
+    onColumnFiltersChange,
+    handleRefresh,
   };
 }

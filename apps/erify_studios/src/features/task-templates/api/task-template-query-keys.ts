@@ -1,5 +1,11 @@
 type TaskTemplateListFilters = {
   search?: string;
+  templateKind?: string;
+  taskType?: string;
+  isActive?: boolean;
+  page?: number;
+  limit?: number;
+  sort?: string;
 };
 
 type TaskTemplatePickerFilters = {

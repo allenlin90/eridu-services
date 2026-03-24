@@ -105,4 +105,96 @@ describe('taskTemplateRepository', () => {
       total: 1,
     });
   });
+
+  it('applies studio list moderation filters server-side with deterministic sorting', async () => {
+    prisma.taskTemplate.findMany.mockResolvedValue([]);
+    prisma.taskTemplate.count.mockResolvedValue(0);
+
+    await repository.findPaginated({
+      skip: 10,
+      take: 10,
+      name: 'moderation',
+      uid: 'ttpl_1',
+      studioUid: 'std_123',
+      taskType: 'ACTIVE',
+      templateKind: 'moderation',
+      isActive: true,
+      includeDeleted: false,
+      sort: 'name:asc',
+    });
+
+    expect(prisma.taskTemplate.findMany).toHaveBeenCalledWith({
+      skip: 10,
+      take: 10,
+      where: {
+        deletedAt: null,
+        name: {
+          contains: 'moderation',
+          mode: 'insensitive',
+        },
+        uid: {
+          contains: 'ttpl_1',
+          mode: 'insensitive',
+        },
+        studio: { uid: 'std_123' },
+        isActive: true,
+        AND: [
+          {
+            currentSchema: {
+              path: ['metadata', 'task_type'],
+              equals: 'ACTIVE',
+            },
+          },
+          {
+            currentSchema: {
+              path: ['metadata', 'loops', '0'],
+              not: expect.anything(),
+            },
+          },
+        ],
+      },
+      orderBy: [
+        { name: 'asc' },
+        { updatedAt: 'desc' },
+        { uid: 'asc' },
+      ],
+    });
+    expect(prisma.taskTemplate.count).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        isActive: true,
+      }),
+    });
+  });
+
+  it('treats standard templates as the inverse of the moderation loop filter', async () => {
+    prisma.taskTemplate.findMany.mockResolvedValue([]);
+    prisma.taskTemplate.count.mockResolvedValue(0);
+
+    await repository.findPaginated({
+      skip: 0,
+      take: 10,
+      templateKind: 'standard',
+      includeDeleted: true,
+      sort: 'updated_at:asc',
+    });
+
+    expect(prisma.taskTemplate.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        AND: [
+          {
+            NOT: {
+              currentSchema: {
+                path: ['metadata', 'loops', '0'],
+                not: expect.anything(),
+              },
+            },
+          },
+        ],
+      },
+      orderBy: [
+        { updatedAt: 'asc' },
+        { uid: 'asc' },
+      ],
+    }));
+  });
 });

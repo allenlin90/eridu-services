@@ -8,13 +8,24 @@ import { apiClient } from '@/lib/api/client';
 
 export type GetTaskTemplatesResponse = PaginatedResponse<TaskTemplateDto>;
 
+export type GetTaskTemplatesParams = Pick<
+  ListTaskTemplatesQuery,
+  | 'page'
+  | 'limit'
+  | 'name'
+  | 'task_type'
+  | 'template_kind'
+  | 'is_active'
+  | 'sort'
+>;
+
 type GetTaskTemplatesOptions = {
   signal?: AbortSignal;
 };
 
 export async function getTaskTemplates(
   studioId: string,
-  query: ListTaskTemplatesQuery & { page?: number; limit?: number },
+  query: GetTaskTemplatesParams,
   options?: GetTaskTemplatesOptions,
 ): Promise<GetTaskTemplatesResponse> {
   const response = await apiClient.get<GetTaskTemplatesResponse>(
@@ -24,8 +35,10 @@ export async function getTaskTemplates(
         page: query.page,
         limit: query.limit,
         name: query.name,
+        task_type: query.task_type,
+        template_kind: query.template_kind,
+        is_active: query.is_active,
         sort: query.sort,
-        // Map other query params if needed
       },
       signal: options?.signal,
     },
