@@ -5,14 +5,12 @@ import { useUpdateTaskTemplate } from '@/features/task-templates/hooks/use-updat
 
 const mockUseMutation = vi.fn();
 const mockSetQueryData = vi.fn();
-const mockSetQueriesData = vi.fn();
 const mockInvalidateQueries = vi.fn();
 
 vi.mock('@tanstack/react-query', () => ({
   useMutation: (options: any) => mockUseMutation(options),
   useQueryClient: () => ({
     setQueryData: mockSetQueryData,
-    setQueriesData: mockSetQueriesData,
     invalidateQueries: mockInvalidateQueries,
   }),
 }));
@@ -27,7 +25,7 @@ describe('useUpdateTaskTemplate', () => {
     mockInvalidateQueries.mockResolvedValue(undefined);
   });
 
-  it('updates targeted caches and invalidates inactive prefixes on success', () => {
+  it('updates detail cache and invalidates list prefixes on success', () => {
     const mockMutate = vi.fn();
     const mockMutateAsync = vi.fn();
 
@@ -66,27 +64,11 @@ describe('useUpdateTaskTemplate', () => {
       ['task-templates', 'detail', 's1', 't1'],
       updatedTemplate,
     );
-    expect(mockSetQueriesData).toHaveBeenCalledWith(
-      {
-        queryKey: ['task-templates', 'list', 's1'],
-        type: 'active',
-      },
-      expect.any(Function),
-    );
-    expect(mockSetQueriesData).toHaveBeenCalledWith(
-      {
-        queryKey: ['task-templates', 'list', 's1', 'all-picker'],
-        type: 'active',
-      },
-      expect.any(Function),
-    );
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ['task-templates', 'list', 's1'],
-      type: 'inactive',
     });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ['task-templates', 'list', 's1', 'all-picker'],
-      type: 'inactive',
     });
   });
 });

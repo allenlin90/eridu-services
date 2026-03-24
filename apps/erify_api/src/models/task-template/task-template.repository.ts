@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, TaskStatus, TaskTemplate } from '@prisma/client';
 
+import { TASK_TEMPLATE_KIND, type TaskTemplateKind } from '@eridu/api-types/task-management';
+
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
@@ -106,13 +108,28 @@ export class TaskTemplateRepository extends BaseRepository<
     take?: number;
     name?: string;
     uid?: string;
+    taskType?: string;
+    templateKind?: TaskTemplateKind;
+    isActive?: boolean;
     includeDeleted?: boolean;
     studioUid?: string;
-    orderBy?: 'asc' | 'desc';
+    sort?: 'updated_at:desc' | 'updated_at:asc' | 'name:asc' | 'name:desc';
   }): Promise<{ data: TaskTemplate[]; total: number }> {
-    const { skip, take, name, uid, includeDeleted, studioUid, orderBy } = params;
+    const {
+      skip,
+      take,
+      name,
+      uid,
+      taskType,
+      templateKind,
+      isActive,
+      includeDeleted,
+      studioUid,
+      sort = 'updated_at:desc',
+    } = params;
 
     const where: Prisma.TaskTemplateWhereInput = {};
+    const andFilters: Prisma.TaskTemplateWhereInput[] = [];
 
     if (!includeDeleted) {
       where.deletedAt = null;
@@ -136,12 +153,55 @@ export class TaskTemplateRepository extends BaseRepository<
       where.studio = { uid: studioUid };
     }
 
+    if (taskType) {
+      andFilters.push({
+        currentSchema: {
+          path: ['metadata', 'task_type'],
+          equals: taskType,
+        },
+      });
+    }
+
+    const moderationFilter: Prisma.TaskTemplateWhereInput = {
+      currentSchema: {
+        path: ['metadata', 'loops', '0'],
+        not: Prisma.AnyNull,
+      },
+    };
+
+    if (templateKind === TASK_TEMPLATE_KIND.MODERATION) {
+      andFilters.push(moderationFilter);
+    } else if (templateKind === TASK_TEMPLATE_KIND.STANDARD) {
+      andFilters.push({
+        NOT: moderationFilter,
+      });
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+
+    if (andFilters.length > 0) {
+      where.AND = andFilters;
+    }
+
+    const orderBy: Prisma.TaskTemplateOrderByWithRelationInput[] = sort.startsWith('name:')
+      ? [
+          { name: sort.endsWith(':asc') ? 'asc' : 'desc' },
+          { updatedAt: 'desc' },
+          { uid: 'asc' },
+        ]
+      : [
+          { updatedAt: sort.endsWith(':asc') ? 'asc' : 'desc' },
+          { uid: 'asc' },
+        ];
+
     const [data, total] = await Promise.all([
       this.model.findMany({
         skip,
         take,
         where,
-        orderBy: orderBy ? { createdAt: orderBy } : undefined,
+        orderBy,
       }),
       this.model.count({ where }),
     ]);

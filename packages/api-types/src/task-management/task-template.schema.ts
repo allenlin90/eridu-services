@@ -96,13 +96,31 @@ export const updateStudioTaskTemplateSchema = createTaskTemplateSchema
 export type CreateStudioTaskTemplateInput = z.infer<typeof createStudioTaskTemplateSchema>;
 export type UpdateStudioTaskTemplateInput = z.infer<typeof updateStudioTaskTemplateSchema>;
 
+export const TASK_TEMPLATE_KIND = {
+  MODERATION: 'moderation',
+  STANDARD: 'standard',
+} as const;
+
+export const taskTemplateKindSchema = z.enum(TASK_TEMPLATE_KIND);
+
+export type TaskTemplateKind = z.infer<typeof taskTemplateKindSchema>;
+
 /**
  * Filter schema for listing task templates
  */
 export const listTaskTemplatesFilterSchema = z.object({
   name: z.string().optional(),
   id: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
+  task_type: z.nativeEnum(TASK_TYPE).optional(),
+  template_kind: taskTemplateKindSchema.optional(),
+  is_active: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+    .optional(),
+  include_deleted: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+    .default(false),
 });
 
 export type ListTaskTemplatesFilter = z.infer<typeof listTaskTemplatesFilterSchema>;
@@ -111,7 +129,7 @@ const taskTemplatePaginationQuerySchema = paginationBaseSchema
   .extend({
     // Guardrail for infinite-scroll revalidation and oversized payloads.
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
-    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+    sort: z.enum(['updated_at:desc', 'updated_at:asc', 'name:asc', 'name:desc']).optional().default('updated_at:desc'),
   })
   .transform(transformPagination);
 
@@ -122,10 +140,13 @@ export const listTaskTemplatesQuerySchemaBase = taskTemplatePaginationQuerySchem
   .and(listTaskTemplatesFilterSchema);
 
 export const listTaskTemplatesQuerySchema = listTaskTemplatesQuerySchemaBase
-  .transform(({ include_deleted, id, ...rest }: z.infer<typeof listTaskTemplatesQuerySchemaBase>) => ({
+  .transform(({ include_deleted, id, is_active, task_type, template_kind, ...rest }: z.infer<typeof listTaskTemplatesQuerySchemaBase>) => ({
     ...rest,
     includeDeleted: include_deleted,
     uid: id,
+    isActive: is_active,
+    taskType: task_type,
+    templateKind: template_kind,
   }));
 
 /**
@@ -137,6 +158,9 @@ export const listTaskTemplatesQuerySchema = listTaskTemplatesQuerySchemaBase
  *   limit: 10,
  *   name: 'production',
  *   id: 'ttpl_abc123',
+ *   task_type: 'ACTIVE',
+ *   template_kind: 'moderation',
+ *   is_active: true,
  *   include_deleted: false,
  * };
  */

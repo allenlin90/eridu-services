@@ -1,11 +1,8 @@
-import type { InfiniteData, UseMutationOptions } from '@tanstack/react-query';
+import type { UseMutationOptions } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { deleteTaskTemplate } from '../api/delete-task-template';
-import type { GetTaskTemplatesResponse } from '../api/get-task-templates';
 import { taskTemplateQueryKeys } from '../api/task-template-query-keys';
-
-import { removeTaskTemplateFromInfinitePages } from './task-template-cache-utils';
 
 type UseDeleteTaskTemplateOptions = UseMutationOptions<void, Error, string>;
 
@@ -27,29 +24,11 @@ export function useDeleteTaskTemplate({
         queryKey: taskTemplateQueryKeys.detail(studioId, deletedTemplateId),
       });
 
-      queryClient.setQueriesData<InfiniteData<GetTaskTemplatesResponse>>(
-        {
-          queryKey: taskTemplateQueryKeys.listPrefix(studioId),
-          type: 'active',
-        },
-        (current) => removeTaskTemplateFromInfinitePages(current, deletedTemplateId),
-      );
-
-      queryClient.setQueriesData<InfiniteData<GetTaskTemplatesResponse>>(
-        {
-          queryKey: taskTemplateQueryKeys.allPickerPrefix(studioId),
-          type: 'active',
-        },
-        (current) => removeTaskTemplateFromInfinitePages(current, deletedTemplateId),
-      );
-
       void queryClient.invalidateQueries({
         queryKey: taskTemplateQueryKeys.listPrefix(studioId),
-        type: 'inactive',
       });
       void queryClient.invalidateQueries({
         queryKey: taskTemplateQueryKeys.allPickerPrefix(studioId),
-        type: 'inactive',
       });
 
       onSuccess?.(_result, deletedTemplateId, ...args);

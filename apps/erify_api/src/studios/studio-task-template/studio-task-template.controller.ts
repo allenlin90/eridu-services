@@ -48,8 +48,11 @@ export class StudioTaskTemplateController extends BaseStudioController {
       name: query.name,
       uid: query.uid,
       includeDeleted: query.includeDeleted,
+      taskType: query.taskType,
+      templateKind: query.templateKind,
+      isActive: query.isActive,
       studioUid: studioId,
-      orderBy: query.sort ?? 'desc',
+      sort: query.sort,
     });
 
     return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));

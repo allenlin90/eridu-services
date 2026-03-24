@@ -3,119 +3,126 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { useTaskTemplates } from '../use-task-templates';
 
-// Mock dependencies
-const mockUseInfiniteQuery = vi.fn();
-const mockSetQueryData = vi.fn();
+const mockUseQuery = vi.fn();
+const mockInvalidateQueries = vi.fn();
+
 vi.mock('@tanstack/react-query', () => ({
-  useInfiniteQuery: (options: any) => mockUseInfiniteQuery(options),
+  keepPreviousData: Symbol('keepPreviousData'),
+  useQuery: (options: unknown) => mockUseQuery(options),
   useQueryClient: () => ({
-    setQueryData: mockSetQueryData,
+    invalidateQueries: mockInvalidateQueries,
   }),
 }));
 
 const mockUseTableUrlState = vi.fn();
 vi.mock('@eridu/ui', () => ({
-  useTableUrlState: (options: any) => mockUseTableUrlState(options),
+  useTableUrlState: (options: unknown) => mockUseTableUrlState(options),
 }));
 
-// Mock API
 vi.mock('../../api/get-task-templates', () => ({
   getTaskTemplates: vi.fn(),
 }));
 
 describe('useTaskTemplates', () => {
   const defaultTableState = {
-    columnFilters: [],
-    pagination: { pageIndex: 0, pageSize: 20 },
-    sorting: [],
+    pagination: { pageIndex: 0, pageSize: 10 },
     onPaginationChange: vi.fn(),
-    onSortingChange: vi.fn(),
+    setPageCount: vi.fn(),
+    columnFilters: [],
     onColumnFiltersChange: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseTableUrlState.mockReturnValue(defaultTableState);
-    mockSetQueryData.mockReset();
-    mockUseInfiniteQuery.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: {
-        pages: [
+        data: [
           {
-            data: [{ id: '1', name: 'Template 1' }],
-            meta: { total: 10, page: 1, limit: 10, totalPages: 1 },
+            id: 'ttpl_1',
+            name: 'Moderation Template',
+            description: 'Loop workflow',
+            task_type: 'ACTIVE',
+            is_active: true,
+            version: 2,
+            created_at: '2026-03-24T00:00:00.000Z',
+            updated_at: '2026-03-25T00:00:00.000Z',
+            current_schema: {
+              items: [
+                { id: 'f1', key: 'gmv_l1', type: 'number', label: 'GMV (Loop 1)', standard: true, group: 'l1' },
+              ],
+              metadata: {
+                loops: [{ id: 'l1', name: 'Loop1', durationMin: 15 }],
+              },
+            },
           },
         ],
+        meta: { total: 10, page: 1, limit: 10, totalPages: 2 },
       },
       isLoading: false,
       isFetching: false,
-      isError: false,
-      hasNextPage: false,
-      isFetchingNextPage: false,
-      fetchNextPage: vi.fn(),
-      refetch: vi.fn(),
     });
   });
 
-  it('returns templates and metadata', () => {
-    const { result } = renderHook(() => useTaskTemplates({ studioId: 'test-studio' }));
+  it('maps API templates into moderation-aware table rows', () => {
+    const { result } = renderHook(() => useTaskTemplates({ studioId: 'std_123' }));
 
-    expect(result.current.templates).toHaveLength(1);
-    expect(result.current.templates[0].name).toBe('Template 1');
-    expect(result.current.total).toBe(10);
-  });
-
-  it('exposes isFetching state', () => {
-    mockUseInfiniteQuery.mockReturnValue({
-      data: { pages: [] },
-      isLoading: false,
-      isFetching: true, // Simulate fetching
-      isError: false,
+    expect(result.current.data).toHaveLength(1);
+    expect(result.current.data[0]).toMatchObject({
+      id: 'ttpl_1',
+      template_kind: 'moderation',
+      loop_count: 1,
+      shared_field_count: 1,
+      field_count: 1,
     });
-
-    const { result } = renderHook(() => useTaskTemplates({ studioId: 'test-studio' }));
-
-    expect(result.current.isFetching).toBe(true);
+    expect(result.current.pagination).toMatchObject({
+      pageIndex: 0,
+      pageSize: 10,
+      total: 10,
+      pageCount: 2,
+    });
   });
 
-  it('handles search query from URL state', () => {
+  it('includes all featured filters in the list query key', () => {
     mockUseTableUrlState.mockReturnValue({
       ...defaultTableState,
-      columnFilters: [{ id: 'name', value: 'search-term' }],
+      columnFilters: [
+        { id: 'name', value: 'moderation' },
+        { id: 'template_kind', value: 'moderation' },
+        { id: 'task_type', value: 'ACTIVE' },
+        { id: 'is_active', value: 'true' },
+      ],
     });
 
-    renderHook(() => useTaskTemplates({ studioId: 'test-studio' }));
+    renderHook(() => useTaskTemplates({ studioId: 'std_123' }));
 
-    // Verify useInfiniteQuery was called with correct queryKey including search term
-    expect(mockUseInfiniteQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        queryKey: ['task-templates', 'list', 'test-studio', { search: 'search-term' }],
-      }),
-    );
+    expect(mockUseQuery).toHaveBeenCalledWith(expect.objectContaining({
+      queryKey: [
+        'task-templates',
+        'list',
+        'std_123',
+        {
+          search: 'moderation',
+          templateKind: 'moderation',
+          taskType: 'ACTIVE',
+          isActive: true,
+          page: 1,
+          limit: 10,
+          sort: 'updated_at:desc',
+        },
+      ],
+    }));
   });
 
-  it('compacts cached pages before manual refetch', () => {
-    const mockRefetch = vi.fn();
-    mockUseInfiniteQuery.mockReturnValue({
-      data: { pages: [] },
-      isLoading: false,
-      isFetching: false,
-      isError: false,
-      hasNextPage: false,
-      isFetchingNextPage: false,
-      fetchNextPage: vi.fn(),
-      refetch: mockRefetch,
-    });
-
-    const { result } = renderHook(() => useTaskTemplates({ studioId: 'test-studio' }));
+  it('invalidates the studio task-template list prefix on refresh', () => {
+    const { result } = renderHook(() => useTaskTemplates({ studioId: 'std_123' }));
 
     act(() => {
-      result.current.refetch();
+      result.current.handleRefresh();
     });
 
-    expect(mockSetQueryData).toHaveBeenCalledWith(
-      ['task-templates', 'list', 'test-studio', { search: '' }],
-      expect.any(Function),
-    );
-    expect(mockRefetch).toHaveBeenCalledTimes(1);
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['task-templates', 'list', 'std_123'],
+    });
   });
 });

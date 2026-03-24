@@ -4,7 +4,7 @@ import { Copy, FileText, MoreVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import type { TaskTemplateDto, UiSchema } from '@eridu/api-types/task-management';
+import type { TaskTemplateDto } from '@eridu/api-types/task-management';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,7 @@ import {
 
 import { useCreateTaskTemplate } from '../hooks/use-create-task-template';
 import { useDeleteTaskTemplate } from '../hooks/use-delete-task-template';
+import { resolveTemplateSchemaForClone } from '../lib/resolve-template-schema-for-clone';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
@@ -37,24 +38,6 @@ type TaskTemplateCardProps = {
   template: TaskTemplateDto;
   studioId: string;
 };
-
-function resolveTemplateSchemaForClone(template: TaskTemplateDto): UiSchema {
-  const rawSchema = template.current_schema as Partial<UiSchema> | undefined;
-  const rawItems = rawSchema?.items;
-
-  const items = Array.isArray(rawItems)
-    ? rawItems.map((item) => ({
-        ...item,
-        // Generate new IDs for cloned fields to avoid collisions.
-        id: crypto.randomUUID(),
-      }))
-    : [];
-
-  return {
-    items,
-    ...(rawSchema?.metadata ? { metadata: rawSchema.metadata } : {}),
-  };
-}
 
 export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
