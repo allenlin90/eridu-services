@@ -94,6 +94,30 @@ This is a UX degradation, not a crash — acceptable for now. Flagged as warning
 - `parseDateBoundary` in `TaskReportScopeService` uses local-tz parse (`new Date(\`\${date}T00:00:00\`)`). Intentional — matches existing show/task filtering behavior. See `combineDateAndTime` pattern note above for context.
 - `sortedAllRows` (pre-filter sorted rows) is used for CSV export; `sortedRows` (post-filter) is used for the visible table. This is correct — CSV exports all rows regardless of view filters.
 
+### TaskTemplateResetService: Deliberate Prisma-in-Service Exception
+`task-template-reset.service.ts` is an internal operator-only migration aid (not a regular domain service).
+It uses `PrismaService` directly and imports `Prisma.TaskWhereInput` for `buildRelatedTaskWhere()`.
+This is INTENTIONAL — it's a one-off script service accessed only via CLI, not through HTTP controllers.
+Accept this pattern for internal reset/migration services that are not in the regular request path.
+The `Prisma.*` import is type-only (`import type`) — it does not bleed into public API contracts.
+
+### TaskTemplateModeratorCsvService: Same Script-Service Exception
+`task-template-moderator-csv.service.ts` injects `PrismaService` directly to do a raw `taskTemplate.count()`
+in `planMigration()`. This is also an internal operator tool, same exception applies.
+
+### Double-planReset in Migration Execution Chain
+`executeMigration` in `TaskTemplateModeratorCsvService` calls `planMigration` (which calls `resetService.planReset`),
+then calls `resetService.executeReset` (which internally calls `planReset` again).
+This causes **two sequential planReset DB round-trips** for the reset portion of a migration.
+For an operator script used infrequently on small datasets, this is acceptable overhead.
+Flag as a WARNING (not blocking) in future reviews of this service.
+
+### templateKind filter: JSONB path probe via `metadata.loops[0]`
+The `templateKind` filter in `task-template.repository.ts` uses Prisma JSONB path query:
+`currentSchema -> 'metadata' -> 'loops' -> '0'` — presence means moderation, absence means standard.
+`STANDARD` filter wraps the same check in `NOT`. Both work at DB level (PostgreSQL jsonb operators).
+This is the canonical approach for detecting moderation templates until a DB-level `templateKind` column is added.
+
 ### Phase 4 Merge Program Policy (2026-03-11)
 - Cross-session tracker: `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`
 - Merge strategy: scope-first branches from `master`, using `feat/phase-4-p-and-l` as reference only
