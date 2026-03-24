@@ -127,23 +127,16 @@ Items resolved during the Phase 4 reopen window without full PRD promotion:
 
 ### Pre-Development: Task Template Migration (2026-03-23)
 
-The app is still in alpha test and cannot be used for real operations because the task submission reporting and export feature requires task templates with shared fields to produce meaningful output. A previous migration was run but did not create templates for existing workflows.
+The app reached usable moderation-template state after a one-off operational rebuild on **March 24, 2026**: the production studio shared-field catalog and moderation task templates were recreated from the real moderator worksheet CSV. That rebuild was intentionally executed as an operational data change, not as permanent repo-tracked tooling.
 
-**Task**: Re-run the task template migration with production-equivalent data and reduce manager confusion in the template surface:
-1. Export the real moderator worksheet CSV used operationally
-2. Run a local dry-run/apply rebuild from CSV before touching production
-3. Recreate moderation templates with loop-indexed shared fields (`gmv_l1`, `ctr_l1`, etc.) up to the highest loop observed in source
-4. Hard-reset alpha-era task templates in the target studio as part of the rebuild flow when existing records are disposable
-5. Validate that task submission reporting produces correct output with the rebuilt templates
-6. Redesign the studio task-template list into a filtered paginated table so managers can distinguish moderation vs. standard templates quickly
+**Permanent product scope** for this repo:
+1. Keep the studio task-template surface manager-friendly with a filtered paginated table
+2. Preserve moderation vs. standard template filtering in the API so pagination stays truthful
+3. Validate reporting against fresh submitted moderation tasks whenever the shared-field model changes
 
-Implementation note: the real worksheet includes a small number of `Loop0` setup rows (`Server URL`, `stream key`). The rebuild flow normalizes those setup rows into loop 1 instead of failing the import, while still rejecting any other unsupported `Loop0` usage.
+**Operational note**: Do not keep one-off reset/import scripts in the repo once the rebuild has been executed. Future worksheet-driven rebuilds should be treated as explicit operational work, not a standing app feature.
 
-**Reset policy**: Existing alpha templates may be hard-reset per studio before rebuild. This cleanup deletes the selected task templates, their snapshots, and any tasks bound to those templates. No retroactive preservation is promised for pre-migration alpha task history tied to reset templates. Shared fields are not part of the reset.
-
-**Workflow doc**: [task-template-migration.md](../workflows/task-template-migration.md)
-
-**Status**: 🔲 Pending — details and gaps to be discussed during processing. This is a prerequisite for the app to be operationally usable, independent of the P&L feature work.
+**Status**: ✅ Moderation templates rebuilt operationally on March 24, 2026. Ongoing follow-up is reporting validation plus template-surface refinement.
 
 **Sequencing**: Can run in parallel with Wave 1. No dependency on roster PRDs or economics.
 
@@ -175,7 +168,7 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 ```
 Pre-dev (parallel with Wave 1):
-    └─► Task Template Migration ─────────────────── (staging data → templates + shared fields)
+    └─► Task Template Migration ─────────────────── (operational CSV rebuild completed on March 24, 2026)
 
 Wave 1 (can start now):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
@@ -228,7 +221,7 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 
 | # | PR | Branch | Gate | Deliverables |
 | --- | --- | --- | --- | --- |
-| P | Task template migration | `feat/task-template-migration` | Staging data samples | Migration script + validation |
+| P | Task template migration | `feat/task-template-migration` | Real moderator worksheet CSV | Operational rebuild + template list refinement |
 | 1a | Sidebar redesign | `feat/sidebar-redesign` | None | Code + update skills/memory referencing sidebar |
 | 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None | PRD review → BE/FE design → code + tests |
 | 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (isHelper + version) | PRD review → BE/FE design → code + tests |

@@ -9,7 +9,6 @@ These are **navigation guides**, not specs or API references. They orient a deve
 | Workflow | Description |
 | --- | --- |
 | [Creator Operations](./creator-operations.md) | RBAC roles → creator roster → show assignment → economics |
-| [Task Template Migration](./task-template-migration.md) | Studio-scoped alpha reset → template rebuild → reporting validation |
 
 ## When to Add a Workflow Doc
 
