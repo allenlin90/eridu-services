@@ -24,6 +24,8 @@
     "db:seed:report-simulation": "cross-env ERIFY_SEED_PROFILE=smoke ERIFY_REPORT_SIMULATION=true pnpm run db:generate && npx prisma db seed",
     "db:local:refresh": "pnpm run db:migrate:reset && pnpm run db:migrate:deploy && pnpm run db:seed",
     "db:extid:sync": "tsx scripts/sync-ext-ids.ts",
+    "db:task-template:reset": "tsx scripts/task-template-reset.ts",
+    "db:task-template:rebuild-moderator-csv": "tsx scripts/task-template-rebuild-from-moderator-csv.ts",
     "db:local:refresh:with-ext-sync": "pnpm run db:local:refresh && pnpm run db:extid:sync",
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate",
