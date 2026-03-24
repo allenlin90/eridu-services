@@ -2,6 +2,7 @@ import type { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 
 import axios from 'axios';
 import { decodeJwt } from 'jose';
 
+import { apiQueryParamsSerializer } from '@/lib/api/query-params';
 import { getCachedToken, setCachedToken } from '@/lib/api/token-store';
 import { authClient } from '@/lib/auth';
 
@@ -22,6 +23,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  paramsSerializer: apiQueryParamsSerializer,
   // Security: withCredentials enables cookies for CSRF protection
   withCredentials: true,
 });
