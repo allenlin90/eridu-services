@@ -2,9 +2,14 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Trash2 } from 'lucide-react';
 
 import type { StudioMemberResponse } from '@eridu/api-types/memberships';
+import type { SearchableColumn } from '@eridu/ui';
 import { Badge, Button } from '@eridu/ui';
 
 import { ROLE_LABELS } from '../lib/roles';
+
+export const memberSearchableColumns: SearchableColumn[] = [
+  { id: 'user_name', title: 'Name or Email' },
+];
 
 type ColumnContext = {
   isAdmin: boolean;
@@ -20,6 +25,14 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
     {
       accessorKey: 'user_name',
       header: 'Name',
+      // Search by name OR email
+      filterFn: (row, _columnId, filterValue: string) => {
+        const q = filterValue.toLowerCase();
+        return (
+          row.original.user_name.toLowerCase().includes(q)
+          || row.original.user_email.toLowerCase().includes(q)
+        );
+      },
     },
     {
       accessorKey: 'user_email',
