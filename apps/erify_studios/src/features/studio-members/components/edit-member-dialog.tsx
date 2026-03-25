@@ -25,6 +25,7 @@ import { ROLE_OPTIONS } from '../lib/roles';
 type EditMemberDialogProps = {
   studioId: string;
   member: StudioMemberResponse | null;
+  isSelf: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -32,10 +33,12 @@ type EditMemberDialogProps = {
 function EditMemberForm({
   studioId,
   member,
+  isSelf,
   onOpenChange,
 }: {
   studioId: string;
   member: StudioMemberResponse;
+  isSelf: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [role, setRole] = useState(member.role);
@@ -70,7 +73,7 @@ function EditMemberForm({
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="edit-role">Role</Label>
-        <Select value={role} onValueChange={setRole}>
+        <Select value={role} onValueChange={setRole} disabled={isSelf}>
           <SelectTrigger id="edit-role">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
@@ -82,6 +85,9 @@ function EditMemberForm({
             ))}
           </SelectContent>
         </Select>
+        {isSelf && (
+          <p className="text-xs text-muted-foreground">You cannot change your own role.</p>
+        )}
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="edit-rate">Base Hourly Rate ($)</Label>
@@ -112,7 +118,7 @@ function EditMemberForm({
   );
 }
 
-export function EditMemberDialog({ studioId, member, open, onOpenChange }: EditMemberDialogProps) {
+export function EditMemberDialog({ studioId, member, isSelf, open, onOpenChange }: EditMemberDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
@@ -129,6 +135,7 @@ export function EditMemberDialog({ studioId, member, open, onOpenChange }: EditM
           <EditMemberForm
             studioId={studioId}
             member={member}
+            isSelf={isSelf}
             onOpenChange={onOpenChange}
           />
         )}

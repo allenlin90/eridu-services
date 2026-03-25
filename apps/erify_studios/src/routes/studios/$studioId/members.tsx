@@ -1,10 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
-import { useStudioMembers } from '@/features/studio-members/api/members';
+import { studioMemberKeys, useStudioMembers } from '@/features/studio-members/api/members';
 import { StudioMembersTable } from '@/features/studio-members/components/studio-members-table';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 import { useSession } from '@/lib/session-provider';
@@ -29,14 +30,18 @@ function StudioMembersPage() {
 }
 
 function StudioMembersContent({ studioId }: { studioId: string }) {
-  const { data, isLoading } = useStudioMembers(studioId);
+  const queryClient = useQueryClient();
+  const { data, isLoading, isFetching } = useStudioMembers(studioId);
   const { role } = useStudioAccess(studioId);
   const { session } = useSession();
 
   const isAdmin = role === STUDIO_ROLE.ADMIN;
-  // Use current user email to identify self row — membership UID not in profile payload
   const currentUserEmail = session?.user?.email;
   const members = data?.data ?? [];
+
+  const handleRefresh = () => {
+    void queryClient.invalidateQueries({ queryKey: studioMemberKeys.listPrefix(studioId) });
+  };
 
   return (
     <PageLayout
@@ -47,8 +52,10 @@ function StudioMembersContent({ studioId }: { studioId: string }) {
         studioId={studioId}
         members={members}
         isLoading={isLoading}
+        isFetching={isFetching}
         isAdmin={isAdmin}
         currentUserEmail={currentUserEmail}
+        onRefresh={handleRefresh}
       />
     </PageLayout>
   );

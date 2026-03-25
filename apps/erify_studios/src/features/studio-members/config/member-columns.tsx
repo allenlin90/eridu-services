@@ -9,7 +9,7 @@ import { ROLE_LABELS } from '../lib/roles';
 type ColumnContext = {
   isAdmin: boolean;
   currentUserEmail: string | undefined;
-  onEdit: (member: StudioMemberResponse) => void;
+  onEdit: (member: StudioMemberResponse, isSelf: boolean) => void;
   onRemove: (member: StudioMemberResponse) => void;
 };
 
@@ -55,26 +55,26 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
       cell: ({ row }) => {
         const member = row.original;
         const isSelf = Boolean(currentUserEmail) && currentUserEmail === member.user_email;
-        if (isSelf)
-          return null;
         return (
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onEdit(member)}
+              onClick={() => onEdit(member, isSelf)}
             >
               Edit
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => onRemove(member)}
-              aria-label={`Remove ${member.user_name}`}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!isSelf && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+                onClick={() => onRemove(member)}
+                aria-label={`Remove ${member.user_name}`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         );
       },
