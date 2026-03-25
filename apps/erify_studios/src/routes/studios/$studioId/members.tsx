@@ -11,8 +11,8 @@ import {
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { studioMemberKeys, useStudioMembers } from '@/features/studio-members/api/members';
-import { studioMembersSearchSchema } from '@/features/studio-members/config/studio-members-search-schema';
 import { StudioMembersTable } from '@/features/studio-members/components/studio-members-table';
+import { studioMembersSearchSchema } from '@/features/studio-members/config/studio-members-search-schema';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 import { useSession } from '@/lib/session-provider';
 
