@@ -36,6 +36,7 @@ import { Route as StudiosStudioIdShiftsRouteImport } from './routes/studios/$stu
 import { Route as StudiosStudioIdSharedFieldsRouteImport } from './routes/studios/$studioId/shared-fields'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
 import { Route as StudiosStudioIdMyShiftsRouteImport } from './routes/studios/$studioId/my-shifts'
+import { Route as StudiosStudioIdMembersRouteImport } from './routes/studios/$studioId/members'
 import { Route as StudiosStudioIdDashboardRouteImport } from './routes/studios/$studioId/dashboard'
 import { Route as StudiosStudioIdCreatorMappingRouteImport } from './routes/studios/$studioId/creator-mapping'
 import { Route as StudiosStudioIdTaskTemplatesIndexRouteImport } from './routes/studios/$studioId/task-templates/index'
@@ -196,6 +197,11 @@ const StudiosStudioIdMyShiftsRoute = StudiosStudioIdMyShiftsRouteImport.update({
   path: '/my-shifts',
   getParentRoute: () => StudiosStudioIdRouteRoute,
 } as any)
+const StudiosStudioIdMembersRoute = StudiosStudioIdMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => StudiosStudioIdRouteRoute,
+} as any)
 const StudiosStudioIdDashboardRoute =
   StudiosStudioIdDashboardRouteImport.update({
     id: '/dashboard',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
+  '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
@@ -352,6 +359,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
+  '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
@@ -394,6 +402,7 @@ export interface FileRoutesById {
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
+  '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
@@ -442,6 +451,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
     | '/studios/$studioId/dashboard'
+    | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shared-fields'
@@ -487,6 +497,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/studios/$studioId'
     | '/studios/$studioId/dashboard'
+    | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shared-fields'
@@ -528,6 +539,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
     | '/studios/$studioId/dashboard'
+    | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shared-fields'
@@ -765,6 +777,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdMyShiftsRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
+    '/studios/$studioId/members': {
+      id: '/studios/$studioId/members'
+      path: '/members'
+      fullPath: '/studios/$studioId/members'
+      preLoaderRoute: typeof StudiosStudioIdMembersRouteImport
+      parentRoute: typeof StudiosStudioIdRouteRoute
+    }
     '/studios/$studioId/dashboard': {
       id: '/studios/$studioId/dashboard'
       path: '/dashboard'
@@ -993,6 +1012,7 @@ const StudiosStudioIdTaskTemplatesRouteWithChildren =
 interface StudiosStudioIdRouteRouteChildren {
   StudiosStudioIdCreatorMappingRoute: typeof StudiosStudioIdCreatorMappingRouteWithChildren
   StudiosStudioIdDashboardRoute: typeof StudiosStudioIdDashboardRoute
+  StudiosStudioIdMembersRoute: typeof StudiosStudioIdMembersRoute
   StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
   StudiosStudioIdSharedFieldsRoute: typeof StudiosStudioIdSharedFieldsRoute
@@ -1007,6 +1027,7 @@ const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
   StudiosStudioIdCreatorMappingRoute:
     StudiosStudioIdCreatorMappingRouteWithChildren,
   StudiosStudioIdDashboardRoute: StudiosStudioIdDashboardRoute,
+  StudiosStudioIdMembersRoute: StudiosStudioIdMembersRoute,
   StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
   StudiosStudioIdSharedFieldsRoute: StudiosStudioIdSharedFieldsRoute,

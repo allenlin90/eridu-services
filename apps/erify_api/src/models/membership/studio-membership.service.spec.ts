@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { StudioMembershipRepository } from './studio-membership.repository';
 import { StudioMembershipService } from './studio-membership.service';
 
+import { UserRepository } from '@/models/user/user.repository';
 import { UtilityService } from '@/utility/utility.service';
 
 describe('studioMembershipService', () => {
@@ -30,6 +31,12 @@ describe('studioMembershipService', () => {
         {
           provide: StudioMembershipRepository,
           useValue: mockRepository,
+        },
+        {
+          provide: UserRepository,
+          useValue: {
+            findByEmail: jest.fn(),
+          },
         },
         {
           provide: UtilityService,

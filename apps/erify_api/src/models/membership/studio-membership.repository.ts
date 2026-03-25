@@ -217,4 +217,27 @@ export class StudioMembershipRepository extends BaseRepository<
       data: { deletedAt: null },
     });
   }
+
+  /**
+   * List active memberships for a studio with embedded user info.
+   * Used by the /studios/:studioId/members roster endpoint.
+   */
+  async listStudioMembersWithUser(studioUid: string) {
+    return this.prisma.studioMembership.findMany({
+      where: {
+        studio: { uid: studioUid },
+        deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            uid: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
 }
