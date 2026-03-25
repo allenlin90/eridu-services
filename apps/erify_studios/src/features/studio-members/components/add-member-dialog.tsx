@@ -20,21 +20,13 @@ import {
 } from '@eridu/ui';
 
 import { useAddStudioMember } from '../api/members';
+import { ROLE_OPTIONS } from '../lib/roles';
 
 type AddMemberDialogProps = {
   studioId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-
-const ROLE_OPTIONS = [
-  { value: STUDIO_ROLE.ADMIN, label: 'Admin' },
-  { value: STUDIO_ROLE.MANAGER, label: 'Manager' },
-  { value: STUDIO_ROLE.TALENT_MANAGER, label: 'Talent Manager' },
-  { value: STUDIO_ROLE.DESIGNER, label: 'Designer' },
-  { value: STUDIO_ROLE.MODERATION_MANAGER, label: 'Moderation Manager' },
-  { value: STUDIO_ROLE.MEMBER, label: 'Member' },
-] as const;
 
 export function AddMemberDialog({ studioId, open, onOpenChange }: AddMemberDialogProps) {
   const [email, setEmail] = useState('');
