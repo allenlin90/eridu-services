@@ -59,9 +59,9 @@ PRD: [studio-member-roster.md](../../../docs/prd/studio-member-roster.md)
 | `/studios/$studioId/members` | Member roster management | ADMIN (write), MANAGER (read) | 🔲 Wave 1 |
 
 UI components:
-- Data table with columns: name, email, role, hourly rate, helper eligible, actions.
+- Data table with columns: name, email, role, hourly rate, actions.
 - Add member dialog: email input with user catalog lookup, role selector, initial rate input.
-- Inline edit for role, `base_hourly_rate`, `is_helper` toggle.
+- Inline edit for role and `base_hourly_rate`.
 - Version-guarded mutations: PATCH includes `version` from last read; 409 triggers refetch + conflict toast.
 - Self-demotion guard: disable role dropdown for current user's own membership.
 - Remove member confirmation dialog with soft-delete semantics.
@@ -187,7 +187,7 @@ Client integrations (Wave 3 — revenue, pending design decisions):
 - Manual smoke for:
   - creator assignment flows
   - creator roster/catalog driven picker behavior
-  - member roster CRUD (add, update rate/role/helper, remove)
+  - member roster CRUD (add, update rate/role, remove)
   - creator roster CRUD (add from catalog, update defaults, activate/deactivate)
   - planning export date range + download
   - availability strict mode conflict display in assignment dialog

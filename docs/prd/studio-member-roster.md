@@ -11,25 +11,21 @@ Studio operators (ADMIN) cannot manage their own team without system-admin inter
 
 More critically for P&L: `StudioMembership.baseHourlyRate` directly drives shift labor cost in the economics endpoint (`GET /studios/:studioId/shows/:showId/economics`). There is currently no studio-operator workflow to keep these rates accurate — inaccurate rates produce incorrect cost projections in the economics baseline.
 
-A second, interlinked problem: `StudioMembership.isHelper` exists in the schema but is not enforced at the task-assignment layer. Any studio member can currently be assigned as a task helper regardless of their eligibility flag. There is no assignment-level error that distinguishes "user not in studio" from "user not helper-eligible", which makes the flag operationally meaningless until enforcement is added.
-
 Key questions unanswered today:
 
 - *"How does a studio admin add a new team member without filing a request to a system admin?"*
 - *"How do we update hourly rates as market rates change without system-admin access?"*
-- *"Who has helper eligibility enabled and how do we toggle it without going through a separate admin workflow?"*
-- *"Why was a helper assigned to a task when their eligibility flag was disabled?"*
 
 ## Users
 
-- **Studio ADMIN** (primary): full CRUD access — invite members, update roles and rates, toggle helper eligibility, remove members
+- **Studio ADMIN** (primary): full CRUD access — invite members, update roles and rates, remove members
 - **Studio MANAGER** (secondary): read-only roster view — see member list with roles and rates for operational awareness
 
 ## Existing Infrastructure
 
 | Model / Endpoint | Fields / Behavior | Status |
 | --- | --- | --- |
-| `StudioMembership` | `baseHourlyRate`, `isHelper`, `role`, `deletedAt` | ✅ Exists |
+| `StudioMembership` | `baseHourlyRate`, `role`, `deletedAt` | ✅ Exists |
 | `GET /studios/:studioId/studio-memberships` | List only, ADMIN-only, returns `studioMembershipWithRelationsDto` (includes `baseHourlyRate`) | ✅ Exists |
 | `StudioShift.projectedCost` / `calculatedCost` | Derived from `baseHourlyRate` via shift service | ✅ Exists |
 | Studio role system | `ADMIN`, `MANAGER`, `TALENT_MANAGER`, `MODERATION_MANAGER`, `DESIGNER`, `MEMBER` | ✅ Exists |
@@ -39,7 +35,7 @@ Key questions unanswered today:
 
 ### In Scope
 
-1. **List studio members** — display all non-deleted studio memberships with user name, email, role, `baseHourlyRate`, and `isHelper` flag. ADMIN and MANAGER can view.
+1. **List studio members** — display all non-deleted studio memberships with user name, email, role, and `baseHourlyRate`. ADMIN and MANAGER can view.
 
 2. **Invite / add member** — ADMIN can add a member by email lookup from the user catalog. If the user does not exist, return a clear error (no account creation in scope). The invite creates a new `StudioMembership` with the specified role and an initial `baseHourlyRate`.
 
@@ -47,11 +43,7 @@ Key questions unanswered today:
 
 4. **Update `baseHourlyRate`** — ADMIN can edit the hourly rate for any member. This is the **L-side economics hook**: the updated rate immediately affects future shift cost projections via the existing shift service. Rate must be a non-negative decimal. Zero is valid (volunteer/intern scenario).
 
-5. **Toggle `isHelper` eligibility** — ADMIN can enable or disable helper eligibility per member. This controls whether the member appears in helper assignment workflows and gates the assignment endpoint (see requirement 7).
-
-6. **Helper eligibility enforcement on task assignment** — The task helper assignment endpoint must check `StudioMembership.isHelper` for the assignee before accepting the assignment. If the flag is `false`, return a typed error (`MEMBER_NOT_HELPER_ELIGIBLE`) distinct from `MEMBER_NOT_IN_STUDIO` and authorization errors. This enforcement makes the toggle operationally meaningful — setting `isHelper=false` actively blocks future assignments without removing the member from the roster.
-
-7. **Remove (soft-deactivate) member** — ADMIN can remove a member from the studio. Removal sets `deletedAt` (soft delete). Removed members no longer appear in roster listings or have studio route access. Historical shift and task records referencing the membership are preserved.
+5. **Remove (soft-deactivate) member** — ADMIN can remove a member from the studio. Removal sets `deletedAt` (soft delete). Removed members no longer appear in roster listings or have studio route access. Historical shift and task records referencing the membership are preserved.
 
 ### Out of Scope
 
@@ -78,7 +70,7 @@ Rate change behavior: updating `baseHourlyRate` affects **future** shift cost pr
 | --- | --- | --- | --- |
 | `GET` | `/studios/:studioId/members` | List all active studio memberships with user details | ADMIN, MANAGER |
 | `POST` | `/studios/:studioId/members` | Add a member by email lookup | ADMIN only |
-| `PATCH` | `/studios/:studioId/members/:membershipId` | Update role, `baseHourlyRate`, or `isHelper` | ADMIN only |
+| `PATCH` | `/studios/:studioId/members/:membershipId` | Update role or `baseHourlyRate` | ADMIN only |
 | `DELETE` | `/studios/:studioId/members/:membershipId` | Soft-deactivate (remove) a member | ADMIN only |
 
 Route guards: all routes use `@StudioProtected`. Write routes require `ADMIN` role. Read routes allow `ADMIN` and `MANAGER`.
@@ -93,7 +85,6 @@ Route guards: all routes use `@StudioProtected`. Write routes require `ADMIN` ro
   "user_email": "jane@example.com",
   "role": "MANAGER",
   "base_hourly_rate": 25.00,
-  "is_helper": true,
   "version": 3,
   "created_at": "2026-01-15T08:00:00Z"
 }
@@ -105,8 +96,7 @@ Route guards: all routes use `@StudioProtected`. Write routes require `ADMIN` ro
 {
   "email": "jane@example.com",
   "role": "MANAGER",
-  "base_hourly_rate": 25.00,
-  "is_helper": false
+  "base_hourly_rate": 25.00
 }
 ```
 
@@ -118,7 +108,6 @@ All fields optional except `version` (required for optimistic concurrency).
 {
   "role": "ADMIN",
   "base_hourly_rate": 30.00,
-  "is_helper": true,
   "version": 3
 }
 ```
@@ -129,7 +118,6 @@ Stale `version` returns 409 Conflict. This prevents concurrent overwrites of fin
 
 | Code | HTTP Status | Condition |
 | --- | --- | --- |
-| `MEMBER_NOT_HELPER_ELIGIBLE` | 422 | Task helper assignment attempted for member with `is_helper=false` |
 | `SELF_DEMOTION_NOT_ALLOWED` | 422 | ADMIN attempts to demote their own membership |
 | `USER_NOT_FOUND` | 404 | Email lookup returns no matching user in system catalog |
 | `MEMBER_ALREADY_EXISTS` | 409 | Email already has an active membership in this studio |
@@ -145,10 +133,9 @@ All error codes to be defined in `@eridu/api-types`.
 
 ### Schema Migration Required
 
-`StudioMembership` needs two new fields (consistent with `StudioCreator` which already has `version`):
+`StudioMembership` needs one new field (consistent with `StudioCreator` which already has `version`):
 
 ```prisma
-isHelper  Boolean @default(false) @map("is_helper")
 version   Int     @default(1)
 ```
 
@@ -166,13 +153,10 @@ Appears under a new **Studio Settings** group, alongside Shared Fields. See `app
 
 ## Acceptance Criteria
 
-- [ ] List endpoint returns all active memberships with `user_name`, `user_email`, `role`, `base_hourly_rate`, `is_helper`.
+- [ ] List endpoint returns all active memberships with `user_name`, `user_email`, `role`, `base_hourly_rate`.
 - [ ] ADMIN can add a member by email; system returns 404 if user is not found in catalog.
 - [ ] ADMIN can update member role; self-demotion from ADMIN returns 422 with a clear error.
 - [ ] ADMIN can update `base_hourly_rate`; value is validated as non-negative decimal.
-- [ ] ADMIN can toggle `is_helper`; change takes effect immediately.
-- [ ] Task helper assignment endpoint returns typed `MEMBER_NOT_HELPER_ELIGIBLE` error (distinct from 403) when assignee has `is_helper=false`.
-- [ ] Helper assignment error contract is documented in `@eridu/api-types`.
 - [ ] ADMIN can remove a member; membership is soft-deleted and no longer appears in roster.
 - [ ] MANAGER cannot perform any write operation; PATCH/POST/DELETE return 403.
 - [ ] Role guards enforced on all routes via `@StudioProtected`.

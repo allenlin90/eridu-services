@@ -148,7 +148,7 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 | ------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
 | Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔲 Planned                             | —                                                                                         | 1    |
 | Studio creator roster CRUD                       | [studio-creator-roster.md](../prd/studio-creator-roster.md)                     | 🔲 Planned                             | `StudioCreator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback | 1    |
-| Studio member roster + helper eligibility gating | [studio-member-roster.md](../prd/studio-member-roster.md)                       | 🔲 Planned                             | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
+| Studio member roster                             | [studio-member-roster.md](../prd/studio-member-roster.md)                       | 🔲 Planned                             | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
 | Show planning export with cost preview           | [show-planning-export.md](../prd/show-planning-export.md)                       | 🔲 Planned                             | `estimated_total_cost` column from economics                                              | 2    |
 | Creator availability hardening (strict mode)     | [creator-availability-hardening.md](../prd/creator-availability-hardening.md)   | 🔲 Planned (depends on creator roster) | Conflict enforcement: overlap, roster state, inactive                                     | 2    |
 | P&L revenue workflow (GMV/sales input)           | [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md)                       | 🔲 Planned (open design Qs)            | Activates COMMISSION/HYBRID creator cost computation                                      | 3    |
@@ -159,7 +159,7 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 | Gate | Blocks | Status |
 | --- | --- | --- |
-| **Prisma migration** — add `isHelper` + `version` to `StudioMembership` | Wave 1: Studio Member Roster | 🔲 Pending |
+| **Prisma migration** — add `version` to `StudioMembership` | Wave 1: Studio Member Roster | 🔲 Pending |
 | **Economics cost model review** — review cost components (bonus, OT, allowances) and revise economics service if needed | Wave 2: Show Planning Export | ⏸️ Deferred to after Wave 1 |
 | **Economics merge** — merge `feat/show-economics-baseline` (with potential revisions) to `master` | Wave 2: Show Planning Export | ⏸️ Deferred to after cost model review |
 | **Financial arithmetic decision** — adopt `big.js` or accept floating-point risk | Wave 3: P&L Revenue Workflow | 🔲 Pending |
@@ -173,7 +173,7 @@ Pre-dev (parallel with Wave 1):
 Wave 1 (can start now):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
     ├─► Studio Creator Roster ─────────────────────── (StudioCreator model complete)
-    └─► Studio Member Roster ──────────────────────── (needs isHelper + version migration)
+    └─► Studio Member Roster ──────────────────────── (needs version migration)
 
 Post-Wave 1: Economics cost model review
     └─► Decide additional cost components (bonus, OT, allowances)
@@ -194,7 +194,7 @@ Design Qs resolved + big.js adopted (gate for Wave 3):
 | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sidebar Redesign**      | S    | Pure FE refactor: `sidebar-config.tsx` + `studio-route-access.ts`. Ships navigation homes for all new pages.                          |
 | **Studio Creator Roster** | M    | `StudioCreator` model is complete. Add `POST`/`PATCH` write endpoints, version-guarded compensation updates, FE roster page.          |
-| **Studio Member Roster**  | M    | Requires Prisma migration first. Add `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, helper eligibility enforcement, FE page. |
+| **Studio Member Roster**  | M    | Requires Prisma migration first. Add `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, FE page. |
 
 **Milestone 1**: Economics endpoint reflects roster-managed rates for FIXED creators; shift costs reflect updated `baseHourlyRate`. Sidebar shows function-based groups with new page navigation.
 
@@ -224,7 +224,7 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 | P | Task template migration | `feat/task-template-migration` | Real moderator worksheet CSV | Operational rebuild + template list refinement |
 | 1a | Sidebar redesign | `feat/sidebar-redesign` | None | Code + update skills/memory referencing sidebar |
 | 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None | PRD review → BE/FE design → code + tests |
-| 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (isHelper + version) | PRD review → BE/FE design → code + tests |
+| 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (version) | PRD review → BE/FE design → code + tests |
 | R | Economics cost model review | — | Wave 1 complete | Review cost components, revise economics service |
 | 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | Cost model review done | Code (potentially revised) + BE/FE design docs |
 | 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) | PRD review → BE/FE design → code + tests |
@@ -243,7 +243,6 @@ Per-PR workflow: review PRD → create `apps/erify_api/docs/design/<FEATURE>_DES
 | P&L Revenue Workflow has 4 unresolved design questions | High — blocks Wave 3 entirely | Resolve during Wave 1 so Wave 3 can start without delay |
 | Task template migration depends on staging data availability | Medium — blocks operational readiness | Export samples early; can proceed with representative examples |
 | Show Planning Export per-show economics batch cost | Medium — performance at scale | Define cap (max 90-day range) and batch computation strategy |
-| Member roster helper eligibility touches task assignment path | Medium — regression risk | Dedicated tests for assignment with `isHelper=false` |
 | No financial arithmetic library — JS `Number` with `.toFixed(2)` | Medium — floating-point accumulation | Adopt `big.js` before Wave 3 revenue workflow |
 
 ### Task Submission Reporting & Export (Shipped)
@@ -257,7 +256,7 @@ Per-PR workflow: review PRD → create `apps/erify_api/docs/design/<FEATURE>_DES
 - Mapping/assignment flow is stable and merged-ready. ✅
 - Creator mapping PRD intent and BE/FE design docs are synced and traceable by route/contract. ✅
 - Economics baseline (variable cost side) shipped: per-show and grouped endpoints. ✅
-- Studio member roster with `baseHourlyRate` editing and helper eligibility gating implemented.
+- Studio member roster with `baseHourlyRate` editing implemented.
 - Studio creator roster CRUD with compensation defaults implemented.
 - P&L revenue workflow design questions resolved and GMV/sales input shipped.
 - Show planning export (pre-show, with cost column) shipped.
