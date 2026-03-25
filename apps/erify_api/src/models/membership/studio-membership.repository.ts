@@ -8,9 +8,6 @@ import {
 } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
-/** Maximum number of members returned by the roster endpoint. */
-const STUDIO_MEMBER_MAP_DEFAULT_LIMIT = 500;
-
 // Type aliases for better readability and type safety
 type UserId = Prisma.UserWhereUniqueInput['id'];
 type StudioId = bigint;
@@ -264,7 +261,6 @@ export class StudioMembershipRepository extends BaseRepository<
         },
       },
       orderBy: { createdAt: 'asc' },
-      take: STUDIO_MEMBER_MAP_DEFAULT_LIMIT,
     });
   }
 

@@ -9,6 +9,8 @@ import type {
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 
@@ -77,6 +79,8 @@ export function DataTable<TData>({
     columns,
     getRowId,
     getCoreRowModel: getCoreRowModel(),
+    ...(!manualFiltering && { getFilteredRowModel: getFilteredRowModel() }),
+    ...(!manualPagination && { getPaginationRowModel: getPaginationRowModel() }),
     manualPagination: !!manualPagination,
     manualFiltering: !!manualFiltering,
     manualSorting: !!manualSorting,
