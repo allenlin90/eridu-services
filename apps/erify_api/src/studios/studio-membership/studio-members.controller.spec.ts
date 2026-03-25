@@ -131,7 +131,8 @@ describe('studioMembersController', () => {
       studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(mockMembership as any);
       studioMembershipService.removeStudioMember.mockResolvedValue(mockMembership as any);
 
-      await controller.removeMember(studioId, membershipId);
+      const mockRequest = { studioMembership: { uid: 'smb_other456' } } as any;
+      await controller.removeMember(studioId, membershipId, mockRequest);
 
       expect(studioMembershipService.findStudioMemberByUidAndStudio).toHaveBeenCalledWith(
         membershipId,
@@ -144,7 +145,7 @@ describe('studioMembersController', () => {
       studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(null);
 
       await expect(
-        controller.removeMember('std_test123', 'smb_notfound'),
+        controller.removeMember('std_test123', 'smb_notfound', { studioMembership: { uid: 'smb_other456' } } as any),
       ).rejects.toThrow();
     });
   });

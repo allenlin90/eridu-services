@@ -19,6 +19,7 @@ import { BaseStudioController } from '../base-studio.controller';
 import type { AuthenticatedRequest } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
@@ -50,7 +51,7 @@ export class StudioMembersController extends BaseStudioController {
     const total = data.length;
     return this.createPaginatedResponse(data, total, {
       page: 1,
-      limit: total || 1,
+      limit: total || 10,
       take: total,
       skip: 0,
     });
@@ -114,6 +115,7 @@ export class StudioMembersController extends BaseStudioController {
   async removeMember(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('membershipId', new UidValidationPipe(StudioMembershipService.UID_PREFIX, 'Membership')) membershipId: string,
+    @Req() request: AuthenticatedRequest,
   ) {
     // Verify the membership belongs to this studio
     const existing = await this.studioMembershipService.findStudioMemberByUidAndStudio(
@@ -121,6 +123,12 @@ export class StudioMembersController extends BaseStudioController {
       studioId,
     );
     this.ensureResourceExists(existing, 'Membership', membershipId);
+
+    // Prevent self-removal
+    const actorMembershipUid = request.studioMembership?.uid;
+    if (actorMembershipUid && actorMembershipUid === existing.uid) {
+      throw HttpError.unprocessableEntity('SELF_REMOVE_NOT_ALLOWED');
+    }
 
     await this.studioMembershipService.removeStudioMember(membershipId);
   }

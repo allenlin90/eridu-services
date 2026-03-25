@@ -35,6 +35,17 @@ export function AddMemberDialog({ studioId, open, onOpenChange }: AddMemberDialo
 
   const addMutation = useAddStudioMember(studioId);
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen)
+      addMutation.reset();
+    onOpenChange(nextOpen);
+  };
+
+  const handleCancel = () => {
+    addMutation.reset();
+    onOpenChange(false);
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -63,7 +74,10 @@ export function AddMemberDialog({ studioId, open, onOpenChange }: AddMemberDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={handleOpenChange}
+    >
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle>Add Studio Member</DialogTitle>
@@ -115,7 +129,7 @@ export function AddMemberDialog({ studioId, open, onOpenChange }: AddMemberDialo
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleCancel}
               disabled={addMutation.isPending}
             >
               Cancel

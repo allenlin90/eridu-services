@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { StudioMembership } from '@prisma/client';
+import { Prisma, StudioMembership } from '@prisma/client';
 
-import { STUDIO_MEMBER_ERROR } from '@eridu/api-types/memberships';
+import { STUDIO_MEMBER_ERROR, STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 import type {
   AddStudioMemberPayload,
@@ -289,12 +289,12 @@ export class StudioMembershipService extends BaseModelService {
       actorMembershipUid
       && actorMembershipUid === membershipUid
       && payload.role !== undefined
-      && payload.role !== 'admin'
+      && payload.role !== STUDIO_ROLE.ADMIN
     ) {
       throw HttpError.unprocessableEntity(STUDIO_MEMBER_ERROR.SELF_DEMOTION_NOT_ALLOWED);
     }
 
-    const data: Record<string, unknown> = {};
+    const data: Prisma.StudioMembershipUpdateInput = {};
     if (payload.role !== undefined) {
       data.role = payload.role;
     }
