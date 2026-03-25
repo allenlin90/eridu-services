@@ -63,7 +63,7 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
   if (isAdmin) {
     columns.push({
       id: 'actions',
-      header: '',
+      header: 'Actions',
       cell: ({ row }) => {
         const member = row.original;
         const isSelf = Boolean(currentUserEmail) && currentUserEmail === member.user_email;
