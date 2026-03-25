@@ -13,8 +13,6 @@ import {
 import { getMemberColumns, memberSearchableColumns } from '../config/member-columns';
 
 import { AddMemberDialog } from './add-member-dialog';
-import { EditMemberDialog } from './edit-member-dialog';
-import { RemoveMemberDialog } from './remove-member-dialog';
 
 type StudioMembersTableProps = {
   studioId: string;
@@ -30,8 +28,6 @@ type StudioMembersTableProps = {
   onRefresh: () => void;
 };
 
-type EditState = { member: StudioMemberResponse; isSelf: boolean } | null;
-
 export function StudioMembersTable({
   studioId,
   members,
@@ -46,15 +42,8 @@ export function StudioMembersTable({
   onRefresh,
 }: StudioMembersTableProps) {
   const [addOpen, setAddOpen] = useState(false);
-  const [editState, setEditState] = useState<EditState>(null);
-  const [memberToRemove, setMemberToRemove] = useState<StudioMemberResponse | null>(null);
 
-  const columns = getMemberColumns({
-    isAdmin,
-    currentUserEmail,
-    onEdit: (member, isSelf) => setEditState({ member, isSelf }),
-    onRemove: setMemberToRemove,
-  });
+  const columns = getMemberColumns({ studioId, isAdmin, currentUserEmail });
 
   return (
     <>
@@ -111,32 +100,11 @@ export function StudioMembersTable({
       />
 
       {isAdmin && (
-        <>
-          <AddMemberDialog
-            studioId={studioId}
-            open={addOpen}
-            onOpenChange={setAddOpen}
-          />
-          <EditMemberDialog
-            studioId={studioId}
-            member={editState?.member ?? null}
-            isSelf={editState?.isSelf ?? false}
-            open={editState !== null}
-            onOpenChange={(open) => {
-              if (!open)
-                setEditState(null);
-            }}
-          />
-          <RemoveMemberDialog
-            studioId={studioId}
-            member={memberToRemove}
-            open={memberToRemove !== null}
-            onOpenChange={(open) => {
-              if (!open)
-                setMemberToRemove(null);
-            }}
-          />
-        </>
+        <AddMemberDialog
+          studioId={studioId}
+          open={addOpen}
+          onOpenChange={setAddOpen}
+        />
       )}
     </>
   );

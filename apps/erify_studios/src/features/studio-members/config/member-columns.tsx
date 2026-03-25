@@ -1,10 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Trash2 } from 'lucide-react';
 
 import type { StudioMemberResponse } from '@eridu/api-types/memberships';
 import type { SearchableColumn } from '@eridu/ui';
-import { Badge, Button } from '@eridu/ui';
+import { Badge } from '@eridu/ui';
 
+import { StudioMemberActionsCell } from '../components/studio-member-actions-cell';
 import { ROLE_LABELS } from '../lib/roles';
 
 export const memberSearchableColumns: SearchableColumn[] = [
@@ -12,14 +12,13 @@ export const memberSearchableColumns: SearchableColumn[] = [
 ];
 
 type ColumnContext = {
+  studioId: string;
   isAdmin: boolean;
   currentUserEmail: string | undefined;
-  onEdit: (member: StudioMemberResponse, isSelf: boolean) => void;
-  onRemove: (member: StudioMemberResponse) => void;
 };
 
 export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResponse>[] {
-  const { isAdmin, currentUserEmail, onEdit, onRemove } = ctx;
+  const { studioId, isAdmin, currentUserEmail } = ctx;
 
   const columns: ColumnDef<StudioMemberResponse>[] = [
     {
@@ -69,26 +68,11 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
         const member = row.original;
         const isSelf = Boolean(currentUserEmail) && currentUserEmail === member.user_email;
         return (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(member, isSelf)}
-            >
-              Edit
-            </Button>
-            {!isSelf && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
-                onClick={() => onRemove(member)}
-                aria-label={`Remove ${member.user_name}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          <StudioMemberActionsCell
+            member={member}
+            studioId={studioId}
+            isSelf={isSelf}
+          />
         );
       },
     });
