@@ -159,7 +159,6 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 | Gate | Blocks | Status |
 | --- | --- | --- |
-| **Prisma migration** — add `version` to `StudioMembership` | Wave 1: Studio Member Roster | 🔲 Pending |
 | **Economics cost model review** — review cost components (bonus, OT, allowances) and revise economics service if needed | Wave 2: Show Planning Export | ⏸️ Deferred to after Wave 1 |
 | **Economics merge** — merge `feat/show-economics-baseline` (with potential revisions) to `master` | Wave 2: Show Planning Export | ⏸️ Deferred to after cost model review |
 | **Financial arithmetic decision** — adopt `big.js` or accept floating-point risk | Wave 3: P&L Revenue Workflow | 🔲 Pending |
@@ -173,7 +172,7 @@ Pre-dev (parallel with Wave 1):
 Wave 1 (can start now):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
     ├─► Studio Creator Roster ─────────────────────── (StudioCreator model complete)
-    └─► Studio Member Roster ──────────────────────── (needs version migration)
+    └─► Studio Member Roster ──────────────────────── (no migration needed)
 
 Post-Wave 1: Economics cost model review
     └─► Decide additional cost components (bonus, OT, allowances)
@@ -194,7 +193,7 @@ Design Qs resolved + big.js adopted (gate for Wave 3):
 | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sidebar Redesign**      | S    | Pure FE refactor: `sidebar-config.tsx` + `studio-route-access.ts`. Ships navigation homes for all new pages.                          |
 | **Studio Creator Roster** | M    | `StudioCreator` model is complete. Add `POST`/`PATCH` write endpoints, version-guarded compensation updates, FE roster page.          |
-| **Studio Member Roster**  | M    | Requires Prisma migration first. Add `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, FE page. |
+| **Studio Member Roster**  | M    | No migration needed. Add `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, FE page. |
 
 **Milestone 1**: Economics endpoint reflects roster-managed rates for FIXED creators; shift costs reflect updated `baseHourlyRate`. Sidebar shows function-based groups with new page navigation.
 
@@ -224,7 +223,7 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 | P | Task template migration | `feat/task-template-migration` | Real moderator worksheet CSV | Operational rebuild + template list refinement |
 | 1a | Sidebar redesign | `feat/sidebar-redesign` | None | Code + update skills/memory referencing sidebar |
 | 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None | PRD review → BE/FE design → code + tests |
-| 1c | Studio member roster CRUD | `feat/studio-member-roster` | Prisma migration (version) | PRD review → BE/FE design → code + tests |
+| 1c | Studio member roster CRUD | `feat/studio-member-roster` | None | PRD review → BE/FE design → code + tests |
 | R | Economics cost model review | — | Wave 1 complete | Review cost components, revise economics service |
 | 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | Cost model review done | Code (potentially revised) + BE/FE design docs |
 | 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) | PRD review → BE/FE design → code + tests |

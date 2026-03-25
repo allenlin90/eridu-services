@@ -85,7 +85,6 @@ Route guards: all routes use `@StudioProtected`. Write routes require `ADMIN` ro
   "user_email": "jane@example.com",
   "role": "MANAGER",
   "base_hourly_rate": 25.00,
-  "version": 3,
   "created_at": "2026-01-15T08:00:00Z"
 }
 ```
@@ -102,17 +101,14 @@ Route guards: all routes use `@StudioProtected`. Write routes require `ADMIN` ro
 
 ### Request DTO (PATCH — update member)
 
-All fields optional except `version` (required for optimistic concurrency).
+All fields optional.
 
 ```json
 {
   "role": "ADMIN",
-  "base_hourly_rate": 30.00,
-  "version": 3
+  "base_hourly_rate": 30.00
 }
 ```
-
-Stale `version` returns 409 Conflict. This prevents concurrent overwrites of financial data (`baseHourlyRate`).
 
 ### Error Codes
 
@@ -121,7 +117,6 @@ Stale `version` returns 409 Conflict. This prevents concurrent overwrites of fin
 | `SELF_DEMOTION_NOT_ALLOWED` | 422 | ADMIN attempts to demote their own membership |
 | `USER_NOT_FOUND` | 404 | Email lookup returns no matching user in system catalog |
 | `MEMBER_ALREADY_EXISTS` | 409 | Email already has an active membership in this studio |
-| `VERSION_CONFLICT` | 409 | PATCH `version` does not match current record |
 
 All error codes to be defined in `@eridu/api-types`.
 
@@ -133,11 +128,7 @@ All error codes to be defined in `@eridu/api-types`.
 
 ### Schema Migration Required
 
-`StudioMembership` needs one new field (consistent with `StudioCreator` which already has `version`):
-
-```prisma
-version   Int     @default(1)
-```
+None. `StudioMembership` has all required fields (`baseHourlyRate`, `role`, `deletedAt`, `updatedAt`) already in the schema.
 
 ## Frontend Route
 

@@ -92,12 +92,11 @@ PRD: [studio-member-roster.md](../../../docs/prd/studio-member-roster.md)
 | --- | --- | --- | --- |
 | `/studios/:studioId/members` | `GET` | List active studio memberships with user details and rates | 🔲 Wave 1 |
 | `/studios/:studioId/members` | `POST` | Add member by email lookup from user catalog | 🔲 Wave 1 |
-| `/studios/:studioId/members/:membershipId` | `PATCH` | Update role or `baseHourlyRate` (version-guarded) | 🔲 Wave 1 |
+| `/studios/:studioId/members/:membershipId` | `PATCH` | Update role or `baseHourlyRate` | 🔲 Wave 1 |
 | `/studios/:studioId/members/:membershipId` | `DELETE` | Soft-deactivate member | 🔲 Wave 1 |
 
 Key behaviors:
 - Self-demotion guard: ADMIN cannot demote their own membership (returns 422 `SELF_DEMOTION_NOT_ALLOWED`).
-- Version-guarded PATCH: stale `version` returns 409 `VERSION_CONFLICT`.
 - Duplicate email invite returns 409 `MEMBER_ALREADY_EXISTS`.
 - Re-invite after soft-delete restores the membership.
 
@@ -190,9 +189,7 @@ Metadata behavior:
 
 ### Wave 1 — StudioMembership
 
-```prisma
-version   Int     @default(1)
-```
+None. All required fields already exist in the schema.
 
 ### Wave 3 — ShowPlatform (pending design decision)
 
