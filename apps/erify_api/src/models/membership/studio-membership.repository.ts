@@ -245,23 +245,46 @@ export class StudioMembershipRepository extends BaseRepository<
    * List active memberships for a studio with embedded user info.
    * Used by the /studios/:studioId/members roster endpoint.
    */
-  async listStudioMembersWithUser(studioUid: string) {
-    return this.prisma.studioMembership.findMany({
-      where: {
-        studio: { uid: studioUid },
-        deletedAt: null,
-      },
-      include: {
-        user: {
-          select: {
-            uid: true,
-            name: true,
-            email: true,
-          },
+  async listStudioMembersWithUser(
+    studioUid: string,
+    params: { skip?: number; take?: number; search?: string } = {},
+  ): Promise<{ data: Prisma.StudioMembershipGetPayload<{ include: { user: { select: { uid: true; name: true; email: true } } } }>[], total: number }> {
+    const where: Prisma.StudioMembershipWhereInput = {
+      studio: { uid: studioUid },
+      deletedAt: null,
+    };
+
+    if (params.search) {
+      where.user = {
+        OR: [
+          { name: { contains: params.search, mode: 'insensitive' } },
+          { email: { contains: params.search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const include = {
+      user: {
+        select: {
+          uid: true as const,
+          name: true as const,
+          email: true as const,
         },
       },
-      orderBy: { createdAt: 'asc' },
-    });
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.studioMembership.findMany({
+        where,
+        include,
+        orderBy: { createdAt: 'asc' },
+        skip: params.skip,
+        take: params.take,
+      }),
+      this.prisma.studioMembership.count({ where }),
+    ]);
+
+    return { data, total };
   }
 
   /**

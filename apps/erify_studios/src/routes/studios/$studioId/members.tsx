@@ -1,18 +1,13 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import {
-  adaptColumnFiltersChange,
-  adaptPaginationChange,
-  useTableUrlState,
-} from '@eridu/ui';
+import { adaptColumnFiltersChange, adaptPaginationChange } from '@eridu/ui';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
-import { studioMemberKeys, useStudioMembers } from '@/features/studio-members/api/members';
 import { StudioMembersTable } from '@/features/studio-members/components/studio-members-table';
 import { studioMembersSearchSchema } from '@/features/studio-members/config/studio-members-search-schema';
+import { useStudioMembers } from '@/features/studio-members/hooks/use-studio-members';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 import { useSession } from '@/lib/session-provider';
 
@@ -37,25 +32,22 @@ function StudioMembersPage() {
 }
 
 function StudioMembersContent({ studioId }: { studioId: string }) {
-  const queryClient = useQueryClient();
-  const { data, isLoading, isFetching } = useStudioMembers(studioId);
   const { role } = useStudioAccess(studioId);
   const { session } = useSession();
 
   const {
+    members,
+    isLoading,
+    isFetching,
     pagination,
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
-  } = useTableUrlState({ from: '/studios/$studioId/members', searchColumnId: 'user_name' });
+    handleRefresh,
+  } = useStudioMembers({ studioId });
 
   const isAdmin = role === STUDIO_ROLE.ADMIN;
   const currentUserEmail = session?.user?.email;
-  const members = data?.data ?? [];
-
-  const handleRefresh = () => {
-    void queryClient.invalidateQueries({ queryKey: studioMemberKeys.listPrefix(studioId) });
-  };
 
   return (
     <PageLayout

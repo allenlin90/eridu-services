@@ -345,6 +345,21 @@ export const studioMemberDto = studioMemberWithUserSchema.transform(
 ).pipe(studioMemberResponseSchema);
 
 /**
+ * Query DTO for listing studio members (GET /studios/:studioId/members).
+ */
+export const listStudioMembersQuerySchema = paginationQuerySchema.and(
+  z.object({ search: z.string().optional() }),
+);
+
+export class ListStudioMembersQueryDto extends createZodDto(listStudioMembersQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare search: string | undefined;
+}
+
+/**
  * Request DTO for adding a member (POST /studios/:studioId/members).
  */
 export class AddStudioMemberDto extends createZodDto(addStudioMemberRequestSchema) {}

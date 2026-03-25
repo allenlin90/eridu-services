@@ -221,8 +221,11 @@ export class StudioMembershipService extends BaseModelService {
   /**
    * List active memberships for a studio with embedded user info.
    */
-  async listStudioMembers(studioUid: string) {
-    return this.studioMembershipRepository.listStudioMembersWithUser(studioUid);
+  async listStudioMembers(
+    studioUid: string,
+    params: { skip?: number; take?: number; search?: string } = {},
+  ) {
+    return this.studioMembershipRepository.listStudioMembersWithUser(studioUid, params);
   }
 
   /**

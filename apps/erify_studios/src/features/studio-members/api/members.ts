@@ -11,6 +11,12 @@ import { apiClient } from '@/lib/api/client';
 
 export type StudioMembersResponse = PaginatedResponse<StudioMemberResponse>;
 
+export type GetStudioMembersParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
 // ---------------------------------------------------------------------------
 // Query keys
 // ---------------------------------------------------------------------------
@@ -19,7 +25,8 @@ export const studioMemberKeys = {
   all: ['studio-members'] as const,
   lists: () => [...studioMemberKeys.all, 'list'] as const,
   listPrefix: (studioId: string) => [...studioMemberKeys.lists(), studioId] as const,
-  list: (studioId: string) => [...studioMemberKeys.listPrefix(studioId)] as const,
+  list: (studioId: string, params?: GetStudioMembersParams) =>
+    [...studioMemberKeys.listPrefix(studioId), params] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -28,11 +35,19 @@ export const studioMemberKeys = {
 
 export async function getStudioMembers(
   studioId: string,
+  params?: GetStudioMembersParams,
   options?: { signal?: AbortSignal },
 ): Promise<StudioMembersResponse> {
   const { data } = await apiClient.get<StudioMembersResponse>(
     `/studios/${studioId}/members`,
-    { signal: options?.signal },
+    {
+      params: {
+        page: params?.page,
+        limit: params?.limit,
+        search: params?.search || undefined,
+      },
+      signal: options?.signal,
+    },
   );
   return data;
 }
@@ -71,12 +86,17 @@ export async function removeStudioMember(
 // TanStack Query hooks
 // ---------------------------------------------------------------------------
 
-export function useStudioMembers(studioId: string, options?: { enabled?: boolean }) {
+export function useStudioMembers(
+  studioId: string,
+  params?: GetStudioMembersParams,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
-    queryKey: studioMemberKeys.list(studioId),
-    queryFn: ({ signal }) => getStudioMembers(studioId, { signal }),
+    queryKey: studioMemberKeys.list(studioId, params),
+    queryFn: ({ signal }) => getStudioMembers(studioId, params, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
     staleTime: 20_000,
+    placeholderData: (prev) => prev,
   });
 }
 

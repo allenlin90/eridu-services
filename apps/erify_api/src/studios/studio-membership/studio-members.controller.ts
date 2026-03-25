@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -24,6 +25,7 @@ import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   AddStudioMemberDto,
+  ListStudioMembersQueryDto,
   studioMemberDto,
   UpdateStudioMemberDto,
 } from '@/models/membership/schemas/studio-membership.schema';
@@ -46,15 +48,14 @@ export class StudioMembersController extends BaseStudioController {
   @ZodPaginatedResponse(studioMemberDto)
   async listMembers(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ListStudioMembersQueryDto,
   ) {
-    const data = await this.studioMembershipService.listStudioMembers(studioId);
-    const total = data.length;
-    return this.createPaginatedResponse(data, total, {
-      page: 1,
-      limit: data.length,
-      take: data.length,
-      skip: 0,
+    const { data, total } = await this.studioMembershipService.listStudioMembers(studioId, {
+      skip: query.skip,
+      take: query.take,
+      search: query.search,
     });
+    return this.createPaginatedResponse(data, total, query);
   }
 
   @ApiOperation({ summary: 'Add a member to the studio by email lookup' })

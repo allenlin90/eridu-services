@@ -52,22 +52,28 @@ describe('studioMembersController', () => {
     jest.clearAllMocks();
   });
 
+  const mockQuery = { page: 1, limit: 10, take: 10, skip: 0, sort: 'desc' as const, search: undefined };
+
   describe('listMembers', () => {
     it('should list members for a studio', async () => {
       const studioId = 'std_test123';
-      studioMembershipService.listStudioMembers.mockResolvedValue([mockMembership] as any);
+      studioMembershipService.listStudioMembers.mockResolvedValue({ data: [mockMembership], total: 1 } as any);
 
-      const result = await controller.listMembers(studioId);
+      const result = await controller.listMembers(studioId, mockQuery as any);
 
-      expect(studioMembershipService.listStudioMembers).toHaveBeenCalledWith(studioId);
+      expect(studioMembershipService.listStudioMembers).toHaveBeenCalledWith(studioId, {
+        skip: 0,
+        take: 10,
+        search: undefined,
+      });
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
 
     it('should return empty paginated response when no members', async () => {
-      studioMembershipService.listStudioMembers.mockResolvedValue([]);
+      studioMembershipService.listStudioMembers.mockResolvedValue({ data: [], total: 0 } as any);
 
-      const result = await controller.listMembers('std_test123');
+      const result = await controller.listMembers('std_test123', mockQuery as any);
 
       expect(result.data).toHaveLength(0);
       expect(result.meta.total).toBe(0);

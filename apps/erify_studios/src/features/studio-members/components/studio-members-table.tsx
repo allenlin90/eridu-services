@@ -21,7 +21,7 @@ type StudioMembersTableProps = {
   isFetching: boolean;
   isAdmin: boolean;
   currentUserEmail: string | undefined;
-  pagination: PaginationState;
+  pagination: PaginationState & { total?: number; pageCount?: number };
   onPaginationChange: OnChangeFn<PaginationState>;
   columnFilters: ColumnFiltersState;
   onColumnFiltersChange: OnChangeFn<ColumnFiltersState>;
@@ -53,6 +53,9 @@ export function StudioMembersTable({
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage="No members yet."
+        manualPagination
+        manualFiltering
+        pageCount={pagination.pageCount}
         getRowId={(member) => member.membership_id}
         paginationState={pagination}
         onPaginationChange={onPaginationChange}
@@ -83,17 +86,16 @@ export function StudioMembersTable({
             )}
           </DataTableToolbar>
         )}
-        renderFooter={(table) => (
+        renderFooter={() => (
           <DataTablePagination
             pagination={{
-              pageIndex: table.getState().pagination.pageIndex,
-              pageSize: table.getState().pagination.pageSize,
-              total: table.getFilteredRowModel().rows.length,
-              pageCount: table.getPageCount(),
+              pageIndex: pagination.pageIndex,
+              pageSize: pagination.pageSize,
+              total: pagination.total ?? 0,
+              pageCount: pagination.pageCount ?? 0,
             }}
             onPaginationChange={({ pageIndex, pageSize }) => {
-              table.setPageIndex(pageIndex);
-              table.setPageSize(pageSize);
+              onPaginationChange({ pageIndex, pageSize });
             }}
           />
         )}
