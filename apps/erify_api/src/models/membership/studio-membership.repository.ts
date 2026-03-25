@@ -240,4 +240,17 @@ export class StudioMembershipRepository extends BaseRepository<
       orderBy: { createdAt: 'asc' },
     });
   }
+
+  /**
+   * Find membership by user and studio regardless of deleted status.
+   * Used by add-member flow to support re-invite/restore behavior.
+   */
+  async findByUserAndStudioIncludingDeleted(userUid: string, studioUid: string) {
+    return this.prisma.studioMembership.findFirst({
+      where: {
+        user: { uid: userUid },
+        studio: { uid: studioUid },
+      },
+    });
+  }
 }

@@ -238,10 +238,10 @@ export class StudioMembershipService extends BaseModelService {
     }
 
     // Check for existing membership (active or soft-deleted)
-    const existing = await this.studioMembershipRepository.findOne({
-      user: { uid: user.uid },
-      studio: { uid: payload.studioUid },
-    });
+    const existing = await this.studioMembershipRepository.findByUserAndStudioIncludingDeleted(
+      user.uid,
+      payload.studioUid,
+    );
 
     if (existing) {
       if (!existing.deletedAt) {

@@ -10,6 +10,7 @@ import { UtilityService } from '@/utility/utility.service';
 describe('studioMembershipService', () => {
   let service: StudioMembershipService;
   let findAdminMembershipByExtIdSpy: jest.Mock;
+  let userRepository: { findByEmail: jest.Mock };
 
   const mockUtilityService = {
     generateBrandedId: jest.fn(),
@@ -21,6 +22,8 @@ describe('studioMembershipService', () => {
       findAdminMembershipByExtId: findAdminMembershipByExtIdSpy,
       findByUid: jest.fn(),
       listStudioMemberships: jest.fn(),
+      findByUserAndStudioIncludingDeleted: jest.fn(),
+      createStudioMembership: jest.fn(),
       updateByUnique: jest.fn(),
       softDeleteByUnique: jest.fn(),
     };
@@ -46,6 +49,7 @@ describe('studioMembershipService', () => {
     }).compile();
 
     service = module.get<StudioMembershipService>(StudioMembershipService);
+    userRepository = module.get(UserRepository);
   });
 
   beforeEach(() => {
@@ -197,6 +201,46 @@ describe('studioMembershipService', () => {
 
       expect((service as any).studioMembershipRepository.softDeleteByUnique).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('addStudioMember', () => {
+    it('should restore soft-deleted membership when re-inviting existing user', async () => {
+      const user = { uid: 'user_123', email: 'jane@example.com' };
+      const deletedMembership = {
+        id: BigInt(1),
+        uid: 'smb_123',
+        deletedAt: new Date('2026-01-01T00:00:00Z'),
+      };
+      const restoredMembership = { ...deletedMembership, deletedAt: null };
+
+      userRepository.findByEmail.mockResolvedValue(user as any);
+      ((service as any).studioMembershipRepository.findByUserAndStudioIncludingDeleted as jest.Mock)
+        .mockResolvedValue(deletedMembership);
+      ((service as any).studioMembershipRepository.updateByUnique as jest.Mock)
+        .mockResolvedValue(restoredMembership);
+
+      const result = await service.addStudioMember({
+        email: 'jane@example.com',
+        role: 'manager',
+        baseHourlyRate: 25,
+        studioUid: 'std_123',
+      });
+
+      expect(userRepository.findByEmail).toHaveBeenCalledWith('jane@example.com');
+      expect((service as any).studioMembershipRepository.findByUserAndStudioIncludingDeleted)
+        .toHaveBeenCalledWith('user_123', 'std_123');
+      expect((service as any).studioMembershipRepository.updateByUnique).toHaveBeenCalledWith(
+        { id: BigInt(1) },
+        {
+          deletedAt: null,
+          role: 'manager',
+          baseHourlyRate: '25.00',
+        },
+        { user: true },
+      );
+      expect((service as any).studioMembershipRepository.createStudioMembership).not.toHaveBeenCalled();
+      expect(result).toEqual(restoredMembership);
     });
   });
 });
