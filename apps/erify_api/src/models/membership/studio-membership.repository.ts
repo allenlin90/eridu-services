@@ -8,6 +8,9 @@ import {
 } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
+/** Maximum number of members returned by the roster endpoint. */
+const STUDIO_MEMBER_MAP_DEFAULT_LIMIT = 500;
+
 // Type aliases for better readability and type safety
 type UserId = Prisma.UserWhereUniqueInput['id'];
 type StudioId = bigint;
@@ -219,6 +222,29 @@ export class StudioMembershipRepository extends BaseRepository<
   }
 
   /**
+   * Update a studio member's role and/or hourly rate.
+   * Accepts domain-level payload and builds the Prisma input internally.
+   */
+  async updateStudioMember(
+    uid: string,
+    payload: { role?: string; baseHourlyRate?: number },
+  ): Promise<Prisma.StudioMembershipGetPayload<{ include: { user: true } }>> {
+    const data: Prisma.StudioMembershipUpdateInput = {};
+    if (payload.role !== undefined) {
+      data.role = payload.role;
+    }
+    if (payload.baseHourlyRate !== undefined) {
+      data.baseHourlyRate = payload.baseHourlyRate.toFixed(2);
+    }
+
+    return this.prisma.studioMembership.update({
+      where: { uid },
+      data,
+      include: { user: true },
+    });
+  }
+
+  /**
    * List active memberships for a studio with embedded user info.
    * Used by the /studios/:studioId/members roster endpoint.
    */
@@ -238,6 +264,7 @@ export class StudioMembershipRepository extends BaseRepository<
         },
       },
       orderBy: { createdAt: 'asc' },
+      take: STUDIO_MEMBER_MAP_DEFAULT_LIMIT,
     });
   }
 

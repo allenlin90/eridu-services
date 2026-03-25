@@ -1,6 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import type { StudioMemberResponse } from '@eridu/api-types/memberships';
 import {
   addStudioMemberRequestSchema,
   createMembershipInputSchema,
@@ -28,7 +29,7 @@ export const studioMembershipSchema = z.object({
   userId: z.bigint(),
   studioId: z.bigint(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-  baseHourlyRate: z.any().nullable(),
+  baseHourlyRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -94,7 +95,7 @@ export const studioMembershipWithRelationsSchema = z.object({
   userId: z.bigint(),
   studioId: z.bigint(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-  baseHourlyRate: z.any().nullable(),
+  baseHourlyRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -312,7 +313,7 @@ export const studioMemberWithUserSchema = z.object({
   userId: z.bigint(),
   studioId: z.bigint(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-  baseHourlyRate: z.any().nullable(),
+  baseHourlyRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -330,7 +331,7 @@ export type StudioMemberWithUser = z.infer<typeof studioMemberWithUserSchema>;
  * DTO transform: converts a StudioMembership+user record to the member roster wire format.
  */
 export const studioMemberDto = studioMemberWithUserSchema.transform(
-  (obj): import('@eridu/api-types/memberships').StudioMemberResponse => ({
+  (obj): StudioMemberResponse => ({
     membership_id: obj.uid,
     user_id: obj.user.uid,
     user_name: obj.user.name,

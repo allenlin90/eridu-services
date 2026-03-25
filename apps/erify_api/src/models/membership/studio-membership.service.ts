@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, StudioMembership } from '@prisma/client';
+import { StudioMembership } from '@prisma/client';
 
 import { STUDIO_MEMBER_ERROR, STUDIO_ROLE } from '@eridu/api-types/memberships';
 
@@ -13,7 +13,7 @@ import { StudioMembershipRepository } from './studio-membership.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UserRepository } from '@/models/user/user.repository';
+import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 // Type aliases for better readability and type safety
@@ -28,7 +28,7 @@ export class StudioMembershipService extends BaseModelService {
 
   constructor(
     private readonly studioMembershipRepository: StudioMembershipRepository,
-    private readonly userRepository: UserRepository,
+    private readonly userService: UserService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -232,7 +232,7 @@ export class StudioMembershipService extends BaseModelService {
    * - If soft-deleted membership exists → restore it with new role + rate
    */
   async addStudioMember(payload: AddStudioMemberPayload) {
-    const user = await this.userRepository.findByEmail(payload.email);
+    const user = await this.userService.findByEmail(payload.email);
     if (!user) {
       throw HttpError.notFound(STUDIO_MEMBER_ERROR.USER_NOT_FOUND, payload.email);
     }
@@ -294,19 +294,7 @@ export class StudioMembershipService extends BaseModelService {
       throw HttpError.unprocessableEntity(STUDIO_MEMBER_ERROR.SELF_DEMOTION_NOT_ALLOWED);
     }
 
-    const data: Prisma.StudioMembershipUpdateInput = {};
-    if (payload.role !== undefined) {
-      data.role = payload.role;
-    }
-    if (payload.baseHourlyRate !== undefined) {
-      data.baseHourlyRate = payload.baseHourlyRate.toFixed(2);
-    }
-
-    return this.studioMembershipRepository.updateByUnique(
-      { uid: membershipUid },
-      data,
-      { user: true },
-    );
+    return this.studioMembershipRepository.updateStudioMember(membershipUid, payload);
   }
 
   /**

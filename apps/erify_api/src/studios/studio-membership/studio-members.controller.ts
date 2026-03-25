@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { STUDIO_MEMBER_ERROR, STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 import { BaseStudioController } from '../base-studio.controller';
 
@@ -51,8 +51,8 @@ export class StudioMembersController extends BaseStudioController {
     const total = data.length;
     return this.createPaginatedResponse(data, total, {
       page: 1,
-      limit: total || 10,
-      take: total,
+      limit: data.length,
+      take: data.length,
       skip: 0,
     });
   }
@@ -127,7 +127,7 @@ export class StudioMembersController extends BaseStudioController {
     // Prevent self-removal
     const actorMembershipUid = request.studioMembership?.uid;
     if (actorMembershipUid && actorMembershipUid === existing.uid) {
-      throw HttpError.unprocessableEntity('SELF_REMOVE_NOT_ALLOWED');
+      throw HttpError.unprocessableEntity(STUDIO_MEMBER_ERROR.SELF_REMOVE_NOT_ALLOWED);
     }
 
     await this.studioMembershipService.removeStudioMember(membershipId);

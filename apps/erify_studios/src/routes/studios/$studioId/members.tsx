@@ -47,7 +47,7 @@ function StudioMembersContent({ studioId }: { studioId: string }) {
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
-  } = useTableUrlState({ from: '/studios/$studioId/members' });
+  } = useTableUrlState({ from: '/studios/$studioId/members', searchColumnId: 'user_name' });
 
   const isAdmin = role === STUDIO_ROLE.ADMIN;
   const currentUserEmail = session?.user?.email;
