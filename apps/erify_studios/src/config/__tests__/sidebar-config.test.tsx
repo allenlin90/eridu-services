@@ -135,7 +135,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + Studio Common + Studio Manager + Studio Admin + Creators
+    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + My Workspace + Operations + Studio Settings + Creators
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -166,7 +166,7 @@ describe('useSidebarConfig', () => {
     });
 
     expect(result.current.navMain[2]).toEqual(expect.objectContaining({
-      title: 'Studio Common',
+      title: 'My Workspace',
       url: '/studios/studio-1',
       icon: expect.any(Function),
       isActive: false,
@@ -187,7 +187,7 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[3]).toEqual(expect.objectContaining({
-      title: 'Studio Manager',
+      title: 'Operations',
       url: '/studios/studio-1/task-review',
       icon: expect.any(Function),
       isActive: false,
@@ -204,18 +204,30 @@ describe('useSidebarConfig', () => {
           title: 'Show Operations',
           url: '/studios/studio-1/show-operations',
         }),
+        expect.objectContaining({
+          title: 'Task Reports',
+          url: '/studios/studio-1/task-reports',
+        }),
       ]),
     }));
 
     expect(result.current.navMain[4]).toEqual(expect.objectContaining({
-      title: 'Studio Admin',
-      url: '/studios/studio-1/shared-fields',
+      title: 'Studio Settings',
+      url: '/studios/studio-1/members',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
+          title: 'Members',
+          url: '/studios/studio-1/members',
+        }),
+        expect.objectContaining({
           title: 'Shared Fields',
           url: '/studios/studio-1/shared-fields',
+        }),
+        expect.objectContaining({
+          title: 'Task Templates',
+          url: '/studios/studio-1/task-templates',
         }),
       ]),
     }));

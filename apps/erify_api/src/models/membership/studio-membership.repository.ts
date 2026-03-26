@@ -248,14 +248,16 @@ export class StudioMembershipRepository extends BaseRepository<
   async listStudioMembersWithUser(
     studioUid: string,
     params: { skip?: number; take?: number; search?: string } = {},
-  ): Promise<{ data: Prisma.StudioMembershipGetPayload<{ include: { user: { select: { uid: true; name: true; email: true } } } }>[], total: number }> {
+  ): Promise<{ data: Prisma.StudioMembershipGetPayload<{ include: { user: { select: { uid: true; name: true; email: true } } } }>[]; total: number }> {
     const where: Prisma.StudioMembershipWhereInput = {
       studio: { uid: studioUid },
       deletedAt: null,
+      user: { deletedAt: null },
     };
 
     if (params.search) {
       where.user = {
+        deletedAt: null,
         OR: [
           { name: { contains: params.search, mode: 'insensitive' } },
           { email: { contains: params.search, mode: 'insensitive' } },
