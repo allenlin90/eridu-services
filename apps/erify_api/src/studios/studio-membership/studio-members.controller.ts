@@ -105,7 +105,6 @@ export class StudioMembersController extends BaseStudioController {
       actorMembershipUid,
     );
 
-    this.ensureResourceExists(updated, 'Membership', membershipId);
     return updated;
   }
 

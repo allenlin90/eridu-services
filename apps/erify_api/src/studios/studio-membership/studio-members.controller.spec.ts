@@ -154,5 +154,15 @@ describe('studioMembersController', () => {
         controller.removeMember('std_test123', 'smb_notfound', { studioMembership: { uid: 'smb_other456' } } as any),
       ).rejects.toThrow();
     });
+
+    it('should throw SELF_REMOVE_NOT_ALLOWED when actor tries to remove themselves', async () => {
+      studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(mockMembership as any);
+
+      await expect(
+        controller.removeMember('std_test123', 'smb_test123', {
+          studioMembership: { uid: 'smb_test123' },
+        } as any),
+      ).rejects.toMatchObject({ message: expect.stringContaining('SELF_REMOVE_NOT_ALLOWED') });
+    });
   });
 });

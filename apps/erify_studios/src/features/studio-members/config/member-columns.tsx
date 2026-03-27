@@ -66,7 +66,7 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
       header: 'Actions',
       cell: ({ row }) => {
         const member = row.original;
-        const isSelf = Boolean(currentUserEmail) && currentUserEmail === member.user_email;
+        const isSelf = Boolean(currentUserEmail) && currentUserEmail!.toLowerCase() === member.user_email.toLowerCase();
         return (
           <StudioMemberActionsCell
             member={member}
