@@ -19,7 +19,7 @@ export class UserRepository extends BaseRepository<
   async findByEmail(email: string): Promise<User | null> {
     return this.model.findFirst({
       where: {
-        email: { equals: email, mode: 'insensitive' },
+        email: email.toLowerCase(),
         deletedAt: null,
       },
     });

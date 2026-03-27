@@ -54,6 +54,7 @@ export class StudioMembersController extends BaseStudioController {
       skip: query.skip,
       take: query.take,
       search: query.search,
+      sort: query.sort,
     });
     return this.createPaginatedResponse(data, total, query);
   }

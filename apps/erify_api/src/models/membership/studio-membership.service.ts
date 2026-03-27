@@ -223,7 +223,7 @@ export class StudioMembershipService extends BaseModelService {
    */
   async listStudioMembers(
     studioUid: string,
-    params: { skip?: number; take?: number; search?: string } = {},
+    params: { skip?: number; take?: number; search?: string; sort?: 'asc' | 'desc' } = {},
   ) {
     return this.studioMembershipRepository.listStudioMembersWithUser(studioUid, params);
   }

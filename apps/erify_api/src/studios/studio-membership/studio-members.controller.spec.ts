@@ -65,6 +65,7 @@ describe('studioMembersController', () => {
         skip: 0,
         take: 10,
         search: undefined,
+        sort: 'desc',
       });
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);

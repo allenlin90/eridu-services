@@ -364,6 +364,7 @@ export class ListStudioMembersQueryDto extends createZodDto(listStudioMembersQue
   declare limit: number;
   declare take: number;
   declare skip: number;
+  declare sort: 'asc' | 'desc';
   declare search: string | undefined;
 }
 

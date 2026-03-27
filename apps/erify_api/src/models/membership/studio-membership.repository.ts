@@ -247,7 +247,7 @@ export class StudioMembershipRepository extends BaseRepository<
    */
   async listStudioMembersWithUser(
     studioUid: string,
-    params: { skip?: number; take?: number; search?: string } = {},
+    params: { skip?: number; take?: number; search?: string; sort?: 'asc' | 'desc' } = {},
   ): Promise<{ data: Prisma.StudioMembershipGetPayload<{ include: { user: { select: { uid: true; name: true; email: true } } } }>[]; total: number }> {
     const where: Prisma.StudioMembershipWhereInput = {
       studio: { uid: studioUid },
@@ -279,7 +279,7 @@ export class StudioMembershipRepository extends BaseRepository<
       this.prisma.studioMembership.findMany({
         where,
         include,
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: params.sort ?? 'desc' },
         skip: params.skip,
         take: params.take,
       }),
