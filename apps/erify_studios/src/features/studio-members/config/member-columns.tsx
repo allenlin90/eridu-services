@@ -24,14 +24,6 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
     {
       accessorKey: 'user_name',
       header: 'Name',
-      // Search by name OR email
-      filterFn: (row, _columnId, filterValue: string) => {
-        const q = filterValue.toLowerCase();
-        return (
-          row.original.user_name.toLowerCase().includes(q)
-          || row.original.user_email.toLowerCase().includes(q)
-        );
-      },
     },
     {
       accessorKey: 'user_email',

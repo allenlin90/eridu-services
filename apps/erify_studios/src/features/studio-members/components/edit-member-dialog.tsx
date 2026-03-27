@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 
 import type {
   StudioMemberResponse,
+  UpdateStudioMemberRequest,
 } from '@eridu/api-types/memberships';
 import {
   Button,
