@@ -12,7 +12,11 @@ import {
   updateStudioMemberRequestSchema,
 } from '@eridu/api-types/memberships';
 
-import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
+import {
+  paginationBaseSchema,
+  paginationQuerySchema,
+  transformPagination,
+} from '@/lib/pagination/pagination.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
@@ -347,9 +351,13 @@ export const studioMemberDto = studioMemberWithUserSchema.transform(
 /**
  * Query DTO for listing studio members (GET /studios/:studioId/members).
  */
-export const listStudioMembersQuerySchema = paginationQuerySchema.and(
-  z.object({ search: z.string().optional() }),
-);
+export const listStudioMembersQuerySchema = paginationBaseSchema
+  .extend({
+    limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+    search: z.string().optional(),
+  })
+  .transform(transformPagination);
 
 export class ListStudioMembersQueryDto extends createZodDto(listStudioMembersQuerySchema) {
   declare page: number;
