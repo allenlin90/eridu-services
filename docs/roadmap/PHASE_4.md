@@ -72,8 +72,8 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 | Scope | Doc | Purpose |
 | --- | --- | --- |
 | Phase roadmap & sequencing | This file (`PHASE_4.md`) | Portfolio tracker, wave plan, PR plan |
-| BE index across all features | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md) | API contract summary, authorization matrix, architecture rules |
-| FE index across all features | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) | Route plan, sidebar spec, UX rules, query key conventions |
+| BE index across all features | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md) | Phase-level backend index, shared guardrails, per-feature design links |
+| FE index across all features | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) | Phase-level frontend index, shared UX/query rules, per-feature design links |
 | Authorization foundation | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) | Guard patterns, role hierarchy |
 | Role use cases | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) | Per-role view access |
 
@@ -81,14 +81,14 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 
 | Feature | PRD | BE Design | FE Design |
 | --- | --- | --- | --- |
-| Creator mapping | Shipped → [feature doc](../features/creator-mapping.md) | Covered in phase-level BE doc | Covered in phase-level FE doc |
-| Economics baseline | Deferred → [feature doc](../features/show-economics.md) | TBD (after cost model review) | TBD (after cost model review) |
+| Creator mapping | Shipped → [feature doc](../features/creator-mapping.md) | Shipped feature; no retained design doc | Shipped feature; no retained design doc |
+| Economics baseline | Deferred → [feature doc](../features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md) |
 | Studio member roster | Shipped → [PRD](../prd/studio-member-roster.md) | Shipped (PR #28) | Shipped (PR #28) |
-| Studio creator roster | [PRD](../prd/studio-creator-roster.md) | TBD (create with PR #1b) | TBD (create with PR #1b) |
-| Compensation line items | [PRD](../prd/compensation-line-items.md) | TBD (create with PR #R+) | TBD (create with PR #R+) |
-| Show planning export | [PRD](../prd/show-planning-export.md) | TBD (create with PR #2a) | TBD (create with PR #2a) |
-| Creator availability hardening | [PRD](../prd/creator-availability-hardening.md) | TBD (create with PR #2b) | TBD (create with PR #2b) |
-| P&L revenue workflow | [PRD](../prd/pnl-revenue-workflow.md) | TBD (create with PR #3) | TBD (create with PR #3) |
+| Studio creator roster | [PRD](../prd/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER_DESIGN.md](../../apps/erify_api/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md) | [STUDIO_CREATOR_ROSTER_DESIGN.md](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md) |
+| Compensation line items | [PRD](../prd/compensation-line-items.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
+| Show planning export | [PRD](../prd/show-planning-export.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) |
+| Creator availability hardening | [PRD](../prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
+| P&L revenue workflow | [PRD](../prd/pnl-revenue-workflow.md) | [PNL_REVENUE_WORKFLOW_DESIGN.md](../../apps/erify_api/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md) | [PNL_REVENUE_WORKFLOW_DESIGN.md](../../apps/erify_studios/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md) |
 | Sidebar redesign | N/A (simple config) | N/A | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) |
 
 ## Out of Scope for Phase 4
@@ -150,7 +150,7 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 | Workstream                                       | PRD                                                                             | Status                                | L-side Hook                                                                               | Wave |
 | ------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
-| Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/SIDEBAR_REDESIGN.md)        | 🔲 Planned                             | —                                                                                         | 1    |
+| Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔲 Planned                             | —                                                                                         | 1    |
 | Studio creator roster CRUD                       | [studio-creator-roster.md](../prd/studio-creator-roster.md)                     | 🔲 Planned                             | `StudioCreator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback | 1    |
 | Studio member roster                             | [studio-member-roster.md](../prd/studio-member-roster.md)                       | ✅ Shipped (PR #28)                     | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
 | Compensation line items                          | [compensation-line-items.md](../prd/compensation-line-items.md)                 | 🔲 Planned (post-Wave 1)               | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators; no implicit cross-show proration in Phase 4 | R+   |
@@ -240,7 +240,7 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 
 PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b can be developed and reviewed in parallel; PR 1c is shipped. Economics cost model review (PR #R) and compensation line items (PR #R+) run post-Wave 1, before economics merge. PRs 2a/2b wait for their respective gates.
 
-Per-PR workflow: review PRD → create `apps/erify_api/docs/design/<FEATURE>_DESIGN.md` + `apps/erify_studios/docs/design/<FEATURE>_DESIGN.md` → implement → post-ship knowledge-sync.
+Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE design docs under `apps/*/docs/design/` → implement → post-ship knowledge-sync.
 
 ### Risks & Open Items
 

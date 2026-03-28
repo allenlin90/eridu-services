@@ -162,7 +162,7 @@ Appears under a new **Studio Settings** group, alongside Shared Fields. See `app
 
 ## Design Reference
 
-- Backend API design: `apps/erify_api/docs/design/` (to be created when this PRD is promoted to implementation)
-- Frontend design: `apps/erify_studios/docs/design/` (to be created when this PRD is promoted to implementation)
+- Backend API design: shipped in PR #28; no retained per-feature design doc
+- Frontend design: shipped in PR #28; no retained per-feature design doc
 - Authorization reference: `apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md`
 - Role use cases: `apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md`

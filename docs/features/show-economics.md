@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Shipped — Phase 4 (reopened), commit `8de31ffe`, 2026-03-22
 > **Workstream**: P&L Baseline — Variable Cost Visibility
-> **Canonical docs**: [BE design](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md), [FE design](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)
+> **Canonical docs**: [BE design](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md)
 
 ## Problem
 

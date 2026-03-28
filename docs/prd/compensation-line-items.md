@@ -290,7 +290,9 @@ Additionally, compensation line items surface as inline sections on:
 ## Design Reference
 
 - TaskTarget polymorphic pattern: `apps/erify_api/prisma/schema.prisma` (line 636)
-- Economics baseline: `apps/erify_api/docs/PHASE_4_PNL_BACKEND.md`
+- Backend API design: `apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`
+- Frontend design: `apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`
+- Economics baseline: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
 - Studio member roster: `docs/prd/studio-member-roster.md`
 - Studio creator roster: `docs/prd/studio-creator-roster.md`
 - Shift cost calculation: `apps/erify_api/src/models/studio-shift/studio-shift.service.ts`
