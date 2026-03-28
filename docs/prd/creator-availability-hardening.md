@@ -3,7 +3,9 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: Creator operations — assignment correctness
-> **Depends on**: Studio Creator Roster — ✅ **Complete** (`docs/features/studio-creator-roster.md` ships roster state and inactive enforcement)
+> **Depends on**:
+> - Studio Creator Roster — ✅ **Complete** (`docs/features/studio-creator-roster.md` ships roster state and inactive enforcement)
+> - Studio Creator Onboarding & Roster-First Assignment — 🔲 **Planned** (`docs/prd/studio-creator-onboarding.md` removes the `/system/*` dependency and makes roster membership an intentional studio-owned state)
 
 ## Problem
 
@@ -81,11 +83,17 @@ The `show_id` param is required when `strict=true` (needed to evaluate time-wind
 
 ## Sequencing Dependency
 
-This PRD **must not be implemented before** the Studio Creator Roster feature ships the creator roster state to the studio-operator level. Reason: strict mode's `NOT_IN_ROSTER` rule is only meaningful once the roster is studio-operator-managed. Implementing the strict mode flag before the roster exists would gate on incomplete state.
+This PRD **must not be implemented before**:
+
+1. the Studio Creator Roster feature ships creator roster state to the studio-operator level, and
+2. studio creator onboarding exists outside `/system/*` so studios can resolve `NOT_IN_ROSTER` from their normal workspace.
+
+Reason: strict mode's `NOT_IN_ROSTER` rule is only product-safe once roster membership is both studio-operator-managed **and** studio-operator-recoverable. Enforcing the strict-mode flag before studio onboarding exists would replace one gap with another and keep studios dependent on system-admin-only tools.
 
 Recommended sequencing:
 1. Studio Creator Roster feature — implements roster CRUD and active/inactive state
-2. This PRD — adds `strict=true` mode that enforces roster state
+2. Studio Creator Onboarding & Roster-First Assignment — removes `/system/*` dependency and makes roster membership the required assignment gate
+3. This PRD — adds `strict=true` mode that enforces roster state and overlap correctness
 
 The `OVERLAP` check (requirement 3) can be implemented independently of the roster, so a phased approach is valid: ship overlap detection first, then add roster-based rules in a second iteration.
 

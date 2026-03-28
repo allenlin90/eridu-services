@@ -9,6 +9,7 @@ Build the P&L system on existing entities, focusing on the **L-side** (labor and
 
 Key outcomes:
 - Studio operators can manage labor rates and creator compensation defaults without system-admin intervention.
+- Studio admins can onboard brand-new creators from the studio workspace without falling back to `/system/*`.
 - Variable cost visibility (creator costs + shift labor) is surfaced via economics endpoints.
 - Pre-show planning exports include estimated cost data.
 - Creator assignment correctness is enforced (overlap + roster conflicts).
@@ -36,6 +37,14 @@ Key outcomes:
 ### 3. Docs / Agent / Memory Sync (Done)
 
 - Roadmap and app-local design docs aligned with delivered mapping scope and deferred economics scope.
+
+### 4. Studio Creator Onboarding Gap (Critical Path)
+
+- Studio creator roster CRUD shipped, but studio creator management is still incomplete.
+- Current studio roster flows can only add or reactivate creators who already exist in the global catalog.
+- `/system/creators` remains the only shipped path for creating a brand-new creator, which keeps normal studio onboarding dependent on system-admin-only routes.
+- Creator mapping still permits non-rostered catalog creators in some flows, so roster membership is not yet the authoritative assignment gate.
+- Track the corrective scope in [studio-creator-onboarding.md](../prd/studio-creator-onboarding.md) and treat it as a blocker for completing studio creator management.
 
 ## Architecture Guardrails (Phase 4 Baseline)
 
@@ -85,6 +94,7 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 | Economics baseline | Deferred → [feature doc](../features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md) |
 | Studio member roster | Shipped → [feature doc](../features/studio-member-roster.md) | Shipped (PR #28) | Shipped (PR #28) |
 | Studio creator roster | Shipped → [feature doc](../features/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER.md](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md) | [STUDIO_CREATOR_ROSTER.md](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md) |
+| Studio creator onboarding & roster-first assignment | [PRD](../prd/studio-creator-onboarding.md) | TBD (create with implementation PR) | TBD (create with implementation PR) |
 | Compensation line items | [PRD](../prd/compensation-line-items.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
 | Show planning export | [PRD](../prd/show-planning-export.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) |
 | Creator availability hardening | [PRD](../prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
@@ -146,16 +156,17 @@ The app reached usable moderation-template state after a one-off operational reb
 
 ### Extended Scope (2026-03-22) — Workstream Lifecycle
 
-Phase 4 expanded to cover full P&L operator foundations. Six new workstreams promoted from ideation:
+Phase 4 expanded to cover full P&L operator foundations plus a critical creator-onboarding correction. The workstreams below are tracked across Waves 1-3:
 
 | Workstream                                       | Lifecycle Doc                                                                   | Status                                | L-side Hook                                                                               | Wave |
 | ------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
 | Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔲 Planned                             | —                                                                                         | 1    |
 | Studio creator roster CRUD                       | [studio-creator-roster.md](../features/studio-creator-roster.md)                | ✅ Implemented                          | `StudioCreator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback | 1    |
+| Studio creator onboarding + roster-first assignment | [studio-creator-onboarding.md](../prd/studio-creator-onboarding.md)              | 🔲 Planned (critical-path blocker)      | Removes `/system/*` dependency for new talent intake; makes active roster membership mandatory for assignment | 1    |
 | Studio member roster                             | [studio-member-roster.md](../features/studio-member-roster.md)                  | ✅ Shipped (PR #28)                     | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
 | Compensation line items                          | [compensation-line-items.md](../prd/compensation-line-items.md)                 | 🔲 Planned (post-Wave 1)               | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators; no implicit cross-show proration in Phase 4 | R+   |
 | Show planning export with cost preview           | [show-planning-export.md](../prd/show-planning-export.md)                       | 🔲 Planned                             | `estimated_total_cost` column from economics                                              | 2    |
-| Creator availability hardening (strict mode)     | [creator-availability-hardening.md](../prd/creator-availability-hardening.md)   | 🔲 Planned (depends on creator roster) | Conflict enforcement: overlap, roster state, inactive                                     | 2    |
+| Creator availability hardening (strict mode)     | [creator-availability-hardening.md](../prd/creator-availability-hardening.md)   | 🔲 Planned (depends on onboarding gate) | Conflict enforcement: overlap, roster state, inactive                                     | 2    |
 | P&L revenue workflow (GMV/sales input)           | [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md)                       | 🔲 Planned (open design Qs)            | Activates COMMISSION/HYBRID creator cost computation                                      | 3    |
 
 ### Implementation Sequencing
@@ -164,6 +175,7 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 | Gate | Blocks | Status |
 | --- | --- | --- |
+| **Studio creator onboarding + roster-first assignment** — ship studio-side create/onboard flow outside `/system/*` and reject off-roster assignments | Wave 2: Creator Availability Hardening; completion of studio creator management in Phase 4 | 🔲 Planned (critical path) |
 | **Economics cost model review** — review cost components (bonus, OT, allowances) and design CompensationLineItem integration | Wave 2: Show Planning Export | ⏸️ Deferred to after Wave 1 |
 | **Compensation line items** — implement `CompensationLineItem` + `CompensationTarget` schema, CRUD, and economics integration | Wave 2: Show Planning Export (line items feed into economics aggregation) | 🔲 Planned (post-Wave 1) |
 | **Economics merge** — merge `feat/show-economics-baseline` (with compensation line item integration) to `master` | Wave 2: Show Planning Export | ⏸️ Deferred to after cost model review + compensation line items |
@@ -178,6 +190,7 @@ Pre-dev (parallel with Wave 1):
 Wave 1 (in progress):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
     ├─► Studio Creator Roster ─────────────────────── ✅ Implemented
+    ├─► Studio Creator Onboarding + Roster-First ──── (depends on creator roster; blocks creator-management completion)
     └─► Studio Member Roster ──────────────────────── ✅ Shipped (PR #28)
 
 Post-Wave 1: Economics cost model review + Compensation line items
@@ -187,29 +200,30 @@ Post-Wave 1: Economics cost model review + Compensation line items
 
 Economics merged to master (gate for Wave 2):
     ├─► Wave 2: Show Planning Export ──────────────── (needs economics endpoints)
-    └─► Wave 2: Creator Availability Hardening ────── (needs creator roster from Wave 1)
+    └─► Wave 2: Creator Availability Hardening ────── (needs creator roster + onboarding gate)
 
 Design Qs resolved + big.js adopted (gate for Wave 3):
     └─► Wave 3: P&L Revenue Workflow ──────────────── (needs design Q resolution + big.js)
             └─► Removes @preview markers, activates COMMISSION/HYBRID
 ```
 
-#### Wave 1 — Foundation (parallel, no inter-dependencies)
+#### Wave 1 — Foundation
 
 | Workstream                | Size | Scope                                                                                                                                 |
 | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sidebar Redesign**      | S    | Pure FE refactor: `sidebar-config.tsx` + `studio-route-access.ts`. Ships navigation homes for all new pages.                          |
 | **Studio Creator Roster** | M    | ✅ Implemented. Delivered root `GET`/`POST`/`PATCH` roster routes, version-guarded compensation updates, the `/studios/$studioId/creators` page, and inactive-roster enforcement for availability discovery and bulk assignment writes. |
+| **Studio Creator Onboarding + Roster-First Assignment** | M    | New studio-side onboarding flow under `/studios/$studioId/creators`: search existing catalog first, create + roster new creators outside `/system/*`, and enforce active-roster-only assignment in creator mapping. |
 | **Studio Member Roster**  | M    | ✅ Shipped. No migration needed; delivered `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, and the studio member roster page. |
 
-**Milestone 1**: Economics endpoint reflects roster-managed rates for FIXED creators; shift costs reflect updated `baseHourlyRate`. Sidebar shows function-based groups with new page navigation.
+**Milestone 1**: Sidebar shows function-based groups with new page navigation. Studio admins can onboard creators without `/system/*`, and creator mapping is roster-first. Economics endpoint reflects roster-managed rates for FIXED creators; shift costs reflect updated `baseHourlyRate`.
 
 #### Wave 2 — Export & Assignment Integrity
 
 | Workstream                         | Size | Scope                                                                                                                                                                     |
 | ---------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Show Planning Export**           | M    | New endpoint with CSV/JSON, date-range filtering, `estimated_total_cost` column from economics. Performance cap needed for batch computation.                             |
-| **Creator Availability Hardening** | M    | `strict=true` mode on availability endpoint: overlap detection, roster membership check, typed error codes in `@eridu/api-types`. Resolves `add-creator-dialog.tsx` TODO. |
+| **Creator Availability Hardening** | M    | `strict=true` mode on availability endpoint: overlap detection, roster membership check, typed error codes in `@eridu/api-types`. Depends on roster-first onboarding so `NOT_IN_ROSTER` is studio-operator-resolvable. Resolves `add-creator-dialog.tsx` TODO. |
 
 **Milestone 2**: Operators can download pre-show planning sheet with cost data; conflicting creator assignments are flagged before save.
 
@@ -231,14 +245,15 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 | 1a | Sidebar redesign | `feat/sidebar-redesign` | None | Code + update skills/memory referencing sidebar |
 | 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None | PRD review → BE/FE design → code + tests |
 | 1c | Studio member roster CRUD | — | — | ✅ Shipped (PR #28, 2026-03-27) |
+| 1d | Studio creator onboarding + roster-first assignment | `feat/studio-creator-onboarding` | PR #1b merged (creator roster) | PRD review → BE/FE design → code + tests |
 | R | Economics cost model review | — | Wave 1 complete | Review cost components, design CompensationLineItem integration |
 | R+ | Compensation line items | `feat/compensation-line-items` | Wave 1 complete | Schema migration + CRUD + economics service integration |
 | 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | Cost model review + compensation line items done | Code (revised with line item aggregation) + BE/FE design docs |
 | 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) | PRD review → BE/FE design → code + tests |
-| 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1b merged (creator roster state) | PRD review → BE/FE design → code + tests |
+| 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1d merged (roster-first onboarding gate) | PRD review → BE/FE design → code + tests |
 | 3 | P&L revenue workflow | `feat/pnl-revenue-workflow` | Design Qs resolved + big.js adopted | PRD review → BE/FE design → code + tests |
 
-PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b can be developed and reviewed in parallel; PR 1c is shipped. Economics cost model review (PR #R) and compensation line items (PR #R+) run post-Wave 1, before economics merge. PRs 2a/2b wait for their respective gates.
+PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b can be developed and reviewed in parallel; PR 1c is shipped. PR 1d is now on the critical path for complete studio creator management. Economics cost model review (PR #R) and compensation line items (PR #R+) run post-Wave 1, before economics merge. PRs 2a/2b wait for their respective gates.
 
 Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE design docs under `apps/*/docs/design/` → implement → post-ship knowledge-sync.
 
@@ -248,6 +263,7 @@ Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE des
 | --- | --- | --- |
 | Economics cost model may need rework for bonus/OT/allowances | High — could require architecture changes | Review after Wave 1 when roster data layer is stable; revise before merge |
 | P&L Revenue Workflow has 4 unresolved design questions | High — blocks Wave 3 entirely | Resolve during Wave 1 so Wave 3 can start without delay |
+| Studio creator management is still incomplete without studio-side onboarding | High — studios still depend on `/system/*` for new talent; roster can be bypassed in mapping | Ship studio creator onboarding + roster-first assignment before marking creator management complete |
 | Task template migration depends on staging data availability | Medium — blocks operational readiness | Export samples early; can proceed with representative examples |
 | Show Planning Export per-show economics batch cost | Medium — performance at scale | Define cap (max 90-day range) and batch computation strategy |
 | No financial arithmetic library — JS `Number` with `.toFixed(2)` | Medium — floating-point accumulation | Adopt `big.js` before Wave 3 revenue workflow |
@@ -265,6 +281,7 @@ Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE des
 - Economics baseline (variable cost side) shipped: per-show and grouped endpoints. ✅
 - Studio member roster with `baseHourlyRate` editing implemented. ✅
 - Studio creator roster CRUD with compensation defaults implemented. ✅
+- Studio-side creator onboarding outside `/system/*` is shipped, and active studio roster membership is required for creator assignment.
 - Compensation line items (`CompensationLineItem` + `CompensationTarget`) shipped with economics integration.
 - P&L revenue workflow design questions resolved and GMV/sales input shipped.
 - Show planning export (pre-show, with cost column) shipped.
