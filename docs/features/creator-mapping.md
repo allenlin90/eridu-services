@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Shipped — Phase 4
 > **Workstream**: 2
-> **Canonical docs**: [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md), [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)
+> **Canonical docs**: No per-feature design doc retained (shipped before per-feature design doc pattern was established)
 
 ## Problem
 
