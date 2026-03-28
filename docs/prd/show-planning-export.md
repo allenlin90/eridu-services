@@ -98,6 +98,7 @@ Each row includes `estimated_total_cost` sourced from the show-level economics s
 Cost value rules:
 - Returns the economics baseline total (creator costs + shift costs) if available.
 - Returns `null` if the show has no assignments, no economics data, or all creators are COMMISSION/HYBRID without revenue.
+- Includes show-scoped compensation line items only. Schedule-scoped and standing/global compensation items are not prorated into per-show exports in Phase 4.
 - A null cost is a valid and expected state, not an error.
 
 The export does not trigger a full economics computation per row on every export request — it reads pre-computed or cached economics state where available, or runs a lightweight pass. The performance contract is defined in the technical design doc.

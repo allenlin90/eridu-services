@@ -136,7 +136,9 @@ Key behaviors:
 - Polymorphic targeting via `CompensationTarget` (follows `TaskTarget` pattern): `targetType` + `targetId` discriminator with nullable FK columns for Prisma referential integrity.
 - Current target types: `MEMBERSHIP` (→ `StudioMembership`), `STUDIO_CREATOR` (→ `StudioCreator`). Extensible via additive FK column migrations.
 - Dual-role support: a person who is both a member and a creator has independent line items under each association record — separate P&L cost buckets.
-- Economics integration: the economics service sums line items alongside base costs during aggregation. Member cost = `projectedCost + SUM(line items)`. Creator cost = `computedCost + SUM(line items)`.
+- Economics integration uses scope-matched aggregation only. Show/client surfaces include show-scoped items only; schedule grouping also includes schedule-scoped items; unscoped items stay out of economics in Phase 4 until an allocation policy exists.
+- Member shift basis is `calculatedCost ?? projectedCost`, then applicable line items are added.
+- Creator outputs surface `lineItemCost` separately. If base `computedCost` is unresolved for `COMMISSION` / `HYBRID` without revenue, the resolved creator total stays `null`.
 
 ### Show Planning Export API (Wave 2)
 

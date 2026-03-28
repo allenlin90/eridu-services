@@ -45,7 +45,7 @@ Studios had no visibility into show-level costs. Creator fees and shift labor co
 
 ## Forward References
 
-- **Compensation line items** (additive cost channel): [compensation-line-items.md](../prd/compensation-line-items.md) — supplemental cost items (bonus, allowance, OT, deduction) for members and creators. The economics service will aggregate these alongside base costs. Uses `CompensationLineItem` + `CompensationTarget` (polymorphic, follows `TaskTarget` pattern). Scheduled for post-Wave 1 economics cost model review.
+- **Compensation line items** (additive cost channel): [compensation-line-items.md](../prd/compensation-line-items.md) — supplemental cost items (bonus, allowance, OT, deduction) for members and creators. Phase 4 economics uses scope-matched aggregation only: show/client surfaces include show-scoped items, schedule grouping also includes schedule-scoped items, and standing/global items stay out of economics until an allocation policy exists. Uses `CompensationLineItem` + `CompensationTarget` (polymorphic, follows `TaskTarget` pattern). Scheduled for post-Wave 1 economics cost model review.
 - Revenue workflow (activates COMMISSION/HYBRID, removes `@preview`): [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md)
 - Studio rosters (accurate cost inputs): [studio-member-roster.md](../prd/studio-member-roster.md) ✅, [studio-creator-roster.md](../prd/studio-creator-roster.md)
 - Show planning export (consumes economics for cost column): [show-planning-export.md](../prd/show-planning-export.md)

@@ -87,7 +87,7 @@ PRD: [show-planning-export.md](../../../docs/prd/show-planning-export.md)
 
 | Route | Purpose | Access | Status |
 | --- | --- | --- | --- |
-| `/studios/$studioId/reports/planning-export` | Pre-show planning export with cost preview | ADMIN, MANAGER | 🔲 Wave 2 |
+| `/studios/$studioId/shows/planning-export` | Pre-show planning export with cost preview | ADMIN, MANAGER | 🔲 Wave 2 |
 
 UI components:
 - Date range picker (required, max 90-day span).
