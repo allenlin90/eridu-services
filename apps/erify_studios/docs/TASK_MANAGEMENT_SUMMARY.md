@@ -32,6 +32,9 @@
 | 3.8   | System Tasks           | `/system/tasks`                           | System Admin | ✅       |
 | 3.9   | System Show Statuses   | `/system/show-statuses`                   | System Admin | ✅      |
 | 3.10  | System Task Templates  | `/system/task-templates`                  | System Admin | ✅      |
+| 3.11  | Task Reports           | `/studios/$studioId/task-reports`         | Admin/Manager/ModerationManager | ✅ |
+| 3.12  | Task Report Builder    | `/studios/$studioId/task-reports/builder` | Admin/Manager/ModerationManager | ✅ |
+| 3.13  | Task Report Results    | `/studios/$studioId/task-reports/results` | Admin/Manager/ModerationManager | ✅ |
 
 ---
 
@@ -153,5 +156,6 @@ Readiness scope totals should be refreshed by query-key changes (for example `re
 ✅ Task Review (per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
 ✅ System Tasks (cross-studio list, detail dialog, reassignment)
 ✅ Moderation loop workflow (loop-based template builder, loop progress block, live loop detection, per-loop field filtering)
+✅ Task Submission Reporting (definition CRUD, scope filters, contextual source catalog, column picker, preflight, run, result table, view filters, CSV export)
 
 **Deferred**: Animations/confetti, swipe gestures, PWA/offline, WebSocket sync, ~~analytics dashboard~~, bulk review approve, per-loop countdown timer, "Mark Loop Complete" button

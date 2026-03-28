@@ -2,6 +2,9 @@
 
 > **TLDR**: Add a studio-scoped reporting API with a show-first workflow: managers filter shows, discover available task columns contextually, then the BE joins submitted task data into a flat table JSON returned inline. No server-side result storage — the FE caches and applies view filters client-side.
 
+> [!NOTE]
+> **Status: ✅ Implemented** — This document is the architectural reference for the shipped implementation. See [`docs/features/task-submission-reporting.md`](../../../../docs/features/task-submission-reporting.md) for the shipped feature spec.
+
 ## 1. Purpose
 
 Support manager-facing review and export of submitted task data without introducing server-side report files or a warehouse dependency. This is a **management and oversight tool** — not part of the operator task-execution flow. Junior moderators submit tasks through existing workflows; they do not interact with the reporting API.

@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Shipped — Phase 4 (reopened)
 > **Workstream**: Task Management Reporting
-> **Canonical docs**: [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
+> **Design references**: [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)
 
 ## Problem
 
@@ -24,6 +24,14 @@ Studio managers need to review and export submitted task data across many shows 
 - Snapshot-driven data extraction preserving historical fidelity
 - Client-side view filters (client, status, room, assignee) and CSV export
 - 8 API endpoints: definition CRUD (5), sources, preflight, run
+
+### Frontend Route Architecture
+
+| Route | Purpose |
+| --- | --- |
+| `/studios/$studioId/task-reports` | Definitions landing page (list, create, load) |
+| `/studios/$studioId/task-reports/builder` | Report builder (scope filters, column picker, preflight, run) |
+| `/studios/$studioId/task-reports/results` | Result viewer (cached table, view filters, sort, CSV export) |
 
 ## Key Product Decisions
 

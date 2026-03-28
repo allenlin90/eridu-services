@@ -20,16 +20,16 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 8. [Phase 4 P&L Frontend Index](./PHASE_4_PNL_FRONTEND.md)
 9. [PWA Shell Runbook](./PWA_SHELL_RUNBOOK.md)
 10. [Studios Internal Read Traffic Hardening](./STUDIOS_INTERNAL_READ_TRAFFIC.md)
+11. [Task Submission Reporting & Export — Frontend Design](./design/TASK_SUBMISSION_REPORTING_DESIGN.md) — ✅ Implemented
 
 ## Design Docs
 
 Active (in progress):
 
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — ⏳ In Progress
-2. [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md) — 🚧 In progress (viewer/builder split, studio-scoped filters, definition save flow, shared-field integration)
-3. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 📐 Planned
-4. [Show Economics Frontend Design](./design/SHOW_ECONOMICS_DESIGN.md) — 📐 Planned
-5. [Compensation Line Items Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — 📐 Planned
-6. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned
-7. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-8. [P&L Revenue Workflow Frontend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) — 📐 Planned
+2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 📐 Planned
+3. [Show Economics Frontend Design](./design/SHOW_ECONOMICS_DESIGN.md) — 📐 Planned
+4. [Compensation Line Items Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — 📐 Planned
+5. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned
+6. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
+7. [P&L Revenue Workflow Frontend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) — 📐 Planned

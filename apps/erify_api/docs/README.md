@@ -41,7 +41,7 @@
 | [P&L Revenue Workflow Backend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)            | 📐      | Blocked Wave 3 revenue-side activation design |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Planned template-less task creation using the existing `Task` model            |
-| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)        | 📐      | Planned studio-scoped submitted-task report definitions and batched query API  |
+| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)        | ✅      | Studio-scoped submitted-task report definitions and batched query API — backend design reference |
 | Analytics Dashboard                                                                        | ⚠️ Removed | Superseded by Datastream + BigQuery planning in [Phase 4](../../../docs/roadmap/PHASE_4.md) |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | 🗓️      | Planned for Phase 4; not implemented in the current schema                     |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | 🗓️      | Planned Datastream + BigQuery architecture for Phase 4                         |
