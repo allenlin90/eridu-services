@@ -302,6 +302,48 @@ PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b can be develop
 
 Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE design docs under `apps/*/docs/design/` → implement → post-ship knowledge-sync.
 
+### Current Execution Plan (updated 2026-03-28)
+
+After PR #30 (studio creator roster) merges to `master`, the next actions are:
+
+#### Immediate (start after PR #30 merge)
+
+| Priority | PR | Workstream | Size | Why Now |
+| --- | --- | --- | --- | --- |
+| **Primary** | 1d | [Studio Creator Onboarding + Roster-First](../prd/studio-creator-onboarding.md) | M | **Critical path blocker** for Wave 1 completion. Fixes roster enforcement bug, removes `/system/*` dependency, unblocks Wave 2. Also addresses 2 minor code warnings from PR #30 review (cache invalidation helper export, internal schema enum). |
+| Parallel | 1a | Sidebar Redesign | S | FE-only, no deps. Ships navigation homes for all new pages. Quick win. |
+| Parallel | 1e | [Studio Show Management](../prd/studio-show-management.md) | M | Highest-impact studio autonomy gap. No deps. PRD ready. Every show setup currently requires system admin. |
+
+**Per-PR workflow**: review PRD → create BE/FE design docs under `apps/*/docs/design/` → implement → post-ship knowledge-sync.
+
+#### After Wave 1 Completes (PR #1d merged)
+
+| Priority | PR | Workstream | Gate |
+| --- | --- | --- | --- |
+| 1 | R | Economics cost model review | Wave 1 complete |
+| 2 | R+ | [Compensation Line Items](../prd/compensation-line-items.md) | Cost model review done |
+| 3 | 0 | Economics baseline merge (`feat/show-economics-baseline` → `master`) | Compensation line items done |
+| Parallel | 1f | [Studio Schedule Management](../prd/studio-schedule-management.md) | Benefits from PR #1e |
+
+#### After Economics Merge (PR #0 on master)
+
+| Priority | PR | Workstream | Gate |
+| --- | --- | --- | --- |
+| 1 | 2a | [Show Planning Export](../prd/show-planning-export.md) | Economics on master |
+| 2 | 2b | [Creator Availability Hardening](../prd/creator-availability-hardening.md) | PR #1d merged (roster-first gate) |
+
+#### After Design Qs Resolved + big.js Adopted
+
+| Priority | PR | Workstream | Gate |
+| --- | --- | --- | --- |
+| 1 | 3 | [P&L Revenue Workflow](../prd/pnl-revenue-workflow.md) | Design Qs resolved + big.js |
+
+#### Deferred to Phase 5 (Track C: Studio Autonomy Completion)
+
+- Studio reference data management — [PRD](../prd/studio-reference-data.md)
+- Studio creator profile editing — [PRD](../prd/studio-creator-profile.md)
+- Studio snapshot/audit trail visibility
+
 ### Risks & Open Items
 
 | Item | Risk | Mitigation |
