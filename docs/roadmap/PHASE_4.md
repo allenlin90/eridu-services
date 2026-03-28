@@ -264,7 +264,7 @@ Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE des
 - Creator mapping PRD intent and BE/FE design docs are synced and traceable by route/contract. ✅
 - Economics baseline (variable cost side) shipped: per-show and grouped endpoints. ✅
 - Studio member roster with `baseHourlyRate` editing implemented. ✅
-- Studio creator roster CRUD with compensation defaults implemented.
+- Studio creator roster CRUD with compensation defaults implemented. ✅
 - Compensation line items (`CompensationLineItem` + `CompensationTarget`) shipped with economics integration.
 - P&L revenue workflow design questions resolved and GMV/sales input shipped.
 - Show planning export (pre-show, with cost column) shipped.
