@@ -15,7 +15,7 @@ Complete the revenue half of the P&L model that Phase 4 defers. This track depen
 
 Potential scope:
 - **P&L revenue workflow** — GMV/sales inputs, commission cost activation, contribution margin (currently a Phase 4 Wave 3 PRD — may carry forward if not completed in Phase 4)
-- **Advanced compensation engine** — bonus, OT, special allowances, tiered/volume commission, hybrid rule sets
+- **Advanced compensation engine** — automated rule-based computation (OT multipliers, tiered/volume commission, bonus formulas) that **writes `CompensationLineItem` records** as output. The data model and manual CRUD ship in Phase 4; the rule engine that automates line item creation is Phase 5. Double-entry ledger is out of scope unless the platform evolves into a financial product.
 - **Creator HR & operations** — fixed cost tracking (rent, equipment depreciation), creator HRMS, platform API integrations
 - **Financial arithmetic** — `big.js` adoption for production-grade financial reporting
 - **Economics FE** — dashboard pages consuming the shipped economics endpoints
@@ -45,7 +45,7 @@ These are explicitly out of Phase 4 scope and candidates for Phase 5:
 
 | Item | Source | Candidate Track |
 | --- | --- | --- |
-| Advanced compensation (bonus, OT, tiered commission) | Phase 4 out-of-scope | A |
+| Advanced compensation **rule engine** (automated OT, tiered commission, bonus formulas) | Phase 4 ships the data model + manual CRUD; Phase 5 adds the computation engine | A |
 | Creator HR & operations (HRMS, fixed cost tracking) | Phase 4 out-of-scope, ideation | A |
 | Full-text search & admin UX searchability | Phase 4 out-of-scope, ideation | Either |
 | Ticketing & material management | Phase 4 out-of-scope, ideation | B |

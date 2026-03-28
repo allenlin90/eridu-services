@@ -6,6 +6,7 @@
 - `studio-scoped-patterns.md` — Studio lookup, membership endpoint, IDOR guard, @StudioParam
 - `studio-shift-schedule-patterns.md` — Shift schedule feature patterns (feat/studio-shift-schedule)
 - `moderation-workflow-patterns.md` — Moderation loop, idb-keyval draft persistence
+- `studio-member-roster-patterns.md` — Studio member roster CRUD (PR #28), isSelf logic, version descope, filterFn dead code
 
 ## Cross-Cutting Patterns (Quick Reference)
 

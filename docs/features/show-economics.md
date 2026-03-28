@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Shipped — Phase 4 (reopened), commit `8de31ffe`, 2026-03-22
 > **Workstream**: P&L Baseline — Variable Cost Visibility
-> **Canonical docs**: [BE design](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md), [FE design](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)
+> **Canonical docs**: [BE design](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md)
 
 ## Problem
 
@@ -45,6 +45,7 @@ Studios had no visibility into show-level costs. Creator fees and shift labor co
 
 ## Forward References
 
+- **Compensation line items** (additive cost channel): [compensation-line-items.md](../prd/compensation-line-items.md) — supplemental cost items (bonus, allowance, OT, deduction) for members and creators. Phase 4 economics uses scope-matched aggregation only: show/client surfaces include show-scoped items, schedule grouping also includes schedule-scoped items, and standing/global items stay out of economics until an allocation policy exists. Uses `CompensationLineItem` + `CompensationTarget` (polymorphic, follows `TaskTarget` pattern). Scheduled for post-Wave 1 economics cost model review.
 - Revenue workflow (activates COMMISSION/HYBRID, removes `@preview`): [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md)
-- Studio rosters (accurate cost inputs): [studio-member-roster.md](../prd/studio-member-roster.md), [studio-creator-roster.md](../prd/studio-creator-roster.md)
+- Studio rosters (accurate cost inputs): [studio-member-roster.md](./studio-member-roster.md) ✅, [studio-creator-roster.md](../prd/studio-creator-roster.md)
 - Show planning export (consumes economics for cost column): [show-planning-export.md](../prd/show-planning-export.md)

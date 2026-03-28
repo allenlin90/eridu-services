@@ -97,6 +97,6 @@ GET /shows/:id/economics  →  { creator_cost, shift_cost, total_cost }
 | Feature (RBAC) | [docs/features/rbac-roles.md](../features/rbac-roles.md) |
 | Feature (Creator Mapping) | [docs/features/creator-mapping.md](../features/creator-mapping.md) |
 | PRD (Economics) | [docs/prd/show-economics.md](../prd/show-economics.md) |
-| Backend implementation | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md) |
-| Frontend implementation | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) |
+| Phase 4 backend index | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md) |
+| Phase 4 frontend index | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) |
 | Role visibility model | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |

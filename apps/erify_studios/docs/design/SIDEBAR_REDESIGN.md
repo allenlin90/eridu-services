@@ -3,13 +3,14 @@
 > **Status**: Planning
 > **Date**: 2026-03-22
 > **Scope**: `apps/erify_studios/src/config/sidebar-config.tsx`, `apps/erify_studios/src/lib/constants/studio-route-access.ts`
-> **Triggered by**: Phase 4 extended PRDs — member roster, creator roster, show planning export, economics/P&L UI
+> **Triggered by**: Phase 4 extended PRDs — member roster, creator roster, compensation line items, show planning export, economics/P&L UI
 
 ## Why Now
 
 The current sidebar was designed for a single studio with limited management surface. Phase 4 extended scope adds:
 - Studio member roster (`/studios/$studioId/members`)
 - Creator roster write surface (`/studios/$studioId/creators`)
+- Compensation management (`/studios/$studioId/compensation`)
 - Show planning export (`/studios/$studioId/shows/planning-export`)
 - Economics / P&L UI (future, `/studios/$studioId/economics`)
 
@@ -121,8 +122,11 @@ Groups are reorganized by **function** (what you do) not by **role** (who you ar
 - Label: `"Finance"` — new group for P&L and economics UI
 - Icon: `TrendingUp` (lucide-react: `TrendingUp`)
 - Items:
+  - Compensation — `Wallet` (lucide-react: `Wallet`) — **new**
   - Economics / P&L — `TrendingUp` — **new** (when shipped)
-- Access: ADMIN (new `economics` key)
+- Access:
+  - Compensation: ADMIN, MANAGER (new `compensation` key)
+  - Economics / P&L: ADMIN (new `economics` key)
 - Note: Group is omitted from sidebar until at least one item is accessible. Ship when P&L Revenue Workflow PRD is implemented.
 
 ### Group: Studio Settings
@@ -143,10 +147,11 @@ Groups are reorganized by **function** (what you do) not by **role** (who you ar
 
 ## New Routes
 
-| Route | Feature | PRD |
+| Route | Feature | Product Doc |
 | --- | --- | --- |
-| `/studios/$studioId/members` | Studio member roster | `docs/prd/studio-member-roster.md` |
+| `/studios/$studioId/members` | Studio member roster | `docs/features/studio-member-roster.md` |
 | `/studios/$studioId/creators` | Creator roster | `docs/prd/studio-creator-roster.md` |
+| `/studios/$studioId/compensation` | Compensation management | `docs/prd/compensation-line-items.md` |
 | `/studios/$studioId/shows/planning-export` | Show planning export | `docs/prd/show-planning-export.md` |
 | `/studios/$studioId/economics` | P&L / economics UI | `docs/prd/pnl-revenue-workflow.md` |
 
@@ -160,6 +165,7 @@ Update `apps/erify_studios/src/lib/constants/studio-route-access.ts`:
 | --- | --- | --- |
 | `members` | `[ADMIN, MANAGER]` | MANAGER read-only; write gating handled in page component |
 | `creatorRoster` | `[ADMIN, MANAGER, TALENT_MANAGER]` | Write operations (ADMIN only) gated in component |
+| `compensation` | `[ADMIN, MANAGER]` | MANAGER read-only; Finance group entry for line-item management |
 | `economics` | `[ADMIN]` | Finance group; hidden until P&L Revenue Workflow ships |
 | `showPlanningExport` | `[ADMIN, MANAGER]` | Reports group |
 
@@ -177,6 +183,7 @@ All icons from `lucide-react`:
 | Show Planning Export | `FileDown` | Downloadable export action |
 | Creators group | `Users` | Keep |
 | Creator Roster | `UserCheck` | Managed/verified roster members |
+| Compensation | `Wallet` | Supplemental cost management |
 | Finance group | `TrendingUp` | Financial trend / P&L |
 | Studio Settings group | `Settings` | Keep |
 | Members (item) | `Users` | Studio team members |
@@ -212,5 +219,5 @@ The Finance group is new but should not appear in the sidebar until at least the
 ### Sidebar file changes required
 
 1. `sidebar-config.tsx`: rename group labels, restructure item assignments into the new function-based helper functions, add new item entries with route access key checks.
-2. `studio-route-access.ts`: add four new keys (`members`, `creatorRoster`, `economics`, `showPlanningExport`).
-3. New icon imports: `BarChart2`, `FileDown`, `UserCheck`, `TrendingUp` from `lucide-react`.
+2. `studio-route-access.ts`: add five new keys (`members`, `creatorRoster`, `compensation`, `economics`, `showPlanningExport`).
+3. New icon imports: `BarChart2`, `FileDown`, `UserCheck`, `TrendingUp`, `Wallet` from `lucide-react`.

@@ -119,7 +119,8 @@ Current economics calculations use standard JavaScript `number` arithmetic for f
 
 ## Design Reference
 
-- Economics baseline: `apps/erify_api/docs/PHASE_4_PNL_BACKEND.md`
-- Frontend P&L: `apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md`
+- Backend design: `apps/erify_api/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md`
+- Frontend design: `apps/erify_studios/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md`
+- Economics baseline: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
 - Business domain definitions: `docs/domain/BUSINESS.md` (GMV vs. sales distinction should be formally defined here before implementation)
 - Studio creator roster PRD: `docs/prd/studio-creator-roster.md` (prerequisite: compensation defaults should be operator-managed before revenue inputs are prioritized)

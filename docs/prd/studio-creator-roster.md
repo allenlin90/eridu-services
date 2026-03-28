@@ -169,7 +169,7 @@ Listed in the sidebar under the **Creators** group alongside Creator Mapping. Se
 
 ## Design Reference
 
-- Backend API design: `apps/erify_api/docs/design/` (to be created when this PRD is promoted to implementation)
-- Frontend design: `apps/erify_studios/docs/design/` (to be created when this PRD is promoted to implementation)
-- Economics baseline design: `apps/erify_api/docs/PHASE_4_PNL_BACKEND.md`
-- Creator mapping (shipped): `apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md`
+- Backend API design: `apps/erify_api/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md`
+- Frontend design: `apps/erify_studios/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md`
+- Economics baseline design: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
+- Creator mapping (shipped): `docs/features/creator-mapping.md`

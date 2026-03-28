@@ -147,7 +147,7 @@ These are distinct from 403 (authorization) and 404 (not found). Defined in `@er
 
 ## Design Reference
 
-- Backend API design: `apps/erify_api/docs/design/` (to be created at implementation)
-- Frontend design: `apps/erify_studios/docs/design/` (to be created at implementation)
+- Backend API design: `apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md`
+- Frontend design: `apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md`
 - Creator roster dependency: `docs/prd/studio-creator-roster.md`
 - Authorization reference: `apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md`
