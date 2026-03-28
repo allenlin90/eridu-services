@@ -96,18 +96,6 @@ function validatePartialCompensationDefaults(
   if (
     (data.default_rate_type === CREATOR_COMPENSATION_TYPE.COMMISSION
       || data.default_rate_type === CREATOR_COMPENSATION_TYPE.HYBRID)
-    && data.default_commission_rate === undefined
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['default_commission_rate'],
-      message: 'default_commission_rate is required when default_rate_type is COMMISSION or HYBRID',
-    });
-  }
-
-  if (
-    (data.default_rate_type === CREATOR_COMPENSATION_TYPE.COMMISSION
-      || data.default_rate_type === CREATOR_COMPENSATION_TYPE.HYBRID)
     && data.default_commission_rate === null
   ) {
     ctx.addIssue({

@@ -9,6 +9,19 @@ import {
 } from '../studio-creator-compensation';
 
 describe('studio creator compensation payload builders', () => {
+  it('omits untouched compensation fields for create payloads', () => {
+    const payload = buildCreateStudioCreatorRosterPayload({
+      creatorId: 'creator_123',
+      defaultRate: '',
+      defaultRateType: UNSET_COMPENSATION_TYPE,
+      defaultCommissionRate: '',
+    });
+
+    expect(payload).toEqual({
+      creator_id: 'creator_123',
+    });
+  });
+
   it('builds a FIXED create payload with null commission', () => {
     const payload = buildCreateStudioCreatorRosterPayload({
       creatorId: 'creator_123',

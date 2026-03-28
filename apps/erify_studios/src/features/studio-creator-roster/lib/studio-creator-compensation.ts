@@ -40,6 +40,16 @@ function normalizeCompensationType(
   return value === UNSET_COMPENSATION_TYPE ? null : value;
 }
 
+function hasExplicitCompensationInput(params: {
+  defaultRate: string;
+  defaultRateType: StudioCreatorCompensationTypeOption;
+  defaultCommissionRate: string;
+}) {
+  return params.defaultRate.trim().length > 0
+    || params.defaultRateType !== UNSET_COMPENSATION_TYPE
+    || params.defaultCommissionRate.trim().length > 0;
+}
+
 function buildCompensationFields(params: {
   defaultRate: string;
   defaultRateType: StudioCreatorCompensationTypeOption;
@@ -78,6 +88,12 @@ export function buildCreateStudioCreatorRosterPayload(params: {
   defaultRateType: StudioCreatorCompensationTypeOption;
   defaultCommissionRate: string;
 }): CreateStudioCreatorRosterInput {
+  if (!hasExplicitCompensationInput(params)) {
+    return {
+      creator_id: params.creatorId,
+    };
+  }
+
   const compensation = buildCompensationFields(params);
 
   return {

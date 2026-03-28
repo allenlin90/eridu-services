@@ -43,8 +43,8 @@ export function AddStudioCreatorDialog({
 }: AddStudioCreatorDialogProps) {
   const [selectedCreatorId, setSelectedCreatorId] = useState('');
   const [search, setSearch] = useState('');
-  const [defaultRate, setDefaultRate] = useState('0');
-  const [defaultRateType, setDefaultRateType] = useState<StudioCreatorCompensationTypeOption>('FIXED');
+  const [defaultRate, setDefaultRate] = useState('');
+  const [defaultRateType, setDefaultRateType] = useState<StudioCreatorCompensationTypeOption>(UNSET_COMPENSATION_TYPE);
   const [defaultCommissionRate, setDefaultCommissionRate] = useState('');
 
   const addMutation = useAddStudioCreatorToRoster(studioId);
@@ -85,8 +85,8 @@ export function AddStudioCreatorDialog({
   const resetState = () => {
     setSelectedCreatorId('');
     setSearch('');
-    setDefaultRate('0');
-    setDefaultRateType('FIXED');
+    setDefaultRate('');
+    setDefaultRateType(UNSET_COMPENSATION_TYPE);
     setDefaultCommissionRate('');
     addMutation.reset();
   };
