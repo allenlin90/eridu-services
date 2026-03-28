@@ -44,7 +44,22 @@ Key outcomes:
 - Current studio roster flows can only add or reactivate creators who already exist in the global catalog.
 - `/system/creators` remains the only shipped path for creating a brand-new creator, which keeps normal studio onboarding dependent on system-admin-only routes.
 - Creator mapping still permits non-rostered catalog creators in some flows, so roster membership is not yet the authoritative assignment gate.
+- **Implementation bug**: `bulkAssignCreatorsToShow` only checks for *inactive* roster entries — creators with *no roster entry at all* are silently assigned. This must be fixed as part of the onboarding PR.
 - Track the corrective scope in [studio-creator-onboarding.md](../prd/studio-creator-onboarding.md) and treat it as a blocker for completing studio creator management.
+
+### 5. Studio Autonomy Gap Analysis (2026-03-28)
+
+A cross-reference of `/admin/*` vs `/studios/*` routes revealed that studios depend on system admins for several routine operations beyond creator onboarding. The gaps are prioritized below and tracked via new PRDs:
+
+| Gap | Severity | Current State | Phase | PRD |
+| --- | --- | --- | --- | --- |
+| **Show CRUD** — studios cannot create, update, or delete shows | Critical | Read-only + creator assign at studio level | 4 (extended) | [studio-show-management.md](../prd/studio-show-management.md) |
+| **Schedule management** — studios have zero schedule endpoints | High | Admin-only; studios manage shifts but not schedules | 4 (extended) | [studio-schedule-management.md](../prd/studio-schedule-management.md) |
+| **Reference data** — clients, platforms, types, standards, statuses are admin-only CRUD | Medium | Read-only lookups at studio level | 5 (candidate) | [studio-reference-data.md](../prd/studio-reference-data.md) |
+| **Creator profile editing** — name/alias changes require system admin | Low | Studios can edit roster overrides but not global profile | 5 (candidate) | [studio-creator-profile.md](../prd/studio-creator-profile.md) |
+| **Snapshot/audit trail** — studios cannot view schedule/show version history | Low | Admin-only read endpoint | 5 (candidate) | — (track in Phase 5) |
+
+**Show CRUD is the most impactful untracked gap** — every show setup requires system admin intervention, which is more frequent and operationally blocking than creator onboarding. Studio schedule management is the next priority since schedules group shows into publishable work periods.
 
 ## Architecture Guardrails (Phase 4 Baseline)
 
@@ -100,6 +115,10 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 | Creator availability hardening | [PRD](../prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
 | P&L revenue workflow | [PRD](../prd/pnl-revenue-workflow.md) | [PNL_REVENUE_WORKFLOW_DESIGN.md](../../apps/erify_api/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md) | [PNL_REVENUE_WORKFLOW_DESIGN.md](../../apps/erify_studios/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md) |
 | Sidebar redesign | N/A (simple config) | N/A | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) |
+| Studio show management | [PRD](../prd/studio-show-management.md) | TBD (create with implementation PR) | TBD (create with implementation PR) |
+| Studio schedule management | [PRD](../prd/studio-schedule-management.md) | TBD (create with implementation PR) | TBD (create with implementation PR) |
+| Studio reference data | [PRD](../prd/studio-reference-data.md) | TBD (create with implementation PR) | TBD (create with implementation PR) |
+| Studio creator profile editing | [PRD](../prd/studio-creator-profile.md) | TBD (create with implementation PR) | TBD (create with implementation PR) |
 
 ## Out of Scope for Phase 4
 
@@ -107,6 +126,9 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 - Advanced compensation engine (bonus, OT, tiered/volume commission) — [Phase 5 Track A](./PHASE_5.md#track-a-pl-revenue-side-p-side-completion).
 - Creator HR & operations (HRMS, platform API integrations, fixed cost tracking) — [Phase 5 Track A](./PHASE_5.md#track-a-pl-revenue-side-p-side-completion).
 - Full-text search, admin UX searchability refactor — Phase 5 (either track).
+- Studio reference data management (clients, platforms, types, standards, statuses) — [Phase 5 Track C](./PHASE_5.md#track-c-studio-autonomy-completion).
+- Studio creator profile editing (name/alias at studio level) — [Phase 5 Track C](./PHASE_5.md#track-c-studio-autonomy-completion).
+- Studio snapshot/audit trail visibility — [Phase 5 Track C](./PHASE_5.md#track-c-studio-autonomy-completion).
 
 ## Phase 4 Reopened Scope (2026-03-21)
 
@@ -168,6 +190,8 @@ Phase 4 expanded to cover full P&L operator foundations plus a critical creator-
 | Show planning export with cost preview           | [show-planning-export.md](../prd/show-planning-export.md)                       | 🔲 Planned                             | `estimated_total_cost` column from economics                                              | 2    |
 | Creator availability hardening (strict mode)     | [creator-availability-hardening.md](../prd/creator-availability-hardening.md)   | 🔲 Planned (depends on onboarding gate) | Conflict enforcement: overlap, roster state, inactive                                     | 2    |
 | P&L revenue workflow (GMV/sales input)           | [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md)                       | 🔲 Planned (open design Qs)            | Activates COMMISSION/HYBRID creator cost computation                                      | 3    |
+| Studio show management (CRUD)                    | [studio-show-management.md](../prd/studio-show-management.md)                   | 🔲 Planned (studio autonomy gap)       | Studios can create/update/delete shows without `/admin/*`; enables studio-owned cost tracking | 1+   |
+| Studio schedule management                       | [studio-schedule-management.md](../prd/studio-schedule-management.md)           | 🔲 Planned (studio autonomy gap)       | Studios can create/publish schedules without `/admin/*`; schedule-level cost grouping       | 1+   |
 
 ### Implementation Sequencing
 
@@ -191,7 +215,12 @@ Wave 1 (in progress):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
     ├─► Studio Creator Roster ─────────────────────── ✅ Implemented
     ├─► Studio Creator Onboarding + Roster-First ──── (depends on creator roster; blocks creator-management completion)
+    │       └─► Includes fix for roster enforcement bug (non-rostered creators silently assigned)
     └─► Studio Member Roster ──────────────────────── ✅ Shipped (PR #28)
+
+Wave 1+ (studio autonomy — can parallel with post-Wave 1 economics work):
+    ├─► Studio Show Management ──────────────────── (no deps; removes admin bottleneck for show CRUD)
+    └─► Studio Schedule Management ──────────────── (benefits from show management; removes admin bottleneck for schedules)
 
 Post-Wave 1: Economics cost model review + Compensation line items
     ├─► Decide additional cost components (bonus, OT, allowances)
@@ -205,6 +234,11 @@ Economics merged to master (gate for Wave 2):
 Design Qs resolved + big.js adopted (gate for Wave 3):
     └─► Wave 3: P&L Revenue Workflow ──────────────── (needs design Q resolution + big.js)
             └─► Removes @preview markers, activates COMMISSION/HYBRID
+
+Phase 5 (studio autonomy completion):
+    ├─► Studio Reference Data ───────────────────── (clients, platforms, types, standards, statuses)
+    ├─► Studio Creator Profile Editing ──────────── (name/alias at studio level)
+    └─► Studio Snapshot/Audit Trail ─────────────── (version history for studios)
 ```
 
 #### Wave 1 — Foundation
@@ -217,6 +251,15 @@ Design Qs resolved + big.js adopted (gate for Wave 3):
 | **Studio Member Roster**  | M    | ✅ Shipped. No migration needed; delivered `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, and the studio member roster page. |
 
 **Milestone 1**: Sidebar shows function-based groups with new page navigation. Studio admins can onboard creators without `/system/*`, and creator mapping is roster-first. Economics endpoint reflects roster-managed rates for FIXED creators; shift costs reflect updated `baseHourlyRate`.
+
+#### Wave 1+ — Studio Autonomy (parallel with post-Wave 1 economics)
+
+| Workstream                    | Size | Scope                                                                                                                                                   |
+| ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Studio Show Management**    | M    | Studio-scoped show CRUD (`POST`/`PATCH`/`DELETE`). Admin + Manager create/update; Admin-only delete. Platform assignment at studio level. No cross-studio. |
+| **Studio Schedule Management** | M    | Studio-scoped schedule CRUD + validate/publish/duplicate/snapshots/monthly overview. Admin publish/delete; Manager create/update/duplicate/view.           |
+
+**Milestone 1+**: Studios can create, update, and delete shows and schedules without system admin intervention. Combined with Wave 1 roster features, studios are operationally self-sufficient for day-to-day workflows.
 
 #### Wave 2 — Export & Assignment Integrity
 
@@ -251,9 +294,11 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 | 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | Cost model review + compensation line items done | Code (revised with line item aggregation) + BE/FE design docs |
 | 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) | PRD review → BE/FE design → code + tests |
 | 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1d merged (roster-first onboarding gate) | PRD review → BE/FE design → code + tests |
+| 1e | Studio show management | `feat/studio-show-management` | None (can start immediately) | PRD review → BE/FE design → code + tests |
+| 1f | Studio schedule management | `feat/studio-schedule-management` | Benefits from PR #1e (show management) | PRD review → BE/FE design → code + tests |
 | 3 | P&L revenue workflow | `feat/pnl-revenue-workflow` | Design Qs resolved + big.js adopted | PRD review → BE/FE design → code + tests |
 
-PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b can be developed and reviewed in parallel; PR 1c is shipped. PR 1d is now on the critical path for complete studio creator management. Economics cost model review (PR #R) and compensation line items (PR #R+) run post-Wave 1, before economics merge. PRs 2a/2b wait for their respective gates.
+PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b can be developed and reviewed in parallel; PR 1c is shipped. PR 1d is now on the critical path for complete studio creator management. **PRs 1e/1f (studio autonomy)** have no hard prerequisites and can run in parallel with post-Wave 1 economics work — 1e (show management) should land before 1f (schedule management) since schedules group shows. Economics cost model review (PR #R) and compensation line items (PR #R+) run post-Wave 1, before economics merge. PRs 2a/2b wait for their respective gates.
 
 Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE design docs under `apps/*/docs/design/` → implement → post-ship knowledge-sync.
 
@@ -267,6 +312,9 @@ Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE des
 | Task template migration depends on staging data availability | Medium — blocks operational readiness | Export samples early; can proceed with representative examples |
 | Show Planning Export per-show economics batch cost | Medium — performance at scale | Define cap (max 90-day range) and batch computation strategy |
 | No financial arithmetic library — JS `Number` with `.toFixed(2)` | Medium — floating-point accumulation | Adopt `big.js` before Wave 3 revenue workflow |
+| Roster enforcement bug — non-rostered creators silently assigned to shows | High — roster can be bypassed entirely | Fix in studio creator onboarding PR (roster-first assignment enforcement) |
+| Studio show/schedule management adds scope to Phase 4 | Medium — extends timeline | Wave 1+ has no deps on economics; can parallel with cost model review |
+| Economics branch drift — `feat/show-economics-baseline` unmerged since 2026-03-22 | Medium — merge conflict risk grows | Rebase periodically as Wave 1 features merge to master |
 
 ### Task Submission Reporting & Export (Shipped)
 
@@ -287,4 +335,6 @@ Per-PR workflow: review PRD → update/refine the relevant per-feature BE/FE des
 - Show planning export (pre-show, with cost column) shipped.
 - Creator availability strict-mode endpoint (overlap + roster conflict) shipped.
 - Sidebar redesigned to function-based groups in `erify_studios`.
+- Studio show CRUD shipped — studios can create, update, and delete shows without `/admin/*`.
+- Studio schedule management shipped — studios can create, validate, publish, and duplicate schedules without `/admin/*`.
 - Revenue side of P&L (COMMISSION/HYBRID cost activation) tracked in [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md).

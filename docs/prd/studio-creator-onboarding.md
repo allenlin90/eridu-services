@@ -43,9 +43,28 @@ Key unanswered questions:
 | `/system/creators` | Global creator CRUD, system-admin only | ✅ Exists |
 | `POST /studios/:studioId/creators` | Adds/reactivates an existing catalog creator in the studio roster | ✅ Exists |
 | `GET /studios/:studioId/creators/catalog` | Returns rostered + non-rostered creators for discovery | ✅ Exists |
-| `POST /studios/:studioId/shows/:showId/creators/bulk-assign` | Accepts existing creators; blocks inactive roster rows only | ✅ Exists |
+| `POST /studios/:studioId/shows/:showId/creators/bulk-assign` | Accepts existing creators; blocks inactive roster rows only | ✅ Exists (**⚠️ BUG**: only checks for inactive roster entries; creators with *no roster entry at all* are silently assigned — see Implementation Bug below) |
 | `Creator` | Global creator identity shared across studios | ✅ Exists |
 | `StudioCreator` | Studio-scoped creator roster, defaults, active state | ✅ Exists |
+
+## Implementation Bug (Pre-Existing)
+
+The current `bulkAssignCreatorsToShow` in `show-orchestration.service.ts` has a **roster enforcement gap**: it only filters for *inactive* roster entries but does not reject creators who have *no roster entry at all*. A creator not in the studio roster can be silently assigned to shows.
+
+**Root cause** (lines ~185-232 of `show-orchestration.service.ts`):
+```typescript
+// Only builds a set of INACTIVE roster entries
+const inactiveRosterCreatorIds = new Set(
+  studioCreatorRosterEntries
+    .filter((entry) => !entry.isActive)
+    .map((entry) => entry.creator.uid)
+);
+// A creator with NO roster entry passes this check — not in the inactive set
+```
+
+**Fix required**: Add a `CREATOR_NOT_IN_ROSTER` check that compares the requested creator UIDs against the roster entries returned. Any creator UID not found in `studioCreatorRosterEntries` (regardless of active state) should be rejected with a `422 CREATOR_NOT_IN_ROSTER` error.
+
+**Priority**: Should be fixed as part of this PRD's implementation, not deferred. The roster-first assignment enforcement in Requirement #5 below directly addresses this bug.
 
 ## Requirements
 
