@@ -7,6 +7,8 @@ import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule } from 'nestjs-cls';
 
+import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
+
 import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ShowRepository } from '@/models/show/show.repository';
@@ -622,7 +624,7 @@ describe('showOrchestrationService', () => {
         assigned: 0,
         skipped: 0,
         failed: [
-          { creatorId: 'creator_inactive', reason: 'CREATOR_INACTIVE_IN_ROSTER' },
+          { creatorId: 'creator_inactive', reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_INACTIVE_IN_ROSTER },
         ],
       });
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();

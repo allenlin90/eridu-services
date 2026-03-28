@@ -5,11 +5,11 @@ import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { CreatorRepository } from '@/models/creator/creator.repository';
-import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
+import { StudioCreatorRepository, type StudioCreatorRosterRecord } from '@/models/studio-creator/studio-creator.repository';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 import { UtilityService } from '@/utility/utility.service';
 
-function buildRosterRecord(overrides: Partial<any> = {}) {
+function buildRosterRecord(overrides: Partial<Record<keyof StudioCreatorRosterRecord, unknown>> = {}) {
   return {
     id: 1n,
     uid: 'smc_00000000000000000001',

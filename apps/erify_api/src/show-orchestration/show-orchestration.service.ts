@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import type { Show } from '@prisma/client';
 
+import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
+
 import {
   CreateShowWithAssignmentsDto,
   showWithAssignmentsInclude,
@@ -224,7 +226,7 @@ export class ShowOrchestrationService {
       if (inactiveRosterCreatorIds.has(creator.creatorId)) {
         result.failed.push({
           creatorId: creator.creatorId,
-          reason: 'CREATOR_INACTIVE_IN_ROSTER',
+          reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_INACTIVE_IN_ROSTER,
         });
         continue;
       }
