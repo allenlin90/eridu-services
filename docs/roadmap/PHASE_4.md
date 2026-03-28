@@ -43,7 +43,10 @@ Key outcomes:
 - Controllers must stay transport-focused (authz, DTO parsing, response shaping only).
 - Orchestration services may coordinate flows but must not own financial formulas.
 - `metadata` is not a compensation rule engine and must not store executable bonus logic.
-- Complex compensation (bonus, post-show adjustments, tiered/volume commission, hybrid rule sets) is explicitly deferred.
+- `CompensationLineItem` records are flat monetary amounts entered by humans (or written by a future rule engine). The model stores **outcomes**, not **rules**. Rule engines (OT multipliers, tiered commission formulas) that compute these amounts are Phase 5 scope.
+- The compensation system is a single-entry cost journal, not a double-entry ledger. If full accounting is needed, integrate with external accounting software.
+- `CompensationTarget` follows the `TaskTarget` polymorphic pattern: single intermediate table with `targetType` + `targetId` discriminator and nullable FK columns for Prisma referential integrity. New engagement types add a nullable FK column — one table, additive migrations only.
+- A person can be both a `StudioMembership` and a `StudioCreator` simultaneously. Line items attach to the **association record** via `CompensationTarget` — separate target records, independent P&L cost buckets.
 
 ## Documentation Structure
 
@@ -80,8 +83,9 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 | --- | --- | --- | --- |
 | Creator mapping | Shipped → [feature doc](../features/creator-mapping.md) | Covered in phase-level BE doc | Covered in phase-level FE doc |
 | Economics baseline | Deferred → [feature doc](../features/show-economics.md) | TBD (after cost model review) | TBD (after cost model review) |
-| Studio member roster | [PRD](../prd/studio-member-roster.md) | TBD (create with PR #1c) | TBD (create with PR #1c) |
+| Studio member roster | Shipped → [PRD](../prd/studio-member-roster.md) | Shipped (PR #28) | Shipped (PR #28) |
 | Studio creator roster | [PRD](../prd/studio-creator-roster.md) | TBD (create with PR #1b) | TBD (create with PR #1b) |
+| Compensation line items | [PRD](../prd/compensation-line-items.md) | TBD (create with PR #R+) | TBD (create with PR #R+) |
 | Show planning export | [PRD](../prd/show-planning-export.md) | TBD (create with PR #2a) | TBD (create with PR #2a) |
 | Creator availability hardening | [PRD](../prd/creator-availability-hardening.md) | TBD (create with PR #2b) | TBD (create with PR #2b) |
 | P&L revenue workflow | [PRD](../prd/pnl-revenue-workflow.md) | TBD (create with PR #3) | TBD (create with PR #3) |
@@ -146,9 +150,10 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 | Workstream                                       | PRD                                                                             | Status                                | L-side Hook                                                                               | Wave |
 | ------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
-| Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔲 Planned                             | —                                                                                         | 1    |
+| Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/SIDEBAR_REDESIGN.md)        | 🔲 Planned                             | —                                                                                         | 1    |
 | Studio creator roster CRUD                       | [studio-creator-roster.md](../prd/studio-creator-roster.md)                     | 🔲 Planned                             | `StudioCreator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback | 1    |
-| Studio member roster                             | [studio-member-roster.md](../prd/studio-member-roster.md)                       | 🔲 Planned                             | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
+| Studio member roster                             | [studio-member-roster.md](../prd/studio-member-roster.md)                       | ✅ Shipped (PR #28)                     | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
+| Compensation line items                          | [compensation-line-items.md](../prd/compensation-line-items.md)                 | 🔲 Planned (post-Wave 1)               | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators          | R+   |
 | Show planning export with cost preview           | [show-planning-export.md](../prd/show-planning-export.md)                       | 🔲 Planned                             | `estimated_total_cost` column from economics                                              | 2    |
 | Creator availability hardening (strict mode)     | [creator-availability-hardening.md](../prd/creator-availability-hardening.md)   | 🔲 Planned (depends on creator roster) | Conflict enforcement: overlap, roster state, inactive                                     | 2    |
 | P&L revenue workflow (GMV/sales input)           | [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md)                       | 🔲 Planned (open design Qs)            | Activates COMMISSION/HYBRID creator cost computation                                      | 3    |
@@ -159,8 +164,9 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 
 | Gate | Blocks | Status |
 | --- | --- | --- |
-| **Economics cost model review** — review cost components (bonus, OT, allowances) and revise economics service if needed | Wave 2: Show Planning Export | ⏸️ Deferred to after Wave 1 |
-| **Economics merge** — merge `feat/show-economics-baseline` (with potential revisions) to `master` | Wave 2: Show Planning Export | ⏸️ Deferred to after cost model review |
+| **Economics cost model review** — review cost components (bonus, OT, allowances) and design CompensationLineItem integration | Wave 2: Show Planning Export | ⏸️ Deferred to after Wave 1 |
+| **Compensation line items** — implement `CompensationLineItem` + `CompensationTarget` schema, CRUD, and economics integration | Wave 2: Show Planning Export (line items feed into economics aggregation) | 🔲 Planned (post-Wave 1) |
+| **Economics merge** — merge `feat/show-economics-baseline` (with compensation line item integration) to `master` | Wave 2: Show Planning Export | ⏸️ Deferred to after cost model review + compensation line items |
 | **Financial arithmetic decision** — adopt `big.js` or accept floating-point risk | Wave 3: P&L Revenue Workflow | 🔲 Pending |
 
 #### Dependency Graph
@@ -169,14 +175,15 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 Pre-dev (parallel with Wave 1):
     └─► Task Template Migration ─────────────────── (operational CSV rebuild completed on March 24, 2026)
 
-Wave 1 (can start now):
+Wave 1 (in progress):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
     ├─► Studio Creator Roster ─────────────────────── (StudioCreator model complete)
-    └─► Studio Member Roster ──────────────────────── (no migration needed)
+    └─► Studio Member Roster ──────────────────────── ✅ Shipped (PR #28)
 
-Post-Wave 1: Economics cost model review
-    └─► Decide additional cost components (bonus, OT, allowances)
-    └─► Revise and merge feat/show-economics-baseline
+Post-Wave 1: Economics cost model review + Compensation line items
+    ├─► Decide additional cost components (bonus, OT, allowances)
+    ├─► Implement CompensationLineItem + CompensationTarget (schema, CRUD, economics integration)
+    └─► Revise and merge feat/show-economics-baseline (with line item aggregation)
 
 Economics merged to master (gate for Wave 2):
     ├─► Wave 2: Show Planning Export ──────────────── (needs economics endpoints)
@@ -223,14 +230,15 @@ Each feature ships as a separate PR with its own design docs. Order follows depe
 | P | Task template migration | `feat/task-template-migration` | Real moderator worksheet CSV | Operational rebuild + template list refinement |
 | 1a | Sidebar redesign | `feat/sidebar-redesign` | None | Code + update skills/memory referencing sidebar |
 | 1b | Studio creator roster CRUD | `feat/studio-creator-roster` | None | PRD review → BE/FE design → code + tests |
-| 1c | Studio member roster CRUD | `feat/studio-member-roster` | None | PRD review → BE/FE design → code + tests |
-| R | Economics cost model review | — | Wave 1 complete | Review cost components, revise economics service |
-| 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | Cost model review done | Code (potentially revised) + BE/FE design docs |
+| 1c | Studio member roster CRUD | — | — | ✅ Shipped (PR #28, 2026-03-27) |
+| R | Economics cost model review | — | Wave 1 complete | Review cost components, design CompensationLineItem integration |
+| R+ | Compensation line items | `feat/compensation-line-items` | Wave 1 complete | Schema migration + CRUD + economics service integration |
+| 0 | Economics baseline merge | `feat/show-economics-baseline` → `master` | Cost model review + compensation line items done | Code (revised with line item aggregation) + BE/FE design docs |
 | 2a | Show planning export | `feat/show-planning-export` | PR #0 merged (economics on master) | PRD review → BE/FE design → code + tests |
 | 2b | Creator availability hardening | `feat/creator-availability-hardening` | PR #1b merged (creator roster state) | PRD review → BE/FE design → code + tests |
 | 3 | P&L revenue workflow | `feat/pnl-revenue-workflow` | Design Qs resolved + big.js adopted | PRD review → BE/FE design → code + tests |
 
-PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b/1c can be developed and reviewed in parallel. Economics merge (PR #0) waits for cost model review after Wave 1. PRs 2a/2b wait for their respective gates.
+PR P (template migration) runs in parallel with Wave 1. PRs 1a/1b can be developed and reviewed in parallel; PR 1c is shipped. Economics cost model review (PR #R) and compensation line items (PR #R+) run post-Wave 1, before economics merge. PRs 2a/2b wait for their respective gates.
 
 Per-PR workflow: review PRD → create `apps/erify_api/docs/design/<FEATURE>_DESIGN.md` + `apps/erify_studios/docs/design/<FEATURE>_DESIGN.md` → implement → post-ship knowledge-sync.
 
@@ -255,8 +263,9 @@ Per-PR workflow: review PRD → create `apps/erify_api/docs/design/<FEATURE>_DES
 - Mapping/assignment flow is stable and merged-ready. ✅
 - Creator mapping PRD intent and BE/FE design docs are synced and traceable by route/contract. ✅
 - Economics baseline (variable cost side) shipped: per-show and grouped endpoints. ✅
-- Studio member roster with `baseHourlyRate` editing implemented.
+- Studio member roster with `baseHourlyRate` editing implemented. ✅
 - Studio creator roster CRUD with compensation defaults implemented.
+- Compensation line items (`CompensationLineItem` + `CompensationTarget`) shipped with economics integration.
 - P&L revenue workflow design questions resolved and GMV/sales input shipped.
 - Show planning export (pre-show, with cost column) shipped.
 - Creator availability strict-mode endpoint (overlap + roster conflict) shipped.

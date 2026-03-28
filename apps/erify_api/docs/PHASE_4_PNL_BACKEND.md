@@ -25,8 +25,9 @@ Define backend feature behavior, contracts, and data-flow rules for Phase 4 P&L 
 
 ### Extended Scope (Active — Waves 1–3)
 
-- Studio member roster CRUD with `baseHourlyRate` editing.
+- Studio member roster CRUD with `baseHourlyRate` editing. ✅ Shipped (PR #28).
 - Studio creator roster write endpoints with compensation defaults and version-guarded updates.
+- Compensation line items — supplemental cost items (bonus, allowance, OT, deduction) for members and creators, with polymorphic targeting via `CompensationTarget`.
 - Show planning export with estimated cost column.
 - Creator availability strict mode (overlap + roster conflict enforcement).
 - P&L revenue workflow (GMV/sales input, commission cost activation) — Wave 3, pending design decisions.
@@ -90,10 +91,10 @@ PRD: [studio-member-roster.md](../../../docs/prd/studio-member-roster.md)
 
 | Endpoint | Method | Purpose | Status |
 | --- | --- | --- | --- |
-| `/studios/:studioId/members` | `GET` | List active studio memberships with user details and rates | 🔲 Wave 1 |
-| `/studios/:studioId/members` | `POST` | Add member by email lookup from user catalog | 🔲 Wave 1 |
-| `/studios/:studioId/members/:membershipId` | `PATCH` | Update role or `baseHourlyRate` | 🔲 Wave 1 |
-| `/studios/:studioId/members/:membershipId` | `DELETE` | Soft-deactivate member | 🔲 Wave 1 |
+| `/studios/:studioId/members` | `GET` | List active studio memberships with user details and rates | ✅ Shipped (PR #28) |
+| `/studios/:studioId/members` | `POST` | Add member by email lookup from user catalog | ✅ Shipped (PR #28) |
+| `/studios/:studioId/members/:membershipId` | `PATCH` | Update role or `baseHourlyRate` | ✅ Shipped (PR #28) |
+| `/studios/:studioId/members/:membershipId` | `DELETE` | Soft-deactivate member | ✅ Shipped (PR #28) |
 
 Key behaviors:
 - Self-demotion guard: ADMIN cannot demote their own membership (returns 422 `SELF_DEMOTION_NOT_ALLOWED`).
@@ -116,6 +117,26 @@ Key behaviors:
 - Duplicate add returns 409 `CREATOR_ALREADY_IN_ROSTER`.
 - Deactivation (not deletion): `is_active=false` excludes from assignment workflows.
 - Re-add after deactivation restores the roster entry.
+
+### Compensation Line Items APIs (Post-Wave 1)
+
+PRD: [compensation-line-items.md](../../../docs/prd/compensation-line-items.md)
+
+| Endpoint | Method | Purpose | Status |
+| --- | --- | --- | --- |
+| `/studios/:studioId/compensation-items` | `GET` | List line items (filterable by targetType, showId, scheduleId, dateRange) | 🔲 Post-Wave 1 |
+| `/studios/:studioId/compensation-items` | `POST` | Create a line item with CompensationTarget | 🔲 Post-Wave 1 |
+| `/studios/:studioId/compensation-items/:uid` | `PATCH` | Update amount, label, note, effectiveDate | 🔲 Post-Wave 1 |
+| `/studios/:studioId/compensation-items/:uid` | `DELETE` | Soft-delete a line item | 🔲 Post-Wave 1 |
+| `/studios/:studioId/members/:membershipId/compensation` | `GET` | Member self-review: base rate + line items for date range | 🔲 Post-Wave 1 |
+| `/studios/:studioId/creators/:creatorId/compensation` | `GET` | Creator compensation summary: defaults + line items | 🔲 Post-Wave 1 |
+
+Key behaviors:
+- Single-entry cost journal — each line item is a flat monetary amount, not a double-entry ledger transaction.
+- Polymorphic targeting via `CompensationTarget` (follows `TaskTarget` pattern): `targetType` + `targetId` discriminator with nullable FK columns for Prisma referential integrity.
+- Current target types: `MEMBERSHIP` (→ `StudioMembership`), `STUDIO_CREATOR` (→ `StudioCreator`). Extensible via additive FK column migrations.
+- Dual-role support: a person who is both a member and a creator has independent line items under each association record — separate P&L cost buckets.
+- Economics integration: the economics service sums line items alongside base costs during aggregation. Member cost = `projectedCost + SUM(line items)`. Creator cost = `computedCost + SUM(line items)`.
 
 ### Show Planning Export API (Wave 2)
 
@@ -177,6 +198,10 @@ Planned scope (pending decisions):
 | Studio member roster reads | `[ADMIN, MANAGER]` |
 | Studio member roster writes | `[ADMIN]` |
 | Studio creator roster writes | `[ADMIN]` |
+| Compensation line item reads | `[ADMIN, MANAGER]` |
+| Compensation line item writes | `[ADMIN]` |
+| Member self-review compensation | `[ADMIN, self]` |
+| Creator compensation summary | `[ADMIN, MANAGER, TALENT_MANAGER]` |
 | Show planning export | `[ADMIN, MANAGER]` |
 
 Metadata behavior:
@@ -189,7 +214,32 @@ Metadata behavior:
 
 ### Wave 1 — StudioMembership
 
-None. All required fields already exist in the schema.
+None. All required fields already exist in the schema. ✅ Shipped (PR #28).
+
+### Post-Wave 1 — CompensationLineItem + CompensationTarget
+
+New tables (additive — no changes to existing tables):
+
+```prisma
+model CompensationLineItem {
+  // Base table — the compensation fact
+  // See docs/prd/compensation-line-items.md for full schema
+  // Key fields: uid, studioId, itemType, amount, label?, showId?, scheduleId?, effectiveDate?
+  // 1:1 relation to CompensationTarget
+}
+
+model CompensationTarget {
+  // Intermediate table — polymorphic link (follows TaskTarget pattern)
+  // Key fields: lineItemId (unique), targetType, targetId
+  // Nullable FK columns: membershipId?, studioCreatorId?
+  // Extensible: new engagement types add a nullable FK column
+}
+```
+
+Design rationale:
+- Single-entry cost journal, not double-entry ledger (operations platform, not accounting system).
+- `CompensationTarget` follows `TaskTarget` pattern: single intermediate table with discriminator + nullable FKs.
+- Dual-role safe: same person's membership and creator records are independent targets.
 
 ### Wave 3 — ShowPlatform (pending design decision)
 
@@ -204,14 +254,16 @@ netSales  Decimal? @map("net_sales") @db.Decimal(12, 2)
 - Keep controllers transport-focused only (authz, input parsing, response mapping).
 - Orchestration services can compose service calls but must not contain finance formulas.
 - Treat `metadata` as descriptive context only, not as a future compensation rule container.
-- Complex compensation (bonus, tiered/volume commission, hybrid rule sets) is explicitly deferred.
+- `CompensationLineItem` records are flat monetary amounts. Rule engines (OT multipliers, tiered commission formulas) that compute these amounts are Phase 5 scope.
+- `CompensationTarget` follows `TaskTarget` polymorphic pattern: single intermediate table, additive FK column migrations for new engagement types.
+- A person can be both a `StudioMembership` and a `StudioCreator` simultaneously — line items attach to the association record via `CompensationTarget`, not the person.
 
 ## Validation + Rules
 
 - Use zod DTOs from `@eridu/api-types` as request/response source of truth.
 - No DB internal IDs in API responses.
-- Baseline economics does not execute complex bonus/tiered/hybrid compensation formulas.
-- Complex compensation logic is intentionally deferred to a dedicated profit module.
+- Baseline economics aggregates `CompensationLineItem` amounts alongside base costs — it does not execute complex bonus/tiered/hybrid compensation formulas.
+- Complex compensation **rule engines** (automated OT calculation, tiered commission formulas, bonus formulas) are intentionally deferred to Phase 5. The data model and manual CRUD ship in Phase 4.
 - Use consistent decimal-safe arithmetic strategy before production-grade financial claims (see `big.js` adoption in Wave 3).
 
 ## Verification Gate (backend)
@@ -225,6 +277,9 @@ netSales  Decimal? @map("net_sales") @db.Decimal(12, 2)
   - show creator assignment with compensation fields
   - member roster CRUD with rate and role updates (Wave 1)
   - creator roster write with version guard (Wave 1)
+  - compensation line item CRUD with member and creator targets (Post-Wave 1)
+  - member self-review compensation endpoint (Post-Wave 1)
+  - economics endpoint after line item creation → verify updated cost (Post-Wave 1)
   - planning export with economics cost column (Wave 2)
   - availability strict mode conflict detection (Wave 2)
   - economics endpoint after roster rate change → verify updated cost
@@ -234,8 +289,9 @@ netSales  Decimal? @map("net_sales") @db.Decimal(12, 2)
 - Product intent:
   - Creator mapping: shipped (PRD deleted per lifecycle)
   - Economics baseline: [show-economics.md](../../../docs/features/show-economics.md) (shipped)
-  - Studio member roster: [studio-member-roster.md](../../../docs/prd/studio-member-roster.md)
+  - Studio member roster: [studio-member-roster.md](../../../docs/prd/studio-member-roster.md) (shipped)
   - Studio creator roster: [studio-creator-roster.md](../../../docs/prd/studio-creator-roster.md)
+  - Compensation line items: [compensation-line-items.md](../../../docs/prd/compensation-line-items.md)
   - Show planning export: [show-planning-export.md](../../../docs/prd/show-planning-export.md)
   - Creator availability hardening: [creator-availability-hardening.md](../../../docs/prd/creator-availability-hardening.md)
   - P&L revenue workflow: [pnl-revenue-workflow.md](../../../docs/prd/pnl-revenue-workflow.md)
