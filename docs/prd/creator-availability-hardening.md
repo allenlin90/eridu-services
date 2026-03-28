@@ -3,7 +3,9 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: Creator operations — assignment correctness
-> **Depends on**: Studio Creator Roster PRD — 🔲 **In progress** (`docs/prd/studio-creator-roster.md` must ship first so roster state exists to enforce)
+> **Depends on**:
+> - Studio Creator Roster — ✅ **Complete** (`docs/features/studio-creator-roster.md` ships roster state and inactive enforcement)
+> - Studio Creator Onboarding & Roster-First Assignment — 🔲 **Planned** (`docs/prd/studio-creator-onboarding.md` removes the `/system/*` dependency and makes roster membership an intentional studio-owned state)
 
 ## Problem
 
@@ -14,7 +16,7 @@ Consequences today:
 - A creator can be assigned to overlapping shows with no conflict signal in the UI.
 - A creator who is inactive in the studio roster can still appear as available.
 - The creator-mapping UI has no way to surface conflict metadata (`is_conflicted`, `conflict_reason`) to guide the operator's assignment decision.
-- Once the creator roster PRD ships and roster state becomes studio-operator-managed, availability behavior needs to reflect that state — otherwise the roster is a form with no enforcement consequence.
+- Now that the creator roster feature ships and roster state is studio-operator-managed, availability behavior needs to reflect that state — otherwise the roster is a form with no enforcement consequence.
 
 Key questions unanswered today:
 
@@ -33,7 +35,7 @@ Key questions unanswered today:
 | --- | --- | --- |
 | `GET /studios/:studioId/creators/availability` | Broad discovery mode, no conflict enforcement | ✅ Exists (intentionally loose) |
 | `ShowCreator` | Records current show–creator assignments | ✅ Exists |
-| `Creator.deletedAt` / roster active status | Soft-delete exists; roster active/inactive not yet studio-operator-managed | ✅ Exists (studio-operator write workflow pending creator roster PRD) |
+| `Creator.deletedAt` / roster active status | Soft-delete exists; roster active/inactive is now studio-operator-managed on `StudioCreator` | ✅ Exists |
 | Creator-mapping assignment endpoint | Accepts any creator without eligibility check | ✅ Exists |
 
 ## Requirements
@@ -52,13 +54,13 @@ Key questions unanswered today:
 
 3. **Overlap detection logic** — a creator is flagged as `OVERLAP` when they are already assigned via `ShowCreator` to a show whose time window intersects with the target show's time window. Same-show assignments (creator already on the target show) are **not** flagged as conflicts.
 
-4. **Roster membership enforcement in strict mode** — a creator is flagged as `NOT_IN_ROSTER` when they exist in the system catalog but are not in the studio's creator roster. Gate definition aligns with studio creator roster PRD.
+4. **Roster membership enforcement in strict mode** — a creator is flagged as `NOT_IN_ROSTER` when they exist in the system catalog but are not in the studio's creator roster. Gate definition aligns with the shipped studio creator roster feature.
 
 5. **Inactive roster creator handling in strict mode** — a creator who is soft-deleted or marked inactive in the studio roster is flagged as `INACTIVE` and excluded from the default response list unless an `include_inactive=true` param is passed.
 
 6. **Assignment endpoint eligibility check** — the creator-mapping assignment endpoint enforces strict-mode rules at write time. If the creator has a conflict at assignment time, return a typed error:
    - `CREATOR_OVERLAP_CONFLICT` — creator already assigned to an overlapping show
-   - `CREATOR_NOT_IN_ROSTER` — creator not in studio roster (enforced after creator roster PRD ships)
+   - `CREATOR_NOT_IN_ROSTER` — creator not in studio roster (enforced after creator roster feature ships)
    - These are distinct from 403 (authorization) and 404 (not found).
 
 ### Out of Scope
@@ -81,11 +83,17 @@ The `show_id` param is required when `strict=true` (needed to evaluate time-wind
 
 ## Sequencing Dependency
 
-This PRD **must not be implemented before** the Studio Creator Roster PRD ships the creator roster state to the studio-operator level. Reason: strict mode's `NOT_IN_ROSTER` rule is only meaningful once the roster is studio-operator-managed. Implementing the strict mode flag before the roster exists would gate on incomplete state.
+This PRD **must not be implemented before**:
+
+1. the Studio Creator Roster feature ships creator roster state to the studio-operator level, and
+2. studio creator onboarding exists outside `/system/*` so studios can resolve `NOT_IN_ROSTER` from their normal workspace.
+
+Reason: strict mode's `NOT_IN_ROSTER` rule is only product-safe once roster membership is both studio-operator-managed **and** studio-operator-recoverable. Enforcing the strict-mode flag before studio onboarding exists would replace one gap with another and keep studios dependent on system-admin-only tools.
 
 Recommended sequencing:
-1. Studio Creator Roster PRD — implements roster CRUD and active/inactive state
-2. This PRD — adds `strict=true` mode that enforces roster state
+1. Studio Creator Roster feature — implements roster CRUD and active/inactive state
+2. Studio Creator Onboarding & Roster-First Assignment — removes `/system/*` dependency and makes roster membership the required assignment gate
+3. This PRD — adds `strict=true` mode that enforces roster state and overlap correctness
 
 The `OVERLAP` check (requirement 3) can be implemented independently of the roster, so a phased approach is valid: ship overlap detection first, then add roster-based rules in a second iteration.
 
@@ -95,7 +103,7 @@ The `OVERLAP` check (requirement 3) can be implemented independently of the rost
 - [ ] `GET /availability?strict=true&show_id=<id>` requires `show_id`; returns 400 if omitted.
 - [ ] Each creator in strict-mode response includes `is_conflicted`, `conflict_reason`, and `conflicting_show_id` (when applicable).
 - [ ] Creators with overlapping `ShowCreator` assignments have `conflict_reason: "OVERLAP"` and `conflicting_show_id` set.
-- [ ] Creators not in studio roster have `conflict_reason: "NOT_IN_ROSTER"` (after creator roster PRD ships).
+- [ ] Creators not in studio roster have `conflict_reason: "NOT_IN_ROSTER"` (after creator roster feature ships).
 - [ ] Inactive/deleted roster creators have `conflict_reason: "INACTIVE"` unless `include_inactive=true`.
 - [ ] Assignment endpoint returns typed `CREATOR_OVERLAP_CONFLICT` error (not 403) when overlap exists at write time.
 - [ ] Error codes are defined in `@eridu/api-types`.
@@ -135,7 +143,7 @@ When `is_conflicted=false`, `conflict_reason` and `conflicting_show_id` are omit
 | Code | HTTP Status | Condition |
 | --- | --- | --- |
 | `CREATOR_OVERLAP_CONFLICT` | 409 | Creator already assigned to show with overlapping time window |
-| `CREATOR_NOT_IN_ROSTER` | 422 | Creator not in studio roster (enforced after creator roster PRD ships) |
+| `CREATOR_NOT_IN_ROSTER` | 422 | Creator not in studio roster (enforced after creator roster feature ships) |
 
 These are distinct from 403 (authorization) and 404 (not found). Defined in `@eridu/api-types`.
 
@@ -149,5 +157,5 @@ These are distinct from 403 (authorization) and 404 (not found). Defined in `@er
 
 - Backend API design: `apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md`
 - Frontend design: `apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md`
-- Creator roster dependency: `docs/prd/studio-creator-roster.md`
+- Creator roster dependency: `docs/features/studio-creator-roster.md`
 - Authorization reference: `apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md`

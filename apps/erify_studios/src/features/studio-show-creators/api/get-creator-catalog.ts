@@ -12,7 +12,9 @@ export type CreatorCatalogQuery = {
 
 export const creatorCatalogKeys = {
   all: ['creator-catalog'] as const,
-  list: (studioId: string, query: CreatorCatalogQuery) => [...creatorCatalogKeys.all, studioId, query] as const,
+  lists: () => [...creatorCatalogKeys.all, 'list'] as const,
+  listPrefix: (studioId: string) => [...creatorCatalogKeys.lists(), studioId] as const,
+  list: (studioId: string, query: CreatorCatalogQuery) => [...creatorCatalogKeys.listPrefix(studioId), query] as const,
 };
 
 export async function getCreatorCatalog(

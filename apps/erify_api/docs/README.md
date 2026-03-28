@@ -22,6 +22,7 @@
 | [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                     | ✅ Core    | Identity-preserving diff+upsert publish             |
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                             | ✅         | Task-as-Form architecture, API surface, workflows   |
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
+| [Studio Creator Roster](./STUDIO_CREATOR_ROSTER.md)                                 | ✅ Phase 4 | Studio-scoped creator roster CRUD, compensation defaults, and inactive-roster assignment enforcement |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                               | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries |
 | [Studios Internal Read Traffic Hardening](../../erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md) | ✅ Ops | Internal-read burst handling, query cancellation, and readBurst throttle coverage |
@@ -34,14 +35,13 @@
 | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Show Economics Backend Design](./design/SHOW_ECONOMICS_DESIGN.md)                        | 📐      | Deferred merge target for economics endpoints and compensation-aware revisions |
-| [Studio Creator Roster Backend Design](./design/STUDIO_CREATOR_ROSTER_DESIGN.md)          | 📐      | Planned studio-scoped creator roster write surface |
 | [Compensation Line Items Backend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)      | 📐      | Planned supplemental compensation CRUD and aggregation model |
 | [Show Planning Export Backend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md)            | 📐      | Planned planning-export endpoint and economics composition rules |
 | [Creator Availability Hardening Backend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | 📐 | Planned strict availability enforcement and assignment errors |
 | [P&L Revenue Workflow Backend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)            | 📐      | Blocked Wave 3 revenue-side activation design |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Planned template-less task creation using the existing `Task` model            |
-| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)        | 📐      | Planned studio-scoped submitted-task report definitions and batched query API  |
+| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)        | ✅      | Studio-scoped submitted-task report definitions and batched query API — backend design reference |
 | Analytics Dashboard                                                                        | ⚠️ Removed | Superseded by Datastream + BigQuery planning in [Phase 4](../../../docs/roadmap/PHASE_4.md) |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | 🗓️      | Planned for Phase 4; not implemented in the current schema                     |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | 🗓️      | Planned Datastream + BigQuery architecture for Phase 4                         |

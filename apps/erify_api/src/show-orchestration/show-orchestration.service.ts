@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import type { Show } from '@prisma/client';
 
+import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
+
 import {
   CreateShowWithAssignmentsDto,
   showWithAssignmentsInclude,
@@ -20,6 +22,7 @@ import { ShowCreatorRepository } from '@/models/show-creator/show-creator.reposi
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 
 type CreatorAssignmentPayload = {
   creatorId: string;
@@ -61,6 +64,7 @@ export class ShowOrchestrationService {
     private readonly creatorRepository: CreatorRepository,
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly platformRepository: PlatformRepository,
+    private readonly studioCreatorRepository: StudioCreatorRepository,
   ) {}
 
   async createShowWithAssignments(
@@ -165,6 +169,7 @@ export class ShowOrchestrationService {
   }
 
   async bulkAssignCreatorsToShow(
+    studioUid: string,
     uid: string,
     creators: CreatorAssignmentPayload[],
   ): Promise<BulkAssignCreatorsResult> {
@@ -177,6 +182,15 @@ export class ShowOrchestrationService {
     const uniqueCreatorUids = [...new Set(creators.map((creator) => creator.creatorId))];
     const foundCreators = await this.creatorRepository.findByUids(uniqueCreatorUids);
     const creatorUidToIdMap = new Map(foundCreators.map((creator) => [creator.uid, creator.id]));
+    const studioCreatorRosterEntries = await this.studioCreatorRepository.findByStudioUidAndCreatorUids(
+      studioUid,
+      uniqueCreatorUids,
+    );
+    const inactiveRosterCreatorIds = new Set(
+      studioCreatorRosterEntries
+        .filter((entry) => !entry.isActive)
+        .map((entry) => entry.creator.uid),
+    );
 
     const existingAssignments = await this.showCreatorRepository.findMany({
       where: {
@@ -205,6 +219,14 @@ export class ShowOrchestrationService {
         result.failed.push({
           creatorId: creator.creatorId,
           reason: 'Creator not found',
+        });
+        continue;
+      }
+
+      if (inactiveRosterCreatorIds.has(creator.creatorId)) {
+        result.failed.push({
+          creatorId: creator.creatorId,
+          reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_INACTIVE_IN_ROSTER,
         });
         continue;
       }

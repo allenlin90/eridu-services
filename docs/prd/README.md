@@ -32,9 +32,20 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | --- | --- | --- | --- |
 | ~~Show Economics~~ | P&L baseline — creator cost + shift cost endpoints | — | ✅ Shipped → [feature doc](../features/show-economics.md) |
 | ~~Studio Member Roster~~ | Studio operator governance — L-side labor cost inputs (`baseHourlyRate`) | 1 | ✅ Shipped → [feature doc](../features/studio-member-roster.md) |
-| [Studio Creator Roster](./studio-creator-roster.md) | Studio operator governance — L-side creator cost defaults | 1 | Active |
+| ~~Studio Creator Roster~~ | Studio operator governance — L-side creator cost defaults | 1 | ✅ Implemented → [feature doc](../features/studio-creator-roster.md) |
+| [Studio Creator Onboarding](./studio-creator-onboarding.md) | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | Active (critical path blocker for complete studio creator management) |
 | [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active |
-| [Creator Availability Hardening](./creator-availability-hardening.md) | Dual-mode availability endpoint — overlap + roster conflict enforcement | 2 | Active (depends on creator roster) |
+| [Creator Availability Hardening](./creator-availability-hardening.md) | Dual-mode availability endpoint — overlap + roster conflict enforcement | 2 | Active (depends on creator roster + onboarding gate) |
+| [Compensation Line Items](./compensation-line-items.md) | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators | R+ | Active (post-Wave 1) |
 | [P&L Revenue Workflow](./pnl-revenue-workflow.md) | P&L revenue ("P") side — GMV/sales inputs, commission cost activation, contribution margin | 3 | Active (4 open design Qs) |
+| [Studio Show Management](./studio-show-management.md) | Studio CRUD for shows — removes `/admin/*` dependency for show lifecycle | 1+ | Active (studio autonomy gap) |
+| [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, validate, publish, duplicate | 1+ | Active (studio autonomy gap) |
+
+### Phase 5 Candidates (PRDs created, implementation deferred)
+
+| PRD | Workstream | Track | Status |
+| --- | --- | --- | --- |
+| [Studio Reference Data](./studio-reference-data.md) | Studio-initiated creation of clients, platforms, types, standards, statuses | C | Deferred to Phase 5 |
+| [Studio Creator Profile](./studio-creator-profile.md) | Studio-level editing of creator name, alias, metadata | C | Deferred to Phase 5 |
 
 Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1).

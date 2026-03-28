@@ -3,7 +3,7 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: P&L revenue ("P") side — completing the P&L model
-> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`), Studio Creator Roster PRD (compensation defaults should be studio-operator-managed before revenue inputs matter)
+> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`), Studio Creator Roster — ✅ **Complete** ([feature doc](../features/studio-creator-roster.md))
 
 ## Problem
 
@@ -32,7 +32,7 @@ Key questions unanswered today:
 | `GET /studios/:studioId/shows/:showId/economics` | Returns variable costs; `@preview`; commission costs null without revenue | ✅ Exists (`@preview`) |
 | `GET /studios/:studioId/economics` | Grouped economics; `@preview` | ✅ Exists (`@preview`) |
 | Economics service | Revenue parameter accepted; commission cost calculation logic exists but dormant | ✅ Exists (dormant) |
-| `ShowCreator.commissionRate` / `Creator.defaultCommissionRate` | Commission rate inputs; drive commission cost once revenue is known | ✅ Exists |
+| `ShowCreator.commissionRate` / `StudioCreator.defaultCommissionRate` | Commission rate inputs; drive commission cost once revenue is known | ✅ Exists |
 
 ## Requirements
 
@@ -42,7 +42,7 @@ Key questions unanswered today:
 
 2. **Revenue input UI** — ADMIN can enter GMV and net sales values on the show platform form in the studio app (`erify_studios`). Inputs are per-platform per show, reflecting that a show may stream on multiple platforms with different revenue figures.
 
-3. **Economics endpoint uses revenue to compute COMMISSION/HYBRID creator costs** — once revenue is present for a show-platform, the economics service calculates commission-based creator fees using `ShowCreator.commissionRate` → `Creator.defaultCommissionRate` precedence. The existing computation logic is activated.
+3. **Economics endpoint uses revenue to compute COMMISSION/HYBRID creator costs** — once revenue is present for a show-platform, the economics service calculates commission-based creator fees using `ShowCreator.commissionRate` → `StudioCreator.defaultCommissionRate` precedence. The existing computation logic is activated.
 
 4. **Remove `@preview` markers** — once revenue input is live and commission cost computation is functional, remove the `@preview` annotation from both economics endpoints.
 
@@ -115,7 +115,7 @@ Current economics calculations use standard JavaScript `number` arithmetic for f
 - **Revenue absence is not an error** — shows without revenue input continue to work; commission costs remain null. The `@preview` marker is removed only after the input workflow is live, not merely after the model is deployed.
 - **Per-platform revenue** — revenue is tracked per `ShowPlatform` record, not as a single show-level aggregate, because different platforms may have materially different revenue figures for the same broadcast.
 - **Contribution margin is derived, not stored** — margin is computed at query time from revenue and cost components. It is not persisted.
-- **Rate precedence unchanged** — `ShowCreator.commissionRate` → `Creator.defaultCommissionRate`. This PRD does not alter the precedence chain.
+- **Rate precedence unchanged** — `ShowCreator.commissionRate` → `StudioCreator.defaultCommissionRate`. This PRD does not alter the precedence chain.
 
 ## Design Reference
 
@@ -123,4 +123,4 @@ Current economics calculations use standard JavaScript `number` arithmetic for f
 - Frontend design: `apps/erify_studios/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md`
 - Economics baseline: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
 - Business domain definitions: `docs/domain/BUSINESS.md` (GMV vs. sales distinction should be formally defined here before implementation)
-- Studio creator roster PRD: `docs/prd/studio-creator-roster.md` (prerequisite: compensation defaults should be operator-managed before revenue inputs are prioritized)
+- Studio creator roster feature: `docs/features/studio-creator-roster.md` (prerequisite: compensation defaults should be operator-managed before revenue inputs are prioritized)

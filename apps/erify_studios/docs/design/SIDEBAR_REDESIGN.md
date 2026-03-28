@@ -150,7 +150,7 @@ Groups are reorganized by **function** (what you do) not by **role** (who you ar
 | Route | Feature | Product Doc |
 | --- | --- | --- |
 | `/studios/$studioId/members` | Studio member roster | `docs/features/studio-member-roster.md` |
-| `/studios/$studioId/creators` | Creator roster | `docs/prd/studio-creator-roster.md` |
+| `/studios/$studioId/creators` | Creator roster | `docs/features/studio-creator-roster.md` |
 | `/studios/$studioId/compensation` | Compensation management | `docs/prd/compensation-line-items.md` |
 | `/studios/$studioId/shows/planning-export` | Show planning export | `docs/prd/show-planning-export.md` |
 | `/studios/$studioId/economics` | P&L / economics UI | `docs/prd/pnl-revenue-workflow.md` |

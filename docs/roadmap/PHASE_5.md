@@ -1,7 +1,7 @@
 # Phase 5: TBD
 
 > **Status**: Placeholder — scope to be decided after Phase 4 Wave 1 completes
-> **Planning stance**: Two candidate tracks identified. Final scope and priority will be set based on business needs at the time.
+> **Planning stance**: Three candidate tracks identified. Final scope and priority will be set based on business needs at the time.
 
 ## Purpose
 
@@ -39,6 +39,20 @@ Related ideation topics:
 - `docs/ideation/material-management.md`
 - `docs/ideation/collaboration-communication.md`
 
+### Track C: Studio Autonomy Completion
+
+Complete the transition from system-admin-dependent operations to studio self-service. Phase 4 addresses the most critical gaps (show management, schedule management, creator onboarding); Track C covers the remaining medium/low severity gaps identified in the Phase 4 gap analysis (2026-03-28).
+
+Potential scope:
+- **Studio reference data management** — studio-initiated creation of clients, platforms, show types, show standards, and show statuses into the global catalog. Removes system-admin bottleneck for routine metadata setup. See [PRD](../prd/studio-reference-data.md).
+- **Studio creator profile editing** — studio admins can edit creator name, alias, and metadata for rostered creators. Conditional user-link setting. See [PRD](../prd/studio-creator-profile.md).
+- **Studio snapshot/audit trail** — expose schedule and show version history at studio level for operational audit and review. Currently admin-only via `/admin/snapshots`.
+- **Full-text search & admin UX searchability** — cross-entity search at studio level (deferred from Phase 4).
+
+Prerequisites from Phase 4:
+- Studio creator onboarding must ship first (creator profile editing extends the onboarding surface).
+- Studio show and schedule management should ship first (snapshot visibility is more useful once studios own these lifecycles).
+
 ## Items Deferred from Phase 4
 
 These are explicitly out of Phase 4 scope and candidates for Phase 5:
@@ -47,10 +61,13 @@ These are explicitly out of Phase 4 scope and candidates for Phase 5:
 | --- | --- | --- |
 | Advanced compensation **rule engine** (automated OT, tiered commission, bonus formulas) | Phase 4 ships the data model + manual CRUD; Phase 5 adds the computation engine | A |
 | Creator HR & operations (HRMS, fixed cost tracking) | Phase 4 out-of-scope, ideation | A |
-| Full-text search & admin UX searchability | Phase 4 out-of-scope, ideation | Either |
+| Full-text search & admin UX searchability | Phase 4 out-of-scope, ideation | C (or either) |
 | Ticketing & material management | Phase 4 out-of-scope, ideation | B |
 | PWA push notifications | Ideation | B |
 | Creator app expansion | Ideation | B |
+| Studio reference data management (clients, platforms, types, standards, statuses) | Phase 4 gap analysis (2026-03-28) | C |
+| Studio creator profile editing (name/alias at studio level) | Phase 4 gap analysis (2026-03-28) | C |
+| Studio snapshot/audit trail visibility | Phase 4 gap analysis (2026-03-28) | C |
 
 ## Promotion Rule
 

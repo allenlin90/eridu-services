@@ -47,5 +47,5 @@ Studio operators previously depended on system-admin-only membership tooling for
 ## Forward References
 
 - Shift labor cost baseline: [show-economics.md](./show-economics.md)
-- Creator-side cost input governance: [studio-creator-roster.md](../prd/studio-creator-roster.md)
+- Creator-side cost input governance: [studio-creator-roster.md](./studio-creator-roster.md)
 - Supplemental cost inputs: [compensation-line-items.md](../prd/compensation-line-items.md)

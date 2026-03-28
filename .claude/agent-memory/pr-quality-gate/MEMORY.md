@@ -7,6 +7,7 @@
 - `studio-shift-schedule-patterns.md` — Shift schedule feature patterns (feat/studio-shift-schedule)
 - `moderation-workflow-patterns.md` — Moderation loop, idb-keyval draft persistence
 - `studio-member-roster-patterns.md` — Studio member roster CRUD (PR #28), isSelf logic, version descope, filterFn dead code
+- `studio-creator-roster-patterns.md` — Creator roster CRUD (PR #30), duplicate validation, updateWithVersionCheck 3-query pattern, CREATOR_INACTIVE_IN_ROSTER hardcoded string
 
 ## Cross-Cutting Patterns (Quick Reference)
 

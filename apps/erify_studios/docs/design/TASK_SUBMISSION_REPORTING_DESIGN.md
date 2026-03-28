@@ -2,6 +2,9 @@
 
 > **TLDR**: Add a studio-scoped report-builder page with a show-first workflow: managers filter shows, discover contextual task columns, select columns, generate a flat table JSON (returned inline), then cache the result and apply client-side view filters, sorting, and CSV export.
 
+> [!NOTE]
+> **Status: ✅ Implemented** — This document is the architectural reference for the shipped implementation. See [`docs/features/task-submission-reporting.md`](../../../../docs/features/task-submission-reporting.md) for the shipped feature spec.
+
 ## 1. Purpose
 
 Provide a **management and oversight workflow** that sits between the current per-task review queue and a future warehouse/reporting stack. This replaces the moderation team's current Google Sheets workflow where they manually input data and use filter views to review shows by time range.

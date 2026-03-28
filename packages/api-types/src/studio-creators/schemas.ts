@@ -4,17 +4,122 @@ import { UID_PREFIXES } from '../constants.js';
 import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
 import { createPaginatedResponseSchema } from '../pagination/schemas.js';
 
+export const STUDIO_CREATOR_ROSTER_ERROR = {
+  CREATOR_NOT_FOUND: 'CREATOR_NOT_FOUND',
+  CREATOR_ALREADY_IN_ROSTER: 'CREATOR_ALREADY_IN_ROSTER',
+  CREATOR_INACTIVE_IN_ROSTER: 'CREATOR_INACTIVE_IN_ROSTER',
+  VERSION_CONFLICT: 'VERSION_CONFLICT',
+} as const;
+
+export type StudioCreatorRosterError = (typeof STUDIO_CREATOR_ROSTER_ERROR)[keyof typeof STUDIO_CREATOR_ROSTER_ERROR];
+
+export const STUDIO_CREATOR_ROSTER_STATE = {
+  NONE: 'NONE',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+
+export type StudioCreatorRosterState = (typeof STUDIO_CREATOR_ROSTER_STATE)[keyof typeof STUDIO_CREATOR_ROSTER_STATE];
+
 const creatorUidSchema = z
   .string()
   .startsWith(`${UID_PREFIXES.CREATOR}_`, 'Invalid creator id');
 
 const showUidSchema = z.string().startsWith(`${UID_PREFIXES.SHOW}_`);
 
+const creatorCompensationTypeSchema = z.enum(
+  Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]],
+);
+
+const defaultRateInputSchema = z.coerce.number().min(0).nullable().optional();
+const defaultCommissionRateInputSchema = z.coerce.number().min(0).max(100).nullable().optional();
+
+function validateCreateCompensationDefaults(
+  data: {
+    default_rate_type?: string | null;
+    default_commission_rate?: number | null;
+  },
+  ctx: z.RefinementCtx,
+) {
+  if (
+    data.default_rate_type === CREATOR_COMPENSATION_TYPE.FIXED
+    && data.default_commission_rate !== undefined
+    && data.default_commission_rate !== null
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['default_commission_rate'],
+      message: 'default_commission_rate must be null when default_rate_type is FIXED',
+    });
+  }
+
+  if (
+    (data.default_rate_type === CREATOR_COMPENSATION_TYPE.COMMISSION
+      || data.default_rate_type === CREATOR_COMPENSATION_TYPE.HYBRID)
+    && data.default_commission_rate == null
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['default_commission_rate'],
+      message: 'default_commission_rate is required when default_rate_type is COMMISSION or HYBRID',
+    });
+  }
+
+  if (data.default_commission_rate !== undefined && data.default_commission_rate !== null && data.default_rate_type == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['default_rate_type'],
+      message: 'default_rate_type is required when default_commission_rate is provided',
+    });
+  }
+}
+
+function validatePartialCompensationDefaults(
+  data: {
+    default_rate_type?: string | null;
+    default_commission_rate?: number | null;
+  },
+  ctx: z.RefinementCtx,
+) {
+  if (
+    data.default_rate_type === CREATOR_COMPENSATION_TYPE.FIXED
+    && data.default_commission_rate !== undefined
+    && data.default_commission_rate !== null
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['default_commission_rate'],
+      message: 'default_commission_rate must be null when default_rate_type is FIXED',
+    });
+  }
+
+  if (
+    (data.default_rate_type === CREATOR_COMPENSATION_TYPE.COMMISSION
+      || data.default_rate_type === CREATOR_COMPENSATION_TYPE.HYBRID)
+    && data.default_commission_rate === null
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['default_commission_rate'],
+      message: 'default_commission_rate cannot be null when default_rate_type is COMMISSION or HYBRID',
+    });
+  }
+
+  if (data.default_rate_type === null && data.default_commission_rate !== undefined && data.default_commission_rate !== null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['default_commission_rate'],
+      message: 'default_commission_rate must be null when default_rate_type is null',
+    });
+  }
+}
+
 export const studioCreatorCatalogItemSchema = z.object({
   id: creatorUidSchema,
   name: z.string(),
   alias_name: z.string(),
   is_rostered: z.boolean(),
+  roster_state: z.enum(Object.values(STUDIO_CREATOR_ROSTER_STATE) as [string, ...string[]]),
 });
 
 export const studioCreatorCatalogQuerySchema = z.object({
@@ -55,9 +160,7 @@ export const studioCreatorRosterItemSchema = z.object({
   creator_name: z.string(),
   creator_alias_name: z.string(),
   default_rate: z.string().nullable(),
-  default_rate_type: z
-    .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
-    .nullable(),
+  default_rate_type: creatorCompensationTypeSchema.nullable(),
   default_commission_rate: z.string().nullable(),
   is_active: z.boolean(),
   version: z.number().int().positive(),
@@ -71,10 +174,7 @@ export const studioCreatorRosterListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).optional().default(20),
   search: z.string().optional(),
   is_active: z.coerce.boolean().optional(),
-  default_rate_type: z
-    .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
-    .nullable()
-    .optional(),
+  default_rate_type: creatorCompensationTypeSchema.nullable().optional(),
 });
 
 export const studioCreatorRosterListResponseSchema = createPaginatedResponseSchema(
@@ -83,27 +183,20 @@ export const studioCreatorRosterListResponseSchema = createPaginatedResponseSche
 
 export const createStudioCreatorRosterInputSchema = z.object({
   creator_id: creatorUidSchema,
-  default_rate: z.coerce.number().positive().nullable().optional(),
-  default_rate_type: z
-    .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
-    .nullable()
-    .optional(),
-  default_commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
-  is_active: z.boolean().optional(),
+  default_rate: defaultRateInputSchema,
+  default_rate_type: creatorCompensationTypeSchema.nullable().optional(),
+  default_commission_rate: defaultCommissionRateInputSchema,
   metadata: z.record(z.string(), z.any()).optional(),
-});
+}).superRefine(validateCreateCompensationDefaults);
 
 export const updateStudioCreatorRosterInputSchema = z.object({
   version: z.number().int().positive(),
-  default_rate: z.coerce.number().positive().nullable().optional(),
-  default_rate_type: z
-    .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
-    .nullable()
-    .optional(),
-  default_commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+  default_rate: defaultRateInputSchema,
+  default_rate_type: creatorCompensationTypeSchema.nullable().optional(),
+  default_commission_rate: defaultCommissionRateInputSchema,
   is_active: z.boolean().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
-});
+}).superRefine(validatePartialCompensationDefaults);
 
 export const creatorAvailabilityWindowSchema = z.object({
   date_from: z.iso.datetime(),
@@ -118,10 +211,7 @@ export const studioShowCreatorAssignmentItemInputSchema = z.object({
   creator_id: creatorUidSchema,
   note: z.string().max(1000).nullable().optional(),
   agreed_rate: z.coerce.number().positive().nullable().optional(),
-  compensation_type: z
-    .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
-    .nullable()
-    .optional(),
+  compensation_type: creatorCompensationTypeSchema.nullable().optional(),
   commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
@@ -132,9 +222,7 @@ export const studioShowCreatorListItemSchema = z.object({
   creator_alias_name: z.string(),
   note: z.string().nullable(),
   agreed_rate: z.string().nullable(),
-  compensation_type: z
-    .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
-    .nullable(),
+  compensation_type: creatorCompensationTypeSchema.nullable(),
   commission_rate: z.string().nullable(),
   metadata: z.record(z.string(), z.any()),
 });

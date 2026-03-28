@@ -13,8 +13,10 @@ export type CreatorAvailabilityQuery = {
 
 export const creatorAvailabilityKeys = {
   all: ['creator-availability'] as const,
+  lists: () => [...creatorAvailabilityKeys.all, 'list'] as const,
+  listPrefix: (studioId: string) => [...creatorAvailabilityKeys.lists(), studioId] as const,
   list: (studioId: string, query: CreatorAvailabilityQuery) =>
-    [...creatorAvailabilityKeys.all, studioId, query] as const,
+    [...creatorAvailabilityKeys.listPrefix(studioId), query] as const,
 };
 
 export async function getCreatorAvailability(

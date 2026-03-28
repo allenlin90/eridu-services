@@ -28,26 +28,26 @@ Talent managers assigned creators to shows one at a time through system-admin en
 - `GET /studios/:studioId/shows/:showId/creators` — list creators assigned to a show
 - `DELETE /studios/:studioId/shows/:showId/creators/:creatorId` — remove a creator from a show
 - `GET /studios/:studioId/creators/catalog` — browse all creators (rostered + non-rostered)
-- `GET /studios/:studioId/creators/roster` — studio's active creator roster
+- `GET /studios/:studioId/creators` — studio creator roster (active by default; filterable)
 - `GET /studios/:studioId/creators/availability` — creators not booked in a date window
 
-### Compensation fields
+### Compensation fields and fallback contract
 
-Per-show compensation inputs live on `ShowCreator` and are used by the economics layer (see [Show Economics PRD](../prd/show-economics.md)):
+Per-show compensation inputs live on `ShowCreator` and are used by the economics layer (see [Show Economics](./show-economics.md)):
 
 | Field | Description |
 | --- | --- |
-| `agreedRate` | Per-show fixed rate override (falls back to `Creator.defaultRate`) |
+| `agreedRate` | Per-show fixed rate override (falls back to `StudioCreator.defaultRate`) |
 | `compensationType` | `FIXED`, `COMMISSION`, or `HYBRID` |
 | `commissionRate` | Commission percentage (0–100); `FIXED` type uses `agreedRate` only |
 
-Creator defaults: `Creator.defaultRate`, `Creator.defaultRateType`, `Creator.defaultCommissionRate`.
+Studio-scoped creator defaults live on `StudioCreator`: `defaultRate`, `defaultRateType`, `defaultCommissionRate`.
 
 ## Key Product Decisions
 
 - Creators are **not** studio-scoped — a creator can work across multiple studios.
 - `metadata` on `ShowCreator` is opaque JSON for audit/operations context (`source`, `operator_note`, `tags`) — not compensation rule execution logic.
-- Creator availability check is currently **loose** (discoverability mode). Strict overlap-conflict enforcement is deferred to Phase 5 (see [PHASE_5.md](../roadmap/PHASE_5.md)).
+- Creator availability remains **loose/discovery mode**. It excludes overlapping show bookings and inactive studio roster rows, but full `NOT_IN_ROSTER` enforcement is deferred to creator-availability hardening.
 - HRMS for leaves/unavailability is future — current availability is show-booking conflict only.
 
 ## Acceptance Record

@@ -71,7 +71,11 @@ describe('studioShowController', () => {
       const result = await controller.bulkAssignCreators(studioId, showId, dto);
 
       expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
-      expect(showOrchestrationServiceMock.bulkAssignCreatorsToShow).toHaveBeenCalledWith(showId, dto.creators);
+      expect(showOrchestrationServiceMock.bulkAssignCreatorsToShow).toHaveBeenCalledWith(
+        studioId,
+        showId,
+        dto.creators,
+      );
       expect(result).toEqual({ assigned: 1, skipped: 0, failed: [] });
     });
   });
