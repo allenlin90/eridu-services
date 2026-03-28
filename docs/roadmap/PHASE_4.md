@@ -84,7 +84,7 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 | Creator mapping | Shipped → [feature doc](../features/creator-mapping.md) | Shipped feature; no retained design doc | Shipped feature; no retained design doc |
 | Economics baseline | Deferred → [feature doc](../features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md) |
 | Studio member roster | Shipped → [feature doc](../features/studio-member-roster.md) | Shipped (PR #28) | Shipped (PR #28) |
-| Studio creator roster | [PRD](../prd/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER_DESIGN.md](../../apps/erify_api/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md) | [STUDIO_CREATOR_ROSTER_DESIGN.md](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md) |
+| Studio creator roster | Shipped → [feature doc](../features/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER.md](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md) | [STUDIO_CREATOR_ROSTER.md](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md) |
 | Compensation line items | [PRD](../prd/compensation-line-items.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
 | Show planning export | [PRD](../prd/show-planning-export.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) |
 | Creator availability hardening | [PRD](../prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
@@ -151,7 +151,7 @@ Phase 4 expanded to cover full P&L operator foundations. Six new workstreams pro
 | Workstream                                       | Lifecycle Doc                                                                   | Status                                | L-side Hook                                                                               | Wave |
 | ------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
 | Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔲 Planned                             | —                                                                                         | 1    |
-| Studio creator roster CRUD                       | [studio-creator-roster.md](../prd/studio-creator-roster.md)                     | 🔲 Planned                             | `StudioCreator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback | 1    |
+| Studio creator roster CRUD                       | [studio-creator-roster.md](../features/studio-creator-roster.md)                | ✅ Implemented                          | `StudioCreator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback | 1    |
 | Studio member roster                             | [studio-member-roster.md](../features/studio-member-roster.md)                  | ✅ Shipped (PR #28)                     | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
 | Compensation line items                          | [compensation-line-items.md](../prd/compensation-line-items.md)                 | 🔲 Planned (post-Wave 1)               | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators; no implicit cross-show proration in Phase 4 | R+   |
 | Show planning export with cost preview           | [show-planning-export.md](../prd/show-planning-export.md)                       | 🔲 Planned                             | `estimated_total_cost` column from economics                                              | 2    |
@@ -177,7 +177,7 @@ Pre-dev (parallel with Wave 1):
 
 Wave 1 (in progress):
     ├─► Sidebar Redesign ──────────────────────────── (FE-only, no deps)
-    ├─► Studio Creator Roster ─────────────────────── (StudioCreator model complete)
+    ├─► Studio Creator Roster ─────────────────────── ✅ Implemented
     └─► Studio Member Roster ──────────────────────── ✅ Shipped (PR #28)
 
 Post-Wave 1: Economics cost model review + Compensation line items
@@ -199,7 +199,7 @@ Design Qs resolved + big.js adopted (gate for Wave 3):
 | Workstream                | Size | Scope                                                                                                                                 |
 | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sidebar Redesign**      | S    | Pure FE refactor: `sidebar-config.tsx` + `studio-route-access.ts`. Ships navigation homes for all new pages.                          |
-| **Studio Creator Roster** | M    | `StudioCreator` model is complete. Add `POST`/`PATCH` write endpoints, version-guarded compensation updates, FE roster page.          |
+| **Studio Creator Roster** | M    | ✅ Implemented. Delivered root `GET`/`POST`/`PATCH` roster routes, version-guarded compensation updates, the `/studios/$studioId/creators` page, and inactive-roster enforcement for availability discovery and bulk assignment writes. |
 | **Studio Member Roster**  | M    | ✅ Shipped. No migration needed; delivered `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, and the studio member roster page. |
 
 **Milestone 1**: Economics endpoint reflects roster-managed rates for FIXED creators; shift costs reflect updated `baseHourlyRate`. Sidebar shows function-based groups with new page navigation.

@@ -7,10 +7,19 @@ import { PlatformModule } from '@/models/platform/platform.module';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowCreatorModule } from '@/models/show-creator/show-creator.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
+import { StudioCreatorModelModule } from '@/models/studio-creator/studio-creator.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule, ShowModule, ShowCreatorModule, ShowPlatformModule, CreatorModule, PlatformModule],
+  imports: [
+    PrismaModule,
+    ShowModule,
+    ShowCreatorModule,
+    ShowPlatformModule,
+    CreatorModule,
+    PlatformModule,
+    StudioCreatorModelModule,
+  ],
   providers: [ShowOrchestrationService],
   exports: [ShowOrchestrationService],
 })

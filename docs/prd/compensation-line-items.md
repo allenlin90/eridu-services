@@ -3,7 +3,7 @@
 > **Status**: Active
 > **Phase**: 4 — Post-Wave 1 (Economics Cost Model Review)
 > **Workstream**: P&L cost visibility — supplemental compensation beyond base rates
-> **Depends on**: Studio Member Roster — ✅ **Complete** (PR #28), Studio Creator Roster — **In progress** (Wave 1)
+> **Depends on**: Studio Member Roster — ✅ **Complete** (PR #28), Studio Creator Roster — ✅ **Complete** ([feature doc](../features/studio-creator-roster.md))
 
 ## Problem
 
@@ -294,6 +294,6 @@ Additionally, compensation line items surface as inline sections on:
 - Frontend design: `apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`
 - Economics baseline: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
 - Studio member roster: `docs/features/studio-member-roster.md`
-- Studio creator roster: `docs/prd/studio-creator-roster.md`
+- Studio creator roster: `docs/features/studio-creator-roster.md`
 - Shift cost calculation: `apps/erify_api/src/models/studio-shift/studio-shift.service.ts`
 - Phase 4 roadmap: `docs/roadmap/PHASE_4.md`

@@ -1,5 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import z from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
@@ -23,6 +23,10 @@ import {
   ListStudioCreatorRosterQueryDto,
   studioCreatorRosterItemDto,
 } from './schemas/studio-creator-roster-list.schema';
+import {
+  CreateStudioCreatorRosterDto,
+  UpdateStudioCreatorRosterDto,
+} from './schemas/studio-creator-roster-write.schema';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
@@ -38,7 +42,6 @@ const STUDIO_CREATOR_ACCESS_ROLES = [
 ];
 
 @ApiTags('Studio Creators')
-@StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)
 @Controller('studios/:studioId/creators')
 export class StudioCreatorController extends BaseStudioController {
   constructor(
@@ -47,6 +50,66 @@ export class StudioCreatorController extends BaseStudioController {
     super();
   }
 
+  @ApiOperation({ summary: 'List studio creator roster' })
+  @StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)
+  @Get()
+  @ReadBurstThrottle()
+  @ZodPaginatedResponse(studioCreatorRosterItemApiSchema)
+  async listRoster(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ListStudioCreatorRosterQueryDto,
+  ) {
+    const { data, total } = await this.studioCreatorService.listRoster(studioId, query);
+    return this.createPaginatedResponse(
+      data.map((item) => studioCreatorRosterItemDto.parse(item)),
+      total,
+      this.toPaginationQuery(query),
+    );
+  }
+
+  @ApiOperation({ summary: 'Add or reactivate a creator in the studio roster' })
+  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ZodResponse(studioCreatorRosterItemApiSchema, HttpStatus.CREATED)
+  async addCreator(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Body() dto: CreateStudioCreatorRosterDto,
+  ) {
+    const creator = await this.studioCreatorService.addCreatorToRoster(studioId, {
+      creatorId: dto.creatorId,
+      defaultRate: dto.defaultRate,
+      defaultRateType: dto.defaultRateType,
+      defaultCommissionRate: dto.defaultCommissionRate,
+      metadata: dto.metadata,
+    });
+
+    return studioCreatorRosterItemDto.parse(creator);
+  }
+
+  @ApiOperation({ summary: 'Update studio creator defaults or active state' })
+  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @Patch(':creatorId')
+  @ZodResponse(studioCreatorRosterItemApiSchema)
+  async updateCreator(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
+    @Body() dto: UpdateStudioCreatorRosterDto,
+  ) {
+    const creator = await this.studioCreatorService.updateRosterEntry(studioId, creatorId, {
+      version: dto.version,
+      defaultRate: dto.defaultRate,
+      defaultRateType: dto.defaultRateType,
+      defaultCommissionRate: dto.defaultCommissionRate,
+      isActive: dto.isActive,
+      metadata: dto.metadata,
+    });
+
+    return studioCreatorRosterItemDto.parse(creator);
+  }
+
+  @ApiOperation({ summary: 'List creators available for show assignment discovery' })
+  @StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)
   @Get('availability')
   @ReadBurstThrottle()
   @ZodResponse(z.array(studioCreatorAvailabilityItemApiSchema))
@@ -58,6 +121,8 @@ export class StudioCreatorController extends BaseStudioController {
     return creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
   }
 
+  @ApiOperation({ summary: 'List creators from the global catalog for studio use' })
+  @StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)
   @Get('catalog')
   @ReadBurstThrottle()
   @ZodResponse(z.array(studioCreatorCatalogItemApiSchema))
@@ -67,20 +132,5 @@ export class StudioCreatorController extends BaseStudioController {
   ) {
     const creators = await this.studioCreatorService.listCatalog(studioId, query);
     return creators.map((item) => studioCreatorCatalogItemDto.parse(item));
-  }
-
-  @Get('roster')
-  @ReadBurstThrottle()
-  @ZodPaginatedResponse(studioCreatorRosterItemApiSchema)
-  async roster(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
-    @Query() query: ListStudioCreatorRosterQueryDto,
-  ) {
-    const { data, total } = await this.studioCreatorService.listRoster(studioId, query);
-    return this.createPaginatedResponse(
-      data.map((item) => studioCreatorRosterItemDto.parse(item)),
-      total,
-      this.toPaginationQuery(query),
-    );
   }
 }

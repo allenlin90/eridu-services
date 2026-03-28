@@ -11,6 +11,7 @@ export const studioCreatorCatalogItemSchema = z.object({
   name: z.string(),
   aliasName: z.string(),
   isRostered: z.boolean(),
+  rosterState: z.string(),
 });
 
 export const studioCreatorCatalogItemDto = studioCreatorCatalogItemSchema
@@ -19,6 +20,7 @@ export const studioCreatorCatalogItemDto = studioCreatorCatalogItemSchema
     name: item.name,
     alias_name: item.aliasName,
     is_rostered: item.isRostered,
+    roster_state: item.rosterState,
   }))
   .pipe(studioCreatorCatalogItemApiSchema);
 

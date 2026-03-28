@@ -20,7 +20,7 @@ Studios had no visibility into show-level costs. Creator fees and shift labor co
 
 - Show-level baseline variable cost endpoint: creator costs + shift labor costs.
 - Grouped economics endpoint: aggregate costs by show, schedule, or client with date-range filtering.
-- Creator cost precedence: `ShowCreator.agreedRate` → `Creator.defaultRate`.
+- Creator cost precedence contract: `ShowCreator.agreedRate` → `StudioCreator.defaultRate`.
 - Compensation type handling: `FIXED` creators have computed cost; `COMMISSION`/`HYBRID` yield `null` (revenue side deferred).
 - Shift cost attribution: proportional to block overlap with show time window.
 - 2 API endpoints:
@@ -34,12 +34,13 @@ Studios had no visibility into show-level costs. Creator fees and shift labor co
 - **FIXED-only baseline cost** — `COMMISSION`/`HYBRID` types appear with `null` computed cost until revenue inputs are available.
 - **`@preview` markers** — endpoints marked `@preview` until revenue workflow ships and removes them.
 - **No compensation logic in metadata** — `metadata` is descriptive only.
+- **Studio roster fallback** — creator-side fallback compensation is studio-scoped on `StudioCreator`, not global on `Creator`.
 
 ## Acceptance Record
 
 - [x] Show economics endpoint returns baseline creator cost + shift cost.
 - [x] Grouped economics endpoint returns baseline cost totals by show/schedule/client.
-- [x] Compensation input fields accepted/persisted on `ShowCreator` and `Creator`.
+- [x] Compensation input fields accepted/persisted on `ShowCreator`; creator-side fallback contract targets `StudioCreator`.
 - [x] No bonus/tiered/hybrid rule execution required.
 - [x] `COMMISSION`/`HYBRID` creators included with `null` cost and `compensation_type` indicator.
 
@@ -47,5 +48,5 @@ Studios had no visibility into show-level costs. Creator fees and shift labor co
 
 - **Compensation line items** (additive cost channel): [compensation-line-items.md](../prd/compensation-line-items.md) — supplemental cost items (bonus, allowance, OT, deduction) for members and creators. Phase 4 economics uses scope-matched aggregation only: show/client surfaces include show-scoped items, schedule grouping also includes schedule-scoped items, and standing/global items stay out of economics until an allocation policy exists. Uses `CompensationLineItem` + `CompensationTarget` (polymorphic, follows `TaskTarget` pattern). Scheduled for post-Wave 1 economics cost model review.
 - Revenue workflow (activates COMMISSION/HYBRID, removes `@preview`): [pnl-revenue-workflow.md](../prd/pnl-revenue-workflow.md)
-- Studio rosters (accurate cost inputs): [studio-member-roster.md](./studio-member-roster.md) ✅, [studio-creator-roster.md](../prd/studio-creator-roster.md)
+- Studio rosters (accurate cost inputs): [studio-member-roster.md](./studio-member-roster.md) ✅, [studio-creator-roster.md](./studio-creator-roster.md) ✅
 - Show planning export (consumes economics for cost column): [show-planning-export.md](../prd/show-planning-export.md)

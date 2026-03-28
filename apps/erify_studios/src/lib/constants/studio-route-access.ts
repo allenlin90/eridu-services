@@ -49,6 +49,11 @@ export const STUDIO_ROUTE_ACCESS = {
   sharedFields: [
     STUDIO_ROLE.ADMIN,
   ],
+  creatorRoster: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.TALENT_MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
   creatorMapping: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.TALENT_MANAGER,

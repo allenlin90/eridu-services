@@ -8,7 +8,7 @@ Use these docs for planning and implementation tracking. Once behavior is shippe
 
 1. [Authorization Guide](./AUTHORIZATION_GUIDE.md) — Proposed RBAC model
 2. [Show Economics Backend Design](./SHOW_ECONOMICS_DESIGN.md) — Deferred merge target for economics baseline revisions
-3. [Studio Creator Roster Backend Design](./STUDIO_CREATOR_ROSTER_DESIGN.md) — Planned roster write surface
+3. ~~Studio Creator Roster Backend Design~~ — ✅ Implemented — promoted to canonical doc at [../STUDIO_CREATOR_ROSTER.md](../STUDIO_CREATOR_ROSTER.md)
 4. [Compensation Line Items Backend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — Planned supplemental compensation model
 5. [Show Planning Export Backend Design](./SHOW_PLANNING_EXPORT_DESIGN.md) — Planned planning export endpoint
 6. [Creator Availability Hardening Backend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — Planned strict availability enforcement

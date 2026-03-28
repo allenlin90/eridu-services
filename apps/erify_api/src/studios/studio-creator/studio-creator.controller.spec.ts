@@ -4,6 +4,10 @@ import { Test } from '@nestjs/testing';
 import type { StudioCreatorAvailabilityQueryDto } from './schemas/studio-creator-availability.schema';
 import type { StudioCreatorCatalogQueryDto } from './schemas/studio-creator-catalog.schema';
 import type { ListStudioCreatorRosterQueryDto } from './schemas/studio-creator-roster-list.schema';
+import type {
+  CreateStudioCreatorRosterDto,
+  UpdateStudioCreatorRosterDto,
+} from './schemas/studio-creator-roster-write.schema';
 import { StudioCreatorController } from './studio-creator.controller';
 
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
@@ -22,6 +26,8 @@ describe('studioCreatorController', () => {
             listAvailable: jest.fn(),
             listCatalog: jest.fn(),
             listRoster: jest.fn(),
+            addCreatorToRoster: jest.fn(),
+            updateRosterEntry: jest.fn(),
           },
         },
       ],
@@ -76,6 +82,7 @@ describe('studioCreatorController', () => {
         name: 'Ann',
         aliasName: 'Ann',
         isRostered: false,
+        rosterState: 'NONE',
       },
     ]);
 
@@ -86,6 +93,7 @@ describe('studioCreatorController', () => {
       expect.objectContaining({
         id: 'creator_00000000000000000001',
         is_rostered: false,
+        roster_state: 'NONE',
       }),
     ]);
   });
@@ -129,7 +137,7 @@ describe('studioCreatorController', () => {
       total: 1,
     });
 
-    const result = await controller.roster(studioId, query);
+    const result = await controller.listRoster(studioId, query);
 
     expect(studioCreatorService.listRoster).toHaveBeenCalledWith(studioId, query);
     expect(result).toEqual({
@@ -150,5 +158,103 @@ describe('studioCreatorController', () => {
         hasPreviousPage: false,
       },
     });
+  });
+
+  it('should add a creator to the roster', async () => {
+    const studioId = 'std_00000000000000000001';
+    const dto = {
+      creatorId: 'creator_00000000000000000001',
+      defaultRate: 500,
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      metadata: {},
+    } as CreateStudioCreatorRosterDto;
+
+    studioCreatorService.addCreatorToRoster.mockResolvedValue({
+      id: 1n,
+      uid: 'smc_00000000000000000001',
+      studioId: 1n,
+      creatorId: 1n,
+      defaultRate: '500.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      isActive: true,
+      version: 1,
+      metadata: {},
+      createdAt: new Date('2026-03-11T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-11T00:00:00.000Z'),
+      deletedAt: null,
+      creator: {
+        uid: 'creator_00000000000000000001',
+        name: 'Ann',
+        aliasName: 'Ann',
+      },
+    } as any);
+
+    const result = await controller.addCreator(studioId, dto);
+
+    expect(studioCreatorService.addCreatorToRoster).toHaveBeenCalledWith(studioId, {
+      creatorId: 'creator_00000000000000000001',
+      defaultRate: 500,
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      metadata: {},
+    });
+    expect(result).toEqual(expect.objectContaining({
+      id: 'smc_00000000000000000001',
+      creator_id: 'creator_00000000000000000001',
+      default_rate: '500.00',
+    }));
+  });
+
+  it('should update a creator roster entry', async () => {
+    const studioId = 'std_00000000000000000001';
+    const creatorId = 'creator_00000000000000000001';
+    const dto = {
+      version: 2,
+      defaultRate: 650,
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      isActive: false,
+      metadata: { note: 'inactive' },
+    } as unknown as UpdateStudioCreatorRosterDto;
+
+    studioCreatorService.updateRosterEntry.mockResolvedValue({
+      id: 1n,
+      uid: 'smc_00000000000000000001',
+      studioId: 1n,
+      creatorId: 1n,
+      defaultRate: '650.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      isActive: false,
+      version: 3,
+      metadata: { note: 'inactive' },
+      createdAt: new Date('2026-03-11T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-12T00:00:00.000Z'),
+      deletedAt: null,
+      creator: {
+        uid: creatorId,
+        name: 'Ann',
+        aliasName: 'Ann',
+      },
+    } as any);
+
+    const result = await controller.updateCreator(studioId, creatorId, dto);
+
+    expect(studioCreatorService.updateRosterEntry).toHaveBeenCalledWith(studioId, creatorId, {
+      version: 2,
+      defaultRate: 650,
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      isActive: false,
+      metadata: { note: 'inactive' },
+    });
+    expect(result).toEqual(expect.objectContaining({
+      id: 'smc_00000000000000000001',
+      default_rate: '650.00',
+      is_active: false,
+      version: 3,
+    }));
   });
 });

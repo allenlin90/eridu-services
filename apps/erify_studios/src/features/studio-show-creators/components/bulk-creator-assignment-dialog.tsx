@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 
-import { BULK_ASSIGN_MAX_CREATORS_PER_SHOW, BULK_ASSIGN_MAX_SHOWS } from '@eridu/api-types/studio-creators';
+import {
+  BULK_ASSIGN_MAX_CREATORS_PER_SHOW,
+  BULK_ASSIGN_MAX_SHOWS,
+  STUDIO_CREATOR_ROSTER_STATE,
+} from '@eridu/api-types/studio-creators';
 import {
   AsyncMultiCombobox,
   Button,
@@ -47,12 +51,14 @@ export function BulkCreatorAssignmentDialog({
 
   const creatorOptions = useMemo(
     () =>
-      creators.map((creator) => ({
-        value: creator.id,
-        label: creator.alias_name
-          ? `${creator.name} (${creator.alias_name})`
-          : creator.name,
-      })),
+      creators
+        .filter((creator) => creator.roster_state !== STUDIO_CREATOR_ROSTER_STATE.INACTIVE)
+        .map((creator) => ({
+          value: creator.id,
+          label: creator.alias_name
+            ? `${creator.name} (${creator.alias_name})`
+            : creator.name,
+        })),
     [creators],
   );
 

@@ -1,0 +1,268 @@
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+
+import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
+
+import { VersionConflictError } from '@/lib/errors/version-conflict.error';
+import { CreatorRepository } from '@/models/creator/creator.repository';
+import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
+import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
+import { UtilityService } from '@/utility/utility.service';
+
+function buildRosterRecord(overrides: Partial<any> = {}) {
+  return {
+    id: 1n,
+    uid: 'smc_00000000000000000001',
+    studioId: 1n,
+    creatorId: 1n,
+    defaultRate: null,
+    defaultRateType: null,
+    defaultCommissionRate: null,
+    isActive: true,
+    version: 1,
+    metadata: {},
+    createdAt: new Date('2026-03-11T00:00:00.000Z'),
+    updatedAt: new Date('2026-03-11T00:00:00.000Z'),
+    deletedAt: null,
+    creator: {
+      uid: 'creator_00000000000000000001',
+      name: 'Ann',
+      aliasName: 'Ann',
+    },
+    ...overrides,
+  };
+}
+
+describe('studioCreatorService', () => {
+  let service: StudioCreatorService;
+  let studioCreatorRepository: jest.Mocked<StudioCreatorRepository>;
+  let creatorRepository: jest.Mocked<CreatorRepository>;
+  let utilityService: jest.Mocked<UtilityService>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        StudioCreatorService,
+        {
+          provide: StudioCreatorRepository,
+          useValue: {
+            findByStudioUidPaginated: jest.fn(),
+            findByStudioUidAndCreatorUid: jest.fn(),
+            createRosterEntry: jest.fn(),
+            reactivateRosterEntry: jest.fn(),
+            updateWithVersionCheck: jest.fn(),
+          },
+        },
+        {
+          provide: CreatorRepository,
+          useValue: {
+            findByUid: jest.fn(),
+            findCatalogForStudio: jest.fn(),
+            findAvailableForStudioWindow: jest.fn(),
+          },
+        },
+        {
+          provide: UtilityService,
+          useValue: {
+            generateBrandedId: jest.fn().mockReturnValue('smc_generated'),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get(StudioCreatorService);
+    studioCreatorRepository = module.get(StudioCreatorRepository);
+    creatorRepository = module.get(CreatorRepository);
+    utilityService = module.get(UtilityService);
+  });
+
+  it('defaults roster listing to active creators', async () => {
+    studioCreatorRepository.findByStudioUidPaginated.mockResolvedValue({ data: [], total: 0 });
+
+    await service.listRoster('std_1', {
+      skip: 0,
+      take: 20,
+    });
+
+    expect(studioCreatorRepository.findByStudioUidPaginated).toHaveBeenCalledWith('std_1', {
+      skip: 0,
+      take: 20,
+      isActive: true,
+    });
+  });
+
+  it('passes studio scope into availability discovery', async () => {
+    creatorRepository.findAvailableForStudioWindow.mockResolvedValue([]);
+
+    await service.listAvailable('std_1', {
+      dateFrom: new Date('2026-03-15T10:00:00.000Z'),
+      dateTo: new Date('2026-03-15T12:00:00.000Z'),
+      search: 'ann',
+      limit: 25,
+    });
+
+    expect(creatorRepository.findAvailableForStudioWindow).toHaveBeenCalledWith({
+      studioUid: 'std_1',
+      dateFrom: new Date('2026-03-15T10:00:00.000Z'),
+      dateTo: new Date('2026-03-15T12:00:00.000Z'),
+      search: 'ann',
+      limit: 25,
+    });
+  });
+
+  it('creates a new roster entry for a catalog creator', async () => {
+    creatorRepository.findByUid.mockResolvedValue({ uid: 'creator_1' } as any);
+    studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue(null);
+    studioCreatorRepository.createRosterEntry.mockResolvedValue(buildRosterRecord() as any);
+
+    const result = await service.addCreatorToRoster('std_1', {
+      creatorId: 'creator_1',
+      defaultRate: 500,
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      metadata: { source: 'ui' },
+    });
+
+    expect(utilityService.generateBrandedId).toHaveBeenCalledWith('smc', undefined);
+    expect(studioCreatorRepository.createRosterEntry).toHaveBeenCalledWith({
+      uid: 'smc_generated',
+      studioUid: 'std_1',
+      creatorUid: 'creator_1',
+      defaultRate: '500.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      metadata: { source: 'ui' },
+    });
+    expect(result).toEqual(expect.objectContaining({ uid: 'smc_00000000000000000001' }));
+  });
+
+  it('reactivates an inactive roster entry instead of duplicating it', async () => {
+    creatorRepository.findByUid.mockResolvedValue({ uid: 'creator_1' } as any);
+    studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue(
+      buildRosterRecord({
+        uid: 'smc_existing',
+        isActive: false,
+        metadata: { preserved: true },
+      }) as any,
+    );
+    studioCreatorRepository.reactivateRosterEntry.mockResolvedValue(
+      buildRosterRecord({ uid: 'smc_existing', isActive: true }) as any,
+    );
+
+    await service.addCreatorToRoster('std_1', {
+      creatorId: 'creator_1',
+      defaultRate: 600,
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+    });
+
+    expect(studioCreatorRepository.reactivateRosterEntry).toHaveBeenCalledWith({
+      uid: 'smc_existing',
+      defaultRate: '600.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      metadata: { preserved: true },
+    });
+    expect(studioCreatorRepository.createRosterEntry).not.toHaveBeenCalled();
+  });
+
+  it('throws CREATOR_ALREADY_IN_ROSTER for duplicate active add', async () => {
+    creatorRepository.findByUid.mockResolvedValue({ uid: 'creator_1' } as any);
+    studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue(
+      buildRosterRecord({ isActive: true }) as any,
+    );
+
+    await expect(service.addCreatorToRoster('std_1', {
+      creatorId: 'creator_1',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: expect.stringContaining(STUDIO_CREATOR_ROSTER_ERROR.CREATOR_ALREADY_IN_ROSTER),
+      }),
+    });
+  });
+
+  it('throws CREATOR_NOT_FOUND when creator is missing from the catalog', async () => {
+    creatorRepository.findByUid.mockResolvedValue(null);
+
+    await expect(service.addCreatorToRoster('std_1', {
+      creatorId: 'creator_404',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: expect.stringContaining(STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_FOUND),
+      }),
+    });
+  });
+
+  it('updates roster defaults and clears commission when switching to FIXED', async () => {
+    studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue(
+      buildRosterRecord({
+        defaultRateType: 'COMMISSION',
+        defaultCommissionRate: '10.00',
+      }) as any,
+    );
+    studioCreatorRepository.updateWithVersionCheck.mockResolvedValue(
+      buildRosterRecord({
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+        version: 3,
+      }) as any,
+    );
+
+    await service.updateRosterEntry('std_1', 'creator_1', {
+      version: 2,
+      defaultRateType: 'FIXED',
+      isActive: false,
+    });
+
+    expect(studioCreatorRepository.updateWithVersionCheck).toHaveBeenCalledWith(
+      'std_1',
+      'creator_1',
+      2,
+      {
+        defaultRate: undefined,
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+        isActive: false,
+        metadata: undefined,
+      },
+    );
+  });
+
+  it('throws VERSION_CONFLICT when optimistic locking fails', async () => {
+    studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue(buildRosterRecord() as any);
+    studioCreatorRepository.updateWithVersionCheck.mockRejectedValue(
+      new VersionConflictError('stale', 2, 3),
+    );
+
+    await expect(service.updateRosterEntry('std_1', 'creator_1', {
+      version: 2,
+      defaultRate: 650,
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: expect.stringContaining(STUDIO_CREATOR_ROSTER_ERROR.VERSION_CONFLICT),
+      }),
+    });
+  });
+
+  it('rejects commission updates that conflict with a FIXED creator type', async () => {
+    studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue(
+      buildRosterRecord({
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+      }) as any,
+    );
+
+    await expect(service.updateRosterEntry('std_1', 'creator_1', {
+      version: 2,
+      defaultCommissionRate: 15,
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: expect.stringContaining('default_commission_rate must be null'),
+      }),
+    });
+  });
+});

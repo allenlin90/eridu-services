@@ -15,6 +15,7 @@ import { ShowCreatorRepository } from '@/models/show-creator/show-creator.reposi
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 import type {
   CreateShowWithAssignmentsDto,
@@ -45,6 +46,7 @@ describe('showOrchestrationService', () => {
   let creatorRepository: jest.Mocked<CreatorRepository>;
   let showPlatformRepository: jest.Mocked<ShowPlatformRepository>;
   let platformRepository: jest.Mocked<PlatformRepository>;
+  let studioCreatorRepository: jest.Mocked<StudioCreatorRepository>;
 
   const mockShow: Show = {
     id: BigInt(1),
@@ -153,6 +155,12 @@ describe('showOrchestrationService', () => {
             findByUids: jest.fn(),
           },
         },
+        {
+          provide: StudioCreatorRepository,
+          useValue: {
+            findByStudioUidAndCreatorUids: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -165,6 +173,7 @@ describe('showOrchestrationService', () => {
     creatorRepository = module.get<CreatorRepository>(CreatorRepository) as jest.Mocked<CreatorRepository>;
     showPlatformRepository = module.get<ShowPlatformRepository>(ShowPlatformRepository) as jest.Mocked<ShowPlatformRepository>;
     platformRepository = module.get<PlatformRepository>(PlatformRepository) as jest.Mocked<PlatformRepository>;
+    studioCreatorRepository = module.get<StudioCreatorRepository>(StudioCreatorRepository) as jest.Mocked<StudioCreatorRepository>;
   });
 
   beforeEach(() => {
@@ -468,6 +477,7 @@ describe('showOrchestrationService', () => {
         { id: BigInt(2), uid: 'creator_active' },
         { id: BigInt(3), uid: 'creator_deleted' },
       ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
       showCreatorRepository.findMany.mockResolvedValue([
         { id: BigInt(22), showId: mockShow.id, creatorId: BigInt(2), deletedAt: null, metadata: {} },
         { id: BigInt(33), showId: mockShow.id, creatorId: BigInt(3), deletedAt: new Date(), metadata: {} },
@@ -476,7 +486,7 @@ describe('showOrchestrationService', () => {
       showCreatorRepository.createAssignment.mockResolvedValue({} as any);
       showCreatorRepository.restoreAndUpdateAssignment.mockResolvedValue({} as any);
 
-      const result = await service.bulkAssignCreatorsToShow(uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
 
       expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -514,7 +524,7 @@ describe('showOrchestrationService', () => {
       const uid = 'show_test123';
       showService.getShowById.mockResolvedValue(mockShow);
 
-      const result = await service.bulkAssignCreatorsToShow(uid, []);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, []);
       expect(result).toEqual({ assigned: 0, skipped: 0, failed: [] });
       expect(creatorRepository.findByUids).not.toHaveBeenCalled();
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
@@ -534,11 +544,12 @@ describe('showOrchestrationService', () => {
       creatorRepository.findByUids.mockResolvedValue([
         { id: BigInt(1), uid: 'creator_new' },
       ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
       showCreatorRepository.findMany.mockResolvedValue([]);
       showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
       showCreatorRepository.createAssignment.mockRejectedValue(new Error('insert failed'));
 
-      const result = await service.bulkAssignCreatorsToShow(uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
 
       expect(result).toEqual({
         assigned: 0,
@@ -563,19 +574,58 @@ describe('showOrchestrationService', () => {
       creatorRepository.findByUids.mockResolvedValue([
         { id: BigInt(1), uid: 'creator_new' },
       ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
       showCreatorRepository.findMany.mockResolvedValue([]);
       showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
       showCreatorRepository.createAssignment.mockRejectedValue(
         createMockUniqueConstraintError(['showId', 'creatorId'], 'ShowCreator'),
       );
 
-      const result = await service.bulkAssignCreatorsToShow(uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
 
       expect(result).toEqual({
         assigned: 0,
         skipped: 1,
         failed: [],
       });
+    });
+
+    it('should reject creators that are inactive in the studio roster', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_inactive',
+          note: null,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(9), uid: 'creator_inactive' },
+      ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          creator: {
+            uid: 'creator_inactive',
+            name: 'Inactive Creator',
+            aliasName: 'Inactive Creator',
+          },
+          isActive: false,
+        },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+
+      expect(result).toEqual({
+        assigned: 0,
+        skipped: 0,
+        failed: [
+          { creatorId: 'creator_inactive', reason: 'CREATOR_INACTIVE_IN_ROSTER' },
+        ],
+      });
+      expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
     });
   });
 

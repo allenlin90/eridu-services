@@ -239,6 +239,14 @@ function getStudioCreatorItems(
 ): SidebarNavItem['items'] {
   const creatorItems: SidebarNavItem['items'] = [];
 
+  if (hasStudioRouteAccess(role as StudioRole, 'creatorRoster')) {
+    creatorItems.push({
+      title: 'Creator Roster',
+      url: `/studios/${studioId}/creators`,
+      icon: Users,
+    });
+  }
+
   if (hasStudioRouteAccess(role as StudioRole, 'creatorMapping')) {
     creatorItems.push({
       title: 'Creator Mapping',
@@ -330,7 +338,7 @@ export function useSidebarConfig(
       if (studioCreatorItems.length > 0) {
         navItems.push({
           title: 'Creators',
-          url: `/studios/${activeStudio.studio.uid}/creator-mapping`,
+          url: studioCreatorItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/creators`,
           icon: Users,
           isActive: studioCreatorItems.some((item) => item.isActive),
           items: studioCreatorItems,

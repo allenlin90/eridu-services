@@ -3,6 +3,8 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Creator, Prisma } from '@prisma/client';
 
+import { STUDIO_CREATOR_ROSTER_STATE, type StudioCreatorRosterState } from '@eridu/api-types/studio-creators';
+
 import type { CreateCreatorPayload, UpdateCreatorPayload } from './schemas/creator.schema';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
@@ -178,6 +180,7 @@ export class CreatorRepository extends BaseRepository<
       name: string;
       aliasName: string;
       isRostered: boolean;
+      rosterState: StudioCreatorRosterState;
     }>> {
     const search = params.search?.trim();
     const where: Prisma.CreatorWhereInput = {
@@ -220,7 +223,10 @@ export class CreatorRepository extends BaseRepository<
               deletedAt: null,
             },
           },
-          select: { id: true },
+          select: {
+            id: true,
+            isActive: true,
+          },
           take: 1,
         },
       },
@@ -231,10 +237,16 @@ export class CreatorRepository extends BaseRepository<
       name: creator.name,
       aliasName: creator.aliasName,
       isRostered: creator.studioCreators.length > 0,
+      rosterState: creator.studioCreators.length === 0
+        ? STUDIO_CREATOR_ROSTER_STATE.NONE
+        : creator.studioCreators[0]?.isActive
+          ? STUDIO_CREATOR_ROSTER_STATE.ACTIVE
+          : STUDIO_CREATOR_ROSTER_STATE.INACTIVE,
     }));
   }
 
   async findAvailableForStudioWindow(params: {
+    studioUid: string;
     dateFrom: Date;
     dateTo: Date;
     search?: string;
@@ -249,6 +261,18 @@ export class CreatorRepository extends BaseRepository<
     return this.delegate.findMany({
       where: {
         deletedAt: null,
+        NOT: {
+          studioCreators: {
+            some: {
+              deletedAt: null,
+              isActive: false,
+              studio: {
+                uid: params.studioUid,
+                deletedAt: null,
+              },
+            },
+          },
+        },
         ...(params.search
           ? {
               OR: [

@@ -38,6 +38,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/show-operations/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-templates` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/shared-fields` | View + Manage | No access | No access | No access | No access | No access |
+| `/studios/:studioId/creators` | View + Manage | View | View | No access | No access | No access |
 | `/studios/:studioId/creator-mapping` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 | `/studios/:studioId/creator-mapping/:showId` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 
@@ -47,7 +48,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 |---------|----------|
 | Studio Common (Dashboard, My Tasks, My Shifts) | All roles |
 | Studio Admin (Task Review, Shift Schedule, Show Operations, Task Templates) | ADMIN, MANAGER |
-| Creators (Creator Mapping) | ADMIN, MANAGER, TALENT_MANAGER |
+| Creators (Creator Roster, Creator Mapping) | ADMIN, MANAGER, TALENT_MANAGER |
 
 ## Dashboard View (All Studio Roles)
 
@@ -133,6 +134,25 @@ Define what each studio role can see and do across all studio-scoped routes.
 | Access shared-fields settings route | Yes | No | No |
 | Create/update/deactivate shared fields | Yes | No | No |
 
+## Creator Roster View (`/creators`, ADMIN + MANAGER + TALENT_MANAGER)
+
+### Use Cases
+
+1. Review which creators are active in the studio roster.
+2. Review studio-scoped creator compensation defaults.
+3. Add a creator from the catalog to the roster.
+4. Reactivate an inactive creator.
+5. Deactivate a creator from future assignment workflows without deleting history.
+
+### Functions by Role
+
+| Function | ADMIN | MANAGER | TALENT_MANAGER |
+| -------- | ----- | ------- | -------------- |
+| Access creator roster route | Yes | Yes | Yes |
+| View roster and compensation defaults | Yes | Yes | Yes |
+| Add/reactivate creator | Yes | No | No |
+| Update defaults / active state | Yes | No | No |
+
 ## Creator Mapping View (`/creator-mapping`, ADMIN + MANAGER + TALENT_MANAGER)
 
 ### Use Cases
@@ -174,7 +194,8 @@ Define what each studio role can see and do across all studio-scoped routes.
 3. `POST /studios/:studioId/shows/:showId/creators/bulk-assign` — bulk assign
 4. `DELETE /studios/:studioId/shows/:showId/creators/:creatorId` — remove one mapping
 5. `GET /studios/:studioId/creators/catalog` — searchable creator picker
-6. `GET /studios/:studioId/creators/roster` — studio creator roster
+6. `GET /studios/:studioId/creators` — studio creator roster
+7. `POST /studios/:studioId/creators` / `PATCH /studios/:studioId/creators/:creatorId` — roster management for admin users
 
 ## Change Control
 

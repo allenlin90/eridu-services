@@ -22,6 +22,7 @@
 | [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                     | ✅ Core    | Identity-preserving diff+upsert publish             |
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                             | ✅         | Task-as-Form architecture, API surface, workflows   |
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
+| [Studio Creator Roster](./STUDIO_CREATOR_ROSTER.md)                                 | ✅ Phase 4 | Studio-scoped creator roster CRUD, compensation defaults, and inactive-roster assignment enforcement |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                               | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries |
 | [Studios Internal Read Traffic Hardening](../../erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md) | ✅ Ops | Internal-read burst handling, query cancellation, and readBurst throttle coverage |
@@ -34,7 +35,6 @@
 | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Show Economics Backend Design](./design/SHOW_ECONOMICS_DESIGN.md)                        | 📐      | Deferred merge target for economics endpoints and compensation-aware revisions |
-| [Studio Creator Roster Backend Design](./design/STUDIO_CREATOR_ROSTER_DESIGN.md)          | 📐      | Planned studio-scoped creator roster write surface |
 | [Compensation Line Items Backend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)      | 📐      | Planned supplemental compensation CRUD and aggregation model |
 | [Show Planning Export Backend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md)            | 📐      | Planned planning-export endpoint and economics composition rules |
 | [Creator Availability Hardening Backend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | 📐 | Planned strict availability enforcement and assignment errors |

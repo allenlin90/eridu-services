@@ -57,6 +57,12 @@ My-shifts route refactor pattern (2026-03-06):
 - Dense table/filter/pagination UI moved to `apps/erify_studios/src/features/studio-shifts/components/my-shifts-table-card.tsx`.
 - Search contract type is centralized in `apps/erify_studios/src/features/studio-shifts/utils/my-shifts-route-search.utils.ts`.
 
+Studio roster/list route pattern (2026-03-28):
+- `apps/erify_studios/src/routes/studios/$studioId/creators.tsx` follows the same route-container split as the shipped member roster page.
+- Shared access stays centralized in `apps/erify_studios/src/lib/constants/studio-route-access.ts`; sidebar visibility and `StudioRouteGuard` must stay in sync with that map.
+- URL-backed list state lives in a feature hook (`use-studio-creator-roster.ts`) and drives `DataTable`, `DataTableToolbar`, and `DataTablePagination`.
+- Admin-only write flows should stay isolated in dialog/components files; read roles still render the same table shell without duplicating role checks inside the route.
+
 Studios page spacing consistency (2026-03-06):
 - Standardized route/page wrapper top spacing under `SidebarLayoutHeader` to `p-4 pt-2` (instead of mixed `pt-0` overrides).
 - Introduced shared `PageContainer` (`apps/erify_studios/src/components/layouts/page-container.tsx`) as the canonical wrapper to avoid route-level hardcoded wrapper classes.

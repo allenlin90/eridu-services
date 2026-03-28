@@ -25,7 +25,7 @@ This file is the **phase-level backend index** for Phase 4. Feature-specific bac
 | Creator mapping + assignment | ✅ Shipped | [creator-mapping.md](../../../docs/features/creator-mapping.md) | No retained Phase 4 design doc; shipped feature |
 | Show economics baseline | ⏸️ Deferred revision | [show-economics.md](../../../docs/features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](./design/SHOW_ECONOMICS_DESIGN.md) |
 | Studio member roster | ✅ Shipped | [studio-member-roster.md](../../../docs/features/studio-member-roster.md) | No retained design doc; shipped in PR #28 |
-| Studio creator roster | 🔲 Planned | [studio-creator-roster.md](../../../docs/prd/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER_DESIGN.md](./design/STUDIO_CREATOR_ROSTER_DESIGN.md) |
+| Studio creator roster | ✅ Implemented | [studio-creator-roster.md](../../../docs/features/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER.md](./STUDIO_CREATOR_ROSTER.md) |
 | Compensation line items | 🔲 Planned | [compensation-line-items.md](../../../docs/prd/compensation-line-items.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
 | Show planning export | 🔲 Planned | [show-planning-export.md](../../../docs/prd/show-planning-export.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](./design/SHOW_PLANNING_EXPORT_DESIGN.md) |
 | Creator availability hardening | 🔲 Planned | [creator-availability-hardening.md](../../../docs/prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |

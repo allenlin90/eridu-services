@@ -38,13 +38,14 @@ describe('creatorRepository', () => {
     repository = new CreatorRepository(prisma, txHost);
   });
 
-  it('lists creators with loose availability constraints and search matching', async () => {
+  it('lists creators with loose availability constraints, search matching, and inactive roster exclusion', async () => {
     txCreatorDelegate.findMany.mockResolvedValue([]);
 
     const dateFrom = new Date('2026-03-15T10:00:00.000Z');
     const dateTo = new Date('2026-03-15T12:00:00.000Z');
 
     await repository.findAvailableForStudioWindow({
+      studioUid: 'std_00000000000000000001',
       dateFrom,
       dateTo,
       search: 'ann',
@@ -59,8 +60,19 @@ describe('creatorRepository', () => {
     };
 
     expect(args.take).toBe(25);
-    expect(args.where.studioCreators).toBeUndefined();
     expect(args.where.showCreators).toBeUndefined();
+    expect(args.where.NOT).toEqual({
+      studioCreators: {
+        some: {
+          deletedAt: null,
+          isActive: false,
+          studio: {
+            uid: 'std_00000000000000000001',
+            deletedAt: null,
+          },
+        },
+      },
+    });
 
     expect(args.where.OR).toEqual(
       expect.arrayContaining([

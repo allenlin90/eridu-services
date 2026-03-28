@@ -291,6 +291,7 @@ This applies everywhere in JSX — component slots, list renders, and inline con
 - Route sets may use different shared layout components (for example: `PageContainer` for studio-scoped pages, `AdminLayout` for system pages), but each route set should have one clear reusable wrapper pattern and avoid page-level wrapper duplication.
 - For `erify_studios`, treat `/system/*` as the reference pattern for DRY wrappers: parent route owns access boundary, each leaf page owns content and uses one shared leaf wrapper component.
 - For `studios/$studioId/*`, keep page padding in the parent (`PageContainer`) and use `PageLayout` consistently in leaf pages instead of manual `<h1>`/description blocks.
+- For studio-scoped roster/list pages with filters and dialogs, keep the route file as the composition boundary (`StudioRouteGuard` + `validateSearch` + page assembly), move URL/query wiring into a feature hook, and keep columns plus write dialogs in feature-local `config/` and `components/` files. Canonical references: `src/routes/studios/$studioId/members.tsx` and `src/routes/studios/$studioId/creators.tsx`.
 
 ## Checklist
 

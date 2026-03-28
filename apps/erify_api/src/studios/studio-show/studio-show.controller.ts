@@ -103,7 +103,7 @@ export class StudioShowController extends BaseStudioController {
     @Body() body: BulkAssignStudioShowCreatorsDto,
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
-    const result = await this.showOrchestrationService.bulkAssignCreatorsToShow(id, body.creators);
+    const result = await this.showOrchestrationService.bulkAssignCreatorsToShow(studioId, id, body.creators);
     return {
       assigned: result.assigned,
       skipped: result.skipped,

@@ -234,10 +234,14 @@ describe('useSidebarConfig', () => {
 
     expect(result.current.navMain[5]).toEqual(expect.objectContaining({
       title: 'Creators',
-      url: '/studios/studio-1/creator-mapping',
+      url: '/studios/studio-1/creators',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Creator Roster',
+          url: '/studios/studio-1/creators',
+        }),
         expect.objectContaining({
           title: 'Creator Mapping',
           url: '/studios/studio-1/creator-mapping',

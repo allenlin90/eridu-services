@@ -38,6 +38,7 @@ import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$st
 import { Route as StudiosStudioIdMyShiftsRouteImport } from './routes/studios/$studioId/my-shifts'
 import { Route as StudiosStudioIdMembersRouteImport } from './routes/studios/$studioId/members'
 import { Route as StudiosStudioIdDashboardRouteImport } from './routes/studios/$studioId/dashboard'
+import { Route as StudiosStudioIdCreatorsRouteImport } from './routes/studios/$studioId/creators'
 import { Route as StudiosStudioIdCreatorMappingRouteImport } from './routes/studios/$studioId/creator-mapping'
 import { Route as StudiosStudioIdTaskTemplatesIndexRouteImport } from './routes/studios/$studioId/task-templates/index'
 import { Route as StudiosStudioIdTaskReviewIndexRouteImport } from './routes/studios/$studioId/task-review/index'
@@ -208,6 +209,11 @@ const StudiosStudioIdDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => StudiosStudioIdRouteRoute,
   } as any)
+const StudiosStudioIdCreatorsRoute = StudiosStudioIdCreatorsRouteImport.update({
+  id: '/creators',
+  path: '/creators',
+  getParentRoute: () => StudiosStudioIdRouteRoute,
+} as any)
 const StudiosStudioIdCreatorMappingRoute =
   StudiosStudioIdCreatorMappingRouteImport.update({
     id: '/creator-mapping',
@@ -312,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
+  '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
@@ -358,6 +365,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
+  '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
@@ -401,6 +409,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
+  '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/members': typeof StudiosStudioIdMembersRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
@@ -450,6 +459,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
+    | '/studios/$studioId/creators'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/studios/$studioId'
+    | '/studios/$studioId/creators'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
@@ -538,6 +549,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/studios/$studioId'
     | '/studios/$studioId/creator-mapping'
+    | '/studios/$studioId/creators'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/members'
     | '/studios/$studioId/my-shifts'
@@ -791,6 +803,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdDashboardRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
+    '/studios/$studioId/creators': {
+      id: '/studios/$studioId/creators'
+      path: '/creators'
+      fullPath: '/studios/$studioId/creators'
+      preLoaderRoute: typeof StudiosStudioIdCreatorsRouteImport
+      parentRoute: typeof StudiosStudioIdRouteRoute
+    }
     '/studios/$studioId/creator-mapping': {
       id: '/studios/$studioId/creator-mapping'
       path: '/creator-mapping'
@@ -1011,6 +1030,7 @@ const StudiosStudioIdTaskTemplatesRouteWithChildren =
 
 interface StudiosStudioIdRouteRouteChildren {
   StudiosStudioIdCreatorMappingRoute: typeof StudiosStudioIdCreatorMappingRouteWithChildren
+  StudiosStudioIdCreatorsRoute: typeof StudiosStudioIdCreatorsRoute
   StudiosStudioIdDashboardRoute: typeof StudiosStudioIdDashboardRoute
   StudiosStudioIdMembersRoute: typeof StudiosStudioIdMembersRoute
   StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
@@ -1026,6 +1046,7 @@ interface StudiosStudioIdRouteRouteChildren {
 const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
   StudiosStudioIdCreatorMappingRoute:
     StudiosStudioIdCreatorMappingRouteWithChildren,
+  StudiosStudioIdCreatorsRoute: StudiosStudioIdCreatorsRoute,
   StudiosStudioIdDashboardRoute: StudiosStudioIdDashboardRoute,
   StudiosStudioIdMembersRoute: StudiosStudioIdMembersRoute,
   StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
