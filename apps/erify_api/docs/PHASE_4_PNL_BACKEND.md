@@ -1,12 +1,12 @@
 # Phase 4 P&L Backend Feature Description
 
-> **Status**: Active — mapping foundation shipped; economics baseline shipped; extended scope in progress
+> **Status**: Active — mapping foundation shipped; economics baseline developed (merge deferred); extended scope in progress
 > **Phase scope**: Phase 4 P&L workstreams
 > **Owner app**: `apps/erify_api`
 
 ## Purpose
 
-Define backend feature behavior, contracts, and data-flow rules for Phase 4 P&L delivery: creator mapping + assignment (shipped), economics baseline (shipped), and extended scope (roster management, planning export, availability hardening, revenue workflow).
+Define backend feature behavior, contracts, and data-flow rules for Phase 4 P&L delivery: creator mapping + assignment (shipped), economics baseline (developed, merge deferred), and extended scope (roster management, planning export, availability hardening, revenue workflow).
 
 ## Scope
 
@@ -16,7 +16,7 @@ Define backend feature behavior, contracts, and data-flow rules for Phase 4 P&L 
 - Creator assignment payload normalization for show-level operations.
 - Compensation inputs required by economics (`agreed_rate`, `compensation_type`, `commission_rate`).
 
-### Economics Baseline (Shipped)
+### Economics Baseline (Developed — merge deferred to after Wave 1)
 
 - Show-level and grouped variable cost endpoints (creator costs + shift labor costs).
 - `COMMISSION`/`HYBRID` yield `null` computed cost (revenue side in Wave 3).
@@ -25,7 +25,7 @@ Define backend feature behavior, contracts, and data-flow rules for Phase 4 P&L 
 
 ### Extended Scope (Active — Waves 1–3)
 
-- Studio member roster CRUD with `baseHourlyRate` editing and helper eligibility gating.
+- Studio member roster CRUD with `baseHourlyRate` editing.
 - Studio creator roster write endpoints with compensation defaults and version-guarded updates.
 - Show planning export with estimated cost column.
 - Creator availability strict mode (overlap + roster conflict enforcement).
@@ -90,15 +90,13 @@ PRD: [studio-member-roster.md](../../../docs/prd/studio-member-roster.md)
 
 | Endpoint | Method | Purpose | Status |
 | --- | --- | --- | --- |
-| `/studios/:studioId/members` | `GET` | List active studio memberships with user details, rates, helper flag | 🔲 Wave 1 |
+| `/studios/:studioId/members` | `GET` | List active studio memberships with user details and rates | 🔲 Wave 1 |
 | `/studios/:studioId/members` | `POST` | Add member by email lookup from user catalog | 🔲 Wave 1 |
-| `/studios/:studioId/members/:membershipId` | `PATCH` | Update role, `baseHourlyRate`, `isHelper` (version-guarded) | 🔲 Wave 1 |
+| `/studios/:studioId/members/:membershipId` | `PATCH` | Update role or `baseHourlyRate` | 🔲 Wave 1 |
 | `/studios/:studioId/members/:membershipId` | `DELETE` | Soft-deactivate member | 🔲 Wave 1 |
 
 Key behaviors:
 - Self-demotion guard: ADMIN cannot demote their own membership (returns 422 `SELF_DEMOTION_NOT_ALLOWED`).
-- Version-guarded PATCH: stale `version` returns 409 `VERSION_CONFLICT`.
-- Helper eligibility enforcement: task helper assignment checks `StudioMembership.isHelper`; returns 422 `MEMBER_NOT_HELPER_ELIGIBLE` if false.
 - Duplicate email invite returns 409 `MEMBER_ALREADY_EXISTS`.
 - Re-invite after soft-delete restores the membership.
 
@@ -191,10 +189,7 @@ Metadata behavior:
 
 ### Wave 1 — StudioMembership
 
-```prisma
-isHelper  Boolean @default(false) @map("is_helper")
-version   Int     @default(1)
-```
+None. All required fields already exist in the schema.
 
 ### Wave 3 — ShowPlatform (pending design decision)
 
@@ -228,7 +223,7 @@ netSales  Decimal? @map("net_sales") @db.Decimal(12, 2)
 - Targeted smoke for:
   - creator catalog/roster reads
   - show creator assignment with compensation fields
-  - member roster CRUD with rate/helper toggle (Wave 1)
+  - member roster CRUD with rate and role updates (Wave 1)
   - creator roster write with version guard (Wave 1)
   - planning export with economics cost column (Wave 2)
   - availability strict mode conflict detection (Wave 2)

@@ -182,14 +182,6 @@ function getStudioManagerItems(
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
-    managerItems.push({
-      title: 'Task Templates',
-      url: `/studios/${studioId}/task-templates`,
-      icon: ClipboardCheck,
-    });
-  }
-
   if (hasStudioRouteAccess(role as StudioRole, 'taskReports')) {
     managerItems.push({
       title: 'Task Reports',
@@ -202,23 +194,40 @@ function getStudioManagerItems(
 }
 
 /**
- * Generates admin-only studio navigation items.
+ * Generates Studio Settings navigation items (was "Studio Admin").
+ * Includes: Members, Shared Fields, Task Templates.
  */
-function getStudioAdminItems(
+function getStudioSettingsItems(
   studioId: string,
   role: string,
 ): SidebarNavItem['items'] {
-  const adminItems: SidebarNavItem['items'] = [];
+  const settingsItems: SidebarNavItem['items'] = [];
+
+  if (hasStudioRouteAccess(role as StudioRole, 'members')) {
+    settingsItems.push({
+      title: 'Members',
+      url: `/studios/${studioId}/members`,
+      icon: Users,
+    });
+  }
 
   if (hasStudioRouteAccess(role as StudioRole, 'sharedFields')) {
-    adminItems.push({
+    settingsItems.push({
       title: 'Shared Fields',
       url: `/studios/${studioId}/shared-fields`,
       icon: Settings,
     });
   }
 
-  return adminItems;
+  if (hasStudioRouteAccess(role as StudioRole, 'taskTemplates')) {
+    settingsItems.push({
+      title: 'Task Templates',
+      url: `/studios/${studioId}/task-templates`,
+      icon: ClipboardCheck,
+    });
+  }
+
+  return settingsItems;
 }
 
 /**
@@ -287,11 +296,11 @@ export function useSidebarConfig(
     if (activeStudio) {
       const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
       const studioManagerItems = buildActiveItems(getStudioManagerItems(activeStudio.studio.uid, activeStudio.role));
-      const studioAdminItems = buildActiveItems(getStudioAdminItems(activeStudio.studio.uid, activeStudio.role));
+      const studioSettingsItems = buildActiveItems(getStudioSettingsItems(activeStudio.studio.uid, activeStudio.role));
       const studioCreatorItems = buildActiveItems(getStudioCreatorItems(activeStudio.studio.uid, activeStudio.role));
 
       navItems.push({
-        title: 'Studio Common',
+        title: 'My Workspace',
         url: `/studios/${activeStudio.studio.uid}`,
         icon: Videotape,
         isActive: studioCommonItems.some((item) => item.isActive),
@@ -300,7 +309,7 @@ export function useSidebarConfig(
 
       if (studioManagerItems.length > 0) {
         navItems.push({
-          title: 'Studio Manager',
+          title: 'Operations',
           url: studioManagerItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
           icon: Settings,
           isActive: studioManagerItems.some((item) => item.isActive),
@@ -308,13 +317,13 @@ export function useSidebarConfig(
         });
       }
 
-      if (studioAdminItems.length > 0) {
+      if (studioSettingsItems.length > 0) {
         navItems.push({
-          title: 'Studio Admin',
-          url: studioAdminItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
+          title: 'Studio Settings',
+          url: studioSettingsItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
           icon: ShieldCheck,
-          isActive: studioAdminItems.some((item) => item.isActive),
-          items: studioAdminItems,
+          isActive: studioSettingsItems.some((item) => item.isActive),
+          items: studioSettingsItems,
         });
       }
 

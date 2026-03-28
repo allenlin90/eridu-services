@@ -217,4 +217,88 @@ export class StudioMembershipRepository extends BaseRepository<
       data: { deletedAt: null },
     });
   }
+
+  /**
+   * Update a studio member's role and/or hourly rate.
+   * Accepts domain-level payload and builds the Prisma input internally.
+   */
+  async updateStudioMember(
+    uid: string,
+    payload: { role?: string; baseHourlyRate?: number },
+  ): Promise<Prisma.StudioMembershipGetPayload<{ include: { user: true } }>> {
+    const data: Prisma.StudioMembershipUpdateInput = {};
+    if (payload.role !== undefined) {
+      data.role = payload.role;
+    }
+    if (payload.baseHourlyRate !== undefined) {
+      data.baseHourlyRate = payload.baseHourlyRate.toFixed(2);
+    }
+
+    return this.prisma.studioMembership.update({
+      where: { uid },
+      data,
+      include: { user: true },
+    });
+  }
+
+  /**
+   * List active memberships for a studio with embedded user info.
+   * Used by the /studios/:studioId/members roster endpoint.
+   */
+  async listStudioMembersWithUser(
+    studioUid: string,
+    params: { skip?: number; take?: number; search?: string; sort?: 'asc' | 'desc' } = {},
+  ): Promise<{ data: Prisma.StudioMembershipGetPayload<{ include: { user: { select: { uid: true; name: true; email: true } } } }>[]; total: number }> {
+    const where: Prisma.StudioMembershipWhereInput = {
+      studio: { uid: studioUid },
+      deletedAt: null,
+      user: { deletedAt: null },
+    };
+
+    if (params.search) {
+      where.user = {
+        deletedAt: null,
+        OR: [
+          { name: { contains: params.search, mode: 'insensitive' } },
+          { email: { contains: params.search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const include = {
+      user: {
+        select: {
+          uid: true as const,
+          name: true as const,
+          email: true as const,
+        },
+      },
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.studioMembership.findMany({
+        where,
+        include,
+        orderBy: { createdAt: params.sort ?? 'desc' },
+        skip: params.skip,
+        take: params.take,
+      }),
+      this.prisma.studioMembership.count({ where }),
+    ]);
+
+    return { data, total };
+  }
+
+  /**
+   * Find membership by user and studio regardless of deleted status.
+   * Used by add-member flow to support re-invite/restore behavior.
+   */
+  async findByUserAndStudioIncludingDeleted(userUid: string, studioUid: string) {
+    return this.prisma.studioMembership.findFirst({
+      where: {
+        user: { uid: userUid },
+        studio: { uid: studioUid },
+      },
+    });
+  }
 }

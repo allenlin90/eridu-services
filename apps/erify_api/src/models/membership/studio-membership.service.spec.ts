@@ -4,11 +4,24 @@ import { Test } from '@nestjs/testing';
 import { StudioMembershipRepository } from './studio-membership.repository';
 import { StudioMembershipService } from './studio-membership.service';
 
+import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 describe('studioMembershipService', () => {
   let service: StudioMembershipService;
   let findAdminMembershipByExtIdSpy: jest.Mock;
+  let userService: { findByEmail: jest.Mock };
+  let membershipRepository: {
+    findAdminMembershipByExtId: jest.Mock;
+    findByUid: jest.Mock;
+    listStudioMemberships: jest.Mock;
+    findByUserAndStudioIncludingDeleted: jest.Mock;
+    createStudioMembership: jest.Mock;
+    updateByUnique: jest.Mock;
+    updateStudioMember: jest.Mock;
+    softDeleteByUnique: jest.Mock;
+    findOne: jest.Mock;
+  };
 
   const mockUtilityService = {
     generateBrandedId: jest.fn(),
@@ -16,12 +29,16 @@ describe('studioMembershipService', () => {
 
   beforeEach(async () => {
     findAdminMembershipByExtIdSpy = jest.fn();
-    const mockRepository = {
+    membershipRepository = {
       findAdminMembershipByExtId: findAdminMembershipByExtIdSpy,
       findByUid: jest.fn(),
       listStudioMemberships: jest.fn(),
+      findByUserAndStudioIncludingDeleted: jest.fn(),
+      createStudioMembership: jest.fn(),
       updateByUnique: jest.fn(),
+      updateStudioMember: jest.fn(),
       softDeleteByUnique: jest.fn(),
+      findOne: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -29,7 +46,13 @@ describe('studioMembershipService', () => {
         StudioMembershipService,
         {
           provide: StudioMembershipRepository,
-          useValue: mockRepository,
+          useValue: membershipRepository,
+        },
+        {
+          provide: UserService,
+          useValue: {
+            findByEmail: jest.fn(),
+          },
         },
         {
           provide: UtilityService,
@@ -39,6 +62,7 @@ describe('studioMembershipService', () => {
     }).compile();
 
     service = module.get<StudioMembershipService>(StudioMembershipService);
+    userService = module.get(UserService);
   });
 
   beforeEach(() => {
@@ -131,18 +155,18 @@ describe('studioMembershipService', () => {
   describe('getStudioMembershipById', () => {
     it('should return membership when found', async () => {
       const mockMembership = { uid: 'smb_123' };
-      ((service as any).studioMembershipRepository.findByUid as jest.Mock).mockResolvedValue(mockMembership);
+      membershipRepository.findByUid.mockResolvedValue(mockMembership);
 
       const result = await service.getStudioMembershipById('smb_123');
-      expect((service as any).studioMembershipRepository.findByUid).toHaveBeenCalledWith('smb_123', undefined);
+      expect(membershipRepository.findByUid).toHaveBeenCalledWith('smb_123', undefined);
       expect(result).toEqual(mockMembership);
     });
 
     it('should return null when not found', async () => {
-      ((service as any).studioMembershipRepository.findByUid as jest.Mock).mockResolvedValue(null);
+      membershipRepository.findByUid.mockResolvedValue(null);
 
       const result = await service.getStudioMembershipById('smb_123');
-      expect((service as any).studioMembershipRepository.findByUid).toHaveBeenCalledWith('smb_123', undefined);
+      expect(membershipRepository.findByUid).toHaveBeenCalledWith('smb_123', undefined);
       expect(result).toBeNull();
     });
   });
@@ -151,10 +175,10 @@ describe('studioMembershipService', () => {
     it('should delegate to repository listStudioMemberships', async () => {
       const params = { skip: 0, take: 10 };
       const expectedResult = { data: [], total: 0 };
-      ((service as any).studioMembershipRepository.listStudioMemberships as jest.Mock).mockResolvedValue(expectedResult);
+      membershipRepository.listStudioMemberships.mockResolvedValue(expectedResult);
 
       const result = await service.listStudioMemberships(params);
-      expect((service as any).studioMembershipRepository.listStudioMemberships).toHaveBeenCalledWith(params, undefined);
+      expect(membershipRepository.listStudioMemberships).toHaveBeenCalledWith(params, undefined);
       expect(result).toEqual(expectedResult);
     });
   });
@@ -166,11 +190,11 @@ describe('studioMembershipService', () => {
       const includes = { user: true };
       const mockResult = { uid, role: 'admin' };
 
-      ((service as any).studioMembershipRepository.updateByUnique as jest.Mock).mockResolvedValue(mockResult);
+      membershipRepository.updateByUnique.mockResolvedValue(mockResult);
 
       const result = await service.updateStudioMembership(uid, payload, includes);
 
-      expect((service as any).studioMembershipRepository.updateByUnique).toHaveBeenCalledWith(
+      expect(membershipRepository.updateByUnique).toHaveBeenCalledWith(
         { uid },
         { role: 'admin' },
         includes,
@@ -184,12 +208,180 @@ describe('studioMembershipService', () => {
       const uid = 'smb_123';
       const mockResult = { uid, deletedAt: new Date() };
 
-      ((service as any).studioMembershipRepository.softDeleteByUnique as jest.Mock).mockResolvedValue(mockResult);
+      membershipRepository.softDeleteByUnique.mockResolvedValue(mockResult);
 
       const result = await service.deleteStudioMembership(uid);
 
-      expect((service as any).studioMembershipRepository.softDeleteByUnique).toHaveBeenCalledWith({ uid });
+      expect(membershipRepository.softDeleteByUnique).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('addStudioMember', () => {
+    const mockUser = { uid: 'user_abc123', email: 'jane@example.com' };
+    const payload = {
+      email: 'jane@example.com',
+      role: 'manager',
+      baseHourlyRate: 25,
+      studioUid: 'std_123',
+    };
+
+    it('should create a new membership when user exists and has no prior membership', async () => {
+      userService.findByEmail.mockResolvedValue(mockUser as any);
+      membershipRepository.findByUserAndStudioIncludingDeleted.mockResolvedValue(null);
+      const createdMembership = { uid: 'smb_new123', role: 'manager', user: mockUser };
+      membershipRepository.createStudioMembership.mockResolvedValue(createdMembership);
+
+      const result = await service.addStudioMember(payload);
+
+      expect(userService.findByEmail).toHaveBeenCalledWith('jane@example.com');
+      expect(membershipRepository.findByUserAndStudioIncludingDeleted)
+        .toHaveBeenCalledWith('user_abc123', 'std_123');
+      expect(membershipRepository.createStudioMembership).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'manager',
+          baseHourlyRate: '25.00',
+          metadata: {},
+        }),
+        { user: true },
+      );
+      expect(result).toEqual(createdMembership);
+    });
+
+    it('should throw USER_NOT_FOUND when email does not match a user', async () => {
+      userService.findByEmail.mockResolvedValue(null);
+
+      await expect(service.addStudioMember(payload)).rejects.toMatchObject({
+        message: expect.stringContaining('USER_NOT_FOUND'),
+      });
+      expect(membershipRepository.createStudioMembership).not.toHaveBeenCalled();
+    });
+
+    it('should throw MEMBER_ALREADY_EXISTS when active membership exists', async () => {
+      userService.findByEmail.mockResolvedValue(mockUser as any);
+      membershipRepository.findByUserAndStudioIncludingDeleted.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'smb_existing',
+        deletedAt: null, // Active membership
+      });
+
+      await expect(service.addStudioMember(payload)).rejects.toMatchObject({
+        message: expect.stringContaining('MEMBER_ALREADY_EXISTS'),
+      });
+      expect(membershipRepository.createStudioMembership).not.toHaveBeenCalled();
+    });
+
+    it('should restore soft-deleted membership when re-inviting existing user', async () => {
+      const deletedMembership = {
+        id: BigInt(1),
+        uid: 'smb_123',
+        deletedAt: new Date('2026-01-01T00:00:00Z'),
+      };
+      const restoredMembership = { ...deletedMembership, deletedAt: null };
+
+      userService.findByEmail.mockResolvedValue(mockUser as any);
+      membershipRepository.findByUserAndStudioIncludingDeleted.mockResolvedValue(deletedMembership);
+      membershipRepository.updateByUnique.mockResolvedValue(restoredMembership);
+
+      const result = await service.addStudioMember(payload);
+
+      expect(userService.findByEmail).toHaveBeenCalledWith('jane@example.com');
+      expect(membershipRepository.findByUserAndStudioIncludingDeleted)
+        .toHaveBeenCalledWith('user_abc123', 'std_123');
+      expect(membershipRepository.updateByUnique).toHaveBeenCalledWith(
+        { id: BigInt(1) },
+        {
+          deletedAt: null,
+          role: 'manager',
+          baseHourlyRate: '25.00',
+        },
+        { user: true },
+      );
+      expect(membershipRepository.createStudioMembership).not.toHaveBeenCalled();
+      expect(result).toEqual(restoredMembership);
+    });
+  });
+
+  describe('updateStudioMember', () => {
+    const membershipUid = 'smb_member123';
+    const payload = { role: 'manager', baseHourlyRate: 30 };
+
+    it('should update role and hourly rate successfully', async () => {
+      const mockUpdated = { uid: membershipUid, role: 'manager', user: {} };
+      membershipRepository.updateStudioMember.mockResolvedValue(mockUpdated);
+
+      const result = await service.updateStudioMember(membershipUid, payload);
+
+      expect(membershipRepository.updateStudioMember).toHaveBeenCalledWith(
+        membershipUid,
+        payload,
+      );
+      expect(result).toEqual(mockUpdated);
+    });
+
+    it('should throw SELF_DEMOTION_NOT_ALLOWED when admin demotes themselves', async () => {
+      const actorUid = membershipUid; // Actor is same as target
+
+      await expect(
+        service.updateStudioMember(membershipUid, { role: 'manager' }, actorUid),
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('SELF_DEMOTION_NOT_ALLOWED'),
+      });
+      expect(membershipRepository.updateStudioMember).not.toHaveBeenCalled();
+    });
+
+    it('should allow admin to update their own hourly rate without role change', async () => {
+      const actorUid = membershipUid;
+      const rateOnlyPayload = { baseHourlyRate: 50 };
+      const mockUpdated = { uid: membershipUid, baseHourlyRate: '50.00', user: {} };
+      membershipRepository.updateStudioMember.mockResolvedValue(mockUpdated);
+
+      const result = await service.updateStudioMember(membershipUid, rateOnlyPayload, actorUid);
+
+      expect(membershipRepository.updateStudioMember).toHaveBeenCalledWith(
+        membershipUid,
+        rateOnlyPayload,
+      );
+      expect(result).toEqual(mockUpdated);
+    });
+  });
+
+  describe('removeStudioMember', () => {
+    it('should delegate soft-delete to repository', async () => {
+      const uid = 'smb_target123';
+      const mockDeleted = { uid, deletedAt: new Date() };
+      membershipRepository.softDeleteByUnique.mockResolvedValue(mockDeleted);
+
+      const result = await service.removeStudioMember(uid);
+
+      expect(membershipRepository.softDeleteByUnique).toHaveBeenCalledWith({ uid });
+      expect(result).toEqual(mockDeleted);
+    });
+  });
+
+  describe('findStudioMemberByUidAndStudio', () => {
+    it('should delegate to repository findOne with studio scope', async () => {
+      const membershipUid = 'smb_member123';
+      const studioUid = 'std_studio456';
+      const mockResult = { uid: membershipUid };
+      membershipRepository.findOne.mockResolvedValue(mockResult);
+
+      const result = await service.findStudioMemberByUidAndStudio(membershipUid, studioUid);
+
+      expect(membershipRepository.findOne).toHaveBeenCalledWith({
+        uid: membershipUid,
+        studio: { uid: studioUid },
+        deletedAt: null,
+      });
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return null when membership is not found in the studio', async () => {
+      membershipRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.findStudioMemberByUidAndStudio('smb_notfound', 'std_123');
+
+      expect(result).toBeNull();
     });
   });
 });

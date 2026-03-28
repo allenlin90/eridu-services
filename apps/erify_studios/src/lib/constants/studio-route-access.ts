@@ -54,6 +54,10 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.TALENT_MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
+  members: [
+    STUDIO_ROLE.ADMIN,
+    STUDIO_ROLE.MANAGER,
+  ],
 } as const satisfies Record<string, readonly StudioRole[]>;
 
 export type StudioRouteAccessKey = keyof typeof STUDIO_ROUTE_ACCESS;

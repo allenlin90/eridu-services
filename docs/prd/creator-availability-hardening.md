@@ -66,7 +66,7 @@ Key questions unanswered today:
 - Automatic conflict resolution or re-assignment suggestions
 - Multi-creator batch conflict checking beyond per-creator flags
 - Retroactive conflict detection on existing assignments (only new assignments are checked)
-- Availability enforcement for task-helper assignment (that is covered by the helper eligibility gate in the studio member roster PRD)
+- Availability enforcement for task-helper assignment (out of scope for this PRD)
 - Tiered/volume assignment policies (Phase 5+)
 
 ## Dual-Mode API Shape

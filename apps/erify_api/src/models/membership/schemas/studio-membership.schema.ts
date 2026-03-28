@@ -1,14 +1,22 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import type { StudioMemberResponse } from '@eridu/api-types/memberships';
 import {
+  addStudioMemberRequestSchema,
   createMembershipInputSchema,
   membershipApiResponseSchema,
   STUDIO_ROLE,
+  studioMemberResponseSchema,
   updateMembershipInputSchema,
+  updateStudioMemberRequestSchema,
 } from '@eridu/api-types/memberships';
 
-import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
+import {
+  paginationBaseSchema,
+  paginationQuerySchema,
+  transformPagination,
+} from '@/lib/pagination/pagination.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
@@ -25,7 +33,7 @@ export const studioMembershipSchema = z.object({
   userId: z.bigint(),
   studioId: z.bigint(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-  baseHourlyRate: z.any().nullable(),
+  baseHourlyRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -91,7 +99,7 @@ export const studioMembershipWithRelationsSchema = z.object({
   userId: z.bigint(),
   studioId: z.bigint(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-  baseHourlyRate: z.any().nullable(),
+  baseHourlyRate: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -293,4 +301,97 @@ export type StudioMembershipOrderBy = {
   createdAt?: 'asc' | 'desc';
   updatedAt?: 'asc' | 'desc';
   role?: 'asc' | 'desc';
+};
+
+// ---------------------------------------------------------------------------
+// Studio Member Roster — /studios/:studioId/members
+// ---------------------------------------------------------------------------
+
+/**
+ * Internal Prisma shape for a membership with user included.
+ * Used to validate repository output before DTO transformation.
+ */
+export const studioMemberWithUserSchema = z.object({
+  id: z.bigint(),
+  uid: z.string().startsWith(StudioMembershipService.UID_PREFIX),
+  userId: z.bigint(),
+  studioId: z.bigint(),
+  role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+  baseHourlyRate: z.unknown().nullable(),
+  metadata: z.record(z.string(), z.any()),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  deletedAt: z.date().nullable(),
+  user: z.object({
+    uid: z.string(),
+    name: z.string(),
+    email: z.string().email(),
+  }),
+});
+
+export type StudioMemberWithUser = z.infer<typeof studioMemberWithUserSchema>;
+
+/**
+ * DTO transform: converts a StudioMembership+user record to the member roster wire format.
+ */
+export const studioMemberDto = studioMemberWithUserSchema.transform(
+  (obj): StudioMemberResponse => ({
+    membership_id: obj.uid,
+    user_id: obj.user.uid,
+    user_name: obj.user.name,
+    user_email: obj.user.email,
+    role: obj.role,
+    base_hourly_rate: obj.baseHourlyRate !== null && obj.baseHourlyRate !== undefined
+      ? Number(obj.baseHourlyRate)
+      : null,
+    created_at: obj.createdAt.toISOString(),
+  }),
+).pipe(studioMemberResponseSchema);
+
+/**
+ * Query DTO for listing studio members (GET /studios/:studioId/members).
+ */
+export const listStudioMembersQuerySchema = paginationBaseSchema
+  .extend({
+    limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+    search: z.string().optional(),
+  })
+  .transform(transformPagination);
+
+export class ListStudioMembersQueryDto extends createZodDto(listStudioMembersQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare sort: 'asc' | 'desc';
+  declare search: string | undefined;
+}
+
+/**
+ * Request DTO for adding a member (POST /studios/:studioId/members).
+ */
+export class AddStudioMemberDto extends createZodDto(addStudioMemberRequestSchema) {}
+
+/**
+ * Request DTO for updating a member (PATCH /studios/:studioId/members/:membershipId).
+ */
+export class UpdateStudioMemberDto extends createZodDto(updateStudioMemberRequestSchema) {}
+
+/**
+ * Service payload for adding a studio member via the member roster endpoint.
+ */
+export type AddStudioMemberPayload = {
+  email: string;
+  role: string;
+  baseHourlyRate: number;
+  studioUid: string;
+};
+
+/**
+ * Service payload for updating a studio member via the member roster endpoint.
+ */
+export type UpdateStudioMemberPayload = {
+  role?: string;
+  baseHourlyRate?: number;
 };

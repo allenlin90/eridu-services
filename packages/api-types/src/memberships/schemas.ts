@@ -1,6 +1,18 @@
 import { z } from 'zod';
 
 /**
+ * Error codes for studio member roster operations.
+ */
+export const STUDIO_MEMBER_ERROR = {
+  SELF_DEMOTION_NOT_ALLOWED: 'SELF_DEMOTION_NOT_ALLOWED',
+  SELF_REMOVE_NOT_ALLOWED: 'SELF_REMOVE_NOT_ALLOWED',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
+  MEMBER_ALREADY_EXISTS: 'MEMBER_ALREADY_EXISTS',
+} as const;
+
+export type StudioMemberError = (typeof STUDIO_MEMBER_ERROR)[keyof typeof STUDIO_MEMBER_ERROR];
+
+/**
  * Role types for studio membership permissions
  */
 export const STUDIO_ROLE = {
@@ -50,3 +62,44 @@ export const updateMembershipInputSchema = z.object({
 export type MembershipApiResponse = z.infer<typeof membershipApiResponseSchema>;
 export type CreateMembershipInput = z.infer<typeof createMembershipInputSchema>;
 export type UpdateMembershipInput = z.infer<typeof updateMembershipInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Studio Member Roster — /studios/:studioId/members
+// ---------------------------------------------------------------------------
+
+/**
+ * Response DTO for a single studio member (with embedded user info).
+ */
+export const studioMemberResponseSchema = z.object({
+  membership_id: z.string(),
+  user_id: z.string(),
+  user_name: z.string(),
+  user_email: z.string().email(),
+  role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+  base_hourly_rate: z.number().nullable(),
+  created_at: z.string(),
+});
+
+export type StudioMemberResponse = z.infer<typeof studioMemberResponseSchema>;
+
+/**
+ * Request DTO for adding a member to a studio (POST /studios/:studioId/members).
+ */
+export const addStudioMemberRequestSchema = z.object({
+  email: z.string().email('A valid email address is required'),
+  role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
+  base_hourly_rate: z.number().min(0, 'Hourly rate must be a non-negative number'),
+});
+
+export type AddStudioMemberRequest = z.infer<typeof addStudioMemberRequestSchema>;
+
+/**
+ * Request DTO for updating a studio member (PATCH /studios/:studioId/members/:membershipId).
+ * All fields are optional — partial update (last-write-wins).
+ */
+export const updateStudioMemberRequestSchema = z.object({
+  role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]).optional(),
+  base_hourly_rate: z.number().min(0, 'Hourly rate must be a non-negative number').optional(),
+});
+
+export type UpdateStudioMemberRequest = z.infer<typeof updateStudioMemberRequestSchema>;

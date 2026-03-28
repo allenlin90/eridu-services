@@ -1,13 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { StudioMembership } from '@prisma/client';
 
+import { STUDIO_MEMBER_ERROR, STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import type {
+  AddStudioMemberPayload,
   CreateStudioMembershipPayload,
+  UpdateStudioMemberPayload,
   UpdateStudioMembershipPayload,
 } from './schemas/studio-membership.schema';
 import { StudioMembershipRepository } from './studio-membership.repository';
 
+import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 // Type aliases for better readability and type safety
@@ -22,6 +28,7 @@ export class StudioMembershipService extends BaseModelService {
 
   constructor(
     private readonly studioMembershipRepository: StudioMembershipRepository,
+    private readonly userService: UserService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -205,5 +212,110 @@ export class StudioMembershipService extends BaseModelService {
     id: StudioMembershipId,
   ): Promise<StudioMembership> {
     return this.studioMembershipRepository.restoreByUnique({ id });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Studio Member Roster — /studios/:studioId/members
+  // ---------------------------------------------------------------------------
+
+  /**
+   * List active memberships for a studio with embedded user info.
+   */
+  async listStudioMembers(
+    studioUid: string,
+    params: { skip?: number; take?: number; search?: string; sort?: 'asc' | 'desc' } = {},
+  ) {
+    return this.studioMembershipRepository.listStudioMembersWithUser(studioUid, params);
+  }
+
+  /**
+   * Add a member to a studio by email lookup.
+   * - If user does not exist → 404 USER_NOT_FOUND
+   * - If active membership already exists → 409 MEMBER_ALREADY_EXISTS
+   * - If soft-deleted membership exists → restore it with new role + rate
+   */
+  async addStudioMember(payload: AddStudioMemberPayload) {
+    const user = await this.userService.findByEmail(payload.email);
+    if (!user) {
+      throw HttpError.notFound(STUDIO_MEMBER_ERROR.USER_NOT_FOUND, payload.email);
+    }
+
+    // Check for existing membership (active or soft-deleted)
+    const existing = await this.studioMembershipRepository.findByUserAndStudioIncludingDeleted(
+      user.uid,
+      payload.studioUid,
+    );
+
+    if (existing) {
+      if (!existing.deletedAt) {
+        // Active membership already exists
+        throw HttpError.conflict(STUDIO_MEMBER_ERROR.MEMBER_ALREADY_EXISTS);
+      }
+
+      // Soft-deleted: restore with new role and rate
+      return this.studioMembershipRepository.updateByUnique(
+        { id: existing.id },
+        {
+          deletedAt: null,
+          role: payload.role,
+          baseHourlyRate: payload.baseHourlyRate.toFixed(2),
+        },
+        { user: true },
+      );
+    }
+
+    const uid = this.generateUid();
+    return this.studioMembershipRepository.createStudioMembership(
+      {
+        uid,
+        user: { connect: { uid: user.uid } },
+        studio: { connect: { uid: payload.studioUid } },
+        role: payload.role,
+        baseHourlyRate: payload.baseHourlyRate.toFixed(2),
+        metadata: {},
+      },
+      { user: true },
+    );
+  }
+
+  /**
+   * Update a studio member's role and/or hourly rate.
+   * Enforces self-demotion guard: ADMIN cannot demote their own membership.
+   */
+  async updateStudioMember(
+    membershipUid: string,
+    payload: UpdateStudioMemberPayload,
+    actorMembershipUid?: string,
+  ) {
+    // Self-demotion guard: if actor is updating their own membership and demoting from ADMIN
+    if (
+      actorMembershipUid
+      && actorMembershipUid === membershipUid
+      && payload.role !== undefined
+      && payload.role !== STUDIO_ROLE.ADMIN
+    ) {
+      throw HttpError.unprocessableEntity(STUDIO_MEMBER_ERROR.SELF_DEMOTION_NOT_ALLOWED);
+    }
+
+    return this.studioMembershipRepository.updateStudioMember(membershipUid, payload);
+  }
+
+  /**
+   * Soft-deactivate a studio member.
+   */
+  async removeStudioMember(membershipUid: string): Promise<StudioMembership> {
+    return this.studioMembershipRepository.softDeleteByUnique({ uid: membershipUid });
+  }
+
+  /**
+   * Find a studio member by UID scoped to a specific studio.
+   * Returns null if not found or not in the given studio.
+   */
+  async findStudioMemberByUidAndStudio(membershipUid: string, studioUid: string) {
+    return this.studioMembershipRepository.findOne({
+      uid: membershipUid,
+      studio: { uid: studioUid },
+      deletedAt: null,
+    });
   }
 }

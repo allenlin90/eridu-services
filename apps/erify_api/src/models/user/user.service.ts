@@ -133,6 +133,10 @@ export class UserService extends BaseModelService {
     return this.userRepository.findByExtId(extId);
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findByEmail(email);
+  }
+
   /**
    * Retrieves a user's membership for a specific studio.
    * Used by StudioGuard.
