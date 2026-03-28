@@ -293,7 +293,7 @@ Additionally, compensation line items surface as inline sections on:
 - Backend API design: `apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`
 - Frontend design: `apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`
 - Economics baseline: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
-- Studio member roster: `docs/prd/studio-member-roster.md`
+- Studio member roster: `docs/features/studio-member-roster.md`
 - Studio creator roster: `docs/prd/studio-creator-roster.md`
 - Shift cost calculation: `apps/erify_api/src/models/studio-shift/studio-shift.service.ts`
 - Phase 4 roadmap: `docs/roadmap/PHASE_4.md`

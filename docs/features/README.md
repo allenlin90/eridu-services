@@ -22,4 +22,5 @@ When a feature ships:
 | --- | --- | --- |
 | [RBAC Roles](./rbac-roles.md) | Phase 4 | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
 | [Creator Mapping](./creator-mapping.md) | Phase 4 | No per-feature design doc retained |
+| [Studio Member Roster](./studio-member-roster.md) | Phase 4 | [API types](../../packages/api-types/src/memberships/schemas.ts), [BE controller](../../apps/erify_api/src/studios/studio-membership/studio-members.controller.ts), [FE route](../../apps/erify_studios/src/routes/studios/$studioId/members.tsx) |
 | [Task Submission Reporting](./task-submission-reporting.md) | Phase 4 | [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |

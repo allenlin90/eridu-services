@@ -50,7 +50,7 @@ Key outcomes:
 
 ## Documentation Structure
 
-Phase 4 is a **portfolio of features**, each with its own PRD and per-feature design docs. Phase-level docs serve as indexes and cross-cutting references.
+Phase 4 is a **portfolio of features**, each with its own lifecycle document (PRD before ship, feature doc after ship) and per-feature design docs where retained. Phase-level docs serve as indexes and cross-cutting references.
 
 ### Doc Flow (per feature)
 
@@ -79,11 +79,11 @@ Exception: **Sidebar Redesign** — no PRD (FE-only config change). Uses existin
 
 ### Per-Feature Design Docs (created with each PR)
 
-| Feature | PRD | BE Design | FE Design |
+| Feature | Product Doc | BE Design | FE Design |
 | --- | --- | --- | --- |
 | Creator mapping | Shipped → [feature doc](../features/creator-mapping.md) | Shipped feature; no retained design doc | Shipped feature; no retained design doc |
 | Economics baseline | Deferred → [feature doc](../features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md) | [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md) |
-| Studio member roster | Shipped → [PRD](../prd/studio-member-roster.md) | Shipped (PR #28) | Shipped (PR #28) |
+| Studio member roster | Shipped → [feature doc](../features/studio-member-roster.md) | Shipped (PR #28) | Shipped (PR #28) |
 | Studio creator roster | [PRD](../prd/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER_DESIGN.md](../../apps/erify_api/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md) | [STUDIO_CREATOR_ROSTER_DESIGN.md](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ROSTER_DESIGN.md) |
 | Compensation line items | [PRD](../prd/compensation-line-items.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
 | Show planning export | [PRD](../prd/show-planning-export.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md) |
@@ -144,15 +144,15 @@ The app reached usable moderation-template state after a one-off operational reb
 
 **Sequencing**: Can run in parallel with Wave 1. No dependency on roster PRDs or economics.
 
-### Extended Scope (2026-03-22) — Active PRDs
+### Extended Scope (2026-03-22) — Workstream Lifecycle
 
 Phase 4 expanded to cover full P&L operator foundations. Six new workstreams promoted from ideation:
 
-| Workstream                                       | PRD                                                                             | Status                                | L-side Hook                                                                               | Wave |
+| Workstream                                       | Lifecycle Doc                                                                   | Status                                | L-side Hook                                                                               | Wave |
 | ------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
 | Sidebar redesign (erify_studios)                 | [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔲 Planned                             | —                                                                                         | 1    |
 | Studio creator roster CRUD                       | [studio-creator-roster.md](../prd/studio-creator-roster.md)                     | 🔲 Planned                             | `StudioCreator.defaultRate/defaultRateType/defaultCommissionRate` → creator cost fallback | 1    |
-| Studio member roster                             | [studio-member-roster.md](../prd/studio-member-roster.md)                       | ✅ Shipped (PR #28)                     | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
+| Studio member roster                             | [studio-member-roster.md](../features/studio-member-roster.md)                  | ✅ Shipped (PR #28)                     | `StudioMembership.baseHourlyRate` → shift labor cost                                      | 1    |
 | Compensation line items                          | [compensation-line-items.md](../prd/compensation-line-items.md)                 | 🔲 Planned (post-Wave 1)               | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators; no implicit cross-show proration in Phase 4 | R+   |
 | Show planning export with cost preview           | [show-planning-export.md](../prd/show-planning-export.md)                       | 🔲 Planned                             | `estimated_total_cost` column from economics                                              | 2    |
 | Creator availability hardening (strict mode)     | [creator-availability-hardening.md](../prd/creator-availability-hardening.md)   | 🔲 Planned (depends on creator roster) | Conflict enforcement: overlap, roster state, inactive                                     | 2    |
@@ -200,7 +200,7 @@ Design Qs resolved + big.js adopted (gate for Wave 3):
 | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sidebar Redesign**      | S    | Pure FE refactor: `sidebar-config.tsx` + `studio-route-access.ts`. Ships navigation homes for all new pages.                          |
 | **Studio Creator Roster** | M    | `StudioCreator` model is complete. Add `POST`/`PATCH` write endpoints, version-guarded compensation updates, FE roster page.          |
-| **Studio Member Roster**  | M    | No migration needed. Add `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, FE page. |
+| **Studio Member Roster**  | M    | ✅ Shipped. No migration needed; delivered `POST`/`PATCH`/`DELETE` endpoints, self-demotion guard, and the studio member roster page. |
 
 **Milestone 1**: Economics endpoint reflects roster-managed rates for FIXED creators; shift costs reflect updated `baseHourlyRate`. Sidebar shows function-based groups with new page navigation.
 
