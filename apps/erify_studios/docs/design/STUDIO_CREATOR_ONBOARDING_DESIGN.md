@@ -4,218 +4,344 @@
 > **Phase scope**: Phase 4 Wave 1
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/studio-creator-onboarding.md`](../../../../docs/prd/studio-creator-onboarding.md)
-> **Depends on**: Studio creator roster FE ✅ (PR #30), backend onboard endpoint (this PR)
+> **Depends on**: Studio creator roster UI ✅, backend onboarding + onboarding-user lookup endpoints
 
 ## Purpose
 
-Extend the existing creator roster page (`/studios/$studioId/creators`) with a search-first onboarding flow so studio admins can create brand-new creators without leaving the studio workspace, and surface roster enforcement feedback in creator mapping when off-roster creators are rejected.
+Extend the studio roster surface so a studio admin can complete routine creator intake without leaving `/studios/$studioId/creators`, while making creator-mapping failures understandable when a creator has not been onboarded to the studio roster.
 
 ## Scope
 
 | Change | Type | Priority |
 | --- | --- | --- |
-| Onboard dialog (search → create-and-roster) | New component | Primary |
-| Refactor add-creator dialog to use onboard flow | Modify existing | Primary |
-| Mapping UX for `CREATOR_NOT_IN_ROSTER` errors | Modify existing | Primary |
-| Missing-creator guidance (role-aware CTA) | New UI element | Secondary |
+| Search-first onboarding dialog on creator roster page | Primary UI flow | Primary |
+| Optional user-link search in create mode | New feature API + form field | Primary |
+| Human-readable roster enforcement feedback in creator mapping | UX refinement | Primary |
+| Role-aware "ask admin / go to roster" guidance | Empty/error state | Secondary |
+
+## Ordered Task List
+
+### FE-1 Feature API And Contracts
+
+- [ ] Consume the new onboarding payload/error contracts from `@eridu/api-types`.
+- [ ] Extend `src/features/studio-creator-roster/api/studio-creator-roster.ts` with `onboardStudioCreator()` and `useOnboardStudioCreator()`.
+- [ ] Add `src/features/studio-creator-roster/api/get-onboarding-users.ts` for `GET /studios/:studioId/creators/onboarding-users`.
+- [ ] Add `useStudioCreatorOnboardingUsersQuery()` with forwarded `AbortSignal` and feature-local query keys.
+- [ ] Invalidate roster, creator-catalog, and creator-availability query families after successful onboarding.
+
+### FE-2 Roster Dialog Restructure
+
+- [ ] Refactor `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx` into explicit `search` and `create` modes.
+- [ ] Keep `search` as the default mode every time the dialog opens.
+- [ ] Preserve the current search term when switching between modes.
+- [ ] Keep existing add/reactivate behavior for actionable `NONE` and `INACTIVE` results.
+- [ ] Render `ACTIVE` matches in non-actionable helper UI instead of the selectable combobox list.
+
+### FE-3 Create Mode And Optional User Link
+
+- [ ] Add create-mode fields for `name`, `alias`, optional user link, and compensation defaults.
+- [ ] Keep compensation validation aligned with existing roster rules and field-level copy.
+- [ ] Use the new studio-scoped onboarding-user search hook for the optional `user_id` field.
+- [ ] Do not call `/admin/users` or reuse `useUsersQuery()` in this flow.
+- [ ] Submit create mode through `useOnboardStudioCreator()` and close only on success.
+
+### FE-4 Mapping Error Handling
+
+- [ ] Update `src/features/studio-show-creators/components/add-creator-dialog.tsx` to show role-aware onboarding guidance before submit and on typed failure.
+- [ ] Update `src/features/studio-show-creators/components/show-creator-list.tsx` so single-show assignment surfaces readable `CREATOR_NOT_IN_ROSTER` and `CREATOR_INACTIVE_IN_ROSTER` copy.
+- [ ] Update `src/features/studio-show-creators/api/bulk-assign-creators-to-shows.ts` to preserve structured error reasons for the dialog layer.
+- [ ] Update `src/features/studio-show-creators/components/bulk-creator-assignment-dialog.tsx` to stay open on error-only or actionable partial failures.
+- [ ] Add admin CTA routing back to `/studios/$studioId/creators` where the user can actually resolve the problem.
+
+### FE-5 Test Coverage
+
+- [ ] Add component tests proving the dialog defaults to search mode.
+- [ ] Add tests proving the create CTA appears after search even when results exist.
+- [ ] Add tests proving active roster matches are visible but not actionable.
+- [ ] Add tests proving create mode uses the studio onboarding-user endpoint instead of admin users.
+- [ ] Add tests for query invalidation after successful onboarding.
+- [ ] Add tests for single-show and bulk-mapping roster error messaging and keep-open behavior.
+
+### FE-6 Verification Gate
+
+- [ ] Run `pnpm --filter erify_studios lint`.
+- [ ] Run `pnpm --filter erify_studios typecheck`.
+- [ ] Run `pnpm --filter erify_studios test`.
+- [ ] Run `pnpm --filter erify_studios build` if route wiring or shared package exports change.
+
+## Design Decisions
+
+- The dialog must always start with catalog search.
+- "Create and onboard new creator" becomes available after search, not only on zero results.
+- The studios app must **not** reuse `useUsersQuery()` because it calls `/admin/users`.
+- No shared combobox API change is required for this slice. Non-actionable matches are shown through feature-specific helper UI instead of disabled combobox options.
+- Creator mapping search remains partly discovery-first in this slice because the current availability endpoint is intentionally loose; typed write-time errors remain authoritative.
 
 ## Route And Access
 
-No new routes. The onboarding flow lives within the existing `/studios/$studioId/creators` page.
+No new route is added. The onboarding flow remains on:
+
+- `/studios/$studioId/creators`
+
+Access stays unchanged:
 
 | Surface | Access | Change |
 | --- | --- | --- |
-| `/studios/$studioId/creators` | `ADMIN` write, `MANAGER` + `TALENT_MANAGER` read | No change |
-| Add Creator button | `ADMIN` only | Launches redesigned dialog |
-| Creator mapping assignment | `ADMIN`, `MANAGER`, `TALENT_MANAGER` | Error handling for off-roster |
+| Creator roster page | `ADMIN` write, `MANAGER` + `TALENT_MANAGER` read | No route change |
+| Add Creator button | `ADMIN` only | Launches redesigned onboarding dialog |
+| Creator mapping dialogs | `ADMIN`, `MANAGER`, `TALENT_MANAGER` | Better off-roster guidance and error handling |
 
-## Dialog Redesign: Add Creator → Onboard Creator
+## Roster Dialog UX
 
-The current `AddStudioCreatorDialog` picks from the existing catalog only. The redesigned dialog becomes a two-path onboarding flow:
+### Overall Flow
 
-### Flow
-
-```
-[Add Creator] button
-      │
-      ▼
-┌─────────────────────────┐
-│  Search Creator Catalog  │  ← Always starts here
-│  (AsyncCombobox)         │
-└─────────┬───────────────┘
-          │
-    ┌─────┴──────┐
-    │             │
-    ▼             ▼
-Found?          Not found?
-    │             │
-    ▼             ▼
-Select →        [Create New Creator]
-Set defaults    secondary action link
-    │             │
-    ▼             ▼
-POST /creators  POST /creators/onboard
-(existing)      (new endpoint)
-    │             │
-    ▼             ▼
-  ← Roster refreshed, dialog closes →
+```mermaid
+flowchart TD
+    A[Open Add Creator dialog] --> B[Search existing creator catalog]
+    B --> C{Use existing identity?}
+    C -- Yes --> D[Select creator and apply studio defaults]
+    D --> E[POST /studios/:studioId/creators]
+    C -- No --> F[Switch to create mode]
+    F --> G[Enter name, alias, optional user link, defaults]
+    G --> H[POST /studios/:studioId/creators/onboard]
+    E --> I[Invalidate roster, catalog, availability]
+    H --> I
+    I --> J[Dialog closes and roster refreshes]
 ```
 
-### Search-First UX
+### Search Mode
 
-1. Dialog opens with a catalog search combobox (reuses `useCreatorCatalogQuery` with `include_rostered: false`).
-2. Typing searches the global catalog — results show name, alias, and roster state badge.
-3. If a match is found: select it, fill compensation defaults, submit → calls existing `POST /studios/:studioId/creators`.
-4. If no match: a "Create new creator" link/button appears below the search results.
+The current `AddStudioCreatorDialog` becomes a two-mode flow with `search` as the default mode.
 
-### Create-New Form
+**Data source**
 
-Clicking "Create new creator" expands the dialog to show creator identity fields:
+- `useCreatorCatalogQuery(studioId, { search, include_rostered: true, limit: 50 })`
+
+**Result handling**
+
+Split catalog results into three groups:
+
+1. **Actionable**
+   - `roster_state = NONE`
+   - `roster_state = INACTIVE`
+   - these appear in the combobox and can be submitted
+2. **Already active in this studio**
+   - `roster_state = ACTIVE`
+   - these are shown in a small informational list below the combobox, not as selectable options
+3. **No useful match chosen**
+   - admin can switch to create mode after search
+
+This keeps duplicate-prevention visible without requiring disabled-option support in the shared combobox.
+
+**Create CTA rule**
+
+- show `Create and onboard new creator` after the admin has searched
+- do not require zero results
+- keep copy explicit that creator identities are global across studios
+
+### Create Mode
+
+Create mode is opened from the same dialog, not a separate route.
+
+Fields:
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| Name | `Input` (text) | Yes | Global creator name |
-| Alias | `Input` (text) | Yes | Display name |
-| User link | `AsyncCombobox` (user search) | No | Optional user association |
-| Default rate | `Input` (number) | No | Studio compensation default |
-| Rate type | `Select` | No | FIXED / COMMISSION / HYBRID / Not set |
-| Commission rate | `Input` (number) | Conditional | Required if COMMISSION or HYBRID |
+| Name | text input | Yes | Global creator name |
+| Alias | text input | Yes | Display / stage name |
+| User link | async combobox | No | Uses studio onboarding-user search endpoint |
+| Default rate | number input | No | Studio-level compensation default |
+| Rate type | select | No | Reuse existing compensation options |
+| Commission rate | number input | Conditional | Required if COMMISSION or HYBRID |
 
-Submit calls `POST /studios/:studioId/creators/onboard`.
+Behavior:
 
-### Implementation Approach
+- `Back to search` returns to search mode without losing the current catalog search term
+- compensation validation reuses the existing roster helper logic
+- submit calls the onboard mutation and closes only on successful create
 
-Replace the internals of `AddStudioCreatorDialog` with a two-mode component:
+### Copy
 
+- Dialog title: `Add Creator to Roster`
+- Search placeholder: `Search creators by name or alias...`
+- Search helper: `Search first to reuse an existing creator identity when possible.`
+- Create CTA: `Create and onboard new creator`
+- Create subtitle: `New creators are global identities shared across studios.`
+- Active-match helper label: `Already active in this studio`
+
+## User Lookup In Create Mode
+
+The optional `user_id` field gets a dedicated feature API.
+
+### New Feature API
+
+Recommended file:
+
+- `src/features/studio-creator-roster/api/get-onboarding-users.ts`
+
+Contract:
+
+```typescript
+GET /studios/:studioId/creators/onboarding-users?search=alice&limit=20
 ```
-State: 'search' | 'create'
 
-'search' mode:
-  - Catalog combobox (existing)
-  - Compensation defaults (existing)
-  - "Create new creator" link at bottom
-  - Submit → POST /studios/:studioId/creators
+Response type:
 
-'create' mode:
-  - Creator identity fields (name, alias, user_id)
-  - Compensation defaults (same fields)
-  - "Back to search" link
-  - Submit → POST /studios/:studioId/creators/onboard
-```
+- reuse `UserApiResponse` from `@eridu/api-types/users`
 
-This avoids a separate component — the dialog handles both paths with a mode toggle. The existing compensation field logic (`buildCreateStudioCreatorRosterPayload`, validation rules) is reused in both modes.
+Why new API instead of reusing existing users hooks:
 
-### Copy Guidance
+- `useUsersQuery()` currently targets `/admin/users`
+- that is the wrong authorization boundary for studio-admin-owned onboarding
 
-- Dialog title: "Add Creator to Roster" (both modes)
-- Search placeholder: "Search creators by name or alias..."
-- Create link text: "Creator not found? Create a new one"
-- Create mode subtitle: "New creators are shared across all studios"
-- Back link text: "Back to search"
+### User Combobox Rendering
+
+Display label format:
+
+- `name (email)` when email exists
+- fallback to `name`
+
+Empty-state copy:
+
+- `No eligible users found. Linking can be skipped for now.`
 
 ## API Layer
 
-### New Mutation
+### Add To Existing Roster API Module
 
-Add to `src/features/studio-creator-roster/api/studio-creator-roster.ts`:
+Extend `src/features/studio-creator-roster/api/studio-creator-roster.ts` with:
 
-```typescript
-export async function onboardStudioCreator(
-  studioId: string,
-  data: OnboardCreatorInput,
-): Promise<StudioCreatorRosterItem> {
-  const response = await apiClient.post(
-    `/studios/${studioId}/creators/onboard`,
-    data,
-  );
-  return response.data;
-}
+- `onboardStudioCreator()`
+- `useOnboardStudioCreator()`
 
-export function useOnboardStudioCreator(studioId: string) {
-  // Same invalidation pattern as useAddStudioCreatorToRoster:
-  // invalidates roster list, catalog, availability
-}
-```
+The mutation should invalidate:
 
-### Type Contract
+- `studioCreatorRosterKeys.listPrefix(studioId)`
+- `creatorCatalogKeys.listPrefix(studioId)`
+- `creatorAvailabilityKeys.listPrefix(studioId)`
 
-Import `onboardCreatorInputSchema` from `@eridu/api-types/studio-creators` and derive the input type:
+### New Onboarding User Search Hook
+
+Add a dedicated query hook for create mode:
 
 ```typescript
-import type { z } from 'zod';
-import { onboardCreatorInputSchema } from '@eridu/api-types/studio-creators';
-
-type OnboardCreatorInput = z.infer<typeof onboardCreatorInputSchema>;
+useStudioCreatorOnboardingUsersQuery(
+  studioId,
+  { search, limit },
+  enabled,
+)
 ```
 
-## Creator Mapping: Roster Enforcement UX
+This hook should:
 
-When the backend now rejects off-roster creators with `CREATOR_NOT_IN_ROSTER`, the mapping UI must handle this gracefully.
+- forward `AbortSignal`
+- use a short warm cache like other studio reads
+- stay feature-local instead of living under the admin users feature
 
-### Bulk Assignment Dialog
+## Creator Mapping UX
 
-In `bulk-creator-assignment-dialog.tsx`, the response `errors[]` array may now include `CREATOR_NOT_IN_ROSTER` as a reason. Update the error display:
-
-```
-Error reasons mapping:
-  CREATOR_INACTIVE_IN_ROSTER → "Creator is inactive in this studio's roster"
-  CREATOR_NOT_IN_ROSTER      → "Creator is not in this studio's roster"
-```
-
-The toast already shows `"{n} error(s)"` — no structural change needed, just the human-readable mapping.
+The design must match current backend reality: search endpoints are not yet a full roster-eligibility oracle.
 
 ### Single-Show Assignment Dialog
 
-The add-creator dialog for shows (`studio-show-creators/components/add-creator-dialog.tsx`) uses the availability endpoint, which already filters by roster. Creators not in the roster won't appear in search results. No change needed for the happy path.
+Current state:
 
-For the error path (race condition where roster changes between search and submit): display the error reason from the bulk-assign response.
+- uses `GET /studios/:studioId/creators/availability`
+- that endpoint is still intentionally loose until availability hardening ships
 
-### Missing Creator Guidance
+Design for this slice:
 
-When a user searches for a creator in the mapping flow and finds nothing:
+- keep the existing availability-driven search
+- do **not** claim search results are already roster-safe
+- add persistent helper text in the dialog:
+  - admin: `Can't find the right creator? Add them to the studio roster first.`
+  - manager / talent manager: `Can't find the right creator? Ask a studio admin to add them to the studio roster.`
+- map write-time failures:
+  - `CREATOR_NOT_IN_ROSTER` → onboarding guidance
+  - `CREATOR_INACTIVE_IN_ROSTER` → inactive roster guidance
 
-- **Admin**: Show "Creator not in roster. [Add to roster →]" with a link to `/studios/$studioId/creators`.
-- **Manager / Talent Manager**: Show "Creator not in roster. Ask a studio admin to add them."
+### Bulk Assignment Dialog
 
-This is a small addition to the empty-state rendering in the assignment combobox.
+Current state:
 
-## Query Invalidation
+- uses catalog search plus aggregated mutation results
+- currently closes too aggressively because the dialog callback treats any mutation success as a terminal success, even when the payload contains errors
 
-The onboard mutation follows the same invalidation pattern as add-to-roster:
+Design for this slice:
 
-| Query family | Why |
-| --- | --- |
-| `studioCreatorRosterKeys.listPrefix(studioId)` | New roster entry appears |
-| `creatorCatalogKeys.listPrefix(studioId)` | New creator appears in catalog with `ACTIVE` state |
-| `creatorAvailabilityKeys.listPrefix(studioId)` | New creator may be available for assignment |
+- keep catalog-based creator discovery for now
+- surface readable reason labels for:
+  - `CREATOR_NOT_IN_ROSTER`
+  - `CREATOR_INACTIVE_IN_ROSTER`
+- keep the dialog open when the result contains only errors or partial failure that still needs user attention
+- close only when the assignment outcome is fully successful or skipped-only
+
+### Guidance Rules
+
+Use `useStudioAccess(studioId)` inside mapping dialogs or pass a precomputed capability flag from the route.
+
+Guidance copy:
+
+- **Admin**
+  - `Creator is not in this studio's roster. Add them to the roster first.`
+  - CTA link to `/studios/$studioId/creators`
+- **Manager / Talent Manager**
+  - `Creator is not in this studio's roster. Ask a studio admin to onboard them.`
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Mapping as Creator Mapping Dialog
+    participant API as Assignment API
+
+    Operator->>Mapping: Search and select creator
+    Operator->>API: Submit assignment
+    alt creator is active in roster
+        API-->>Mapping: success
+        Mapping-->>Operator: success toast / close dialog
+    else creator not in roster
+        API-->>Mapping: CREATOR_NOT_IN_ROSTER
+        Mapping-->>Operator: show onboarding guidance
+    else creator inactive in roster
+        API-->>Mapping: CREATOR_INACTIVE_IN_ROSTER
+        Mapping-->>Operator: show inactive-roster guidance
+    end
+```
 
 ## File Inventory
 
 | File | Action |
 | --- | --- |
-| `src/features/studio-creator-roster/api/studio-creator-roster.ts` | Add `onboardStudioCreator` + `useOnboardStudioCreator` |
-| `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx` | Redesign to two-mode flow (search / create) |
-| `src/features/studio-show-creators/components/bulk-creator-assignment-dialog.tsx` | Add `CREATOR_NOT_IN_ROSTER` error reason label |
-| `src/features/studio-show-creators/components/add-creator-dialog.tsx` | Add missing-creator guidance (role-aware) |
+| `src/features/studio-creator-roster/api/studio-creator-roster.ts` | Add onboard mutation |
+| `src/features/studio-creator-roster/api/get-onboarding-users.ts` | New feature API for studio-safe user lookup |
+| `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx` | Redesign into search/create two-mode onboarding flow |
+| `src/features/studio-show-creators/components/add-creator-dialog.tsx` | Add role-aware onboarding guidance and write-error mapping |
+| `src/features/studio-show-creators/components/show-creator-list.tsx` | Surface readable roster error copy for single-show assign |
+| `src/features/studio-show-creators/api/bulk-assign-creators-to-shows.ts` | Preserve structured error results so dialog can decide whether to close |
+| `src/features/studio-show-creators/components/bulk-creator-assignment-dialog.tsx` | Add readable roster error labels and keep-open behavior on actionable failures |
 
 ## Testing
 
-### Unit / Component Tests
+### Component / Hook Tests
 
-| Test | File |
-| --- | --- |
-| Onboard dialog renders search mode by default | `add-studio-creator-dialog` test |
-| "Create new" link switches to create mode | `add-studio-creator-dialog` test |
-| Create mode form validation (name + alias required) | `add-studio-creator-dialog` test |
-| Compensation validation reused in create mode | existing compensation lib tests |
+- roster dialog defaults to search mode
+- create CTA appears after search, not only on zero results
+- active roster matches render in helper UI, not as selectable add targets
+- create mode validates required `name` and `alias_name`
+- create mode user lookup uses the studio onboarding-user endpoint, not admin users
+- onboard mutation invalidates roster/catalog/availability queries
+- single-show assignment renders readable off-roster guidance on typed failure
+- bulk dialog does not auto-close on error-only or partial-failure results
 
-### Manual Smoke Tests
+### Manual Smoke
 
-1. Open `/studios/$studioId/creators` as ADMIN → click Add Creator → search finds existing creator → add → roster refreshes.
-2. Search with no results → "Create new creator" link appears → fill form → submit → creator appears in roster.
-3. Open bulk assignment → assign a non-rostered creator (if possible via API) → see `CREATOR_NOT_IN_ROSTER` error.
-4. As MANAGER, open creator mapping → search finds nothing → see "Ask admin" guidance (no create link).
+1. As `ADMIN`, open `/studios/$studioId/creators`, search a real existing creator, add/reactivate, and verify roster refresh.
+2. As `ADMIN`, search, switch to create mode, optionally link a user, onboard, and verify the new creator appears in roster.
+3. In single-show mapping, submit an off-roster creator via race/API path and confirm the UI shows onboarding guidance.
+4. In bulk mapping, confirm readable roster-error labels and that the dialog remains open when user action is still needed.
 
-## Open Questions
+## Assumptions Locked For Implementation
 
-None — the PRD and backend design are fully specified. Proceed to implementation.
+- No shared `AsyncCombobox` or `AsyncMultiCombobox` API change is required.
+- Search mode prevents duplicate add/reactivate actions through feature-local helper UI for active matches.
+- Single-show mapping still relies on a loose discovery endpoint in this slice; write-time errors are the authoritative roster gate.
