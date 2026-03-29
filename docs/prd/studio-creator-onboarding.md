@@ -14,13 +14,12 @@ Current state:
 
 - `/system/creators` is still the only shipped surface that can create a brand-new `Creator`, and `/system/*` is reserved for system admins.
 - `POST /studios/:studioId/creators` only adds or reactivates an **existing** creator from the global catalog.
-- Creator mapping can still assign creators who are not in the studio roster, so the roster is not the authoritative gate for assignment.
+- Creator assignment writes now enforce studio roster membership, but the studio UI still lacks the full onboarding path and clear missing-creator handoff.
 
 Consequences today:
 
 - A studio admin cannot onboard a brand-new creator from the studio workspace without system-admin help.
-- Studio-managed creator defaults on `StudioCreator` can be bypassed because show assignment does not require active roster membership.
-- Managers and talent managers can assign a creator who was never intentionally onboarded to the studio.
+- Managers and talent managers still need clearer in-product guidance when a creator is missing from the roster.
 - Phase 4 cannot honestly claim "studio creator management complete" while day-to-day onboarding still depends on `/system/*`.
 
 Key unanswered questions:
@@ -49,41 +48,9 @@ Key unanswered questions:
 | `/system/creators` | Global creator CRUD, system-admin only | ✅ Exists |
 | `POST /studios/:studioId/creators` | Adds/reactivates an existing catalog creator in the studio roster | ✅ Exists |
 | `GET /studios/:studioId/creators/catalog` | Returns rostered + non-rostered creators for discovery | ✅ Exists |
-| `POST /studios/:studioId/shows/:showId/creators/bulk-assign` | Accepts existing creators; blocks inactive roster rows only | ✅ Exists (**⚠️ BUG**: only checks for inactive roster entries; creators with *no roster entry at all* are silently assigned — see Implementation Bug below) |
+| `POST /studios/:studioId/shows/:showId/creators/bulk-assign` | Accepts existing creators; rejects off-roster and inactive roster rows at write time | ✅ Exists |
 | `Creator` | Global creator identity shared across studios | ✅ Exists |
 | `StudioCreator` | Studio-scoped creator roster, defaults, active state | ✅ Exists |
-
-## Implementation Bug (Pre-Existing)
-
-The current `bulkAssignCreatorsToShow` in `show-orchestration.service.ts` has a **roster enforcement gap**: it only filters for *inactive* roster entries but does not reject creators who have *no roster entry at all*. A creator not in the studio roster can be silently assigned to shows.
-
-**Root cause** (lines ~185-232 of `show-orchestration.service.ts`):
-```typescript
-// Only builds a set of INACTIVE roster entries
-const inactiveRosterCreatorIds = new Set(
-  studioCreatorRosterEntries
-    .filter((entry) => !entry.isActive)
-    .map((entry) => entry.creator.uid)
-);
-// A creator with NO roster entry passes this check — not in the inactive set
-```
-
-**Fix required**: Add a `CREATOR_NOT_IN_ROSTER` check that compares the requested creator UIDs against the roster entries returned. Any creator UID not found in `studioCreatorRosterEntries` (regardless of active state) should be rejected with a `422 CREATOR_NOT_IN_ROSTER` error.
-
-**Priority**: Should be fixed as part of this PRD's implementation, not deferred. The roster-first assignment enforcement in Requirement #5 below directly addresses this bug.
-
-```mermaid
-flowchart TD
-    A[Creator assignment request] --> B{Creator exists globally?}
-    B -- No --> N[404 creator not found]
-    B -- Yes --> C{StudioCreator row exists?}
-    C -- No --> D[422 CREATOR_NOT_IN_ROSTER]
-    C -- Yes --> E{StudioCreator is active?}
-    E -- No --> F[422 CREATOR_INACTIVE_IN_ROSTER]
-    E -- Yes --> G{Already assigned to target show?}
-    G -- Yes --> H[Skip as idempotent existing assignment]
-    G -- No --> I[Create or restore ShowCreator assignment]
-```
 
 ## Requirements
 
@@ -114,10 +81,10 @@ flowchart TD
    - Linking a creator to a user account remains optional at onboarding time.
    - If `user_id` is supported in the UI, selection must happen from a studio-scoped lookup flow rather than a system-admin-only user surface.
 
-5. **Roster-first assignment enforcement**
+5. **Roster-first assignment alignment**
    - Only **active studio roster creators** are assignable from `/studios/:studioId/creator-mapping`.
    - Creators with `roster_state = NONE` are not assignable in single-show or bulk assignment flows.
-   - Assignment write APIs must reject off-roster creators with a typed `CREATOR_NOT_IN_ROSTER` error.
+   - The onboarding flow and mapping UI must align with the existing write-time `CREATOR_NOT_IN_ROSTER` / `CREATOR_INACTIVE_IN_ROSTER` gate.
 
 6. **Studio mapping UX for missing creators**
    - If an operator cannot find a creator in mapping, the UI explains that the creator must be onboarded to the studio roster first.
@@ -278,7 +245,6 @@ These are distinct from 403 (authorization) and 404 (creator not found).
 - [ ] Existing catalog creators can still be added or reactivated in the studio roster from the same studio surface.
 - [ ] Optional user linking can be completed from the studio onboarding flow without depending on `/admin/users`.
 - [ ] Managers and talent managers can no longer assign `roster_state = NONE` creators from single-show or bulk creator mapping.
-- [ ] Assignment APIs return typed `CREATOR_NOT_IN_ROSTER` errors for off-roster creators.
 - [ ] Mapping UI shows a clear "onboard to roster first" message when a creator is missing or when assignment is rejected as `CREATOR_NOT_IN_ROSTER`.
 - [ ] Studio creator onboarding no longer depends on `/system/creators` for ordinary day-to-day operations.
 
