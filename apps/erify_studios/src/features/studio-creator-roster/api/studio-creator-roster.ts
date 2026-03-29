@@ -1,7 +1,9 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { z } from 'zod';
 
 import type {
   CreateStudioCreatorRosterInput,
+  onboardCreatorInputSchema,
   StudioCreatorRosterItem,
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
@@ -73,6 +75,19 @@ export async function updateStudioCreatorRoster(
   return data;
 }
 
+type OnboardStudioCreatorInput = z.infer<typeof onboardCreatorInputSchema>;
+
+export async function onboardStudioCreator(
+  studioId: string,
+  payload: OnboardStudioCreatorInput,
+): Promise<StudioCreatorRosterItem> {
+  const { data } = await apiClient.post<StudioCreatorRosterItem>(
+    `/studios/${studioId}/creators/onboard`,
+    payload,
+  );
+  return data;
+}
+
 export function useStudioCreatorRosterQuery(
   studioId: string,
   params?: GetStudioCreatorRosterParams,
@@ -114,6 +129,16 @@ export function useUpdateStudioCreatorRoster(studioId: string) {
   return useMutation({
     mutationFn: ({ creatorId, payload }: { creatorId: string; payload: UpdateStudioCreatorRosterInput }) =>
       updateStudioCreatorRoster(studioId, creatorId, payload),
+    onSuccess: () => {
+      invalidateStudioCreatorDependencies(queryClient, studioId);
+    },
+  });
+}
+
+export function useOnboardStudioCreator(studioId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: OnboardStudioCreatorInput) => onboardStudioCreator(studioId, payload),
     onSuccess: () => {
       invalidateStudioCreatorDependencies(queryClient, studioId);
     },
