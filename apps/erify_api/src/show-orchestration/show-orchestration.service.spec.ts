@@ -701,6 +701,52 @@ describe('showOrchestrationService', () => {
       });
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
     });
+
+    it('should keep already-assigned creators idempotent even when roster is missing or inactive', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_off_roster',
+          note: null,
+          metadata: {},
+        },
+        {
+          creatorId: 'creator_inactive',
+          note: null,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(11), uid: 'creator_off_roster' },
+        { id: BigInt(12), uid: 'creator_inactive' },
+      ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          creator: {
+            uid: 'creator_inactive',
+            name: 'Inactive Creator',
+            aliasName: 'Inactive Creator',
+          },
+          isActive: false,
+        },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([
+        { id: BigInt(21), showId: mockShow.id, creatorId: BigInt(11), deletedAt: null, metadata: {} },
+        { id: BigInt(22), showId: mockShow.id, creatorId: BigInt(12), deletedAt: null, metadata: {} },
+      ] as any);
+
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+
+      expect(result).toEqual({
+        assigned: 0,
+        skipped: 2,
+        failed: [],
+      });
+      expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
+      expect(showCreatorRepository.restoreAndUpdateAssignment).not.toHaveBeenCalled();
+    });
   });
 
   describe('replaceCreatorsForShow', () => {
