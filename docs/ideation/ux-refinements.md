@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [erify-studios-route-query-optimization.md](./erify-studios-route-query-optimization.md)
+> **Related**: [Review Quality Hardening](./review-quality-hardening.md), [Studios Internal Read Traffic Hardening](../../apps/erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md)
 
 ## What
 
