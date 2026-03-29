@@ -26,8 +26,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // 3. Extract the token (Bearer Token only)
-  const token = context.request.headers.get("Authorization")?.replace("Bearer ", "");
+  // 3. Extract the token (Cookie first, then Bearer Token)
+  const token = context.cookies.get(CONFIG.auth.cookieName)?.value ||
+                context.request.headers.get("Authorization")?.replace("Bearer ", "");
 
   // 4. Fallback: If no token, redirect to login
   if (!token) {
