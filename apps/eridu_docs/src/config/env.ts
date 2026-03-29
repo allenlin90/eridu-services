@@ -8,7 +8,6 @@ import { z } from 'zod';
 const envSchema = z.object({
   // Authentication Context
   AUTH_URL: z.url({ message: 'AUTH_URL must be a valid URL' }).default('http://localhost:3000'),
-  AUTH_COOKIE_NAME: z.string().default('eridu_session_token'),
   
   // External Application Links
   LOGIN_URL: z.url({ message: 'LOGIN_URL must be a valid URL' }).default('http://localhost:3000/login'),
@@ -26,7 +25,6 @@ export type Env = z.infer<typeof envSchema>;
  */
 const parsedEnv = envSchema.parse({
   AUTH_URL: import.meta.env.AUTH_URL,
-  AUTH_COOKIE_NAME: import.meta.env.AUTH_COOKIE_NAME,
   LOGIN_URL: import.meta.env.LOGIN_URL,
   DEV: import.meta.env.DEV,
   BYPASS_AUTH: import.meta.env.BYPASS_AUTH || process.env.BYPASS_AUTH,
@@ -35,7 +33,6 @@ const parsedEnv = envSchema.parse({
 export const CONFIG = {
   auth: {
     url: parsedEnv.AUTH_URL,
-    cookieName: parsedEnv.AUTH_COOKIE_NAME,
   },
   urls: {
     login: parsedEnv.LOGIN_URL,

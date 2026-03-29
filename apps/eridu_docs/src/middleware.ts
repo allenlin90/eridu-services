@@ -26,9 +26,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // 3. Extract the token
-  const token = context.cookies.get(CONFIG.auth.cookieName)?.value || 
-                context.request.headers.get("Authorization")?.replace("Bearer ", "");
+  // 3. Extract the token (Bearer Token only)
+  const token = context.request.headers.get("Authorization")?.replace("Bearer ", "");
 
   // 4. Fallback: If no token, redirect to login
   if (!token) {
@@ -44,9 +43,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   } catch (err: unknown) {
     console.error("🔑 Invalid JWT Signature:", err instanceof Error ? err.message : err);
-    
-    // Clear dead cookie
-    context.cookies.delete(CONFIG.auth.cookieName, { path: '/' });
     
     // Redirect unauthenticated user
     const loginUrl = new URL(CONFIG.urls.login);
