@@ -30,13 +30,6 @@ export function SignInForm() {
       if (signInError) {
         setError(signInError.message || 'Failed to sign in');
       } else {
-        // Sync JWT for SSR Apps (like eridu_docs) relying purely on JWKS validation
-        const tokenRes = await authClient.token();
-        if (tokenRes?.data?.token) {
-          const domain = window.location.hostname === 'localhost' ? 'localhost' : '.eridu.io';
-          document.cookie = `eridu_jwt_token=${tokenRes.data.token}; domain=${domain}; path=/; max-age=86400; SameSite=Lax`;
-        }
-
         if (callbackURL) {
           window.location.href = callbackURL;
           return;

@@ -1,53 +1,67 @@
 import { defineMiddleware } from 'astro:middleware';
-import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
-import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 
 import { CONFIG } from './config/env';
+import {
+  COOKIE_NAME,
+  buildLoginUrl,
+  extractUser,
+  jwtVerifier,
+  refreshToken,
+  setTokenCookie,
+} from './lib/auth';
 
-// Initialize the shared auth SDK verifier globally so JWKS is cached across requests
-const jwksService = new JwksService({ authServiceUrl: CONFIG.auth.url });
-const jwtVerifier = new JwtVerifier({ jwksService, issuer: CONFIG.auth.url });
-
-// Prefetch JWKS to prime the cache (non-blocking)
-jwksService.initialize().catch(err => console.error("Failed to prefetch JWKS:", err));
+function isPublicPath(pathname: string): boolean {
+  return (
+    pathname.startsWith('/_astro/') ||
+    pathname.startsWith('/auth/') ||
+    /\.(png|jpg|jpeg|gif|css|js|ico|svg|webp|woff2?)$/.test(pathname)
+  );
+}
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  // 1. Skip auth check for static assets (images, css, etc.)
-  if (context.url.pathname.startsWith('/_astro/') || context.url.pathname.match(/\.(png|jpg|jpeg|gif|css|js|ico|svg)$/)) {
-    return next();
-  }
+  if (isPublicPath(context.url.pathname)) return next();
 
-  // 2. Dev & Local Bypass (Put BEFORE reading headers/cookies to avoid Astro SSR warnings on prerendered pages)
-  if (CONFIG.isDev || CONFIG.bypassAuth) {
+  if (CONFIG.bypassAuth) {
     if (context.url.pathname === '/') {
-      // Only warn on the root so we don't spam the terminal on every chunk load
-      console.warn("🔐 [DEV] Auth Token Bypassed for local docs dev.");
+      console.warn('[DEV] Auth bypassed for local docs dev.');
     }
     return next();
   }
 
-  // 3. Extract the token (Cookie first, then Bearer Token)
-  const token = context.cookies.get(CONFIG.auth.cookieName)?.value ||
-                context.request.headers.get("Authorization")?.replace("Bearer ", "");
+  const token = context.cookies.get(COOKIE_NAME)?.value;
 
-  // 4. Fallback: If no token, redirect to login
   if (!token) {
-    // Redirect unauthenticated user to Login
-    const loginUrl = new URL(CONFIG.urls.login);
-    loginUrl.searchParams.set('callbackURL', context.url.href);
-    return context.redirect(loginUrl.toString(), 302);
+    return context.redirect(
+      buildLoginUrl(context.url.origin, context.url.pathname),
+      302,
+    );
   }
 
-  // 5. Verify Token Signature via SDK (JWKS)
+  // Verify JWT with cached JWKS (zero network calls on happy path)
   try {
-    await jwtVerifier.verify(token);
+    const payload = await jwtVerifier.verify(token);
+    context.locals.user = extractUser(payload);
     return next();
-  } catch (err: unknown) {
-    console.error("🔑 Invalid JWT Signature:", err instanceof Error ? err.message : err);
-    
-    // Redirect unauthenticated user
-    const loginUrl = new URL(CONFIG.urls.login);
-    loginUrl.searchParams.set('callbackURL', context.url.href);
-    return context.redirect(loginUrl.toString(), 302);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    const isExpired =
+      message.includes('"exp" claim') || message.includes('timestamp check');
+
+    if (isExpired) {
+      // Server-side refresh: forward Better Auth session cookies to get fresh JWT
+      const cookieHeader = context.request.headers.get('cookie') || '';
+      const refreshed = await refreshToken(cookieHeader);
+
+      if (refreshed) {
+        setTokenCookie(context.cookies, refreshed.token);
+        context.locals.user = extractUser(refreshed.payload);
+        return next();
+      }
+    }
+
+    return context.redirect(
+      buildLoginUrl(context.url.origin, context.url.pathname),
+      302,
+    );
   }
 });
