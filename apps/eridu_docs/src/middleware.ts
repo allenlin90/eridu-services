@@ -1,8 +1,15 @@
-import { defineMiddleware } from "astro:middleware";
-import * as jose from 'jose'; 
-import { CONFIG } from "./config/env";
+import { defineMiddleware } from 'astro:middleware';
+import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
+import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 
-const JWT_SECRET = new TextEncoder().encode(CONFIG.jwt.secret);
+import { CONFIG } from './config/env';
+
+// Initialize the shared auth SDK verifier globally so JWKS is cached across requests
+const jwksService = new JwksService({ authServiceUrl: CONFIG.auth.url });
+const jwtVerifier = new JwtVerifier({ jwksService, issuer: CONFIG.auth.url });
+
+// Prefetch JWKS to prime the cache (non-blocking)
+jwksService.initialize().catch(err => console.error("Failed to prefetch JWKS:", err));
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // 1. Skip auth check for static assets (images, css, etc.)
@@ -10,35 +17,39 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // 2. Extract the token
-  const token = context.cookies.get(CONFIG.jwt.cookieName)?.value || 
+  // 2. Dev & Local Bypass (Put BEFORE reading headers/cookies to avoid Astro SSR warnings on prerendered pages)
+  if (CONFIG.isDev || CONFIG.bypassAuth) {
+    if (context.url.pathname === '/') {
+      // Only warn on the root so we don't spam the terminal on every chunk load
+      console.warn("🔐 [DEV] Auth Token Bypassed for local docs dev.");
+    }
+    return next();
+  }
+
+  // 3. Extract the token
+  const token = context.cookies.get(CONFIG.auth.cookieName)?.value || 
                 context.request.headers.get("Authorization")?.replace("Bearer ", "");
 
-  // 3. Fallback: If no token, redirect to login
+  // 4. Fallback: If no token, redirect to login
   if (!token) {
-    if (CONFIG.isDev) {
-       console.warn("🔐 [DEV] Missing Auth Token. Bypassing strictly for local docs dev.");
-       return next();
-    }
-    
-    // Redirect unauthenticated user to Eridu Studios Login
+    // Redirect unauthenticated user to Login
     const loginUrl = new URL(CONFIG.urls.login);
     loginUrl.searchParams.set('redirect', context.url.href);
     return context.redirect(loginUrl.toString(), 302);
   }
 
-  // 4. Validate the JWT
+  // 5. Verify Token Signature via SDK (JWKS)
   try {
-    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-    
-    // Pass the decoded user payload to the Astro Locals object
-    context.locals.user = payload;
-    
+    await jwtVerifier.verify(token);
     return next();
-  } catch (error) {
-    console.error("JWT Validation Failed", error);
-    // Invalid token -> Clear cookie and redirect to login
-    context.cookies.delete(CONFIG.jwt.cookieName);
-    return context.redirect(CONFIG.urls.login, 302);
+  } catch (err: unknown) {
+    console.error("🔑 Invalid JWT Signature:", err instanceof Error ? err.message : err);
+    
+    // Clear dead cookie
+    context.cookies.delete(CONFIG.auth.cookieName, { path: '/' });
+    
+    // Redirect unauthenticated user
+    const loginUrl = new URL(CONFIG.urls.login);
+    return context.redirect(loginUrl.toString(), 302);
   }
 });

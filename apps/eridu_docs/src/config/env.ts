@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   // Authentication Context
-  JWT_SECRET: z.string().min(1).default('fallback_secret_override_in_env'),
+  AUTH_URL: z.url({ message: 'AUTH_URL must be a valid URL' }).default('http://localhost:3000'),
   AUTH_COOKIE_NAME: z.string().default('eridu_session_token'),
   
   // External Application Links
@@ -15,6 +15,7 @@ const envSchema = z.object({
   
   // Environment State
   DEV: z.coerce.boolean().default(false),
+  BYPASS_AUTH: z.coerce.boolean().default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -24,19 +25,21 @@ export type Env = z.infer<typeof envSchema>;
  * Parsed immediately at module-build using Astro's current import.meta.env scope
  */
 const parsedEnv = envSchema.parse({
-  JWT_SECRET: import.meta.env.JWT_SECRET,
+  AUTH_URL: import.meta.env.AUTH_URL,
   AUTH_COOKIE_NAME: import.meta.env.AUTH_COOKIE_NAME,
   LOGIN_URL: import.meta.env.LOGIN_URL,
   DEV: import.meta.env.DEV,
+  BYPASS_AUTH: import.meta.env.BYPASS_AUTH || process.env.BYPASS_AUTH,
 });
 
 export const CONFIG = {
-  jwt: {
-    secret: parsedEnv.JWT_SECRET,
+  auth: {
+    url: parsedEnv.AUTH_URL,
     cookieName: parsedEnv.AUTH_COOKIE_NAME,
   },
   urls: {
     login: parsedEnv.LOGIN_URL,
   },
   isDev: parsedEnv.DEV,
+  bypassAuth: parsedEnv.BYPASS_AUTH,
 };
