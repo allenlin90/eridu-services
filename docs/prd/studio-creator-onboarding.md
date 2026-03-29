@@ -29,6 +29,12 @@ Key unanswered questions:
 - *"Should creator mapping ever allow assignment of a creator who is not in the studio roster?"*
 - *"How does a talent manager resolve a missing creator without leaving the studio workspace?"*
 
+## Design Clarifications
+
+- **Search is mandatory before create** — the studio flow must always begin with catalog search, but "Create and onboard new creator" remains available after search even when returned matches are visible but not suitable.
+- **Optional user linking must stay studio-safe** — if `user_id` is collected during onboarding, the studio flow must provide its own guarded user lookup and must not depend on `/admin/users`.
+- **Mapping remains discovery-first in this slice** — current creator-mapping search may remain broad until availability hardening ships, but assignment writes are the authoritative roster gate and the UI must explain off-roster failures clearly.
+
 ## Users
 
 - **Studio ADMIN**: onboard brand-new creators, reactivate roster rows, maintain studio defaults
@@ -66,6 +72,19 @@ const inactiveRosterCreatorIds = new Set(
 
 **Priority**: Should be fixed as part of this PRD's implementation, not deferred. The roster-first assignment enforcement in Requirement #5 below directly addresses this bug.
 
+```mermaid
+flowchart TD
+    A[Creator assignment request] --> B{Creator exists globally?}
+    B -- No --> N[404 creator not found]
+    B -- Yes --> C{StudioCreator row exists?}
+    C -- No --> D[422 CREATOR_NOT_IN_ROSTER]
+    C -- Yes --> E{StudioCreator is active?}
+    E -- No --> F[422 CREATOR_INACTIVE_IN_ROSTER]
+    E -- Yes --> G{Already assigned to target show?}
+    G -- Yes --> H[Skip as idempotent existing assignment]
+    G -- No --> I[Create or restore ShowCreator assignment]
+```
+
 ## Requirements
 
 ### In Scope
@@ -81,6 +100,8 @@ const inactiveRosterCreatorIds = new Set(
    - The flow starts by searching the existing creator catalog.
    - If a suitable creator already exists, the operator should reuse that identity instead of creating a duplicate.
    - "Create new creator" is a secondary action shown only after search, with clear copy that creator identities are global across studios.
+   - The create-new path remains available after search even when visible results exist, because operators may determine that none of the returned identities are the correct creator.
+   - Existing active roster matches may stay visible for duplicate prevention, but they are not addable paths.
 
 3. **Create-and-roster in one operation**
    - Creating a new creator from the studio flow must create the global `Creator` record and the `StudioCreator` roster row in the same workflow.
@@ -91,6 +112,7 @@ const inactiveRosterCreatorIds = new Set(
    - Required: `name`, `alias_name`
    - Optional: `user_id`, `metadata`, `default_rate`, `default_rate_type`, `default_commission_rate`
    - Linking a creator to a user account remains optional at onboarding time.
+   - If `user_id` is supported in the UI, selection must happen from a studio-scoped lookup flow rather than a system-admin-only user surface.
 
 5. **Roster-first assignment enforcement**
    - Only **active studio roster creators** are assignable from `/studios/:studioId/creator-mapping`.
@@ -99,6 +121,7 @@ const inactiveRosterCreatorIds = new Set(
 
 6. **Studio mapping UX for missing creators**
    - If an operator cannot find a creator in mapping, the UI explains that the creator must be onboarded to the studio roster first.
+   - If an operator selects a creator who is rejected as off-roster, the UI surfaces the same onboarding guidance instead of only showing a generic failure.
    - Studio admins see a direct CTA back to the creator roster onboarding flow.
    - Managers and talent managers see guidance to ask a studio admin to onboard the creator.
 
@@ -126,19 +149,38 @@ const inactiveRosterCreatorIds = new Set(
 2. They click `Add Creator`.
 3. They search the existing catalog first.
 4. If a matching creator exists, they add or reactivate that creator in the studio roster.
-5. If no suitable creator exists, they choose `Create and onboard new creator`.
+5. If no suitable creator exists, or returned matches are not the right person, they choose `Create and onboard new creator`.
 6. They enter name, alias, and optional user/default-compensation fields.
 7. The system creates the global creator and the active studio roster row.
 8. The creator is immediately available in creator mapping.
 9. Managers and talent managers only assign active roster creators from that point onward.
+
+```mermaid
+flowchart TD
+    A[Studio admin opens /studios/$studioId/creators] --> B[Search existing creator catalog]
+    B --> C{Suitable creator found?}
+    C -- Yes --> D[Select existing creator]
+    D --> E{Roster state}
+    E -- NONE --> F[Add creator to studio roster]
+    E -- INACTIVE --> G[Reactivate existing StudioCreator row]
+    C -- No or not the right identity --> H[Create and onboard new creator]
+    H --> I[Enter name, alias, optional user link, and defaults]
+    I --> J[Create global Creator plus active StudioCreator row]
+    F --> K[Creator is active in studio roster]
+    G --> K
+    J --> K
+    K --> L[Creator becomes eligible for roster-first assignment]
+```
 
 ## Product Decisions
 
 - **Studio onboarding may create a global creator identity** — `Creator` remains global, but routine creator intake is a studio operation and must not depend on system-admin-only routes.
 - **Search first, create second** — duplicate risk is reduced by forcing catalog search before create.
 - **Roster is authoritative** — assignment is roster-first, not catalog-first.
+- **Loose discovery, strict assignment for this slice** — creator-mapping search may remain broad until availability hardening ships, but assignment writes must enforce roster membership immediately.
 - **No silent auto-create during mapping** — onboarding happens explicitly through the roster flow so defaults and audit intent are captured at the right moment.
 - **Admin-owned onboarding** — this removes the system-admin dependency without widening studio roster write permissions.
+- **Studio-safe optional user linking** — if onboarding links a creator to a user account, the lookup must be available from the studio workspace itself.
 
 ## API / Route Shape
 
@@ -159,6 +201,12 @@ Add a dedicated studio onboarding action for brand-new creators:
 
 ```http
 POST /studios/:studioId/creators/onboard
+```
+
+Supporting lookup for optional user linking:
+
+```http
+GET /studios/:studioId/creators/onboarding-users?search=alice
 ```
 
 Example request:
@@ -185,6 +233,32 @@ Expected behavior:
 - `creator` creates the global identity
 - `roster` creates the studio-scoped `StudioCreator` row
 - response returns the canonical studio roster item so the UI can refresh the roster directly
+- the optional `user_id` is chosen from a studio-scoped lookup flow rather than `/admin/users`
+
+```mermaid
+sequenceDiagram
+    actor Admin as Studio Admin
+    participant UI as /studios/$studioId/creators
+    participant Catalog as Creator Catalog API
+    participant Users as Studio User Lookup
+    participant Roster as Studio Creator API
+    participant Mapping as Creator Mapping Write API
+
+    Admin->>UI: Open Add Creator dialog
+    UI->>Catalog: Search existing creator catalog
+
+    alt Reuse existing creator
+        UI->>Roster: POST /studios/:studioId/creators
+        Roster-->>UI: Active roster item
+    else Create new creator
+        UI->>Users: Optional lookup for user_id
+        UI->>Roster: POST /studios/:studioId/creators/onboard
+        Roster-->>UI: Active roster item
+    end
+
+    UI->>Mapping: POST /studios/:studioId/shows/:showId/creators/bulk-assign
+    Mapping-->>UI: Success or typed roster error
+```
 
 ### Assignment Error Contract
 
@@ -199,16 +273,18 @@ These are distinct from 403 (authorization) and 404 (creator not found).
 
 - [ ] A studio admin can onboard a brand-new creator from `/studios/$studioId/creators` without using `/system/*`.
 - [ ] The onboarding flow always begins with catalog search before showing create-new.
+- [ ] The create-new path remains available after catalog search even when returned matches are visible but not suitable.
 - [ ] Creating a new creator from the studio flow creates both the global `Creator` and the active `StudioCreator` row.
 - [ ] Existing catalog creators can still be added or reactivated in the studio roster from the same studio surface.
+- [ ] Optional user linking can be completed from the studio onboarding flow without depending on `/admin/users`.
 - [ ] Managers and talent managers can no longer assign `roster_state = NONE` creators from single-show or bulk creator mapping.
 - [ ] Assignment APIs return typed `CREATOR_NOT_IN_ROSTER` errors for off-roster creators.
-- [ ] Mapping UI shows a clear "onboard to roster first" message when a creator is missing.
+- [ ] Mapping UI shows a clear "onboard to roster first" message when a creator is missing or when assignment is rejected as `CREATOR_NOT_IN_ROSTER`.
 - [ ] Studio creator onboarding no longer depends on `/system/creators` for ordinary day-to-day operations.
 
 ## Design Reference
 
-- Backend design: create with implementation PR under `apps/erify_api/docs/design/`
-- Frontend design: create with implementation PR under `apps/erify_studios/docs/design/`
+- Backend design + task list: [`apps/erify_api/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md`](../../apps/erify_api/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)
+- Frontend design + task list: [`apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md`](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)
 - Related shipped feature: `docs/features/studio-creator-roster.md`
 - Related follow-up PRD: `docs/prd/creator-availability-hardening.md`
