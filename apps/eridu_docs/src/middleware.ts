@@ -34,7 +34,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (!token) {
     // Redirect unauthenticated user to Login
     const loginUrl = new URL(CONFIG.urls.login);
-    loginUrl.searchParams.set('redirect', context.url.href);
+    loginUrl.searchParams.set('callbackURL', context.url.href);
     return context.redirect(loginUrl.toString(), 302);
   }
 
@@ -50,6 +50,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     
     // Redirect unauthenticated user
     const loginUrl = new URL(CONFIG.urls.login);
+    loginUrl.searchParams.set('callbackURL', context.url.href);
     return context.redirect(loginUrl.toString(), 302);
   }
 });
