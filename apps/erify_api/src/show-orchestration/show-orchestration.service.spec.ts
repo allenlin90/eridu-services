@@ -479,7 +479,32 @@ describe('showOrchestrationService', () => {
         { id: BigInt(2), uid: 'creator_active' },
         { id: BigInt(3), uid: 'creator_deleted' },
       ] as any);
-      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          creator: {
+            uid: 'creator_new',
+            name: 'New Creator',
+            aliasName: 'New Creator',
+          },
+          isActive: true,
+        },
+        {
+          creator: {
+            uid: 'creator_active',
+            name: 'Active Creator',
+            aliasName: 'Active Creator',
+          },
+          isActive: true,
+        },
+        {
+          creator: {
+            uid: 'creator_deleted',
+            name: 'Deleted Creator',
+            aliasName: 'Deleted Creator',
+          },
+          isActive: true,
+        },
+      ] as any);
       showCreatorRepository.findMany.mockResolvedValue([
         { id: BigInt(22), showId: mockShow.id, creatorId: BigInt(2), deletedAt: null, metadata: {} },
         { id: BigInt(33), showId: mockShow.id, creatorId: BigInt(3), deletedAt: new Date(), metadata: {} },
@@ -546,7 +571,16 @@ describe('showOrchestrationService', () => {
       creatorRepository.findByUids.mockResolvedValue([
         { id: BigInt(1), uid: 'creator_new' },
       ] as any);
-      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          creator: {
+            uid: 'creator_new',
+            name: 'New Creator',
+            aliasName: 'New Creator',
+          },
+          isActive: true,
+        },
+      ] as any);
       showCreatorRepository.findMany.mockResolvedValue([]);
       showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
       showCreatorRepository.createAssignment.mockRejectedValue(new Error('insert failed'));
@@ -576,7 +610,16 @@ describe('showOrchestrationService', () => {
       creatorRepository.findByUids.mockResolvedValue([
         { id: BigInt(1), uid: 'creator_new' },
       ] as any);
-      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          creator: {
+            uid: 'creator_new',
+            name: 'New Creator',
+            aliasName: 'New Creator',
+          },
+          isActive: true,
+        },
+      ] as any);
       showCreatorRepository.findMany.mockResolvedValue([]);
       showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
       showCreatorRepository.createAssignment.mockRejectedValue(
@@ -625,6 +668,35 @@ describe('showOrchestrationService', () => {
         skipped: 0,
         failed: [
           { creatorId: 'creator_inactive', reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_INACTIVE_IN_ROSTER },
+        ],
+      });
+      expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
+    });
+
+    it('should reject creators that are not in the studio roster', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_off_roster',
+          note: null,
+          metadata: {},
+        },
+      ];
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(11), uid: 'creator_off_roster' },
+      ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+
+      expect(result).toEqual({
+        assigned: 0,
+        skipped: 0,
+        failed: [
+          { creatorId: 'creator_off_roster', reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_IN_ROSTER },
         ],
       });
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
