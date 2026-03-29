@@ -203,6 +203,15 @@ export class UserService extends BaseModelService {
     return this.userRepository.findPaginated(query);
   }
 
+  searchUsersForCreatorOnboarding(
+    params: {
+      search: string;
+      limit: number;
+    },
+  ): ReturnType<UserRepository['searchUsersForCreatorOnboarding']> {
+    return this.userRepository.searchUsersForCreatorOnboarding(params);
+  }
+
   /**
    * Updates a user.
    */

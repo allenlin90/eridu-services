@@ -26,6 +26,10 @@ const creatorUidSchema = z
   .string()
   .startsWith(`${UID_PREFIXES.CREATOR}_`, 'Invalid creator id');
 
+const userUidSchema = z
+  .string()
+  .startsWith('user_', 'Invalid user id');
+
 const showUidSchema = z.string().startsWith(`${UID_PREFIXES.SHOW}_`);
 
 const creatorCompensationTypeSchema = z.enum(
@@ -182,13 +186,31 @@ export const studioCreatorRosterListResponseSchema = createPaginatedResponseSche
   studioCreatorRosterItemSchema,
 );
 
-export const createStudioCreatorRosterInputSchema = z.object({
-  creator_id: creatorUidSchema,
+const studioCreatorRosterDefaultsInputSchema = z.object({
   default_rate: defaultRateInputSchema,
   default_rate_type: creatorCompensationTypeSchema.nullable().optional(),
   default_commission_rate: defaultCommissionRateInputSchema,
   metadata: z.record(z.string(), z.any()).optional(),
 }).superRefine(validateCreateCompensationDefaults);
+
+export const createStudioCreatorRosterInputSchema = studioCreatorRosterDefaultsInputSchema.extend({
+  creator_id: creatorUidSchema,
+});
+
+export const onboardCreatorInputSchema = z.object({
+  creator: z.object({
+    name: z.string().trim().min(1, 'name is required'),
+    alias_name: z.string().trim().min(1, 'alias_name is required'),
+    user_id: userUidSchema.nullable().optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
+  }),
+  roster: studioCreatorRosterDefaultsInputSchema,
+});
+
+export const studioCreatorOnboardingUserSearchQuerySchema = z.object({
+  search: z.string().trim().min(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
 
 export const updateStudioCreatorRosterInputSchema = z.object({
   version: z.number().int().positive(),

@@ -24,3 +24,18 @@ export type UpdateStudioCreatorRosterPayload = {
   isActive?: boolean;
   metadata?: object;
 };
+
+export type OnboardCreatorPayload = {
+  creator: {
+    name: string;
+    aliasName: string;
+    userId?: string | null;
+    metadata?: object;
+  };
+  roster: {
+    defaultRate?: number | null;
+    defaultRateType?: string | null;
+    defaultCommissionRate?: number | null;
+    metadata?: object;
+  };
+};
