@@ -45,6 +45,7 @@ Internal documentation (feature specs, workflows, operational guides) lives acro
 ### Out-of-Scope (future)
 
 - Role-based or attribute-based document access (authz layer)
+- Interactive workflow walkthroughs (see Forward References below)
 - Content authoring workflow (approval, review, publishing pipeline)
 - Search indexing with access-scoped results
 - Logout endpoint on eridu_docs (session expires naturally)
@@ -90,3 +91,31 @@ No architectural change — just richer data in the same JWT.
 - [ ] No changes to eridu_auth server config
 - [ ] erify_api and erify_studios auth chains are unaffected
 - [ ] Local dev supports `BYPASS_AUTH=true` for content authoring without running eridu_auth
+
+## Forward References
+
+### Interactive Workflow Walkthroughs
+
+**Purpose**: Complement static documentation with embedded, interactive demos that let readers experience actual UI flows with mock data. Primary use case is **onboarding** — new team members learn workflows by interacting with realistic UI, not just reading about them.
+
+**Approach**: Astro islands (`client:load`) embed React components from `@eridu/ui` inside workflow MDX pages. Demo shells provide a `QueryClientProvider` with pre-seeded fixture data so components render without a live backend.
+
+**Structure**:
+```
+apps/eridu_docs/src/
+├── demos/
+│   ├── providers/
+│   │   └── mock-query-provider.tsx   ← QueryClient + fixture cache
+│   ├── fixtures/                     ← realistic mock data per domain
+│   └── workflows/
+│       └── {workflow-name}/          ← step-by-step demo components
+```
+
+**Key decisions (deferred)**:
+- Build demos with `@eridu/ui` primitives directly (pragmatic start) vs. extract shared feature components into a package (cleaner reuse, higher effort)
+- Fixture data strategy: hand-crafted vs. generated from API schemas
+- Step navigation UX: inline per-section vs. guided stepper
+
+**Depends on**: Knowledge base v1 (this PRD) shipped and stable.
+
+**Separate PRD required** when this workstream is prioritized.
