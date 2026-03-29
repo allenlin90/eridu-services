@@ -34,7 +34,9 @@ Preserve a consistent documentation model in `eridu-services`:
 6. Keep app design docs focused on proposals, not shipped behavior.
 7. Update the nearest README indexes whenever a doc moves layers.
 8. Remove legacy ownership language that still implies one app owns the product or roadmap.
-9. Run a markdown-link check after reorganization.
+9. Normalize Markdown links so they use relative paths from the current document.
+10. Never leave `file://` links or absolute filesystem paths in repo docs.
+11. Run a markdown-link check after reorganization.
 
 ## Placement Rules
 
@@ -63,5 +65,6 @@ Preserve a consistent documentation model in `eridu-services`:
 After doc moves or index updates:
 
 1. Scan markdown links in touched doc trees.
-2. Check for duplicated ownership language between root docs and app docs.
-3. Confirm phase status appears only in root roadmap docs unless an app file is explicitly marked as archive/history.
+2. Confirm links are relative and do not use `file://` or absolute filesystem paths.
+3. Check for duplicated ownership language between root docs and app docs.
+4. Confirm phase status appears only in root roadmap docs unless an app file is explicitly marked as archive/history.

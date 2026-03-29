@@ -22,9 +22,9 @@ Establish the first production-ready backend and domain foundation for live-comm
 ## Implementation Notes
 
 - The canonical shipped behavior is documented in:
-  - [apps/erify_api/docs/SCHEDULE_PLANNING.md](/Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/docs/SCHEDULE_PLANNING.md)
-  - [docs/engineering/ARCHITECTURE_OVERVIEW.md](/Users/allenlin/Desktop/projects/eridu-services/docs/engineering/ARCHITECTURE_OVERVIEW.md)
-  - [docs/domain/BUSINESS.md](/Users/allenlin/Desktop/projects/eridu-services/docs/domain/BUSINESS.md)
+  - [apps/erify_api/docs/SCHEDULE_PLANNING.md](../../apps/erify_api/docs/SCHEDULE_PLANNING.md)
+  - [docs/engineering/ARCHITECTURE_OVERVIEW.md](../engineering/ARCHITECTURE_OVERVIEW.md)
+  - [docs/domain/BUSINESS.md](../domain/BUSINESS.md)
 - The phase was backend-heavy in implementation, but it established cross-app product foundations rather than a backend-only roadmap.
 
 ## Deferred From Phase 1
