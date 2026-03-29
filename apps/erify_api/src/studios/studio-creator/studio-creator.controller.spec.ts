@@ -3,6 +3,8 @@ import { Test } from '@nestjs/testing';
 
 import type { StudioCreatorAvailabilityQueryDto } from './schemas/studio-creator-availability.schema';
 import type { StudioCreatorCatalogQueryDto } from './schemas/studio-creator-catalog.schema';
+import type { OnboardStudioCreatorDto } from './schemas/studio-creator-onboard.schema';
+import type { StudioCreatorOnboardingUserSearchQueryDto } from './schemas/studio-creator-onboarding-user-search.schema';
 import type { ListStudioCreatorRosterQueryDto } from './schemas/studio-creator-roster-list.schema';
 import type {
   CreateStudioCreatorRosterDto,
@@ -27,6 +29,8 @@ describe('studioCreatorController', () => {
             listCatalog: jest.fn(),
             listRoster: jest.fn(),
             addCreatorToRoster: jest.fn(),
+            onboardCreator: jest.fn(),
+            searchOnboardingUsers: jest.fn(),
             updateRosterEntry: jest.fn(),
           },
         },
@@ -256,5 +260,106 @@ describe('studioCreatorController', () => {
       is_active: false,
       version: 3,
     }));
+  });
+
+  it('should onboard a brand-new creator into roster', async () => {
+    const studioId = 'std_00000000000000000001';
+    const dto = {
+      creator: {
+        name: 'Alice Example',
+        aliasName: 'Alice',
+        userId: 'user_00000000000000000001',
+        metadata: { source: 'onboard' },
+      },
+      roster: {
+        defaultRate: 550,
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+        metadata: { source: 'ui' },
+      },
+    } as OnboardStudioCreatorDto;
+
+    studioCreatorService.onboardCreator.mockResolvedValue({
+      id: 2n,
+      uid: 'smc_00000000000000000002',
+      studioId: 1n,
+      creatorId: 2n,
+      defaultRate: '550.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      isActive: true,
+      version: 1,
+      metadata: {},
+      createdAt: new Date('2026-03-11T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-11T00:00:00.000Z'),
+      deletedAt: null,
+      creator: {
+        uid: 'creator_00000000000000000002',
+        name: 'Alice Example',
+        aliasName: 'Alice',
+      },
+    } as any);
+
+    const result = await controller.onboardCreator(studioId, dto);
+
+    expect(studioCreatorService.onboardCreator).toHaveBeenCalledWith(studioId, {
+      creator: {
+        name: 'Alice Example',
+        aliasName: 'Alice',
+        userId: 'user_00000000000000000001',
+        metadata: { source: 'onboard' },
+      },
+      roster: {
+        defaultRate: 550,
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+        metadata: { source: 'ui' },
+      },
+    });
+    expect(result).toEqual(expect.objectContaining({
+      id: 'smc_00000000000000000002',
+      creator_id: 'creator_00000000000000000002',
+      creator_name: 'Alice Example',
+    }));
+  });
+
+  it('should return studio-safe onboarding users', async () => {
+    const studioId = 'std_00000000000000000001';
+    const query = {
+      search: 'alice',
+      limit: 20,
+    } as StudioCreatorOnboardingUserSearchQueryDto;
+
+    studioCreatorService.searchOnboardingUsers.mockResolvedValue([
+      {
+        id: 1n,
+        uid: 'user_00000000000000000001',
+        extId: 'ext_alice',
+        email: 'alice@example.com',
+        name: 'Alice',
+        profileUrl: null,
+        metadata: {},
+        isSystemAdmin: false,
+        isBanned: false,
+        createdAt: new Date('2026-03-11T00:00:00.000Z'),
+        updatedAt: new Date('2026-03-11T00:00:00.000Z'),
+        deletedAt: null,
+      },
+    ] as any);
+
+    const result = await controller.onboardingUsers(studioId, query);
+
+    expect(studioCreatorService.searchOnboardingUsers).toHaveBeenCalledWith(studioId, {
+      search: 'alice',
+      limit: 20,
+    });
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'user_00000000000000000001',
+        ext_id: 'ext_alice',
+        email: 'alice@example.com',
+        name: 'Alice',
+      }),
+    ]);
   });
 });

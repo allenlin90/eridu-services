@@ -8,6 +8,7 @@ import {
   studioCreatorCatalogItemSchema as studioCreatorCatalogItemApiSchema,
   studioCreatorRosterItemSchema as studioCreatorRosterItemApiSchema,
 } from '@eridu/api-types/studio-creators';
+import { userApiResponseSchema } from '@eridu/api-types/users';
 
 import { BaseStudioController } from '../base-studio.controller';
 
@@ -19,6 +20,8 @@ import {
   studioCreatorCatalogItemDto,
   StudioCreatorCatalogQueryDto,
 } from './schemas/studio-creator-catalog.schema';
+import { OnboardStudioCreatorDto } from './schemas/studio-creator-onboard.schema';
+import { StudioCreatorOnboardingUserSearchQueryDto } from './schemas/studio-creator-onboarding-user-search.schema';
 import {
   ListStudioCreatorRosterQueryDto,
   studioCreatorRosterItemDto,
@@ -34,6 +37,7 @@ import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
+import { userDto } from '@/models/user/schemas/user.schema';
 
 const STUDIO_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
@@ -87,6 +91,33 @@ export class StudioCreatorController extends BaseStudioController {
     return studioCreatorRosterItemDto.parse(creator);
   }
 
+  @ApiOperation({ summary: 'Create and onboard a brand-new creator into studio roster' })
+  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @Post('onboard')
+  @HttpCode(HttpStatus.CREATED)
+  @ZodResponse(studioCreatorRosterItemApiSchema, HttpStatus.CREATED)
+  async onboardCreator(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Body() dto: OnboardStudioCreatorDto,
+  ) {
+    const creator = await this.studioCreatorService.onboardCreator(studioId, {
+      creator: {
+        name: dto.creator.name,
+        aliasName: dto.creator.aliasName,
+        userId: dto.creator.userId,
+        metadata: dto.creator.metadata,
+      },
+      roster: {
+        defaultRate: dto.roster.defaultRate,
+        defaultRateType: dto.roster.defaultRateType,
+        defaultCommissionRate: dto.roster.defaultCommissionRate,
+        metadata: dto.roster.metadata,
+      },
+    });
+
+    return studioCreatorRosterItemDto.parse(creator);
+  }
+
   @ApiOperation({ summary: 'Update studio creator defaults or active state' })
   @StudioProtected([STUDIO_ROLE.ADMIN])
   @Patch(':creatorId')
@@ -132,5 +163,21 @@ export class StudioCreatorController extends BaseStudioController {
   ) {
     const creators = await this.studioCreatorService.listCatalog(studioId, query);
     return creators.map((item) => studioCreatorCatalogItemDto.parse(item));
+  }
+
+  @ApiOperation({ summary: 'Search users eligible for creator onboarding user link' })
+  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @Get('onboarding-users')
+  @ReadBurstThrottle()
+  @ZodResponse(z.array(userApiResponseSchema))
+  async onboardingUsers(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: StudioCreatorOnboardingUserSearchQueryDto,
+  ) {
+    const users = await this.studioCreatorService.searchOnboardingUsers(studioId, {
+      search: query.search,
+      limit: query.limit,
+    });
+    return users.map((user) => userDto.parse(user));
   }
 }

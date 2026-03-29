@@ -77,6 +77,36 @@ export class UserRepository extends BaseRepository<
     });
   }
 
+  async searchUsersForCreatorOnboarding(params: {
+    search: string;
+    limit: number;
+  }): Promise<User[]> {
+    const search = params.search.trim();
+    if (!search) {
+      return [];
+    }
+
+    return this.model.findMany({
+      where: {
+        deletedAt: null,
+        creator: {
+          is: null,
+        },
+        OR: [
+          { uid: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: 'insensitive' } },
+          { extId: { contains: search, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: [
+        { name: 'asc' },
+        { email: 'asc' },
+      ],
+      take: params.limit,
+    });
+  }
+
   // Implementation of findPaginated matching the pattern
   async findPaginated(
     query: ListUsersQueryDto,

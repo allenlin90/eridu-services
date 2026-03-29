@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import type {
   CreateStudioCreatorRosterPayload,
+  OnboardCreatorPayload,
   StudioCreatorCatalogItemPayload,
   UpdateStudioCreatorRosterPayload,
 } from './schemas/studio-creator.schema';
@@ -14,6 +16,8 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { CreatorRepository } from '@/models/creator/creator.repository';
+import { CreatorService } from '@/models/creator/creator.service';
+import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
@@ -24,6 +28,8 @@ export class StudioCreatorService extends BaseModelService {
   constructor(
     private readonly studioCreatorRepository: StudioCreatorRepository,
     private readonly creatorRepository: CreatorRepository,
+    private readonly creatorService: CreatorService,
+    private readonly userService: UserService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -128,6 +134,55 @@ export class StudioCreatorService extends BaseModelService {
       studioUid,
       creatorUid: payload.creatorId,
       ...normalized,
+    });
+  }
+
+  @Transactional()
+  async onboardCreator(
+    studioUid: string,
+    payload: OnboardCreatorPayload,
+  ): ReturnType<StudioCreatorRepository['createRosterEntry']> {
+    this.validateCompensationDefaults({
+      defaultRateType: payload.roster.defaultRateType ?? null,
+      defaultCommissionRate: payload.roster.defaultCommissionRate ?? null,
+    });
+
+    const userId = payload.creator.userId ?? null;
+    if (userId) {
+      const user = await this.userService.getUserById(userId);
+      if (!user) {
+        throw HttpError.notFound('User', userId);
+      }
+    }
+
+    const creator = await this.creatorService.createCreator({
+      name: payload.creator.name,
+      aliasName: payload.creator.aliasName,
+      userId,
+      metadata: payload.creator.metadata as Record<string, unknown> | undefined,
+    });
+
+    return this.studioCreatorRepository.createRosterEntry({
+      uid: this.generateUid(),
+      studioUid,
+      creatorUid: creator.uid,
+      defaultRate: this.toDecimalString(payload.roster.defaultRate),
+      defaultRateType: payload.roster.defaultRateType,
+      defaultCommissionRate: this.toDecimalString(payload.roster.defaultCommissionRate),
+      metadata: payload.roster.metadata ?? {},
+    });
+  }
+
+  searchOnboardingUsers(
+    _studioUid: string,
+    params: {
+      search: string;
+      limit: number;
+    },
+  ): ReturnType<UserService['searchUsersForCreatorOnboarding']> {
+    return this.userService.searchUsersForCreatorOnboarding({
+      search: params.search,
+      limit: params.limit,
     });
   }
 
