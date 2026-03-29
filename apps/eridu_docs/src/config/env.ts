@@ -11,7 +11,7 @@ const envSchema = z.object({
   AUTH_COOKIE_NAME: z.string().default('eridu_session_token'),
   
   // External Application Links
-  LOGIN_URL: z.url({ message: 'LOGIN_URL must be a valid URL' }).default('https://app.erify.io/login'),
+  LOGIN_URL: z.url({ message: 'LOGIN_URL must be a valid URL' }).default('http://localhost:3000/login'),
   
   // Environment State
   DEV: z.coerce.boolean().default(false),
