@@ -186,6 +186,9 @@ export class ShowOrchestrationService {
       studioUid,
       uniqueCreatorUids,
     );
+    const rosteredCreatorIds = new Set(
+      studioCreatorRosterEntries.map((entry) => entry.creator.uid),
+    );
     const inactiveRosterCreatorIds = new Set(
       studioCreatorRosterEntries
         .filter((entry) => !entry.isActive)
@@ -219,6 +222,14 @@ export class ShowOrchestrationService {
         result.failed.push({
           creatorId: creator.creatorId,
           reason: 'Creator not found',
+        });
+        continue;
+      }
+
+      if (!rosteredCreatorIds.has(creator.creatorId)) {
+        result.failed.push({
+          creatorId: creator.creatorId,
+          reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_IN_ROSTER,
         });
         continue;
       }
