@@ -3,7 +3,7 @@
 > **Status**: Implemented (PR #32)
 > **Phase scope**: Phase 4 Wave 1
 > **Owner app**: `apps/erify_api`
-> **Product source**: [`docs/prd/studio-creator-onboarding.md`](../../../../docs/prd/studio-creator-onboarding.md)
+> **Product source**: [`docs/features/studio-creator-onboarding.md`](../../../../docs/features/studio-creator-onboarding.md)
 > **Depends on**: Studio creator roster ✅, creator model service ✅, user model service ✅
 
 ## Purpose

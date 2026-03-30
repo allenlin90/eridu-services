@@ -3,7 +3,7 @@
 > **Status**: Implemented (PR #32)
 > **Phase scope**: Phase 4 Wave 1
 > **Owner app**: `apps/erify_studios`
-> **Product source**: [`docs/prd/studio-creator-onboarding.md`](../../../../docs/prd/studio-creator-onboarding.md)
+> **Product source**: [`docs/features/studio-creator-onboarding.md`](../../../../docs/features/studio-creator-onboarding.md)
 > **Depends on**: Studio creator roster UI ✅, backend onboarding + onboarding-user lookup endpoints
 
 ## Purpose
