@@ -8,6 +8,8 @@ import type {
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
 
+import { onboardingUsersKeys } from './get-onboarding-users';
+
 import { creatorAvailabilityKeys } from '@/features/studio-show-creators/api/get-creator-availability';
 import { creatorCatalogKeys } from '@/features/studio-show-creators/api/get-creator-catalog';
 import type { PaginatedResponse } from '@/lib/api/admin';
@@ -141,6 +143,9 @@ export function useOnboardStudioCreator(studioId: string) {
     mutationFn: (payload: OnboardStudioCreatorInput) => onboardStudioCreator(studioId, payload),
     onSuccess: () => {
       invalidateStudioCreatorDependencies(queryClient, studioId);
+      void queryClient.invalidateQueries({
+        queryKey: onboardingUsersKeys.listPrefix(studioId),
+      });
     },
   });
 }
