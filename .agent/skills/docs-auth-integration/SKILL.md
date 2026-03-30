@@ -60,6 +60,10 @@ Has no cookie?        → Redirect to eridu_auth/sign-in
 
 🔴 **Critical**: Always check `isPublicPath` first — skip auth for `/_astro/`, `/auth/`, and static assets.
 
+🔴 **Critical**: If `eridu_docs` uses Starlight, set `starlight({ prerender: false, pagefind: false })`. Starlight prerenders by default even in server mode, which routes pages through `routes/static/*` and breaks cookie/header-based auth middleware.
+
+🟡 **Recommended**: If you still need Pagefind search, generate it in a separate bypass-auth snapshot build and keep the runtime docs app on SSR. The default Starlight Search component can still be rendered via a local override while `/pagefind/*` is produced during `build`.
+
 🔴 **Critical**: Detect expired vs invalid JWT. Expired → attempt refresh. Invalid signature → redirect immediately.
 
 ### 3. Callback Endpoint (`/auth/callback`)
@@ -107,6 +111,10 @@ The refresh works because Better Auth cross-subdomain session cookies (on `.erid
 | `AUTH_URL` | (optional fallback) | Legacy fallback used for both API and UI |
 | `COOKIE_DOMAIN` | (omitted) | Production cookie domain |
 | `BYPASS_AUTH` | `false` | Skip auth for local dev |
+
+🟡 **Recommended**: In `eridu_auth`, only enable Better Auth `crossSubDomainCookies` when a real shared `COOKIE_DOMAIN` is configured. On localhost, keep session cookies host-only; `Domain=localhost` cookies can be rejected by browsers and cause `/auth/callback` redirect loops.
+
+🟡 **Recommended**: Keep at least one project-owned non-prerendered Astro page route in `eridu_docs` when Starlight owns the main docs route. Astro 6 can otherwise optimize the SSR renderer manifest down to `renderers = []`, which breaks MDX docs pages at runtime with `NoMatchingRenderer`. The current safeguard is `src/pages/renderer-keepalive.astro`.
 
 ## Anti-Patterns
 

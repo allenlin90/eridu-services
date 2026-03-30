@@ -159,6 +159,9 @@ importers:
 
   apps/eridu_docs:
     dependencies:
+      '@astrojs/mdx':
+        specifier: ^5.0.3
+        version: 5.0.3(astro@6.1.1(@types/node@24.10.1)(idb-keyval@6.2.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.1))
       '@astrojs/node':
         specifier: ^10.0.4
         version: 10.0.4(astro@6.1.1(@types/node@24.10.1)(idb-keyval@6.2.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.1))
@@ -23740,7 +23743,7 @@ snapshots:
   terser@5.44.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.15.0
+      acorn: 8.16.0
       commander: 2.20.3
       source-map-support: 0.5.21
 

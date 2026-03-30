@@ -34,6 +34,7 @@ pnpm dev                      # Start on http://localhost:3000
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment | `development` |
 | `CORS_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:5173,http://localhost:5174` |
+| `COOKIE_DOMAIN` | Shared cookie domain for cross-subdomain sessions | unset |
 
 ### Optional (SSO — disabled in Phase 1)
 
@@ -54,12 +55,15 @@ BETTER_AUTH_URL=http://localhost:3000
 CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 ```
 
+Leave `COOKIE_DOMAIN` unset on localhost. Browsers can reject `Domain=localhost` cookies, while host-only cookies already work across localhost ports such as `5173 -> 4321`.
+
 **Production:**
 ```env
 DATABASE_URL=postgresql://user:password@prod-host:5432/eridu_auth
 BETTER_AUTH_SECRET=<generated-secret-64-chars>
 BETTER_AUTH_URL=https://auth.example.com
 CORS_ORIGINS=https://creators.example.com,https://studios.example.com
+COOKIE_DOMAIN=.example.com
 ```
 
 > [!CAUTION]

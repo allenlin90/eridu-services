@@ -1,0 +1,18 @@
+---
+export const prerender = false;
+---
+
+<!--
+  Internal route: Astro drops SSR renderers when a project only has injected
+  external page routes. Starlight's SSR docs pages still need the MDX
+  `astro:jsx` renderer at runtime.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Internal</title>
+  </head>
+  <body></body>
+</html>

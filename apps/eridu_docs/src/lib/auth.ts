@@ -11,12 +11,14 @@ export const TOKEN_MAX_AGE = 900; // 15 min, matches JWT expiry
 const jwksService = new JwksService({ authServiceUrl: CONFIG.authApiUrl });
 export const jwtVerifier = new JwtVerifier({
   jwksService,
-  issuer: CONFIG.authApiUrl,
+  issuer: CONFIG.authIssuerUrl,
 });
 
-jwksService
-  .initialize()
-  .catch((err) => console.error('Failed to prefetch JWKS:', err));
+if (!CONFIG.bypassAuth) {
+  jwksService
+    .initialize()
+    .catch((err) => console.error('Failed to prefetch JWKS:', err));
+}
 
 export function buildLoginUrl(origin: string, pathname: string): string {
   const callbackUrl = new URL('/auth/callback', origin);
@@ -30,7 +32,7 @@ export function buildLoginUrl(origin: string, pathname: string): string {
 export function setTokenCookie(cookies: AstroCookies, token: string): void {
   cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: !CONFIG.isDev,
+    secure: CONFIG.cookieSecure,
     sameSite: 'lax',
     path: '/',
     maxAge: TOKEN_MAX_AGE,

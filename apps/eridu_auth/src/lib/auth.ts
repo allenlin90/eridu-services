@@ -17,6 +17,11 @@ import env from '@/env';
 import type { ExtendedUser } from '@/lib/types';
 import packageJson from '$/package.json' with { type: 'json' };
 
+const authHostname = new URL(env.BETTER_AUTH_URL).hostname;
+const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+const shouldUseCrossSubDomainCookies
+  = Boolean(env.COOKIE_DOMAIN) && !localHosts.has(authHostname);
+
 export const auth = betterAuth({
   appName: packageJson.name,
   basePath: '/api/auth',
@@ -35,10 +40,15 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: 'eridu_auth',
-    crossSubDomainCookies: {
-      enabled: true,
-      domain: env.COOKIE_DOMAIN,
-    },
+    // Keep localhost cookies host-only so browsers accept them across ports.
+    ...(shouldUseCrossSubDomainCookies
+      ? {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: env.COOKIE_DOMAIN,
+          },
+        }
+      : {}),
   },
   emailAndPassword: {
     enabled: true,

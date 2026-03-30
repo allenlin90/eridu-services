@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "astro dev",
     "start": "node ./dist/server/entry.mjs",
-    "build": "astro build",
+    "build": "astro build && node ./scripts/build-pagefind-index.mjs",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/mdx": "^5.0.3",
     "@astrojs/node": "^10.0.4",
     "@astrojs/starlight": "^0.38.2",
     "@eridu/auth-sdk": "workspace:*",

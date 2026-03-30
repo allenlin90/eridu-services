@@ -83,13 +83,28 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 ```
 apps/eridu_docs/src/
-├── config/env.ts          ← AUTH_API_URL, AUTH_UI_URL, COOKIE_DOMAIN, BYPASS_AUTH
+├── config/env.ts          ← AUTH_URL (+ optional AUTH_API_URL/AUTH_UI_URL/AUTH_ISSUER_URL), COOKIE_DOMAIN, BYPASS_AUTH
 ├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
 ├── pages/auth/logout.ts   ← Sign out eridu_auth session + clear docs JWT cookie
 └── env.d.ts               ← App.Locals.user type
 ```
+
+## Starlight SSR Requirement
+
+Starlight prerenders its docs pages by default, even when Astro `output` is set to `server`. For cookie-based auth to work, `apps/eridu_docs/astro.config.mjs` must set:
+
+- `starlight({ prerender: false, pagefind: false })`
+
+If prerender stays enabled, docs routes are served through Starlight's `routes/static/*` entrypoints, request headers/cookies are not available reliably, and the auth middleware loops back to sign-in.
+
+Search still uses Pagefind, but it is generated separately during `pnpm --filter eridu_docs build`:
+
+- runtime build: SSR docs app (`prerender: false`) for auth-aware requests
+- snapshot build: temporary bypass-auth prerendered output used only to generate `/pagefind/*`
+
+Astro 6 also strips SSR renderers from the server bundle when a project only has injected external page routes. Because Starlight owns the runtime docs route, `apps/eridu_docs/src/pages/renderer-keepalive.astro` exists as a project-owned non-prerendered page so the MDX `astro:jsx` renderer stays in the SSR manifest. Removing that file reintroduces `NoMatchingRenderer` runtime failures on MDX docs pages.
 
 ## Comparison with Other Services
 
@@ -117,11 +132,25 @@ apps/eridu_docs/src/
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `AUTH_API_URL` | No | `http://localhost:3001` | eridu_auth backend URL (JWKS + token + sign-out APIs) |
-| `AUTH_UI_URL` | No | `http://localhost:5173` | eridu_auth frontend login URL (`/sign-in`) |
-| `AUTH_URL` | No | (none) | Legacy fallback used for both API/UI if specific vars are absent |
+| `AUTH_URL` | No | `http://localhost:5173` | Auth public URL used for login and JWT issuer validation |
+| `AUTH_API_URL` | No | inferred from `AUTH_URL` | eridu_auth backend URL (JWKS + token + sign-out APIs). If `AUTH_URL` is `localhost:5173`, API defaults to `localhost:3001` |
+| `AUTH_UI_URL` | No | `AUTH_URL` | eridu_auth frontend login URL (`/sign-in`) |
+| `AUTH_ISSUER_URL` | No | `AUTH_URL` (fallback: `AUTH_API_URL`) | Explicit JWT issuer URL for mixed local setups |
 | `COOKIE_DOMAIN` | No | (omitted) | Cookie domain for production (e.g., `.eridu.io`) |
+| `COOKIE_SECURE` | No | auto (`false` on localhost, `true` on non-local prod) | Force JWT cookie `Secure` flag behavior |
 | `BYPASS_AUTH` | No | `false` | Skip auth in local dev |
+
+### Local Development Note (`5173` + `3001`)
+
+For local development where `eridu_auth` frontend is on `http://localhost:5173` and backend is on `http://localhost:3001`:
+
+- Set only `AUTH_URL=http://localhost:5173`
+- `eridu_docs` will:
+  - validate JWT issuer against `5173` (matches `BETTER_AUTH_URL`)
+  - call JWKS/token/sign-out APIs on `3001` (auto-inferred)
+- If your local `BETTER_AUTH_URL` is still `http://localhost:3001`, set `AUTH_ISSUER_URL=http://localhost:3001`.
+
+This avoids login loops caused by issuer mismatch while keeping API calls on the backend port.
 
 ## Security Considerations
 
