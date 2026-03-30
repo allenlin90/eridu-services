@@ -1,6 +1,6 @@
 # Studio Creator Onboarding — Frontend Design
 
-> **Status**: Design
+> **Status**: Implemented (PR #32)
 > **Phase scope**: Phase 4 Wave 1
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/studio-creator-onboarding.md`](../../../../docs/prd/studio-creator-onboarding.md)
@@ -23,51 +23,51 @@ Extend the studio roster surface so a studio admin can complete routine creator 
 
 ### FE-1 Feature API And Contracts
 
-- [ ] Consume the new onboarding payload/error contracts from `@eridu/api-types`.
-- [ ] Extend `src/features/studio-creator-roster/api/studio-creator-roster.ts` with `onboardStudioCreator()` and `useOnboardStudioCreator()`.
-- [ ] Add `src/features/studio-creator-roster/api/get-onboarding-users.ts` for `GET /studios/:studioId/creators/onboarding-users`.
-- [ ] Add `useStudioCreatorOnboardingUsersQuery()` with forwarded `AbortSignal` and feature-local query keys.
-- [ ] Invalidate roster, creator-catalog, and creator-availability query families after successful onboarding.
+- [x] Consume the new onboarding payload/error contracts from `@eridu/api-types`.
+- [x] Extend `src/features/studio-creator-roster/api/studio-creator-roster.ts` with `onboardStudioCreator()` and `useOnboardStudioCreator()`.
+- [x] Add `src/features/studio-creator-roster/api/get-onboarding-users.ts` for `GET /studios/:studioId/creators/onboarding-users`.
+- [x] Add `useStudioCreatorOnboardingUsersQuery()` with forwarded `AbortSignal` and feature-local query keys.
+- [x] Invalidate roster, creator-catalog, and creator-availability query families after successful onboarding.
 
 ### FE-2 Roster Dialog Restructure
 
-- [ ] Refactor `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx` into explicit `search` and `create` modes.
-- [ ] Keep `search` as the default mode every time the dialog opens.
-- [ ] Preserve the current search term when switching between modes.
-- [ ] Keep existing add/reactivate behavior for actionable `NONE` and `INACTIVE` results.
-- [ ] Render `ACTIVE` matches in non-actionable helper UI instead of the selectable combobox list.
+- [x] Refactor `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx` into explicit `search` and `create` modes.
+- [x] Keep `search` as the default mode every time the dialog opens.
+- [x] Preserve the current search term when switching between modes.
+- [x] Keep existing add/reactivate behavior for actionable `NONE` and `INACTIVE` results.
+- [x] Render `ACTIVE` matches in non-actionable helper UI instead of the selectable combobox list.
 
 ### FE-3 Create Mode And Optional User Link
 
-- [ ] Add create-mode fields for `name`, `alias`, optional user link, and compensation defaults.
-- [ ] Keep compensation validation aligned with existing roster rules and field-level copy.
-- [ ] Use the new studio-scoped onboarding-user search hook for the optional `user_id` field.
-- [ ] Do not call `/admin/users` or reuse `useUsersQuery()` in this flow.
-- [ ] Submit create mode through `useOnboardStudioCreator()` and close only on success.
+- [x] Add create-mode fields for `name`, `alias`, optional user link, and compensation defaults.
+- [x] Keep compensation validation aligned with existing roster rules and field-level copy.
+- [x] Use the new studio-scoped onboarding-user search hook for the optional `user_id` field.
+- [x] Do not call `/admin/users` or reuse `useUsersQuery()` in this flow.
+- [x] Submit create mode through `useOnboardStudioCreator()` and close only on success.
 
 ### FE-4 Mapping Error Handling
 
-- [ ] Update `src/features/studio-show-creators/components/add-creator-dialog.tsx` to show role-aware onboarding guidance before submit and on typed failure.
-- [ ] Update `src/features/studio-show-creators/components/show-creator-list.tsx` so single-show assignment surfaces readable `CREATOR_NOT_IN_ROSTER` and `CREATOR_INACTIVE_IN_ROSTER` copy.
-- [ ] Update `src/features/studio-show-creators/api/bulk-assign-creators-to-shows.ts` to preserve structured error reasons for the dialog layer.
-- [ ] Update `src/features/studio-show-creators/components/bulk-creator-assignment-dialog.tsx` to stay open on error-only or actionable partial failures.
-- [ ] Add admin CTA routing back to `/studios/$studioId/creators` where the user can actually resolve the problem.
+- [x] Update `src/features/studio-show-creators/components/add-creator-dialog.tsx` to show role-aware onboarding guidance before submit and on typed failure.
+- [x] Update `src/features/studio-show-creators/components/show-creator-list.tsx` so single-show assignment surfaces readable `CREATOR_NOT_IN_ROSTER` and `CREATOR_INACTIVE_IN_ROSTER` copy.
+- [x] Update `src/features/studio-show-creators/api/bulk-assign-creators-to-shows.ts` to preserve structured error reasons for the dialog layer.
+- [x] Update `src/features/studio-show-creators/components/bulk-creator-assignment-dialog.tsx` to stay open on error-only or actionable partial failures.
+- [x] Add admin CTA routing back to `/studios/$studioId/creators` where the user can actually resolve the problem.
 
 ### FE-5 Test Coverage
 
-- [ ] Add component tests proving the dialog defaults to search mode.
-- [ ] Add tests proving the create CTA appears after search even when results exist.
-- [ ] Add tests proving active roster matches are visible but not actionable.
-- [ ] Add tests proving create mode uses the studio onboarding-user endpoint instead of admin users.
-- [ ] Add tests for query invalidation after successful onboarding.
-- [ ] Add tests for single-show and bulk-mapping roster error messaging and keep-open behavior.
+- [x] Add component tests proving the dialog defaults to search mode.
+- [x] Add tests proving the create CTA appears after search even when results exist.
+- [x] Add tests proving active roster matches are visible but not actionable.
+- [x] Add tests proving create mode uses the studio onboarding-user endpoint instead of admin users.
+- [x] Add tests for query invalidation after successful onboarding.
+- [x] Add tests for single-show and bulk-mapping roster error messaging and keep-open behavior.
 
 ### FE-6 Verification Gate
 
-- [ ] Run `pnpm --filter erify_studios lint`.
-- [ ] Run `pnpm --filter erify_studios typecheck`.
-- [ ] Run `pnpm --filter erify_studios test`.
-- [ ] Run `pnpm --filter erify_studios build` if route wiring or shared package exports change.
+- [x] Run `pnpm --filter erify_studios lint`.
+- [x] Run `pnpm --filter erify_studios typecheck`.
+- [x] Run `pnpm --filter erify_studios test`.
+- [x] Run `pnpm --filter erify_studios build` if route wiring or shared package exports change.
 
 ## Design Decisions
 

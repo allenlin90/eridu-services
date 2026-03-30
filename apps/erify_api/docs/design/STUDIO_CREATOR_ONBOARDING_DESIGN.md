@@ -1,6 +1,6 @@
 # Studio Creator Onboarding — Backend Design
 
-> **Status**: Design
+> **Status**: Implemented (PR #32)
 > **Phase scope**: Phase 4 Wave 1
 > **Owner app**: `apps/erify_api`
 > **Product source**: [`docs/prd/studio-creator-onboarding.md`](../../../../docs/prd/studio-creator-onboarding.md)
@@ -28,55 +28,55 @@ Ship the backend contract for studio-owned creator onboarding without `/system/*
 
 ### BE-1 Shared Contracts
 
-- [ ] Add `onboardCreatorInputSchema` to `packages/api-types/src/studio-creators/schemas.ts`.
-- [ ] Add `studioCreatorOnboardingUserSearchQuerySchema` to `packages/api-types/src/studio-creators/schemas.ts`.
-- [ ] Add `CREATOR_NOT_IN_ROSTER` to `STUDIO_CREATOR_ROSTER_ERROR`.
-- [ ] Re-export any new onboarding types from the package entrypoints consumed by `erify_api` and `erify_studios`.
-- [ ] Add schema tests for valid onboarding payloads, invalid compensation combinations, and query-limit bounds.
+- [x] Add `onboardCreatorInputSchema` to `packages/api-types/src/studio-creators/schemas.ts`.
+- [x] Add `studioCreatorOnboardingUserSearchQuerySchema` to `packages/api-types/src/studio-creators/schemas.ts`.
+- [x] Add `CREATOR_NOT_IN_ROSTER` to `STUDIO_CREATOR_ROSTER_ERROR`.
+- [x] Re-export any new onboarding types from the package entrypoints consumed by `erify_api` and `erify_studios`.
+- [x] Add schema tests for valid onboarding payloads, invalid compensation combinations, and query-limit bounds.
 
 ### BE-2 Controller And DTO Wiring
 
-- [ ] Add `apps/erify_api/src/studios/studio-creator/schemas/studio-creator-onboard.schema.ts`.
-- [ ] Add `apps/erify_api/src/studios/studio-creator/schemas/studio-creator-onboarding-user-search.schema.ts`.
-- [ ] Add `POST /studios/:studioId/creators/onboard` to `apps/erify_api/src/studios/studio-creator/studio-creator.controller.ts`.
-- [ ] Add `GET /studios/:studioId/creators/onboarding-users` to `apps/erify_api/src/studios/studio-creator/studio-creator.controller.ts`.
-- [ ] Keep both endpoints under `ADMIN` studio guard only.
+- [x] Add `apps/erify_api/src/studios/studio-creator/schemas/studio-creator-onboard.schema.ts`.
+- [x] Add `apps/erify_api/src/studios/studio-creator/schemas/studio-creator-onboarding-user-search.schema.ts`.
+- [x] Add `POST /studios/:studioId/creators/onboard` to `apps/erify_api/src/studios/studio-creator/studio-creator.controller.ts`.
+- [x] Add `GET /studios/:studioId/creators/onboarding-users` to `apps/erify_api/src/studios/studio-creator/studio-creator.controller.ts`.
+- [x] Keep both endpoints under `ADMIN` studio guard only.
 
 ### BE-3 Service And Repository Work
 
-- [ ] Add `OnboardCreatorPayload` support in `apps/erify_api/src/models/studio-creator/schemas/studio-creator.schema.ts`.
-- [ ] Inject `CreatorService` into `StudioCreatorService` and add `onboardCreator(studioUid, payload)`.
-- [ ] Reuse the existing roster compensation validation path instead of duplicating cross-field rules.
-- [ ] Validate optional `userId` existence before creator creation, while preserving current duplicate-user-link behavior from `CreatorService.createCreator()`.
-- [ ] Add `searchOnboardingUsers({ search, limit })` to `StudioCreatorService`.
-- [ ] Add `searchUsersForCreatorOnboarding()` to `UserService`.
-- [ ] Add `searchUsersForCreatorOnboarding()` to `UserRepository` with `deletedAt = null` and "no linked creator" filtering.
-- [ ] Wire any missing module imports in `apps/erify_api/src/models/studio-creator/studio-creator.module.ts`.
+- [x] Add `OnboardCreatorPayload` support in `apps/erify_api/src/models/studio-creator/schemas/studio-creator.schema.ts`.
+- [x] Inject `CreatorService` into `StudioCreatorService` and add `onboardCreator(studioUid, payload)`.
+- [x] Reuse the existing roster compensation validation path instead of duplicating cross-field rules.
+- [x] Validate optional `userId` existence before creator creation, while preserving current duplicate-user-link behavior from `CreatorService.createCreator()`.
+- [x] Add `searchOnboardingUsers({ search, limit })` to `StudioCreatorService`.
+- [x] Add `searchUsersForCreatorOnboarding()` to `UserService`.
+- [x] Add `searchUsersForCreatorOnboarding()` to `UserRepository` with `deletedAt = null` and "no linked creator" filtering.
+- [x] Wire any missing module imports in `apps/erify_api/src/models/studio-creator/studio-creator.module.ts`.
 
 ### BE-4 Assignment Gate Fix
 
-- [ ] Update `apps/erify_api/src/show-orchestration/show-orchestration.service.ts` so creator assignment first verifies roster membership, then active state.
-- [ ] Return `CREATOR_NOT_IN_ROSTER` when the creator exists globally but has no `StudioCreator` row for the studio.
-- [ ] Preserve `CREATOR_INACTIVE_IN_ROSTER` when the row exists but is inactive.
-- [ ] Keep already-assigned creators idempotent instead of turning them into false-positive failures.
+- [x] Update `apps/erify_api/src/show-orchestration/show-orchestration.service.ts` so creator assignment first verifies roster membership, then active state.
+- [x] Return `CREATOR_NOT_IN_ROSTER` when the creator exists globally but has no `StudioCreator` row for the studio.
+- [x] Preserve `CREATOR_INACTIVE_IN_ROSTER` when the row exists but is inactive.
+- [x] Keep already-assigned creators idempotent instead of turning them into false-positive failures.
 
 ### BE-5 Test Coverage
 
-- [ ] Add service tests for `StudioCreatorService.onboardCreator`.
-- [ ] Add controller tests for both onboarding endpoints.
-- [ ] Add tests for onboarding-user search eligibility filtering and guard behavior.
-- [ ] Add regression tests for `bulkAssignCreatorsToShow` covering off-roster and inactive-roster creators.
-- [ ] Add or update shared contract tests in `@eridu/api-types`.
+- [x] Add service tests for `StudioCreatorService.onboardCreator`.
+- [x] Add controller tests for both onboarding endpoints.
+- [x] Add tests for onboarding-user search eligibility filtering and guard behavior.
+- [x] Add regression tests for `bulkAssignCreatorsToShow` covering off-roster and inactive-roster creators.
+- [x] Add or update shared contract tests in `@eridu/api-types`.
 
 ### BE-6 Verification Gate
 
-- [ ] Run `pnpm --filter @eridu/api-types lint`.
-- [ ] Run `pnpm --filter @eridu/api-types typecheck`.
-- [ ] Run `pnpm --filter @eridu/api-types test`.
-- [ ] Run `pnpm --filter erify_api lint`.
-- [ ] Run `pnpm --filter erify_api typecheck`.
-- [ ] Run `pnpm --filter erify_api test`.
-- [ ] Run `pnpm --filter erify_api build` if package exports, DTO wiring, or module wiring changes require it.
+- [x] Run `pnpm --filter @eridu/api-types lint`.
+- [x] Run `pnpm --filter @eridu/api-types typecheck`.
+- [x] Run `pnpm --filter @eridu/api-types test`.
+- [x] Run `pnpm --filter erify_api lint`.
+- [x] Run `pnpm --filter erify_api typecheck`.
+- [x] Run `pnpm --filter erify_api test`.
+- [x] Run `pnpm --filter erify_api build` if package exports, DTO wiring, or module wiring changes require it.
 
 ## Design Decisions
 

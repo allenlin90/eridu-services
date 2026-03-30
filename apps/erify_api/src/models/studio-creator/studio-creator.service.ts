@@ -173,6 +173,9 @@ export class StudioCreatorService extends BaseModelService {
     });
   }
 
+  // studioUid is unused here because authorization is enforced at the controller layer via
+  // @StudioProtected([STUDIO_ROLE.ADMIN]). The global user search is intentionally scoped
+  // only by the studio-guarded endpoint, not by a per-studio user filter.
   searchOnboardingUsers(
     _studioUid: string,
     params: {
