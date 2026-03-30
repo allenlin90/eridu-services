@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,9 +8,7 @@ import { STUDIO_CREATOR_ROSTER_STATE } from '@eridu/api-types/studio-creators';
 import { AddStudioCreatorDialog } from '../add-studio-creator-dialog';
 
 const mockUseCreatorCatalogQuery = vi.fn();
-const mockUseStudioCreatorOnboardingUsersQuery = vi.fn();
 const mockUseAddStudioCreatorToRoster = vi.fn();
-const mockUseOnboardStudioCreator = vi.fn();
 
 vi.mock('@eridu/ui', () => ({
   AsyncCombobox: ({
@@ -25,28 +23,24 @@ vi.mock('@eridu/ui', () => ({
     options: Array<{ value: string; label: string }>;
     placeholder?: string;
     emptyMessage?: string;
-  }) => {
-    const testId = placeholder?.includes('users') ? 'onboarding-user-options' : 'creator-options';
-
-    return (
-      <div>
-        <input
-          placeholder={placeholder}
-          onChange={(event) => onSearch(event.target.value)}
-        />
-        <ul data-testid={testId}>
-          {options.map((option) => (
-            <li key={option.value}>
-              <button type="button" onClick={() => onChange(option.value)}>
-                {option.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-        {options.length === 0 && emptyMessage ? <p>{emptyMessage}</p> : null}
-      </div>
-    );
-  },
+  }) => (
+    <div>
+      <input
+        placeholder={placeholder}
+        onChange={(event) => onSearch(event.target.value)}
+      />
+      <ul data-testid="creator-options">
+        {options.map((option) => (
+          <li key={option.value}>
+            <button type="button" onClick={() => onChange(option.value)}>
+              {option.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+      {options.length === 0 && emptyMessage ? <p>{emptyMessage}</p> : null}
+    </div>
+  ),
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type={props.type ?? 'button'} {...props}>{children}</button>
   ),
@@ -78,14 +72,8 @@ vi.mock('@/features/studio-show-creators/api/get-creator-catalog', () => ({
   useCreatorCatalogQuery: (...args: unknown[]) => mockUseCreatorCatalogQuery(...args),
 }));
 
-vi.mock('@/features/studio-creator-roster/api/get-onboarding-users', () => ({
-  useStudioCreatorOnboardingUsersQuery: (...args: unknown[]) =>
-    mockUseStudioCreatorOnboardingUsersQuery(...args),
-}));
-
 vi.mock('@/features/studio-creator-roster/api/studio-creator-roster', () => ({
   useAddStudioCreatorToRoster: (...args: unknown[]) => mockUseAddStudioCreatorToRoster(...args),
-  useOnboardStudioCreator: (...args: unknown[]) => mockUseOnboardStudioCreator(...args),
 }));
 
 describe('addStudioCreatorDialog', () => {
@@ -97,25 +85,14 @@ describe('addStudioCreatorDialog', () => {
       isLoading: false,
     });
 
-    mockUseStudioCreatorOnboardingUsersQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-    });
-
     mockUseAddStudioCreatorToRoster.mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: false,
-      reset: vi.fn(),
-    });
-
-    mockUseOnboardStudioCreator.mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: false,
       reset: vi.fn(),
     });
   });
 
-  it('defaults to search mode when opened', () => {
+  it('renders the search description on open', () => {
     render(
       <AddStudioCreatorDialog
         studioId="std_1"
@@ -125,31 +102,9 @@ describe('addStudioCreatorDialog', () => {
     );
 
     expect(screen.getByText('Search first to reuse an existing creator identity when possible.')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
-    expect(screen.queryByText('New creators are global identities shared across studios.')).not.toBeInTheDocument();
   });
 
-  it('shows create CTA after catalog search even when results exist', async () => {
-    const user = userEvent.setup();
-
-    mockUseCreatorCatalogQuery.mockReturnValue({
-      data: [
-        {
-          id: 'creator_1',
-          name: 'Alice',
-          alias_name: 'Ali',
-          roster_state: STUDIO_CREATOR_ROSTER_STATE.ACTIVE,
-        },
-        {
-          id: 'creator_2',
-          name: 'Bob',
-          alias_name: 'B',
-          roster_state: STUDIO_CREATOR_ROSTER_STATE.NONE,
-        },
-      ],
-      isLoading: false,
-    });
-
+  it('does not render creator name or alias fields', () => {
     render(
       <AddStudioCreatorDialog
         studioId="std_1"
@@ -158,9 +113,21 @@ describe('addStudioCreatorDialog', () => {
       />,
     );
 
-    await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'alice');
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Alias')).not.toBeInTheDocument();
+  });
 
-    expect(screen.getByRole('button', { name: 'Create and onboard new creator' })).toBeInTheDocument();
+  it('does not render a mode toggle or create CTA', () => {
+    render(
+      <AddStudioCreatorDialog
+        studioId="std_1"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Create and onboard new creator' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to search' })).not.toBeInTheDocument();
   });
 
   it('keeps active roster matches visible but outside actionable options', async () => {
@@ -202,16 +169,16 @@ describe('addStudioCreatorDialog', () => {
     expect(within(creatorOptions).queryByText('Alice (Ali)')).not.toBeInTheDocument();
   });
 
-  it('enables studio onboarding-user lookup only after switching to create mode', async () => {
+  it('shows reactivation hint when an inactive creator is selected', async () => {
     const user = userEvent.setup();
 
     mockUseCreatorCatalogQuery.mockReturnValue({
       data: [
         {
-          id: 'creator_2',
-          name: 'Bob',
-          alias_name: 'B',
-          roster_state: STUDIO_CREATOR_ROSTER_STATE.NONE,
+          id: 'creator_3',
+          name: 'Carol',
+          alias_name: null,
+          roster_state: STUDIO_CREATOR_ROSTER_STATE.INACTIVE,
         },
       ],
       isLoading: false,
@@ -225,21 +192,48 @@ describe('addStudioCreatorDialog', () => {
       />,
     );
 
-    expect(mockUseStudioCreatorOnboardingUsersQuery).toHaveBeenCalledWith(
-      'std_1',
-      { search: '', limit: 20 },
-      false,
+    await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'carol');
+    await user.click(screen.getByRole('button', { name: 'Carol • Reactivate' }));
+
+    expect(
+      screen.getByText('This creator already has an inactive studio roster row and will be reactivated.'),
+    ).toBeInTheDocument();
+  });
+
+  it('calls addMutation.mutateAsync with correct payload on submit', async () => {
+    const user = userEvent.setup();
+    const mutateAsync = vi.fn().mockResolvedValue({});
+
+    mockUseCreatorCatalogQuery.mockReturnValue({
+      data: [
+        {
+          id: 'creator_2',
+          name: 'Bob',
+          alias_name: 'B',
+          roster_state: STUDIO_CREATOR_ROSTER_STATE.NONE,
+        },
+      ],
+      isLoading: false,
+    });
+
+    mockUseAddStudioCreatorToRoster.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      reset: vi.fn(),
+    });
+
+    render(
+      <AddStudioCreatorDialog
+        studioId="std_1"
+        open
+        onOpenChange={vi.fn()}
+      />,
     );
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'bob');
-    await user.click(screen.getByRole('button', { name: 'Create and onboard new creator' }));
+    await user.click(screen.getByRole('button', { name: 'Bob (B)' }));
+    await user.click(screen.getByRole('button', { name: 'Add Creator' }));
 
-    await waitFor(() => {
-      expect(mockUseStudioCreatorOnboardingUsersQuery).toHaveBeenLastCalledWith(
-        'std_1',
-        { search: '', limit: 20 },
-        true,
-      );
-    });
+    expect(mutateAsync).toHaveBeenCalledWith({ creator_id: 'creator_2' });
   });
 });

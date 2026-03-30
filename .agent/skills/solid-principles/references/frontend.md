@@ -273,6 +273,55 @@ function CheckoutButton() {
 
 ---
 
+## Codebase Example: Studio Creator Roster Dialogs
+
+The `studio-creator-roster` feature provides a concrete before/after example of SRP, OCP, and ISP applied to a real dialog split.
+
+### Before: Combined `AddStudioCreatorDialog` (violation)
+
+The original component managed two unrelated flows in a single file using a `mode` state toggle (`'search' | 'create'`):
+
+- **Search mode**: searched the global creator catalog, picked an existing creator, set compensation defaults
+- **Create mode**: created a new global `Creator` (with optional user link), set compensation defaults
+
+This violated SRP (two domain operations, two reasons to change) and OCP (adding a new flow required editing the existing component's `if/switch` on `mode`).
+
+### After: Split into three focused units
+
+**`AddStudioCreatorDialog`** (`add-studio-creator-dialog.tsx`)
+- Single responsibility: search the catalog, pick an existing creator, add to roster
+- Depends only on `useAddStudioCreatorToRoster` and `useCreatorCatalogQuery`
+- No mode state, no create form fields
+
+**`OnboardCreatorDialog`** (`onboard-creator-dialog.tsx`)
+- Single responsibility: create a new global creator identity and onboard them
+- Depends only on `useOnboardStudioCreator` and `useStudioCreatorOnboardingUsersQuery`
+- No catalog search, no mode toggle
+
+**`CreatorCompensationFields`** (`creator-compensation-fields.tsx`)
+- Extracted shared compensation UI (Default Rate, Compensation Type, Commission Rate)
+- Receives only the props it uses — no dialog-level state leaks in (ISP)
+- Both dialogs compose it without modification (OCP): when compensation fields change, only `CreatorCompensationFields` needs to update
+
+```tsx
+// OCP in action — both dialogs are closed for modification on compensation changes:
+<CreatorCompensationFields
+  defaultRate={defaultRate}
+  defaultRateType={defaultRateType}
+  defaultCommissionRate={defaultCommissionRate}
+  onDefaultRateChange={setDefaultRate}
+  onDefaultRateTypeChange={setDefaultRateType}
+  onDefaultCommissionRateChange={setDefaultCommissionRate}
+  disabled={mutation.isPending}
+/>
+```
+
+**ISP** — each dialog receives only `{ studioId, open, onOpenChange }`. The roster table renders both independently with their own open state — no shared mode prop or combined handler.
+
+**DIP** — both dialogs depend on their own mutation hooks (`useAddStudioCreatorToRoster`, `useOnboardStudioCreator`) injected via TanStack Query, not on each other or on parent page state.
+
+---
+
 ## Related Skills
 
 - **[Frontend Code Quality](../../frontend-code-quality/SKILL.md)**: Linting and code standards.
