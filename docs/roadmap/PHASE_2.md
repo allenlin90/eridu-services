@@ -21,8 +21,8 @@ Introduce a reusable workflow system that can support operational checklists and
 ## Implementation Notes
 
 - Canonical implementation detail lives in:
-  - [apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md](/Users/allenlin/Desktop/projects/eridu-services/apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md)
-  - [apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md](/Users/allenlin/Desktop/projects/eridu-services/apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md)
+  - [apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md](../../apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md)
+  - [apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md](../../apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md)
 - Phase 2 is considered closed because its remaining gaps were intentionally reassigned rather than left as incomplete scope.
 
 ## Deferred From Phase 2

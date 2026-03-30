@@ -26,7 +26,7 @@ Single source of truth for all Phase 4 features. Each row links to its PRD (pre-
 | 1a  | Sidebar redesign                         | [design](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔁 Incremental                    | 1      | Structure done (My Workspace, Settings, Creators). Reports + Finance groups added as features ship. Icon fixes remaining. |
 | 1b  | Studio creator roster CRUD               | [feature](../features/studio-creator-roster.md)                    | ✅ Implemented (PR #30)           | 1      | Roster + compensation defaults + inactive enforcement                                                                     |
 | 1c  | Studio member roster CRUD                | [feature](../features/studio-member-roster.md)                     | ✅ Shipped (PR #28)               | 1      | `baseHourlyRate` editing, self-demotion guard                                                                             |
-| 1d  | Studio creator onboarding + roster-first | [PRD](../prd/studio-creator-onboarding.md)                         | 🔲 **Next** (critical path)       | 1      | Fixes roster enforcement bug; removes `/system/*` dependency; unblocks Wave 2                                             |
+| 1d  | Studio creator onboarding + roster-first | [feature](../features/studio-creator-onboarding.md)                | ✅ Implemented (PR #32)           | 1      | Fixes roster enforcement bug; removes `/system/*` dependency; unblocks Wave 2                                             |
 | 1e  | Studio show management                   | [PRD](../prd/studio-show-management.md)                            | 🔲 Planned                        | 1+     | No deps. Highest-impact studio autonomy gap                                                                               |
 | 1f  | Studio schedule management               | [PRD](../prd/studio-schedule-management.md)                        | 🔲 Planned                        | 1+     | Benefits from 1e. Schedule CRUD + publish + snapshots                                                                     |
 | R   | Economics cost model review              | —                                                                  | ⏸️ Deferred                       | Post-1 | Gate: Wave 1 complete. Review bonus/OT/allowance cost components                                                          |
@@ -51,33 +51,62 @@ Single source of truth for all Phase 4 features. Each row links to its PRD (pre-
 
 ### Dependency Graph
 
+```mermaid
+flowchart TD
+    subgraph wave1["Wave 1 (in progress)"]
+        1a["1a Sidebar Redesign ✅🔁"]
+        1b["1b Creator Roster ✅"]
+        1c["1c Member Roster ✅"]
+        1d["1d Creator Onboarding\n+ Roster-First 🔲"]
+    end
+
+    subgraph wave1plus["Wave 1+ (parallel)"]
+        1e["1e Show Management 🔲"]
+        1f["1f Schedule Management 🔲"]
+    end
+
+    subgraph postwave1["Post-Wave 1"]
+        R["R Cost Model Review ⏸️"]
+        Rplus["R+ Compensation\nLine Items 🔲"]
+        E0["0 Economics Merge ⏸️"]
+    end
+
+    subgraph wave2["Wave 2"]
+        2a["2a Show Planning Export 🔲"]
+        2b["2b Creator Availability\nHardening 🔲"]
+    end
+
+    subgraph wave3["Wave 3"]
+        W3["3 P&L Revenue Workflow 🔲"]
+    end
+
+    %% Dependencies
+    1b --> 1d
+    1c --> 1d
+    1e --> 1f
+    R --> Rplus --> E0
+    E0 --> 2a
+    1d --> 2b
+    E0 --> 2b
+    E0 --> W3
+
+    %% Styling
+    classDef done fill:#d4edda,stroke:#28a745,color:#000
+    classDef next fill:#fff3cd,stroke:#ffc107,color:#000
+    classDef planned fill:#e2e3e5,stroke:#6c757d,color:#000
+    classDef deferred fill:#f8d7da,stroke:#dc3545,color:#000
+
+    class 1a,1b,1c done
+    class 1d next
+    class 1e,1f,Rplus,2a,2b,W3 planned
+    class R,E0 deferred
 ```
-Wave 1 (in progress):
-    ├─► 1a Sidebar Redesign ─────────────────── (FE-only, no deps)
-    ├─► 1b Studio Creator Roster ────────────── ✅ Implemented (PR #30)
-    ├─► 1c Studio Member Roster ─────────────── ✅ Shipped (PR #28)
-    └─► 1d Creator Onboarding + Roster-First ── (critical path; includes roster enforcement bug fix)
 
-Wave 1+ (parallel with post-Wave 1):
-    ├─► 1e Studio Show Management ───────────── (no deps)
-    └─► 1f Studio Schedule Management ──────── (benefits from 1e)
-
-Post-Wave 1:
-    R  Cost model review ──► R+ Compensation line items ──► 0 Economics merge
-
-Wave 2 (gate: economics on master):
-    ├─► 2a Show Planning Export
-    └─► 2b Creator Availability Hardening (also needs 1d)
-
-Wave 3 (gate: design Qs + big.js):
-    └─► 3 P&L Revenue Workflow ──► removes @preview, activates COMMISSION/HYBRID
-```
-
-### Current Priority (after PR #30 merges)
+### Current Priority
 
 | Priority    | PR  | Workstream                                                               | Why                                                                                                                    |
 | ----------- | --- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| **Primary** | 1d  | [Creator Onboarding + Roster-First](../prd/studio-creator-onboarding.md) | Critical path blocker. Fixes roster bug, removes `/system/*` dep, unblocks Wave 2. Also fixes 2 minor PR #30 warnings. |
+| ~~**Primary**~~ | 1d  | [Creator Onboarding + Roster-First](../features/studio-creator-onboarding.md) | ✅ Implemented (PR #32). Roster bug fixed, `/system/*` dep removed, Wave 2 unblocked. |
 | Parallel    | 1e  | [Studio Show Management](../prd/studio-show-management.md)               | Highest-impact autonomy gap. No deps. PRD ready.                                                                       |
 
 **Per-PR workflow**: review PRD → create BE/FE design docs under `apps/*/docs/design/` → implement → post-ship knowledge-sync.
@@ -133,7 +162,7 @@ Post-ship: promote PRD → docs/features/, run knowledge-sync
 | Economics baseline             | [feature](../features/show-economics.md)            | [BE](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)                 | [FE](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md)                 |
 | Studio member roster           | [feature](../features/studio-member-roster.md)      | Shipped (PR #28)                                                                | Shipped (PR #28)                                                                    |
 | Studio creator roster          | [feature](../features/studio-creator-roster.md)     | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md)                        | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md)                        |
-| Studio creator onboarding      | [PRD](../prd/studio-creator-onboarding.md)          | TBD                                                                             | TBD                                                                                 |
+| Studio creator onboarding      | [feature](../features/studio-creator-onboarding.md) | [BE](../../apps/erify_api/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)      | [FE](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)      |
 | Compensation line items        | [PRD](../prd/compensation-line-items.md)            | [BE](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)        | [FE](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)        |
 | Show planning export           | [PRD](../prd/show-planning-export.md)               | [BE](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)           | [FE](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)           |
 | Creator availability hardening | [PRD](../prd/creator-availability-hardening.md)     | [BE](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [FE](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |

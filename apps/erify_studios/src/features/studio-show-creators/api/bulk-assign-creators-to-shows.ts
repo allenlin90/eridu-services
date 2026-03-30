@@ -16,7 +16,7 @@ import { apiClient } from '@/lib/api/client';
 
 type UseBulkAssignCreatorsToShowsProps = {
   studioId: string;
-  onSuccess?: () => void;
+  onSuccess?: (response: BulkShowCreatorAssignmentResponse) => void;
 };
 
 type StudioShowCreatorAssignmentInput = {
@@ -142,7 +142,7 @@ export function useBulkAssignCreatorsToShows({
         toast.success(`Assigned ${response.created} creator-show pair(s).`);
       }
 
-      onSuccess?.();
+      onSuccess?.(response);
     },
   });
 }

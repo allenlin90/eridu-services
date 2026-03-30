@@ -139,7 +139,7 @@ For detailed implementation patterns, see `.agent/skills/`:
 
 ## Related Documentation
 
-- **[Business Domain](./BUSINESS.md)** — Product/domain concepts and entity meaning
+- **[Business Domain](../domain/BUSINESS.md)** — Product/domain concepts and entity meaning
 - **[Root Roadmap](../roadmap/README.md)** — Cross-app phase ownership
 - **[erify_api Architecture Reference](../../apps/erify_api/docs/README.md)** — Backend implementation docs
 - **[erify_studios Docs](../../apps/erify_studios/docs/README.md)** — Frontend workflow docs

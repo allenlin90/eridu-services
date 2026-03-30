@@ -3,6 +3,7 @@ import { Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import type { StudioShowCreatorListItem } from '@eridu/api-types/studio-creators';
 import {
   Badge,
@@ -14,8 +15,11 @@ import {
 import { useBulkAssignShowCreators } from '../api/bulk-assign-show-creators';
 import { useShowCreatorsQuery } from '../api/get-show-creators';
 import { useRemoveShowCreator } from '../api/remove-show-creator';
+import { getRosterAssignmentFailureMessage } from '../lib/creator-roster-guidance';
 
 import { AddCreatorDialog } from './add-creator-dialog';
+
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 type ShowCreatorListProps = {
   studioId: string;
@@ -102,6 +106,8 @@ export function ShowCreatorList({
 }: ShowCreatorListProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const { role } = useStudioAccess(studioId);
+  const isAdmin = role === STUDIO_ROLE.ADMIN;
 
   const {
     data: showCreators = [],
@@ -127,7 +133,9 @@ export function ShowCreatorList({
       {
         onSuccess: (result) => {
           if (result.failed.length > 0) {
-            toast.error(`Add failed: ${result.failed[0]?.reason ?? 'Unknown error'}`);
+            const firstFailure = result.failed[0];
+            const failureReason = firstFailure?.reason ?? 'Unknown error';
+            toast.error(`Add failed: ${getRosterAssignmentFailureMessage(failureReason, isAdmin)}`);
             return;
           }
           if (result.skipped > 0 && result.assigned === 0) {
@@ -140,7 +148,7 @@ export function ShowCreatorList({
         },
       },
     );
-  }, [bulkAssignCreators]);
+  }, [bulkAssignCreators, isAdmin]);
 
   const handleRemoveCreator = useCallback((creatorId: string) => {
     removeCreator(creatorId, {
@@ -252,6 +260,7 @@ export function ShowCreatorList({
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         studioId={studioId}
+        isAdmin={isAdmin}
         showStartTime={showStartTime}
         showEndTime={showEndTime}
         isSubmitting={isAssigning}

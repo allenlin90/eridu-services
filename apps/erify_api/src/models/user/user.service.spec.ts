@@ -127,4 +127,22 @@ describe('userService', () => {
       expect(userRepositoryMock.findPaginated).toHaveBeenCalledWith(query);
     });
   });
+
+  it('searchUsersForCreatorOnboarding delegates to repository', async () => {
+    const users = [{ uid: 'user_1', email: 'alice@example.com', name: 'Alice' }];
+    userRepositoryMock.searchUsersForCreatorOnboarding = jest
+      .fn()
+      .mockResolvedValue(users as any);
+
+    const result = await service.searchUsersForCreatorOnboarding({
+      search: 'alice',
+      limit: 20,
+    });
+
+    expect(userRepositoryMock.searchUsersForCreatorOnboarding).toHaveBeenCalledWith({
+      search: 'alice',
+      limit: 20,
+    });
+    expect(result).toEqual(users);
+  });
 });

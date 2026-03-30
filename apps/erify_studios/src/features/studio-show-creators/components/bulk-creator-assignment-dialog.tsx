@@ -1,8 +1,12 @@
+import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   BULK_ASSIGN_MAX_CREATORS_PER_SHOW,
   BULK_ASSIGN_MAX_SHOWS,
+  type BulkShowCreatorAssignmentResponse,
+  STUDIO_CREATOR_ROSTER_ERROR,
   STUDIO_CREATOR_ROSTER_STATE,
 } from '@eridu/api-types/studio-creators';
 import {
@@ -18,8 +22,13 @@ import {
 
 import { useBulkAssignCreatorsToShows } from '../api/bulk-assign-creators-to-shows';
 import { useCreatorCatalogQuery } from '../api/get-creator-catalog';
+import {
+  getMissingCreatorGuidance,
+  getRosterAssignmentFailureMessage,
+} from '../lib/creator-roster-guidance';
 
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 type BulkCreatorAssignmentDialogProps = {
   studioId: string;
@@ -38,6 +47,9 @@ export function BulkCreatorAssignmentDialog({
 }: BulkCreatorAssignmentDialogProps) {
   const [selectedCreatorIds, setSelectedCreatorIds] = useState<string[]>([]);
   const [creatorSearch, setCreatorSearch] = useState('');
+  const [assignmentSummary, setAssignmentSummary] = useState<BulkShowCreatorAssignmentResponse | null>(null);
+  const { role } = useStudioAccess(studioId);
+  const isAdmin = role === STUDIO_ROLE.ADMIN;
 
   const { data: creators = [], isLoading: isLoadingCreators } = useCreatorCatalogQuery(
     studioId,
@@ -61,20 +73,33 @@ export function BulkCreatorAssignmentDialog({
         })),
     [creators],
   );
+  const showNameById = useMemo(
+    () => new Map(shows.map((show) => [show.id, show.name])),
+    [shows],
+  );
+  const creatorNameById = useMemo(
+    () => new Map(creators.map((creator) => [creator.id, creator.name])),
+    [creators],
+  );
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setSelectedCreatorIds([]);
       setCreatorSearch('');
+      setAssignmentSummary(null);
     }
     onOpenChange(nextOpen);
   };
 
   const { mutate: assignCreators, isPending: isAssigning } = useBulkAssignCreatorsToShows({
     studioId,
-    onSuccess: () => {
-      handleOpenChange(false);
-      onSuccess?.();
+    onSuccess: (response) => {
+      setAssignmentSummary(response);
+
+      if (response.errors.length === 0) {
+        handleOpenChange(false);
+        onSuccess?.();
+      }
     },
   });
 
@@ -86,6 +111,7 @@ export function BulkCreatorAssignmentDialog({
       return;
     }
 
+    setAssignmentSummary(null);
     assignCreators({
       show_ids: shows.map((show) => show.id),
       creator_ids: selectedCreatorIds,
@@ -142,6 +168,18 @@ export function BulkCreatorAssignmentDialog({
               emptyMessage="No creators found."
               disabled={isAssigning}
             />
+            <p className="text-xs text-muted-foreground">
+              {getMissingCreatorGuidance(isAdmin)}
+            </p>
+            {isAdmin && (
+              <Link
+                to="/studios/$studioId/creators"
+                params={{ studioId }}
+                className="inline-flex text-xs font-medium text-primary hover:underline"
+              >
+                Go to creator roster onboarding
+              </Link>
+            )}
             <p className={`text-xs ${creatorLimitExceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
               Selected:
               {' '}
@@ -155,6 +193,55 @@ export function BulkCreatorAssignmentDialog({
               {creatorLimitExceeded && ' — limit exceeded'}
             </p>
           </div>
+
+          {assignmentSummary && assignmentSummary.errors.length > 0 && (
+            <div className="space-y-1 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900">
+              <p className="font-medium">
+                Some assignments were not completed (
+                {assignmentSummary.errors.length}
+                ).
+              </p>
+              <ul className="max-h-28 space-y-1 overflow-y-auto pr-1">
+                {assignmentSummary.errors.slice(0, 12).map((error) => {
+                  const showName = showNameById.get(error.show_id) ?? error.show_id;
+                  const creatorName = creatorNameById.get(error.creator_id) ?? error.creator_id;
+                  const reason = getRosterAssignmentFailureMessage(error.reason, isAdmin);
+
+                  return (
+                    <li key={`${error.show_id}-${error.creator_id}-${error.reason}`}>
+                      <span className="font-medium">{showName}</span>
+                      {' '}
+                      •
+                      {' '}
+                      <span className="font-medium">{creatorName}</span>
+                      {' '}
+                      •
+                      {' '}
+                      {reason}
+                    </li>
+                  );
+                })}
+                {assignmentSummary.errors.length > 12 && (
+                  <li className="text-amber-700">
+                    +
+                    {assignmentSummary.errors.length - 12}
+                    {' '}
+                    more
+                  </li>
+                )}
+              </ul>
+              {assignmentSummary.errors.some((error) => error.reason === STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_IN_ROSTER)
+              && isAdmin && (
+                <Link
+                  to="/studios/$studioId/creators"
+                  params={{ studioId }}
+                  className="inline-flex pt-1 font-medium text-primary hover:underline"
+                >
+                  Onboard missing creators in roster
+                </Link>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>

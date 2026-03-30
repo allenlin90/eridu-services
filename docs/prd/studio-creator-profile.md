@@ -3,7 +3,7 @@
 > **Status**: Active
 > **Phase**: 5 — Candidate (Studio Autonomy track)
 > **Workstream**: Studio self-service — creator profile management
-> **Depends on**: Studio Creator Onboarding — ✅ tracked (`docs/prd/studio-creator-onboarding.md`)
+> **Depends on**: Studio Creator Onboarding — ✅ tracked (`docs/features/studio-creator-onboarding.md`)
 > **Blocks**: None (workaround exists via system admin)
 
 ## Problem
@@ -112,5 +112,5 @@ All fields optional. `user_id` accepted only when current value is null.
 
 - Backend design: create with implementation PR under `apps/erify_api/docs/design/`
 - Frontend design: create with implementation PR under `apps/erify_studios/docs/design/`
-- Related: Studio Creator Onboarding PRD (`docs/prd/studio-creator-onboarding.md`)
+- Related: Studio Creator Onboarding PRD (`docs/features/studio-creator-onboarding.md`)
 - Related admin controller: `apps/erify_api/src/admin/creators/admin-creator.controller.ts`

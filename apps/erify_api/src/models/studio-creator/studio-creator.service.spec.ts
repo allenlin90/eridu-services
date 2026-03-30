@@ -1,13 +1,30 @@
+import { Module } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { ClsModule } from 'nestjs-cls';
 
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { CreatorRepository } from '@/models/creator/creator.repository';
+import { CreatorService } from '@/models/creator/creator.service';
 import { StudioCreatorRepository, type StudioCreatorRosterRecord } from '@/models/studio-creator/studio-creator.repository';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
+import { UserService } from '@/models/user/user.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
+
+const mockPrismaForCls = {
+  $transaction: jest.fn(async (callback: any) => await callback({})),
+};
+
+@Module({
+  providers: [{ provide: PrismaService, useValue: mockPrismaForCls }],
+  exports: [PrismaService],
+})
+class MockPrismaModule {}
 
 function buildRosterRecord(overrides: Partial<Record<keyof StudioCreatorRosterRecord, unknown>> = {}) {
   return {
@@ -37,10 +54,26 @@ describe('studioCreatorService', () => {
   let service: StudioCreatorService;
   let studioCreatorRepository: jest.Mocked<StudioCreatorRepository>;
   let creatorRepository: jest.Mocked<CreatorRepository>;
+  let creatorService: jest.Mocked<CreatorService>;
+  let userService: jest.Mocked<UserService>;
   let utilityService: jest.Mocked<UtilityService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       providers: [
         StudioCreatorService,
         {
@@ -62,6 +95,19 @@ describe('studioCreatorService', () => {
           },
         },
         {
+          provide: CreatorService,
+          useValue: {
+            createCreator: jest.fn(),
+          },
+        },
+        {
+          provide: UserService,
+          useValue: {
+            getUserById: jest.fn(),
+            searchUsersForCreatorOnboarding: jest.fn(),
+          },
+        },
+        {
           provide: UtilityService,
           useValue: {
             generateBrandedId: jest.fn().mockReturnValue('smc_generated'),
@@ -73,6 +119,8 @@ describe('studioCreatorService', () => {
     service = module.get(StudioCreatorService);
     studioCreatorRepository = module.get(StudioCreatorRepository);
     creatorRepository = module.get(CreatorRepository);
+    creatorService = module.get(CreatorService);
+    userService = module.get(UserService);
     utilityService = module.get(UtilityService);
   });
 
@@ -195,6 +243,103 @@ describe('studioCreatorService', () => {
         message: expect.stringContaining(STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_FOUND),
       }),
     });
+  });
+
+  it('onboards a brand-new creator into an active studio roster row', async () => {
+    userService.getUserById.mockResolvedValue({
+      uid: 'user_1',
+      email: 'creator@example.com',
+    } as any);
+    creatorService.createCreator.mockResolvedValue({
+      uid: 'creator_new',
+      name: 'Alice Example',
+      aliasName: 'Alice',
+    } as any);
+    studioCreatorRepository.createRosterEntry.mockResolvedValue(
+      buildRosterRecord({
+        uid: 'smc_new',
+        creator: {
+          uid: 'creator_new',
+          name: 'Alice Example',
+          aliasName: 'Alice',
+        },
+      }) as any,
+    );
+
+    const result = await service.onboardCreator('std_1', {
+      creator: {
+        name: 'Alice Example',
+        aliasName: 'Alice',
+        userId: 'user_1',
+        metadata: { source: 'onboard' },
+      },
+      roster: {
+        defaultRate: 500,
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+        metadata: { team: 'studio' },
+      },
+    });
+
+    expect(userService.getUserById).toHaveBeenCalledWith('user_1');
+    expect(creatorService.createCreator).toHaveBeenCalledWith({
+      name: 'Alice Example',
+      aliasName: 'Alice',
+      userId: 'user_1',
+      metadata: { source: 'onboard' },
+    });
+    expect(studioCreatorRepository.createRosterEntry).toHaveBeenCalledWith({
+      uid: 'smc_generated',
+      studioUid: 'std_1',
+      creatorUid: 'creator_new',
+      defaultRate: '500.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      metadata: { team: 'studio' },
+    });
+    expect(result).toEqual(expect.objectContaining({ uid: 'smc_new' }));
+  });
+
+  it('returns 404 when onboarding references a missing user', async () => {
+    userService.getUserById.mockResolvedValue(null);
+
+    await expect(service.onboardCreator('std_1', {
+      creator: {
+        name: 'Alice Example',
+        aliasName: 'Alice',
+        userId: 'user_missing',
+      },
+      roster: {
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+      },
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: expect.stringContaining('User not found'),
+      }),
+    });
+
+    expect(creatorService.createCreator).not.toHaveBeenCalled();
+    expect(studioCreatorRepository.createRosterEntry).not.toHaveBeenCalled();
+  });
+
+  it('delegates onboarding user search to user service', async () => {
+    userService.searchUsersForCreatorOnboarding.mockResolvedValue([
+      { uid: 'user_1', name: 'Alice', email: 'alice@example.com' },
+    ] as any);
+
+    const result = await service.searchOnboardingUsers('std_1', {
+      search: 'alice',
+      limit: 20,
+    });
+
+    expect(userService.searchUsersForCreatorOnboarding).toHaveBeenCalledWith({
+      search: 'alice',
+      limit: 20,
+    });
+    expect(result).toEqual([
+      { uid: 'user_1', name: 'Alice', email: 'alice@example.com' },
+    ]);
   });
 
   it('updates roster defaults and clears commission when switching to FIXED', async () => {

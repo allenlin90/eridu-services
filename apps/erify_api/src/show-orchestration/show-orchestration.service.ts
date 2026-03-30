@@ -186,6 +186,9 @@ export class ShowOrchestrationService {
       studioUid,
       uniqueCreatorUids,
     );
+    const rosteredCreatorIds = new Set(
+      studioCreatorRosterEntries.map((entry) => entry.creator.uid),
+    );
     const inactiveRosterCreatorIds = new Set(
       studioCreatorRosterEntries
         .filter((entry) => !entry.isActive)
@@ -223,17 +226,25 @@ export class ShowOrchestrationService {
         continue;
       }
 
+      const existingAssignment = existingByCreatorId.get(internalCreatorId);
+      if (existingAssignment?.deletedAt === null) {
+        result.skipped += 1;
+        continue;
+      }
+
+      if (!rosteredCreatorIds.has(creator.creatorId)) {
+        result.failed.push({
+          creatorId: creator.creatorId,
+          reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_IN_ROSTER,
+        });
+        continue;
+      }
+
       if (inactiveRosterCreatorIds.has(creator.creatorId)) {
         result.failed.push({
           creatorId: creator.creatorId,
           reason: STUDIO_CREATOR_ROSTER_ERROR.CREATOR_INACTIVE_IN_ROSTER,
         });
-        continue;
-      }
-
-      const existingAssignment = existingByCreatorId.get(internalCreatorId);
-      if (existingAssignment?.deletedAt === null) {
-        result.skipped += 1;
         continue;
       }
 

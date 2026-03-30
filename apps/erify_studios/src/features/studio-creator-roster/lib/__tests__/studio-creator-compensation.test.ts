@@ -4,6 +4,7 @@ import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 
 import {
   buildCreateStudioCreatorRosterPayload,
+  buildOnboardStudioCreatorPayload,
   buildUpdateStudioCreatorRosterPayload,
   UNSET_COMPENSATION_TYPE,
 } from '../studio-creator-compensation';
@@ -65,5 +66,53 @@ describe('studio creator compensation payload builders', () => {
         defaultCommissionRate: '',
       }),
     ).toThrow('Default commission rate is required');
+  });
+
+  it('builds onboarding payload with creator identity and optional user link', () => {
+    const payload = buildOnboardStudioCreatorPayload({
+      name: 'Alice Example',
+      aliasName: 'Alice',
+      userId: 'user_123',
+      defaultRate: '500',
+      defaultRateType: CREATOR_COMPENSATION_TYPE.FIXED,
+      defaultCommissionRate: '',
+    });
+
+    expect(payload).toEqual({
+      creator: {
+        name: 'Alice Example',
+        alias_name: 'Alice',
+        user_id: 'user_123',
+        metadata: undefined,
+      },
+      roster: {
+        default_rate: 500,
+        default_rate_type: CREATOR_COMPENSATION_TYPE.FIXED,
+        default_commission_rate: null,
+        metadata: undefined,
+      },
+    });
+  });
+
+  it('requires creator name and alias in onboarding payloads', () => {
+    expect(() =>
+      buildOnboardStudioCreatorPayload({
+        name: '   ',
+        aliasName: 'Alice',
+        defaultRate: '',
+        defaultRateType: UNSET_COMPENSATION_TYPE,
+        defaultCommissionRate: '',
+      }),
+    ).toThrow('Creator name is required');
+
+    expect(() =>
+      buildOnboardStudioCreatorPayload({
+        name: 'Alice Example',
+        aliasName: '   ',
+        defaultRate: '',
+        defaultRateType: UNSET_COMPENSATION_TYPE,
+        defaultCommissionRate: '',
+      }),
+    ).toThrow('Creator alias is required');
   });
 });
