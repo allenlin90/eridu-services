@@ -89,8 +89,12 @@ export class UserRepository extends BaseRepository<
     return this.model.findMany({
       where: {
         deletedAt: null,
-        creator: {
-          is: null,
+        NOT: {
+          creator: {
+            is: {
+              deletedAt: null,
+            },
+          },
         },
         OR: [
           { uid: { contains: search, mode: 'insensitive' } },

@@ -26,7 +26,7 @@ Additionally, the assignment write path only blocked *inactive* roster rows — 
 - `POST /studios/:studioId/creators/onboard` — creates a global `Creator` and an active `StudioCreator` row in one atomic transaction
 - `ADMIN`-only; no change to `/system/creators` or broader role permissions
 - Optional `user_id` links a creator to a platform user account; looked up through a studio-safe endpoint, not `/admin/users`
-- `GET /studios/:studioId/creators/onboarding-users?search=&limit=` — studio-guarded user search that excludes soft-deleted users and users already linked to a creator
+- `GET /studios/:studioId/creators/onboarding-users?search=&limit=` — studio-guarded user search that excludes soft-deleted users and users linked to active creators, while keeping users linked only to soft-deleted creators eligible
 
 ### Search-first onboarding dialog
 
