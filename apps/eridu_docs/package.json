@@ -4,8 +4,10 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
+    "start": "node ./dist/server/entry.mjs",
     "build": "astro build",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "preview": "astro preview",
     "astro": "astro"
   },
