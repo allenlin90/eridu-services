@@ -53,7 +53,7 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 1. Browser requests `docs.eridu.io/any-page`
 2. Middleware: no `eridu_docs_token` cookie → redirect to `eridu_auth/sign-in?callbackURL=.../auth/callback?returnTo=/any-page`
-3. User logs in (or auto-redirects if already logged into eridu_auth)
+3. User logs in
 4. eridu_auth redirects to `/auth/callback` (Better Auth session cookies set on `.eridu.io`)
 5. Callback forwards session cookies to `eridu_auth/api/auth/token`
 6. Gets JWT from response body, verifies with JWKS
@@ -136,21 +136,18 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 | `AUTH_API_URL`    | No       | inferred from `AUTH_URL`                              | eridu_auth backend URL (JWKS + token + sign-out APIs). If `AUTH_URL` is `localhost:5173`, API defaults to `localhost:3001` |
 | `AUTH_UI_URL`     | No       | `AUTH_URL`                                            | eridu_auth frontend login URL (`/sign-in`)                                                                                 |
 | `AUTH_ISSUER_URL` | No       | `AUTH_URL` (fallback: `AUTH_API_URL`)                 | Explicit JWT issuer URL for mixed local setups                                                                             |
-| `COOKIE_DOMAIN`   | No       | (omitted)                                             | Cookie domain for production (e.g., `.eridu.io`)                                                                           |
+| `COOKIE_DOMAIN`   | No       | (omitted)                                             | Cookie domain for production deployments when docs are served on a shared parent domain (for example `.eridu.io`)         |
 | `COOKIE_SECURE`   | No       | auto (`false` on localhost, `true` on non-local prod) | Force JWT cookie `Secure` flag behavior                                                                                    |
 | `BYPASS_AUTH`     | No       | `false`                                               | Skip auth in local dev                                                                                                     |
 
-### Local Development Note (`5173` + `3001`)
+### Local Development
 
-For local development where `eridu_auth` frontend is on `http://localhost:5173` and backend is on `http://localhost:3001`:
+For plain localhost docs work, set `BYPASS_AUTH=true` and keep the default
+localhost auth URLs.
 
-- Set only `AUTH_URL=http://localhost:5173`
-- `eridu_docs` will:
-  - validate JWT issuer against `5173` (matches `BETTER_AUTH_URL`)
-  - call JWKS/token/sign-out APIs on `3001` (auto-inferred)
-- If your local `BETTER_AUTH_URL` is still `http://localhost:3001`, set `AUTH_ISSUER_URL=http://localhost:3001`.
-
-This avoids login loops caused by issuer mismatch while keeping API calls on the backend port.
+Local end-to-end auth integration is intentionally not the primary workflow for
+this docs app. The recommended local setup is bypassed docs auth, while the
+real auth flow is exercised in deployed environments.
 
 ## Security Considerations
 

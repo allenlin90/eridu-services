@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+const stringBoolean = z
+  .union([z.boolean(), z.string()])
+  .transform((value) => {
+    if (typeof value === 'boolean') return value;
+    return value === 'true';
+  });
+
 const envSchema = z.object({
   AUTH_URL: z.url({ message: 'AUTH_URL must be a valid URL' }).optional(),
   AUTH_API_URL: z
@@ -10,9 +17,9 @@ const envSchema = z.object({
     .url({ message: 'AUTH_ISSUER_URL must be a valid URL' })
     .optional(),
   COOKIE_DOMAIN: z.string().optional(),
-  COOKIE_SECURE: z.coerce.boolean().optional(),
-  DEV: z.coerce.boolean().default(false),
-  BYPASS_AUTH: z.coerce.boolean().default(false),
+  COOKIE_SECURE: stringBoolean.optional(),
+  DEV: stringBoolean.default(false),
+  BYPASS_AUTH: stringBoolean.default(false),
 });
 
 const parsedEnv = envSchema.parse({
@@ -23,7 +30,7 @@ const parsedEnv = envSchema.parse({
   COOKIE_DOMAIN: import.meta.env.COOKIE_DOMAIN,
   COOKIE_SECURE: import.meta.env.COOKIE_SECURE,
   DEV: import.meta.env.DEV,
-  BYPASS_AUTH: import.meta.env.BYPASS_AUTH || process.env.BYPASS_AUTH,
+  BYPASS_AUTH: import.meta.env.BYPASS_AUTH ?? process.env.BYPASS_AUTH,
 });
 
 const authUrl

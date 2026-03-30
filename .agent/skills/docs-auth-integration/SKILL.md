@@ -100,7 +100,7 @@ The refresh works because Better Auth cross-subdomain session cookies (on `.erid
 | `secure` | `true` in production | HTTPS only |
 | `sameSite` | `lax` | Allows redirect from eridu_auth |
 | `maxAge` | `900` (15 min) | Matches JWT expiry from Better Auth |
-| `domain` | `.eridu.io` in prod | Cross-subdomain (omit for localhost) |
+| `domain` | `.eridu.io` in prod | Cross-subdomain in deployed environments |
 
 ## Environment Variables
 
@@ -109,10 +109,10 @@ The refresh works because Better Auth cross-subdomain session cookies (on `.erid
 | `AUTH_API_URL` | `http://localhost:3001` | eridu_auth backend API URL (`/api/auth/*`) |
 | `AUTH_UI_URL` | `http://localhost:5173` | eridu_auth frontend login UI URL (`/sign-in`) |
 | `AUTH_URL` | (optional fallback) | Legacy fallback used for both API and UI |
-| `COOKIE_DOMAIN` | (omitted) | Production cookie domain |
+| `COOKIE_DOMAIN` | (omitted) | Shared-domain cookie root for production |
 | `BYPASS_AUTH` | `false` | Skip auth for local dev |
 
-🟡 **Recommended**: In `eridu_auth`, only enable Better Auth `crossSubDomainCookies` when a real shared `COOKIE_DOMAIN` is configured. On localhost, keep session cookies host-only; `Domain=localhost` cookies can be rejected by browsers and cause `/auth/callback` redirect loops.
+🟡 **Recommended**: For local docs work in this repo, prefer `BYPASS_AUTH=true` instead of trying to reproduce the full cross-domain auth flow on localhost. Keep `COOKIE_DOMAIN` for deployed environments only.
 
 🟡 **Recommended**: Keep at least one project-owned non-prerendered Astro page route in `eridu_docs` when Starlight owns the main docs route. Astro 6 can otherwise optimize the SSR renderer manifest down to `renderers = []`, which breaks MDX docs pages at runtime with `NoMatchingRenderer`. The current safeguard is `src/pages/renderer-keepalive.astro`.
 
