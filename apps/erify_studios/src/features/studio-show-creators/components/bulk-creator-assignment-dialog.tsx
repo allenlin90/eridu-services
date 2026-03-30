@@ -30,6 +30,8 @@ import {
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
+const MAX_ERRORS_DISPLAYED = 12;
+
 type BulkCreatorAssignmentDialogProps = {
   studioId: string;
   shows: StudioShow[];
@@ -98,6 +100,9 @@ export function BulkCreatorAssignmentDialog({
 
       if (response.errors.length === 0) {
         handleOpenChange(false);
+        onSuccess?.();
+      } else if (response.created > 0) {
+        // Partial success: some assignments were created — notify the parent so it can refresh.
         onSuccess?.();
       }
     },
@@ -202,7 +207,7 @@ export function BulkCreatorAssignmentDialog({
                 ).
               </p>
               <ul className="max-h-28 space-y-1 overflow-y-auto pr-1">
-                {assignmentSummary.errors.slice(0, 12).map((error) => {
+                {assignmentSummary.errors.slice(0, MAX_ERRORS_DISPLAYED).map((error) => {
                   const showName = showNameById.get(error.show_id) ?? error.show_id;
                   const creatorName = creatorNameById.get(error.creator_id) ?? error.creator_id;
                   const reason = getRosterAssignmentFailureMessage(error.reason, isAdmin);
@@ -221,10 +226,10 @@ export function BulkCreatorAssignmentDialog({
                     </li>
                   );
                 })}
-                {assignmentSummary.errors.length > 12 && (
+                {assignmentSummary.errors.length > MAX_ERRORS_DISPLAYED && (
                   <li className="text-amber-700">
                     +
-                    {assignmentSummary.errors.length - 12}
+                    {assignmentSummary.errors.length - MAX_ERRORS_DISPLAYED}
                     {' '}
                     more
                   </li>

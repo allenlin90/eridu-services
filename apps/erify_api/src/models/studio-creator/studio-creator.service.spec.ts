@@ -300,6 +300,46 @@ describe('studioCreatorService', () => {
     expect(result).toEqual(expect.objectContaining({ uid: 'smc_new' }));
   });
 
+  it('onboards a brand-new creator without a user link and skips user lookup', async () => {
+    creatorService.createCreator.mockResolvedValue({
+      uid: 'creator_new',
+      name: 'Bob Example',
+      aliasName: 'Bob',
+    } as any);
+    studioCreatorRepository.createRosterEntry.mockResolvedValue(
+      buildRosterRecord({
+        uid: 'smc_new',
+        creator: {
+          uid: 'creator_new',
+          name: 'Bob Example',
+          aliasName: 'Bob',
+        },
+      }) as any,
+    );
+
+    const result = await service.onboardCreator('std_1', {
+      creator: {
+        name: 'Bob Example',
+        aliasName: 'Bob',
+        metadata: { source: 'onboard' },
+      },
+      roster: {
+        defaultRate: 400,
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
+      },
+    });
+
+    expect(userService.getUserById).not.toHaveBeenCalled();
+    expect(creatorService.createCreator).toHaveBeenCalledWith({
+      name: 'Bob Example',
+      aliasName: 'Bob',
+      userId: null,
+      metadata: { source: 'onboard' },
+    });
+    expect(result).toEqual(expect.objectContaining({ uid: 'smc_new' }));
+  });
+
   it('returns 404 when onboarding references a missing user', async () => {
     userService.getUserById.mockResolvedValue(null);
 

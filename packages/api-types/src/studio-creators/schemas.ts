@@ -301,6 +301,7 @@ export type StudioShowCreatorListItem = z.infer<typeof studioShowCreatorListItem
 export type BulkAssignStudioShowCreatorsInput = z.infer<typeof bulkAssignStudioShowCreatorsInputSchema>;
 export type BulkAssignStudioShowCreatorsFailure = z.infer<typeof bulkAssignStudioShowCreatorsFailureSchema>;
 export type BulkAssignStudioShowCreatorsResponse = z.infer<typeof bulkAssignStudioShowCreatorsResponseSchema>;
+export type OnboardCreatorInput = z.infer<typeof onboardCreatorInputSchema>;
 export type BulkShowCreatorAssignmentInput = z.infer<typeof bulkShowCreatorAssignmentInputSchema>;
 export type BulkShowCreatorAssignmentError = z.infer<typeof bulkShowCreatorAssignmentErrorSchema>;
 export type BulkShowCreatorAssignmentResponse = z.infer<typeof bulkShowCreatorAssignmentResponseSchema>;

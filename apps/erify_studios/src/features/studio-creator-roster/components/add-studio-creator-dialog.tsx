@@ -41,6 +41,8 @@ type AddStudioCreatorDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+const MAX_ACTIVE_CREATORS_DISPLAY = 5;
+
 type AddStudioCreatorDialogMode = 'search' | 'create';
 
 export function AddStudioCreatorDialog({
@@ -247,15 +249,15 @@ export function AddStudioCreatorDialog({
                     <div className="rounded-md border bg-muted/30 p-2.5">
                       <p className="text-xs font-medium text-muted-foreground">Already active in this studio</p>
                       <ul className="mt-1 space-y-1">
-                        {activeCreators.slice(0, 5).map((creator) => (
+                        {activeCreators.slice(0, MAX_ACTIVE_CREATORS_DISPLAY).map((creator) => (
                           <li key={creator.id} className="text-xs">
                             {creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name}
                           </li>
                         ))}
-                        {activeCreators.length > 5 && (
+                        {activeCreators.length > MAX_ACTIVE_CREATORS_DISPLAY && (
                           <li className="text-xs text-muted-foreground">
                             +
-                            {activeCreators.length - 5}
+                            {activeCreators.length - MAX_ACTIVE_CREATORS_DISPLAY}
                             {' '}
                             more
                           </li>
@@ -363,7 +365,10 @@ export function AddStudioCreatorDialog({
               type="button"
               variant="ghost"
               className="w-full justify-start px-2"
-              onClick={() => setMode('search')}
+              onClick={() => {
+                setMode('search');
+                setUserSearch('');
+              }}
               disabled={isSubmitting}
             >
               Back to search

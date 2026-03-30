@@ -1,9 +1,7 @@
-import type { z } from 'zod';
-
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import type {
   CreateStudioCreatorRosterInput,
-  onboardCreatorInputSchema,
+  OnboardCreatorInput,
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
 
@@ -121,8 +119,6 @@ export function buildUpdateStudioCreatorRosterPayload(params: {
   };
 }
 
-type OnboardStudioCreatorInput = z.infer<typeof onboardCreatorInputSchema>;
-
 export function buildOnboardStudioCreatorPayload(params: {
   name: string;
   aliasName: string;
@@ -132,7 +128,7 @@ export function buildOnboardStudioCreatorPayload(params: {
   defaultRateType: StudioCreatorCompensationTypeOption;
   defaultCommissionRate: string;
   rosterMetadata?: Record<string, unknown>;
-}): OnboardStudioCreatorInput {
+}): OnboardCreatorInput {
   const name = params.name.trim();
   const aliasName = params.aliasName.trim();
 
