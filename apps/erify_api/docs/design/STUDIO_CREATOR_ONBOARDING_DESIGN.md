@@ -161,7 +161,8 @@ GET /studios/:studioId/creators/onboarding-users?search=alice&limit=20
 
 - search across `uid`, `email`, `name`, and `ext_id`
 - exclude soft-deleted users
-- exclude users already linked to a creator
+- exclude users linked to an active (non-soft-deleted) creator
+- include users whose only creator link is soft-deleted
 - order by best operational readability: `name asc`, then `email asc`
 
 **Why this endpoint exists**
@@ -376,7 +377,7 @@ No new top-level API module is required. The work stays within the existing stud
 - `StudioCreatorService.onboardCreator` happy path
 - onboarding with invalid `user_id` returns not-found
 - onboarding with already-linked `user_id` preserves current duplicate-user-link error behavior
-- onboarding user search excludes users already linked to creators
+- onboarding user search excludes users linked to active creators while keeping users linked only to soft-deleted creators eligible
 - controller guard + response shape for both new endpoints
 - `ShowOrchestrationService.bulkAssignCreatorsToShow` rejects off-roster creators
 - existing inactive-roster rejection still works
