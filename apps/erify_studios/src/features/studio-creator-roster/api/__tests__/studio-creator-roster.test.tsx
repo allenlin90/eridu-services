@@ -50,7 +50,7 @@ describe('studioCreatorRoster onboarding api', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/studios/std_123/creators/onboard', payload);
   });
 
-  it('invalidates roster, catalog, and availability keys after onboarding success', () => {
+  it('invalidates roster, catalog, availability, and onboarding-user keys after onboarding success', () => {
     mockUseMutation.mockReturnValue({
       mutate: vi.fn(),
       mutateAsync: vi.fn(),
@@ -77,6 +77,9 @@ describe('studioCreatorRoster onboarding api', () => {
     });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ['creator-availability', 'list', 'std_1'],
+    });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['studio-creator-onboarding-users', 'list', 'std_1'],
     });
   });
 });
