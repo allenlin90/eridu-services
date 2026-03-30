@@ -1,0 +1,30 @@
+---
+import DefaultSocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
+
+const logoutHref = '/auth/logout?returnTo=/';
+---
+
+<DefaultSocialIcons />
+<a href={logoutHref} class="logout-link" data-astro-prefetch="false">
+  Logout
+</a>
+
+<style>
+  @layer starlight.core {
+    .logout-link {
+      color: var(--sl-color-text-accent);
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.2;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .logout-link:hover {
+      border-color: var(--sl-color-accent-high);
+      color: var(--sl-color-white);
+    }
+  }
+</style>

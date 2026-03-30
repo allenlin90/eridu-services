@@ -1,0 +1,43 @@
+---
+title: File Uploads & Presigned URLs
+description: Documentation covering Cloudflare R2 presigned uploads, frontend compression, and storage policies.
+sidebar:
+  order: 1
+---
+
+> [!TIP]
+> This workflow details how assets like thumbnails, instructions, and show materials traverse from the browser to Cloudflare R2 without hitting the API server with binary payloads.
+
+## System Flow
+
+The system leverages Presigned URLs to allow the client browser to upload large binaries directly to object storage. 
+
+1. Client calls `POST /uploads/presign` with `{ use_case, mime_type, file_size, file_name, [task_id, field_key] }`
+2. `UploadService` validates MIME type and file size against the predefined rules.
+3. For `MATERIAL_ASSET`: additionally validates against the task snapshot schema's rule for the given `field_key`.
+4. Returns a short-lived presigned PUT URL pointing to Cloudflare R2.
+5. Client `PUT`s the file directly to R2 — **never through the API server**.
+
+> [!WARNING]
+> The direct R2 PUT uses bare `fetch()`, not your application `apiClient`. Adding the API `Authorization` header to Cloudflare R2 endpoints causes R2 to throw a `403 Forbidden` error.
+
+## Defined Use Cases & Limits
+
+Your application strictly enforces size and type limits per-usecase at the presign phase:
+
+| Use Case            | Max Size | Allowed MIME Types                                         |
+| ------------------- | :------: | ---------------------------------------------------------- |
+| `QC_SCREENSHOT`     |  200 KB  | `image/jpeg`, `image/png`, `image/webp`                    |
+| `SCENE_REFERENCE`   |  10 MB   | `image/jpeg`, `image/png`, `image/webp`, `application/pdf` |
+| `INSTRUCTION_ASSET` |  50 MB   | `image/*`, `application/pdf`, `video/mp4`                  |
+| `MATERIAL_ASSET`    |  50 MB   | `image/*`, `application/pdf`, `video/mp4`                  |
+
+> [!IMPORTANT]
+> Because `QC_SCREENSHOT` is capped at 200KB, the frontend `JsonForm` component guarantees client-side compression *first* before even requesting the presign URL to conserve bandwidth and reduce latency.
+
+## Frontend Image Compression
+
+Before an upload ever kicks off on the web, compression takes place:
+- **Technique**: Worker-first native compression (`Web Worker` + `OffscreenCanvas`) with main-thread canvas fallback.
+- **Scaling**: Reduces aspect resolution by 40% (1.0 → 0.6) and quality aggressively to 34%.
+- **Safety**: A hard client-side size check executes after compression—it throws a native error prior to evaluating the presign API if it manages to still exceed the 200KB limit.
