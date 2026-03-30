@@ -108,37 +108,37 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 
 ## Comparison with Other Services
 
-| Aspect | erify_api (NestJS) | erify_studios (React SPA) | eridu_docs (Astro SSR) |
-| --- | --- | --- | --- |
-| Token source | `Authorization: Bearer` header | In-memory (from `set-auth-jwt`) | httpOnly cookie |
-| Verification | JWKS (JwtAuthGuard) | N/A (erify_api verifies) | JWKS (middleware) |
-| Token refresh | N/A (client handles) | Axios interceptor → `/api/auth/token` | Middleware → `/api/auth/token` |
-| Shared secret | No | No | No |
-| Stateless | Yes | Yes (in-memory only) | Yes |
-| Horizontally scalable | Yes | Yes (static) | Yes |
+| Aspect                | erify_api (NestJS)             | erify_studios (React SPA)             | eridu_docs (Astro SSR)         |
+| --------------------- | ------------------------------ | ------------------------------------- | ------------------------------ |
+| Token source          | `Authorization: Bearer` header | In-memory (from `set-auth-jwt`)       | httpOnly cookie                |
+| Verification          | JWKS (JwtAuthGuard)            | N/A (erify_api verifies)              | JWKS (middleware)              |
+| Token refresh         | N/A (client handles)           | Axios interceptor → `/api/auth/token` | Middleware → `/api/auth/token` |
+| Shared secret         | No                             | No                                    | No                             |
+| Stateless             | Yes                            | Yes (in-memory only)                  | Yes                            |
+| Horizontally scalable | Yes                            | Yes (static)                          | Yes                            |
 
 ## Cookie Configuration
 
-| Property | Value | Reason |
-| --- | --- | --- |
-| `httpOnly` | `true` | Prevents client-side JS access |
-| `secure` | `true` in production | HTTPS only |
-| `sameSite` | `lax` | Allows redirect from eridu_auth |
-| `path` | `/` | Available to all routes |
-| `maxAge` | `900` (15 min) | Matches JWT expiry |
-| `domain` | `.eridu.io` in production | Cross-subdomain if needed |
+| Property   | Value                     | Reason                          |
+| ---------- | ------------------------- | ------------------------------- |
+| `httpOnly` | `true`                    | Prevents client-side JS access  |
+| `secure`   | `true` in production      | HTTPS only                      |
+| `sameSite` | `lax`                     | Allows redirect from eridu_auth |
+| `path`     | `/`                       | Available to all routes         |
+| `maxAge`   | `900` (15 min)            | Matches JWT expiry              |
+| `domain`   | `.eridu.io` in production | Cross-subdomain if needed       |
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-| --- | --- | --- | --- |
-| `AUTH_URL` | No | `http://localhost:5173` | Auth public URL used for login and JWT issuer validation |
-| `AUTH_API_URL` | No | inferred from `AUTH_URL` | eridu_auth backend URL (JWKS + token + sign-out APIs). If `AUTH_URL` is `localhost:5173`, API defaults to `localhost:3001` |
-| `AUTH_UI_URL` | No | `AUTH_URL` | eridu_auth frontend login URL (`/sign-in`) |
-| `AUTH_ISSUER_URL` | No | `AUTH_URL` (fallback: `AUTH_API_URL`) | Explicit JWT issuer URL for mixed local setups |
-| `COOKIE_DOMAIN` | No | (omitted) | Cookie domain for production (e.g., `.eridu.io`) |
-| `COOKIE_SECURE` | No | auto (`false` on localhost, `true` on non-local prod) | Force JWT cookie `Secure` flag behavior |
-| `BYPASS_AUTH` | No | `false` | Skip auth in local dev |
+| Variable          | Required | Default                                               | Description                                                                                                                |
+| ----------------- | -------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_URL`        | No       | `http://localhost:5173`                               | Auth public URL used for login and JWT issuer validation                                                                   |
+| `AUTH_API_URL`    | No       | inferred from `AUTH_URL`                              | eridu_auth backend URL (JWKS + token + sign-out APIs). If `AUTH_URL` is `localhost:5173`, API defaults to `localhost:3001` |
+| `AUTH_UI_URL`     | No       | `AUTH_URL`                                            | eridu_auth frontend login URL (`/sign-in`)                                                                                 |
+| `AUTH_ISSUER_URL` | No       | `AUTH_URL` (fallback: `AUTH_API_URL`)                 | Explicit JWT issuer URL for mixed local setups                                                                             |
+| `COOKIE_DOMAIN`   | No       | (omitted)                                             | Cookie domain for production (e.g., `.eridu.io`)                                                                           |
+| `COOKIE_SECURE`   | No       | auto (`false` on localhost, `true` on non-local prod) | Force JWT cookie `Secure` flag behavior                                                                                    |
+| `BYPASS_AUTH`     | No       | `false`                                               | Skip auth in local dev                                                                                                     |
 
 ### Local Development Note (`5173` + `3001`)
 

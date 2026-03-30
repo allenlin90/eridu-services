@@ -18,6 +18,7 @@ export default defineConfig({
           prerender: isPagefindSnapshotBuild,
           pagefind: false,
           title: 'Eridu Knowledge Base',
+          favicon: '/favicon.png',
           components: {
               Search: './src/components/Search.astro',
               SocialIcons: './src/components/SocialIcons.astro',
