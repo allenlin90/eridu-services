@@ -12,6 +12,9 @@ export default defineConfig({
   integrations: [
       starlight({
           title: 'Eridu Knowledge Base',
+          components: {
+              SocialIcons: './src/components/SocialIcons.astro',
+          },
           sidebar: [
               {
                   label: 'Features',

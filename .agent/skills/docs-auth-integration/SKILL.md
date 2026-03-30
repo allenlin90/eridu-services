@@ -19,7 +19,8 @@ Study these implementations as the source of truth:
 | `apps/eridu_docs/src/lib/auth.ts` | Shared JWKS/JWT setup, token refresh, cookie helpers |
 | `apps/eridu_docs/src/middleware.ts` | Auth gate: verify → refresh → redirect |
 | `apps/eridu_docs/src/pages/auth/callback.ts` | Token exchange endpoint after IDP login |
-| `apps/eridu_docs/src/config/env.ts` | Environment config (AUTH_URL, COOKIE_DOMAIN, BYPASS_AUTH) |
+| `apps/eridu_docs/src/pages/auth/logout.ts` | Sign-out endpoint (clear docs cookie + sign out Better Auth session) |
+| `apps/eridu_docs/src/config/env.ts` | Environment config (`AUTH_API_URL`, `AUTH_UI_URL`, `COOKIE_DOMAIN`, `BYPASS_AUTH`) |
 | `apps/eridu_docs/docs/AUTH_DESIGN.md` | Full design document with architecture diagram |
 
 ## Core Pattern
@@ -33,8 +34,8 @@ import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
 import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 
 // Module-level singletons — JWKS cached across requests
-const jwksService = new JwksService({ authServiceUrl: CONFIG.authUrl });
-export const jwtVerifier = new JwtVerifier({ jwksService, issuer: CONFIG.authUrl });
+const jwksService = new JwksService({ authServiceUrl: CONFIG.authApiUrl });
+export const jwtVerifier = new JwtVerifier({ jwksService, issuer: CONFIG.authApiUrl });
 
 // Prime cache at startup (non-blocking)
 jwksService.initialize().catch(console.error);
@@ -45,6 +46,8 @@ Key exports:
 - `refreshToken(cookieHeader)` — forwards session cookies to `/api/auth/token`, verifies fresh JWT
 - `setTokenCookie(cookies, token)` — sets httpOnly cookie with correct options
 - `buildLoginUrl(origin, pathname)` — constructs IDP redirect URL with callback/returnTo
+- `clearTokenCookie(cookies)` — clears docs JWT cookie on logout
+- `signOutFromAuth(cookieHeader)` — server-side POST to `/api/auth/sign-out`
 - `extractUser(payload)` — maps JwtPayload → App.Locals.user
 
 ### 2. Middleware — Three States
@@ -80,7 +83,7 @@ This is the SSR equivalent of erify_studios' Axios interceptor:
 | erify_studios (SPA) | eridu_docs (SSR) |
 | --- | --- |
 | Axios response interceptor | Middleware catch block |
-| `authClient.client.token()` | `fetch(authUrl/api/auth/token, { headers: { cookie } })` |
+| `authClient.client.token()` | `fetch(authApiUrl/api/auth/token, { headers: { cookie } })` |
 | `setCachedToken(token)` | `setTokenCookie(cookies, token)` |
 
 The refresh works because Better Auth cross-subdomain session cookies (on `.eridu.io`) are sent by the browser to `docs.eridu.io`. The middleware forwards them server-side to eridu_auth.
@@ -99,7 +102,9 @@ The refresh works because Better Auth cross-subdomain session cookies (on `.erid
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `AUTH_URL` | `http://localhost:3000` | eridu_auth base URL |
+| `AUTH_API_URL` | `http://localhost:3001` | eridu_auth backend API URL (`/api/auth/*`) |
+| `AUTH_UI_URL` | `http://localhost:5173` | eridu_auth frontend login UI URL (`/sign-in`) |
+| `AUTH_URL` | (optional fallback) | Legacy fallback used for both API and UI |
 | `COOKIE_DOMAIN` | (omitted) | Production cookie domain |
 | `BYPASS_AUTH` | `false` | Skip auth for local dev |
 
@@ -144,6 +149,7 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] 🔴 `lib/auth.ts` exports singleton JwksService/JwtVerifier (no duplicate instances)
 - [ ] 🔴 Middleware skips auth for public paths before reading cookies
 - [ ] 🔴 Expired JWT triggers refresh, invalid signature triggers redirect — never conflate
+- [ ] 🔴 Auth API and auth UI URLs are configured correctly for the environment (`AUTH_API_URL` vs `AUTH_UI_URL`)
 - [ ] 🔴 No `BETTER_AUTH_SECRET` in eridu_docs env
 - [ ] 🔴 No modifications to eridu_auth for eridu_docs integration
 - [ ] 🟡 JWKS initialized at module load (non-blocking `.catch()`)

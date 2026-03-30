@@ -8,10 +8,10 @@ import { CONFIG } from '../config/env';
 export const COOKIE_NAME = 'eridu_docs_token';
 export const TOKEN_MAX_AGE = 900; // 15 min, matches JWT expiry
 
-const jwksService = new JwksService({ authServiceUrl: CONFIG.authUrl });
+const jwksService = new JwksService({ authServiceUrl: CONFIG.authApiUrl });
 export const jwtVerifier = new JwtVerifier({
   jwksService,
-  issuer: CONFIG.authUrl,
+  issuer: CONFIG.authApiUrl,
 });
 
 jwksService
@@ -22,7 +22,7 @@ export function buildLoginUrl(origin: string, pathname: string): string {
   const callbackUrl = new URL('/auth/callback', origin);
   callbackUrl.searchParams.set('returnTo', pathname);
 
-  const loginUrl = new URL('/sign-in', CONFIG.authUrl);
+  const loginUrl = new URL('/sign-in', CONFIG.authUiUrl);
   loginUrl.searchParams.set('callbackURL', callbackUrl.toString());
   return loginUrl.toString();
 }
@@ -42,7 +42,7 @@ export async function refreshToken(
   cookieHeader: string,
 ): Promise<{ token: string; payload: JwtPayload } | null> {
   try {
-    const res = await fetch(`${CONFIG.authUrl}/api/auth/token`, {
+    const res = await fetch(`${CONFIG.authApiUrl}/api/auth/token`, {
       headers: { cookie: cookieHeader },
     });
 
@@ -56,6 +56,30 @@ export async function refreshToken(
     return { token, payload };
   } catch {
     return null;
+  }
+}
+
+export function clearTokenCookie(cookies: AstroCookies): void {
+  cookies.delete(COOKIE_NAME, {
+    path: '/',
+    ...(CONFIG.cookieDomain ? { domain: CONFIG.cookieDomain } : {}),
+  });
+}
+
+export async function signOutFromAuth(
+  cookieHeader: string,
+  origin?: string,
+): Promise<void> {
+  try {
+    await fetch(`${CONFIG.authApiUrl}/api/auth/sign-out`, {
+      method: 'POST',
+      headers: {
+        cookie: cookieHeader,
+        ...(origin ? { origin } : {}),
+      },
+    });
+  } catch {
+    // We still clear the docs cookie in the caller even if auth sign-out fails.
   }
 }
 

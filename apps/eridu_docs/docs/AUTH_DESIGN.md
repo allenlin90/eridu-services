@@ -83,10 +83,11 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 ```
 apps/eridu_docs/src/
-├── config/env.ts          ← AUTH_URL, COOKIE_DOMAIN, BYPASS_AUTH
+├── config/env.ts          ← AUTH_API_URL, AUTH_UI_URL, COOKIE_DOMAIN, BYPASS_AUTH
 ├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
+├── pages/auth/logout.ts   ← Sign out eridu_auth session + clear docs JWT cookie
 └── env.d.ts               ← App.Locals.user type
 ```
 
@@ -116,7 +117,9 @@ apps/eridu_docs/src/
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `AUTH_URL` | Yes | `http://localhost:3000` | eridu_auth base URL (for JWKS, token, login redirect) |
+| `AUTH_API_URL` | No | `http://localhost:3001` | eridu_auth backend URL (JWKS + token + sign-out APIs) |
+| `AUTH_UI_URL` | No | `http://localhost:5173` | eridu_auth frontend login URL (`/sign-in`) |
+| `AUTH_URL` | No | (none) | Legacy fallback used for both API/UI if specific vars are absent |
 | `COOKIE_DOMAIN` | No | (omitted) | Cookie domain for production (e.g., `.eridu.io`) |
 | `BYPASS_AUTH` | No | `false` | Skip auth in local dev |
 
