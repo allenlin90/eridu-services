@@ -221,6 +221,14 @@ export function BulkCreatorAssignmentDialog({
                     </li>
                   );
                 })}
+                {assignmentSummary.errors.length > 12 && (
+                  <li className="text-amber-700">
+                    +
+                    {assignmentSummary.errors.length - 12}
+                    {' '}
+                    more
+                  </li>
+                )}
               </ul>
               {assignmentSummary.errors.some((error) => error.reason === STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_IN_ROSTER)
               && isAdmin && (
