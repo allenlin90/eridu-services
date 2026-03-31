@@ -111,7 +111,32 @@ Browser → /auth/callback?returnTo=/page
 
 Reuse `refreshToken()` from the shared auth module — it already does fetch + verify via `refreshSessionToken`.
 
-### 4. Token Refresh (Server-Side)
+### 4. Logout (Server-to-Server Session Revocation)
+
+`GET /auth/logout` pattern for SSR apps:
+
+```
+1. Read JWT cookie → verify with JWKS → extract userId
+2. POST AUTH_INTERNAL_URL/api/service/sign-out
+   { Authorization: Bearer AUTH_SERVICE_SECRET, body: { userId } }
+3. eridu_auth deletes all sessions for userId from DB
+4. Clear JWT cookie (Max-Age=0) in response headers
+5. 302 → AUTH_URL/sign-in?callbackURL=.../auth/callback
+```
+
+**Why not call eridu_auth's `/api/auth/sign-out`?**
+- Better Auth's sign-out clears cookies via `Set-Cookie` headers in its response
+- Those headers target `Domain=.eridu.io` — forwarding them from a server-side response originating on `docs.eridu.io` does not reliably clear them across browsers
+- The service endpoint uses the JWT to identify the user, deletes sessions in the DB, and requires no cookie round-trip
+
+**Why not browser-side JS `fetch` (matching erify_studios)?**
+- erify_studios uses `authClient.signOut()` from the browser — the response `Set-Cookie` headers are applied to `.eridu.io` because the fetch originates from the browser on a `.eridu.io` subdomain
+- SSR apps don't have a client-side auth client; replicating this with inline `<script>` is fragile and requires the origin to be in `ALLOWED_ORIGINS`
+- Server-to-server via the service endpoint is cleaner, requires no browser JS, and works regardless of CORS configuration
+
+**Fallback when `AUTH_SERVICE_SECRET` is unset:** Still clear the local JWT cookie and redirect to sign-in. Silent SSO may immediately re-log the user in. Set `AUTH_SERVICE_SECRET` in production for complete logout.
+
+### 5. Token Refresh (Server-Side)
 
 This is the SSR equivalent of erify_studios' Axios interceptor:
 
@@ -172,6 +197,7 @@ The three SDK primitives (`refreshSessionToken`, `normalizeReturnTo`, `signOutFr
 | ------------------- | :--------------: | ----------------------- | --------------------------------------------------------------------------- |
 | `AUTH_URL`          | Yes              | `http://localhost:3001` | Browser-facing eridu_auth origin used for redirects and JWT issuer checks   |
 | `AUTH_INTERNAL_URL` | No               | `AUTH_URL`              | Internal eridu_auth origin used for server-to-server JWKS/token/sign-out    |
+| `AUTH_SERVICE_SECRET` | No             | —                       | Shared secret for server-to-server sign-out; must match `SERVICE_SECRET` in eridu_auth |
 | `BYPASS_AUTH`       | No               | `false`                 | Skip auth for local dev (never set in production)                           |
 | `COOKIE_SECURE`     | No               | `true` in production    | Override JWT cookie `Secure` flag                                           |
 
@@ -284,6 +310,7 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] All runtime-configurable env vars use `import.meta.env.X ?? process.env.X` (Astro bakes `import.meta.env` at build time; without the fallback, Railway env vars are silently ignored)
 - [ ] `SITE_URL` is set in production to the app's public origin — used as the base for `/auth/callback` in `buildLoginUrl`; without it, Railway's internal `Host: localhost:PORT` header produces a broken callbackURL
 - [ ] Middleware attempts silent token exchange (`refreshToken`) before redirecting to sign-in — users already signed in via Better Auth should reach the app without a login prompt
+- [ ] `AUTH_SERVICE_SECRET` set in production (≥32 chars, matches `SERVICE_SECRET` in eridu_auth); logout revokes server-side sessions so silent SSO cannot immediately re-log the user in
 - [ ] `BYPASS_AUTH` only for local dev, never in production
 - [ ] `returnTo` preserved through login → callback → redirect chain
 - [ ] `normalizeReturnTo` used before redirecting to any user-supplied path

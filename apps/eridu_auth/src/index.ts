@@ -2,8 +2,11 @@ import path from 'node:path';
 
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { eq } from 'drizzle-orm';
 import { cors } from 'hono/cors';
 
+import { db } from '@/db';
+import { session } from '@/db/schema';
 import env from '@/env';
 import { auth } from '@/lib/auth'; // path to your auth file
 import { createApp } from '@/lib/create-app';
@@ -30,11 +33,45 @@ app.use('*', async (c, next) => {
     return next();
   }
 
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  const authSession = await auth.api.getSession({ headers: c.req.raw.headers });
 
-  c.set('user', session?.user ?? null);
-  c.set('session', session?.session ?? null);
+  c.set('user', authSession?.user ?? null);
+  c.set('session', authSession?.session ?? null);
   return next();
+});
+
+// Service-to-service endpoint: revoke all sessions for a user.
+// Used by SSR consumers (e.g. eridu_docs) to perform server-side logout.
+// Protected by SERVICE_SECRET — must not be exposed to browsers.
+app.post('/api/service/sign-out', async (c) => {
+  if (!env.SERVICE_SECRET) {
+    return c.json({ error: 'Service endpoint not configured' }, 503);
+  }
+
+  const authHeader = c.req.header('Authorization') ?? '';
+  const [scheme, secret] = authHeader.split(' ');
+  if (scheme !== 'Bearer' || secret !== env.SERVICE_SECRET) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const userId = typeof (body as Record<string, unknown>)?.userId === 'string'
+    ? (body as Record<string, string>).userId
+    : null;
+
+  if (!userId) {
+    return c.json({ error: 'userId required' }, 400);
+  }
+
+  await db.delete(session).where(eq(session.userId, userId));
+
+  return c.json({ success: true });
 });
 
 // Auth API routes - must be registered before static file serving

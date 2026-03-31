@@ -1,48 +1,76 @@
 import type { APIRoute } from 'astro';
 
 import { CONFIG } from '../../config/env';
-import { clearTokenCookie } from '../../lib/auth';
+import { COOKIE_NAME, jwtVerifier } from '../../lib/auth';
 
 export const GET: APIRoute = async (context) => {
-  const cookieHeader = context.request.headers.get('cookie') ?? '';
   const siteOrigin = CONFIG.siteUrl ?? context.url.origin;
 
-  // Call eridu_auth sign-out directly (not via the sdk helper) so we can
-  // capture the Set-Cookie headers from the response. The sdk helper discards
-  // the response; without forwarding those headers the browser keeps its Better
-  // Auth session cookies and silent-SSO immediately re-logs the user in.
-  let authSetCookies: string[] = [];
-  try {
-    const res = await fetch(`${CONFIG.authApiUrl}/api/auth/sign-out`, {
-      method: 'POST',
-      headers: {
-        cookie: cookieHeader,
-        origin: siteOrigin,
-      },
-    });
-    authSetCookies = res.headers.getSetCookie();
-  }
-  catch {
-    // best-effort — clear the local cookie regardless
+  // Server-to-server session revocation via JWT identity.
+  //
+  // Why not forward Better Auth session cookies to /api/auth/sign-out?
+  //   eridu_auth's Set-Cookie response clears Domain=.eridu.io cookies, but
+  //   the browser only applies those headers when the response comes from a
+  //   same-domain request. A server-forwarded Set-Cookie from eridu_docs does
+  //   not reliably clear cookies on the .eridu.io domain in all browsers.
+  //
+  // Why JWT instead of a session token?
+  //   eridu_docs already has the user's JWT (eridu_docs_token cookie). We verify
+  //   it to get the userId, then POST to the internal /api/service/sign-out
+  //   endpoint which deletes all sessions for that user directly in the database.
+  //   The browser's Better Auth session cookies become invalid server-side, so
+  //   the next silent-SSO attempt on the callback endpoint will fail → sign-in
+  //   page is shown rather than re-logging the user in transparently.
+  if (CONFIG.authServiceSecret) {
+    const token = context.cookies.get(COOKIE_NAME)?.value;
+
+    if (token) {
+      try {
+        const payload = await jwtVerifier.verify(token);
+
+        if (payload.id) {
+          const revokeUrl = new URL('/api/service/sign-out', CONFIG.authApiUrl);
+          // Best-effort: network errors or eridu_auth downtime must not block logout.
+          await fetch(revokeUrl.toString(), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${CONFIG.authServiceSecret}`,
+            },
+            body: JSON.stringify({ userId: payload.id }),
+          }).catch(() => {
+            // Swallow — session will expire naturally; local cookie is cleared below.
+          });
+        }
+      } catch {
+        // JWT is expired or invalid — skip revocation, clear cookie below.
+      }
+    }
   }
 
-  // Clear the docs JWT cookie via context so Astro merges it into the response.
-  clearTokenCookie(context.cookies);
+  // Clear the docs JWT cookie.
+  const cookieFlags = [
+    `${COOKIE_NAME}=`,
+    'Max-Age=0',
+    'Path=/',
+    'HttpOnly',
+    CONFIG.cookieSecure ? 'Secure' : '',
+    'SameSite=Lax',
+  ].filter(Boolean).join('; ');
 
-  // Build sign-in URL with a callbackURL so the user is returned to docs
-  // after re-authenticating.
+  // Redirect to sign-in with a callbackURL so the user is returned to docs
+  // after re-authenticating. Use /auth/callback (not a specific docs page) so
+  // the callback can issue a fresh JWT on the next login.
   const callbackUrl = new URL('/auth/callback', siteOrigin);
   const signInUrl = new URL('/sign-in', CONFIG.authUiUrl);
   signInUrl.searchParams.set('callbackURL', callbackUrl.toString());
 
-  const response = context.redirect(signInUrl.toString(), 302);
-
-  // Forward eridu_auth's Set-Cookie headers so the browser actually clears
-  // the Better Auth session cookies. Without this the sign-out appears to
-  // succeed on eridu_auth's side but the browser retains the cookies.
-  for (const cookie of authSetCookies) {
-    response.headers.append('set-cookie', cookie);
-  }
-
-  return response;
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: signInUrl.toString(),
+      'set-cookie': cookieFlags,
+      'cache-control': 'no-store',
+    },
+  });
 };

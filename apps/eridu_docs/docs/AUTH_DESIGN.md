@@ -100,16 +100,35 @@ This means users who are already signed in to any eridu service arrive at the do
 
 Cookie helpers (`setTokenCookie`, `clearTokenCookie`), `buildLoginUrl`, and `extractUser` remain Astro-specific in `lib/auth.ts`.
 
+## Logout Flow (Server-to-Server)
+
+`GET /auth/logout`:
+
+1. Read `eridu_docs_token` from cookie
+2. Verify JWT with cached JWKS → extract `userId`
+3. POST `AUTH_INTERNAL_URL/api/service/sign-out` with `Authorization: Bearer AUTH_SERVICE_SECRET` and `{ userId }`
+4. eridu_auth deletes all sessions for that user from the database
+5. Clear `eridu_docs_token` cookie (Max-Age=0) in the response
+6. 302 → `AUTH_URL/sign-in?callbackURL=.../auth/callback`
+
+The browser's Better Auth session cookies are now orphaned (server-side sessions deleted). When the user later triggers silent SSO, eridu_auth finds no valid session and shows the sign-in page — the user is fully logged out.
+
+**Why not call eridu_auth's `/api/auth/sign-out` directly?**
+
+Better Auth's sign-out reads a signed session cookie from the request, clears it, and responds with `Set-Cookie` headers that expire those cookies on the client. Forwarding those `Set-Cookie` headers from a server-side response originating from `docs.eridu.io` does not reliably clear `Domain=.eridu.io` cookies across all browsers. Using the service endpoint with the JWT avoids the cookie domain entirely.
+
+**Fallback when `AUTH_SERVICE_SECRET` is not set:** The docs JWT cookie is still cleared, so the user will be sent to sign-in. However, silent SSO may immediately re-log them in if a valid Better Auth session remains. Set `AUTH_SERVICE_SECRET` in production for a complete logout.
+
 ## File Structure
 
 ```
 apps/eridu_docs/src/
-├── config/env.ts          ← AUTH_URL, AUTH_INTERNAL_URL, BYPASS_AUTH, COOKIE_SECURE
+├── config/env.ts          ← AUTH_URL, AUTH_INTERNAL_URL, AUTH_SERVICE_SECRET, BYPASS_AUTH, COOKIE_SECURE
 ├── pages/healthz.ts       ← Public liveness endpoint for probes
 ├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, SDK wrappers, cookie helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
-├── pages/auth/logout.ts   ← Sign out eridu_auth session + clear docs JWT cookie
+├── pages/auth/logout.ts   ← Server-side sign-out: revoke sessions via service endpoint + clear cookie
 └── env.d.ts               ← App.Locals.user type
 ```
 
@@ -156,6 +175,7 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 | `SITE_URL`          |       Yes        | —                       | Public origin of eridu_docs (e.g. `https://docs.eridu.io`). Used as the base for `/auth/callback`. Without this, Railway's internal `Host: localhost:PORT` header is used, producing a broken callbackURL. |
 | `AUTH_URL`          |       Yes        | `http://localhost:3001` | Browser-facing eridu_auth origin used for redirects and JWT issuer validation    |
 | `AUTH_INTERNAL_URL` |        No        | `AUTH_URL`              | Internal eridu_auth origin used for server-to-server JWKS/token/sign-out calls   |
+| `AUTH_SERVICE_SECRET` |      No        | —                       | Shared secret for server-to-server sign-out (must match `SERVICE_SECRET` in eridu_auth). When set, logout deletes all server-side sessions for the user. When unset, only the docs JWT cookie is cleared. |
 | `BYPASS_AUTH`       |        No        | `false`                 | Skip auth for local dev (never set in production)                                |
 | `COOKIE_SECURE`     |        No        | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`)                |
 
