@@ -649,3 +649,13 @@ packages/
 ├── auth-sdk/            ← JWT verification
 └── ui/                  ← Shared components
 ```
+
+---
+
+## 🖼️ Screenshot Compression
+
+- `erify_studios` `JsonForm` keeps the hard `200 KB` screenshot target aligned with `QC_SCREENSHOT`.
+- For screenshot-sized image uploads, prefer a long-edge ladder `[1440, 1280, 1080, 960]` from the original image instead of one generic max-dimension clamp.
+- `prepareImageForUpload()` in `packages/browser-upload/src/index.ts` now supports explicit `maxLongEdges` and retries the quality ladder at each step.
+- Canonical doc: `apps/erify_api/docs/FILE_UPLOAD.md`
+- Reusable agent guidance: `.agent/skills/file-upload-presign/SKILL.md`

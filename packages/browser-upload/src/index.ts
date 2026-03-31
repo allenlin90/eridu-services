@@ -6,6 +6,7 @@ export type PrepareImageForUploadOptions = {
   targetMaxBytes: number;
   accept?: string;
   maxDimension?: number;
+  maxLongEdges?: readonly number[];
   preferWorker?: boolean;
 };
 
@@ -16,7 +17,7 @@ export type PreparedImageResult = {
 };
 
 const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25];
-const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34, 0.26, 0.2];
+const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34, 0.26, 0.2, 0.16, 0.12];
 
 function replaceFileExtension(fileName: string, mimeType: string): string {
   const extensionByMime: Record<string, string> = {
@@ -79,23 +80,63 @@ function pickOutputMimeType(fileType: string, fileName: string, accept?: string)
   return currentMime;
 }
 
-function calculateDimensions(width: number, height: number, scale: number, maxDimension?: number): { width: number; height: number } {
-  let nextWidth = Math.max(1, Math.round(width * scale));
-  let nextHeight = Math.max(1, Math.round(height * scale));
-
+function clampToMaxDimension(width: number, height: number, maxDimension?: number): { width: number; height: number } {
   if (!maxDimension || maxDimension <= 0) {
-    return { width: nextWidth, height: nextHeight };
+    return { width, height };
   }
 
-  const longest = Math.max(nextWidth, nextHeight);
+  const longest = Math.max(width, height);
   if (longest <= maxDimension) {
-    return { width: nextWidth, height: nextHeight };
+    return { width, height };
   }
 
   const ratio = maxDimension / longest;
-  nextWidth = Math.max(1, Math.round(nextWidth * ratio));
-  nextHeight = Math.max(1, Math.round(nextHeight * ratio));
-  return { width: nextWidth, height: nextHeight };
+  return {
+    width: Math.max(1, Math.round(width * ratio)),
+    height: Math.max(1, Math.round(height * ratio)),
+  };
+}
+
+function calculateScaledDimensions(width: number, height: number, scale: number, maxDimension?: number): { width: number; height: number } {
+  return clampToMaxDimension(
+    Math.max(1, Math.round(width * scale)),
+    Math.max(1, Math.round(height * scale)),
+    maxDimension,
+  );
+}
+
+function calculateLongEdgeDimensions(width: number, height: number, maxLongEdge: number): { width: number; height: number } {
+  if (!Number.isFinite(maxLongEdge) || maxLongEdge <= 0) {
+    return { width, height };
+  }
+
+  return clampToMaxDimension(width, height, maxLongEdge);
+}
+
+function buildCompressionDimensions(
+  width: number,
+  height: number,
+  options: PrepareImageForUploadOptions,
+): Array<{ width: number; height: number }> {
+  const dimensions = new Map<string, { width: number; height: number }>();
+
+  const addDimensions = (next: { width: number; height: number }) => {
+    dimensions.set(`${next.width}x${next.height}`, next);
+  };
+
+  if (options.maxLongEdges && options.maxLongEdges.length > 0) {
+    for (const maxLongEdge of options.maxLongEdges) {
+      addDimensions(calculateLongEdgeDimensions(width, height, maxLongEdge));
+    }
+
+    return [...dimensions.values()];
+  }
+
+  for (const scale of DEFAULT_SCALES) {
+    addDimensions(calculateScaledDimensions(width, height, scale, options.maxDimension));
+  }
+
+  return [...dimensions.values()];
 }
 
 async function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality?: number): Promise<Blob | null> {
@@ -110,14 +151,9 @@ async function compressInMainThread(file: File, options: PrepareImageForUploadOp
   let bestBlob: Blob | null = null;
 
   try {
-    for (const scale of DEFAULT_SCALES) {
-      const dimensions = calculateDimensions(
-        image.width,
-        image.height,
-        scale,
-        options.maxDimension,
-      );
+    const compressionDimensions = buildCompressionDimensions(image.width, image.height, options);
 
+    for (const dimensions of compressionDimensions) {
       const canvas = document.createElement('canvas');
       canvas.width = dimensions.width;
       canvas.height = dimensions.height;
@@ -173,6 +209,7 @@ async function compressInWorker(file: File, options: PrepareImageForUploadOption
         accept: options.accept,
         targetMaxBytes: options.targetMaxBytes,
         maxDimension: options.maxDimension,
+        maxLongEdges: options.maxLongEdges,
       }, [fileArrayBuffer]);
     });
 
