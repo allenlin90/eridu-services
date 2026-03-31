@@ -1,3 +1,8 @@
+import {
+  buildCompressionDimensions,
+  DEFAULT_QUALITIES,
+} from './compress-utils';
+
 type CompressionWorkerResult =
   | { ok: true; fileArrayBuffer: ArrayBuffer; fileType: string }
   | { ok: false; message: string };
@@ -5,7 +10,17 @@ type CompressionWorkerResult =
 export type PrepareImageForUploadOptions = {
   targetMaxBytes: number;
   accept?: string;
+  /**
+   * Optional scalar clamp applied to the generic scale-based search.
+   * Ignored when `maxLongEdges` is provided — `maxLongEdges` always takes precedence.
+   */
   maxDimension?: number;
+  /**
+   * Explicit long-edge ladder (e.g. `[1440, 1280, 1080, 960]`) used instead of
+   * the generic scale search. When set, `maxDimension` is ignored.
+   * Prefer this for screenshot-sized uploads where a single clamp would collapse
+   * multiple scale steps into the same output size.
+   */
   maxLongEdges?: readonly number[];
   preferWorker?: boolean;
 };
@@ -15,9 +30,6 @@ export type PreparedImageResult = {
   wasCompressed: boolean;
   usedWorker: boolean;
 };
-
-const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25];
-const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34, 0.26, 0.2, 0.16, 0.12];
 
 function replaceFileExtension(fileName: string, mimeType: string): string {
   const extensionByMime: Record<string, string> = {
@@ -78,65 +90,6 @@ function pickOutputMimeType(fileType: string, fileName: string, accept?: string)
     return currentMime;
   }
   return currentMime;
-}
-
-function clampToMaxDimension(width: number, height: number, maxDimension?: number): { width: number; height: number } {
-  if (!maxDimension || maxDimension <= 0) {
-    return { width, height };
-  }
-
-  const longest = Math.max(width, height);
-  if (longest <= maxDimension) {
-    return { width, height };
-  }
-
-  const ratio = maxDimension / longest;
-  return {
-    width: Math.max(1, Math.round(width * ratio)),
-    height: Math.max(1, Math.round(height * ratio)),
-  };
-}
-
-function calculateScaledDimensions(width: number, height: number, scale: number, maxDimension?: number): { width: number; height: number } {
-  return clampToMaxDimension(
-    Math.max(1, Math.round(width * scale)),
-    Math.max(1, Math.round(height * scale)),
-    maxDimension,
-  );
-}
-
-function calculateLongEdgeDimensions(width: number, height: number, maxLongEdge: number): { width: number; height: number } {
-  if (!Number.isFinite(maxLongEdge) || maxLongEdge <= 0) {
-    return { width, height };
-  }
-
-  return clampToMaxDimension(width, height, maxLongEdge);
-}
-
-function buildCompressionDimensions(
-  width: number,
-  height: number,
-  options: PrepareImageForUploadOptions,
-): Array<{ width: number; height: number }> {
-  const dimensions = new Map<string, { width: number; height: number }>();
-
-  const addDimensions = (next: { width: number; height: number }) => {
-    dimensions.set(`${next.width}x${next.height}`, next);
-  };
-
-  if (options.maxLongEdges && options.maxLongEdges.length > 0) {
-    for (const maxLongEdge of options.maxLongEdges) {
-      addDimensions(calculateLongEdgeDimensions(width, height, maxLongEdge));
-    }
-
-    return [...dimensions.values()];
-  }
-
-  for (const scale of DEFAULT_SCALES) {
-    addDimensions(calculateScaledDimensions(width, height, scale, options.maxDimension));
-  }
-
-  return [...dimensions.values()];
 }
 
 async function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality?: number): Promise<Blob | null> {

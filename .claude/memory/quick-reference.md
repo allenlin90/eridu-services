@@ -652,7 +652,7 @@ packages/
 
 ---
 
-## 🖼️ Screenshot Compression
+## Screenshot Compression
 
 - `erify_studios` `JsonForm` keeps the hard `200 KB` screenshot target aligned with `QC_SCREENSHOT`.
 - For screenshot-sized image uploads, prefer a long-edge ladder `[1440, 1280, 1080, 960]` from the original image instead of one generic max-dimension clamp.
