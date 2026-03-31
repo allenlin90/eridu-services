@@ -83,7 +83,7 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 ```
 apps/eridu_docs/src/
-├── config/env.ts          ← AUTH_URL (+ optional AUTH_API_URL/AUTH_UI_URL/AUTH_ISSUER_URL), BYPASS_AUTH
+├── config/env.ts          ← AUTH_API_URL, AUTH_UI_URL, BYPASS_AUTH, COOKIE_SECURE
 ├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
@@ -129,23 +129,21 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 
 ## Environment Variables
 
-| Variable          | Required | Default                                               | Description                                                                                                                |
-| ----------------- | -------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `AUTH_URL`        | No       | `http://localhost:5173`                               | Auth public URL used for login and JWT issuer validation                                                                   |
-| `AUTH_API_URL`    | No       | inferred from `AUTH_URL`                              | eridu_auth backend URL (JWKS + token + sign-out APIs). If `AUTH_URL` is `localhost:5173`, API defaults to `localhost:3001` |
-| `AUTH_UI_URL`     | No       | `AUTH_URL`                                            | eridu_auth frontend login URL (`/sign-in`)                                                                                 |
-| `AUTH_ISSUER_URL` | No       | `AUTH_URL` (fallback: `AUTH_API_URL`)                 | Explicit JWT issuer URL for mixed local setups                                                                             |
-| `COOKIE_SECURE`   | No       | auto (`false` on localhost, `true` on non-local prod) | Force JWT cookie `Secure` flag behavior                                                                                    |
-| `BYPASS_AUTH`     | No       | `false`                                               | Skip auth in local dev                                                                                                     |
+| Variable        | Required in prod | Default                 | Description                                              |
+| --------------- | :--------------: | ----------------------- | -------------------------------------------------------- |
+| `AUTH_API_URL`  | Yes              | `http://localhost:3001` | eridu_auth backend — JWKS, `/api/auth/token`, sign-out   |
+| `AUTH_UI_URL`   | Yes              | `http://localhost:5173` | eridu_auth frontend — `/sign-in` redirect                |
+| `BYPASS_AUTH`   | No               | `false`                 | Skip auth for local dev (never set in production)        |
+| `COOKIE_SECURE` | No               | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`) |
 
 ### Local Development
 
-For plain localhost docs work, set `BYPASS_AUTH=true`. No auth URL overrides
-are needed for the normal local docs workflow.
+Set `BYPASS_AUTH=true`. No other variables are needed — eridu_auth does not
+need to be running for local docs authoring.
 
-Local end-to-end auth integration is intentionally not the primary workflow for
-this docs app. The recommended local setup is bypassed docs auth, while the
-real auth flow is exercised in deployed environments.
+The full auth flow (login → callback → cookie → refresh) is exercised in
+deployed environments where `AUTH_API_URL` and `AUTH_UI_URL` point to real
+eridu_auth instances.
 
 ## Security Considerations
 

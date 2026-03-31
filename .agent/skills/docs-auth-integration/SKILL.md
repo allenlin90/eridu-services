@@ -102,12 +102,12 @@ The refresh works because Better Auth cross-subdomain session cookies (on `.erid
 | `maxAge` | `900` (15 min) | Matches JWT expiry from Better Auth |
 ## Environment Variables
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `AUTH_API_URL` | `http://localhost:3001` | eridu_auth backend API URL (`/api/auth/*`) |
-| `AUTH_UI_URL` | `http://localhost:5173` | eridu_auth frontend login UI URL (`/sign-in`) |
-| `AUTH_URL` | (optional fallback) | Legacy fallback used for both API and UI |
-| `BYPASS_AUTH` | `false` | Skip auth for local dev |
+| Variable        | Required in prod | Default                 | Purpose                                                  |
+| --------------- | :--------------: | ----------------------- | -------------------------------------------------------- |
+| `AUTH_API_URL`  | Yes              | `http://localhost:3001` | eridu_auth backend — JWKS, `/api/auth/token`, sign-out   |
+| `AUTH_UI_URL`   | Yes              | `http://localhost:5173` | eridu_auth frontend — `/sign-in` redirect                |
+| `BYPASS_AUTH`   | No               | `false`                 | Skip auth for local dev (never set in production)        |
+| `COOKIE_SECURE` | No               | `true` in production    | Override JWT cookie `Secure` flag (auto from Astro `PROD`) |
 
 🟡 **Recommended**: For local docs work in this repo, prefer `BYPASS_AUTH=true` instead of trying to reproduce the full cross-domain auth flow on localhost.
 
