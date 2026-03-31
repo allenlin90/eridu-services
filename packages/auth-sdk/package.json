@@ -53,6 +53,10 @@
       "types": "./dist/schemas/jwt-payload.schema.d.ts",
       "default": "./dist/schemas/jwt-payload.schema.js"
     },
+    "./server/ssr": {
+      "types": "./dist/server/ssr/index.d.ts",
+      "default": "./dist/server/ssr/index.js"
+    },
     "./client/react": {
       "types": "./dist/client/react.d.ts",
       "default": "./dist/client/react.js"

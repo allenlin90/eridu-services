@@ -62,6 +62,10 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
   - `frontend-i18n`
   - `frontend-code-quality`
   - `pwa-best-practices` (for PWA setup/migration and SW-query caching boundaries)
+- Docs platform (`apps/eridu_docs`):
+  - `ssr-auth-integration`
+  - `astro-starlight-best-practices`
+  - `monorepo-doc-layering`
 - Architecture and shared contracts:
   - `shared-api-types`
   - `design-patterns`
