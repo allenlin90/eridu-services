@@ -5,6 +5,7 @@ const booleanish = z
   .transform((v) => (typeof v === 'boolean' ? v : v === 'true'));
 
 const envSchema = z.object({
+  SITE_URL: z.url().optional(),
   AUTH_URL: z.url().default('http://localhost:3001'),
   AUTH_INTERNAL_URL: z.url().optional(),
   BYPASS_AUTH: booleanish.default(false),
@@ -12,6 +13,7 @@ const envSchema = z.object({
 });
 
 const parsed = envSchema.parse({
+  SITE_URL: import.meta.env.SITE_URL ?? process.env.SITE_URL,
   AUTH_URL: import.meta.env.AUTH_URL ?? process.env.AUTH_URL,
   AUTH_INTERNAL_URL: import.meta.env.AUTH_INTERNAL_URL ?? process.env.AUTH_INTERNAL_URL,
   BYPASS_AUTH: import.meta.env.BYPASS_AUTH ?? process.env.BYPASS_AUTH,
@@ -19,6 +21,10 @@ const parsed = envSchema.parse({
 });
 
 export const CONFIG = {
+  // Explicit public origin used for building callback URLs.
+  // Required in production to avoid Railway's internal Host header (localhost:PORT)
+  // being used as the callbackURL base. Falls back to the request origin in local dev.
+  siteUrl: parsed.SITE_URL ?? null,
   authApiUrl: parsed.AUTH_INTERNAL_URL ?? parsed.AUTH_URL,
   authUiUrl: parsed.AUTH_URL,
   // JWT issuer matches eridu_auth BETTER_AUTH_URL

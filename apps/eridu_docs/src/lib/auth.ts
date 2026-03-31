@@ -28,7 +28,10 @@ if (!CONFIG.bypassAuth) {
 }
 
 export function buildLoginUrl(origin: string, pathname: string): string {
-  const callbackUrl = new URL('/auth/callback', origin);
+  // Use SITE_URL if configured — Railway's ingress passes Host: localhost:PORT
+  // to the container, so context.url.origin would produce the wrong callback URL.
+  const callbackBase = CONFIG.siteUrl ?? origin;
+  const callbackUrl = new URL('/auth/callback', callbackBase);
   callbackUrl.searchParams.set('returnTo', pathname);
 
   const loginUrl = new URL('/sign-in', CONFIG.authUiUrl);

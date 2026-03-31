@@ -49,6 +49,15 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 ## Auth Flow
 
+### Silent SSO (no eridu_docs cookie, but active Better Auth session)
+
+1. Browser requests `docs.eridu.io/any-page` without an `eridu_docs_token` cookie
+2. Middleware attempts `refreshToken` using the Better Auth session cookies the browser carries from `.eridu.io`
+3. If eridu_auth returns a JWT → set cookie, serve page — **no sign-in page shown**
+4. If no active session → redirect to sign-in
+
+This means users who are already signed in to any eridu service arrive at the docs without a prompt.
+
 ### First Visit (no cookie)
 
 1. Browser requests `docs.eridu.io/any-page`
@@ -144,6 +153,7 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 
 | Variable            | Required in prod | Default                 | Description                                                                      |
 | ------------------- | :--------------: | ----------------------- | -------------------------------------------------------------------------------- |
+| `SITE_URL`          |       Yes        | —                       | Public origin of eridu_docs (e.g. `https://docs.eridu.io`). Used as the base for `/auth/callback`. Without this, Railway's internal `Host: localhost:PORT` header is used, producing a broken callbackURL. |
 | `AUTH_URL`          |       Yes        | `http://localhost:3001` | Browser-facing eridu_auth origin used for redirects and JWT issuer validation    |
 | `AUTH_INTERNAL_URL` |        No        | `AUTH_URL`              | Internal eridu_auth origin used for server-to-server JWKS/token/sign-out calls   |
 | `BYPASS_AUTH`       |        No        | `false`                 | Skip auth for local dev (never set in production)                                |

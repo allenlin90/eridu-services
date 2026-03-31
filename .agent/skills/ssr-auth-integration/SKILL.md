@@ -197,6 +197,32 @@ const parsed = envSchema.parse({
 
 This is not needed for `PUBLIC_` variables — Vite embeds those correctly in both client and server bundles.
 
+**Critical**: Behind a reverse proxy (Railway, nginx, etc.), `context.url.origin` reflects the raw `Host` header the container receives — typically `localhost:PORT`, not the public domain. Never use `context.url.origin` directly as the base for OAuth callback URLs. Always use a `SITE_URL` env var:
+
+```typescript
+// lib/auth.ts
+export function buildLoginUrl(origin: string, pathname: string): string {
+  const callbackBase = CONFIG.siteUrl ?? origin; // origin only as local-dev fallback
+  const callbackUrl = new URL('/auth/callback', callbackBase);
+  ...
+}
+```
+
+**Critical**: Middleware should attempt a silent token exchange before redirecting to sign-in. Users already signed in via Better Auth carry session cookies on the shared domain (`.eridu.io`) — forwarding those to `/api/auth/token` gives a JWT without showing the sign-in page:
+
+```typescript
+if (!token) {
+  const cookieHeader = context.request.headers.get('cookie') ?? '';
+  const silentAuth = await refreshToken(cookieHeader);
+  if (silentAuth) {
+    setTokenCookie(context.cookies, silentAuth.token);
+    context.locals.user = extractUser(silentAuth.payload);
+    return next();
+  }
+  return context.redirect(buildLoginUrl(context.url.origin, returnTo), 302);
+}
+```
+
 **Critical**: `@astrojs/node` standalone mode defaults to binding on `localhost` (loopback interface), unlike Express/NestJS which default to `0.0.0.0`. In a container deployment (Railway, Docker, etc.) the health check probe comes from outside the container and cannot reach loopback. Always set `HOST=0.0.0.0` in the start command:
 
 ```json
@@ -256,6 +282,8 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] Cookie uses `httpOnly`, `secure`, `sameSite: 'lax'`
 - [ ] `HOST=0.0.0.0` set in the container start command (Astro node standalone binds to loopback by default — Railway health checks cannot reach it otherwise)
 - [ ] All runtime-configurable env vars use `import.meta.env.X ?? process.env.X` (Astro bakes `import.meta.env` at build time; without the fallback, Railway env vars are silently ignored)
+- [ ] `SITE_URL` is set in production to the app's public origin — used as the base for `/auth/callback` in `buildLoginUrl`; without it, Railway's internal `Host: localhost:PORT` header produces a broken callbackURL
+- [ ] Middleware attempts silent token exchange (`refreshToken`) before redirecting to sign-in — users already signed in via Better Auth should reach the app without a login prompt
 - [ ] `BYPASS_AUTH` only for local dev, never in production
 - [ ] `returnTo` preserved through login → callback → redirect chain
 - [ ] `normalizeReturnTo` used before redirecting to any user-supplied path

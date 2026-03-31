@@ -33,6 +33,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const token = context.cookies.get(COOKIE_NAME)?.value;
 
   if (!token) {
+    // Attempt silent SSO: the browser may already carry Better Auth session
+    // cookies from auth.eridu.io (cross-subdomain on .eridu.io). Try exchanging
+    // them for a JWT before falling back to a redirect to sign-in.
+    const cookieHeader = context.request.headers.get('cookie') ?? '';
+    const silentAuth = await refreshToken(cookieHeader);
+
+    if (silentAuth) {
+      setTokenCookie(context.cookies, silentAuth.token);
+      context.locals.user = extractUser(silentAuth.payload);
+      return next();
+    }
+
     return context.redirect(
       buildLoginUrl(context.url.origin, returnTo),
       302,
