@@ -20,6 +20,7 @@ function isPublicPath(pathname: string): boolean {
 
 export const onRequest = defineMiddleware(async (context, next) => {
   if (isPublicPath(context.url.pathname)) return next();
+  const returnTo = `${context.url.pathname}${context.url.search}`;
 
   if (CONFIG.bypassAuth) {
     if (context.url.pathname === '/') {
@@ -32,7 +33,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (!token) {
     return context.redirect(
-      buildLoginUrl(context.url.origin, context.url.pathname),
+      buildLoginUrl(context.url.origin, returnTo),
       302,
     );
   }
@@ -60,7 +61,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     return context.redirect(
-      buildLoginUrl(context.url.origin, context.url.pathname),
+      buildLoginUrl(context.url.origin, returnTo),
       302,
     );
   }
