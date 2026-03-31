@@ -18,14 +18,14 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 ┌──────────────────────────────────────┐
 │         eridu_docs (Astro SSR)       │
 │                                      │
-│  middleware.ts                        │
+│  middleware.ts                       │
 │  ├─ Read eridu_docs_token cookie     │
 │  ├─ Verify JWT with JWKS (cached)    │
 │  ├─ On expiry: refresh server-side   │
 │  └─ Set context.locals.user          │
 │                                      │
 │  /auth/callback                      │
-│  ├─ Forward session cookies           │
+│  ├─ Forward session cookies          │
 │  ├─ Get JWT from /api/auth/token     │
 │  ├─ Verify + set cookie              │
 │  └─ Redirect to returnTo             │
@@ -41,9 +41,9 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 ┌──────────────────────────────────────┐
 │        eridu_auth (Better Auth)      │
 │                                      │
-│  /api/auth/jwks   → public keys     │
-│  /api/auth/token  → JWT (EdDSA)     │
-│  /sign-in         → login UI        │
+│  /api/auth/jwks   → public keys      │
+│  /api/auth/token  → JWT (EdDSA)      │
+│  /sign-in         → login UI         │
 └──────────────────────────────────────┘
 ```
 
@@ -83,11 +83,11 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 `lib/auth.ts` is the single auth facade consumed by middleware, callback, and logout. Three of its helpers are sourced directly from `@eridu/auth-sdk/server/ssr` and wrapped to close over `CONFIG`:
 
-| Helper | Source | Notes |
-| --- | --- | --- |
-| `refreshToken(cookieHeader)` | `@eridu/auth-sdk/server/ssr` (`refreshSessionToken`) | Forwards session cookies, verifies fresh JWT |
-| `normalizeReturnTo(value)` | `@eridu/auth-sdk/server/ssr` (`normalizeReturnTo`) | Re-exported directly, no wrapper |
-| `signOutFromAuth(cookieHeader, origin?)` | `@eridu/auth-sdk/server/ssr` (`signOutFromAuth`) | Forwards sign-out request, best-effort |
+| Helper                                   | Source                                               | Notes                                        |
+| ---------------------------------------- | ---------------------------------------------------- | -------------------------------------------- |
+| `refreshToken(cookieHeader)`             | `@eridu/auth-sdk/server/ssr` (`refreshSessionToken`) | Forwards session cookies, verifies fresh JWT |
+| `normalizeReturnTo(value)`               | `@eridu/auth-sdk/server/ssr` (`normalizeReturnTo`)   | Re-exported directly, no wrapper             |
+| `signOutFromAuth(cookieHeader, origin?)` | `@eridu/auth-sdk/server/ssr` (`signOutFromAuth`)     | Forwards sign-out request, best-effort       |
 
 Cookie helpers (`setTokenCookie`, `clearTokenCookie`), `buildLoginUrl`, and `extractUser` remain Astro-specific in `lib/auth.ts`.
 
@@ -131,21 +131,21 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 
 ## Cookie Configuration
 
-| Property   | Value                     | Reason                          |
-| ---------- | ------------------------- | ------------------------------- |
-| `httpOnly` | `true`                    | Prevents client-side JS access  |
-| `secure`   | `true` in production      | HTTPS only                      |
-| `sameSite` | `lax`                     | Allows redirect from eridu_auth |
-| `path`     | `/`                       | Available to all routes         |
-| `maxAge`   | `900` (15 min)            | Matches JWT expiry              |
+| Property   | Value                | Reason                          |
+| ---------- | -------------------- | ------------------------------- |
+| `httpOnly` | `true`               | Prevents client-side JS access  |
+| `secure`   | `true` in production | HTTPS only                      |
+| `sameSite` | `lax`                | Allows redirect from eridu_auth |
+| `path`     | `/`                  | Available to all routes         |
+| `maxAge`   | `900` (15 min)       | Matches JWT expiry              |
 
 ## Environment Variables
 
-| Variable        | Required in prod | Default                 | Description                                              |
-| --------------- | :--------------: | ----------------------- | -------------------------------------------------------- |
-| `AUTH_URL`      | Yes              | `http://localhost:3001` | eridu_auth service URL — API endpoints and `/sign-in` UI are on the same origin |
-| `BYPASS_AUTH`   | No               | `false`                 | Skip auth for local dev (never set in production)        |
-| `COOKIE_SECURE` | No               | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`) |
+| Variable        | Required in prod | Default                 | Description                                                                     |
+| --------------- | :--------------: | ----------------------- | ------------------------------------------------------------------------------- |
+| `AUTH_URL`      |       Yes        | `http://localhost:3001` | eridu_auth service URL — API endpoints and `/sign-in` UI are on the same origin |
+| `BYPASS_AUTH`   |        No        | `false`                 | Skip auth for local dev (never set in production)                               |
+| `COOKIE_SECURE` |        No        | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`)               |
 
 ### Local Development
 
