@@ -183,6 +183,14 @@ over HTTP for server-side fetches.
 
 ## Astro-Specific Notes
 
+**Critical**: `@astrojs/node` standalone mode defaults to binding on `localhost` (loopback interface), unlike Express/NestJS which default to `0.0.0.0`. In a container deployment (Railway, Docker, etc.) the health check probe comes from outside the container and cannot reach loopback. Always set `HOST=0.0.0.0` in the start command:
+
+```json
+"startCommand": "HOST=0.0.0.0 node ./dist/server/entry.mjs"
+```
+
+Without this the server starts normally and responds to local `curl` on the same machine, but Railway's ingress router gets connection refused and the deployment never passes its health check. NestJS/Express services do not need this because they bind to `0.0.0.0` by default.
+
 **Critical**: If `eridu_docs` uses Starlight, set `starlight({ prerender: false, pagefind: false })`. Starlight prerenders by default even in server mode, which routes pages through `routes/static/*` and breaks cookie/header-based auth middleware.
 
 **Recommended**: If you still need Pagefind search, generate it in a separate bypass-auth snapshot build and keep the runtime docs app on SSR.
@@ -232,6 +240,7 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] `refreshToken`, `normalizeReturnTo`, `signOutFromAuth` imported from `@eridu/auth-sdk/server/ssr` (not re-implemented)
 - [ ] JWKS initialized at module load (non-blocking `.catch()`)
 - [ ] Cookie uses `httpOnly`, `secure`, `sameSite: 'lax'`
+- [ ] `HOST=0.0.0.0` set in the container start command (Astro node standalone binds to loopback by default — Railway health checks cannot reach it otherwise)
 - [ ] `BYPASS_AUTH` only for local dev, never in production
 - [ ] `returnTo` preserved through login → callback → redirect chain
 - [ ] `normalizeReturnTo` used before redirecting to any user-supplied path

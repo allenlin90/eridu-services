@@ -169,6 +169,25 @@ HTTPS origin used by the browser.
 - It does not call `eridu_auth`; dependency readiness should be checked
   separately to avoid restart loops caused by external outages.
 
+## Container Deployment (Railway)
+
+`@astrojs/node` standalone mode binds to `localhost` (loopback) by default —
+unlike Express/NestJS which bind to `0.0.0.0`. Railway's health check probe
+comes from the ingress router outside the container, so it cannot reach a
+server bound to loopback. The result is a deployment that appears to start
+correctly locally but always fails the health check on Railway.
+
+**Fix**: set `HOST=0.0.0.0` in the Railway start command so the server binds
+to all interfaces:
+
+```json
+"startCommand": "HOST=0.0.0.0 pnpm --filter eridu_docs start"
+```
+
+This is an Astro-specific concern. Other services in this repo (erify_api,
+eridu_auth) use NestJS/Hono which bind to all interfaces by default and do
+not require this.
+
 ## Security Considerations
 
 - **No shared secrets**: eridu_auth is the sole signing authority (EdDSA private key)
