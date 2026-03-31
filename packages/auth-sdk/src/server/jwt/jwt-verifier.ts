@@ -2,7 +2,7 @@
  * JWT Verifier - Verifies JWT tokens locally using cached JWKS
  */
 
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createLocalJWKSet, jwtVerify } from 'jose';
 
 import type { JwtPayload, UserInfo } from '../../types.js';
 
@@ -11,12 +11,15 @@ import type { JwtVerifierConfig } from './types.js';
 
 /**
  * Service for verifying JWT tokens using JWKS
+ *
+ * Uses JwksService as the single source of truth for keys — jose never makes
+ * its own HTTP requests. This gives us full control over fetch timeouts,
+ * caching, and key rotation retries.
  */
 export class JwtVerifier {
   private readonly jwksService: JwtVerifierConfig['jwksService'];
   private readonly issuer: string;
   private readonly audience: string;
-  private remoteJWKSet: ReturnType<typeof createRemoteJWKSet> | null = null;
 
   constructor(config: JwtVerifierConfig) {
     this.jwksService = config.jwksService;
@@ -29,57 +32,22 @@ export class JwtVerifier {
   }
 
   /**
-   * Verify a JWT token and return the payload
-   * Automatically handles key rotation by refreshing JWKS if unknown key ID detected
+   * Verify a JWT token and return the payload.
+   * Automatically handles key rotation by refreshing JWKS if unknown key ID detected.
    */
   async verify(token: string): Promise<JwtPayload> {
     try {
-      // Get JWKS URL for remote JWK set
-      const jwksUrl = this.getJwksUrl();
-
-      // Create or reuse remote JWK set (handles key rotation automatically)
-      if (!this.remoteJWKSet) {
-        this.remoteJWKSet = createRemoteJWKSet(new URL(jwksUrl));
-      }
-
-      // Verify token
-      const { payload } = await jwtVerify(token, this.remoteJWKSet, {
-        issuer: this.issuer,
-        audience: this.audience,
-      });
-
-      // Validate payload structure
-      if (!validateJwtPayload(payload)) {
-        throw new Error('Invalid JWT payload structure');
-      }
-
-      return payload as JwtPayload;
+      const payload = await this.verifyWithCachedKeys(token);
+      return payload;
     } catch (error) {
       if (error instanceof Error) {
-        // Check if it's a key rotation issue (unknown key ID)
+        // Key rotation: unknown kid → refresh cache and retry once
         if (
           error.message.includes('no matching key')
           || error.message.includes('key not found')
         ) {
-          // Refresh JWKS and retry once
           await this.jwksService.refreshJwks();
-          // Reset remote JWK set to force refresh
-          this.remoteJWKSet = null;
-
-          // Retry verification
-          const jwksUrl = this.getJwksUrl();
-          this.remoteJWKSet = createRemoteJWKSet(new URL(jwksUrl));
-
-          const { payload } = await jwtVerify(token, this.remoteJWKSet, {
-            issuer: this.issuer,
-            audience: this.audience,
-          });
-
-          if (!validateJwtPayload(payload)) {
-            throw new Error('Invalid JWT payload structure');
-          }
-
-          return payload as JwtPayload;
+          return this.verifyWithCachedKeys(token);
         }
 
         throw new Error(`JWT verification failed: ${error.message}`);
@@ -97,9 +65,22 @@ export class JwtVerifier {
   }
 
   /**
-   * Get JWKS URL from JWKS service
+   * Verify token against the locally-cached JWKS.
+   * JwksService.getJwks() will auto-fetch if the cache is empty (e.g. after restart).
    */
-  private getJwksUrl(): string {
-    return this.jwksService.getJwksUrl();
+  private async verifyWithCachedKeys(token: string): Promise<JwtPayload> {
+    const jwks = await this.jwksService.getJwks();
+    const localKeySet = createLocalJWKSet(jwks);
+
+    const { payload } = await jwtVerify(token, localKeySet, {
+      issuer: this.issuer,
+      audience: this.audience,
+    });
+
+    if (!validateJwtPayload(payload)) {
+      throw new Error('Invalid JWT payload structure');
+    }
+
+    return payload as JwtPayload;
   }
 }
