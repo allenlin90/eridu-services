@@ -36,7 +36,6 @@ export function setTokenCookie(cookies: AstroCookies, token: string): void {
     sameSite: 'lax',
     path: '/',
     maxAge: TOKEN_MAX_AGE,
-    ...(CONFIG.cookieDomain ? { domain: CONFIG.cookieDomain } : {}),
   });
 }
 
@@ -64,7 +63,6 @@ export async function refreshToken(
 export function clearTokenCookie(cookies: AstroCookies): void {
   cookies.delete(COOKIE_NAME, {
     path: '/',
-    ...(CONFIG.cookieDomain ? { domain: CONFIG.cookieDomain } : {}),
   });
 }
 

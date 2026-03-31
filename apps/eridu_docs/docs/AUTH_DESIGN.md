@@ -83,7 +83,7 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 ```
 apps/eridu_docs/src/
-├── config/env.ts          ← AUTH_URL (+ optional AUTH_API_URL/AUTH_UI_URL/AUTH_ISSUER_URL), COOKIE_DOMAIN, BYPASS_AUTH
+├── config/env.ts          ← AUTH_URL (+ optional AUTH_API_URL/AUTH_UI_URL/AUTH_ISSUER_URL), BYPASS_AUTH
 ├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
@@ -126,7 +126,6 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 | `sameSite` | `lax`                     | Allows redirect from eridu_auth |
 | `path`     | `/`                       | Available to all routes         |
 | `maxAge`   | `900` (15 min)            | Matches JWT expiry              |
-| `domain`   | `.eridu.io` in production | Cross-subdomain if needed       |
 
 ## Environment Variables
 
@@ -136,14 +135,13 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 | `AUTH_API_URL`    | No       | inferred from `AUTH_URL`                              | eridu_auth backend URL (JWKS + token + sign-out APIs). If `AUTH_URL` is `localhost:5173`, API defaults to `localhost:3001` |
 | `AUTH_UI_URL`     | No       | `AUTH_URL`                                            | eridu_auth frontend login URL (`/sign-in`)                                                                                 |
 | `AUTH_ISSUER_URL` | No       | `AUTH_URL` (fallback: `AUTH_API_URL`)                 | Explicit JWT issuer URL for mixed local setups                                                                             |
-| `COOKIE_DOMAIN`   | No       | (omitted)                                             | Cookie domain for production deployments when docs are served on a shared parent domain (for example `.eridu.io`)         |
 | `COOKIE_SECURE`   | No       | auto (`false` on localhost, `true` on non-local prod) | Force JWT cookie `Secure` flag behavior                                                                                    |
 | `BYPASS_AUTH`     | No       | `false`                                               | Skip auth in local dev                                                                                                     |
 
 ### Local Development
 
-For plain localhost docs work, set `BYPASS_AUTH=true` and keep the default
-localhost auth URLs.
+For plain localhost docs work, set `BYPASS_AUTH=true`. No auth URL overrides
+are needed for the normal local docs workflow.
 
 Local end-to-end auth integration is intentionally not the primary workflow for
 this docs app. The recommended local setup is bypassed docs auth, while the

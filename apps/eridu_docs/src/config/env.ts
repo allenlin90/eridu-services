@@ -16,7 +16,6 @@ const envSchema = z.object({
   AUTH_ISSUER_URL: z
     .url({ message: 'AUTH_ISSUER_URL must be a valid URL' })
     .optional(),
-  COOKIE_DOMAIN: z.string().optional(),
   COOKIE_SECURE: stringBoolean.optional(),
   DEV: stringBoolean.default(false),
   BYPASS_AUTH: stringBoolean.default(false),
@@ -27,7 +26,6 @@ const parsedEnv = envSchema.parse({
   AUTH_API_URL: import.meta.env.AUTH_API_URL,
   AUTH_UI_URL: import.meta.env.AUTH_UI_URL,
   AUTH_ISSUER_URL: import.meta.env.AUTH_ISSUER_URL,
-  COOKIE_DOMAIN: import.meta.env.COOKIE_DOMAIN,
   COOKIE_SECURE: import.meta.env.COOKIE_SECURE,
   DEV: import.meta.env.DEV,
   BYPASS_AUTH: import.meta.env.BYPASS_AUTH ?? process.env.BYPASS_AUTH,
@@ -70,7 +68,6 @@ export const CONFIG = {
   authUiUrl,
   authIssuerUrl,
   cookieSecure,
-  cookieDomain: parsedEnv.COOKIE_DOMAIN,
   isDev: parsedEnv.DEV,
   bypassAuth: parsedEnv.BYPASS_AUTH,
 };
