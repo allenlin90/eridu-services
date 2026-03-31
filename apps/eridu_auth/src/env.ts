@@ -44,7 +44,7 @@ const EnvSchema = z
     ALLOWED_ORIGINS: z
       .string()
       .default(
-        'http://localhost:3000,http://localhost:3001,http://localhost:4173,http://localhost:4321,http://localhost:5173',
+        'http://localhost:3000,http://localhost:3001,http://localhost:4173,http://localhost:5173',
       ),
     // SAML Configuration (optional - for future enterprise clients)
     SAML_ENTRY_POINT: z.url().optional(),
