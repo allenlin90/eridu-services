@@ -183,6 +183,20 @@ over HTTP for server-side fetches.
 
 ## Astro-Specific Notes
 
+**Critical**: In Astro SSR, `import.meta.env.X` for non-`PUBLIC_` variables is resolved at **build time** by Vite, not at runtime. If an env var is not set during the build (e.g. Railway env vars are only available at runtime), it compiles to `undefined` and any `.default()` in Zod kicks in — ignoring whatever the runtime environment says. Always add a `process.env` fallback for vars that must be configurable at runtime:
+
+```typescript
+// env.ts — correct pattern for runtime-configurable vars
+const parsed = envSchema.parse({
+  AUTH_URL: import.meta.env.AUTH_URL ?? process.env.AUTH_URL,
+  AUTH_INTERNAL_URL: import.meta.env.AUTH_INTERNAL_URL ?? process.env.AUTH_INTERNAL_URL,
+  BYPASS_AUTH: import.meta.env.BYPASS_AUTH ?? process.env.BYPASS_AUTH,
+  COOKIE_SECURE: import.meta.env.COOKIE_SECURE ?? process.env.COOKIE_SECURE,
+});
+```
+
+This is not needed for `PUBLIC_` variables — Vite embeds those correctly in both client and server bundles.
+
 **Critical**: `@astrojs/node` standalone mode defaults to binding on `localhost` (loopback interface), unlike Express/NestJS which default to `0.0.0.0`. In a container deployment (Railway, Docker, etc.) the health check probe comes from outside the container and cannot reach loopback. Always set `HOST=0.0.0.0` in the start command:
 
 ```json
@@ -241,6 +255,7 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] JWKS initialized at module load (non-blocking `.catch()`)
 - [ ] Cookie uses `httpOnly`, `secure`, `sameSite: 'lax'`
 - [ ] `HOST=0.0.0.0` set in the container start command (Astro node standalone binds to loopback by default — Railway health checks cannot reach it otherwise)
+- [ ] All runtime-configurable env vars use `import.meta.env.X ?? process.env.X` (Astro bakes `import.meta.env` at build time; without the fallback, Railway env vars are silently ignored)
 - [ ] `BYPASS_AUTH` only for local dev, never in production
 - [ ] `returnTo` preserved through login → callback → redirect chain
 - [ ] `normalizeReturnTo` used before redirecting to any user-supplied path

@@ -149,6 +149,23 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 | `BYPASS_AUTH`       |        No        | `false`                 | Skip auth for local dev (never set in production)                                |
 | `COOKIE_SECURE`     |        No        | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`)                |
 
+### Runtime vs Build-time Resolution
+
+In Astro SSR, `import.meta.env.X` for non-`PUBLIC_` variables is resolved at
+**build time** by Vite. If a variable is not present during the build (e.g.
+Railway env vars are only injected at runtime), it compiles to `undefined` —
+the Zod `.default()` then applies, ignoring whatever the live environment says.
+
+All env vars that must be configurable at deploy time require a `process.env`
+fallback:
+
+```typescript
+AUTH_URL: import.meta.env.AUTH_URL ?? process.env.AUTH_URL,
+```
+
+Without this, setting `AUTH_URL` in Railway has no effect and redirects always
+go to `http://localhost:3001`.
+
 ### Local Development
 
 Set `BYPASS_AUTH=true`. No other variables are needed — eridu_auth does not

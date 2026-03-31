@@ -12,10 +12,10 @@ const envSchema = z.object({
 });
 
 const parsed = envSchema.parse({
-  AUTH_URL: import.meta.env.AUTH_URL,
-  AUTH_INTERNAL_URL: import.meta.env.AUTH_INTERNAL_URL,
+  AUTH_URL: import.meta.env.AUTH_URL ?? process.env.AUTH_URL,
+  AUTH_INTERNAL_URL: import.meta.env.AUTH_INTERNAL_URL ?? process.env.AUTH_INTERNAL_URL,
   BYPASS_AUTH: import.meta.env.BYPASS_AUTH ?? process.env.BYPASS_AUTH,
-  COOKIE_SECURE: import.meta.env.COOKIE_SECURE,
+  COOKIE_SECURE: import.meta.env.COOKIE_SECURE ?? process.env.COOKIE_SECURE,
 });
 
 export const CONFIG = {
