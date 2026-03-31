@@ -14,7 +14,7 @@
   },
   "deploy": {
     "startCommand": "pnpm --filter eridu_docs start",
-    "healthcheckPath": "/favicon.png",
+    "healthcheckPath": "/healthz",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10

@@ -168,13 +168,18 @@ The three SDK primitives (`refreshSessionToken`, `normalizeReturnTo`, `signOutFr
 
 ## Environment Variables
 
-| Variable        | Required in prod | Default                 | Purpose                                                                  |
-| --------------- | :--------------: | ----------------------- | ------------------------------------------------------------------------ |
-| `AUTH_URL`      | Yes              | `http://localhost:3001` | eridu_auth service URL — API endpoints and `/sign-in` UI on same origin  |
-| `BYPASS_AUTH`   | No               | `false`                 | Skip auth for local dev (never set in production)                        |
-| `COOKIE_SECURE` | No               | `true` in production    | Override JWT cookie `Secure` flag                                        |
+| Variable            | Required in prod | Default                 | Purpose                                                                     |
+| ------------------- | :--------------: | ----------------------- | --------------------------------------------------------------------------- |
+| `AUTH_URL`          | Yes              | `http://localhost:3001` | Browser-facing eridu_auth origin used for redirects and JWT issuer checks   |
+| `AUTH_INTERNAL_URL` | No               | `AUTH_URL`              | Internal eridu_auth origin used for server-to-server JWKS/token/sign-out    |
+| `BYPASS_AUTH`       | No               | `false`                 | Skip auth for local dev (never set in production)                           |
+| `COOKIE_SECURE`     | No               | `true` in production    | Override JWT cookie `Secure` flag                                           |
 
 **Recommended**: For local docs work in this repo, prefer `BYPASS_AUTH=true` instead of trying to reproduce the full cross-domain auth flow on localhost.
+
+**Recommended**: In clustered deployments, keep `AUTH_URL` on the public HTTPS
+browser origin and point `AUTH_INTERNAL_URL` at the internal service DNS name
+over HTTP for server-side fetches.
 
 ## Astro-Specific Notes
 
@@ -220,7 +225,8 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] Shared auth module exports singleton JwksService/JwtVerifier (no duplicate instances)
 - [ ] Middleware skips auth for public paths before reading cookies
 - [ ] Expired JWT triggers refresh, invalid signature triggers redirect — never conflate
-- [ ] `AUTH_URL` is configured correctly for the environment
+- [ ] `AUTH_URL` is configured for browser redirects and JWT issuer validation
+- [ ] `AUTH_INTERNAL_URL` is configured when server-side traffic should stay on the cluster network
 - [ ] No `BETTER_AUTH_SECRET` in SSR app env
 - [ ] No modifications to eridu_auth for SSR consumer integration
 - [ ] `refreshToken`, `normalizeReturnTo`, `signOutFromAuth` imported from `@eridu/auth-sdk/server/ssr` (not re-implemented)

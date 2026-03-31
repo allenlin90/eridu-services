@@ -95,7 +95,8 @@ Cookie helpers (`setTokenCookie`, `clearTokenCookie`), `buildLoginUrl`, and `ext
 
 ```
 apps/eridu_docs/src/
-├── config/env.ts          ← AUTH_API_URL, AUTH_UI_URL, BYPASS_AUTH, COOKIE_SECURE
+├── config/env.ts          ← AUTH_URL, AUTH_INTERNAL_URL, BYPASS_AUTH, COOKIE_SECURE
+├── pages/healthz.ts       ← Public liveness endpoint for probes
 ├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, SDK wrappers, cookie helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
@@ -141,11 +142,12 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 
 ## Environment Variables
 
-| Variable        | Required in prod | Default                 | Description                                                                     |
-| --------------- | :--------------: | ----------------------- | ------------------------------------------------------------------------------- |
-| `AUTH_URL`      |       Yes        | `http://localhost:3001` | eridu_auth service URL — API endpoints and `/sign-in` UI are on the same origin |
-| `BYPASS_AUTH`   |        No        | `false`                 | Skip auth for local dev (never set in production)                               |
-| `COOKIE_SECURE` |        No        | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`)               |
+| Variable            | Required in prod | Default                 | Description                                                                      |
+| ------------------- | :--------------: | ----------------------- | -------------------------------------------------------------------------------- |
+| `AUTH_URL`          |       Yes        | `http://localhost:3001` | Browser-facing eridu_auth origin used for redirects and JWT issuer validation    |
+| `AUTH_INTERNAL_URL` |        No        | `AUTH_URL`              | Internal eridu_auth origin used for server-to-server JWKS/token/sign-out calls   |
+| `BYPASS_AUTH`       |        No        | `false`                 | Skip auth for local dev (never set in production)                                |
+| `COOKIE_SECURE`     |        No        | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`)                |
 
 ### Local Development
 
@@ -154,6 +156,18 @@ need to be running for local docs authoring.
 
 The full auth flow (login → callback → cookie → refresh) is exercised in
 deployed environments where `AUTH_URL` points to the live eridu_auth instance.
+
+In clustered deployments, set `AUTH_INTERNAL_URL` to the internal service DNS
+name over HTTP for server-side fetches, while keeping `AUTH_URL` on the public
+HTTPS origin used by the browser.
+
+## Health Checks
+
+- `GET /healthz` is a public liveness endpoint that returns `200` with JSON.
+- It is intentionally unauthenticated so load balancers and uptime probes can
+  ping it without docs or eridu_auth cookies.
+- It does not call `eridu_auth`; dependency readiness should be checked
+  separately to avoid restart loops caused by external outages.
 
 ## Security Considerations
 

@@ -14,6 +14,7 @@ function isPublicPath(pathname: string): boolean {
   return (
     pathname.startsWith('/_astro/') ||
     pathname.startsWith('/auth/') ||
+    pathname === '/healthz' ||
     /\.(png|jpg|jpeg|gif|css|js|ico|svg|webp|woff2?)$/.test(pathname)
   );
 }

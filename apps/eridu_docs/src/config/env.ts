@@ -6,18 +6,20 @@ const booleanish = z
 
 const envSchema = z.object({
   AUTH_URL: z.url().default('http://localhost:3001'),
+  AUTH_INTERNAL_URL: z.url().optional(),
   BYPASS_AUTH: booleanish.default(false),
   COOKIE_SECURE: booleanish.optional(),
 });
 
 const parsed = envSchema.parse({
   AUTH_URL: import.meta.env.AUTH_URL,
+  AUTH_INTERNAL_URL: import.meta.env.AUTH_INTERNAL_URL,
   BYPASS_AUTH: import.meta.env.BYPASS_AUTH ?? process.env.BYPASS_AUTH,
   COOKIE_SECURE: import.meta.env.COOKIE_SECURE,
 });
 
 export const CONFIG = {
-  authApiUrl: parsed.AUTH_URL,
+  authApiUrl: parsed.AUTH_INTERNAL_URL ?? parsed.AUTH_URL,
   authUiUrl: parsed.AUTH_URL,
   // JWT issuer matches eridu_auth BETTER_AUTH_URL
   authIssuerUrl: parsed.AUTH_URL,

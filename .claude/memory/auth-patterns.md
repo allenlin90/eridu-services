@@ -23,6 +23,12 @@
 - Auto-refresh on expiration (single retry)
 - Redirect to login on auth failure
 
+### 4. eridu_docs (Astro SSR)
+- Browser redirects and JWT issuer validation use `AUTH_URL`
+- Server-to-server JWKS/token/sign-out calls use `AUTH_INTERNAL_URL` when set
+- Public liveness probe is `GET /healthz`
+- Auth middleware must skip `/healthz` so probes do not require cookies
+
 ## Token Flow
 
 ```
