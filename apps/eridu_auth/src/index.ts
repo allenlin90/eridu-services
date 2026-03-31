@@ -1,9 +1,12 @@
+import { Buffer } from 'node:buffer';
+import { timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { eq } from 'drizzle-orm';
 import { cors } from 'hono/cors';
+import { z } from 'zod';
 
 import { db } from '@/db';
 import { session } from '@/db/schema';
@@ -49,8 +52,11 @@ app.post('/api/service/sign-out', async (c) => {
   }
 
   const authHeader = c.req.header('Authorization') ?? '';
-  const [scheme, secret] = authHeader.split(' ');
-  if (scheme !== 'Bearer' || secret !== env.SERVICE_SECRET) {
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const expectedBuf = Buffer.from(env.SERVICE_SECRET, 'utf8');
+  const tokenBuf = Buffer.from(token ?? '', 'utf8');
+  const isValid = tokenBuf.length === expectedBuf.length && timingSafeEqual(tokenBuf, expectedBuf);
+  if (!isValid) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
@@ -61,13 +67,11 @@ app.post('/api/service/sign-out', async (c) => {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const userId = typeof (body as Record<string, unknown>)?.userId === 'string'
-    ? (body as Record<string, string>).userId
-    : null;
-
-  if (!userId) {
+  const result = z.object({ userId: z.string().min(1) }).safeParse(body);
+  if (!result.success) {
     return c.json({ error: 'userId required' }, 400);
   }
+  const { userId } = result.data;
 
   await db.delete(session).where(eq(session.userId, userId));
 
