@@ -58,7 +58,7 @@ To enable a newly registered user, a System Admin (or existing Studio Admin) mus
 
 When the newly enabled user navigates to `erify_studios`:
 1. The browser automatically sends the `eridu_session_token` to `erify_api`.
-2. `erify_api` reads the token, confirms it is mathematically valid via the `JWT_SECRET`, and extracts the `userid`.
+2. `erify_api` reads the token, confirms it is mathematically valid via JWKS public key verification, and extracts the `userid`.
 3. The backend hits a `@StudioProtected()` endpoint.
 4. The application queries the `erify_api` database: *"Does this known UserId have an active `StudioMembership` for the requested StudioId, and does their role satisfy the endpoint requirements?"*
 5. Access is granted seamlessly.

@@ -32,6 +32,9 @@ if (!existsSync(snapshotClientDir)) {
 
 const localRequire = createRequire(import.meta.url);
 const starlightEntry = localRequire.resolve('@astrojs/starlight');
+// Resolves pagefind from @astrojs/starlight's bundled copy.
+// Assumes starlight's package layout: <starlight>/../../pagefind/lib/index.js
+// This path may break if Starlight reorganizes its internal package structure.
 const pagefindEntry = resolve(
   dirname(starlightEntry),
   '../../pagefind/lib/index.js',

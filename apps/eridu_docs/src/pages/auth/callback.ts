@@ -2,12 +2,13 @@ import type { APIRoute } from 'astro';
 
 import {
   buildLoginUrl,
+  normalizeReturnTo,
   refreshToken,
   setTokenCookie,
 } from '../../lib/auth';
 
 export const GET: APIRoute = async (context) => {
-  const returnTo = context.url.searchParams.get('returnTo') || '/';
+  const returnTo = normalizeReturnTo(context.url.searchParams.get('returnTo'));
   const loginUrl = buildLoginUrl(context.url.origin, returnTo);
 
   // Forward Better Auth session cookies (cross-subdomain on .eridu.io) to get JWT

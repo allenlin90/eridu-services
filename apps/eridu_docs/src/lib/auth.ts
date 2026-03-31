@@ -8,6 +8,12 @@ import { CONFIG } from '../config/env';
 export const COOKIE_NAME = 'eridu_docs_token';
 export const TOKEN_MAX_AGE = 900; // 15 min, matches JWT expiry
 
+export function normalizeReturnTo(value: string | null): string {
+  if (!value) return '/';
+  if (value.startsWith('/') && !value.startsWith('//')) return value;
+  return '/';
+}
+
 const jwksService = new JwksService({ authServiceUrl: CONFIG.authApiUrl });
 export const jwtVerifier = new JwtVerifier({
   jwksService,

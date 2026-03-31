@@ -1,12 +1,6 @@
 import type { APIRoute } from 'astro';
 
-import { clearTokenCookie, signOutFromAuth } from '../../lib/auth';
-
-function normalizeReturnTo(value: string | null): string {
-  if (!value) return '/';
-  if (value.startsWith('/') && !value.startsWith('//')) return value;
-  return '/';
-}
+import { clearTokenCookie, normalizeReturnTo, signOutFromAuth } from '../../lib/auth';
 
 export const GET: APIRoute = async (context) => {
   const returnTo = normalizeReturnTo(context.url.searchParams.get('returnTo'));
