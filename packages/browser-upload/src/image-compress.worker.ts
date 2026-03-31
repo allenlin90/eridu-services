@@ -1,3 +1,8 @@
+import {
+  buildCompressionDimensions,
+  DEFAULT_QUALITIES,
+} from './compress-utils';
+
 type WorkerInput = {
   fileArrayBuffer: ArrayBuffer;
   fileName: string;
@@ -5,6 +10,7 @@ type WorkerInput = {
   accept?: string;
   targetMaxBytes: number;
   maxDimension?: number;
+  maxLongEdges?: readonly number[];
 };
 
 type WorkerOutput = {
@@ -19,9 +25,6 @@ type WorkerError = {
 };
 
 const workerScope: DedicatedWorkerGlobalScope = globalThis as unknown as DedicatedWorkerGlobalScope;
-
-const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25];
-const DEFAULT_QUALITIES = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34, 0.26, 0.2];
 
 function matchesAccept(fileType: string, fileName: string, accept?: string): boolean {
   if (!accept || accept.trim().length === 0) {
@@ -66,25 +69,6 @@ function pickOutputMimeType(fileType: string, fileName: string, accept?: string)
   return currentMime;
 }
 
-function scaledDimensions(width: number, height: number, scale: number, maxDimension?: number): { width: number; height: number } {
-  let nextWidth = Math.max(1, Math.round(width * scale));
-  let nextHeight = Math.max(1, Math.round(height * scale));
-
-  if (!maxDimension || maxDimension <= 0) {
-    return { width: nextWidth, height: nextHeight };
-  }
-
-  const longest = Math.max(nextWidth, nextHeight);
-  if (longest <= maxDimension) {
-    return { width: nextWidth, height: nextHeight };
-  }
-
-  const ratio = maxDimension / longest;
-  nextWidth = Math.max(1, Math.round(nextWidth * ratio));
-  nextHeight = Math.max(1, Math.round(nextHeight * ratio));
-  return { width: nextWidth, height: nextHeight };
-}
-
 async function compressImage(input: WorkerInput): Promise<Blob> {
   if (typeof createImageBitmap !== 'function' || typeof OffscreenCanvas === 'undefined') {
     throw new TypeError('Offscreen compression is not supported');
@@ -100,14 +84,9 @@ async function compressImage(input: WorkerInput): Promise<Blob> {
   let bestBlob: Blob | null = null;
 
   try {
-    for (const scale of DEFAULT_SCALES) {
-      const dimensions = scaledDimensions(
-        image.width,
-        image.height,
-        scale,
-        input.maxDimension,
-      );
+    const compressionDimensions = buildCompressionDimensions(image.width, image.height, input);
 
+    for (const dimensions of compressionDimensions) {
       const canvas = new OffscreenCanvas(dimensions.width, dimensions.height);
       const ctx = canvas.getContext('2d');
       if (!ctx) {

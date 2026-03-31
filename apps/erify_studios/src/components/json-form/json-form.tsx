@@ -76,6 +76,7 @@ type UploadedFileCacheEntry = {
 
 const DEFAULT_VALUES: Record<string, unknown> = {};
 const SCREENSHOT_MAX_BYTES = getImageCompressionTargetBytes(Number.POSITIVE_INFINITY);
+const SCREENSHOT_COMPRESSION_MAX_LONG_EDGES = [1440, 1280, 1080, 960] as const;
 const MATERIAL_ASSET_MAX_BYTES = FILE_UPLOAD_USE_CASE_RULES[FILE_UPLOAD_USE_CASE.MATERIAL_ASSET].max_file_size_bytes;
 const MATERIAL_ASSET_ALLOWED_MIME_TYPES = new Set(
   FILE_UPLOAD_USE_CASE_RULES[FILE_UPLOAD_USE_CASE.MATERIAL_ASSET].allowed_mime_types,
@@ -509,7 +510,9 @@ export const JsonForm = function JsonForm({
                                     const prepared = await prepareImageForUpload(file, {
                                       targetMaxBytes: maxBytesForField,
                                       accept: item.validation?.accept,
-                                      maxDimension: maxBytesForField <= SCREENSHOT_MAX_BYTES ? 1600 : undefined,
+                                      maxLongEdges: maxBytesForField <= SCREENSHOT_MAX_BYTES
+                                        ? SCREENSHOT_COMPRESSION_MAX_LONG_EDGES
+                                        : undefined,
                                       preferWorker: true,
                                     });
                                     const preparedFile = prepared.file;
