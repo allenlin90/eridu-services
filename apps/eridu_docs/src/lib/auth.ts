@@ -1,6 +1,11 @@
 import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
 import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 import type { JwtPayload } from '@eridu/auth-sdk/types';
+import {
+  normalizeReturnTo,
+  refreshSessionToken,
+  signOutFromAuth as signOutFromAuthBase,
+} from '@eridu/auth-sdk/server/ssr';
 import type { AstroCookies } from 'astro';
 
 import { CONFIG } from '../config/env';
@@ -8,11 +13,7 @@ import { CONFIG } from '../config/env';
 export const COOKIE_NAME = 'eridu_docs_token';
 export const TOKEN_MAX_AGE = 900; // 15 min, matches JWT expiry
 
-export function normalizeReturnTo(value: string | null): string {
-  if (!value) return '/';
-  if (value.startsWith('/') && !value.startsWith('//')) return value;
-  return '/';
-}
+export { normalizeReturnTo };
 
 const jwksService = new JwksService({ authServiceUrl: CONFIG.authApiUrl });
 export const jwtVerifier = new JwtVerifier({
@@ -48,22 +49,7 @@ export function setTokenCookie(cookies: AstroCookies, token: string): void {
 export async function refreshToken(
   cookieHeader: string,
 ): Promise<{ token: string; payload: JwtPayload } | null> {
-  try {
-    const res = await fetch(`${CONFIG.authApiUrl}/api/auth/token`, {
-      headers: { cookie: cookieHeader },
-    });
-
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as { token?: string };
-    const token = data?.token;
-    if (!token) return null;
-
-    const payload = await jwtVerifier.verify(token);
-    return { token, payload };
-  } catch {
-    return null;
-  }
+  return refreshSessionToken<JwtPayload>(CONFIG.authApiUrl, cookieHeader, jwtVerifier);
 }
 
 export function clearTokenCookie(cookies: AstroCookies): void {
@@ -72,21 +58,8 @@ export function clearTokenCookie(cookies: AstroCookies): void {
   });
 }
 
-export async function signOutFromAuth(
-  cookieHeader: string,
-  origin?: string,
-): Promise<void> {
-  try {
-    await fetch(`${CONFIG.authApiUrl}/api/auth/sign-out`, {
-      method: 'POST',
-      headers: {
-        cookie: cookieHeader,
-        ...(origin ? { origin } : {}),
-      },
-    });
-  } catch {
-    // We still clear the docs cookie in the caller even if auth sign-out fails.
-  }
+export async function signOutFromAuth(cookieHeader: string, origin?: string): Promise<void> {
+  return signOutFromAuthBase(CONFIG.authApiUrl, cookieHeader, origin);
 }
 
 export function extractUser(

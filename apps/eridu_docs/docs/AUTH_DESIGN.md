@@ -32,7 +32,7 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 │                                      │
 │  lib/auth.ts                         │
 │  ├─ JwksService + JwtVerifier        │
-│  ├─ Token refresh helper             │
+│  ├─ Token refresh helper (SDK)       │
 │  └─ Cookie management                │
 └──────────────┬───────────────────────┘
                │ JWKS fetch (cached, at startup)
@@ -79,12 +79,24 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 1. Token refresh fails (session cookies invalid)
 2. Middleware redirects to login
 
+## Shared Auth Module
+
+`lib/auth.ts` is the single auth facade consumed by middleware, callback, and logout. Three of its helpers are sourced directly from `@eridu/auth-sdk/server/ssr` and wrapped to close over `CONFIG`:
+
+| Helper | Source | Notes |
+| --- | --- | --- |
+| `refreshToken(cookieHeader)` | `@eridu/auth-sdk/server/ssr` (`refreshSessionToken`) | Forwards session cookies, verifies fresh JWT |
+| `normalizeReturnTo(value)` | `@eridu/auth-sdk/server/ssr` (`normalizeReturnTo`) | Re-exported directly, no wrapper |
+| `signOutFromAuth(cookieHeader, origin?)` | `@eridu/auth-sdk/server/ssr` (`signOutFromAuth`) | Forwards sign-out request, best-effort |
+
+Cookie helpers (`setTokenCookie`, `clearTokenCookie`), `buildLoginUrl`, and `extractUser` remain Astro-specific in `lib/auth.ts`.
+
 ## File Structure
 
 ```
 apps/eridu_docs/src/
 ├── config/env.ts          ← AUTH_API_URL, AUTH_UI_URL, BYPASS_AUTH, COOKIE_SECURE
-├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, helpers
+├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, SDK wrappers, cookie helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
 ├── pages/auth/logout.ts   ← Sign out eridu_auth session + clear docs JWT cookie
