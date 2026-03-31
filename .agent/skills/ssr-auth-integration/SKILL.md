@@ -20,7 +20,7 @@ Study these implementations as the source of truth:
 | `apps/eridu_docs/src/middleware.ts` | Astro: auth gate — verify → refresh → redirect |
 | `apps/eridu_docs/src/pages/auth/callback.ts` | Astro: token exchange endpoint after IDP login |
 | `apps/eridu_docs/src/pages/auth/logout.ts` | Astro: sign-out endpoint (clear docs cookie + sign out Better Auth session) |
-| `apps/eridu_docs/src/config/env.ts` | Environment config (`AUTH_API_URL`, `AUTH_UI_URL`, `BYPASS_AUTH`) |
+| `apps/eridu_docs/src/config/env.ts` | Environment config (`AUTH_URL`, `BYPASS_AUTH`) |
 | `apps/eridu_docs/docs/AUTH_DESIGN.md` | Full design document with architecture diagram |
 
 ## Package Boundary
@@ -136,17 +136,17 @@ import { refreshSessionToken, normalizeReturnTo, signOutFromAuth as signOutBase 
 import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
 import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 
-const jwksService = new JwksService({ authServiceUrl: process.env.AUTH_API_URL! });
-export const jwtVerifier = new JwtVerifier({ jwksService, issuer: process.env.AUTH_ISSUER_URL! });
+const jwksService = new JwksService({ authServiceUrl: process.env.AUTH_URL! });
+export const jwtVerifier = new JwtVerifier({ jwksService, issuer: process.env.AUTH_URL! });
 
 export { normalizeReturnTo };
 
 export async function refreshToken(cookieHeader: string) {
-  return refreshSessionToken(process.env.AUTH_API_URL!, cookieHeader, jwtVerifier);
+  return refreshSessionToken(process.env.AUTH_URL!, cookieHeader, jwtVerifier);
 }
 
 export async function signOutFromAuth(cookieHeader: string, origin?: string) {
-  return signOutBase(process.env.AUTH_API_URL!, cookieHeader, origin);
+  return signOutBase(process.env.AUTH_URL!, cookieHeader, origin);
 }
 
 // Next.js-specific: read the cookie from the request store
@@ -168,12 +168,11 @@ The three SDK primitives (`refreshSessionToken`, `normalizeReturnTo`, `signOutFr
 
 ## Environment Variables
 
-| Variable        | Required in prod | Default                 | Purpose                                                  |
-| --------------- | :--------------: | ----------------------- | -------------------------------------------------------- |
-| `AUTH_API_URL`  | Yes              | `http://localhost:3001` | eridu_auth backend — JWKS, `/api/auth/token`, sign-out   |
-| `AUTH_UI_URL`   | Yes              | `http://localhost:5173` | eridu_auth frontend — `/sign-in` redirect                |
-| `BYPASS_AUTH`   | No               | `false`                 | Skip auth for local dev (never set in production)        |
-| `COOKIE_SECURE` | No               | `true` in production    | Override JWT cookie `Secure` flag (auto from Astro `PROD`) |
+| Variable        | Required in prod | Default                 | Purpose                                                                  |
+| --------------- | :--------------: | ----------------------- | ------------------------------------------------------------------------ |
+| `AUTH_URL`      | Yes              | `http://localhost:3001` | eridu_auth service URL — API endpoints and `/sign-in` UI on same origin  |
+| `BYPASS_AUTH`   | No               | `false`                 | Skip auth for local dev (never set in production)                        |
+| `COOKIE_SECURE` | No               | `true` in production    | Override JWT cookie `Secure` flag                                        |
 
 **Recommended**: For local docs work in this repo, prefer `BYPASS_AUTH=true` instead of trying to reproduce the full cross-domain auth flow on localhost.
 
@@ -221,7 +220,7 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] Shared auth module exports singleton JwksService/JwtVerifier (no duplicate instances)
 - [ ] Middleware skips auth for public paths before reading cookies
 - [ ] Expired JWT triggers refresh, invalid signature triggers redirect — never conflate
-- [ ] Auth API and auth UI URLs are configured correctly for the environment (`AUTH_API_URL` vs `AUTH_UI_URL`)
+- [ ] `AUTH_URL` is configured correctly for the environment
 - [ ] No `BETTER_AUTH_SECRET` in SSR app env
 - [ ] No modifications to eridu_auth for SSR consumer integration
 - [ ] `refreshToken`, `normalizeReturnTo`, `signOutFromAuth` imported from `@eridu/auth-sdk/server/ssr` (not re-implemented)

@@ -143,8 +143,7 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 
 | Variable        | Required in prod | Default                 | Description                                              |
 | --------------- | :--------------: | ----------------------- | -------------------------------------------------------- |
-| `AUTH_API_URL`  | Yes              | `http://localhost:3001` | eridu_auth backend — JWKS, `/api/auth/token`, sign-out   |
-| `AUTH_UI_URL`   | Yes              | `http://localhost:5173` | eridu_auth frontend — `/sign-in` redirect                |
+| `AUTH_URL`      | Yes              | `http://localhost:3001` | eridu_auth service URL — API endpoints and `/sign-in` UI are on the same origin |
 | `BYPASS_AUTH`   | No               | `false`                 | Skip auth for local dev (never set in production)        |
 | `COOKIE_SECURE` | No               | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`) |
 
@@ -154,8 +153,7 @@ Set `BYPASS_AUTH=true`. No other variables are needed — eridu_auth does not
 need to be running for local docs authoring.
 
 The full auth flow (login → callback → cookie → refresh) is exercised in
-deployed environments where `AUTH_API_URL` and `AUTH_UI_URL` point to real
-eridu_auth instances.
+deployed environments where `AUTH_URL` points to the live eridu_auth instance.
 
 ## Security Considerations
 
