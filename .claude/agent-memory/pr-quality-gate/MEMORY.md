@@ -120,6 +120,17 @@ The `templateKind` filter in `task-template.repository.ts` uses Prisma JSONB pat
 `STANDARD` filter wraps the same check in `NOT`. Both work at DB level (PostgreSQL jsonb operators).
 This is the canonical approach for detecting moderation templates until a DB-level `templateKind` column is added.
 
+### Studio Creator Onboarding Patterns (PR #32) — MERGED
+- `StudioCreatorService.onboardCreator` is `@Transactional()`. Both `CreatorService.createCreator` and `StudioCreatorRepository.createRosterEntry` use `txHost.tx` internally so they participate correctly.
+- `UserRepository.searchUsersForCreatorOnboarding` uses `this.model.findMany` (PrismaModelWrapper backed by static `prisma.user`). This is a read-only method never called inside a transaction — acceptable.
+- `onboardCreatorInputSchema` in `@eridu/api-types` re-uses `studioCreatorRosterDefaultsInputSchema` (private base schema) for the `roster` sub-object. This enforces compensation validation in the shared package layer, not duplicated in the API layer.
+- `userUidSchema` validates `user_id` starts with `'user_'` (not the UID_PREFIXES constant). Intentional — user UIDs use a fixed prefix not derived from the shared enum.
+- Two separate action buttons in the roster table toolbar: "Onboard Creator" (new global identity) and "Add Creator" (add existing from catalog). This is a deliberate UX split that diverges from the design doc's single "Add Creator" flow — but is consistent with SOLID split into `OnboardCreatorDialog` + `AddStudioCreatorDialog`.
+- `BulkCreatorAssignmentDialog.onSuccess` prop type stays `() => void` (no args). The internal `useBulkAssignCreatorsToShows.onSuccess` receives the full response and decides internally whether to call the prop's `onSuccess`. This intentional layering is correct.
+- `show-orchestration.service.ts` fix: `existingAssignment` (already-active) check now comes BEFORE roster check so idempotent re-assignment of a previously-assigned creator is always skipped, even when that creator has since left the roster. This is intentional.
+- Schema spec file `studio-creator-onboard.schema.spec.ts` lives in `apps/erify_api/src/studios/studio-creator/schemas/` but tests `@eridu/api-types` schemas. This is non-standard but accepted — it co-locates validation tests near the DTO that consumes those schemas.
+- `OnboardStudioCreatorDto` uses `.transform()` in `createZodDto()` to convert snake_case wire format to camelCase. The controller then re-reads `dto.creator.name`, `dto.creator.aliasName` (already camelCase). This is correct; the `declare` fields on the class reflect the post-transform shape.
+
 ### Phase 4 Merge Program Policy (2026-03-11)
 - Cross-session tracker: `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`
 - Merge strategy: scope-first branches from `master`, using `feat/phase-4-p-and-l` as reference only
