@@ -4,11 +4,12 @@ import { StudioCreatorRepository } from './studio-creator.repository';
 import { StudioCreatorService } from './studio-creator.service';
 
 import { CreatorModule } from '@/models/creator/creator.module';
+import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
-  imports: [PrismaModule, UtilityModule, CreatorModule],
+  imports: [PrismaModule, UtilityModule, CreatorModule, UserModule],
   providers: [StudioCreatorService, StudioCreatorRepository],
   exports: [StudioCreatorService, StudioCreatorRepository],
 })

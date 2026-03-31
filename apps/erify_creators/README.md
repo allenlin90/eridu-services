@@ -629,7 +629,7 @@ VITE_AUTH_URL=http://localhost:5173
 
 #### 2. Auth Client Initialization
 
-The auth client is initialized in [`src/lib/auth.ts`](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_creators/src/lib/auth.ts):
+The auth client is initialized in [`src/lib/auth.ts`](./src/lib/auth.ts):
 
 ```typescript
 import { createAuthClient } from '@eridu/auth-sdk/client/react';
@@ -645,7 +645,7 @@ export type Session = Awaited<ReturnType<typeof authClient.client.getSession>>['
 
 #### Checking Authentication Status
 
-The root route ([`__root.tsx`](file:///Users/allenlin/Desktop/projects/eridu-services/apps/erify_creators/src/routes/__root.tsx#L11-L43)) handles authentication for the entire app:
+The root route ([`__root.tsx`](./src/routes/__root.tsx#L11-L43)) handles authentication for the entire app:
 
 ```typescript
 import { authClient, type Session } from '@/lib/auth';

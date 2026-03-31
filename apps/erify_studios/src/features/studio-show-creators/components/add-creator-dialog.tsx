@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 
 import {
@@ -12,11 +13,13 @@ import {
 } from '@eridu/ui';
 
 import { useCreatorAvailabilityQuery } from '../api/get-creator-availability';
+import { getMissingCreatorGuidance } from '../lib/creator-roster-guidance';
 
 type AddCreatorDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   studioId: string;
+  isAdmin: boolean;
   showStartTime: string;
   showEndTime: string;
   isSubmitting: boolean;
@@ -27,6 +30,7 @@ export function AddCreatorDialog({
   open,
   onOpenChange,
   studioId,
+  isAdmin,
   showStartTime,
   showEndTime,
   isSubmitting,
@@ -93,6 +97,18 @@ export function AddCreatorDialog({
             placeholder="Search creators..."
             emptyMessage="No creators found."
           />
+          <p className="mt-2 text-xs text-muted-foreground">
+            {getMissingCreatorGuidance(isAdmin)}
+          </p>
+          {isAdmin && (
+            <Link
+              to="/studios/$studioId/creators"
+              params={{ studioId }}
+              className="mt-1 inline-flex text-xs font-medium text-primary hover:underline"
+            >
+              Go to creator roster onboarding
+            </Link>
+          )}
         </div>
 
         <DialogFooter>

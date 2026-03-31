@@ -11,22 +11,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@eridu/ui';
 
 import { useAddStudioCreatorToRoster } from '../api/studio-creator-roster';
 import {
   buildCreateStudioCreatorRosterPayload,
-  STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS,
   type StudioCreatorCompensationTypeOption,
   UNSET_COMPENSATION_TYPE,
 } from '../lib/studio-creator-compensation';
+
+import { CreatorCompensationFields } from './creator-compensation-fields';
 
 import { useCreatorCatalogQuery } from '@/features/studio-show-creators/api/get-creator-catalog';
 
@@ -35,6 +30,8 @@ type AddStudioCreatorDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+const MAX_ACTIVE_CREATORS_DISPLAY = 5;
 
 export function AddStudioCreatorDialog({
   studioId,
@@ -48,6 +45,7 @@ export function AddStudioCreatorDialog({
   const [defaultCommissionRate, setDefaultCommissionRate] = useState('');
 
   const addMutation = useAddStudioCreatorToRoster(studioId);
+
   const { data: creators = [], isLoading } = useCreatorCatalogQuery(
     studioId,
     {
@@ -58,7 +56,7 @@ export function AddStudioCreatorDialog({
     open,
   );
 
-  const eligibleCreators = useMemo(
+  const actionableCreators = useMemo(
     () =>
       creators.filter((creator) =>
         creator.roster_state === STUDIO_CREATOR_ROSTER_STATE.NONE
@@ -66,10 +64,15 @@ export function AddStudioCreatorDialog({
       ),
     [creators],
   );
+  const activeCreators = useMemo(
+    () => creators.filter((creator) => creator.roster_state === STUDIO_CREATOR_ROSTER_STATE.ACTIVE),
+    [creators],
+  );
+  const hasSearchedCatalog = search.trim().length > 0;
 
   const creatorOptions = useMemo(
     () =>
-      eligibleCreators.map((creator) => ({
+      actionableCreators.map((creator) => ({
         value: creator.id,
         label: creator.roster_state === STUDIO_CREATOR_ROSTER_STATE.INACTIVE
           ? `${creator.name}${creator.alias_name ? ` (${creator.alias_name})` : ''} • Reactivate`
@@ -77,10 +80,10 @@ export function AddStudioCreatorDialog({
             ? `${creator.name} (${creator.alias_name})`
             : creator.name,
       })),
-    [eligibleCreators],
+    [actionableCreators],
   );
 
-  const selectedCreator = eligibleCreators.find((creator) => creator.id === selectedCreatorId) ?? null;
+  const selectedCreator = actionableCreators.find((creator) => creator.id === selectedCreatorId) ?? null;
 
   const resetState = () => {
     setSelectedCreatorId('');
@@ -133,15 +136,13 @@ export function AddStudioCreatorDialog({
     }
   };
 
-  const commissionDisabled = defaultRateType === UNSET_COMPENSATION_TYPE || defaultRateType === 'FIXED';
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Add Creator to Roster</DialogTitle>
           <DialogDescription>
-            Search the creator catalog and add or reactivate a creator for this studio.
+            Search first to reuse an existing creator identity when possible.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
@@ -153,8 +154,8 @@ export function AddStudioCreatorDialog({
               onSearch={setSearch}
               options={creatorOptions}
               isLoading={isLoading}
-              placeholder="Search creators..."
-              emptyMessage="No eligible creators found."
+              placeholder="Search creators by name or alias..."
+              emptyMessage="No actionable creators found."
               disabled={addMutation.isPending}
             />
             {selectedCreator?.roster_state === STUDIO_CREATOR_ROSTER_STATE.INACTIVE && (
@@ -163,49 +164,38 @@ export function AddStudioCreatorDialog({
               </p>
             )}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="add-default-rate">Default Rate</Label>
-            <Input
-              id="add-default-rate"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              value={defaultRate}
-              onChange={(event) => setDefaultRate(event.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="add-default-rate-type">Compensation Type</Label>
-            <Select
-              value={defaultRateType}
-              onValueChange={(value) => setDefaultRateType(value as StudioCreatorCompensationTypeOption)}
-            >
-              <SelectTrigger id="add-default-rate-type">
-                <SelectValue placeholder="Select compensation type" />
-              </SelectTrigger>
-              <SelectContent>
-                {STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
+
+          {hasSearchedCatalog && activeCreators.length > 0 && (
+            <div className="rounded-md border bg-muted/30 p-2.5">
+              <p className="text-xs font-medium text-muted-foreground">Already active in this studio</p>
+              <ul className="mt-1 space-y-1">
+                {activeCreators.slice(0, MAX_ACTIVE_CREATORS_DISPLAY).map((creator) => (
+                  <li key={creator.id} className="text-xs">
+                    {creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name}
+                  </li>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="add-default-commission-rate">Default Commission Rate (%)</Label>
-            <Input
-              id="add-default-commission-rate"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              value={defaultCommissionRate}
-              onChange={(event) => setDefaultCommissionRate(event.target.value)}
-              disabled={commissionDisabled}
-            />
-          </div>
+                {activeCreators.length > MAX_ACTIVE_CREATORS_DISPLAY && (
+                  <li className="text-xs text-muted-foreground">
+                    +
+                    {activeCreators.length - MAX_ACTIVE_CREATORS_DISPLAY}
+                    {' '}
+                    more
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
+          <CreatorCompensationFields
+            defaultRate={defaultRate}
+            defaultRateType={defaultRateType}
+            defaultCommissionRate={defaultCommissionRate}
+            onDefaultRateChange={setDefaultRate}
+            onDefaultRateTypeChange={setDefaultRateType}
+            onDefaultCommissionRateChange={setDefaultCommissionRate}
+            disabled={addMutation.isPending}
+          />
+
           <DialogFooter>
             <Button
               type="button"

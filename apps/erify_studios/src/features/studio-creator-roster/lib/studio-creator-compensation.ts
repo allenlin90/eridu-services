@@ -1,6 +1,7 @@
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import type {
   CreateStudioCreatorRosterInput,
+  OnboardCreatorInput,
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
 
@@ -115,5 +116,43 @@ export function buildUpdateStudioCreatorRosterPayload(params: {
     version: params.version,
     ...compensation,
     is_active: params.isActive,
+  };
+}
+
+export function buildOnboardStudioCreatorPayload(params: {
+  name: string;
+  aliasName: string;
+  userId?: string;
+  creatorMetadata?: Record<string, unknown>;
+  defaultRate: string;
+  defaultRateType: StudioCreatorCompensationTypeOption;
+  defaultCommissionRate: string;
+  rosterMetadata?: Record<string, unknown>;
+}): OnboardCreatorInput {
+  const name = params.name.trim();
+  const aliasName = params.aliasName.trim();
+
+  if (!name) {
+    throw new Error('Creator name is required');
+  }
+  if (!aliasName) {
+    throw new Error('Creator alias is required');
+  }
+
+  const rosterBase = hasExplicitCompensationInput(params)
+    ? buildCompensationFields(params)
+    : {};
+
+  return {
+    creator: {
+      name,
+      alias_name: aliasName,
+      user_id: params.userId?.trim() || undefined,
+      metadata: params.creatorMetadata,
+    },
+    roster: {
+      ...rosterBase,
+      metadata: params.rosterMetadata,
+    },
   };
 }

@@ -5,7 +5,7 @@
 > **Workstream**: Creator operations — assignment correctness
 > **Depends on**:
 > - Studio Creator Roster — ✅ **Complete** (`docs/features/studio-creator-roster.md` ships roster state and inactive enforcement)
-> - Studio Creator Onboarding & Roster-First Assignment — 🔲 **Planned** (`docs/prd/studio-creator-onboarding.md` removes the `/system/*` dependency and makes roster membership an intentional studio-owned state)
+> - Studio Creator Onboarding & Roster-First Assignment — ✅ **Implemented** (`docs/features/studio-creator-onboarding.md` — removes the `/system/*` dependency and enforces roster membership at assignment write time)
 
 ## Problem
 

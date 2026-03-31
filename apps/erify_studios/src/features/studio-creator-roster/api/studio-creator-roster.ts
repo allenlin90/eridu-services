@@ -2,9 +2,12 @@ import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tansta
 
 import type {
   CreateStudioCreatorRosterInput,
+  OnboardCreatorInput,
   StudioCreatorRosterItem,
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
+
+import { onboardingUsersKeys } from './get-onboarding-users';
 
 import { creatorAvailabilityKeys } from '@/features/studio-show-creators/api/get-creator-availability';
 import { creatorCatalogKeys } from '@/features/studio-show-creators/api/get-creator-catalog';
@@ -73,6 +76,17 @@ export async function updateStudioCreatorRoster(
   return data;
 }
 
+export async function onboardStudioCreator(
+  studioId: string,
+  payload: OnboardCreatorInput,
+): Promise<StudioCreatorRosterItem> {
+  const { data } = await apiClient.post<StudioCreatorRosterItem>(
+    `/studios/${studioId}/creators/onboard`,
+    payload,
+  );
+  return data;
+}
+
 export function useStudioCreatorRosterQuery(
   studioId: string,
   params?: GetStudioCreatorRosterParams,
@@ -116,6 +130,19 @@ export function useUpdateStudioCreatorRoster(studioId: string) {
       updateStudioCreatorRoster(studioId, creatorId, payload),
     onSuccess: () => {
       invalidateStudioCreatorDependencies(queryClient, studioId);
+    },
+  });
+}
+
+export function useOnboardStudioCreator(studioId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: OnboardCreatorInput) => onboardStudioCreator(studioId, payload),
+    onSuccess: () => {
+      invalidateStudioCreatorDependencies(queryClient, studioId);
+      void queryClient.invalidateQueries({
+        queryKey: onboardingUsersKeys.listPrefix(studioId),
+      });
     },
   });
 }

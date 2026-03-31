@@ -2,7 +2,7 @@
 
 > **Status**: Active ideation with initial implementation slice shipped in March 2026
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [api-performance-optimization skill](../../.agent/skills/api-performance-optimization/SKILL.md), [Read-Path Optimization](../../apps/erify_api/docs/READ_PATH_OPTIMIZATION.md), [erify-studios-route-query-optimization.md](./erify-studios-route-query-optimization.md)
+> **Related**: [api-performance-optimization skill](../../.agent/skills/api-performance-optimization/SKILL.md), [Read-Path Optimization](../../apps/erify_api/docs/READ_PATH_OPTIMIZATION.md), [Studios Internal Read Traffic Hardening](../../apps/erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md)
 
 ## What
 
@@ -71,4 +71,4 @@ The `.agent/skills/api-performance-optimization/SKILL.md` covers: lean select/in
 
 ### Companion frontend work
 
-The frontend route query optimization (`erify-studios-route-query-optimization.md`) addresses the client-side half of this problem. Both items may benefit from being promoted together to avoid solving only half of a latency issue.
+The frontend read-traffic hardening doc, [Studios Internal Read Traffic Hardening](../../apps/erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md), captures the current client-side half of this problem. Both items may benefit from being promoted together to avoid solving only half of a latency issue.

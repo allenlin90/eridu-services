@@ -32,7 +32,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 - **StudioCreator is the fallback source of truth**: creator-side cost fallback is studio-scoped, not global on `Creator`.
 - **Creator-first public routing**: `PATCH /studios/:studioId/creators/:creatorId` uses the public creator UID; the backend resolves the unique studio roster row from `studioId + creatorId`.
 - **Reactivation instead of duplication**: re-adding an inactive creator restores the existing `StudioCreator` row and updates defaults.
-- **Partial roster enforcement in v1**: inactive roster creators are blocked from discovery and assignment writes now; full `NOT_IN_ROSTER` strict enforcement remains in creator-availability hardening.
+- **Full roster enforcement shipped in PR #32**: inactive roster creators are blocked from discovery and assignment writes; creators with no roster row at all are now rejected with `CREATOR_NOT_IN_ROSTER` at assignment write time. Full overlap/conflict enforcement remains in creator-availability hardening.
 - **Version-guarded updates**: roster edits require the current `version` and return `VERSION_CONFLICT` on stale writes.
 
 ## Acceptance Record
@@ -50,6 +50,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 ## Forward References
 
 - Creator assignment flows: [creator-mapping.md](./creator-mapping.md)
+- Studio onboarding (brand-new creators): [studio-creator-onboarding.md](./studio-creator-onboarding.md)
 - Show economics fallback contract: [show-economics.md](./show-economics.md)
-- Strict roster gating follow-up: [creator-availability-hardening.md](../prd/creator-availability-hardening.md)
+- Full overlap/conflict enforcement: [creator-availability-hardening.md](../prd/creator-availability-hardening.md)
 - Supplemental compensation: [compensation-line-items.md](../prd/compensation-line-items.md)
