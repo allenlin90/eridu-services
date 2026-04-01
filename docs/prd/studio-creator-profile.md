@@ -112,5 +112,5 @@ All fields optional. `user_id` accepted only when current value is null.
 
 - Backend design: create with implementation PR under `apps/erify_api/docs/design/`
 - Frontend design: create with implementation PR under `apps/erify_studios/docs/design/`
-- Related: Studio Creator Onboarding PRD (`docs/features/studio-creator-onboarding.md`)
+- Related: Studio Creator Onboarding feature doc (`docs/features/studio-creator-onboarding.md`)
 - Related admin controller: `apps/erify_api/src/admin/creators/admin-creator.controller.ts`

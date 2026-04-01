@@ -42,5 +42,5 @@ App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design*
 ## Current Phase State
 
 - Phase 1–3: ✅ Closed. Summarized in [Phase 3](./roadmap/PHASE_3.md).
-- Phase 4: 🚧 Active. Wave 1 complete (studio creator roster + studio member roster shipped). Next: economics cost model review + compensation line items (post-Wave 1 gate). See [Phase 4](./roadmap/PHASE_4.md).
+- Phase 4: 🚧 Active. Wave 1 shipped (studio member roster, studio creator roster, and studio creator onboarding). `eridu_docs` knowledge base also shipped as extended-scope internal tooling. Next: studio autonomy follow-ups plus economics cost model review and compensation line items. See [Phase 4](./roadmap/PHASE_4.md).
 - Phase 5: Placeholder. Scope TBD after Phase 4 economics ships. See [Phase 5](./roadmap/PHASE_5.md).

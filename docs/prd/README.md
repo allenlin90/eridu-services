@@ -33,7 +33,8 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | ~~Show Economics~~ | P&L baseline — creator cost + shift cost endpoints | — | ✅ Shipped → [feature doc](../features/show-economics.md) |
 | ~~Studio Member Roster~~ | Studio operator governance — L-side labor cost inputs (`baseHourlyRate`) | 1 | ✅ Shipped → [feature doc](../features/studio-member-roster.md) |
 | ~~Studio Creator Roster~~ | Studio operator governance — L-side creator cost defaults | 1 | ✅ Implemented → [feature doc](../features/studio-creator-roster.md) |
-| [Studio Creator Onboarding](./studio-creator-onboarding.md) | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | Active (critical path blocker for complete studio creator management) |
+| ~~Studio Creator Onboarding~~ | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | ✅ Implemented → [feature doc](../features/studio-creator-onboarding.md) |
+| ~~Internal Knowledge Base (`eridu_docs`)~~ | Internal tooling — authenticated knowledge base for repo docs | Ext | ✅ Implemented → [feature doc](../features/eridu-docs-knowledge-base.md) |
 | [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active |
 | [Creator Availability Hardening](./creator-availability-hardening.md) | Dual-mode availability endpoint — overlap + roster conflict enforcement | 2 | Active (depends on creator roster + onboarding gate) |
 | [Compensation Line Items](./compensation-line-items.md) | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators | R+ | Active (post-Wave 1) |

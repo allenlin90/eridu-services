@@ -27,3 +27,4 @@ When a feature ships:
 | [Studio Member Roster](./studio-member-roster.md) | Phase 4 | [API types](../../packages/api-types/src/memberships/schemas.ts), [BE controller](../../apps/erify_api/src/studios/studio-membership/studio-members.controller.ts), [FE route](../../apps/erify_studios/src/routes/studios/$studioId/members.tsx) |
 | [Task Submission Reporting](./task-submission-reporting.md) | Phase 4 | [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md) |
 | [Studio Creator Onboarding](./studio-creator-onboarding.md) | Phase 4 | [BE design](../../apps/erify_api/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md) |
+| [Internal Knowledge Base (`eridu_docs`)](./eridu-docs-knowledge-base.md) | Phase 4 | [Auth design](../../apps/eridu_docs/docs/AUTH_DESIGN.md) |

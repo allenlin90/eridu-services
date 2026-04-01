@@ -1,8 +1,8 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active (Wave 1 in progress — rosters shipped, onboarding next)
+> **Status**: 🚧 Active (Wave 1 shipped; studio autonomy and economics follow-ups next)
 > **Primary tracker**: This file (`PHASE_4.md`)
-> **Last updated**: 2026-03-28
+> **Last updated**: 2026-04-01
 
 ## Goal
 
@@ -14,6 +14,7 @@ Key outcomes:
 - Variable cost visibility (creator costs + shift labor) is surfaced via economics endpoints.
 - Pre-show planning exports include estimated cost data.
 - Creator assignment correctness is enforced (overlap + roster conflicts).
+- Internal documentation is available in an authenticated monorepo knowledge base (`eridu_docs`).
 - Revenue inputs (P-side) complete the full P&L model.
 
 ## Workstream Tracker
@@ -23,6 +24,7 @@ Single source of truth for all Phase 4 features. Each row links to its PRD (pre-
 | #   | Workstream                               | Doc                                                                | Status                           | Wave   | Notes                                                                                                                     |
 | --- | ---------------------------------------- | ------------------------------------------------------------------ | -------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
 | P   | Task template migration                  | —                                                                  | ✅ Done (operational, 2026-03-24) | Pre    | Not repo-tracked; operational CSV rebuild                                                                                 |
+| KB  | `eridu_docs` internal knowledge base    | [feature](../features/eridu-docs-knowledge-base.md)                | ✅ Implemented                    | Ext    | Astro + Starlight SSR app with JWKS-based auth, silent SSO, and local BYPASS_AUTH support                                |
 | 1a  | Sidebar redesign                         | [design](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔁 Incremental                    | 1      | Structure done (My Workspace, Settings, Creators). Reports + Finance groups added as features ship. Icon fixes remaining. |
 | 1b  | Studio creator roster CRUD               | [feature](../features/studio-creator-roster.md)                    | ✅ Implemented (PR #30)           | 1      | Roster + compensation defaults + inactive enforcement                                                                     |
 | 1c  | Studio member roster CRUD                | [feature](../features/studio-member-roster.md)                     | ✅ Shipped (PR #28)               | 1      | `baseHourlyRate` editing, self-demotion guard                                                                             |
@@ -53,11 +55,11 @@ Single source of truth for all Phase 4 features. Each row links to its PRD (pre-
 
 ```mermaid
 flowchart TD
-    subgraph wave1["Wave 1 (in progress)"]
+    subgraph wave1["Wave 1 (shipped)"]
         1a["1a Sidebar Redesign ✅🔁"]
         1b["1b Creator Roster ✅"]
         1c["1c Member Roster ✅"]
-        1d["1d Creator Onboarding\n+ Roster-First 🔲"]
+        1d["1d Creator Onboarding\n+ Roster-First ✅"]
     end
 
     subgraph wave1plus["Wave 1+ (parallel)"]
@@ -96,18 +98,18 @@ flowchart TD
     classDef planned fill:#e2e3e5,stroke:#6c757d,color:#000
     classDef deferred fill:#f8d7da,stroke:#dc3545,color:#000
 
-    class 1a,1b,1c done
-    class 1d next
+    class 1a,1b,1c,1d done
     class 1e,1f,Rplus,2a,2b,W3 planned
     class R,E0 deferred
 ```
 
 ### Current Priority
 
-| Priority    | PR  | Workstream                                                               | Why                                                                                                                    |
-| ----------- | --- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| ~~**Primary**~~ | 1d  | [Creator Onboarding + Roster-First](../features/studio-creator-onboarding.md) | ✅ Implemented (PR #32). Roster bug fixed, `/system/*` dep removed, Wave 2 unblocked. |
-| Parallel    | 1e  | [Studio Show Management](../prd/studio-show-management.md)               | Highest-impact autonomy gap. No deps. PRD ready.                                                                       |
+| Priority | PR | Workstream | Why |
+| -------- | -- | ---------- | --- |
+| Primary | 1e | [Studio Show Management](../prd/studio-show-management.md) | Highest-impact remaining studio autonomy gap. No prerequisite blockers in current repo state. |
+| Parallel | 1f | [Studio Schedule Management](../prd/studio-schedule-management.md) | Natural follow-on to show ownership; still blocked conceptually by show lifecycle ownership. |
+| Parallel | R | Economics cost model review | Needed before compensation line items and the deferred economics merge can move cleanly. |
 
 **Per-PR workflow**: review PRD → create BE/FE design docs under `apps/*/docs/design/` → implement → post-ship knowledge-sync.
 
@@ -163,6 +165,7 @@ Post-ship: promote PRD → docs/features/, run knowledge-sync
 | Studio member roster           | [feature](../features/studio-member-roster.md)      | Shipped (PR #28)                                                                | Shipped (PR #28)                                                                    |
 | Studio creator roster          | [feature](../features/studio-creator-roster.md)     | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md)                        | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md)                        |
 | Studio creator onboarding      | [feature](../features/studio-creator-onboarding.md) | [BE](../../apps/erify_api/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)      | [FE](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)      |
+| Internal knowledge base        | [feature](../features/eridu-docs-knowledge-base.md) | N/A                                                                             | [Auth design](../../apps/eridu_docs/docs/AUTH_DESIGN.md)                             |
 | Compensation line items        | [PRD](../prd/compensation-line-items.md)            | [BE](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)        | [FE](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)        |
 | Show planning export           | [PRD](../prd/show-planning-export.md)               | [BE](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)           | [FE](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)           |
 | Creator availability hardening | [PRD](../prd/creator-availability-hardening.md)     | [BE](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [FE](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
@@ -191,13 +194,14 @@ Post-ship: promote PRD → docs/features/, run knowledge-sync
 - [x] Economics baseline shipped (per-show and grouped endpoints)
 - [x] Studio member roster with `baseHourlyRate` editing
 - [x] Studio creator roster CRUD with compensation defaults
-- [ ] Studio-side creator onboarding outside `/system/*` with roster-first assignment enforcement
+- [x] Studio-side creator onboarding outside `/system/*` with roster-first assignment enforcement
 - [ ] Studio show CRUD — studios can create, update, and delete shows
 - [ ] Studio schedule management — studios can create, validate, publish schedules
 - [ ] Compensation line items (`CompensationLineItem` + `CompensationTarget`) with economics integration
 - [ ] Show planning export (pre-show, with cost column)
 - [ ] Creator availability strict-mode (overlap + roster conflict)
 - [ ] Sidebar redesigned to function-based groups
+- [x] Internal docs knowledge base (`eridu_docs`) with authenticated SSR access
 - [ ] P&L revenue workflow — GMV/sales input, COMMISSION/HYBRID activation
 
 ## Historical Notes

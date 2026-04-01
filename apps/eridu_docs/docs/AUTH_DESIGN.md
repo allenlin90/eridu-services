@@ -1,6 +1,6 @@
 # eridu_docs Authentication Design
 
-> **PRD**: [docs/prd/eridu-docs-knowledge-base.md](../../../docs/prd/eridu-docs-knowledge-base.md)
+> **Feature doc**: [docs/features/eridu-docs-knowledge-base.md](../../../docs/features/eridu-docs-knowledge-base.md)
 
 ## Overview
 
@@ -10,8 +10,8 @@ eridu_docs uses a Clerk-like authentication pattern: JWT stored in an httpOnly c
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Browser                                   │
-│  Sends: eridu_docs_token (httpOnly) + eridu_auth session cookies │
+│                        Browser                                  │
+│  Sends: eridu_docs_token (httpOnly) + eridu_auth session cookies│
 └──────────────┬──────────────────────────────────────────────────┘
                │
                ▼
@@ -112,6 +112,8 @@ Cookie helpers (`setTokenCookie`, `clearTokenCookie`), `buildLoginUrl`, and `ext
 
 This matches the browser-driven logout model used by the SPA apps. The key constraint is that `eridu_docs_token` is `HttpOnly`, so the browser cannot clear it directly; Astro still needs a small server route to delete the docs cookie after Better Auth has cleared the shared session cookies.
 
+**Known issue (2026-04-01):** the current browser-initiated logout flow is directionally correct but not yet reliable enough to treat as a hardened contract. Track the open bug/investigation in [docs/ideation/eridu-docs-logout-investigation.md](../../../docs/ideation/eridu-docs-logout-investigation.md).
+
 ## File Structure
 
 ```
@@ -164,13 +166,13 @@ Astro 6 also strips SSR renderers from the server bundle when a project only has
 
 ## Environment Variables
 
-| Variable            | Required in prod | Default                 | Description                                                                      |
-| ------------------- | :--------------: | ----------------------- | -------------------------------------------------------------------------------- |
+| Variable            | Required in prod | Default                 | Description                                                                                                                                                                                                |
+| ------------------- | :--------------: | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SITE_URL`          |       Yes        | —                       | Public origin of eridu_docs (e.g. `https://docs.eridu.io`). Used as the base for `/auth/callback`. Without this, Railway's internal `Host: localhost:PORT` header is used, producing a broken callbackURL. |
-| `AUTH_URL`          |       Yes        | `http://localhost:3001` | Browser-facing eridu_auth origin used for redirects and JWT issuer validation    |
-| `AUTH_INTERNAL_URL` |        No        | `AUTH_URL`              | Internal eridu_auth origin used for server-to-server JWKS/token/sign-out calls   |
-| `BYPASS_AUTH`       |        No        | `false`                 | Skip auth for local dev (never set in production)                                |
-| `COOKIE_SECURE`     |        No        | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`)                |
+| `AUTH_URL`          |       Yes        | `http://localhost:3001` | Browser-facing eridu_auth origin used for redirects and JWT issuer validation                                                                                                                              |
+| `AUTH_INTERNAL_URL` |        No        | `AUTH_URL`              | Internal eridu_auth origin used for server-to-server JWKS/token/sign-out calls                                                                                                                             |
+| `BYPASS_AUTH`       |        No        | `false`                 | Skip auth for local dev (never set in production)                                                                                                                                                          |
+| `COOKIE_SECURE`     |        No        | `true` in production    | Override JWT cookie `Secure` flag (auto-detected by Astro `PROD`)                                                                                                                                          |
 
 ### Runtime vs Build-time Resolution
 
