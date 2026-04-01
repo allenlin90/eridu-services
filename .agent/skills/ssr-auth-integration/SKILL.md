@@ -19,23 +19,24 @@ Study these implementations as the source of truth:
 | `apps/eridu_docs/src/lib/auth.ts` | Astro: shared JWKS/JWT setup, SDK wrappers, cookie helpers |
 | `apps/eridu_docs/src/middleware.ts` | Astro: auth gate — verify → refresh → redirect |
 | `apps/eridu_docs/src/pages/auth/callback.ts` | Astro: token exchange endpoint after IDP login |
-| `apps/eridu_docs/src/pages/auth/logout.ts` | Astro: sign-out endpoint (clear docs cookie + sign out Better Auth session) |
+| `apps/eridu_docs/src/pages/auth/logout.ts` | Astro: browser-initiated sign-out page for Better Auth |
+| `apps/eridu_docs/src/pages/auth/logout/complete.ts` | Astro: local JWT cookie cleanup + redirect back to sign-in |
 | `apps/eridu_docs/src/config/env.ts` | Environment config (`AUTH_URL`, `BYPASS_AUTH`) |
 | `apps/eridu_docs/docs/AUTH_DESIGN.md` | Full design document with architecture diagram |
 
 ## Package Boundary
 
-The `@eridu/auth-sdk/server/ssr` subpath provides the three framework-agnostic primitives:
+The `@eridu/auth-sdk/server/ssr` subpath provides the key framework-agnostic primitives used by SSR consumers:
 
 | Export | File | What it does |
 | --- | --- | --- |
 | `refreshSessionToken<T>` | `token-refresh.ts` | Forwards session cookies to `/api/auth/token`, verifies JWT |
 | `normalizeReturnTo` | `redirect-guard.ts` | Validates `returnTo` param against open-redirect attacks |
-| `signOutFromAuth` | `sign-out.ts` | Server-side POST to `/api/auth/sign-out`, best-effort |
 
 **What stays framework-specific** (not in the SDK):
 - Cookie read/write helpers (API differs: Astro `AstroCookies`, Next.js `cookies()`, etc.)
 - `buildLoginUrl` — constructs the IDP redirect with `callbackURL`
+- Browser-driven sign-out flow when Better Auth must clear shared-domain cookies itself
 - `extractUser` — maps `JwtPayload` → app-local user shape
 - Module-level singleton wiring (`JwksService`, `JwtVerifier`)
 
@@ -43,7 +44,7 @@ The `@eridu/auth-sdk/server/ssr` subpath provides the three framework-agnostic p
 
 ### 1. Shared Auth Module
 
-All auth logic lives in one module, consumed by both middleware and callback. The three SDK functions are wrapped to close over the app's `CONFIG` so callers don't pass URLs on every call:
+All auth logic lives in one module, consumed by both middleware and callback. The shared SDK functions are wrapped to close over the app's `CONFIG` so callers don't pass URLs on every call:
 
 ```typescript
 import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
@@ -51,7 +52,6 @@ import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 import {
   normalizeReturnTo,
   refreshSessionToken,
-  signOutFromAuth as signOutFromAuthBase,
 } from '@eridu/auth-sdk/server/ssr';
 
 // Module-level singletons — JWKS cached across requests
@@ -70,17 +70,12 @@ export { normalizeReturnTo };
 export async function refreshToken(cookieHeader: string) {
   return refreshSessionToken<JwtPayload>(CONFIG.authApiUrl, cookieHeader, jwtVerifier);
 }
-
-export async function signOutFromAuth(cookieHeader: string, origin?: string) {
-  return signOutFromAuthBase(CONFIG.authApiUrl, cookieHeader, origin);
-}
 ```
 
 Key exports:
 - `jwtVerifier` — verifies JWT with cached JWKS
 - `refreshToken(cookieHeader)` — wraps `refreshSessionToken`, closes over config
 - `normalizeReturnTo(value)` — re-exported from SDK directly
-- `signOutFromAuth(cookieHeader, origin?)` — wraps `signOutFromAuth`, closes over config
 - `setTokenCookie / clearTokenCookie` — framework-specific cookie helpers
 - `buildLoginUrl(origin, pathname)` — constructs IDP redirect URL with callback/returnTo
 - `extractUser(payload)` — maps JwtPayload → app-local user shape
@@ -111,7 +106,26 @@ Browser → /auth/callback?returnTo=/page
 
 Reuse `refreshToken()` from the shared auth module — it already does fetch + verify via `refreshSessionToken`.
 
-### 4. Token Refresh (Server-Side)
+### 4. Logout (Browser-Initiated)
+
+For Better Auth logout, prefer a browser-initiated flow:
+
+```
+Browser → /auth/logout?returnTo=/page
+  → Astro serves a tiny page with inline JS
+  → Browser POSTs directly to eridu_auth/api/auth/sign-out with credentials
+  → Better Auth clears its shared-domain cookies in the browser response
+  → Browser navigates to /auth/logout/complete?returnTo=/page
+  → Astro clears the SSR app's own httpOnly JWT cookie
+  → 302 → eridu_auth/sign-in?callbackURL=.../auth/callback?returnTo=/page
+```
+
+Why this split route works:
+- Shared Better Auth cookies must be cleared by a browser response from `eridu_auth`
+- The SSR app's JWT cookie is `HttpOnly`, so only the SSR app can clear it
+- Separating the two avoids shared secrets and avoids relying on an unexpired JWT during logout
+
+### 5. Token Refresh (Server-Side)
 
 This is the SSR equivalent of erify_studios' Axios interceptor:
 
@@ -132,7 +146,7 @@ Any SSR framework can use the same SDK utilities by wrapping them with its own c
 ```typescript
 // app/lib/auth.ts (Next.js App Router)
 import { cookies } from 'next/headers';
-import { refreshSessionToken, normalizeReturnTo, signOutFromAuth as signOutBase } from '@eridu/auth-sdk/server/ssr';
+import { refreshSessionToken, normalizeReturnTo } from '@eridu/auth-sdk/server/ssr';
 import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
 import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 
@@ -145,17 +159,13 @@ export async function refreshToken(cookieHeader: string) {
   return refreshSessionToken(process.env.AUTH_URL!, cookieHeader, jwtVerifier);
 }
 
-export async function signOutFromAuth(cookieHeader: string, origin?: string) {
-  return signOutBase(process.env.AUTH_URL!, cookieHeader, origin);
-}
-
 // Next.js-specific: read the cookie from the request store
 export async function getTokenCookie() {
   return (await cookies()).get('my_app_token')?.value ?? null;
 }
 ```
 
-The three SDK primitives (`refreshSessionToken`, `normalizeReturnTo`, `signOutFromAuth`) are identical across frameworks. Only the cookie plumbing and config wiring change.
+The shared SDK primitives (`refreshSessionToken`, `normalizeReturnTo`) are identical across frameworks. Only the cookie plumbing, config wiring, and browser logout glue change.
 
 ## Cookie Configuration
 
@@ -277,13 +287,14 @@ No architectural changes — same JWT, same verification, richer payload.
 - [ ] `AUTH_INTERNAL_URL` is configured when server-side traffic should stay on the cluster network
 - [ ] No `BETTER_AUTH_SECRET` in SSR app env
 - [ ] No modifications to eridu_auth for SSR consumer integration
-- [ ] `refreshToken`, `normalizeReturnTo`, `signOutFromAuth` imported from `@eridu/auth-sdk/server/ssr` (not re-implemented)
+- [ ] `refreshToken` and `normalizeReturnTo` imported from `@eridu/auth-sdk/server/ssr` (not re-implemented)
 - [ ] JWKS initialized at module load (non-blocking `.catch()`)
 - [ ] Cookie uses `httpOnly`, `secure`, `sameSite: 'lax'`
 - [ ] `HOST=0.0.0.0` set in the container start command (Astro node standalone binds to loopback by default — Railway health checks cannot reach it otherwise)
 - [ ] All runtime-configurable env vars use `import.meta.env.X ?? process.env.X` (Astro bakes `import.meta.env` at build time; without the fallback, Railway env vars are silently ignored)
 - [ ] `SITE_URL` is set in production to the app's public origin — used as the base for `/auth/callback` in `buildLoginUrl`; without it, Railway's internal `Host: localhost:PORT` header produces a broken callbackURL
 - [ ] Middleware attempts silent token exchange (`refreshToken`) before redirecting to sign-in — users already signed in via Better Auth should reach the app without a login prompt
+- [ ] Logout clears Better Auth cookies from the browser first, then clears the SSR app's own `HttpOnly` JWT cookie server-side
 - [ ] `BYPASS_AUTH` only for local dev, never in production
 - [ ] `returnTo` preserved through login → callback → redirect chain
 - [ ] `normalizeReturnTo` used before redirecting to any user-supplied path

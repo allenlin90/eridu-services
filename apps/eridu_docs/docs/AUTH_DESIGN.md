@@ -90,15 +90,27 @@ This means users who are already signed in to any eridu service arrive at the do
 
 ## Shared Auth Module
 
-`lib/auth.ts` is the single auth facade consumed by middleware, callback, and logout. Three of its helpers are sourced directly from `@eridu/auth-sdk/server/ssr` and wrapped to close over `CONFIG`:
+`lib/auth.ts` is the single auth facade consumed by middleware, callback, and logout. Two of its helpers are sourced directly from `@eridu/auth-sdk/server/ssr` and wrapped to close over `CONFIG`:
 
-| Helper                                   | Source                                               | Notes                                        |
-| ---------------------------------------- | ---------------------------------------------------- | -------------------------------------------- |
-| `refreshToken(cookieHeader)`             | `@eridu/auth-sdk/server/ssr` (`refreshSessionToken`) | Forwards session cookies, verifies fresh JWT |
-| `normalizeReturnTo(value)`               | `@eridu/auth-sdk/server/ssr` (`normalizeReturnTo`)   | Re-exported directly, no wrapper             |
-| `signOutFromAuth(cookieHeader, origin?)` | `@eridu/auth-sdk/server/ssr` (`signOutFromAuth`)     | Forwards sign-out request, best-effort       |
+| Helper                       | Source                                               | Notes                                        |
+| ---------------------------- | ---------------------------------------------------- | -------------------------------------------- |
+| `refreshToken(cookieHeader)` | `@eridu/auth-sdk/server/ssr` (`refreshSessionToken`) | Forwards session cookies, verifies fresh JWT |
+| `normalizeReturnTo(value)`   | `@eridu/auth-sdk/server/ssr` (`normalizeReturnTo`)   | Re-exported directly, no wrapper             |
 
 Cookie helpers (`setTokenCookie`, `clearTokenCookie`), `buildLoginUrl`, and `extractUser` remain Astro-specific in `lib/auth.ts`.
+
+## Logout Flow (Browser-Initiated)
+
+`GET /auth/logout`:
+
+1. Browser requests `/auth/logout?returnTo=/some-page`
+2. Astro serves a lightweight logout page with inline JS
+3. The browser `POST`s directly to `eridu_auth/api/auth/sign-out` with credentials included
+4. Better Auth clears its shared `.eridu.io` session cookies in the browser response
+5. Browser navigates to `/auth/logout/complete?returnTo=/some-page`
+6. Astro clears the local `eridu_docs_token` cookie and redirects to the standard sign-in flow
+
+This matches the browser-driven logout model used by the SPA apps. The key constraint is that `eridu_docs_token` is `HttpOnly`, so the browser cannot clear it directly; Astro still needs a small server route to delete the docs cookie after Better Auth has cleared the shared session cookies.
 
 ## File Structure
 
@@ -109,7 +121,8 @@ apps/eridu_docs/src/
 ├── lib/auth.ts            ← Shared: JwksService, JwtVerifier, SDK wrappers, cookie helpers
 ├── middleware.ts           ← Auth gate: verify, refresh, or redirect
 ├── pages/auth/callback.ts ← Token exchange endpoint
-├── pages/auth/logout.ts   ← Sign out eridu_auth session + clear docs JWT cookie
+├── pages/auth/logout.ts   ← Browser-initiated Better Auth sign-out page
+├── pages/auth/logout/complete.ts ← Clear docs JWT cookie + redirect to sign-in
 └── env.d.ts               ← App.Locals.user type
 ```
 
