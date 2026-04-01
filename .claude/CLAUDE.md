@@ -15,6 +15,7 @@ Before implementing ANY feature, read the relevant skill from `.agent/skills/<sk
 - Full-stack: `admin-list-pattern`, `studio-list-pattern`
 - Shift schedule: `shift-schedule-pattern`
 - Domain cutover: `domain-refactor-cutover-strategy`, `data-compatibility-migration`
+- User-facing docs: `user-facing-docs`
 
 ### Dependency Changes — Full Impact (CRITICAL)
 The cloud build runs `pnpm install --frozen-lockfile`. **`pnpm-lock.yaml` is the authoritative install manifest** — `package.json` alone is not enough. A stale lockfile hard-fails the build before any code runs, which cascades: build fails → deployment blocked → pre-deploy migration never runs → all downstream issues compound.
@@ -319,8 +320,9 @@ const where: Prisma.TaskWhereInput = { ... };
 | **domain-refactor-cutover-strategy** | Multi-phase domain rename playbook: scope isolation, contract-first ordering, alias vs. direct cutover, stabilization | MEDIUM |
 | **data-compatibility-migration** | Frontend dual-field fallback helpers for API contract migrations, centralized accessor pattern, lifecycle rules | MEDIUM |
 | **pwa-best-practices** | PWA setup/migration, SW caching boundaries, app-shell update/recovery patterns | HIGH |
+| **user-facing-docs** | Convert PRDs/feature docs into non-technical user guides, SOPs, and FAQs for eridu_docs — role-scoped, visually diagrammed, layered abstraction | MEDIUM |
 
-**Full skill list** (41 total): See `.agent/skills/` directory
+**Full skill list** (42 total): See `.agent/skills/` directory
 
 ### Memory Files (Supplementary - `.claude/memory/`)
 | File | Purpose | When to Use |

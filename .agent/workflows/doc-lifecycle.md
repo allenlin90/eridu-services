@@ -54,6 +54,8 @@ For each PRD in `docs/prd/` (excluding `README.md`):
 
 3. Delete the PRD from `docs/prd/`.
 
+4. **Generate user-facing docs** — run the `user-facing-docs` skill (`.agent/skills/user-facing-docs/SKILL.md`) to produce role-scoped user guides, SOPs, and FAQ entries in `apps/eridu_docs/src/content/docs/`. Cross-link the feature doc to the generated user guides and vice versa.
+
 **Deferred PRDs → clean up, record deferral**
 
 1. Note the deferral in the relevant `docs/roadmap/PHASE_N.md` under "Out of Scope" or "Deferred".
@@ -139,6 +141,7 @@ grep -r "docs/product/" . --include="*.md" --exclude-dir=node_modules --exclude-
 ## Completion Checklist
 
 - [ ] Every shipped PRD is promoted to `docs/features/` with acceptance criteria checked off.
+- [ ] Every shipped PRD has corresponding user-facing docs in `eridu_docs` (user guides, SOPs, and/or FAQ entries) per `user-facing-docs` skill.
 - [ ] Every deferred PRD is deleted; deferral is recorded in the phase doc.
 - [ ] No PRD in `docs/prd/` describes already-shipped work.
 - [ ] New cross-feature flows have a `docs/workflows/` entry if warranted.
