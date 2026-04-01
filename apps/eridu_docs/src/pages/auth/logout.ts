@@ -86,6 +86,8 @@ export const GET: APIRoute = async (context) => {
       const completeUrl = ${completeUrlJson};
       const finish = () => window.location.replace(completeUrl);
 
+      // Best-effort: if eridu_auth is unreachable we still proceed to clear
+      // the local docs cookie so the user isn't permanently stuck.
       fetch(authSignOutUrl, {
         method: 'POST',
         credentials: 'include',
@@ -98,6 +100,7 @@ export const GET: APIRoute = async (context) => {
     {
       headers: {
         'cache-control': 'no-store',
+        'content-security-policy': `default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src ${CONFIG.authUiUrl}; base-uri 'none'; form-action 'none'`,
         'content-type': 'text/html; charset=utf-8',
       },
       status: 200,
