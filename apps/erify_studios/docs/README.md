@@ -33,3 +33,4 @@ Active (in progress):
 5. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned
 6. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
 7. [P&L Revenue Workflow Frontend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) — 📐 Planned
+8. [Studio Show Management Frontend Design](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md) — 📐 Planned

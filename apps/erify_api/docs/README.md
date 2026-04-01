@@ -37,6 +37,7 @@
 | [Show Economics Backend Design](./design/SHOW_ECONOMICS_DESIGN.md)                        | 📐      | Deferred merge target for economics endpoints and compensation-aware revisions |
 | [Compensation Line Items Backend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)      | 📐      | Planned supplemental compensation CRUD and aggregation model |
 | [Show Planning Export Backend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md)            | 📐      | Planned planning-export endpoint and economics composition rules |
+| [Studio Show Management Backend Design](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md)        | 📐      | Planned studio-scoped show create/update/delete, lookup bundling, and optimistic locking |
 | [Creator Availability Hardening Backend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | 📐 | Planned strict availability enforcement and assignment errors |
 | [P&L Revenue Workflow Backend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)            | 📐      | Blocked Wave 3 revenue-side activation design |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |

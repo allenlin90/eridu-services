@@ -20,8 +20,9 @@ Use these docs for planning and implementation tracking. Once behavior is shippe
 12. [Ad-hoc Task Ticketing](./AD_HOC_TASK_TICKETING.md) — Planned template-less task creation for pre-production tickets
 13. [Task Submission Reporting & Export](./TASK_SUBMISSION_REPORTING_DESIGN.md) — ✅ Implemented studio-scoped reporting API (sources, preflight, run, definition CRUD)
 14. [Studio Creator Onboarding](./STUDIO_CREATOR_ONBOARDING_DESIGN.md) — Studio-scoped creator creation + roster-first assignment enforcement
-15. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — 🗓️ Planned for Phase 5
-16. ~~Analytics Dashboard~~ — ⚠️ Superseded by Data Warehouse approach; prior design doc removed
+15. [Studio Show Management](./STUDIO_SHOW_MANAGEMENT_DESIGN.md) — Planned studio-scoped show create/update/delete and lookup realignment
+16. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — 🗓️ Planned for Phase 5
+17. ~~Analytics Dashboard~~ — ⚠️ Superseded by Data Warehouse approach; prior design doc removed
 
 ## Note
 
