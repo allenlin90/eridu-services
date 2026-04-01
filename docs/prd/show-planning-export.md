@@ -3,7 +3,7 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: Operations planning — pre-show export with L-side cost preview
-> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`; estimated cost column sourced from economics endpoint)
+> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`; estimated cost column sourced from economics endpoint), Studio Economics Review — 🔲 Planned (shared future-horizon cost semantics)
 
 ## Problem
 
@@ -138,6 +138,7 @@ Listed in the sidebar under the **Reports** group alongside Task Reports. See `a
 - **One row per show** — aggregated creator list over exploded rows. This is the planning mental model.
 - **Fixed column schema first** — no column builder in v1. Operations validates the fixed schema against their Google Sheets workflow before adding configurability.
 - **Normalized data source** — reads from live show relations, not cached snapshots. Export reflects current DB state at generation time.
+- **Interactive review comes first** — the studio economics review route is the primary in-product finance surface; planning export is the downstream handoff.
 - **Economics cost is informational** — null cost is not an error state. The export is useful for assignment verification even without cost data.
 - **Format toggle on same endpoint** — `format=csv` vs. `format=json` on the same route rather than separate endpoints, keeping the filter/scope logic shared.
 

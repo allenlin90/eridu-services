@@ -4,11 +4,11 @@
 > **Phase scope**: Phase 4 Wave 2
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/show-planning-export.md`](../../../../docs/prd/show-planning-export.md)
-> **Depends on**: Economics endpoints on `master` ⏸️, sidebar redesign 🔲
+> **Depends on**: Economics endpoints on `master` ⏸️, studio economics review contract 🔲, sidebar redesign 🔲
 
 ## Purpose
 
-Add a planning export screen that lets operators preview and download one-row-per-show planning data with estimated cost.
+Add a planning export screen that lets operators preview and download one-row-per-show planning data with estimated cost after reviewing the same future-horizon slice in the main economics workspace.
 
 ## Route Plan
 
@@ -42,4 +42,3 @@ Add a planning export screen that lets operators preview and download one-row-pe
 - `pnpm --filter erify_studios build`
 - `pnpm --filter erify_studios test`
 - Manual smoke: preview paging, CSV download, filter persistence, null cost explanation
-
