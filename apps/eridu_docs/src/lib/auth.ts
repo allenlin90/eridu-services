@@ -4,7 +4,6 @@ import type { JwtPayload } from '@eridu/auth-sdk/types';
 import {
   normalizeReturnTo,
   refreshSessionToken,
-  signOutFromAuth as signOutFromAuthBase,
 } from '@eridu/auth-sdk/server/ssr';
 import type { AstroCookies } from 'astro';
 
@@ -59,10 +58,6 @@ export function clearTokenCookie(cookies: AstroCookies): void {
   cookies.delete(COOKIE_NAME, {
     path: '/',
   });
-}
-
-export async function signOutFromAuth(cookieHeader: string, origin?: string): Promise<void> {
-  return signOutFromAuthBase(CONFIG.authApiUrl, cookieHeader, origin);
 }
 
 export function extractUser(

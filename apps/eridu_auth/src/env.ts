@@ -59,9 +59,6 @@ const EnvSchema = z
     OIDC_CLIENT_SECRET: z.string().optional(),
     OIDC_ISSUER: z.url().optional(),
     COOKIE_DOMAIN: z.string().optional(),
-    // Shared secret for service-to-service calls (e.g. eridu_docs server-side sign-out).
-    // Must be at least 32 characters. Optional — endpoints that require it return 401 if unset.
-    SERVICE_SECRET: z.string().min(32).optional(),
   })
   .transform((data) => {
     // Construct BETTER_AUTH_URL from PORT only if not provided or if localhost

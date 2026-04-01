@@ -1,76 +1,106 @@
 import type { APIRoute } from 'astro';
 
 import { CONFIG } from '../../config/env';
-import { COOKIE_NAME, jwtVerifier } from '../../lib/auth';
+import { normalizeReturnTo } from '../../lib/auth';
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
 
 export const GET: APIRoute = async (context) => {
+  const returnTo = normalizeReturnTo(context.url.searchParams.get('returnTo'));
   const siteOrigin = CONFIG.siteUrl ?? context.url.origin;
+  const authSignOutUrl = new URL('/api/auth/sign-out', CONFIG.authUiUrl);
+  const completeUrl = new URL('/auth/logout/complete', siteOrigin);
+  completeUrl.searchParams.set('returnTo', returnTo);
 
-  // Server-to-server session revocation via JWT identity.
-  //
-  // Why not forward Better Auth session cookies to /api/auth/sign-out?
-  //   eridu_auth's Set-Cookie response clears Domain=.eridu.io cookies, but
-  //   the browser only applies those headers when the response comes from a
-  //   same-domain request. A server-forwarded Set-Cookie from eridu_docs does
-  //   not reliably clear cookies on the .eridu.io domain in all browsers.
-  //
-  // Why JWT instead of a session token?
-  //   eridu_docs already has the user's JWT (eridu_docs_token cookie). We verify
-  //   it to get the userId, then POST to the internal /api/service/sign-out
-  //   endpoint which deletes all sessions for that user directly in the database.
-  //   The browser's Better Auth session cookies become invalid server-side, so
-  //   the next silent-SSO attempt on the callback endpoint will fail → sign-in
-  //   page is shown rather than re-logging the user in transparently.
-  if (CONFIG.authServiceSecret) {
-    const token = context.cookies.get(COOKIE_NAME)?.value;
+  const authSignOutUrlJson = JSON.stringify(authSignOutUrl.toString()).replaceAll('<', '\\u003c');
+  const completeUrlJson = JSON.stringify(completeUrl.toString()).replaceAll('<', '\\u003c');
 
-    if (token) {
-      try {
-        const payload = await jwtVerifier.verify(token);
-
-        if (payload.id) {
-          const revokeUrl = new URL('/api/service/sign-out', CONFIG.authApiUrl);
-          // Best-effort: network errors or eridu_auth downtime must not block logout.
-          await fetch(revokeUrl.toString(), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${CONFIG.authServiceSecret}`,
-            },
-            body: JSON.stringify({ userId: payload.id }),
-          }).catch(() => {
-            // Swallow — session will expire naturally; local cookie is cleared below.
-          });
-        }
-      } catch {
-        // JWT is expired or invalid — skip revocation, clear cookie below.
+  return new Response(
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Signing out...</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
-    }
-  }
 
-  // Clear the docs JWT cookie.
-  const cookieFlags = [
-    `${COOKIE_NAME}=`,
-    'Max-Age=0',
-    'Path=/',
-    'HttpOnly',
-    CONFIG.cookieSecure ? 'Secure' : '',
-    'SameSite=Lax',
-  ].filter(Boolean).join('; ');
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f6f7f9;
+        color: #111827;
+      }
 
-  // Redirect to sign-in with a callbackURL so the user is returned to docs
-  // after re-authenticating. Use /auth/callback (not a specific docs page) so
-  // the callback can issue a fresh JWT on the next login.
-  const callbackUrl = new URL('/auth/callback', siteOrigin);
-  const signInUrl = new URL('/sign-in', CONFIG.authUiUrl);
-  signInUrl.searchParams.set('callbackURL', callbackUrl.toString());
+      main {
+        width: min(32rem, calc(100vw - 2rem));
+        padding: 2rem;
+        border: 1px solid #d1d5db;
+        border-radius: 1rem;
+        background: white;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: signInUrl.toString(),
-      'set-cookie': cookieFlags,
-      'cache-control': 'no-store',
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: 1.25rem;
+      }
+
+      p {
+        margin: 0;
+        line-height: 1.5;
+        color: #4b5563;
+      }
+
+      a {
+        color: #0f766e;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Signing you out...</h1>
+      <p>Clearing the shared Better Auth session, then returning to the docs sign-in flow.</p>
+      <noscript>
+        <p style="margin-top: 1rem;">
+          JavaScript is required to fully clear the shared auth session. You can still
+          <a href="${escapeHtml(completeUrl.toString())}">clear the docs session only</a>.
+        </p>
+      </noscript>
+    </main>
+    <script>
+      const authSignOutUrl = ${authSignOutUrlJson};
+      const completeUrl = ${completeUrlJson};
+      const finish = () => window.location.replace(completeUrl);
+
+      fetch(authSignOutUrl, {
+        method: 'POST',
+        credentials: 'include',
+      })
+        .catch(() => undefined)
+        .finally(finish);
+    </script>
+  </body>
+</html>`,
+    {
+      headers: {
+        'cache-control': 'no-store',
+        'content-type': 'text/html; charset=utf-8',
+      },
+      status: 200,
     },
-  });
+  );
 };
