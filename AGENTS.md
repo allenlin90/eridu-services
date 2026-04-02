@@ -61,6 +61,7 @@ For Claude Code sessions, the primary configuration lives in `.claude/`. Claude 
   - `frontend-performance`
   - `frontend-i18n`
   - `frontend-code-quality`
+  - `table-view-pattern` (for searchable/filterable/sortable table CRUD/list pages)
   - `pwa-best-practices` (for PWA setup/migration and SW-query caching boundaries)
 - Docs platform (`apps/eridu_docs`):
   - `ssr-auth-integration`

@@ -292,6 +292,7 @@ This applies everywhere in JSX — component slots, list renders, and inline con
 - For `erify_studios`, treat `/system/*` as the reference pattern for DRY wrappers: parent route owns access boundary, each leaf page owns content and uses one shared leaf wrapper component.
 - For `studios/$studioId/*`, keep page padding in the parent (`PageContainer`) and use `PageLayout` consistently in leaf pages instead of manual `<h1>`/description blocks.
 - For studio-scoped roster/list pages with filters and dialogs, keep the route file as the composition boundary (`StudioRouteGuard` + `validateSearch` + page assembly), move URL/query wiring into a feature hook, and keep columns plus write dialogs in feature-local `config/` and `components/` files. Canonical references: `src/routes/studios/$studioId/members.tsx` and `src/routes/studios/$studioId/creators.tsx`.
+- For new studio-scoped table CRUD pages, treat the nearest existing table route as the UX baseline before introducing a new toolbar/filter/action variant. Prefer `PageLayout` + `DataTable` + `DataTableToolbar` + feature hook wiring, and keep specialized operational pages unchanged when the new work is CRUD-only.
 
 ## Checklist
 
