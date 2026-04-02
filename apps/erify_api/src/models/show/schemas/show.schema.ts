@@ -3,8 +3,10 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import {
+  createStudioShowInputSchema,
   showApiResponseSchema,
   studioShowDetailSchema,
+  updateStudioShowInputSchema,
 } from '@eridu/api-types/shows';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
@@ -410,3 +412,28 @@ export class CreateShowDto extends createZodDto(transformCreateShowSchema) {}
 export class UpdateShowDto extends createZodDto(updateShowSchema) {}
 export class ShowDto extends createZodDto(showDto) {}
 export class StudioShowDetailDto extends createZodDto(studioShowDetailDto) {}
+export class CreateStudioShowDto extends createZodDto(createStudioShowInputSchema.transform((data) => ({
+  externalId: data.external_id,
+  clientId: data.client_id,
+  showTypeId: data.show_type_id,
+  showStatusId: data.show_status_id,
+  showStandardId: data.show_standard_id,
+  studioRoomId: data.studio_room_id,
+  name: data.name,
+  startTime: new Date(data.start_time),
+  endTime: new Date(data.end_time),
+  metadata: data.metadata,
+  platformIds: data.platform_ids,
+}))) {}
+export class UpdateStudioShowDto extends createZodDto(updateStudioShowInputSchema.transform((data) => ({
+  name: data.name,
+  startTime: data.start_time ? new Date(data.start_time) : undefined,
+  endTime: data.end_time ? new Date(data.end_time) : undefined,
+  clientId: data.client_id,
+  showTypeId: data.show_type_id,
+  showStatusId: data.show_status_id,
+  showStandardId: data.show_standard_id,
+  studioRoomId: data.studio_room_id,
+  metadata: data.metadata,
+  platformIds: data.platform_ids,
+}))) {}

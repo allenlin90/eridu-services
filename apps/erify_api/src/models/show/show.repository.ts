@@ -48,6 +48,25 @@ export class ShowRepository extends BaseRepository<
     });
   }
 
+  async findByClientUidAndExternalId<
+    T extends Prisma.ShowInclude = Record<string, never>,
+  >(
+    clientUid: string,
+    externalId: string,
+    params?: { includeDeleted?: boolean; include?: T },
+  ): Promise<ShowWithIncludes<T> | Show | null> {
+    const { includeDeleted = false, include } = params ?? {};
+
+    return this.delegate.findFirst({
+      where: {
+        client: { uid: clientUid },
+        externalId,
+        ...(includeDeleted ? {} : { deletedAt: null }),
+      },
+      ...(include && { include }),
+    }) as Promise<ShowWithIncludes<T> | Show | null>;
+  }
+
   async findActiveShows(params: {
     skip?: number;
     take?: number;

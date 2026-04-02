@@ -4,7 +4,9 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -20,13 +22,18 @@ import {
   bulkAssignStudioShowCreatorsResultSchema,
 } from './schemas/studio-show-creator-assignment.schema';
 import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list.schema';
+import { StudioShowManagementService } from './studio-show-management.service';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
-import { studioShowDetailDto } from '@/models/show/schemas/show.schema';
+import {
+  CreateStudioShowDto,
+  studioShowDetailDto,
+  UpdateStudioShowDto,
+} from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -42,6 +49,10 @@ const STUDIO_SHOW_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.MANAGER,
   STUDIO_ROLE.TALENT_MANAGER,
 ];
+const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+];
 
 @StudioProtected() // All studio members can view
 @Controller('studios/:studioId/shows')
@@ -49,6 +60,7 @@ export class StudioShowController extends BaseStudioController {
   constructor(
     private readonly taskOrchestrationService: TaskOrchestrationService,
     private readonly showOrchestrationService: ShowOrchestrationService,
+    private readonly studioShowManagementService: StudioShowManagementService,
   ) {
     super();
   }
@@ -71,6 +83,37 @@ export class StudioShowController extends BaseStudioController {
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
   ) {
     return this.taskOrchestrationService.getStudioShow(studioId, id);
+  }
+
+  @Post()
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(studioShowDetailDto, HttpStatus.CREATED)
+  async create(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Body() body: CreateStudioShowDto,
+  ) {
+    return this.studioShowManagementService.createShow(studioId, body);
+  }
+
+  @Patch(':id')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(studioShowDetailDto)
+  async update(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: UpdateStudioShowDto,
+  ) {
+    return this.studioShowManagementService.updateShow(studioId, id, body);
+  }
+
+  @Delete(':id')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(undefined, HttpStatus.NO_CONTENT)
+  async delete(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    await this.studioShowManagementService.deleteShow(studioId, id);
   }
 
   @Get(':id/tasks')
