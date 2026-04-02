@@ -8,15 +8,16 @@
 
 ## Purpose
 
-Add studio-owned create/edit/delete workflows to the existing show-operations surface without falling back to `/system/shows` or admin-only lookup APIs.
+Add a dedicated studio show CRUD page and keep `show-operations` focused on readiness, task generation, and assignment without falling back to `/system/shows` or admin-only lookup APIs.
 
 ## Current-State Evaluation
 
-The current studio frontend has the right route shell but not the right write path:
+The current studio frontend has the operations shell, but it mixes concerns for this feature:
 
 - `/studios/$studioId/show-operations` already exists and is guarded by the shared `shows` access policy (`ADMIN`, `MANAGER`).
-- The page already lists shows, caches studio lookups, and links to task/detail flows.
-- There is no create button, no row action menu, and no studio-scoped show mutations.
+- That page already serves a specific operational purpose: readiness review, bulk task generation, and assignment flows.
+- There is no dedicated studio CRUD page for show lifecycle work.
+- The current `useStudioShows` hook is route-bound to `/studios/$studioId/show-operations`, so reusing it as-is would leak operations URL state and defaults into the CRUD page.
 - The reusable admin `features/shows` form is not safe to drop in:
   - it uses admin endpoints for clients and rooms
   - it includes creator assignment fields, which are out of scope for studio show management
@@ -25,35 +26,54 @@ The current studio frontend has the right route shell but not the right write pa
 
 ## Final Design Decisions
 
-1. Reuse the existing show-operations route.
-   No new top-level studio route is added. Show management stays inside `/studios/$studioId/show-operations`.
+1. Split CRUD and operations into separate studio pages.
+   Show lifecycle CRUD gets its own list page. `show-operations` remains an operations-only page.
+
+   Implementation guardrail:
+
+   - `/studios/$studioId/show-operations` remains behaviorally unchanged in this slice
+   - studio show management must not rewrite that page's layout, filters, or bulk task actions
 
 2. Keep route access aligned with the existing `shows` policy key.
-   Managers and admins can open the page; only admins can delete.
+   Managers and admins can open both pages; only admins can delete.
 
-3. Create/edit lives in modal dialogs, not separate routes.
-   This preserves the existing list/filter/search context and keeps the implementation local to the current route.
+3. Show CRUD uses a table/list page with dialog-based create/edit/delete.
+   The CRUD page owns lifecycle management. The operations page should not grow create/edit/delete controls.
 
 4. Studio show management gets its own feature slice.
    Do not extend the admin `features/shows` forms directly. Reuse only domain-neutral pieces once they are parameterized for studio-safe lookups.
 
-5. The studio form manages metadata and platform membership only.
+5. The studio CRUD form manages metadata and platform membership only.
    Creator assignment remains on the dedicated creator-mapping surfaces.
 
-6. Delete confirmation uses a preflight query.
-   The dialog should show warning counts before confirming delete, not after a destructive call.
+6. Delete uses a simple pre-start rule.
+   The UI should only offer delete to admins, and the backend will reject delete when the show has already started.
 
-7. `409` is handled as a refetch-and-review flow.
-   If the update version is stale, the dialog refetches the latest show detail, shows a conflict banner, and keeps the user in context to review/resubmit.
+7. The frontend follows the backend's last-write-wins rule.
+   The form does not send a concurrency token in v1. Save success should simply refresh the shared show queries.
+
+8. `external_id` restore is backend behavior, not an initial form field.
+   The studio form does not expose `external_id` in v1. If the create API later receives it from another caller, restore-on-create remains a backend identity rule.
+
+9. Shared endpoints and cache are still preferred.
+   The new CRUD page and the existing operations page should reuse the same `GET /studios/:studioId/shows`, `GET /studios/:studioId/shows/:showId`, and lookup queries where possible.
+
+10. Shared data does not mean shared route state.
+    The pages should share API calls and query keys, but each route must own its own search schema, table state, and UX defaults.
 
 ## Route Plan
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/studios/$studioId/show-operations` | List shows, readiness, create/edit/delete actions | `ADMIN`, `MANAGER` |
+| `/studios/$studioId/shows` | Show CRUD table view | `ADMIN`, `MANAGER` |
+| `/studios/$studioId/show-operations` | Task generation, readiness, and assignment operations | `ADMIN`, `MANAGER` |
 | `/studios/$studioId/show-operations/$showId/tasks` | Existing task page | Unchanged |
 
-No navigation move is required for this slice. The route already maps to the `shows` access key and existing sidebar grouping.
+Navigation plan:
+
+- add a dedicated `Shows` item that points to `/studios/$studioId/shows`
+- keep `Show Operations` as a separate item pointing to `/studios/$studioId/show-operations`
+- both routes may continue to share the `shows` access policy key unless product later splits permissions
 
 ## Feature Structure
 
@@ -67,7 +87,6 @@ src/features/studio-shows/
 │   ├── create-studio-show.ts
 │   ├── update-studio-show.ts
 │   ├── delete-studio-show.ts
-│   ├── get-studio-show-delete-impact.ts
 │   └── get-studio-show.ts        // updated detail type
 ├── components/
 │   ├── studio-show-management-dialogs.tsx
@@ -78,14 +97,14 @@ src/features/studio-shows/
 │   ├── use-studio-show-management-options.ts
 │   └── use-studio-show-management-dialog-state.ts
 └── lib/
-    └── studio-show-conflict-copy.ts
+    └── studio-show-form-copy.ts
 ```
 
 Why this boundary:
 
 - it keeps write behavior colocated with the existing studio show list/detail queries
 - it avoids cross-feature imports from the admin show module
-- it lets the route stay a composition boundary instead of turning into a monolith
+- it lets the CRUD page and operations page stay purpose-specific instead of turning one route into a monolith
 
 ## Data And Query Plan
 
@@ -95,9 +114,32 @@ Why this boundary:
 - `studioShowKeys.detail(studioId, showId)`
 - `showLookupsKeys.detail(studioId)`
 
-### New Keys
+Cache policy:
 
-- `['studio-show-delete-impact', studioId, showId]`
+- the CRUD page and `show-operations` should share `studioShowsKeys` and `studioShowKeys`
+- do not fork duplicate query families just because the pages are separate
+
+### Separate Route-State Plan
+
+Keep the low-level data layer shared, but split route-owned table state and defaults.
+
+Required rule:
+
+- do not reuse the current route-bound `useStudioShows()` hook as-is for the CRUD page
+- keep the current `useStudioShows()` hook serving `/studios/$studioId/show-operations`
+
+Recommended structure:
+
+- keep `getStudioShows()` and `studioShowsKeys` as the shared fetch/cache layer
+- extract route-neutral list querying into a page-agnostic hook or helper
+- add one route/view-model hook for `/studios/$studioId/shows`
+- keep a separate route/view-model hook for `/studios/$studioId/show-operations`
+
+Behavior split:
+
+- the CRUD page owns its own search/filter/pagination URL contract
+- the operations page keeps its own scope date defaults, readiness filters, and selection state
+- neither page should inherit the other's URL params or default table behavior
 
 ### Invalidation Rules
 
@@ -117,9 +159,84 @@ After delete:
 
 ## UI Plan
 
-### Page-Level Actions
+### Shows Page
 
-Add a `Create Show` button to the show-operations toolbar.
+This is the new lifecycle-management surface.
+
+Primary elements:
+
+- table view of studio shows
+- create button
+- row actions for edit/delete
+- URL-backed search/filter/pagination
+- no readiness snapshot or operations-specific default date scope
+- no bulk task generation or assignment controls
+
+Recommended page copy:
+
+- title: `Shows`
+- description: `Create, update, and manage studio shows.`
+
+Recommended layout:
+
+- keep the existing studio `PageLayout`
+- render one primary full-width table section
+- keep toolbar actions lightweight: search, filters, create, refresh
+- avoid adding the readiness scope card or selection action bar from `show-operations`
+
+### Show Operations Page
+
+Keep the existing operational purpose:
+
+- readiness summary
+- bulk task generation
+- assign shows/tasks
+- jump into per-show task workflow
+
+Explicitly exclude from this page:
+
+- create show
+- edit show metadata
+- delete show
+
+Implementation guardrail:
+
+- do not change the current `show-operations` layout structure, readiness section, date scope behavior, filter set, or bulk action UX as part of this feature
+
+### CRUD Page Filter Plan
+
+The new CRUD page should align with the existing query/filter patterns already familiar from `/system/shows` and `/studios/$studioId/show-operations`, while staying scoped to lifecycle management rather than task operations.
+
+Recommended toolbar filters:
+
+- `name`
+- `client_name`
+- `creator_name`
+- `show_type_name`
+- `show_standard_name`
+- `show_status_name`
+- `platform_name`
+- `start_date_from` / `start_date_to` as the CRUD page date-range filter
+
+Filter exclusions on the CRUD page:
+
+- no `needs_attention`
+- no `has_tasks`
+- no readiness-only quick toggles
+
+Mapping rule:
+
+- keep the CRUD page URL/search schema close to `/system/shows`
+- map the CRUD page date-range filter to the existing studio list endpoint params without changing `show-operations`
+
+Practical implication:
+
+- the CRUD page can expose `start_date_from` / `start_date_to` in route state for parity with `/system/shows`
+- the data hook can translate that to the shared studio list query params consumed by `GET /studios/:studioId/shows`
+
+### CRUD Page Actions
+
+Add a `Create Show` button to the CRUD page toolbar.
 
 Rules:
 
@@ -129,7 +246,7 @@ Rules:
 
 ### Row-Level Actions
 
-Add a row action trigger to the studio show table.
+Add a row action trigger to the CRUD table.
 
 Actions:
 
@@ -162,19 +279,21 @@ Explicitly excluded:
 - live-stream-link metadata
 - platform show ids
 - viewer counts
+- manual `external_id` entry in the v1 studio UI
 
 The current admin form is not reused as-is because it violates all four exclusions above.
 
 ### Delete Dialog
 
-Before enabling confirm:
-
-1. fetch `GET /studios/:studioId/shows/:showId/delete-impact`
-2. render warning copy when either count is non-zero
+The dialog is a direct confirmation, not a warning-preflight flow.
 
 Recommended copy:
 
-- `This show still has 3 active tasks and 2 submitted reports. Deleting it will preserve history but remove it from active studio lists.`
+- `Delete this show? Studio delete is only allowed before the show start time.`
+
+Failure handling:
+
+- if the backend returns `SHOW_ALREADY_STARTED`, keep the dialog closed and show a user-facing error explaining the show can no longer be deleted because it has started
 
 ## Studio-Safe Lookup Strategy
 
@@ -192,17 +311,17 @@ Implementation rule:
 
 - do not reuse `useClientFieldData()` or `useStudioRoomFieldData()` in the studio management form until they are rewritten to accept studio-scoped lookups
 
-## Conflict Handling
+## Save Behavior
 
-Update flow on `409 SHOW_VERSION_CONFLICT`:
+Update flow follows last-write-wins:
 
-1. keep the dialog open
-2. refetch `studioShowKeys.detail(studioId, showId)`
-3. replace form state with the latest server record
-4. render a banner explaining the show changed on another session
-5. let the user review and resubmit
+1. submit the latest form payload
+2. on success, invalidate the shared show list/detail queries
+3. close the dialog and render the refreshed server state
 
-Do not silently discard the mutation or auto-close the dialog.
+Known limitation:
+
+- the UI does not detect stale form state in v1 because the backend is intentionally not returning `409` conflict responses for studio show updates
 
 ## Ordered Task List
 
@@ -211,29 +330,34 @@ Do not silently discard the mutation or auto-close the dialog.
 - [ ] Add `create-studio-show.ts`.
 - [ ] Add `update-studio-show.ts`.
 - [ ] Add `delete-studio-show.ts`.
-- [ ] Add `get-studio-show-delete-impact.ts`.
 - [ ] Update `get-studio-show.ts` to the enriched detail type.
+- [ ] Keep `external_id` restore behavior backend-owned unless product later decides to expose it in the form.
 
 ### FE-2 Form And Dialogs
 
 - [ ] Add studio-safe show management form fields.
 - [ ] Add create dialog.
 - [ ] Add edit dialog.
-- [ ] Add delete confirmation dialog with preflight warning copy.
+- [ ] Add delete confirmation dialog with pre-start rule copy.
 - [ ] Exclude creator assignment fields from the studio form.
 
 ### FE-3 Show-Operations Integration
 
-- [ ] Add `Create Show` toolbar action.
-- [ ] Add row/mobile action menus.
-- [ ] Wire create/edit/delete dialog state into the route container.
-- [ ] Preserve all existing URL-backed filters and pagination behavior.
+- [ ] Add `/studios/$studioId/shows` route as the dedicated CRUD page.
+- [ ] Add CRUD table toolbar and row/mobile action menus to that page.
+- [ ] Wire create/edit/delete dialog state into the CRUD route container.
+- [ ] Preserve URL-backed filters and pagination behavior on the CRUD page.
+- [ ] Keep `show-operations` focused on readiness/task workflows only, with no layout or filter regression.
+- [ ] Reuse the same show query keys and endpoint contracts across both pages.
+- [ ] Extract the current route-bound `useStudioShows()` behavior so shared fetching is decoupled from `show-operations` URL state.
+- [ ] Give `/studios/$studioId/shows` its own search schema and table-state hook instead of inheriting `show-operations` defaults.
+- [ ] Match CRUD page filters closely to the existing `/system/shows` and studio operations table patterns: `name`, `client_name`, `creator_name`, `show_type_name`, `show_standard_name`, `show_status_name`, `platform_name`, and start-date range.
 
 ### FE-4 Access And Conflict UX
 
 - [ ] Gate delete action to `ADMIN`.
 - [ ] Keep create/edit available to `MANAGER`.
-- [ ] Handle `409` with refetch-and-review flow.
+- [ ] Keep save behavior aligned with backend last-write-wins semantics.
 - [ ] Keep `403` and `404` error states explicit.
 
 ### FE-5 Tests
@@ -242,8 +366,9 @@ Do not silently discard the mutation or auto-close the dialog.
 - [ ] Row action test for manager/admin delete visibility.
 - [ ] Form tests proving studio lookup data, not admin endpoints, drives the selects.
 - [ ] Mutation tests for query invalidation.
-- [ ] Conflict test proving dialog stays open on `409`.
-- [ ] Delete dialog test proving preflight warning counts render.
+- [ ] Mutation test proving successful save refreshes the shared show queries.
+- [ ] Delete test proving `SHOW_ALREADY_STARTED` renders the correct error state.
+- [ ] Route-level test proving CRUD actions are on `/studios/$studioId/shows`, not `show-operations`.
 
 ## Verification
 
@@ -256,4 +381,5 @@ Do not silently discard the mutation or auto-close the dialog.
 
 - Because the DB model still requires client/type/standard/status, the studio create dialog cannot be a lightweight name/time-only composer in this slice.
 - The existing admin field hooks should not be shared into studio management until their data sources are parameterized; copying them blindly would reintroduce `/admin/*` dependency.
-- If the page route starts growing again, extract the management-dialog state into a view-model hook first rather than inflating the route file.
+- Studio show edits intentionally follow last-write-wins while Google Sheets schedule upload/publish remains the dominant show-writing workflow. If manual show editing frequency rises, revisit conflict handling together with the backend concurrency strategy.
+- If the CRUD page route starts growing again, extract the management-dialog state into a view-model hook first rather than inflating the route file.

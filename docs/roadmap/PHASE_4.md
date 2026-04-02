@@ -29,7 +29,7 @@ Single source of truth for all Phase 4 features. Each row links to its PRD (pre-
 | 1b  | Studio creator roster CRUD               | [feature](../features/studio-creator-roster.md)                    | ✅ Implemented (PR #30)           | 1      | Roster + compensation defaults + inactive enforcement                                                                     |
 | 1c  | Studio member roster CRUD                | [feature](../features/studio-member-roster.md)                     | ✅ Shipped (PR #28)               | 1      | `baseHourlyRate` editing, self-demotion guard                                                                             |
 | 1d  | Studio creator onboarding + roster-first | [feature](../features/studio-creator-onboarding.md)                | ✅ Implemented (PR #32)           | 1      | Fixes roster enforcement bug; removes `/system/*` dependency; unblocks Wave 2                                             |
-| 1e  | Studio show management                   | [PRD](../prd/studio-show-management.md)                            | 🔲 Planned                        | 1+     | No deps. Highest-impact studio autonomy gap                                                                               |
+| 1e  | Studio show management                   | [PRD](../prd/studio-show-management.md)                            | 🔲 Planned                        | 1+     | No deps. Highest-impact studio autonomy gap. Studio delete is allowed only before the show starts. V1 update semantics are last-write-wins. |
 | 1f  | Studio schedule management               | [PRD](../prd/studio-schedule-management.md)                        | 🔲 Planned                        | 1+     | Benefits from 1e. Schedule CRUD + publish + snapshots                                                                     |
 | R   | Economics cost model review              | —                                                                  | ⏸️ Deferred                       | Post-1 | Gate: Wave 1 complete. Review bonus/OT/allowance cost components                                                          |
 | R+  | Compensation line items                  | [PRD](../prd/compensation-line-items.md)                           | 🔲 Planned                        | Post-1 | `CompensationLineItem` + `CompensationTarget` schema, CRUD, economics integration                                         |
@@ -195,7 +195,7 @@ Post-ship: promote PRD → docs/features/, run knowledge-sync
 - [x] Studio member roster with `baseHourlyRate` editing
 - [x] Studio creator roster CRUD with compensation defaults
 - [x] Studio-side creator onboarding outside `/system/*` with roster-first assignment enforcement
-- [ ] Studio show CRUD — studios can create, update, and delete shows
+- [ ] Studio show CRUD — studios can create, update, and delete shows before start time
 - [ ] Studio schedule management — studios can create, validate, publish schedules
 - [ ] Compensation line items (`CompensationLineItem` + `CompensationTarget`) with economics integration
 - [ ] Show planning export (pre-show, with cost column)

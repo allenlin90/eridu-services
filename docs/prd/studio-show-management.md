@@ -54,19 +54,21 @@ Key unanswered questions:
 1. **Studio-scoped show creation**
    - Studio admins and managers can create shows from `/studios/$studioId/shows`.
    - Show is automatically scoped to the current studio (no cross-studio creation).
-   - Required fields: `name`, `startTime`, `endTime`
-   - Optional fields: `clientUid`, `showTypeUid`, `showStandardUid`, `showStatusUid`, `roomUid`, `metadata`, `platforms[]`
+   - Required fields: `name`, `startTime`, `endTime`, `clientId`, `showTypeId`, `showStandardId`, `showStatusId`
+   - Optional fields: `externalId`, `studioRoomId`, `metadata`, `platformIds[]`
    - Platform assignments can be set at creation time.
+   - If a soft-deleted show already exists for the same external identity, the record is restored instead of creating a duplicate row.
 
 2. **Studio-scoped show update**
    - Studio admins and managers can update show details (name, times, client, type, standard, status, room, metadata).
    - Platform assignment management (add/remove) at studio level.
-   - Version-guarded updates for optimistic concurrency.
+   - Updates follow last-write-wins behavior in v1.
 
 3. **Studio-scoped show soft-delete**
    - Studio admins only (managers cannot delete).
    - Soft-delete only — historical data preserved for economics and reporting.
-   - Shows with active tasks or submitted reports should warn before delete (not hard-block in v1).
+   - Delete is allowed only before the show's `startTime`.
+   - If the show has already started, delete is rejected.
 
 4. **Studio-scoped platform management on shows**
    - Add/remove platforms from shows at studio level.
@@ -93,18 +95,22 @@ Key unanswered questions:
 
 1. A studio admin or manager opens `/studios/$studioId/shows`.
 2. They click `Create Show`.
-3. They fill in show name, times, and optionally select client, type, standard, status, room, and platforms.
+3. They fill in show name, times, client, type, standard, and status, then optionally select room and platforms.
 4. The system creates the show scoped to the current studio.
 5. The show immediately appears in the studio show list and is available for creator assignment.
-6. The admin/manager can later edit the show to update details or manage platform assignments.
-7. A studio admin can soft-delete a show that is no longer needed.
+6. The admin/manager can later edit the show from the same CRUD list view to update details or manage platform assignments.
+7. A studio admin can soft-delete a show only before it starts.
+8. Task generation, readiness review, and task assignment remain on the separate `/studios/$studioId/show-operations` workflow page.
 
 ## Product Decisions
 
 - **Studio-scoped creation** — shows are always created within a studio context; the studio FK is set automatically from the route, not from request body.
+- **Restore by `externalId`** — when create includes an `externalId` that matches a soft-deleted show identity, the system restores that row and updates its mutable fields from the latest payload instead of inserting a new record.
 - **Manager write access** — managers create and update shows as a routine operational task; only admins can delete.
+- **Separate FE purpose-built views** — show CRUD lives on a dedicated show-management list page; task generation/readiness/assignment stay on the existing show-operations page. They may reuse the same backend endpoints and cache families.
 - **Platform assignment at studio level** — platforms are operational metadata that studios manage; no reason to keep this admin-only.
-- **Soft-delete only** — shows accumulate historical cost and task data; hard delete would break economics and reporting.
+- **Soft-delete only, pre-start only** — shows accumulate historical cost and task data; hard delete would break economics and reporting, and studio delete is limited to shows that have not started yet.
+- **Last-write-wins for v1 studio edits** — explicit optimistic locking is deferred because manual studio show CRUD remains a relatively rare path while Google Sheets schedule upload/publish is still the dominant show-creation flow.
 - **No show transfer** — shows belong to one studio; cross-studio movement is a governance action for system admins only.
 
 ## API Shape
@@ -115,7 +121,6 @@ Key unanswered questions:
 POST   /studios/:studioId/shows
 PATCH  /studios/:studioId/shows/:showId
 DELETE /studios/:studioId/shows/:showId
-PATCH  /studios/:studioId/shows/:showId/platforms/replace
 ```
 
 ### Create Show
@@ -127,16 +132,17 @@ POST /studios/:studioId/shows
 Request:
 ```json
 {
+  "external_id": "erp_show_20260401_morning_live",
   "name": "Morning Live Stream",
   "start_time": "2026-04-01T09:00:00Z",
   "end_time": "2026-04-01T12:00:00Z",
-  "client_uid": "client_abc123",
-  "show_type_uid": "showtype_xyz",
-  "show_standard_uid": "standard_abc",
-  "show_status_uid": "status_draft",
-  "room_uid": "room_a1",
+  "client_id": "client_abc123",
+  "show_type_id": "showtype_xyz",
+  "show_standard_id": "standard_abc",
+  "show_status_id": "status_draft",
+  "studio_room_id": "room_a1",
   "metadata": {},
-  "platform_uids": ["platform_tiktok", "platform_youtube"]
+  "platform_ids": ["platform_tiktok", "platform_youtube"]
 }
 ```
 
@@ -148,7 +154,7 @@ Response: canonical show DTO (same shape as existing GET response).
 PATCH /studios/:studioId/shows/:showId
 ```
 
-Request: partial update of show fields + optional `version` for optimistic locking.
+Request: partial update of show fields.
 
 ### Delete Show
 
@@ -163,17 +169,17 @@ Soft-delete. Returns 204 on success.
 | Code | HTTP Status | Condition |
 | --- | --- | --- |
 | `SHOW_NOT_FOUND` | 404 | Show does not exist or belongs to different studio |
-| `SHOW_VERSION_CONFLICT` | 409 | Optimistic locking version mismatch |
-| `SHOW_HAS_SUBMITTED_REPORTS` | 400 | Warning: show has submitted task reports (delete proceeds but warns) |
+| `SHOW_ALREADY_STARTED` | 400 | Show `startTime` is in the past or present, so studio delete is not allowed |
 
 ## Acceptance Criteria
 
 - [ ] Studio ADMIN and MANAGER can create shows scoped to their studio from `/studios/$studioId/shows`.
+- [ ] Studio create restores a soft-deleted show when the payload carries the same `external_id`, and the restored record follows the latest payload for mutable fields.
 - [ ] Studio ADMIN and MANAGER can update show details (name, times, client, type, standard, status, room, metadata).
-- [ ] Studio ADMIN can soft-delete shows; MANAGER cannot.
+- [ ] Studio ADMIN can soft-delete shows before start time; MANAGER cannot.
 - [ ] Studio ADMIN and MANAGER can manage platform assignments on shows.
 - [ ] Shows are automatically scoped to the studio from the route — no cross-studio creation.
-- [ ] Version-guarded updates prevent concurrent overwrites.
+- [ ] Studio update follows explicit last-write-wins behavior in v1, and the known overwrite risk is documented.
 - [ ] All existing read endpoints and creator assignment flows remain unchanged.
 - [ ] `/admin/shows` retains full capability for system admins.
 - [ ] MEMBER role cannot create/update/delete shows (403).

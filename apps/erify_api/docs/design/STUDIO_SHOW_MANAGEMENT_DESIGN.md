@@ -12,8 +12,8 @@ Ship studio-owned show lifecycle management without reusing `/admin/shows`:
 
 - create studio-scoped shows from the studio workspace
 - update show metadata and platform assignments inside the same studio boundary
-- soft-delete shows with role-aware access and explicit impact warnings
-- satisfy the PRD's optimistic-concurrency requirement with a real show version column
+- soft-delete shows before start time under a simple studio-side business rule
+- keep the write flow simple while accepting last-write-wins behavior for this slice
 
 ## Current-State Evaluation
 
@@ -21,16 +21,16 @@ The current backend is close on persistence primitives, but not on studio-owned 
 
 - `POST/PATCH/DELETE /admin/shows` already exist and reuse `ShowOrchestrationService`.
 - `GET /studios/:studioId/shows*` is read-only plus creator assignment operations.
-- `Show` does **not** have a `version` column, so optimistic locking is impossible today.
 - `GET /studios/:studioId/shows/:id` returns the base show DTO only; it does not include platform assignments needed for editing.
 - `GET /studios/:studioId/show-lookups` omits `clients` and `studio_rooms`, so studio-side forms still depend on admin/global lookups.
 - The shared `@eridu/api-types/shows` contract is admin-shaped and does not express studio-scoped write DTOs.
 - The PRD marks `client`, `type`, `standard`, and `status` as optional on create, but the current `Show` model requires all four relations at the database level.
+- The current dominant show-write path is still schedule-driven batch publishing from Google Sheets, so manual studio CRUD is not the primary concurrency hotspot today.
 
 ## Final Design Decisions
 
-1. `Show.version` is added in this slice.
-   This is required to make the PRD's version-guarded update acceptance criteria real.
+1. Studio show updates use last-write-wins in this slice.
+   We will not add a `Show.version` column or `updated_at` compare-and-swap token for v1 studio CRUD.
 
 2. Studio show writes get their own DTOs.
    Do not reuse the admin `createShowWithAssignments` / `updateShowWithAssignments` payloads for studio routes.
@@ -43,13 +43,16 @@ The current backend is close on persistence primitives, but not on studio-owned 
 
 5. Create-time required fields follow the current DB constraints, not the original PRD wording.
    Final create requirements: `name`, `start_time`, `end_time`, `client_id`, `show_type_id`, `show_standard_id`, `show_status_id`.
-   Optional: `studio_room_id`, `metadata`, `platform_ids`.
+   Optional: `external_id`, `studio_room_id`, `metadata`, `platform_ids`.
 
-6. Delete warnings use an explicit preflight endpoint.
-   `DELETE` stays `204 No Content`. A separate `GET .../delete-impact` endpoint provides the counts the UI needs before confirming deletion.
+6. Studio delete uses a hard time gate, not a warning/preflight flow.
+   A studio admin can delete a show only when `now < show.startTime`. If the show has started, the delete call returns a business error.
 
-7. Studio detail becomes an enriched superset response.
-   `GET /studios/:studioId/shows/:showId` will include `version` and current platform assignments, while staying compatible with current read consumers that only use the base show fields.
+7. Create restores by external identity.
+   If create receives an `external_id` and a soft-deleted show already exists under the same unique identity, restore that row and apply the latest payload instead of inserting a new show record.
+
+8. Studio detail becomes an enriched superset response.
+   `GET /studios/:studioId/shows/:showId` will include current platform assignments needed by the edit form, while staying compatible with current read consumers that only use the base show fields.
 
 ## API Surface
 
@@ -57,10 +60,16 @@ The current backend is close on persistence primitives, but not on studio-owned 
 | --- | --- | --- |
 | `GET /studios/:studioId/show-lookups` | Studio-safe lookup bundle for show forms | All studio members |
 | `GET /studios/:studioId/shows/:showId` | Enriched show detail for read + edit | All studio members |
-| `GET /studios/:studioId/shows/:showId/delete-impact` | Warning counts for delete confirmation | `ADMIN` |
+| `GET /studios/:studioId/shows` | Shared show list/read model for CRUD and operations surfaces | All studio members |
 | `POST /studios/:studioId/shows` | Create a studio-scoped show | `ADMIN`, `MANAGER` |
-| `PATCH /studios/:studioId/shows/:showId` | Update show metadata + platform assignments with optimistic locking | `ADMIN`, `MANAGER` |
-| `DELETE /studios/:studioId/shows/:showId` | Soft-delete a show | `ADMIN` |
+| `PATCH /studios/:studioId/shows/:showId` | Update show metadata + platform assignments | `ADMIN`, `MANAGER` |
+| `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show | `ADMIN` |
+
+Design note:
+
+- the backend does **not** split CRUD and operations into separate endpoint families
+- FE may present separate pages, but both pages should reuse the same studio show read APIs and cache families
+- `GET /studios/:studioId/shows` stays a shared superset read model; page-specific filters, defaults, and presentation rules stay in FE route state rather than creating a second backend list endpoint
 
 ## Shared Contract Plan
 
@@ -68,17 +77,16 @@ The current backend is close on persistence primitives, but not on studio-owned 
 
 Add or update shared show contracts:
 
-- extend `showApiResponseSchema` with `version`
 - add `studioShowPlatformSummarySchema`
 - add `studioShowDetailSchema`
 - add `createStudioShowInputSchema`
 - add `updateStudioShowInputSchema`
-- add `studioShowDeleteImpactSchema`
 
 Recommended wire shapes:
 
 ```typescript
 createStudioShowInputSchema = z.object({
+  external_id: z.string().min(1).optional(),
   name: z.string().min(1),
   start_time: z.iso.datetime(),
   end_time: z.iso.datetime(),
@@ -92,7 +100,6 @@ createStudioShowInputSchema = z.object({
 });
 
 updateStudioShowInputSchema = z.object({
-  version: z.number().int().positive(),
   name: z.string().min(1).optional(),
   start_time: z.iso.datetime().optional(),
   end_time: z.iso.datetime().optional(),
@@ -109,7 +116,7 @@ updateStudioShowInputSchema = z.object({
 Notes:
 
 - `platform_ids` is final for the studio contract. This keeps the studio form scoped to assignment membership, not admin-only platform metadata.
-- `version` is required on update.
+- `external_id` is optional. When present, it is used for restore-on-create identity matching.
 - `client_id`, `show_type_id`, `show_standard_id`, and `show_status_id` stay required on create because the DB model still requires them.
 
 ### `packages/api-types/src/task-management/task.schema.ts`
@@ -121,32 +128,12 @@ Extend the existing `studioShowLookupsDto` so the studio app can create/edit sho
 
 This preserves the existing lookup route and cache family instead of adding multiple form-only endpoints.
 
-## Database And Model Plan
-
-### Prisma
-
-Update `apps/erify_api/prisma/schema.prisma`:
-
-```prisma
-model Show {
-  // ...
-  version Int @default(1)
-  // ...
-}
-```
-
-Implementation note:
-
-- generate the migration with Prisma tooling
-- backfill existing rows to `1` through the generated migration
-- do not hand-write the migration
+## Model Plan
 
 ### `apps/erify_api/src/models/show/schemas/show.schema.ts`
 
 Add:
 
-- `version` to `showSchema`
-- `version` to `showDto`
 - new studio-specific detail DTO that extends the base show DTO with `platforms`
 
 Recommended response shape:
@@ -154,7 +141,6 @@ Recommended response shape:
 ```typescript
 studioShowDetailDto = showWithPlatformsSchema.transform((obj) => ({
   ...showDto.parse(obj),
-  version: obj.version,
   platforms: obj.showPlatforms.map((item) => ({
     id: item.platform.uid,
     name: item.platform.name,
@@ -168,16 +154,55 @@ studioShowDetailDto = showWithPlatformsSchema.transform((obj) => ({
 
 Add:
 
-- `updateWithVersionCheck(uid, version, data, include?)`
+- `updateStudioManagedShow(uid, data, include?)`
+- `findDeletedByExternalIdentity(clientUid, externalId, studioUid?)`
+- `restoreByUid(uid, data, include?)`
 
 Behavior:
 
-1. resolve the active show first
-2. `updateMany` with `where: { id, deletedAt: null, version }`
-3. increment `version`
-4. if `count === 0`, load current version and throw `VersionConflictError`
+1. resolve the active studio-scoped show
+2. update the mutable show fields directly
+3. return the latest persisted row
 
-This should mirror the existing optimistic-locking pattern already used in `StudioCreatorRepository`.
+Non-goal:
+
+- this slice does not attempt to detect concurrent overwrite conflicts for manual studio edits
+
+### Restore-On-Create Rule
+
+Create flow should support soft-delete recovery by external identity.
+
+Recommended rule:
+
+```text
+createShow(studioUid, payload)
+1. if payload.externalId is absent -> normal create
+2. look up a soft-deleted show by the external identity key
+3. if not found -> normal create
+4. if found -> restore that row, clear deletedAt, and overwrite mutable fields from the latest payload
+5. sync platform assignments from the latest payload
+```
+
+Identity key:
+
+- existing schema suggests `clientId + externalId` as the stable unique pair
+- studio scoping should still be validated during restore so a studio route cannot restore a show into a different studio
+
+Mutable fields updated on restore:
+
+- `name`
+- `startTime`
+- `endTime`
+- `studioId`
+- `studioRoomId`
+- `showTypeId`
+- `showStatusId`
+- `showStandardId`
+- `metadata`
+
+Non-goal:
+
+- this is restore-on-create for deleted rows, not a general upsert for active rows
 
 ### `ShowPlatformService` Or Shared Platform Sync Helper
 
@@ -203,11 +228,11 @@ Responsibilities:
 
 - resolve and validate studio scope
 - create shows with `studioId` forced from the route
-- update shows through repository-level optimistic locking
+- restore soft-deleted shows by `external_id` when applicable
+- update shows through a simple last-write-wins path
 - replace platform membership
 - fetch enriched studio show detail
-- compute delete preflight counts
-- soft-delete the show and soft-delete active `ShowPlatform` / `ShowCreator` join rows
+- soft-delete the show and soft-delete active `ShowPlatform` / `ShowCreator` join rows when the show has not started yet
 
 Why a dedicated service:
 
@@ -215,25 +240,25 @@ Why a dedicated service:
 - creator assignment must remain excluded from this slice
 - studio scope checks should not be duplicated across controller methods
 
-## Delete-Impact Preflight
+## Delete Rule
 
-Add a small studio-only preflight endpoint instead of overloading `DELETE`.
+Studio delete is allowed only when the show has not started yet.
 
-Recommended response:
+Recommended service rule:
 
-```json
-{
-  "active_task_count": 3,
-  "submitted_report_count": 2
-}
+```text
+deleteShow(studioUid, showUid)
+1. load the studio-scoped show
+2. if show.startTime <= now, throw SHOW_ALREADY_STARTED
+3. soft-delete the show
+4. soft-delete active ShowPlatform and ShowCreator join rows
 ```
 
-Computation rules:
+Why this rule:
 
-- `active_task_count`: tasks linked to the show and not soft-deleted, with status not in terminal states
-- `submitted_report_count`: count based on the same submitted-task semantics already used by task-reporting, via a dedicated helper or repository method instead of copy-pasting status logic
-
-If both counts are zero, the endpoint still returns `200` with zero values.
+- it matches the current business decision cleanly
+- it avoids ambiguous warning UX
+- it aligns with the idea that historical or in-progress shows should not be studio-deleted
 
 ## Controller Plan
 
@@ -242,13 +267,12 @@ If both counts are zero, the endpoint still returns `200` with zero values.
 Keep existing reads. Add:
 
 - `@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])` on create/update handlers
-- `@StudioProtected([STUDIO_ROLE.ADMIN])` on delete and delete-impact handlers
+- `@StudioProtected([STUDIO_ROLE.ADMIN])` on delete handlers
 
 Recommended handler list:
 
 - `createShow()`
 - `updateShow()`
-- `getDeleteImpact()`
 - `deleteShow()`
 
 Keep read routes unchanged in path to avoid frontend route churn.
@@ -257,32 +281,30 @@ Keep read routes unchanged in path to avoid frontend route churn.
 
 ### BE-1 Shared Contracts
 
-- [ ] Add `version` to `showApiResponseSchema`.
 - [ ] Add `createStudioShowInputSchema`.
 - [ ] Add `updateStudioShowInputSchema`.
 - [ ] Add `studioShowDetailSchema`.
-- [ ] Add `studioShowDeleteImpactSchema`.
 - [ ] Extend `studioShowLookupsDto` with `clients` and `studio_rooms`.
+- [ ] Add optional `external_id` to the studio create contract.
 
-### BE-2 Prisma And Model Wiring
+### BE-2 Model Wiring
 
-- [ ] Add `version Int @default(1)` to `Show`.
-- [ ] Generate Prisma migration.
 - [ ] Update `showSchema` / `showDto` transforms.
 - [ ] Add studio detail DTO with platform summary.
 
 ### BE-3 Repository And Services
 
-- [ ] Add `ShowRepository.updateWithVersionCheck()`.
+- [ ] Add `ShowRepository.updateStudioManagedShow()`.
+- [ ] Add repository helpers for restore-by-external-identity.
 - [ ] Extract shared show-platform replacement logic from the admin path.
 - [ ] Add `StudioShowManagementService`.
-- [ ] Add delete-impact aggregation helper.
+- [ ] Add pre-start delete validation with `SHOW_ALREADY_STARTED`.
+- [ ] Add restore-on-create behavior for soft-deleted shows with matching `external_id`.
 
 ### BE-4 Controller Wiring
 
 - [ ] Add studio create endpoint.
 - [ ] Add studio update endpoint.
-- [ ] Add studio delete-impact endpoint.
 - [ ] Add studio delete endpoint.
 - [ ] Enrich `GET /studios/:studioId/shows/:showId`.
 - [ ] Extend `GET /studios/:studioId/show-lookups`.
@@ -290,10 +312,12 @@ Keep read routes unchanged in path to avoid frontend route churn.
 ### BE-5 Tests
 
 - [ ] Contract tests in `@eridu/api-types`.
-- [ ] Controller tests for create/update/delete/delete-impact guards and payloads.
+- [ ] Controller tests for create/update/delete guards and payloads.
 - [ ] Service tests for studio scope enforcement.
-- [ ] Repository test for optimistic-locking conflict path.
+- [ ] Repository tests for last-write-wins update behavior.
 - [ ] Regression tests proving platform sync preserves unchanged rows and restores soft-deleted rows.
+- [ ] Delete tests proving started shows return `SHOW_ALREADY_STARTED`.
+- [ ] Create tests proving a soft-deleted show is restored by `external_id` and updated from the latest payload.
 
 ## Verification
 
@@ -308,5 +332,6 @@ Keep read routes unchanged in path to avoid frontend route churn.
 ## Risks And Follow-Ups
 
 - The PRD's original "name/time-only create" wording is intentionally narrowed here to match the current non-null schema. If product still wants ultra-light create, that needs a separate reference-data/defaults decision.
-- Admin show update remains non-versioned in the current implementation; this design adds the reusable repository primitive so admin parity can be adopted later without redesign.
+- Studio show updates intentionally use last-write-wins. A manual studio edit can be overwritten by another later studio edit or by a schedule-driven publish/import flow while Google Sheets remains the dominant source of show records.
+- If manual studio editing becomes common enough to create real overwrite pain, revisit this slice with a dedicated concurrency token strategy rather than retrofitting hidden heuristics.
 - Studio room lookup support is bundled into `show-lookups` to minimize new endpoints. If room lists become too large later, split room search into a dedicated studio endpoint in a follow-up.
