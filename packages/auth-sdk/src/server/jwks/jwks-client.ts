@@ -4,6 +4,8 @@
 
 import type { JwksResponse } from './types.js';
 
+const FETCH_TIMEOUT_MS = 5000;
+
 /**
  * Fetches JWKS from the auth service endpoint
  */
@@ -14,12 +16,21 @@ export async function fetchJwks(
   const url = `${authServiceUrl}${jwksPath}`;
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       throw new Error(
