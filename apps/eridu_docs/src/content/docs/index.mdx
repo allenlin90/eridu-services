@@ -1,40 +1,36 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: Eridu Knowledge Base
+description: User guides, SOPs, and technical references for Eridu operators and product teams.
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
+  tagline: Workflow-first documentation for studio operators, planners, and internal product teams.
   image:
     file: ../../assets/houston.webp
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: Scheduling & Shows
+      link: /scheduling/google-sheets-publishing/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
-      icon: external
+    - text: Assets & Uploads
+      link: /assets/file-uploads/
+      icon: open-book
       variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
+## Start Here
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+	<Card title="Getting Started" icon="document">
+		Start with onboarding and app-relationship context before diving into feature-specific workflows.
 	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
+	<Card title="Scheduling & Shows" icon="pencil">
+		Keep scheduling guides, SOPs, and FAQs together so one workflow is not split across multiple top-level buckets.
 	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Assets & Uploads" icon="open-book">
+		Use asset-specific workflow pages for operational upload behavior and storage rules.
 	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	<Card title="Technical Reference" icon="open-book">
+		Use the Reference section for implementation-facing explanations that support, but do not drive, operator navigation.
 	</Card>
 </CardGrid>
