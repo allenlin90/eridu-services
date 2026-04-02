@@ -8,6 +8,7 @@ import { PlatformService } from '@/models/platform/platform.service';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
+import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 
 describe('studioLookupController', () => {
   let controller: StudioLookupController;
@@ -16,6 +17,7 @@ describe('studioLookupController', () => {
   let showStandardService: jest.Mocked<ShowStandardService>;
   let showStatusService: jest.Mocked<ShowStatusService>;
   let platformService: jest.Mocked<PlatformService>;
+  let studioRoomService: jest.Mocked<StudioRoomService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -41,6 +43,10 @@ describe('studioLookupController', () => {
           provide: PlatformService,
           useValue: { listPlatforms: jest.fn() },
         },
+        {
+          provide: StudioRoomService,
+          useValue: { getStudioRooms: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -50,6 +56,28 @@ describe('studioLookupController', () => {
     showStandardService = module.get(ShowStandardService);
     showStatusService = module.get(ShowStatusService);
     platformService = module.get(PlatformService);
+    studioRoomService = module.get(StudioRoomService);
+  });
+
+  it('should return the studio show lookup bundle with clients and studio rooms', async () => {
+    clientService.listClients.mockResolvedValue({ data: [], total: 0 } as any);
+    showTypeService.listShowTypes.mockResolvedValue({ data: [], total: 0 } as any);
+    showStandardService.listShowStandards.mockResolvedValue({ data: [], total: 0 } as any);
+    showStatusService.getShowStatuses.mockResolvedValue({ data: [], total: 0 } as any);
+    platformService.listPlatforms.mockResolvedValue({ data: [], total: 0 } as any);
+    studioRoomService.getStudioRooms.mockResolvedValue({ data: [], total: 0 } as any);
+
+    await controller.getShowLookups('std_1');
+
+    expect(clientService.listClients).toHaveBeenCalledWith({
+      take: 200,
+      include_deleted: false,
+    });
+    expect(studioRoomService.getStudioRooms).toHaveBeenCalledWith({
+      take: 200,
+      includeDeleted: false,
+      studioUid: 'std_1',
+    });
   });
 
   it('should list studio show types', async () => {

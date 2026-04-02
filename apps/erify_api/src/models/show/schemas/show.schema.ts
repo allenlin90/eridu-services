@@ -2,7 +2,10 @@ import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { showApiResponseSchema } from '@eridu/api-types/shows';
+import {
+  showApiResponseSchema,
+  studioShowDetailSchema,
+} from '@eridu/api-types/shows';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
@@ -74,6 +77,14 @@ const showStatusRelationSchema = z.object({
 const showStandardRelationSchema = z.object({
   uid: z.string().startsWith(ShowStandardService.UID_PREFIX),
   name: z.string(),
+});
+
+const showPlatformSummaryRelationSchema = z.object({
+  uid: z.string(),
+  platform: z.object({
+    uid: z.string(),
+    name: z.string(),
+  }).optional(),
 });
 
 // Internal schema for database entity
@@ -284,6 +295,21 @@ export const showWithTaskSummaryInclude = {
   },
 } as const satisfies Prisma.ShowInclude;
 
+export const studioShowDetailInclude = {
+  ...showDtoListInclude,
+  showPlatforms: {
+    where: { deletedAt: null },
+    include: {
+      platform: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.ShowInclude;
+
 // API output schema (transforms to snake_case)
 // Uses shared schema from @eridu/api-types for consistency
 export const showDto = showWithRelationsSchema
@@ -310,6 +336,19 @@ export const showDto = showWithRelationsSchema
     updated_at: obj.updatedAt.toISOString(),
   }))
   .pipe(showApiResponseSchema);
+
+export const studioShowDetailDto = showWithRelationsSchema
+  .extend({
+    showPlatforms: z.array(showPlatformSummaryRelationSchema).optional(),
+  })
+  .transform((obj) => ({
+    ...showDto.parse(obj),
+    platforms: (obj.showPlatforms ?? []).map((item) => ({
+      id: item.platform?.uid ?? item.uid,
+      name: item.platform?.name ?? '',
+    })),
+  }))
+  .pipe(studioShowDetailSchema);
 
 export const listShowsFilterSchema = z.object({
   name: z.string().optional(),
@@ -370,3 +409,4 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
 export class CreateShowDto extends createZodDto(transformCreateShowSchema) {}
 export class UpdateShowDto extends createZodDto(updateShowSchema) {}
 export class ShowDto extends createZodDto(showDto) {}
+export class StudioShowDetailDto extends createZodDto(studioShowDetailDto) {}

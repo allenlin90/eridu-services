@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { clientApiResponseSchema } from '../clients/index.js';
 import { UID_PREFIXES } from '../constants.js';
 import { paginationBaseSchema, transformPagination } from '../pagination/index.js';
 import { platformApiResponseSchema } from '../platforms/index.js';
@@ -7,6 +8,7 @@ import { showStandardApiResponseSchema } from '../show-standards/index.js';
 import { showStatusApiResponseSchema } from '../show-statuses/index.js';
 import { showTypeApiResponseSchema } from '../show-types/index.js';
 import { showApiResponseSchema } from '../shows/index.js';
+import { studioRoomApiResponseSchema } from '../studio-rooms/index.js';
 
 /**
  * Task Status enum
@@ -312,10 +314,12 @@ export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;
  * Studio show lookup bundle for filter dropdown options.
  */
 export const studioShowLookupsDto = z.object({
+  clients: z.array(clientApiResponseSchema),
   show_types: z.array(showTypeApiResponseSchema),
   show_standards: z.array(showStandardApiResponseSchema),
   show_statuses: z.array(showStatusApiResponseSchema),
   platforms: z.array(platformApiResponseSchema),
+  studio_rooms: z.array(studioRoomApiResponseSchema),
 });
 
 export type StudioShowLookupsDto = z.infer<typeof studioShowLookupsDto>;

@@ -24,6 +24,8 @@ import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { ListShowTypesQueryDto, showTypeDto } from '@/models/show-type/schemas/show-type.schema';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
 import { StudioService } from '@/models/studio/studio.service';
+import { studioRoomDto } from '@/models/studio-room/schemas/studio-room.schema';
+import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { studioShowLookupsDto } from '@/models/task/schemas/task.schema';
 
 const DEFAULT_LOOKUP_LIMIT = 200;
@@ -38,6 +40,7 @@ export class StudioLookupController extends BaseStudioController {
     private readonly showStandardService: ShowStandardService,
     private readonly showStatusService: ShowStatusService,
     private readonly platformService: PlatformService,
+    private readonly studioRoomService: StudioRoomService,
   ) {
     super();
   }
@@ -46,20 +49,31 @@ export class StudioLookupController extends BaseStudioController {
   @ReadBurstThrottle()
   @ZodResponse(studioShowLookupsDto)
   async getShowLookups(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
   ) {
-    const [showTypes, showStandards, showStatuses, platforms] = await Promise.all([
+    const [clients, showTypes, showStandards, showStatuses, platforms, studioRooms] = await Promise.all([
+      this.clientService.listClients({
+        take: DEFAULT_LOOKUP_LIMIT,
+        include_deleted: false,
+      }),
       this.showTypeService.listShowTypes({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStandardService.listShowStandards({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStatusService.getShowStatuses({ take: DEFAULT_LOOKUP_LIMIT }),
       this.platformService.listPlatforms({ take: DEFAULT_LOOKUP_LIMIT }),
+      this.studioRoomService.getStudioRooms({
+        take: DEFAULT_LOOKUP_LIMIT,
+        includeDeleted: false,
+        studioUid: studioId,
+      }),
     ]);
 
     return {
+      clients: clients.data.map((item) => clientDto.parse(item)),
       show_types: showTypes.data.map((item) => showTypeDto.parse(item)),
       show_standards: showStandards.data.map((item) => showStandardDto.parse(item)),
       show_statuses: showStatuses.data.map((item) => showStatusDto.parse(item)),
       platforms: platforms.data.map((item) => platformDto.parse(item)),
+      studio_rooms: studioRooms.data.map((item) => studioRoomDto.parse(item)),
     };
   }
 

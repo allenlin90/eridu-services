@@ -26,7 +26,7 @@ import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
-import { showDto } from '@/models/show/schemas/show.schema';
+import { studioShowDetailDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import {
@@ -65,7 +65,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id')
-  @ZodResponse(showDto)
+  @ZodResponse(studioShowDetailDto)
   async show(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,

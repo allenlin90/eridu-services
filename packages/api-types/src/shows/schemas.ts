@@ -38,6 +38,15 @@ export const showApiResponseSchema = z.object({
 export const showListResponseSchema
   = createPaginatedResponseSchema(showApiResponseSchema);
 
+export const studioShowPlatformSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export const studioShowDetailSchema = showApiResponseSchema.extend({
+  platforms: z.array(studioShowPlatformSummarySchema).default([]),
+});
+
 /**
  * Show List Query Parameters Schema
  */
@@ -135,6 +144,65 @@ export const updateShowInputSchema = z
   .refine(
     (data) => {
       // Only validate if both times are provided
+      if (data.start_time && data.end_time) {
+        return new Date(data.end_time) > new Date(data.start_time);
+      }
+      return true;
+    },
+    {
+      message: 'End time must be after start time',
+      path: ['end_time'],
+    },
+  );
+
+/**
+ * Studio create show input schema (snake_case - matches studio API input)
+ */
+export const createStudioShowInputSchema = z
+  .object({
+    external_id: z.string().min(1).optional(),
+    client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+    show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE),
+    show_status_id: z.string().startsWith(UID_PREFIXES.SHOW_STATUS),
+    show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD),
+    studio_room_id: z
+      .string()
+      .startsWith(UID_PREFIXES.STUDIO_ROOM)
+      .nullable()
+      .optional(),
+    name: z.string().min(1, 'Show name is required'),
+    start_time: z.iso.datetime(),
+    end_time: z.iso.datetime(),
+    metadata: z.record(z.string(), z.any()).optional(),
+    platform_ids: z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)).default([]),
+  })
+  .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
+    message: 'End time must be after start time',
+    path: ['end_time'],
+  });
+
+/**
+ * Studio update show input schema (snake_case - matches studio API input)
+ */
+export const updateStudioShowInputSchema = z
+  .object({
+    name: z.string().min(1, 'Show name is required').optional(),
+    start_time: z.iso.datetime().optional(),
+    end_time: z.iso.datetime().optional(),
+    client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional(),
+    show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE).optional(),
+    show_status_id: z.string().startsWith(UID_PREFIXES.SHOW_STATUS).optional(),
+    show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD).optional(),
+    studio_room_id: z
+      .string()
+      .startsWith(UID_PREFIXES.STUDIO_ROOM)
+      .nullable()
+      .optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
+    platform_ids: z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)).optional(),
+  })
+  .refine(
+    (data) => {
       if (data.start_time && data.end_time) {
         return new Date(data.end_time) > new Date(data.start_time);
       }

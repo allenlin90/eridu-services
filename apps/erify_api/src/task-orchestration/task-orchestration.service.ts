@@ -8,7 +8,10 @@ import { TaskGenerationProcessor } from './task-generation-processor.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { showDto, showDtoListInclude } from '@/models/show/schemas/show.schema';
+import {
+  showDto,
+  studioShowDetailInclude,
+} from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
@@ -258,7 +261,7 @@ export class TaskOrchestrationService {
    * Gets studio-scoped show details for task pages.
    */
   async getStudioShow(studioUid: string, showUid: string) {
-    const show = await this.showService.getShowById(showUid, showDtoListInclude);
+    const show = await this.showService.getShowById(showUid, studioShowDetailInclude);
 
     const studio = await this.studioService.findByUid(studioUid);
     if (!studio || show.studioId !== studio.id) {
