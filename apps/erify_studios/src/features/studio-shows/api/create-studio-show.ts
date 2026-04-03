@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { toast } from 'sonner';
 
 import type { CreateStudioShowInput, StudioShowDetail } from '@eridu/api-types/shows';
@@ -7,23 +6,9 @@ import type { CreateStudioShowInput, StudioShowDetail } from '@eridu/api-types/s
 import { studioShowKeys } from './get-studio-show';
 
 import { showLookupsKeys } from '@/features/shows/api/get-show-lookups';
+import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
 import { invalidateStudioTaskQueries } from '@/features/studio-shows/lib/invalidate-studio-task-queries';
 import { apiClient } from '@/lib/api/client';
-
-function getMutationErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error)) {
-    const message = error.response?.data?.message;
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return message;
-    }
-  }
-
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 export async function createStudioShow(
   studioId: string,

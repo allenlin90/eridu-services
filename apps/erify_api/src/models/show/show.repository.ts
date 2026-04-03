@@ -42,6 +42,17 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
+  async findByUidAndStudioUid<T extends Prisma.ShowInclude = Record<string, never>>(
+    uid: string,
+    studioUid: string,
+    include?: T,
+  ): Promise<Prisma.ShowGetPayload<{ include: T }> | null> {
+    return this.delegate.findFirst({
+      where: { uid, studio: { uid: studioUid }, deletedAt: null },
+      ...(include && { include }),
+    }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
+  }
+
   async findByName(name: string): Promise<Show | null> {
     return this.delegate.findFirst({
       where: { name, deletedAt: null },

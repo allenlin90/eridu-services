@@ -247,6 +247,28 @@ async doSomething(payload: unknown): Promise<X> {
   const data = someSchema.parse(payload); // ← move this to a DTO
 ```
 
+This rule also applies to **DTO composition**. When building a derived DTO schema (e.g., a detail DTO that extends a base DTO), do NOT call `.parse()` of the base DTO inside the derived transform. Instead, inline the transform logic so the object is only parsed once through a single `.pipe()` chain.
+
+```typescript
+// ❌ BAD: nested .parse() inside transform causes double validation
+export const detailDto = baseSchema.extend({ extra: z.string() })
+  .transform((obj) => ({
+    ...baseDto.parse(obj),   // ← re-runs full base validation
+    extra: obj.extra,
+  }))
+  .pipe(detailApiSchema);
+
+// ✅ GOOD: inline the transform, single parse pass
+export const detailDto = baseSchema.extend({ extra: z.string() })
+  .transform((obj) => ({
+    id: obj.uid,
+    name: obj.name,
+    // ... inline base fields directly
+    extra: obj.extra,
+  }))
+  .pipe(detailApiSchema);
+```
+
 ### Rule 4: Repository Owns Where-Clause Building
 
 The repository layer is responsible for building ORM-specific where clauses. Services pass domain-level parameters:

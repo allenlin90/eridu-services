@@ -1,29 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { toast } from 'sonner';
 
 import { studioShowKeys } from './get-studio-show';
 
+import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
 import { invalidateStudioTaskQueries } from '@/features/studio-shows/lib/invalidate-studio-task-queries';
 import { apiClient } from '@/lib/api/client';
 
-function getMutationErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error)) {
-    const message = error.response?.data?.message;
-    if (message === 'SHOW_ALREADY_STARTED') {
-      return 'Shows can only be deleted before the start time.';
-    }
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return message;
-    }
-  }
-
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
-}
+const DELETE_ERROR_MESSAGES: Record<string, string> = {
+  SHOW_ALREADY_STARTED: 'Shows can only be deleted before the start time.',
+};
 
 export async function deleteStudioShow(
   studioId: string,
@@ -47,7 +33,7 @@ export function useDeleteStudioShow(studioId: string) {
       toast.success('Show deleted');
     },
     onError: (error) => {
-      toast.error(getMutationErrorMessage(error, 'Failed to delete show'));
+      toast.error(getMutationErrorMessage(error, 'Failed to delete show', DELETE_ERROR_MESSAGES));
     },
   });
 }

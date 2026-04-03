@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
-import type { Prisma } from '@prisma/client';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PlatformRepository } from '@/models/platform/platform.repository';
@@ -17,6 +16,9 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+
+type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
+type ShowUpdateData = Parameters<ShowRepository['update']>[1];
 
 @Injectable()
 export class StudioShowManagementService {
@@ -100,11 +102,14 @@ export class StudioShowManagementService {
     studioUid: string,
     showUid: string,
   ): Promise<ShowWithPayload<typeof studioShowDetailInclude>> {
-    const show = await this.showService.getShowById(showUid, studioShowDetailInclude);
-    const studio = await this.studioService.getStudioById(studioUid);
+    const show = await this.showRepository.findByUidAndStudioUid(
+      showUid,
+      studioUid,
+      studioShowDetailInclude,
+    );
 
-    if (show.studioId !== studio.id) {
-      throw HttpError.forbidden('Show does not belong to this studio');
+    if (!show) {
+      throw HttpError.notFound('Show', showUid);
     }
 
     return show;
@@ -145,7 +150,7 @@ export class StudioShowManagementService {
   private buildCreatePayload(
     studioUid: string,
     dto: CreateStudioShowDto,
-  ): Omit<Prisma.ShowCreateInput, 'uid'> {
+  ): ShowCreateData {
     return {
       externalId: dto.externalId ?? null,
       name: dto.name,
@@ -166,7 +171,7 @@ export class StudioShowManagementService {
   private buildCreateRestorePayload(
     studioUid: string,
     dto: CreateStudioShowDto,
-  ): Prisma.ShowUpdateInput {
+  ): ShowUpdateData {
     return {
       externalId: dto.externalId ?? null,
       name: dto.name,
@@ -185,8 +190,8 @@ export class StudioShowManagementService {
     };
   }
 
-  private buildUpdatePayload(dto: UpdateStudioShowDto): Prisma.ShowUpdateInput {
-    const payload: Prisma.ShowUpdateInput = {};
+  private buildUpdatePayload(dto: UpdateStudioShowDto): ShowUpdateData {
+    const payload: ShowUpdateData = {};
 
     if (dto.name !== undefined)
       payload.name = dto.name;
@@ -229,10 +234,14 @@ export class StudioShowManagementService {
     }
 
     const platformIdByUid = new Map(foundPlatforms.map((platform) => [platform.uid, platform.id]));
+    // Fetch all assignments including soft-deleted ones so restore-on-add works correctly
     const existingAssignments = await this.showPlatformRepository.findMany({
       where: { showId },
     });
     const retainedPlatformIds = new Set<bigint>();
+
+    const toRestore: Array<{ id: bigint; liveStreamLink: string | null; platformShowId: string | null; viewerCount: number; metadata: object }> = [];
+    const toCreate: Array<{ uid: string; showId: bigint; platformId: bigint; metadata: object }> = [];
 
     for (const platformUid of uniquePlatformUids) {
       const platformId = platformIdByUid.get(platformUid);
@@ -250,7 +259,8 @@ export class StudioShowManagementService {
       }
 
       if (existingAssignment) {
-        await this.showPlatformRepository.restoreAndUpdateAssignment(existingAssignment.id, {
+        toRestore.push({
+          id: existingAssignment.id,
           liveStreamLink: existingAssignment.liveStreamLink,
           platformShowId: existingAssignment.platformShowId,
           viewerCount: existingAssignment.viewerCount,
@@ -259,7 +269,7 @@ export class StudioShowManagementService {
         continue;
       }
 
-      await this.showPlatformRepository.createAssignment({
+      toCreate.push({
         uid: this.showPlatformService.generateShowPlatformUid(),
         showId,
         platformId,
@@ -267,12 +277,28 @@ export class StudioShowManagementService {
       });
     }
 
-    const assignmentsToDelete = existingAssignments.filter(
-      (assignment) => assignment.deletedAt === null && !retainedPlatformIds.has(assignment.platformId),
-    );
+    const idsToDelete = existingAssignments
+      .filter((a) => a.deletedAt === null && !retainedPlatformIds.has(a.platformId))
+      .map((a) => a.platformId);
 
-    for (const assignment of assignmentsToDelete) {
-      await this.showPlatformRepository.softDelete({ id: assignment.id });
-    }
+    await Promise.all([
+      // Batch create new assignments
+      toCreate.length > 0
+        ? this.showPlatformRepository.createManyAssignments(toCreate)
+        : Promise.resolve(),
+      // Batch soft-delete removed assignments
+      idsToDelete.length > 0
+        ? this.showPlatformRepository.softDeleteByPlatformIds(showId, idsToDelete)
+        : Promise.resolve(),
+      // Restore soft-deleted assignments (individual updates needed for per-row data)
+      ...toRestore.map((item) =>
+        this.showPlatformRepository.restoreAndUpdateAssignment(item.id, {
+          liveStreamLink: item.liveStreamLink,
+          platformShowId: item.platformShowId,
+          viewerCount: item.viewerCount,
+          metadata: item.metadata,
+        }),
+      ),
+    ]);
   }
 }

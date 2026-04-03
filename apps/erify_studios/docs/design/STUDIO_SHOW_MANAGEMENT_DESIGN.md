@@ -35,7 +35,7 @@ The current studio frontend has the operations shell, but it mixes concerns for 
    - studio show management must not rewrite that page's layout, filters, or bulk task actions
 
 2. Keep route access aligned with the existing `shows` policy key.
-   Managers and admins can open both pages; only admins can delete.
+   Managers and admins can open both pages and perform all CRUD operations including delete.
 
 3. Show CRUD uses a table/list page with dialog-based create/edit/delete.
    The CRUD page owns lifecycle management. The operations page should not grow create/edit/delete controls.
@@ -47,7 +47,7 @@ The current studio frontend has the operations shell, but it mixes concerns for 
    Creator assignment remains on the dedicated creator-mapping surfaces.
 
 6. Delete uses a simple pre-start rule.
-   The UI should only offer delete to admins, and the backend will reject delete when the show has already started.
+   The UI should offer delete to admins and managers, and the backend will reject delete when the show has already started.
 
 7. The frontend follows the backend's last-write-wins rule.
    The form does not send a concurrency token in v1. Save success should simply refresh the shared show queries.
@@ -251,7 +251,7 @@ Add a row action trigger to the CRUD table.
 Actions:
 
 - `Edit show` for `ADMIN`, `MANAGER`
-- `Delete show` for `ADMIN` only
+- `Delete show` for `ADMIN`, `MANAGER`
 
 Mobile:
 
@@ -355,8 +355,8 @@ Known limitation:
 
 ### FE-4 Access And Conflict UX
 
-- [ ] Gate delete action to `ADMIN`.
-- [ ] Keep create/edit available to `MANAGER`.
+- [ ] Gate delete action to `ADMIN` and `MANAGER`.
+- [ ] Keep create/edit/delete available to `MANAGER`.
 - [ ] Keep save behavior aligned with backend last-write-wins semantics.
 - [ ] Keep `403` and `404` error states explicit.
 

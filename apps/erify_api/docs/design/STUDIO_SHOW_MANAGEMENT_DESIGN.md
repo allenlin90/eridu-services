@@ -63,7 +63,7 @@ The current backend is close on persistence primitives, but not on studio-owned 
 | `GET /studios/:studioId/shows` | Shared show list/read model for CRUD and operations surfaces | All studio members |
 | `POST /studios/:studioId/shows` | Create a studio-scoped show | `ADMIN`, `MANAGER` |
 | `PATCH /studios/:studioId/shows/:showId` | Update show metadata + platform assignments | `ADMIN`, `MANAGER` |
-| `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show | `ADMIN` |
+| `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show | `ADMIN`, `MANAGER` |
 
 Design note:
 

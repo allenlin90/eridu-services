@@ -151,6 +151,29 @@ export class ShowPlatformRepository extends BaseRepository<
   }
 
   /**
+   * Batch-creates ShowPlatform assignments by internal IDs (domain-level).
+   * Uses createManyAndReturn for a single DB round-trip.
+   */
+  async createManyAssignments(items: Array<{
+    uid: string;
+    showId: bigint;
+    platformId: bigint;
+    metadata?: object;
+  }>): Promise<Prisma.BatchPayload> {
+    return this.delegate.createMany({
+      data: items.map((item) => ({
+        uid: item.uid,
+        showId: item.showId,
+        platformId: item.platformId,
+        liveStreamLink: null,
+        platformShowId: null,
+        viewerCount: 0,
+        metadata: item.metadata ?? {},
+      })),
+    });
+  }
+
+  /**
    * Creates a ShowPlatform assignment by internal IDs (domain-level).
    * Builds Prisma relation syntax internally.
    */

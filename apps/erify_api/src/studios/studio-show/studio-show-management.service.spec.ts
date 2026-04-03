@@ -27,6 +27,7 @@ describe('studioShowManagementService', () => {
   };
   const showRepositoryMock = {
     findByClientUidAndExternalId: jest.fn(),
+    findByUidAndStudioUid: jest.fn(),
     update: jest.fn(),
   };
   const platformRepositoryMock = {
@@ -35,8 +36,10 @@ describe('studioShowManagementService', () => {
   const showPlatformRepositoryMock = {
     findMany: jest.fn(),
     createAssignment: jest.fn(),
+    createManyAssignments: jest.fn(),
     restoreAndUpdateAssignment: jest.fn(),
     softDelete: jest.fn(),
+    softDeleteByPlatformIds: jest.fn(),
   };
   const showPlatformServiceMock = {
     generateShowPlatformUid: jest.fn(),
@@ -72,7 +75,7 @@ describe('studioShowManagementService', () => {
       { id: BigInt(30), uid: 'plt_1' },
     ]);
     showPlatformServiceMock.generateShowPlatformUid.mockReturnValue('shp_1');
-    showServiceMock.getShowById.mockResolvedValue({
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
       id: BigInt(100),
       uid: 'show_123',
       studioId: BigInt(10),
@@ -100,13 +103,13 @@ describe('studioShowManagementService', () => {
     });
 
     expect(showServiceMock.createShow).toHaveBeenCalled();
-    expect(showPlatformRepositoryMock.createAssignment).toHaveBeenCalledWith(
+    expect(showPlatformRepositoryMock.createManyAssignments).toHaveBeenCalledWith([
       expect.objectContaining({
         uid: 'shp_1',
         showId: BigInt(100),
         platformId: BigInt(30),
       }),
-    );
+    ]);
   });
 
   it('restores a soft-deleted show when external_id matches', async () => {
@@ -151,7 +154,7 @@ describe('studioShowManagementService', () => {
   });
 
   it('rejects delete after the show start time', async () => {
-    showServiceMock.getShowById.mockResolvedValue({
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
       id: BigInt(100),
       uid: 'show_123',
       studioId: BigInt(10),
