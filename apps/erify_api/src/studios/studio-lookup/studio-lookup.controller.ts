@@ -53,9 +53,13 @@ export class StudioLookupController extends BaseStudioController {
   ) {
     const [clients, showTypes, showStandards, showStatuses, platforms, studioRooms] = await Promise.all([
       this.clientService.listClients({
+        page: 1,
+        limit: DEFAULT_LOOKUP_LIMIT,
         take: DEFAULT_LOOKUP_LIMIT,
+        skip: 0,
+        sort: 'desc',
         include_deleted: false,
-      }),
+      } as ListClientsQueryDto),
       this.showTypeService.listShowTypes({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStandardService.listShowStandards({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStatusService.getShowStatuses({ take: DEFAULT_LOOKUP_LIMIT }),
