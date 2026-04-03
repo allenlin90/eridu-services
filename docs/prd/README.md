@@ -35,11 +35,11 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | ~~Studio Creator Roster~~ | Studio operator governance — L-side creator cost defaults | 1 | ✅ Implemented → [feature doc](../features/studio-creator-roster.md) |
 | ~~Studio Creator Onboarding~~ | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | ✅ Implemented → [feature doc](../features/studio-creator-onboarding.md) |
 | ~~Internal Knowledge Base (`eridu_docs`)~~ | Internal tooling — authenticated knowledge base for repo docs | Ext | ✅ Implemented → [feature doc](../features/eridu-docs-knowledge-base.md) |
-| [Studio Show Management](./studio-show-management.md) | Studio CRUD for shows — removes `/admin/*` dependency for show lifecycle | 1+ | Active (studio autonomy gap) |
-| [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, validate, publish, duplicate | 1+ | Active (studio autonomy gap) |
+| [Studio Show Management](./studio-show-management.md) | Studio CRUD for shows — removes `/admin/*` dependency and keeps show writes schedule-ready | 1+ | Active (studio autonomy gap) |
+| [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, assign/rearrange shows, validate, publish, duplicate | 1+ | Active (studio autonomy gap) |
 | [Compensation Line Items](./compensation-line-items.md) | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators | R+ | Active (post-Wave 1) |
-| [Studio Economics Review](./studio-economics-review.md) | Unified studio finance workspace for future projected and past actual cost review | 2 | Active |
-| [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active (downstream of studio economics review) |
+| [Studio Economics Review](./studio-economics-review.md) | Configurable studio finance review/export engine for future projected and past actual cost views | 2 | Active |
+| [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active (locked preset downstream of studio economics review) |
 | [Creator Availability Hardening](./creator-availability-hardening.md) | Dual-mode availability endpoint — overlap + roster conflict enforcement | 2 | Active (depends on creator roster + onboarding gate) |
 | [P&L Revenue Workflow](./pnl-revenue-workflow.md) | P&L revenue ("P") side — GMV/sales inputs, commission cost activation, contribution margin | 3 | Active (4 open design Qs) |
 

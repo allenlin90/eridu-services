@@ -4,7 +4,7 @@
 > **Phase**: 4 — Extended Scope (Studio Autonomy)
 > **Workstream**: Studio self-service — show lifecycle management
 > **Depends on**: None (no prerequisite features required)
-> **Blocks**: Show Planning Export (studio-owned shows feed into planning export), full studio autonomy
+> **Blocks**: Studio Schedule Management (studios need schedule-ready show records they can later assign/rearrange), Show Planning Export (studio-owned shows feed into planning export), full studio autonomy
 
 ## Problem
 
@@ -22,6 +22,7 @@ Consequences today:
 - Show metadata corrections (name, times, client, type, room) require escalation to system admin.
 - Show cancellation (soft-delete) requires system admin intervention.
 - Platform assignment/removal on shows is system-admin-only, yet studios manage their own platform relationships day-to-day.
+- Studios cannot directly decide whether a show is unscheduled, attached to a schedule, or moved between schedules from the studio workflow.
 - The studio workspace appears to "own" shows but has no write authority over them, creating a confusing authority model.
 
 Key unanswered questions:
@@ -29,6 +30,7 @@ Key unanswered questions:
 - *"Why does a studio admin need to ask a system admin to create a show that only that studio will operate?"*
 - *"Who should own show lifecycle — the studio that operates it, or the system admin who rarely touches it after creation?"*
 - *"How do we maintain cross-studio governance while granting studios routine show management?"*
+- *"When schedule management ships, how does a studio attach or move a show into the right schedule?"*
 
 ## Users
 
@@ -43,9 +45,10 @@ Key unanswered questions:
 | `/admin/shows` | Full CRUD + bulk creator/platform operations, system-admin only | ✅ Exists |
 | `/studios/:studioId/shows` | Read-only + creator assignment operations | ✅ Exists |
 | `Show` model | Studio-scoped via `studioId` FK; supports soft-delete, metadata, room assignment | ✅ Exists |
+| `Show.scheduleId` | Nullable schedule linkage already exists on the model | ✅ Exists |
 | `ShowCreator` | Creator assignment to show (studio-managed) | ✅ Exists |
 | `ShowPlatform` | Platform assignment to show (admin-only today) | ✅ Exists |
-| Studio show lookups | Read-only access to clients, platforms, types, standards, statuses | ✅ Exists |
+| Studio show lookups | Read-only access to clients, platforms, types, standards, statuses, schedules | ✅ Exists |
 
 ## Requirements
 
@@ -55,29 +58,37 @@ Key unanswered questions:
    - Studio admins and managers can create shows from `/studios/$studioId/shows`.
    - Show is automatically scoped to the current studio (no cross-studio creation).
    - Required fields: `name`, `startTime`, `endTime`
-   - Optional fields: `clientUid`, `showTypeUid`, `showStandardUid`, `showStatusUid`, `roomUid`, `metadata`, `platforms[]`
+   - Optional fields: `clientUid`, `scheduleUid`, `showTypeUid`, `showStandardUid`, `showStatusUid`, `roomUid`, `metadata`, `platforms[]`
    - Platform assignments can be set at creation time.
+   - If `scheduleUid` is provided, it must belong to the same studio.
 
 2. **Studio-scoped show update**
-   - Studio admins and managers can update show details (name, times, client, type, standard, status, room, metadata).
+   - Studio admins and managers can update show details (name, times, client, schedule, type, standard, status, room, metadata).
    - Platform assignment management (add/remove) at studio level.
    - Version-guarded updates for optimistic concurrency.
+   - A show can be assigned to a schedule, moved to a different draft schedule, or returned to an unscheduled state.
 
-3. **Studio-scoped show soft-delete**
+3. **Schedule-ready linkage contract**
+   - Show CRUD is the owning write path for single-show schedule linkage in Phase 4.
+   - `scheduleUid` stays nullable so studios can manage unscheduled/ad-hoc shows.
+   - Schedule management will later provide the higher-level workspace for arranging multiple shows within a schedule, but it must reuse the same underlying show-to-schedule relation.
+   - Studio show list/detail responses should expose enough schedule summary data for the schedule relationship to be visible in the UI.
+
+4. **Studio-scoped show soft-delete**
    - Studio admins only (managers cannot delete).
    - Soft-delete only — historical data preserved for economics and reporting.
    - Shows with active tasks or submitted reports should warn before delete (not hard-block in v1).
 
-4. **Studio-scoped platform management on shows**
+5. **Studio-scoped platform management on shows**
    - Add/remove platforms from shows at studio level.
    - Replaces current admin-only platform assignment.
 
-5. **Preserve admin governance**
+6. **Preserve admin governance**
    - `/admin/shows` retains full CRUD for cross-studio management.
    - System admins can still create/update/delete any show regardless of studio.
    - Studio-scoped routes enforce studio membership and role checks.
 
-6. **Read access unchanged**
+7. **Read access unchanged**
    - All studio members continue to see shows via existing GET endpoints.
    - No change to task or creator assignment read paths.
 
@@ -86,6 +97,7 @@ Key unanswered questions:
 - Cross-studio show sharing or transfer
 - Show templates or cloning workflows
 - Automated show creation from schedules (schedule-show linking is existing behavior)
+- Full schedule workspace operations such as bulk assignment, reordering, or publish-time validation from the show page
 - Show archival beyond soft-delete
 - Bulk show creation from studio context (admin bulk ops remain admin-only in v1)
 
@@ -93,16 +105,17 @@ Key unanswered questions:
 
 1. A studio admin or manager opens `/studios/$studioId/shows`.
 2. They click `Create Show`.
-3. They fill in show name, times, and optionally select client, type, standard, status, room, and platforms.
+3. They fill in show name, times, and optionally select client, schedule, type, standard, status, room, and platforms.
 4. The system creates the show scoped to the current studio.
 5. The show immediately appears in the studio show list and is available for creator assignment.
-6. The admin/manager can later edit the show to update details or manage platform assignments.
+6. The admin/manager can later edit the show to update details, move it into or out of a schedule, or manage platform assignments.
 7. A studio admin can soft-delete a show that is no longer needed.
 
 ## Product Decisions
 
 - **Studio-scoped creation** — shows are always created within a studio context; the studio FK is set automatically from the route, not from request body.
 - **Manager write access** — managers create and update shows as a routine operational task; only admins can delete.
+- **Schedule linkage is part of show ownership** — a single show can be created unscheduled or linked to a draft schedule through the same studio write surface.
 - **Platform assignment at studio level** — platforms are operational metadata that studios manage; no reason to keep this admin-only.
 - **Soft-delete only** — shows accumulate historical cost and task data; hard delete would break economics and reporting.
 - **No show transfer** — shows belong to one studio; cross-studio movement is a governance action for system admins only.
@@ -131,6 +144,7 @@ Request:
   "start_time": "2026-04-01T09:00:00Z",
   "end_time": "2026-04-01T12:00:00Z",
   "client_uid": "client_abc123",
+  "schedule_uid": "sched_week14",
   "show_type_uid": "showtype_xyz",
   "show_standard_uid": "standard_abc",
   "show_status_uid": "status_draft",
@@ -163,15 +177,17 @@ Soft-delete. Returns 204 on success.
 | Code | HTTP Status | Condition |
 | --- | --- | --- |
 | `SHOW_NOT_FOUND` | 404 | Show does not exist or belongs to different studio |
+| `SCHEDULE_NOT_FOUND` | 404 | Provided schedule does not exist or belongs to different studio |
 | `SHOW_VERSION_CONFLICT` | 409 | Optimistic locking version mismatch |
 | `SHOW_HAS_SUBMITTED_REPORTS` | 400 | Warning: show has submitted task reports (delete proceeds but warns) |
 
 ## Acceptance Criteria
 
 - [ ] Studio ADMIN and MANAGER can create shows scoped to their studio from `/studios/$studioId/shows`.
-- [ ] Studio ADMIN and MANAGER can update show details (name, times, client, type, standard, status, room, metadata).
+- [ ] Studio ADMIN and MANAGER can update show details (name, times, client, schedule, type, standard, status, room, metadata).
 - [ ] Studio ADMIN can soft-delete shows; MANAGER cannot.
 - [ ] Studio ADMIN and MANAGER can manage platform assignments on shows.
+- [ ] Studio ADMIN and MANAGER can assign a show to a same-studio schedule, move it between draft schedules, or clear its schedule linkage.
 - [ ] Shows are automatically scoped to the studio from the route — no cross-studio creation.
 - [ ] Version-guarded updates prevent concurrent overwrites.
 - [ ] All existing read endpoints and creator assignment flows remain unchanged.
