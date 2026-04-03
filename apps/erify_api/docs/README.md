@@ -35,6 +35,7 @@
 | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                     | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Show Economics Backend Design](./design/SHOW_ECONOMICS_DESIGN.md)                        | 📐      | Deferred merge target for economics endpoints and compensation-aware revisions |
+| [Studio Economics Review Backend Design](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)     | 📐      | Planned finance review workspace contract for projected and actual cost reads |
 | [Compensation Line Items Backend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)      | 📐      | Planned supplemental compensation CRUD and aggregation model |
 | [Show Planning Export Backend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md)            | 📐      | Planned planning-export endpoint and economics composition rules |
 | [Studio Show Management Backend Design](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md)        | 📐      | Planned studio-scoped show create/update/delete, lookup bundling, and optimistic locking |

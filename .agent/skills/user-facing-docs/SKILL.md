@@ -1,11 +1,11 @@
 ---
 name: user-facing-docs
-description: Convert PRDs and feature docs into non-technical, role-scoped user guides, SOPs, and FAQs for eridu_docs — translating implementation specs into app-user language with layered abstraction and visual diagrams
+description: Convert PRDs and feature docs into non-technical user documentation for eridu_docs. In this repo, organize output by workflow and function first, with guide, SOP, and FAQ pages grouped inside the same area rather than separate top-level buckets.
 ---
 
 # User-Facing Documentation Generator
 
-Convert technical PRDs and feature docs into clear, non-technical documentation for app users and studio operators. Output lives in `eridu_docs` (Astro Starlight) and is organized by purpose: guides, SOPs, and FAQs.
+Convert technical PRDs and feature docs into clear, non-technical documentation for app users and studio operators. Output lives in `eridu_docs` (Astro Starlight) and, in this repo, is organized by workflow and function first. Guide, SOP, and FAQ pages for the same workflow should live together.
 
 ## When to Use
 
@@ -22,26 +22,28 @@ Convert technical PRDs and feature docs into clear, non-technical documentation 
 
 ## Content Architecture in `eridu_docs`
 
+For `eridu_docs`, prefer the repo-local information architecture guidance in [eridu-docs-information-architecture](../eridu-docs-information-architecture/SKILL.md).
+
 ### Directory Structure
 
 ```
 apps/eridu_docs/src/content/docs/
-├── user-guides/           ← How to use features (by role)
-│   ├── creators/          ← For talent / creators using erify_creators
-│   ├── managers/          ← For studio managers / admins using erify_studios
-│   └── operators/         ← For ops team: scheduling, moderation, task management
-├── sop/                   ← Standard operating procedures (step-by-step manuals)
-│   ├── daily-ops/         ← Recurring daily workflows
-│   ├── onboarding/        ← First-time setup procedures
-│   └── troubleshooting/   ← Recovery procedures for known failure states
-├── faq/                   ← Frequently asked questions (by feature area)
-│   ├── account-access.mdx
-│   ├── scheduling.mdx
-│   ├── shows.mdx
-│   └── tasks.mdx
-├── features/              ← (existing) technical feature docs
-├── workflows/             ← (existing) technical workflow docs
-└── ...
+├── getting-started/       ← Entry-point flows and app relationships
+├── scheduling/            ← Schedule creation, publishing, FAQ, SOPs
+├── tasks/                 ← Task generation, assignment, review workflows
+├── studio-operations/     ← Operational runbooks that span multiple features
+├── assets/                ← Upload and asset-management workflows
+├── reference/             ← Technical/supporting reference pages
+└── upcoming/              ← Optional internal planning surface, not primary operator nav
+```
+
+Keep document genre inside the workflow folder, for example:
+
+```text
+scheduling/
+  google-sheets-publishing.mdx
+  publish-sop.mdx
+  faq.mdx
 ```
 
 ### Sidebar Configuration
@@ -50,27 +52,12 @@ Add these sections to `astro.config.mjs`:
 
 ```javascript
 sidebar: [
-  // ... existing sections ...
-  {
-    label: 'User Guides',
-    items: [
-      { label: 'For Creators', autogenerate: { directory: 'user-guides/creators' } },
-      { label: 'For Managers', autogenerate: { directory: 'user-guides/managers' } },
-      { label: 'For Operators', autogenerate: { directory: 'user-guides/operators' } },
-    ],
-  },
-  {
-    label: 'SOPs & Procedures',
-    items: [
-      { label: 'Daily Operations', autogenerate: { directory: 'sop/daily-ops' } },
-      { label: 'Onboarding', autogenerate: { directory: 'sop/onboarding' } },
-      { label: 'Troubleshooting', autogenerate: { directory: 'sop/troubleshooting' } },
-    ],
-  },
-  {
-    label: 'FAQ',
-    autogenerate: { directory: 'faq' },
-  },
+  { label: 'Getting Started', autogenerate: { directory: 'getting-started' } },
+  { label: 'Scheduling & Shows', autogenerate: { directory: 'scheduling' } },
+  { label: 'Tasks & Reviews', autogenerate: { directory: 'tasks' } },
+  { label: 'Studio Operations', autogenerate: { directory: 'studio-operations' } },
+  { label: 'Assets & Uploads', autogenerate: { directory: 'assets' } },
+  { label: 'Reference', autogenerate: { directory: 'reference' } },
 ],
 ```
 
@@ -111,20 +98,21 @@ From the source material, extract only what an app user needs:
 
 ### Step 3: Determine Output Documents
 
-One PRD may produce multiple user-facing docs depending on the roles involved:
+One PRD may produce multiple user-facing docs depending on the workflow depth involved:
 
 ```
 PRD: studio-show-management.md
-  ├── user-guides/managers/show-management.mdx     (Manager guide)
-  ├── user-guides/operators/show-setup-checklist.mdx (Operator checklist)
-  ├── sop/daily-ops/pre-show-preparation.mdx        (Daily SOP)
-  └── faq/shows.mdx                                 (FAQ section update)
+  ├── scheduling/show-management.mdx
+  ├── scheduling/pre-show-checklist.mdx
+  ├── scheduling/publish-sop.mdx
+  └── scheduling/faq.mdx
 ```
 
 **Decision rules:**
-- If 2+ roles interact with the feature differently → separate role-scoped guides
-- If the feature involves a repeatable daily/weekly process → SOP
-- If the feature has known edge cases or confusing states → FAQ entries
+- If the feature belongs to an existing workflow area → add pages to that folder
+- If 2+ roles interact with the feature differently → separate pages inside the same workflow area
+- If the feature involves a repeatable daily/weekly process → add an SOP page in that workflow area
+- If the feature has known edge cases or confusing states → add or update that workflow area's FAQ page
 - Always cross-link between related docs
 
 ### Step 4: Write with Layered Abstraction
@@ -208,7 +196,7 @@ If you're a Manager and still can't see it, check that:
 1. You're viewing the correct studio (top-left dropdown)
 2. The date range includes published shifts
 
-→ *See also: [Understanding Roles](/user-guides/managers/roles-and-permissions)*
+→ *See also: [Understanding Roles](/getting-started/roles-and-permissions)*
 ```
 
 **Rules:**
@@ -300,9 +288,9 @@ After completing these steps:
 
 ## Related
 
-- [<SOP name>](/sop/daily-ops/<name>) — Daily procedure for this feature
-- [<Other guide>](/user-guides/<role>/<name>) — Related capability
-- [<FAQ>](/faq/<area>) — More questions about <area>
+- [<SOP name>](/<workflow-area>/<name>) — Daily procedure for this feature
+- [<Other page>](/<workflow-area>/<name>) — Related capability in the same workflow area
+- [<FAQ>](/<workflow-area>/faq) — More questions about this workflow area
 ```
 
 ### SOP Template
@@ -359,8 +347,8 @@ flowchart TD
 
 ## Related
 
-- [<User guide>](/user-guides/<role>/<name>) — Full feature guide
-- [<Troubleshooting SOP>](/sop/troubleshooting/<name>) — Recovery procedure
+- [<Workflow guide>](/<workflow-area>/<name>) — Full feature guide
+- [<Related recovery page>](/<workflow-area>/<name>) — Recovery or exception handling
 ```
 
 ### FAQ Page Template
@@ -403,7 +391,7 @@ sidebar:
 2. Verify <thing 2>
 3. If still stuck, <escalation path>
 
-→ *See also: [Troubleshooting SOP](/sop/troubleshooting/<name>)*
+→ *See also: [Related workflow page](/<workflow-area>/<name>)*
 ```
 
 ---
@@ -456,9 +444,9 @@ sidebar:
 When running `doc-lifecycle.md` and a PRD is classified as **Shipped**:
 
 1. **Promote to feature doc** (existing step) → `docs/features/<name>.md`
-2. **Generate user-facing docs** (this skill) → `apps/eridu_docs/src/content/docs/user-guides/`, `sop/`, `faq/`
-3. **Update eridu_docs sidebar** if new directories were created
-4. **Cross-link**: feature doc links to user guides; user guides link back to feature doc for technical readers
+2. **Generate user-facing docs** (this skill) → `apps/eridu_docs/src/content/docs/<workflow-area>/`
+3. **Update eridu_docs sidebar** only if a brand-new top-level workflow area was introduced
+4. **Cross-link**: feature doc links to workflow pages; workflow pages link back to feature doc for technical readers
 
 ### Standalone Usage
 

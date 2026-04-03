@@ -29,8 +29,9 @@ Active (in progress):
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — ⏳ In Progress
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 📐 Planned
 3. [Show Economics Frontend Design](./design/SHOW_ECONOMICS_DESIGN.md) — 📐 Planned
-4. [Compensation Line Items Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — 📐 Planned
-5. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned
-6. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-7. [P&L Revenue Workflow Frontend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) — 📐 Planned
-8. [Studio Show Management Frontend Design](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md) — 📐 Planned
+4. [Studio Economics Review Frontend Design](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md) — 📐 Planned
+5. [Compensation Line Items Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — 📐 Planned
+6. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned
+7. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
+8. [P&L Revenue Workflow Frontend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) — 📐 Planned
+9. [Studio Show Management Frontend Design](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md) — 📐 Planned

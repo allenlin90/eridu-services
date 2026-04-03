@@ -25,16 +25,20 @@ export default defineConfig({
           },
           sidebar: [
               {
-                  label: 'Features',
-                  autogenerate: { directory: 'features' },
+                  label: 'Getting Started',
+                  autogenerate: { directory: 'getting-started' },
               },
               {
-                  label: 'Workflows & Standards',
-                  autogenerate: { directory: 'workflows' },
+                  label: 'Scheduling & Shows',
+                  autogenerate: { directory: 'scheduling' },
               },
               {
-                  label: 'Upcoming Releases (PRDs)',
-                  autogenerate: { directory: 'upcoming' },
+                  label: 'Assets & Uploads',
+                  autogenerate: { directory: 'assets' },
+              },
+              {
+                  label: 'Reference',
+                  autogenerate: { directory: 'reference' },
               },
           ],
       }),

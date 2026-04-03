@@ -50,6 +50,7 @@ Use this skill for `apps/eridu_docs` and other Astro/Starlight doc surfaces.
 
 - Use `starlight.sidebar` for intentional nav structure.
 - Prefer `autogenerate` groups for large directories; use frontmatter `sidebar` fields for per-page ordering/labels/badges.
+- In `eridu_docs`, prefer function and workflow-first top-level groups. Do not use top-level genre buckets like `guides`, `sop`, or `faq`.
 - Use page frontmatter intentionally:
   - `template: splash` for landing-style pages
   - `draft: true` for dev-only content

@@ -1,0 +1,65 @@
+---
+title: Scheduling FAQ
+description: Common questions about Google Sheets schedule syncing, validation, publishing, and old-record behavior.
+sidebar:
+  order: 1
+---
+
+## Why did my published schedule go back to draft?
+
+Because the draft was updated again. Any new sync to a published schedule sends it back to `draft` so the latest changes can be reviewed and published safely.
+
+See also: [Google Sheets Schedule Publishing](/scheduling/google-sheets-publishing/)
+
+## What happens if I remove a show row from the sheet?
+
+The old live show is not deleted during normal publish. Instead, the system keeps the record and changes its status.
+
+- If there are no linked tasks, it moves to **Cancelled**.
+- If there are linked tasks, it moves to **Cancelled Pending Resolution**.
+
+See also: [Google Sheets Schedule Publishing](/scheduling/google-sheets-publishing/)
+
+## What happens if I change a Show ID?
+
+The system treats that as identity change, not a rename. The old Show ID is treated as removed, and the new Show ID is treated as a new show.
+
+If you only meant to change the show details, keep the same Show ID and edit the other fields instead.
+
+See also: [Google Sheets Schedule Publishing](/scheduling/google-sheets-publishing/)
+
+## If a show moves from 9:00 AM to 10:00 AM, what happens to its tasks?
+
+If the Show ID stays the same, the show is updated in place and the existing task links stay attached to that show. The tasks are not deleted and recreated just because the show time changed.
+
+However, schedule publish does not automatically recompute generated task due dates. If you need task timing to move with the new show time, review those task dates separately.
+
+See also: [Google Sheets Schedule Publishing](/scheduling/google-sheets-publishing/)
+
+## Why was publish skipped?
+
+The most common reasons are:
+
+1. the schedule is not in `review`
+2. the Version in the sheet does not match the server
+3. validation has not been rerun after a draft change
+
+See also: [SOP: Update and Publish Google Sheets Schedules](/scheduling/publish-sop/)
+
+## What does version mismatch mean?
+
+It means the server has a newer draft version than the sheet. Sync the version from the server, then retry the step you were running.
+
+See also: [SOP: Update and Publish Google Sheets Schedules](/scheduling/publish-sop/)
+
+## If a removed show comes back later, do we get a duplicate?
+
+Not if it comes back with the same Show ID. The publish flow restores the existing show record and updates it in place.
+
+See also: [Google Sheets Schedule Publishing](/scheduling/google-sheets-publishing/)
+
+## Why did creator or platform assignments disappear after publish?
+
+Because those links follow the latest published sheet. If a creator or platform is missing from the latest row, publish removes that link from the live show.
+
+See also: [Google Sheets Schedule Publishing](/scheduling/google-sheets-publishing/)

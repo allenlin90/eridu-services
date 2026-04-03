@@ -11,6 +11,7 @@ This file is the **phase-level backend index** for Phase 4. Feature-specific bac
 ## Shared Backend Guardrails
 
 - Keep financial arithmetic in dedicated economics domain services/calculators.
+- Keep projected-vs-actual cost semantics explicit. Phase 4 does not imply immutable budget snapshots.
 - Keep controllers transport-focused only: authz, DTO parsing, and response shaping.
 - Use Zod schemas from `@eridu/api-types` as request/response source of truth.
 - No DB internal IDs in public API responses; use UIDs only.
@@ -20,35 +21,36 @@ This file is the **phase-level backend index** for Phase 4. Feature-specific bac
 
 ## Feature Design Index
 
-| Feature | Status | Product source | Backend design |
-| --- | --- | --- | --- |
-| Creator mapping + assignment | ✅ Shipped | [creator-mapping.md](../../../docs/features/creator-mapping.md) | No retained Phase 4 design doc; shipped feature |
-| Show economics baseline | ⏸️ Deferred revision | [show-economics.md](../../../docs/features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](./design/SHOW_ECONOMICS_DESIGN.md) |
-| Studio member roster | ✅ Shipped | [studio-member-roster.md](../../../docs/features/studio-member-roster.md) | No retained design doc; shipped in PR #28 |
-| Studio creator roster | ✅ Implemented | [studio-creator-roster.md](../../../docs/features/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER.md](./STUDIO_CREATOR_ROSTER.md) |
-| Studio show management | 🔲 Planned | [studio-show-management.md](../../../docs/prd/studio-show-management.md) | [STUDIO_SHOW_MANAGEMENT_DESIGN.md](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md) |
-| Compensation line items | 🔲 Planned | [compensation-line-items.md](../../../docs/prd/compensation-line-items.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
-| Show planning export | 🔲 Planned | [show-planning-export.md](../../../docs/prd/show-planning-export.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](./design/SHOW_PLANNING_EXPORT_DESIGN.md) |
-| Creator availability hardening | 🔲 Planned | [creator-availability-hardening.md](../../../docs/prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
-| P&L revenue workflow | 🔲 Blocked on decisions | [pnl-revenue-workflow.md](../../../docs/prd/pnl-revenue-workflow.md) | [PNL_REVENUE_WORKFLOW_DESIGN.md](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) |
+| Feature                        | Status                 | Product source                                                                           | Backend design                                                                                |
+| ------------------------------ | ---------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Creator mapping + assignment   | ✅ Shipped              | [creator-mapping.md](../../../docs/features/creator-mapping.md)                          | No retained Phase 4 design doc; shipped feature                                               |
+| Show economics baseline        | ⏸️ Deferred revision    | [show-economics.md](../../../docs/features/show-economics.md)                            | [SHOW_ECONOMICS_DESIGN.md](./design/SHOW_ECONOMICS_DESIGN.md)                                 |
+| Studio economics review        | 🔲 Planned              | [studio-economics-review.md](../../../docs/prd/studio-economics-review.md)               | [STUDIO_ECONOMICS_REVIEW_DESIGN.md](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)               |
+| Studio member roster           | ✅ Shipped              | [studio-member-roster.md](../../../docs/features/studio-member-roster.md)                | No retained design doc; shipped in PR #28                                                     |
+| Studio creator roster          | ✅ Implemented          | [studio-creator-roster.md](../../../docs/features/studio-creator-roster.md)              | [STUDIO_CREATOR_ROSTER.md](./STUDIO_CREATOR_ROSTER.md)                                        |
+| Studio show management         | 🔲 Planned              | [studio-show-management.md](../../../docs/prd/studio-show-management.md)                 | [STUDIO_SHOW_MANAGEMENT_DESIGN.md](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md)                 |
+| Compensation line items        | 🔲 Planned              | [compensation-line-items.md](../../../docs/prd/compensation-line-items.md)               | [COMPENSATION_LINE_ITEMS_DESIGN.md](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)               |
+| Show planning export           | 🔲 Planned              | [show-planning-export.md](../../../docs/prd/show-planning-export.md)                     | [SHOW_PLANNING_EXPORT_DESIGN.md](./design/SHOW_PLANNING_EXPORT_DESIGN.md)                     |
+| Creator availability hardening | 🔲 Planned              | [creator-availability-hardening.md](../../../docs/prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
+| P&L revenue workflow           | 🔲 Blocked on decisions | [pnl-revenue-workflow.md](../../../docs/prd/pnl-revenue-workflow.md)                     | [PNL_REVENUE_WORKFLOW_DESIGN.md](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)                     |
 
 ## Shared Authorization Matrix
 
-| Endpoint group | Required roles |
-| --- | --- |
+| Endpoint group                        | Required roles                     |
+| ------------------------------------- | ---------------------------------- |
 | Catalog / roster / availability reads | `[ADMIN, MANAGER, TALENT_MANAGER]` |
-| Show creator list read | `[ADMIN, MANAGER, TALENT_MANAGER]` |
-| Bulk assign / remove creators | `[ADMIN, MANAGER, TALENT_MANAGER]` |
-| Economics reads | `[ADMIN, MANAGER]` |
-| Studio member roster reads | `[ADMIN, MANAGER]` |
-| Studio member roster writes | `[ADMIN]` |
-| Studio creator roster writes | `[ADMIN]` |
-| Studio show writes | create/update: `[ADMIN, MANAGER]`; delete: `[ADMIN]` |
-| Compensation line item reads | `[ADMIN, MANAGER]` |
-| Compensation line item writes | `[ADMIN]` |
-| Member self-review compensation | `[ADMIN, self]` |
-| Creator compensation summary | `[ADMIN, MANAGER, TALENT_MANAGER]` |
-| Show planning export | `[ADMIN, MANAGER]` |
+| Show creator list read                | `[ADMIN, MANAGER, TALENT_MANAGER]` |
+| Bulk assign / remove creators         | `[ADMIN, MANAGER, TALENT_MANAGER]` |
+| Economics review reads                | `[ADMIN, MANAGER]`                 |
+| Studio member roster reads            | `[ADMIN, MANAGER]`                 |
+| Studio member roster writes           | `[ADMIN]`                          |
+| Studio creator roster writes          | `[ADMIN]`                          |
+| Studio show writes                    | `[ADMIN, MANAGER]`                 |
+| Compensation line item reads          | `[ADMIN, MANAGER]`                 |
+| Compensation line item writes         | `[ADMIN]`                          |
+| Member self-review compensation       | `[ADMIN, self]`                    |
+| Creator compensation summary          | `[ADMIN, MANAGER, TALENT_MANAGER]` |
+| Show planning export                  | `[ADMIN, MANAGER]`                 |
 
 ## Verification Gate
 

@@ -4,11 +4,11 @@
 > **Phase scope**: Phase 4 Wave 2
 > **Owner app**: `apps/erify_api`
 > **Product source**: [`docs/prd/show-planning-export.md`](../../../../docs/prd/show-planning-export.md)
-> **Depends on**: Economics endpoints on `master` ⏸️
+> **Depends on**: Economics endpoints on `master` ⏸️, studio economics review contract 🔲
 
 ## Purpose
 
-Provide a studio-scoped planning export endpoint that returns one row per show for pre-show operational planning and budget review.
+Provide a studio-scoped planning export endpoint that returns one row per show for pre-show operational planning and budget review, downstream of the interactive studio economics review workflow.
 
 ## API Surface
 
@@ -46,4 +46,3 @@ Provide a studio-scoped planning export endpoint that returns one row per show f
 - `pnpm --filter erify_api build`
 - `pnpm --filter erify_api test`
 - Targeted smoke: JSON pagination, CSV output, date cap, filter combinations, null cost handling
-
