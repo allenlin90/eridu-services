@@ -23,6 +23,7 @@ It should be used alongside the repo-wide guidance in `AGENTS.md` and the closes
 - Adding row actions, row selection, lightweight inline editing, or saved-table-view behavior
 - Introducing virtualization for row-heavy or cell-heavy views
 - Modifying shared table primitives in `@eridu/ui`
+- Adding a studio-scoped CRUD page that is better represented as a table than as an infinite card list
 
 ## Do Not Use This Skill When
 - The surface is better represented as a studio infinite-card list. Use `studio-list-pattern` instead.
@@ -45,6 +46,10 @@ Always inspect the target module before changing code.
 These are verified examples of the current route composition pattern for large admin-style tables:
 - `apps/erify_studios/src/routes/system/users/index.tsx`
 - `apps/erify_studios/src/routes/system/task-templates/index.tsx`
+- `apps/erify_studios/src/routes/system/shows/index.tsx`
+
+For studio-scoped operational tables that already establish route-specific behavior and filter conventions:
+- `apps/erify_studios/src/routes/studios/$studioId/show-operations/index.tsx`
 
 ### Query and persistence behavior shared across frontend apps
 - `apps/erify_studios/src/lib/api/query-client.ts`
@@ -106,6 +111,19 @@ src/
 ```
 
 If virtualization is needed, isolate it in a feature-local component instead of bloating the route.
+
+### 5. Match the nearest canonical table before inventing a new variant
+For new table CRUD/list pages, start by identifying the closest existing table in the same app and reuse its layout, toolbar density, search/filter contract, and row-action pattern unless product requirements explicitly differ.
+
+Consistency rules:
+- Reuse `AdminLayout` for `/system/*` table pages and `PageLayout` for studio-scoped table pages.
+- Reuse `DataTable`, `DataTableToolbar`, and `DataTablePagination` unless the surface has a justified exception.
+- Keep create/edit/delete on routine CRUD tables in dialogs or row actions rather than inventing a second interaction model.
+- If a nearby page already owns a specialized operational layout, do not fold CRUD controls into it just because the underlying endpoint is shared.
+
+Examples:
+- `/system/shows` is the canonical admin show CRUD table.
+- `/studios/$studioId/show-operations` is a specialized operations surface, not the canonical layout for studio CRUD.
 
 ## Decision Order
 Decide in this order before writing code.
@@ -172,6 +190,31 @@ Guidelines:
 - let the shared toolbar own debounced search behavior
 - put route-specific actions in toolbar children
 - manual refresh controls should follow repo rules: icon-only, explicit `aria-label`, visible loading state
+
+### CRUD Table UX Consistency Rules
+For routine searchable/filterable CRUD tables, keep the UI and filter contract boringly consistent across pages.
+
+Preferred shape:
+- one page-level wrapper (`AdminLayout` or `PageLayout`)
+- one primary table section
+- toolbar with search, shared filters, refresh, and primary create action
+- row-level actions for edit/delete
+- no duplicate secondary headers, custom filter shells, or alternate action bars unless the page has a genuinely different workflow
+
+When adding a new CRUD table page:
+1. inspect the nearest admin/system table in the same domain
+2. inspect the nearest studio-scoped table in the same domain
+3. adopt the shared subset of filters and actions first
+4. document any intentional divergence in the feature design doc
+
+Filter consistency policy:
+- If two pages expose the same underlying entity list for different purposes, keep the common filter names aligned.
+- Prefer parity with the nearest canonical table route over inventing new param names.
+- Only add specialized filters on the page that actually needs them.
+
+Example:
+- A new studio show CRUD table should align its common show filters with `/system/shows`.
+- Readiness-only filters such as `needs_attention` or `has_tasks` belong on `show-operations`, not on the CRUD page.
 
 ### Pagination
 Use `DataTablePagination` for standard server-driven tables.
@@ -416,6 +459,7 @@ Do not introduce these without explicit justification.
 - [ ] URL state is owned by `useTableUrlState`
 - [ ] Feature hook owns query/filter/refresh state
 - [ ] Shared `DataTable` primitives are reused unless there is a justified exception
+- [ ] Layout, toolbar actions, and common filters were compared against the nearest canonical table route before adding a new variant
 - [ ] Stable row ids are used where selection/editing depends on identity
 - [ ] `isLoading` and `isFetching` are both handled correctly
 - [ ] Mutation invalidation is scoped correctly
