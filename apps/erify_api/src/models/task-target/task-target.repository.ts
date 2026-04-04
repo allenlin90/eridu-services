@@ -21,6 +21,12 @@ export class TaskTargetRepository extends BaseRepository<
     });
   }
 
+  async findAllByShowId(showId: bigint): Promise<TaskTarget[]> {
+    return this.model.findMany({
+      where: { showId },
+    });
+  }
+
   async findByShowIds(showIds: bigint[]): Promise<TaskTarget[]> {
     return this.model.findMany({
       where: {
@@ -43,6 +49,12 @@ export class TaskTargetRepository extends BaseRepository<
     return this.prisma.taskTarget.updateMany({
       where: { taskId },
       data: { deletedAt: null },
+    });
+  }
+
+  async hardDeleteByShowId(showId: bigint): Promise<Prisma.BatchPayload> {
+    return this.prisma.taskTarget.deleteMany({
+      where: { showId },
     });
   }
 }

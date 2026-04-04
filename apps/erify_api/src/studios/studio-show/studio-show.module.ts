@@ -4,6 +4,7 @@ import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { PlatformModule } from '@/models/platform/platform.module';
+import { ScheduleModule } from '@/models/schedule/schedule.module';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
 import { StudioModule } from '@/models/studio/studio.module';
@@ -18,6 +19,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     ShowOrchestrationModule,
     StudioModule,
     StudioRoomModule,
+    ScheduleModule,
     PlatformModule,
     ShowPlatformModule,
   ],

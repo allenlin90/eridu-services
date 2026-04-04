@@ -23,6 +23,8 @@ import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
+import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 
 type CreatorAssignmentPayload = {
   creatorId: string;
@@ -65,6 +67,8 @@ export class ShowOrchestrationService {
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly platformRepository: PlatformRepository,
     private readonly studioCreatorRepository: StudioCreatorRepository,
+    private readonly taskService: TaskService,
+    private readonly taskTargetService: TaskTargetService,
   ) {}
 
   async createShowWithAssignments(
@@ -153,10 +157,14 @@ export class ShowOrchestrationService {
   async deleteShow(uid: string): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
+    const taskTargets = await this.taskTargetService.findAllByShowId(showId);
+    const taskIds = [...new Set(taskTargets.map((target) => target.taskId))];
 
-    await this.showRepository.softDelete({ uid });
+    await this.taskTargetService.hardDeleteByShowId(showId);
+    await this.taskService.hardDeleteByIds(taskIds);
     await this.showCreatorRepository.softDeleteAllByShowId(showId);
     await this.showPlatformRepository.softDeleteAllByShowId(showId);
+    await this.showRepository.softDelete({ uid });
   }
 
   @Transactional()

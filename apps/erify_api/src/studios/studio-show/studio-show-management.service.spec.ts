@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { PlatformRepository } from '@/models/platform/platform.repository';
+import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
@@ -21,6 +22,9 @@ describe('studioShowManagementService', () => {
   };
   const studioRoomServiceMock = {
     findOne: jest.fn(),
+  };
+  const scheduleServiceMock = {
+    getScheduleById: jest.fn(),
   };
   const showServiceMock = {
     createShow: jest.fn(),
@@ -55,6 +59,7 @@ describe('studioShowManagementService', () => {
         StudioShowManagementService,
         { provide: StudioService, useValue: studioServiceMock },
         { provide: StudioRoomService, useValue: studioRoomServiceMock },
+        { provide: ScheduleService, useValue: scheduleServiceMock },
         { provide: ShowService, useValue: showServiceMock },
         { provide: ShowRepository, useValue: showRepositoryMock },
         { provide: PlatformRepository, useValue: platformRepositoryMock },
@@ -71,6 +76,7 @@ describe('studioShowManagementService', () => {
     jest.clearAllMocks();
     studioServiceMock.getStudioById.mockResolvedValue({ id: BigInt(10), uid: 'std_123' });
     studioRoomServiceMock.findOne.mockResolvedValue({ id: BigInt(20), uid: 'srm_1' });
+    scheduleServiceMock.getScheduleById.mockResolvedValue({ id: BigInt(40), uid: 'sch_1', studioId: BigInt(10) });
     showPlatformRepositoryMock.findMany.mockResolvedValue([]);
     platformRepositoryMock.findByUids.mockResolvedValue([
       { id: BigInt(30), uid: 'plt_1' },
@@ -92,6 +98,7 @@ describe('studioShowManagementService', () => {
     await service.createShow('std_123', {
       externalId: 'ext_1',
       clientId: 'cli_1',
+      scheduleId: 'sch_1',
       showTypeId: 'sht_1',
       showStatusId: 'shs_1',
       showStandardId: 'shn_1',
@@ -104,6 +111,9 @@ describe('studioShowManagementService', () => {
     });
 
     expect(showServiceMock.createShow).toHaveBeenCalled();
+    expect(showServiceMock.createShow).toHaveBeenCalledWith(expect.objectContaining({
+      Schedule: { connect: { uid: 'sch_1' } },
+    }));
     expect(showPlatformRepositoryMock.createManyAssignments).toHaveBeenCalledWith([
       expect.objectContaining({
         uid: 'shp_1',
@@ -124,6 +134,7 @@ describe('studioShowManagementService', () => {
     await service.createShow('std_123', {
       externalId: 'ext_1',
       clientId: 'cli_1',
+      scheduleId: null,
       showTypeId: 'sht_1',
       showStatusId: 'shs_1',
       showStandardId: 'shn_1',
@@ -140,8 +151,36 @@ describe('studioShowManagementService', () => {
       expect.objectContaining({
         deletedAt: null,
         externalId: 'ext_1',
+        Schedule: { disconnect: true },
       }),
     );
+  });
+
+  it('rejects create when schedule belongs to a different studio', async () => {
+    scheduleServiceMock.getScheduleById.mockResolvedValue({
+      id: BigInt(99),
+      uid: 'sch_other',
+      studioId: BigInt(999),
+    });
+
+    await expect(service.createShow('std_123', {
+      externalId: 'ext_1',
+      clientId: 'cli_1',
+      scheduleId: 'sch_other',
+      showTypeId: 'sht_1',
+      showStatusId: 'shs_1',
+      showStandardId: 'shn_1',
+      studioRoomId: 'srm_1',
+      name: 'Studio Show',
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+      metadata: {},
+      platformIds: [],
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Schedule sch_other does not belong to studio std_123',
+      }),
+    });
   });
 
   it('rejects update when a partial time change would invert the range', async () => {

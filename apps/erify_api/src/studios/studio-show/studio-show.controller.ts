@@ -53,6 +53,9 @@ const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
+const STUDIO_SHOW_DELETE_ACCESS_ROLES = [
+  STUDIO_ROLE.ADMIN,
+];
 
 @StudioProtected() // All studio members can view
 @Controller('studios/:studioId/shows')
@@ -107,7 +110,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Delete(':id')
-  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @StudioProtected(STUDIO_SHOW_DELETE_ACCESS_ROLES)
   @ZodResponse(undefined, HttpStatus.NO_CONTENT)
   async delete(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

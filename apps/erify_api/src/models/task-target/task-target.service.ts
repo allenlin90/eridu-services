@@ -25,6 +25,10 @@ export class TaskTargetService extends BaseModelService {
     return this.taskTargetRepository.findByShowId(...args);
   }
 
+  async findAllByShowId(...args: Parameters<TaskTargetRepository['findAllByShowId']>): ReturnType<TaskTargetRepository['findAllByShowId']> {
+    return this.taskTargetRepository.findAllByShowId(...args);
+  }
+
   async findByShowIds(...args: Parameters<TaskTargetRepository['findByShowIds']>): ReturnType<TaskTargetRepository['findByShowIds']> {
     return this.taskTargetRepository.findByShowIds(...args);
   }
@@ -35,5 +39,9 @@ export class TaskTargetService extends BaseModelService {
 
   async undeleteByTaskId(...args: Parameters<TaskTargetRepository['undeleteByTaskId']>): ReturnType<TaskTargetRepository['undeleteByTaskId']> {
     return this.taskTargetRepository.undeleteByTaskId(...args);
+  }
+
+  async hardDeleteByShowId(...args: Parameters<TaskTargetRepository['hardDeleteByShowId']>): ReturnType<TaskTargetRepository['hardDeleteByShowId']> {
+    return this.taskTargetRepository.hardDeleteByShowId(...args);
   }
 }

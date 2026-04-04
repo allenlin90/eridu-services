@@ -360,6 +360,18 @@ export class TaskRepository extends BaseRepository<
     });
   }
 
+  async hardDeleteByIds(taskIds: bigint[]): Promise<Prisma.BatchPayload> {
+    if (taskIds.length === 0) {
+      return { count: 0 };
+    }
+
+    return this.prisma.task.deleteMany({
+      where: {
+        id: { in: taskIds },
+      },
+    });
+  }
+
   async findTasksByAssignee(
     assigneeId: bigint,
     query: ListMyTasksQueryTransformed,

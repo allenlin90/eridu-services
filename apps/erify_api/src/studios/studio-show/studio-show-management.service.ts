@@ -3,6 +3,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PlatformRepository } from '@/models/platform/platform.repository';
+import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
 import {
   CreateStudioShowDto,
@@ -25,6 +26,7 @@ export class StudioShowManagementService {
   constructor(
     private readonly studioService: StudioService,
     private readonly studioRoomService: StudioRoomService,
+    private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
     private readonly showRepository: ShowRepository,
     private readonly platformRepository: PlatformRepository,
@@ -35,8 +37,9 @@ export class StudioShowManagementService {
 
   @Transactional()
   async createShow(studioUid: string, dto: CreateStudioShowDto) {
-    await this.studioService.getStudioById(studioUid);
+    const studio = await this.studioService.getStudioById(studioUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
+    await this.ensureScheduleBelongsToStudio(studio.id, studioUid, dto.scheduleId);
 
     const existingByExternalId = dto.externalId
       ? await this.showRepository.findByClientUidAndExternalId(dto.clientId, dto.externalId, {
@@ -75,7 +78,9 @@ export class StudioShowManagementService {
   @Transactional()
   async updateShow(studioUid: string, showUid: string, dto: UpdateStudioShowDto) {
     const existingShow = await this.findStudioShowOrThrow(studioUid, showUid);
+    const studio = await this.studioService.getStudioById(studioUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
+    await this.ensureScheduleBelongsToStudio(studio.id, studioUid, dto.scheduleId);
     this.ensureValidTimeRange(existingShow.startTime, existingShow.endTime, dto);
 
     await this.showRepository.update({ uid: showUid }, this.buildUpdatePayload(dto));
@@ -134,6 +139,21 @@ export class StudioShowManagementService {
     }
   }
 
+  private async ensureScheduleBelongsToStudio(
+    studioId: bigint,
+    studioUid: string,
+    scheduleUid?: string | null,
+  ): Promise<void> {
+    if (scheduleUid === undefined || scheduleUid === null) {
+      return;
+    }
+
+    const schedule = await this.scheduleService.getScheduleById(scheduleUid);
+    if (schedule.studioId !== studioId) {
+      throw HttpError.badRequest(`Schedule ${scheduleUid} does not belong to studio ${studioUid}`);
+    }
+  }
+
   private ensureValidTimeRange(
     currentStartTime: Date,
     currentEndTime: Date,
@@ -159,6 +179,9 @@ export class StudioShowManagementService {
       metadata: dto.metadata ?? {},
       client: { connect: { uid: dto.clientId } },
       studio: { connect: { uid: studioUid } },
+      Schedule: dto.scheduleId
+        ? { connect: { uid: dto.scheduleId } }
+        : undefined,
       studioRoom: dto.studioRoomId
         ? { connect: { uid: dto.studioRoomId } }
         : undefined,
@@ -180,6 +203,9 @@ export class StudioShowManagementService {
       metadata: dto.metadata ?? {},
       client: { connect: { uid: dto.clientId } },
       studio: { connect: { uid: studioUid } },
+      Schedule: dto.scheduleId
+        ? { connect: { uid: dto.scheduleId } }
+        : { disconnect: true },
       studioRoom: dto.studioRoomId
         ? { connect: { uid: dto.studioRoomId } }
         : { disconnect: true },
@@ -203,6 +229,11 @@ export class StudioShowManagementService {
       payload.metadata = dto.metadata;
     if (dto.clientId !== undefined)
       payload.client = { connect: { uid: dto.clientId } };
+    if (dto.scheduleId !== undefined) {
+      payload.Schedule = dto.scheduleId
+        ? { connect: { uid: dto.scheduleId } }
+        : { disconnect: true };
+    }
     if (dto.showTypeId !== undefined)
       payload.showType = { connect: { uid: dto.showTypeId } };
     if (dto.showStatusId !== undefined)
