@@ -11,8 +11,9 @@
 Ship studio-owned show lifecycle management without reusing `/admin/shows`:
 
 - create studio-scoped shows from the studio workspace
-- update show metadata and platform assignments inside the same studio boundary
+- update show metadata, schedule association, and platform assignments inside the same studio boundary
 - soft-delete shows before start time under a simple studio-side business rule
+- restore soft-deleted shows as new operational lifecycles without reviving old workflow state
 - keep the write flow simple while accepting last-write-wins behavior for this slice
 
 ## Current-State Evaluation
@@ -22,8 +23,9 @@ The current backend is close on persistence primitives, but not on studio-owned 
 - `POST/PATCH/DELETE /admin/shows` already exist and reuse `ShowOrchestrationService`.
 - `GET /studios/:studioId/shows*` is read-only plus creator assignment operations.
 - `GET /studios/:studioId/shows/:id` returns the base show DTO only; it does not include platform assignments needed for editing.
-- `GET /studios/:studioId/show-lookups` omits `clients` and `studio_rooms`, so studio-side forms still depend on admin/global lookups.
+- `GET /studios/:studioId/show-lookups` omits `clients`, `studio_rooms`, and schedules, so studio-side forms still depend on admin/global assumptions.
 - The shared `@eridu/api-types/shows` contract is admin-shaped and does not express studio-scoped write DTOs.
+- The shared show DTOs do not yet expose schedule summary fields or a `has_schedule`-style filter signal needed for orphan handling.
 - The PRD marks `client`, `type`, `standard`, and `status` as optional on create, but the current `Show` model requires all four relations at the database level.
 - The current dominant show-write path is still schedule-driven batch publishing from Google Sheets, so manual studio CRUD is not the primary concurrency hotspot today.
 
@@ -43,27 +45,36 @@ The current backend is close on persistence primitives, but not on studio-owned 
 
 5. Create-time required fields follow the current DB constraints, not the original PRD wording.
    Final create requirements: `name`, `start_time`, `end_time`, `client_id`, `show_type_id`, `show_standard_id`, `show_status_id`.
-   Optional: `external_id`, `studio_room_id`, `metadata`, `platform_ids`.
+   Optional: `external_id`, `studio_room_id`, `schedule_id`, `metadata`, `platform_ids`.
 
 6. Studio delete uses a hard time gate, not a warning/preflight flow.
    A studio admin can delete a show only when `now < show.startTime`. If the show has started, the delete call returns a business error.
 
-7. Create restores by external identity.
-   If create receives an `external_id` and a soft-deleted show already exists under the same unique identity, restore that row and apply the latest payload instead of inserting a new show record.
+7. Delete treats pre-start workflow state as disposable.
+   Soft-delete the `Show` row, but remove pre-start task workflow records rooted in that show so restore does not revive stale task state.
 
-8. Studio detail becomes an enriched superset response.
-   `GET /studios/:studioId/shows/:showId` will include current platform assignments needed by the edit form, while staying compatible with current read consumers that only use the base show fields.
+8. Create restores by external identity and starts a new lifecycle.
+   If create receives an `external_id` and a soft-deleted show already exists under the same unique identity, restore that row, apply the latest payload, and do not revive old creator/platform/task workflow state beyond what the new payload recreates.
+
+9. `schedule_id` is optional in BE, required in normal FE UX.
+   The backend contract stays flexible and allows orphan shows. The studio app should require schedule selection in the normal create/edit flow and expose orphan discovery/repair on the shows page.
+
+10. Schedule publish can reclaim restored/manual rows.
+    Schedule publishing should match active shows by external identity globally, adopt valid restored/manual rows, and replace creators/platforms from schedule data when available.
+
+11. Studio detail becomes an enriched superset response.
+    `GET /studios/:studioId/shows/:showId` will include current platform assignments and schedule summary data needed by the edit form, while staying compatible with current read consumers that only use the base show fields.
 
 ## API Surface
 
 | Endpoint | Purpose | Roles |
 | --- | --- | --- |
-| `GET /studios/:studioId/show-lookups` | Studio-safe lookup bundle for show forms | All studio members |
-| `GET /studios/:studioId/shows/:showId` | Enriched show detail for read + edit | All studio members |
-| `GET /studios/:studioId/shows` | Shared show list/read model for CRUD and operations surfaces | All studio members |
+| `GET /studios/:studioId/show-lookups` | Studio-safe lookup bundle for show forms, including schedules | All studio members |
+| `GET /studios/:studioId/shows/:showId` | Enriched show detail for read + edit, including schedule summary | All studio members |
+| `GET /studios/:studioId/shows` | Shared show list/read model for CRUD and operations surfaces, with orphan-friendly filtering | All studio members |
 | `POST /studios/:studioId/shows` | Create a studio-scoped show | `ADMIN`, `MANAGER` |
 | `PATCH /studios/:studioId/shows/:showId` | Update show metadata + platform assignments | `ADMIN`, `MANAGER` |
-| `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show | `ADMIN`, `MANAGER` |
+| `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show and remove disposable workflow state | `ADMIN` |
 
 Design note:
 
@@ -81,6 +92,7 @@ Add or update shared show contracts:
 - add `studioShowDetailSchema`
 - add `createStudioShowInputSchema`
 - add `updateStudioShowInputSchema`
+- extend shared show response schemas with schedule summary fields used by studio CRUD/orphan handling
 
 Recommended wire shapes:
 
@@ -91,6 +103,7 @@ createStudioShowInputSchema = z.object({
   start_time: z.iso.datetime(),
   end_time: z.iso.datetime(),
   client_id: clientUidSchema,
+  schedule_id: scheduleUidSchema.nullable().optional(),
   show_type_id: showTypeUidSchema,
   show_standard_id: showStandardUidSchema,
   show_status_id: showStatusUidSchema,
@@ -104,6 +117,7 @@ updateStudioShowInputSchema = z.object({
   start_time: z.iso.datetime().optional(),
   end_time: z.iso.datetime().optional(),
   client_id: clientUidSchema.optional(),
+  schedule_id: scheduleUidSchema.nullable().optional(),
   show_type_id: showTypeUidSchema.optional(),
   show_standard_id: showStandardUidSchema.optional(),
   show_status_id: showStatusUidSchema.optional(),
@@ -117,6 +131,7 @@ Notes:
 
 - `platform_ids` is final for the studio contract. This keeps the studio form scoped to assignment membership, not admin-only platform metadata.
 - `external_id` is optional. When present, it is used for restore-on-create identity matching.
+- `schedule_id` is optional in the backend contract. FE can still require it for normal create/edit UX.
 - `client_id`, `show_type_id`, `show_standard_id`, and `show_status_id` stay required on create because the DB model still requires them.
 
 ### `packages/api-types/src/task-management/task.schema.ts`
@@ -125,6 +140,7 @@ Extend the existing `studioShowLookupsDto` so the studio app can create/edit sho
 
 - add `clients`
 - add `studio_rooms`
+- add `schedules`
 
 This preserves the existing lookup route and cache family instead of adding multiple form-only endpoints.
 
@@ -135,12 +151,15 @@ This preserves the existing lookup route and cache family instead of adding mult
 Add:
 
 - new studio-specific detail DTO that extends the base show DTO with `platforms`
+- schedule summary fields on studio show list/detail DTOs so FE can surface assignment state and orphan detection
 
 Recommended response shape:
 
 ```typescript
 studioShowDetailDto = showWithPlatformsSchema.transform((obj) => ({
   ...showDto.parse(obj),
+  schedule_id: obj.Schedule?.uid ?? null,
+  schedule_name: obj.Schedule?.name ?? null,
   platforms: obj.showPlatforms.map((item) => ({
     id: item.platform.uid,
     name: item.platform.name,
@@ -154,9 +173,9 @@ studioShowDetailDto = showWithPlatformsSchema.transform((obj) => ({
 
 Add:
 
-- `updateStudioManagedShow(uid, data, include?)`
 - `findDeletedByExternalIdentity(clientUid, externalId, studioUid?)`
-- `restoreByUid(uid, data, include?)`
+- `findActiveByExternalIdentity(clientUid, externalId, include?)`
+- `restoreStudioManagedShow(uid, data, include?)`
 
 Behavior:
 
@@ -179,8 +198,9 @@ createShow(studioUid, payload)
 1. if payload.externalId is absent -> normal create
 2. look up a soft-deleted show by the external identity key
 3. if not found -> normal create
-4. if found -> restore that row, clear deletedAt, and overwrite mutable fields from the latest payload
-5. sync platform assignments from the latest payload
+4. if found -> restore that row, clear deletedAt, set `scheduleId` from the latest payload (or `null`), and overwrite mutable fields from the latest payload
+5. do not resume prior task/creator/platform workflow state automatically
+6. sync platform assignments from the latest payload only
 ```
 
 Identity key:
@@ -195,6 +215,7 @@ Mutable fields updated on restore:
 - `endTime`
 - `studioId`
 - `studioRoomId`
+- `scheduleId`
 - `showTypeId`
 - `showStatusId`
 - `showStandardId`
@@ -203,6 +224,22 @@ Mutable fields updated on restore:
 Non-goal:
 
 - this is restore-on-create for deleted rows, not a general upsert for active rows
+
+### Schedule Takeover Rule
+
+Schedule publishing must not assume that only rows already linked to the target schedule can be updated.
+
+Recommended rule:
+
+```text
+publishSchedule(scheduleUid, payload)
+1. resolve active shows already linked to this schedule
+2. also resolve active rows by the stable external identity key
+3. if a restored/manual row is found and validation passes, adopt it by setting scheduleId to the publishing schedule
+4. apply the latest schedule payload to the adopted row
+5. replace creator/platform assignments from schedule data when available
+6. if adoption would violate validation/conflict rules, fail validation instead of creating a duplicate row
+```
 
 ### `ShowPlatformService` Or Shared Platform Sync Helper
 
@@ -229,10 +266,11 @@ Responsibilities:
 - resolve and validate studio scope
 - create shows with `studioId` forced from the route
 - restore soft-deleted shows by `external_id` when applicable
+- apply optional `schedule_id` from the latest payload during create/restore/update
 - update shows through a simple last-write-wins path
 - replace platform membership
 - fetch enriched studio show detail
-- soft-delete the show and soft-delete active `ShowPlatform` / `ShowCreator` join rows when the show has not started yet
+- soft-delete the show, soft-delete active `ShowPlatform` / `ShowCreator` join rows, and remove disposable pre-start task workflow state when the show has not started yet
 
 Why a dedicated service:
 
@@ -252,6 +290,7 @@ deleteShow(studioUid, showUid)
 2. if show.startTime <= now, throw SHOW_ALREADY_STARTED
 3. soft-delete the show
 4. soft-delete active ShowPlatform and ShowCreator join rows
+5. hard-delete pre-start task workflow records rooted in that show
 ```
 
 Why this rule:
@@ -259,6 +298,7 @@ Why this rule:
 - it matches the current business decision cleanly
 - it avoids ambiguous warning UX
 - it aligns with the idea that historical or in-progress shows should not be studio-deleted
+- it keeps restore semantics clean by preventing stale tasks/targets from surviving into the new lifecycle
 
 ## Controller Plan
 
@@ -284,13 +324,17 @@ Keep read routes unchanged in path to avoid frontend route churn.
 - [ ] Add `createStudioShowInputSchema`.
 - [ ] Add `updateStudioShowInputSchema`.
 - [ ] Add `studioShowDetailSchema`.
+- [ ] Extend shared show response schemas with schedule summary fields.
 - [ ] Extend `studioShowLookupsDto` with `clients` and `studio_rooms`.
-- [ ] Add optional `external_id` to the studio create contract.
+- [ ] Extend `studioShowLookupsDto` with `schedules`.
+- [ ] Add optional `external_id` and `schedule_id` to the studio create contract.
+- [ ] Add optional `schedule_id` to the studio update contract.
 
 ### BE-2 Model Wiring
 
 - [ ] Update `showSchema` / `showDto` transforms.
 - [ ] Add studio detail DTO with platform summary.
+- [ ] Add schedule summary fields to studio show list/detail DTOs.
 
 ### BE-3 Repository And Services
 
@@ -300,6 +344,9 @@ Keep read routes unchanged in path to avoid frontend route churn.
 - [ ] Add `StudioShowManagementService`.
 - [ ] Add pre-start delete validation with `SHOW_ALREADY_STARTED`.
 - [ ] Add restore-on-create behavior for soft-deleted shows with matching `external_id`.
+- [ ] Apply incoming `schedule_id` during create/update/restore.
+- [ ] Remove pre-start task workflow records during studio delete.
+- [ ] Update schedule publishing to reclaim restored/manual rows by external identity and replace creators/platforms from schedule data.
 
 ### BE-4 Controller Wiring
 
@@ -308,6 +355,7 @@ Keep read routes unchanged in path to avoid frontend route churn.
 - [ ] Add studio delete endpoint.
 - [ ] Enrich `GET /studios/:studioId/shows/:showId`.
 - [ ] Extend `GET /studios/:studioId/show-lookups`.
+- [ ] Add orphan-friendly show list filtering (`has_schedule` or equivalent) on `GET /studios/:studioId/shows`.
 
 ### BE-5 Tests
 
@@ -318,6 +366,8 @@ Keep read routes unchanged in path to avoid frontend route churn.
 - [ ] Regression tests proving platform sync preserves unchanged rows and restores soft-deleted rows.
 - [ ] Delete tests proving started shows return `SHOW_ALREADY_STARTED`.
 - [ ] Create tests proving a soft-deleted show is restored by `external_id` and updated from the latest payload.
+- [ ] Delete tests proving old tasks/targets are removed and not revived by restore.
+- [ ] Publish tests proving schedule publish can reclaim a restored/manual row by external identity and replace creator/platform assignments.
 
 ## Verification
 
@@ -333,5 +383,6 @@ Keep read routes unchanged in path to avoid frontend route churn.
 
 - The PRD's original "name/time-only create" wording is intentionally narrowed here to match the current non-null schema. If product still wants ultra-light create, that needs a separate reference-data/defaults decision.
 - Studio show updates intentionally use last-write-wins. A manual studio edit can be overwritten by another later studio edit or by a schedule-driven publish/import flow while Google Sheets remains the dominant source of show records.
+- Nullable `scheduleId` remains a deliberate backend flexibility point. FE should still treat orphan shows as exceptional and surface a repair workflow.
 - If manual studio editing becomes common enough to create real overwrite pain, revisit this slice with a dedicated concurrency token strategy rather than retrofitting hidden heuristics.
 - Studio room lookup support is bundled into `show-lookups` to minimize new endpoints. If room lists become too large later, split room search into a dedicated studio endpoint in a follow-up.

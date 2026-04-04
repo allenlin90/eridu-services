@@ -34,8 +34,8 @@ The current studio frontend has the operations shell, but it mixes concerns for 
    - `/studios/$studioId/show-operations` remains behaviorally unchanged in this slice
    - studio show management must not rewrite that page's layout, filters, or bulk task actions
 
-2. Keep route access aligned with the existing `shows` policy key.
-   Managers and admins can open both pages and perform all CRUD operations including delete.
+2. Keep route access aligned with the existing `shows` policy key for reads and normal writes.
+   Managers and admins can open both pages and create/update shows. Delete stays admin-only.
 
 3. Show CRUD uses a table/list page with dialog-based create/edit/delete.
    The CRUD page owns lifecycle management. The operations page should not grow create/edit/delete controls.
@@ -47,7 +47,7 @@ The current studio frontend has the operations shell, but it mixes concerns for 
    Creator assignment remains on the dedicated creator-mapping surfaces.
 
 6. Delete uses a simple pre-start rule.
-   The UI should offer delete to admins and managers, and the backend will reject delete when the show has already started.
+   The UI should offer delete to admins only, and the backend will reject delete when the show has already started.
 
 7. The frontend follows the backend's last-write-wins rule.
    The form does not send a concurrency token in v1. Save success should simply refresh the shared show queries.
@@ -55,10 +55,13 @@ The current studio frontend has the operations shell, but it mixes concerns for 
 8. `external_id` restore is backend behavior, not an initial form field.
    The studio form does not expose `external_id` in v1. If the create API later receives it from another caller, restore-on-create remains a backend identity rule.
 
-9. Shared endpoints and cache are still preferred.
+9. Schedule is required in normal studio UX even though BE keeps it optional.
+   The studio create/edit form should require schedule selection, while the list page should also help operators find orphan shows with no schedule.
+
+10. Shared endpoints and cache are still preferred.
    The new CRUD page and the existing operations page should reuse the same `GET /studios/:studioId/shows`, `GET /studios/:studioId/shows/:showId`, and lookup queries where possible.
 
-10. Shared data does not mean shared route state.
+11. Shared data does not mean shared route state.
     The pages should share API calls and query keys, but each route must own its own search schema, table state, and UX defaults.
 
 ## Route Plan
@@ -118,6 +121,12 @@ Cache policy:
 
 - the CRUD page and `show-operations` should share `studioShowsKeys` and `studioShowKeys`
 - do not fork duplicate query families just because the pages are separate
+
+Contract expectations for this slice:
+
+- shared show list/detail data should expose schedule summary fields so the CRUD page can show assignment state
+- shared show list query should support an orphan-friendly `has_schedule` filter or equivalent
+- `show-lookups` should include schedules for the create/edit form
 
 ### Separate Route-State Plan
 
@@ -216,6 +225,7 @@ Recommended toolbar filters:
 - `show_standard_name`
 - `show_status_name`
 - `platform_name`
+- `has_schedule` (`Assigned` / `Orphan`)
 - `start_date_from` / `start_date_to` as the CRUD page date-range filter
 
 Filter exclusions on the CRUD page:
@@ -228,6 +238,7 @@ Mapping rule:
 
 - keep the CRUD page URL/search schema close to `/system/shows`
 - map the CRUD page date-range filter to the existing studio list endpoint params without changing `show-operations`
+- add an explicit orphan-friendly schedule-state filter on the CRUD page instead of pushing that recovery workflow into `show-operations`
 
 Practical implication:
 
@@ -251,7 +262,7 @@ Add a row action trigger to the CRUD table.
 Actions:
 
 - `Edit show` for `ADMIN`, `MANAGER`
-- `Delete show` for `ADMIN`, `MANAGER`
+- `Delete show` for `ADMIN`
 
 Mobile:
 
@@ -267,6 +278,7 @@ Fields:
 | Start time | Yes | direct input |
 | End time | Yes | direct input |
 | Client | Yes | `show-lookups.clients` |
+| Schedule | Yes in normal studio UX | `show-lookups.schedules` |
 | Show type | Yes | `show-lookups.show_types` |
 | Show standard | Yes | `show-lookups.show_standards` |
 | Status | Yes | `show-lookups.show_statuses` |
@@ -283,13 +295,19 @@ Explicitly excluded:
 
 The current admin form is not reused as-is because it violates all four exclusions above.
 
+Orphan handling:
+
+- FE should still be able to render and edit an orphan show with `schedule_id = null`
+- normal create/edit submit UX should require schedule selection
+- orphan rows are repaired from the CRUD page rather than treated as a separate workflow
+
 ### Delete Dialog
 
 The dialog is a direct confirmation, not a warning-preflight flow.
 
 Recommended copy:
 
-- `Delete this show? Studio delete is only allowed before the show start time.`
+- `Delete this show? Studio delete is only allowed before the show start time, and pre-start workflow data will be removed.`
 
 Failure handling:
 
@@ -301,6 +319,7 @@ Use the existing `GET /studios/:studioId/show-lookups` query family as the form 
 
 - `clients`
 - `studio_rooms`
+- `schedules`
 
 This avoids introducing studio-side calls to:
 
@@ -332,6 +351,7 @@ Known limitation:
 - [ ] Add `delete-studio-show.ts`.
 - [ ] Update `get-studio-show.ts` to the enriched detail type.
 - [ ] Keep `external_id` restore behavior backend-owned unless product later decides to expose it in the form.
+- [ ] Carry `schedule_id` in studio create/update APIs.
 
 ### FE-2 Form And Dialogs
 
@@ -340,6 +360,7 @@ Known limitation:
 - [ ] Add edit dialog.
 - [ ] Add delete confirmation dialog with pre-start rule copy.
 - [ ] Exclude creator assignment fields from the studio form.
+- [ ] Require schedule selection in the normal studio create/edit UX.
 
 ### FE-3 Show-Operations Integration
 
@@ -351,19 +372,20 @@ Known limitation:
 - [ ] Reuse the same show query keys and endpoint contracts across both pages.
 - [ ] Extract the current route-bound `useStudioShows()` behavior so shared fetching is decoupled from `show-operations` URL state.
 - [ ] Give `/studios/$studioId/shows` its own search schema and table-state hook instead of inheriting `show-operations` defaults.
-- [ ] Match CRUD page filters closely to the existing `/system/shows` and studio operations table patterns: `name`, `client_name`, `creator_name`, `show_type_name`, `show_standard_name`, `show_status_name`, `platform_name`, and start-date range.
+- [ ] Match CRUD page filters closely to the existing `/system/shows` and studio operations table patterns: `name`, `client_name`, `creator_name`, `show_type_name`, `show_standard_name`, `show_status_name`, `platform_name`, `has_schedule`, and start-date range.
+- [ ] Surface orphan-show discovery and repair inside `/studios/$studioId/shows`.
 
 ### FE-4 Access And Conflict UX
 
-- [ ] Gate delete action to `ADMIN` and `MANAGER`.
-- [ ] Keep create/edit/delete available to `MANAGER`.
+- [ ] Gate delete action to `ADMIN` only.
+- [ ] Keep create/edit available to `MANAGER`.
 - [ ] Keep save behavior aligned with backend last-write-wins semantics.
 - [ ] Keep `403` and `404` error states explicit.
 
 ### FE-5 Tests
 
 - [ ] Toolbar test for role-based create action.
-- [ ] Row action test for manager/admin delete visibility.
+- [ ] Row action test for admin-only delete visibility.
 - [ ] Form tests proving studio lookup data, not admin endpoints, drives the selects.
 - [ ] Mutation tests for query invalidation.
 - [ ] Mutation test proving successful save refreshes the shared show queries.

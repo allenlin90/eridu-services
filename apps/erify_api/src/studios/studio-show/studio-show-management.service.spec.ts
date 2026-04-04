@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { PlatformRepository } from '@/models/platform/platform.repository';
+import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
@@ -146,7 +147,7 @@ describe('studioShowManagementService', () => {
   it('rejects update when a partial time change would invert the range', async () => {
     await expect(service.updateShow('std_123', 'show_123', {
       startTime: new Date('2026-04-02T13:00:00.000Z'),
-    })).rejects.toMatchObject({
+    } as UpdateStudioShowDto)).rejects.toMatchObject({
       response: expect.objectContaining({
         message: 'End time must be after start time',
       }),

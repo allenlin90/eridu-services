@@ -105,7 +105,7 @@ describe('studioShowController', () => {
         startTime: new Date('2026-04-02T10:00:00.000Z'),
         endTime: new Date('2026-04-02T12:00:00.000Z'),
         platformIds: ['plt_1'],
-      } satisfies CreateStudioShowDto;
+      } as CreateStudioShowDto;
 
       studioShowManagementServiceMock.createShow.mockResolvedValue({ id: 'show_123' });
 
@@ -123,7 +123,7 @@ describe('studioShowController', () => {
       const dto = {
         name: 'Updated Show',
         platformIds: ['plt_1', 'plt_2'],
-      } satisfies UpdateStudioShowDto;
+      } as UpdateStudioShowDto;
 
       studioShowManagementServiceMock.updateShow.mockResolvedValue({ id: showId });
 
