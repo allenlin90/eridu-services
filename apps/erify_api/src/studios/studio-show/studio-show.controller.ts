@@ -85,7 +85,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
   ) {
-    return this.taskOrchestrationService.getStudioShow(studioId, id);
+    return this.studioShowManagementService.getShowDetail(studioId, id);
   }
 
   @Post()

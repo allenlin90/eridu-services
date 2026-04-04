@@ -25,6 +25,7 @@ describe('studioShowController', () => {
   };
 
   const studioShowManagementServiceMock = {
+    getShowDetail: jest.fn(),
     createShow: jest.fn(),
     updateShow: jest.fn(),
     deleteShow: jest.fn(),

@@ -96,6 +96,10 @@ export class StudioShowManagementService {
     return this.showService.getShowById(showUid, studioShowDetailInclude);
   }
 
+  async getShowDetail(studioUid: string, showUid: string) {
+    return this.findStudioShowOrThrow(studioUid, showUid);
+  }
+
   @Transactional()
   async deleteShow(studioUid: string, showUid: string): Promise<void> {
     const show = await this.findStudioShowOrThrow(studioUid, showUid);
