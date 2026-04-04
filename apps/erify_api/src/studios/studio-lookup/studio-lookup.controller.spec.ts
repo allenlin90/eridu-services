@@ -78,7 +78,11 @@ describe('studioLookupController', () => {
     await controller.getShowLookups('std_1');
 
     expect(clientService.listClients).toHaveBeenCalledWith({
+      page: 1,
+      limit: 200,
       take: 200,
+      skip: 0,
+      sort: 'desc',
       include_deleted: false,
     });
     expect(studioRoomService.getStudioRooms).toHaveBeenCalledWith({

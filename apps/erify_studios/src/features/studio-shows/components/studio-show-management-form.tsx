@@ -106,7 +106,10 @@ export function StudioShowManagementForm({
     [showLookups?.studio_rooms],
   );
   const scheduleOptions = useMemo(
-    () => (showLookups?.schedules ?? []).map((schedule) => ({ value: schedule.id, label: schedule.name })),
+    () => (showLookups?.schedules ?? []).map((schedule) => ({
+      value: schedule.id,
+      label: `${schedule.name} (${schedule.status})`,
+    })),
     [showLookups?.schedules],
   );
   const showTypeOptions = useMemo(

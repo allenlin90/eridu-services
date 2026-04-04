@@ -64,6 +64,9 @@ The current studio frontend has the operations shell, but it mixes concerns for 
 11. Shared data does not mean shared route state.
     The pages should share API calls and query keys, but each route must own its own search schema, table state, and UX defaults.
 
+12. Schedule status is contextual, not a hard CRUD lock.
+    The show-management form should allow selecting any same-studio schedule returned by studio-safe lookups. Status can be shown for context, but Phase 4 should not hide or disable schedules solely because they are not in `draft`.
+
 ## Route Plan
 
 | Route | Purpose | Access |
@@ -126,7 +129,7 @@ Contract expectations for this slice:
 
 - shared show list/detail data should expose schedule summary fields so the CRUD page can show assignment state
 - shared show list query should support an orphan-friendly `has_schedule` filter or equivalent
-- `show-lookups` should include schedules for the create/edit form
+- `show-lookups` should include same-studio schedules for the create/edit form, regardless of planning status
 
 ### Separate Route-State Plan
 
@@ -300,6 +303,7 @@ Orphan handling:
 - FE should still be able to render and edit an orphan show with `schedule_id = null`
 - normal create/edit submit UX should require schedule selection
 - orphan rows are repaired from the CRUD page rather than treated as a separate workflow
+- schedule status may be shown beside the selected schedule for operator context, but it should not hard-block reassignment in this slice
 
 ### Delete Dialog
 
@@ -403,5 +407,6 @@ Known limitation:
 
 - Because the DB model still requires client/type/standard/status, the studio create dialog cannot be a lightweight name/time-only composer in this slice.
 - The existing admin field hooks should not be shared into studio management until their data sources are parameterized; copying them blindly would reintroduce `/admin/*` dependency.
-- Studio show edits intentionally follow last-write-wins while Google Sheets schedule upload/publish remains the dominant show-writing workflow. If manual show editing frequency rises, revisit conflict handling together with the backend concurrency strategy.
+- Studio show edits intentionally follow last-write-wins while Google Sheets publish remains a specialized planning-sync workflow rather than the only source of later schedule linkage changes. If concurrent edits across those flows rise, revisit conflict handling together with the backend concurrency strategy.
+- Exact schedule date-range enforcement is intentionally deferred in the CRUD UI. If product later wants stricter period validation, prefer warnings first rather than hard client-side blocking.
 - If the CRUD page route starts growing again, extract the management-dialog state into a view-model hook first rather than inflating the route file.

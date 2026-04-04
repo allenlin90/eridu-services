@@ -250,15 +250,17 @@ describe('studioShowManagementService', () => {
     });
   });
 
-  it('rejects create when schedule is already published', async () => {
+  it('allows create when target schedule is already published', async () => {
     scheduleServiceMock.getScheduleById.mockResolvedValue({
       id: BigInt(40),
       uid: 'sch_1',
       studioId: BigInt(10),
       status: 'published',
     });
+    showRepositoryMock.findByClientUidAndExternalId.mockResolvedValue(null);
+    showServiceMock.createShow.mockResolvedValue({ id: BigInt(100), uid: 'show_123' });
 
-    await expect(service.createShow('std_123', {
+    await service.createShow('std_123', {
       externalId: 'ext_1',
       clientId: 'cli_1',
       scheduleId: 'sch_1',
@@ -271,11 +273,11 @@ describe('studioShowManagementService', () => {
       endTime: new Date('2026-04-02T12:00:00.000Z'),
       metadata: {},
       platformIds: [],
-    })).rejects.toMatchObject({
-      response: expect.objectContaining({
-        message: 'Schedule is already published',
-      }),
     });
+
+    expect(showServiceMock.createShow).toHaveBeenCalledWith(expect.objectContaining({
+      Schedule: { connect: { uid: 'sch_1' } },
+    }));
   });
 
   it('rejects create when a show with the same external_id already exists and is not deleted', async () => {
@@ -316,6 +318,26 @@ describe('studioShowManagementService', () => {
         message: 'End time must be after start time',
       }),
     });
+  });
+
+  it('allows update when target schedule is already published', async () => {
+    scheduleServiceMock.getScheduleById.mockResolvedValue({
+      id: BigInt(40),
+      uid: 'sch_1',
+      studioId: BigInt(10),
+      status: 'published',
+    });
+
+    await service.updateShow('std_123', 'show_123', {
+      scheduleId: 'sch_1',
+    } as UpdateStudioShowDto);
+
+    expect(showRepositoryMock.update).toHaveBeenCalledWith(
+      { uid: 'show_123' },
+      expect.objectContaining({
+        Schedule: { connect: { uid: 'sch_1' } },
+      }),
+    );
   });
 
   it('rejects delete after the show start time', async () => {

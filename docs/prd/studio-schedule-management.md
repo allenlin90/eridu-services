@@ -8,7 +8,7 @@
 
 ## Problem
 
-Schedules are the primary organizational unit for grouping shows into publishable work periods (typically weekly or per-client). Studios have **zero visibility or control over schedules** — there are no studio-scoped schedule endpoints at all.
+Schedules are the primary organizational unit for grouping shows into studio-managed work periods (typically monthly, but sometimes weekly or per-client). In this product direction, schedules are used first as grouping containers and date-ranged operational buckets, while planning/publish state is secondary workflow metadata. Studios have **zero visibility or control over schedules** — there are no studio-scoped schedule endpoints at all.
 
 Current state:
 
@@ -19,9 +19,9 @@ Current state:
 
 Consequences today:
 
-- Studio admins cannot create weekly schedules for their shows without system-admin intervention.
-- Studio admins cannot build a draft schedule by attaching their existing shows to it in the intended run order.
-- Schedule publishing (finalizing a work period) requires system admin action.
+- Studio admins cannot create period schedules for their shows without system-admin intervention.
+- Studio admins cannot group existing shows into the intended schedule as client requests change.
+- Schedule publishing or plan acknowledgment still requires system admin action.
 - Studios cannot view schedule history or snapshots for audit/review.
 - The monthly overview (schedule grouping by client) is only visible to system admins, not to studio operators who need it for planning.
 - Bulk schedule operations (common for multi-client studios) require system admin involvement.
@@ -64,20 +64,22 @@ Key unanswered questions:
 2. **Show assignment and arrangement inside schedules**
    - Studio admins and managers can attach existing same-studio shows to a schedule.
    - They can remove a show from a schedule without deleting the show itself.
-   - They can move a show from one draft schedule to another draft schedule in the same studio.
+   - They can move a show from one same-studio schedule to another same-studio schedule.
    - They can rearrange the display/order of shows within a schedule for operational planning.
    - The schedule workspace must support both scheduled shows and an unscheduled backlog/picker so the assignment flow is actionable.
+   - Schedule status should inform operators, but it must not be the sole hard lock on show membership changes.
 
 3. **Schedule validation**
    - Studio admins and managers can validate a schedule (check for conflicts, missing assignments).
    - Returns validation results without modifying state.
-   - Validation should include schedule-aware show checks such as out-of-range show timing, duplicate schedule assignment conflicts, or missing required schedule context before publish.
+   - Validation should include schedule-aware show checks such as out-of-range show timing warnings, duplicate schedule assignment conflicts, or missing required schedule context before publish.
 
 4. **Schedule publishing**
-   - Studio admins only can publish a schedule (finalize it for the work period).
+   - Studio admins only can publish a schedule (capture the latest acknowledged plan for the work period).
    - Publishing creates a snapshot for version history.
    - Published schedules are visible to all studio members.
    - Publishing uses the current arranged set of shows linked to the schedule.
+   - Later show/schedule edits may still happen; publish is not a blanket lock on future operational changes.
 
 5. **Schedule duplication**
    - Studio admins and managers can duplicate a schedule as a starting point for a new period.
@@ -118,11 +120,13 @@ Key unanswered questions:
 
 ## Product Decisions
 
-- **Publishing is admin-only** — publishing finalizes a schedule and creates an immutable snapshot; this is a governance action.
+- **Schedules are grouping containers first** — schedule ownership is primarily about grouping shows into a period and exposing that grouping for operations, exports, and later finance workflows.
+- **Publishing is admin-only** — publishing records an acknowledged schedule snapshot and member-visible state; it is a governance action, but not a blanket mutation lock on later show edits.
 - **Show assignment lives in the schedule workspace** — show CRUD owns the single-show linkage field, but schedule management owns the higher-level workflow for attaching, removing, and arranging shows in a schedule.
 - **Validation is non-destructive** — returns conflict data without blocking or modifying.
 - **Bulk operations remain admin-only** — studios operate on single schedules; cross-studio bulk is a system concern.
 - **Snapshot access for managers** — managers need schedule history for review but cannot publish or delete.
+- **Finance/settlement lifecycle is deferred** — invoice/payment semantics, if needed later, should be modeled separately rather than overloading schedule status during Phase 4.
 
 ## API Shape
 
@@ -167,15 +171,15 @@ GET    /studios/:studioId/schedules/overview/monthly
 | `SHOW_NOT_FOUND` | 404 | Provided show does not exist or belongs to different studio |
 | `SHOW_ALREADY_ASSIGNED_TO_OTHER_SCHEDULE` | 409 | Show is already linked to another schedule that cannot be overwritten by this action |
 | `SCHEDULE_VERSION_CONFLICT` | 409 | Optimistic locking version mismatch |
-| `SCHEDULE_ALREADY_PUBLISHED` | 400 | Attempt to modify a published schedule |
+| `SCHEDULE_ALREADY_PUBLISHED` | 400 | Attempt to publish a schedule that is already in published state |
 | `SCHEDULE_VALIDATION_FAILED` | 422 | Validation found conflicts (returned with detail payload) |
 
 ## Acceptance Criteria
 
 - [ ] Studio ADMIN and MANAGER can create schedules scoped to their studio.
-- [ ] Studio ADMIN and MANAGER can update draft schedules.
-- [ ] Studio ADMIN and MANAGER can attach and remove same-studio shows from a draft schedule.
-- [ ] Studio ADMIN and MANAGER can rearrange show order within a draft schedule.
+- [ ] Studio ADMIN and MANAGER can update schedules scoped to their studio.
+- [ ] Studio ADMIN and MANAGER can attach and remove same-studio shows from a schedule.
+- [ ] Studio ADMIN and MANAGER can rearrange show order within a schedule.
 - [ ] Studio ADMIN can publish schedules; MANAGER cannot.
 - [ ] Studio ADMIN can soft-delete schedules; MANAGER cannot.
 - [ ] Studio ADMIN and MANAGER can duplicate schedules.
@@ -184,8 +188,9 @@ GET    /studios/:studioId/schedules/overview/monthly
 - [ ] Studio ADMIN and MANAGER can view monthly overview.
 - [ ] MEMBER can view published schedules (read-only).
 - [ ] Schedules are automatically scoped to the studio from the route.
-- [ ] Published schedules cannot be modified (create new version instead).
-- [ ] Published schedules expose their arranged show set read-only to studio viewers.
+- [ ] Schedule status informs workflow and visibility, but it is not the sole hard lock on same-studio show membership changes.
+- [ ] Publishing captures a snapshot/member-facing plan view, but later edits can still require a refreshed publish.
+- [ ] Published schedules expose their last published arranged show set read-only to studio viewers.
 - [ ] `/admin/schedules` retains full capability for system admins.
 
 ## Design Reference

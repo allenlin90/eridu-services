@@ -1,14 +1,15 @@
 # Schedule Planning
 
-> **TLDR**: JSON-based per-client schedule planning with snapshot versioning and optimistic locking. Planners work in Google Sheets → Apps Script syncs drafts → validate → publish to normalized Show tables. One schedule per client (~50 shows each).
+> **TLDR**: JSON-based per-client schedule planning with snapshot versioning and optimistic locking. Schedules act both as planning documents and as date-ranged grouping containers for shows. Planners work in Google Sheets → Apps Script syncs drafts → validate → publish to normalized Show tables. One schedule per client (~50 shows each).
 
 ## Overview
 
-The system uses **JSON documents for flexible planning** and **normalized tables for queryable published data**. Schedules go through a lifecycle: `draft` → `review` → `published`, with automatic snapshots capturing every version.
+The system uses **JSON documents for flexible planning** and **normalized tables for queryable published data**. Schedules go through a lifecycle of `draft` → `review` → `published`, but those statuses should be interpreted as lightweight planning markers around the latest acknowledged plan, not as universal write locks across every workflow. Automatic snapshots capture every version.
 
 - **Update operations** (`PATCH`) only update the `planDocument` JSON column — cheap, frequent
 - **Publish operations** (`POST /publish`) sync JSON to normalized Show/ShowMC/ShowPlatform tables — expensive, batched
 - **Optimistic locking** via `version` column prevents concurrent update conflicts
+- Schedules also serve as grouping/date-range containers for downstream studio operations, exports, and later finance workflows
 
 > [!NOTE]
 > Publish now uses identity-preserving **diff + upsert** instead of delete/recreate. See [Schedule Continuity](./SCHEDULE_CONTINUITY.md) for details.
@@ -36,7 +37,7 @@ erDiagram
 |-------|------|-------------|
 | `planDocument` | JSON | Shows array + metadata (see below) |
 | `version` | Int | Auto-increments on each update (optimistic lock) |
-| `status` | Enum | `draft`, `review`, `published` |
+| `status` | Enum | `draft`, `review`, `published` planning marker for the latest acknowledged schedule state |
 | `publishedAt` | DateTime? | Last publish timestamp |
 
 ### Plan Document Structure
@@ -71,7 +72,7 @@ Immutable version history, created automatically on every update. Snapshot reaso
 | `POST`   | `/admin/schedules`     | Create new schedule |
 | `GET`    | `/admin/schedules`     | List schedules (plan_document excluded by default) |
 | `GET`    | `/admin/schedules/:id` | Get schedule with full plan_document |
-| `PATCH`  | `/admin/schedules/:id` | Update draft (creates snapshot, increments version) |
+| `PATCH`  | `/admin/schedules/:id` | Update schedule plan document (creates snapshot, increments version) |
 | `DELETE` | `/admin/schedules/:id` | Soft delete |
 
 ### Publishing
@@ -93,7 +94,7 @@ Immutable version history, created automatically on every update. Snapshot reaso
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | `POST` | `/google-sheets/schedules/bulk` | Primary intake from Apps Script |
-| `PATCH` | `/google-sheets/schedules/:id` | Update draft with plan data |
+| `PATCH` | `/google-sheets/schedules/:id` | Update schedule plan with incoming sheet data |
 | `POST` | `/google-sheets/schedules/:id/validate` | Validate |
 | `POST` | `/google-sheets/schedules/:id/publish` | Publish |
 
@@ -143,7 +144,7 @@ Immutable version history, created automatically on every update. Snapshot reaso
 
 ### Per-Show
 
-- Time range: show within schedule date range
+- Time range alignment: schedule planning validation may flag shows that fall outside the nominal schedule date range; exact hard enforcement for manual studio show CRUD is intentionally deferred
 - Time logic: `endTime` after `startTime`
 - References: all UIDs must exist (client, room, type, status, standard)
 - Client consistency: all shows belong to same client

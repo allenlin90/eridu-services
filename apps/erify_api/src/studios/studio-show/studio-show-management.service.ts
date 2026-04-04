@@ -3,7 +3,6 @@ import { Transactional } from '@nestjs-cls/transactional';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PlatformRepository } from '@/models/platform/platform.repository';
-import { SCHEDULE_STATUS } from '@/models/schedule/schedule.constants';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
 import {
@@ -156,9 +155,6 @@ export class StudioShowManagementService {
     const schedule = await this.scheduleService.getScheduleById(scheduleUid);
     if (!schedule.studioId || schedule.studioId !== studioId) {
       throw HttpError.badRequest(`Schedule ${scheduleUid} does not belong to studio ${studioUid}`);
-    }
-    if (schedule.status === SCHEDULE_STATUS.PUBLISHED) {
-      throw HttpError.badRequest('Schedule is already published');
     }
   }
 
