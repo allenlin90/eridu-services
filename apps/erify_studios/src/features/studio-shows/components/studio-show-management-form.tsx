@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
+import { UID_PREFIXES } from '@eridu/api-types/constants';
 import {
   createStudioShowInputSchema,
   type StudioShowDetail,
@@ -25,6 +26,8 @@ import {
 
 const studioShowFormSchema = createStudioShowInputSchema.omit({
   external_id: true,
+}).extend({
+  schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE, 'Schedule is required'),
 });
 
 export type StudioShowFormValues = z.infer<typeof studioShowFormSchema>;
@@ -61,6 +64,7 @@ export function StudioShowManagementForm({
       start_time: '',
       end_time: '',
       client_id: '',
+      schedule_id: '',
       show_type_id: '',
       show_status_id: '',
       show_standard_id: '',
@@ -77,6 +81,7 @@ export function StudioShowManagementForm({
         start_time: show.start_time,
         end_time: show.end_time,
         client_id: show.client_id ?? '',
+        schedule_id: show.schedule_id ?? '',
         show_type_id: show.show_type_id ?? '',
         show_status_id: show.show_status_id ?? '',
         show_standard_id: show.show_standard_id ?? '',
@@ -92,6 +97,7 @@ export function StudioShowManagementForm({
       start_time: '',
       end_time: '',
       client_id: '',
+      schedule_id: '',
       show_type_id: '',
       show_status_id: '',
       show_standard_id: '',
@@ -108,6 +114,10 @@ export function StudioShowManagementForm({
   const roomOptions = useMemo(
     () => (showLookups?.studio_rooms ?? []).map((room) => ({ value: room.id, label: room.name })),
     [showLookups?.studio_rooms],
+  );
+  const scheduleOptions = useMemo(
+    () => (showLookups?.schedules ?? []).map((schedule) => ({ value: schedule.id, label: schedule.name })),
+    [showLookups?.schedules],
   );
   const showTypeOptions = useMemo(
     () => (showLookups?.show_types ?? []).map((item) => ({ value: item.id, label: item.name })),
@@ -202,6 +212,27 @@ export function StudioShowManagementForm({
                     options={clientOptions}
                     isLoading={isLookupsLoading}
                     placeholder="Select client"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="schedule_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Schedule</FormLabel>
+                <FormControl>
+                  <AsyncCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    onSearch={() => {}}
+                    options={scheduleOptions}
+                    isLoading={isLookupsLoading}
+                    placeholder="Select schedule"
                   />
                 </FormControl>
                 <FormMessage />

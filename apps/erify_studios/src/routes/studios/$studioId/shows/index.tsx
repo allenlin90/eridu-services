@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Plus, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -27,6 +28,7 @@ import { getStudioShowManagementColumns } from '@/features/studio-shows/componen
 import { StudioShowManagementForm } from '@/features/studio-shows/components/studio-show-management-form';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { useStudioShowManagement } from '@/features/studio-shows/hooks/use-studio-show-management';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 export const Route = createFileRoute('/studios/$studioId/shows/')({
   component: StudioShowsPage,
@@ -37,6 +39,7 @@ function StudioShowsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingShow, setEditingShow] = useState<StudioShow | null>(null);
   const [deletingShow, setDeletingShow] = useState<StudioShow | null>(null);
+  const { role } = useStudioAccess(studioId);
 
   const {
     data,
@@ -53,6 +56,7 @@ function StudioShowsPage() {
   const createMutation = useCreateStudioShow(studioId);
   const updateMutation = useUpdateStudioShow(studioId);
   const deleteMutation = useDeleteStudioShow(studioId);
+  const canDeleteShows = role === STUDIO_ROLE.ADMIN;
 
   const editingShowQuery = useStudioShow({
     studioId,
@@ -89,6 +93,15 @@ function StudioShowsPage() {
         type: 'select' as const,
         options: (showLookups?.platforms ?? []).map((item) => ({ value: item.name, label: item.name })),
       },
+      {
+        id: 'has_schedule',
+        title: 'Schedule',
+        type: 'select' as const,
+        options: [
+          { value: 'true', label: 'Assigned' },
+          { value: 'false', label: 'Orphan' },
+        ],
+      },
       { id: 'start_time', title: 'Date', type: 'date-range' as const },
     ],
     [showLookups],
@@ -97,15 +110,17 @@ function StudioShowsPage() {
   const columns = useMemo(
     () => getStudioShowManagementColumns(studioId, {
       onEdit: (show) => setEditingShow(show),
-      onDelete: (show) => setDeletingShow(show),
+      onDelete: canDeleteShows
+        ? (show) => setDeletingShow(show)
+        : undefined,
     }),
-    [studioId],
+    [canDeleteShows, studioId],
   );
 
   return (
     <PageLayout
       title="Shows"
-      description="Manage studio shows in a dedicated CRUD view without task-generation controls."
+      description="Manage studio shows in a dedicated CRUD view, including schedule reassignment for orphan shows."
     >
       <DataTable
         data={data}
@@ -129,7 +144,7 @@ function StudioShowsPage() {
             searchColumn="name"
             searchableColumns={searchableColumns}
             searchPlaceholder="Search shows..."
-            featuredFilterColumns={['show_status_name', 'start_time']}
+            featuredFilterColumns={['show_status_name', 'has_schedule', 'start_time']}
           >
             <Button
               variant="outline"
@@ -210,22 +225,24 @@ function StudioShowsPage() {
         </DialogContent>
       </Dialog>
 
-      <DeleteConfirmDialog
-        open={Boolean(deletingShow)}
-        onOpenChange={(open) => !open && setDeletingShow(null)}
-        onConfirm={() => {
-          if (!deletingShow) {
-            return;
-          }
+      {canDeleteShows && (
+        <DeleteConfirmDialog
+          open={Boolean(deletingShow)}
+          onOpenChange={(open) => !open && setDeletingShow(null)}
+          onConfirm={() => {
+            if (!deletingShow) {
+              return;
+            }
 
-          deleteMutation.mutate(deletingShow.id, {
-            onSuccess: () => setDeletingShow(null),
-          });
-        }}
-        title="Delete Show"
-        description="Delete this show before it starts. After the start time, studio deletion is blocked."
-        isLoading={deleteMutation.isPending}
-      />
+            deleteMutation.mutate(deletingShow.id, {
+              onSuccess: () => setDeletingShow(null),
+            });
+          }}
+          title="Delete Show"
+          description="Delete this show before it starts. After the start time, studio deletion is blocked."
+          isLoading={deleteMutation.isPending}
+        />
+      )}
     </PageLayout>
   );
 }

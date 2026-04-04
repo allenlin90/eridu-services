@@ -21,7 +21,7 @@ export function getStudioShowManagementColumns(
   studioId: string,
   actions: {
     onEdit: (show: StudioShow) => void;
-    onDelete: (show: StudioShow) => void;
+    onDelete?: (show: StudioShow) => void;
   },
 ): ColumnDef<StudioShow>[] {
   return [
@@ -47,10 +47,17 @@ export function getStudioShowManagementColumns(
     {
       id: 'client_name',
       accessorFn: (row) => row.client_name ?? '',
-      header: 'Client / Room',
+      header: 'Client',
+      cell: ({ row }) => (
+        <span>{row.original.client_name ?? '—'}</span>
+      ),
+    },
+    {
+      accessorKey: 'schedule_name',
+      header: 'Schedule / Room',
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span>{row.original.client_name ?? '—'}</span>
+          <span>{row.original.schedule_name ?? 'Orphan show'}</span>
           <span className="text-xs text-muted-foreground">{row.original.studio_room_name ?? 'No room'}</span>
         </div>
       ),
@@ -125,6 +132,12 @@ export function getStudioShowManagementColumns(
     },
     {
       id: 'platform_name',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      id: 'has_schedule',
       header: () => null,
       cell: () => null,
       meta: { className: 'hidden' },

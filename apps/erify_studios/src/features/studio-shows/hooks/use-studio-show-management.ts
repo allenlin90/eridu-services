@@ -40,6 +40,7 @@ export function useStudioShowManagement(studioId: string) {
         'show_standard_name',
         'show_status_name',
         'platform_name',
+        'has_schedule',
       ].includes(filter.id)) {
         nextFilters[filter.id] = filter.value as string;
       }
@@ -66,6 +67,9 @@ export function useStudioShowManagement(studioId: string) {
       search: search || undefined,
       date_from: dateRange?.from,
       date_to: dateRange?.to,
+      has_schedule: filters.has_schedule === undefined
+        ? undefined
+        : filters.has_schedule === 'true',
       creator_name: filters.creator_name,
       client_name: filters.client_name,
       show_type_name: filters.show_type_name,
