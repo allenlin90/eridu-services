@@ -431,6 +431,9 @@ export class PublishingService {
         publishSummary.shows_restored += 1;
       }
 
+      // wasCancelled: show was soft-cancelled via status — tasks are soft-deleted and can be resumed.
+      // wasDeleted: show was manually deleted (pre-start) via studio CRUD — deleteShow hard-purges
+      // tasks, so there is nothing to resume; the incoming payload starts a new lifecycle.
       if (wasCancelled) {
         await this.resumeSoftDeletedTasksAndTargets(existing.id);
       }

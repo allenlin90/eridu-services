@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   Param,
   Patch,
@@ -162,7 +161,7 @@ export class StudioShowController extends BaseStudioController {
 
   @Delete(':id/creators/:creatorId')
   @StudioProtected(STUDIO_SHOW_CREATOR_ACCESS_ROLES)
-  @HttpCode(204)
+  @ZodResponse(undefined, HttpStatus.NO_CONTENT)
   async removeCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,

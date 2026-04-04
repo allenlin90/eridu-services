@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
 import {
@@ -24,13 +24,22 @@ import {
   Input,
 } from '@eridu/ui';
 
-const studioShowFormSchema = createStudioShowInputSchema.omit({
+// Create mode: schedule is required
+const studioShowCreateFormSchema = createStudioShowInputSchema.omit({
   external_id: true,
 }).extend({
   schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE, 'Schedule is required'),
 });
 
-export type StudioShowFormValues = z.infer<typeof studioShowFormSchema>;
+// Edit mode: schedule can be empty (orphan shows are repaired by assigning a schedule,
+// but other fields can be updated without requiring one)
+const studioShowEditFormSchema = createStudioShowInputSchema.omit({
+  external_id: true,
+}).extend({
+  schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE).or(z.literal('')),
+});
+
+export type StudioShowFormValues = z.infer<typeof studioShowEditFormSchema>;
 
 const EMPTY_SHOW_FORM_VALUES: StudioShowFormValues = {
   name: '',
@@ -72,7 +81,7 @@ export function StudioShowManagementForm({
   onCancel,
 }: StudioShowManagementFormProps) {
   const form = useForm<StudioShowFormValues>({
-    resolver: zodResolver(studioShowFormSchema),
+    resolver: zodResolver(show ? studioShowEditFormSchema : studioShowCreateFormSchema),
     defaultValues: EMPTY_SHOW_FORM_VALUES,
   });
 

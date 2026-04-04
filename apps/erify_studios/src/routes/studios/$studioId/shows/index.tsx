@@ -214,9 +214,12 @@ function StudioShowsPage() {
                 return;
               }
 
+              // Empty schedule_id means "no change" for orphan shows — strip it so
+              // the PATCH body omits the field rather than sending an invalid value.
+              const { schedule_id, ...rest } = values;
               updateMutation.mutate({
                 showId: editingShow.id,
-                data: values,
+                data: schedule_id ? { ...rest, schedule_id } : rest,
               }, {
                 onSuccess: () => setEditingShow(null),
               });
