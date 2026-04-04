@@ -78,9 +78,9 @@ export class StudioShowManagementService {
   @Transactional()
   async updateShow(studioUid: string, showUid: string, dto: UpdateStudioShowDto) {
     const existingShow = await this.findStudioShowOrThrow(studioUid, showUid);
-    const studio = await this.studioService.getStudioById(studioUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
-    await this.ensureScheduleBelongsToStudio(studio.id, studioUid, dto.scheduleId);
+    // existingShow.studioId is non-null: the show was fetched via studio-scoped query
+    await this.ensureScheduleBelongsToStudio(existingShow.studioId!, studioUid, dto.scheduleId);
     this.ensureValidTimeRange(existingShow.startTime, existingShow.endTime, dto);
 
     await this.showRepository.update({ uid: showUid }, this.buildUpdatePayload(dto));
@@ -149,7 +149,7 @@ export class StudioShowManagementService {
     }
 
     const schedule = await this.scheduleService.getScheduleById(scheduleUid);
-    if (schedule.studioId !== studioId) {
+    if (!schedule.studioId || schedule.studioId !== studioId) {
       throw HttpError.badRequest(`Schedule ${scheduleUid} does not belong to studio ${studioUid}`);
     }
   }

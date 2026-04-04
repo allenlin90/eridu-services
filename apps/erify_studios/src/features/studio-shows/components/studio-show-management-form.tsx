@@ -32,6 +32,20 @@ const studioShowFormSchema = createStudioShowInputSchema.omit({
 
 export type StudioShowFormValues = z.infer<typeof studioShowFormSchema>;
 
+const EMPTY_SHOW_FORM_VALUES: StudioShowFormValues = {
+  name: '',
+  start_time: '',
+  end_time: '',
+  client_id: '',
+  schedule_id: '',
+  show_type_id: '',
+  show_status_id: '',
+  show_standard_id: '',
+  studio_room_id: undefined,
+  metadata: {},
+  platform_ids: [],
+};
+
 type StudioShowManagementFormProps = {
   show?: StudioShowDetail | null;
   showLookups?: StudioShowLookupsDto;
@@ -59,19 +73,7 @@ export function StudioShowManagementForm({
 }: StudioShowManagementFormProps) {
   const form = useForm<StudioShowFormValues>({
     resolver: zodResolver(studioShowFormSchema),
-    defaultValues: {
-      name: '',
-      start_time: '',
-      end_time: '',
-      client_id: '',
-      schedule_id: '',
-      show_type_id: '',
-      show_status_id: '',
-      show_standard_id: '',
-      studio_room_id: undefined,
-      metadata: {},
-      platform_ids: [],
-    },
+    defaultValues: EMPTY_SHOW_FORM_VALUES,
   });
 
   useEffect(() => {
@@ -92,19 +94,7 @@ export function StudioShowManagementForm({
       return;
     }
 
-    form.reset({
-      name: '',
-      start_time: '',
-      end_time: '',
-      client_id: '',
-      schedule_id: '',
-      show_type_id: '',
-      show_status_id: '',
-      show_standard_id: '',
-      studio_room_id: undefined,
-      metadata: {},
-      platform_ids: [],
-    });
+    form.reset(EMPTY_SHOW_FORM_VALUES);
   }, [form, show]);
 
   const clientOptions = useMemo(

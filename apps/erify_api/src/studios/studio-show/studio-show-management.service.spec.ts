@@ -183,6 +183,35 @@ describe('studioShowManagementService', () => {
     });
   });
 
+  it('rejects create when a show with the same external_id already exists and is not deleted', async () => {
+    showRepositoryMock.findByClientUidAndExternalId.mockResolvedValue({
+      id: BigInt(55),
+      uid: 'show_existing',
+      deletedAt: null,
+    });
+
+    await expect(service.createShow('std_123', {
+      externalId: 'ext_1',
+      clientId: 'cli_1',
+      scheduleId: null,
+      showTypeId: 'sht_1',
+      showStatusId: 'shs_1',
+      showStandardId: 'shn_1',
+      studioRoomId: null,
+      name: 'Studio Show',
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+      metadata: {},
+      platformIds: [],
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        statusCode: 409,
+      }),
+    });
+    expect(showServiceMock.createShow).not.toHaveBeenCalled();
+    expect(showRepositoryMock.update).not.toHaveBeenCalled();
+  });
+
   it('rejects update when a partial time change would invert the range', async () => {
     await expect(service.updateShow('std_123', 'show_123', {
       startTime: new Date('2026-04-02T13:00:00.000Z'),

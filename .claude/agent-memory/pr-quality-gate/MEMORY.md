@@ -131,7 +131,7 @@ This is the canonical approach for detecting moderation templates until a DB-lev
 - Schema spec file `studio-creator-onboard.schema.spec.ts` lives in `apps/erify_api/src/studios/studio-creator/schemas/` but tests `@eridu/api-types` schemas. This is non-standard but accepted — it co-locates validation tests near the DTO that consumes those schemas.
 - `OnboardStudioCreatorDto` uses `.transform()` in `createZodDto()` to convert snake_case wire format to camelCase. The controller then re-reads `dto.creator.name`, `dto.creator.aliasName` (already camelCase). This is correct; the `declare` fields on the class reflect the post-transform shape.
 
-### Studio Show Management Patterns (PR #36 — feat/phase4-1e-show-management-design) — SECOND REVIEW CYCLE
+### Studio Show Management Patterns (PR #36 — feat/phase4-1e-show-management-design) — THIRD REVIEW CYCLE (FINAL)
 - `ShowWithPayload<T>` is defined in `show.schema.ts` (schema layer, Prisma-ok). The management service imports it as `import type` for use in a PRIVATE method return type only — accepted.
 - `ShowCreateData`/`ShowUpdateData` type aliases (in management service via `Parameters<ShowRepository['create/update']>[N]`) effectively alias Prisma input types without importing Prisma directly. Used only in private builder methods. Accepted gray area.
 - The private builder methods (`buildCreatePayload`, `buildCreateRestorePayload`, `buildUpdatePayload`) construct Prisma relation objects (`{ connect: { uid: ... } }`) inside the service. Accepted for now since types are not in public signatures.
@@ -146,6 +146,11 @@ This is the canonical approach for detecting moderation templates until a DB-lev
 - `getMutationErrorMessage` utility in `get-mutation-error-message.ts` is a clean shared helper — good pattern, should be extracted to shared `lib/` later if other features need it.
 - `invalidateStudioTaskQueries` uses `refetchType: 'active'` on show-task invalidation — correct to avoid ghost fetches on non-mounted queries.
 - `sidebar-config.test.tsx` updated to include "Shows" nav item in Operations section — test is in the pre-existing failing set due to `@eridu/auth-sdk/client/react` build issue, not a new regression.
+- `updateShow` calls `getStudioById` to get `studio.id` (BigInt) for schedule ownership validation, but `existingShow.studioId` is already a BigInt field on the returned Show model. This is a redundant DB round-trip; the optimization is to use `existingShow.studioId` directly. Flagged as WARNING, not blocking.
+- `studioShowDetailDto` uses `.pipe(studioShowDetailSchema as any)` — Zod 4 `.extend()` breaks pipe-compatibility due to internal branded types. The `as any` cast is intentional and documented in a comment. The output is structurally validated by `studioShowDetailSchema` at runtime. Accepted.
+- `erify_api` typecheck fails in this worktree due to missing generated Prisma client (`.prisma/client/default`). All TS errors shown are pre-existing worktree setup issues, not regressions from this PR. `erify_studios` typecheck passes clean.
+- FE form `studioShowFormSchema` overrides `schedule_id` to be required (`startsWith(...)`). The underlying `createStudioShowInputSchema` marks `schedule_id` as optional. This is an intentional tightening — the management form requires a schedule; external imports that skip schedule are for programmatic creation only.
+- `useUpdateStudioShow` does NOT invalidate `showLookupsKeys` on success, but `useCreateStudioShow` does. This asymmetry is intentional — creating a show may add it to lookup lists, updating does not change lookup data.
 
 ### Phase 4 Merge Program Policy (2026-03-11)
 - Cross-session tracker: `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`
