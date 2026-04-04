@@ -110,6 +110,7 @@ describe('studioShowManagementService', () => {
       uid: 'sch_1',
       studioId: BigInt(10),
       status: 'draft',
+      client: { uid: 'cli_1' },
     });
     showPlatformRepositoryMock.findMany.mockResolvedValue([]);
     platformRepositoryMock.findByUids.mockResolvedValue([
@@ -120,6 +121,7 @@ describe('studioShowManagementService', () => {
       id: BigInt(100),
       uid: 'show_123',
       studioId: BigInt(10),
+      client: { uid: 'cli_1' },
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
     });
@@ -228,6 +230,7 @@ describe('studioShowManagementService', () => {
       uid: 'sch_other',
       studioId: BigInt(999),
       status: 'draft',
+      client: { uid: 'cli_1' },
     });
 
     await expect(service.createShow('std_123', {
@@ -250,12 +253,42 @@ describe('studioShowManagementService', () => {
     });
   });
 
+  it('rejects create when schedule belongs to a different client', async () => {
+    scheduleServiceMock.getScheduleById.mockResolvedValue({
+      id: BigInt(40),
+      uid: 'sch_1',
+      studioId: BigInt(10),
+      status: 'draft',
+      client: { uid: 'cli_other' },
+    });
+
+    await expect(service.createShow('std_123', {
+      externalId: 'ext_1',
+      clientId: 'cli_1',
+      scheduleId: 'sch_1',
+      showTypeId: 'sht_1',
+      showStatusId: 'shs_1',
+      showStandardId: 'shn_1',
+      studioRoomId: 'srm_1',
+      name: 'Studio Show',
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+      metadata: {},
+      platformIds: [],
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Schedule sch_1 does not belong to client cli_1',
+      }),
+    });
+  });
+
   it('allows create when target schedule is already published', async () => {
     scheduleServiceMock.getScheduleById.mockResolvedValue({
       id: BigInt(40),
       uid: 'sch_1',
       studioId: BigInt(10),
       status: 'published',
+      client: { uid: 'cli_1' },
     });
     showRepositoryMock.findByClientUidAndExternalId.mockResolvedValue(null);
     showServiceMock.createShow.mockResolvedValue({ id: BigInt(100), uid: 'show_123' });
@@ -326,6 +359,7 @@ describe('studioShowManagementService', () => {
       uid: 'sch_1',
       studioId: BigInt(10),
       status: 'published',
+      client: { uid: 'cli_1' },
     });
 
     await service.updateShow('std_123', 'show_123', {
@@ -338,6 +372,24 @@ describe('studioShowManagementService', () => {
         Schedule: { connect: { uid: 'sch_1' } },
       }),
     );
+  });
+
+  it('rejects update when target schedule belongs to a different client', async () => {
+    scheduleServiceMock.getScheduleById.mockResolvedValue({
+      id: BigInt(40),
+      uid: 'sch_1',
+      studioId: BigInt(10),
+      status: 'draft',
+      client: { uid: 'cli_other' },
+    });
+
+    await expect(service.updateShow('std_123', 'show_123', {
+      scheduleId: 'sch_1',
+    } as UpdateStudioShowDto)).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Schedule sch_1 does not belong to client cli_1',
+      }),
+    });
   });
 
   it('rejects delete after the show start time', async () => {

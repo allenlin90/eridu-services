@@ -62,7 +62,10 @@ The current backend is close on persistence primitives, but not on studio-owned 
 10. Schedule publish can reclaim restored/manual rows.
     Schedule publishing should match active shows by external identity globally, adopt valid restored/manual rows, and replace creators/platforms from schedule data when available.
 
-11. Studio detail becomes an enriched superset response.
+11. Schedule linkage must preserve client consistency.
+    A studio show may link only to schedules that belong to the same studio and the same client as the show. Same-studio alone is not sufficient because schedules remain per-client planning/grouping containers.
+
+12. Studio detail becomes an enriched superset response.
     `GET /studios/:studioId/shows/:showId` will include current platform assignments and schedule summary data needed by the edit form, while staying compatible with current read consumers that only use the base show fields.
 
 ## API Surface
@@ -132,6 +135,7 @@ Notes:
 - `platform_ids` is final for the studio contract. This keeps the studio form scoped to assignment membership, not admin-only platform metadata.
 - `external_id` is optional. When present, it is used for restore-on-create identity matching.
 - `schedule_id` is optional in the backend contract. FE can still require it for normal create/edit UX.
+- if `schedule_id` is present, backend validation must enforce same-studio and same-client ownership relative to the show payload
 - `client_id`, `show_type_id`, `show_standard_id`, and `show_status_id` stay required on create because the DB model still requires them.
 
 ### `packages/api-types/src/task-management/task.schema.ts`
@@ -207,6 +211,7 @@ Identity key:
 
 - existing schema suggests `clientId + externalId` as the stable unique pair
 - studio scoping should still be validated during restore so a studio route cannot restore a show into a different studio
+- schedule reassignment during restore/update should also keep `schedule.clientId === show.clientId`
 
 Mutable fields updated on restore:
 

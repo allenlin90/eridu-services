@@ -43,13 +43,14 @@ Use this skill for the schedule continuity feature across `erify_api`, `erify_st
 When implementing or reviewing schedule/show interactions:
 
 1. Preserve same-studio assignment boundaries and external-identity safety checks.
-2. Do **not** add or preserve policy that blocks same-studio show reassignment solely because the target schedule is not `draft`.
-3. Treat `published` as "latest acknowledged plan/member-visible state" rather than "immutable forever".
-4. Keep publish-time continuity guarantees intact:
+2. Preserve same-client schedule boundaries: a show must not be linked to a schedule owned by a different client, even within the same studio.
+3. Do **not** add or preserve policy that blocks same-studio show reassignment solely because the target schedule is not `draft`.
+4. Treat `published` as "latest acknowledged plan/member-visible state" rather than "immutable forever".
+5. Keep publish-time continuity guarantees intact:
    - diff by `(client_id, external_id)`
    - preserve show identity across republish
    - preserve task-target linkage for matched shows
-5. If a new requirement introduces finance or settlement lifecycle behavior, model it separately rather than folding it into schedule planning status by default.
+6. If a new requirement introduces finance or settlement lifecycle behavior, model it separately rather than folding it into schedule planning status by default.
 
 ## Review Focus
 
@@ -80,4 +81,5 @@ Use generic status update endpoints only if the same guards/audit/error contract
 - [ ] External API uses `id` and `external_id` (not UIDs)
 - [ ] Consistency verified across `@eridu/api-types`, backend, and frontend
 - [ ] Same-studio show CRUD is not blocked solely by schedule planning status
+- [ ] Same-client schedule linkage is preserved for manual studio show CRUD
 - [ ] New workflow semantics do not overload schedule `status` with finance/settlement meaning

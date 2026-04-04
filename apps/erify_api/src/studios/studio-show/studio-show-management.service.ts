@@ -39,7 +39,12 @@ export class StudioShowManagementService {
   async createShow(studioUid: string, dto: CreateStudioShowDto) {
     const studio = await this.studioService.getStudioById(studioUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
-    await this.ensureScheduleBelongsToStudio(studio.id, studioUid, dto.scheduleId);
+    await this.ensureScheduleBelongsToStudioAndClient(
+      studio.id,
+      studioUid,
+      dto.scheduleId,
+      dto.clientId,
+    );
 
     const existingByExternalId = dto.externalId
       ? await this.showRepository.findByClientUidAndExternalId(dto.clientId, dto.externalId, {
@@ -84,7 +89,12 @@ export class StudioShowManagementService {
     const existingShow = await this.findStudioShowOrThrow(studioUid, showUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
     // existingShow.studioId is non-null: the show was fetched via studio-scoped query
-    await this.ensureScheduleBelongsToStudio(existingShow.studioId!, studioUid, dto.scheduleId);
+    await this.ensureScheduleBelongsToStudioAndClient(
+      existingShow.studioId!,
+      studioUid,
+      dto.scheduleId,
+      dto.clientId ?? existingShow.client?.uid,
+    );
     this.ensureValidTimeRange(existingShow.startTime, existingShow.endTime, dto);
 
     await this.showRepository.update({ uid: showUid }, this.buildUpdatePayload(dto));
@@ -147,18 +157,31 @@ export class StudioShowManagementService {
     }
   }
 
-  private async ensureScheduleBelongsToStudio(
+  private async ensureScheduleBelongsToStudioAndClient(
     studioId: bigint,
     studioUid: string,
     scheduleUid?: string | null,
+    expectedClientUid?: string | null,
   ): Promise<void> {
     if (scheduleUid === undefined || scheduleUid === null) {
       return;
     }
 
-    const schedule = await this.scheduleService.getScheduleById(scheduleUid);
+    const schedule = await this.scheduleService.getScheduleById(scheduleUid, {
+      client: true,
+    });
     if (!schedule.studioId || schedule.studioId !== studioId) {
       throw HttpError.badRequest(`Schedule ${scheduleUid} does not belong to studio ${studioUid}`);
+    }
+
+    if (
+      expectedClientUid !== undefined
+      && expectedClientUid !== null
+      && (!('client' in schedule) || schedule.client?.uid !== expectedClientUid)
+    ) {
+      throw HttpError.badRequest(
+        `Schedule ${scheduleUid} does not belong to client ${expectedClientUid}`,
+      );
     }
   }
 

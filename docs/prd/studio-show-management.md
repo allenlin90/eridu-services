@@ -73,6 +73,7 @@ Key unanswered questions:
 3. **Schedule linkage contract**
    - Show CRUD is the owning write path for single-show schedule linkage in Phase 4.
    - In this phase, schedules are primarily grouping/period containers for shows. Schedule status is workflow metadata, not a hard lock on single-show CRUD.
+   - When a show is linked to a schedule, the schedule must belong to the same studio and the same client as the show.
    - `scheduleUid` stays nullable at the API/DB layer so orphan shows can exist as a recoverable state.
    - The studio app should treat schedule-less shows as exceptional and help operators find/fix them from `/studios/$studioId/shows`.
    - Schedule management will later provide the higher-level workspace for arranging multiple shows within a schedule, but it must reuse the same underlying show-to-schedule relation.
@@ -125,6 +126,7 @@ Key unanswered questions:
 - **Restore by `externalId`** — when create includes an `externalId` that matches a soft-deleted show identity, the system restores that row, applies the latest payload, and treats the record as a new operational lifecycle rather than reviving old workflow state.
 - **Schedule is a frontend workflow constraint, not a DB rule** — `scheduleId` stays nullable in the backend contract, but the studio CRUD UX should require schedule selection in the normal flow and expose orphan-show detection/repair in the shows table.
 - **Schedule association follows the latest payload** — restore should attach the show to the incoming `scheduleId` when provided, or leave it orphaned when absent.
+- **Schedule linkage preserves client consistency** — a show can only attach to schedules owned by the same studio and the same client.
 - **Schedule publish can reclaim restored rows** — later schedule publish flows should match active rows by external identity, take ownership of restored/manual rows when valid, and replace creator/platform assignments from schedule data when available.
 - **Schedules are grouping containers first** — in Phase 4, schedules primarily group shows into operational periods. Planning/publish status is secondary metadata and must not hard-block normal same-studio show reassignment.
 - **Strict schedule-range enforcement is deferred** — the schedule date range is useful context for grouping and later finance/reporting, but exact containment rules for single-show CRUD will be decided with schedule management rather than hard-blocked in this slice.
@@ -205,7 +207,7 @@ Soft-delete. Returns 204 on success.
 - [ ] Studio ADMIN and MANAGER can update show details (name, times, client, type, standard, status, room, metadata).
 - [ ] Studio ADMIN can soft-delete shows before start time.
 - [ ] Studio ADMIN and MANAGER can manage platform assignments on shows.
-- [ ] Studio ADMIN and MANAGER can assign a show to a same-studio schedule, move it between same-studio schedules, or clear its schedule linkage.
+- [ ] Studio ADMIN and MANAGER can assign a show to a same-studio, same-client schedule, move it between same-studio/same-client schedules, or clear its schedule linkage.
 - [ ] The studio shows page can identify orphan shows with no schedule so operators can repair schedule linkage.
 - [ ] Shows are automatically scoped to the studio from the route — no cross-studio creation.
 - [ ] Studio update follows explicit last-write-wins behavior in v1, and the known overwrite risk is documented.
