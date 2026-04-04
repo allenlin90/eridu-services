@@ -450,17 +450,17 @@ const createStudioShowTransformSchema = createStudioShowInputSchema.transform((d
   platformIds: data.platform_ids,
 }));
 export class CreateStudioShowDto extends createZodDto(createStudioShowTransformSchema) {
-  declare externalId?: string;
+  declare externalId: string | undefined;
   declare clientId: string;
-  declare scheduleId?: string | null;
+  declare scheduleId: string | null | undefined;
   declare showTypeId: string;
   declare showStatusId: string;
   declare showStandardId: string;
-  declare studioRoomId?: string | null;
+  declare studioRoomId: string | null | undefined;
   declare name: string;
   declare startTime: Date;
   declare endTime: Date;
-  declare metadata?: Record<string, any>;
+  declare metadata: Record<string, any> | undefined;
   declare platformIds: string[];
 }
 
@@ -478,15 +478,15 @@ const updateStudioShowTransformSchema = updateStudioShowInputSchema.transform((d
   platformIds: data.platform_ids,
 }));
 export class UpdateStudioShowDto extends createZodDto(updateStudioShowTransformSchema) {
-  declare name?: string;
-  declare startTime?: Date;
-  declare endTime?: Date;
-  declare clientId?: string;
-  declare scheduleId?: string | null;
-  declare showTypeId?: string;
-  declare showStatusId?: string;
-  declare showStandardId?: string;
-  declare studioRoomId?: string | null;
-  declare metadata?: Record<string, any>;
-  declare platformIds?: string[];
+  declare name: string | undefined;
+  declare startTime: Date | undefined;
+  declare endTime: Date | undefined;
+  declare clientId: string | undefined;
+  declare scheduleId: string | null | undefined;
+  declare showTypeId: string | undefined;
+  declare showStatusId: string | undefined;
+  declare showStandardId: string | undefined;
+  declare studioRoomId: string | null | undefined;
+  declare metadata: Record<string, any> | undefined;
+  declare platformIds: string[] | undefined;
 }

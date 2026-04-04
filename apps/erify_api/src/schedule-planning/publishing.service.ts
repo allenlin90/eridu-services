@@ -174,6 +174,7 @@ export class PublishingService {
         showStandardId,
       };
     });
+    const incomingByKey = new Map(incomingShows.map((show) => [show.key, show]));
 
     const currentScheduleShows = await tx.show.findMany({
       where: {
@@ -239,7 +240,23 @@ export class PublishingService {
         },
       });
 
-    const incomingByKey = new Map(incomingShows.map((show) => [show.key, show]));
+    const conflictingAdoption = matchingShows.find((show) => {
+      if (!show.externalId) {
+        return false;
+      }
+      const incoming = incomingByKey.get(`${show.clientId.toString()}:${show.externalId}`);
+      return (
+        !!incoming
+        && show.studioId !== null
+        && incoming.studioId !== null
+        && show.studioId !== incoming.studioId
+      );
+    });
+
+    if (conflictingAdoption) {
+      throw HttpError.conflict('SHOW_RESTORE_CONFLICT');
+    }
+
     const existingByKey = new Map<string, ExistingShow>();
     const currentScheduleByKey = new Map<string, ExistingShow>();
 

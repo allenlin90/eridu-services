@@ -17,6 +17,7 @@ const studioShowsSearchSchema = z.object({
   show_standard_name: z.string().optional().catch(undefined),
   show_status_name: z.string().optional().catch(undefined),
   platform_name: z.string().optional().catch(undefined),
+  has_schedule: z.enum(['true', 'false']).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/studios/$studioId/shows')({

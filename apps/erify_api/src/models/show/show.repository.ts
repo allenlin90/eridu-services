@@ -12,6 +12,10 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ShowWhereInput
 
+type ShowWithIncludes<T extends Prisma.ShowInclude> = Prisma.ShowGetPayload<{
+  include: T;
+}>;
+
 @Injectable()
 export class ShowRepository extends BaseRepository<
   Show,

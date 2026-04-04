@@ -1,5 +1,9 @@
+import { Module } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { ClsModule } from 'nestjs-cls';
 
 import { StudioShowManagementService } from './studio-show-management.service';
 
@@ -12,7 +16,18 @@ import { ShowPlatformRepository } from '@/models/show-platform/show-platform.rep
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+
+const mockPrismaForCls = {
+  $transaction: jest.fn(async (callback: any) => await callback({})),
+};
+
+@Module({
+  providers: [{ provide: PrismaService, useValue: mockPrismaForCls }],
+  exports: [PrismaService],
+})
+class MockPrismaModule {}
 
 describe('studioShowManagementService', () => {
   let service: StudioShowManagementService;
@@ -55,6 +70,20 @@ describe('studioShowManagementService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       providers: [
         StudioShowManagementService,
         { provide: StudioService, useValue: studioServiceMock },
@@ -76,7 +105,12 @@ describe('studioShowManagementService', () => {
     jest.clearAllMocks();
     studioServiceMock.getStudioById.mockResolvedValue({ id: BigInt(10), uid: 'std_123' });
     studioRoomServiceMock.findOne.mockResolvedValue({ id: BigInt(20), uid: 'srm_1' });
-    scheduleServiceMock.getScheduleById.mockResolvedValue({ id: BigInt(40), uid: 'sch_1', studioId: BigInt(10) });
+    scheduleServiceMock.getScheduleById.mockResolvedValue({
+      id: BigInt(40),
+      uid: 'sch_1',
+      studioId: BigInt(10),
+      status: 'draft',
+    });
     showPlatformRepositoryMock.findMany.mockResolvedValue([]);
     platformRepositoryMock.findByUids.mockResolvedValue([
       { id: BigInt(30), uid: 'plt_1' },
@@ -127,6 +161,7 @@ describe('studioShowManagementService', () => {
     showRepositoryMock.findByClientUidAndExternalId.mockResolvedValue({
       id: BigInt(55),
       uid: 'show_deleted',
+      studioId: BigInt(10),
       deletedAt: new Date('2026-03-01T00:00:00.000Z'),
     });
     showRepositoryMock.update.mockResolvedValue({ id: BigInt(55), uid: 'show_deleted' });
@@ -156,11 +191,43 @@ describe('studioShowManagementService', () => {
     );
   });
 
+  it('rejects create when restore would move a deleted show across studios', async () => {
+    showRepositoryMock.findByClientUidAndExternalId.mockResolvedValue({
+      id: BigInt(55),
+      uid: 'show_deleted_other_studio',
+      studioId: BigInt(999),
+      deletedAt: new Date('2026-03-01T00:00:00.000Z'),
+    });
+
+    await expect(service.createShow('std_123', {
+      externalId: 'ext_1',
+      clientId: 'cli_1',
+      scheduleId: null,
+      showTypeId: 'sht_1',
+      showStatusId: 'shs_1',
+      showStandardId: 'shn_1',
+      studioRoomId: null,
+      name: 'Studio Show',
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+      metadata: {},
+      platformIds: [],
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        statusCode: 409,
+        message: 'SHOW_RESTORE_CONFLICT',
+      }),
+    });
+    expect(showRepositoryMock.update).not.toHaveBeenCalled();
+    expect(showServiceMock.createShow).not.toHaveBeenCalled();
+  });
+
   it('rejects create when schedule belongs to a different studio', async () => {
     scheduleServiceMock.getScheduleById.mockResolvedValue({
       id: BigInt(99),
       uid: 'sch_other',
       studioId: BigInt(999),
+      status: 'draft',
     });
 
     await expect(service.createShow('std_123', {
@@ -183,10 +250,39 @@ describe('studioShowManagementService', () => {
     });
   });
 
+  it('rejects create when schedule is already published', async () => {
+    scheduleServiceMock.getScheduleById.mockResolvedValue({
+      id: BigInt(40),
+      uid: 'sch_1',
+      studioId: BigInt(10),
+      status: 'published',
+    });
+
+    await expect(service.createShow('std_123', {
+      externalId: 'ext_1',
+      clientId: 'cli_1',
+      scheduleId: 'sch_1',
+      showTypeId: 'sht_1',
+      showStatusId: 'shs_1',
+      showStandardId: 'shn_1',
+      studioRoomId: 'srm_1',
+      name: 'Studio Show',
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+      metadata: {},
+      platformIds: [],
+    })).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Schedule is already published',
+      }),
+    });
+  });
+
   it('rejects create when a show with the same external_id already exists and is not deleted', async () => {
     showRepositoryMock.findByClientUidAndExternalId.mockResolvedValue({
       id: BigInt(55),
       uid: 'show_existing',
+      studioId: BigInt(10),
       deletedAt: null,
     });
 

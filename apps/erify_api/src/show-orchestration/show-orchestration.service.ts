@@ -157,7 +157,7 @@ export class ShowOrchestrationService {
   async deleteShow(uid: string): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
-    const taskTargets = await this.taskTargetService.findAllByShowId(showId);
+    const taskTargets = await this.taskTargetService.findByShowId(showId);
     const taskIds = [...new Set(taskTargets.map((target) => target.taskId))];
 
     await this.taskTargetService.hardDeleteByShowId(showId);

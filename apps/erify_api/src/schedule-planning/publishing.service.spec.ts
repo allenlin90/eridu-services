@@ -499,6 +499,50 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_created).toBe(0);
     });
 
+    it('should reject adopting a deleted show from a different studio', async () => {
+      const deletedOtherStudioShow = {
+        id: BigInt(77),
+        uid: 'show_deleted_other_studio',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: null,
+        studioId: BigInt(2),
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Name',
+        startTime: new Date('2024-01-01T08:00:00Z'),
+        endTime: new Date('2024-01-01T09:00:00Z'),
+        metadata: { stale: true },
+        deletedAt: new Date('2024-01-01T07:00:00Z'),
+        showStatus: {
+          systemKey: null,
+        },
+      };
+
+      const studioScopedSchedule = {
+        ...mockSchedule,
+        studioId: BigInt(1),
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(studioScopedSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([deletedOtherStudioShow]);
+
+      await expect(service.publish(scheduleUid, version, userId)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(mockTransactionClient.show.createMany).not.toHaveBeenCalled();
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalled();
+    });
+
     it('should create shows with MCs and Platforms', async () => {
       await service.publish(scheduleUid, version, userId);
 

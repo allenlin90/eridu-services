@@ -176,7 +176,7 @@ describe('showOrchestrationService', () => {
         {
           provide: TaskTargetService,
           useValue: {
-            findAllByShowId: jest.fn(),
+            findByShowId: jest.fn(),
             hardDeleteByShowId: jest.fn(),
           },
         },
@@ -400,7 +400,7 @@ describe('showOrchestrationService', () => {
     it('should soft-delete show and purge dependent task state', async () => {
       const uid = 'show_test123';
       showService.getShowById.mockResolvedValue(mockShow);
-      taskTargetService.findAllByShowId.mockResolvedValue([
+      taskTargetService.findByShowId.mockResolvedValue([
         { taskId: BigInt(10) },
         { taskId: BigInt(10) },
         { taskId: BigInt(11) },
@@ -414,7 +414,7 @@ describe('showOrchestrationService', () => {
       await service.deleteShow(uid);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(taskTargetService.findAllByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(taskTargetService.findByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(taskTargetService.hardDeleteByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
       expect(showCreatorRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
