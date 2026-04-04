@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import type { StudioShowDetail, UpdateStudioShowInput } from '@eridu/api-types/shows';
 
 import { studioShowKeys } from './get-studio-show';
+import { studioShowsKeys } from './get-studio-shows';
 
 import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
 import { invalidateStudioTaskQueries } from '@/features/studio-shows/lib/invalidate-studio-task-queries';
@@ -39,6 +40,7 @@ export function useUpdateStudioShow(studioId: string) {
         showIds: [show.id],
       });
       queryClient.setQueryData(studioShowKeys.detail(studioId, show.id), show);
+      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
       toast.success('Show updated');
     },
     onError: (error) => {

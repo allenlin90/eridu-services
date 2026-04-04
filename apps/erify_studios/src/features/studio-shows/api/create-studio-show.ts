@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import type { CreateStudioShowInput, StudioShowDetail } from '@eridu/api-types/shows';
 
 import { studioShowKeys } from './get-studio-show';
+import { studioShowsKeys } from './get-studio-shows';
 
-import { showLookupsKeys } from '@/features/shows/api/get-show-lookups';
 import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
 import { invalidateStudioTaskQueries } from '@/features/studio-shows/lib/invalidate-studio-task-queries';
 import { apiClient } from '@/lib/api/client';
@@ -30,7 +30,7 @@ export function useCreateStudioShow(studioId: string) {
         showIds: [show.id],
       });
       queryClient.setQueryData(studioShowKeys.detail(studioId, show.id), show);
-      queryClient.invalidateQueries({ queryKey: showLookupsKeys.detail(studioId) });
+      queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
       toast.success('Show created');
     },
     onError: (error) => {

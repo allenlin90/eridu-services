@@ -10,7 +10,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import {
   showDto,
-  studioShowDetailInclude,
+  showDtoListInclude,
 } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
@@ -261,7 +261,7 @@ export class TaskOrchestrationService {
    * Gets studio-scoped show details for task pages.
    */
   async getStudioShow(studioUid: string, showUid: string) {
-    const show = await this.showService.getShowById(showUid, studioShowDetailInclude);
+    const show = await this.showService.getShowById(showUid, showDtoListInclude);
 
     const studio = await this.studioService.findByUid(studioUid);
     if (!studio || show.studioId !== studio.id) {
