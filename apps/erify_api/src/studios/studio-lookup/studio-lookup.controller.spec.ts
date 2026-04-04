@@ -5,6 +5,7 @@ import { StudioLookupController } from './studio-lookup.controller';
 
 import { ClientService } from '@/models/client/client.service';
 import { PlatformService } from '@/models/platform/platform.service';
+import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
@@ -17,6 +18,7 @@ describe('studioLookupController', () => {
   let showStandardService: jest.Mocked<ShowStandardService>;
   let showStatusService: jest.Mocked<ShowStatusService>;
   let platformService: jest.Mocked<PlatformService>;
+  let scheduleService: jest.Mocked<ScheduleService>;
   let studioRoomService: jest.Mocked<StudioRoomService>;
 
   beforeEach(async () => {
@@ -44,6 +46,10 @@ describe('studioLookupController', () => {
           useValue: { listPlatforms: jest.fn() },
         },
         {
+          provide: ScheduleService,
+          useValue: { listActiveSchedulesByStudioUid: jest.fn() },
+        },
+        {
           provide: StudioRoomService,
           useValue: { getStudioRooms: jest.fn() },
         },
@@ -56,6 +62,7 @@ describe('studioLookupController', () => {
     showStandardService = module.get(ShowStandardService);
     showStatusService = module.get(ShowStatusService);
     platformService = module.get(PlatformService);
+    scheduleService = module.get(ScheduleService);
     studioRoomService = module.get(StudioRoomService);
   });
 
@@ -65,6 +72,7 @@ describe('studioLookupController', () => {
     showStandardService.listShowStandards.mockResolvedValue({ data: [], total: 0 } as any);
     showStatusService.getShowStatuses.mockResolvedValue({ data: [], total: 0 } as any);
     platformService.listPlatforms.mockResolvedValue({ data: [], total: 0 } as any);
+    scheduleService.listActiveSchedulesByStudioUid.mockResolvedValue([]);
     studioRoomService.getStudioRooms.mockResolvedValue({ data: [], total: 0 } as any);
 
     await controller.getShowLookups('std_1');
@@ -77,6 +85,13 @@ describe('studioLookupController', () => {
       take: 200,
       includeDeleted: false,
       studioUid: 'std_1',
+    });
+    expect(scheduleService.listActiveSchedulesByStudioUid).toHaveBeenCalledWith('std_1', {
+      take: 200,
+      include: {
+        client: true,
+        studio: true,
+      },
     });
   });
 

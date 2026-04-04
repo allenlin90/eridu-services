@@ -85,6 +85,13 @@ export class ScheduleService extends BaseModelService {
     return this.scheduleRepository.findPaginated(query);
   }
 
+  async listActiveSchedulesByStudioUid(
+    studioUid: string,
+    params?: Parameters<ScheduleRepository['findActiveByStudioUid']>[1],
+  ): ReturnType<ScheduleRepository['findActiveByStudioUid']> {
+    return this.scheduleRepository.findActiveByStudioUid(studioUid, params);
+  }
+
   async updateScheduleFromDto<T extends ScheduleInclude = Record<string, never>>(
     uid: string,
     dto: UpdateScheduleDto,

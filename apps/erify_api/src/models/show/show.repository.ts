@@ -355,6 +355,7 @@ export class ShowRepository extends BaseRepository<
       date_to?: string;
       has_tasks?: boolean;
       has_creators?: boolean;
+      has_schedule?: boolean;
       show_uids?: string[];
       creator_name?: string;
       client_name?: string;
@@ -402,6 +403,10 @@ export class ShowRepository extends BaseRepository<
           },
         };
       }
+    }
+
+    if (query.has_schedule !== undefined) {
+      where.scheduleId = query.has_schedule ? { not: null } : null;
     }
 
     if (query.client_name) {

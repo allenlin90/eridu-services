@@ -11,6 +11,7 @@ import {
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
+import { SCHEDULE_UID_PREFIX } from '@/models/schedule/schedule.constants';
 import { SHOW_UID_PREFIX } from '@/models/show/show-uid.util';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
@@ -57,6 +58,11 @@ const showClientRelationSchema = z.object({
 
 const showStudioRelationSchema = z.object({
   uid: z.string().startsWith(StudioService.UID_PREFIX),
+  name: z.string(),
+});
+
+const showScheduleRelationSchema = z.object({
+  uid: z.string().startsWith(SCHEDULE_UID_PREFIX),
   name: z.string(),
 });
 
@@ -209,6 +215,7 @@ export const updateShowSchema = z
 // Schema for Show with relations (used in admin endpoints)
 export const showWithRelationsSchema = showSchema.extend({
   client: showClientRelationSchema.optional(),
+  Schedule: showScheduleRelationSchema.nullable().optional(),
   studio: showStudioRelationSchema.nullable().optional(),
   studioRoom: showStudioRoomRelationSchema.nullable().optional(),
   showType: showTypeRelationSchema.optional(),
@@ -218,6 +225,12 @@ export const showWithRelationsSchema = showSchema.extend({
 
 export const showDtoListInclude = {
   client: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
+  Schedule: {
     select: {
       uid: true,
       name: true,
@@ -319,6 +332,8 @@ function transformShowToApi(obj: z.output<typeof showWithRelationsSchema>) {
     name: obj.name,
     client_id: obj.client?.uid ?? null,
     client_name: obj.client?.name ?? null,
+    schedule_id: obj.Schedule?.uid ?? null,
+    schedule_name: obj.Schedule?.name ?? null,
     studio_id: obj.studio?.uid ?? null,
     studio_name: obj.studio?.name ?? null,
     studio_room_id: obj.studioRoom?.uid ?? null,
@@ -423,6 +438,7 @@ export class StudioShowDetailDto extends createZodDto(studioShowDetailDto) {}
 const createStudioShowTransformSchema = createStudioShowInputSchema.transform((data) => ({
   externalId: data.external_id,
   clientId: data.client_id,
+  scheduleId: data.schedule_id,
   showTypeId: data.show_type_id,
   showStatusId: data.show_status_id,
   showStandardId: data.show_standard_id,
@@ -434,16 +450,17 @@ const createStudioShowTransformSchema = createStudioShowInputSchema.transform((d
   platformIds: data.platform_ids,
 }));
 export class CreateStudioShowDto extends createZodDto(createStudioShowTransformSchema) {
-  declare externalId: string | undefined;
+  declare externalId?: string;
   declare clientId: string;
+  declare scheduleId?: string | null;
   declare showTypeId: string;
   declare showStatusId: string;
   declare showStandardId: string;
-  declare studioRoomId: string | null | undefined;
+  declare studioRoomId?: string | null;
   declare name: string;
   declare startTime: Date;
   declare endTime: Date;
-  declare metadata: Record<string, any> | undefined;
+  declare metadata?: Record<string, any>;
   declare platformIds: string[];
 }
 
@@ -452,6 +469,7 @@ const updateStudioShowTransformSchema = updateStudioShowInputSchema.transform((d
   startTime: data.start_time ? new Date(data.start_time) : undefined,
   endTime: data.end_time ? new Date(data.end_time) : undefined,
   clientId: data.client_id,
+  scheduleId: data.schedule_id,
   showTypeId: data.show_type_id,
   showStatusId: data.show_status_id,
   showStandardId: data.show_standard_id,
@@ -460,14 +478,15 @@ const updateStudioShowTransformSchema = updateStudioShowInputSchema.transform((d
   platformIds: data.platform_ids,
 }));
 export class UpdateStudioShowDto extends createZodDto(updateStudioShowTransformSchema) {
-  declare name: string | undefined;
-  declare startTime: Date | undefined;
-  declare endTime: Date | undefined;
-  declare clientId: string | undefined;
-  declare showTypeId: string | undefined;
-  declare showStatusId: string | undefined;
-  declare showStandardId: string | undefined;
-  declare studioRoomId: string | null | undefined;
-  declare metadata: Record<string, any> | undefined;
-  declare platformIds: string[] | undefined;
+  declare name?: string;
+  declare startTime?: Date;
+  declare endTime?: Date;
+  declare clientId?: string;
+  declare scheduleId?: string | null;
+  declare showTypeId?: string;
+  declare showStatusId?: string;
+  declare showStandardId?: string;
+  declare studioRoomId?: string | null;
+  declare metadata?: Record<string, any>;
+  declare platformIds?: string[];
 }

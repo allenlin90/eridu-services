@@ -17,6 +17,8 @@ import { ClientService } from '@/models/client/client.service';
 import { clientDto, ListClientsQueryDto } from '@/models/client/schemas/client.schema';
 import { PlatformService } from '@/models/platform/platform.service';
 import { ListPlatformsQueryDto, platformDto } from '@/models/platform/schemas/platform.schema';
+import { ScheduleService } from '@/models/schedule/schedule.service';
+import { scheduleDto } from '@/models/schedule/schemas/schedule.schema';
 import { ListShowStandardsQueryDto, showStandardDto } from '@/models/show-standard/schemas/show-standard.schema';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 import { showStatusDto } from '@/models/show-status/schemas/show-status.schema';
@@ -40,6 +42,7 @@ export class StudioLookupController extends BaseStudioController {
     private readonly showStandardService: ShowStandardService,
     private readonly showStatusService: ShowStatusService,
     private readonly platformService: PlatformService,
+    private readonly scheduleService: ScheduleService,
     private readonly studioRoomService: StudioRoomService,
   ) {
     super();
@@ -51,7 +54,7 @@ export class StudioLookupController extends BaseStudioController {
   async getShowLookups(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
   ) {
-    const [clients, showTypes, showStandards, showStatuses, platforms, studioRooms] = await Promise.all([
+    const [clients, showTypes, showStandards, showStatuses, platforms, schedules, studioRooms] = await Promise.all([
       this.clientService.listClients({
         page: 1,
         limit: DEFAULT_LOOKUP_LIMIT,
@@ -64,6 +67,13 @@ export class StudioLookupController extends BaseStudioController {
       this.showStandardService.listShowStandards({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStatusService.getShowStatuses({ take: DEFAULT_LOOKUP_LIMIT }),
       this.platformService.listPlatforms({ take: DEFAULT_LOOKUP_LIMIT }),
+      this.scheduleService.listActiveSchedulesByStudioUid(studioId, {
+        take: DEFAULT_LOOKUP_LIMIT,
+        include: {
+          client: true,
+          studio: true,
+        },
+      }),
       this.studioRoomService.getStudioRooms({
         take: DEFAULT_LOOKUP_LIMIT,
         includeDeleted: false,
@@ -77,6 +87,7 @@ export class StudioLookupController extends BaseStudioController {
       show_standards: showStandards.data.map((item) => showStandardDto.parse(item)),
       show_statuses: showStatuses.data.map((item) => showStatusDto.parse(item)),
       platforms: platforms.data.map((item) => platformDto.parse(item)),
+      schedules: schedules.map((item) => scheduleDto.parse(item)),
       studio_rooms: studioRooms.data.map((item) => studioRoomDto.parse(item)),
     };
   }

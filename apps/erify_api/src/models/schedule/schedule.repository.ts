@@ -196,4 +196,27 @@ export class ScheduleRepository extends BaseRepository<
       ...(include && { include }),
     });
   }
+
+  async findActiveByStudioUid(
+    studioUid: string,
+    params?: {
+      take?: number;
+      skip?: number;
+      orderBy?: Prisma.ScheduleOrderByWithRelationInput;
+      include?: Prisma.ScheduleInclude;
+    },
+  ): Promise<Schedule[]> {
+    const { take, skip, orderBy, include } = params ?? {};
+
+    return this.prisma.schedule.findMany({
+      where: {
+        studio: { uid: studioUid, deletedAt: null },
+        deletedAt: null,
+      },
+      skip,
+      take,
+      orderBy: orderBy ?? { startDate: 'desc' },
+      ...(include && { include }),
+    });
+  }
 }

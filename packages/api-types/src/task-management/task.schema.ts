@@ -4,6 +4,7 @@ import { clientApiResponseSchema } from '../clients/index.js';
 import { UID_PREFIXES } from '../constants.js';
 import { paginationBaseSchema, transformPagination } from '../pagination/index.js';
 import { platformApiResponseSchema } from '../platforms/index.js';
+import { scheduleApiResponseSchema } from '../schedules/index.js';
 import { showStandardApiResponseSchema } from '../show-standards/index.js';
 import { showStatusApiResponseSchema } from '../show-statuses/index.js';
 import { showTypeApiResponseSchema } from '../show-types/index.js';
@@ -319,6 +320,7 @@ export const studioShowLookupsDto = z.object({
   show_standards: z.array(showStandardApiResponseSchema),
   show_statuses: z.array(showStatusApiResponseSchema),
   platforms: z.array(platformApiResponseSchema),
+  schedules: z.array(scheduleApiResponseSchema),
   studio_rooms: z.array(studioRoomApiResponseSchema),
 });
 
@@ -349,6 +351,10 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
       .optional(),
     needs_attention: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional(),
+    has_schedule: z
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
       .optional(),
