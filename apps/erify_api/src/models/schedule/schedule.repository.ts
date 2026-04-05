@@ -57,6 +57,7 @@ export class ScheduleRepository extends BaseRepository<
       skip,
       take,
       client_id,
+      studio_id,
       status,
       created_by,
       published_by,
@@ -82,6 +83,14 @@ export class ScheduleRepository extends BaseRepository<
       const clientIds = Array.isArray(client_id) ? client_id : [client_id];
       where.client = {
         uid: { in: clientIds },
+        ...(include_deleted ? {} : { deletedAt: null }),
+      };
+    }
+
+    if (studio_id) {
+      const studioIds = Array.isArray(studio_id) ? studio_id : [studio_id];
+      where.studio = {
+        uid: { in: studioIds },
         ...(include_deleted ? {} : { deletedAt: null }),
       };
     }

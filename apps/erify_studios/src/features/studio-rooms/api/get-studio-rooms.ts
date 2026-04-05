@@ -16,8 +16,25 @@ export type GetStudioRoomsParams = {
   id?: string;
 };
 
-export async function getStudioRooms(params: GetStudioRoomsParams): Promise<StudioRoomsResponse> {
-  const response = await apiClient.get<StudioRoomsResponse>('/admin/studio-rooms', { params });
+type GetStudioRoomsOptions = {
+  signal?: AbortSignal;
+};
+
+export async function getStudioRooms(
+  params: GetStudioRoomsParams,
+  studioId?: string,
+  options?: GetStudioRoomsOptions,
+): Promise<StudioRoomsResponse> {
+  const endpoint = studioId ? `/studios/${studioId}/studio-rooms` : '/admin/studio-rooms';
+  const requestParams = studioId
+    ? {
+        page: params.page,
+        limit: params.limit,
+        name: params.name,
+        id: params.id,
+      }
+    : params;
+  const response = await apiClient.get<StudioRoomsResponse>(endpoint, { params: requestParams, signal: options?.signal });
   return response.data;
 }
 

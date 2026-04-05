@@ -17,6 +17,7 @@ import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
 import { clientSchema } from '@/models/client/schemas/client.schema';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
+import { StudioService } from '@/models/studio/studio.service';
 import { userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
@@ -213,6 +214,12 @@ export const listSchedulesFilterSchema = z.object({
       z.array(z.string().startsWith(ClientService.UID_PREFIX)),
     ])
     .optional(),
+  studio_id: z
+    .union([
+      z.string().startsWith(StudioService.UID_PREFIX),
+      z.array(z.string().startsWith(StudioService.UID_PREFIX)),
+    ])
+    .optional(),
   status: z.union([z.string(), z.array(z.string())]).optional(),
   created_by: z
     .union([
@@ -313,6 +320,7 @@ export class ListSchedulesQueryDto extends createZodDto(
   declare sort: 'asc' | 'desc';
   declare name?: string;
   declare client_id?: string | string[];
+  declare studio_id?: string | string[];
   declare status?: string | string[];
   declare created_by?: string | string[];
   declare published_by?: string | string[];
@@ -350,6 +358,7 @@ export type ScheduleFindPaginatedParams = {
   skip?: number;
   take?: number;
   client_id?: string | string[];
+  studio_id?: string | string[];
   status?: string | string[];
   created_by?: string | string[];
   published_by?: string | string[];

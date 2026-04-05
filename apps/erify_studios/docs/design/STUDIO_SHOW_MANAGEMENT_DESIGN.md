@@ -130,8 +130,8 @@ Contract expectations for this slice:
 - shared show list/detail data should expose schedule summary fields so the CRUD page can show assignment state
 - shared show list query should support an orphan-friendly `has_schedule` filter or equivalent
 - `show-lookups` should include same-studio schedules for the create/edit form, regardless of planning status
-- searchable form lookups should hit studio-safe endpoints when they exist (`clients`, `show-types`, `show-standards`, `show-statuses`, `platforms`) instead of relying only on a preloaded bundle
-- schedules and studio rooms may continue to use the bundled `show-lookups` response until dedicated studio search endpoints exist for those resources
+- searchable form lookups should hit studio-safe endpoints when they exist (`clients`, `schedules`, `studio-rooms`, `show-types`, `show-standards`, `show-statuses`, `platforms`) instead of relying only on a preloaded bundle
+- any field that still uses local filtering must document that exception explicitly; do not leave mixed remote/local lookup behavior implicit
 
 ### Separate Route-State Plan
 
@@ -283,13 +283,13 @@ Fields:
 | External ID | Optional on create | direct input |
 | Start time | Yes | direct input |
 | End time | Yes | direct input |
-| Client | Yes | `show-lookups.clients` |
-| Schedule | Yes in normal studio UX | `show-lookups.schedules` |
-| Show type | Yes | `show-lookups.show_types` |
-| Show standard | Yes | `show-lookups.show_standards` |
-| Status | Yes | `show-lookups.show_statuses` |
-| Studio room | No | `show-lookups.studio_rooms` |
-| Platforms | No | `show-lookups.platforms` |
+| Client | Yes | `GET /studios/:studioId/clients` |
+| Schedule | Yes in normal studio UX | `GET /studios/:studioId/schedules` |
+| Show type | Yes | `GET /studios/:studioId/show-types` |
+| Show standard | Yes | `GET /studios/:studioId/show-standards` |
+| Status | Yes | `GET /studios/:studioId/show-statuses` |
+| Studio room | No | `GET /studios/:studioId/studio-rooms` |
+| Platforms | No | `GET /studios/:studioId/platforms` |
 
 Explicitly excluded:
 
@@ -323,20 +323,23 @@ Failure handling:
 
 ## Studio-Safe Lookup Strategy
 
-Use the existing `GET /studios/:studioId/show-lookups` query family as the form lookup source after the backend extends it with:
+Use studio-scoped lookup endpoints for searchable form controls:
 
-- `clients`
-- `studio_rooms`
-- `schedules`
+- `GET /studios/:studioId/clients`
+- `GET /studios/:studioId/schedules`
+- `GET /studios/:studioId/show-types`
+- `GET /studios/:studioId/show-standards`
+- `GET /studios/:studioId/show-statuses`
+- `GET /studios/:studioId/studio-rooms`
+- `GET /studios/:studioId/platforms`
 
-This avoids introducing studio-side calls to:
+Use `GET /studios/:studioId/show-lookups` only for initial bundled reference data and compatibility, not as a reason to leave searchable inputs on dead local-only filtering.
 
-- `/admin/clients`
-- `/admin/studio-rooms`
+Implementation rules:
 
-Implementation rule:
-
-- do not reuse `useClientFieldData()` or `useStudioRoomFieldData()` in the studio management form until they are rewritten to accept studio-scoped lookups
+- do not reuse admin lookup hooks in the studio management form
+- if a field is visually searchable, typing must update query state or a documented local-filter state
+- if the backend lacks a dedicated search endpoint, call that out explicitly in the design doc instead of leaving the combobox half-implemented
 
 ## Save Behavior
 
@@ -395,6 +398,7 @@ Known limitation:
 - [ ] Toolbar test for role-based create action.
 - [ ] Row action test for admin-only delete visibility.
 - [ ] Form tests proving studio lookup data, not admin endpoints, drives the selects.
+- [ ] Search interaction tests proving each searchable combobox updates query or documented local-filter state.
 - [ ] Mutation tests for query invalidation.
 - [ ] Mutation test proving successful save refreshes the shared show queries.
 - [ ] Delete test proving `SHOW_ALREADY_STARTED` renders the correct error state.

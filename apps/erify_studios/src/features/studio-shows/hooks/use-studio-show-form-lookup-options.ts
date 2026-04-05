@@ -5,9 +5,11 @@ import type { StudioShowDetail } from '@eridu/api-types/shows';
 
 import { getClients } from '@/features/clients/api/get-clients';
 import { getPlatforms } from '@/features/platforms/api/get-platforms';
+import { getSchedules } from '@/features/schedules/api/get-schedules';
 import { getShowStandards } from '@/features/show-standards/api/get-show-standards';
 import { getShowStatuses } from '@/features/show-statuses/api/get-show-statuses';
 import { getShowTypes } from '@/features/show-types/api/get-show-types';
+import { getStudioRooms } from '@/features/studio-rooms/api/get-studio-rooms';
 
 const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
 const DEFAULT_LOOKUP_LIMIT = 10;
@@ -81,6 +83,63 @@ export function useStudioShowClientOptions(show: StudioShowDetail | null | undef
         { id: show?.client_id, label: show?.client_name },
       ),
     [query.data?.data, show?.client_id, show?.client_name],
+  );
+
+  return { options, isLoading: query.isLoading || query.isFetching, setSearch };
+}
+
+export function useStudioShowScheduleOptions(show: StudioShowDetail | null | undefined, studioId: string) {
+  const [search, setSearch] = useState('');
+
+  const query = useQuery({
+    queryKey: ['studio-show-form', 'schedules', studioId, { search }],
+    queryFn: ({ signal }) => getSchedules({
+      name: search || undefined,
+      limit: search ? SEARCH_LOOKUP_LIMIT : DEFAULT_LOOKUP_LIMIT,
+    }, studioId, { signal }),
+    enabled: Boolean(studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
+  });
+
+  const options = useMemo(
+    () =>
+      withSelectedOption(
+        (query.data?.data ?? []).map((schedule) => ({
+          value: schedule.id,
+          label: `${schedule.name} (${schedule.status})`,
+        })),
+        show?.schedule_id && show?.schedule_name
+          ? { id: show.schedule_id, label: show.schedule_name }
+          : undefined,
+      ),
+    [query.data?.data, show],
+  );
+
+  return { options, isLoading: query.isLoading || query.isFetching, setSearch };
+}
+
+export function useStudioShowRoomOptions(show: StudioShowDetail | null | undefined, studioId: string) {
+  const [search, setSearch] = useState('');
+
+  const query = useQuery({
+    queryKey: ['studio-show-form', 'studio-rooms', studioId, { search }],
+    queryFn: ({ signal }) => getStudioRooms({
+      name: search || undefined,
+      limit: search ? SEARCH_LOOKUP_LIMIT : DEFAULT_LOOKUP_LIMIT,
+    }, studioId, { signal }),
+    enabled: Boolean(studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
+  });
+
+  const options = useMemo(
+    () =>
+      withSelectedOption(
+        (query.data?.data ?? []).map((room) => ({ value: room.id, label: room.name })),
+        { id: show?.studio_room_id, label: show?.studio_room_name },
+      ),
+    [query.data?.data, show?.studio_room_id, show?.studio_room_name],
   );
 
   return { options, isLoading: query.isLoading || query.isFetching, setSearch };

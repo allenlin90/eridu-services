@@ -47,7 +47,7 @@ describe('studioLookupController', () => {
         },
         {
           provide: ScheduleService,
-          useValue: { listSchedulesByStudioUid: jest.fn() },
+          useValue: { listSchedulesByStudioUid: jest.fn(), getPaginatedSchedules: jest.fn() },
         },
         {
           provide: StudioRoomService,
@@ -164,6 +164,53 @@ describe('studioLookupController', () => {
     expect(showStatusService.getShowStatuses).toHaveBeenCalledWith({
       skip: 0,
       take: 100,
+    });
+  });
+
+  it('should list studio schedules with studio scoping', async () => {
+    scheduleService.getPaginatedSchedules.mockResolvedValue({ schedules: [], total: 0 } as any);
+
+    await controller.getSchedules('std_1', {
+      page: 1,
+      limit: 100,
+      take: 100,
+      skip: 0,
+      sort: 'desc',
+      name: 'Q2',
+      include_plan_document: false,
+      include_deleted: false,
+      order_by: 'created_at',
+      order_direction: 'desc',
+      uid: undefined,
+    } as any);
+
+    expect(scheduleService.getPaginatedSchedules).toHaveBeenCalledWith(expect.objectContaining({
+      studio_id: 'std_1',
+      name: 'Q2',
+      take: 100,
+      skip: 0,
+    }));
+  });
+
+  it('should list studio rooms with studio scoping', async () => {
+    studioRoomService.getStudioRooms.mockResolvedValue({ data: [], total: 0 } as any);
+
+    await controller.getStudioRooms('std_1', {
+      page: 1,
+      limit: 100,
+      take: 100,
+      skip: 0,
+      sort: 'desc',
+      name: 'Main',
+      id: undefined,
+    } as any);
+
+    expect(studioRoomService.getStudioRooms).toHaveBeenCalledWith({
+      skip: 0,
+      take: 100,
+      studioUid: 'std_1',
+      name: 'Main',
+      uid: undefined,
     });
   });
 

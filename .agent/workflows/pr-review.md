@@ -92,6 +92,7 @@ Applies to `erify_studios` and `erify_creators`.
 - [ ] Query keys follow the project key factory pattern (see `.agent/skills/frontend-api-layer/SKILL.md`).
 - [ ] Mutations use `onMutate`/`onError`/`onSettled` for optimistic updates where the UX requires it.
 - [ ] No direct `fetch`/`axios` calls outside the API layer module.
+- [ ] Searchable lookup inputs/filters have an explicit per-field data-source contract (`scoped endpoint` vs documented local filter) and matching query-key scope discrimination where applicable.
 
 ### State management
 
@@ -106,6 +107,8 @@ Full reference: `.agent/skills/frontend-state-management/SKILL.md`
 - [ ] Shared primitives come from `@eridu/ui` — no local re-implementations of Radix/Tailwind primitives.
 - [ ] Form/dialog field inventory matches the intended product/API contract; any intentionally excluded fields (for example `external_id`) are documented in the design doc and called out near form/schema composition.
 - [ ] Date and datetime editing uses `DatePicker` / `DateTimePicker` from `@eridu/ui`; native `type="date"` / `type="datetime-local"` inputs only appear with a documented exception.
+- [ ] `AsyncCombobox` / `AsyncMultiCombobox` search wiring is complete: no `onSearch={() => {}}`, no dead “search” affordances, and no undocumented mixed remote/local behavior across fields in the same form.
+- [ ] Review evidence exists for searchable fields: either tests or direct verification that typing changes the intended query state or the documented local-filter state.
 - [ ] Nullable prop guards: explicit non-null guard before dereference — no `a?.x === b?.y` then `a.x`.
 - [ ] Route guards and sidebar visibility reference the same access policy source.
 - [ ] i18n strings go through Paraglide — no hardcoded UI copy.

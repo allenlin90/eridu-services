@@ -52,7 +52,7 @@ function StudioShowsPage() {
     columnFilters,
     onColumnFiltersChange,
   } = useStudioShowManagement(studioId);
-  const { data: showLookups, isLoading: isLoadingLookups } = useShowLookupsQuery(studioId);
+  const { data: showLookups } = useShowLookupsQuery(studioId);
   const createMutation = useCreateStudioShow(studioId);
   const updateMutation = useUpdateStudioShow(studioId);
   const deleteMutation = useDeleteStudioShow(studioId);
@@ -185,8 +185,6 @@ function StudioShowsPage() {
           </DialogHeader>
           <StudioShowManagementForm
             studioId={studioId}
-            showLookups={showLookups}
-            isLookupsLoading={isLoadingLookups}
             isSubmitting={createMutation.isPending}
             onCancel={() => setIsCreateOpen(false)}
             onSubmit={(values) => {
@@ -211,8 +209,6 @@ function StudioShowsPage() {
           <StudioShowManagementForm
             studioId={studioId}
             show={editingShowQuery.data}
-            showLookups={showLookups}
-            isLookupsLoading={isLoadingLookups || editingShowQuery.isLoading}
             isSubmitting={updateMutation.isPending}
             onCancel={() => setEditingShow(null)}
             onSubmit={(values) => {

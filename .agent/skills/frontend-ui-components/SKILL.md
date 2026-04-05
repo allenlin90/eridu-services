@@ -63,6 +63,21 @@ Checklist for form work:
 - [ ] Datetime fields use `DateTimePicker` from `@eridu/ui`.
 - [ ] Native `date` / `datetime-local` inputs appear only with a documented exception.
 
+#### Searchable Lookup Inputs
+Any control that visually advertises search, especially `AsyncCombobox` and `AsyncMultiCombobox`, needs an explicit per-field search contract before implementation.
+
+Rules:
+- Planning: list each searchable field and whether it should use a scoped API endpoint or intentional client-side filtering of preloaded data.
+- Implementation: do not leave `onSearch` as a no-op just to satisfy a prop shape. If the input is searchable, typing must either update query state or documented local filter state.
+- Keep same-form lookup behavior consistent where possible. If five fields search remotely and one still uses a local bundle, that exception must be documented in the design doc with the backend gap called out.
+- Review: treat dead search wiring, undocumented mixed parity, and “looks async but is really static” controls as incomplete implementation, not minor UX polish.
+
+Checklist for searchable inputs:
+- [ ] Each searchable control has an identified data source.
+- [ ] `onSearch` updates live search state instead of using a placeholder callback.
+- [ ] Remote lookup fields have query coverage or equivalent interaction test coverage.
+- [ ] Any local-filter fallback is documented in the design doc and reflected in UX expectations.
+
 #### Refresh Actions
 Use icon-only refresh buttons for data refetch actions to keep toolbar density and interaction patterns consistent.
 

@@ -17,6 +17,8 @@ Studio-owned show lifecycle management without reusing `/admin/shows`:
 | Endpoint                                  | Purpose                                                           | Roles              |
 | ----------------------------------------- | ----------------------------------------------------------------- | ------------------ |
 | `GET /studios/:studioId/show-lookups`     | Studio-safe lookup bundle for show forms, including schedules     | All studio members |
+| `GET /studios/:studioId/schedules`        | Searchable studio-scoped schedule lookup for show create/edit     | All studio members |
+| `GET /studios/:studioId/studio-rooms`     | Searchable studio-scoped room lookup for show create/edit         | All studio members |
 | `GET /studios/:studioId/shows/:showId`    | Enriched show detail for read + edit, including schedule summary  | All studio members |
 | `GET /studios/:studioId/shows`            | Shared show list/read model with schedule-assignment filtering    | All studio members |
 | `POST /studios/:studioId/shows`           | Create a studio-scoped show                                       | `ADMIN`, `MANAGER` |
@@ -105,4 +107,4 @@ The platform-replacement path is shared across admin and studio flows:
 
 - Studio show updates intentionally use last-write-wins. If manual studio editing becomes common enough to create real overwrite pain, revisit with a dedicated concurrency token strategy.
 - Nullable `scheduleId` is a deliberate backend flexibility point. FE should treat shows without schedules as exceptional and surface a repair workflow.
-- Studio room lookup is bundled into `show-lookups` to minimize new endpoints. If room lists become too large, split into a dedicated studio endpoint.
+- Studio room and schedule lookups now have dedicated studio-scoped search endpoints for the create/edit modal. Keep review pressure on lookup parity so future searchable fields do not regress into dead local-only search.

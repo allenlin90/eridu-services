@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import type { Resolver } from 'react-hook-form';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
@@ -10,7 +10,6 @@ import {
   createStudioShowInputObjectSchema,
   type StudioShowDetail,
 } from '@eridu/api-types/shows';
-import type { StudioShowLookupsDto } from '@eridu/api-types/task-management';
 import {
   AsyncCombobox,
   AsyncMultiCombobox,
@@ -29,6 +28,8 @@ import {
 import {
   useStudioShowClientOptions,
   useStudioShowPlatformOptions,
+  useStudioShowRoomOptions,
+  useStudioShowScheduleOptions,
   useStudioShowStandardOptions,
   useStudioShowStatusOptions,
   useStudioShowTypeOptions,
@@ -84,31 +85,14 @@ const EMPTY_SHOW_FORM_VALUES: StudioShowFormValues = {
 type StudioShowManagementFormProps = {
   studioId: string;
   show?: StudioShowDetail | null;
-  showLookups?: StudioShowLookupsDto;
-  isLookupsLoading?: boolean;
   isSubmitting?: boolean;
   onSubmit: (values: StudioShowFormValues) => void;
   onCancel: () => void;
 };
 
-function filterLookupOptions(
-  options: Array<{ value: string; label: string }>,
-  search: string,
-) {
-  const normalizedSearch = search.trim().toLowerCase();
-
-  if (!normalizedSearch) {
-    return options;
-  }
-
-  return options.filter((option) => option.label.toLowerCase().includes(normalizedSearch));
-}
-
 export function StudioShowManagementForm({
   studioId,
   show,
-  showLookups,
-  isLookupsLoading = false,
   isSubmitting = false,
   onSubmit,
   onCancel,
@@ -124,13 +108,21 @@ export function StudioShowManagementForm({
   const scheduleIdValue = useWatch({ control: form.control, name: 'schedule_id' });
   const showHasNoSchedule = !show?.schedule_id;
   const isScheduleBeingCleared = Boolean(show) && !showHasNoSchedule && !scheduleIdValue;
-  const [scheduleSearch, setScheduleSearch] = useState('');
-  const [roomSearch, setRoomSearch] = useState('');
   const {
     options: clientOptions,
     isLoading: isClientOptionsLoading,
     setSearch: setClientSearch,
   } = useStudioShowClientOptions(show, studioId);
+  const {
+    options: scheduleOptions,
+    isLoading: isScheduleOptionsLoading,
+    setSearch: setScheduleSearch,
+  } = useStudioShowScheduleOptions(show, studioId);
+  const {
+    options: roomOptions,
+    isLoading: isRoomOptionsLoading,
+    setSearch: setRoomSearch,
+  } = useStudioShowRoomOptions(show, studioId);
   const {
     options: showTypeOptions,
     isLoading: isShowTypeOptionsLoading,
@@ -173,24 +165,6 @@ export function StudioShowManagementForm({
 
     form.reset(EMPTY_SHOW_FORM_VALUES);
   }, [form, show]);
-
-  const roomOptions = useMemo(
-    () => filterLookupOptions(
-      (showLookups?.studio_rooms ?? []).map((room) => ({ value: room.id, label: room.name })),
-      roomSearch,
-    ),
-    [roomSearch, showLookups?.studio_rooms],
-  );
-  const scheduleOptions = useMemo(
-    () => filterLookupOptions(
-      (showLookups?.schedules ?? []).map((schedule) => ({
-        value: schedule.id,
-        label: `${schedule.name} (${schedule.status})`,
-      })),
-      scheduleSearch,
-    ),
-    [scheduleSearch, showLookups?.schedules],
-  );
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
@@ -298,7 +272,7 @@ export function StudioShowManagementForm({
                     onChange={field.onChange}
                     onSearch={setScheduleSearch}
                     options={scheduleOptions}
-                    isLoading={isLookupsLoading}
+                    isLoading={isScheduleOptionsLoading}
                     placeholder="Select schedule"
                   />
                 </FormControl>
@@ -325,7 +299,7 @@ export function StudioShowManagementForm({
                     onChange={field.onChange}
                     onSearch={setRoomSearch}
                     options={roomOptions}
-                    isLoading={isLookupsLoading}
+                    isLoading={isRoomOptionsLoading}
                     placeholder="Select room"
                   />
                 </FormControl>

@@ -5,20 +5,22 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
 
 import { BaseStudioController } from '../base-studio.controller';
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
-import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
+import { createPaginatedQuerySchema, PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ClientService } from '@/models/client/client.service';
 import { clientDto, ListClientsQueryDto } from '@/models/client/schemas/client.schema';
 import { PlatformService } from '@/models/platform/platform.service';
 import { ListPlatformsQueryDto, platformDto } from '@/models/platform/schemas/platform.schema';
 import { ScheduleService } from '@/models/schedule/schedule.service';
-import { scheduleDto } from '@/models/schedule/schemas/schedule.schema';
+import { ListSchedulesQueryDto, scheduleDto } from '@/models/schedule/schemas/schedule.schema';
 import { ListShowStandardsQueryDto, showStandardDto } from '@/models/show-standard/schemas/show-standard.schema';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 import { showStatusDto } from '@/models/show-status/schemas/show-status.schema';
@@ -31,6 +33,23 @@ import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { studioShowLookupsDto } from '@/models/task/schemas/task.schema';
 
 const DEFAULT_LOOKUP_LIMIT = 200;
+
+const studioRoomListQuerySchema = createPaginatedQuerySchema(
+  z.object({
+    name: z.string().optional(),
+    id: z.string().optional(),
+  }),
+);
+
+class StudioRoomListQueryDto extends createZodDto(studioRoomListQuerySchema) {
+  declare page: number;
+  declare limit: number;
+  declare take: number;
+  declare skip: number;
+  declare sort: 'asc' | 'desc';
+  declare name?: string;
+  declare id?: string;
+}
 
 @ApiTags('Studio Lookup')
 @StudioProtected()
@@ -90,6 +109,43 @@ export class StudioLookupController extends BaseStudioController {
       schedules: schedules.map((item) => scheduleDto.parse(item)),
       studio_rooms: studioRooms.data.map((item) => studioRoomDto.parse(item)),
     };
+  }
+
+  @Get('schedules')
+  @ReadBurstThrottle()
+  @ZodPaginatedResponse(scheduleDto)
+  async getSchedules(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ListSchedulesQueryDto,
+  ) {
+    const { schedules, total } = await this.scheduleService.getPaginatedSchedules({
+      ...query,
+      studio_id: studioId,
+    });
+
+    const data = query.include_plan_document
+      ? schedules
+      : schedules.map((schedule) => ({ ...schedule, plan_document: undefined as any }));
+
+    return this.createPaginatedResponse(data, total, query);
+  }
+
+  @Get('studio-rooms')
+  @ReadBurstThrottle()
+  @ZodPaginatedResponse(studioRoomDto)
+  async getStudioRooms(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: StudioRoomListQueryDto,
+  ) {
+    const { data, total } = await this.studioRoomService.getStudioRooms({
+      skip: query.skip,
+      take: query.take,
+      studioUid: studioId,
+      name: query.name,
+      uid: query.id,
+    });
+
+    return this.createPaginatedResponse(data, total, query);
   }
 
   @Get('show-types')

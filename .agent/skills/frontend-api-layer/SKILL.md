@@ -193,6 +193,17 @@ useInfiniteQuery({
 - ✅ This prevents stale responses from appearing after a user navigates away mid-request
 - ✅ For navigation-heavy internal-tool reads, cancellation is required even when the request is "just a GET" — otherwise route switches still consume backend throttle budget after the user leaves
 
+### Searchable Lookup Query Contract
+
+For searchable form/filter controls, the API layer must make the lookup contract explicit per field instead of leaving the UI to “figure it out”.
+
+Rules:
+- Build a field-by-field matrix during planning: control name, endpoint, scope discriminator (`studioId`, `admin`, etc.), supported search params, and whether fallback local filtering is allowed.
+- If the UI uses `AsyncCombobox` / `AsyncMultiCombobox`, the fetcher and hook should expose real search state and pass it into the query key and API declaration.
+- Include the scope discriminator in the query key for dual-scope helpers so studio/admin caches cannot collide.
+- If a field cannot search remotely because the backend lacks an endpoint, document the local-filter fallback and keep it out of generic “async lookup” abstractions until the endpoint exists.
+- Review/test expectation: for each searchable field family, verify that typing changes the query key or the documented local-filter state. A no-op `onSearch` is a broken implementation, not an acceptable placeholder.
+
 ### Internal Read Freshness Policy
 
 `erify_studios` uses tiered query freshness instead of `staleTime: 0` everywhere:

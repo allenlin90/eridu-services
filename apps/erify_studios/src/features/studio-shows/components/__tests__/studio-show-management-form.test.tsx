@@ -23,6 +23,8 @@ vi.mock('lucide-react', () => ({
 
 vi.mock('@/features/studio-shows/hooks/use-studio-show-form-lookup-options', () => ({
   useStudioShowClientOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
+  useStudioShowScheduleOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
+  useStudioShowRoomOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
   useStudioShowTypeOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
   useStudioShowStatusOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
   useStudioShowStandardOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
