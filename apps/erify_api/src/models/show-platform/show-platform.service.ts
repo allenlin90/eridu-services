@@ -57,18 +57,6 @@ export class ShowPlatformService extends BaseModelService {
     return this.showPlatformRepository.findPaginated(...args);
   }
 
-  async getShowPlatformsByShow(
-    ...args: Parameters<ShowPlatformRepository['findByShow']>
-  ): ReturnType<ShowPlatformRepository['findByShow']> {
-    return this.showPlatformRepository.findByShow(...args);
-  }
-
-  async getShowPlatformsByPlatform(
-    ...args: Parameters<ShowPlatformRepository['findByPlatform']>
-  ): ReturnType<ShowPlatformRepository['findByPlatform']> {
-    return this.showPlatformRepository.findByPlatform(...args);
-  }
-
   async findShowPlatformByShowAndPlatform(
     showId: bigint,
     platformId: bigint,

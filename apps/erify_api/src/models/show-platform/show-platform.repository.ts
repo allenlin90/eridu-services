@@ -50,44 +50,6 @@ export class ShowPlatformRepository extends BaseRepository<
     });
   }
 
-  async findByShow(
-    showId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
-      include?: Prisma.ShowPlatformInclude;
-    },
-  ): Promise<ShowPlatform[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { showId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
-  async findByPlatform(
-    platformId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
-      include?: Prisma.ShowPlatformInclude;
-    },
-  ): Promise<ShowPlatform[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { platformId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
   async findPaginated(params: {
     skip?: number;
     take?: number;

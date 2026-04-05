@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { TaskTarget } from '@prisma/client';
 
 import { TaskTargetRepository } from './task-target.repository';
 
@@ -21,20 +22,20 @@ export class TaskTargetService extends BaseModelService {
     return this.taskTargetRepository.create(...args);
   }
 
-  async findByShowId(...args: Parameters<TaskTargetRepository['findByShowId']>): ReturnType<TaskTargetRepository['findByShowId']> {
-    return this.taskTargetRepository.findByShowId(...args);
+  async findByShowId(showId: bigint): Promise<TaskTarget[]> {
+    return this.taskTargetRepository.findMany({ where: { showId, deletedAt: null } });
   }
 
-  async findAllByShowId(...args: Parameters<TaskTargetRepository['findAllByShowId']>): ReturnType<TaskTargetRepository['findAllByShowId']> {
-    return this.taskTargetRepository.findAllByShowId(...args);
+  async findAllByShowId(showId: bigint): Promise<TaskTarget[]> {
+    return this.taskTargetRepository.findMany({ where: { showId } });
   }
 
   async findByShowIds(...args: Parameters<TaskTargetRepository['findByShowIds']>): ReturnType<TaskTargetRepository['findByShowIds']> {
     return this.taskTargetRepository.findByShowIds(...args);
   }
 
-  async findByTaskId(...args: Parameters<TaskTargetRepository['findByTaskId']>): ReturnType<TaskTargetRepository['findByTaskId']> {
-    return this.taskTargetRepository.findByTaskId(...args);
+  async findByTaskId(taskId: bigint): Promise<TaskTarget[]> {
+    return this.taskTargetRepository.findMany({ where: { taskId, deletedAt: null } });
   }
 
   async undeleteByTaskId(...args: Parameters<TaskTargetRepository['undeleteByTaskId']>): ReturnType<TaskTargetRepository['undeleteByTaskId']> {

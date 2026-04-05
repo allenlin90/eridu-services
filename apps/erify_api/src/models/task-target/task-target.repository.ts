@@ -15,18 +15,9 @@ export class TaskTargetRepository extends BaseRepository<
     super(new PrismaModelWrapper(prisma.taskTarget));
   }
 
-  async findByShowId(showId: bigint): Promise<TaskTarget[]> {
-    return this.model.findMany({
-      where: { showId, deletedAt: null },
-    });
-  }
-
-  async findAllByShowId(showId: bigint): Promise<TaskTarget[]> {
-    return this.model.findMany({
-      where: { showId },
-    });
-  }
-
+  // Engineering decision: cross-model join filter (task.deletedAt: null) cannot be expressed
+  // as a flat where clause without leaking relation semantics into the caller.
+  // This method encapsulates the "active task targets for a set of shows" query for all callers.
   async findByShowIds(showIds: bigint[]): Promise<TaskTarget[]> {
     return this.model.findMany({
       where: {
@@ -36,12 +27,6 @@ export class TaskTargetRepository extends BaseRepository<
           deletedAt: null,
         },
       },
-    });
-  }
-
-  async findByTaskId(taskId: bigint): Promise<TaskTarget[]> {
-    return this.model.findMany({
-      where: { taskId, deletedAt: null },
     });
   }
 

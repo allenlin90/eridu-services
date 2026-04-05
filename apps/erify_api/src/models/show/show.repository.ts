@@ -57,12 +57,6 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
-  async findByName(name: string): Promise<Show | null> {
-    return this.delegate.findFirst({
-      where: { name, deletedAt: null },
-    });
-  }
-
   async findByClientUidAndExternalId<
     T extends Prisma.ShowInclude = Record<string, never>,
   >(
@@ -82,61 +76,9 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<ShowWithIncludes<T> | Show | null>;
   }
 
-  async findActiveShows(params: {
-    skip?: number;
-    take?: number;
-    where?: Prisma.ShowWhereInput;
-    orderBy?: Prisma.ShowOrderByWithRelationInput;
-    include?: Prisma.ShowInclude;
-  }): Promise<Show[]> {
-    const { skip, take, where, orderBy, include } = params;
-    return this.delegate.findMany({
-      where: { ...where, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
-  async findShowsByClient(
-    clientId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-      include?: Prisma.ShowInclude;
-    },
-  ): Promise<Show[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { clientId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
-  async findShowsByStudioRoom(
-    studioRoomId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-      include?: Prisma.ShowInclude;
-    },
-  ): Promise<Show[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { studioRoomId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
+  // Engineering decision: two-sided date range bound comparison (startTime gte AND lte)
+  // cannot be expressed as a flat where clause without knowing the specific field semantics.
+  // This method encapsulates the date-bound semantics once for all callers.
   async findShowsByDateRange(
     startDate: Date,
     endDate: Date,
