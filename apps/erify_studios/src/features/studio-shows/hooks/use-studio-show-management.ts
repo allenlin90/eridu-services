@@ -5,6 +5,8 @@ import { useTableUrlState } from '@eridu/ui';
 
 import { getStudioShows, studioShowsKeys } from '../api/get-studio-shows';
 
+const ORPHAN_SCHEDULE_TERMS = new Set(['orphan', 'orphans', 'unassigned']);
+
 const TABLE_OPTIONS = {
   from: '/studios/$studioId/shows/',
   searchColumnId: 'name',
@@ -34,6 +36,7 @@ export function useStudioShowManagement(studioId: string) {
 
     columnFilters.forEach((filter) => {
       if ([
+        'schedule_name',
         'client_name',
         'creator_name',
         'show_type_name',
@@ -48,6 +51,12 @@ export function useStudioShowManagement(studioId: string) {
 
     return nextFilters;
   }, [columnFilters]);
+  const normalizedScheduleFilter = filters.schedule_name?.trim().toLowerCase();
+  const isOrphanScheduleFilter = normalizedScheduleFilter
+    ? ORPHAN_SCHEDULE_TERMS.has(normalizedScheduleFilter)
+    : false;
+  const effectiveScheduleName = isOrphanScheduleFilter ? undefined : filters.schedule_name;
+  const effectiveHasSchedule = isOrphanScheduleFilter ? 'false' : filters.has_schedule;
   const dateRange = columnFilters.find((filter) => filter.id === 'start_time')?.value as
     | { from?: string; to?: string }
     | undefined;
@@ -57,19 +66,29 @@ export function useStudioShowManagement(studioId: string) {
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       search,
+      schedule_name: effectiveScheduleName,
       date_from: dateRange?.from,
       date_to: dateRange?.to,
-      ...filters,
+      client_name: filters.client_name,
+      creator_name: filters.creator_name,
+      show_type_name: filters.show_type_name,
+      show_standard_name: filters.show_standard_name,
+      show_status_name: filters.show_status_name,
+      platform_name: filters.platform_name,
+      has_schedule: effectiveHasSchedule,
     }),
     queryFn: ({ signal }) => getStudioShows(studioId, {
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       search: search || undefined,
+      schedule_name: effectiveScheduleName,
       date_from: dateRange?.from,
       date_to: dateRange?.to,
-      has_schedule: filters.has_schedule === undefined
-        ? undefined
-        : filters.has_schedule === 'true',
+      has_schedule: isOrphanScheduleFilter
+        ? false
+        : filters.has_schedule === undefined
+          ? undefined
+          : filters.has_schedule === 'true',
       creator_name: filters.creator_name,
       client_name: filters.client_name,
       show_type_name: filters.show_type_name,

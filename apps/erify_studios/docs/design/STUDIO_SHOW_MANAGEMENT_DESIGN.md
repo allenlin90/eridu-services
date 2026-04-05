@@ -1,9 +1,9 @@
 # Studio Show Management — Frontend Design
 
-> **Status**: Planning
+> **Status**: Implemented reference
 > **Phase scope**: Phase 4 Wave 1+
 > **Owner app**: `apps/erify_studios`
-> **Product source**: [`docs/prd/studio-show-management.md`](../../../../docs/prd/studio-show-management.md)
+> **Product source**: [`docs/features/studio-show-management.md`](../../../../docs/features/studio-show-management.md)
 > **Depends on**: Existing show-operations route ✅, backend studio show management endpoints
 
 ## Purpose
@@ -224,13 +224,13 @@ The new CRUD page should align with the existing query/filter patterns already f
 Recommended toolbar filters:
 
 - `name`
+- `schedule_name` with keyword support for `orphans`
 - `client_name`
 - `creator_name`
 - `show_type_name`
 - `show_standard_name`
 - `show_status_name`
 - `platform_name`
-- `has_schedule` (`Assigned` / `Unassigned`)
 - `start_date_from` / `start_date_to` as the CRUD page date-range filter
 
 Filter exclusions on the CRUD page:
@@ -243,7 +243,7 @@ Mapping rule:
 
 - keep the CRUD page URL/search schema close to `/system/shows`
 - map the CRUD page date-range filter to the existing studio list endpoint params without changing `show-operations`
-- add an explicit schedule-state filter on the CRUD page instead of pushing that recovery workflow into `show-operations`
+- allow one schedule filter input to search by schedule name and use `orphans` as the missing-schedule shortcut instead of splitting that recovery workflow into a separate control
 
 Practical implication:
 
@@ -383,7 +383,7 @@ Known limitation:
 - [ ] Reuse the same show query keys and endpoint contracts across both pages.
 - [ ] Extract the current route-bound `useStudioShows()` behavior so shared fetching is decoupled from `show-operations` URL state.
 - [ ] Give `/studios/$studioId/shows` its own search schema and table-state hook instead of inheriting `show-operations` defaults.
-- [ ] Match CRUD page filters closely to the existing `/system/shows` and studio operations table patterns: `name`, `client_name`, `creator_name`, `show_type_name`, `show_standard_name`, `show_status_name`, `platform_name`, `has_schedule`, and start-date range.
+- [ ] Match CRUD page filters closely to the existing `/system/shows` and studio operations table patterns: `name`, `schedule_name` (with `orphans` shortcut), `client_name`, `creator_name`, `show_type_name`, `show_standard_name`, `show_status_name`, `platform_name`, and start-date range.
 - [ ] Surface orphan-show discovery and repair inside `/studios/$studioId/shows`.
 
 ### FE-4 Access And Conflict UX

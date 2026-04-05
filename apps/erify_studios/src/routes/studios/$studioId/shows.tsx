@@ -7,6 +7,7 @@ const studioShowsSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   limit: z.coerce.number().int().min(1).catch(10),
   search: z.string().optional().catch(undefined),
+  schedule_name: z.string().optional().catch(undefined),
   date_from: z.string().optional().catch(undefined),
   date_to: z.string().optional().catch(undefined),
   client_name: z.string().optional().catch(undefined),

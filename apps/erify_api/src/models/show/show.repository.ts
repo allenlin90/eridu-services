@@ -306,6 +306,7 @@ export class ShowRepository extends BaseRepository<
       has_tasks?: boolean;
       has_creators?: boolean;
       has_schedule?: boolean;
+      schedule_name?: string;
       show_uids?: string[];
       creator_name?: string;
       client_name?: string;
@@ -357,6 +358,13 @@ export class ShowRepository extends BaseRepository<
 
     if (query.has_schedule !== undefined) {
       where.scheduleId = query.has_schedule ? { not: null } : null;
+    }
+
+    if (query.schedule_name) {
+      where.Schedule = {
+        name: { contains: query.schedule_name, mode: 'insensitive' },
+        deletedAt: null,
+      };
     }
 
     if (query.client_name) {

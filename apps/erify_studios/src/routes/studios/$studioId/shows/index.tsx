@@ -67,6 +67,7 @@ function StudioShowsPage() {
   const searchableColumns = useMemo(
     () => [
       { id: 'name', title: 'Name', type: 'text' as const },
+      { id: 'schedule_name', title: 'Schedule', type: 'text' as const },
       { id: 'client_name', title: 'Client', type: 'text' as const },
       { id: 'creator_name', title: 'Creator', type: 'text' as const },
       {
@@ -92,15 +93,6 @@ function StudioShowsPage() {
         title: 'Platform',
         type: 'select' as const,
         options: (showLookups?.platforms ?? []).map((item) => ({ value: item.name, label: item.name })),
-      },
-      {
-        id: 'has_schedule',
-        title: 'Schedule',
-        type: 'select' as const,
-        options: [
-          { value: 'true', label: 'Assigned' },
-          { value: 'false', label: 'Unassigned' },
-        ],
       },
       { id: 'start_time', title: 'Date', type: 'date-range' as const },
     ],
@@ -144,7 +136,7 @@ function StudioShowsPage() {
             searchColumn="name"
             searchableColumns={searchableColumns}
             searchPlaceholder="Search shows..."
-            featuredFilterColumns={['show_status_name', 'has_schedule', 'start_time']}
+            featuredFilterColumns={['show_status_name', 'schedule_name', 'start_time']}
           >
             <Button
               variant="outline"

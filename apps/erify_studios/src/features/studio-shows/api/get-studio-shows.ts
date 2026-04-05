@@ -16,6 +16,7 @@ type GetStudioShowsParams = {
   page?: number;
   limit?: number;
   search?: string;
+  schedule_name?: string;
   date_from?: string;
   date_to?: string;
   planning_date_from?: string;
