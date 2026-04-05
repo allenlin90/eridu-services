@@ -14,11 +14,11 @@ Studios could assign creators to shows and read show details, but could not cont
 
 ## Users
 
-| Role | Need |
-| --- | --- |
-| Studio Admin | Create, update, and soft-delete shows within their studio; manage platform assignments |
-| Studio Manager | Create and update shows as a routine operational task; cannot delete |
-| System Admin | Retains cross-studio governance via `/admin/shows`; no longer required for routine studio show management |
+| Role           | Need                                                                                                      |
+| -------------- | --------------------------------------------------------------------------------------------------------- |
+| Studio Admin   | Create, update, and soft-delete shows within their studio; manage platform assignments                    |
+| Studio Manager | Create and update shows as a routine operational task; cannot delete                                      |
+| System Admin   | Retains cross-studio governance via `/admin/shows`; no longer required for routine studio show management |
 
 ## What Was Delivered
 
