@@ -24,6 +24,9 @@
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
 | [Studio Creator Roster](./STUDIO_CREATOR_ROSTER.md)                                 | ✅ Phase 4 | Studio-scoped creator roster CRUD, compensation defaults, and inactive-roster assignment enforcement |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
+| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)  | ✅ Phase 4 | Studio-scoped submitted-task report definitions and batched query API |
+| [Studio Creator Onboarding](./STUDIO_CREATOR_ONBOARDING.md)                         | ✅ Phase 4 | Studio-scoped creator creation and roster-first assignment enforcement |
+| [Studio Show Management](./STUDIO_SHOW_MANAGEMENT.md)                               | ✅ Phase 4 | Studio-scoped show create/update/delete, lookup bundling, and last-write-wins semantics |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                               | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries |
 | [Studios Internal Read Traffic Hardening](../../erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md) | ✅ Ops | Internal-read burst handling, query cancellation, and readBurst throttle coverage |
 | [Phase 4 P&L Backend Index](./PHASE_4_PNL_BACKEND.md)                               | ⏳ Phase 4 | Phase-level backend index and shared rules for per-feature Phase 4 design docs |
@@ -38,13 +41,10 @@
 | [Studio Economics Review Backend Design](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)     | 📐      | Planned finance review workspace contract for projected and actual cost reads |
 | [Compensation Line Items Backend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)      | 📐      | Planned supplemental compensation CRUD and aggregation model |
 | [Show Planning Export Backend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md)            | 📐      | Planned planning-export endpoint and economics composition rules |
-| [Studio Show Management Backend Design](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md)        | 📐      | Planned studio-scoped show create/update/delete, lookup bundling, and optimistic locking |
 | [Creator Availability Hardening Backend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | 📐 | Planned strict availability enforcement and assignment errors |
 | [P&L Revenue Workflow Backend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)            | 📐      | Blocked Wave 3 revenue-side activation design |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | ⏳      | Studio-scoped resolution for cancelled shows                                   |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                | 📐      | Planned template-less task creation using the existing `Task` model            |
-| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)        | ✅      | Studio-scoped submitted-task report definitions and batched query API — backend design reference |
-| Analytics Dashboard                                                                        | ⚠️ Removed | Superseded by Datastream + BigQuery planning in [Phase 4](../../../docs/roadmap/PHASE_4.md) |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                             | 🗓️      | Planned for Phase 4; not implemented in the current schema                     |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                       | 🗓️      | Planned Datastream + BigQuery architecture for Phase 4                         |
 
