@@ -109,6 +109,10 @@ export class ShowPlatformRepository extends BaseRepository<
     });
   }
 
+  // Override: intentionally does NOT auto-apply deletedAt: null (unlike BaseRepository.findMany).
+  // Both callers (replaceShowPlatforms, replacePlatformsForShow) need soft-deleted records
+  // to implement restore-on-add semantics. Callers that need only active records must include
+  // deletedAt: null in their where clause explicitly.
   async findMany(params: {
     where?: Prisma.ShowPlatformWhereInput;
     include?: Prisma.ShowPlatformInclude;

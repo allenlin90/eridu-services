@@ -40,10 +40,10 @@ Preserve a consistent documentation model in `eridu-services`:
    - Remove it from `apps/*/docs/design/README.md`.
    - See `.agent/workflows/doc-lifecycle.md` § "Design Doc Promotion" for the full step-by-step.
 8. Update the nearest README indexes whenever a doc moves layers.
-8. Remove legacy ownership language that still implies one app owns the product or roadmap.
-9. Normalize Markdown links so they use relative paths from the current document.
-10. Never leave `file://` links or absolute filesystem paths in repo docs.
-11. Run a markdown-link check after reorganization.
+9. Remove legacy ownership language that still implies one app owns the product or roadmap.
+10. Normalize Markdown links so they use relative paths from the current document.
+11. Never leave `file://` links or absolute filesystem paths in repo docs.
+12. Run a markdown-link check after reorganization.
 
 ## Placement Rules
 
