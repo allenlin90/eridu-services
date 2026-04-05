@@ -104,6 +104,8 @@ Full reference: `.agent/skills/frontend-state-management/SKILL.md`
 ### Components and UI
 
 - [ ] Shared primitives come from `@eridu/ui` — no local re-implementations of Radix/Tailwind primitives.
+- [ ] Form/dialog field inventory matches the intended product/API contract; any intentionally excluded fields (for example `external_id`) are documented in the design doc and called out near form/schema composition.
+- [ ] Date and datetime editing uses `DatePicker` / `DateTimePicker` from `@eridu/ui`; native `type="date"` / `type="datetime-local"` inputs only appear with a documented exception.
 - [ ] Nullable prop guards: explicit non-null guard before dereference — no `a?.x === b?.y` then `a.x`.
 - [ ] Route guards and sidebar visibility reference the same access policy source.
 - [ ] i18n strings go through Paraglide — no hardcoded UI copy.

@@ -43,6 +43,26 @@ import { DatePicker, DateTimePicker } from '@eridu/ui/components/date-picker';
 <input type="date" value={dateStr} />
 ```
 
+Review rule:
+- Native browser date/datetime inputs require a documented reason in the design doc or a short inline code comment at the usage site.
+- "Faster to wire up" or "browser default is fine" is not a sufficient reason.
+
+#### Form Contract Coverage
+For CRUD forms, dialogs, and sheets backed by shared API schemas or feature design docs, start by inventorying the full intended field set before implementation.
+
+Rules:
+- Planning: compare the intended UX against the shared contract/design doc and record any exclusions up front.
+- Implementation: do not silently omit user-editable fields from the form just because they are optional, inconvenient, or hidden by an `.omit()` call.
+- If a field is intentionally excluded from the UX (for example `external_id` or advanced metadata), document the reason in the relevant design doc and leave a short comment near the form/schema composition point.
+- Review: treat undocumented field omissions as product/contract drift, not as harmless cleanup.
+
+Checklist for form work:
+- [ ] Form field inventory reviewed against the shared API schema and feature doc.
+- [ ] Any omitted contract field has an explicit product rationale.
+- [ ] Date fields use `DatePicker` from `@eridu/ui`.
+- [ ] Datetime fields use `DateTimePicker` from `@eridu/ui`.
+- [ ] Native `date` / `datetime-local` inputs appear only with a documented exception.
+
 #### Refresh Actions
 Use icon-only refresh buttons for data refetch actions to keep toolbar density and interaction patterns consistent.
 

@@ -116,6 +116,8 @@ async create(data: Prisma.TaskCreateInput): Promise<Task>
 ### Forms
 - [ ] `react-hook-form` + `zodResolver`
 - [ ] Validation schema from `@eridu/api-types` (reuse backend schema)
+- [ ] Form/dialog field inventory matches the intended product/API contract; omitted fields are explicitly documented
+- [ ] Date/time editing uses `DatePicker` / `DateTimePicker` from `@eridu/ui`, not native browser date/datetime inputs unless exception documented
 - [ ] Error messages displayed per field
 - [ ] Submit button disabled during submission
 
