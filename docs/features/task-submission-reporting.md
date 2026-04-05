@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Shipped — Phase 4 (reopened)
 > **Workstream**: Task Management Reporting
-> **Canonical docs**: [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [FE canonical](../../apps/erify_studios/docs/TASK_SUBMISSION_REPORTING.md)
+> **Canonical docs**: [BE design](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md), [FE canonical](../../apps/erify_studios/docs/TASK_SUBMISSION_REPORTING.md)
 
 ## Problem
 

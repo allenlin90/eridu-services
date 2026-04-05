@@ -24,7 +24,7 @@
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                 | ✅ Phase 3 | Shift CRUD, duty-manager coverage, calendar, alignment |
 | [Studio Creator Roster](./STUDIO_CREATOR_ROSTER.md)                                 | ✅ Phase 4 | Studio-scoped creator roster CRUD, compensation defaults, and inactive-roster assignment enforcement |
 | [File Upload (Cloudflare R2)](./FILE_UPLOAD.md)                                     | ✅ Phase 3 | Presigned URL flow, use-case limits, storage routing |
-| [Task Submission Reporting & Export](./design/TASK_SUBMISSION_REPORTING_DESIGN.md)  | ✅ Phase 4 | Studio-scoped submitted-task report definitions and batched query API |
+| [Task Submission Reporting & Export](./TASK_SUBMISSION_REPORTING.md)  | ✅ Phase 4 | Studio-scoped submitted-task report definitions and batched query API |
 | [Studio Creator Onboarding](./STUDIO_CREATOR_ONBOARDING.md)                         | ✅ Phase 4 | Studio-scoped creator creation and roster-first assignment enforcement |
 | [Studio Show Management](./STUDIO_SHOW_MANAGEMENT.md)                               | ✅ Phase 4 | Studio-scoped show create/update/delete, lookup bundling, and last-write-wins semantics |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                               | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries |

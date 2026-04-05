@@ -2,7 +2,7 @@
 
 > **Status**: Deferred — monitor in Phase 3
 > **Origin**: Task submission reporting design review (2026-03-21)
-> **Related**: [BE design](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md), [feature doc](../features/task-submission-reporting.md)
+> **Related**: [BE design](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md), [feature doc](../features/task-submission-reporting.md)
 
 ## What
 

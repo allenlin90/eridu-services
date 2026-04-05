@@ -184,7 +184,7 @@ Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, ru
 | Studio schedule management     | [PRD](../prd/studio-schedule-management.md)         | TBD                                                                             | TBD                                                                                 |
 | Studio reference data          | [PRD](../prd/studio-reference-data.md)              | TBD                                                                             | TBD                                                                                 |
 | Studio creator profile         | [PRD](../prd/studio-creator-profile.md)             | TBD                                                                             | TBD                                                                                 |
-| Task submission reporting      | [feature](../features/task-submission-reporting.md) | [BE](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)      | [FE](../../apps/erify_studios/docs/TASK_SUBMISSION_REPORTING.md)                    |
+| Task submission reporting      | [feature](../features/task-submission-reporting.md) | [BE](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md)      | [FE](../../apps/erify_studios/docs/TASK_SUBMISSION_REPORTING.md)                    |
 
 ## Risks & Open Items
 
