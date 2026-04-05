@@ -118,7 +118,7 @@ export class ShowPlatformRepository extends BaseRepository<
 
   /**
    * Batch-creates ShowPlatform assignments by internal IDs (domain-level).
-   * Uses createManyAndReturn for a single DB round-trip.
+   * Uses createMany for a single DB round-trip.
    */
   async createManyAssignments(items: Array<{
     uid: string;
