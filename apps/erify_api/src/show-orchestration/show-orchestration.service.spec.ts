@@ -177,6 +177,7 @@ describe('showOrchestrationService', () => {
           provide: TaskTargetService,
           useValue: {
             findByShowId: jest.fn(),
+            findAllByShowId: jest.fn(),
             hardDeleteByShowId: jest.fn(),
           },
         },
@@ -400,7 +401,7 @@ describe('showOrchestrationService', () => {
     it('should soft-delete show and purge dependent task state', async () => {
       const uid = 'show_test123';
       showService.getShowById.mockResolvedValue(mockShow);
-      taskTargetService.findByShowId.mockResolvedValue([
+      taskTargetService.findAllByShowId.mockResolvedValue([
         { taskId: BigInt(10) },
         { taskId: BigInt(10) },
         { taskId: BigInt(11) },
@@ -414,12 +415,32 @@ describe('showOrchestrationService', () => {
       await service.deleteShow(uid);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(taskTargetService.findByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(taskTargetService.findAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(taskTargetService.hardDeleteByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
       expect(showCreatorRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(showPlatformRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(showRepository.softDelete).toHaveBeenCalledWith({ uid });
+    });
+
+    it('should include soft-deleted task targets when collecting taskIds to purge', async () => {
+      const uid = 'show_test123';
+      showService.getShowById.mockResolvedValue(mockShow);
+      // Mix of active and soft-deleted targets referencing distinct tasks
+      taskTargetService.findAllByShowId.mockResolvedValue([
+        { taskId: BigInt(10), deletedAt: null },
+        { taskId: BigInt(11), deletedAt: new Date('2026-03-01') },
+      ] as any);
+      taskTargetService.hardDeleteByShowId.mockResolvedValue({ count: 2 } as any);
+      taskService.hardDeleteByIds.mockResolvedValue({ count: 2 } as any);
+      showRepository.softDelete.mockResolvedValue(mockShow);
+      showCreatorRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+      showPlatformRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+
+      await service.deleteShow(uid);
+
+      // Both taskIds must be included — soft-deleted target's task must not be orphaned
+      expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
     });
   });
 

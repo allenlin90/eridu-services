@@ -157,9 +157,15 @@ export class ShowOrchestrationService {
   async deleteShow(uid: string): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
-    const taskTargets = await this.taskTargetService.findByShowId(showId);
+    // Use findAllByShowId (includes soft-deleted) so soft-deleted targets' taskIds are
+    // collected and hard-deleted — avoids orphaned tasks after hardDeleteByShowId removes all targets.
+    const taskTargets = await this.taskTargetService.findAllByShowId(showId);
     const taskIds = [...new Set(taskTargets.map((target) => target.taskId))];
 
+    // Known limitation: hardDeleteByShowId and hardDeleteByIds use raw PrismaService (not the
+    // CLS transaction delegate), so these hard deletes commit immediately and are not rolled back
+    // if a subsequent call fails. Hard deletes are intentionally front-loaded — for pre-start shows,
+    // partial cleanup is recoverable by retrying the delete operation.
     await this.taskTargetService.hardDeleteByShowId(showId);
     await this.taskService.hardDeleteByIds(taskIds);
     await this.showCreatorRepository.softDeleteAllByShowId(showId);

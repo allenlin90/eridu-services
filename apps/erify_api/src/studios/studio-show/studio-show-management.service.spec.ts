@@ -374,6 +374,53 @@ describe('studioShowManagementService', () => {
     );
   });
 
+  it('rejects update when clientId changes and existing schedule belongs to the old client', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      client: { uid: 'cli_1' },
+      Schedule: { uid: 'sch_1' },
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+    });
+    // schedule belongs to cli_1, but the update is moving the show to cli_other
+    scheduleServiceMock.getScheduleById.mockResolvedValue({
+      id: BigInt(40),
+      uid: 'sch_1',
+      studioId: BigInt(10),
+      status: 'draft',
+      client: { uid: 'cli_1' },
+    });
+
+    await expect(service.updateShow('std_123', 'show_123', {
+      clientId: 'cli_other',
+    } as UpdateStudioShowDto)).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Schedule sch_1 does not belong to client cli_other',
+      }),
+    });
+  });
+
+  it('allows update when clientId changes and show has no existing schedule', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      client: { uid: 'cli_1' },
+      Schedule: null,
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+    });
+
+    await service.updateShow('std_123', 'show_123', {
+      clientId: 'cli_other',
+    } as UpdateStudioShowDto);
+
+    expect(scheduleServiceMock.getScheduleById).not.toHaveBeenCalled();
+    expect(showRepositoryMock.update).toHaveBeenCalled();
+  });
+
   it('rejects update when target schedule belongs to a different client', async () => {
     scheduleServiceMock.getScheduleById.mockResolvedValue({
       id: BigInt(40),

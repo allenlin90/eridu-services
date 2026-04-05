@@ -88,11 +88,18 @@ export class StudioShowManagementService {
   async updateShow(studioUid: string, showUid: string, dto: UpdateStudioShowDto) {
     const existingShow = await this.findStudioShowOrThrow(studioUid, showUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
+    // When clientId changes but scheduleId is not explicitly provided, validate the
+    // existing schedule against the new clientId to prevent cross-client schedule assignments.
+    const scheduleToValidate = dto.scheduleId !== undefined
+      ? dto.scheduleId
+      : dto.clientId !== undefined
+        ? (existingShow.Schedule?.uid ?? null)
+        : undefined;
     // existingShow.studioId is non-null: the show was fetched via studio-scoped query
     await this.ensureScheduleBelongsToStudioAndClient(
       existingShow.studioId!,
       studioUid,
-      dto.scheduleId,
+      scheduleToValidate,
       dto.clientId ?? existingShow.client?.uid,
     );
     this.ensureValidTimeRange(existingShow.startTime, existingShow.endTime, dto);
