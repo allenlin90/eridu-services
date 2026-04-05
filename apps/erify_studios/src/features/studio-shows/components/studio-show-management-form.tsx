@@ -54,8 +54,11 @@ const studioShowCreateFormSchema = studioShowFormBaseSchema
     path: ['end_time'],
   });
 
-// Edit mode: schedule can be empty (shows without schedules can still be updated,
-// but other fields can be updated without requiring one)
+// Edit mode: schedule_id accepts either a valid schedule UID or an empty string.
+// An empty string means the show is currently an orphan (no schedule) or the user
+// cleared the schedule field — both are valid edit states. The submit handler converts
+// empty string → null (explicit unlink) and undefined → omitted (leave unchanged).
+// Create mode uses a separate schema that requires a valid schedule UID.
 const studioShowEditFormSchema = studioShowFormBaseSchema
   .extend({
     schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE).or(z.literal('')),

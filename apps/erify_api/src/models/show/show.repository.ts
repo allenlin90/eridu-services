@@ -46,6 +46,10 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
+  // Engineering decision: compound studio-scoped lookup with optional generic include
+  // cannot be expressed as a caller-supplied flat where+include pair without leaking the
+  // relation-join semantics (studio: { uid }). Used in management service for all
+  // studio-scoped show retrieval paths where IDOR safety must be enforced at query time.
   async findByUidAndStudioUid<T extends Prisma.ShowInclude = Record<string, never>>(
     uid: string,
     studioUid: string,

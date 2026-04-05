@@ -97,6 +97,11 @@ export const createShowInputSchema = z
 
 /**
  * Update Show Input Schema (snake_case - matches API input)
+ *
+ * Admin-path schema used by admin show-operations endpoints. Accepts nested `creators`
+ * and `platforms` objects for direct assignment. For studio-scoped show updates, use
+ * `updateStudioShowInputSchema` instead — the studio path uses `platform_ids` and
+ * separate assignment endpoints rather than nested objects.
  */
 export const updateShowInputSchema = z
   .object({
