@@ -85,7 +85,7 @@ export class ScheduleService extends BaseModelService {
     return this.scheduleRepository.findPaginated(query);
   }
 
-  async listActiveSchedulesByStudioUid(
+  async listSchedulesByStudioUid(
     studioUid: string,
     params?: {
       take?: number;

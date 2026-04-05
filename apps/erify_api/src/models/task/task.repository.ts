@@ -366,6 +366,9 @@ export class TaskRepository extends BaseRepository<
     return task;
   }
 
+  // Engineering decision: pre-start show delete treats task workflow records as disposable.
+  // Hard delete (not soft delete) prevents orphaned task rows from accumulating and avoids
+  // reviving stale workflow state on show restore. See STUDIO_SHOW_MANAGEMENT.md § Delete Rule.
   async hardDeleteByIds(taskIds: bigint[]): Promise<Prisma.BatchPayload> {
     if (taskIds.length === 0) {
       return { count: 0 };

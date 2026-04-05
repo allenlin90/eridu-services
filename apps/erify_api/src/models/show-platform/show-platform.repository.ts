@@ -41,6 +41,10 @@ export class ShowPlatformRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: compound (showId, platformId) lookup uses findFirst rather than
+  // findMany to return a single nullable result directly. The composite index semantics
+  // (one active assignment per show+platform pair) make a named method clearer than
+  // passing a where clause from the service for every caller.
   async findByShowAndPlatform(
     showId: bigint,
     platformId: bigint,

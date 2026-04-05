@@ -162,10 +162,8 @@ export class ShowOrchestrationService {
     const taskTargets = await this.taskTargetService.findAllByShowId(showId);
     const taskIds = [...new Set(taskTargets.map((target) => target.taskId))];
 
-    // Known limitation: hardDeleteByShowId and hardDeleteByIds use raw PrismaService (not the
-    // CLS transaction delegate), so these hard deletes commit immediately and are not rolled back
-    // if a subsequent call fails. Hard deletes are intentionally front-loaded — for pre-start shows,
-    // partial cleanup is recoverable by retrying the delete operation.
+    // Hard deletes are intentionally front-loaded: for pre-start shows, task workflow state
+    // is disposable and partial cleanup is recoverable by retrying the delete operation.
     await this.taskTargetService.hardDeleteByShowId(showId);
     await this.taskService.hardDeleteByIds(taskIds);
     await this.showCreatorRepository.softDeleteAllByShowId(showId);

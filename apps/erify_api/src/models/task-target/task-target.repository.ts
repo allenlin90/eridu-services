@@ -50,6 +50,9 @@ export class TaskTargetRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: pre-start show delete treats task-target workflow records as
+  // disposable. Hard delete (not soft delete) prevents orphaned target rows from accumulating
+  // and avoids reviving stale state on show restore. See STUDIO_SHOW_MANAGEMENT.md § Delete Rule.
   async hardDeleteByShowId(showId: bigint): Promise<Prisma.BatchPayload> {
     return this.delegate.deleteMany({
       where: { showId },

@@ -47,7 +47,7 @@ describe('studioLookupController', () => {
         },
         {
           provide: ScheduleService,
-          useValue: { listActiveSchedulesByStudioUid: jest.fn() },
+          useValue: { listSchedulesByStudioUid: jest.fn() },
         },
         {
           provide: StudioRoomService,
@@ -72,7 +72,7 @@ describe('studioLookupController', () => {
     showStandardService.listShowStandards.mockResolvedValue({ data: [], total: 0 } as any);
     showStatusService.getShowStatuses.mockResolvedValue({ data: [], total: 0 } as any);
     platformService.listPlatforms.mockResolvedValue({ data: [], total: 0 } as any);
-    scheduleService.listActiveSchedulesByStudioUid.mockResolvedValue([]);
+    scheduleService.listSchedulesByStudioUid.mockResolvedValue([]);
     studioRoomService.getStudioRooms.mockResolvedValue({ data: [], total: 0 } as any);
 
     await controller.getShowLookups('std_1');
@@ -90,7 +90,7 @@ describe('studioLookupController', () => {
       includeDeleted: false,
       studioUid: 'std_1',
     });
-    expect(scheduleService.listActiveSchedulesByStudioUid).toHaveBeenCalledWith('std_1', {
+    expect(scheduleService.listSchedulesByStudioUid).toHaveBeenCalledWith('std_1', {
       take: 200,
       include: {
         client: true,

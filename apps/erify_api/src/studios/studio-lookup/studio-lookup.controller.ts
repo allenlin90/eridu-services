@@ -67,7 +67,7 @@ export class StudioLookupController extends BaseStudioController {
       this.showStandardService.listShowStandards({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStatusService.getShowStatuses({ take: DEFAULT_LOOKUP_LIMIT }),
       this.platformService.listPlatforms({ take: DEFAULT_LOOKUP_LIMIT }),
-      this.scheduleService.listActiveSchedulesByStudioUid(studioId, {
+      this.scheduleService.listSchedulesByStudioUid(studioId, {
         take: DEFAULT_LOOKUP_LIMIT,
         include: {
           client: true,

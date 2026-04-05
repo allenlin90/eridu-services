@@ -291,6 +291,10 @@ export class ShowRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: studio show list requires AND-composed multi-filter where building
+  // (creator name filters via showCreators join, boolean has_tasks/has_creators presence checks,
+  // date-range bounds, platform name filter) that cannot be expressed as a caller-supplied flat
+  // where clause without leaking Prisma relation semantics into the service layer.
   async findPaginatedWithTaskSummary(
     studioId: bigint,
     query: {
