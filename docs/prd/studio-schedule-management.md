@@ -42,14 +42,14 @@ Key unanswered questions:
 
 ## Existing Infrastructure
 
-| Surface / Model | Current Behavior | Status |
-| --- | --- | --- |
-| `/admin/schedules` | Full CRUD + validate/publish/duplicate/bulk/monthly overview | ✅ Exists |
-| Studios | **No schedule endpoints** | ❌ Missing |
-| `Schedule` model | Studio-scoped via `studioId` FK; supports soft-delete, snapshots, published state | ✅ Exists |
-| `Snapshot` model | Versioned schedule history (immutable after creation) | ✅ Exists |
-| `Show.scheduleId` | Nullable relation used to link a show to a schedule | ✅ Exists |
-| `/studios/:studioId/shifts` | Full shift CRUD at studio level | ✅ Exists |
+| Surface / Model             | Current Behavior                                                                  | Status    |
+| --------------------------- | --------------------------------------------------------------------------------- | --------- |
+| `/admin/schedules`          | Full CRUD + validate/publish/duplicate/bulk/monthly overview                      | ✅ Exists  |
+| Studios                     | **No schedule endpoints**                                                         | ❌ Missing |
+| `Schedule` model            | Studio-scoped via `studioId` FK; supports soft-delete, snapshots, published state | ✅ Exists  |
+| `Snapshot` model            | Versioned schedule history (immutable after creation)                             | ✅ Exists  |
+| `Show.scheduleId`           | Nullable relation used to link a show to a schedule                               | ✅ Exists  |
+| `/studios/:studioId/shifts` | Full shift CRUD at studio level                                                   | ✅ Exists  |
 
 ## Requirements
 
@@ -151,28 +151,28 @@ GET    /studios/:studioId/schedules/overview/monthly
 
 ### Role Access
 
-| Operation | ADMIN | MANAGER | MEMBER |
-| --- | --- | --- | --- |
-| Create | ✅ | ✅ | ❌ |
-| Read / List | ✅ | ✅ | ✅ (published only) |
-| Update | ✅ | ✅ | ❌ |
-| Delete | ✅ | ❌ | ❌ |
-| Validate | ✅ | ✅ | ❌ |
-| Publish | ✅ | ❌ | ❌ |
-| Duplicate | ✅ | ✅ | ❌ |
-| View Snapshots | ✅ | ✅ | ❌ |
-| Monthly Overview | ✅ | ✅ | ❌ |
+| Operation        | ADMIN | MANAGER | MEMBER             |
+| ---------------- | ----- | ------- | ------------------ |
+| Create           | ✅     | ✅       | ❌                  |
+| Read / List      | ✅     | ✅       | ✅ (published only) |
+| Update           | ✅     | ✅       | ❌                  |
+| Delete           | ✅     | ❌       | ❌                  |
+| Validate         | ✅     | ✅       | ❌                  |
+| Publish          | ✅     | ❌       | ❌                  |
+| Duplicate        | ✅     | ✅       | ❌                  |
+| View Snapshots   | ✅     | ✅       | ❌                  |
+| Monthly Overview | ✅     | ✅       | ❌                  |
 
 ### Error Codes
 
-| Code | HTTP Status | Condition |
-| --- | --- | --- |
-| `SCHEDULE_NOT_FOUND` | 404 | Schedule does not exist or belongs to different studio |
-| `SHOW_NOT_FOUND` | 404 | Provided show does not exist or belongs to different studio |
-| `SHOW_ALREADY_ASSIGNED_TO_OTHER_SCHEDULE` | 409 | Show is already linked to another schedule that cannot be overwritten by this action |
-| `SCHEDULE_VERSION_CONFLICT` | 409 | Optimistic locking version mismatch |
-| `SCHEDULE_ALREADY_PUBLISHED` | 400 | Attempt to publish a schedule that is already in published state |
-| `SCHEDULE_VALIDATION_FAILED` | 422 | Validation found conflicts (returned with detail payload) |
+| Code                                      | HTTP Status | Condition                                                                            |
+| ----------------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| `SCHEDULE_NOT_FOUND`                      | 404         | Schedule does not exist or belongs to different studio                               |
+| `SHOW_NOT_FOUND`                          | 404         | Provided show does not exist or belongs to different studio                          |
+| `SHOW_ALREADY_ASSIGNED_TO_OTHER_SCHEDULE` | 409         | Show is already linked to another schedule that cannot be overwritten by this action |
+| `SCHEDULE_VERSION_CONFLICT`               | 409         | Optimistic locking version mismatch                                                  |
+| `SCHEDULE_ALREADY_PUBLISHED`              | 400         | Attempt to publish a schedule that is already in published state                     |
+| `SCHEDULE_VALIDATION_FAILED`              | 422         | Validation found conflicts (returned with detail payload)                            |
 
 ## Acceptance Criteria
 

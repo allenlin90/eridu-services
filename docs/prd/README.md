@@ -35,7 +35,7 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | ~~Studio Creator Roster~~ | Studio operator governance — L-side creator cost defaults | 1 | ✅ Implemented → [feature doc](../features/studio-creator-roster.md) |
 | ~~Studio Creator Onboarding~~ | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | ✅ Implemented → [feature doc](../features/studio-creator-onboarding.md) |
 | ~~Internal Knowledge Base (`eridu_docs`)~~ | Internal tooling — authenticated knowledge base for repo docs | Ext | ✅ Implemented → [feature doc](../features/eridu-docs-knowledge-base.md) |
-| [Studio Show Management](./studio-show-management.md) | Studio CRUD for shows — removes `/admin/*` dependency and keeps show writes schedule-ready | 1+ | Active (studio autonomy gap) |
+| ~~Studio Show Management~~ | Studio CRUD for shows — removes `/admin/*` dependency and keeps show writes schedule-ready | 1+ | ✅ Implemented → [feature doc](../features/studio-show-management.md) |
 | [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, assign/rearrange shows, validate, publish, duplicate | 1+ | Active (studio autonomy gap) |
 | [Compensation Line Items](./compensation-line-items.md) | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators | R+ | Active (post-Wave 1) |
 | [Studio Economics Review](./studio-economics-review.md) | Configurable studio finance review/export engine for future projected and past actual cost views | 2 | Active |

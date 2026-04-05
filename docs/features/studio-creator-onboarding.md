@@ -3,7 +3,7 @@
 > **Status**: ✅ Implemented — Phase 4 Wave 1, 2026-03-30 (PR #32)
 > **Workstream**: Creator operations — studio onboarding and roster governance completion
 > **Depends on**: [Studio Creator Roster](./studio-creator-roster.md)
-> **Implementation refs**: [API types](../../packages/api-types/src/studio-creators/schemas.ts), [BE controller](../../apps/erify_api/src/studios/studio-creator/studio-creator.controller.ts), [BE service](../../apps/erify_api/src/models/studio-creator/studio-creator.service.ts), [BE design](../../apps/erify_api/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md), [FE dialog](../../apps/erify_studios/src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx), [FE design](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)
+> **Implementation refs**: [API types](../../packages/api-types/src/studio-creators/schemas.ts), [BE controller](../../apps/erify_api/src/studios/studio-creator/studio-creator.controller.ts), [BE service](../../apps/erify_api/src/models/studio-creator/studio-creator.service.ts), [BE canonical](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md), [FE dialog](../../apps/erify_studios/src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx), [FE design](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)
 
 ## Problem
 
