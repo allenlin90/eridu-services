@@ -131,6 +131,19 @@ This is the canonical approach for detecting moderation templates until a DB-lev
 - Schema spec file `studio-creator-onboard.schema.spec.ts` lives in `apps/erify_api/src/studios/studio-creator/schemas/` but tests `@eridu/api-types` schemas. This is non-standard but accepted — it co-locates validation tests near the DTO that consumes those schemas.
 - `OnboardStudioCreatorDto` uses `.transform()` in `createZodDto()` to convert snake_case wire format to camelCase. The controller then re-reads `dto.creator.name`, `dto.creator.aliasName` (already camelCase). This is correct; the `declare` fields on the class reflect the post-transform shape.
 
+### Studio Show Management Patterns (PR feat/phase4-1e-show-management-design) — SECOND REVIEW (2026-04-05)
+- `hardDeleteByIds` (`task.repository.ts`) and `hardDeleteByShowId` (`task-target.repository.ts`) both use `this.prisma` directly, NOT `txHost`. They are called inside `deleteShow` which is `@Transactional()`. These operations do NOT participate in the CLS transaction. Pre-existing issue with both repositories; the new hard-delete calls are now inside a transaction boundary they don't respect. Flagged as WARNING (not blocking) — pre-existing pattern debt; the design doc accepts this for the pre-start hard-delete use case.
+- Both `hardDeleteByIds` and `hardDeleteByShowId` are missing `// Engineering decision:` inline comments. The feature doc (`STUDIO_SHOW_MANAGEMENT.md` line 64) has the intent, but per project rules the in-code comment is also required. Flagged as BLOCKING.
+- `StudioShowManagementService` injects `ShowRepository` directly alongside `ShowService`. Calls `showRepository.update` and `showRepository.findByUidAndStudioUid` directly to avoid extra `findShowOrThrow` round-trips. This is an intentional optimization for the management service — accepted gray area for orchestration/management services.
+- `Show` model is still MISSING `version` field (last-write-wins per design doc decision 1). Deferred by design.
+- All verification checks pass: lint CLEAN, typecheck CLEAN, build CLEAN, 695/695 tests passed.
+
+### Show/ShowPlatform/TaskTarget Repository: Thin-Wrapper Cleanup (refactor applied 2026-04-04)
+Thin wrappers removed: `ShowRepository.findByName` (dead), `findActiveShows`, `findShowsByClient`, `findShowsByStudioRoom`; `ShowPlatformRepository.findByShow`, `findByPlatform`; `TaskTargetRepository.findByShowId`, `findAllByShowId`, `findByTaskId`.
+Services now call `findMany({ where: {...} })` directly. Spec mocks updated to use `findMany` accordingly.
+Justified methods kept with `// Engineering decision:` comments: `findShowsByDateRange` (two-sided date bound), `TaskTargetRepository.findByShowIds` (cross-model join filter on task.deletedAt).
+The `show.service.ts` service methods (getActiveShows, getShowsByClient, getShowsByStudioRoom) keep their names and signatures — only the internal implementation changed from named repo methods to `findMany`.
+
 ### Studio Show Management Patterns (PR #36 — feat/phase4-1e-show-management-design) — FOURTH REVIEW CYCLE
 - `ShowWithPayload<T>` is defined in `show.schema.ts` (schema layer, Prisma-ok). The management service imports it as `import type` for use in a PRIVATE method return type only — accepted.
 - `ShowCreateData`/`ShowUpdateData` type aliases (in management service via `Parameters<ShowRepository['create/update']>[N]`) effectively alias Prisma input types without importing Prisma directly. Used only in private builder methods. Accepted gray area.
