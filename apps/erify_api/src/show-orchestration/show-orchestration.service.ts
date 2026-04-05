@@ -157,15 +157,25 @@ export class ShowOrchestrationService {
   async deleteShow(uid: string): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
-    // Use findAllByShowId (includes soft-deleted) so soft-deleted targets' taskIds are
-    // collected and hard-deleted — avoids orphaned tasks after hardDeleteByShowId removes all targets.
+
+    // Collect all taskIds ever linked to this show (including soft-deleted historical targets)
+    // before removing this show's targets, so we can evaluate which tasks become fully orphaned.
     const taskTargets = await this.taskTargetService.findAllByShowId(showId);
-    const taskIds = [...new Set(taskTargets.map((target) => target.taskId))];
+    const candidateTaskIds = [...new Set(taskTargets.map((target) => target.taskId))];
 
     // Hard deletes are intentionally front-loaded: for pre-start shows, task workflow state
     // is disposable and partial cleanup is recoverable by retrying the delete operation.
     await this.taskTargetService.hardDeleteByShowId(showId);
-    await this.taskService.hardDeleteByIds(taskIds);
+
+    // Only hard-delete tasks that have no remaining active targets on any other show.
+    // Tasks reassigned to another show will have surviving active target rows and must not be removed.
+    if (candidateTaskIds.length > 0) {
+      const survivingTargets = await this.taskTargetService.findByTaskIds(candidateTaskIds);
+      const survivingTaskIds = new Set(survivingTargets.map((t) => t.taskId));
+      const orphanedTaskIds = candidateTaskIds.filter((id) => !survivingTaskIds.has(id));
+      await this.taskService.hardDeleteByIds(orphanedTaskIds);
+    }
+
     await this.showCreatorRepository.softDeleteAllByShowId(showId);
     await this.showPlatformRepository.softDeleteAllByShowId(showId);
     await this.showRepository.softDelete({ uid });

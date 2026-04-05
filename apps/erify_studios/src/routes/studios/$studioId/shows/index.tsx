@@ -214,12 +214,12 @@ function StudioShowsPage() {
                 return;
               }
 
-              // Empty schedule_id means "no change" for orphan shows — strip it so
-              // the PATCH body omits the field rather than sending an invalid value.
+              // Send schedule_id: null explicitly to unlink the schedule; only omit the field
+              // when the user never touched it (undefined). An empty/falsy value means "clear".
               const { schedule_id, ...rest } = values;
               updateMutation.mutate({
                 showId: editingShow.id,
-                data: schedule_id ? { ...rest, schedule_id } : rest,
+                data: { ...rest, ...(schedule_id !== undefined && { schedule_id: schedule_id || null }) },
               }, {
                 onSuccess: () => setEditingShow(null),
               });

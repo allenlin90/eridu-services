@@ -40,6 +40,12 @@ export class TaskTargetService extends BaseModelService {
     return this.taskTargetRepository.findMany({ where: { taskId, deletedAt: null } });
   }
 
+  async findByTaskIds(taskIds: bigint[]): Promise<TaskTarget[]> {
+    if (taskIds.length === 0)
+      return [];
+    return this.taskTargetRepository.findMany({ where: { taskId: { in: taskIds }, deletedAt: null } });
+  }
+
   async undeleteByTaskId(...args: Parameters<TaskTargetRepository['undeleteByTaskId']>): ReturnType<TaskTargetRepository['undeleteByTaskId']> {
     return this.taskTargetRepository.undeleteByTaskId(...args);
   }
