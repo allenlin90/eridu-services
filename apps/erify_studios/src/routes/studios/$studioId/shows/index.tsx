@@ -184,12 +184,17 @@ function StudioShowsPage() {
             <DialogDescription>Create a studio show without entering the operations workflow.</DialogDescription>
           </DialogHeader>
           <StudioShowManagementForm
+            studioId={studioId}
             showLookups={showLookups}
             isLookupsLoading={isLoadingLookups}
             isSubmitting={createMutation.isPending}
             onCancel={() => setIsCreateOpen(false)}
             onSubmit={(values) => {
-              createMutation.mutate(values, {
+              const { external_id, ...rest } = values;
+              createMutation.mutate({
+                ...rest,
+                ...(external_id ? { external_id } : {}),
+              }, {
                 onSuccess: () => setIsCreateOpen(false),
               });
             }}
@@ -204,6 +209,7 @@ function StudioShowsPage() {
             <DialogDescription>Update the core show record without entering show operations.</DialogDescription>
           </DialogHeader>
           <StudioShowManagementForm
+            studioId={studioId}
             show={editingShowQuery.data}
             showLookups={showLookups}
             isLookupsLoading={isLoadingLookups || editingShowQuery.isLoading}
@@ -216,7 +222,7 @@ function StudioShowsPage() {
 
               // Send schedule_id: null explicitly to unlink the schedule; only omit the field
               // when the user never touched it (undefined). An empty/falsy value means "clear".
-              const { schedule_id, ...rest } = values;
+              const { schedule_id, external_id: _externalId, ...rest } = values;
               updateMutation.mutate({
                 showId: editingShow.id,
                 data: { ...rest, ...(schedule_id !== undefined && { schedule_id: schedule_id || null }) },

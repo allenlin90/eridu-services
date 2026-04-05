@@ -16,14 +16,24 @@ export type GetClientsParams = {
   id?: string;
 };
 
-export async function getClients(params: GetClientsParams): Promise<ClientsResponse> {
-  const response = await apiClient.get<ClientsResponse>('/admin/clients', {
+type GetClientsOptions = {
+  signal?: AbortSignal;
+};
+
+export async function getClients(
+  params: GetClientsParams,
+  studioId?: string,
+  options?: GetClientsOptions,
+): Promise<ClientsResponse> {
+  const endpoint = studioId ? `/studios/${studioId}/clients` : '/admin/clients';
+  const response = await apiClient.get<ClientsResponse>(endpoint, {
     params: {
       page: params.page,
       limit: params.limit,
       name: params.name,
       id: params.id,
     },
+    signal: options?.signal,
   });
   return response.data;
 }

@@ -43,13 +43,15 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 8. **Restore by external identity starts a new lifecycle**. If create receives an `external_id` and a soft-deleted show already exists under the same identity, restore that row, apply the latest payload, and do not revive old creator/platform/task workflow state beyond what the new payload recreates.
 
-9. **`schedule_id` is optional in BE, required in normal FE UX**. The backend contract stays flexible and allows shows without schedules. The studio app should require schedule selection in the normal create/edit flow and expose unassigned-schedule discovery/repair on the shows page.
+9. **`external_id` is optional in the contract but exposed in create UX**. Because restore/adopt logic depends on stable external identity, the studio app should expose `external_id` as an optional create-only input instead of hiding it behind backend-only behavior.
 
-10. **Schedule publish can reclaim restored/manual rows**. Schedule publishing matches active shows by external identity globally, adopts valid restored/manual rows, and replaces creators/platforms from schedule data when available.
+10. **`schedule_id` is optional in BE, required in normal FE UX**. The backend contract stays flexible and allows shows without schedules. The studio app should require schedule selection in the normal create/edit flow and expose unassigned-schedule discovery/repair on the shows page.
 
-11. **Schedule linkage must preserve client consistency**. A studio show may link only to schedules belonging to the same studio and the same client as the show.
+11. **Schedule publish can reclaim restored/manual rows**. Schedule publishing matches active shows by external identity globally, adopts valid restored/manual rows, and replaces creators/platforms from schedule data when available.
 
-12. **Studio detail is an enriched superset response**. `GET /studios/:studioId/shows/:showId` includes current platform assignments and schedule summary, while staying compatible with current read consumers that only use base show fields.
+12. **Schedule linkage must preserve client consistency**. A studio show may link only to schedules belonging to the same studio and the same client as the show.
+
+13. **Studio detail is an enriched superset response**. `GET /studios/:studioId/shows/:showId` includes current platform assignments and schedule summary, while staying compatible with current read consumers that only use base show fields.
 
 ## Key Business Rules
 

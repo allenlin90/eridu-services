@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Resolver } from 'react-hook-form';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
@@ -16,6 +15,7 @@ import {
   AsyncCombobox,
   AsyncMultiCombobox,
   Button,
+  DateTimePicker,
   DialogFooter,
   Form,
   FormControl,
@@ -26,8 +26,17 @@ import {
   Input,
 } from '@eridu/ui';
 
-const studioShowFormBaseSchema = createStudioShowInputObjectSchema.omit({
-  external_id: true,
+import {
+  useStudioShowClientOptions,
+  useStudioShowPlatformOptions,
+  useStudioShowStandardOptions,
+  useStudioShowStatusOptions,
+  useStudioShowTypeOptions,
+} from '@/features/studio-shows/hooks/use-studio-show-form-lookup-options';
+
+const studioShowFormBaseSchema = createStudioShowInputObjectSchema.extend({
+  // Form state uses '' for empty optional text inputs; submit handlers normalize it back to undefined.
+  external_id: z.string().min(1).or(z.literal('')).optional(),
 });
 
 function hasValidStudioShowTimeRange(data: { start_time: string; end_time: string }) {
@@ -58,6 +67,7 @@ const studioShowEditFormSchema = studioShowFormBaseSchema
 export type StudioShowFormValues = z.infer<typeof studioShowEditFormSchema>;
 
 const EMPTY_SHOW_FORM_VALUES: StudioShowFormValues = {
+  external_id: '',
   name: '',
   start_time: '',
   end_time: '',
@@ -72,6 +82,7 @@ const EMPTY_SHOW_FORM_VALUES: StudioShowFormValues = {
 };
 
 type StudioShowManagementFormProps = {
+  studioId: string;
   show?: StudioShowDetail | null;
   showLookups?: StudioShowLookupsDto;
   isLookupsLoading?: boolean;
@@ -80,15 +91,21 @@ type StudioShowManagementFormProps = {
   onCancel: () => void;
 };
 
-function toDateTimeLocalValue(value?: string | null) {
-  if (!value) {
-    return '';
+function filterLookupOptions(
+  options: Array<{ value: string; label: string }>,
+  search: string,
+) {
+  const normalizedSearch = search.trim().toLowerCase();
+
+  if (!normalizedSearch) {
+    return options;
   }
 
-  return format(new Date(value), 'yyyy-MM-dd\'T\'HH:mm');
+  return options.filter((option) => option.label.toLowerCase().includes(normalizedSearch));
 }
 
 export function StudioShowManagementForm({
+  studioId,
   show,
   showLookups,
   isLookupsLoading = false,
@@ -107,10 +124,38 @@ export function StudioShowManagementForm({
   const scheduleIdValue = useWatch({ control: form.control, name: 'schedule_id' });
   const showHasNoSchedule = !show?.schedule_id;
   const isScheduleBeingCleared = Boolean(show) && !showHasNoSchedule && !scheduleIdValue;
+  const [scheduleSearch, setScheduleSearch] = useState('');
+  const [roomSearch, setRoomSearch] = useState('');
+  const {
+    options: clientOptions,
+    isLoading: isClientOptionsLoading,
+    setSearch: setClientSearch,
+  } = useStudioShowClientOptions(show, studioId);
+  const {
+    options: showTypeOptions,
+    isLoading: isShowTypeOptionsLoading,
+    setSearch: setShowTypeSearch,
+  } = useStudioShowTypeOptions(show, studioId);
+  const {
+    options: showStatusOptions,
+    isLoading: isShowStatusOptionsLoading,
+    setSearch: setShowStatusSearch,
+  } = useStudioShowStatusOptions(show, studioId);
+  const {
+    options: showStandardOptions,
+    isLoading: isShowStandardOptionsLoading,
+    setSearch: setShowStandardSearch,
+  } = useStudioShowStandardOptions(show, studioId);
+  const {
+    options: platformOptions,
+    isLoading: isPlatformOptionsLoading,
+    setSearch: setPlatformSearch,
+  } = useStudioShowPlatformOptions(show, studioId);
 
   useEffect(() => {
     if (show) {
       form.reset({
+        external_id: '',
         name: show.name,
         start_time: show.start_time,
         end_time: show.end_time,
@@ -129,42 +174,47 @@ export function StudioShowManagementForm({
     form.reset(EMPTY_SHOW_FORM_VALUES);
   }, [form, show]);
 
-  const clientOptions = useMemo(
-    () => (showLookups?.clients ?? []).map((client) => ({ value: client.id, label: client.name })),
-    [showLookups?.clients],
-  );
   const roomOptions = useMemo(
-    () => (showLookups?.studio_rooms ?? []).map((room) => ({ value: room.id, label: room.name })),
-    [showLookups?.studio_rooms],
+    () => filterLookupOptions(
+      (showLookups?.studio_rooms ?? []).map((room) => ({ value: room.id, label: room.name })),
+      roomSearch,
+    ),
+    [roomSearch, showLookups?.studio_rooms],
   );
   const scheduleOptions = useMemo(
-    () => (showLookups?.schedules ?? []).map((schedule) => ({
-      value: schedule.id,
-      label: `${schedule.name} (${schedule.status})`,
-    })),
-    [showLookups?.schedules],
+    () => filterLookupOptions(
+      (showLookups?.schedules ?? []).map((schedule) => ({
+        value: schedule.id,
+        label: `${schedule.name} (${schedule.status})`,
+      })),
+      scheduleSearch,
+    ),
+    [scheduleSearch, showLookups?.schedules],
   );
-  const showTypeOptions = useMemo(
-    () => (showLookups?.show_types ?? []).map((item) => ({ value: item.id, label: item.name })),
-    [showLookups?.show_types],
-  );
-  const showStatusOptions = useMemo(
-    () => (showLookups?.show_statuses ?? []).map((item) => ({ value: item.id, label: item.name })),
-    [showLookups?.show_statuses],
-  );
-  const showStandardOptions = useMemo(
-    () => (showLookups?.show_standards ?? []).map((item) => ({ value: item.id, label: item.name })),
-    [showLookups?.show_standards],
-  );
-  const platformOptions = useMemo(
-    () => (showLookups?.platforms ?? []).map((platform) => ({ value: platform.id, label: platform.name })),
-    [showLookups?.platforms],
-  );
-
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-4 md:grid-cols-2">
+          {!show && (
+            <FormField
+              control={form.control}
+              name="external_id"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>External ID</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="Optional external identifier"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           <FormField
             control={form.control}
             name="name"
@@ -186,14 +236,10 @@ export function StudioShowManagementForm({
               <FormItem>
                 <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    type="datetime-local"
-                    value={toDateTimeLocalValue(field.value)}
-                    onChange={(event) => {
-                      const nextValue = event.target.value;
-                      field.onChange(nextValue ? new Date(nextValue).toISOString() : '');
-                    }}
+                  <DateTimePicker
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    className="w-full"
                   />
                 </FormControl>
                 <FormMessage />
@@ -208,14 +254,10 @@ export function StudioShowManagementForm({
               <FormItem>
                 <FormLabel>End Time</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    type="datetime-local"
-                    value={toDateTimeLocalValue(field.value)}
-                    onChange={(event) => {
-                      const nextValue = event.target.value;
-                      field.onChange(nextValue ? new Date(nextValue).toISOString() : '');
-                    }}
+                  <DateTimePicker
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    className="w-full"
                   />
                 </FormControl>
                 <FormMessage />
@@ -233,9 +275,9 @@ export function StudioShowManagementForm({
                   <AsyncCombobox
                     value={field.value}
                     onChange={field.onChange}
-                    onSearch={() => {}}
+                    onSearch={setClientSearch}
                     options={clientOptions}
-                    isLoading={isLookupsLoading}
+                    isLoading={isClientOptionsLoading}
                     placeholder="Select client"
                   />
                 </FormControl>
@@ -254,7 +296,7 @@ export function StudioShowManagementForm({
                   <AsyncCombobox
                     value={field.value}
                     onChange={field.onChange}
-                    onSearch={() => {}}
+                    onSearch={setScheduleSearch}
                     options={scheduleOptions}
                     isLoading={isLookupsLoading}
                     placeholder="Select schedule"
@@ -281,7 +323,7 @@ export function StudioShowManagementForm({
                   <AsyncCombobox
                     value={field.value ?? undefined}
                     onChange={field.onChange}
-                    onSearch={() => {}}
+                    onSearch={setRoomSearch}
                     options={roomOptions}
                     isLoading={isLookupsLoading}
                     placeholder="Select room"
@@ -302,9 +344,9 @@ export function StudioShowManagementForm({
                   <AsyncCombobox
                     value={field.value}
                     onChange={field.onChange}
-                    onSearch={() => {}}
+                    onSearch={setShowTypeSearch}
                     options={showTypeOptions}
-                    isLoading={isLookupsLoading}
+                    isLoading={isShowTypeOptionsLoading}
                     placeholder="Select show type"
                   />
                 </FormControl>
@@ -323,9 +365,9 @@ export function StudioShowManagementForm({
                   <AsyncCombobox
                     value={field.value}
                     onChange={field.onChange}
-                    onSearch={() => {}}
+                    onSearch={setShowStatusSearch}
                     options={showStatusOptions}
-                    isLoading={isLookupsLoading}
+                    isLoading={isShowStatusOptionsLoading}
                     placeholder="Select status"
                   />
                 </FormControl>
@@ -344,9 +386,9 @@ export function StudioShowManagementForm({
                   <AsyncCombobox
                     value={field.value}
                     onChange={field.onChange}
-                    onSearch={() => {}}
+                    onSearch={setShowStandardSearch}
                     options={showStandardOptions}
-                    isLoading={isLookupsLoading}
+                    isLoading={isShowStandardOptionsLoading}
                     placeholder="Select standard"
                   />
                 </FormControl>
@@ -365,9 +407,9 @@ export function StudioShowManagementForm({
                   <AsyncMultiCombobox
                     value={field.value ?? []}
                     onChange={field.onChange}
-                    onSearch={() => {}}
+                    onSearch={setPlatformSearch}
                     options={platformOptions}
-                    isLoading={isLookupsLoading}
+                    isLoading={isPlatformOptionsLoading}
                     placeholder="Select platforms"
                   />
                 </FormControl>

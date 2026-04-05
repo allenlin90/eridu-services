@@ -15,12 +15,17 @@ export type GetPlatformsParams = {
   id?: string;
 };
 
+type GetPlatformsOptions = {
+  signal?: AbortSignal;
+};
+
 export async function getPlatforms(
   params: GetPlatformsParams,
   studioId?: string,
+  options?: GetPlatformsOptions,
 ): Promise<PlatformsResponse> {
   const endpoint = studioId ? `/studios/${studioId}/platforms` : '/admin/platforms';
-  const response = await apiClient.get<PlatformsResponse>(endpoint, { params });
+  const response = await apiClient.get<PlatformsResponse>(endpoint, { params, signal: options?.signal });
   return response.data;
 }
 

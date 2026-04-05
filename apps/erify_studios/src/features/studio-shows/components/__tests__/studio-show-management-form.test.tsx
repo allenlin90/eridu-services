@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { StudioShowManagementForm } from '../studio-show-management-form';
 
 const fieldValues: Record<string, unknown> = {
+  external_id: '',
   name: '',
   start_time: '',
   end_time: '',
@@ -20,6 +21,14 @@ vi.mock('lucide-react', () => ({
   AlertTriangle: (props: any) => <svg {...props} />,
 }));
 
+vi.mock('@/features/studio-shows/hooks/use-studio-show-form-lookup-options', () => ({
+  useStudioShowClientOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
+  useStudioShowTypeOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
+  useStudioShowStatusOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
+  useStudioShowStandardOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
+  useStudioShowPlatformOptions: () => ({ options: [], isLoading: false, setSearch: vi.fn() }),
+}));
+
 vi.mock('@eridu/ui', () => ({
   AsyncCombobox: ({ placeholder }: any) => <div>{placeholder}</div>,
   AsyncMultiCombobox: ({ placeholder }: any) => <div>{placeholder}</div>,
@@ -29,6 +38,11 @@ vi.mock('@eridu/ui', () => ({
     </button>
   ),
   DialogFooter: ({ children }: any) => <div>{children}</div>,
+  DateTimePicker: ({ value, onChange }: any) => (
+    <button type="button" onClick={() => onChange(value)}>
+      DateTimePicker
+    </button>
+  ),
   Form: ({ children }: any) => <>{children}</>,
   FormControl: ({ children }: any) => <div>{children}</div>,
   FormField: ({ name, render }: any) => render({
@@ -49,13 +63,15 @@ describe('studioShowManagementForm', () => {
   it('renders create mode without throwing when composing the form schema', () => {
     render(
       <StudioShowManagementForm
+        studioId="std_1"
         onSubmit={vi.fn()}
         onCancel={vi.fn()}
       />,
     );
 
+    expect(screen.getByText('External ID')).toBeInTheDocument();
     expect(screen.getByText('Name')).toBeInTheDocument();
-    expect(screen.getByText('Select schedule')).toBeInTheDocument();
+    expect(screen.getAllByText('DateTimePicker')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 });

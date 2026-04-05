@@ -52,14 +52,14 @@ The current studio frontend has the operations shell, but it mixes concerns for 
 7. The frontend follows the backend's last-write-wins rule.
    The form does not send a concurrency token in v1. Save success should simply refresh the shared show queries.
 
-8. `external_id` restore is backend behavior, not an initial form field.
-   The studio form does not expose `external_id` in v1. If the create API later receives it from another caller, restore-on-create remains a backend identity rule.
+8. `external_id` should be available on create when the contract supports it.
+   The studio form should expose `external_id` as an optional create-only field so operators can intentionally participate in backend restore/adopt flows.
 
 9. Schedule is required in normal studio UX even though BE keeps it optional.
    The studio create/edit form should require schedule selection, while the list page should also help operators find shows without schedules.
 
 10. Shared endpoints and cache are still preferred.
-   The new CRUD page and the existing operations page should reuse the same `GET /studios/:studioId/shows`, `GET /studios/:studioId/shows/:showId`, and lookup queries where possible.
+    The new CRUD page and the existing operations page should reuse the same `GET /studios/:studioId/shows`, `GET /studios/:studioId/shows/:showId`, and lookup queries where possible.
 
 11. Shared data does not mean shared route state.
     The pages should share API calls and query keys, but each route must own its own search schema, table state, and UX defaults.
@@ -130,6 +130,8 @@ Contract expectations for this slice:
 - shared show list/detail data should expose schedule summary fields so the CRUD page can show assignment state
 - shared show list query should support an orphan-friendly `has_schedule` filter or equivalent
 - `show-lookups` should include same-studio schedules for the create/edit form, regardless of planning status
+- searchable form lookups should hit studio-safe endpoints when they exist (`clients`, `show-types`, `show-standards`, `show-statuses`, `platforms`) instead of relying only on a preloaded bundle
+- schedules and studio rooms may continue to use the bundled `show-lookups` response until dedicated studio search endpoints exist for those resources
 
 ### Separate Route-State Plan
 
@@ -278,6 +280,7 @@ Fields:
 | Field | Required | Source |
 | --- | --- | --- |
 | Name | Yes | direct input |
+| External ID | Optional on create | direct input |
 | Start time | Yes | direct input |
 | End time | Yes | direct input |
 | Client | Yes | `show-lookups.clients` |
@@ -294,9 +297,9 @@ Explicitly excluded:
 - live-stream-link metadata
 - platform show ids
 - viewer counts
-- manual `external_id` entry in the v1 studio UI
+- creator/platform operational metadata fields that are outside studio CRUD scope
 
-The current admin form is not reused as-is because it violates all four exclusions above.
+The current admin form is not reused as-is because it violates the excluded advanced fields above.
 
 Shows-without-schedules handling:
 
@@ -304,6 +307,7 @@ Shows-without-schedules handling:
 - normal create/edit submit UX should require schedule selection
 - rows without schedules are repaired from the CRUD page rather than treated as a separate workflow
 - schedule status may be shown beside the selected schedule for operator context, but it should not hard-block reassignment in this slice
+- start/end inputs should use the shared `@eridu/ui` `DateTimePicker`, not native browser `datetime-local` controls
 
 ### Delete Dialog
 
@@ -354,7 +358,7 @@ Known limitation:
 - [ ] Add `update-studio-show.ts`.
 - [ ] Add `delete-studio-show.ts`.
 - [ ] Update `get-studio-show.ts` to the enriched detail type.
-- [ ] Keep `external_id` restore behavior backend-owned unless product later decides to expose it in the form.
+- [ ] Expose `external_id` as an optional create-only field so studio users can intentionally trigger restore/adopt flows.
 - [ ] Carry `schedule_id` in studio create/update APIs.
 
 ### FE-2 Form And Dialogs
