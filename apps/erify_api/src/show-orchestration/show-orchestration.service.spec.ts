@@ -178,6 +178,7 @@ describe('showOrchestrationService', () => {
           useValue: {
             findByShowId: jest.fn(),
             findAllByShowId: jest.fn(),
+            findByTaskIds: jest.fn(),
             hardDeleteByShowId: jest.fn(),
           },
         },
@@ -406,6 +407,7 @@ describe('showOrchestrationService', () => {
         { taskId: BigInt(10) },
         { taskId: BigInt(11) },
       ] as any);
+      taskTargetService.findByTaskIds.mockResolvedValue([] as any);
       taskTargetService.hardDeleteByShowId.mockResolvedValue({ count: 3 } as any);
       taskService.hardDeleteByIds.mockResolvedValue({ count: 2 } as any);
       showRepository.softDelete.mockResolvedValue(mockShow);
@@ -417,6 +419,7 @@ describe('showOrchestrationService', () => {
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
       expect(taskTargetService.findAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(taskTargetService.hardDeleteByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(taskTargetService.findByTaskIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
       expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
       expect(showCreatorRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(showPlatformRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
@@ -431,6 +434,7 @@ describe('showOrchestrationService', () => {
         { taskId: BigInt(10), deletedAt: null },
         { taskId: BigInt(11), deletedAt: new Date('2026-03-01') },
       ] as any);
+      taskTargetService.findByTaskIds.mockResolvedValue([] as any);
       taskTargetService.hardDeleteByShowId.mockResolvedValue({ count: 2 } as any);
       taskService.hardDeleteByIds.mockResolvedValue({ count: 2 } as any);
       showRepository.softDelete.mockResolvedValue(mockShow);
@@ -441,6 +445,28 @@ describe('showOrchestrationService', () => {
 
       // Both taskIds must be included — soft-deleted target's task must not be orphaned
       expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
+    });
+
+    it('should preserve tasks that still have active targets on other shows', async () => {
+      const uid = 'show_test123';
+      showService.getShowById.mockResolvedValue(mockShow);
+      taskTargetService.findAllByShowId.mockResolvedValue([
+        { taskId: BigInt(10), deletedAt: null },
+        { taskId: BigInt(11), deletedAt: null },
+      ] as any);
+      taskTargetService.findByTaskIds.mockResolvedValue([
+        { taskId: BigInt(11), deletedAt: null },
+      ] as any);
+      taskTargetService.hardDeleteByShowId.mockResolvedValue({ count: 2 } as any);
+      taskService.hardDeleteByIds.mockResolvedValue({ count: 1 } as any);
+      showRepository.softDelete.mockResolvedValue(mockShow);
+      showCreatorRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+      showPlatformRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+
+      await service.deleteShow(uid);
+
+      expect(taskTargetService.findByTaskIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
+      expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10)]);
     });
   });
 
