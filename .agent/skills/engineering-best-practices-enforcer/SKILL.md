@@ -135,6 +135,37 @@ For every review batch, output:
    - smallest commit(s) to revert safely
    - any untested edge paths
 
+## Backend Repository Review Checklist
+
+Run this when reviewing any repository file or PR that touches a repository.
+
+### Method proliferation (most common violation)
+
+- [ ] Does any named method body reduce entirely to `findMany({ where: { field: value } })`?
+  → Delete it. Call `findMany` from the service with the `where` clause directly.
+- [ ] Does any named method exist for a single caller with no reuse?
+  → Inline it. Named methods are justified only for non-trivial Prisma logic, multi-step operations, or methods reused across multiple callers.
+- [ ] Are methods like `findActiveByX`, `findByStatus`, `findByStudioUid` present?
+  → Each is a red flag. Evaluate whether the logic is non-trivial before keeping it.
+
+### Soft-delete hygiene
+
+- [ ] All custom queries filter `deletedAt: null` (or explicitly opt in with `includeDeleted`).
+- [ ] `BaseRepository.findMany` is used where possible — it applies `deletedAt: null` automatically.
+- [ ] No raw `this.prisma.model.findMany` without a `deletedAt: null` guard unless `includeDeleted` is intentional.
+
+### ORM leakage
+
+- [ ] No `Prisma.*` types in service method signatures (payloads defined in schema files instead).
+- [ ] No Prisma query building in services — `where` clauses belong in the repository.
+
+### Error handling
+
+- [ ] Repository methods return `null` for not-found — never throw `NotFoundException` from a repository.
+- [ ] No `findByUidOrThrow` methods — controllers call `ensureResourceExists()` after a `null` return.
+
+---
+
 ## Implementation Micro-Decisions
 
 ### `useCallback` Decision Rule

@@ -115,6 +115,75 @@ async findByUidWithProfile(uid: string): Promise<User & { profile: Profile } | n
 
 ---
 
+## Repository Method Proliferation — Anti-Pattern
+
+🔴 **Critical**: Do NOT add a named method for every filter combination. This is the single most common repository violation.
+
+**The rule**: Add a named method only when it encapsulates Prisma query logic that cannot be expressed as a plain `where` argument to `findMany`. If the entire method body is just `findMany({ where: { field: value } })`, delete it and call `findMany` directly from the service.
+
+**Wrong** — named wrapper with no added value:
+
+```typescript
+// BAD: findActiveByStudioUid adds nothing over findMany({ where })
+async findActiveByStudioUid(
+  studioUid: string,
+  params?: { take?: number; skip?: number; include?: Prisma.ScheduleInclude },
+): Promise<Schedule[]> {
+  return this.prisma.schedule.findMany({
+    where: { studio: { uid: studioUid, deletedAt: null }, deletedAt: null },
+    ...params,
+  });
+}
+```
+
+**Correct** — call `findMany` from the service directly:
+
+```typescript
+// service.ts
+return this.scheduleRepository.findMany({
+  where: { studio: { uid: studioUid, deletedAt: null } },
+  take: params?.take,
+  skip: params?.skip,
+  orderBy: params?.orderBy ?? { startDate: 'desc' },
+  include: params?.include,
+});
+```
+
+**When a named method IS justified:**
+
+| Criterion | Example |
+| --- | --- |
+| Non-trivial Prisma query building (range logic, OR conditions, subqueries) | `findByDateRange`, `findOverlapping` |
+| Multi-step operations (find + conditional update) | `findAndLockForUpdate` |
+| Reused across multiple service callers with identical complex logic | `findPaginated` |
+| Unique index lookup requiring `findFirst` with specific unique field semantics | `findByExternalIdentity` |
+
+**Test**: if you can replace the entire method body with a one-liner `this.model.findMany({ where: {...}, ...rest })` called from the service, the method should not exist.
+
+**When an exception is made — record it.** If a named method IS necessary, the engineering decision must be captured:
+
+1. Add a `// Engineering decision:` comment directly above the method explaining why `findMany` is insufficient.
+2. Record the decision in the relevant feature doc (under "Key Product Decisions" or "Design Decisions") so it is discoverable during future development and reviews.
+
+```typescript
+// Engineering decision: date-range overlap requires two-sided bound comparison
+// (startDate lte endDate AND endDate gte startDate) that cannot be expressed as
+// a single flat where clause — this encapsulates the overlap semantics for all callers.
+async findOverlapping(params: { startDate: Date; endDate: Date }): Promise<Schedule[]> {
+  return this.prisma.schedule.findMany({
+    where: {
+      startDate: { lte: params.endDate },
+      endDate: { gte: params.startDate },
+      deletedAt: null,
+    },
+  });
+}
+```
+
+This makes the justification reviewable at the code level and traceable to the feature context. An undocumented named repository method is a red flag during PR review.
+
+---
+
 ## Join/Association Table Repositories
 
 Join table repositories follow the same BaseRepository pattern.
@@ -245,6 +314,7 @@ async updateWithVersionCheck(
 - [ ] Create proper ModelWrapper implementing `IBaseModel` (current pattern, Phase 4 will simplify)
 - [ ] Use `findOne({ uid, deletedAt: null })` from BaseRepository instead of redundant `findByUid` wrappers
 - [ ] Only add `findByUid` if it has additional logic (relations, scoping)
+- [ ] 🔴 **Critical**: Do NOT add named methods that are only thin `findMany({ where })` wrappers — call `findMany` directly from the service instead. See **Repository Method Proliferation** section.
 - [ ] 🔴 **Critical**: Never implement `findByUidOrThrow` — let Controller call `ensureResourceExists()`
 - [ ] 🔴 **Critical**: Always filter `deletedAt: null` in custom queries
 - [ ] Use `Promise.all` for pagination (count + data)
