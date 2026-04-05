@@ -129,7 +129,7 @@ Contract expectations for this slice:
 
 - shared show list/detail data should expose schedule summary fields so the CRUD page can show assignment state
 - shared show list query should support an orphan-friendly `has_schedule` filter or equivalent
-- `show-lookups` should include same-studio schedules for the create/edit form, regardless of planning status
+- shared `show-lookups` should stay lightweight for list/filter pages; the create/edit form should load same-studio schedules from `GET /studios/:studioId/schedules`, regardless of planning status
 - searchable form lookups should hit studio-safe endpoints when they exist (`clients`, `schedules`, `studio-rooms`, `show-types`, `show-standards`, `show-statuses`, `platforms`) instead of relying only on a preloaded bundle
 - any field that still uses local filtering must document that exception explicitly; do not leave mixed remote/local lookup behavior implicit
 

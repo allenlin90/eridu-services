@@ -27,7 +27,7 @@ Studios could assign creators to shows and read show details, but could not cont
 - `DELETE /studios/:studioId/shows/:showId` — soft-delete a pre-start show (ADMIN only)
 - `GET /studios/:studioId/shows/:showId` — enriched show detail including platform assignments and schedule summary for the edit form
 - `GET /studios/:studioId/shows` — shared list with schedule-name filtering plus orphan discovery via the `orphans` keyword shortcut
-- `GET /studios/:studioId/show-lookups` — bundled studio-safe reference data for the show-management surfaces
+- `GET /studios/:studioId/show-lookups` — bundled studio-safe reference data for shared show-management filters
 - `GET /studios/:studioId/schedules` and `GET /studios/:studioId/studio-rooms` — dedicated searchable lookup endpoints for the modal comboboxes
 - Restore-on-create: if create includes an `external_id` matching a soft-deleted show, that record is restored and updated from the latest payload without reviving old workflow state
 - Pre-start delete clears disposable task workflow records so restore behaves like a new lifecycle
@@ -38,7 +38,7 @@ Studios could assign creators to shows and read show details, but could not cont
 - **Studio-scoped creation** — shows are always created within the studio context; the studio FK is forced from the route, not from the request body.
 - **Restore by `externalId`** — when create includes an `external_id` that matches a soft-deleted show identity, the system restores that row, applies the latest payload, and treats the record as a new operational lifecycle rather than reviving old workflow state.
 - **Last-write-wins for v1** — no optimistic locking while studio CRUD and Google Sheets publish coexist. If concurrent edits become common, revisit with a concurrency token strategy.
-- **Schedule is a frontend constraint, not a DB rule** — `scheduleId` stays nullable in the backend contract; the studio CRUD UX should require schedule selection in the normal flow and expose orphan-show detection/repair in the shows table.
+- **Schedule is a frontend constraint, not a DB rule** — `scheduleId` stays nullable in the backend contract; the studio CRUD UX should require schedule selection in the normal flow and expose orphan-show detection/repair in the shows table, while schedule search uses the dedicated lookup endpoint instead of the shared bootstrap bundle.
 - **Schedule filtering is operator-oriented** — the studio shows table now supports direct schedule-name search and treats `orphans` as a missing-schedule shortcut instead of splitting schedule-state recovery into a separate dropdown.
 - **Schedule linkage preserves client consistency** — a show can only attach to schedules owned by the same studio and the same client.
 - **Schedule publish can reclaim restored rows** — schedule publish matches active rows by external identity, adopts valid restored/manual rows, and replaces creator/platform assignments from schedule data when available.

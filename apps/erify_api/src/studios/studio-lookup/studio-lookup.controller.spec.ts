@@ -72,7 +72,6 @@ describe('studioLookupController', () => {
     showStandardService.listShowStandards.mockResolvedValue({ data: [], total: 0 } as any);
     showStatusService.getShowStatuses.mockResolvedValue({ data: [], total: 0 } as any);
     platformService.listPlatforms.mockResolvedValue({ data: [], total: 0 } as any);
-    scheduleService.listSchedulesByStudioUid.mockResolvedValue([]);
     studioRoomService.getStudioRooms.mockResolvedValue({ data: [], total: 0 } as any);
 
     await controller.getShowLookups('std_1');
@@ -90,13 +89,7 @@ describe('studioLookupController', () => {
       includeDeleted: false,
       studioUid: 'std_1',
     });
-    expect(scheduleService.listSchedulesByStudioUid).toHaveBeenCalledWith('std_1', {
-      take: 200,
-      include: {
-        client: true,
-        studio: true,
-      },
-    });
+    expect(scheduleService.listSchedulesByStudioUid).not.toHaveBeenCalled();
   });
 
   it('should list studio show types', async () => {
@@ -168,9 +161,16 @@ describe('studioLookupController', () => {
   });
 
   it('should list studio schedules with studio scoping', async () => {
-    scheduleService.getPaginatedSchedules.mockResolvedValue({ schedules: [], total: 0 } as any);
+    scheduleService.getPaginatedSchedules.mockResolvedValue({
+      schedules: [{
+        uid: 'sch_1',
+        name: 'Q2',
+        planDocument: { shows: [] },
+      }],
+      total: 1,
+    } as any);
 
-    await controller.getSchedules('std_1', {
+    const result = await controller.getSchedules('std_1', {
       page: 1,
       limit: 100,
       take: 100,
@@ -190,6 +190,11 @@ describe('studioLookupController', () => {
       take: 100,
       skip: 0,
     }));
+    expect(result.data).toEqual([{
+      uid: 'sch_1',
+      name: 'Q2',
+      planDocument: undefined,
+    }]);
   });
 
   it('should list studio rooms with studio scoping', async () => {

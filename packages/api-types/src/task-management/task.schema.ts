@@ -320,7 +320,9 @@ export const studioShowLookupsDto = z.object({
   show_standards: z.array(showStandardApiResponseSchema),
   show_statuses: z.array(showStatusApiResponseSchema),
   platforms: z.array(platformApiResponseSchema),
-  schedules: z.array(scheduleApiResponseSchema),
+  // Schedule search moved to the dedicated `/studios/:studioId/schedules` endpoint to
+  // keep the shared lookup bootstrap lightweight for unrelated show-management surfaces.
+  schedules: z.array(scheduleApiResponseSchema).default([]),
   studio_rooms: z.array(studioRoomApiResponseSchema),
 });
 

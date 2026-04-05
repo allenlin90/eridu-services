@@ -73,7 +73,7 @@ export class StudioLookupController extends BaseStudioController {
   async getShowLookups(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
   ) {
-    const [clients, showTypes, showStandards, showStatuses, platforms, schedules, studioRooms] = await Promise.all([
+    const [clients, showTypes, showStandards, showStatuses, platforms, studioRooms] = await Promise.all([
       this.clientService.listClients({
         page: 1,
         limit: DEFAULT_LOOKUP_LIMIT,
@@ -86,13 +86,6 @@ export class StudioLookupController extends BaseStudioController {
       this.showStandardService.listShowStandards({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStatusService.getShowStatuses({ take: DEFAULT_LOOKUP_LIMIT }),
       this.platformService.listPlatforms({ take: DEFAULT_LOOKUP_LIMIT }),
-      this.scheduleService.listSchedulesByStudioUid(studioId, {
-        take: DEFAULT_LOOKUP_LIMIT,
-        include: {
-          client: true,
-          studio: true,
-        },
-      }),
       this.studioRoomService.getStudioRooms({
         take: DEFAULT_LOOKUP_LIMIT,
         includeDeleted: false,
@@ -106,7 +99,6 @@ export class StudioLookupController extends BaseStudioController {
       show_standards: showStandards.data.map((item) => showStandardDto.parse(item)),
       show_statuses: showStatuses.data.map((item) => showStatusDto.parse(item)),
       platforms: platforms.data.map((item) => platformDto.parse(item)),
-      schedules: schedules.map((item) => scheduleDto.parse(item)),
       studio_rooms: studioRooms.data.map((item) => studioRoomDto.parse(item)),
     };
   }
@@ -125,7 +117,7 @@ export class StudioLookupController extends BaseStudioController {
 
     const data = query.include_plan_document
       ? schedules
-      : schedules.map((schedule) => ({ ...schedule, plan_document: undefined as any }));
+      : schedules.map((schedule) => ({ ...schedule, planDocument: undefined as any }));
 
     return this.createPaginatedResponse(data, total, query);
   }
