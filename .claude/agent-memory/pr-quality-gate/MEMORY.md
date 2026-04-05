@@ -144,7 +144,7 @@ Services now call `findMany({ where: {...} })` directly. Spec mocks updated to u
 Justified methods kept with `// Engineering decision:` comments: `findShowsByDateRange` (two-sided date bound), `TaskTargetRepository.findByShowIds` (cross-model join filter on task.deletedAt).
 The `show.service.ts` service methods (getActiveShows, getShowsByClient, getShowsByStudioRoom) keep their names and signatures — only the internal implementation changed from named repo methods to `findMany`.
 
-### Studio Show Management Patterns (PR #36 — feat/phase4-1e-show-management-design) — FIFTH REVIEW CYCLE (FINAL / MERGED)
+### Studio Show Management Patterns (PR #36 — feat/phase4-1e-show-management-design) — SIXTH REVIEW CYCLE (2026-04-05)
 - `ShowWithPayload<T>` is defined in `show.schema.ts` (schema layer, Prisma-ok). The management service imports it as `import type` for use in a PRIVATE method return type only — accepted.
 - `ShowCreateData`/`ShowUpdateData` type aliases (in management service via `Parameters<ShowRepository['create/update']>[N]`) effectively alias Prisma input types without importing Prisma directly. Used only in private builder methods. Accepted gray area.
 - The private builder methods (`buildCreatePayload`, `buildCreateRestorePayload`, `buildUpdatePayload`) construct Prisma relation objects (`{ connect: { uid: ... } }`) inside the service. Accepted for now since types are not in public signatures.
@@ -170,6 +170,7 @@ The `show.service.ts` service methods (getActiveShows, getShowsByClient, getShow
 - `showShowOrphanClearLogic` (FE): when editing a show with `schedule_id = ''` (empty string), the page's submit handler strips `schedule_id` entirely rather than sending `null`, so the existing schedule association is preserved for orphan shows. This is correct — the backend's `undefined` path leaves the current schedule unchanged. The orphan-shows-editing edge case from prior reviews is RESOLVED.
 - FE edit form now uses two schemas: `studioShowCreateFormSchema` (schedule_id required) and `studioShowEditFormSchema` (schedule_id optional, empty string allowed). This resolves the prior blocking UX bug.
 - All verification: lint CLEAN, typecheck CLEAN, 698/698 tests pass.
+- Sixth review (2026-04-05, 702/702 tests): APPROVED. All previous blocking issues resolved. Remaining deferred items: (1) `findByUidAndStudioUid` on ShowRepository lacks `// Engineering decision:` comment (compound studio-scope filter with generic include parameter — justifiable, but undocumented; flagged as warning). (2) `Show` model still missing `version` field (last-write-wins by design decision). (3) `getShowLookups` endpoint hard-caps at 200 records with no search on clients/platforms — silently truncates for large datasets.
 
 ### Phase 4 Merge Program Policy (2026-03-11)
 - Cross-session tracker: `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`
