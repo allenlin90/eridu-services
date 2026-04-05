@@ -57,7 +57,7 @@ export function getStudioShowManagementColumns(
       header: 'Schedule / Room',
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span>{row.original.schedule_name ?? 'Orphan show'}</span>
+          <span>{row.original.schedule_name ?? 'No schedule assigned'}</span>
           <span className="text-xs text-muted-foreground">{row.original.studio_room_name ?? 'No room'}</span>
         </div>
       ),

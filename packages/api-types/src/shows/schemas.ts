@@ -157,32 +157,32 @@ export const updateShowInputSchema = z
     },
   );
 
+export const createStudioShowInputObjectSchema = z.object({
+  external_id: z.string().min(1).optional(),
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+  schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE).nullable().optional(),
+  show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE),
+  show_status_id: z.string().startsWith(UID_PREFIXES.SHOW_STATUS),
+  show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD),
+  studio_room_id: z
+    .string()
+    .startsWith(UID_PREFIXES.STUDIO_ROOM)
+    .nullable()
+    .optional(),
+  name: z.string().min(1, 'Show name is required'),
+  start_time: z.iso.datetime(),
+  end_time: z.iso.datetime(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  platform_ids: z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)).default([]),
+});
+
 /**
  * Studio create show input schema (snake_case - matches studio API input)
  */
-export const createStudioShowInputSchema = z
-  .object({
-    external_id: z.string().min(1).optional(),
-    client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
-    schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE).nullable().optional(),
-    show_type_id: z.string().startsWith(UID_PREFIXES.SHOW_TYPE),
-    show_status_id: z.string().startsWith(UID_PREFIXES.SHOW_STATUS),
-    show_standard_id: z.string().startsWith(UID_PREFIXES.SHOW_STANDARD),
-    studio_room_id: z
-      .string()
-      .startsWith(UID_PREFIXES.STUDIO_ROOM)
-      .nullable()
-      .optional(),
-    name: z.string().min(1, 'Show name is required'),
-    start_time: z.iso.datetime(),
-    end_time: z.iso.datetime(),
-    metadata: z.record(z.string(), z.any()).optional(),
-    platform_ids: z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)).default([]),
-  })
-  .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
-    message: 'End time must be after start time',
-    path: ['end_time'],
-  });
+export const createStudioShowInputSchema = createStudioShowInputObjectSchema.refine((data) => new Date(data.end_time) > new Date(data.start_time), {
+  message: 'End time must be after start time',
+  path: ['end_time'],
+});
 
 /**
  * Studio update show input schema (snake_case - matches studio API input)

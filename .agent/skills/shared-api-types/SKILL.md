@@ -110,6 +110,26 @@ const form = useForm<CreateUserDto>({
 });
 ```
 
+## Schema Composition Rule
+
+When a shared Zod schema needs downstream composition with `.omit()`, `.pick()`, `.partial()`, or `.extend()`, export an unrefined object schema alongside the refined contract schema.
+
+```typescript
+export const createStudioShowInputObjectSchema = z.object({
+  // fields
+});
+
+export const createStudioShowInputSchema = createStudioShowInputObjectSchema.refine(
+  (data) => new Date(data.end_time) > new Date(data.start_time),
+  {
+    message: 'End time must be after start time',
+    path: ['end_time'],
+  },
+);
+```
+
+Use the refined schema at API boundaries and the base object schema when feature code needs to derive form-specific variants. This avoids Zod runtime errors from calling object helpers on schemas that already contain refinements.
+
 ## Transform Pattern for Prisma → DTO
 
 ### When a transform is required

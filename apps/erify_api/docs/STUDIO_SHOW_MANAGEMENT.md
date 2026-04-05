@@ -18,7 +18,7 @@ Studio-owned show lifecycle management without reusing `/admin/shows`:
 | ----------------------------------------- | ----------------------------------------------------------------- | ------------------ |
 | `GET /studios/:studioId/show-lookups`     | Studio-safe lookup bundle for show forms, including schedules     | All studio members |
 | `GET /studios/:studioId/shows/:showId`    | Enriched show detail for read + edit, including schedule summary  | All studio members |
-| `GET /studios/:studioId/shows`            | Shared show list/read model with orphan-friendly filtering        | All studio members |
+| `GET /studios/:studioId/shows`            | Shared show list/read model with schedule-assignment filtering    | All studio members |
 | `POST /studios/:studioId/shows`           | Create a studio-scoped show                                       | `ADMIN`, `MANAGER` |
 | `PATCH /studios/:studioId/shows/:showId`  | Update show metadata + platform assignments                       | `ADMIN`, `MANAGER` |
 | `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show and remove disposable workflow state | `ADMIN`            |
@@ -43,7 +43,7 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 8. **Restore by external identity starts a new lifecycle**. If create receives an `external_id` and a soft-deleted show already exists under the same identity, restore that row, apply the latest payload, and do not revive old creator/platform/task workflow state beyond what the new payload recreates.
 
-9. **`schedule_id` is optional in BE, required in normal FE UX**. The backend contract stays flexible and allows orphan shows. The studio app should require schedule selection in the normal create/edit flow and expose orphan discovery/repair on the shows page.
+9. **`schedule_id` is optional in BE, required in normal FE UX**. The backend contract stays flexible and allows shows without schedules. The studio app should require schedule selection in the normal create/edit flow and expose unassigned-schedule discovery/repair on the shows page.
 
 10. **Schedule publish can reclaim restored/manual rows**. Schedule publishing matches active shows by external identity globally, adopts valid restored/manual rows, and replaces creators/platforms from schedule data when available.
 
@@ -102,5 +102,5 @@ The platform-replacement path is shared across admin and studio flows:
 ## Follow-Ups
 
 - Studio show updates intentionally use last-write-wins. If manual studio editing becomes common enough to create real overwrite pain, revisit with a dedicated concurrency token strategy.
-- Nullable `scheduleId` is a deliberate backend flexibility point. FE should treat orphan shows as exceptional and surface a repair workflow.
+- Nullable `scheduleId` is a deliberate backend flexibility point. FE should treat shows without schedules as exceptional and surface a repair workflow.
 - Studio room lookup is bundled into `show-lookups` to minimize new endpoints. If room lists become too large, split into a dedicated studio endpoint.

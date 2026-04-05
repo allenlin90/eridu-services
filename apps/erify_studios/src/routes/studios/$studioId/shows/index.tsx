@@ -99,7 +99,7 @@ function StudioShowsPage() {
         type: 'select' as const,
         options: [
           { value: 'true', label: 'Assigned' },
-          { value: 'false', label: 'Orphan' },
+          { value: 'false', label: 'Unassigned' },
         ],
       },
       { id: 'start_time', title: 'Date', type: 'date-range' as const },
@@ -120,7 +120,7 @@ function StudioShowsPage() {
   return (
     <PageLayout
       title="Shows"
-      description="Manage studio shows in a dedicated CRUD view, including schedule reassignment for orphan shows."
+      description="Manage studio shows in a dedicated CRUD view, including schedule reassignment for shows without schedules."
     >
       <DataTable
         data={data}

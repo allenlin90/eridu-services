@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
 import {
-  createStudioShowInputSchema,
+  createStudioShowInputObjectSchema,
   type StudioShowDetail,
 } from '@eridu/api-types/shows';
 import type { StudioShowLookupsDto } from '@eridu/api-types/task-management';
@@ -26,20 +26,34 @@ import {
   Input,
 } from '@eridu/ui';
 
-// Create mode: schedule is required
-const studioShowCreateFormSchema = createStudioShowInputSchema.omit({
+const studioShowFormBaseSchema = createStudioShowInputObjectSchema.omit({
   external_id: true,
-}).extend({
-  schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE, 'Schedule is required'),
 });
 
-// Edit mode: schedule can be empty (orphan shows are repaired by assigning a schedule,
+function hasValidStudioShowTimeRange(data: { start_time: string; end_time: string }) {
+  return new Date(data.end_time) > new Date(data.start_time);
+}
+
+// Create mode: schedule is required
+const studioShowCreateFormSchema = studioShowFormBaseSchema
+  .extend({
+    schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE, 'Schedule is required'),
+  })
+  .refine(hasValidStudioShowTimeRange, {
+    message: 'End time must be after start time',
+    path: ['end_time'],
+  });
+
+// Edit mode: schedule can be empty (shows without schedules can still be updated,
 // but other fields can be updated without requiring one)
-const studioShowEditFormSchema = createStudioShowInputSchema.omit({
-  external_id: true,
-}).extend({
-  schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE).or(z.literal('')),
-});
+const studioShowEditFormSchema = studioShowFormBaseSchema
+  .extend({
+    schedule_id: z.string().startsWith(UID_PREFIXES.SCHEDULE).or(z.literal('')),
+  })
+  .refine(hasValidStudioShowTimeRange, {
+    message: 'End time must be after start time',
+    path: ['end_time'],
+  });
 
 export type StudioShowFormValues = z.infer<typeof studioShowEditFormSchema>;
 
@@ -91,8 +105,8 @@ export function StudioShowManagementForm({
 
   // M1: Detect when an editor clears the schedule on a show that previously had one
   const scheduleIdValue = useWatch({ control: form.control, name: 'schedule_id' });
-  const showIsOrphan = !show?.schedule_id;
-  const isScheduleBeingCleared = Boolean(show) && !showIsOrphan && !scheduleIdValue;
+  const showHasNoSchedule = !show?.schedule_id;
+  const isScheduleBeingCleared = Boolean(show) && !showHasNoSchedule && !scheduleIdValue;
 
   useEffect(() => {
     if (show) {
@@ -249,7 +263,7 @@ export function StudioShowManagementForm({
                 {isScheduleBeingCleared && (
                   <p className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    Clearing the schedule will make this an orphan show. Assign a schedule to keep it linked.
+                    Clearing the schedule will leave this show unassigned. Assign a schedule to keep it linked.
                   </p>
                 )}
                 <FormMessage />

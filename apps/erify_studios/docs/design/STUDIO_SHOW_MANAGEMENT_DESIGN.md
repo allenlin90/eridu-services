@@ -56,7 +56,7 @@ The current studio frontend has the operations shell, but it mixes concerns for 
    The studio form does not expose `external_id` in v1. If the create API later receives it from another caller, restore-on-create remains a backend identity rule.
 
 9. Schedule is required in normal studio UX even though BE keeps it optional.
-   The studio create/edit form should require schedule selection, while the list page should also help operators find orphan shows with no schedule.
+   The studio create/edit form should require schedule selection, while the list page should also help operators find shows without schedules.
 
 10. Shared endpoints and cache are still preferred.
    The new CRUD page and the existing operations page should reuse the same `GET /studios/:studioId/shows`, `GET /studios/:studioId/shows/:showId`, and lookup queries where possible.
@@ -228,7 +228,7 @@ Recommended toolbar filters:
 - `show_standard_name`
 - `show_status_name`
 - `platform_name`
-- `has_schedule` (`Assigned` / `Orphan`)
+- `has_schedule` (`Assigned` / `Unassigned`)
 - `start_date_from` / `start_date_to` as the CRUD page date-range filter
 
 Filter exclusions on the CRUD page:
@@ -241,7 +241,7 @@ Mapping rule:
 
 - keep the CRUD page URL/search schema close to `/system/shows`
 - map the CRUD page date-range filter to the existing studio list endpoint params without changing `show-operations`
-- add an explicit orphan-friendly schedule-state filter on the CRUD page instead of pushing that recovery workflow into `show-operations`
+- add an explicit schedule-state filter on the CRUD page instead of pushing that recovery workflow into `show-operations`
 
 Practical implication:
 
@@ -298,11 +298,11 @@ Explicitly excluded:
 
 The current admin form is not reused as-is because it violates all four exclusions above.
 
-Orphan handling:
+Shows-without-schedules handling:
 
-- FE should still be able to render and edit an orphan show with `schedule_id = null`
+- FE should still be able to render and edit a show with `schedule_id = null`
 - normal create/edit submit UX should require schedule selection
-- orphan rows are repaired from the CRUD page rather than treated as a separate workflow
+- rows without schedules are repaired from the CRUD page rather than treated as a separate workflow
 - schedule status may be shown beside the selected schedule for operator context, but it should not hard-block reassignment in this slice
 
 ### Delete Dialog
