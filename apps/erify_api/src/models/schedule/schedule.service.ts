@@ -87,9 +87,20 @@ export class ScheduleService extends BaseModelService {
 
   async listActiveSchedulesByStudioUid(
     studioUid: string,
-    params?: Parameters<ScheduleRepository['findActiveByStudioUid']>[1],
-  ): ReturnType<ScheduleRepository['findActiveByStudioUid']> {
-    return this.scheduleRepository.findActiveByStudioUid(studioUid, params);
+    params?: {
+      take?: number;
+      skip?: number;
+      orderBy?: Record<string, 'asc' | 'desc'>;
+      include?: ScheduleInclude;
+    },
+  ): Promise<Schedule[]> {
+    return this.scheduleRepository.findMany({
+      where: { studio: { uid: studioUid, deletedAt: null } },
+      skip: params?.skip,
+      take: params?.take,
+      orderBy: params?.orderBy ?? { startDate: 'desc' },
+      include: params?.include,
+    });
   }
 
   async updateScheduleFromDto<T extends ScheduleInclude = Record<string, never>>(
