@@ -131,26 +131,25 @@ This is the canonical approach for detecting moderation templates until a DB-lev
 - Schema spec file `studio-creator-onboard.schema.spec.ts` lives in `apps/erify_api/src/studios/studio-creator/schemas/` but tests `@eridu/api-types` schemas. This is non-standard but accepted — it co-locates validation tests near the DTO that consumes those schemas.
 - `OnboardStudioCreatorDto` uses `.transform()` in `createZodDto()` to convert snake_case wire format to camelCase. The controller then re-reads `dto.creator.name`, `dto.creator.aliasName` (already camelCase). This is correct; the `declare` fields on the class reflect the post-transform shape.
 
-### Studio Show Management Patterns (PR #36 — feat/phase4-1e-show-management-design) — THIRD REVIEW CYCLE (FINAL)
+### Studio Show Management Patterns (PR #36 — feat/phase4-1e-show-management-design) — FOURTH REVIEW CYCLE
 - `ShowWithPayload<T>` is defined in `show.schema.ts` (schema layer, Prisma-ok). The management service imports it as `import type` for use in a PRIVATE method return type only — accepted.
 - `ShowCreateData`/`ShowUpdateData` type aliases (in management service via `Parameters<ShowRepository['create/update']>[N]`) effectively alias Prisma input types without importing Prisma directly. Used only in private builder methods. Accepted gray area.
 - The private builder methods (`buildCreatePayload`, `buildCreateRestorePayload`, `buildUpdatePayload`) construct Prisma relation objects (`{ connect: { uid: ... } }`) inside the service. Accepted for now since types are not in public signatures.
-- `studio-lookup.controller.ts` TS2345 (partial ListClientsQueryDto) was FIXED in commit 6b49c8d7 with full object including `page, limit, take, skip, sort`.
-- BLOCKING REGRESSION from commit 6b49c8d7: `declare` fields added to `CreateStudioShowDto`/`UpdateStudioShowDto` to fix controller errors broke the spec files' `satisfies` assertions. The test objects don't include `externalId`, `metadata`, `studioRoomId` properties required by the new `declare` overrides. 5 TS errors in 2 spec files.
-  - `studio-show.controller.spec.ts` (lines 108, 112, 126, 130) — TS1360 and TS2345
-  - `studio-show-management.service.spec.ts` (line 147) — TS2345
-  - Fix: update test objects to include missing optional fields as `undefined`, OR use type assertion `as CreateStudioShowDto` in tests instead of `satisfies`.
-- `Show` Prisma model is MISSING `version` field (no optimistic locking). Known technical debt; deferred.
+- `Show` Prisma model is MISSING `version` field (no optimistic locking). Known technical debt; deferred by design ("last-write-wins" per design doc).
 - `replaceShowPlatforms` uses `Promise.all([...toRestore.map(item => restoreAndUpdateAssignment(...))])` — N individual UPDATE queries for restores. Acceptable for MVP given typical platform count.
-- `studioService.getStudioById` called in `createShow` for fast-fail 404 before transaction. Acceptable defense-in-depth (guard already validated membership but not studio existence per se).
+- `studioService.getStudioById` called in `createShow` for fast-fail 404 before transaction. Acceptable defense-in-depth.
 - `getMutationErrorMessage` utility in `get-mutation-error-message.ts` is a clean shared helper — good pattern, should be extracted to shared `lib/` later if other features need it.
 - `invalidateStudioTaskQueries` uses `refetchType: 'active'` on show-task invalidation — correct to avoid ghost fetches on non-mounted queries.
-- `sidebar-config.test.tsx` updated to include "Shows" nav item in Operations section — test is in the pre-existing failing set due to `@eridu/auth-sdk/client/react` build issue, not a new regression.
-- `updateShow` calls `getStudioById` to get `studio.id` (BigInt) for schedule ownership validation, but `existingShow.studioId` is already a BigInt field on the returned Show model. This is a redundant DB round-trip; the optimization is to use `existingShow.studioId` directly. Flagged as WARNING, not blocking.
-- `studioShowDetailDto` uses `.pipe(studioShowDetailSchema as any)` — Zod 4 `.extend()` breaks pipe-compatibility due to internal branded types. The `as any` cast is intentional and documented in a comment. The output is structurally validated by `studioShowDetailSchema` at runtime. Accepted.
-- `erify_api` typecheck fails in this worktree due to missing generated Prisma client (`.prisma/client/default`). All TS errors shown are pre-existing worktree setup issues, not regressions from this PR. `erify_studios` typecheck passes clean.
-- FE form `studioShowFormSchema` overrides `schedule_id` to be required (`startsWith(...)`). The underlying `createStudioShowInputSchema` marks `schedule_id` as optional. This is an intentional tightening — the management form requires a schedule; external imports that skip schedule are for programmatic creation only.
-- `useUpdateStudioShow` does NOT invalidate `showLookupsKeys` on success, but `useCreateStudioShow` does. This asymmetry is intentional — creating a show may add it to lookup lists, updating does not change lookup data.
+- `studioShowDetailDto` uses `.pipe(studioShowDetailSchema as any)` — Zod 4 `.extend()` breaks pipe-compatibility due to internal branded types. The `as any` cast is intentional and documented in a comment. Accepted.
+- FE form `studioShowFormSchema` overrides `schedule_id` to be required (`startsWith(...)`). The underlying `createStudioShowInputSchema` marks `schedule_id` as optional. Intentional tightening — form requires a schedule.
+- `useUpdateStudioShow` does NOT invalidate `showLookupsKeys` on success, but `useCreateStudioShow` does. Intentional — creating a show may add it to lookup lists, updating does not change lookup data.
+- Schedule status DOES NOT block show CRUD — this is the deliberate policy in this PR. `ensureScheduleBelongsToStudioAndClient` only validates ownership (studio+client), not status.
+- BLOCKING TEST FAILURE: `studio-show-management.service.spec.ts` test "allows create when target schedule is already published" fails because the mock schedule does not include `client: { uid: 'cli_1' }` but `ensureScheduleBelongsToStudioAndClient` now validates schedule.client.uid against dto.clientId. Fix: add `client: { uid: 'cli_1' }` to the mock in that test case.
+- `ensureScheduleBelongsToStudioAndClient` was added to validate schedule-client ownership in addition to studio ownership. This is a good security guard.
+- UX BUG (warning): editing an orphan show (schedule_id = null) via the management form fails schema validation because `studioShowFormSchema` requires `schedule_id` to start with SCHEDULE prefix. The form resets to `schedule_id: ''` for null values which fails validation. Fix: use separate form schemas for create vs edit, or make schedule_id optional in the edit schema.
+- `publishingService` changes: `matchingShows` query (no deletedAt filter) finds all shows matching by clientId+externalId globally. Safe because `@@unique([clientId, externalId])` DB constraint ensures at most one row per pair. `currentScheduleShows` query (with `deletedAt: null` filter) finds shows in current schedule only. These are used separately and correctly.
+- Deleted show restored via schedule publish (`wasDeleted=true`) does NOT call `resumeSoftDeletedTasksAndTargets`. This is intentional — deleted shows start a new lifecycle per design doc. Only `wasCancelled` triggers task resumption.
+- `ScheduleRepository.findActiveByStudioUid` uses `this.prisma` directly (not `txHost`). Acceptable — read-only lookup query, never called inside a transaction.
 
 ### Phase 4 Merge Program Policy (2026-03-11)
 - Cross-session tracker: `docs/roadmap/PHASE_4_MERGE_PROGRAM.md`
