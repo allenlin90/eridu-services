@@ -32,7 +32,14 @@ Preserve a consistent documentation model in `eridu-services`:
 4. Keep root roadmap docs free of app-specific implementation detail beyond what is needed to explain scope or status.
 5. Keep app canonical docs focused on shipped behavior, not phase planning.
 6. Keep app design docs focused on proposals, not shipped behavior.
-7. Update the nearest README indexes whenever a doc moves layers.
+7. When a design doc describes shipped behavior, promote it immediately:
+   - Create `apps/*/docs/<FEATURE_NAME>.md` keeping only: purpose, API surface, design decisions, and key business rules.
+   - Strip: ordered task lists, file inventories, verification commands, and "planned" status language.
+   - Delete the original file from `apps/*/docs/design/`.
+   - Move its index entry from the Design table to the Features table in `apps/*/docs/README.md` with `✅` status.
+   - Remove it from `apps/*/docs/design/README.md`.
+   - See `.agent/workflows/doc-lifecycle.md` § "Design Doc Promotion" for the full step-by-step.
+8. Update the nearest README indexes whenever a doc moves layers.
 8. Remove legacy ownership language that still implies one app owns the product or roadmap.
 9. Normalize Markdown links so they use relative paths from the current document.
 10. Never leave `file://` links or absolute filesystem paths in repo docs.
