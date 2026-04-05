@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, Task, TaskStatus, TaskTemplateSnapshot, TaskType } from '@prisma/client';
 
 import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
@@ -15,15 +17,26 @@ export class TaskRepository extends BaseRepository<
   Prisma.TaskUpdateInput,
   Prisma.TaskWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
     super(new PrismaModelWrapper(prisma.task));
+  }
+
+  private get delegate() {
+    return this.txHost.tx.task;
+  }
+
+  async create(data: Prisma.TaskCreateInput, include?: Record<string, any>): Promise<Task> {
+    return this.delegate.create({ data, ...(include && { include }) });
   }
 
   async findByUid(
     uid: string,
     include?: Prisma.TaskInclude,
   ): Promise<Task | null> {
-    return this.model.findFirst({
+    return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),
     });
@@ -32,7 +45,7 @@ export class TaskRepository extends BaseRepository<
   async findByUidWithSnapshot(
     uid: string,
   ): Promise<(Task & { snapshot: TaskTemplateSnapshot | null; targets: { show: { id: bigint; uid: string; externalId: string | null; studioId: bigint | null; startTime: Date; endTime: Date; client: { name: string } | null; showCreators: { creator: { name: string; aliasName: string } }[] } | null }[] }) | null> {
-    return this.model.findFirst({
+    return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       include: {
         snapshot: true,
@@ -90,7 +103,7 @@ export class TaskRepository extends BaseRepository<
       } | null;
     }[];
   }) | null> {
-    return this.prisma.task.findFirst({
+    return this.delegate.findFirst({
       where: { uid, deletedAt: null, assigneeId },
       include: {
         template: true,
@@ -168,7 +181,7 @@ export class TaskRepository extends BaseRepository<
       } | null;
     }[];
   }) | null> {
-    return this.prisma.task.findFirst({
+    return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       include: {
         template: true,
@@ -234,7 +247,7 @@ export class TaskRepository extends BaseRepository<
     options: { includeDeleted?: boolean } = {},
   ): Promise<Task | null> {
     // Check if a task already exists for this show and template to ensure idempotency
-    return this.prisma.task.findFirst({
+    return this.delegate.findFirst({
       where: {
         templateId,
         ...(options.includeDeleted ? {} : { deletedAt: null }),
@@ -258,7 +271,7 @@ export class TaskRepository extends BaseRepository<
     showIds: bigint[],
     include?: Prisma.TaskInclude,
   ) {
-    return this.prisma.task.findMany({
+    return this.delegate.findMany({
       where: {
         deletedAt: null,
         targets: {
@@ -280,7 +293,7 @@ export class TaskRepository extends BaseRepository<
     taskIds: bigint[],
     assigneeId: bigint,
   ): Promise<Prisma.BatchPayload> {
-    return this.prisma.task.updateMany({
+    return this.delegate.updateMany({
       where: {
         id: { in: taskIds },
         deletedAt: null,
@@ -297,7 +310,7 @@ export class TaskRepository extends BaseRepository<
     include?: Prisma.TaskInclude,
   ): Promise<Task> {
     try {
-      return await this.prisma.task.update({
+      return await this.delegate.update({
         where: { ...where, deletedAt: null },
         data,
         ...(include && { include }),
@@ -327,7 +340,7 @@ export class TaskRepository extends BaseRepository<
     membershipId: bigint | null,
     include?: Prisma.TaskInclude,
   ): Promise<Task> {
-    return this.prisma.task.update({
+    return this.delegate.update({
       where: { uid, deletedAt: null },
       data: {
         assignee: membershipId !== null
@@ -339,25 +352,18 @@ export class TaskRepository extends BaseRepository<
   }
 
   async softDelete(where: Prisma.TaskWhereUniqueInput): Promise<Task> {
-    return this.prisma.$transaction(async (tx) => {
-      const now = new Date();
-      const task = await tx.task.update({
-        where,
-        data: { deletedAt: now },
-      });
-
-      await tx.taskTarget.updateMany({
-        where: {
-          taskId: task.id,
-          deletedAt: null,
-        },
-        data: {
-          deletedAt: now,
-        },
-      });
-
-      return task;
+    const now = new Date();
+    const task = await this.delegate.update({
+      where,
+      data: { deletedAt: now },
     });
+
+    await this.txHost.tx.taskTarget.updateMany({
+      where: { taskId: task.id, deletedAt: null },
+      data: { deletedAt: now },
+    });
+
+    return task;
   }
 
   async hardDeleteByIds(taskIds: bigint[]): Promise<Prisma.BatchPayload> {
@@ -365,10 +371,8 @@ export class TaskRepository extends BaseRepository<
       return { count: 0 };
     }
 
-    return this.prisma.task.deleteMany({
-      where: {
-        id: { in: taskIds },
-      },
+    return this.delegate.deleteMany({
+      where: { id: { in: taskIds } },
     });
   }
 
@@ -626,7 +630,7 @@ export class TaskRepository extends BaseRepository<
     }
 
     const [items, total] = await Promise.all([
-      this.prisma.task.findMany({
+      this.delegate.findMany({
         where,
         orderBy,
         skip,
@@ -672,7 +676,7 @@ export class TaskRepository extends BaseRepository<
           },
         },
       }),
-      this.prisma.task.count({ where }),
+      this.delegate.count({ where }),
     ]);
 
     return { items, total };
@@ -926,7 +930,7 @@ export class TaskRepository extends BaseRepository<
     }
 
     const [items, total] = await Promise.all([
-      this.prisma.task.findMany({
+      this.delegate.findMany({
         where,
         orderBy,
         skip,
@@ -972,97 +976,91 @@ export class TaskRepository extends BaseRepository<
           },
         },
       }),
-      this.prisma.task.count({ where }),
+      this.delegate.count({ where }),
     ]);
 
     return { items, total };
   }
 
   async reserveMaterialAssetUploadVersion(taskUid: string, fieldKey: string): Promise<number> {
-    return this.prisma.$transaction(async (tx) => {
-      const task = await tx.task.findFirst({
-        where: {
-          uid: taskUid,
-          deletedAt: null,
-        },
-        select: {
-          id: true,
-          metadata: true,
-        },
-      });
-
-      if (!task) {
-        throw new Error('Task not found');
-      }
-
-      const metadataObj = (task.metadata && typeof task.metadata === 'object')
-        ? task.metadata as Record<string, unknown>
-        : {};
-      const versionsRaw = metadataObj.material_asset_upload_versions;
-      const versionsByField = (versionsRaw && typeof versionsRaw === 'object')
-        ? versionsRaw as Record<string, unknown>
-        : {};
-      const currentVersionRaw = versionsByField[fieldKey];
-      const currentVersion = typeof currentVersionRaw === 'number'
-        ? currentVersionRaw
-        : 0;
-      const nextVersion = currentVersion + 1;
-
-      await tx.task.update({
-        where: {
-          id: task.id,
-        },
-        data: {
-          metadata: {
-            ...metadataObj,
-            material_asset_upload_versions: {
-              ...versionsByField,
-              [fieldKey]: nextVersion,
-            },
-          } as Prisma.InputJsonValue,
-        },
-      });
-
-      return nextVersion;
+    const task = await this.delegate.findFirst({
+      where: {
+        uid: taskUid,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        metadata: true,
+      },
     });
+
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
+    const metadataObj = (task.metadata && typeof task.metadata === 'object')
+      ? task.metadata as Record<string, unknown>
+      : {};
+    const versionsRaw = metadataObj.material_asset_upload_versions;
+    const versionsByField = (versionsRaw && typeof versionsRaw === 'object')
+      ? versionsRaw as Record<string, unknown>
+      : {};
+    const currentVersionRaw = versionsByField[fieldKey];
+    const currentVersion = typeof currentVersionRaw === 'number'
+      ? currentVersionRaw
+      : 0;
+    const nextVersion = currentVersion + 1;
+
+    await this.delegate.update({
+      where: { id: task.id },
+      data: {
+        metadata: {
+          ...metadataObj,
+          material_asset_upload_versions: {
+            ...versionsByField,
+            [fieldKey]: nextVersion,
+          },
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    return nextVersion;
   }
 
   async bulkSoftDelete(studioId: bigint, uids: string[]): Promise<Prisma.BatchPayload> {
-    return this.prisma.$transaction(async (tx) => {
-      const now = new Date();
+    const now = new Date();
 
-      // 1. Find the internal IDs of the tasks to delete (and verify studio scope)
-      const tasks = await tx.task.findMany({
-        where: {
-          uid: { in: uids },
-          studioId,
-          deletedAt: null,
-        },
-        select: { id: true },
-      });
-
-      const ids = tasks.map((t) => t.id);
-      if (ids.length === 0) {
-        return { count: 0 };
-      }
-
-      // 2. Soft-delete the tasks
-      const result = await tx.task.updateMany({
-        where: { id: { in: ids } },
-        data: { deletedAt: now },
-      });
-
-      // 3. Soft-delete the related task targets
-      await tx.taskTarget.updateMany({
-        where: {
-          taskId: { in: ids },
-          deletedAt: null,
-        },
-        data: { deletedAt: now },
-      });
-
-      return result;
+    // 1. Find the internal IDs of the tasks to delete (and verify studio scope)
+    const tasks = await this.delegate.findMany({
+      where: {
+        uid: { in: uids },
+        studioId,
+        deletedAt: null,
+      },
+      select: { id: true },
     });
+
+    const ids = tasks.map((t) => t.id);
+    if (ids.length === 0) {
+      return { count: 0 };
+    }
+
+    // 2. Soft-delete the tasks
+    const result = await this.delegate.updateMany({
+      where: { id: { in: ids } },
+      data: { deletedAt: now },
+    });
+
+    // 3. Soft-delete the related task targets
+    await this.txHost.tx.taskTarget.updateMany({
+      where: {
+        taskId: { in: ids },
+        deletedAt: null,
+      },
+      data: { deletedAt: now },
+    });
+
+    return result;
   }
 
   async resumeTask(
@@ -1076,7 +1074,7 @@ export class TaskRepository extends BaseRepository<
       metadata?: Prisma.InputJsonValue;
     },
   ): Promise<Task> {
-    return this.prisma.task.update({
+    return this.delegate.update({
       where: { id },
       data: {
         deletedAt: null,
@@ -1098,77 +1096,75 @@ export class TaskRepository extends BaseRepository<
     studioId: bigint,
     dueDate: Date | null,
   ): Promise<Task | null> {
-    return this.prisma.$transaction(async (tx) => {
-      const task = await tx.task.findFirst({
-        where: { uid: taskUid, deletedAt: null },
-        select: { id: true },
-      });
+    const task = await this.delegate.findFirst({
+      where: { uid: taskUid, deletedAt: null },
+      select: { id: true },
+    });
 
-      if (!task) {
-        return null;
+    if (!task) {
+      return null;
+    }
+
+    const currentShowTarget = await this.txHost.tx.taskTarget.findFirst({
+      where: {
+        taskId: task.id,
+        targetType: 'SHOW',
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!currentShowTarget) {
+      return null;
+    }
+
+    const existingTargetForShow = await this.txHost.tx.taskTarget.findFirst({
+      where: {
+        taskId: task.id,
+        targetType: 'SHOW',
+        targetId: showId,
+      },
+      select: { id: true },
+    });
+
+    if (existingTargetForShow) {
+      if (existingTargetForShow.id !== currentShowTarget.id) {
+        await this.txHost.tx.taskTarget.updateMany({
+          where: {
+            taskId: task.id,
+            targetType: 'SHOW',
+            deletedAt: null,
+            id: { not: existingTargetForShow.id },
+          },
+          data: { deletedAt: new Date() },
+        });
       }
 
-      const currentShowTarget = await tx.taskTarget.findFirst({
-        where: {
-          taskId: task.id,
-          targetType: 'SHOW',
+      await this.txHost.tx.taskTarget.update({
+        where: { id: existingTargetForShow.id },
+        data: {
+          deletedAt: null,
+          targetId: showId,
+          showId,
+        },
+      });
+    } else {
+      await this.txHost.tx.taskTarget.update({
+        where: { id: currentShowTarget.id },
+        data: {
+          targetId: showId,
+          showId,
           deletedAt: null,
         },
-        select: { id: true },
       });
+    }
 
-      if (!currentShowTarget) {
-        return null;
-      }
-
-      const existingTargetForShow = await tx.taskTarget.findFirst({
-        where: {
-          taskId: task.id,
-          targetType: 'SHOW',
-          targetId: showId,
-        },
-        select: { id: true },
-      });
-
-      if (existingTargetForShow) {
-        if (existingTargetForShow.id !== currentShowTarget.id) {
-          await tx.taskTarget.updateMany({
-            where: {
-              taskId: task.id,
-              targetType: 'SHOW',
-              deletedAt: null,
-              id: { not: existingTargetForShow.id },
-            },
-            data: { deletedAt: new Date() },
-          });
-        }
-
-        await tx.taskTarget.update({
-          where: { id: existingTargetForShow.id },
-          data: {
-            deletedAt: null,
-            targetId: showId,
-            showId,
-          },
-        });
-      } else {
-        await tx.taskTarget.update({
-          where: { id: currentShowTarget.id },
-          data: {
-            targetId: showId,
-            showId,
-            deletedAt: null,
-          },
-        });
-      }
-
-      return tx.task.update({
-        where: { id: task.id },
-        data: {
-          studioId,
-          dueDate,
-        },
-      });
+    return this.delegate.update({
+      where: { id: task.id },
+      data: {
+        studioId,
+        dueDate,
+      },
     });
   }
 }

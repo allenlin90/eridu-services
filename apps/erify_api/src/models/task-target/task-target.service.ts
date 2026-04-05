@@ -27,7 +27,9 @@ export class TaskTargetService extends BaseModelService {
   }
 
   async findAllByShowId(showId: bigint): Promise<TaskTarget[]> {
-    return this.taskTargetRepository.findMany({ where: { showId } });
+    // includeDeleted: true — this method is called by the deleteShow() cascade to collect
+    // every taskId (including those on soft-deleted targets) before hard-deleting.
+    return this.taskTargetRepository.findMany({ where: { showId }, includeDeleted: true });
   }
 
   async findByShowIds(...args: Parameters<TaskTargetRepository['findByShowIds']>): ReturnType<TaskTargetRepository['findByShowIds']> {
