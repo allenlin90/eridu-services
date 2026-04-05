@@ -2,6 +2,8 @@ import type { StudioShowDetail } from '@eridu/api-types/shows';
 
 import { apiClient } from '@/lib/api/client';
 
+export type { StudioShowDetail };
+
 export const studioShowKeys = {
   all: ['studio-show'] as const,
   detail: (studioId: string, showId: string) => [...studioShowKeys.all, studioId, showId] as const,

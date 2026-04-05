@@ -242,7 +242,7 @@ function StudioShowsPage() {
             });
           }}
           title="Delete Show"
-          description="Delete this show before it starts. After the start time, studio deletion is blocked."
+          description="Delete this show? Studio delete is only allowed before the show start time, and pre-start workflow data will be removed."
           isLoading={deleteMutation.isPending}
         />
       )}

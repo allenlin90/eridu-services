@@ -1,7 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { AlertTriangle } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import type { Resolver } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
@@ -81,9 +83,16 @@ export function StudioShowManagementForm({
   onCancel,
 }: StudioShowManagementFormProps) {
   const form = useForm<StudioShowFormValues>({
-    resolver: zodResolver(show ? studioShowEditFormSchema : studioShowCreateFormSchema),
+    // Cast required: zodResolver infers the literal schema type, but both schemas are
+    // structurally compatible with StudioShowFormValues at runtime.
+    resolver: zodResolver(show ? studioShowEditFormSchema : studioShowCreateFormSchema) as Resolver<StudioShowFormValues>,
     defaultValues: EMPTY_SHOW_FORM_VALUES,
   });
+
+  // M1: Detect when an editor clears the schedule on a show that previously had one
+  const scheduleIdValue = useWatch({ control: form.control, name: 'schedule_id' });
+  const showIsOrphan = !show?.schedule_id;
+  const isScheduleBeingCleared = Boolean(show) && !showIsOrphan && !scheduleIdValue;
 
   useEffect(() => {
     if (show) {
@@ -237,6 +246,12 @@ export function StudioShowManagementForm({
                     placeholder="Select schedule"
                   />
                 </FormControl>
+                {isScheduleBeingCleared && (
+                  <p className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    Clearing the schedule will make this an orphan show. Assign a schedule to keep it linked.
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -250,7 +265,7 @@ export function StudioShowManagementForm({
                 <FormLabel>Studio Room</FormLabel>
                 <FormControl>
                   <AsyncCombobox
-                    value={field.value}
+                    value={field.value ?? undefined}
                     onChange={field.onChange}
                     onSearch={() => {}}
                     options={roomOptions}
