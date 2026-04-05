@@ -179,6 +179,8 @@ Remove the file from `apps/*/docs/design/`. Do not leave a stub.
 
 **`apps/*/docs/README.md`** — move the entry from the Design table to the Features table with the correct canonical path and `✅` status. Remove any `📐` or "Planned" language.
 
+**`docs/features/*.md` and roadmap docs** — if they referenced the design file, update them to the new canonical `apps/*/docs/<FEATURE_NAME>.md` path.
+
 ### 5. Verify no stale links
 
 ```bash
@@ -205,6 +207,7 @@ Fix any remaining references in skills, phase docs, or cross-app READMEs.
 - [ ] `docs/ideation/README.md` active topics table is accurate (no stale entries, no missing deferrals).
 - [ ] No implemented design doc remains in any `apps/*/docs/design/` index.
 - [ ] Every promoted design doc is in the Features table of the app's `docs/README.md` with a `✅` status and a link to the canonical path (not the `design/` path).
+- [ ] Feature docs and roadmap/index tables no longer point to deleted `apps/*/docs/design/` paths for shipped work.
 
 ---
 

@@ -141,8 +141,10 @@ Full reference: `.claude/memory/monorepo-package-rules.md`
 ## Documentation gate
 
 - [ ] Any implemented design doc in `apps/*/docs/design/` has been promoted (stripped of task lists, moved to `docs/` root, indexes updated). See `doc-lifecycle.md` § **Design Doc Promotion**.
+- [ ] Shipped feature docs and roadmap/index tables point to canonical `apps/*/docs/*.md` files, not deleted `apps/*/docs/design/*.md` paths.
 - [ ] PRD for shipped features promoted to `docs/features/` and deleted from `docs/prd/`.
 - [ ] `apps/*/docs/README.md` Features table lists promoted docs with `✅` and correct paths (not `design/` paths).
+- [ ] `apps/*/docs/design/README.md` contains only active design proposals; no shipped/implemented items remain in the design index.
 - [ ] No stale links to deleted or moved files.
 
 ---

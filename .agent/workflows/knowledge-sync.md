@@ -24,11 +24,12 @@ Run when any of these are true:
    - `agent guidance` (skills/workflows/rules/memory)
 
 2. **Update product/technical docs**
-   - Implemented behavior -> `docs/` root as a focused feature description (what it does, code refs, key rules). No design rationale.
-   - Design/in-progress proposals -> `docs/design/` only while not yet implemented.
-   - When a design doc is implemented: delete it from `docs/design/`, create or update the canonical feature description at `docs/` root, update `docs/README.md`. Do not keep stubs in `docs/design/`.
+   - Implemented product behavior -> `docs/features/` with acceptance record and canonical references.
+   - Implemented app/package technical behavior -> `apps/*/docs/` or `packages/*/docs/` root as the canonical reference (what it does, code refs, key rules). No design rationale.
+   - Design/in-progress proposals -> `apps/*/docs/design/`, `packages/*/docs/design/`, or other design folders only while not yet implemented.
+   - When an app/package design doc is implemented: delete it from the design folder, create or update the canonical root doc, update the local `docs/README.md`, and replace all references to the old design path. Do not keep stubs in `docs/design/`.
    - Feature descriptions must reference actual source files, not contain inline code examples.
-   - Update each app/package `docs/README.md` status/index entries.
+   - Update each app/package `docs/README.md` status/index entries and any roadmap/feature-doc references that still point at the old design path.
 
 3. **Update skills**
    - Update the most relevant skill(s) in `.agent/skills/*/SKILL.md`.
@@ -55,6 +56,7 @@ Run when any of these are true:
 
 - [ ] Canonical docs reflect shipped behavior.
 - [ ] Design docs are isolated under `docs/design/` with clear status.
+- [ ] Implemented app/package design docs are promoted to canonical root docs and removed from design indexes.
 - [ ] Relevant skills updated for future agent reuse.
 - [ ] Workflow/rules updated if process changed.
 - [ ] Memory reference updated for durable project knowledge.

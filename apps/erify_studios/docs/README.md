@@ -20,7 +20,9 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 8. [Phase 4 P&L Frontend Index](./PHASE_4_PNL_FRONTEND.md)
 9. [PWA Shell Runbook](./PWA_SHELL_RUNBOOK.md)
 10. [Studios Internal Read Traffic Hardening](./STUDIOS_INTERNAL_READ_TRAFFIC.md)
-11. [Task Submission Reporting & Export — Frontend Design](./design/TASK_SUBMISSION_REPORTING_DESIGN.md) — ✅ Implemented
+11. [Task Submission Reporting Frontend Reference](./TASK_SUBMISSION_REPORTING.md)
+12. [Studio Creator Onboarding Frontend Reference](./STUDIO_CREATOR_ONBOARDING.md)
+13. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md)
 
 ## Design Docs
 
@@ -34,4 +36,3 @@ Active (in progress):
 6. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned
 7. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
 8. [P&L Revenue Workflow Frontend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) — 📐 Planned
-9. [Studio Show Management Frontend Design](./design/STUDIO_SHOW_MANAGEMENT_DESIGN.md) — 📐 Planned

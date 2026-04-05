@@ -4,7 +4,7 @@
 > **Workstream**: Studio self-service — show lifecycle management
 > **Depends on**: None (no prerequisite features required)
 > **Blocks**: Studio Schedule Management, Show Planning Export, full studio autonomy
-> **Implementation refs**: [BE canonical doc](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md), [BE controller](../../apps/erify_api/src/studios/studio-show/studio-show.controller.ts), [FE design](../../apps/erify_studios/docs/design/STUDIO_SHOW_MANAGEMENT_DESIGN.md)
+> **Implementation refs**: [BE canonical doc](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md), [BE controller](../../apps/erify_api/src/studios/studio-show/studio-show.controller.ts), [FE canonical](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md)
 
 ## Problem
 

@@ -152,7 +152,7 @@ apps/erify_studios/docs/design/<FEATURE>_DESIGN.md   ← FE design
     ↓
 Implementation PR (code + tests)
     ↓
-Post-ship: promote PRD → docs/features/, run knowledge-sync
+Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, run knowledge-sync
 ```
 
 ### Phase-Level Reference Docs
@@ -164,27 +164,27 @@ Post-ship: promote PRD → docs/features/, run knowledge-sync
 | Authorization  | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)                      |
 | Role use cases | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
 
-### Per-Feature Design Docs
+### Per-Feature Technical Docs
 
-| Feature                        | Product Doc                                         | BE Design                                                                       | FE Design                                                                           |
+| Feature                        | Product Doc                                         | BE Doc                                                                          | FE Doc                                                                               |
 | ------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Creator mapping                | [feature](../features/creator-mapping.md)           | —                                                                               | —                                                                                   |
 | Economics baseline             | [feature](../features/show-economics.md)            | [BE](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)                 | [FE](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md)                 |
 | Studio economics review        | [PRD](../prd/studio-economics-review.md)            | [BE](../../apps/erify_api/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)        | [FE](../../apps/erify_studios/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)        |
 | Studio member roster           | [feature](../features/studio-member-roster.md)      | Shipped (PR #28)                                                                | Shipped (PR #28)                                                                    |
 | Studio creator roster          | [feature](../features/studio-creator-roster.md)     | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md)                        | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md)                        |
-| Studio creator onboarding      | [feature](../features/studio-creator-onboarding.md) | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md)                    | [FE](../../apps/erify_studios/docs/design/STUDIO_CREATOR_ONBOARDING_DESIGN.md)      |
+| Studio creator onboarding      | [feature](../features/studio-creator-onboarding.md) | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md)                    | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ONBOARDING.md)                    |
 | Internal knowledge base        | [feature](../features/eridu-docs-knowledge-base.md) | N/A                                                                             | [Auth design](../../apps/eridu_docs/docs/AUTH_DESIGN.md)                            |
 | Compensation line items        | [PRD](../prd/compensation-line-items.md)            | [BE](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)        | [FE](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)        |
 | Show planning export           | [PRD](../prd/show-planning-export.md)               | [BE](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)           | [FE](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)           |
 | Creator availability hardening | [PRD](../prd/creator-availability-hardening.md)     | [BE](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [FE](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
 | P&L revenue workflow           | [PRD](../prd/pnl-revenue-workflow.md)               | [BE](../../apps/erify_api/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md)           | [FE](../../apps/erify_studios/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md)           |
 | Sidebar redesign               | N/A                                                 | N/A                                                                             | [FE](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md)                      |
-| Studio show management         | [feature](../features/studio-show-management.md)    | [BE](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md)                       | [FE](../../apps/erify_studios/docs/design/STUDIO_SHOW_MANAGEMENT_DESIGN.md)         |
+| Studio show management         | [feature](../features/studio-show-management.md)    | [BE](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md)                       | [FE](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md)                       |
 | Studio schedule management     | [PRD](../prd/studio-schedule-management.md)         | TBD                                                                             | TBD                                                                                 |
 | Studio reference data          | [PRD](../prd/studio-reference-data.md)              | TBD                                                                             | TBD                                                                                 |
 | Studio creator profile         | [PRD](../prd/studio-creator-profile.md)             | TBD                                                                             | TBD                                                                                 |
-| Task submission reporting      | [feature](../features/task-submission-reporting.md) | [BE](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)      | [FE](../../apps/erify_studios/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)      |
+| Task submission reporting      | [feature](../features/task-submission-reporting.md) | [BE](../../apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md)      | [FE](../../apps/erify_studios/docs/TASK_SUBMISSION_REPORTING.md)                    |
 
 ## Risks & Open Items
 
