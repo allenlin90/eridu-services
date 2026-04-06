@@ -545,7 +545,7 @@ export const JsonForm = function JsonForm({
                                       };
                                     });
 
-                                    if (prepared.wasCompressed && preparedFile.size < file.size) {
+                                    if (prepared.metTarget && prepared.wasCompressed && preparedFile.size < file.size) {
                                       const method = prepared.usedWorker ? ' in background' : '';
                                       toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
                                     }

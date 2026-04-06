@@ -113,6 +113,10 @@
 - sonner 2.0.7 (toasts)
 - usehooks-ts 3.1.1
 
+### Browser Upload Notes
+- `@eridu/browser-upload` is worker-first (`Web Worker` + `OffscreenCanvas`) with main-thread `canvas` fallback and `HTMLImageElement` decode fallback for Safari/iPhone.
+- Image compression now probes real WebP encoder support before trying `image/webp`, keeps the original file as the size baseline, and returns `metTarget` so callers can block oversize best-effort results without showing a false success toast.
+
 ### Feature Organization
 ```
 /src
