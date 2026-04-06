@@ -1,6 +1,7 @@
 import {
   buildCompressionDimensions,
   DEFAULT_QUALITIES,
+  replaceFileExtension,
 } from './compress-utils';
 
 type CompressionWorkerResult =
@@ -30,25 +31,6 @@ export type PreparedImageResult = {
   wasCompressed: boolean;
   usedWorker: boolean;
 };
-
-function replaceFileExtension(fileName: string, mimeType: string): string {
-  const extensionByMime: Record<string, string> = {
-    'image/jpeg': '.jpg',
-    'image/png': '.png',
-    'image/webp': '.webp',
-  };
-  const expectedExt = extensionByMime[mimeType];
-  if (!expectedExt) {
-    return fileName;
-  }
-
-  const dotIndex = fileName.lastIndexOf('.');
-  if (dotIndex < 0) {
-    return `${fileName}${expectedExt}`;
-  }
-
-  return `${fileName.slice(0, dotIndex)}${expectedExt}`;
-}
 
 export function matchesAcceptRule(fileType: string, fileName: string, accept?: string): boolean {
   if (!accept || accept.trim().length === 0) {

@@ -66,6 +66,27 @@ function installImageMock() {
   return { createObjectURL, revokeObjectURL };
 }
 
+function installWorkerMock(outputSizeBytes: number, outputMimeType = 'image/webp') {
+  Object.defineProperty(globalThis, 'Worker', {
+    configurable: true,
+    value: class MockWorker {
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      onerror: (() => void) | null = null;
+
+      postMessage() {
+        const responseBuffer = new Uint8Array(outputSizeBytes).buffer;
+        queueMicrotask(() => {
+          this.onmessage?.({
+            data: { ok: true, fileArrayBuffer: responseBuffer, fileType: outputMimeType },
+          } as MessageEvent);
+        });
+      }
+
+      terminate() {}
+    },
+  });
+}
+
 describe('prepareImageForUpload', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -73,6 +94,23 @@ describe('prepareImageForUpload', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('compresses via worker on the happy path', async () => {
+    installWorkerMock(50_000, 'image/webp');
+
+    const file = new File([new Uint8Array(500_000)], 'photo.jpg', { type: 'image/jpeg' });
+
+    const prepared = await prepareImageForUpload(file, {
+      targetMaxBytes: TARGET_MAX_BYTES,
+      preferWorker: true,
+    });
+
+    expect(prepared.usedWorker).toBe(true);
+    expect(prepared.wasCompressed).toBe(true);
+    expect(prepared.file.size).toBeLessThanOrEqual(TARGET_MAX_BYTES);
+    expect(prepared.file.type).toBe('image/webp');
+    expect(prepared.file.name).toBe('photo.webp');
   });
 
   it('falls back to HTMLImageElement decoding when worker creation fails on iPhone-like browsers', async () => {

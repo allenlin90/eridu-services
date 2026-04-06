@@ -1,6 +1,7 @@
 import {
   buildCompressionDimensions,
   DEFAULT_QUALITIES,
+  replaceFileExtension,
 } from './compress-utils';
 
 type WorkerInput = {
@@ -25,25 +26,6 @@ type WorkerError = {
 };
 
 const workerScope: DedicatedWorkerGlobalScope = globalThis as unknown as DedicatedWorkerGlobalScope;
-
-function replaceFileExtension(fileName: string, mimeType: string): string {
-  const extensionByMime: Record<string, string> = {
-    'image/jpeg': '.jpg',
-    'image/png': '.png',
-    'image/webp': '.webp',
-  };
-  const expectedExt = extensionByMime[mimeType];
-  if (!expectedExt) {
-    return fileName;
-  }
-
-  const dotIndex = fileName.lastIndexOf('.');
-  if (dotIndex < 0) {
-    return `${fileName}${expectedExt}`;
-  }
-
-  return `${fileName.slice(0, dotIndex)}${expectedExt}`;
-}
 
 function matchesAccept(fileType: string, fileName: string, accept?: string): boolean {
   if (!accept || accept.trim().length === 0) {
