@@ -187,9 +187,9 @@ Business Rules:
 
 ## Schedule management
 
-Purpose: Enables collaborative planning and resource allocation.
+Purpose: Enables collaborative planning, operational grouping, and later downstream reporting/finance scoping.
 
-**Phase 1 Feature** - The Schedule Planning Management System allows Clients and studio managers to collaboratively plan shows before publishing them to the normalized Show tables. Schedules use JSON-based plan documents for flexible editing during the draft phase, with snapshot-based versioning for complete audit trails.
+**Phase 1 Feature** - The Schedule Planning Management System allows clients and studio managers to collaboratively plan shows before publishing them to the normalized Show tables. Schedules use JSON-based plan documents for flexible editing, snapshot-based versioning for audit trails, and date-ranged grouping so published shows can later be organized by period.
 
 Key Models: `schedules`, `schedule_snapshots`, `shows`
 
@@ -197,7 +197,7 @@ Workflow:
 
 - Draft Phase: JSON-based planning with spreadsheet-like editing
 - Review Phase: Pre-publish validation and conflict detection
-- Published Phase: JSON synced to normalized Show tables (delete + insert strategy)
+- Published Phase: latest acknowledged plan synced to normalized Show tables
 
 Features:
 
@@ -213,7 +213,8 @@ Features:
 Business Rules:
 
 - Draft schedules don't reserve studio resources (only in JSON planning document)
-- Published schedules sync to normalized Show tables (delete + insert strategy)
+- Schedule status is planning metadata, not a universal write lock on every future show-management workflow
+- Published schedules sync to normalized Show tables via identity-preserving update behavior
 - Pre-publish validation prevents double-booking and conflicts
 - All changes create immutable snapshots for audit trail
 - **Schedule Naming & Duration**: Schedule names and date ranges can overlap for different packages, events, and campaigns - there are no unique constraints on (name, clientId, startDate, endDate) combinations. Idempotency handling (Phase 2) prevents duplicate schedule creation from retries or concurrent requests.

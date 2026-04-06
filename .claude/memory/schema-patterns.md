@@ -195,6 +195,12 @@ const data = membershipApiResponseSchema.parse(response.data);
 
 ## Common Schema Patterns
 
+### Refined Shared Schemas Need a Base Object Export
+
+- If frontend or backend code needs to derive variants with `.omit()`, `.pick()`, `.partial()`, or `.extend()`, do not compose from a schema that already has `.refine()` or `.superRefine()`.
+- Export an unrefined `*ObjectSchema` from `packages/api-types` first, then build the refined API contract from that base object.
+- Current example: `packages/api-types/src/shows/schemas.ts` exports `createStudioShowInputObjectSchema`, and `apps/erify_studios/src/features/studio-shows/components/studio-show-management-form.tsx` composes create/edit form schemas from it.
+
 ### Basic Response Schema
 ```typescript
 // API layer

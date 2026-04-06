@@ -45,6 +45,37 @@ Report exact output. Any failure is a **BLOCKING** issue.
 
 ## Step 3: Architectural & Pattern Review
 
+### Repository Method Necessity Gate
+
+For **every new named method** added to a repository file (beyond `findOne` / `findByUid`):
+
+1. **Necessity test**: read the method body. Can it be replaced by `this.repository.findMany({ where: {...}, ...rest })` called directly from the service? If yes — the method must not exist. Flag as **BLOCKING**.
+
+2. **Exception criteria** (any one is sufficient to justify the method):
+   - Non-trivial Prisma query that cannot be a flat `where` (range overlap, OR conditions, subqueries)
+   - Multi-step operation inside a transaction that belongs together
+   - Reused identically across multiple service callers
+
+3. **Exception documentation** (both required when an exception is warranted):
+   - An `// Engineering decision:` comment directly above the method in code, explaining why `findMany` at the service level is insufficient.
+   - The same decision recorded in the relevant feature doc (Key Product Decisions or Design Decisions section) so it is traceable.
+
+Flag as **BLOCKING** if: a named method has no exception justification, or has justification in code but not in the feature doc.
+
+```typescript
+// GOOD — justified exception with documented decision
+// Engineering decision: date-range overlap requires two-sided bound comparison
+// that cannot be expressed as a single flat where clause.
+async findOverlapping(params: { startDate: Date; endDate: Date }): Promise<Schedule[]> { ... }
+
+// BAD — simple filter wrapper with no added value (BLOCKING)
+async findActiveByStudioUid(studioUid: string): Promise<Schedule[]> {
+  return this.prisma.schedule.findMany({ where: { studio: { uid: studioUid }, deletedAt: null } });
+}
+```
+
+---
+
 ### Three-Tier Schema Architecture
 Verify the layering is respected:
 - **API Layer**: snake_case, Zod schemas, in `@eridu/api-types` — no business logic

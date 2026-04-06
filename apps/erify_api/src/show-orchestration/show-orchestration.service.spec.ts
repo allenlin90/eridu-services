@@ -18,6 +18,8 @@ import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
+import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import type {
   CreateShowWithAssignmentsDto,
@@ -49,6 +51,8 @@ describe('showOrchestrationService', () => {
   let showPlatformRepository: jest.Mocked<ShowPlatformRepository>;
   let platformRepository: jest.Mocked<PlatformRepository>;
   let studioCreatorRepository: jest.Mocked<StudioCreatorRepository>;
+  let taskService: jest.Mocked<TaskService>;
+  let taskTargetService: jest.Mocked<TaskTargetService>;
 
   const mockShow: Show = {
     id: BigInt(1),
@@ -163,6 +167,21 @@ describe('showOrchestrationService', () => {
             findByStudioUidAndCreatorUids: jest.fn(),
           },
         },
+        {
+          provide: TaskService,
+          useValue: {
+            hardDeleteByIds: jest.fn(),
+          },
+        },
+        {
+          provide: TaskTargetService,
+          useValue: {
+            findByShowId: jest.fn(),
+            findAllByShowId: jest.fn(),
+            findByTaskIds: jest.fn(),
+            hardDeleteByShowId: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -176,6 +195,8 @@ describe('showOrchestrationService', () => {
     showPlatformRepository = module.get<ShowPlatformRepository>(ShowPlatformRepository) as jest.Mocked<ShowPlatformRepository>;
     platformRepository = module.get<PlatformRepository>(PlatformRepository) as jest.Mocked<PlatformRepository>;
     studioCreatorRepository = module.get<StudioCreatorRepository>(StudioCreatorRepository) as jest.Mocked<StudioCreatorRepository>;
+    taskService = module.get<TaskService>(TaskService) as jest.Mocked<TaskService>;
+    taskTargetService = module.get<TaskTargetService>(TaskTargetService) as jest.Mocked<TaskTargetService>;
   });
 
   beforeEach(() => {
@@ -378,9 +399,17 @@ describe('showOrchestrationService', () => {
   });
 
   describe('deleteShow', () => {
-    it('should soft-delete show and assignments', async () => {
+    it('should soft-delete show and purge dependent task state', async () => {
       const uid = 'show_test123';
       showService.getShowById.mockResolvedValue(mockShow);
+      taskTargetService.findAllByShowId.mockResolvedValue([
+        { taskId: BigInt(10) },
+        { taskId: BigInt(10) },
+        { taskId: BigInt(11) },
+      ] as any);
+      taskTargetService.findByTaskIds.mockResolvedValue([] as any);
+      taskTargetService.hardDeleteByShowId.mockResolvedValue({ count: 3 } as any);
+      taskService.hardDeleteByIds.mockResolvedValue({ count: 2 } as any);
       showRepository.softDelete.mockResolvedValue(mockShow);
       showCreatorRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
       showPlatformRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
@@ -388,9 +417,56 @@ describe('showOrchestrationService', () => {
       await service.deleteShow(uid);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(showRepository.softDelete).toHaveBeenCalledWith({ uid });
+      expect(taskTargetService.findAllByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(taskTargetService.hardDeleteByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(taskTargetService.findByTaskIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
+      expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
       expect(showCreatorRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
       expect(showPlatformRepository.softDeleteAllByShowId).toHaveBeenCalledWith(mockShow.id);
+      expect(showRepository.softDelete).toHaveBeenCalledWith({ uid });
+    });
+
+    it('should include soft-deleted task targets when collecting taskIds to purge', async () => {
+      const uid = 'show_test123';
+      showService.getShowById.mockResolvedValue(mockShow);
+      // Mix of active and soft-deleted targets referencing distinct tasks
+      taskTargetService.findAllByShowId.mockResolvedValue([
+        { taskId: BigInt(10), deletedAt: null },
+        { taskId: BigInt(11), deletedAt: new Date('2026-03-01') },
+      ] as any);
+      taskTargetService.findByTaskIds.mockResolvedValue([] as any);
+      taskTargetService.hardDeleteByShowId.mockResolvedValue({ count: 2 } as any);
+      taskService.hardDeleteByIds.mockResolvedValue({ count: 2 } as any);
+      showRepository.softDelete.mockResolvedValue(mockShow);
+      showCreatorRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+      showPlatformRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+
+      await service.deleteShow(uid);
+
+      // Both taskIds must be included — soft-deleted target's task must not be orphaned
+      expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
+    });
+
+    it('should preserve tasks that still have active targets on other shows', async () => {
+      const uid = 'show_test123';
+      showService.getShowById.mockResolvedValue(mockShow);
+      taskTargetService.findAllByShowId.mockResolvedValue([
+        { taskId: BigInt(10), deletedAt: null },
+        { taskId: BigInt(11), deletedAt: null },
+      ] as any);
+      taskTargetService.findByTaskIds.mockResolvedValue([
+        { taskId: BigInt(11), deletedAt: null },
+      ] as any);
+      taskTargetService.hardDeleteByShowId.mockResolvedValue({ count: 2 } as any);
+      taskService.hardDeleteByIds.mockResolvedValue({ count: 1 } as any);
+      showRepository.softDelete.mockResolvedValue(mockShow);
+      showCreatorRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+      showPlatformRepository.softDeleteAllByShowId.mockResolvedValue(undefined as any);
+
+      await service.deleteShow(uid);
+
+      expect(taskTargetService.findByTaskIds).toHaveBeenCalledWith([BigInt(10), BigInt(11)]);
+      expect(taskService.hardDeleteByIds).toHaveBeenCalledWith([BigInt(10)]);
     });
   });
 

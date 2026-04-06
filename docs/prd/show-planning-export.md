@@ -194,7 +194,7 @@ Standard paginated response following existing list conventions:
 
 - Backend design: `apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md`
 - Frontend design: `apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md`
-- Task submission reporting (pattern reference, not code dependency): `apps/erify_api/docs/design/TASK_SUBMISSION_REPORTING_DESIGN.md`
+- Task submission reporting (pattern reference, not code dependency): `apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md`
 - Economics baseline: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
 - Business domain: `docs/domain/BUSINESS.md`
 - Show planning ideation (preserved context): deleted after this PRD was created (promoted 2026-03-22)

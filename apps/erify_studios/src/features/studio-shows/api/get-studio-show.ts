@@ -1,8 +1,8 @@
-import type { ShowApiResponse } from '@eridu/api-types/shows';
+import type { StudioShowDetail } from '@eridu/api-types/shows';
 
 import { apiClient } from '@/lib/api/client';
 
-export type StudioShowDetail = ShowApiResponse;
+export type { StudioShowDetail };
 
 export const studioShowKeys = {
   all: ['studio-show'] as const,

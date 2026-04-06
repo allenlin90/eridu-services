@@ -331,7 +331,8 @@ describe('publishingService', () => {
 
       mockTransactionClient.show.createMany.mockResolvedValue({ count: 2 });
       mockTransactionClient.show.findMany
-        .mockResolvedValueOnce([]) // existing shows
+        .mockResolvedValueOnce([]) // current schedule shows
+        .mockResolvedValueOnce([]) // matching shows by external identity
         .mockResolvedValueOnce([ // created shows lookup
           { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
           { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
@@ -432,7 +433,8 @@ describe('publishingService', () => {
     it('should keep identity and not mark removals when payload matches existing scope', async () => {
       mockTransactionClient.show.findMany
         .mockReset()
-        .mockResolvedValueOnce([]) // existing shows
+        .mockResolvedValueOnce([]) // current schedule shows
+        .mockResolvedValueOnce([]) // matching shows by external identity
         .mockResolvedValueOnce([
           { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
           { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
@@ -445,12 +447,108 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_created).toBe(2);
     });
 
+    it('should restore and adopt a matching deleted show instead of creating a duplicate', async () => {
+      const deletedExistingShow = {
+        id: BigInt(77),
+        uid: 'show_deleted',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: null,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Name',
+        startTime: new Date('2024-01-01T08:00:00Z'),
+        endTime: new Date('2024-01-01T09:00:00Z'),
+        metadata: { stale: true },
+        deletedAt: new Date('2024-01-01T07:00:00Z'),
+        showStatus: {
+          systemKey: null,
+        },
+      };
+
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([deletedExistingShow]);
+      mockTransactionClient.show.update.mockResolvedValue({});
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.createMany).not.toHaveBeenCalled();
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(77) },
+        data: expect.objectContaining({
+          scheduleId: BigInt(1),
+          deletedAt: null,
+          name: 'Test Show 1',
+        }),
+      });
+      expect(result.publishSummary.shows_restored).toBe(1);
+      expect(result.publishSummary.shows_created).toBe(0);
+    });
+
+    it('should reject adopting a deleted show from a different studio', async () => {
+      const deletedOtherStudioShow = {
+        id: BigInt(77),
+        uid: 'show_deleted_other_studio',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: null,
+        studioId: BigInt(2),
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Name',
+        startTime: new Date('2024-01-01T08:00:00Z'),
+        endTime: new Date('2024-01-01T09:00:00Z'),
+        metadata: { stale: true },
+        deletedAt: new Date('2024-01-01T07:00:00Z'),
+        showStatus: {
+          systemKey: null,
+        },
+      };
+
+      const studioScopedSchedule = {
+        ...mockSchedule,
+        studioId: BigInt(1),
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(studioScopedSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([deletedOtherStudioShow]);
+
+      await expect(service.publish(scheduleUid, version, userId)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(mockTransactionClient.show.createMany).not.toHaveBeenCalled();
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalled();
+    });
+
     it('should create shows with MCs and Platforms', async () => {
       await service.publish(scheduleUid, version, userId);
 
       // Verify bulk show creation was called
       expect(mockTransactionClient.show.createMany).toHaveBeenCalledTimes(1);
-      expect(mockTransactionClient.show.findMany).toHaveBeenCalledTimes(2);
+      expect(mockTransactionClient.show.findMany).toHaveBeenCalledTimes(3);
 
       // Verify ShowCreator creation was called
       expect(mockTransactionClient.showCreator.create).toHaveBeenCalledTimes(1);
@@ -655,6 +753,7 @@ describe('publishingService', () => {
       mockTransactionClient.show.findMany
         .mockReset()
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
           { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
         ]);
@@ -709,6 +808,7 @@ describe('publishingService', () => {
       mockTransactionClient.show.findMany
         .mockReset()
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
           { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
         ]);
@@ -749,9 +849,12 @@ describe('publishingService', () => {
         },
       };
       getScheduleByIdMock.mockResolvedValue(scheduleWithoutMetadata);
-      mockTransactionClient.show.findMany.mockResolvedValue([
-        { id: BigInt(1), uid: 'show_test123' },
-      ]);
+      mockTransactionClient.show.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { id: BigInt(1), uid: 'show_test123' },
+        ]);
 
       await service.publish(scheduleUid, version, userId);
 

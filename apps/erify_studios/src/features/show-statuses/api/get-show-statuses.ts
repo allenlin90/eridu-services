@@ -15,12 +15,17 @@ export type GetShowStatusesParams = {
   id?: string;
 };
 
+type GetShowStatusesOptions = {
+  signal?: AbortSignal;
+};
+
 export async function getShowStatuses(
   params: GetShowStatusesParams,
   studioId?: string,
+  options?: GetShowStatusesOptions,
 ): Promise<ShowStatusesResponse> {
   const endpoint = studioId ? `/studios/${studioId}/show-statuses` : '/admin/show-statuses';
-  const response = await apiClient.get<ShowStatusesResponse>(endpoint, { params });
+  const response = await apiClient.get<ShowStatusesResponse>(endpoint, { params, signal: options?.signal });
   return response.data;
 }
 

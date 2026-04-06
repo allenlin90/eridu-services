@@ -85,6 +85,24 @@ export class ScheduleService extends BaseModelService {
     return this.scheduleRepository.findPaginated(query);
   }
 
+  async listSchedulesByStudioUid(
+    studioUid: string,
+    params?: {
+      take?: number;
+      skip?: number;
+      orderBy?: Record<string, 'asc' | 'desc'>;
+      include?: ScheduleInclude;
+    },
+  ): Promise<Schedule[]> {
+    return this.scheduleRepository.findMany({
+      where: { studio: { uid: studioUid, deletedAt: null } },
+      skip: params?.skip,
+      take: params?.take,
+      orderBy: params?.orderBy ?? { startDate: 'desc' },
+      include: params?.include,
+    });
+  }
+
   async updateScheduleFromDto<T extends ScheduleInclude = Record<string, never>>(
     uid: string,
     dto: UpdateScheduleDto,

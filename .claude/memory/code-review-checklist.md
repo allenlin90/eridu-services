@@ -116,6 +116,11 @@ async create(data: Prisma.TaskCreateInput): Promise<Task>
 ### Forms
 - [ ] `react-hook-form` + `zodResolver`
 - [ ] Validation schema from `@eridu/api-types` (reuse backend schema)
+- [ ] Form/dialog field inventory matches the intended product/API contract; omitted fields are explicitly documented
+- [ ] Date/time editing uses `DatePicker` / `DateTimePicker` from `@eridu/ui`, not native browser date/datetime inputs unless exception documented
+- [ ] Searchable inputs have an explicit per-field data source (`scoped API` or documented local filter)
+- [ ] `AsyncCombobox` / `AsyncMultiCombobox` `onSearch` is not a placeholder no-op
+- [ ] Tests or direct verification prove typing into searchable fields changes query state or the documented local filter state
 - [ ] Error messages displayed per field
 - [ ] Submit button disabled during submission
 

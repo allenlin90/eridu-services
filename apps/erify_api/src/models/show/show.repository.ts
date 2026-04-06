@@ -12,6 +12,10 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ShowWhereInput
 
+type ShowWithIncludes<T extends Prisma.ShowInclude> = Prisma.ShowGetPayload<{
+  include: T;
+}>;
+
 @Injectable()
 export class ShowRepository extends BaseRepository<
   Show,
@@ -42,67 +46,47 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
-  async findByName(name: string): Promise<Show | null> {
+  // Engineering decision: compound studio-scoped lookup with optional generic include
+  // cannot be expressed as a caller-supplied flat where+include pair without leaking the
+  // relation-join semantics (studio: { uid }). Used in management service for all
+  // studio-scoped show retrieval paths where IDOR safety must be enforced at query time.
+  async findByUidAndStudioUid<T extends Prisma.ShowInclude = Record<string, never>>(
+    uid: string,
+    studioUid: string,
+    include?: T,
+  ): Promise<Prisma.ShowGetPayload<{ include: T }> | null> {
     return this.delegate.findFirst({
-      where: { name, deletedAt: null },
-    });
-  }
-
-  async findActiveShows(params: {
-    skip?: number;
-    take?: number;
-    where?: Prisma.ShowWhereInput;
-    orderBy?: Prisma.ShowOrderByWithRelationInput;
-    include?: Prisma.ShowInclude;
-  }): Promise<Show[]> {
-    const { skip, take, where, orderBy, include } = params;
-    return this.delegate.findMany({
-      where: { ...where, deletedAt: null },
-      skip,
-      take,
-      orderBy,
+      where: { uid, studio: { uid: studioUid }, deletedAt: null },
       ...(include && { include }),
-    });
+    }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
-  async findShowsByClient(
-    clientId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-      include?: Prisma.ShowInclude;
-    },
-  ): Promise<Show[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { clientId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
+  // Engineering decision: restore-on-create lookup requires a client-relation where clause
+  // (client: { uid }) combined with an explicit includeDeleted opt-in that inverts the
+  // default deletedAt: null guard. Neither can be expressed as a caller-supplied flat
+  // where clause without leaking relation semantics into the service layer.
+  async findByClientUidAndExternalId<
+    T extends Prisma.ShowInclude = Record<string, never>,
+  >(
+    clientUid: string,
+    externalId: string,
+    params?: { includeDeleted?: boolean; include?: T },
+  ): Promise<ShowWithIncludes<T> | Show | null> {
+    const { includeDeleted = false, include } = params ?? {};
+
+    return this.delegate.findFirst({
+      where: {
+        client: { uid: clientUid },
+        externalId,
+        ...(includeDeleted ? {} : { deletedAt: null }),
+      },
       ...(include && { include }),
-    });
+    }) as Promise<ShowWithIncludes<T> | Show | null>;
   }
 
-  async findShowsByStudioRoom(
-    studioRoomId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowOrderByWithRelationInput;
-      include?: Prisma.ShowInclude;
-    },
-  ): Promise<Show[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { studioRoomId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
+  // Engineering decision: two-sided date range bound comparison (startTime gte AND lte)
+  // cannot be expressed as a flat where clause without knowing the specific field semantics.
+  // This method encapsulates the date-bound semantics once for all callers.
   async findShowsByDateRange(
     startDate: Date,
     endDate: Date,
@@ -315,6 +299,10 @@ export class ShowRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: studio show list requires AND-composed multi-filter where building
+  // (creator name filters via showCreators join, boolean has_tasks/has_creators presence checks,
+  // date-range bounds, platform name filter) that cannot be expressed as a caller-supplied flat
+  // where clause without leaking Prisma relation semantics into the service layer.
   async findPaginatedWithTaskSummary(
     studioId: bigint,
     query: {
@@ -325,6 +313,8 @@ export class ShowRepository extends BaseRepository<
       date_to?: string;
       has_tasks?: boolean;
       has_creators?: boolean;
+      has_schedule?: boolean;
+      schedule_name?: string;
       show_uids?: string[];
       creator_name?: string;
       client_name?: string;
@@ -372,6 +362,17 @@ export class ShowRepository extends BaseRepository<
           },
         };
       }
+    }
+
+    if (query.has_schedule !== undefined) {
+      where.scheduleId = query.has_schedule ? { not: null } : null;
+    }
+
+    if (query.schedule_name) {
+      where.Schedule = {
+        name: { contains: query.schedule_name, mode: 'insensitive' },
+        deletedAt: null,
+      };
     }
 
     if (query.client_name) {
