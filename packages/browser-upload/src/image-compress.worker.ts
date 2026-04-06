@@ -55,19 +55,76 @@ function matchesAccept(fileType: string, fileName: string, accept?: string): boo
   });
 }
 
-function pickOutputMimeType(fileType: string, fileName: string, accept?: string): string {
-  const currentMime = fileType || 'image/jpeg';
-  if (matchesAccept('image/webp', replaceFileExtension(fileName, 'image/webp'), accept)) {
-    return 'image/webp';
+function addOutputMimeCandidate(
+  candidates: string[],
+  seenMimeTypes: Set<string>,
+  candidateMimeType: string,
+  fileName: string,
+  accept?: string,
+): void {
+  if (seenMimeTypes.has(candidateMimeType)) {
+    return;
   }
-  if (matchesAccept('image/jpeg', replaceFileExtension(fileName, 'image/jpeg'), accept)) {
-    return 'image/jpeg';
-  }
-  if (matchesAccept(currentMime, replaceFileExtension(fileName, currentMime), accept)) {
-    return currentMime;
+  if (!matchesAccept(candidateMimeType, replaceFileExtension(fileName, candidateMimeType), accept)) {
+    return;
   }
 
-  return currentMime;
+  seenMimeTypes.add(candidateMimeType);
+  candidates.push(candidateMimeType);
+}
+
+async function supportsWebpEncoding(): Promise<boolean> {
+  if (typeof OffscreenCanvas === 'undefined') {
+    return false;
+  }
+
+  try {
+    const canvas = new OffscreenCanvas(1, 1);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return false;
+    }
+
+    ctx.fillRect(0, 0, 1, 1);
+    const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+    return blob.type === 'image/webp';
+  } catch {
+    return false;
+  }
+}
+
+async function listOutputMimeTypes(fileType: string, fileName: string, accept?: string): Promise<string[]> {
+  const currentMime = fileType || 'image/jpeg';
+  const candidates: string[] = [];
+  const seenMimeTypes = new Set<string>();
+  const webpAllowed = matchesAccept('image/webp', replaceFileExtension(fileName, 'image/webp'), accept);
+  const webpSupported = webpAllowed ? await supportsWebpEncoding() : false;
+
+  const addCandidate = (candidateMimeType: string) => {
+    addOutputMimeCandidate(candidates, seenMimeTypes, candidateMimeType, fileName, accept);
+  };
+
+  if (currentMime === 'image/png') {
+    addCandidate('image/jpeg');
+    if (webpSupported) {
+      addCandidate('image/webp');
+    }
+    addCandidate(currentMime);
+  } else {
+    addCandidate(currentMime);
+    if (currentMime !== 'image/jpeg') {
+      addCandidate('image/jpeg');
+    }
+    if (currentMime !== 'image/webp' && webpSupported) {
+      addCandidate('image/webp');
+    }
+  }
+
+  if (candidates.length === 0) {
+    candidates.push(currentMime);
+  }
+
+  return candidates;
 }
 
 async function compressImage(input: WorkerInput): Promise<Blob> {
@@ -80,28 +137,33 @@ async function compressImage(input: WorkerInput): Promise<Blob> {
     return inputBlob;
   }
 
-  const outputMimeType = pickOutputMimeType(input.fileType, input.fileName, input.accept);
+  const outputMimeTypes = await listOutputMimeTypes(input.fileType, input.fileName, input.accept);
   const image = await createImageBitmap(inputBlob);
-  let bestBlob: Blob | null = null;
+  let bestBlob: Blob = inputBlob;
 
   try {
     const compressionDimensions = buildCompressionDimensions(image.width, image.height, input);
 
-    for (const dimensions of compressionDimensions) {
-      const canvas = new OffscreenCanvas(dimensions.width, dimensions.height);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        continue;
-      }
-      ctx.drawImage(image, 0, 0, dimensions.width, dimensions.height);
-
-      for (const quality of DEFAULT_QUALITIES) {
-        const blob = await canvas.convertToBlob({ type: outputMimeType, quality });
-        if (!bestBlob || blob.size < bestBlob.size) {
-          bestBlob = blob;
+    for (const outputMimeType of outputMimeTypes) {
+      for (const dimensions of compressionDimensions) {
+        const canvas = new OffscreenCanvas(dimensions.width, dimensions.height);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          continue;
         }
-        if (blob.size <= input.targetMaxBytes) {
-          return blob;
+        ctx.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+
+        for (const quality of DEFAULT_QUALITIES) {
+          const blob = await canvas.convertToBlob({ type: outputMimeType, quality });
+          if (blob.type !== outputMimeType) {
+            continue;
+          }
+          if (blob.size < bestBlob.size) {
+            bestBlob = blob;
+          }
+          if (blob.size <= input.targetMaxBytes) {
+            return blob;
+          }
         }
       }
     }
@@ -109,7 +171,7 @@ async function compressImage(input: WorkerInput): Promise<Blob> {
     image.close();
   }
 
-  return bestBlob ?? inputBlob;
+  return bestBlob;
 }
 
 workerScope.onmessage = async (event: MessageEvent<WorkerInput>) => {

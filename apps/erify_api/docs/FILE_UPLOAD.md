@@ -163,13 +163,16 @@ Is file an image/* ?
             ├─ Fallback to main-thread canvas if worker path unsupported/fails
             ├─ Main-thread decode falls back to HTMLImageElement when createImageBitmap
             │  is unavailable or rejects the Blob/File (Safari/iPhone compatibility)
+            ├─ MIME search is conservative: current format first for JPEG/WebP inputs,
+            │  lossy candidates first for PNG inputs, and WebP only after a real
+            │  browser encoder capability check
             ├─ For the 200 KB screenshot path, retries from the original image at
             │  long-edge clamps [1440, 1280, 1080, 960]
             ├─ At each clamp, tries quality [0.9→0.12]
-            └─ Falls back to best (smallest) attempt
+            └─ Falls back to best (smallest) attempt and reports whether target was met
               │
               ▼
-          Hard check: uploadFile.size ≤ maxBytes → throws if not
+          Hard check: uploadFile.size ≤ maxBytes → block presign/upload if not
     │
     ▼
 requestPresignedUpload({ use_case: MATERIAL_ASSET, ... })

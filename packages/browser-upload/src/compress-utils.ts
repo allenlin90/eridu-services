@@ -95,10 +95,11 @@ export function buildCompressionDimensions(
     for (const maxLongEdge of options.maxLongEdges) {
       addDimensions(longEdgeDimensions(width, height, maxLongEdge));
     }
-
-    return [...dimensions.values()];
   }
 
+  // Always include scale-based steps so there is a continuous ladder down to
+  // small dimensions. This ensures compression can reach the target even when
+  // the long-edge steps alone are not aggressive enough for very complex images.
   for (const scale of DEFAULT_SCALES) {
     addDimensions(scaledDimensions(width, height, scale, options.maxDimension));
   }

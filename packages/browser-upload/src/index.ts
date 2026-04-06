@@ -30,6 +30,7 @@ export type PreparedImageResult = {
   file: File;
   wasCompressed: boolean;
   usedWorker: boolean;
+  metTarget: boolean;
 };
 
 export function matchesAcceptRule(fileType: string, fileName: string, accept?: string): boolean {
@@ -60,18 +61,78 @@ export function matchesAcceptRule(fileType: string, fileName: string, accept?: s
   });
 }
 
-function pickOutputMimeType(fileType: string, fileName: string, accept?: string): string {
+function addOutputMimeCandidate(
+  candidates: string[],
+  seenMimeTypes: Set<string>,
+  candidateMimeType: string,
+  fileName: string,
+  accept?: string,
+): void {
+  if (seenMimeTypes.has(candidateMimeType)) {
+    return;
+  }
+  if (!matchesAcceptRule(candidateMimeType, replaceFileExtension(fileName, candidateMimeType), accept)) {
+    return;
+  }
+
+  seenMimeTypes.add(candidateMimeType);
+  candidates.push(candidateMimeType);
+}
+
+async function supportsCanvasEncoding(mimeType: string): Promise<boolean> {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return false;
+  }
+
+  ctx.fillRect(0, 0, 1, 1);
+  const blob = await canvasToBlob(canvas, mimeType, 0.8);
+  return blob?.type === mimeType;
+}
+
+async function supportsWebpEncoding(): Promise<boolean> {
+  return supportsCanvasEncoding('image/webp');
+}
+
+async function listOutputMimeTypes(fileType: string, fileName: string, accept?: string): Promise<string[]> {
   const currentMime = fileType || 'image/jpeg';
-  if (matchesAcceptRule('image/webp', replaceFileExtension(fileName, 'image/webp'), accept)) {
-    return 'image/webp';
+  const candidates: string[] = [];
+  const seenMimeTypes = new Set<string>();
+  const webpAllowed = matchesAcceptRule('image/webp', replaceFileExtension(fileName, 'image/webp'), accept);
+  const webpSupported = webpAllowed ? await supportsWebpEncoding() : false;
+
+  const addCandidate = (candidateMimeType: string) => {
+    addOutputMimeCandidate(candidates, seenMimeTypes, candidateMimeType, fileName, accept);
+  };
+
+  if (currentMime === 'image/png') {
+    addCandidate('image/jpeg');
+    if (webpSupported) {
+      addCandidate('image/webp');
+    }
+    addCandidate(currentMime);
+  } else {
+    addCandidate(currentMime);
+    if (currentMime !== 'image/jpeg') {
+      addCandidate('image/jpeg');
+    }
+    if (currentMime !== 'image/webp' && webpSupported) {
+      addCandidate('image/webp');
+    }
   }
-  if (matchesAcceptRule('image/jpeg', replaceFileExtension(fileName, 'image/jpeg'), accept)) {
-    return 'image/jpeg';
+
+  if (candidates.length === 0) {
+    candidates.push(currentMime);
   }
-  if (matchesAcceptRule(currentMime, replaceFileExtension(fileName, currentMime), accept)) {
-    return currentMime;
-  }
-  return currentMime;
+
+  return candidates;
 }
 
 async function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality?: number): Promise<Blob | null> {
@@ -140,34 +201,36 @@ async function decodeImageInMainThread(file: Blob): Promise<DecodedMainThreadIma
 }
 
 async function compressInMainThread(file: File, options: PrepareImageForUploadOptions): Promise<Blob> {
-  const outputMimeType = pickOutputMimeType(file.type, file.name, options.accept);
+  const outputMimeTypes = await listOutputMimeTypes(file.type, file.name, options.accept);
   const image = await decodeImageInMainThread(file);
-  let bestBlob: Blob | null = null;
+  let bestBlob: Blob = file;
 
   try {
     const compressionDimensions = buildCompressionDimensions(image.width, image.height, options);
 
-    for (const dimensions of compressionDimensions) {
-      const canvas = document.createElement('canvas');
-      canvas.width = dimensions.width;
-      canvas.height = dimensions.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        continue;
-      }
-
-      ctx.drawImage(image.source, 0, 0, dimensions.width, dimensions.height);
-
-      for (const quality of DEFAULT_QUALITIES) {
-        const blob = await canvasToBlob(canvas, outputMimeType, quality);
-        if (!blob) {
+    for (const outputMimeType of outputMimeTypes) {
+      for (const dimensions of compressionDimensions) {
+        const canvas = document.createElement('canvas');
+        canvas.width = dimensions.width;
+        canvas.height = dimensions.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
           continue;
         }
-        if (!bestBlob || blob.size < bestBlob.size) {
-          bestBlob = blob;
-        }
-        if (blob.size <= options.targetMaxBytes) {
-          return blob;
+
+        ctx.drawImage(image.source, 0, 0, dimensions.width, dimensions.height);
+
+        for (const quality of DEFAULT_QUALITIES) {
+          const blob = await canvasToBlob(canvas, outputMimeType, quality);
+          if (!blob || blob.type !== outputMimeType) {
+            continue;
+          }
+          if (blob.size < bestBlob.size) {
+            bestBlob = blob;
+          }
+          if (blob.size <= options.targetMaxBytes) {
+            return blob;
+          }
         }
       }
     }
@@ -175,7 +238,7 @@ async function compressInMainThread(file: File, options: PrepareImageForUploadOp
     image.close();
   }
 
-  return bestBlob ?? file;
+  return bestBlob;
 }
 
 function supportsWorkerCompression(): boolean {
@@ -219,10 +282,10 @@ async function compressInWorker(file: File, options: PrepareImageForUploadOption
 
 export async function prepareImageForUpload(file: File, options: PrepareImageForUploadOptions): Promise<PreparedImageResult> {
   if (!file.type.startsWith('image/')) {
-    return { file, wasCompressed: false, usedWorker: false };
+    return { file, wasCompressed: false, usedWorker: false, metTarget: true };
   }
   if (file.size <= options.targetMaxBytes) {
-    return { file, wasCompressed: false, usedWorker: false };
+    return { file, wasCompressed: false, usedWorker: false, metTarget: true };
   }
 
   const preferWorker = options.preferWorker ?? true;
@@ -254,5 +317,6 @@ export async function prepareImageForUpload(file: File, options: PrepareImageFor
     file: nextFile,
     wasCompressed: nextFile.size < file.size || nextFile.type !== file.type || nextFile.name !== file.name,
     usedWorker,
+    metTarget: nextFile.size <= options.targetMaxBytes,
   };
 }

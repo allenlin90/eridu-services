@@ -39,5 +39,6 @@ Your application strictly enforces size and type limits per-usecase at the presi
 
 Before an upload ever kicks off on the web, compression takes place:
 - **Technique**: Worker-first native compression (`Web Worker` + `OffscreenCanvas`) with main-thread canvas fallback. If `createImageBitmap` is missing or rejects the file, the main-thread path falls back again to `HTMLImageElement` decoding for Safari/iPhone compatibility.
-- **Scaling**: Reduces aspect resolution by 40% (1.0 → 0.6) and quality aggressively to 34%.
-- **Safety**: A hard client-side size check executes after compression—it throws a native error prior to evaluating the presign API if it manages to still exceed the 200KB limit.
+- **MIME strategy**: Compression tries safer MIME candidates first and only uses WebP when the accept rule allows it and the active browser can actually encode `image/webp`.
+- **Scaling**: For 200 KB-style screenshots it retries long-edge clamps (`1440 → 1280 → 1080 → 960`) with the full quality ladder (`0.9 → 0.12`) from the original image.
+- **Safety**: Compression keeps the smallest candidate but also reports whether it really met the byte cap. The form blocks presign/upload and suppresses success messaging when the best effort still exceeds the 200KB limit.
