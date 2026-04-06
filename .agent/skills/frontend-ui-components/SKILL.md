@@ -63,6 +63,52 @@ Checklist for form work:
 - [ ] Datetime fields use `DateTimePicker` from `@eridu/ui`.
 - [ ] Native `date` / `datetime-local` inputs appear only with a documented exception.
 
+#### Async Lookup Field Isolation
+
+When a form or dialog has two or more `AsyncCombobox` / `AsyncMultiCombobox` fields backed by async lookup hooks that each own a `useState` for search, each field **must** be extracted into its own `memo()` component that calls its hook internally.
+
+**Why**: every `setSearch` call in an inline hook triggers a full parent-form re-render, causing every other field, its `useQuery`, and the form's `useWatch` to re-run on every keystroke. Isolating each field into its own `memo()` component limits re-renders to that field only.
+
+**Required pattern** (reference: `show-form-fields.tsx`):
+
+```tsx
+// ❌ BAD: hooks at form level — every setSearch re-renders the whole form
+export function MyForm({ show, studioId }) {
+  const { options: clientOptions, setSearch: setClientSearch } = useClientOptions(show, studioId);
+  const { options: typeOptions, setSearch: setTypeSearch } = useTypeOptions(show, studioId);
+  // ...
+  return <form>...</form>;
+}
+
+// ✅ GOOD: each field owns its hook — re-renders are isolated
+const ClientField = memo(({ control, show, studioId }: FieldProps) => {
+  const { options, isLoading, setSearch } = useClientOptions(show, studioId);
+  return (
+    <FormField control={control} name="client_id" render={({ field }) => (
+      <AsyncCombobox value={field.value} onChange={field.onChange} onSearch={setSearch} options={options} isLoading={isLoading} />
+    )} />
+  );
+});
+
+export function MyForm({ show, studioId, control }) {
+  return <form><ClientField control={control} show={show} studioId={studioId} /></form>;
+}
+```
+
+Rules:
+- Extract to a field component when two or more async lookup hooks appear in the same form component.
+- Wrap each field component in `memo()` — this prevents the field from re-rendering when unrelated form-level state changes.
+- Field components are co-located in a `components/` subfolder alongside the form file (or in a dedicated `fields/` subfolder for larger forms), not exported from a separate domain feature.
+- Exception: forms with a single async field do not require extraction (isolation benefit does not apply).
+- `useWatch` calls that observe the field's own value (e.g. detecting when a schedule is cleared) belong **inside** the field component, not the parent form.
+- Reference implementation: `apps/erify_studios/src/features/shows/components/show-form-fields.tsx`
+
+Checklist for forms with async lookups:
+- [ ] Forms with 2+ async lookup fields extract each into its own `memo()` field component.
+- [ ] Each field component calls its hook internally — no hook results passed as props.
+- [ ] `useWatch` for field-level derived state lives inside the field component.
+- [ ] Parent form only renders field components and manages form-level concerns (submit, reset, overall validation).
+
 #### Searchable Lookup Inputs
 Any control that visually advertises search, especially `AsyncCombobox` and `AsyncMultiCombobox`, needs an explicit per-field search contract before implementation.
 
