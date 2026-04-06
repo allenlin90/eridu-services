@@ -1,5 +1,25 @@
 export const DEFAULT_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25];
 
+const EXTENSION_BY_MIME: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+};
+
+export function replaceFileExtension(fileName: string, mimeType: string): string {
+  const expectedExt = EXTENSION_BY_MIME[mimeType];
+  if (!expectedExt) {
+    return fileName;
+  }
+
+  const dotIndex = fileName.lastIndexOf('.');
+  if (dotIndex < 0) {
+    return `${fileName}${expectedExt}`;
+  }
+
+  return `${fileName.slice(0, dotIndex)}${expectedExt}`;
+}
+
 // Quality ladder for compression attempts. Values below 0.2 (0.16, 0.12) are
 // last-resort steps that only activate when all dimension steps + higher quality
 // levels still fail to reach the target size. They will produce visible artifacts.

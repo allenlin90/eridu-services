@@ -38,6 +38,6 @@ Your application strictly enforces size and type limits per-usecase at the presi
 ## Frontend Image Compression
 
 Before an upload ever kicks off on the web, compression takes place:
-- **Technique**: Worker-first native compression (`Web Worker` + `OffscreenCanvas`) with main-thread canvas fallback.
+- **Technique**: Worker-first native compression (`Web Worker` + `OffscreenCanvas`) with main-thread canvas fallback. If `createImageBitmap` is missing or rejects the file, the main-thread path falls back again to `HTMLImageElement` decoding for Safari/iPhone compatibility.
 - **Scaling**: Reduces aspect resolution by 40% (1.0 → 0.6) and quality aggressively to 34%.
 - **Safety**: A hard client-side size check executes after compression—it throws a native error prior to evaluating the presign API if it manages to still exceed the 200KB limit.
