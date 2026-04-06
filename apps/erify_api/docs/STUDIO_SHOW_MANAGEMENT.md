@@ -55,6 +55,10 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 13. **Studio detail is an enriched superset response**. `GET /studios/:studioId/shows/:showId` includes current platform assignments and schedule summary, while staying compatible with current read consumers that only use base show fields.
 
+14. **`ShowRepository.findPaginatedWithTaskSummary` is a named method, not an inlined where clause**. The list query composes AND-joined multi-field filters, OR conditions for studio-room and schedule matching, and an optional `_count` aggregate join for task summaries. These semantics cannot be expressed as a flat where clause passed from the service layer without coupling the service to Prisma query structures. The method is intentionally retained as a named repository method.
+
+15. **`ShowRepository.findByClientUidAndExternalId` is a named method, not an inlined where clause**. The restore-on-create lookup requires a client-relation where clause (`client: { uid }`) combined with an explicit `includeDeleted` opt-in that inverts the default `deletedAt: null` guard. Neither can be expressed as a caller-supplied flat where clause without leaking relation semantics into the service layer.
+
 ## Key Business Rules
 
 ### Delete Rule

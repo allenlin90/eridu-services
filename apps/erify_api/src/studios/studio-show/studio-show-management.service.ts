@@ -174,10 +174,12 @@ export class StudioShowManagementService {
       return;
     }
 
+    // Use catch-null to avoid leaking schedule existence: a non-existent UID and a
+    // wrong-studio UID both surface as the same generic ownership error.
     const schedule = await this.scheduleService.getScheduleById(scheduleUid, {
       client: true,
-    });
-    if (!schedule.studioId || schedule.studioId !== studioId) {
+    }).catch(() => null);
+    if (!schedule || !schedule.studioId || schedule.studioId !== studioId) {
       throw HttpError.badRequest(`Schedule ${scheduleUid} does not belong to studio ${studioUid}`);
     }
 

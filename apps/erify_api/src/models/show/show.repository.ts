@@ -61,6 +61,10 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
+  // Engineering decision: restore-on-create lookup requires a client-relation where clause
+  // (client: { uid }) combined with an explicit includeDeleted opt-in that inverts the
+  // default deletedAt: null guard. Neither can be expressed as a caller-supplied flat
+  // where clause without leaking relation semantics into the service layer.
   async findByClientUidAndExternalId<
     T extends Prisma.ShowInclude = Record<string, never>,
   >(

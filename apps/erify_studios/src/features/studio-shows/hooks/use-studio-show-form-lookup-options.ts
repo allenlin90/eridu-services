@@ -176,9 +176,11 @@ export function useStudioShowStatusOptions(show: StudioShowDetail | null | undef
 
   const query = useQuery({
     queryKey: ['studio-show-form', 'show-statuses', studioId, { search }],
+    // Show statuses are a finite set. The /show-statuses endpoint does not accept a
+    // name filter, so filtering is client-side via filterOptions() below. The name
+    // param is intentionally omitted here to avoid sending a param the backend ignores.
     queryFn: ({ signal }) => getShowStatuses({
-      name: search || undefined,
-      limit: search ? SEARCH_LOOKUP_LIMIT : DEFAULT_LOOKUP_LIMIT,
+      limit: DEFAULT_LOOKUP_LIMIT,
     }, studioId, { signal }),
     enabled: Boolean(studioId),
     staleTime: LOOKUP_STALE_TIME_MS,
