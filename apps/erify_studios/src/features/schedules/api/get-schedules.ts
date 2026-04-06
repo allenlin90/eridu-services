@@ -17,9 +17,19 @@ export type GetSchedulesParams = {
   id?: string;
 };
 
-export async function getSchedules(params: GetSchedulesParams): Promise<SchedulesResponse> {
-  const response = await apiClient.get<SchedulesResponse>('/admin/schedules', {
+type GetSchedulesOptions = {
+  signal?: AbortSignal;
+};
+
+export async function getSchedules(
+  params: GetSchedulesParams,
+  studioId?: string,
+  options?: GetSchedulesOptions,
+): Promise<SchedulesResponse> {
+  const endpoint = studioId ? `/studios/${studioId}/schedules` : '/admin/schedules';
+  const response = await apiClient.get<SchedulesResponse>(endpoint, {
     params,
+    signal: options?.signal,
   });
   return response.data;
 }

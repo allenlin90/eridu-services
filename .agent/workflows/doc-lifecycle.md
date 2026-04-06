@@ -17,6 +17,7 @@ Run when any of these are true:
 3. A PRD has been officially deferred to a future phase.
 4. A cross-feature workstream is complete enough to document as an end-to-end flow.
 5. `docs/prd/` contains documents that no longer reflect the current active work.
+6. An `apps/*/docs/design/` document describes behavior that has shipped — promote it via the **Design Doc Promotion** section below.
 
 ---
 
@@ -138,6 +139,58 @@ grep -r "docs/product/" . --include="*.md" --exclude-dir=node_modules --exclude-
 
 ---
 
+## Design Doc Promotion
+
+Run this sub-process whenever an `apps/*/docs/design/` document describes behavior that has shipped.
+
+Design docs serve as the implementation blueprint. Once a feature ships, the doc is promoted to a canonical reference — stripped of implementation noise and placed in the app's `docs/` root so future engineers and agents can treat it as backbone context.
+
+### 1. Identify implemented design docs
+
+For each entry in `apps/*/docs/design/README.md`:
+
+- Check the codebase for the corresponding controller, service, and schema.
+- If implemented: mark for promotion. Do not leave it in the design index.
+- If planned/in-progress: leave it as-is.
+
+### 2. Promote: strip noise, keep backbone
+
+Create a new file at `apps/*/docs/<FEATURE_NAME>.md`. Keep only:
+
+| Keep | Strip |
+| --- | --- |
+| Purpose / scope | Ordered task list / checklist |
+| API surface (endpoints, guards, request/response, errors) | File inventory |
+| Design decisions (the "why" — tradeoffs, rejections, scope boundaries) | Verification / `pnpm` command blocks |
+| Key business rules (delete rules, restore rules, enforcement logic) | "Status: Planning" / "Planned for Phase N" language |
+| Follow-ups / known limitations | Inline code examples that mirror the actual implementation |
+
+Update the status header to `✅ Implemented — Phase N`.
+
+> The code is the source of truth for implementation detail. Canonical docs capture the decisions and rules that are not otherwise derivable from reading the code.
+
+### 3. Delete the original design file
+
+Remove the file from `apps/*/docs/design/`. Do not leave a stub.
+
+### 4. Update both indexes
+
+**`apps/*/docs/design/README.md`** — remove the promoted entry and renumber.
+
+**`apps/*/docs/README.md`** — move the entry from the Design table to the Features table with the correct canonical path and `✅` status. Remove any `📐` or "Planned" language.
+
+**`docs/features/*.md` and roadmap docs** — if they referenced the design file, update them to the new canonical `apps/*/docs/<FEATURE_NAME>.md` path.
+
+### 5. Verify no stale links
+
+```bash
+grep -r "design/PROMOTED_FILENAME" . --include="*.md" --exclude-dir=node_modules --exclude-dir=.git
+```
+
+Fix any remaining references in skills, phase docs, or cross-app READMEs.
+
+---
+
 ## Completion Checklist
 
 - [ ] Every shipped PRD is promoted to `docs/features/` with acceptance criteria checked off.
@@ -152,6 +205,9 @@ grep -r "docs/product/" . --include="*.md" --exclude-dir=node_modules --exclude-
 - [ ] No stale `docs/product/` or other broken path references remain.
 - [ ] `docs/features/README.md` and `docs/workflows/README.md` indexes are up to date.
 - [ ] `docs/ideation/README.md` active topics table is accurate (no stale entries, no missing deferrals).
+- [ ] No implemented design doc remains in any `apps/*/docs/design/` index.
+- [ ] Every promoted design doc is in the Features table of the app's `docs/README.md` with a `✅` status and a link to the canonical path (not the `design/` path).
+- [ ] Feature docs and roadmap/index tables no longer point to deleted `apps/*/docs/design/` paths for shipped work.
 
 ---
 

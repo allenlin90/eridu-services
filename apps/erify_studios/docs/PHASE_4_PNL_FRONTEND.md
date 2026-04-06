@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This file is the **phase-level frontend index** for Phase 4. Feature-specific frontend design now lives in `apps/erify_studios/docs/design/` on a per-feature basis instead of one omnibus Phase 4 design file.
+This file is the **phase-level frontend index** for Phase 4. Active feature proposals stay in `apps/erify_studios/docs/design/`; once a feature ships, its frontend reference is promoted into `apps/erify_studios/docs/` root and linked here instead of remaining in the design folder.
 
 ## Shared Frontend Rules
 
@@ -18,9 +18,9 @@ This file is the **phase-level frontend index** for Phase 4. Feature-specific fr
 - Do not reproduce finance formulas or compensation allocation logic in FE code.
 - Loading, empty, and null-data states must be explicit for economics and reporting surfaces.
 
-## Feature Design Index
+## Feature Doc Index
 
-| Feature | Status | Product source | Frontend design |
+| Feature | Status | Product source | Frontend doc |
 | --- | --- | --- | --- |
 | Creator mapping + assignment | ✅ Shipped | [creator-mapping.md](../../../docs/features/creator-mapping.md) | No retained Phase 4 design doc; shipped feature |
 | Sidebar redesign | 🔲 Planned | FE-only scope | [SIDEBAR_REDESIGN.md](./design/SIDEBAR_REDESIGN.md) |
@@ -28,6 +28,9 @@ This file is the **phase-level frontend index** for Phase 4. Feature-specific fr
 | Studio economics review | 🔲 Planned | [studio-economics-review.md](../../../docs/prd/studio-economics-review.md) | [STUDIO_ECONOMICS_REVIEW_DESIGN.md](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md) |
 | Studio member roster | ✅ Shipped | [studio-member-roster.md](../../../docs/features/studio-member-roster.md) | No retained design doc; shipped in PR #28 |
 | Studio creator roster | ✅ Implemented | [studio-creator-roster.md](../../../docs/features/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER.md](./STUDIO_CREATOR_ROSTER.md) |
+| Studio show management | ✅ Implemented | [studio-show-management.md](../../../docs/features/studio-show-management.md) | [STUDIO_SHOW_MANAGEMENT.md](./STUDIO_SHOW_MANAGEMENT.md) |
+| Studio creator onboarding | ✅ Implemented | [studio-creator-onboarding.md](../../../docs/features/studio-creator-onboarding.md) | [STUDIO_CREATOR_ONBOARDING.md](./STUDIO_CREATOR_ONBOARDING.md) |
+| Task submission reporting | ✅ Implemented | [task-submission-reporting.md](../../../docs/features/task-submission-reporting.md) | [TASK_SUBMISSION_REPORTING.md](./TASK_SUBMISSION_REPORTING.md) |
 | Compensation line items | 🔲 Planned | [compensation-line-items.md](../../../docs/prd/compensation-line-items.md) | [COMPENSATION_LINE_ITEMS_DESIGN.md](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
 | Show planning export | 🔲 Planned | [show-planning-export.md](../../../docs/prd/show-planning-export.md) | [SHOW_PLANNING_EXPORT_DESIGN.md](./design/SHOW_PLANNING_EXPORT_DESIGN.md) |
 | Creator availability hardening | 🔲 Planned | [creator-availability-hardening.md](../../../docs/prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |

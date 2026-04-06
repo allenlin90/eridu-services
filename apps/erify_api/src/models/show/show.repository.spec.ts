@@ -130,6 +130,27 @@ describe('showRepository', () => {
     expect(creatorFilter?.showCreators?.some?.creator?.name?.contains).toBe('alice');
   });
 
+  it('maps schedule_name filter to studio task-summary schedule relation search', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      schedule_name: 'prime',
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      Schedule?: {
+        name?: { contains?: string };
+        deletedAt?: null;
+      };
+    };
+    expect(where.Schedule?.name?.contains).toBe('prime');
+    expect(where.Schedule?.deletedAt).toBeNull();
+  });
+
   it('maps has_creators=true to studio task-summary show creator existence filter', async () => {
     txShowDelegate.count.mockResolvedValue(0);
     txShowDelegate.findMany.mockResolvedValue([]);

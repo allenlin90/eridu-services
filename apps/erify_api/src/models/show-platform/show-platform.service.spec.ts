@@ -24,8 +24,6 @@ describe('showPlatformService', () => {
   beforeEach(async () => {
     showPlatformRepositoryMock = createMockRepository<ShowPlatformRepository>({
       findPaginated: jest.fn(),
-      findByShow: jest.fn(),
-      findByPlatform: jest.fn(),
       findByShowAndPlatform: jest.fn(),
       softDelete: jest.fn(),
     });
@@ -245,68 +243,6 @@ describe('showPlatformService', () => {
       expect(showPlatformRepositoryMock.softDelete).toHaveBeenCalledWith({
         uid: 'show_plt_123',
       });
-    });
-  });
-
-  describe('getShowPlatformsByShow', () => {
-    it('returns show platforms for a show', async () => {
-      const showPlatforms = [
-        {
-          uid: 'show_plt_123',
-          id: 1n,
-          showId: 1n,
-          platformId: 1n,
-          liveStreamLink: 'https://example.com/stream',
-          platformShowId: 'ext_123',
-          viewerCount: 100,
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ];
-
-      (showPlatformRepositoryMock.findByShow as jest.Mock).mockResolvedValue(
-        showPlatforms,
-      );
-
-      const result = await service.getShowPlatformsByShow(1n);
-
-      expect(showPlatformRepositoryMock.findByShow).toHaveBeenCalledWith(
-        1n,
-      );
-      expect(result).toEqual(showPlatforms);
-    });
-  });
-
-  describe('getShowPlatformsByPlatform', () => {
-    it('returns show platforms for a platform', async () => {
-      const showPlatforms = [
-        {
-          uid: 'show_plt_123',
-          id: 1n,
-          showId: 1n,
-          platformId: 1n,
-          liveStreamLink: 'https://example.com/stream',
-          platformShowId: 'ext_123',
-          viewerCount: 100,
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ];
-
-      (
-        showPlatformRepositoryMock.findByPlatform as jest.Mock
-      ).mockResolvedValue(showPlatforms);
-
-      const result = await service.getShowPlatformsByPlatform(1n);
-
-      expect(showPlatformRepositoryMock.findByPlatform).toHaveBeenCalledWith(
-        1n,
-      );
-      expect(result).toEqual(showPlatforms);
     });
   });
 

@@ -54,9 +54,7 @@ describe('showService', () => {
 
   beforeEach(async () => {
     showRepositoryMock = createMockRepository<ShowRepository>({
-      findActiveShows: jest.fn(),
-      findShowsByClient: jest.fn(),
-      findShowsByStudioRoom: jest.fn(),
+      findMany: jest.fn(),
       findShowsByDateRange: jest.fn(),
       findPaginated: jest.fn(),
     });
@@ -397,9 +395,7 @@ describe('showService', () => {
         },
       ];
 
-      (showRepositoryMock.findActiveShows as jest.Mock).mockResolvedValue(
-        shows,
-      );
+      (showRepositoryMock.findMany as jest.Mock).mockResolvedValue(shows);
 
       const result = await service.getActiveShows({
         skip: 0,
@@ -407,10 +403,12 @@ describe('showService', () => {
         orderBy: { createdAt: 'desc' },
       });
 
-      expect(showRepositoryMock.findActiveShows).toHaveBeenCalledWith({
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: null },
         skip: 0,
         take: 10,
         orderBy: { createdAt: 'desc' },
+        include: undefined,
       });
       expect(result).toEqual(shows);
     });
@@ -437,18 +435,19 @@ describe('showService', () => {
         },
       ];
 
-      (showRepositoryMock.findShowsByClient as jest.Mock).mockResolvedValue(
-        shows,
-      );
+      (showRepositoryMock.findMany as jest.Mock).mockResolvedValue(shows);
 
       const result = await service.getShowsByClient(1n, {
         skip: 0,
         take: 10,
       });
 
-      expect(showRepositoryMock.findShowsByClient).toHaveBeenCalledWith(1n, {
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        where: { clientId: 1n, deletedAt: null },
         skip: 0,
         take: 10,
+        orderBy: undefined,
+        include: undefined,
       });
       expect(result).toEqual(shows);
     });
@@ -475,22 +474,20 @@ describe('showService', () => {
         },
       ];
 
-      (showRepositoryMock.findShowsByStudioRoom as jest.Mock).mockResolvedValue(
-        shows,
-      );
+      (showRepositoryMock.findMany as jest.Mock).mockResolvedValue(shows);
 
       const result = await service.getShowsByStudioRoom(1n, {
         skip: 0,
         take: 10,
       });
 
-      expect(showRepositoryMock.findShowsByStudioRoom).toHaveBeenCalledWith(
-        1n,
-        {
-          skip: 0,
-          take: 10,
-        },
-      );
+      expect(showRepositoryMock.findMany).toHaveBeenCalledWith({
+        where: { studioRoomId: 1n, deletedAt: null },
+        skip: 0,
+        take: 10,
+        orderBy: undefined,
+        include: undefined,
+      });
       expect(result).toEqual(shows);
     });
   });

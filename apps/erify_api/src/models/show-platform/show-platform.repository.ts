@@ -41,50 +41,16 @@ export class ShowPlatformRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: compound (showId, platformId) lookup uses findFirst rather than
+  // findMany to return a single nullable result directly. The composite index semantics
+  // (one active assignment per show+platform pair) make a named method clearer than
+  // passing a where clause from the service for every caller.
   async findByShowAndPlatform(
     showId: bigint,
     platformId: bigint,
   ): Promise<ShowPlatform | null> {
     return this.delegate.findFirst({
       where: { showId, platformId, deletedAt: null },
-    });
-  }
-
-  async findByShow(
-    showId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
-      include?: Prisma.ShowPlatformInclude;
-    },
-  ): Promise<ShowPlatform[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { showId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
-    });
-  }
-
-  async findByPlatform(
-    platformId: bigint,
-    params?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.ShowPlatformOrderByWithRelationInput;
-      include?: Prisma.ShowPlatformInclude;
-    },
-  ): Promise<ShowPlatform[]> {
-    const { skip, take, orderBy, include } = params || {};
-    return this.delegate.findMany({
-      where: { platformId, deletedAt: null },
-      skip,
-      take,
-      orderBy,
-      ...(include && { include }),
     });
   }
 
@@ -143,11 +109,38 @@ export class ShowPlatformRepository extends BaseRepository<
     });
   }
 
+  // Override: intentionally does NOT auto-apply deletedAt: null (unlike BaseRepository.findMany).
+  // Both callers (replaceShowPlatforms, replacePlatformsForShow) need soft-deleted records
+  // to implement restore-on-add semantics. Callers that need only active records must include
+  // deletedAt: null in their where clause explicitly.
   async findMany(params: {
     where?: Prisma.ShowPlatformWhereInput;
     include?: Prisma.ShowPlatformInclude;
   }): Promise<ShowPlatform[]> {
     return this.delegate.findMany(params);
+  }
+
+  /**
+   * Batch-creates ShowPlatform assignments by internal IDs (domain-level).
+   * Uses createMany for a single DB round-trip.
+   */
+  async createManyAssignments(items: Array<{
+    uid: string;
+    showId: bigint;
+    platformId: bigint;
+    metadata?: object;
+  }>): Promise<Prisma.BatchPayload> {
+    return this.delegate.createMany({
+      data: items.map((item) => ({
+        uid: item.uid,
+        showId: item.showId,
+        platformId: item.platformId,
+        liveStreamLink: null,
+        platformShowId: null,
+        viewerCount: 0,
+        metadata: item.metadata ?? {},
+      })),
+    });
   }
 
   /**

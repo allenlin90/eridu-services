@@ -23,6 +23,8 @@ import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
+import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 
 type CreatorAssignmentPayload = {
   creatorId: string;
@@ -65,6 +67,8 @@ export class ShowOrchestrationService {
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly platformRepository: PlatformRepository,
     private readonly studioCreatorRepository: StudioCreatorRepository,
+    private readonly taskService: TaskService,
+    private readonly taskTargetService: TaskTargetService,
   ) {}
 
   async createShowWithAssignments(
@@ -154,9 +158,27 @@ export class ShowOrchestrationService {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    await this.showRepository.softDelete({ uid });
+    // Collect all taskIds ever linked to this show (including soft-deleted historical targets)
+    // before removing this show's targets, so we can evaluate which tasks become fully orphaned.
+    const taskTargets = await this.taskTargetService.findAllByShowId(showId);
+    const candidateTaskIds = [...new Set(taskTargets.map((target) => target.taskId))];
+
+    // Hard deletes are intentionally front-loaded: for pre-start shows, task workflow state
+    // is disposable and partial cleanup is recoverable by retrying the delete operation.
+    await this.taskTargetService.hardDeleteByShowId(showId);
+
+    // Only hard-delete tasks that have no remaining active targets on any other show.
+    // Tasks reassigned to another show will have surviving active target rows and must not be removed.
+    if (candidateTaskIds.length > 0) {
+      const survivingTargets = await this.taskTargetService.findByTaskIds(candidateTaskIds);
+      const survivingTaskIds = new Set(survivingTargets.map((t) => t.taskId));
+      const orphanedTaskIds = candidateTaskIds.filter((id) => !survivingTaskIds.has(id));
+      await this.taskService.hardDeleteByIds(orphanedTaskIds);
+    }
+
     await this.showCreatorRepository.softDeleteAllByShowId(showId);
     await this.showPlatformRepository.softDeleteAllByShowId(showId);
+    await this.showRepository.softDelete({ uid });
   }
 
   @Transactional()

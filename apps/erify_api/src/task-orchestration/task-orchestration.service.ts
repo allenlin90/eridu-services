@@ -8,7 +8,10 @@ import { TaskGenerationProcessor } from './task-generation-processor.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { showDto, showDtoListInclude } from '@/models/show/schemas/show.schema';
+import {
+  showDto,
+  showDtoListInclude,
+} from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';

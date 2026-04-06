@@ -42,6 +42,7 @@ type ExistingShow = {
   uid: string;
   externalId: string | null;
   clientId: bigint;
+  scheduleId: bigint | null;
   studioId: bigint | null;
   studioRoomId: bigint | null;
   showTypeId: bigint;
@@ -51,6 +52,7 @@ type ExistingShow = {
   startTime: Date;
   endTime: Date;
   metadata: unknown;
+  deletedAt: Date | null;
   showStatus: {
     systemKey: string | null;
   };
@@ -172,8 +174,9 @@ export class PublishingService {
         showStandardId,
       };
     });
+    const incomingByKey = new Map(incomingShows.map((show) => [show.key, show]));
 
-    const existingShows = await tx.show.findMany({
+    const currentScheduleShows = await tx.show.findMany({
       where: {
         scheduleId: schedule.id,
         deletedAt: null,
@@ -183,6 +186,7 @@ export class PublishingService {
         uid: true,
         externalId: true,
         clientId: true,
+        scheduleId: true,
         studioId: true,
         studioRoomId: true,
         showTypeId: true,
@@ -192,6 +196,7 @@ export class PublishingService {
         startTime: true,
         endTime: true,
         metadata: true,
+        deletedAt: true,
         showStatus: {
           select: {
             systemKey: true,
@@ -200,15 +205,75 @@ export class PublishingService {
       },
     });
 
-    const incomingByKey = new Map(incomingShows.map((show) => [show.key, show]));
-    const existingByKey = new Map<string, ExistingShow>();
+    const matchingShows = incomingShows.length === 0
+      ? []
+      : await tx.show.findMany({
+        where: {
+          clientId: {
+            in: Array.from(new Set(incomingShows.map((show) => show.clientId))),
+          },
+          externalId: {
+            in: incomingShows.map((show) => show.source.externalId),
+          },
+        },
+        select: {
+          id: true,
+          uid: true,
+          externalId: true,
+          clientId: true,
+          scheduleId: true,
+          studioId: true,
+          studioRoomId: true,
+          showTypeId: true,
+          showStatusId: true,
+          showStandardId: true,
+          name: true,
+          startTime: true,
+          endTime: true,
+          metadata: true,
+          deletedAt: true,
+          showStatus: {
+            select: {
+              systemKey: true,
+            },
+          },
+        },
+      });
 
-    existingShows.forEach((show) => {
+    const conflictingAdoption = matchingShows.find((show) => {
+      if (!show.externalId) {
+        return false;
+      }
+      const incoming = incomingByKey.get(`${show.clientId.toString()}:${show.externalId}`);
+      return (
+        !!incoming
+        && show.studioId !== null
+        && incoming.studioId !== null
+        && show.studioId !== incoming.studioId
+      );
+    });
+
+    if (conflictingAdoption) {
+      throw HttpError.conflict('SHOW_RESTORE_CONFLICT');
+    }
+
+    const existingByKey = new Map<string, ExistingShow>();
+    const currentScheduleByKey = new Map<string, ExistingShow>();
+
+    matchingShows.forEach((show) => {
       if (!show.externalId) {
         return;
       }
       const key = `${show.clientId.toString()}:${show.externalId}`;
       existingByKey.set(key, show);
+    });
+
+    currentScheduleShows.forEach((show) => {
+      if (!show.externalId) {
+        return;
+      }
+      const key = `${show.clientId.toString()}:${show.externalId}`;
+      currentScheduleByKey.set(key, show);
     });
 
     const toCreate: DiffIncomingShow[] = [];
@@ -224,7 +289,7 @@ export class PublishingService {
       }
     });
 
-    existingByKey.forEach((existing, key) => {
+    currentScheduleByKey.forEach((existing, key) => {
       if (!incomingByKey.has(key)) {
         toRemove.push(existing);
       }
@@ -317,6 +382,10 @@ export class PublishingService {
         updateData.clientId = incoming.clientId;
       }
 
+      if (existing.scheduleId !== schedule.id) {
+        updateData.scheduleId = schedule.id;
+      }
+
       if (existing.studioId !== incoming.studioId) {
         updateData.studioId = incoming.studioId;
       }
@@ -342,8 +411,13 @@ export class PublishingService {
         updateData.metadata = incomingMetadata;
       }
 
+      const wasDeleted = existing.deletedAt !== null;
       const wasCancelled = existing.showStatus.systemKey === 'CANCELLED'
         || existing.showStatus.systemKey === 'CANCELLED_PENDING_RESOLUTION';
+
+      if (wasDeleted) {
+        updateData.deletedAt = null;
+      }
 
       if (Object.keys(updateData).length > 0) {
         await tx.show.update({
@@ -353,8 +427,14 @@ export class PublishingService {
         publishSummary.shows_updated += 1;
       }
 
-      if (wasCancelled) {
+      if (wasDeleted || wasCancelled) {
         publishSummary.shows_restored += 1;
+      }
+
+      // wasCancelled: show was soft-cancelled via status — tasks are soft-deleted and can be resumed.
+      // wasDeleted: show was manually deleted (pre-start) via studio CRUD — deleteShow hard-purges
+      // tasks, so there is nothing to resume; the incoming payload starts a new lifecycle.
+      if (wasCancelled) {
         await this.resumeSoftDeletedTasksAndTargets(existing.id);
       }
     }

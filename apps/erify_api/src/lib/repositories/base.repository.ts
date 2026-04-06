@@ -40,6 +40,11 @@ export type IBaseRepository<T, C, U, W> = {
     take?: number;
     orderBy?: any;
     include?: Record<string, any>;
+    /**
+     * When true, suppresses the default `deletedAt: null` filter. Use only when the
+     * calling service explicitly needs soft-deleted records (e.g. cascading delete).
+     */
+    includeDeleted?: boolean;
   }) => Promise<T[]>;
   update: (where: W, data: U, include?: Record<string, any>) => Promise<T>;
   delete: (where: W) => Promise<T>;
@@ -154,9 +159,18 @@ implements IBaseRepository<T, C, U, W> {
     // orderBy uses any to support Prisma's complex OrderByWithRelationInput types
     orderBy?: any;
     include?: Record<string, any>;
+    /**
+     * When true, suppresses the default `deletedAt: null` filter. Use only when the
+     * calling service explicitly needs soft-deleted records (e.g. cascading delete).
+     */
+    includeDeleted?: boolean;
   }): Promise<T[]> {
+    const where = params.includeDeleted
+      ? (params.where as W)
+      : ({ ...params.where, deletedAt: null } as W);
+
     return this.model.findMany({
-      where: { ...params.where, deletedAt: null } as W,
+      where,
       skip: params.skip,
       take: params.take,
 

@@ -16,6 +16,7 @@ type GetStudioShowsParams = {
   page?: number;
   limit?: number;
   search?: string;
+  schedule_name?: string;
   date_from?: string;
   date_to?: string;
   planning_date_from?: string;
@@ -23,6 +24,7 @@ type GetStudioShowsParams = {
   has_tasks?: boolean;
   has_creators?: boolean;
   needs_attention?: boolean;
+  has_schedule?: boolean;
   creator_name?: string;
   client_name?: string;
   show_type_name?: string;

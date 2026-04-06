@@ -28,6 +28,7 @@ This file is the **phase-level backend index** for Phase 4. Feature-specific bac
 | Studio economics review        | 🔲 Planned              | [studio-economics-review.md](../../../docs/prd/studio-economics-review.md)               | [STUDIO_ECONOMICS_REVIEW_DESIGN.md](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)               |
 | Studio member roster           | ✅ Shipped              | [studio-member-roster.md](../../../docs/features/studio-member-roster.md)                | No retained design doc; shipped in PR #28                                                     |
 | Studio creator roster          | ✅ Implemented          | [studio-creator-roster.md](../../../docs/features/studio-creator-roster.md)              | [STUDIO_CREATOR_ROSTER.md](./STUDIO_CREATOR_ROSTER.md)                                        |
+| Studio show management         | ✅ Implemented           | [studio-show-management.md](../../../docs/features/studio-show-management.md)            | [STUDIO_SHOW_MANAGEMENT.md](./STUDIO_SHOW_MANAGEMENT.md)                                      |
 | Compensation line items        | 🔲 Planned              | [compensation-line-items.md](../../../docs/prd/compensation-line-items.md)               | [COMPENSATION_LINE_ITEMS_DESIGN.md](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)               |
 | Show planning export           | 🔲 Planned              | [show-planning-export.md](../../../docs/prd/show-planning-export.md)                     | [SHOW_PLANNING_EXPORT_DESIGN.md](./design/SHOW_PLANNING_EXPORT_DESIGN.md)                     |
 | Creator availability hardening | 🔲 Planned              | [creator-availability-hardening.md](../../../docs/prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
@@ -44,6 +45,7 @@ This file is the **phase-level backend index** for Phase 4. Feature-specific bac
 | Studio member roster reads            | `[ADMIN, MANAGER]`                 |
 | Studio member roster writes           | `[ADMIN]`                          |
 | Studio creator roster writes          | `[ADMIN]`                          |
+| Studio show writes                    | `[ADMIN, MANAGER]`                 |
 | Compensation line item reads          | `[ADMIN, MANAGER]`                 |
 | Compensation line item writes         | `[ADMIN]`                          |
 | Member self-review compensation       | `[ADMIN, self]`                    |

@@ -84,10 +84,21 @@ export class ShowService extends BaseModelService {
   /**
    * @internal
    */
-  async getActiveShows(
-    params: Parameters<ShowRepository['findActiveShows']>[0],
-  ): ReturnType<ShowRepository['findActiveShows']> {
-    return this.showRepository.findActiveShows(params);
+  async getActiveShows(params: {
+    skip?: number;
+    take?: number;
+    where?: Parameters<ShowRepository['findMany']>[0]['where'];
+    orderBy?: Parameters<ShowRepository['findMany']>[0]['orderBy'];
+    include?: Parameters<ShowRepository['findMany']>[0]['include'];
+  }): ReturnType<ShowRepository['findMany']> {
+    const { skip, take, where, orderBy, include } = params;
+    return this.showRepository.findMany({
+      where: { ...where, deletedAt: null },
+      skip,
+      take,
+      orderBy,
+      include,
+    });
   }
 
   /**
@@ -95,9 +106,21 @@ export class ShowService extends BaseModelService {
    */
   async getShowsByClient(
     clientId: bigint,
-    params?: Parameters<ShowRepository['findShowsByClient']>[1],
-  ): ReturnType<ShowRepository['findShowsByClient']> {
-    return this.showRepository.findShowsByClient(clientId, params);
+    params?: {
+      skip?: number;
+      take?: number;
+      orderBy?: Parameters<ShowRepository['findMany']>[0]['orderBy'];
+      include?: Parameters<ShowRepository['findMany']>[0]['include'];
+    },
+  ): ReturnType<ShowRepository['findMany']> {
+    const { skip, take, orderBy, include } = params || {};
+    return this.showRepository.findMany({
+      where: { clientId, deletedAt: null },
+      skip,
+      take,
+      orderBy,
+      include,
+    });
   }
 
   /**
@@ -105,9 +128,21 @@ export class ShowService extends BaseModelService {
    */
   async getShowsByStudioRoom(
     studioRoomId: bigint,
-    params?: Parameters<ShowRepository['findShowsByStudioRoom']>[1],
-  ): ReturnType<ShowRepository['findShowsByStudioRoom']> {
-    return this.showRepository.findShowsByStudioRoom(studioRoomId, params);
+    params?: {
+      skip?: number;
+      take?: number;
+      orderBy?: Parameters<ShowRepository['findMany']>[0]['orderBy'];
+      include?: Parameters<ShowRepository['findMany']>[0]['include'];
+    },
+  ): ReturnType<ShowRepository['findMany']> {
+    const { skip, take, orderBy, include } = params || {};
+    return this.showRepository.findMany({
+      where: { studioRoomId, deletedAt: null },
+      skip,
+      take,
+      orderBy,
+      include,
+    });
   }
 
   /**

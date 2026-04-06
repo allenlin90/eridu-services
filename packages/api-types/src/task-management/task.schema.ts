@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
+import { clientApiResponseSchema } from '../clients/index.js';
 import { UID_PREFIXES } from '../constants.js';
 import { paginationBaseSchema, transformPagination } from '../pagination/index.js';
 import { platformApiResponseSchema } from '../platforms/index.js';
+import { scheduleApiResponseSchema } from '../schedules/index.js';
 import { showStandardApiResponseSchema } from '../show-standards/index.js';
 import { showStatusApiResponseSchema } from '../show-statuses/index.js';
 import { showTypeApiResponseSchema } from '../show-types/index.js';
 import { showApiResponseSchema } from '../shows/index.js';
+import { studioRoomApiResponseSchema } from '../studio-rooms/index.js';
 
 /**
  * Task Status enum
@@ -312,10 +315,15 @@ export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;
  * Studio show lookup bundle for filter dropdown options.
  */
 export const studioShowLookupsDto = z.object({
+  clients: z.array(clientApiResponseSchema),
   show_types: z.array(showTypeApiResponseSchema),
   show_standards: z.array(showStandardApiResponseSchema),
   show_statuses: z.array(showStatusApiResponseSchema),
   platforms: z.array(platformApiResponseSchema),
+  // Schedule search moved to the dedicated `/studios/:studioId/schedules` endpoint to
+  // keep the shared lookup bootstrap lightweight for unrelated show-management surfaces.
+  schedules: z.array(scheduleApiResponseSchema).default([]),
+  studio_rooms: z.array(studioRoomApiResponseSchema),
 });
 
 export type StudioShowLookupsDto = z.infer<typeof studioShowLookupsDto>;
@@ -326,6 +334,7 @@ export type StudioShowLookupsDto = z.infer<typeof studioShowLookupsDto>;
 export const listStudioShowsQuerySchema = paginationBaseSchema
   .extend({
     search: z.string().optional(),
+    schedule_name: z.string().optional(),
     creator_name: z.string().optional(),
     client_name: z.string().optional(),
     show_type_name: z.string().optional(),
@@ -345,6 +354,10 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
       .optional(),
     needs_attention: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional(),
+    has_schedule: z
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
       .optional(),

@@ -2,10 +2,16 @@ import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { showApiResponseSchema } from '@eridu/api-types/shows';
+import {
+  createStudioShowInputSchema,
+  showApiResponseSchema,
+  studioShowDetailSchema,
+  updateStudioShowInputSchema,
+} from '@eridu/api-types/shows';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
+import { SCHEDULE_UID_PREFIX } from '@/models/schedule/schedule.constants';
 import { SHOW_UID_PREFIX } from '@/models/show/show-uid.util';
 import { ShowStandardService } from '@/models/show-standard/show-standard.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
@@ -55,6 +61,11 @@ const showStudioRelationSchema = z.object({
   name: z.string(),
 });
 
+const showScheduleRelationSchema = z.object({
+  uid: z.string().startsWith(SCHEDULE_UID_PREFIX),
+  name: z.string(),
+});
+
 const showStudioRoomRelationSchema = z.object({
   uid: z.string().startsWith(StudioRoomService.UID_PREFIX),
   name: z.string(),
@@ -74,6 +85,14 @@ const showStatusRelationSchema = z.object({
 const showStandardRelationSchema = z.object({
   uid: z.string().startsWith(ShowStandardService.UID_PREFIX),
   name: z.string(),
+});
+
+const showPlatformSummaryRelationSchema = z.object({
+  uid: z.string(),
+  platform: z.object({
+    uid: z.string(),
+    name: z.string(),
+  }).optional(),
 });
 
 // Internal schema for database entity
@@ -196,6 +215,7 @@ export const updateShowSchema = z
 // Schema for Show with relations (used in admin endpoints)
 export const showWithRelationsSchema = showSchema.extend({
   client: showClientRelationSchema.optional(),
+  Schedule: showScheduleRelationSchema.nullable().optional(),
   studio: showStudioRelationSchema.nullable().optional(),
   studioRoom: showStudioRoomRelationSchema.nullable().optional(),
   showType: showTypeRelationSchema.optional(),
@@ -205,6 +225,12 @@ export const showWithRelationsSchema = showSchema.extend({
 
 export const showDtoListInclude = {
   client: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
+  Schedule: {
     select: {
       uid: true,
       name: true,
@@ -284,14 +310,30 @@ export const showWithTaskSummaryInclude = {
   },
 } as const satisfies Prisma.ShowInclude;
 
-// API output schema (transforms to snake_case)
-// Uses shared schema from @eridu/api-types for consistency
-export const showDto = showWithRelationsSchema
-  .transform((obj) => ({
+export const studioShowDetailInclude = {
+  ...showDtoListInclude,
+  showPlatforms: {
+    where: { deletedAt: null },
+    include: {
+      platform: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.ShowInclude;
+
+// Shared transform: DB entity with relations → snake_case API fields
+function transformShowToApi(obj: z.output<typeof showWithRelationsSchema>) {
+  return {
     id: obj.uid,
     name: obj.name,
     client_id: obj.client?.uid ?? null,
     client_name: obj.client?.name ?? null,
+    schedule_id: obj.Schedule?.uid ?? null,
+    schedule_name: obj.Schedule?.name ?? null,
     studio_id: obj.studio?.uid ?? null,
     studio_name: obj.studio?.name ?? null,
     studio_room_id: obj.studioRoom?.uid ?? null,
@@ -308,8 +350,30 @@ export const showDto = showWithRelationsSchema
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
-  }))
+  };
+}
+
+// API output schema (transforms to snake_case)
+// Uses shared schema from @eridu/api-types for consistency
+export const showDto = showWithRelationsSchema
+  .transform(transformShowToApi)
   .pipe(showApiResponseSchema);
+
+export const studioShowDetailDto = showWithRelationsSchema
+  .extend({
+    showPlatforms: z.array(showPlatformSummaryRelationSchema).optional(),
+  })
+  .transform((obj) => {
+    const base = transformShowToApi(obj);
+    const platforms = (obj.showPlatforms ?? []).map((item) => ({
+      id: item.platform?.uid ?? item.uid,
+      name: item.platform?.name ?? '',
+    }));
+    return { ...base, platforms };
+  })
+  // Zod 4 .extend() schemas lose pipe-compatibility due to internal branded types.
+  // The transform output is structurally validated by studioShowDetailSchema at runtime.
+  .pipe(studioShowDetailSchema as any) as z.ZodPipe<any, typeof studioShowDetailSchema>;
 
 export const listShowsFilterSchema = z.object({
   name: z.string().optional(),
@@ -370,3 +434,59 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
 export class CreateShowDto extends createZodDto(transformCreateShowSchema) {}
 export class UpdateShowDto extends createZodDto(updateShowSchema) {}
 export class ShowDto extends createZodDto(showDto) {}
+export class StudioShowDetailDto extends createZodDto(studioShowDetailDto) {}
+const createStudioShowTransformSchema = createStudioShowInputSchema.transform((data) => ({
+  externalId: data.external_id,
+  clientId: data.client_id,
+  scheduleId: data.schedule_id,
+  showTypeId: data.show_type_id,
+  showStatusId: data.show_status_id,
+  showStandardId: data.show_standard_id,
+  studioRoomId: data.studio_room_id,
+  name: data.name,
+  startTime: new Date(data.start_time),
+  endTime: new Date(data.end_time),
+  metadata: data.metadata,
+  platformIds: data.platform_ids,
+}));
+export class CreateStudioShowDto extends createZodDto(createStudioShowTransformSchema) {
+  declare externalId: string | undefined;
+  declare clientId: string;
+  declare scheduleId: string | null | undefined;
+  declare showTypeId: string;
+  declare showStatusId: string;
+  declare showStandardId: string;
+  declare studioRoomId: string | null | undefined;
+  declare name: string;
+  declare startTime: Date;
+  declare endTime: Date;
+  declare metadata: Record<string, any> | undefined;
+  declare platformIds: string[];
+}
+
+const updateStudioShowTransformSchema = updateStudioShowInputSchema.transform((data) => ({
+  name: data.name,
+  startTime: data.start_time ? new Date(data.start_time) : undefined,
+  endTime: data.end_time ? new Date(data.end_time) : undefined,
+  clientId: data.client_id,
+  scheduleId: data.schedule_id,
+  showTypeId: data.show_type_id,
+  showStatusId: data.show_status_id,
+  showStandardId: data.show_standard_id,
+  studioRoomId: data.studio_room_id,
+  metadata: data.metadata,
+  platformIds: data.platform_ids,
+}));
+export class UpdateStudioShowDto extends createZodDto(updateStudioShowTransformSchema) {
+  declare name: string | undefined;
+  declare startTime: Date | undefined;
+  declare endTime: Date | undefined;
+  declare clientId: string | undefined;
+  declare scheduleId: string | null | undefined;
+  declare showTypeId: string | undefined;
+  declare showStatusId: string | undefined;
+  declare showStandardId: string | undefined;
+  declare studioRoomId: string | null | undefined;
+  declare metadata: Record<string, any> | undefined;
+  declare platformIds: string[] | undefined;
+}

@@ -176,6 +176,12 @@ function getStudioManagerItems(
 
   if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
     managerItems.push({
+      title: 'Shows',
+      url: `/studios/${studioId}/shows`,
+      icon: Film,
+    });
+
+    managerItems.push({
       title: 'Show Operations',
       url: `/studios/${studioId}/show-operations`,
       icon: Clapperboard,

@@ -53,6 +53,7 @@ When a phase closes, PRDs ship, or docs are reorganized — run `.agent/workflow
 | `knowledge-sync.md` | Content changed: API contracts, behavior, architecture |
 | `doc-lifecycle.md` | Structure changed: PRDs shipping, phase close, doc reorganization |
 | `ideation-lifecycle.md` | Design review, optimization investigation, PR review, or phase planning — cross-check deferred topics |
+| `pr-review.md` | Before merging any PR — pattern compliance, code review, documentation gate, verification |
 
 ## Project Stack
 

@@ -51,6 +51,10 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.softDelete(...args);
   }
 
+  async hardDeleteByIds(...args: Parameters<TaskRepository['hardDeleteByIds']>): ReturnType<TaskRepository['hardDeleteByIds']> {
+    return this.taskRepository.hardDeleteByIds(...args);
+  }
+
   /** @internal */
   async create(...args: Parameters<TaskRepository['create']>): ReturnType<TaskRepository['create']> {
     return this.taskRepository.create(...args);

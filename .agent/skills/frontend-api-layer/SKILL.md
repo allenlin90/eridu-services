@@ -193,6 +193,58 @@ useInfiniteQuery({
 - ✅ This prevents stale responses from appearing after a user navigates away mid-request
 - ✅ For navigation-heavy internal-tool reads, cancellation is required even when the request is "just a GET" — otherwise route switches still consume backend throttle budget after the user leaves
 
+### Searchable Lookup Query Contract
+
+For searchable form/filter controls, the API layer must make the lookup contract explicit per field instead of leaving the UI to “figure it out”.
+
+Rules:
+- Build a field-by-field matrix during planning: control name, endpoint, scope discriminator (`studioId`, `admin`, etc.), supported search params, and whether fallback local filtering is allowed.
+- If the UI uses `AsyncCombobox` / `AsyncMultiCombobox`, the fetcher and hook should expose real search state and pass it into the query key and API declaration.
+- Include the scope discriminator in the query key for dual-scope helpers so studio/admin caches cannot collide.
+- If a field cannot search remotely because the backend lacks an endpoint, document the local-filter fallback and keep it out of generic “async lookup” abstractions until the endpoint exists.
+- Review/test expectation: for each searchable field family, verify that typing changes the query key or the documented local-filter state. A no-op `onSearch` is a broken implementation, not an acceptable placeholder.
+
+### Searchable Lookup Hook Structure
+
+When a file exports multiple hooks that each manage a `search` string + `useQuery` for a lookup field, the `useState`/`useQuery`/`staleTime`/`gcTime`/`enabled` boilerplate must be extracted into a shared internal helper rather than repeated per hook.
+
+**Required pattern** (reference: `use-studio-show-form-lookup-options.ts`):
+
+```ts
+// Internal helper — not exported
+function useSearchQuery<T>(
+  segment: string,
+  studioId: string,
+  queryFn: (search: string, studioId: string, signal: AbortSignal | undefined) => Promise<{ data: T[] }>,
+) {
+  const [search, setSearch] = useState('');
+  const query = useQuery({
+    queryKey: ['<scope>', segment, studioId, { search }],
+    queryFn: ({ signal }) => queryFn(search, studioId, signal),
+    enabled: Boolean(studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
+  });
+  return { items: query.data?.data ?? [], isLoading: query.isLoading || query.isFetching, search, setSearch };
+}
+
+// Each exported hook only expresses what differs
+export function useFooOptions(show: ..., studioId: string) {
+  const { items, isLoading, setSearch } = useSearchQuery('foos', studioId, (search, sid, signal) =>
+    getFoos({ name: search || undefined, limit: search ? SEARCH_LIMIT : DEFAULT_LIMIT }, sid, { signal }),
+  );
+  const options = useMemo(() => withSelectedOption(items.map(...), ...), [items, ...]);
+  return { options, isLoading, setSearch };
+}
+```
+
+Rules:
+- Extract the shared helper when two or more lookup hooks exist in the same file — do not wait for three.
+- The helper should not be exported; it is an implementation detail of the hook file.
+- Exception: hooks with genuinely different query config (no `enabled`, different `staleTime`, polling) should not be forced into the shared helper.
+- Existing files with this pattern already applied: `use-studio-show-form-lookup-options.ts`.
+- Existing files that still need refactoring: `use-platforms-field-data.ts`, `use-creators-field-data.ts`, `use-client-field-data.ts` (all under `shows/components/hooks/`).
+
 ### Internal Read Freshness Policy
 
 `erify_studios` uses tiered query freshness instead of `staleTime: 0` everywhere:

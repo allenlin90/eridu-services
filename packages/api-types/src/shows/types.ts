@@ -2,10 +2,14 @@ import type { z } from 'zod';
 
 import type {
   createShowInputSchema,
+  createStudioShowInputSchema,
   listShowsQuerySchema,
   showApiResponseSchema,
   showListResponseSchema,
+  studioShowDetailSchema,
+  studioShowPlatformSummarySchema,
   updateShowInputSchema,
+  updateStudioShowInputSchema,
 } from './schemas.js';
 
 /**
@@ -22,6 +26,8 @@ export type ShowApiResponse = z.infer<typeof showApiResponseSchema>;
  * Show List Response Type
  */
 export type ShowListResponse = z.infer<typeof showListResponseSchema>;
+export type StudioShowPlatformSummary = z.infer<typeof studioShowPlatformSummarySchema>;
+export type StudioShowDetail = z.infer<typeof studioShowDetailSchema>;
 
 /**
  * List Shows Query Parameters Type
@@ -32,11 +38,13 @@ export type ListShowsQuery = z.infer<typeof listShowsQuerySchema>;
  * Create Show Input Type (snake_case - matches API input)
  */
 export type CreateShowInput = z.infer<typeof createShowInputSchema>;
+export type CreateStudioShowInput = z.infer<typeof createStudioShowInputSchema>;
 
 /**
  * Update Show Input Type (snake_case - matches API input)
  */
 export type UpdateShowInput = z.infer<typeof updateShowInputSchema>;
+export type UpdateStudioShowInput = z.infer<typeof updateStudioShowInputSchema>;
 
 /**
  * Frontend-friendly Show type (snake_case to match API response)
