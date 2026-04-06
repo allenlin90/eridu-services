@@ -161,6 +161,8 @@ Is file an image/* ?
           prepareImageForUpload(file, { targetMaxBytes, accept, preferWorker: true })
             ├─ Worker-first via native Web Worker + OffscreenCanvas
             ├─ Fallback to main-thread canvas if worker path unsupported/fails
+            ├─ Main-thread decode falls back to HTMLImageElement when createImageBitmap
+            │  is unavailable or rejects the Blob/File (Safari/iPhone compatibility)
             ├─ For the 200 KB screenshot path, retries from the original image at
             │  long-edge clamps [1440, 1280, 1080, 960]
             ├─ At each clamp, tries quality [0.9→0.12]

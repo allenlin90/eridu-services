@@ -158,6 +158,11 @@
 - LocaleEnum, LOCALE_LABELS
 - Watch mode for dev
 
+### @eridu/browser-upload
+- Shared browser-side file preparation for direct R2 uploads
+- Worker-first image compression via `Web Worker` + `OffscreenCanvas`
+- Main-thread canvas fallback with `HTMLImageElement` decode fallback for Safari/iPhone `createImageBitmap` gaps
+
 ---
 
 ## Build & Dev Tools

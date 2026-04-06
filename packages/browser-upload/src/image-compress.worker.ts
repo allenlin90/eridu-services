@@ -26,6 +26,25 @@ type WorkerError = {
 
 const workerScope: DedicatedWorkerGlobalScope = globalThis as unknown as DedicatedWorkerGlobalScope;
 
+function replaceFileExtension(fileName: string, mimeType: string): string {
+  const extensionByMime: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+  };
+  const expectedExt = extensionByMime[mimeType];
+  if (!expectedExt) {
+    return fileName;
+  }
+
+  const dotIndex = fileName.lastIndexOf('.');
+  if (dotIndex < 0) {
+    return `${fileName}${expectedExt}`;
+  }
+
+  return `${fileName.slice(0, dotIndex)}${expectedExt}`;
+}
+
 function matchesAccept(fileType: string, fileName: string, accept?: string): boolean {
   if (!accept || accept.trim().length === 0) {
     return true;
@@ -56,13 +75,13 @@ function matchesAccept(fileType: string, fileName: string, accept?: string): boo
 
 function pickOutputMimeType(fileType: string, fileName: string, accept?: string): string {
   const currentMime = fileType || 'image/jpeg';
-  if (matchesAccept('image/webp', fileName, accept)) {
+  if (matchesAccept('image/webp', replaceFileExtension(fileName, 'image/webp'), accept)) {
     return 'image/webp';
   }
-  if (matchesAccept('image/jpeg', fileName, accept)) {
+  if (matchesAccept('image/jpeg', replaceFileExtension(fileName, 'image/jpeg'), accept)) {
     return 'image/jpeg';
   }
-  if (matchesAccept(currentMime, fileName, accept)) {
+  if (matchesAccept(currentMime, replaceFileExtension(fileName, currentMime), accept)) {
     return currentMime;
   }
 

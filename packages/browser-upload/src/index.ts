@@ -80,13 +80,13 @@ export function matchesAcceptRule(fileType: string, fileName: string, accept?: s
 
 function pickOutputMimeType(fileType: string, fileName: string, accept?: string): string {
   const currentMime = fileType || 'image/jpeg';
-  if (matchesAcceptRule('image/webp', fileName, accept)) {
+  if (matchesAcceptRule('image/webp', replaceFileExtension(fileName, 'image/webp'), accept)) {
     return 'image/webp';
   }
-  if (matchesAcceptRule('image/jpeg', fileName, accept)) {
+  if (matchesAcceptRule('image/jpeg', replaceFileExtension(fileName, 'image/jpeg'), accept)) {
     return 'image/jpeg';
   }
-  if (matchesAcceptRule(currentMime, fileName, accept)) {
+  if (matchesAcceptRule(currentMime, replaceFileExtension(fileName, currentMime), accept)) {
     return currentMime;
   }
   return currentMime;
@@ -98,9 +98,68 @@ async function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality
   });
 }
 
+type DecodedMainThreadImage = {
+  source: CanvasImageSource;
+  width: number;
+  height: number;
+  close: () => void;
+};
+
+async function decodeImageInMainThread(file: Blob): Promise<DecodedMainThreadImage> {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file);
+      return {
+        source: bitmap,
+        width: bitmap.width,
+        height: bitmap.height,
+        close: () => bitmap.close(),
+      };
+    } catch {
+      // Some Safari/iPhone variants expose createImageBitmap but still fail File/Blob decoding.
+    }
+  }
+
+  if (
+    typeof Image === 'undefined'
+    || typeof URL === 'undefined'
+    || typeof URL.createObjectURL !== 'function'
+    || typeof URL.revokeObjectURL !== 'function'
+  ) {
+    throw new TypeError('Main-thread image decoding is not supported');
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error('Failed to decode image'));
+      nextImage.src = objectUrl;
+    });
+
+    const width = image.naturalWidth || image.width;
+    const height = image.naturalHeight || image.height;
+    if (width <= 0 || height <= 0) {
+      throw new Error('Decoded image has invalid dimensions');
+    }
+
+    return {
+      source: image,
+      width,
+      height,
+      close: () => URL.revokeObjectURL(objectUrl),
+    };
+  } catch (error) {
+    URL.revokeObjectURL(objectUrl);
+    throw error;
+  }
+}
+
 async function compressInMainThread(file: File, options: PrepareImageForUploadOptions): Promise<Blob> {
   const outputMimeType = pickOutputMimeType(file.type, file.name, options.accept);
-  const image = await createImageBitmap(file);
+  const image = await decodeImageInMainThread(file);
   let bestBlob: Blob | null = null;
 
   try {
@@ -115,7 +174,7 @@ async function compressInMainThread(file: File, options: PrepareImageForUploadOp
         continue;
       }
 
-      ctx.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+      ctx.drawImage(image.source, 0, 0, dimensions.width, dimensions.height);
 
       for (const quality of DEFAULT_QUALITIES) {
         const blob = await canvasToBlob(canvas, outputMimeType, quality);

@@ -60,7 +60,7 @@ Special case: `INSTRUCTION_ASSET` (non-material use case) is currently routed to
 
 `JsonForm` compresses images before requesting a presign (for `MATERIAL_ASSET` only):
 - Target: `min(field.validation.max_size, 200 KB)`
-- Worker-first native compression (`Web Worker` + `OffscreenCanvas`) with main-thread canvas fallback
+- Worker-first native compression (`Web Worker` + `OffscreenCanvas`) with main-thread canvas fallback and `HTMLImageElement` decode fallback when `createImageBitmap` is unavailable/unreliable
 - For the 200 KB screenshot path, prefer long-edge clamps `[1440, 1280, 1080, 960]` from the original image
 - Try quality `[0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.34, 0.26, 0.2, 0.16, 0.12]` at each clamp
 - Only fall back to the generic scale search when no explicit long-edge ladder is provided

@@ -17,13 +17,15 @@
     "dev": "tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "vitest run"
   },
   "devDependencies": {
     "@eridu/eslint-config": "workspace:*",
     "@eridu/typescript-config": "workspace:*",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
+    "happy-dom": "^20.0.11",
+    "vitest": "^4.0.13",
     "typescript": "^5.9.3"
   }
 }
