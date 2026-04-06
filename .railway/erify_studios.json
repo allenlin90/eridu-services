@@ -8,7 +8,8 @@
       "/apps/erify_studios/package.json",
       "/packages/api-types/**",
       "/packages/auth-sdk/**",
-      "/packages/ui/**"
+      "/packages/ui/**",
+      "/packages/browser-upload/**"
     ]
   },
   "deploy": {
