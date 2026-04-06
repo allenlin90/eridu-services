@@ -40,6 +40,15 @@ The `DEFAULT_LOOKUP_LIMIT` constant is in `studio-lookup.controller.ts:35`. If t
 
 Replace static bundle consumption in `DataTableToolbar` with per-type async combobox controls that call the existing per-type endpoints (e.g. `GET /studios/:studioId/lookups/clients?search=...`). These endpoints already support search and pagination — the work is on the frontend filter panel only.
 
+### Form field local-filter pattern (onSearch for show-statuses)
+
+`useStudioShowStatusOptions` (use-studio-show-form-lookup-options.ts:164–186) uses client-side filtering via `filterOptions()` because the `/show-statuses` endpoint does not accept a `name` filter parameter. This is correct for a finite, system-level list today. Revisit this design when:
+
+1. Show statuses grow beyond **~20 entries** — client-side filtering over a larger set degrades UX noticeably.
+2. The `/show-statuses` endpoint gains a `name` search parameter — the local fallback can be removed and replaced with API-side filtering, consistent with all other form lookup fields.
+
+Until then, `filterOptions()` is the correct approach. The comment in the hook documents the intentional deviation.
+
 ### Per-type endpoints available
 
 - `GET /studios/:studioId/lookups/clients`

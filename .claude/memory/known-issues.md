@@ -107,6 +107,26 @@ Shared fields settings currently persist to `Studio.metadata.shared_fields` usin
 
 ---
 
+## Deferred: Show / ShowPlatform missing `version` field (April 2026)
+
+Neither `Show` nor `ShowPlatform` has a `version Int @default(1)` column for optimistic locking. Concurrent studio CRUD edits to the same show or show-platform record apply last-write-wins semantics.
+
+**Risk**: Low — concurrent dual-operator edits of the same show are an unlikely scenario for current usage volumes.
+**Action**: Add `version` to both models in the next schema migration pass that already requires a migration for another reason. Do not add a standalone migration for this alone.
+**Tracked**: April 2026 — deferred from `feat/phase4-1e-show-management-design` PR review.
+
+---
+
+## Deferred: ShowPlatformService thin-wrapper method (April 2026)
+
+`ShowPlatformService.findShowPlatformByShowAndPlatform` (show-platform.service.ts:60–65) is a thin wrapper that forwards directly to `ShowPlatformRepository.findByShowAndPlatform` with no additional logic. It is a candidate for inlining at call sites when the show domain is next refactored. Note: `findShowsByDateRange` (show.service.ts) was **intentionally retained** as a named method because it encodes non-trivial query logic; that one is not a candidate for removal.
+
+**Risk**: None — this is readability/maintainability debt only.
+**Action**: Inline the wrapper at callers during the next show-domain refactor pass. Do not touch it in isolation.
+**Tracked**: April 2026 — deferred from `feat/phase4-1e-show-management-design` PR review.
+
+---
+
 ## Related Documentation
 
 - [Schema Patterns](./schema-patterns.md) — Three-tier schema architecture
