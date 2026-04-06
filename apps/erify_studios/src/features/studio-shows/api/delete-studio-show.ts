@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { studioShowKeys } from './get-studio-show';
+import { studioShowsKeys } from './get-studio-shows';
 
 import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
 import { invalidateStudioTaskQueries } from '@/features/studio-shows/lib/invalidate-studio-task-queries';
@@ -30,6 +31,7 @@ export function useDeleteStudioShow(studioId: string) {
         showIds: [showId],
       });
       queryClient.removeQueries({ queryKey: studioShowKeys.detail(studioId, showId) });
+      await queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
       toast.success('Show deleted');
     },
     onError: (error) => {

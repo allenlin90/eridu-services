@@ -204,8 +204,10 @@ describe('useStudioShowFormLookupOptions', () => {
       'std_1',
       { signal: undefined },
     );
+    // Show statuses are a finite set; the endpoint does not accept a name param,
+    // so the search string is applied client-side via filterOptions() instead.
     expect(mockGetShowStatuses).toHaveBeenLastCalledWith(
-      { name: 'live', limit: 20 },
+      { limit: 10 },
       'std_1',
       { signal: undefined },
     );

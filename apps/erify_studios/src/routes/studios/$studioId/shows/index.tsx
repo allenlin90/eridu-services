@@ -6,6 +6,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
+  adaptSortingChange,
   Button,
   DataTable,
   DataTablePagination,
@@ -51,6 +52,8 @@ function StudioShowsPage() {
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
+    sorting,
+    onSortingChange,
   } = useStudioShowManagement(studioId);
   const { data: showLookups } = useShowLookupsQuery(studioId);
   const createMutation = useCreateStudioShow(studioId);
@@ -128,6 +131,9 @@ function StudioShowsPage() {
           pageSize: pagination.pageSize,
         }}
         onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
+        manualSorting
+        sorting={sorting}
+        onSortingChange={adaptSortingChange(sorting, onSortingChange)}
         columnFilters={columnFilters}
         onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
         renderToolbar={(table) => (
