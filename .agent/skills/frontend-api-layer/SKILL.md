@@ -204,6 +204,47 @@ Rules:
 - If a field cannot search remotely because the backend lacks an endpoint, document the local-filter fallback and keep it out of generic “async lookup” abstractions until the endpoint exists.
 - Review/test expectation: for each searchable field family, verify that typing changes the query key or the documented local-filter state. A no-op `onSearch` is a broken implementation, not an acceptable placeholder.
 
+### Searchable Lookup Hook Structure
+
+When a file exports multiple hooks that each manage a `search` string + `useQuery` for a lookup field, the `useState`/`useQuery`/`staleTime`/`gcTime`/`enabled` boilerplate must be extracted into a shared internal helper rather than repeated per hook.
+
+**Required pattern** (reference: `use-studio-show-form-lookup-options.ts`):
+
+```ts
+// Internal helper — not exported
+function useSearchQuery<T>(
+  segment: string,
+  studioId: string,
+  queryFn: (search: string, studioId: string, signal: AbortSignal | undefined) => Promise<{ data: T[] }>,
+) {
+  const [search, setSearch] = useState('');
+  const query = useQuery({
+    queryKey: ['<scope>', segment, studioId, { search }],
+    queryFn: ({ signal }) => queryFn(search, studioId, signal),
+    enabled: Boolean(studioId),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
+  });
+  return { items: query.data?.data ?? [], isLoading: query.isLoading || query.isFetching, search, setSearch };
+}
+
+// Each exported hook only expresses what differs
+export function useFooOptions(show: ..., studioId: string) {
+  const { items, isLoading, setSearch } = useSearchQuery('foos', studioId, (search, sid, signal) =>
+    getFoos({ name: search || undefined, limit: search ? SEARCH_LIMIT : DEFAULT_LIMIT }, sid, { signal }),
+  );
+  const options = useMemo(() => withSelectedOption(items.map(...), ...), [items, ...]);
+  return { options, isLoading, setSearch };
+}
+```
+
+Rules:
+- Extract the shared helper when two or more lookup hooks exist in the same file — do not wait for three.
+- The helper should not be exported; it is an implementation detail of the hook file.
+- Exception: hooks with genuinely different query config (no `enabled`, different `staleTime`, polling) should not be forced into the shared helper.
+- Existing files with this pattern already applied: `use-studio-show-form-lookup-options.ts`.
+- Existing files that still need refactoring: `use-platforms-field-data.ts`, `use-creators-field-data.ts`, `use-client-field-data.ts` (all under `shows/components/hooks/`).
+
 ### Internal Read Freshness Policy
 
 `erify_studios` uses tiered query freshness instead of `staleTime: 0` everywhere:

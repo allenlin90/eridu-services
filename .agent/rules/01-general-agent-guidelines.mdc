@@ -68,6 +68,11 @@ Required baseline for PWA tasks:
   3. If a remote endpoint does not exist yet, document the temporary local-filter behavior in the design doc and keep the UI semantics honest.
   4. Add or update tests that prove typing into each searchable field changes query state or the documented local-filter state.
   5. During code review and PR review, treat undocumented local fallback, no-op search handlers, and mixed remote/local behavior across same-form fields as blocking findings.
+- **Frontend Searchable Lookup Hook Deduplication (MANDATORY):**
+  1. When a file exports two or more hooks that share the same `useState('')` + `useQuery` + `staleTime`/`gcTime`/`enabled` structure, extract a shared internal helper (e.g. `useSearchQuery`) and reduce each exported hook to only the parts that differ: query segment, API call, and option-mapping logic.
+  2. During planning, flag any new lookup hook file that will contain three or more hooks — design the shared helper upfront rather than retrofitting.
+  3. During implementation, do not copy-paste the boilerplate block; call the shared helper instead.
+  4. During code review and PR review, treat three or more hooks in the same file with duplicated search/query boilerplate as a blocking finding.
 - **Frontend Collapsible Toggle Consistency (MANDATORY):** For show/hide section toggles in frontend pages, use icon-only toggle buttons with `ChevronUp` (expanded) and `ChevronDown` (collapsed), with explicit `aria-label`. Keep placement consistent across breakpoints (prefer top-right of the section header).
 - **Frontend Route Wrapper Consistency (MANDATORY):** For route groups with shared page chrome/padding (for example `studios/$studioId/*`, `system/*`), define one parent route layout (`route.tsx`) with `Outlet` and shared wrapper component. Child pages must not hardcode duplicated page wrapper class strings.
 - **Frontend Leaf Header Wrapper Consistency (MANDATORY):** Inside one route set, leaf pages must use the same shared page-shell component (for example: `/system/*` -> `AdminLayout`, `studios/$studioId/*` -> `PageLayout`). Avoid manual duplicated `<h1>` + description blocks in leaf routes.

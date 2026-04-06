@@ -93,6 +93,7 @@ Applies to `erify_studios` and `erify_creators`.
 - [ ] Mutations use `onMutate`/`onError`/`onSettled` for optimistic updates where the UX requires it.
 - [ ] No direct `fetch`/`axios` calls outside the API layer module.
 - [ ] Searchable lookup inputs/filters have an explicit per-field data-source contract (`scoped endpoint` vs documented local filter) and matching query-key scope discrimination where applicable.
+- [ ] Hook files with two or more lookup hooks extract a shared internal search-query helper — no copy-pasted `useState`/`useQuery`/`staleTime`/`gcTime`/`enabled` blocks across hooks in the same file.
 
 ### State management
 
