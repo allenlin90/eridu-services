@@ -155,6 +155,9 @@ async function compressImage(input: WorkerInput): Promise<Blob> {
 
         for (const quality of DEFAULT_QUALITIES) {
           const blob = await canvas.convertToBlob({ type: outputMimeType, quality });
+          if (blob.type !== outputMimeType) {
+            continue;
+          }
           if (blob.size < bestBlob.size) {
             bestBlob = blob;
           }

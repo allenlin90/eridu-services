@@ -222,7 +222,7 @@ async function compressInMainThread(file: File, options: PrepareImageForUploadOp
 
         for (const quality of DEFAULT_QUALITIES) {
           const blob = await canvasToBlob(canvas, outputMimeType, quality);
-          if (!blob) {
+          if (!blob || blob.type !== outputMimeType) {
             continue;
           }
           if (blob.size < bestBlob.size) {

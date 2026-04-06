@@ -28,6 +28,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
   Textarea,
 } from '@eridu/ui';
 
@@ -527,7 +528,11 @@ export const JsonForm = function JsonForm({
                                       if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
                                         error = `Compressed file for '${item.label}' does not match allowed types`;
                                       } else if (preparedFile.size > maxBytesForField) {
-                                        error = getFileTooLargeMessage(item.label, maxBytesForField);
+                                        const limitKb = Math.round(maxBytesForField / 1024);
+                                        const achievedKb = Math.round(preparedFile.size / 1024);
+                                        error = prepared.wasCompressed
+                                          ? `Could not compress '${item.label}' below ${limitKb} KB (best: ${achievedKb} KB)`
+                                          : getFileTooLargeMessage(item.label, maxBytesForField);
                                       }
 
                                       if (error) {
@@ -668,10 +673,11 @@ function FileFieldRenderer({
             {' '}
             {getFieldMaxHint(item, pendingUpload)}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {pendingUpload.isPreparing && <Spinner className="size-3" />}
             {pendingUpload.isPreparing
               ? (pendingUpload.file.type.startsWith('image/')
-                  ? 'Compressing image in background...'
+                  ? 'Compressing image...'
                   : 'Preparing file...')
               : 'Will upload when you submit.'}
           </p>

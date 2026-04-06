@@ -207,10 +207,12 @@ describe('prepareImageForUpload', () => {
       value: vi.fn().mockRejectedValue(new Error('Blob decoding failed')),
     });
 
+    // JPEG sizeFactor must exceed ~9.07 so JPEG blobs remain over the target even
+    // at the smallest scale step (0.25 × 1179×2556 → 295×639 at quality 0.12).
     installCanvasMock({
-      'image/jpeg': { sizeFactor: 4.2, blobType: 'image/jpeg' },
+      'image/jpeg': { sizeFactor: 12.0, blobType: 'image/jpeg' },
       'image/webp': { sizeFactor: 2.5, blobType: 'image/webp' },
-      'default': { sizeFactor: 4.8 },
+      'default': { sizeFactor: 12.0 },
     });
     installImageMock();
     const file = new File([new Uint8Array(450_000)], 'show-reference.png', { type: 'image/png' });
@@ -287,10 +289,12 @@ describe('prepareImageForUpload', () => {
       value: vi.fn().mockRejectedValue(new Error('Blob decoding failed')),
     });
 
+    // All sizeFactors must exceed ~9.07 so every MIME type stays over the target
+    // even at the smallest scale step (0.25 × 1179×2556 → 295×639 at quality 0.12).
     installCanvasMock({
-      'image/jpeg': { sizeFactor: 4.2, blobType: 'image/jpeg' },
-      'image/webp': { sizeFactor: 4.4, blobType: 'image/webp' },
-      'default': { sizeFactor: 4.8 },
+      'image/jpeg': { sizeFactor: 12.0, blobType: 'image/jpeg' },
+      'image/webp': { sizeFactor: 12.0, blobType: 'image/webp' },
+      'default': { sizeFactor: 12.0 },
     });
     installImageMock();
     const file = new File([new Uint8Array(900_000)], 'oversize.png', { type: 'image/png' });
