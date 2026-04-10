@@ -99,6 +99,10 @@ async create(data: Prisma.TaskCreateInput): Promise<Task>
 - [ ] `getRowId={(row) => row.id}` passed to `<DataTable>` whenever the table is paginated and rows are selectable — prevents index-collision bug across pages
 - [ ] Cross-page selection uses the accumulator pattern (`useEffect` keyed by item ID), not `shows[parseInt(k)]` index lookup
 - [ ] Member/assignee pickers use `AsyncCombobox` from `@eridu/ui`, not `<Select>`, with client-side `onSearch` filtering
+- [ ] Standard paginated routes use `useTableUrlState` for `page/pageSize` instead of route-local pagination state
+- [ ] Paginated queries preserve previous metadata with `placeholderData: keepPreviousData`
+- [ ] Page-count sync comes from real API metadata; no fallback clamp like `totalPages ?? 1` can reset valid pages during loading
+- [ ] Shared `DataTablePagination` is reused unless a documented product exception exists
 
 ### TanStack Query
 - [ ] Query keys follow convention: `['domain', action, ...params]`

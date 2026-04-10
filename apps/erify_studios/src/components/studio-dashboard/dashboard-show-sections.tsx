@@ -196,23 +196,7 @@ export function OperationalDayShowListCard({
           pagination={pagination}
           onPaginationChange={onPaginationChange}
           textOverrides={{
-            showingEntries: (start, end, total) => (
-              <>
-                Showing
-                {' '}
-                {start}
-                {' '}
-                to
-                {' '}
-                {end}
-                {' '}
-                of
-                {' '}
-                {total}
-                {' '}
-                shows
-              </>
-            ),
+            showingEntries: (start, end, total) => `Showing ${start} to ${end} of ${total} shows`,
           }}
         />
       </CardContent>

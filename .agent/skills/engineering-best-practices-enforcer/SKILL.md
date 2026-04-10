@@ -56,6 +56,12 @@ If guidance conflicts, document the trade-off explicitly and choose the lower-ri
    - `pnpm --filter <workspace> typecheck`
    - `pnpm --filter <workspace> test`
    - `pnpm --filter <workspace> build` (only when package wiring/build behavior changed)
+9. For frontend paginated views, run an implementation-parity check before approving or refactoring:
+   - identify the nearest existing paginated route in the same app
+   - compare pagination ownership (`useTableUrlState` vs route-local state)
+   - compare query transition behavior (`keepPreviousData` vs empty metadata resets)
+   - compare footer implementation (`DataTablePagination` vs manual controls)
+   - treat fallback clamps and custom state machines as blocking unless a documented product exception exists
 
 ## Documentation Lifecycle and Placement (Repository Convention)
 
@@ -134,6 +140,8 @@ For every review batch, output:
 6. Residual risk + rollback unit:
    - smallest commit(s) to revert safely
    - any untested edge paths
+
+When the review scope includes paginated frontend routes, explicitly state whether the implementation matches the shared pagination pattern or name the documented exception.
 
 ## Backend Repository Review Checklist
 

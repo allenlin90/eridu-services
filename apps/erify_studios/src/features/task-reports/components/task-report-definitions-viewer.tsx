@@ -176,23 +176,7 @@ export function TaskReportDefinitionsViewer({
           pagination={pagination}
           onPaginationChange={onPaginationChange}
           textOverrides={{
-            showingEntries: (start, end, total) => (
-              <>
-                Showing
-                {' '}
-                {start}
-                {' '}
-                to
-                {' '}
-                {end}
-                {' '}
-                of
-                {' '}
-                {total}
-                {' '}
-                definitions
-              </>
-            ),
+            showingEntries: (start, end, total) => `Showing ${start} to ${end} of ${total} definitions`,
           }}
         />
       </div>
