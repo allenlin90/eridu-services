@@ -2,6 +2,7 @@ import { registerSW } from 'virtual:pwa-register';
 
 const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const CONTROLLER_CHANGE_REFRESH_KEY = 'erify-studios:pwa-controllerchange-refreshed';
+const IOS_PENDING_UPDATE_NOTICE = 'PWA update is ready on iOS. Use Check for updates or restart the app to apply the latest shell.';
 
 let activeRegistration: ServiceWorkerRegistration | null = null;
 let updateIntervalId: number | null = null;
@@ -9,9 +10,23 @@ let hasControllerChangeListener = false;
 let hasForcedRefreshFallback = false;
 let hasLoggedRefreshNotice = false;
 let hasLoggedReloadBlockNotice = false;
+let pendingUpdateActivator: ((reloadPage?: boolean) => Promise<void>) | null = null;
 
 function isPwaRuntimeSupported() {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator;
+}
+
+function isIosWebKitEnvironment() {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent;
+  const platform = navigator.platform;
+  const maxTouchPoints = navigator.maxTouchPoints ?? 0;
+
+  return /iPad|iPhone|iPod/.test(userAgent)
+    || (platform === 'MacIntel' && maxTouchPoints > 1);
 }
 
 function hasForcedRefreshThisSession() {
@@ -64,6 +79,8 @@ function installControllerChangeReloadGuard() {
   }
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    pendingUpdateActivator = null;
+
     if (hasForcedRefreshThisSession()) {
       if (hasLoggedReloadBlockNotice) {
         return;
@@ -99,6 +116,7 @@ export function initializePwaShell() {
   }
 
   installControllerChangeReloadGuard();
+  const requiresManualIosUpdate = isIosWebKitEnvironment();
 
   const triggerUpdate = registerSW({
     immediate: true,
@@ -115,6 +133,18 @@ export function initializePwaShell() {
       startPeriodicUpdateChecks(registration);
     },
     onNeedRefresh() {
+      pendingUpdateActivator = triggerUpdate;
+
+      if (requiresManualIosUpdate) {
+        if (hasLoggedRefreshNotice) {
+          return;
+        }
+
+        hasLoggedRefreshNotice = true;
+        console.warn(IOS_PENDING_UPDATE_NOTICE);
+        return;
+      }
+
       if (hasForcedRefreshThisSession()) {
         if (hasLoggedReloadBlockNotice) {
           return;
@@ -126,6 +156,7 @@ export function initializePwaShell() {
       }
 
       void triggerUpdate(true);
+      pendingUpdateActivator = null;
 
       if (hasLoggedRefreshNotice) {
         return;
@@ -143,6 +174,13 @@ export function initializePwaShell() {
 export async function checkForPwaUpdates(): Promise<boolean> {
   if (!isPwaRuntimeSupported()) {
     return false;
+  }
+
+  if (pendingUpdateActivator) {
+    const applyPendingUpdate = pendingUpdateActivator;
+    pendingUpdateActivator = null;
+    await applyPendingUpdate(true);
+    return true;
   }
 
   const registration = activeRegistration ?? await navigator.serviceWorker.getRegistration();
@@ -174,6 +212,7 @@ export async function recoverPwaShell(options?: { reload?: boolean }) {
     }
 
     activeRegistration = null;
+    pendingUpdateActivator = null;
     hasLoggedReloadBlockNotice = false;
     hasLoggedRefreshNotice = false;
     clearForcedRefreshThisSession();

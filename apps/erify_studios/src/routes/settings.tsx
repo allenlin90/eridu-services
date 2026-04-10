@@ -71,7 +71,7 @@ function SettingsPage() {
                 <CardHeader>
                   <CardTitle className="text-base">Check for Updates</CardTitle>
                   <CardDescription>
-                    Trigger an immediate service worker update check without waiting for the background interval.
+                    Trigger an immediate service worker update check. If an update is already waiting, this also applies it.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

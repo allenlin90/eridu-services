@@ -19,9 +19,35 @@ function mockServiceWorker(serviceWorker: ServiceWorkerMock) {
   });
 }
 
+function mockNavigatorEnvironment({
+  userAgent,
+  platform,
+  maxTouchPoints,
+}: {
+  userAgent: string;
+  platform: string;
+  maxTouchPoints: number;
+}) {
+  Object.defineProperty(navigator, 'userAgent', {
+    configurable: true,
+    value: userAgent,
+  });
+  Object.defineProperty(navigator, 'platform', {
+    configurable: true,
+    value: platform,
+  });
+  Object.defineProperty(navigator, 'maxTouchPoints', {
+    configurable: true,
+    value: maxTouchPoints,
+  });
+}
+
 describe('pwaRuntime', () => {
   const originalProd = import.meta.env.PROD;
   const originalLocation = window.location;
+  const originalUserAgent = navigator.userAgent;
+  const originalPlatform = navigator.platform;
+  const originalMaxTouchPoints = navigator.maxTouchPoints;
 
   beforeEach(() => {
     vi.resetModules();
@@ -37,6 +63,18 @@ describe('pwaRuntime', () => {
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: originalLocation,
+    });
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: originalUserAgent,
+    });
+    Object.defineProperty(navigator, 'platform', {
+      configurable: true,
+      value: originalPlatform,
+    });
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: originalMaxTouchPoints,
     });
   });
 
@@ -196,6 +234,54 @@ describe('pwaRuntime', () => {
 
     getItemSpy.mockRestore();
     setItemSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('keeps updates pending on iOS until manually applied', async () => {
+    const registration = {
+      update: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ServiceWorkerRegistration;
+
+    mockNavigatorEnvironment({
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+      platform: 'iPhone',
+      maxTouchPoints: 5,
+    });
+
+    mockServiceWorker({
+      addEventListener: vi.fn(),
+      getRegistration: vi.fn().mockResolvedValue(registration),
+      getRegistrations: vi.fn(),
+    });
+
+    const triggerUpdate = vi.fn().mockResolvedValue(undefined);
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let onNeedRefreshHandler: (() => void) | undefined;
+
+    registerSWMock.mockImplementation((options: {
+      onRegisteredSW?: (swUrl?: string, registration?: ServiceWorkerRegistration) => void;
+      onNeedRefresh?: () => void;
+    }) => {
+      options.onRegisteredSW?.('/sw.js', registration);
+      onNeedRefreshHandler = options.onNeedRefresh;
+      return triggerUpdate;
+    });
+
+    const { checkForPwaUpdates, initializePwaShell } = await import('../pwa-runtime');
+    initializePwaShell();
+
+    onNeedRefreshHandler?.();
+
+    expect(triggerUpdate).not.toHaveBeenCalled();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'PWA update is ready on iOS. Use Check for updates or restart the app to apply the latest shell.',
+    );
+
+    const didApplyPendingUpdate = await checkForPwaUpdates();
+    expect(didApplyPendingUpdate).toBe(true);
+    expect(triggerUpdate).toHaveBeenCalledTimes(1);
+    expect(triggerUpdate).toHaveBeenCalledWith(true);
+
     consoleWarnSpy.mockRestore();
   });
 

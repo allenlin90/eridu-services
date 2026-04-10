@@ -86,10 +86,12 @@ VitePWA({
 Use `registerType: 'prompt'` or `registerType: 'autoUpdate'`. 
 - **Prompt:** Better for apps where a sudden reload might lose user work (e.g., editors, forms).
 - **AutoUpdate:** Better for read-heavy apps where freshness is priority.
+- **Platform-specific update policy:** If one platform needs manual update application but others can auto-apply, prefer `registerType: 'prompt'` and decide in runtime whether to call the returned update function.
 
 ### 2. Assets and Icons
 - **Maskable Icons:** Always provide `purpose: 'any maskable'` icons for Android compatibility.
 - **Theme Color:** Sync the `theme_color` in `manifest.json` with the `<meta name="theme-color">` in `index.html` and the app's CSS variables.
+- **SPA Fallback URL:** If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'` instead of relying on the default `index.html`. Otherwise navigation requests can fail with browser errors about service-worker responses containing redirections.
 
 ### 3. Offline UX
 - **Connectivity Status:** Implement a hook (e.g., `useOnlineStatus`) to show a non-intrusive banner when the app is offline.

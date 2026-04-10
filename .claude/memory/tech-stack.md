@@ -112,6 +112,8 @@
 - react-hook-form 7.68.0
 - sonner 2.0.7 (toasts)
 - usehooks-ts 3.1.1
+- PWA shell via `vite-plugin-pwa`; Workbox SPA navigation fallback should bind to `/` rather than `index.html` on hosts that canonicalize `index.html`
+- Runtime update policy is `prompt`-based so non-iOS browsers can auto-apply while iOS keeps updates pending until explicitly applied
 
 ### Browser Upload Notes
 - `@eridu/browser-upload` is worker-first (`Web Worker` + `OffscreenCanvas`) with main-thread `canvas` fallback and `HTMLImageElement` decode fallback for Safari/iPhone.

@@ -11,12 +11,13 @@ Push notification delivery and advanced offline mutation workflows are intention
 
 ## Update Policy
 
-- Update strategy: `autoUpdate` via `vite-plugin-pwa`.
+- Update strategy: `prompt` via `vite-plugin-pwa`, with runtime auto-apply on non-iOS and manual apply on iOS.
 - Runtime behavior:
   - service worker registers in production only,
   - initial + periodic update checks run automatically,
-  - controller change can trigger one forced reload per tab session to apply the latest shell,
-  - if another update is found after that forced reload, the app stops auto-applying it and requires a manual refresh.
+  - non-iOS browsers auto-apply the waiting worker once per tab session,
+  - iOS browsers keep the waiting worker pending and require an explicit apply path to avoid standalone reload loops.
+- Navigation fallback is bound to `/` rather than `index.html` so hosts that canonicalize `index.html` do not return redirected document responses through the service worker.
 - API responses remain `NetworkOnly` in service worker runtime caching to avoid double-caching with TanStack Query persistence.
 
 ## Recovery Entry Point
@@ -24,7 +25,7 @@ Push notification delivery and advanced offline mutation workflows are intention
 Navigate to **Settings** (`/settings`) when app shell updates appear stuck after deployment.
 
 Available actions:
-1. **Check for updates**: trigger immediate service worker update check.
+1. **Check for updates**: trigger immediate service worker update check, or apply a waiting update when one is already ready.
 2. **Reset app shell**: unregister service workers, clear caches, and reload.
 
 ## Manual Verification Checklist

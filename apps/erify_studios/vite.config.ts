@@ -47,7 +47,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: [
         'icons/favicon.png',
@@ -91,6 +91,10 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        // Some production hosts canonicalize `/index.html` to `/`, which causes
+        // Chrome to reject the navigation response when Workbox binds SPA
+        // fallback handling to `index.html`.
+        navigateFallback: '/',
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
