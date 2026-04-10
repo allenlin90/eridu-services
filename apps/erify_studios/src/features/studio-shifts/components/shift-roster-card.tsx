@@ -8,15 +8,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DataTablePagination,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Table,
   TableBody,
   TableCell,
@@ -34,10 +30,13 @@ type ShiftRosterCardProps = {
   shifts: StudioShift[];
   isLoading: boolean;
   isFetching: boolean;
-  page: number;
-  totalPages: number;
-  total: number;
-  limit: number;
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+    total: number;
+    pageCount: number;
+  };
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   canManageShifts: boolean;
   memberMap: Map<string, MemberInfo>;
   isMutating: boolean;
@@ -48,19 +47,14 @@ type ShiftRosterCardProps = {
   onToggleDutyManager: (shiftId: string, nextDutyManager: boolean) => void;
   onEdit: (shift: StudioShift) => void;
   onDelete: (shiftId: string) => void;
-  onPreviousPage: () => void;
-  onNextPage: () => void;
-  onLimitChange: (limit: number) => void;
 };
 
 export function ShiftRosterCard({
   shifts,
   isLoading,
   isFetching,
-  page,
-  totalPages,
-  total,
-  limit,
+  pagination,
+  onPaginationChange,
   canManageShifts,
   memberMap,
   isMutating,
@@ -71,9 +65,6 @@ export function ShiftRosterCard({
   onToggleDutyManager,
   onEdit,
   onDelete,
-  onPreviousPage,
-  onNextPage,
-  onLimitChange,
 }: ShiftRosterCardProps) {
   const formatShiftDurationHours = (shift: StudioShift): string => {
     const totalMs = shift.blocks.reduce((acc, block) => {
@@ -105,7 +96,7 @@ export function ShiftRosterCard({
               <div className="overflow-x-auto rounded-md border">
                 <TableSkeleton
                   columnCount={7}
-                  rowCount={Math.max(1, limit)}
+                  rowCount={Math.max(1, pagination.pageSize)}
                   showButton={canManageShifts}
                 />
               </div>
@@ -236,52 +227,11 @@ export function ShiftRosterCard({
                 </div>
               )}
         {shifts.length > 0 && (
-          <div className="mt-4 flex items-center justify-between text-sm">
-            <p className="text-muted-foreground">
-              Page
-              {' '}
-              {Math.min(page, totalPages)}
-              {' '}
-              of
-              {' '}
-              {totalPages}
-              {' '}
-              (
-              {total}
-              {' '}
-              records)
-            </p>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Rows</span>
-                <Select value={String(limit)} onValueChange={(value) => onLimitChange(Number(value))}>
-                  <SelectTrigger className="h-8 w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page <= 1 || isFetching}
-                onClick={onPreviousPage}
-              >
-                Previous
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page >= totalPages || isFetching}
-                onClick={onNextPage}
-              >
-                Next
-              </Button>
-            </div>
+          <div className="mt-4">
+            <DataTablePagination
+              pagination={pagination}
+              onPaginationChange={onPaginationChange}
+            />
           </div>
         )}
       </CardContent>

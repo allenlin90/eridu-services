@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
 import { PageLayout } from '@/components/layouts/page-layout';
@@ -17,7 +17,7 @@ import {
   DEFAULT_OPERATIONAL_DAY_END_HOUR,
 } from '@/features/studio-shifts/utils/shift-date.utils';
 import { formatDate, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-import { useDashboardOperationalDayShows } from '@/features/studio-shows/hooks/use-dashboard-operational-day-shows';
+import { useDashboardOperationalDayShowsPageController } from '@/features/studio-shows/hooks/use-dashboard-operational-day-shows-page-controller';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 const DASHBOARD_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -52,8 +52,6 @@ function StudioDashboardPage() {
   const selectedDate = search.date ?? todayDate;
   const isSelectedToday = selectedDate === todayDate;
 
-  const showsPage = search.page;
-  const showsLimit = search.limit;
   const { hasAccess } = useStudioAccess(studioId);
   const isStudioAdmin = hasAccess('shifts');
 
@@ -73,15 +71,12 @@ function StudioDashboardPage() {
     isLoading: isLoadingTodayShows,
     isFetching: isFetchingTodayShows,
     shows: todayShows,
-    total: totalShows,
-    totalPages: totalShowPages,
-    hasResponse: hasShowsResponse,
-  } = useDashboardOperationalDayShows({
+    pagination,
+    onPaginationChange,
+  } = useDashboardOperationalDayShowsPageController({
     studioId,
     dayStartIso,
     dayEndIso,
-    page: showsPage,
-    limit: showsLimit,
   });
   const isTodayShowsLoading = isLoadingTodayShows || isFetchingTodayShows;
 
@@ -96,16 +91,6 @@ function StudioDashboardPage() {
       replace: options?.replace ?? false,
     });
   }, [navigate, studioId]);
-
-  useEffect(() => {
-    if (!hasShowsResponse) {
-      return;
-    }
-
-    if (showsPage > totalShowPages && totalShowPages > 0) {
-      navigateDashboard((previous) => ({ ...previous, page: totalShowPages }), { replace: true });
-    }
-  }, [hasShowsResponse, navigateDashboard, showsPage, totalShowPages]);
 
   const operationalDateLabel = formatDate(dayStartIso);
 
@@ -143,7 +128,7 @@ function StudioDashboardPage() {
           <OperationalDayShowsSummaryCard
             dateLabel={operationalDateLabel}
             operationalDayEndHour={DEFAULT_OPERATIONAL_DAY_END_HOUR}
-            totalShows={totalShows}
+            totalShows={pagination.total}
             isLoading={isTodayShowsLoading}
           />
           <DashboardDutyCoverageCards
@@ -159,23 +144,10 @@ function StudioDashboardPage() {
           isStudioAdmin={isStudioAdmin}
           operationalDayEndHour={DEFAULT_OPERATIONAL_DAY_END_HOUR}
           isLoading={isTodayShowsLoading}
-          isFetching={isFetchingTodayShows}
           shows={todayShows}
-          totalShows={totalShows}
-          currentPage={showsPage}
-          totalPages={totalShowPages}
-          rowsPerPage={showsLimit}
+          pagination={pagination}
+          onPaginationChange={onPaginationChange}
           formatShowTime={formatTimeHHmm}
-          onRowsPerPageChange={(value) =>
-            navigateDashboard((previous) => ({
-              ...previous,
-              page: 1,
-              limit: value,
-            }))}
-          onPreviousPage={() =>
-            navigateDashboard((previous) => ({ ...previous, page: Math.max(1, showsPage - 1) }))}
-          onNextPage={() =>
-            navigateDashboard((previous) => ({ ...previous, page: Math.min(totalShowPages, showsPage + 1) }))}
         />
 
       </div>

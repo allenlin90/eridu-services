@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
 import { useTableUrlState } from '@eridu/ui';
@@ -64,7 +64,7 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
 
   const query = useQuery({
     queryKey: studioShowsKeys.list(studioId, {
-      page: pagination.pageIndex,
+      page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       search: searchQuery,
       date_from: scopeDateBounds.date_from,
@@ -87,6 +87,7 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
         ...filters,
       }, { signal }),
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   const { data, isLoading, isFetching, isError } = query;
@@ -97,15 +98,28 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
+  const tablePagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        total: 0,
+        pageCount: 0,
+      };
+
   return {
     data,
     shows: data?.data ?? [],
-    total: data?.meta?.total ?? 0,
     isLoading,
     isFetching,
     isError,
     refetch: query.refetch,
-    pagination,
+    pagination: tablePagination,
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,

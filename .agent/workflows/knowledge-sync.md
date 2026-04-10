@@ -36,12 +36,14 @@ Run when any of these are true:
    - Capture only stable/reusable guidance (avoid one-off task logs).
    - Keep paths/references accurate.
    - When frontend access control/navigation behavior changes, document the shared policy location and guard usage so route guard + sidebar visibility remain aligned.
+   - When frontend pagination behavior is standardized or corrected, update `table-view-pattern` and the relevant review-oriented skill/checklist so future implementations and reviews enforce the same stack.
    - When decomposing large routes, document the standard boundary split (route container vs hooks vs presentation sections).
    - When route-shell consistency changes, document parent layout boundary + leaf wrapper convention (for example `/system/*` + `AdminLayout`, `studios/$studioId/*` + `PageLayout`).
 
 4. **Update workflows/rules when process changed**
    - If this change introduces a repeatable process, update/create `.agent/workflows/*.md`.
    - If it should be mandatory, update `.agent/rules/*.md` and `AGENTS.md`.
+   - For pagination consistency mandates, update both implementation guidance and review gates so the shared stack is checked during coding, code review, and PR review.
 
 5. **Update memory references**
    - Record durable project knowledge in `.claude/memory/*.md` (choose the most relevant file).

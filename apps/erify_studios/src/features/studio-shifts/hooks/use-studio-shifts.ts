@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { getMyShifts, type GetMyShiftsParams, myShiftsKeys } from '@/features/studio-shifts/api/get-my-shifts';
 import {
@@ -41,6 +41,7 @@ export function useStudioShifts(
     queryKey: studioShiftsKeys.list(studioId, queryParams),
     queryFn: ({ signal }) => getStudioShifts(studioId, queryParams, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -78,6 +79,7 @@ export function useMyShifts(
     queryKey: myShiftsKeys.list(queryParams),
     queryFn: ({ signal }) => getMyShifts(queryParams, { signal }),
     enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 1000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,

@@ -33,6 +33,12 @@ pnpm --filter <app> test
    - Confirm loading/empty/data UI states still match expected behavior.
    - Confirm route/search-param behaviors still match expected URL contract.
    - Confirm pagination/date/filter transitions behave correctly after extraction/decomposition.
+   - For standard paginated frontend views, confirm the route still uses the shared pagination stack:
+     - `useTableUrlState` owns URL pagination state
+     - query uses `placeholderData: keepPreviousData`
+     - `setPageCount` is driven by real API metadata
+     - footer reuses `DataTablePagination`
+     - no fallback clamp such as `totalPages ?? 1` can reset a valid page during loading
    - Confirm route-layout DRY parity for touched route sets:
      - parent route owns shared container/guard via `<Outlet />`
      - leaf pages use the route-set shared page wrapper (for example `AdminLayout` or `PageLayout`) instead of repeated manual header markup.

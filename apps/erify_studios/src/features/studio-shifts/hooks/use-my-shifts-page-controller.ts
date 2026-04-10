@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
+
+import { useTableUrlState } from '@eridu/ui';
 
 import { useMyShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import type { MyShiftsRouteSearch } from '@/features/studio-shifts/utils/my-shifts-route-search.utils';
@@ -19,6 +21,13 @@ export function useMyShiftsPageController({
   studioId,
   search,
 }: UseMyShiftsPageControllerParams) {
+  const {
+    pagination,
+    onPaginationChange,
+    setPageCount,
+  } = useTableUrlState({
+    from: '/studios/$studioId/my-shifts',
+  });
   const today = toLocalDateInputValue(new Date());
   const dateFrom = resolveDateParamOrDefault(search.date_from, today);
   const dateTo = resolveDateParamOrDefault(
@@ -27,8 +36,8 @@ export function useMyShiftsPageController({
   );
 
   const myShiftsQuery = useMyShifts({
-    page: search.page,
-    limit: search.limit,
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
     studio_id: studioId,
     date_from: dateFrom,
     date_to: dateTo,
@@ -37,9 +46,26 @@ export function useMyShiftsPageController({
     enabled: Boolean(studioId),
   });
 
+  useEffect(() => {
+    if (myShiftsQuery.data?.meta?.totalPages !== undefined) {
+      setPageCount(myShiftsQuery.data.meta.totalPages);
+    }
+  }, [myShiftsQuery.data?.meta?.totalPages, setPageCount]);
+
   const shifts = myShiftsQuery.data?.data ?? [];
-  const totalPages = myShiftsQuery.data?.meta?.totalPages ?? 1;
-  const total = myShiftsQuery.data?.meta?.total ?? 0;
+  const tablePagination = myShiftsQuery.data?.meta
+    ? {
+        pageIndex: myShiftsQuery.data.meta.page - 1,
+        pageSize: myShiftsQuery.data.meta.limit,
+        total: myShiftsQuery.data.meta.total,
+        pageCount: myShiftsQuery.data.meta.totalPages,
+      }
+    : {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        total: 0,
+        pageCount: 0,
+      };
 
   const dateRange = useMemo<DateRange>(() => ({
     from: new Date(`${dateFrom}T00:00:00`),
@@ -52,8 +78,8 @@ export function useMyShiftsPageController({
     dateTo,
     dateRange,
     shifts,
-    totalPages,
-    total,
+    pagination: tablePagination,
+    onPaginationChange,
     isLoadingMyShifts: myShiftsQuery.isLoading,
     isFetchingMyShifts: myShiftsQuery.isFetching,
     refetchMyShifts: myShiftsQuery.refetch,

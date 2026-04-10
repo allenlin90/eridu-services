@@ -193,6 +193,21 @@ Review expectation:
 2. Preserve behavior and URL contracts (search params, pagination, filters).
 3. Avoid cosmetic-only extraction that adds indirection without reducing complexity.
 
+### Paginated Route Consistency
+
+For standard server-driven paginated routes, do not invent route-local pagination patterns.
+
+Implementation baseline:
+- `useTableUrlState` owns URL pagination state
+- the feature hook/controller updates `setPageCount` from real API metadata
+- paginated queries use `placeholderData: keepPreviousData`
+- shared `DataTablePagination` renders the footer unless the UX is intentionally different and documented
+
+Review expectation:
+1. Challenge any manual next/prev button implementation on a standard paginated route.
+2. Treat fallback clamps such as `totalPages ?? 1` during loading as correctness bugs.
+3. Treat missing previous-data preservation on paginated queries as a UX consistency finding.
+
 ### Avoid Low-Value Component Extraction
 
 Do not extract a component if it only wraps a single primitive element with fixed styling and one callback, unless there is a clear reuse or complexity need.

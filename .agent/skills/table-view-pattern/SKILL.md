@@ -221,6 +221,26 @@ Use `DataTablePagination` for standard server-driven tables.
 
 Do not create per-feature pagination controls unless the feature has a materially different UX.
 
+Required baseline for standard paginated routes:
+- `useTableUrlState` owns `page` and `pageSize`
+- the feature hook/controller maps URL state to API params
+- the feature hook/controller feeds API pagination metadata back through `setPageCount`
+- the paginated query uses `placeholderData: keepPreviousData`
+- the route/presentation layer reuses `DataTablePagination` instead of manual next/prev controls
+
+This rule applies to table-like paginated surfaces even when the presentation is cards or custom rows rather than a literal `DataTable`, unless the product requirement makes the shared footer unsuitable.
+
+When page changes trigger a new server query:
+- prefer `placeholderData: keepPreviousData` on the paginated query so the previous page metadata remains available during transition
+- only auto-correct an out-of-range page after real API pagination metadata arrives
+- never clamp against a fallback like `totalPages ?? 1` while the next page is still loading, or valid pages such as `?page=2` can be forced back to page 1 before the response resolves
+
+Review gate for pagination work:
+- if a route manually reads/writes `page` and `limit`, ask why `useTableUrlState` is not the owner
+- if a paginated query drops previous metadata during transitions, ask why `keepPreviousData` is missing
+- if the UI renders custom pagination buttons, ask why `DataTablePagination` is not reused
+- if page correction depends on fallback values instead of real API metadata, treat it as a correctness bug rather than a style preference
+
 ## Virtualized Table Pattern
 Use this only when the shared server-paginated table is not enough.
 

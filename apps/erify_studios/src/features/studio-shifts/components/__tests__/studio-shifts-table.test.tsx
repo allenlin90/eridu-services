@@ -4,12 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { StudioShiftsTable } from '../studio-shifts-table';
 
-import type { StudioShiftsResponse } from '@/features/studio-shifts/api/studio-shifts.types';
-
 const mockDeleteMutateAsync = vi.fn();
 const mockUpdateSearch = vi.fn();
-
-const mockUseStudioShifts = vi.fn();
+const mockUseStudioShiftsPageController = vi.fn();
 
 vi.mock('@/features/studio-shifts/hooks/use-studio-member-map', () => ({
   useStudioMemberMap: () => ({ memberMap: {} }),
@@ -19,8 +16,8 @@ vi.mock('@/features/memberships/api/get-studio-memberships', () => ({
   useStudioMembershipsQuery: () => ({ data: { data: [] }, isLoading: false }),
 }));
 
-vi.mock('@/features/studio-shifts/hooks/use-studio-shifts', () => ({
-  useStudioShifts: (...args: unknown[]) => mockUseStudioShifts(...args),
+vi.mock('@/features/studio-shifts/hooks/use-studio-shifts-page-controller', () => ({
+  useStudioShiftsPageController: (...args: unknown[]) => mockUseStudioShiftsPageController(...args),
 }));
 
 vi.mock('@/features/studio-shifts/api/create-studio-shift', () => ({
@@ -70,19 +67,19 @@ vi.mock('@/features/studio-shifts/components/shift-roster-card', () => ({
   ShiftRosterCard: ({
     shifts,
     onDelete,
-    onLimitChange,
+    onPaginationChange,
   }: {
     shifts: Array<{ id: string }>;
     onDelete: (shiftId: string) => void;
-    onLimitChange: (limit: number) => void;
+    onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   }) => (
     <div>
       <p data-testid="shift-order">{shifts.map((shift) => shift.id).join(',')}</p>
       <button type="button" onClick={() => onDelete('ssh_1')}>
         delete-ssh-1
       </button>
-      <button type="button" onClick={() => onLimitChange(25)}>
-        limit-25
+      <button type="button" onClick={() => onPaginationChange({ pageIndex: 0, pageSize: 20 })}>
+        pagination-change
       </button>
     </div>
   ),
@@ -134,29 +131,29 @@ describe('studioShiftsTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockUseStudioShifts.mockReturnValue({
-      data: {
-        data: [],
-        meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
-      } satisfies StudioShiftsResponse,
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: undefined,
+      shifts: [],
       isLoading: false,
       isFetching: false,
       refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 10, total: 0, pageCount: 0 },
+      onPaginationChange: vi.fn(),
     });
   });
 
-  it('sorts shifts by first block start before rendering roster', () => {
-    mockUseStudioShifts.mockReturnValue({
-      data: {
-        data: [
-          createShift('ssh_late', '2026-03-05T11:00:00.000Z'),
-          createShift('ssh_early', '2026-03-05T09:00:00.000Z'),
-        ],
-        meta: { page: 1, limit: 10, total: 2, totalPages: 1 },
-      } satisfies StudioShiftsResponse,
+  it('renders shifts from the page controller', () => {
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: undefined,
+      shifts: [
+        createShift('ssh_early', '2026-03-05T09:00:00.000Z'),
+        createShift('ssh_late', '2026-03-05T11:00:00.000Z'),
+      ],
       isLoading: false,
       isFetching: false,
       refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 10, total: 2, pageCount: 1 },
+      onPaginationChange: vi.fn(),
     });
 
     render(
@@ -174,14 +171,14 @@ describe('studioShiftsTable', () => {
   it('opens delete confirmation dialog before mutation', async () => {
     const user = userEvent.setup();
     mockDeleteMutateAsync.mockResolvedValue(undefined);
-    mockUseStudioShifts.mockReturnValue({
-      data: {
-        data: [createShift('ssh_1', '2026-03-05T09:00:00.000Z')],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
-      } satisfies StudioShiftsResponse,
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: undefined,
+      shifts: [createShift('ssh_1', '2026-03-05T09:00:00.000Z')],
       isLoading: false,
       isFetching: false,
       refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 10, total: 1, pageCount: 1 },
+      onPaginationChange: vi.fn(),
     });
 
     render(
@@ -205,8 +202,19 @@ describe('studioShiftsTable', () => {
     });
   });
 
-  it('opens create dialog and updates limit via roster action', async () => {
+  it('opens create dialog and wires pagination changes through the shared handler', async () => {
     const user = userEvent.setup();
+    const mockOnPaginationChange = vi.fn();
+
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: undefined,
+      shifts: [],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 10, total: 0, pageCount: 0 },
+      onPaginationChange: mockOnPaginationChange,
+    });
 
     render(
       <StudioShiftsTable
@@ -222,8 +230,8 @@ describe('studioShiftsTable', () => {
     await user.click(screen.getByRole('button', { name: 'open-create' }));
     expect(screen.getByTestId('dialog-create')).toHaveTextContent('open');
 
-    await user.click(screen.getByRole('button', { name: 'limit-25' }));
+    await user.click(screen.getByRole('button', { name: 'pagination-change' }));
 
-    expect(mockUpdateSearch).toHaveBeenCalled();
+    expect(mockOnPaginationChange).toHaveBeenCalledWith({ pageIndex: 0, pageSize: 20 });
   });
 });

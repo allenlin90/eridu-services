@@ -381,7 +381,6 @@ function StudioShowsTableSection({
 
   const {
     shows,
-    total,
     isLoading,
     isFetching,
     refetch,
@@ -508,7 +507,7 @@ function StudioShowsTableSection({
         manualPagination
         manualFiltering
         manualSorting
-        pageCount={Math.ceil(total / pagination.pageSize)}
+        pageCount={pagination.pageCount}
         paginationState={{
           pageIndex: pagination.pageIndex,
           pageSize: pagination.pageSize,
@@ -564,12 +563,7 @@ function StudioShowsTableSection({
         )}
         renderFooter={() => (
           <DataTablePagination
-            pagination={{
-              pageIndex: pagination.pageIndex,
-              pageSize: pagination.pageSize,
-              total,
-              pageCount: Math.ceil(total / pagination.pageSize),
-            }}
+            pagination={pagination}
             onPaginationChange={onPaginationChange}
           />
         )}

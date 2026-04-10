@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { getStudioShows, studioShowsKeys } from '@/features/studio-shows/api/get-studio-shows';
 
@@ -33,6 +33,7 @@ export function useDashboardOperationalDayShows({
         date_to: dayEndIso,
       }),
     enabled: Boolean(studioId),
+    placeholderData: keepPreviousData,
   });
 
   const response = query.data;
