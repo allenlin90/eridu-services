@@ -81,6 +81,10 @@ function installControllerChangeReloadGuard() {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     pendingUpdateActivator = null;
 
+    if (isIosWebKitEnvironment()) {
+      return;
+    }
+
     if (hasForcedRefreshThisSession()) {
       if (hasLoggedReloadBlockNotice) {
         return;
