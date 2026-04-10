@@ -1,14 +1,61 @@
 import { registerSW } from 'virtual:pwa-register';
 
 const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+const CONTROLLER_CHANGE_REFRESH_KEY = 'erify-studios:pwa-controllerchange-refreshed';
 
 let activeRegistration: ServiceWorkerRegistration | null = null;
 let updateIntervalId: number | null = null;
 let hasControllerChangeListener = false;
-let isReloadingForControllerChange = false;
+let hasForcedRefreshFallback = false;
+let hasLoggedRefreshNotice = false;
+let hasLoggedReloadBlockNotice = false;
 
 function isPwaRuntimeSupported() {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator;
+}
+
+function hasForcedRefreshThisSession() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  if (hasForcedRefreshFallback) {
+    return true;
+  }
+
+  try {
+    return window.sessionStorage.getItem(CONTROLLER_CHANGE_REFRESH_KEY) === 'true';
+  } catch {
+    return hasForcedRefreshFallback;
+  }
+}
+
+function markForcedRefreshThisSession() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  hasForcedRefreshFallback = true;
+
+  try {
+    window.sessionStorage.setItem(CONTROLLER_CHANGE_REFRESH_KEY, 'true');
+  } catch {
+    // Ignore storage failures and fall back to in-memory guard behavior.
+  }
+}
+
+function clearForcedRefreshThisSession() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  hasForcedRefreshFallback = false;
+
+  try {
+    window.sessionStorage.removeItem(CONTROLLER_CHANGE_REFRESH_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
 function installControllerChangeReloadGuard() {
@@ -17,11 +64,17 @@ function installControllerChangeReloadGuard() {
   }
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (isReloadingForControllerChange) {
+    if (hasForcedRefreshThisSession()) {
+      if (hasLoggedReloadBlockNotice) {
+        return;
+      }
+
+      hasLoggedReloadBlockNotice = true;
+      console.warn('PWA update already forced one refresh in this session. Further updates require a manual refresh.');
       return;
     }
 
-    isReloadingForControllerChange = true;
+    markForcedRefreshThisSession();
     window.location.reload();
   });
 
@@ -62,7 +115,24 @@ export function initializePwaShell() {
       startPeriodicUpdateChecks(registration);
     },
     onNeedRefresh() {
+      if (hasForcedRefreshThisSession()) {
+        if (hasLoggedReloadBlockNotice) {
+          return;
+        }
+
+        hasLoggedReloadBlockNotice = true;
+        console.warn('PWA update already forced one refresh in this session. Further updates require a manual refresh.');
+        return;
+      }
+
       void triggerUpdate(true);
+
+      if (hasLoggedRefreshNotice) {
+        return;
+      }
+
+      hasLoggedRefreshNotice = true;
+      console.warn('PWA update applied. Restart or refresh the app when convenient to load the latest shell.');
     },
     onRegisterError(error) {
       console.error('PWA service worker registration failed', error);
@@ -104,7 +174,9 @@ export async function recoverPwaShell(options?: { reload?: boolean }) {
     }
 
     activeRegistration = null;
-    isReloadingForControllerChange = false;
+    hasLoggedReloadBlockNotice = false;
+    hasLoggedRefreshNotice = false;
+    clearForcedRefreshThisSession();
 
     if (updateIntervalId !== null) {
       window.clearInterval(updateIntervalId);

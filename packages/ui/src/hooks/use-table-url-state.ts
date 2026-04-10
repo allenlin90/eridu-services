@@ -345,6 +345,7 @@ export function useTableUrlState<TRoute extends string>(
     (updater: PaginationState | ((old: PaginationState) => PaginationState)) => {
       const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
       navigate({
+        replace: true,
         search: (prev) => {
           const next = { ...prev, ...paginationToUrl(newPagination) };
           // Delete legacy pageSize so it is never re-serialised to the URL.
@@ -360,6 +361,7 @@ export function useTableUrlState<TRoute extends string>(
     (updater: SortingState | ((old: SortingState) => SortingState)) => {
       const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
       navigate({
+        replace: true,
         search: (prev) => ({
           ...prev,
           ...sortingToUrl(newSorting),
@@ -381,6 +383,7 @@ export function useTableUrlState<TRoute extends string>(
       const filterUpdates = serializeFilters(nextFilters, columnFilters, paramNames, searchColumnId, dateColumnId);
 
       navigate({
+        replace: true,
         search: (prev) => {
           const next = { ...prev };
 

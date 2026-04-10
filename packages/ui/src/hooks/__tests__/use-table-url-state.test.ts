@@ -75,6 +75,7 @@ describe('useTableUrlState', () => {
 
       expect(mockNavigate).toHaveBeenCalledWith(
         expect.objectContaining({
+          replace: true,
           search: expect.any(Function),
         }),
       );
@@ -194,6 +195,7 @@ describe('useTableUrlState', () => {
 
       expect(mockNavigate).toHaveBeenCalledWith(
         expect.objectContaining({
+          replace: true,
           search: expect.any(Function),
         }),
       );
@@ -223,6 +225,7 @@ describe('useTableUrlState', () => {
 
       expect(mockNavigate).toHaveBeenCalledWith(
         expect.objectContaining({
+          replace: true,
           search: expect.any(Function),
         }),
       );

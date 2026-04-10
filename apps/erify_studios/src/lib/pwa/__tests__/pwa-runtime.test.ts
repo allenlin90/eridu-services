@@ -84,7 +84,67 @@ describe('pwaRuntime', () => {
     expect(addEventListener).toHaveBeenCalledWith('controllerchange', expect.any(Function));
   });
 
-  it('reloads only once when service worker controller changes repeatedly', async () => {
+  it('does not auto-apply another update after the session already forced a refresh', async () => {
+    const registration = {
+      update: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ServiceWorkerRegistration;
+
+    let controllerChangeHandler: (() => void) | null = null;
+    const addEventListener = vi.fn().mockImplementation((event: string, handler: () => void) => {
+      if (event === 'controllerchange') {
+        controllerChangeHandler = handler;
+      }
+    });
+    mockServiceWorker({
+      addEventListener,
+      getRegistration: vi.fn().mockResolvedValue(registration),
+      getRegistrations: vi.fn(),
+    });
+
+    const triggerUpdate = vi.fn();
+    const reloadSpy = vi.fn();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let onNeedRefreshHandler: (() => void) | undefined;
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadSpy },
+    });
+
+    registerSWMock.mockImplementation((options: {
+      onRegisteredSW?: (swUrl?: string, registration?: ServiceWorkerRegistration) => void;
+      onNeedRefresh?: () => void;
+    }) => {
+      options.onRegisteredSW?.('/sw.js', registration);
+      onNeedRefreshHandler = options.onNeedRefresh;
+      return triggerUpdate;
+    });
+
+    const { initializePwaShell } = await import('../pwa-runtime');
+    initializePwaShell();
+
+    onNeedRefreshHandler?.();
+    expect(controllerChangeHandler).toBeTypeOf('function');
+    controllerChangeHandler?.();
+    onNeedRefreshHandler?.();
+    controllerChangeHandler?.();
+
+    expect(triggerUpdate).toHaveBeenCalledTimes(1);
+    expect(triggerUpdate).toHaveBeenCalledWith(true);
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
+    expect(consoleWarnSpy).toHaveBeenNthCalledWith(
+      1,
+      'PWA update applied. Restart or refresh the app when convenient to load the latest shell.',
+    );
+    expect(consoleWarnSpy).toHaveBeenNthCalledWith(
+      2,
+      'PWA update already forced one refresh in this session. Further updates require a manual refresh.',
+    );
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('falls back to an in-memory reload guard when sessionStorage is unavailable', async () => {
     const registration = {
       update: vi.fn().mockResolvedValue(undefined),
     } as unknown as ServiceWorkerRegistration;
@@ -102,6 +162,14 @@ describe('pwaRuntime', () => {
     });
 
     const reloadSpy = vi.fn();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const getItemSpy = vi.spyOn(window.sessionStorage, 'getItem').mockImplementation(() => {
+      throw new Error('storage blocked');
+    });
+    const setItemSpy = vi.spyOn(window.sessionStorage, 'setItem').mockImplementation(() => {
+      throw new Error('storage blocked');
+    });
+
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { ...window.location, reload: reloadSpy },
@@ -122,6 +190,13 @@ describe('pwaRuntime', () => {
     controllerChangeHandler?.();
 
     expect(reloadSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'PWA update already forced one refresh in this session. Further updates require a manual refresh.',
+    );
+
+    getItemSpy.mockRestore();
+    setItemSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
   });
 
   it('logs registration errors safely', async () => {

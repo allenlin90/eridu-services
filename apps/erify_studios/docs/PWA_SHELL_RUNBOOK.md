@@ -15,7 +15,8 @@ Push notification delivery and advanced offline mutation workflows are intention
 - Runtime behavior:
   - service worker registers in production only,
   - initial + periodic update checks run automatically,
-  - controller change triggers a guarded one-time reload to apply the latest shell.
+  - controller change can trigger one forced reload per tab session to apply the latest shell,
+  - if another update is found after that forced reload, the app stops auto-applying it and requires a manual refresh.
 - API responses remain `NetworkOnly` in service worker runtime caching to avoid double-caching with TanStack Query persistence.
 
 ## Recovery Entry Point
@@ -33,4 +34,3 @@ Available actions:
 3. Confirm the app updates to latest shell and reloads cleanly.
 4. Confirm outdated caches are removed.
 5. Use the **Reset App Shell** action in Settings and verify app reloads in a clean state.
-
