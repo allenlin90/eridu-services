@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type { ListTaskReportDefinitionsQuery } from '@eridu/api-types/task-management';
 
@@ -14,5 +14,6 @@ export function useTaskReportDefinitions({ studioId, query }: UseTaskReportDefin
   return useQuery({
     queryKey: taskReportDefinitionKeys.list(studioId, query),
     queryFn: ({ signal }) => getTaskReportDefinitions(studioId, query, { signal }),
+    placeholderData: keepPreviousData,
   });
 }

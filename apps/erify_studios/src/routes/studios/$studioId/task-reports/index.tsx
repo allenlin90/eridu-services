@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import { TaskReportDefinitionsViewer } from '@/features/task-reports/components/task-report-definitions-viewer';
+import { useTaskReportDefinitionsPageController } from '@/features/task-reports/hooks/use-task-report-definitions-page-controller';
 
 const taskReportDefinitionsSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
@@ -17,8 +18,18 @@ export const Route = createFileRoute('/studios/$studioId/task-reports/')({
 
 function TaskReportsDefinitionsPage() {
   const { studioId } = Route.useParams();
-  const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const {
+    data,
+    pagination,
+    onPaginationChange,
+    search,
+    onSearchChange,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useTaskReportDefinitionsPageController({ studioId });
 
   return (
     <PageLayout
@@ -27,31 +38,16 @@ function TaskReportsDefinitionsPage() {
     >
       <TaskReportDefinitionsViewer
         studioId={studioId}
-        page={search.page}
-        limit={search.limit}
-        search={search.search}
-        onSearchChange={(value) => {
-          void navigate({
-            to: '/studios/$studioId/task-reports',
-            params: { studioId },
-            search: (prev) => ({
-              ...prev,
-              page: 1,
-              search: value,
-            }),
-            replace: true,
-          });
-        }}
-        onPageChange={(nextPage) => {
-          void navigate({
-            to: '/studios/$studioId/task-reports',
-            params: { studioId },
-            search: (prev) => ({
-              ...prev,
-              page: nextPage,
-            }),
-            replace: true,
-          });
+        definitions={data?.data ?? []}
+        pagination={pagination}
+        onPaginationChange={onPaginationChange}
+        search={search}
+        onSearchChange={onSearchChange}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        isError={isError}
+        onRefresh={() => {
+          void refetch();
         }}
         onCreateNew={() => {
           void navigate({

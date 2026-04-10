@@ -4,50 +4,55 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { TaskReportDefinition } from '@eridu/api-types/task-management';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@eridu/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTablePagination, Input } from '@eridu/ui';
 
 import { useDeleteTaskReportDefinition } from '../hooks/use-delete-task-report-definition';
-import { useTaskReportDefinitions } from '../hooks/use-task-report-definitions';
 
 import { DeleteConfirmDialog } from '@/features/admin/components';
 
 type TaskReportDefinitionsViewerProps = {
   studioId: string;
-  page: number;
-  limit: number;
+  definitions: TaskReportDefinition[];
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+    total: number;
+    pageCount: number;
+  };
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   search: string | undefined;
   onSearchChange: (value: string | undefined) => void;
-  onPageChange: (page: number) => void;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  onRefresh: () => void;
   onCreateNew: () => void;
   onOpenBuilder: (definitionId: string) => void;
 };
 
 export function TaskReportDefinitionsViewer({
   studioId,
-  page,
-  limit,
+  definitions,
+  pagination,
+  onPaginationChange,
   search,
   onSearchChange,
-  onPageChange,
+  isLoading,
+  isFetching,
+  isError,
+  onRefresh,
   onCreateNew,
   onOpenBuilder,
 }: TaskReportDefinitionsViewerProps) {
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
-  const { data, isLoading, isFetching, isError, refetch } = useTaskReportDefinitions({
-    studioId,
-    query: { page, limit, search },
-  });
   const deleteMutation = useDeleteTaskReportDefinition({ studioId });
 
-  const definitions = data?.data ?? [];
-  const total = data?.meta.total ?? 0;
-  const totalPages = data?.meta.totalPages ?? 1;
   const pageTitle = useMemo(() => {
-    if (total === 0) {
+    if (pagination.total === 0) {
       return 'No saved definitions';
     }
-    return `${total} saved definition${total === 1 ? '' : 's'}`;
-  }, [total]);
+    return `${pagination.total} saved definition${pagination.total === 1 ? '' : 's'}`;
+  }, [pagination.total]);
 
   const formatScopeSummary = (definition: TaskReportDefinition) => {
     const summary = [];
@@ -91,7 +96,7 @@ export function TaskReportDefinitionsViewer({
             variant="outline"
             size="icon"
             className="h-9 w-9"
-            onClick={() => void refetch()}
+            onClick={onRefresh}
             disabled={isFetching}
             aria-label="Refresh task report definitions"
           >
@@ -166,32 +171,30 @@ export function TaskReportDefinitionsViewer({
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end gap-2 border-t pt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={page <= 1 || isFetching}
-        >
-          Previous
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          Page
-          {' '}
-          {page}
-          {' '}
-          of
-          {' '}
-          {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages || isFetching}
-        >
-          Next
-        </Button>
+      <div className="border-t pt-4">
+        <DataTablePagination
+          pagination={pagination}
+          onPaginationChange={onPaginationChange}
+          textOverrides={{
+            showingEntries: (start, end, total) => (
+              <>
+                Showing
+                {' '}
+                {start}
+                {' '}
+                to
+                {' '}
+                {end}
+                {' '}
+                of
+                {' '}
+                {total}
+                {' '}
+                definitions
+              </>
+            ),
+          }}
+        />
       </div>
 
       <DeleteConfirmDialog

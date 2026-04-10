@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { CalendarDays } from 'lucide-react';
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTablePagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
 
 import { TaskSummaryInline } from './dashboard-coverage-cards';
 
@@ -21,16 +21,15 @@ type OperationalDayShowListCardProps = {
   isStudioAdmin: boolean;
   operationalDayEndHour: number;
   isLoading: boolean;
-  isFetching: boolean;
   shows: StudioShow[];
-  totalShows: number;
-  currentPage: number;
-  totalPages: number;
-  rowsPerPage: number;
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+    total: number;
+    pageCount: number;
+  };
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   formatShowTime: (value: string) => string;
-  onRowsPerPageChange: (value: number) => void;
-  onPreviousPage: () => void;
-  onNextPage: () => void;
 };
 
 function formatShowCreators(show: StudioShow): string {
@@ -88,16 +87,10 @@ export function OperationalDayShowListCard({
   isStudioAdmin,
   operationalDayEndHour,
   isLoading,
-  isFetching,
   shows,
-  totalShows,
-  currentPage,
-  totalPages,
-  rowsPerPage,
+  pagination,
+  onPaginationChange,
   formatShowTime,
-  onRowsPerPageChange,
-  onPreviousPage,
-  onNextPage,
 }: OperationalDayShowListCardProps) {
   return (
     <Card>
@@ -199,48 +192,29 @@ export function OperationalDayShowListCard({
               )}
       </CardContent>
       <CardContent className="pt-0">
-        <div className="flex items-center justify-between text-sm">
-          <p className="text-muted-foreground">
-            Page
-            {' '}
-            {Math.min(currentPage, totalPages)}
-            {' '}
-            of
-            {' '}
-            {totalPages}
-            {' '}
-            (
-            {totalShows}
-            {' '}
-            shows)
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-2 sm:flex">
-              <span className="text-muted-foreground">Rows</span>
-              <Select value={String(rowsPerPage)} onValueChange={(value) => onRowsPerPageChange(Number(value))}>
-                <SelectTrigger className="h-8 w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button size="sm" variant="outline" disabled={currentPage <= 1 || isFetching} onClick={onPreviousPage}>
-              Previous
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={currentPage >= totalPages || isFetching}
-              onClick={onNextPage}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+        <DataTablePagination
+          pagination={pagination}
+          onPaginationChange={onPaginationChange}
+          textOverrides={{
+            showingEntries: (start, end, total) => (
+              <>
+                Showing
+                {' '}
+                {start}
+                {' '}
+                to
+                {' '}
+                {end}
+                {' '}
+                of
+                {' '}
+                {total}
+                {' '}
+                shows
+              </>
+            ),
+          }}
+        />
       </CardContent>
     </Card>
   );
