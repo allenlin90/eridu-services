@@ -207,7 +207,7 @@ Features:
 - Pre-publish validation (room conflicts, MC double-booking)
 - Version restore capabilities
 - CSV import/export for migration from Google Sheets
-- **Client-scoped query support**: Query schedules by client ID and date range for planning workflows
+- **Client-aware query support**: Query client-linked schedules by client ID and date range for planning workflows while still allowing studio-internal schedules with no client link
 - **Google Sheets integration**: Support for sorted monthly schedule listings
 
 Business Rules:
@@ -218,7 +218,7 @@ Business Rules:
 - Pre-publish validation prevents double-booking and conflicts
 - All changes create immutable snapshots for audit trail
 - **Schedule Naming & Duration**: Schedule names and date ranges can overlap for different packages, events, and campaigns - there are no unique constraints on (name, clientId, startDate, endDate) combinations. Idempotency handling (Phase 2) prevents duplicate schedule creation from retries or concurrent requests.
-- **Client Separation**: Schedules are client-scoped and can be queried by client ID and date range for planning workflows
+- **Client Separation**: Schedules may be client-linked or studio-internal. Client-linked schedules can be queried by client ID and date range for planning workflows; studio-internal schedules remain unlinked.
 
 ## Studio shift planning and control
 
@@ -232,8 +232,9 @@ Core Rules:
 
 - **Duty manager coverage is show-time critical**: the primary coverage risk is when no duty manager is on shift while a show is happening.
 - **Operational day boundary is 06:00**:
-  - Shows with start time before `06:00` are counted in the previous operational day.
-  - Shows with start time at or after `06:00` are counted in that date's operational day.
+  - Shows with start time (local) before `06:00` are counted in the **previous** operational day.
+  - Shows with start time (local) at or after `06:00` are counted in that date's operational day.
+  - This rule applies to **both** shift planning (duty-manager coverage bucketing) and **schedule membership** (which schedule a show belongs to). A show starting Feb 1 02:00 local belongs to the Jan 31 operational day and is valid for a January schedule.
 - **Operational day continuity**: for each operational day, duty manager continuity is evaluated from the first show start to the last show end.
 - **Time storage vs presentation**:
   - Persisted datetimes are UTC/epoch-standardized in DB.
