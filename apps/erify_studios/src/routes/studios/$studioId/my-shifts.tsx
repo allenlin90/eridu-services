@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
@@ -58,9 +58,8 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
     today,
     dateRange,
     shifts,
-    totalPages,
-    resolvedTotalPages,
-    total,
+    pagination,
+    onPaginationChange,
     isLoadingMyShifts,
     isFetchingMyShifts,
     refetchMyShifts,
@@ -81,15 +80,6 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
     });
   }, [navigate, studioId]);
 
-  useEffect(() => {
-    if (typeof totalPages === 'number' && search.page > totalPages && totalPages > 0) {
-      updateSearch((previous) => ({
-        ...previous,
-        page: totalPages,
-      }));
-    }
-  }, [search.page, totalPages, updateSearch]);
-
   const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
     const effectiveFrom = range?.from ?? new Date(`${today}T00:00:00`);
     const fallbackTo = addDays(effectiveFrom, 7);
@@ -108,14 +98,6 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
       ...previous,
       page: 1,
       status,
-    }));
-  }, [updateSearch]);
-
-  const handleRowsPerPageChange = useCallback((limit: number) => {
-    updateSearch((previous) => ({
-      ...previous,
-      page: 1,
-      limit,
     }));
   }, [updateSearch]);
 
@@ -145,8 +127,8 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
               <MyShiftsTableCard
                 search={search}
                 shifts={shifts}
-                totalPages={resolvedTotalPages}
-                total={total}
+                pagination={pagination}
+                onPaginationChange={onPaginationChange}
                 dateRange={dateRange}
                 isLoading={isLoadingMyShifts}
                 isFetching={isFetchingMyShifts}
@@ -155,17 +137,6 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
                 onRefresh={() => {
                   void refetchMyShifts();
                 }}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                onPreviousPage={() =>
-                  updateSearch((previous) => ({
-                    ...previous,
-                    page: Math.max(1, previous.page - 1),
-                  }), { replace: false })}
-                onNextPage={() =>
-                  updateSearch((previous) => ({
-                    ...previous,
-                    page: Math.min(resolvedTotalPages, previous.page + 1),
-                  }), { replace: false })}
               />
             )}
       </div>

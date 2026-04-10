@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DataTablePagination,
   DatePickerWithRange,
   Select,
   SelectContent,
@@ -38,17 +39,19 @@ import {
 type MyShiftsTableCardProps = {
   search: MyShiftsRouteSearch;
   shifts: StudioShift[];
-  totalPages: number;
-  total: number;
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+    total: number;
+    pageCount: number;
+  };
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   dateRange: DateRange;
   isLoading: boolean;
   isFetching: boolean;
   onDateRangeChange: (range: DateRange | undefined) => void;
   onStatusChange: (status?: MyShiftStatus) => void;
   onRefresh: () => void;
-  onRowsPerPageChange: (limit: number) => void;
-  onPreviousPage: () => void;
-  onNextPage: () => void;
 };
 
 function formatShiftDurationHours(shift: StudioShift): string {
@@ -70,17 +73,14 @@ function formatProjectedCost(shift: StudioShift): string {
 export function MyShiftsTableCard({
   search,
   shifts,
-  totalPages,
-  total,
+  pagination,
+  onPaginationChange,
   dateRange,
   isLoading,
   isFetching,
   onDateRangeChange,
   onStatusChange,
   onRefresh,
-  onRowsPerPageChange,
-  onPreviousPage,
-  onNextPage,
 }: MyShiftsTableCardProps) {
   return (
     <Card>
@@ -132,7 +132,7 @@ export function MyShiftsTableCard({
         {isLoading
           ? (
               <div className="overflow-x-auto rounded-md border">
-                <TableSkeleton columnCount={6} rowCount={Math.max(1, search.limit)} />
+                <TableSkeleton columnCount={6} rowCount={Math.max(1, pagination.pageSize)} />
               </div>
             )
           : shifts.length === 0
@@ -198,55 +198,11 @@ export function MyShiftsTableCard({
                   </div>
                 </>
               )}
-        <div className="flex items-center justify-between text-sm">
-          <p className="text-muted-foreground">
-            Page
-            {' '}
-            {Math.min(search.page, totalPages)}
-            {' '}
-            of
-            {' '}
-            {totalPages}
-            {' '}
-            (
-            {total}
-            {' '}
-            records)
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-2 sm:flex">
-              <span className="text-muted-foreground">Rows</span>
-              <Select
-                value={String(search.limit)}
-                onValueChange={(value) => onRowsPerPageChange(Number(value))}
-              >
-                <SelectTrigger className="h-8 w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={search.page <= 1 || isFetching}
-              onClick={onPreviousPage}
-            >
-              Previous
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={search.page >= totalPages || isFetching}
-              onClick={onNextPage}
-            >
-              Next
-            </Button>
-          </div>
+        <div className="pt-1">
+          <DataTablePagination
+            pagination={pagination}
+            onPaginationChange={onPaginationChange}
+          />
         </div>
       </CardContent>
     </Card>

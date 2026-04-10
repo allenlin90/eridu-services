@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { DeleteConfirmDialog } from '@/features/admin/components';
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
@@ -17,7 +17,7 @@ import { ShiftRosterCard } from '@/features/studio-shifts/components/shift-roste
 import { ShiftToolbar } from '@/features/studio-shifts/components/shift-toolbar';
 import { StudioShiftFormDialog } from '@/features/studio-shifts/components/studio-shift-form-dialog';
 import { useStudioMemberMap } from '@/features/studio-shifts/hooks/use-studio-member-map';
-import { useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
+import { useStudioShiftsPageController } from '@/features/studio-shifts/hooks/use-studio-shifts-page-controller';
 import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
 import {
   createDefaultFormState,
@@ -27,25 +27,15 @@ import {
   getShiftDisplayDate,
   getShiftWindowLabel,
 } from '@/features/studio-shifts/utils/shift-form.utils';
+import type { StudioShiftsRouteSearch } from '@/features/studio-shifts/utils/studio-shifts-route-search.utils';
 import {
-  buildStudioShiftsQueryParams,
   getApiErrorMessage,
   type ShiftListDutyFilter,
   type ShiftListStatus,
-  sortShiftsByFirstBlockStart,
   validateShiftBlocks,
 } from '@/features/studio-shifts/utils/studio-shifts-table.utils';
 
-export type StudioShiftsTableSearch = {
-  view: 'calendar' | 'table';
-  page: number;
-  limit: number;
-  user_id?: string;
-  status?: ShiftListStatus;
-  duty?: ShiftListDutyFilter;
-  date_from?: string;
-  date_to?: string;
-};
+export type StudioShiftsTableSearch = StudioShiftsRouteSearch;
 
 export type StudioShiftsTableSearchUpdater = (previous: StudioShiftsTableSearch) => StudioShiftsTableSearch;
 
@@ -107,14 +97,18 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     { enabled: isStudioAdmin },
   );
 
-  const tableQueryParams = useMemo(() => buildStudioShiftsQueryParams(search), [search]);
-
   const {
-    data: tableShiftsResponse,
     isLoading: isLoadingTableShifts,
     isFetching: isFetchingTableShifts,
     refetch: refetchTableShifts,
-  } = useStudioShifts(studioId, tableQueryParams, { enabled: isStudioAdmin });
+    pagination,
+    onPaginationChange,
+    shifts: tableShifts,
+  } = useStudioShiftsPageController({
+    studioId,
+    search,
+    enabled: isStudioAdmin,
+  });
 
   const createShiftMutation = useCreateStudioShift(studioId);
   const deleteShiftMutation = useDeleteStudioShift(studioId);
@@ -128,21 +122,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       label: `${member.user.name} (${member.user.email})`,
     }));
   }, [tableMemberOptionsResponse?.data]);
-
-  const tableShifts = useMemo(() => {
-    return sortShiftsByFirstBlockStart(tableShiftsResponse?.data ?? []);
-  }, [tableShiftsResponse?.data]);
-  const tableTotalPages = tableShiftsResponse?.meta?.totalPages;
-  const resolvedTableTotalPages = tableTotalPages ?? Math.max(1, search.page);
-
-  useEffect(() => {
-    if (typeof tableTotalPages === 'number' && search.page > tableTotalPages && tableTotalPages > 0) {
-      updateSearch((previous) => ({
-        ...previous,
-        page: tableTotalPages,
-      }));
-    }
-  }, [search.page, tableTotalPages, updateSearch]);
 
   const editingShift = useMemo(() => {
     if (!editDialogState) {
@@ -298,25 +277,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     void refetchTableShifts();
   }, [refetchTableShifts]);
 
-  const handlePreviousPage = useCallback(() => {
-    updateSearch((previous) => ({ ...previous, page: Math.max(1, previous.page - 1) }), { replace: false });
-  }, [updateSearch]);
-
-  const handleNextPage = useCallback(() => {
-    updateSearch((previous) => ({
-      ...previous,
-      page: Math.min(resolvedTableTotalPages, previous.page + 1),
-    }), { replace: false });
-  }, [resolvedTableTotalPages, updateSearch]);
-
-  const handleLimitChange = useCallback((limit: number) => {
-    updateSearch((previous) => ({
-      ...previous,
-      page: 1,
-      limit,
-    }));
-  }, [updateSearch]);
-
   const handleCreateDialogOpenChange = useCallback((open: boolean) => {
     setIsCreateDialogOpen(open);
     if (!open) {
@@ -366,10 +326,8 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         shifts={tableShifts}
         isLoading={isLoadingTableShifts}
         isFetching={isFetchingTableShifts}
-        page={search.page}
-        totalPages={resolvedTableTotalPages}
-        total={tableShiftsResponse?.meta?.total ?? 0}
-        limit={search.limit}
+        pagination={pagination}
+        onPaginationChange={onPaginationChange}
         canManageShifts
         memberMap={memberMap}
         isMutating={
@@ -384,9 +342,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         onToggleDutyManager={handleSetDutyManager}
         onEdit={handleStartEdit}
         onDelete={handleDeleteClick}
-        onPreviousPage={handlePreviousPage}
-        onNextPage={handleNextPage}
-        onLimitChange={handleLimitChange}
       />
 
       <DeleteConfirmDialog
