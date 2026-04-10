@@ -11,6 +11,8 @@ export type ShiftCalendarViewBucket = 'day' | 'week' | 'month';
 const DEFAULT_BUFFER_BEFORE_DAYS = 1;
 const DEFAULT_BUFFER_AFTER_DAYS = 8;
 const CALENDAR_QUERY_LIMIT_FALLBACK = 90;
+const MONDAY_DAY_INDEX = 1;
+const SUNDAY_DAY_INDEX = 0;
 
 const CALENDAR_VIEW_QUERY_PROFILE: Record<ShiftCalendarViewBucket, {
   min: number;
@@ -41,9 +43,18 @@ export function extractDateStringFromUnknown(value: unknown): string | null {
 }
 
 export function createDefaultShiftCalendarRange(baseDate = new Date()): ShiftCalendarDateRange {
+  const startOfWeek = new Date(baseDate);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const dayOfWeek = startOfWeek.getDay();
+  const daysFromMonday = dayOfWeek === SUNDAY_DAY_INDEX ? 6 : dayOfWeek - MONDAY_DAY_INDEX;
+  startOfWeek.setDate(startOfWeek.getDate() - daysFromMonday);
+
+  const endOfWeek = addDays(startOfWeek, 6);
+
   return {
-    date_from: toLocalDateInputValue(addDays(baseDate, -DEFAULT_BUFFER_BEFORE_DAYS)),
-    date_to: toLocalDateInputValue(addDays(baseDate, DEFAULT_BUFFER_AFTER_DAYS)),
+    date_from: toLocalDateInputValue(startOfWeek),
+    date_to: toLocalDateInputValue(endOfWeek),
   };
 }
 

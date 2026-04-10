@@ -18,7 +18,7 @@ describe('shiftCalendarRangeUtils', () => {
     const range = createDefaultShiftCalendarRange(new Date('2026-03-10T08:00:00.000Z'));
     expect(range).toEqual({
       date_from: '2026-03-09',
-      date_to: '2026-03-18',
+      date_to: '2026-03-15',
     });
   });
 

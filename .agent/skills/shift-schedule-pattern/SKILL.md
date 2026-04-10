@@ -227,6 +227,7 @@ Calendar fetch limits must scale with visible range:
 - `day` bucket: low/minimal fetch budget
 - `week` bucket: medium budget
 - `month` bucket: highest budget
+- Seed the initial calendar query range from the mounted `Schedule-X` week window (current Monday-Sunday for the default week view), not an arbitrary buffer around today. Otherwise first-load week renders can appear empty until the user toggles views and triggers `onRangeUpdate`.
 
 Use shared range utilities (`getShiftCalendarViewBucket`, `getShiftCalendarRangeLimit`) to derive query `limit` from range span and keep query-key caching consistent by including `{ date_from, date_to, limit }`.
 

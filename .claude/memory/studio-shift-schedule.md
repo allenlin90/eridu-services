@@ -57,6 +57,7 @@
 - Schedule-X timezone explicitly set from runtime IANA zone
 - Cross-midnight blocks split into per-day segments for timeline rendering
 - Calendar query limit derived from view bucket (day/week/month) instead of static ceiling
+- Initial studio shifts calendar load now seeds the query to the visible week window so first render does not appear empty until a day/week toggle
 
 ## Delta (March 2026 — Shows Issues filter alignment)
 
