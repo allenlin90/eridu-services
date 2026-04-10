@@ -221,6 +221,11 @@ Use `DataTablePagination` for standard server-driven tables.
 
 Do not create per-feature pagination controls unless the feature has a materially different UX.
 
+When page changes trigger a new server query:
+- prefer `placeholderData: keepPreviousData` on the paginated query so the previous page metadata remains available during transition
+- only auto-correct an out-of-range page after real API pagination metadata arrives
+- never clamp against a fallback like `totalPages ?? 1` while the next page is still loading, or valid pages such as `?page=2` can be forced back to page 1 before the response resolves
+
 ## Virtualized Table Pattern
 Use this only when the shared server-paginated table is not enough.
 

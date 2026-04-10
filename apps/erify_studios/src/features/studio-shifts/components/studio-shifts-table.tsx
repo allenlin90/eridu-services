@@ -132,10 +132,11 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const tableShifts = useMemo(() => {
     return sortShiftsByFirstBlockStart(tableShiftsResponse?.data ?? []);
   }, [tableShiftsResponse?.data]);
-  const tableTotalPages = tableShiftsResponse?.meta?.totalPages ?? 1;
+  const tableTotalPages = tableShiftsResponse?.meta?.totalPages;
+  const resolvedTableTotalPages = tableTotalPages ?? Math.max(1, search.page);
 
   useEffect(() => {
-    if (search.page > tableTotalPages && tableTotalPages > 0) {
+    if (typeof tableTotalPages === 'number' && search.page > tableTotalPages && tableTotalPages > 0) {
       updateSearch((previous) => ({
         ...previous,
         page: tableTotalPages,
@@ -304,9 +305,9 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const handleNextPage = useCallback(() => {
     updateSearch((previous) => ({
       ...previous,
-      page: Math.min(tableTotalPages, previous.page + 1),
+      page: Math.min(resolvedTableTotalPages, previous.page + 1),
     }), { replace: false });
-  }, [tableTotalPages, updateSearch]);
+  }, [resolvedTableTotalPages, updateSearch]);
 
   const handleLimitChange = useCallback((limit: number) => {
     updateSearch((previous) => ({
@@ -366,7 +367,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         isLoading={isLoadingTableShifts}
         isFetching={isFetchingTableShifts}
         page={search.page}
-        totalPages={tableTotalPages}
+        totalPages={resolvedTableTotalPages}
         total={tableShiftsResponse?.meta?.total ?? 0}
         limit={search.limit}
         canManageShifts

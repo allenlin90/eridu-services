@@ -226,4 +226,47 @@ describe('studioShiftsTable', () => {
 
     expect(mockUpdateSearch).toHaveBeenCalled();
   });
+
+  it('does not snap back to page 1 while the next page metadata is still loading', () => {
+    mockUseStudioShifts.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: true,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <StudioShiftsTable
+        studioId="std_1"
+        isStudioAdmin
+        search={{ view: 'table', page: 2, limit: 50 }}
+        updateSearch={mockUpdateSearch}
+      />,
+    );
+
+    expect(mockUpdateSearch).not.toHaveBeenCalled();
+  });
+
+  it('corrects the page only after the API reports a lower total page count', () => {
+    mockUseStudioShifts.mockReturnValue({
+      data: {
+        data: [],
+        meta: { page: 2, limit: 50, total: 53, totalPages: 1 },
+      } satisfies StudioShiftsResponse,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <StudioShiftsTable
+        studioId="std_1"
+        isStudioAdmin
+        search={{ view: 'table', page: 2, limit: 50 }}
+        updateSearch={mockUpdateSearch}
+      />,
+    );
+
+    expect(mockUpdateSearch).toHaveBeenCalledWith(expect.any(Function));
+  });
 });
