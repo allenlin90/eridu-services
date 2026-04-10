@@ -79,6 +79,7 @@ export function useMyShifts(
     queryKey: myShiftsKeys.list(queryParams),
     queryFn: ({ signal }) => getMyShifts(queryParams, { signal }),
     enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 1000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,

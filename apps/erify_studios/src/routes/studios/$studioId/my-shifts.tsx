@@ -59,6 +59,7 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
     dateRange,
     shifts,
     totalPages,
+    resolvedTotalPages,
     total,
     isLoadingMyShifts,
     isFetchingMyShifts,
@@ -81,7 +82,7 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
   }, [navigate, studioId]);
 
   useEffect(() => {
-    if (search.page > totalPages && totalPages > 0) {
+    if (typeof totalPages === 'number' && search.page > totalPages && totalPages > 0) {
       updateSearch((previous) => ({
         ...previous,
         page: totalPages,
@@ -144,7 +145,7 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
               <MyShiftsTableCard
                 search={search}
                 shifts={shifts}
-                totalPages={totalPages}
+                totalPages={resolvedTotalPages}
                 total={total}
                 dateRange={dateRange}
                 isLoading={isLoadingMyShifts}
@@ -163,7 +164,7 @@ function MyShiftsPageContent({ studioId }: MyShiftsPageContentProps) {
                 onNextPage={() =>
                   updateSearch((previous) => ({
                     ...previous,
-                    page: Math.min(totalPages, previous.page + 1),
+                    page: Math.min(resolvedTotalPages, previous.page + 1),
                   }), { replace: false })}
               />
             )}

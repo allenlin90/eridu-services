@@ -38,7 +38,8 @@ export function useMyShiftsPageController({
   });
 
   const shifts = myShiftsQuery.data?.data ?? [];
-  const totalPages = myShiftsQuery.data?.meta?.totalPages ?? 1;
+  const totalPages = myShiftsQuery.data?.meta?.totalPages;
+  const resolvedTotalPages = totalPages ?? Math.max(1, search.page);
   const total = myShiftsQuery.data?.meta?.total ?? 0;
 
   const dateRange = useMemo<DateRange>(() => ({
@@ -53,6 +54,7 @@ export function useMyShiftsPageController({
     dateRange,
     shifts,
     totalPages,
+    resolvedTotalPages,
     total,
     isLoadingMyShifts: myShiftsQuery.isLoading,
     isFetchingMyShifts: myShiftsQuery.isFetching,
