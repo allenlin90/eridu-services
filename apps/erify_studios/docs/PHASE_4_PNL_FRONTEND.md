@@ -23,8 +23,8 @@ This file is the **phase-level frontend index** for Phase 4. Active feature prop
 | Feature | Status | Product source | Frontend doc |
 | --- | --- | --- | --- |
 | Creator mapping + assignment | ✅ Shipped | [creator-mapping.md](../../../docs/features/creator-mapping.md) | No retained Phase 4 design doc; shipped feature |
-| Sidebar redesign | 🔲 Planned | FE-only scope | [SIDEBAR_REDESIGN.md](./design/SIDEBAR_REDESIGN.md) |
-| Show economics surfaces | 🔲 Planned | [show-economics.md](../../../docs/features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](./design/SHOW_ECONOMICS_DESIGN.md) |
+| Sidebar redesign | 🔁 Incremental | FE-only scope | [SIDEBAR_REDESIGN.md](./design/SIDEBAR_REDESIGN.md) |
+| Show economics surfaces | ⏸️ Deferred | [show-economics.md](../../../docs/features/show-economics.md) | [SHOW_ECONOMICS_DESIGN.md](./design/SHOW_ECONOMICS_DESIGN.md) |
 | Studio economics review | 🔲 Planned | [studio-economics-review.md](../../../docs/prd/studio-economics-review.md) | [STUDIO_ECONOMICS_REVIEW_DESIGN.md](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md) |
 | Studio member roster | ✅ Shipped | [studio-member-roster.md](../../../docs/features/studio-member-roster.md) | No retained design doc; shipped in PR #28 |
 | Studio creator roster | ✅ Implemented | [studio-creator-roster.md](../../../docs/features/studio-creator-roster.md) | [STUDIO_CREATOR_ROSTER.md](./STUDIO_CREATOR_ROSTER.md) |

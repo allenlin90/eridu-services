@@ -4,7 +4,7 @@
 > **Phase scope**: Phase 4 Wave 3
 > **Owner app**: `apps/erify_api`
 > **Product source**: [`docs/prd/pnl-revenue-workflow.md`](../../../../docs/prd/pnl-revenue-workflow.md)
-> **Depends on**: Show economics baseline on `master` ⏸️, studio creator roster 🔲, `big.js` adoption 🔲
+> **Depends on**: Show economics baseline on `master` ⏸️, studio creator roster ✅, `big.js` adoption 🔲
 
 ## Purpose
 

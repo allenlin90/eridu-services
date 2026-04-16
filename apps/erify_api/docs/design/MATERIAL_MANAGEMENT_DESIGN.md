@@ -1,6 +1,6 @@
 # Material Management Design
 
-> **Status**: 🗓️ **Planned** — Material Management is deferred to Phase 4 and is not implemented in the current schema.
+> **Status**: 🗓️ **Phase 5 candidate** — Material Management is deferred beyond Phase 4 and is not implemented in the current schema.
 
 ## Scope
 
@@ -18,4 +18,5 @@ This document should cover:
 
 - **[Business Domain](../../../../docs/domain/BUSINESS.md)** — Contains the ER diagram for `materials`, `material_types`, and `show_materials`
 - **[File Upload](../FILE_UPLOAD.md)** — Implemented presigned URL architecture that materials should build on
-- **[Phase 4 Roadmap](../../../../docs/roadmap/PHASE_4.md)** — Current phase assignment for material-management planning
+- **[Phase 5 Roadmap](../../../../docs/roadmap/PHASE_5.md)** — Current candidate track for material-management planning
+- **[Material Management Ideation](../../../../docs/ideation/material-management.md)** — Preserved product/operations ideation context

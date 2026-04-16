@@ -1,15 +1,15 @@
 # Implementation Plan: `cancelled_pending_resolution` Product Gap (MVP)
 
-> **TLDR**: Adds a studio-scoped resolution workflow for shows stuck in `cancelled_pending_resolution` after schedule publish. New endpoint `POST /studios/:studioId/shows/:showId/resolve-cancellation` lets studio admins mark shows as cancelled (blocked if active tasks remain). Includes FE queue, warning banners, and resolve CTA.
+> **TLDR**: Proposed studio-scoped resolution workflow for shows stuck in `cancelled_pending_resolution` after schedule publish. Target scope adds `POST /studios/:studioId/shows/:showId/resolve-cancellation`, plus FE queue, warning banners, and resolve CTA.
 
 > [!NOTE]
-> **Status: ⏳ In Progress** — This MVP plan covers both backend (resolution policy, audit, endpoint) and frontend (queue, warnings, resolve dialog) work.
+> **Status: 📐 Planned follow-up** — `master` currently ships the publish-side status transition only. The endpoint, task-aware resolve policy, queue, warning UX, and metadata contract below are the remaining target scope.
 
 ## 1. Context and Gap Statement
 
 This plan closes the current operational gap for shows transitioned to `cancelled_pending_resolution` after schedule publish diff+upsert.
 
-Current validated gap:
+Current validated gap on `master`:
 
 1. Studio admins can discover affected shows via filters, but lack a dedicated resolution workflow.
 2. System admins can edit show status from system scope, but studio-scope resolution is incomplete.

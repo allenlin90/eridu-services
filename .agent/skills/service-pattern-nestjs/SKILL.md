@@ -120,6 +120,9 @@ consider whether the orchestration should just call the parent module's service.
 
 🔴 **Critical**: Services MUST NEVER import or use Prisma types in method signatures or business logic.
 
+> [!NOTE]
+> This is the project standard. The current codebase still contains legacy services with Prisma imports; treat them as migration debt and align touched services toward this pattern rather than copying the legacy examples.
+
 **Why**: We use the repository pattern to encapsulate all database concerns. Services should be completely decoupled from the ORM to allow changing the database layer without touching business logic.
 
 ### Rule 1: Define Payload Types in Schema Files

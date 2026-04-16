@@ -4,7 +4,7 @@
 > **Phase scope**: Phase 4 Wave 2
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/studio-economics-review.md`](../../../../docs/prd/studio-economics-review.md)
-> **Depends on**: Economics engine contract on `master` 🔲, sidebar Finance group 🔲, compensation-aware backend fields 🔲
+> **Depends on**: Economics engine contract on `master` 🔲, sidebar core regrouping 🔁 with Finance follow-up 🔲, compensation-aware backend fields 🔲
 
 ## Purpose
 

@@ -4,7 +4,7 @@
 > **Phase scope**: Phase 4 Wave 2
 > **Owner app**: `apps/erify_api`
 > **Product source**: [`docs/prd/studio-economics-review.md`](../../../../docs/prd/studio-economics-review.md)
-> **Depends on**: Show economics baseline revision/merge ⏸️, compensation line items 🔲, studio show ownership/read paths 🔲, schedule-ready show linkage 🔲
+> **Depends on**: Show economics baseline revision/merge ⏸️, compensation line items 🔲, studio show ownership/read paths ✅, schedule-ready show linkage 🔲
 
 ## Purpose
 
