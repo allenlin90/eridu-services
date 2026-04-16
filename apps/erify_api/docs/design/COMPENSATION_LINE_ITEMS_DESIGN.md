@@ -4,7 +4,7 @@
 > **Phase scope**: Phase 4 post-Wave 1
 > **Owner app**: `apps/erify_api`
 > **Product source**: [`docs/prd/compensation-line-items.md`](../../../../docs/prd/compensation-line-items.md)
-> **Depends on**: Studio member roster ✅, studio creator roster 🔲, economics baseline revision ⏸️
+> **Depends on**: Studio member roster ✅, studio creator roster ✅, economics baseline revision ⏸️
 
 ## Purpose
 
@@ -58,4 +58,3 @@ Add manual supplemental compensation items for memberships and studio creators, 
 - `pnpm --filter erify_api build`
 - `pnpm --filter erify_api test`
 - Targeted smoke: membership target, studio-creator target, scope mismatch, economics roll-up, commission/hybrid creator subtotal
-

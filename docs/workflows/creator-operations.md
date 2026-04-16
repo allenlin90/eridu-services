@@ -21,7 +21,7 @@ End-to-end flow for how a studio manages its creator talent — from role setup 
        ↓
 4. Talent Manager bulk-assigns creators to shows (with optional compensation override)
        ↓
-5. Show economics merge target resolves show overrides over studio roster defaults
+5. Deferred show economics baseline merge resolves show overrides over studio roster defaults
 ```
 
 ## Step-by-Step
@@ -77,12 +77,12 @@ Feature: [Creator Mapping](../features/creator-mapping.md)
 
 ### 5. Cost visibility
 
-Once economics endpoints are built, a finance or admin user will be able to see:
+Once the deferred economics baseline is revised and merged, a finance or admin user will be able to see:
 
 - Per-show baseline cost = sum of FIXED creator costs + shift labor costs
 - `COMMISSION`/`HYBRID` creators appear in the response with `null` cost (pending GMV input)
 
-Reference: [Show Economics](../features/show-economics.md)
+Reference: [Show Economics Baseline (deferred merge reference)](../features/show-economics.md)
 
 ## Data Flow
 
@@ -113,7 +113,7 @@ GET /shows/:id/economics  →  { creator_cost, shift_cost, total_cost }
 | --- | --- |
 | Feature (RBAC) | [docs/features/rbac-roles.md](../features/rbac-roles.md) |
 | Feature (Creator Mapping) | [docs/features/creator-mapping.md](../features/creator-mapping.md) |
-| Feature (Economics contract) | [docs/features/show-economics.md](../features/show-economics.md) |
+| Archived economics reference | [docs/features/show-economics.md](../features/show-economics.md) |
 | Phase 4 backend index | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md) |
 | Phase 4 frontend index | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) |
 | Role visibility model | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |

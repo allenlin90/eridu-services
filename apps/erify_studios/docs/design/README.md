@@ -4,9 +4,9 @@ Design/proposal/in-progress documents for `erify_studios`.
 
 ## Index
 
-1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md)
-2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Planned Phase 4 navigation restructure
-3. [Show Economics Frontend Design](./SHOW_ECONOMICS_DESIGN.md) — Planned economics surfaces
+1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned follow-up for studio resolve UX
+2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
+3. [Show Economics Frontend Design](./SHOW_ECONOMICS_DESIGN.md) — Deferred economics surfaces pending baseline merge
 4. [Studio Economics Review Frontend Design](./STUDIO_ECONOMICS_REVIEW_DESIGN.md) — Planned finance workspace and assignment-side preview UX
 5. [Compensation Line Items Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — Planned compensation management surfaces
 6. [Show Planning Export Frontend Design](./SHOW_PLANNING_EXPORT_DESIGN.md) — Planned export preview/download route

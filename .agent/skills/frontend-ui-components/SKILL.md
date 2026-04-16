@@ -30,7 +30,7 @@ export function MyForm() {
 ### Specific Component Guidelines
 
 #### Date and Time Pickers
-Always use the custom `DatePicker` and `DateTimePicker` components from `@eridu/ui` instead of native `<input type="date">` or `<input type="datetime-local">` unless there is a highly specific and unavoidable requirement to use the native browser inputs. This ensures visual consistency, cross-browser compatibility, and a better user experience across the application.
+Use the custom `DatePicker` and `DateTimePicker` components from `@eridu/ui` instead of native `<input type="date">` or `<input type="datetime-local">` unless there is a highly specific and unavoidable requirement to use the native browser inputs. Older native-input surfaces are refactor debt and should be migrated toward these shared components when touched.
 
 ```typescript
 import { DatePicker, DateTimePicker } from '@eridu/ui/components/date-picker';

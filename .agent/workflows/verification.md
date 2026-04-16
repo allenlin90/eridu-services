@@ -29,6 +29,8 @@ pnpm --filter <app> typecheck
 pnpm --filter <app> test
 ```
 
+If a workspace does not define a `test` script, run the available verification commands and explicitly note that the workspace currently has no automated test command (for example `eridu_docs`).
+
 4. **Refactor parity checks (for feature/refactor work)**
    - Confirm loading/empty/data UI states still match expected behavior.
    - Confirm route/search-param behaviors still match expected URL contract.

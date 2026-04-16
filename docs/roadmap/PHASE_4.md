@@ -2,7 +2,7 @@
 
 > **Status**: 🚧 Active (Wave 1 shipped; studio autonomy and economics engine follow-ups next)
 > **Primary tracker**: This file (`PHASE_4.md`)
-> **Last updated**: 2026-04-02
+> **Last updated**: 2026-04-17
 
 ## Goal
 
@@ -11,7 +11,7 @@ Build the P&L system on existing entities, focusing on the **L-side** (labor and
 Key outcomes:
 - Studio operators can manage labor rates and creator compensation defaults without system-admin intervention.
 - Studio admins can onboard brand-new creators, create shows, and manage schedules from the studio workspace.
-- Variable cost visibility (creator costs + shift labor) is surfaced via economics endpoints.
+- Variable cost visibility baseline is revised and merged from the deferred economics branch, then surfaced via economics endpoints.
 - Studio admins and managers can review and export future projected costs and past actual costs from one date-ranged economics engine.
 - Pre-show planning exports reuse the same economics engine as a locked preset/output.
 - Creator assignment correctness is enforced (overlap + roster conflicts).
@@ -20,13 +20,13 @@ Key outcomes:
 
 ## Workstream Tracker
 
-Single source of truth for all Phase 4 features. Each row links to its PRD (pre-ship) or feature doc (post-ship).
+Single source of truth for all Phase 4 features. Each row links to its PRD (pre-ship), feature doc (post-ship), or archived branch reference when work was deferred before merge.
 
 | #   | Workstream                               | Doc                                                                | Status                           | Wave   | Notes                                                                                                                     |
 | --- | ---------------------------------------- | ------------------------------------------------------------------ | -------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
 | P   | Task template migration                  | —                                                                  | ✅ Done (operational, 2026-03-24) | Pre    | Not repo-tracked; operational CSV rebuild                                                                                 |
 | KB  | `eridu_docs` internal knowledge base     | [feature](../features/eridu-docs-knowledge-base.md)                | ✅ Implemented                    | Ext    | Astro + Starlight SSR app with JWKS-based auth, silent SSO, and local BYPASS_AUTH support                                 |
-| 1a  | Sidebar redesign                         | [design](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔁 Incremental                    | 1      | Structure done (My Workspace, Settings, Creators). Reports + Finance groups added as features ship. Icon fixes remaining. |
+| 1a  | Sidebar redesign                         | [design](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔁 Incremental                    | 1      | Core regrouping shipped (My Workspace, Operations, Studio Settings, Creators). Reports split and Finance group land as downstream features ship. |
 | 1b  | Studio creator roster CRUD               | [feature](../features/studio-creator-roster.md)                    | ✅ Implemented (PR #30)           | 1      | Roster + compensation defaults + inactive enforcement                                                                     |
 | 1c  | Studio member roster CRUD                | [feature](../features/studio-member-roster.md)                     | ✅ Shipped (PR #28)               | 1      | `baseHourlyRate` editing, self-demotion guard                                                                             |
 | 1d  | Studio creator onboarding + roster-first | [feature](../features/studio-creator-onboarding.md)                | ✅ Implemented (PR #32)           | 1      | Fixes roster enforcement bug; removes `/system/*` dependency; unblocks Wave 2                                             |
@@ -34,7 +34,7 @@ Single source of truth for all Phase 4 features. Each row links to its PRD (pre-
 | 1f  | Studio schedule management               | [PRD](../prd/studio-schedule-management.md)                        | 🔲 Planned                        | 1+     | Extends 1e with show assignment, arrangement, validation, publish, and snapshots                                          |
 | R   | Economics cost model review              | —                                                                  | ⏸️ Deferred                       | Post-1 | Gate: Wave 1 complete. Lock projected-vs-actual semantics plus bonus/OT/allowance treatment                               |
 | R+  | Compensation line items                  | [PRD](../prd/compensation-line-items.md)                           | 🔲 Planned                        | Post-1 | `CompensationLineItem` + `CompensationTarget`; required for complete actual-cost review                                   |
-| 0   | Economics baseline merge                 | [feature](../features/show-economics.md)                           | ⏸️ Deferred                       | Post-1 | Branch `feat/show-economics-baseline` (commit `8de31ffe`). Merge revised contract after R+                                |
+| 0   | Economics baseline merge                 | [reference](../features/show-economics.md)                         | ⏸️ Deferred                       | Post-1 | Branch `feat/show-economics-baseline` (commit `8de31ffe`). Merge revised contract after R+                                |
 | 2a  | Studio economics review                  | [PRD](../prd/studio-economics-review.md)                           | 🔲 Planned                        | 2      | Configurable finance review/export engine: perspective selection, included items, preflight, cached results               |
 | 2b  | Show planning export                     | [PRD](../prd/show-planning-export.md)                              | 🔲 Planned                        | 2      | Downstream of 2a. Locked planning preset / CSV-JSON export over the future-horizon economics engine                      |
 | 2c  | Creator availability hardening           | [PRD](../prd/creator-availability-hardening.md)                    | 🔲 Planned                        | 2      | Gate: 1d merged. `strict=true` overlap + roster enforcement                                                               |
@@ -134,6 +134,7 @@ flowchart TD
 ## Economics Baseline (Deferred Merge)
 
 - **Branch**: `feat/show-economics-baseline` — 1 commit ahead of `master`, not yet merged
+- **Current repo state**: retained as an archived branch reference, not a shipped feature on `master`
 - **Endpoints**: `GET /studios/:studioId/shows/:showId/economics` (single show) and `GET /studios/:studioId/economics` (grouped)
 - **Planned consumers**: Studio economics review/export engine first, then show planning export as a preset, then Wave 3 revenue/margin extension
 - **Why deferred**: Cost model may need rework for bonus/OT/allowances. Review after Wave 1 when roster data layer is stable.
@@ -169,7 +170,7 @@ Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, ru
 | Feature                        | Product Doc                                         | BE Doc                                                                          | FE Doc                                                                               |
 | ------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Creator mapping                | [feature](../features/creator-mapping.md)           | —                                                                               | —                                                                                   |
-| Economics baseline             | [feature](../features/show-economics.md)            | [BE](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)                 | [FE](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md)                 |
+| Economics baseline             | [reference](../features/show-economics.md)          | [BE](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)                 | [FE](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md)                 |
 | Studio economics review        | [PRD](../prd/studio-economics-review.md)            | [BE](../../apps/erify_api/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)        | [FE](../../apps/erify_studios/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)        |
 | Studio member roster           | [feature](../features/studio-member-roster.md)      | Shipped (PR #28)                                                                | Shipped (PR #28)                                                                    |
 | Studio creator roster          | [feature](../features/studio-creator-roster.md)     | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md)                        | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md)                        |
@@ -201,7 +202,7 @@ Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, ru
 ## Definition of Done (Phase 4)
 
 - [x] Creator mapping + assignment flow stable and merged
-- [x] Economics baseline shipped (per-show and grouped endpoints)
+- [ ] Economics baseline merged on `master` (per-show and grouped endpoints)
 - [x] Studio member roster with `baseHourlyRate` editing
 - [x] Studio creator roster CRUD with compensation defaults
 - [x] Studio-side creator onboarding outside `/system/*` with roster-first assignment enforcement
@@ -211,7 +212,7 @@ Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, ru
 - [ ] Studio economics review/export engine — perspective-based, date-ranged projected and actual cost review
 - [ ] Show planning export (pre-show, with cost column)
 - [ ] Creator availability strict-mode (overlap + roster conflict)
-- [ ] Sidebar redesigned to function-based groups
+- [ ] Sidebar follow-up groups complete (`Reports`/`Finance`) and aligned with shipped navigation structure
 - [x] Internal docs knowledge base (`eridu_docs`) with authenticated SSR access
 - [ ] P&L revenue workflow — GMV/sales input, COMMISSION/HYBRID activation
 

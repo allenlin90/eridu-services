@@ -56,11 +56,11 @@ Required baseline for PWA tasks:
 - **Error Handling:** Use centralized error handling patterns (e.g., `HttpError` utility for backend APIs).
 - **Communication:** If uncertain about requirements or if a proposed architecture requires user approval, stop and use `notify_user` to gather feedback.
 - **Frontend Access Control Consistency:** For `erify_studios` studio routes, do not duplicate per-page membership/role checks. Use shared route-access policy + shared guard, and keep sidebar visibility derived from the same policy source.
-- **Frontend Refresh Action Consistency (MANDATORY):** For manual data refetch controls in frontend toolbars/headers, use icon-only refresh buttons (`size="icon"`) with explicit `aria-label` and spinning icon state while fetching; avoid text-labeled "Refresh" buttons.
+- **Frontend Refresh Action Consistency (MANDATORY):** For manual data refetch controls in frontend toolbars/headers, use icon-only refresh buttons (`size="icon"`) with explicit `aria-label` and spinning icon state while fetching; avoid text-labeled "Refresh" buttons. Existing text items in older mobile action menus are refactor debt and should be migrated toward this pattern when touched.
 - **Frontend Form Contract & Date/Time Input Consistency (MANDATORY):**
   1. During planning for any frontend form/dialog/sheet, inventory the intended user-editable field set from the shared API schema plus the feature/design doc.
   2. During implementation, do not silently omit contract-backed fields from the UX. If a field is intentionally excluded, document the product reason in the design doc and leave a short code comment near the form/schema composition.
-  3. Use `DatePicker` / `DateTimePicker` from `@eridu/ui` for date and datetime editing by default. Native `<input type="date">` / `<input type="datetime-local">` require a specific documented reason.
+  3. Use `DatePicker` / `DateTimePicker` from `@eridu/ui` for date and datetime editing. Older native `<input type="date">` / `<input type="datetime-local">` usages are refactor debt and should be migrated when those surfaces are touched; require a documented reason before introducing or retaining native inputs.
   4. During code review and PR review, treat undocumented form-field omissions and unjustified native date/datetime inputs as review findings.
 - **Frontend Searchable Lookup Completeness (MANDATORY):**
   1. During planning, inventory every searchable input/filter and record its intended data source per field: scoped API endpoint, preloaded lookup bundle, or deliberate client-side filtering.
@@ -79,7 +79,7 @@ Required baseline for PWA tasks:
   2. Do not hand-roll route-local pagination state, next/prev handlers, or page-clamp effects unless the surface has a materially different UX and that exception is documented.
   3. Never clamp against fallback metadata such as `totalPages ?? 1` while a new page is loading; only correct out-of-range pages after real API pagination metadata arrives.
   4. During planning, identify the nearest existing paginated route in the same app and match its URL contract and pagination ownership model.
-  5. During code review and PR review, treat custom pagination state machines, fallback page clamps, and missing previous-data preservation on standard paginated routes as blocking findings.
+  5. Routes that still use custom pagination should be unified toward this shared stack when touched. During code review and PR review, treat custom pagination state machines, fallback page clamps, and missing previous-data preservation on standard paginated routes as blocking findings unless a materially different UX is documented.
 - **Frontend Collapsible Toggle Consistency (MANDATORY):** For show/hide section toggles in frontend pages, use icon-only toggle buttons with `ChevronUp` (expanded) and `ChevronDown` (collapsed), with explicit `aria-label`. Keep placement consistent across breakpoints (prefer top-right of the section header).
 - **Frontend Route Wrapper Consistency (MANDATORY):** For route groups with shared page chrome/padding (for example `studios/$studioId/*`, `system/*`), define one parent route layout (`route.tsx`) with `Outlet` and shared wrapper component. Child pages must not hardcode duplicated page wrapper class strings.
 - **Frontend Leaf Header Wrapper Consistency (MANDATORY):** Inside one route set, leaf pages must use the same shared page-shell component (for example: `/system/*` -> `AdminLayout`, `studios/$studioId/*` -> `PageLayout`). Avoid manual duplicated `<h1>` + description blocks in leaf routes.

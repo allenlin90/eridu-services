@@ -19,7 +19,7 @@
 | Document                                                                                             | Status       | Description                                                                                          |
 | ---------------------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------- |
 | [Schedule Planning](./SCHEDULE_PLANNING.md)                                                          | ✅ Phase 1    | JSON planning, snapshots, validation, publishing                                                     |
-| [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                                      | ✅ Core       | Identity-preserving diff+upsert publish                                                              |
+| [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                                      | ✅ Core       | Identity-preserving diff+upsert publish; dedicated studio resolve workflow remains follow-up         |
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                                              | ✅            | Task-as-Form architecture, API surface, workflows                                                    |
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                                  | ✅ Phase 3    | Shift CRUD, duty-manager coverage, calendar, alignment                                               |
 | [Studio Creator Roster](./STUDIO_CREATOR_ROSTER.md)                                                  | ✅ Phase 4    | Studio-scoped creator roster CRUD, compensation defaults, and inactive-roster assignment enforcement |
@@ -43,10 +43,10 @@
 | [Show Planning Export Backend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md)                     | 📐      | Planned planning-export endpoint and economics composition rules               |
 | [Creator Availability Hardening Backend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | 📐      | Planned strict availability enforcement and assignment errors                  |
 | [P&L Revenue Workflow Backend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)                     | 📐      | Blocked Wave 3 revenue-side activation design                                  |
-| [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)          | ⏳      | Studio-scoped resolution for cancelled shows                                   |
+| [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)          | 📐      | Planned studio-scoped resolution follow-up for cancelled shows                  |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
-| [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Planned for Phase 4; not implemented in the current schema                     |
-| [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Planned Datastream + BigQuery architecture for Phase 4                         |
+| [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for the operations-expansion track                  |
+| [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
 
 ## Roadmap
 
