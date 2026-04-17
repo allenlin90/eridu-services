@@ -167,6 +167,7 @@ function CreatorMappingPage() {
   const {
     shows,
     total,
+    pageCount,
     isLoading,
     isFetching,
     refetch,
@@ -306,7 +307,7 @@ function CreatorMappingPage() {
           emptyMessage="No shows found for creator mapping."
           manualPagination
           manualFiltering
-          pageCount={Math.ceil(total / pagination.pageSize)}
+          pageCount={pageCount}
           paginationState={{
             pageIndex: pagination.pageIndex,
             pageSize: pagination.pageSize,
@@ -344,7 +345,7 @@ function CreatorMappingPage() {
                 pageIndex: pagination.pageIndex,
                 pageSize: pagination.pageSize,
                 total,
-                pageCount: Math.ceil(total / pagination.pageSize),
+                pageCount,
               }}
               onPaginationChange={onPaginationChange}
             />

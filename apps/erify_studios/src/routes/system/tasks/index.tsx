@@ -38,7 +38,7 @@ function SystemTasksList() {
     columnFilters,
     onColumnFiltersChange,
     handleRefresh,
-  } = useAdminTasks();
+  } = useAdminTasks({ from: '/system/tasks/' });
   const reassignMutation = useReassignAdminTask();
   const reassignShowMutation = useReassignAdminTaskShow();
   const deleteMutation = useDeleteAdminTask();
