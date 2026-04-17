@@ -9,6 +9,14 @@ import {
 // Mock UI components
 vi.mock('@eridu/ui', () => ({
   Input: ({ value, ...props }: any) => <input value={value} {...props} />,
+  DateTimePicker: ({ value, onChange, ...props }: any) => (
+    <input
+      data-testid="datetime-picker"
+      value={value}
+      onChange={(event) => onChange?.(event.target.value)}
+      {...props}
+    />
+  ),
   Select: ({ children }: any) => <div data-testid="select">{children}</div>,
   SelectContent: ({ children }: any) => <div>{children}</div>,
   SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
@@ -88,15 +96,12 @@ describe('scheduleUpdateDialog', () => {
 
     expect(screen.queryByTestId('admin-form-dialog')).not.toBeInTheDocument();
   });
-  it('should render start_date formatted as local string', () => {
+  it('should pass the current start_date value to the shared datetime picker', () => {
     render(<ScheduleUpdateDialog {...mockProps} />);
 
     const startDateInput = screen.getByTestId('field-start_date').querySelector('input');
     expect(startDateInput).toBeInTheDocument();
-
-    // Check format matches local datetime string yyyy-MM-ddTHH:mm
-    expect(startDateInput).toBeInTheDocument();
-    expect(startDateInput?.getAttribute('value')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+    expect(startDateInput).toHaveValue('2024-01-01T10:00:00Z');
   });
 });
 

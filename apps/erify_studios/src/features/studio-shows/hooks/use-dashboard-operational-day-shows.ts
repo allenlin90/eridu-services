@@ -43,7 +43,7 @@ export function useDashboardOperationalDayShows({
     response,
     shows: response?.data ?? [],
     total: response?.meta?.total ?? 0,
-    totalPages: response?.meta?.totalPages ?? 1,
+    totalPages: response?.meta?.totalPages ?? 0,
     hasResponse: Boolean(response),
   };
 }
