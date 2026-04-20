@@ -20,6 +20,7 @@ const snapshotBuild = spawnSync('pnpm', ['astro', 'build'], {
     PAGEFIND_SNAPSHOT_BUILD: 'true',
   },
   stdio: 'inherit',
+  shell: true,
 });
 
 if (snapshotBuild.status !== 0) {
