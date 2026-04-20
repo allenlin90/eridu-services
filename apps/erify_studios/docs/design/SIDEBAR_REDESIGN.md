@@ -1,9 +1,11 @@
 # Sidebar Redesign — Phase 4 Extended Scope
 
-> **Status**: Planning
+> **Status**: 🔁 Incremental rollout
 > **Date**: 2026-03-22
 > **Scope**: `apps/erify_studios/src/config/sidebar-config.tsx`, `apps/erify_studios/src/lib/constants/studio-route-access.ts`
 > **Triggered by**: Phase 4 extended PRDs — member roster, creator roster, compensation line items, show planning export, economics/P&L UI
+
+> **Current implementation note**: The core regrouping is already live on `master` for `My Workspace`, `Operations`, `Studio Settings`, and `Creators`, including shipped `members` and `creatorRoster` access keys. The `Reports` split, `showPlanningExport`, `compensation`, and `economics` entries remain future follow-up work.
 
 ## Why Now
 
@@ -18,13 +20,13 @@ The current group structure does not have natural homes for these features and h
 
 ---
 
-## Current State
+## Current Shipped State
 
 Source file: `apps/erify_studios/src/config/sidebar-config.tsx`
 
-### Group: Studio Common
+### Group: My Workspace
 
-- Label: `"Studio Common"` — confusing; implies only some features are "studio" features
+- Label: `"My Workspace"`
 - Icon: `Videotape`
 - Items:
   - Dashboard — `LayoutDashboard`
@@ -32,68 +34,49 @@ Source file: `apps/erify_studios/src/config/sidebar-config.tsx`
   - My Shifts — `CalendarDays`
 - Access: all studio members
 
-### Group: Studio Manager
+### Group: Operations
 
-- Label: `"Studio Manager"` — misleading; implies this section is only for MANAGER role, but ADMIN also uses it; groups execution management and admin tooling together
+- Label: `"Operations"`
 - Icon: `Settings`
 - Items:
-  - Task Review — `ClipboardCheck`
   - Shift Schedule — `CalendarDays`
+  - Shows — `Film`
   - Show Operations — `Clapperboard`
-  - Task Templates — `ClipboardCheck`
+  - Task Review — `ClipboardCheck`
   - Task Reports — `ClipboardCheck`
-- Access: MANAGER, ADMIN (varies by item)
+- Access: MODERATION_MANAGER, MANAGER, ADMIN (varies by item)
 
-### Group: Studio Admin
+### Group: Studio Settings
 
-- Label: `"Studio Admin"` — only one item; poor label vs. the broader role-based naming already used
+- Label: `"Studio Settings"`
 - Icon: `ShieldCheck`
 - Items:
+  - Members — `Users`
   - Shared Fields — `Settings`
-- Access: ADMIN only
+  - Task Templates — `ClipboardCheck`
+- Access: MANAGER, ADMIN (varies by item)
 
 ### Group: Creators
 
-- Label: `"Creators"` — accurate; will expand
+- Label: `"Creators"`
 - Icon: `Users`
 - Items:
+  - Creator Roster — `Users`
   - Creator Mapping — `MonitorPlay`
 - Access: MANAGER, TALENT_MANAGER, ADMIN
 
-### Problem Summary
+### Deferred Pieces
 
-1. **"Studio Common" vs. "Studio Manager" vs. "Studio Admin"** is role-based labeling, not function-based. Users see "Studio Manager" items they cannot access (the group is filtered, not the label). This confuses new users about the product structure.
-2. **"Studio Manager" mixes execution and output**: Show Operations, Shift Schedule, and Task Review are operational execution tools. Task Reports is an output/analysis tool. These should not share a group.
-3. **"Studio Admin" has one item** — not worth its own group once more admin items are added.
-4. **No home for Finance/P&L** — economics UI has no group.
+1. `Task Reports` still lives under `Operations`; the dedicated `Reports` group has not landed yet.
+2. `Show Planning Export` is not shipped, so the `showPlanningExport` route/access key is still deferred.
+3. `Compensation` and `Economics / P&L` are not shipped, so the `Finance` group is still deferred.
+4. The existing `Operations` group icon/title are shipped, but some icon clean-up originally proposed in this design doc is still optional polish.
 
 ---
 
-## Proposed State
+## Remaining Target State
 
-Groups are reorganized by **function** (what you do) not by **role** (who you are). Role-based access is enforced by `hasStudioRouteAccess` guards on items, not by group labels.
-
-### Group: My Workspace
-
-- Label: `"My Workspace"` — was "Studio Common"
-- Icon: `Videotape` (keep; represents personal workspace context)
-- Items:
-  - Dashboard — `LayoutDashboard`
-  - My Tasks — `ListTodo`
-  - My Shifts — `CalendarDays`
-- Access: all studio members (unchanged)
-- Note: label change only; no routing changes
-
-### Group: Operations
-
-- Label: `"Operations"` — execution-focused; split from "Studio Manager"
-- Icon: `Clapperboard`
-- Items:
-  - Show Operations — `Clapperboard`
-  - Shift Schedule — `CalendarDays`
-  - Task Review — `ClipboardCheck`
-- Access: MANAGER, ADMIN (unchanged per item)
-- Note: Task Templates moves to Studio Settings (it is a configuration item, not an execution item)
+Groups are organized by **function** (what you do) rather than **role** (who you are). Role-based access remains enforced by `hasStudioRouteAccess` guards on items, not by group labels.
 
 ### Group: Reports
 
@@ -108,14 +91,7 @@ Groups are reorganized by **function** (what you do) not by **role** (who you ar
 
 ### Group: Creators
 
-- Label: `"Creators"` — keep; expands from one item to two
-- Icon: `Users` (keep)
-- Items:
-  - Creator Mapping — `MonitorPlay` (unchanged)
-  - Creator Roster — `UserCheck` (lucide-react: `UserCheck`) — **new**
-- Access:
-  - Creator Mapping: MANAGER, TALENT_MANAGER, ADMIN (unchanged)
-  - Creator Roster: ADMIN, MANAGER, TALENT_MANAGER (new `creatorRoster` key)
+Already shipped on `master`. No further structural changes are required here unless iconography is revisited.
 
 ### Group: Finance
 
@@ -131,43 +107,33 @@ Groups are reorganized by **function** (what you do) not by **role** (who you ar
 
 ### Group: Studio Settings
 
-- Label: `"Studio Settings"` — was "Studio Admin"; describes function, not role
-- Icon: `Settings` (keep)
-- Items:
-  - Members — `Users` (lucide-react: `Users`) — **new**
-  - Shared Fields — `Settings` (unchanged)
-  - Task Templates — `ClipboardCheck` (moved from Operations; it is config, not daily execution)
-- Access:
-  - Members: ADMIN, MANAGER (new `members` key — MANAGER read-only, enforced in component)
-  - Shared Fields: ADMIN (unchanged)
-  - Task Templates: MANAGER, ADMIN (unchanged)
-- Note: current shipped frontend slug is `/studios/$studioId/shared-fields`; a nested `/settings/*` layout can be introduced later when more settings surfaces exist.
+Already shipped on `master`. The current slug remains `/studios/$studioId/shared-fields`; a nested `/settings/*` layout can still be introduced later if more settings surfaces land.
 
 ---
 
-## New Routes
+## Route Status
 
 | Route | Feature | Product Doc |
 | --- | --- | --- |
-| `/studios/$studioId/members` | Studio member roster | `docs/features/studio-member-roster.md` |
-| `/studios/$studioId/creators` | Creator roster | `docs/features/studio-creator-roster.md` |
+| `/studios/$studioId/members` | Studio member roster — shipped | `docs/features/studio-member-roster.md` |
+| `/studios/$studioId/creators` | Creator roster — shipped | `docs/features/studio-creator-roster.md` |
 | `/studios/$studioId/compensation` | Compensation management | `docs/prd/compensation-line-items.md` |
 | `/studios/$studioId/shows/planning-export` | Show planning export | `docs/prd/show-planning-export.md` |
 | `/studios/$studioId/economics` | P&L / economics UI | `docs/prd/pnl-revenue-workflow.md` |
 
 ---
 
-## `hasStudioRouteAccess` Keys to Add
+## `hasStudioRouteAccess` Key Status
 
 Update `apps/erify_studios/src/lib/constants/studio-route-access.ts`:
 
 | Key | Roles | Notes |
 | --- | --- | --- |
-| `members` | `[ADMIN, MANAGER]` | MANAGER read-only; write gating handled in page component |
-| `creatorRoster` | `[ADMIN, MANAGER, TALENT_MANAGER]` | Write operations (ADMIN only) gated in component |
-| `compensation` | `[ADMIN, MANAGER]` | MANAGER read-only; Finance group entry for line-item management |
-| `economics` | `[ADMIN]` | Finance group; hidden until P&L Revenue Workflow ships |
-| `showPlanningExport` | `[ADMIN, MANAGER]` | Reports group |
+| `members` | `[ADMIN, MANAGER]` | Shipped; MANAGER read-only gating handled in page component |
+| `creatorRoster` | `[ADMIN, MANAGER, TALENT_MANAGER]` | Shipped; write operations (ADMIN only) gated in component |
+| `compensation` | `[ADMIN, MANAGER]` | Planned; Finance group entry for line-item management |
+| `economics` | `[ADMIN]` | Planned; Finance group, hidden until economics UI ships |
+| `showPlanningExport` | `[ADMIN, MANAGER]` | Planned; Reports group entry |
 
 ---
 
@@ -178,14 +144,14 @@ All icons from `lucide-react`:
 | Item | Icon Name | Rationale |
 | --- | --- | --- |
 | My Workspace group | `Videotape` | Keep — personal workspace context |
-| Operations group | `Clapperboard` | Live show / production context |
+| Operations group | `Settings` | Shipped today; can be revisited if the group is split further |
 | Reports group | `BarChart2` | Output/analysis surface |
 | Show Planning Export | `FileDown` | Downloadable export action |
 | Creators group | `Users` | Keep |
-| Creator Roster | `UserCheck` | Managed/verified roster members |
+| Creator Roster | `Users` | Shipped today; `UserCheck` was only a proposal |
 | Compensation | `Wallet` | Supplemental cost management |
 | Finance group | `TrendingUp` | Financial trend / P&L |
-| Studio Settings group | `Settings` | Keep |
+| Studio Settings group | `ShieldCheck` | Shipped today |
 | Members (item) | `Users` | Studio team members |
 
 ---
@@ -218,6 +184,6 @@ The Finance group is new but should not appear in the sidebar until at least the
 
 ### Sidebar file changes required
 
-1. `sidebar-config.tsx`: rename group labels, restructure item assignments into the new function-based helper functions, add new item entries with route access key checks.
-2. `studio-route-access.ts`: add five new keys (`members`, `creatorRoster`, `compensation`, `economics`, `showPlanningExport`).
-3. New icon imports: `BarChart2`, `FileDown`, `UserCheck`, `TrendingUp`, `Wallet` from `lucide-react`.
+1. `sidebar-config.tsx`: keep the shipped function-based groups, split `Task Reports` into a dedicated `Reports` group when planning export/report surfaces expand, and add `Finance` when compensation/economics routes ship.
+2. `studio-route-access.ts`: keep shipped `members` and `creatorRoster`; add `compensation`, `economics`, and `showPlanningExport` when those routes ship.
+3. New icon imports are only needed when the remaining `Reports` and `Finance` entries land.

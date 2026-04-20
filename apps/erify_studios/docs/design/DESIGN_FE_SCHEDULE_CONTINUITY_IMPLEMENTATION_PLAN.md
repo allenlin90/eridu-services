@@ -1,9 +1,9 @@
 # Frontend Design and Implementation Plan: Schedule Continuity Support
 
-> **TLDR**: Frontend changes to support the backend diff+upsert publish. Adds status badges/filters for `cancelled_pending_resolution`, warning banners on affected show/task pages, and a studio-scoped resolution queue. Three phases: A (status compatibility), B (resolution UX), C (publish impact visibility).
+> **TLDR**: Planned frontend follow-up for the backend diff+upsert publish. Target changes add clearer `cancelled_pending_resolution` status handling, warning banners on affected show/task pages, and a studio-scoped resolution queue. Three phases: A (status compatibility), B (resolution UX), C (publish impact visibility).
 
 > [!NOTE]
-> **Status: ⏳ In Progress** — For `cancelled_pending_resolution` MVP closure, both **Phase A (status compatibility)** and **Phase B (resolution UX)** are in scope. Phase C remains optional/follow-up.
+> **Status: 📐 Planned follow-up** — Core publish continuity is shipped, but the focused studio queue, resolve CTA, and task-context warning flow below are not yet implemented on `master`.
 
 ## 1. Purpose
 
@@ -88,11 +88,11 @@ FE depends on BE exposing:
 2. Publish summary metadata (created/updated/removed/pending-resolution/restored counts) — schema defined in `@eridu/api-types`.
 3. Stable status identity from API via `systemKey` (confirmed in BE design).
 4. Remove policy uses status-only transitions (not soft-delete) — shows remain queryable; filter by status, not `deletedAt`.
-5. Canonical active-task definition used by resolve policy:
+5. Planned resolve-policy refinement:
    - task target not deleted
    - task not deleted
    - task status not in `COMPLETED`, `CLOSED`
-6. Cancellation context metadata in show payload (or derived field) for stronger warnings, especially when pre-transition status was `LIVE`.
+6. Planned cancellation context metadata in show payload (or derived field) for stronger warnings, especially when pre-transition status was `LIVE`.
 
 ---
 
@@ -116,7 +116,7 @@ Changes:
 
 Targets:
 
-1. `apps/erify_studios/src/routes/studios/$studioId/shows/$showId/tasks.tsx`
+1. `apps/erify_studios/src/routes/studios/$studioId/show-operations/$showId/tasks.tsx`
 2. `apps/erify_studios/src/features/studio-shows/api/get-studio-show.ts` (if typed fields needed)
 
 Changes:

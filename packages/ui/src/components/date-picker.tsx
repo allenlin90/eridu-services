@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { cn } from '../lib/utils';
 
@@ -50,6 +50,10 @@ export function DateTimePicker({ value, onChange, className }: { value: string; 
   // value is ISO string with time
   const date = value ? new Date(value) : undefined;
   const [time, setTime] = useState(date ? format(date, 'HH:mm') : '09:00');
+
+  useEffect(() => {
+    setTime(date ? format(date, 'HH:mm') : '09:00');
+  }, [value, date]);
 
   const handleDateSelect = (d: Date | undefined) => {
     if (!d) {

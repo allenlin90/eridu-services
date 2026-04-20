@@ -87,7 +87,8 @@ export function ShowsListPage() {
         <ShowsTable
           columns={columns}
           data={data?.data ?? []}
-          pageCount={data?.meta?.totalPages ?? -1}
+          totalCount={data?.meta?.total ?? 0}
+          pageCount={data?.meta?.totalPages ?? 0}
           pagination={pagination as PaginationState}
           onPaginationChange={onPaginationChange}
           sorting={sorting as SortingState}

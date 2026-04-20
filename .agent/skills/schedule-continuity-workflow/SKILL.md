@@ -11,7 +11,7 @@ Use this skill for the schedule continuity feature across `erify_api`, `erify_st
 
 1. `apps/erify_api/docs/SCHEDULE_CONTINUITY.md`
 2. `apps/erify_api/docs/SCHEDULE_PLANNING.md`
-3. `docs/prd/studio-show-management.md`
+3. `docs/features/studio-show-management.md`
 4. `docs/prd/studio-schedule-management.md`
 5. `apps/erify_api/docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md`
 6. `apps/erify_studios/docs/design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md`
@@ -23,6 +23,11 @@ Use this skill for the schedule continuity feature across `erify_api`, `erify_st
 3. Removed shows with active tasks move to `cancelled_pending_resolution`.
 4. Removed shows without active tasks move to `cancelled`.
 5. Reappearing shows (matched by `(client_id, external_id)`) are restored in place.
+
+Current implementation boundary:
+
+6. The shipped code covers diff+upsert publish, summary counters, and restore behavior.
+7. The studio-scoped pending-resolution resolve endpoint / queue / CTA described in the MVP design docs are not fully shipped yet.
 
 ## Phase 4 Product Direction
 

@@ -4,6 +4,8 @@ Shipped feature specifications — promoted from PRDs when features are implemen
 
 **This is not the technical reference.** Technical implementation lives in `apps/*/docs/`. Feature docs answer "why does this exist and who uses it"; app-local docs answer "how does it work under the hood."
 
+> Temporary exception: this folder also retains a small number of archived deferred references when a workstream was implemented on a non-`master` branch and then deferred before merge. Those references are listed separately below and are not shipped features.
+
 ## Lifecycle
 
 ```
@@ -21,7 +23,6 @@ When a feature ships:
 | Feature | Phase | Canonical Docs |
 | --- | --- | --- |
 | [RBAC Roles](./rbac-roles.md) | Phase 4 | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
-| [Show Economics](./show-economics.md) | Phase 4 | [BE design](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md) |
 | [Creator Mapping](./creator-mapping.md) | Phase 4 | No per-feature design doc retained |
 | [Studio Creator Roster](./studio-creator-roster.md) | Phase 4 | [Backend reference](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md), [Frontend reference](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md) |
 | [Studio Member Roster](./studio-member-roster.md) | Phase 4 | [API types](../../packages/api-types/src/memberships/schemas.ts), [BE controller](../../apps/erify_api/src/studios/studio-membership/studio-members.controller.ts), [FE route](../../apps/erify_studios/src/routes/studios/$studioId/members.tsx) |
@@ -29,3 +30,9 @@ When a feature ships:
 | [Studio Creator Onboarding](./studio-creator-onboarding.md) | Phase 4 | [BE canonical](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md), [FE canonical](../../apps/erify_studios/docs/STUDIO_CREATOR_ONBOARDING.md) |
 | [Studio Show Management](./studio-show-management.md) | Phase 4 | [BE canonical](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md), [FE canonical](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md) |
 | [Internal Knowledge Base (`eridu_docs`)](./eridu-docs-knowledge-base.md) | Phase 4 | [Auth design](../../apps/eridu_docs/docs/AUTH_DESIGN.md) |
+
+## Archived / Deferred References
+
+| Reference | Status | Canonical Docs |
+| --- | --- | --- |
+| [Show Economics Baseline](./show-economics.md) | Deferred merge reference (`feat/show-economics-baseline`, commit `8de31ffe`) | [Phase 4 roadmap](../roadmap/PHASE_4.md), [BE design](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md) |

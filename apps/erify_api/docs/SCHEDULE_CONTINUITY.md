@@ -1,6 +1,6 @@
 # Schedule Continuity
 
-> **TLDR**: Schedule publish uses identity-preserving **diff + upsert** instead of delete/recreate. Shows keep a stable `external_id` across republishes. Removed shows with active non-terminal tasks enter `CANCELLED_PENDING_RESOLUTION` (not deleted). Publish payload always wins conflicts.
+> **TLDR**: Schedule publish uses identity-preserving **diff + upsert** instead of delete/recreate. Shows keep a stable `external_id` across republishes. Missing shows are status-transitioned instead of deleted. Core publish continuity is shipped on `master`; the dedicated studio pending-resolution resolve workflow is still follow-up work.
 
 ## Overview
 
@@ -20,8 +20,8 @@ flowchart TD
     H --> I[Matched → Update in place]
     H --> J[New → Create]
     H --> K{Missing from payload?}
-    K -- No tasks → --> L[Status: CANCELLED]
-    K -- Has tasks → --> M[Status: CANCELLED_PENDING_RESOLUTION]
+    K -- No undeleted tasks → --> L[Status: CANCELLED]
+    K -- Has undeleted tasks → --> M[Status: CANCELLED_PENDING_RESOLUTION]
 
     I & J & L & M --> N[Sync MC/platform diffs]
     N --> O[Publish complete with summary]
@@ -92,27 +92,26 @@ When an existing show is missing from the incoming payload:
 
 | Condition        | Action                                      |
 | ---------------- | ------------------------------------------- |
-| No active tasks  | Set status → `CANCELLED`                    |
-| Has active tasks | Set status → `CANCELLED_PENDING_RESOLUTION` |
+| No undeleted tasks  | Set status → `CANCELLED`                    |
+| Has undeleted tasks | Set status → `CANCELLED_PENDING_RESOLUTION` |
 
-### Active Task Definition (Canonical)
+### Current Shipped Task Check
 
-For schedule continuity remove/resolve decisions, **active task** means:
+Today the publish remove-path checks for any linked task target where:
 
 1. `task_target.deleted_at IS NULL`
 2. `task.deleted_at IS NULL`
-3. `task.status NOT IN ('COMPLETED', 'CLOSED')`
 
-Completed/closed tasks do not block direct transition to `CANCELLED`.
+`COMPLETED` and `CLOSED` tasks still count today because terminal-status exclusion has not landed on `master` yet.
 
 - **No soft-delete**: `deletedAt` stays null. Status-only transitions avoid unique constraint collisions on `(client_id, external_id)`.
 - **Restore on reappearance**: If a cancelled show reappears in a future publish, it's matched → updated back to active, and tasks are resumed.
-- **Manual resolve interaction**: A studio-admin resolved show (`CANCELLED`) can still be restored to active if a later publish reintroduces the same `(client_id, external_id)`.
+- **Manual resolve interaction**: A manually cancelled show can still be restored to active if a later publish reintroduces the same `(client_id, external_id)`.
 - **Hard delete**: Privileged override only (not standard publish path). Cascades to tasks.
 
-### Cancellation Metadata Contract
+### Pending-Resolution Follow-Up Contract
 
-When publish transitions a show to `CANCELLED_PENDING_RESOLUTION`, store context in `show.metadata`:
+The pending-resolution MVP design proposes storing transition context in `show.metadata`:
 
 ```json
 {
@@ -125,7 +124,7 @@ When publish transitions a show to `CANCELLED_PENDING_RESOLUTION`, store context
 }
 ```
 
-This metadata enables safer/manual resolution flows (for example, LIVE pre-transition safeguards).
+That metadata is not written by the current publish implementation on `master`; it remains part of the planned studio resolution follow-up.
 
 ---
 
@@ -148,10 +147,10 @@ This metadata enables safer/manual resolution flows (for example, LIVE pre-trans
 
 1. Task-target links survive show updates where identity matches
 2. System never silently removes operational tasks via publish
-3. Removed shows with tasks enter `cancelled_pending_resolution` for admin resolution
+3. Removed shows with undeleted tasks enter `cancelled_pending_resolution` instead of being deleted
 4. Hard delete (privileged only) cascades to tasks — acceptable since it's an explicit, audited action
 5. Optimistic locking + advisory lock on schedule ID serializes concurrent publishes
-6. Resolution workflows should use `cancellation_context` metadata and enforce domain policy (see pending-resolution MVP implementation plan)
+6. Dedicated studio resolution flows and `cancellation_context` metadata are planned follow-up work (see pending-resolution MVP implementation plan)
 
 ---
 
@@ -202,9 +201,9 @@ sequenceDiagram
         API->>DB: Update show in place
     else New
         API->>DB: Create show
-    else Missing (no tasks)
+    else Missing (no undeleted tasks)
         API->>DB: Status → CANCELLED
-    else Missing (has tasks)
+    else Missing (has undeleted tasks)
         API->>DB: Status → CANCELLED_PENDING_RESOLUTION
     end
 
@@ -223,4 +222,4 @@ sequenceDiagram
 
 - [Schedule Planning](./SCHEDULE_PLANNING.md) — API design, data model, workflow
 - [Task Management](./TASK_MANAGEMENT_SUMMARY.md) — Task lifecycle and API
-- [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Studio-scoped resolution workflow (in progress)
+- [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Planned studio-scoped resolution follow-up

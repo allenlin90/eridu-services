@@ -2,7 +2,7 @@
 
 > **TLDR**: NestJS REST API for live-commerce operations — manages shows, schedules, tasks, users, clients, MCs, platforms, and studios. Uses Prisma/PostgreSQL, JWT auth via `@eridu/auth-sdk`, and Zod validation via `@eridu/api-types`. Three controller scopes: `/admin/*` (system admins), `/studios/:id/*` (studio members), `/me/*` (authenticated users).
 
-The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and StudioMembership model for authorization. For detailed implementation status and roadmap, see [Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md).
+The API uses JWT validation via `@eridu/auth-sdk` SDK for authentication and StudioMembership model for authorization. For detailed implementation status and roadmap, start with the [backend docs index](docs/README.md) and the linked phase trackers.
 
 ## 🚀 Quick Start
 
@@ -575,8 +575,8 @@ The OpenAPI implementation includes:
 - **Client** ↔ **Show**: One-to-Many
 - **Client** ↔ **Schedule**: One-to-Many
 - **StudioRoom** ↔ **Show**: One-to-Many
-- **Client** ↔ **Material**: One-to-Many (Planned for Phase 4)
-- **Platform** ↔ **Material**: One-to-Many (Planned for Phase 4)
+- **Client** ↔ **Material**: One-to-Many (Phase 5 candidate)
+- **Platform** ↔ **Material**: One-to-Many (Phase 5 candidate)
 
 ### Future Entities (Planned)
 
@@ -586,10 +586,10 @@ The database schema includes comprehensive models for the full livestream produc
 - **ShowMC & ShowPlatform**: Show relationship management ✅ (Implemented)
 - **Schedules & ScheduleSnapshots**: Collaborative planning system ✅ (Implemented)
 - **Tasks & TaskTemplates**: Workflow automation ✅ (Implemented — Phase 2)
-- **Materials & MaterialTypes**: Content assets management (Phase 4)
-- **Comments**: Collaboration system (Phase 4)
-- **Tags & Taggables**: Flexible categorization (Phase 4)
-- **Audits**: Complete audit trail (Phase 4)
+- **Materials & MaterialTypes**: Content assets management (Phase 5 candidate)
+- **Comments**: Collaboration system (deferred ideation)
+- **Tags & Taggables**: Flexible categorization (deferred ideation)
+- **Audits**: Complete audit trail (deferred ideation)
 
 See the root [Business Documentation](../../docs/domain/BUSINESS.md) for cross-app domain context and [System Architecture Overview](../../docs/engineering/ARCHITECTURE_OVERVIEW.md) for monorepo architecture. Backend implementation history remains under `apps/erify_api/docs/`.
 
@@ -680,10 +680,10 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | Document                                                                                               | Status | Description                                                                    |
 | ------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](docs/design/AUTHORIZATION_GUIDE.md)                                              | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
-| [Pending-Resolution MVP](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)           | ⏳      | Studio-scoped resolution for cancelled shows                                   |
+| [Pending-Resolution MVP](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)           | 📐      | Planned studio-scoped resolution follow-up for cancelled shows                 |
 | [Ad-hoc Task Ticketing](docs/design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
-| [Material Management](docs/design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Planned for Phase 4; not implemented in the current schema                     |
-| [Data Warehouse Design](docs/design/DATA_WAREHOUSE_DESIGN.md)                                         | 🗓️      | Planned Datastream + BigQuery architecture for Phase 4 analytics               |
+| [Material Management](docs/design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for operations expansion                            |
+| [Data Warehouse Design](docs/design/DATA_WAREHOUSE_DESIGN.md)                                         | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
 
 ### Roadmap
 
@@ -698,7 +698,8 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | [Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md)       | Core foundation that is fully implemented                      |
 | [Phase 2 Roadmap](../../docs/roadmap/PHASE_2.md)       | Task-management foundation and remaining follow-up context     |
 | [Phase 3 Roadmap](../../docs/roadmap/PHASE_3.md)             | Current cross-app closure summary for Phase 3                  |
-| [Phase 4 Roadmap](../../docs/roadmap/PHASE_4.md)             | Planned review-quality, ticketing, materials, and analytics work |
+| [Phase 4 Roadmap](../../docs/roadmap/PHASE_4.md)             | Active P&L and studio-autonomy tracker, including deferred economics baseline merge |
+| [Phase 5 Roadmap](../../docs/roadmap/PHASE_5.md)             | Candidate track for materials, analytics, and broader deferred operations work |
 | [Manual Testing Guide](manual-test/README.md)          | Running E2E workflows: `pnpm -F erify_api manual:schedule:all` |
 
 ## 🔧 Configuration

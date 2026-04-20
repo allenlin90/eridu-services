@@ -46,7 +46,7 @@ import { TaskTemplate } from '@eridu/api-types';
 ```
 
 > [!NOTE]
-> While it's possible to split `schemas.ts` and `types.ts`, current practice in this monorepo is to consolidate them into `schemas.ts` for simplicity and easier maintenance.
+> Default preference is to keep schema-derived exports close together, but the current `@eridu/api-types` package still has a mixed layout: several domains export both `schemas.ts` and `types.ts`. Preserve the existing layout inside a touched domain unless the task explicitly includes a domain-local consolidation/refactor.
 
 ## Implementation Pattern
 

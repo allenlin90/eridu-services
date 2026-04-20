@@ -1,6 +1,6 @@
 # Data Warehouse Design (Datastream + BigQuery)
 
-> **Status**: ⏳ **To be written** — This design doc is a Phase 4 deliverable.
+> **Status**: 🗓️ **Phase 5 candidate** — This design doc is deferred beyond Phase 4 and should be written only if the analytics track is promoted.
 
 ## Scope
 
@@ -20,5 +20,6 @@ This document should cover:
 
 ## Reference
 
-- **[Phase 4 Roadmap](../../../../docs/roadmap/PHASE_4.md)** — Implementation scope and success criteria
+- **[Phase 5 Roadmap](../../../../docs/roadmap/PHASE_5.md)** — Candidate track and prioritization context
+- **[Enterprise Scale Follow-ups](../../../../docs/ideation/enterprise-scale-followups.md)** — Data warehouse and analytics ideation context
 - **[System Architecture Overview](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)** — System architecture
