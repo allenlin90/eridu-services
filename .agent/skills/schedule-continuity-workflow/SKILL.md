@@ -80,7 +80,7 @@ Use generic status update endpoints only if the same guards/audit/error contract
 
 A show's membership in a schedule is determined by its **operational day**, not its raw datetime.
 
-**Rule**: if `show.startTime` (local) is before 06:00, the show's operational day is the previous calendar day. The show belongs to a schedule if its operational day falls within `[schedule.startDate, schedule.endDate]`.
+**Rule**: if `show.startTime` in the intended studio-local day is before 06:00, the show's operational day is the previous calendar day. The show belongs to a schedule if its operational day falls within `[schedule.startDate, schedule.endDate]`.
 
 ```
 show.operationalDay = startTime.local < 06:00
@@ -98,7 +98,7 @@ valid = operationalDay >= schedule.startDate
 
 The existing `ValidationService` uses strict datetime comparison and does not implement this rule. The studio-native validation (1f) must implement the operational day boundary for show-range checks.
 
-**Timezone**: 06:00 cutoff is evaluated in studio local time. Studio-level timezone is not yet modeled — deferred open item. Use runtime local timezone as approximation until resolved.
+**Timezone**: the intended 06:00 cutoff for schedule membership is studio-local time. Studio-level timezone is not yet modeled — deferred open item. Do **not** use ambient server/runtime timezone as an approximation for backend validation. Record the exact timezone-resolution approach in the implementation design, and keep current shift-alignment UTC bucketing unchanged unless that flow is explicitly revisited.
 
 ## Checklist
 

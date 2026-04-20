@@ -153,7 +153,7 @@ For studio-native schedule management, a schedule is **operationally active the 
 
 ## Show-Schedule Membership: Operational Day Boundary
 
-A show belongs to a schedule's period based on its **operational day**, not its raw datetime. The 06:00 rule applies: a show whose `startTime` is before 06:00 local time is counted as belonging to the **previous** calendar day.
+A show belongs to a schedule's period based on its **operational day**, not its raw datetime. The 06:00 rule applies against the show's **intended studio-local day**: a show whose `startTime` is before 06:00 belongs to the **previous** calendar day.
 
 ### Rule
 
@@ -169,7 +169,7 @@ show is within schedule if:
 
 ### Examples
 
-| Show startTime (local) | Operational day | January schedule (Jan 1–31) |
+| Show startTime (intended studio-local time) | Operational day | January schedule (Jan 1–31) |
 |---|---|---|
 | Jan 1 03:00 | Dec 31 | ❌ Belongs to December |
 | Jan 1 07:00 | Jan 1 | ✓ Valid |
@@ -181,9 +181,10 @@ The existing `ValidationService` uses strict datetime comparison and does not ap
 
 ### Timezone Note
 
-Timestamps are stored as UTC instants. The 06:00 cutoff must be evaluated in the **studio's local timezone**, not UTC. Studio-level timezone configuration is not yet modeled in the system. Until it is:
-- Use the runtime local timezone as a best-effort approximation for local display.
-- The exact UTC offset of the 06:00 cutoff is deferred as a known open item.
+Timestamps are stored as UTC instants. The intended 06:00 cutoff for **schedule membership** is based on the studio's local timezone, not UTC. Studio-level timezone configuration is not yet modeled in the system. Until it is:
+- Do **not** derive this cutoff from the ambient server or worker runtime timezone.
+- Treat exact timezone resolution for hard backend validation as an explicit implementation dependency to record in the design PR.
+- This PRD does **not** change the current shift-planning / duty-manager coverage bucketing, which remains on its existing 06:00 UTC backend rule until revisited separately.
 - Improving timezone resolution is tracked in the ideation backlog.
 
 ## Economics Implications

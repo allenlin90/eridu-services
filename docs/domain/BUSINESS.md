@@ -231,10 +231,10 @@ Key Models: `studio_shifts`, `studio_shift_blocks`, `shows`, `tasks`, `task_targ
 Core Rules:
 
 - **Duty manager coverage is show-time critical**: the primary coverage risk is when no duty manager is on shift while a show is happening.
-- **Operational day boundary is 06:00**:
-  - Shows with start time (local) before `06:00` are counted in the **previous** operational day.
-  - Shows with start time (local) at or after `06:00` are counted in that date's operational day.
-  - This rule applies to **both** shift planning (duty-manager coverage bucketing) and **schedule membership** (which schedule a show belongs to). A show starting Feb 1 02:00 local belongs to the Jan 31 operational day and is valid for a January schedule.
+- **Operational day boundary is 06:00, but the timezone depends on the workflow**:
+  - **Shift planning / duty-manager coverage bucketing** currently uses the existing backend rule: `06:00 UTC`.
+  - **Schedule membership** (which schedule a show belongs to) is defined against the intended studio-local operational day. A show starting Feb 1 02:00 studio-local belongs to the Jan 31 operational day and is valid for a January schedule.
+  - Do **not** use the ambient server/runtime timezone as a substitute for studio-local schedule membership in backend validation; exact timezone resolution remains a separate implementation dependency.
 - **Operational day continuity**: for each operational day, duty manager continuity is evaluated from the first show start to the last show end.
 - **Time storage vs presentation**:
   - Persisted datetimes are UTC/epoch-standardized in DB.
