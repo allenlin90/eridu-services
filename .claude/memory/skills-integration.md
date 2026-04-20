@@ -289,45 +289,7 @@ async findPaginated(params: {
 
 ## Skill Categories
 
-### Backend (NestJS)
-1. **service-pattern-nestjs** - Service patterns, payload types
-2. **repository-pattern-nestjs** - Repository, BaseRepository
-3. **backend-controller-pattern-nestjs** - Controllers, DTOs
-4. **authentication-authorization-nestjs** - General auth patterns
-5. **erify-authorization** - erify_api-specific auth
-6. **database-patterns** - Transactions, soft delete, locking
-7. **data-validation** - Zod validation patterns
-8. **orchestration-service-nestjs** - Multi-service coordination, bulk ops
-9. **jsonb-analytics-snapshot** - Analytics aggregation with JSONB snapshots
-
-### Frontend (React)
-10. **frontend-api-layer** - TanStack Query, API client
-11. **frontend-state-management** - State patterns
-12. **frontend-ui-components** - Component patterns
-13. **frontend-testing-patterns** - Testing patterns
-14. **frontend-error-handling** - Error boundaries
-15. **frontend-performance** - Optimization patterns
-16. **frontend-i18n** - Paraglide usage
-17. **frontend-code-quality** - Quality standards
-18. **frontend-tech-stack** - Stack overview
-
-### Shared
-19. **shared-api-types** - @eridu/api-types patterns
-20. **design-patterns** - General patterns
-21. **solid-principles** - SOLID principles for backend & frontend
-22. **engineering-best-practices-enforcer** - Repo-aligned best practices audit & refactor
-
-### Domain-Specific
-23. **admin-list-pattern** - Admin list pages
-24. **studio-list-pattern** - Studio list pages
-25. **task-template-builder** - Task template UI
-26. **schedule-continuity-workflow** - Schedule update/validate/publish workflow
-27. **shift-schedule-pattern** - Shift CRUD, blocks, calendar/alignment orchestration, duty-manager, task-readiness, FE shift UX
-28. **file-upload-presign** - Presigned R2 upload flow, use case limits, storage routing
-
-### Meta
-29. **skill-creator** - Creating new skills
-30. **code-quality** - General quality rules
+See `AGENTS.md` § Skill Routing for the authoritative, complete list of all skills and their routing categories. Do not maintain a duplicate list here.
 
 ## Key Takeaways
 
