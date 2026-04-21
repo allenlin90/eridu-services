@@ -48,6 +48,7 @@ function CreatorsList() {
     data,
     isLoading,
     isFetching,
+    pagination,
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
@@ -81,14 +82,19 @@ function CreatorsList() {
     setEditingCreator(null);
   };
 
-  const pagination = data?.meta
+  const tablePagination = data?.meta
     ? {
         pageIndex: data.meta.page - 1,
         pageSize: data.meta.limit,
         total: data.meta.total,
         pageCount: data.meta.totalPages,
       }
-    : undefined;
+    : {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        total: 0,
+        pageCount: 0,
+      };
 
   const columnsWithActions = useMemo<ColumnDef<Creator>[]>(() => [
     ...creatorColumns,
@@ -123,16 +129,14 @@ function CreatorsList() {
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage="No creators found. Create one to get started."
-        manualPagination={!!pagination}
+        manualPagination
         manualFiltering
-        pageCount={pagination?.pageCount}
-        paginationState={pagination
-          ? {
-              pageIndex: pagination.pageIndex,
-              pageSize: pagination.pageSize,
-            }
-          : undefined}
-        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
+        pageCount={data?.meta?.totalPages}
+        paginationState={{
+          pageIndex: tablePagination.pageIndex,
+          pageSize: tablePagination.pageSize,
+        }}
+        onPaginationChange={adaptPaginationChange(tablePagination, onPaginationChange)}
         columnFilters={columnFilters}
         onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
         renderToolbar={(table) => (
@@ -142,14 +146,12 @@ function CreatorsList() {
             searchPlaceholder="Search by name..."
           />
         )}
-        renderFooter={() => pagination
-          ? (
-              <DataTablePagination
-                pagination={pagination}
-                onPaginationChange={onPaginationChange}
-              />
-            )
-          : null}
+        renderFooter={() => (
+          <DataTablePagination
+            pagination={tablePagination}
+            onPaginationChange={onPaginationChange}
+          />
+        )}
       />
 
       <CreatorCreateDialog

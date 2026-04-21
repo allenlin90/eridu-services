@@ -32,7 +32,7 @@ export function useMemberships() {
   const studioIdFilter = columnFilters.find((filter) => filter.id === 'studio_id')
     ?.value as string | undefined;
 
-  const { data, isLoading } = useMembershipsQuery({
+  const { data, isLoading, isFetching } = useMembershipsQuery({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     name: nameFilter,
@@ -66,6 +66,7 @@ export function useMemberships() {
   return {
     data,
     isLoading,
+    isFetching,
     pagination,
     onPaginationChange,
     columnFilters,
