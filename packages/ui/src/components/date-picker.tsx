@@ -55,29 +55,41 @@ export function DateTimePicker({ value, onChange, className }: { value: string; 
     setTime(date ? format(date, 'HH:mm') : '09:00');
   }, [value, date]);
 
+  const applyTimeToDate = (baseDate: Date, nextTime: string) => {
+    const parts = nextTime.split(':');
+    if (parts.length !== 2) {
+      return null;
+    }
+
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return null;
+    }
+
+    const nextDate = new Date(baseDate);
+    nextDate.setHours(hours, minutes, 0, 0);
+    return nextDate;
+  };
+
   const handleDateSelect = (d: Date | undefined) => {
     if (!d) {
       onChange('');
       return;
     }
-    // Combine date and time
-    const [hours, minutes] = time.split(':').map(Number);
-    if (hours !== undefined && minutes !== undefined) {
-      d.setHours(hours);
-      d.setMinutes(minutes);
+
+    const nextDate = applyTimeToDate(d, time);
+    if (nextDate) {
+      onChange(nextDate.toISOString());
     }
-    onChange(d.toISOString());
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = e.target.value;
     setTime(newTime);
     if (date) {
-      const [hours, minutes] = newTime.split(':').map(Number);
-      if (hours !== undefined && minutes !== undefined) {
-        const newDate = new Date(date);
-        newDate.setHours(hours);
-        newDate.setMinutes(minutes);
+      const newDate = applyTimeToDate(date, newTime);
+      if (newDate) {
         onChange(newDate.toISOString());
       }
     }
@@ -87,6 +99,7 @@ export function DateTimePicker({ value, onChange, className }: { value: string; 
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           className={cn(
             'w-full justify-start text-left font-normal',
@@ -109,11 +122,13 @@ export function DateTimePicker({ value, onChange, className }: { value: string; 
           <div className="flex items-center justify-between mb-2">
             <Label className="text-xs block">Time</Label>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className="h-6 px-2 text-[10px]"
               onClick={() => {
                 const now = new Date();
+                now.setSeconds(0, 0);
                 onChange(now.toISOString());
                 setTime(format(now, 'HH:mm'));
               }}

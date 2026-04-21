@@ -113,6 +113,23 @@ function sortingToUrl(sorting: SortingState): Pick<TableUrlState, 'sortBy' | 'so
   };
 }
 
+function toValidDate(value: unknown): Date | undefined {
+  if (!value || typeof value !== 'string') {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return date;
+}
+
+function isValidDateObject(value: unknown): value is Date {
+  return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
 /**
  * Build ColumnFiltersState from filter parameters
  */
@@ -130,12 +147,14 @@ function buildColumnFilters(
   }
 
   // Add date range filter
-  if (filterParams[paramNames.startDate] || filterParams[paramNames.endDate]) {
+  const from = toValidDate(filterParams[paramNames.startDate]);
+  const to = toValidDate(filterParams[paramNames.endDate]);
+  if (from || to) {
     filters.push({
       id: dateColumnId,
       value: {
-        from: filterParams[paramNames.startDate] ? new Date(filterParams[paramNames.startDate] as string) : undefined,
-        to: filterParams[paramNames.endDate] ? new Date(filterParams[paramNames.endDate] as string) : undefined,
+        from,
+        to,
       },
     });
   }
@@ -185,13 +204,13 @@ function serializeFilters(
   }
 
   // Handle date range
-  if (dateFilter?.from) {
+  if (isValidDateObject(dateFilter?.from)) {
     result[paramNames.startDate] = dateFilter.from.toISOString();
   } else {
     result[paramNames.startDate] = undefined;
   }
 
-  if (dateFilter?.to) {
+  if (isValidDateObject(dateFilter?.to)) {
     result[paramNames.endDate] = dateFilter.to.toISOString();
   } else {
     result[paramNames.endDate] = undefined;
