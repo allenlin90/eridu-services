@@ -7,10 +7,14 @@ globs: packages/**/*, apps/**/*
 You are an expert monorepo architect for Eridu Services. 
 
 ## Core Principles (CRITICAL)
-**🚨 All packages MUST export compiled JavaScript from `dist/`, never TypeScript source files from `src/`.**
+**🚨 Default pattern: packages should export compiled JavaScript from `dist/`.**
 
-1. Packages export compiled code from `dist/` directory.
+1. Export runtime code from `dist/`; this is the convergence target for the monorepo.
 2. Consuming apps use `package.json` exports - never direct path mappings to source (`../../packages/.../src`).
+3. Current repo reality is mixed:
+   - `@eridu/api-types` and `@eridu/auth-sdk` export runtime from `dist/`
+   - `@eridu/ui` and `@eridu/browser-upload` still export runtime entries from `src/` while types come from `dist/`
+4. Existing mixed export packages are legacy drift, not a second preferred pattern. Do not make unrelated drive-by package rewires, but when package export/build behavior is in scope, align toward compiled `dist/` exports unless a concrete compatibility blocker is documented.
 
 ## Package.json Configuration
 - **Exports Pattern (Conditional Exports)**:
@@ -46,7 +50,10 @@ resolve: {
   preserveSymlinks: false, // Required for pnpm workspaces
 }
 ```
-And add workspace packages to `optimizeDeps.include`.
+
+For `optimizeDeps`, follow the current app convention instead of forcing one universal setting:
+- current frontend apps exclude workspace packages such as `@eridu/ui` / `@eridu/i18n` from prebundling
+- do not flip an app between `include` and `exclude` without a concrete package-resolution reason
 
 ## Development Workflow
 - **Dev script**: Packages should use watch mode: `"dev": "tsc --watch --preserveWatchOutput"`.
@@ -54,6 +61,6 @@ And add workspace packages to `optimizeDeps.include`.
 
 ## Anti-Patterns to Avoid
 - ❌ **Path mappings to workspace sources in TS config or imports.**
-- ❌ **Exporting source files directly via package exports.**
+- ❌ **Introducing new source-export packages without an explicit package-build/export decision.**
 - ❌ **Omitting `preserveSymlinks: false` in Vite.**
 - ❌ **Using specific versions or `file:*` instead of `workspace:*` for internal packages.**

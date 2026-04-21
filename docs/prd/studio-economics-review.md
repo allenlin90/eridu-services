@@ -189,7 +189,7 @@ Existing `GET /studios/:studioId/economics` may remain as a low-level grouped re
 
 - Backend design: `apps/erify_api/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md`
 - Frontend design: `apps/erify_studios/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md`
-- Economics baseline feature: `docs/features/show-economics.md`
+- Economics baseline archived reference: `docs/features/show-economics.md`
 - Task reporting feature reference: `docs/features/task-submission-reporting.md`
 - Compensation line items PRD: `docs/prd/compensation-line-items.md`
 - Show planning export PRD: `docs/prd/show-planning-export.md`

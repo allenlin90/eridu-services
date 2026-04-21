@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import { memo } from 'react';
 import type { Control } from 'react-hook-form';
 import type { z } from 'zod';
@@ -7,6 +6,7 @@ import type { updateShowInputSchema } from '@eridu/api-types/shows';
 import {
   AsyncCombobox,
   AsyncMultiCombobox,
+  DateTimePicker,
   FormControl,
   FormField,
   FormItem,
@@ -65,15 +65,7 @@ export const ShowTimeFields = memo(({
           <FormItem>
             <FormLabel>Start Time</FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                type="datetime-local"
-                value={field.value ? format(new Date(field.value), 'yyyy-MM-dd\'T\'HH:mm') : ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  field.onChange(val ? new Date(val).toISOString() : '');
-                }}
-              />
+              <DateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -87,15 +79,7 @@ export const ShowTimeFields = memo(({
           <FormItem>
             <FormLabel>End Time</FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                type="datetime-local"
-                value={field.value ? format(new Date(field.value), 'yyyy-MM-dd\'T\'HH:mm') : ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  field.onChange(val ? new Date(val).toISOString() : '');
-                }}
-              />
+              <DateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
             </FormControl>
             <FormMessage />
           </FormItem>

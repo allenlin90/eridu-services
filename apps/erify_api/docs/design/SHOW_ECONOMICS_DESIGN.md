@@ -3,7 +3,7 @@
 > **Status**: Deferred revision target
 > **Phase scope**: Phase 4 reopened scope
 > **Owner app**: `apps/erify_api`
-> **Product source**: [`docs/features/show-economics.md`](../../../../docs/features/show-economics.md)
+> **Product source**: archived branch reference [`docs/features/show-economics.md`](../../../../docs/features/show-economics.md)
 > **Depends on**: Creator mapping foundation ✅, studio shift cost inputs ✅, compensation line items review ⏸️
 
 ## Purpose
@@ -52,4 +52,3 @@ Define the backend design for the show-level and grouped economics APIs that alr
 - `pnpm --filter erify_api build`
 - `pnpm --filter erify_api test`
 - Targeted smoke: show-level economics, grouped economics, compensation-line-item roll-up, mixed FIXED/COMMISSION creator cases
-

@@ -4,11 +4,12 @@ import { useNavigate } from '@tanstack/react-router';
 import type {
   ColumnDef,
   ColumnFiltersState,
+  PaginationState,
   SortingState,
 } from '@tanstack/react-table';
 import * as React from 'react';
 
-import { DataTable } from '@eridu/ui';
+import { DataTable, DataTablePagination } from '@eridu/ui';
 
 import { ShowsTableToolbar } from './shows-table-toolbar';
 
@@ -17,12 +18,13 @@ import * as m from '@/paraglide/messages.js';
 type ShowsTableProps<TData, TValue> = {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  totalCount: number;
   pageCount: number;
   pagination: {
     pageIndex: number;
     pageSize: number;
   };
-  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
+  onPaginationChange: (pagination: PaginationState) => void;
   sorting: SortingState;
   onSortingChange: (sorting: SortingState) => void;
   columnFilters: ColumnFiltersState;
@@ -34,6 +36,7 @@ type ShowsTableProps<TData, TValue> = {
 export function ShowsTable<TData, TValue>({
   columns,
   data,
+  totalCount,
   pageCount,
   pagination,
   onPaginationChange,
@@ -71,6 +74,17 @@ export function ShowsTable<TData, TValue>({
         });
       }}
       renderToolbar={(table) => <ShowsTableToolbar table={table} />}
+      renderFooter={() => (
+        <DataTablePagination
+          pagination={{
+            pageIndex: pagination.pageIndex,
+            pageSize: pagination.pageSize,
+            total: totalCount,
+            pageCount,
+          }}
+          onPaginationChange={(nextPagination) => onPaginationChange(nextPagination as PaginationState)}
+        />
+      )}
     />
   );
 }

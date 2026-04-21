@@ -180,6 +180,21 @@ describe('useTableUrlState', () => {
         { id: 'status', value: 'active' },
       ]);
     });
+
+    it('drops invalid date params from the derived column filters', () => {
+      mockSearch = {
+        search: 'test',
+        startDate: 'not-a-date',
+        endDate: 'still-not-a-date',
+      };
+      const { result } = renderHook(() =>
+        useTableUrlState({ from: '/test' }),
+      );
+
+      expect(result.current.columnFilters).toEqual([
+        { id: 'name', value: 'test' },
+      ]);
+    });
   });
 
   describe('pagination changes', () => {
@@ -292,6 +307,28 @@ describe('useTableUrlState', () => {
       ]);
 
       expect(mockNavigate).toHaveBeenCalled();
+    });
+
+    it('clears invalid date params when the user updates filters', () => {
+      mockSearch = {
+        search: 'test',
+        startDate: 'not-a-date',
+        endDate: 'still-not-a-date',
+      };
+      const { result } = renderHook(() =>
+        useTableUrlState({ from: '/test' }),
+      );
+
+      result.current.onColumnFiltersChange([
+        ...result.current.columnFilters,
+        { id: 'status', value: 'active' },
+      ]);
+
+      const callArg = mockNavigate.mock.calls[0][0] as { search: (prev: Record<string, unknown>) => Record<string, unknown> };
+      const next = callArg.search(mockSearch);
+      expect(next.startDate).toBeUndefined();
+      expect(next.endDate).toBeUndefined();
+      expect(next.status).toBe('active');
     });
   });
 

@@ -30,7 +30,7 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 
 | PRD | Workstream | Wave | Status |
 | --- | --- | --- | --- |
-| ~~Show Economics~~ | P&L baseline — creator cost + shift cost endpoints | — | ✅ Shipped → [feature doc](../features/show-economics.md) |
+| ~~Show Economics~~ | P&L baseline — creator cost + shift cost endpoints | — | ⏸️ Deferred merge → [archived reference](../features/show-economics.md) |
 | ~~Studio Member Roster~~ | Studio operator governance — L-side labor cost inputs (`baseHourlyRate`) | 1 | ✅ Shipped → [feature doc](../features/studio-member-roster.md) |
 | ~~Studio Creator Roster~~ | Studio operator governance — L-side creator cost defaults | 1 | ✅ Implemented → [feature doc](../features/studio-creator-roster.md) |
 | ~~Studio Creator Onboarding~~ | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | ✅ Implemented → [feature doc](../features/studio-creator-onboarding.md) |
@@ -50,4 +50,4 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | [Studio Reference Data](./studio-reference-data.md) | Studio-initiated creation of clients, platforms, types, standards, statuses | C | Deferred to Phase 5 |
 | [Studio Creator Profile](./studio-creator-profile.md) | Studio-level editing of creator name, alias, metadata | C | Deferred to Phase 5 |
 
-Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1).
+Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1, incremental rollout).

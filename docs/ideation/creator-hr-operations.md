@@ -26,7 +26,7 @@ Build people-operations and cost-input capabilities: creator HRMS (leaves, unava
 
 Promote to a PRD when **any** of these are true:
 
-1. P&L economics baseline is shipped and fixed cost tracking is the identified gap in the P&L model.
+1. P&L economics baseline is merged on `master` and fixed cost tracking is the identified gap in the P&L model.
 2. Creator unavailability management is causing scheduling quality issues that manual processes cannot address.
 3. Platform API integration is approved and credentials are available for at least one platform.
 4. Creator profile/HR separation is required for a compliance or operational reason.
@@ -42,4 +42,4 @@ Promote to a PRD when **any** of these are true:
 
 ### Dependency on P&L economics
 
-Fixed cost tracking is a P&L concern. This item should be sequenced after the economics baseline (`show-economics.md` PRD) ships so the cost model is established before additional cost types are added.
+Fixed cost tracking is a P&L concern. This item should be sequenced after the economics baseline merge tracked by [`docs/features/show-economics.md`](../features/show-economics.md) lands on `master` so the cost model is established before additional cost types are added.

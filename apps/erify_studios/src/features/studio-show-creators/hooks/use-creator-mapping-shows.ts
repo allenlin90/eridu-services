@@ -97,6 +97,7 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
     data: query.data,
     shows: query.data?.data ?? [],
     total: query.data?.meta?.total ?? 0,
+    pageCount: query.data?.meta?.totalPages ?? 0,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,

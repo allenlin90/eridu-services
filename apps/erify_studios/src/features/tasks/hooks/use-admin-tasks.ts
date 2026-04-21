@@ -16,7 +16,15 @@ import { adminTasksKeys, getAdminTasks } from '@/features/tasks/api/get-admin-ta
 const VALID_STATUS = new Set(Object.values(TASK_STATUS));
 const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
 
-export function useAdminTasks() {
+type UseAdminTasksOptions<TRoute extends string> = {
+  from: TRoute;
+  referenceId?: string;
+};
+
+export function useAdminTasks<TRoute extends string>({
+  from,
+  referenceId,
+}: UseAdminTasksOptions<TRoute>) {
   const queryClient = useQueryClient();
 
   const {
@@ -26,7 +34,7 @@ export function useAdminTasks() {
     columnFilters,
     onColumnFiltersChange,
   } = useTableUrlState({
-    from: '/system/tasks/',
+    from,
     searchColumnId: 'description',
     dateColumnId: 'due_date',
     paramNames: {
@@ -78,6 +86,7 @@ export function useAdminTasks() {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search,
+    reference_id: referenceId,
     studio_name: studioName,
     client_name: clientName,
     assignee_name: assigneeName,

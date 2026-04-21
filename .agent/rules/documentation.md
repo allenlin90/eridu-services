@@ -15,7 +15,7 @@ docs/
 └── README.md         Navigation hub
 
 apps/*/docs/
-├── design/           Technical design docs (persist after implementation)
+├── design/           Technical design docs for active proposals / in-progress work
 ├── *.md              Canonical behavioral docs (persistent)
 └── README.md         App-level navigation
 ```
@@ -45,9 +45,9 @@ apps/*/docs/
 - PRDs are working documents, not permanent records
 
 ### Technical designs
-- `apps/*/docs/design/` persist after implementation as
-  architectural reference but should be marked with status
-  (Draft → Implemented) to distinguish active from historical
+- `apps/*/docs/design/` are for active proposals and in-progress work.
+- When a design doc describes shipped behavior, promote it to the app's `docs/` root as the canonical reference and remove it from the design index.
+- Keep historical design docs only when there is an explicit archive/history reason; do not leave shipped work in active design tables by default.
 
 ## Rules for Contributors
 
@@ -57,7 +57,7 @@ apps/*/docs/
    - Deferred → delete PRD, note deferral reason in phase doc
    - Partially done → update or rewrite PRD for next phase
 3. Roadmap files are append-only status records, never deleted
-4. Design docs should reference the PRD or feature doc that motivated them
+4. Design docs should reference the PRD, roadmap item, or archived branch reference that motivated them
 5. App-local docs own shipped behavior — feature docs own product decisions and user context
 
 ## Link Hygiene

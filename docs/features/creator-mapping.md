@@ -33,7 +33,7 @@ Talent managers assigned creators to shows one at a time through system-admin en
 
 ### Compensation fields and fallback contract
 
-Per-show compensation inputs live on `ShowCreator` and are used by the economics layer (see [Show Economics](./show-economics.md)):
+Per-show compensation inputs live on `ShowCreator` and are used by the deferred economics baseline contract (see [Show Economics](./show-economics.md)):
 
 | Field | Description |
 | --- | --- |

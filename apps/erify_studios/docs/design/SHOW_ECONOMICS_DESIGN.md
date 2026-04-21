@@ -1,14 +1,14 @@
 # Show Economics Frontend Design
 
-> **Status**: Planning
+> **Status**: Deferred planning target
 > **Phase scope**: Phase 4 Wave 2/3
 > **Owner app**: `apps/erify_studios`
-> **Product source**: [`docs/features/show-economics.md`](../../../../docs/features/show-economics.md)
-> **Depends on**: Economics endpoints on `master` ⏸️
+> **Product source**: archived branch reference [`docs/features/show-economics.md`](../../../../docs/features/show-economics.md)
+> **Depends on**: revised economics endpoints merged to `master` ⏸️
 
 ## Purpose
 
-Define the studio-facing economics UI that consumes the shipped backend economics endpoints once they are merged to `master`.
+Define the studio-facing economics UI that consumes the deferred backend economics baseline once that contract is revised and merged to `master`.
 
 ## Route Plan
 
@@ -43,4 +43,3 @@ Define the studio-facing economics UI that consumes the shipped backend economic
 - `pnpm --filter erify_studios build`
 - `pnpm --filter erify_studios test`
 - Manual smoke: grouped filters, show drill-in, null commission states, cost formatting
-

@@ -5,10 +5,8 @@ const mockUseSearch = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock('@tanstack/react-router', () => ({
-  getRouteApi: () => ({
-    useSearch: () => mockUseSearch(),
-    useNavigate: () => mockNavigate,
-  }),
+  useSearch: () => mockUseSearch(),
+  useNavigate: () => mockNavigate,
 }));
 
 // Must import after the mock is set up

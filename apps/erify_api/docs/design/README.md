@@ -11,10 +11,10 @@ Active design documents for planned and in-progress features. Once a feature shi
 5. [Show Planning Export Backend Design](./SHOW_PLANNING_EXPORT_DESIGN.md) — Planned planning export endpoint
 6. [Creator Availability Hardening Backend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — Planned strict availability enforcement
 7. [P&L Revenue Workflow Backend Design](./PNL_REVENUE_WORKFLOW_DESIGN.md) — Blocked Wave 3 revenue-side activation
-8. [Pending-Resolution MVP](./IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — In-progress execution plan
-9. [Material Management](./MATERIAL_MANAGEMENT_DESIGN.md) — Planned for Phase 5
+8. [Pending-Resolution MVP](./IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Planned follow-up execution plan
+9. [Material Management](./MATERIAL_MANAGEMENT_DESIGN.md) — Phase 5 candidate
 10. [Ad-hoc Task Ticketing](./AD_HOC_TASK_TICKETING.md) — Planned template-less task creation for pre-production tickets
-11. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Planned for Phase 5
+11. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
 
 ## Note
 

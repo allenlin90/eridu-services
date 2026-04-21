@@ -4,7 +4,7 @@
 > **Phase scope**: Phase 4 Wave 2
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/show-planning-export.md`](../../../../docs/prd/show-planning-export.md)
-> **Depends on**: Economics endpoints on `master` ⏸️, studio economics review contract 🔲, sidebar redesign 🔲
+> **Depends on**: Economics endpoints on `master` ⏸️, studio economics review contract 🔲, sidebar core regrouping 🔁 with Reports follow-up 🔲
 
 ## Purpose
 

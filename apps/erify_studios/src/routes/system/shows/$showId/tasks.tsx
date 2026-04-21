@@ -1,23 +1,25 @@
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
-import { Eye, RefreshCw } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Eye } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
-import { adaptColumnFiltersChange, adaptPaginationChange, Button, DataTable, DataTableActions, DataTablePagination, DataTableToolbar, DropdownMenuItem } from '@eridu/ui';
+import { adaptColumnFiltersChange, adaptPaginationChange, DataTable, DataTableActions, DataTablePagination, DataTableToolbar, DropdownMenuItem } from '@eridu/ui';
 
 import { AdminLayout } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
 import { getShows } from '@/features/shows/api/get-shows';
 import { useDeleteAdminTask } from '@/features/tasks/api/delete-admin-task';
-import { adminTasksKeys, getAdminTasks } from '@/features/tasks/api/get-admin-tasks';
+import { adminTasksKeys } from '@/features/tasks/api/get-admin-tasks';
 import { SystemTaskDetailsDialog } from '@/features/tasks/components/system-task-details-dialog';
 import {
   systemTaskColumns,
   systemTaskSearchableColumns,
 } from '@/features/tasks/config/system-task-columns';
+import { systemTaskSearchSchema } from '@/features/tasks/config/system-task-search-schema';
+import { useAdminTasks } from '@/features/tasks/hooks/use-admin-tasks';
 import { useReassignAdminTask } from '@/features/tasks/hooks/use-reassign-admin-task';
 import { useReassignAdminTaskShow } from '@/features/tasks/hooks/use-reassign-admin-task-show';
 import { useUpdateAdminTask } from '@/features/tasks/hooks/use-update-admin-task';
@@ -26,36 +28,26 @@ import { buildShiftCoverageWarning } from '@/features/tasks/lib/task-assignment-
 
 export const Route = createFileRoute('/system/shows/$showId/tasks')({
   component: ShowTasks,
+  validateSearch: (search) => systemTaskSearchSchema.parse(search),
 });
 
 function ShowTasks() {
   const { showId } = Route.useParams();
-  const queryClient = useQueryClient();
 
   const [selectedTask, setSelectedTask] = useState<TaskWithRelationsDto | null>(null);
   const [deleteTask, setDeleteTask] = useState<TaskWithRelationsDto | null>(null);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-
-  const search = columnFilters.find((filter) => filter.id === 'description')?.value as string | undefined;
-  const status = columnFilters.find((filter) => filter.id === 'status')?.value as string | undefined;
-  const taskType = columnFilters.find((filter) => filter.id === 'task_type')?.value as string | undefined;
-
-  const params = useMemo(() => ({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-    reference_id: showId,
-    search,
-    status,
-    task_type: taskType,
-    sort: 'due_date:asc' as const,
-  }), [pagination.pageIndex, pagination.pageSize, search, showId, status, taskType]);
-
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: adminTasksKeys.list(params),
-    queryFn: () => getAdminTasks(params),
-    gcTime: 2 * 60 * 1000,
-    placeholderData: keepPreviousData,
+  const {
+    data,
+    isLoading,
+    isFetching,
+    pagination,
+    onPaginationChange,
+    columnFilters,
+    onColumnFiltersChange,
+    handleRefresh,
+  } = useAdminTasks({
+    from: '/system/shows/$showId/tasks',
+    referenceId: showId,
   });
   const { data: showSummary } = useQuery({
     queryKey: ['system-show-summary', showId],
@@ -137,17 +129,19 @@ function ShowTasks() {
       },
     });
   };
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: adminTasksKeys.all });
-  };
-
-  const tablePagination = {
-    pageIndex: (data?.meta.page ?? 1) - 1,
-    pageSize: data?.meta.limit ?? pagination.pageSize,
-    total: data?.meta.total ?? 0,
-    pageCount: data?.meta.totalPages ?? 0,
-  };
+  const tablePagination = data?.meta
+    ? {
+        pageIndex: data.meta.page - 1,
+        pageSize: data.meta.limit,
+        total: data.meta.total,
+        pageCount: data.meta.totalPages,
+      }
+    : {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        total: 0,
+        pageCount: 0,
+      };
 
   const columnsWithActions = useMemo<ColumnDef<TaskWithRelationsDto>[]>(() => [
     ...systemTaskColumns,
@@ -190,9 +184,9 @@ function ShowTasks() {
           pageIndex: tablePagination.pageIndex,
           pageSize: tablePagination.pageSize,
         }}
-        onPaginationChange={adaptPaginationChange(tablePagination, setPagination)}
+        onPaginationChange={adaptPaginationChange(tablePagination, onPaginationChange)}
         columnFilters={columnFilters}
-        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, setColumnFilters)}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
         renderToolbar={(table) => (
           <DataTableToolbar
             table={table}
@@ -200,23 +194,12 @@ function ShowTasks() {
             searchColumn="description"
             searchPlaceholder="Search by task, assignee..."
             featuredFilterColumns={['status', 'task_type', 'due_date']}
-          >
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleRefresh}
-              disabled={isFetching}
-              aria-label="Refresh tasks"
-            >
-              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-            </Button>
-          </DataTableToolbar>
+          />
         )}
         renderFooter={() => (
           <DataTablePagination
             pagination={tablePagination}
-            onPaginationChange={setPagination}
+            onPaginationChange={onPaginationChange}
           />
         )}
       />
