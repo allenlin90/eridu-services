@@ -100,6 +100,16 @@ Use `registerType: 'prompt'` or `registerType: 'autoUpdate'`.
 ### 4. Background Sync (Advanced)
 For mutations made while offline, use Workbox Background Sync or TanStack Query's mutation persistence to replay requests when the connection is restored.
 
+### 5. iOS / iPadOS WebKit PWA Update Pitfalls
+
+Installed iOS PWAs (standalone mode) are prone to reload loops when the app auto-applies service-worker updates via `controllerchange` → `window.location.reload()`. WebKit's lifecycle in standalone mode can re-enter update/activate repeatedly on visibility changes, so any code path that reloads on controller change will loop.
+
+- **Detection.** iOS Safari and iPadOS both require handling. Use UA for iPhone/iPad/iPod, and for iPadOS 13+ also check `navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1` (iPad reports desktop UA by default).
+- **Update policy.** Use `registerType: 'prompt'`. On non-iOS, auto-apply the waiting worker once per tab session. On iOS, stash the returned `updateSW` function (e.g. a `pendingUpdateActivator` variable) and only invoke it from an explicit user action such as a "Check for updates" button in Settings.
+- **Controller-change guard.** The `controllerchange` listener must bypass reload on iOS entirely — do not even attempt the once-per-session forced reload there.
+- **Session guard.** For non-iOS, persist the "already forced refresh this session" flag in `sessionStorage` (with in-memory fallback) so reload is capped at once per tab session even if the in-memory state is reset.
+- **Reference.** `apps/erify_studios/src/lib/pwa/pwa-runtime.ts` implements this pattern.
+
 ## Implementation Guardrails (Eridu FE)
 
 - Keep route URL/search-param behavior unchanged during PWA migration.

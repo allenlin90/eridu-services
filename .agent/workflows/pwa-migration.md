@@ -18,9 +18,11 @@ Use this workflow when enabling or hardening PWA shell behavior in frontend apps
 1. Configure `vite-plugin-pwa` with explicit manifest metadata and icon set.
 2. Keep service-worker API runtime caching `NetworkOnly` when TanStack Query owns API data caching.
 3. Centralize service-worker registration in app runtime code.
-4. Add periodic update checks and one-time controller-change reload guard.
-5. Add a user-facing recovery path that unregisters SW + clears caches + reloads.
-6. Document update and recovery behavior in app docs.
+4. Register with `registerType: 'prompt'`, add periodic update checks, and install a controller-change reload guard that (a) bypasses iOS entirely and (b) caps forced reloads to once per tab session on other platforms (session-storage backed).
+5. On iOS, keep the waiting worker pending and expose an explicit "apply update" path (e.g. Check-for-Updates button) rather than reloading automatically.
+6. If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'`.
+7. Add a user-facing recovery path that unregisters SW + clears caches + reloads.
+8. Document update and recovery behavior in app docs.
 
 ## Out of Scope (unless explicitly requested)
 
@@ -42,6 +44,7 @@ pnpm --filter <app> build
 Manual checks:
 - installability,
 - update behavior after new deployment,
+- installed-iOS update behavior: deploy new shell, confirm no reload loop and that "Check for updates" applies the waiting worker,
 - cache cleanup,
 - recovery action success.
 

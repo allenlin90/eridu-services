@@ -48,6 +48,8 @@ When enabling or modifying PWA behavior in frontend apps, you MUST follow `.agen
 Required baseline for PWA tasks:
 - Preserve TanStack Query ownership of API data caching (avoid SW/API double-caching).
 - Keep route URL/search-param behavior parity while introducing PWA support.
+- Register the service worker with `registerType: 'prompt'` and apply waiting workers via an explicit "Check for updates" path; never auto-reload on `controllerchange` in iOS standalone mode.
+- Verify update flow on installed iOS PWA after any change to SW registration, controllerchange handling, or Workbox navigation config.
 - Run `lint`, `typecheck`, `test`, and `build` for each changed frontend app.
 
 ## 3. General Best Practices
