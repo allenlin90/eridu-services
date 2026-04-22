@@ -3,7 +3,8 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: P&L revenue ("P") side — completing the P&L model
-> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`), Studio Creator Roster — ✅ **Complete** ([feature doc](../features/studio-creator-roster.md))
+> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`), Studio Creator Roster — ✅ **Complete** ([feature doc](../features/studio-creator-roster.md)), Economics Cost Model (R) — 🔲 Planned ([PRD](./economics-cost-model.md))
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — revenue entry resolves `COMMISSION` / `HYBRID` base cost and promotes rows from `PARTIAL_ACTUAL` → `ACTUALIZED` per R §7. Contribution margin = `revenue − resolved_total_cost`, null-propagating per R §4.
 
 ## Problem
 

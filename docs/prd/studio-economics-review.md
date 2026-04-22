@@ -3,7 +3,8 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: Studio finance review/export engine — perspective-based projected and actual cost review
-> **Depends on**: Studio Show Management — ✅ **Complete** (shipped 1e, populates `Show.scheduleId` for the `schedule` perspective), Show Economics baseline merge — ⏸️ Deferred revision, Compensation Line Items — 🔲 Active
+> **Depends on**: Studio Show Management — ✅ **Complete** (shipped 1e, populates `Show.scheduleId` for the `schedule` perspective), Economics Cost Model (R) — 🔲 Planned ([PRD](./economics-cost-model.md)), Show Economics baseline merge — ⏸️ Deferred revision, Compensation Line Items — 🔲 Active
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — `cost_state` values, horizon filtering, nullability propagation, and `unresolved_reason` surfacing all originate there. Acceptance criteria below refer to it as the authority.
 > **Extended by**: P&L Revenue Workflow — 🔲 Planned (adds revenue, commission resolution, contribution margin, and future show-platform economics)
 
 ## Problem

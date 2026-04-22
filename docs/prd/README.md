@@ -37,6 +37,7 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | ~~Internal Knowledge Base (`eridu_docs`)~~ | Internal tooling — authenticated knowledge base for repo docs | Ext | ✅ Implemented → [feature doc](../features/eridu-docs-knowledge-base.md) |
 | ~~Studio Show Management~~ | Studio CRUD for shows — removes `/admin/*` dependency and keeps show writes schedule-ready | 1+ | ✅ Implemented → [feature doc](../features/studio-show-management.md) |
 | [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, assign/rearrange shows, validate, publish, duplicate | — | ⏸️ Deferred 2026-04-22 (revisit with Client Portal workstream) |
+| [Economics Cost Model (R)](./economics-cost-model.md) | Canonical cost semantics — projected/actualized state machine, line-item composition, nullability propagation | R | Active (docs-only; gates R+/E0/2a) |
 | [Compensation Line Items](./compensation-line-items.md) | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators | R+ | Active (post-Wave 1) |
 | [Studio Economics Review](./studio-economics-review.md) | Configurable studio finance review/export engine for future projected and past actual cost views | 2 | Active |
 | [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active (locked preset downstream of studio economics review) |

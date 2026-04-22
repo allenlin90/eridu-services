@@ -3,7 +3,8 @@
 > **Status**: Active
 > **Phase**: 4 — Post-Wave 1 (Economics Cost Model Review)
 > **Workstream**: P&L cost visibility — supplemental compensation beyond base rates
-> **Depends on**: Studio Member Roster — ✅ **Complete** (PR #28), Studio Creator Roster — ✅ **Complete** ([feature doc](../features/studio-creator-roster.md))
+> **Depends on**: Studio Member Roster — ✅ **Complete** (PR #28), Studio Creator Roster — ✅ **Complete** ([feature doc](../features/studio-creator-roster.md)), Economics Cost Model (R) — 🔲 Planned ([PRD](./economics-cost-model.md)) — composition semantics authority
+> **Canonical composition semantics**: [economics-cost-model.md](./economics-cost-model.md) §3 (item-type semantics, scope attribution, effective-date rules). This PRD owns the data model + CRUD; R owns how items compose into economics totals.
 
 ## Problem
 

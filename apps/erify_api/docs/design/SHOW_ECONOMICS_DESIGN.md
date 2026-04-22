@@ -1,10 +1,11 @@
 # Show Economics Backend Design
 
-> **Status**: Deferred revision target
+> **Status**: Deferred revision target — revise against R ([economics-cost-model.md](../../../../docs/prd/economics-cost-model.md)) before merging E0
 > **Phase scope**: Phase 4 reopened scope
 > **Owner app**: `apps/erify_api`
 > **Product source**: archived branch reference [`docs/features/show-economics.md`](../../../../docs/features/show-economics.md)
-> **Depends on**: Creator mapping foundation ✅, studio shift cost inputs ✅, compensation line items review ⏸️
+> **Canonical semantics**: [`docs/prd/economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md) — authoritative source for `cost_state`, base-cost resolution, line-item composition, and nullability propagation. This design doc must align with it before E0 ships.
+> **Depends on**: Creator mapping foundation ✅, studio shift cost inputs ✅, Economics Cost Model (R) 🔲 Planned, Compensation Line Items (R+) 🔲 Planned
 
 ## Purpose
 

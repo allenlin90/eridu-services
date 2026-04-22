@@ -3,7 +3,8 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: Operations planning — pre-show export with L-side cost preview
-> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`; estimated cost column sourced from economics endpoint), Studio Economics Review — 🔲 Planned (shared future-horizon cost semantics)
+> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`; estimated cost column sourced from economics endpoint), Studio Economics Review — 🔲 Planned (shared future-horizon cost semantics), Economics Cost Model (R) — 🔲 Planned ([PRD](./economics-cost-model.md))
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — planning export is future-horizon only, so `cost_state = PROJECTED` per R §1 is the only state in scope.
 
 ## Problem
 
