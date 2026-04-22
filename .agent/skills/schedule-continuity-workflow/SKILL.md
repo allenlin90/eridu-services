@@ -32,11 +32,16 @@ Current implementation boundary:
 ## Phase 4 Product Direction
 
 1. Schedules are **grouping/date-range containers first** and planning artifacts second.
-2. Schedule `status` (`draft`, `review`, `published`) is lightweight workflow metadata around the latest acknowledged plan, **not** a universal hard write lock across all show-management flows.
-3. Google Sheets publish remains a **specialized planning-sync workflow**, not the only owner of later show mutations.
-4. Studio show CRUD may assign, move, or clear same-studio schedule linkage without treating non-`draft` status as an automatic blocker.
-5. If later product work needs stronger planning/finality semantics, prefer a dedicated stale/sync/settlement concept over overloading the current schedule `status`.
-6. Exact schedule-range hard enforcement for manual show CRUD is deferred; when revisiting it, prefer warning-first UX/policy before introducing hard blocking.
+2. Schedule `status` (`draft`, `review`, `published`) is a **client-communication signal**, not an operational gate and not a universal hard write lock.
+3. For studio-native schedule management (1f), a schedule is **operationally active from the moment it is created**. Studios do not need to publish to start assigning shows or executing work.
+4. `published` means the client has confirmed the engagement and the plan is member-visible. It is a billing/audit milestone, not an internal execution prerequisite.
+5. **Two distinct publish paths exist — do not conflate them:**
+   - **Google Sheets path**: publish syncs a `planDocument` from an external source → creates/updates shows in the DB → creates snapshot. Shows may not exist before publish.
+   - **Studio-native path** (1f): shows already exist via `scheduleId` FK. Publish only creates a snapshot of the current FK-linked show set and sets `status` to `published`. No `planDocument` processing occurs.
+6. Google Sheets publish remains a **specialized planning-sync workflow**, not the only owner of later show mutations.
+7. Studio show CRUD may assign, move, or clear same-studio schedule linkage without treating non-`draft` status as an automatic blocker.
+8. If later product work needs stronger planning/finality semantics, prefer a dedicated stale/sync/settlement concept over overloading the current schedule `status`.
+9. Exact schedule-range hard enforcement for manual show CRUD is deferred; when revisiting it, prefer warning-first UX/policy before introducing hard blocking.
 
 ## Contract Language
 
@@ -75,6 +80,30 @@ For `cancelled_pending_resolution` resolution, prefer an explicit action endpoin
 4. deterministic domain-specific error responses.
 
 Use generic status update endpoints only if the same guards/audit/error contract are enforced identically.
+
+## Show-Schedule Membership: Operational Day Boundary
+
+A show's membership in a schedule is determined by its **operational day**, not its raw datetime.
+
+**Rule**: if `show.startTime` in the intended studio-local day is before 06:00, the show's operational day is the previous calendar day. The show belongs to a schedule if its operational day falls within `[schedule.startDate, schedule.endDate]`.
+
+```
+show.operationalDay = startTime.local < 06:00
+                      ? startTime.localDate - 1 day
+                      : startTime.localDate
+
+valid = operationalDay >= schedule.startDate
+     && operationalDay <= schedule.endDate
+```
+
+**Examples**:
+- Jan 31 22:00 show → operational day Jan 31 → valid for January schedule
+- Feb 1 02:00 show → operational day Jan 31 → valid for January schedule
+- Jan 1 03:00 show → operational day Dec 31 → belongs to December, not January
+
+The existing `ValidationService` uses strict datetime comparison and does not implement this rule. The studio-native validation (1f) must implement the operational day boundary for show-range checks.
+
+**Timezone**: the intended 06:00 cutoff for schedule membership is studio-local time. Studio-level timezone is not yet modeled — deferred open item. Do **not** use ambient server/runtime timezone as an approximation for backend validation. Record the exact timezone-resolution approach in the implementation design, and keep current shift-alignment UTC bucketing unchanged unless that flow is explicitly revisited.
 
 ## Checklist
 

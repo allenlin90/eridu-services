@@ -36,7 +36,7 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | ~~Studio Creator Onboarding~~ | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | ✅ Implemented → [feature doc](../features/studio-creator-onboarding.md) |
 | ~~Internal Knowledge Base (`eridu_docs`)~~ | Internal tooling — authenticated knowledge base for repo docs | Ext | ✅ Implemented → [feature doc](../features/eridu-docs-knowledge-base.md) |
 | ~~Studio Show Management~~ | Studio CRUD for shows — removes `/admin/*` dependency and keeps show writes schedule-ready | 1+ | ✅ Implemented → [feature doc](../features/studio-show-management.md) |
-| [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, assign/rearrange shows, validate, publish, duplicate | 1+ | Active (studio autonomy gap) |
+| [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, assign/rearrange shows, validate, publish, duplicate | — | ⏸️ Deferred 2026-04-22 (revisit with Client Portal workstream) |
 | [Compensation Line Items](./compensation-line-items.md) | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators | R+ | Active (post-Wave 1) |
 | [Studio Economics Review](./studio-economics-review.md) | Configurable studio finance review/export engine for future projected and past actual cost views | 2 | Active |
 | [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active (locked preset downstream of studio economics review) |

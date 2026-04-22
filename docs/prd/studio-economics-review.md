@@ -3,7 +3,7 @@
 > **Status**: Active
 > **Phase**: 4 — Extended Scope
 > **Workstream**: Studio finance review/export engine — perspective-based projected and actual cost review
-> **Depends on**: Studio Show Management — 🔲 Active, Studio Schedule Management — 🔲 Active, Show Economics baseline merge — ⏸️ Deferred revision, Compensation Line Items — 🔲 Active
+> **Depends on**: Studio Show Management — ✅ **Complete** (shipped 1e, populates `Show.scheduleId` for the `schedule` perspective), Show Economics baseline merge — ⏸️ Deferred revision, Compensation Line Items — 🔲 Active
 > **Extended by**: P&L Revenue Workflow — 🔲 Planned (adds revenue, commission resolution, contribution margin, and future show-platform economics)
 
 ## Problem

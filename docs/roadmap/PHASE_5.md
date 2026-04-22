@@ -46,12 +46,13 @@ Complete the transition from system-admin-dependent operations to studio self-se
 Potential scope:
 - **Studio reference data management** — studio-initiated creation of clients, platforms, show types, show standards, and show statuses into the global catalog. Removes system-admin bottleneck for routine metadata setup. See [PRD](../prd/studio-reference-data.md).
 - **Studio creator profile editing** — studio admins can edit creator name, alias, and metadata for rostered creators. Conditional user-link setting. See [PRD](../prd/studio-creator-profile.md).
+- **Studio-native schedule management** — deferred from Phase 4 on 2026-04-22 (Google Sheets flow remains stable and planner-preferred; client-portal direction speculative). Likely folded into the Client Portal workstream rather than shipped as a standalone studio-app feature. Existing design docs retained for reference: [PRD](../prd/studio-schedule-management.md), [BE design](../../apps/erify_api/docs/design/STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md).
 - **Studio snapshot/audit trail** — expose schedule and show version history at studio level for operational audit and review. Currently admin-only via `/admin/snapshots`.
 - **Full-text search & admin UX searchability** — cross-entity search at studio level (deferred from Phase 4).
 
 Prerequisites from Phase 4:
 - Studio creator onboarding must ship first (creator profile editing extends the onboarding surface).
-- Studio show and schedule management should ship first (snapshot visibility is more useful once studios own these lifecycles).
+- Studio show management already shipped; snapshot visibility is more useful once a schedule-management surface lands (whether studio-native or client-portal-driven).
 
 ## Items Deferred from Phase 4
 
@@ -67,6 +68,7 @@ These are explicitly out of Phase 4 scope and candidates for Phase 5:
 | Creator app expansion | Ideation | B |
 | Studio reference data management (clients, platforms, types, standards, statuses) | Phase 4 gap analysis (2026-03-28) | C |
 | Studio creator profile editing (name/alias at studio level) | Phase 4 gap analysis (2026-03-28) | C |
+| Studio-native schedule management | Phase 4 re-sequencing (2026-04-22); likely folded into Client Portal | C |
 | Studio snapshot/audit trail visibility | Phase 4 gap analysis (2026-03-28) | C |
 
 ## Promotion Rule
