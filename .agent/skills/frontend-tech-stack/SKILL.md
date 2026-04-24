@@ -7,7 +7,7 @@ description: Provides standards for the frontend application technology stack. T
 
 This skill defines the standard technology stack for all frontend applications (`erify_creators`, `erify_studios`, etc.) in the project.
 
-## Core Core Technologies
+## Core Technologies
 
 | Category        | Technology          | Version  | Notes                                     |
 | :-------------- | :------------------ | :------- | :---------------------------------------- |
@@ -90,29 +90,29 @@ If a route file grows large, extract sections first; if state/query logic is sti
 
 **Preventing Cross-Feature Imports**:
 
-Add this ESLint rule to enforce feature isolation:
+If feature isolation needs lint enforcement, add it to the app's flat ESLint config (`eslint.config.js`), not a legacy `.eslintrc.cjs` file:
 
 ```javascript
-// .eslintrc.cjs
-'import/no-restricted-paths': [
-  'error',
+// eslint.config.js
+export default createConfig(
+  { type: 'app', react: true },
   {
-    zones: [
-      // Prevent features from importing from each other
-      {
-        target: './src/features/auth',
-        from: './src/features',
-        except: ['./auth'],
-      },
-      {
-        target: './src/features/dashboard',
-        from: './src/features',
-        except: ['./dashboard'],
-      },
-      // Add more features as needed
-    ],
+    rules: {
+      'import/no-restricted-paths': [
+        'error',
+        {
+          zones: [
+            {
+              target: './src/features/auth',
+              from: './src/features',
+              except: ['./auth'],
+            },
+          ],
+        },
+      ],
+    },
   },
-],
+);
 ```
 
 ## Configuration

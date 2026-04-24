@@ -339,7 +339,7 @@ Output:
 ## Best Practices Checklist
 
 - [ ] Validate all input at controller boundary
-- [ ] Use schema validation (Zod, Joi, Pydantic)
+- [ ] Use Zod schemas and `createZodDto` at API boundaries
 - [ ] Transform snake_case → camelCase on input
 - [ ] Map uid → id in API responses
 - [ ] Hide database primary keys completely

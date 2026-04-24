@@ -174,135 +174,78 @@ export class BackdoorUserController {
 
 ## Frontend Implementation
 
-### Token Storage
+### Token Handling
 
-🔴 **Critical**: Store tokens securely.
+🔴 **Critical**: Do not store long-lived auth tokens in `localStorage`.
 
-**Preferred**: HTTP-only cookies (set by backend)
-```typescript
-// Backend sets cookie
-res.cookie('access_token', token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'strict'
-});
-```
+Current frontend apps use the shared `@eridu/auth-sdk` client with browser cookies and an API JWT surfaced from response headers. Use the existing app-local auth client and API token store patterns instead of inventing route-local token handling.
 
-**Alternative**: localStorage (if cookies not feasible)
-```typescript
-// Only if HTTP-only cookies can't be used
-localStorage.setItem('access_token', token);
-```
+Canonical references:
+
+- `apps/erify_studios/src/lib/auth.ts`
+- `apps/erify_studios/src/lib/api/token-store.ts`
+- `apps/erify_studios/src/lib/session-provider.tsx`
 
 ### Protected Routes
 
-🟡 **Recommended**: Protect routes requiring authentication.
+🟡 **Recommended**: Protect app shells and route groups through TanStack Router layouts and shared guard components.
 
 ```typescript
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+import { authClient } from '@/lib/auth';
+import { SessionProvider, useSession } from '@/lib/session-provider';
+
+function AuthenticatedLayout() {
+  const { session, isLoading } = useSession();
 
   if (isLoading) return <LoadingSpinner />;
-  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (!session) {
+    authClient.redirectToLogin();
+    return null;
+  }
 
-  return <>{children}</>;
+  return <Outlet />;
 }
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: () => (
+    <SessionProvider>
+      <AuthenticatedLayout />
+    </SessionProvider>
+  ),
+});
 ```
+
+For studio-scoped authorization in `erify_studios`, use `StudioRouteGuard`, `useStudioAccess`, and `src/lib/constants/studio-route-access.ts` instead of duplicating membership-role checks inside each route.
 
 ### User Context
 
-🟡 **Recommended**: Provide user context globally.
+🟡 **Recommended**: Provide session context globally through the existing app provider and fetch profile data through query hooks.
 
-```typescript
-import { createContext, useContext, useState, useEffect } from 'react';
+Use:
 
-interface AuthContext {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (credentials: Credentials) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContext | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch current user on mount
-    fetchCurrentUser().then(setUser).finally(() => setIsLoading(false));
-  }, []);
-
-  const login = async (credentials: Credentials) => {
-    const user = await apiClient.login(credentials);
-    setUser(user);
-  };
-
-  const logout = () => {
-    apiClient.logout();
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-}
-```
+- `SessionProvider` and `useSession` for auth session state.
+- `useUserProfile` for the current user's API profile.
+- TanStack Router context for route-level access to shared clients.
 
 ### Token Refresh
 
-🟡 **Recommended**: Implement automatic token refresh.
+🟡 **Recommended**: Use the app-level API client refresh flow rather than adding route-local refresh logic.
 
-```typescript
-import axios from 'axios';
+`apps/erify_studios/src/lib/api/client.ts` handles:
 
-const apiClient = axios.create({ baseURL: '/api' });
-
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      try {
-        // Attempt to refresh token
-        await apiClient.post('/auth/refresh');
-        // Retry original request
-        return apiClient(error.config);
-      } catch {
-        // Refresh failed, redirect to login
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-```
+- in-memory JWT caching,
+- fetching fresh tokens through `authClient.client.token()`,
+- checking JWT expiry before refresh,
+- retrying one expired-token 401 request,
+- redirecting to login only when refresh fails.
 
 ### API Interceptors
 
-🟡 **Recommended**: Attach tokens to requests automatically.
+🟡 **Recommended**: Attach tokens through the shared API client.
 
-```typescript
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-```
+Do not create feature-local Axios clients that read tokens from `localStorage`. Use `apiRequest` / `apiClient` from the app API layer so auth headers, credentials, query serialization, and refresh behavior stay centralized.
 
 ---
 
@@ -335,7 +278,7 @@ async updateProfile(
 
 ---
 
-### ❌ Mistake 2: Storing tokens in localStorage without consideration
+### ❌ Mistake 2: Storing tokens in localStorage
 
 **Problem:**
 ```typescript
@@ -345,18 +288,7 @@ localStorage.setItem('access_token', token);
 
 **Why it's wrong:** XSS attacks can steal tokens from localStorage.
 
-**✅ Correct Approach:**
-```typescript
-// ✅ Preferred: HTTP-only cookies (set by backend)
-// Backend:
-res.cookie('access_token', token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'strict'
-});
-
-// Frontend: Cookie sent automatically, no JS access
-```
+**✅ Correct Approach:** Use the shared auth client and API token store. Keep Better Auth/session cookies browser-managed, cache short-lived API JWTs in memory only, and let the shared API client attach the bearer token.
 
 ---
 
@@ -396,20 +328,7 @@ async listUsers() {
 
 **Why it's wrong:** Poor user experience.
 
-**✅ Correct Approach:**
-```typescript
-// ✅ Right: Implement token refresh
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      await refreshToken();
-      return apiClient(error.config);
-    }
-    return Promise.reject(error);
-  }
-);
-```
+**✅ Correct Approach:** Route all API calls through the shared API client so the single refresh/retry path handles expired JWTs consistently.
 
 ---
 
@@ -444,11 +363,11 @@ throw new UnauthorizedException('Invalid credentials');
 - [ ] Generic error messages (don't reveal user existence)
 
 ### Frontend
-- [ ] 🔴 **Critical**: Store tokens securely (prefer HTTP-only cookies)
+- [ ] 🔴 **Critical**: Do not store auth tokens in `localStorage`
 - [ ] 🔴 **Critical**: Protect sensitive routes with auth checks
-- [ ] 🟡 **Recommended**: Provide global user context via React Context
-- [ ] 🟡 **Recommended**: Implement automatic token refresh
-- [ ] 🟡 **Recommended**: Use API interceptors to attach tokens
+- [ ] 🟡 **Recommended**: Provide session context via the existing `SessionProvider`
+- [ ] 🟡 **Recommended**: Use the shared API client for automatic token refresh
+- [ ] 🟡 **Recommended**: Use centralized API interceptors to attach tokens
 - [ ] 🟡 **Recommended**: Handle token expiration gracefully
 - [ ] Redirect to login on 401 errors
 - [ ] Clear user state on logout

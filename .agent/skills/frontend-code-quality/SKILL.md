@@ -80,25 +80,32 @@ import { Button } from '../../../components/Button';
 
 ### Enforcing Naming Conventions
 
-Use ESLint to enforce consistent file naming:
+Use ESLint flat config to enforce consistent file naming:
 
 ```javascript
-// .eslintrc.cjs
-'check-file/filename-naming-convention': [
-  'error',
+// eslint.config.js
+export default createConfig(
+  { type: 'app', react: true },
   {
-    '**/*.{ts,tsx}': 'KEBAB_CASE',
+    rules: {
+      'check-file/filename-naming-convention': [
+        'error',
+        {
+          '**/*.{ts,tsx}': 'KEBAB_CASE',
+        },
+        {
+          ignoreMiddleExtensions: true,
+        },
+      ],
+      'check-file/folder-naming-convention': [
+        'error',
+        {
+          'src/**/': 'KEBAB_CASE',
+        },
+      ],
+    },
   },
-  {
-    ignoreMiddleExtensions: true,
-  },
-],
-'check-file/folder-naming-convention': [
-  'error',
-  {
-    'src/**/': 'KEBAB_CASE',
-  },
-],
+);
 ```
 
 ## Component Best Practices
