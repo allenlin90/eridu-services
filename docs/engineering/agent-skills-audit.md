@@ -31,9 +31,9 @@ The audit found the skill set is broadly healthy:
 ## Remaining Gaps
 
 - A few skills are still large enough to be candidates for future progressive-disclosure cleanup:
-  - `backend-controller-pattern-nestjs` at 579 lines
   - `service-pattern-nestjs` at 566 lines
   - `table-view-pattern` at 527 lines
+- `backend-controller-pattern-nestjs` was reduced from 579 lines to a concise workflow-oriented skill, with detailed rules moved into `references/controller-rules.md`.
 - `apps/eridu_docs/src/content/docs/` still contains older top-level `features/` and `guides/` folders even though the current IA skill classifies genre-first buckets as debt. That content migration is broader than this skill audit and should be handled through `doc-lifecycle` or a focused docs IA cleanup.
 - Several skills intentionally keep detailed examples in `SKILL.md` rather than `references/`. This is not currently broken, but future edits should prefer moving long examples to references instead of extending these files further.
 
