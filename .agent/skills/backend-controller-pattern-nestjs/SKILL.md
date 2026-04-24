@@ -1,10 +1,6 @@
 ---
 name: backend-controller-pattern-nestjs
 description: Comprehensive NestJS Controller patterns for all controller types. This skill should be used when implementing any controller in NestJS to ensure consistency and use of shared utilities.
-metadata:
-  priority: 3
-  applies_to: [backend, nestjs, controllers]
-  supersedes: [backend-controller-pattern, backend-controller-pattern-admin, backend-controller-pattern-me, backend-controller-pattern-studio, backend-controller-pattern-backdoor, backend-controller-pattern-integration]
 ---
 
 # NestJS Controller Patterns

@@ -1,9 +1,6 @@
 ---
 name: ssr-auth-integration
 description: Framework-agnostic Clerk-like JWKS auth pattern for SSR apps consuming eridu_auth as IDP — JWT cookie, callback exchange, server-side refresh, using @eridu/auth-sdk/server/ssr
-metadata:
-  priority: 3
-  applies_to: [eridu_docs, astro, next.js, auth, ssr]
 ---
 
 # SSR Auth Integration (Clerk-like JWKS Pattern)

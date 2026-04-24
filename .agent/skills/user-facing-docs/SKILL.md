@@ -30,11 +30,8 @@ For `eridu_docs`, prefer the repo-local information architecture guidance in [er
 apps/eridu_docs/src/content/docs/
 ├── getting-started/       ← Entry-point flows and app relationships
 ├── scheduling/            ← Schedule creation, publishing, FAQ, SOPs
-├── tasks/                 ← Task generation, assignment, review workflows
-├── studio-operations/     ← Operational runbooks that span multiple features
 ├── assets/                ← Upload and asset-management workflows
-├── reference/             ← Technical/supporting reference pages
-└── upcoming/              ← Optional internal planning surface, not primary operator nav
+└── reference/             ← Technical/supporting reference pages
 ```
 
 Keep document genre inside the workflow folder, for example:
@@ -54,12 +51,12 @@ Add these sections to `astro.config.mjs`:
 sidebar: [
   { label: 'Getting Started', autogenerate: { directory: 'getting-started' } },
   { label: 'Scheduling & Shows', autogenerate: { directory: 'scheduling' } },
-  { label: 'Tasks & Reviews', autogenerate: { directory: 'tasks' } },
-  { label: 'Studio Operations', autogenerate: { directory: 'studio-operations' } },
   { label: 'Assets & Uploads', autogenerate: { directory: 'assets' } },
   { label: 'Reference', autogenerate: { directory: 'reference' } },
 ],
 ```
+
+Add a new top-level workflow area only when the feature introduces enough stable user-facing content to justify it, and update `eridu-docs-information-architecture` if the default IA changes.
 
 ---
 

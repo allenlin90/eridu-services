@@ -104,5 +104,5 @@ When reviewing code that might be a candidate for extraction:
 
 ## Related Skills
 
-- **[Monorepo Package Rules](../../.claude/memory/monorepo-package-rules.md)**: Export conventions, tsconfig, and Vite config for shared packages.
+- **[Monorepo Package Rules](../../../.claude/memory/monorepo-package-rules.md)**: Export conventions, tsconfig, and Vite config for shared packages.
 - **[Service Pattern](../service-pattern-nestjs/SKILL.md)**: How services consume `lib/` logic.
