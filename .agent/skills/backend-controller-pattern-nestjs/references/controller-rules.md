@@ -29,6 +29,17 @@ Every endpoint must serialize through Zod decorators so internal data cannot lea
 
 Use response schemas that exclude internal database IDs and sensitive fields. Prefer schemas from `@eridu/api-types` or local model schemas that already implement the API snake_case to service/domain camelCase boundary.
 
+## OpenAPI Documentation Sync
+
+Controller OpenAPI text is part of the public API contract. When changing route behavior, side effects, validation, status transitions, throttling, or response shape, update the adjacent documentation decorators in the same change:
+
+- `@ApiOperation({ summary, description })`
+- `@ApiZodResponse(...)`
+- `@AdminResponse(...)` and `@AdminPaginatedResponse(...)`
+- `@ZodResponse(...)` and `@ZodPaginatedResponse(...)`
+
+Cross-check those descriptions against the canonical feature/app docs before finishing. Do not leave stale behavior claims such as delete/recreate when the service now performs diff/upsert, soft delete, restore, or status transition workflows.
+
 ## UID Validation
 
 Validate UID route params with `UidValidationPipe` and the service UID prefix:

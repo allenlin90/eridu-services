@@ -36,8 +36,9 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 4. Extract only the fields required by the service contract; do not pass whole DTOs through.
 5. Call a service or orchestration service; do not query Prisma from the controller.
 6. Serialize all responses with Zod decorators.
-7. Return paginated lists with the shared pagination helper.
-8. Apply a named throttle profile only when the endpoint is a high-frequency read path.
+7. Keep OpenAPI summaries, descriptions, and response descriptions synchronized with the actual controller behavior and canonical docs.
+8. Return paginated lists with the shared pagination helper.
+9. Apply a named throttle profile only when the endpoint is a high-frequency read path.
 
 ## Shared Rules
 
@@ -48,6 +49,7 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 - For deletes, use `@ZodResponse(undefined, HttpStatus.NO_CONTENT)`.
 - For semantic state transitions, prefer action endpoints such as `POST .../resolve-cancellation` over generic `PATCH`.
 - Keep services transport-agnostic: services must not accept HTTP DTOs, request objects, response objects, or Nest exceptions as public contracts.
+- When controller behavior changes, update adjacent `@ApiOperation`, `@ApiZodResponse`, `@AdminResponse`, and `@ZodResponse` descriptions in the same change.
 
 ## Controller-Type Checklists
 
@@ -102,6 +104,7 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 
 - [ ] Correct controller boundary and base class.
 - [ ] Correct guard/decorator for the route audience.
+- [ ] OpenAPI operation and response descriptions match current implementation and canonical docs.
 - [ ] No internal database IDs exposed.
 - [ ] All responses use Zod serialization.
 - [ ] UID params use `UidValidationPipe`.

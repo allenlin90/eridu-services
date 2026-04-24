@@ -22,6 +22,7 @@ Extend `BaseRepository<T, C, U, W>`. Soft delete via `deletedAt`.
 - **Studio/Me**: Use `@ZodResponse(schema, status)` / `@ZodPaginatedResponse(schema)` from `@/lib/decorators`.
 - Controllers extend base controller and use `this.ensureResourceExists()` for 404 checks.
 - Use `UidValidationPipe` for path params.
+- Keep OpenAPI docs synchronized with controller behavior: when route behavior, side effects, status transitions, validation, throttling, or response shape changes, update adjacent `@ApiOperation`, `@ApiZodResponse`, `@AdminResponse`, and `@ZodResponse` descriptions in the same change.
 
 ## Data & ID Management (CRITICAL)
 **🚨 NEVER expose database IDs in API responses**
