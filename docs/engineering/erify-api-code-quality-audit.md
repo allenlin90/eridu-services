@@ -33,7 +33,7 @@ Use this list for follow-up discussion and implementation planning.
 | API-1 | P2 | Admin schedule mutation audit attribution uses temporary user workarounds | Use the authenticated admin for audit attribution while preserving payload user IDs that represent client-selected target/change data |
 | API-2 | P2 | Some admin action request bodies bypass Zod DTO schemas | Add DTO schemas for action payloads; do not remove legitimate target user fields |
 | API-3 | P2 | `erify_api` lint rules do not enforce strict typing | Stage scoped cleanup and re-enable rules gradually |
-| API-4 | P2 | Service layer leaks Prisma model/query types in public contracts | Align new/touched services toward schema-defined payload/result types |
+| API-4 | P2 | Some service APIs expose Prisma query-shape and transaction details | Keep model/enums as lower-risk, but move include/get-payload and transaction-client shapes behind repository or local domain types |
 | API-5 | P3 | Unused hard-delete helper exists for soft-deleted studio memberships | Remove or explicitly rename/document as hard delete |
 
 ## Findings
@@ -98,25 +98,36 @@ Recommendation:
 - Then add scoped ESLint overrides for expected JSON/schema surfaces and test helpers.
 - Finally re-enable `no-explicit-any` as warning for production `src` before making it blocking.
 
-### API-4: Service layer still leaks Prisma model/query types in public contracts
+### API-4: Some service APIs expose Prisma query-shape and transaction details
 
-Several service files import Prisma model or query types directly. Notable examples:
+This item is valid, but it should be narrower than "all Prisma imports in services." The scan found three categories:
 
 - `apps/erify_api/src/models/task/task.service.ts:101`
 - `apps/erify_api/src/schedule-planning/validation.service.ts:145`
-- `apps/erify_api/src/schedule-planning/publishing.service.ts:4`
-- `apps/erify_api/src/show-orchestration/show-orchestration.service.ts:3`
+- `apps/erify_api/src/schedule-planning/schedule-planning.service.ts:17`
+- `apps/erify_api/src/schedule-planning/schedule-planning.service.ts:187`
+- `apps/erify_api/src/schedule-planning/schedule-restoration-processor.service.ts:28`
+- `apps/erify_api/src/task-orchestration/task-generation-processor.service.ts:157`
+
+Assessment:
+
+- Lower-risk: imports such as `TaskStatus`, `TaskType`, `Schedule`, `Show`, or model return types are common legacy/service typing and not the first cleanup target.
+- Higher-risk: `Prisma.TaskInclude`, `Prisma.TaskGetPayload`, `Prisma.ScheduleSnapshotGetPayload`, and `Prisma.TransactionClient | PrismaService` leak query shape or database client details into service-level APIs/helpers.
+- JSON cast debt: `Prisma.InputJsonValue` casts in schedule/task processors are mostly persistence-boundary casts, but they still force services to import Prisma for JSON typing. `studio-shift.service.ts` already shows a better local JSON type approach.
 
 Why it matters:
 
 - `service-pattern-nestjs` and `AGENTS.md` prefer payload types defined in schema files, with services staying transport- and ORM-agnostic.
-- Some imports are harmless enum/model return typing, but transaction-client and `Prisma.*GetPayload` signatures make the service API harder to keep stable across repository refactors.
+- Query-shape generics such as `Prisma.*Include` and `Prisma.*GetPayload` make service callers depend on repository/ORM include mechanics.
+- Transaction-client parameters blur repository/service boundaries and make validation helpers harder to reuse outside Prisma-backed flows.
 
 Recommendation:
 
 - Treat this as architecture debt, not an emergency rewrite.
-- For new/touched services, define local payload/result types in schema files or service-local type modules.
-- Prioritize transaction-heavy schedule planning services and `TaskService.findTasksByShowIds`, because those contracts currently expose Prisma query-shape choices to callers.
+- Prioritize `TaskService.findTasksByShowIds`: the current overload exposes `Prisma.TaskInclude` and `Prisma.TaskGetPayload`; the two current callers only need fixed include shapes (`assignee/template` and `targets/template`), so named service methods or local result types would be clearer.
+- For schedule planning, move `SnapshotWithScheduleInclude` and JSON payload types into schema/local domain types or repository return helpers.
+- For validation, avoid passing `Prisma.TransactionClient | PrismaService` through service helper signatures; prefer repository/helper methods that own the transaction-aware query.
+- For JSON writes, follow the `studio-shift.service.ts` approach with local JSON-compatible types where practical.
 
 ### API-5: Unused hard-delete helper exists for soft-deleted studio memberships
 
