@@ -94,16 +94,17 @@ Phase 4 stores **outcomes, not rules**. All five item types are flat monetary am
 
 | `item_type` | Sign         | Special semantics in Phase 4?                                                                                                                                                                                                          |
 | ----------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BONUS`     | `amount ≥ 0` | None — flat addition                                                                                                                                                                                                                   |
-| `ALLOWANCE` | `amount ≥ 0` | None — flat addition                                                                                                                                                                                                                   |
-| `OVERTIME`  | `amount ≥ 0` | **None**. Label-only distinction from `BONUS` for reporting filters. No shift-block binding in Phase 4. The Phase 5 Advanced Compensation Engine will *write* `OVERTIME` records as its output; it will not change how R+ stores them. |
+| `BONUS`     | `amount > 0` | None — flat addition                                                                                                                                                                                                                   |
+| `ALLOWANCE` | `amount > 0` | None — flat addition                                                                                                                                                                                                                   |
+| `OVERTIME`  | `amount > 0` | **None**. Label-only distinction from `BONUS` for reporting filters. No shift-block binding in Phase 4. The Phase 5 Advanced Compensation Engine will *write* `OVERTIME` records as its output; it will not change how R+ stores them. |
 | `DEDUCTION` | `amount < 0` | None — flat subtraction                                                                                                                                                                                                                |
 | `OTHER`     | Any non-zero | Escape hatch for finance teams. No roll-up categorization beyond "other".                                                                                                                                                              |
 
 ### Sign enforcement
 
+- `amount` must be non-zero for every item type. A zero-amount line item has no finance meaning and is rejected at input validation.
 - `DEDUCTION` requires `amount < 0`.
-- All other types require `amount ≥ 0`.
+- All other types require `amount > 0`.
 - Enforced at R+ input validation; already specified in [compensation-line-items.md](./compensation-line-items.md).
 
 ### Target-level application
@@ -114,11 +115,13 @@ Consequence: a creator subtotal of `-$100` is valid and appears in the show row 
 
 ### Scope → grain attribution
 
-| Line item scope                   | Show row | Schedule row                   | Client row                    | Platform row (Phase 4) |
-| --------------------------------- | -------- | ------------------------------ | ----------------------------- | ---------------------- |
-| `show_id` set                     | ✅        | ✅ (rolled up through its show) | ✅                             | filter/dimension only  |
-| `schedule_id` set, `show_id` null | ❌        | ✅                              | ❌ (not prorated across shows) | ❌                      |
-| both null                         | ❌        | ❌                              | ❌                             | ❌                      |
+| Line item scope                   | Show row | Schedule row                   | Client row                           | Platform row (Phase 4) |
+| --------------------------------- | -------- | ------------------------------ | ------------------------------------ | ---------------------- |
+| `show_id` set                     | ✅        | ✅ (rolled up through its show) | ✅ (rolled up through its show)       | filter/dimension only  |
+| `schedule_id` set, `show_id` null | ❌        | ✅                              | ✅ (rolled up through its schedule)   | ❌                      |
+| both null                         | ❌        | ❌                              | ❌                                    | ❌                      |
+
+Client-grain rollup is a direct sum over its constituent show and schedule rows — no proration across shows is introduced. A schedule-scoped item appears once at the client grain via its schedule, not by being spread across individual shows.
 
 Standing/global items (both scopes null) remain visible in compensation list/breakdown endpoints for the target and date range, but stay **out of economics aggregation** in Phase 4. An explicit allocation policy is a Phase 5 prerequisite for including them.
 

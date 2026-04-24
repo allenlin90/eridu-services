@@ -285,7 +285,7 @@ Additionally, compensation line items surface as inline sections on:
 - **Label is optional** — can be derived from `itemType` when not explicitly set. UI can provide sensible defaults.
 - **Metadata is descriptive only** — architecture guardrail unchanged. No compensation logic in metadata.
 - **No implicit proration in Phase 4** — schedule-scoped and standing/global items are not spread across shows automatically. Economics includes them only where the aggregation grain matches directly.
-- **Unknown creator base cost stays unknown** — if `COMMISSION` / `HYBRID` base cost cannot be computed yet, the system exposes the known line-item subtotal separately and keeps the resolved total null.
+- **Unknown creator base cost stays unknown** — if `COMMISSION` / `HYBRID` base cost cannot be computed yet, the system exposes the known line-item subtotal separately and keeps the resolved total null. Per [economics-cost-model.md §2](./economics-cost-model.md#2-resolution-precedence--base-cost), the fixed portion of a `HYBRID` creator alone is not considered resolved — the full base stays null until revenue arrives, so the hybrid model cannot leak a partial number.
 - **Extensible target types** — new engagement types (contractor, agency talent) add a nullable FK column to `CompensationTarget`. No rewrite of existing data.
 
 ## Design Reference

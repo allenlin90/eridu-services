@@ -199,7 +199,7 @@ Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, ru
 | Item                                                                     | Risk   | Mitigation                                                                           |
 | ------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------ |
 | Roster enforcement bug — non-rostered creators silently assigned         | High   | Fix in PR #1d (roster-first enforcement)                                             |
-| Economics cost model may need rework for bonus/OT/allowances             | High   | Review after Wave 1; revise before merge                                             |
+| Economics cost model may need rework for bonus/OT/allowances             | Resolved | Addressed by R ([economics-cost-model.md](../prd/economics-cost-model.md)) — cost_state, line-item composition, and nullability locked before R+/E0 ship |
 | No immutable planned-cost snapshot for historical variance               | Medium | Keep Phase 4 semantics explicit; defer true budget-vs-actual to snapshot/audit phase |
 | P&L Revenue Workflow has 4 unresolved design questions                   | High   | Resolve during Wave 1/2 so Wave 3 isn't delayed                                      |
 | Economics branch drift (`feat/show-economics-baseline` since 2026-03-22) | Medium | Rebase periodically                                                                  |
