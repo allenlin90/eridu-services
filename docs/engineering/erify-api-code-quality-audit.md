@@ -30,17 +30,17 @@ Use this list for follow-up discussion and implementation planning.
 
 | ID | Priority | Item | Proposed next step |
 | --- | --- | --- | --- |
-| API-1 | P2 | Schedule mutation audit attribution uses temporary user workarounds | Decide admin vs Google Sheets actor policy, then implement current-user/service-principal resolution |
-| API-2 | P2 | Some controller request bodies bypass Zod DTO schemas | Add DTO schemas or remove actor fields once attribution is fixed |
+| API-1 | P2 | Admin schedule mutation audit attribution uses temporary user workarounds | Use the authenticated admin for audit attribution while preserving payload user IDs that represent client-selected target/change data |
+| API-2 | P2 | Some admin action request bodies bypass Zod DTO schemas | Add DTO schemas for action payloads; do not remove legitimate target user fields |
 | API-3 | P2 | `erify_api` lint rules do not enforce strict typing | Stage scoped cleanup and re-enable rules gradually |
 | API-4 | P2 | Service layer leaks Prisma model/query types in public contracts | Align new/touched services toward schema-defined payload/result types |
 | API-5 | P3 | Unused hard-delete helper exists for soft-deleted studio memberships | Remove or explicitly rename/document as hard delete |
 
 ## Findings
 
-### API-1: Schedule mutation audit attribution still uses temporary user workarounds
+### API-1: Admin schedule mutation audit attribution still uses temporary user workarounds
 
-Admin and Google Sheets schedule flows still attribute snapshots, publishes, duplicates, and restores to a schedule creator or to a client-supplied UID instead of the authenticated actor.
+Admin schedule flows still use schedule creator or payload user IDs in places where the service call appears to need an audit actor. Payload `user_id` / `created_by` values can be valid change data chosen by the client; the issue is that the current wiring does not clearly distinguish those target/change fields from the authenticated admin actor used for auditing.
 
 Examples:
 
@@ -48,41 +48,39 @@ Examples:
 - `apps/erify_api/src/admin/schedules/admin-schedule.controller.ts:175`
 - `apps/erify_api/src/admin/schedules/admin-schedule.controller.ts:218`
 - `apps/erify_api/src/admin/snapshots/admin-snapshot.controller.ts:65`
-- `apps/erify_api/src/google-sheets/schedules/google-sheets-schedule.controller.ts:214`
-- `apps/erify_api/src/google-sheets/schedules/google-sheets-schedule.controller.ts:293`
-- `apps/erify_api/src/google-sheets/schedules/google-sheets-schedule.controller.ts:340`
 
 Why it matters:
 
 - Admin routes are JWT-protected, and the repo already uses `@CurrentUser()` from `@eridu/auth-sdk` in me/studio/upload controllers.
-- Client-supplied `created_by` / `user_id` fields allow admin/API-key callers to choose the audit actor.
-- The TODO comments show this is known temporary behavior, but it sits on publish/restore paths that affect schedule state and show generation.
+- Client-supplied `created_by` / `user_id` fields may be valid payload fields for create/update/restore semantics, depending on the client workflow.
+- Admin routes should consistently infer the audit actor from the authenticated or authorized user context when recording who performed an admin action.
+- This sits on publish/restore paths that affect schedule state and show generation.
 
 Recommendation:
 
 - For admin routes, use `@CurrentUser() user: AuthenticatedUser` and resolve the internal user in a service helper.
-- For Google Sheets integration, decide whether the actor should be the API-key service principal or a validated planner UID. Do not accept arbitrary user UIDs without an explicit contract.
-- Move audit-actor resolution out of controllers once both route families share the behavior.
+- Preserve client-supplied `user_id` / `created_by` fields when they represent target/change data.
+- Keep this policy in docs/skills rather than inline TODO comments; comments in these controllers became noisy and were removed.
+- If a field is specifically an audit actor, name and document it as such; otherwise keep the payload semantics separate from audit attribution.
 
-### API-2: A few controller request bodies bypass Zod DTO schemas
+### API-2: A few admin action request bodies bypass Zod DTO schemas
 
-Three controller methods use inline object types for external request bodies:
+Two admin controller methods use inline object types for external request bodies:
 
 - `apps/erify_api/src/admin/schedules/admin-schedule.controller.ts:218`
 - `apps/erify_api/src/admin/snapshots/admin-snapshot.controller.ts:65`
-- `apps/erify_api/src/google-sheets/schedules/google-sheets-schedule.controller.ts:340`
 
 Why it matters:
 
 - TypeScript annotations do not validate runtime input.
 - `data-validation` and `secure-coding-practices` require Zod validation at every API boundary.
-- These bodies carry UID-like fields and names used in state-changing workflows.
+- These bodies carry UID-like fields and names used in state-changing admin workflows.
 
 Recommendation:
 
 - Add schemas/DTOs beside the schedule planning or snapshot schemas.
 - Validate `name` length and `created_by` / `user_id` UID prefixes.
-- Prefer removing caller-supplied actor fields when the current-user fix lands.
+- Keep payload user fields when they are part of the create/update/restore contract; audit attribution should be added separately from authenticated admin context.
 
 ### API-3: `erify_api` lint rules no longer enforce the repo's strict typing expectation
 
@@ -175,11 +173,10 @@ These are not correctness bugs by themselves. The risk is that controller/servic
 
 ## Suggested Cleanup Order
 
-1. Add Zod DTOs for inline schedule/snapshot action bodies.
-2. Replace admin schedule audit workarounds with `@CurrentUser()` plus internal user resolution.
-3. Define an integration actor policy for Google Sheets and document it.
-4. Tighten non-schema `any` usage in guards/base helpers, then re-enable lint rules gradually.
-5. Decompose schedule planning publishing/validation around stable helper boundaries when behavior changes are already in scope.
+1. Replace admin schedule audit workarounds with `@CurrentUser()` plus internal user resolution for audit attribution only.
+2. Add Zod DTOs for admin schedule/snapshot action bodies while preserving legitimate client-selected payload user fields.
+3. Tighten non-schema `any` usage in guards/base helpers, then re-enable lint rules gradually.
+4. Decompose schedule planning publishing/validation around stable helper boundaries when behavior changes are already in scope.
 
 ## Validation Performed
 

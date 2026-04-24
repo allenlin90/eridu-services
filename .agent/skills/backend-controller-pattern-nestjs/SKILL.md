@@ -50,6 +50,7 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 - For semantic state transitions, prefer action endpoints such as `POST .../resolve-cancellation` over generic `PATCH`.
 - Keep services transport-agnostic: services must not accept HTTP DTOs, request objects, response objects, or Nest exceptions as public contracts.
 - When controller behavior changes, update adjacent `@ApiOperation`, `@ApiZodResponse`, `@AdminResponse`, and `@ZodResponse` descriptions in the same change.
+- For admin mutations, distinguish audit actor identity from target/change payload fields: infer the audit actor from authenticated admin context, but keep validated payload user IDs when the client intentionally selects a target user.
 
 ## Controller-Type Checklists
 
@@ -109,6 +110,7 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 - [ ] All responses use Zod serialization.
 - [ ] UID params use `UidValidationPipe`.
 - [ ] DTOs are explicitly translated to service payloads.
+- [ ] Admin audit actor fields are derived from auth context and not confused with target user IDs in the payload.
 - [ ] Studio/user ownership is enforced at query level.
 - [ ] Lists are paginated and bounded.
 - [ ] High-frequency reads use `@ReadBurstThrottle()` instead of skipping throttling.

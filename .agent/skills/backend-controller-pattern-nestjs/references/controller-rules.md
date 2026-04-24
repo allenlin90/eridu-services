@@ -78,6 +78,15 @@ Example route style:
 POST /studios/:studioId/shows/:id/resolve-cancellation
 ```
 
+## Admin Audit Actor vs Payload User IDs
+
+Admin mutations often need two different identities:
+
+1. the authenticated admin who performed the action, used for audit attribution;
+2. a target user selected by the client as part of the create/update/restore payload.
+
+Do not conflate these. Infer the audit actor from auth context, usually `@CurrentUser()`, when recording who performed an admin action. Keep and validate payload `user_id`, `created_by`, or similar fields when they represent target/change data selected by the client.
+
 ## DTO Translation
 
 Controllers must adapt external DTOs to internal service payloads. Extract only the service-contract fields.
