@@ -23,6 +23,15 @@ import {
   SCHEDULE_UID_PREFIX,
 } from './schedule.constants';
 import { ScheduleRepository } from './schedule.repository';
+import type {
+  BulkScheduleOperationResult,
+  ListSchedulesByStudioParams,
+  MonthlyScheduleOverview,
+} from './schedule-service.types';
+import type { ChunkedSchedulePlanDocument } from './schedule-upload-progress';
+import {
+  buildPlanDocumentWithAppendedShows,
+} from './schedule-upload-progress';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
@@ -87,12 +96,7 @@ export class ScheduleService extends BaseModelService {
 
   async listSchedulesByStudioUid(
     studioUid: string,
-    params?: {
-      take?: number;
-      skip?: number;
-      orderBy?: Record<string, 'asc' | 'desc'>;
-      include?: ScheduleInclude;
-    },
+    params?: ListSchedulesByStudioParams,
   ): Promise<Schedule[]> {
     return this.scheduleRepository.findMany({
       where: { studio: { uid: studioUid, deletedAt: null } },
@@ -302,31 +306,11 @@ export class ScheduleService extends BaseModelService {
   async bulkCreateSchedules(
     dto: BulkCreateScheduleDto,
     include?: ScheduleInclude,
-  ): Promise<{
-      total: number;
-      successful: number;
-      failed: number;
-      results: Array<{
-        index?: number;
-        schedule_id?: string | null;
-        client_id?: string | null;
-        client_name?: string | null;
-        success: boolean;
-        error?: string | null;
-        error_code?: string | null;
-      }>;
-      successfulSchedules?: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
-    }> {
-    const results: Array<{
-      index?: number;
-      schedule_id?: string | null;
-      client_id?: string | null;
-      client_name?: string | null;
-      success: boolean;
-      error?: string | null;
-      error_code?: string | null;
-    }> = [];
-    const successfulSchedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>> = [];
+  ): Promise<BulkScheduleOperationResult> {
+    const results: BulkScheduleOperationResult['results'] = [];
+    const successfulSchedules: NonNullable<
+      BulkScheduleOperationResult['successfulSchedules']
+    > = [];
 
     // Process each schedule individually to allow partial success
     for (let index = 0; index < dto.schedules.length; index++) {
@@ -403,31 +387,11 @@ export class ScheduleService extends BaseModelService {
   async bulkUpdateSchedules(
     dto: BulkUpdateScheduleDto,
     include?: ScheduleInclude,
-  ): Promise<{
-      total: number;
-      successful: number;
-      failed: number;
-      results: Array<{
-        index?: number;
-        schedule_id?: string | null;
-        client_id?: string | null;
-        client_name?: string | null;
-        success: boolean;
-        error?: string | null;
-        error_code?: string | null;
-      }>;
-      successfulSchedules?: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
-    }> {
-    const results: Array<{
-      index?: number;
-      schedule_id?: string | null;
-      client_id?: string | null;
-      client_name?: string | null;
-      success: boolean;
-      error?: string | null;
-      error_code?: string | null;
-    }> = [];
-    const successfulSchedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>> = [];
+  ): Promise<BulkScheduleOperationResult> {
+    const results: BulkScheduleOperationResult['results'] = [];
+    const successfulSchedules: NonNullable<
+      BulkScheduleOperationResult['successfulSchedules']
+    > = [];
 
     // Process each schedule update individually to allow partial success
     for (let index = 0; index < dto.schedules.length; index++) {
@@ -545,33 +509,10 @@ export class ScheduleService extends BaseModelService {
       includeDeleted?: boolean;
     },
     include?: ScheduleInclude,
-  ): Promise<{
-      startDate: Date;
-      endDate: Date;
-      totalSchedules: number;
-      schedulesByClient: Record<
-        string,
-        {
-          clientId: string;
-          clientName: string;
-          count: number;
-          schedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
-        }
-      >;
-      schedulesByStatus: Record<string, number>;
-      schedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
-    }> {
+  ): Promise<MonthlyScheduleOverview> {
     const schedules = await this.scheduleRepository.findByDateRange(params, include);
 
-    const schedulesByClient: Record<
-      string,
-      {
-        clientId: string;
-        clientName: string;
-        count: number;
-        schedules: Array<Schedule | ScheduleWithRelations<ScheduleInclude>>;
-      }
-    > = {};
+    const schedulesByClient: MonthlyScheduleOverview['schedulesByClient'] = {};
     const schedulesByStatus: Record<string, number> = {};
 
     for (const schedule of schedules) {
@@ -633,119 +574,22 @@ export class ScheduleService extends BaseModelService {
       );
     }
 
-    // Validate version matches (optimistic locking)
     if (schedule.version !== version) {
       throw HttpError.conflict(
         `Version mismatch. Expected version ${version}, but schedule is at version ${schedule.version}`,
       );
     }
 
-    // Get plan document
-    const planDocument = schedule.planDocument as {
-      metadata?: {
-        uploadProgress?: {
-          expectedChunks: number;
-          receivedChunks: number;
-          lastChunkIndex?: number;
-          isComplete?: boolean;
-        };
-        [key: string]: unknown;
-      };
-      shows?: ShowPlanItem[];
-      [key: string]: unknown;
-    };
+    const updatedPlanDocument = buildPlanDocumentWithAppendedShows(
+      schedule.planDocument as ChunkedSchedulePlanDocument,
+      shows,
+      chunkIndex,
+    );
 
-    // Validate uploadProgress exists
-    if (!planDocument.metadata?.uploadProgress) {
-      throw HttpError.badRequest(
-        'Schedule does not have uploadProgress metadata. Cannot append shows.',
-      );
-    }
-
-    const uploadProgress = planDocument.metadata.uploadProgress;
-
-    // Validate upload not already complete
-    if (uploadProgress.isComplete) {
-      throw HttpError.badRequestWithDetails(
-        `Upload already complete. All ${uploadProgress.expectedChunks} chunks have been received.`,
-        {
-          errorCode: 'UPLOAD_COMPLETE',
-          uploadProgress: {
-            expectedChunks: uploadProgress.expectedChunks,
-            receivedChunks: uploadProgress.receivedChunks,
-            lastChunkIndex: uploadProgress.lastChunkIndex,
-            isComplete: true,
-          },
-        },
-      );
-    }
-
-    // Validate chunk index is valid
-    if (chunkIndex < 1 || chunkIndex > uploadProgress.expectedChunks) {
-      throw HttpError.badRequestWithDetails(
-        `Invalid chunk index ${chunkIndex}. Must be between 1 and ${uploadProgress.expectedChunks}.`,
-        {
-          errorCode: 'INVALID_CHUNK_INDEX',
-          uploadProgress: {
-            expectedChunks: uploadProgress.expectedChunks,
-            receivedChunks: uploadProgress.receivedChunks,
-            lastChunkIndex: uploadProgress.lastChunkIndex,
-            isComplete: uploadProgress.isComplete,
-          },
-        },
-      );
-    }
-
-    // Validate sequential chunks
-    const expectedNextChunk = (uploadProgress.lastChunkIndex ?? 0) + 1;
-    if (chunkIndex !== expectedNextChunk) {
-      // Calculate missing chunks
-      const missingChunks: number[] = [];
-      for (
-        let i = expectedNextChunk;
-        i < chunkIndex && i <= uploadProgress.expectedChunks;
-        i++
-      ) {
-        missingChunks.push(i);
-      }
-
-      throw HttpError.conflict(
-        `Chunk must be uploaded sequentially. Expected chunk ${expectedNextChunk}, but received chunk ${chunkIndex}.`,
-      );
-    }
-
-    // Merge shows into existing plan document
-    const existingShows = planDocument.shows || [];
-    const updatedShows = [...existingShows, ...shows];
-
-    // Update uploadProgress
-    const updatedReceivedChunks = uploadProgress.receivedChunks + 1;
-    const isComplete = updatedReceivedChunks === uploadProgress.expectedChunks;
-
-    const updatedUploadProgress = {
-      expectedChunks: uploadProgress.expectedChunks,
-      receivedChunks: updatedReceivedChunks,
-      lastChunkIndex: chunkIndex,
-      isComplete,
-    };
-
-    // Update plan document
-    const updatedPlanDocument = {
-      ...planDocument,
-      metadata: {
-        ...planDocument.metadata,
-        totalShows: updatedShows.length,
-        lastEditedAt: new Date().toISOString(),
-        uploadProgress: updatedUploadProgress,
-      },
-      shows: updatedShows,
-    };
-
-    // Update schedule with incremented version
     const updatedSchedule = await this.scheduleRepository.update(
       { uid: scheduleUid },
       {
-        planDocument: updatedPlanDocument as ScheduleJsonValue,
+        planDocument: updatedPlanDocument,
         version: schedule.version + 1,
       },
       include,

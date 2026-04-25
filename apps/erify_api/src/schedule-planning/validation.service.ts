@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { Prisma } from '@prisma/client';
 
 import {
   planDocumentSchema,
@@ -9,6 +8,14 @@ import {
   ValidationError,
   ValidationResult,
 } from './schemas/schedule-planning.schema';
+import type {
+  SchedulePlanningPrismaClient,
+  ValidationUidMaps,
+} from './validation-uid-lookup';
+import {
+  buildValidationUidLookupMaps,
+  getCreatorAssignments,
+} from './validation-uid-lookup';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -20,12 +27,6 @@ export class ValidationService {
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     public readonly utilityService: UtilityService,
   ) {}
-
-  private getCreatorAssignments(
-    show: ShowPlanItem,
-  ): Array<{ creatorId: string; note?: string }> {
-    return show.creators || [];
-  }
 
   /**
    * Validates an entire schedule including all shows in the plan document.
@@ -84,7 +85,7 @@ export class ValidationService {
     const scheduleEnd = new Date(schedule.endDate);
 
     // Build UID lookup maps for all references
-    const uidMaps = await this.buildUidLookupMaps(shows, prismaClient);
+    const uidMaps = await buildValidationUidLookupMaps(shows, prismaClient);
 
     const externalIdErrors = await this.validateExternalIdRules(
       shows,
@@ -141,8 +142,8 @@ export class ValidationService {
   private async validateExternalIdRules(
     shows: ShowPlanItem[],
     scheduleId: bigint,
-    uidMaps: Awaited<ReturnType<typeof this.buildUidLookupMaps>>,
-    prismaClient: Prisma.TransactionClient | PrismaService,
+    uidMaps: ValidationUidMaps,
+    prismaClient: SchedulePlanningPrismaClient,
   ): Promise<ValidationError[]> {
     const errors: ValidationError[] = [];
     const seen = new Set<string>();
@@ -239,8 +240,8 @@ export class ValidationService {
     showIndex: number,
     scheduleStart: Date,
     scheduleEnd: Date,
-    uidMaps: Awaited<ReturnType<typeof this.buildUidLookupMaps>>,
-    _prismaClient: Prisma.TransactionClient | PrismaService,
+    uidMaps: ValidationUidMaps,
+    _prismaClient: SchedulePlanningPrismaClient,
   ): ValidationError[] {
     const errors: ValidationError[] = [];
     const startTime = new Date(show.startTime);
@@ -323,7 +324,7 @@ export class ValidationService {
     }
 
     // Validate creators
-    for (const creator of this.getCreatorAssignments(show)) {
+    for (const creator of getCreatorAssignments(show)) {
       if (creator.creatorId && !uidMaps.creators.has(creator.creatorId)) {
         errors.push({
           type: 'reference_not_found',
@@ -368,7 +369,7 @@ export class ValidationService {
   private validateClientConsistency(
     showClientUid: string,
     scheduleClientId: bigint,
-    uidMaps: Awaited<ReturnType<typeof this.buildUidLookupMaps>>,
+    uidMaps: ValidationUidMaps,
     showIndex: number,
   ): ValidationError[] {
     const errors: ValidationError[] = [];
@@ -428,8 +429,8 @@ export class ValidationService {
       const show1 = shows[i];
       for (let j = i + 1; j < shows.length; j++) {
         const show2 = shows[j];
-        const show1Creators = this.getCreatorAssignments(show1);
-        const show2Creators = this.getCreatorAssignments(show2);
+        const show1Creators = getCreatorAssignments(show1);
+        const show2Creators = getCreatorAssignments(show2);
         const commonCreatorUids = show1Creators
           .map((creator) => creator.creatorId)
           .filter((creatorId) =>
@@ -470,7 +471,7 @@ export class ValidationService {
     show: ShowPlanItem,
     roomId: bigint,
     scheduleId: bigint,
-    prismaClient: Prisma.TransactionClient | PrismaService,
+    prismaClient: SchedulePlanningPrismaClient,
   ): Promise<string[]> {
     const startTime = new Date(show.startTime);
     const endTime = new Date(show.endTime);
@@ -529,7 +530,7 @@ export class ValidationService {
     mcUid: string,
     creatorId: bigint,
     scheduleId: bigint,
-    prismaClient: Prisma.TransactionClient | PrismaService,
+    prismaClient: SchedulePlanningPrismaClient,
   ): Promise<string[]> {
     const startTime = new Date(show.startTime);
     const endTime = new Date(show.endTime);
@@ -585,124 +586,4 @@ export class ValidationService {
   /**
    * Builds UID lookup maps for all references in the schedule.
    */
-  private async buildUidLookupMaps(
-    shows: ShowPlanItem[],
-    prismaClient: Prisma.TransactionClient | PrismaService,
-  ): Promise<{
-      clients: Map<string, bigint>;
-      studioRooms: Map<string, bigint>;
-      showTypes: Map<string, bigint>;
-      showStatuses: Map<string, bigint>;
-      showStandards: Map<string, bigint>;
-      creators: Map<string, bigint>;
-      platforms: Map<string, bigint>;
-      existingShows: Map<string, bigint>;
-    }> {
-    // Collect all unique UIDs
-    const clientUids = new Set<string>();
-    const studioRoomUids = new Set<string>();
-    const showTypeUids = new Set<string>();
-    const showStatusUids = new Set<string>();
-    const showStandardUids = new Set<string>();
-    const creatorUids = new Set<string>();
-    const platformUids = new Set<string>();
-    const existingShowIds = new Set<string>();
-
-    shows.forEach((show) => {
-      show.clientId && clientUids.add(show.clientId);
-      show.studioRoomId && studioRoomUids.add(show.studioRoomId);
-      show.showTypeId && showTypeUids.add(show.showTypeId);
-      show.showStatusId && showStatusUids.add(show.showStatusId);
-      show.showStandardId && showStandardUids.add(show.showStandardId);
-      this.getCreatorAssignments(show).forEach((creator) =>
-        creator.creatorId && creatorUids.add(creator.creatorId),
-      );
-      (show.platforms || []).forEach((platform) =>
-        platform.platformId && platformUids.add(platform.platformId),
-      );
-      show.existingShowId && existingShowIds.add(show.existingShowId);
-    });
-
-    // Fetch all entities
-    const [
-      clients,
-      studioRooms,
-      showTypes,
-      showStatuses,
-      showStandards,
-      creators,
-      platforms,
-      existingShows,
-    ] = await Promise.all([
-      prismaClient.client.findMany({
-        where: { uid: { in: Array.from(clientUids) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-      prismaClient.studioRoom.findMany({
-        where: { uid: { in: Array.from(studioRoomUids) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-      prismaClient.showType.findMany({
-        where: { uid: { in: Array.from(showTypeUids) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-      prismaClient.showStatus.findMany({
-        where: { uid: { in: Array.from(showStatusUids) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-      prismaClient.showStandard.findMany({
-        where: { uid: { in: Array.from(showStandardUids) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-      prismaClient.creator.findMany({
-        where: { uid: { in: Array.from(creatorUids) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-      prismaClient.platform.findMany({
-        where: { uid: { in: Array.from(platformUids) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-      prismaClient.show.findMany({
-        where: { uid: { in: Array.from(existingShowIds) }, deletedAt: null },
-        select: { id: true, uid: true },
-      }),
-    ]);
-
-    // Build maps with explicit types
-    const clientMap = new Map<string, bigint>(
-      clients.map((c) => [c.uid, c.id]),
-    );
-    const studioRoomMap = new Map<string, bigint>(
-      studioRooms.map((r) => [r.uid, r.id]),
-    );
-    const showTypeMap = new Map<string, bigint>(
-      showTypes.map((t) => [t.uid, t.id]),
-    );
-    const showStatusMap = new Map<string, bigint>(
-      showStatuses.map((s) => [s.uid, s.id]),
-    );
-    const showStandardMap = new Map<string, bigint>(
-      showStandards.map((s) => [s.uid, s.id]),
-    );
-    const creatorMap = new Map<string, bigint>(
-      creators.map((creator) => [creator.uid, creator.id]),
-    );
-    const platformMap = new Map<string, bigint>(
-      platforms.map((p) => [p.uid, p.id]),
-    );
-    const existingShowMap = new Map<string, bigint>(
-      existingShows.map((s) => [s.uid, s.id]),
-    );
-
-    return {
-      clients: clientMap,
-      studioRooms: studioRoomMap,
-      showTypes: showTypeMap,
-      showStatuses: showStatusMap,
-      showStandards: showStandardMap,
-      creators: creatorMap,
-      platforms: platformMap,
-      existingShows: existingShowMap,
-    };
-  }
 }

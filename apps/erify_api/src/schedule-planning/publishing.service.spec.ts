@@ -7,8 +7,9 @@ import type { Schedule } from '@prisma/client';
 import { ClsModule } from 'nestjs-cls';
 
 import type { PlanDocument } from './schemas/schedule-planning.schema';
-import type { ScheduleWithRelations } from './publishing.service';
 import { PublishingService } from './publishing.service';
+import type { ScheduleWithRelations } from './publishing.types';
+import { PublishingRelationSyncService } from './publishing-relation-sync.service';
 import { ValidationService } from './validation.service';
 
 import { ScheduleService } from '@/models/schedule/schedule.service';
@@ -245,6 +246,7 @@ describe('publishingService', () => {
         }),
       ],
       providers: [
+        PublishingRelationSyncService,
         PublishingService,
         {
           provide: ScheduleService,

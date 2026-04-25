@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PublishingService } from './publishing.service';
+import { PublishingRelationSyncService } from './publishing-relation-sync.service';
 import { SchedulePlanningService } from './schedule-planning.service';
 import { ScheduleRestorationProcessor } from './schedule-restoration-processor.service';
 import { ValidationService } from './validation.service';
@@ -26,6 +27,7 @@ import { UtilityModule } from '@/utility/utility.module';
   providers: [
     SchedulePlanningService,
     ValidationService,
+    PublishingRelationSyncService,
     PublishingService,
     ScheduleRestorationProcessor,
   ],
