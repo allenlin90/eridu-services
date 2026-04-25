@@ -214,6 +214,7 @@ method(@StudioParam() studioUid: string) {
   - `authentication-authorization-nestjs`
   - `orchestration-service-nestjs`
   - `backend-testing-patterns`
+  - `backend-large-file-refactor`
   - `api-performance-optimization`
   - `observability-logging`
   - `secure-coding-practices`
