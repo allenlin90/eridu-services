@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
 import { useTableUrlState } from '@eridu/ui';
@@ -68,7 +68,7 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
 
   const query = useQuery({
     queryKey: studioShowsKeys.list(studioId, {
-      page: pagination.pageIndex,
+      page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       search: searchQuery,
       date_from: scopeDateBounds.date_from,
@@ -85,6 +85,7 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
         ...filters,
       }, { signal }),
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
@@ -93,16 +94,30 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
     }
   }, [query.data?.meta?.totalPages, setPageCount]);
 
+  const tablePagination = query.data?.meta
+    ? {
+        pageIndex: query.data.meta.page - 1,
+        pageSize: query.data.meta.limit,
+        total: query.data.meta.total,
+        pageCount: query.data.meta.totalPages,
+      }
+    : {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        total: 0,
+        pageCount: 0,
+      };
+
   return {
     data: query.data,
     shows: query.data?.data ?? [],
-    total: query.data?.meta?.total ?? 0,
-    pageCount: query.data?.meta?.totalPages ?? 0,
+    total: tablePagination.total,
+    pageCount: tablePagination.pageCount,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
     refetch: query.refetch,
-    pagination,
+    pagination: tablePagination,
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,

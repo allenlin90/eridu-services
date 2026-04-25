@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
@@ -34,13 +33,13 @@ import { getStudioShows, type StudioShow } from '@/features/studio-shows/api/get
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
 import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/show-readiness/show-readiness-triage-panel';
 import { columns } from '@/features/studio-shows/components/studio-shows-table/columns';
+import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
 import {
   normalizeScopeDate,
   parseScopeDateAsLocal,
   toShowScopeDateTimeBounds,
 } from '@/features/studio-shows/utils/show-scope.utils';
-import { resolveUpdater } from '@/lib/table-state.utils';
 
 export const Route = createFileRoute('/studios/$studioId/show-operations/')({
   component: StudioShowOperationsPage,
@@ -375,7 +374,6 @@ function StudioShowsTableSection({
   onShowsMutated: () => void;
   onToggleNeedsAttention: () => void;
 }) {
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
 
@@ -392,56 +390,12 @@ function StudioShowsTableSection({
     onSortingChange,
   } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo, needsAttention });
 
-  // Keep lightweight snapshots for selected rows that are not on current page.
-  const [selectedShowSnapshots, setSelectedShowSnapshots] = useState<Record<string, StudioShow>>({});
-  const selectedShowIds = useMemo(
-    () => Object.entries(rowSelection).filter(([, isSelected]) => isSelected).map(([id]) => id),
-    [rowSelection],
-  );
-  const showsById = useMemo(
-    () => Object.fromEntries(shows.map((show) => [show.id, show])),
-    [shows],
-  );
-
-  const handleRowSelectionChange = useCallback<OnChangeFn<RowSelectionState>>(
-    (updater) => {
-      const nextSelection = resolveUpdater(updater, rowSelection);
-      const selectedIds = new Set(
-        Object.entries(nextSelection)
-          .filter(([, isSelected]) => isSelected)
-          .map(([id]) => id),
-      );
-
-      setRowSelection(nextSelection);
-      setSelectedShowSnapshots((previousSnapshots) => {
-        const nextSnapshots: Record<string, StudioShow> = {};
-        selectedIds.forEach((id) => {
-          const show = showsById[id] ?? previousSnapshots[id];
-          if (show) {
-            nextSnapshots[id] = show;
-          }
-        });
-
-        const previousKeys = Object.keys(previousSnapshots);
-        const nextKeys = Object.keys(nextSnapshots);
-        const hasSameStructure = previousKeys.length === nextKeys.length
-          && nextKeys.every((id) => previousSnapshots[id] === nextSnapshots[id]);
-        return hasSameStructure ? previousSnapshots : nextSnapshots;
-      });
-    },
-    [rowSelection, showsById],
-  );
-
-  const clearSelectedShows = useCallback(() => {
-    setRowSelection({});
-    setSelectedShowSnapshots({});
-  }, []);
-
-  const selectedShows = useMemo(() => {
-    return selectedShowIds
-      .map((id) => showsById[id] ?? selectedShowSnapshots[id] ?? null)
-      .filter((show): show is StudioShow => show !== null);
-  }, [selectedShowIds, selectedShowSnapshots, showsById]);
+  const {
+    rowSelection,
+    selectedItems: selectedShows,
+    onRowSelectionChange: handleRowSelectionChange,
+    clearSelection: clearSelectedShows,
+  } = useSelectedRowSnapshots(shows);
 
   const { data: showLookups } = useShowLookupsQuery(studioId);
 

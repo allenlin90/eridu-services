@@ -1,5 +1,4 @@
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import type { OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import { RefreshCw, UserRound } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
@@ -26,12 +25,11 @@ import { BulkCreatorAssignmentDialog } from '@/features/studio-show-creators/com
 import { creatorMappingShowColumns } from '@/features/studio-show-creators/components/creator-mapping-show-columns';
 import { SelectedCreatorMappingMobileActions } from '@/features/studio-show-creators/components/selected-creator-mapping-mobile-actions';
 import { useCreatorMappingShows } from '@/features/studio-show-creators/hooks/use-creator-mapping-shows';
-import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
 import {
   normalizeScopeDate,
   parseScopeDateAsLocal,
 } from '@/features/studio-shows/utils/show-scope.utils';
-import { resolveUpdater } from '@/lib/table-state.utils';
 
 const creatorMappingRouteApi = getRouteApi('/studios/$studioId/creator-mapping');
 
@@ -90,8 +88,6 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 }
 
 function CreatorMappingPage() {
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [selectedShowSnapshots, setSelectedShowSnapshots] = useState<Record<string, StudioShow>>({});
   const [isBulkAssignDialogOpen, setIsBulkAssignDialogOpen] = useState(false);
 
   const { studioId } = creatorMappingRouteApi.useParams();
@@ -181,57 +177,12 @@ function CreatorMappingPage() {
     dateTo: search.date_to,
   });
 
-  const showsById = useMemo(
-    () => Object.fromEntries(shows.map((show) => [show.id, show])),
-    [shows],
-  );
-
-  const handleRowSelectionChange = useCallback<OnChangeFn<RowSelectionState>>(
-    (updater) => {
-      const nextSelection = resolveUpdater(updater, rowSelection);
-      const selectedIds = new Set(
-        Object.entries(nextSelection)
-          .filter(([, selected]) => selected)
-          .map(([id]) => id),
-      );
-
-      setRowSelection(nextSelection);
-      setSelectedShowSnapshots((previousSnapshots) => {
-        const nextSnapshots: Record<string, StudioShow> = {};
-        selectedIds.forEach((id) => {
-          const show = showsById[id] ?? previousSnapshots[id];
-          if (show) {
-            nextSnapshots[id] = show;
-          }
-        });
-
-        const previousKeys = Object.keys(previousSnapshots);
-        const nextKeys = Object.keys(nextSnapshots);
-        const hasSameStructure = previousKeys.length === nextKeys.length
-          && nextKeys.every((id) => previousSnapshots[id] === nextSnapshots[id]);
-        return hasSameStructure ? previousSnapshots : nextSnapshots;
-      });
-    },
-    [rowSelection, showsById],
-  );
-
-  const selectedShowIds = useMemo(
-    () => Object.entries(rowSelection)
-      .filter(([, selected]) => Boolean(selected))
-      .map(([id]) => id),
-    [rowSelection],
-  );
-
-  const selectedShows = useMemo(() => {
-    return selectedShowIds
-      .map((id) => showsById[id] ?? selectedShowSnapshots[id] ?? null)
-      .filter((show): show is StudioShow => show !== null);
-  }, [selectedShowIds, selectedShowSnapshots, showsById]);
-
-  const clearSelectedShows = useCallback(() => {
-    setRowSelection({});
-    setSelectedShowSnapshots({});
-  }, []);
+  const {
+    rowSelection,
+    selectedItems: selectedShows,
+    onRowSelectionChange: handleRowSelectionChange,
+    clearSelection: clearSelectedShows,
+  } = useSelectedRowSnapshots(shows);
 
   const { data: showLookups } = useShowLookupsQuery(studioId);
   const scopeLabel = formatScopeLabel(search.date_from, search.date_to);
