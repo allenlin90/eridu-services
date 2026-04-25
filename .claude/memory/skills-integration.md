@@ -38,6 +38,25 @@ Source of truth:
 - `.agent/rules/01-general-agent-guidelines.mdc`
 - `.agent/workflows/verification.md`
 
+## Backend Large-File Refactor Pattern (2026-04-25)
+
+For oversized `apps/erify_api` NestJS files, use `.agent/skills/backend-large-file-refactor/SKILL.md`.
+
+Stable split strategy:
+- keep the original service/repository/controller as the public entry point
+- extract stateless Prisma query builders, include/select shapes, UID lookup maps, and plan-document transforms into pure helper modules
+- extract side-effectful relation sync or workflow blocks into injectable collaborators when they need DI, `TransactionHost`, UID generators, or mocking in `TestingModule`
+- avoid Rails-style mixins/concerns by default; prefer Nest composition unless there is a shared class lifecycle contract
+- commit each coherent refactor scope separately, then check for hook-applied `eslint --fix` changes and amend them into the same scope commit
+
+Current examples:
+- `apps/erify_api/src/models/task/task-list-query.ts`
+- `apps/erify_api/src/models/task/task-relation-query.ts`
+- `apps/erify_api/src/schedule-planning/publishing-relation-sync.service.ts`
+- `apps/erify_api/src/schedule-planning/publishing-uid-lookup.ts`
+- `apps/erify_api/src/schedule-planning/validation-uid-lookup.ts`
+- `apps/erify_api/src/models/schedule/schedule-upload-progress.ts`
+
 Additional frontend guidance (2026-03-06):
 - `.agent/skills/frontend-api-layer/SKILL.md` now requires no FE-side required-data joins across endpoints with mismatched auth scopes.
 - `.agent/skills/frontend-state-management/SKILL.md` now requires scoping timer-driven state updates to the smallest subtree.
