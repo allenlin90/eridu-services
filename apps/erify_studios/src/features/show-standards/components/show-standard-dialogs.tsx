@@ -78,7 +78,8 @@ export function ShowStandardUpdateDialog({
           placeholder: 'Enter show standard name',
         },
         {
-          name: 'id' as any,
+          kind: 'render',
+          id: 'id',
           label: 'ID',
           render: () => (
             <div className="flex flex-col gap-2">

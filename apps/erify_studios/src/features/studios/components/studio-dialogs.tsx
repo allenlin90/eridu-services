@@ -90,7 +90,8 @@ export function StudioUpdateDialog({
           placeholder: 'Enter studio name',
         },
         {
-          name: 'id' as any,
+          kind: 'render',
+          id: 'id',
           label: 'ID',
           render: () => (
             <div className="flex flex-col gap-2">

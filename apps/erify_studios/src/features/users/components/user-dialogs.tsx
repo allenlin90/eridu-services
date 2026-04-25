@@ -109,7 +109,8 @@ export function UserUpdateDialog({
           placeholder: 'SSO ID',
         },
         {
-          name: 'id' as any,
+          kind: 'render',
+          id: 'id',
           label: 'ID',
           render: () => (
             <div className="flex flex-col gap-2">
@@ -138,7 +139,7 @@ export function UserUpdateDialog({
           placeholder: 'https://example.com/profile.jpg',
         },
         {
-          name: 'is_system_admin' as any,
+          name: 'is_system_admin',
           label: 'System Admin',
           render: (field) => (
             <div className="flex items-center gap-2">

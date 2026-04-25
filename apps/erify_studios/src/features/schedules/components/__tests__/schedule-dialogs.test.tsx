@@ -34,10 +34,10 @@ vi.mock('@/features/admin/components', () => ({
         <p>{description}</p>
         <div data-testid="fields">
           {fields?.map((field: any) => (
-            <div key={field.name} data-testid={`field-${field.name}`}>
+            <div key={field.name ?? field.id} data-testid={`field-${field.name ?? field.id}`}>
               {field.render
                 ? field.render({
-                    value: field.name.includes('date') ? '2024-01-01T10:00:00Z' : 'some-value',
+                    value: field.name?.includes('date') ? '2024-01-01T10:00:00Z' : 'some-value',
                     onChange: vi.fn(),
                   })
                 : null}

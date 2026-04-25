@@ -78,7 +78,8 @@ export function ShowStatusUpdateDialog({
           placeholder: 'Enter show status name',
         },
         {
-          name: 'id' as any,
+          kind: 'render',
+          id: 'id',
           label: 'ID',
           render: () => (
             <div className="flex flex-col gap-2">

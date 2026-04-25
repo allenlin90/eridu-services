@@ -78,7 +78,8 @@ export function ShowTypeUpdateDialog({
           placeholder: 'Enter show type name',
         },
         {
-          name: 'id' as any,
+          kind: 'render',
+          id: 'id',
           label: 'ID',
           render: () => (
             <div className="flex flex-col gap-2">
