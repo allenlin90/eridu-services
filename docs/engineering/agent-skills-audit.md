@@ -29,6 +29,7 @@ The audit found the skill set is broadly healthy:
 - Updated `user-facing-docs` sidebar and directory guidance to match `eridu-docs-information-architecture` and the current `apps/eridu_docs/astro.config.mjs` default sidebar.
 - Reduced `backend-controller-pattern-nestjs` from 579 lines to a concise workflow-oriented skill, with detailed rules moved into `references/controller-rules.md`.
 - Updated `authentication-authorization-nestjs` frontend guidance to match the current `@eridu/auth-sdk` client, TanStack Router app shell, `SessionProvider`, and shared API client token refresh/interceptor flow.
+- Updated `frontend-error-handling` examples to use the shared API client and auth redirect flow instead of localStorage token handling.
 - Updated `frontend-tech-stack` and `frontend-code-quality` examples to use the repo's current ESLint flat config style (`eslint.config.js`) instead of legacy `.eslintrc.cjs`.
 - Updated `data-validation` to name Zod and `createZodDto` as the repo-standard validation stack instead of generic non-repo alternatives.
 
@@ -69,7 +70,7 @@ The review checked skill content against the current repository, not live upstre
 | `file-upload-presign` | Current | Legacy R2 path note is intentional storage-compatibility guidance. |
 | `frontend-api-layer` | Current | Aligns with TanStack Query 5 and repo API/query-key conventions. |
 | `frontend-code-quality` | Updated | ESLint examples now use flat config. |
-| `frontend-error-handling` | Current | Aligns with TanStack Router error components and TanStack Query meta guidance. |
+| `frontend-error-handling` | Updated | Aligns with TanStack Router error components, TanStack Query meta guidance, and shared API client auth handling. |
 | `frontend-i18n` | Current | Matches Paraglide/shared package terminology override guidance. |
 | `frontend-performance` | Current | Aligns with TanStack Router, Vite, and current memoization guidance. |
 | `frontend-state-management` | Current | Aligns with TanStack Query/Router URL state patterns. |

@@ -113,5 +113,5 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 - [ ] Admin audit actor fields are derived from auth context and not confused with target user IDs in the payload.
 - [ ] Studio/user ownership is enforced at query level.
 - [ ] Lists are paginated and bounded.
-- [ ] High-frequency reads use `@ReadBurstThrottle()` instead of skipping throttling.
+- [ ] High-frequency app reads use `@ReadBurstThrottle()` instead of skipping throttling; integration exceptions are documented and separately authenticated.
 - [ ] No Prisma queries or domain workflows live in the controller.

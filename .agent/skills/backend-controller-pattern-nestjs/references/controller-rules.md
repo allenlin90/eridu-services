@@ -204,7 +204,7 @@ Do not fetch by UID first and then check ownership afterward.
 
 ## Throttle Profiles
 
-The app uses named throttle profiles. Do not skip throttling entirely.
+Normal app routes use named throttle profiles. Do not skip throttling entirely on standard admin, studio, me, or browser-facing API routes.
 
 | Profile | Purpose |
 | --- | --- |
@@ -232,3 +232,5 @@ If a 429 spike appears in `erify_studios`, prefer:
 3. opting the high-frequency read endpoint into `readBurst`.
 
 Do not bypass throttling based on browser `Origin`; that header is not trusted server-side identity in this stack.
+
+Explicit integration exceptions are allowed only when the integration has its own non-browser authentication and traffic contract. The current example is `GoogleSheetsScheduleController`, which uses `@SkipThrottle()` with `GoogleSheetsApiKeyGuard` for Apps Script sync traffic. Document any new exception beside the controller and in the relevant integration docs.

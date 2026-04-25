@@ -22,12 +22,12 @@ Study these real implementations:
 Handle auth errors and network errors globally:
 
 ```typescript
+// Use the shared app API client. Auth headers and token refresh stay centralized there.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Redirect to login
-      window.location.href = '/login';
+      authClient.redirectToLogin();
     }
     
     if (error.response?.status === 403) {

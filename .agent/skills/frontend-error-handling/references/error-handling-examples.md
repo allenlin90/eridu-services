@@ -2,33 +2,17 @@
 
 This file contains detailed error handling examples extracted from the main SKILL.md.
 
-## Complete API Client with Error Interceptor
+## Shared API Client Error Interceptor
 
 ```typescript
-import axios, { type AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { toast } from 'sonner';
 
-export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import { apiClient } from '@/lib/api/client';
+import { authClient } from '@/lib/auth';
 
-// Request interceptor for auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Auth headers and token refresh live in the shared API client.
+// Do not create feature-local Axios clients or read tokens from localStorage.
 
 // Response interceptor for global error handling
 apiClient.interceptors.response.use(
@@ -36,8 +20,7 @@ apiClient.interceptors.response.use(
   (error: AxiosError<{ message?: string }>) => {
     // Handle authentication errors
     if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+      authClient.redirectToLogin();
       toast.error('Session expired. Please log in again.');
       return Promise.reject(error);
     }
