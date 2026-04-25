@@ -21,14 +21,29 @@ export function sortRows(
 
     // String comparison
     if (typeof valA === 'string' && typeof valB === 'string') {
-      return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      if (direction === 'asc') {
+        return valA.localeCompare(valB);
+      }
+
+      return valB.localeCompare(valA);
     }
 
     // Number/Boolean comparison
-    if (valA < valB)
-      return direction === 'asc' ? -1 : 1;
-    if (valA > valB)
-      return direction === 'asc' ? 1 : -1;
+    if (valA < valB) {
+      if (direction === 'asc') {
+        return -1;
+      }
+
+      return 1;
+    }
+
+    if (valA > valB) {
+      if (direction === 'asc') {
+        return 1;
+      }
+
+      return -1;
+    }
 
     return 0;
   });

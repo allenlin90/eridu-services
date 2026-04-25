@@ -6,6 +6,14 @@ import type { Show } from '@/features/shows/api/get-shows';
 
 const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
 
+function getLookupLimit(search: string) {
+  if (search) {
+    return 20;
+  }
+
+  return 10;
+}
+
 /**
  * Network hook for show standard field.
  * Stable list with 1 hour cache.
@@ -15,7 +23,7 @@ export function useShowStandardFieldData(show: Show | null, studioId?: string) {
 
   const { data: showStandardsData, isLoading } = useQuery({
     queryKey: ['show-standards', 'list', studioId ?? 'admin', { name: search }],
-    queryFn: ({ signal }) => getShowStandards({ name: search || undefined, limit: search ? 20 : 10 }, studioId, { signal }),
+    queryFn: ({ signal }) => getShowStandards({ name: search || undefined, limit: getLookupLimit(search) }, studioId, { signal }),
     staleTime: LOOKUP_STALE_TIME_MS,
     gcTime: 2 * 60 * 60 * 1000,
   });

@@ -94,19 +94,21 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
     }
   }, [query.data?.meta?.totalPages, setPageCount]);
 
-  const tablePagination = query.data?.meta
-    ? {
-        pageIndex: query.data.meta.page - 1,
-        pageSize: query.data.meta.limit,
-        total: query.data.meta.total,
-        pageCount: query.data.meta.totalPages,
-      }
-    : {
-        pageIndex: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        total: 0,
-        pageCount: 0,
-      };
+  let tablePagination = {
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    total: 0,
+    pageCount: 0,
+  };
+
+  if (query.data?.meta) {
+    tablePagination = {
+      pageIndex: query.data.meta.page - 1,
+      pageSize: query.data.meta.limit,
+      total: query.data.meta.total,
+      pageCount: query.data.meta.totalPages,
+    };
+  }
 
   return {
     data: query.data,

@@ -106,6 +106,85 @@ export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
     onOpenChange(false);
   };
 
+  const renderFieldControl = (
+    field: AdminFormField<FormValues<T>>,
+    formField: ControllerRenderProps<FormValues<T>, Path<FormValues<T>>>,
+  ) => {
+    if (field.render) {
+      return field.render(formField);
+    }
+
+    if (field.type === 'textarea') {
+      return (
+        <Textarea
+          {...formField}
+          placeholder={field.placeholder}
+          disabled={isLoading}
+          rows={6}
+          value={(formField.value as string) ?? ''}
+        />
+      );
+    }
+
+    return (
+      <Input
+        {...formField}
+        type={field.type || 'text'}
+        placeholder={field.placeholder}
+        disabled={isLoading}
+        value={(formField.value as string) ?? ''}
+      />
+    );
+  };
+
+  const renderSchemaField = (field: AdminFormField<FormValues<T>>) => (
+    <FormField
+      key={field.name}
+      control={form.control}
+      name={field.name}
+      render={({ field: formField }) => (
+        <FormItem>
+          <FormLabel>{field.label}</FormLabel>
+          <FormControl>{renderFieldControl(field, formField)}</FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
+  const renderDialogField = (field: AdminDialogField<FormValues<T>>) => {
+    if (field.kind === 'render') {
+      return (
+        <FormItem key={field.id}>
+          <FormLabel>{field.label}</FormLabel>
+          <FormControl>{field.render(form)}</FormControl>
+        </FormItem>
+      );
+    }
+
+    return renderSchemaField(field);
+  };
+
+  const renderFormBody = () => {
+    if (children) {
+      if (typeof children === 'function') {
+        return children(form);
+      }
+
+      return children;
+    }
+
+    return fields?.map(renderDialogField);
+  };
+
+  const getSubmitLabel = () => {
+    if (isLoading) {
+      return 'Saving...';
+    }
+
+    return 'Save';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -115,57 +194,7 @@ export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {children
-              ? (
-                  typeof children === 'function' ? children(form) : children
-                )
-              : fields?.map((field) => (
-                field.kind === 'render'
-                  ? (
-                      <FormItem key={field.id}>
-                        <FormLabel>{field.label}</FormLabel>
-                        <FormControl>{field.render(form)}</FormControl>
-                      </FormItem>
-                    )
-                  : (
-                      <FormField
-                        key={field.name}
-                        control={form.control}
-                        name={field.name}
-                        render={({ field: formField }) => (
-                          <FormItem>
-                            <FormLabel>{field.label}</FormLabel>
-                            <FormControl>
-                              {field.render
-                                ? (
-                                    field.render(formField)
-                                  )
-                                : field.type === 'textarea'
-                                  ? (
-                                      <Textarea
-                                        {...formField}
-                                        placeholder={field.placeholder}
-                                        disabled={isLoading}
-                                        rows={6}
-                                        value={(formField.value as string) ?? ''}
-                                      />
-                                    )
-                                  : (
-                                      <Input
-                                        {...formField}
-                                        type={field.type || 'text'}
-                                        placeholder={field.placeholder}
-                                        disabled={isLoading}
-                                        value={(formField.value as string) ?? ''}
-                                      />
-                                    )}
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )
-              ))}
+            {renderFormBody()}
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
@@ -181,7 +210,7 @@ export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
                 disabled={isLoading}
                 className="w-full sm:w-auto"
               >
-                {isLoading ? 'Saving...' : 'Save'}
+                {getSubmitLabel()}
               </Button>
             </DialogFooter>
           </form>

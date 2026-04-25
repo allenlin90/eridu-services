@@ -30,16 +30,21 @@ function getHttpStatus(error: unknown) {
 
 function getMutationErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
-    const message = error.response?.data && typeof error.response.data === 'object' && 'message' in error.response.data
-      ? error.response.data.message
-      : undefined;
+    let message: unknown;
+    if (error.response?.data && typeof error.response.data === 'object' && 'message' in error.response.data) {
+      message = error.response.data.message;
+    }
 
     if (typeof message === 'string') {
       return message;
     }
   }
 
-  return error instanceof Error ? error.message : undefined;
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return undefined;
 }
 
 declare module '@tanstack/react-query' {
