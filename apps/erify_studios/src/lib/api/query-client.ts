@@ -20,6 +20,28 @@ function isRateLimitedError(error: unknown) {
     && error.response.status === 429;
 }
 
+function getHttpStatus(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    return error.response?.status;
+  }
+
+  return undefined;
+}
+
+function getMutationErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data && typeof error.response.data === 'object' && 'message' in error.response.data
+      ? error.response.data.message
+      : undefined;
+
+    if (typeof message === 'string') {
+      return message;
+    }
+  }
+
+  return error instanceof Error ? error.message : undefined;
+}
+
 declare module '@tanstack/react-query' {
   // eslint-disable-next-line -- TanStack query module augmentation requires interface
   interface Register {
@@ -52,9 +74,10 @@ export const queryClient = new QueryClient({
       gcTime: 30 * 60 * 1000,
 
       // Retry failed requests (except 4xx errors)
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error) => {
+        const status = getHttpStatus(error);
         // Don't retry on 4xx errors (client errors)
-        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        if (status !== undefined && status >= 400 && status < 500) {
           return false;
         }
         // Retry up to 2 times for other errors
@@ -102,7 +125,7 @@ export const queryClient = new QueryClient({
   }),
   // Global mutation error handler
   mutationCache: new MutationCache({
-    onError: (error: any, variables, _context, mutation) => {
+    onError: (error, variables, _context, mutation) => {
       // Support dynamic suppression for autosave mutations
       if (typeof variables === 'object' && variables !== null && 'silent' in variables && variables.silent) {
         return;
@@ -115,8 +138,7 @@ export const queryClient = new QueryClient({
       const defaultMessage = 'An error occurred during the operation.';
       const errorMessage
         = (mutation.meta?.errorMessage as string)
-        || error?.response?.data?.message
-        || error?.message
+        || getMutationErrorMessage(error)
         || defaultMessage;
 
       toast.error(errorMessage);

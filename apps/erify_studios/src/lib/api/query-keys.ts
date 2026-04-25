@@ -27,7 +27,7 @@ export const queryKeys = {
   shows: {
     all: ['me', 'shows'] as const,
     lists: () => [...queryKeys.shows.all, 'list'] as const,
-    list: (filters: Record<string, any>) =>
+    list: (filters: Record<string, unknown>) =>
       [...queryKeys.shows.lists(), filters] as const,
     details: () => [...queryKeys.shows.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.shows.details(), id] as const,

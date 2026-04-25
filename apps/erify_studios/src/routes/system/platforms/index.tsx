@@ -16,6 +16,7 @@ import { AdminLayout } from '@/features/admin/components';
 import {
   PlatformCreateDialog,
   PlatformDeleteDialog,
+  type PlatformFormData,
   PlatformUpdateDialog,
 } from '@/features/platforms/components/platform-dialogs';
 import {
@@ -63,12 +64,12 @@ function PlatformsList() {
     }
   };
 
-  const onCreateSubmit = async (formData: any) => {
+  const onCreateSubmit = async (formData: PlatformFormData) => {
     await createMutation.mutateAsync(formData);
     setIsCreateDialogOpen(false);
   };
 
-  const onUpdateSubmit = async (formData: any) => {
+  const onUpdateSubmit = async (formData: PlatformFormData) => {
     if (!editingPlatform)
       return;
     await updateMutation.mutateAsync({ id: editingPlatform.id, data: formData });
