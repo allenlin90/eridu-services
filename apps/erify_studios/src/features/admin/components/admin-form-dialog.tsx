@@ -177,14 +177,6 @@ export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
     return fields?.map(renderDialogField);
   };
 
-  const getSubmitLabel = () => {
-    if (isLoading) {
-      return 'Saving...';
-    }
-
-    return 'Save';
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -210,7 +202,7 @@ export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
                 disabled={isLoading}
                 className="w-full sm:w-auto"
               >
-                {getSubmitLabel()}
+                {isLoading ? 'Saving...' : 'Save'}
               </Button>
             </DialogFooter>
           </form>

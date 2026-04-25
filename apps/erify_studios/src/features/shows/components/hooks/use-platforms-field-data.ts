@@ -6,14 +6,6 @@ import type { Show } from '@/features/shows/api/get-shows';
 
 const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
 
-function getLookupLimit(search: string) {
-  if (search) {
-    return 20;
-  }
-
-  return 10;
-}
-
 type SelectedShowPlatform = {
   id?: string;
   name?: string;
@@ -32,7 +24,7 @@ export function usePlatformsFieldData(show: Show | null, studioId?: string) {
 
   const { data: platformsData, isLoading } = useQuery({
     queryKey: ['platforms', 'list', studioId ?? 'admin', { name: search }],
-    queryFn: () => getPlatforms({ name: search, limit: getLookupLimit(search) }, studioId),
+    queryFn: () => getPlatforms({ name: search, limit: search ? 20 : 10 }, studioId),
     staleTime: LOOKUP_STALE_TIME_MS,
     gcTime: 2 * 60 * 60 * 1000,
   });

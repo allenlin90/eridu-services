@@ -6,14 +6,6 @@ import { getStudioRooms } from '@/features/studio-rooms/api/get-studio-rooms';
 
 const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
 
-function getLookupLimit(search: string) {
-  if (search) {
-    return 20;
-  }
-
-  return 10;
-}
-
 /**
  * Network hook for studio room field.
  * Stable list with 1 hour cache.
@@ -23,7 +15,7 @@ export function useStudioRoomFieldData(show: Show | null) {
 
   const { data: studioRoomsData, isLoading } = useQuery({
     queryKey: ['studio-rooms', 'list', 'admin', { name: search }],
-    queryFn: ({ signal }) => getStudioRooms({ name: search || undefined, limit: getLookupLimit(search) }, undefined, { signal }),
+    queryFn: ({ signal }) => getStudioRooms({ name: search || undefined, limit: search ? 20 : 10 }, undefined, { signal }),
     staleTime: LOOKUP_STALE_TIME_MS,
     gcTime: 2 * 60 * 60 * 1000,
   });

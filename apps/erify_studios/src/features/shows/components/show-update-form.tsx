@@ -104,14 +104,6 @@ export function ShowUpdateForm({
     }
   }, [show, propsOnSubmit, internalUpdateMutation, onCancel]);
 
-  const getSubmitLabel = () => {
-    if (isLoading) {
-      return 'Saving...';
-    }
-
-    return 'Save';
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -138,7 +130,7 @@ export function ShowUpdateForm({
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
           <Button type="submit" disabled={isLoading}>
-            {getSubmitLabel()}
+            {isLoading ? 'Saving...' : 'Save'}
           </Button>
         </DialogFooter>
       </form>
