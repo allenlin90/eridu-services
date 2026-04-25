@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { Schedule } from '@prisma/client';
 
 import {
   PlanDocument,
@@ -9,54 +8,22 @@ import {
   PublishScheduleSummary,
   ShowPlanItem,
 } from './schemas/schedule-planning.schema';
+import type {
+  DiffIncomingShow,
+  ExistingShow,
+  PublishingUidMaps,
+  ScheduleWithRelations,
+} from './publishing.types';
+import { PublishingRelationSyncService } from './publishing-relation-sync.service';
 import { ValidationService } from './validation.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
-import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
-import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { UtilityService } from '@/utility/utility.service';
 
-export type ScheduleWithRelations = Schedule & {
-  client: { uid: string; name: string } | null;
-  studio: { uid: string; name: string } | null;
-  createdByUser: { uid: string; name: string; email: string } | null;
-  publishedByUser: { uid: string; name: string; email: string } | null;
-};
-
-type DiffIncomingShow = {
-  source: ShowPlanItem;
-  key: string;
-  clientId: bigint;
-  studioId: bigint | null;
-  studioRoomId: bigint | null;
-  showTypeId: bigint;
-  showStatusId: bigint;
-  showStandardId: bigint;
-};
-
-type ExistingShow = {
-  id: bigint;
-  uid: string;
-  externalId: string | null;
-  clientId: bigint;
-  scheduleId: bigint | null;
-  studioId: bigint | null;
-  studioRoomId: bigint | null;
-  showTypeId: bigint;
-  showStatusId: bigint;
-  showStandardId: bigint;
-  name: string;
-  startTime: Date;
-  endTime: Date;
-  metadata: unknown;
-  deletedAt: Date | null;
-  showStatus: {
-    systemKey: string | null;
-  };
-};
+export type { ScheduleWithRelations } from './publishing.types';
 
 @Injectable()
 export class PublishingService {
@@ -66,8 +33,7 @@ export class PublishingService {
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
-    private readonly showCreatorService: ShowCreatorService,
-    private readonly showPlatformService: ShowPlatformService,
+    private readonly relationSyncService: PublishingRelationSyncService,
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
   ) {}
@@ -473,7 +439,7 @@ export class PublishingService {
       }
     }
 
-    await this.syncShowRelations(
+    await this.relationSyncService.syncShowRelations(
       incomingByShowId,
       uidMaps,
       publishSummary,
@@ -543,216 +509,6 @@ export class PublishingService {
     });
   }
 
-  private async syncShowRelations(
-    incomingByShowId: Map<bigint, DiffIncomingShow>,
-    uidMaps: Awaited<ReturnType<PublishingService['buildUidLookupMaps']>>,
-    summary: PublishScheduleSummary,
-  ): Promise<void> {
-    const tx = this.txHost.tx;
-    const showIds = Array.from(incomingByShowId.keys());
-
-    if (showIds.length === 0) {
-      return;
-    }
-
-    const existingShowCreators = await tx.showCreator.findMany({
-      where: { showId: { in: showIds } },
-      select: {
-        id: true,
-        showId: true,
-        creatorId: true,
-        note: true,
-        metadata: true,
-        deletedAt: true,
-      },
-    });
-
-    const existingShowPlatforms = await tx.showPlatform.findMany({
-      where: { showId: { in: showIds } },
-      select: {
-        id: true,
-        showId: true,
-        platformId: true,
-        liveStreamLink: true,
-        platformShowId: true,
-        metadata: true,
-        deletedAt: true,
-      },
-    });
-
-    const showCreatorByShowId = new Map<bigint, typeof existingShowCreators>();
-    existingShowCreators.forEach((row) => {
-      const list = showCreatorByShowId.get(row.showId) || [];
-      list.push(row);
-      showCreatorByShowId.set(row.showId, list);
-    });
-
-    const showPlatformByShowId = new Map<bigint, typeof existingShowPlatforms>();
-    existingShowPlatforms.forEach((row) => {
-      const list = showPlatformByShowId.get(row.showId) || [];
-      list.push(row);
-      showPlatformByShowId.set(row.showId, list);
-    });
-
-    for (const [showId, incoming] of incomingByShowId.entries()) {
-      const incomingCreatorById = new Map<bigint, { note: string | undefined }>();
-      (incoming.source.creators || []).forEach((creator) => {
-        const creatorInternalId = uidMaps.creators.get(creator.creatorId);
-        if (!creatorInternalId) {
-          return;
-        }
-        incomingCreatorById.set(creatorInternalId, { note: creator.note });
-      });
-
-      const existingCreators = showCreatorByShowId.get(showId) || [];
-      const existingCreatorById = new Map(
-        existingCreators.map((creator) => [creator.creatorId, creator]),
-      );
-
-      for (const [creatorId, incomingCreator] of incomingCreatorById.entries()) {
-        const existing = existingCreatorById.get(creatorId);
-
-        if (!existing) {
-          await tx.showCreator.create({
-            data: {
-              uid: this.showCreatorService.generateShowCreatorUid(),
-              showId,
-              creatorId,
-              note: incomingCreator.note,
-              metadata: {},
-            },
-          });
-          summary.creator_links_added += 1;
-          continue;
-        }
-
-        if (existing.deletedAt) {
-          await tx.showCreator.update({
-            where: { id: existing.id },
-            data: {
-              deletedAt: null,
-              note: incomingCreator.note,
-              metadata: {},
-            },
-          });
-          summary.creator_links_added += 1;
-          continue;
-        }
-
-        if ((existing.note || null) !== (incomingCreator.note || null)) {
-          await tx.showCreator.update({
-            where: { id: existing.id },
-            data: {
-              note: incomingCreator.note,
-            },
-          });
-          summary.creator_links_updated += 1;
-        }
-      }
-
-      const staleCreatorIds = existingCreators
-        .filter((creator) => creator.deletedAt === null && !incomingCreatorById.has(creator.creatorId))
-        .map((creator) => creator.id);
-
-      if (staleCreatorIds.length > 0) {
-        await tx.showCreator.updateMany({
-          where: {
-            id: { in: staleCreatorIds },
-            deletedAt: null,
-          },
-          data: {
-            deletedAt: new Date(),
-          },
-        });
-        summary.creator_links_removed += staleCreatorIds.length;
-      }
-
-      const incomingPlatformById = new Map<bigint, {
-        liveStreamLink: string | undefined;
-        platformShowId: string | undefined;
-      }>();
-
-      (incoming.source.platforms || []).forEach((platform) => {
-        const platformId = uidMaps.platforms.get(platform.platformId);
-        if (!platformId) {
-          return;
-        }
-        incomingPlatformById.set(platformId, {
-          liveStreamLink: platform.liveStreamLink,
-          platformShowId: platform.platformShowId,
-        });
-      });
-
-      const existingPlatforms = showPlatformByShowId.get(showId) || [];
-      const existingPlatformById = new Map(existingPlatforms.map((platform) => [platform.platformId, platform]));
-
-      for (const [platformId, incomingPlatform] of incomingPlatformById.entries()) {
-        const existing = existingPlatformById.get(platformId);
-
-        if (!existing) {
-          await tx.showPlatform.create({
-            data: {
-              uid: this.showPlatformService.generateShowPlatformUid(),
-              showId,
-              platformId,
-              liveStreamLink: incomingPlatform.liveStreamLink,
-              platformShowId: incomingPlatform.platformShowId,
-              viewerCount: 0,
-              metadata: {},
-            },
-          });
-          summary.platform_links_added += 1;
-          continue;
-        }
-
-        if (existing.deletedAt) {
-          await tx.showPlatform.update({
-            where: { id: existing.id },
-            data: {
-              deletedAt: null,
-              liveStreamLink: incomingPlatform.liveStreamLink,
-              platformShowId: incomingPlatform.platformShowId,
-              metadata: {},
-            },
-          });
-          summary.platform_links_added += 1;
-          continue;
-        }
-
-        const hasChanged = (existing.liveStreamLink || null) !== (incomingPlatform.liveStreamLink || null)
-          || (existing.platformShowId || null) !== (incomingPlatform.platformShowId || null);
-
-        if (hasChanged) {
-          await tx.showPlatform.update({
-            where: { id: existing.id },
-            data: {
-              liveStreamLink: incomingPlatform.liveStreamLink,
-              platformShowId: incomingPlatform.platformShowId,
-            },
-          });
-          summary.platform_links_updated += 1;
-        }
-      }
-
-      const stalePlatformIds = existingPlatforms
-        .filter((platform) => platform.deletedAt === null && !incomingPlatformById.has(platform.platformId))
-        .map((platform) => platform.id);
-
-      if (stalePlatformIds.length > 0) {
-        await tx.showPlatform.updateMany({
-          where: {
-            id: { in: stalePlatformIds },
-            deletedAt: null,
-          },
-          data: {
-            deletedAt: new Date(),
-          },
-        });
-        summary.platform_links_removed += stalePlatformIds.length;
-      }
-    }
-  }
-
   private async resolveRequiredStatusIds(): Promise<{
     cancelled: bigint;
     cancelledPendingResolution: bigint;
@@ -802,7 +558,7 @@ export class PublishingService {
   private async buildUidLookupMaps(
     shows: ShowPlanItem[],
     schedule: ScheduleWithRelations,
-  ) {
+  ): Promise<PublishingUidMaps> {
     const tx = this.txHost.tx;
 
     const clientUids = new Set<string>();
