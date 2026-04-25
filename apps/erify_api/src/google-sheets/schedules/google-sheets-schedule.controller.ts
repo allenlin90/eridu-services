@@ -277,7 +277,7 @@ export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
   @ApiOperation({
     summary: 'Publish schedule',
     description:
-      'Publish schedule to create actual shows. Expensive operation: Deletes existing shows and creates new ones from plan document. Creates snapshot, marks as published, and increments version. Requires current version for optimistic locking.',
+      'Publish schedule to synchronize normalized shows from the plan document using identity-preserving diff and upsert behavior. Missing shows are status-transitioned instead of deleted. Creates snapshot, marks as published, and increments version. Requires current version for optimistic locking.',
   })
   @HttpCode(HttpStatus.OK)
   @ApiZodResponse(

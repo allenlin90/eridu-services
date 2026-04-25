@@ -1,10 +1,6 @@
 ---
 name: repository-pattern-nestjs
 description: Comprehensive Prisma repository implementation patterns for NestJS. This skill should be used when implementing repositories that extend BaseRepository or use Prisma delegates.
-metadata:
-  priority: 3
-  applies_to: [backend, nestjs, repositories, prisma]
-  supersedes: [repository-pattern]
 ---
 
 # Repository Pattern - Prisma/NestJS

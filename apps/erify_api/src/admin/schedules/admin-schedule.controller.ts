@@ -113,8 +113,6 @@ export class AdminScheduleController extends BaseAdminController {
 
     // If plan document is updated, create snapshot and increment version
     if (body.planDocument && currentSchedule.createdBy) {
-      // TODO: After implementing authentication pipe/decorator, get current user from request
-      // Replace this temporary workaround with: @CurrentUser() user: User
       // Create auto-snapshot before updating
       // Only create snapshot if schedule has a createdBy user
       await this.schedulePlanningService.createManualSnapshot(
@@ -172,10 +170,6 @@ export class AdminScheduleController extends BaseAdminController {
     id: string,
     @Body() body: PublishScheduleDto,
   ) {
-    // TODO: After implementing authentication pipe/decorator, get current user from request
-    // Replace this temporary workaround with: @CurrentUser() user: User
-    // Get current user from request (this should be injected via decorator in real implementation)
-    // For now, we'll get it from the schedule's createdBy user
     const schedule = await this.scheduleService.getScheduleById(id, {
       createdByUser: true,
     });
@@ -217,9 +211,6 @@ export class AdminScheduleController extends BaseAdminController {
     id: string,
     @Body() body: { name: string; created_by: string },
   ) {
-    // TODO: After implementing authentication pipe/decorator, get current user from request
-    // Replace body.created_by with: @CurrentUser() user: User
-    // Get user by UID
     const user = await this.userService.getUserById(body.created_by);
     this.ensureResourceExists(user, 'User', body.created_by);
 
