@@ -42,6 +42,11 @@ Source of truth:
 
 For oversized `apps/erify_api` NestJS files, use `.agent/skills/backend-large-file-refactor/SKILL.md`.
 
+Overlap boundary:
+- this is a development principle and decomposition decision guide, not a replacement for `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `code-quality`, or `engineering-best-practices-enforcer`
+- use those layer-specific skills for contracts, transaction rules, controller response rules, query ownership, and verification
+- use this skill to decide when private helpers are no longer enough and whether to extract a pure module, injectable collaborator, local schema/types file, or no abstraction
+
 Stable split strategy:
 - keep the original service/repository/controller as the public entry point
 - extract stateless Prisma query builders, include/select shapes, UID lookup maps, and plan-document transforms into pure helper modules
