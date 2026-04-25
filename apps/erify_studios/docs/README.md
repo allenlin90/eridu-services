@@ -23,8 +23,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 11. [Task Submission Reporting Frontend Reference](./TASK_SUBMISSION_REPORTING.md)
 12. [Studio Creator Onboarding Frontend Reference](./STUDIO_CREATOR_ONBOARDING.md)
 13. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md)
-14. [Frontend Refactoring Reference](./FRONTEND_REFACTORING_REFERENCE.md)
-15. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
+14. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
 
 ## Design Docs
 
