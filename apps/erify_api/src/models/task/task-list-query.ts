@@ -50,6 +50,13 @@ export const taskListInclude = {
 
 export function buildTaskListWhere(
   query: ListMyTasksQueryTransformed,
+): Prisma.TaskWhereInput;
+export function buildTaskListWhere(
+  query: ListMyTasksQueryTransformed,
+  scope: TaskListScope,
+): Prisma.TaskWhereInput | null;
+export function buildTaskListWhere(
+  query: ListMyTasksQueryTransformed,
   scope: TaskListScope = {},
 ): Prisma.TaskWhereInput | null {
   const {

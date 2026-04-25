@@ -256,9 +256,6 @@ export class TaskRepository extends BaseRepository<
     const { sort, page, limit } = query;
     const skip = (page - 1) * limit;
     const where = buildTaskListWhere(query);
-    if (!where) {
-      return { items: [], total: 0 };
-    }
     const orderBy = buildTaskListOrderBy(sort);
 
     const [items, total] = await Promise.all([

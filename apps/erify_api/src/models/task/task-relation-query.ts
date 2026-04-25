@@ -1,4 +1,4 @@
-import type { Task, TaskTemplateSnapshot } from '@prisma/client';
+import type { Prisma, Task, TaskTemplateSnapshot } from '@prisma/client';
 
 export type TaskWithSnapshotTargets = Task & {
   snapshot: TaskTemplateSnapshot | null;
@@ -66,7 +66,7 @@ export const taskSnapshotTargetInclude = {
       },
     },
   },
-};
+} satisfies Prisma.TaskInclude;
 
 export const taskRelationInclude = {
   template: true,
@@ -107,4 +107,4 @@ export const taskRelationInclude = {
       },
     },
   },
-};
+} satisfies Prisma.TaskInclude;
