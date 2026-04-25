@@ -87,6 +87,10 @@ Keep concerns separated:
 
 Do not collapse all of these into one component state object.
 
+When row selection must survive server-driven page changes, keep lightweight row
+snapshots in a feature hook instead of duplicating snapshot state in route files.
+Reference: `apps/erify_studios/src/features/studio-shows/hooks/use-selected-row-snapshots.ts`.
+
 ### 3. Preserve route/search contracts
 For route-based tables, search params are part of the feature contract.
 

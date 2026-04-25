@@ -159,6 +159,15 @@ function Dashboard() {
 }
 ```
 
+### Form Display Fields
+
+When a generic form dialog needs to show a read-only value that is not part of
+the submit schema, model it as a render-only/display field instead of casting the
+field name into the schema. This keeps form payload typing honest and avoids
+patterns like `name: 'id' as any` for copy-only IDs.
+
+Reference: `apps/erify_studios/src/features/admin/components/admin-form-dialog.tsx`.
+
 ### Large Route Decomposition Pattern
 
 When a route file grows beyond a maintainable size, split it into clear boundaries:
@@ -323,6 +332,7 @@ This applies everywhere in JSX — component slots, list renders, and inline con
 - [ ] Component names match their filenames.
 - [ ] Complex logic extracted to custom hooks.
 - [ ] Conditional rendering uses ternary (`condition ? <A /> : null`), not `&&` with numeric/nullable conditions.
+- [ ] Read-only display values in schema-backed forms use render-only fields, not fake schema field names.
 - [ ] Large route files (>200 LOC or mixed concerns) are decomposed into container + hooks + presentation components.
 - [ ] Protected studio routes use `StudioRouteGuard` + shared access policy.
 - [ ] Sidebar visibility and route access use the same route-access source.
