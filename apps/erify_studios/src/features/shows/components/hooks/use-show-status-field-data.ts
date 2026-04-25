@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { getShowStatuses } from '@/features/show-statuses/api/get-show-statuses';
 import type { Show } from '@/features/shows/api/get-shows';
@@ -11,9 +11,11 @@ const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
  * Stable list with 1 hour cache.
  */
 export function useShowStatusFieldData(show: Show | null, studioId?: string) {
+  const [search, setSearch] = useState('');
+
   const { data: showStatusesData, isLoading } = useQuery({
-    queryKey: ['show-statuses', 'list', studioId ?? 'admin', 'all'],
-    queryFn: () => getShowStatuses({ limit: 100 }, studioId),
+    queryKey: ['show-statuses', 'list', studioId ?? 'admin', { name: search }],
+    queryFn: ({ signal }) => getShowStatuses({ name: search || undefined, limit: search ? 20 : 10 }, studioId, { signal }),
     staleTime: LOOKUP_STALE_TIME_MS,
     gcTime: 2 * 60 * 60 * 1000,
   });
@@ -28,5 +30,5 @@ export function useShowStatusFieldData(show: Show | null, studioId?: string) {
     return Array.from(optionsMap.values());
   }, [showStatusesData, show]);
 
-  return { options, isLoading };
+  return { options, isLoading, setSearch };
 }

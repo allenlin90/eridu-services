@@ -26,6 +26,8 @@ import { useStudioRoomFieldData } from './hooks/use-studio-room-field-data';
 import type { Show } from '@/features/shows/api/get-shows';
 
 type UpdateShowInput = z.infer<typeof updateShowInputSchema>;
+type ShowCreatorInput = NonNullable<UpdateShowInput['creators']>[number];
+type ShowPlatformInput = NonNullable<UpdateShowInput['platforms']>[number];
 
 // Name Field (no network state)
 export const ShowNameField = memo(({
@@ -131,7 +133,7 @@ export const ShowStudioRoomField = memo(({
   control: Control<UpdateShowInput>;
   show: Show | null;
 }) => {
-  const { options, isLoading } = useStudioRoomFieldData(show);
+  const { options, isLoading, setSearch } = useStudioRoomFieldData(show);
 
   return (
     <FormField
@@ -144,7 +146,7 @@ export const ShowStudioRoomField = memo(({
             <AsyncCombobox
               value={field.value}
               onChange={field.onChange}
-              onSearch={() => {}}
+              onSearch={setSearch}
               options={options}
               isLoading={isLoading}
               placeholder="Select room"
@@ -165,7 +167,7 @@ export const ShowTypeField = memo(({
   control: Control<UpdateShowInput>;
   show: Show | null;
 }) => {
-  const { options, isLoading } = useShowTypeFieldData(show);
+  const { options, isLoading, setSearch } = useShowTypeFieldData(show);
 
   return (
     <FormField
@@ -178,7 +180,7 @@ export const ShowTypeField = memo(({
             <AsyncCombobox
               value={field.value}
               onChange={field.onChange}
-              onSearch={() => {}}
+              onSearch={setSearch}
               options={options}
               isLoading={isLoading}
               placeholder="Select type"
@@ -199,7 +201,7 @@ export const ShowStatusField = memo(({
   control: Control<UpdateShowInput>;
   show: Show | null;
 }) => {
-  const { options, isLoading } = useShowStatusFieldData(show);
+  const { options, isLoading, setSearch } = useShowStatusFieldData(show);
 
   return (
     <FormField
@@ -212,7 +214,7 @@ export const ShowStatusField = memo(({
             <AsyncCombobox
               value={field.value}
               onChange={field.onChange}
-              onSearch={() => {}}
+              onSearch={setSearch}
               options={options}
               isLoading={isLoading}
               placeholder="Select status"
@@ -233,7 +235,7 @@ export const ShowStandardField = memo(({
   control: Control<UpdateShowInput>;
   show: Show | null;
 }) => {
-  const { options, isLoading } = useShowStandardFieldData(show);
+  const { options, isLoading, setSearch } = useShowStandardFieldData(show);
 
   return (
     <FormField
@@ -246,7 +248,7 @@ export const ShowStandardField = memo(({
             <AsyncCombobox
               value={field.value}
               onChange={field.onChange}
-              onSearch={() => {}}
+              onSearch={setSearch}
               options={options}
               isLoading={isLoading}
               placeholder="Select standard"
@@ -278,12 +280,12 @@ export const ShowCreatorsField = memo(({
           <FormLabel>Creators</FormLabel>
           <FormControl>
             <AsyncMultiCombobox
-              value={field.value?.map((v: any) => v.creator_id) || []}
+              value={field.value?.map((creator) => creator.creator_id) || []}
               onChange={(ids) => {
                 // Preserve existing metadata if ID exists, else create new
-                const currentCreators = field.value || [];
+                const currentCreators: ShowCreatorInput[] = field.value || [];
                 const newCreators = ids.map((id) => {
-                  const existing = currentCreators.find((creator: any) => creator.creator_id === id);
+                  const existing = currentCreators.find((creator) => creator.creator_id === id);
                   return existing || { creator_id: id };
                 });
                 field.onChange(newCreators);
@@ -320,11 +322,11 @@ export const ShowPlatformsField = memo(({
           <FormLabel>Platforms</FormLabel>
           <FormControl>
             <AsyncMultiCombobox
-              value={field.value?.map((v: any) => v.platform_id) || []}
+              value={field.value?.map((platform) => platform.platform_id) || []}
               onChange={(ids) => {
-                const currentPlatforms = field.value || [];
+                const currentPlatforms: ShowPlatformInput[] = field.value || [];
                 const newPlatforms = ids.map((id) => {
-                  const existing = currentPlatforms.find((p: any) => p.platform_id === id);
+                  const existing = currentPlatforms.find((platform) => platform.platform_id === id);
                   return existing || { platform_id: id };
                 });
                 field.onChange(newPlatforms);

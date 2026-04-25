@@ -1,17 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { Show } from '@/features/shows/api/get-shows';
 import { getStudioRooms } from '@/features/studio-rooms/api/get-studio-rooms';
+
+const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
 
 /**
  * Network hook for studio room field.
  * Stable list with 1 hour cache.
  */
 export function useStudioRoomFieldData(show: Show | null) {
+  const [search, setSearch] = useState('');
+
   const { data: studioRoomsData, isLoading } = useQuery({
-    queryKey: ['studio-rooms', 'list', 'all'],
-    queryFn: () => getStudioRooms({ limit: 100 }),
+    queryKey: ['studio-rooms', 'list', 'admin', { name: search }],
+    queryFn: ({ signal }) => getStudioRooms({ name: search || undefined, limit: search ? 20 : 10 }, undefined, { signal }),
+    staleTime: LOOKUP_STALE_TIME_MS,
+    gcTime: 2 * 60 * 60 * 1000,
   });
 
   const options = useMemo(() => {
@@ -35,5 +41,5 @@ export function useStudioRoomFieldData(show: Show | null) {
     return allOptions;
   }, [studioRoomsData, show]);
 
-  return { options, isLoading };
+  return { options, isLoading, setSearch };
 }
