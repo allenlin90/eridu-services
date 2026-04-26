@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type {
   AddStudioMemberRequest,
@@ -96,7 +96,7 @@ export function useStudioMembers(
     queryFn: ({ signal }) => getStudioMembers(studioId, params, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
     staleTime: 20_000,
-    placeholderData: (prev) => prev,
+    placeholderData: keepPreviousData,
   });
 }
 

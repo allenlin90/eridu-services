@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type { MembershipApiResponse } from '@eridu/api-types/memberships';
 
@@ -35,6 +35,6 @@ export function useMembershipsQuery(params: GetMembershipsParams) {
   return useQuery({
     queryKey: ['memberships', 'list', params],
     queryFn: () => getMemberships(params),
-    placeholderData: (previousData: MembershipsResponse | undefined) => previousData,
+    placeholderData: keepPreviousData,
   });
 }

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type { ListMyTasksQuery } from '@eridu/api-types/task-management';
 
@@ -9,7 +9,7 @@ export function useMyTasks(query: ListMyTasksQuery) {
     queryKey: myTasksKeys.list(query),
     queryFn: ({ signal }) => getMyTasks(query, { signal }),
     gcTime: 2 * 60 * 1000,
-    placeholderData: (previousData) => previousData,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 1000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
