@@ -19,15 +19,17 @@ It should be used alongside the repo-wide guidance in `AGENTS.md` and the closes
 ## App-Level Refactor References
 
 Before refactoring a paginated/sortable/selectable table in `erify_studios`,
-read the active references and register so cleanup work stays consistent and
-duplicate proposals are avoided:
+read the active register so cleanup work stays consistent and duplicate
+proposals are avoided:
 
-- `apps/erify_studios/docs/FRONTEND_REFACTORING_REFERENCE.md` — baseline
-  patterns (server-derived `tablePagination`, `keepPreviousData`, selected-row
-  snapshots).
 - `apps/erify_studios/docs/FRONTEND_TECH_DEBT.md` — known pagination/table
   follow-ups (e.g., extending the `tablePagination` derivation pattern to all
   listing hooks). Update the document when work resolves a row.
+
+For implemented baseline patterns, inspect current `erify_studios` table hooks
+and routes that derive server-authoritative `tablePagination`, use
+`placeholderData: keepPreviousData`, and keep lightweight selected-row
+snapshots.
 
 ## Use This Skill When
 - Adding or refactoring a large table route in `erify_studios` or `erify_creators`

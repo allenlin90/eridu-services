@@ -7,21 +7,23 @@ description: Provides code quality standards for frontend applications. This ski
 
 This skill defines the quality standards specific to frontend applications.
 
-## App-Level Refactor References
+## App-Level Refactor Register
 
-Before proposing a frontend cleanup or refactor in `erify_studios`, consult both
-documents and reuse or extend them rather than starting a parallel register:
+Before proposing a frontend cleanup or refactor in `erify_studios`, consult the
+active register and reuse or extend it rather than starting a parallel register:
 
-- `apps/erify_studios/docs/FRONTEND_REFACTORING_REFERENCE.md` — implemented
-  baseline patterns (table pagination derivation, selected-row snapshots, typed
-  admin form display fields, search wiring on async lookups).
 - `apps/erify_studios/docs/FRONTEND_TECH_DEBT.md` — active register of known
   follow-ups intentionally deferred from broad cleanup branches. Check first to
   avoid duplicate proposals; when work resolves a row, move it to the
   `Resolved In This Cleanup` section instead of deleting it.
 
-`erify_creators` should follow the same convention if/when a similar pair of
-docs is introduced there.
+For implemented baseline patterns, inspect the current code before editing:
+`useTableUrlState` table controllers, `useSelectedRowSnapshots`, typed
+render-only fields in `AdminFormDialog`, and async lookup hooks that wire
+`onSearch` to scoped queries.
+
+`erify_creators` should follow the same convention if/when a similar register is
+introduced there.
 
 ## Linting & Formatting
 
