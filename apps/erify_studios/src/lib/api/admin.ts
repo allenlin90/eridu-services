@@ -8,7 +8,7 @@ import { apiClient } from './client';
 export type PaginationParams = {
   page?: number;
   limit?: number;
-  [key: string]: any; // Allow additional filter params
+  [key: string]: unknown; // Allow additional filter params
 };
 
 /**
@@ -93,7 +93,7 @@ export const adminApi = {
    * Path is relative to /admin/ and not type-constrained
    * Use this for resource-specific endpoints like schedules/:id/publish
    */
-  post: async <T>(path: string, data?: any): Promise<T> => {
+  post: async <T>(path: string, data?: unknown): Promise<T> => {
     const response = await apiClient.post<T>(`/admin/${path}`, data);
     return response.data;
   },
@@ -101,7 +101,7 @@ export const adminApi = {
   /**
    * Extension point for custom PATCH operations
    */
-  patch: async <T>(path: string, data?: any): Promise<T> => {
+  patch: async <T>(path: string, data?: unknown): Promise<T> => {
     const response = await apiClient.patch<T>(`/admin/${path}`, data);
     return response.data;
   },
@@ -109,7 +109,7 @@ export const adminApi = {
   /**
    * Extension point for custom GET operations
    */
-  customGet: async <T>(path: string, params?: any): Promise<T> => {
+  customGet: async <T>(path: string, params?: unknown): Promise<T> => {
     const response = await apiClient.get<T>(`/admin/${path}`, { params });
     return response.data;
   },

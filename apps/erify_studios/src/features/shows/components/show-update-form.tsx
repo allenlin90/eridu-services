@@ -29,6 +29,15 @@ type ShowUpdateFormProps = {
   isLoading?: boolean;
 };
 
+type ShowPlatformAssignment = {
+  id?: string;
+  platform_id?: string;
+  live_stream_link?: string | null;
+  platform_show_id?: string | null;
+  viewer_count?: number | null;
+  metadata?: Record<string, unknown> | null;
+};
+
 export function ShowUpdateForm({
   show,
   onCancel,
@@ -66,12 +75,12 @@ export function ShowUpdateForm({
           note: creator.note,
           metadata: creator.metadata,
         })) || [],
-        platforms: show.platforms?.map((p: any) => ({
-          platform_id: p.platform_id || p.id || '',
-          live_stream_link: p.live_stream_link,
-          platform_show_id: p.platform_show_id,
-          viewer_count: p.viewer_count,
-          metadata: p.metadata,
+        platforms: (show.platforms as ShowPlatformAssignment[] | undefined)?.map((platform) => ({
+          platform_id: platform.platform_id || platform.id || '',
+          live_stream_link: platform.live_stream_link,
+          platform_show_id: platform.platform_show_id,
+          viewer_count: platform.viewer_count,
+          metadata: platform.metadata,
         })) || [],
       });
     }

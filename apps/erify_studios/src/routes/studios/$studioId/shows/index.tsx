@@ -44,7 +44,6 @@ function StudioShowsPage() {
 
   const {
     data,
-    meta,
     isLoading,
     isFetching,
     refetch,
@@ -125,7 +124,7 @@ function StudioShowsPage() {
         emptyMessage="No shows found."
         manualPagination
         manualFiltering
-        pageCount={meta?.totalPages ?? 0}
+        pageCount={pagination.pageCount}
         paginationState={{
           pageIndex: pagination.pageIndex,
           pageSize: pagination.pageSize,
@@ -167,8 +166,8 @@ function StudioShowsPage() {
             pagination={{
               pageIndex: pagination.pageIndex,
               pageSize: pagination.pageSize,
-              total: meta?.total ?? 0,
-              pageCount: meta?.totalPages ?? 0,
+              total: pagination.total,
+              pageCount: pagination.pageCount,
             }}
             onPaginationChange={onPaginationChange}
           />

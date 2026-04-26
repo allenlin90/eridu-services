@@ -104,6 +104,47 @@ describe('adminFormDialog', () => {
     expect(screen.getByTestId('static-children')).toBeInTheDocument();
   });
 
+  it('renders render-only fields without registering them as schema fields', () => {
+    render(
+      <AdminFormDialog
+        {...defaultProps}
+        fields={[
+          {
+            kind: 'render',
+            id: 'id',
+            label: 'ID',
+            render: () => <span>user_123</span>,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('ID')).toBeInTheDocument();
+    expect(screen.getByText('user_123')).toBeInTheDocument();
+  });
+
+  it('keeps the dialog open when submit handling rejects', async () => {
+    const onOpenChange = vi.fn();
+    const onSubmit = vi.fn().mockRejectedValue(new Error('Save failed'));
+
+    render(
+      <AdminFormDialog
+        open
+        onOpenChange={onOpenChange}
+        title="Test Dialog"
+        schema={z.object({})}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalled();
+    });
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
   it('handles submission', async () => {
     const onSubmit = vi.fn();
     render(<AdminFormDialog {...defaultProps} onSubmit={onSubmit} />);

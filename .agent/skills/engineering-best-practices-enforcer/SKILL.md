@@ -24,6 +24,18 @@ If guidance conflicts, document the trade-off explicitly and choose the lower-ri
 - Creating actionable, severity-ordered engineering findings with clear file references
 - Standardizing review output so multiple engineers can follow the same process
 
+## Existing App-Level Registers
+
+Before producing new findings, check whether the affected app already maintains
+an active tech-debt register. Cite or extend that document instead of opening a
+parallel set of issues:
+
+- `apps/erify_studios/docs/FRONTEND_TECH_DEBT.md`
+
+When a finding lines up with an existing entry, link to the row instead of
+restating it. When a refactor resolves a row, move it to the document's
+`Resolved In This Cleanup` section in the same change.
+
 ## Workflow
 
 1. Identify scope (`single feature`, `workspace`, `cross-workspace`).

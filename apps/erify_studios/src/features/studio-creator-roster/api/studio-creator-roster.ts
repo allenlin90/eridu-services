@@ -1,4 +1,4 @@
-import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type {
   CreateStudioCreatorRosterInput,
@@ -97,7 +97,7 @@ export function useStudioCreatorRosterQuery(
     queryFn: ({ signal }) => getStudioCreatorRoster(studioId, params, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
     staleTime: 20_000,
-    placeholderData: (prev) => prev,
+    placeholderData: keepPreviousData,
   });
 }
 

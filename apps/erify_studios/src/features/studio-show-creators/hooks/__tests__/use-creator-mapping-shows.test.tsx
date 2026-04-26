@@ -5,6 +5,7 @@ import { useCreatorMappingShows } from '../use-creator-mapping-shows';
 
 const mockUseQuery = vi.fn();
 vi.mock('@tanstack/react-query', () => ({
+  keepPreviousData: Symbol('keepPreviousData'),
   useQuery: (options: unknown) => mockUseQuery(options),
 }));
 
@@ -64,6 +65,7 @@ describe('useCreatorMappingShows', () => {
 
     const queryOptions = mockUseQuery.mock.calls[0][0] as {
       queryKey: unknown[];
+      placeholderData: unknown;
       queryFn: () => Promise<unknown>;
     };
 
@@ -72,12 +74,14 @@ describe('useCreatorMappingShows', () => {
       'list',
       'std_1',
       expect.objectContaining({
+        page: 1,
         search: 'night show',
         has_creators: true,
         creator_name: 'alice',
         show_status_name: 'LIVE',
       }),
     ]);
+    expect(queryOptions.placeholderData).toBeDefined();
 
     await queryOptions.queryFn({ signal: undefined } as never);
 

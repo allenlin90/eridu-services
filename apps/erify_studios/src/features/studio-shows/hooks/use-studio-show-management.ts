@@ -52,11 +52,22 @@ export function useStudioShowManagement(studioId: string) {
     return nextFilters;
   }, [columnFilters]);
   const normalizedScheduleFilter = filters.schedule_name?.trim().toLowerCase();
-  const isOrphanScheduleFilter = normalizedScheduleFilter
-    ? ORPHAN_SCHEDULE_TERMS.has(normalizedScheduleFilter)
-    : false;
-  const effectiveScheduleName = isOrphanScheduleFilter ? undefined : filters.schedule_name;
-  const effectiveHasSchedule = isOrphanScheduleFilter ? 'false' : filters.has_schedule;
+  let isOrphanScheduleFilter = false;
+  if (normalizedScheduleFilter) {
+    isOrphanScheduleFilter = ORPHAN_SCHEDULE_TERMS.has(normalizedScheduleFilter);
+  }
+
+  let effectiveScheduleName = filters.schedule_name;
+  let effectiveHasSchedule = filters.has_schedule;
+  let queryHasSchedule: boolean | undefined;
+  if (isOrphanScheduleFilter) {
+    effectiveScheduleName = undefined;
+    effectiveHasSchedule = 'false';
+    queryHasSchedule = false;
+  } else if (filters.has_schedule !== undefined) {
+    queryHasSchedule = filters.has_schedule === 'true';
+  }
+
   const dateRange = columnFilters.find((filter) => filter.id === 'start_time')?.value as
     | { from?: string; to?: string }
     | undefined;
@@ -84,11 +95,7 @@ export function useStudioShowManagement(studioId: string) {
       schedule_name: effectiveScheduleName,
       date_from: dateRange?.from,
       date_to: dateRange?.to,
-      has_schedule: isOrphanScheduleFilter
-        ? false
-        : filters.has_schedule === undefined
-          ? undefined
-          : filters.has_schedule === 'true',
+      has_schedule: queryHasSchedule,
       creator_name: filters.creator_name,
       client_name: filters.client_name,
       show_type_name: filters.show_type_name,
@@ -106,13 +113,29 @@ export function useStudioShowManagement(studioId: string) {
     }
   }, [query.data?.meta.totalPages, setPageCount]);
 
+  let tablePagination = {
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    total: 0,
+    pageCount: 0,
+  };
+
+  if (query.data?.meta) {
+    tablePagination = {
+      pageIndex: query.data.meta.page - 1,
+      pageSize: query.data.meta.limit,
+      total: query.data.meta.total,
+      pageCount: query.data.meta.totalPages,
+    };
+  }
+
   return {
     data: query.data?.data ?? [],
     meta: query.data?.meta,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     refetch: query.refetch,
-    pagination,
+    pagination: tablePagination,
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,

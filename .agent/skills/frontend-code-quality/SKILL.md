@@ -7,6 +7,24 @@ description: Provides code quality standards for frontend applications. This ski
 
 This skill defines the quality standards specific to frontend applications.
 
+## App-Level Refactor Register
+
+Before proposing a frontend cleanup or refactor in `erify_studios`, consult the
+active register and reuse or extend it rather than starting a parallel register:
+
+- `apps/erify_studios/docs/FRONTEND_TECH_DEBT.md` — active register of known
+  follow-ups intentionally deferred from broad cleanup branches. Check first to
+  avoid duplicate proposals; when work resolves a row, move it to the
+  `Resolved In This Cleanup` section instead of deleting it.
+
+For implemented baseline patterns, inspect the current code before editing:
+`useTableUrlState` table controllers, `useSelectedRowSnapshots`, typed
+render-only fields in `AdminFormDialog`, and async lookup hooks that wire
+`onSearch` to scoped queries.
+
+`erify_creators` should follow the same convention if/when a similar register is
+introduced there.
+
 ## Linting & Formatting
 
 We use **ESLint 9** with a shared configuration (`@eridu/eslint-config`).
@@ -158,6 +176,15 @@ function Dashboard() {
   );
 }
 ```
+
+### Form Display Fields
+
+When a generic form dialog needs to show a read-only value that is not part of
+the submit schema, model it as a render-only/display field instead of casting the
+field name into the schema. This keeps form payload typing honest and avoids
+patterns like `name: 'id' as any` for copy-only IDs.
+
+Reference: `apps/erify_studios/src/features/admin/components/admin-form-dialog.tsx`.
 
 ### Large Route Decomposition Pattern
 
@@ -323,6 +350,7 @@ This applies everywhere in JSX — component slots, list renders, and inline con
 - [ ] Component names match their filenames.
 - [ ] Complex logic extracted to custom hooks.
 - [ ] Conditional rendering uses ternary (`condition ? <A /> : null`), not `&&` with numeric/nullable conditions.
+- [ ] Read-only display values in schema-backed forms use render-only fields, not fake schema field names.
 - [ ] Large route files (>200 LOC or mixed concerns) are decomposed into container + hooks + presentation components.
 - [ ] Protected studio routes use `StudioRouteGuard` + shared access policy.
 - [ ] Sidebar visibility and route access use the same route-access source.

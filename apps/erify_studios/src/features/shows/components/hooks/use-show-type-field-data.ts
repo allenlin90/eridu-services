@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { getShowTypes } from '@/features/show-types/api/get-show-types';
 import type { Show } from '@/features/shows/api/get-shows';
@@ -11,9 +11,11 @@ const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
  * Stable list with 1 hour cache.
  */
 export function useShowTypeFieldData(show: Show | null, studioId?: string) {
+  const [search, setSearch] = useState('');
+
   const { data: showTypesData, isLoading } = useQuery({
-    queryKey: ['show-types', 'list', studioId ?? 'admin', 'all'],
-    queryFn: () => getShowTypes({ limit: 100 }, studioId),
+    queryKey: ['show-types', 'list', studioId ?? 'admin', { name: search }],
+    queryFn: ({ signal }) => getShowTypes({ name: search || undefined, limit: search ? 20 : 10 }, studioId, { signal }),
     staleTime: LOOKUP_STALE_TIME_MS,
     gcTime: 2 * 60 * 60 * 1000,
   });
@@ -28,5 +30,5 @@ export function useShowTypeFieldData(show: Show | null, studioId?: string) {
     return Array.from(optionsMap.values());
   }, [showTypesData, show]);
 
-  return { options, isLoading };
+  return { options, isLoading, setSearch };
 }

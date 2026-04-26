@@ -1,10 +1,11 @@
 export type SortDirection = 'asc' | 'desc';
+export type SortableReportRow = Record<string, boolean | number | string | null | undefined>;
 
 export function sortRows(
-  rows: Record<string, any>[],
+  rows: SortableReportRow[],
   columnKey: string | null,
   direction: SortDirection,
-): Record<string, any>[] {
+): SortableReportRow[] {
   if (!rows || rows.length === 0 || !columnKey)
     return rows;
 
@@ -24,10 +25,13 @@ export function sortRows(
     }
 
     // Number/Boolean comparison
-    if (valA < valB)
+    if (valA < valB) {
       return direction === 'asc' ? -1 : 1;
-    if (valA > valB)
+    }
+
+    if (valA > valB) {
       return direction === 'asc' ? 1 : -1;
+    }
 
     return 0;
   });

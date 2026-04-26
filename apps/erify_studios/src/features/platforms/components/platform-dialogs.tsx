@@ -9,7 +9,7 @@ import {
 import { platformSchema } from '@/features/platforms/config/platform-search-schema';
 
 type Platform = PlatformApiResponse;
-type PlatformFormData = z.infer<typeof platformSchema>;
+export type PlatformFormData = z.infer<typeof platformSchema>;
 
 type PlatformCreateDialogProps = {
   open: boolean;

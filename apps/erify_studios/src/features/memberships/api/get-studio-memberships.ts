@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type { MembershipsResponse } from '@/features/memberships/api/get-memberships';
 import { apiClient } from '@/lib/api/client';
@@ -32,7 +32,7 @@ export function useStudioMembershipsQuery(
   return useQuery({
     queryKey: ['studio-memberships', 'list', studioId, params],
     queryFn: ({ signal }) => getStudioMemberships(studioId, params, { signal }),
-    placeholderData: (previousData: MembershipsResponse | undefined) => previousData,
+    placeholderData: keepPreviousData,
     enabled: Boolean(studioId) && (options?.enabled ?? true),
   });
 }

@@ -6,6 +6,13 @@ import type { Show } from '@/features/shows/api/get-shows';
 
 const LOOKUP_STALE_TIME_MS = 60 * 60 * 1000;
 
+type SelectedShowPlatform = {
+  id?: string;
+  name?: string;
+  platform_id?: string;
+  platform_name?: string;
+};
+
 /**
  * Network hook for platforms field.
  * - Shows 10 placeholder options when no search
@@ -28,7 +35,7 @@ export function usePlatformsFieldData(show: Show | null, studioId?: string) {
 
     // Add selected platforms if not in fetched results
     const selectedIds = new Set<string>();
-    show?.platforms?.forEach((platform: any) => {
+    (show?.platforms as SelectedShowPlatform[] | undefined)?.forEach((platform) => {
       const platformId = platform.platform_id || platform.id;
       const platformName = platform.platform_name || platform.name;
       if (platformId && platformName) {

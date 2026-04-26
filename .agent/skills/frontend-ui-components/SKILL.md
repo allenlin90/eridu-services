@@ -115,6 +115,7 @@ Any control that visually advertises search, especially `AsyncCombobox` and `Asy
 Rules:
 - Planning: list each searchable field and whether it should use a scoped API endpoint or intentional client-side filtering of preloaded data.
 - Implementation: do not leave `onSearch` as a no-op just to satisfy a prop shape. If the input is searchable, typing must either update query state or documented local filter state.
+- If an existing lookup endpoint already supports `name`/search params, wire the search state and pass the TanStack Query `AbortSignal` before considering the gap technical debt.
 - Keep same-form lookup behavior consistent where possible. If five fields search remotely and one still uses a local bundle, that exception must be documented in the design doc with the backend gap called out.
 - Review: treat dead search wiring, undocumented mixed parity, and “looks async but is really static” controls as incomplete implementation, not minor UX polish.
 

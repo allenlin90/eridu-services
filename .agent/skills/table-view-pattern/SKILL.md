@@ -16,6 +16,21 @@ This skill applies to:
 
 It should be used alongside the repo-wide guidance in `AGENTS.md` and the closest feature skill for the target surface.
 
+## App-Level Refactor References
+
+Before refactoring a paginated/sortable/selectable table in `erify_studios`,
+read the active register so cleanup work stays consistent and duplicate
+proposals are avoided:
+
+- `apps/erify_studios/docs/FRONTEND_TECH_DEBT.md` — known pagination/table
+  follow-ups (e.g., extending the `tablePagination` derivation pattern to all
+  listing hooks). Update the document when work resolves a row.
+
+For implemented baseline patterns, inspect current `erify_studios` table hooks
+and routes that derive server-authoritative `tablePagination`, use
+`placeholderData: keepPreviousData`, and keep lightweight selected-row
+snapshots.
+
 ## Use This Skill When
 - Adding or refactoring a large table route in `erify_studios` or `erify_creators`
 - Migrating a plain list into a searchable/filterable/sortable table
@@ -86,6 +101,10 @@ Keep concerns separated:
 - **Local UI state**: dialogs, drawers, selected row id, inline draft state
 
 Do not collapse all of these into one component state object.
+
+When row selection must survive server-driven page changes, keep lightweight row
+snapshots in a feature hook instead of duplicating snapshot state in route files.
+Reference: `apps/erify_studios/src/features/studio-shows/hooks/use-selected-row-snapshots.ts`.
 
 ### 3. Preserve route/search contracts
 For route-based tables, search params are part of the feature contract.

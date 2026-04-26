@@ -1,7 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
+import type {
+  ControllerRenderProps,
+  DefaultValues,
+  FieldValues,
+  Path,
+  Resolver,
+  UseFormReturn,
+} from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
@@ -23,26 +30,42 @@ import {
   Textarea,
 } from '@eridu/ui';
 
-type AdminFormDialogProps<T extends z.ZodObject<any>> = {
+type FormValues<T extends z.ZodObject<z.ZodRawShape>> = z.infer<T> & FieldValues;
+
+type AdminFormField<TValues extends FieldValues> = {
+  kind?: 'field';
+  name: Path<TValues>;
+  label: string;
+  placeholder?: string;
+  type?: 'text' | 'textarea' | 'number' | 'email';
+  render?: (field: ControllerRenderProps<TValues, Path<TValues>>) => ReactNode;
+};
+
+type AdminRenderField<TValues extends FieldValues> = {
+  kind: 'render';
+  id: string;
+  label: string;
+  render: (form: UseFormReturn<TValues>) => ReactNode;
+};
+
+type AdminDialogField<TValues extends FieldValues> =
+  | AdminFormField<TValues>
+  | AdminRenderField<TValues>;
+
+type AdminFormDialogProps<T extends z.ZodObject<z.ZodRawShape>> = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
   schema: T;
-  defaultValues?: Partial<z.infer<T>>;
-  onSubmit: (data: z.infer<T>) => Promise<void> | void;
+  defaultValues?: DefaultValues<FormValues<T>>;
+  onSubmit: (data: FormValues<T>) => Promise<void> | void;
   isLoading?: boolean;
-  fields?: Array<{
-    name: keyof z.infer<T>;
-    label: string;
-    placeholder?: string;
-    type?: 'text' | 'textarea' | 'number' | 'email';
-    render?: (field: any) => ReactNode;
-  }>;
-  children?: ReactNode | ((form: UseFormReturn<z.infer<T>>) => ReactNode);
+  fields?: Array<AdminDialogField<FormValues<T>>>;
+  children?: ReactNode | ((form: UseFormReturn<FormValues<T>>) => ReactNode);
 };
 
-export function AdminFormDialog<T extends z.ZodObject<any>>({
+export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
   open,
   onOpenChange,
   title,
@@ -54,34 +77,104 @@ export function AdminFormDialog<T extends z.ZodObject<any>>({
   fields,
   children,
 }: AdminFormDialogProps<T>) {
-  const form = useForm<z.infer<T>>({
-    resolver: zodResolver(schema) as any,
-    defaultValues: defaultValues as any,
+  const form = useForm<FormValues<T>>({
+    resolver: zodResolver(schema) as Resolver<FormValues<T>>,
+    defaultValues,
   });
 
   // Reset form when dialog opens/closes or defaultValues change
   useEffect(() => {
     if (open) {
-      form.reset(defaultValues as any);
+      form.reset(defaultValues);
     } else {
       form.reset();
     }
   }, [open, defaultValues, form]);
 
-  const handleSubmit = async (data: z.infer<T>) => {
+  const handleSubmit = async (data: FormValues<T>) => {
     try {
       await onSubmit(data);
       form.reset();
       onOpenChange(false);
-    } catch (error) {
-      // Error handling is done by the mutation
-      console.error('Form submission error:', error);
+    } catch {
+      // Mutation-level handlers own user-facing errors; keep the dialog open.
     }
   };
 
   const handleCancel = () => {
     form.reset();
     onOpenChange(false);
+  };
+
+  const renderFieldControl = (
+    field: AdminFormField<FormValues<T>>,
+    formField: ControllerRenderProps<FormValues<T>, Path<FormValues<T>>>,
+  ) => {
+    if (field.render) {
+      return field.render(formField);
+    }
+
+    if (field.type === 'textarea') {
+      return (
+        <Textarea
+          {...formField}
+          placeholder={field.placeholder}
+          disabled={isLoading}
+          rows={6}
+          value={(formField.value as string) ?? ''}
+        />
+      );
+    }
+
+    return (
+      <Input
+        {...formField}
+        type={field.type || 'text'}
+        placeholder={field.placeholder}
+        disabled={isLoading}
+        value={(formField.value as string) ?? ''}
+      />
+    );
+  };
+
+  const renderSchemaField = (field: AdminFormField<FormValues<T>>) => (
+    <FormField
+      key={field.name}
+      control={form.control}
+      name={field.name}
+      render={({ field: formField }) => (
+        <FormItem>
+          <FormLabel>{field.label}</FormLabel>
+          <FormControl>{renderFieldControl(field, formField)}</FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
+  const renderDialogField = (field: AdminDialogField<FormValues<T>>) => {
+    if (field.kind === 'render') {
+      return (
+        <FormItem key={field.id}>
+          <FormLabel>{field.label}</FormLabel>
+          <FormControl>{field.render(form)}</FormControl>
+        </FormItem>
+      );
+    }
+
+    return renderSchemaField(field);
+  };
+
+  const renderFormBody = () => {
+    if (children) {
+      if (typeof children === 'function') {
+        return children(form);
+      }
+
+      return children;
+    }
+
+    return fields?.map(renderDialogField);
   };
 
   return (
@@ -93,48 +186,7 @@ export function AdminFormDialog<T extends z.ZodObject<any>>({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {children
-              ? (
-                  typeof children === 'function' ? children(form) : children
-                )
-              : fields?.map((field) => (
-                <FormField
-                  key={String(field.name)}
-                  control={form.control}
-                  name={field.name as any}
-                  render={({ field: formField }) => (
-                    <FormItem>
-                      <FormLabel>{field.label}</FormLabel>
-                      <FormControl>
-                        {field.render
-                          ? (
-                              field.render(formField)
-                            )
-                          : field.type === 'textarea'
-                            ? (
-                                <Textarea
-                                  {...formField}
-                                  placeholder={field.placeholder}
-                                  disabled={isLoading}
-                                  rows={6}
-                                  value={(formField.value as string) ?? ''}
-                                />
-                              )
-                            : (
-                                <Input
-                                  {...formField}
-                                  type={field.type || 'text'}
-                                  placeholder={field.placeholder}
-                                  disabled={isLoading}
-                                  value={(formField.value as string) ?? ''}
-                                />
-                              )}
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
+            {renderFormBody()}
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"

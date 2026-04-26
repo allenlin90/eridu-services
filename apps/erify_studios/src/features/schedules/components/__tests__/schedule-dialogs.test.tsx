@@ -28,35 +28,57 @@ vi.mock('@/features/admin/components', () => ({
   AdminFormDialog: ({ title, description, open, fields }: any) => {
     if (!open)
       return null;
+
+    const getFieldId = (field: any) => field.name ?? field.id;
+
+    const getMockFieldValue = (field: any) => {
+      if (field.name?.includes('date')) {
+        return '2024-01-01T10:00:00Z';
+      }
+
+      return 'some-value';
+    };
+
+    const renderField = (field: any) => {
+      const fieldId = getFieldId(field);
+      let content = null;
+
+      if (field.render) {
+        content = field.render({
+          value: getMockFieldValue(field),
+          onChange: vi.fn(),
+        });
+      }
+
+      return (
+        <div key={fieldId} data-testid={`field-${fieldId}`}>
+          {content}
+        </div>
+      );
+    };
+
     return (
       <div data-testid="admin-form-dialog">
         <h1>{title}</h1>
         <p>{description}</p>
         <div data-testid="fields">
-          {fields?.map((field: any) => (
-            <div key={field.name} data-testid={`field-${field.name}`}>
-              {field.render
-                ? field.render({
-                    value: field.name.includes('date') ? '2024-01-01T10:00:00Z' : 'some-value',
-                    onChange: vi.fn(),
-                  })
-                : null}
-            </div>
-          ))}
+          {fields?.map(renderField)}
         </div>
       </div>
     );
   },
-  DeleteConfirmDialog: ({ title, description, open }: any) => (
-    open
-      ? (
-          <div data-testid="delete-confirm-dialog">
-            <h1>{title}</h1>
-            <p>{description}</p>
-          </div>
-        )
-      : null
-  ),
+  DeleteConfirmDialog: ({ title, description, open }: any) => {
+    if (!open) {
+      return null;
+    }
+
+    return (
+      <div data-testid="delete-confirm-dialog">
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </div>
+    );
+  },
 }));
 
 describe('scheduleUpdateDialog', () => {
