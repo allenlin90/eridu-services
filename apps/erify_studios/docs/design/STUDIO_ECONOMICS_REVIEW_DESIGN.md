@@ -1,10 +1,13 @@
-# Studio Economics Review Frontend Design
+# Studio Economics Review Frontend Design (3.1)
 
-> **Status**: Planning
-> **Phase scope**: Phase 4 Wave 2
+> **Status: Visioning — may be misaligned.** This design doc was written against the pre-simplification version of the Phase 4 cost model. The Phase 4 stack has since been narrowed to a read-only viewer (see [`economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md)). The corresponding sibling PRD is itself visioning. Treat this document as roadmap reference: it is **not committed**, may contain assumptions that no longer hold, and will be rewritten when this workstream activates.
+
+> **Status**: 🔲 Planned
+> **Phase scope**: Phase 4 — Wave 3 (Finance Surfaces)
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/studio-economics-review.md`](../../../../docs/prd/studio-economics-review.md)
-> **Depends on**: Economics engine contract on `master` 🔲, sidebar core regrouping 🔁 with Finance follow-up 🔲, compensation-aware backend fields 🔲
+> **Cost-model authority**: [`docs/prd/economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md) — `cost_state`, nullability, actuals priority cascade, response shape
+> **Depends on**: 2.1 Economics Cost Model 🔲 · 2.2 Compensation Line Items + Freeze + Actuals 🔲 · 2.3 Economics Service 🔲 (the engine 3.1 reads from) · sidebar Finance group 🔲
 
 ## Purpose
 

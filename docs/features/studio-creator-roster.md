@@ -51,6 +51,6 @@ Studio operators could map creators to shows, but they could not maintain the st
 
 - Creator assignment flows: [creator-mapping.md](./creator-mapping.md)
 - Studio onboarding (brand-new creators): [studio-creator-onboarding.md](./studio-creator-onboarding.md)
-- Show economics fallback contract (deferred merge reference): [show-economics.md](./show-economics.md)
+- Show economics fallback contract (rate precedence + freeze + actuals): [economics-cost-model.md](../prd/economics-cost-model.md)
 - Full overlap/conflict enforcement: [creator-availability-hardening.md](../prd/creator-availability-hardening.md)
 - Supplemental compensation: [compensation-line-items.md](../prd/compensation-line-items.md)

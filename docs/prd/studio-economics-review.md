@@ -1,10 +1,13 @@
-# PRD: Studio Economics Review
+# PRD: Studio Economics Review (3.1)
 
-> **Status**: Active
-> **Phase**: 4 — Extended Scope
-> **Workstream**: Studio finance review/export engine — perspective-based projected and actual cost review
-> **Depends on**: Studio Show Management — ✅ **Complete** (shipped 1e, populates `Show.scheduleId` for the `schedule` perspective), Show Economics baseline merge — ⏸️ Deferred revision, Compensation Line Items — 🔲 Active
-> **Extended by**: P&L Revenue Workflow — 🔲 Planned (adds revenue, commission resolution, contribution margin, and future show-platform economics)
+> **Status: Visioning.** This document was drafted before [Phase 4 was simplified to a read-only viewer](./economics-cost-model.md). Treat as roadmap and future-feature reference, not a committed design — it will be redrafted when this workstream activates. Where this document conflicts with [`economics-cost-model.md`](./economics-cost-model.md), the cost model wins for Phase 4 scope.
+
+> **Status**: 🔲 Planned
+> **Phase**: 4 — Wave 3 (Finance Surfaces)
+> **Workstream**: Operational view — perspective-based, date-ranged, manager-facing review/export engine. Owns the **Operational cost** view from [cost-model §8](./economics-cost-model.md#8-three-compensation-views).
+> **Depends on**: 1.5 Studio Show Management ✅ (populates `Show.scheduleId` for the `schedule` perspective) · 2.1 Economics Cost Model 🔲 ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Freeze + Actuals 🔲 · 2.3 Economics Service 🔲 (the engine 3.1 calls)
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — `cost_state`, horizon filtering, nullability propagation, `unresolved_reason`, actuals priority cascade, and the response shape. Acceptance criteria below refer to it as the authority.
+> **Extended by**: 4.1 P&L Revenue Workflow (adds revenue, commission resolution, contribution margin, and future show-platform economics)
 
 ## Problem
 
@@ -36,15 +39,15 @@ That leaves a product gap around the real operational questions:
 
 ## Existing Infrastructure
 
-| Surface / Model | Current Behavior | Status |
-| --- | --- | --- |
-| `GET /studios/:studioId/shows/:showId/economics` | Per-show variable cost breakdown | ✅ Exists on deferred merge branch |
-| `GET /studios/:studioId/economics` | Grouped economics prototype (`show`, `schedule`, `client`) | ✅ Exists on deferred merge branch |
-| Show creator assignments | Current assignment workflow, but no explicit economics preview requirement | ✅ Exists |
-| [Task Submission Reporting](../features/task-submission-reporting.md) | Implemented builder/run/export workflow pattern for configurable manager reports | ✅ Exists |
-| [Compensation Line Items](./compensation-line-items.md) | Adds show/schedule-scoped supplemental cost items | 🔲 Planned |
-| [Show Planning Export](./show-planning-export.md) | Future-horizon export with estimated cost | 🔲 Planned |
-| [P&L Revenue Workflow](./pnl-revenue-workflow.md) | Revenue entry + contribution margin; future show-platform economics extension | 🔲 Planned |
+| Surface / Model                                                       | Current Behavior                                                              | Status         |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------- |
+| `GET /studios/:studioId/shows/:showId/economics`                      | Per-show cost breakdown (consumed for drill-in and assignment-side preview)   | 🔲 Built by 2.3 |
+| `GET /studios/:studioId/economics`                                    | Grouped economics read (`show`, `schedule`, `client`)                         | 🔲 Built by 2.3 |
+| Show creator assignments                                              | Current assignment workflow                                                   | ✅ Exists       |
+| [Task Submission Reporting](../features/task-submission-reporting.md) | Builder/run/export workflow pattern for configurable manager reports          | ✅ Exists       |
+| [Compensation Line Items](./compensation-line-items.md) (2.2)         | Line items + freeze + actuals + per-target compensation views                 | 🔲 Planned      |
+| [Show Planning Export](./show-planning-export.md) (3.2)               | Future-horizon export preset over this engine                                 | 🔲 Planned      |
+| [P&L Revenue Workflow](./pnl-revenue-workflow.md) (4.1)               | Revenue entry + contribution margin; future show-platform economics extension | 🔲 Planned      |
 
 ## Requirements
 
@@ -87,13 +90,14 @@ That leaves a product gap around the real operational questions:
    - Column selection changes what is shown/exported, but it must not silently redefine the underlying finance math.
    - Phase 4 does **not** include an arbitrary formula builder or spreadsheet-style derived metrics engine.
 
-6. **Explicit projected vs actual semantics**
-   - Future-horizon rows show **projected cost** based on the current persisted state of assignments, rates, shifts, and applicable show-scoped line items.
-   - Past-horizon rows show **actual cost** using the occurred cost basis that Phase 4 knows about today:
-     - member shift basis: `calculatedCost ?? projectedCost`
-     - creator base cost when resolvable from the current compensation model
-     - applicable show-scoped compensation line items
-   - When a completed show still has unresolved creator cost (`COMMISSION` / `HYBRID` without revenue), the row is shown as a partial or unresolved actual state rather than silently converted to zero.
+6. **Explicit projected vs actual semantics** (per [cost-model §1–§7](./economics-cost-model.md))
+   - Future-horizon rows show **projected cost** computed live from the current state of assignments, rates, scheduled shifts, and applicable show-scoped line items.
+   - Past-horizon rows show **actual cost** computed from frozen agreement applied to **approved** actuals:
+     - member shift basis: `hourlyRate × actual block minutes` (cascade fallback to scheduled when no actuals; grace windows normalize near-on-schedule actuals to scheduled)
+     - creator base cost: `agreedRate × actual show minutes` for HOURLY (cascade + grace), `agreedRate` for FIXED, base portion only for HYBRID until Wave 4
+     - applicable show-scoped compensation line items (frozen agreement vs post-freeze adjustments surfaced separately)
+   - Pre-approval actuals render with `actuals_approval_state = PENDING_APPROVAL` and the row stays `PARTIAL_ACTUAL`.
+   - Unresolved cost (`COMMISSION` / `HYBRID` without revenue, or actuals not yet approved) renders as partial or unresolved — never silently converted to zero.
 
 7. **Result workflow and export**
    - The workspace must support a preflight step before generation so managers understand scope size and unresolved-cost risk before running the result.
@@ -107,9 +111,9 @@ That leaves a product gap around the real operational questions:
    - The UI must explain why a row is partial or unresolved.
    - Grouped totals inherit the same nullability rules and must not coerce unknown values to zero.
 
-9. **Wave 3 extension path**
-   - Revenue, contribution margin, and commission/hybrid resolution extend this same review workflow in Wave 3.
-   - Phase 4 cost review must therefore keep null and partial states explicit so the Wave 3 revenue extension can layer on without redefining the route or export model.
+9. **Wave 4 extension path**
+   - Revenue, contribution margin, and commission/hybrid resolution extend this same review workflow in 4.1.
+   - 3.1 cost review must keep null and partial states explicit so the 4.1 revenue extension can layer on without redefining the route or export model.
 
 ### Out of Scope
 
@@ -130,7 +134,7 @@ That leaves a product gap around the real operational questions:
 - **Platform is filter/dimension first, not a default additive rollup in Phase 4 core.** Full-show cost cannot be rolled up across multi-platform relationships without explicit allocation semantics.
 - **Column selection does not redefine core totals.** Stable totals come from backend cost semantics; choosing fewer columns only changes what is displayed/exported.
 - **Planning export is a preset over the same engine.** It should not define a second parallel economics workflow.
-- **Revenue is an extension, not a prerequisite for cost review.** Cost review ships first, while unresolved commission/hybrid paths remain explicit until Wave 3.
+- **Revenue is an extension, not a prerequisite for cost review.** Cost review ships first, while unresolved commission/hybrid paths remain explicit until 4.1 ships.
 
 ## API / Route Shape
 
@@ -138,16 +142,16 @@ That leaves a product gap around the real operational questions:
 
 Primary manager-facing contract:
 
-| Method | Route | Description | Access |
-| --- | --- | --- | --- |
-| `GET` | `/studios/:studioId/economics/catalog` | Return available perspectives, filters, selectable columns/measures, and preset metadata | `ADMIN`, `MANAGER` |
-| `GET` | `/studios/:studioId/economics/preflight` | Scope summary before generation | `ADMIN`, `MANAGER` |
-| `POST` | `/studios/:studioId/economics/run` | Generate inline economics result for the selected scope/perspective/columns | `ADMIN`, `MANAGER` |
-| `GET` | `/studios/:studioId/economics-definitions` | List saved economics definitions | `ADMIN`, `MANAGER` |
-| `POST` | `/studios/:studioId/economics-definitions` | Create a saved economics definition | `ADMIN`, `MANAGER` |
-| `PATCH` | `/studios/:studioId/economics-definitions/:definitionUid` | Update a saved economics definition | `ADMIN`, `MANAGER` |
-| `DELETE` | `/studios/:studioId/economics-definitions/:definitionUid` | Delete a saved economics definition | `ADMIN`, `MANAGER` |
-| `GET` | `/studios/:studioId/shows/:showId/economics` | Per-show drill-in and assignment-side preview | `ADMIN`, `MANAGER` |
+| Method   | Route                                                     | Description                                                                              | Access             |
+| -------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------ |
+| `GET`    | `/studios/:studioId/economics/catalog`                    | Return available perspectives, filters, selectable columns/measures, and preset metadata | `ADMIN`, `MANAGER` |
+| `GET`    | `/studios/:studioId/economics/preflight`                  | Scope summary before generation                                                          | `ADMIN`, `MANAGER` |
+| `POST`   | `/studios/:studioId/economics/run`                        | Generate inline economics result for the selected scope/perspective/columns              | `ADMIN`, `MANAGER` |
+| `GET`    | `/studios/:studioId/economics-definitions`                | List saved economics definitions                                                         | `ADMIN`, `MANAGER` |
+| `POST`   | `/studios/:studioId/economics-definitions`                | Create a saved economics definition                                                      | `ADMIN`, `MANAGER` |
+| `PATCH`  | `/studios/:studioId/economics-definitions/:definitionUid` | Update a saved economics definition                                                      | `ADMIN`, `MANAGER` |
+| `DELETE` | `/studios/:studioId/economics-definitions/:definitionUid` | Delete a saved economics definition                                                      | `ADMIN`, `MANAGER` |
+| `GET`    | `/studios/:studioId/shows/:showId/economics`              | Per-show drill-in and assignment-side preview                                            | `ADMIN`, `MANAGER` |
 
 Existing `GET /studios/:studioId/economics` may remain as a low-level grouped read / compatibility layer, but it is no longer sufficient as the primary FE workflow contract.
 
@@ -171,26 +175,32 @@ Existing `GET /studios/:studioId/economics` may remain as a low-level grouped re
 - [ ] Show detail / assignment surfaces display a current projected-cost summary and refresh after assignment mutations.
 - [ ] Grouped totals preserve backend nullability and never silently coerce unresolved creator cost to zero.
 - [ ] Planning export reuses this same economics engine instead of becoming the primary finance surface.
-- [ ] Revenue and contribution margin remain null or hidden until the Wave 3 revenue workflow ships.
+- [ ] Revenue and contribution margin remain null or hidden until 4.1 (Wave 4) revenue workflow ships.
+- [ ] Result rows expose `actuals_source` per [cost-model §4](./economics-cost-model.md#4-actuals-priority-cascade) and the available source values when applicable.
+
+## Scale and scope considerations
+
+The 90-day range cap is the v1 boundary. Performance work (caching, async result persistence, paginated rendering) is justified before the cap is widened or heavier perspectives are added. Preflight is required before any synchronous result generation that could exceed the 90-day default.
 
 ## Delivery Notes
 
-### Recommended Sequence Inside Phase 4
+### Sequence inside Phase 4
 
-1. Finalize economics cost semantics in the Post-Wave 1 review (`R`).
-2. Ship compensation line items so actualized past-show cost can include additive adjustments.
-3. Merge the revised economics baseline to `master`.
-4. Implement the backend economics engine contract: catalog, preflight, run, and saved-definition persistence over the shared economics domain.
-5. Implement the frontend builder/result workflow and keep the show-level preview as a separate compact surface.
-6. Layer show planning export on top of the same engine as a locked preset / export-oriented view.
-7. Extend the same engine in Wave 3 with revenue, commission resolution, contribution margin, and possible future show-platform economics once allocation semantics are explicit.
+1. 2.1 Economics Cost Model — locks contract / freeze / cascade / views.
+2. 2.2 Compensation Line Items + Freeze + Actuals — line-item data model + freeze guards + actuals fields + per-target compensation views.
+3. 2.3 Economics Service — greenfield implementation of the per-show and grouped economics endpoints.
+4. 3.1 (this PRD) — backend engine contract (catalog, preflight, run, saved definitions) plus the frontend builder/result workspace. Show-level drill-in stays a compact surface on the show detail page.
+5. 3.2 Show Planning Export — locked preset / export-oriented view over this engine.
+6. 4.1 P&L Revenue Workflow — extends this engine with revenue, commission resolution, contribution margin, and possible future show-platform economics.
 
 ## Design Reference
 
-- Backend design: `apps/erify_api/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md`
-- Frontend design: `apps/erify_studios/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md`
-- Economics baseline archived reference: `docs/features/show-economics.md`
-- Task reporting feature reference: `docs/features/task-submission-reporting.md`
-- Compensation line items PRD: `docs/prd/compensation-line-items.md`
-- Show planning export PRD: `docs/prd/show-planning-export.md`
-- P&L revenue workflow PRD: `docs/prd/pnl-revenue-workflow.md`
+- 2.1 Cost Model: [`economics-cost-model.md`](./economics-cost-model.md)
+- 2.2 Compensation Line Items: [`compensation-line-items.md`](./compensation-line-items.md)
+- 2.3 Economics Service: [`SHOW_ECONOMICS_DESIGN.md`](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
+- 3.1 Backend design: [`STUDIO_ECONOMICS_REVIEW_DESIGN.md`](../../apps/erify_api/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)
+- 3.1 Frontend design: [`STUDIO_ECONOMICS_REVIEW_DESIGN.md`](../../apps/erify_studios/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)
+- 3.2 Show Planning Export PRD: [`show-planning-export.md`](./show-planning-export.md)
+- 4.1 P&L Revenue Workflow PRD: [`pnl-revenue-workflow.md`](./pnl-revenue-workflow.md)
+- Task reporting feature reference: [`task-submission-reporting.md`](../features/task-submission-reporting.md)
+- Phase 4 roadmap: [`PHASE_4.md`](../roadmap/PHASE_4.md)

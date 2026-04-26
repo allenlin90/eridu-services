@@ -6,12 +6,12 @@ Design/proposal/in-progress documents for `erify_studios`.
 
 1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned follow-up for studio resolve UX
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
-3. [Show Economics Frontend Design](./SHOW_ECONOMICS_DESIGN.md) — Deferred economics surfaces pending baseline merge
-4. [Studio Economics Review Frontend Design](./STUDIO_ECONOMICS_REVIEW_DESIGN.md) — Planned finance workspace and assignment-side preview UX
-5. [Compensation Line Items Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — Planned compensation management surfaces
-6. [Show Planning Export Frontend Design](./SHOW_PLANNING_EXPORT_DESIGN.md) — Planned export preview/download route
-7. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — Planned strict availability UX
-8. [P&L Revenue Workflow Frontend Design](./PNL_REVENUE_WORKFLOW_DESIGN.md) — Planned Wave 3 revenue-entry and margin UI
+3. [Show Economics Frontend Design](./SHOW_ECONOMICS_DESIGN.md) — 2.3 consumer plan (show drill-in card; engine consumed by 3.1)
+4. [Studio Economics Review Frontend Design](./STUDIO_ECONOMICS_REVIEW_DESIGN.md) — 3.1 finance workspace + assignment-side preview UX
+5. [Compensation Line Items Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — 2.2 compensation management + actuals + approval + grace surfaces
+6. [Show Planning Export Frontend Design](./SHOW_PLANNING_EXPORT_DESIGN.md) — 3.2 export preview/download route
+7. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 3.3 strict availability UX
+8. [P&L Revenue Workflow Frontend Design](./PNL_REVENUE_WORKFLOW_DESIGN.md) — 4.1 revenue-entry and margin UI
 
 ## Note
 

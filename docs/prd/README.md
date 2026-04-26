@@ -24,24 +24,22 @@ PRDs are **phase-scoped and transient**:
 
 > PRDs own pre-ship intent. App-local docs own post-ship behavior.
 
-## Phase 4 PRDs (Reopened — Extended Scope)
+## Phase 4 PRDs
 
 Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4.md#implementation-sequencing).
 
-| PRD | Workstream | Wave | Status |
-| --- | --- | --- | --- |
-| ~~Show Economics~~ | P&L baseline — creator cost + shift cost endpoints | — | ⏸️ Deferred merge → [archived reference](../features/show-economics.md) |
-| ~~Studio Member Roster~~ | Studio operator governance — L-side labor cost inputs (`baseHourlyRate`) | 1 | ✅ Shipped → [feature doc](../features/studio-member-roster.md) |
-| ~~Studio Creator Roster~~ | Studio operator governance — L-side creator cost defaults | 1 | ✅ Implemented → [feature doc](../features/studio-creator-roster.md) |
-| ~~Studio Creator Onboarding~~ | Studio-side creator intake outside `/system/*` plus roster-first assignment gate | 1 | ✅ Implemented → [feature doc](../features/studio-creator-onboarding.md) |
-| ~~Internal Knowledge Base (`eridu_docs`)~~ | Internal tooling — authenticated knowledge base for repo docs | Ext | ✅ Implemented → [feature doc](../features/eridu-docs-knowledge-base.md) |
-| ~~Studio Show Management~~ | Studio CRUD for shows — removes `/admin/*` dependency and keeps show writes schedule-ready | 1+ | ✅ Implemented → [feature doc](../features/studio-show-management.md) |
-| [Studio Schedule Management](./studio-schedule-management.md) | Studio schedule lifecycle — create, assign/rearrange shows, validate, publish, duplicate | — | ⏸️ Deferred 2026-04-22 (revisit with Client Portal workstream) |
-| [Compensation Line Items](./compensation-line-items.md) | Supplemental cost items (bonus, allowance, OT, deduction) for members + creators | R+ | Active (post-Wave 1) |
-| [Studio Economics Review](./studio-economics-review.md) | Configurable studio finance review/export engine for future projected and past actual cost views | 2 | Active |
-| [Show Planning Export](./show-planning-export.md) | Operations planning export — pre-show shows + assignments + estimated cost; CSV + JSON | 2 | Active (locked preset downstream of studio economics review) |
-| [Creator Availability Hardening](./creator-availability-hardening.md) | Dual-mode availability endpoint — overlap + roster conflict enforcement | 2 | Active (depends on creator roster + onboarding gate) |
-| [P&L Revenue Workflow](./pnl-revenue-workflow.md) | P&L revenue ("P") side — GMV/sales inputs, commission cost activation, contribution margin | 3 | Active (4 open design Qs) |
+| #   | PRD                                                                  | Wave | Status                          |
+| --- | -------------------------------------------------------------------- | ---- | ------------------------------- |
+| 2.1 | [Economics Cost Model](./economics-cost-model.md)                    | 2    | 🔲 Active — docs-only            |
+| 2.2 | [Compensation Line Items + Freeze + Actuals](./compensation-line-items.md) | 2    | 🔲 Planned                       |
+| 3.1 | [Studio Economics Review](./studio-economics-review.md)              | 3    | 🔲 Planned                       |
+| 3.2 | [Show Planning Export](./show-planning-export.md)                    | 3    | 🔲 Planned                       |
+| 3.3 | [Creator Availability Hardening](./creator-availability-hardening.md) | 3    | 🔲 Planned                       |
+| 4.1 | [P&L Revenue Workflow](./pnl-revenue-workflow.md)                    | 4    | 🔲 Planned (4 open design Qs)    |
+
+Wave 2.3 (Economics Service) does not have its own PRD — it's a backend implementation against 2.1 + 2.2; the design doc lands when the workstream starts.
+
+Studio schedule management is deferred (revisit with the Client Portal workstream): [PRD](./studio-schedule-management.md).
 
 ### Phase 5 Candidates (PRDs created, implementation deferred)
 

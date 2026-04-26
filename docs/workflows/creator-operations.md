@@ -4,11 +4,11 @@ End-to-end flow for how a studio manages its creator talent — from role setup 
 
 ## Actors
 
-| Actor | Role | Key Capability |
-| --- | --- | --- |
-| Studio Admin | `ADMIN` | Manages memberships, assigns roles, full access |
-| Talent Manager | `TALENT_MANAGER` | Browses creators, maps to shows |
-| Manager | `MANAGER` | Same as Admin except membership management |
+| Actor          | Role             | Key Capability                                  |
+| -------------- | ---------------- | ----------------------------------------------- |
+| Studio Admin   | `ADMIN`          | Manages memberships, assigns roles, full access |
+| Talent Manager | `TALENT_MANAGER` | Browses creators, maps to shows                 |
+| Manager        | `MANAGER`        | Same as Admin except membership management      |
 
 ## Flow Overview
 
@@ -21,7 +21,7 @@ End-to-end flow for how a studio manages its creator talent — from role setup 
        ↓
 4. Talent Manager bulk-assigns creators to shows (with optional compensation override)
        ↓
-5. Deferred show economics baseline merge resolves show overrides over studio roster defaults
+5. Wave 2 economics service (2.3) resolves show overrides over studio roster defaults using the contract model in 2.1
 ```
 
 ## Step-by-Step
@@ -77,12 +77,9 @@ Feature: [Creator Mapping](../features/creator-mapping.md)
 
 ### 5. Cost visibility
 
-Once the deferred economics baseline is revised and merged, a finance or admin user will be able to see:
+Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed of frozen agreement (creator base + shift labor) plus pre-freeze line items, with adjustments surfaced separately. `COMMISSION` and the `HYBRID` commission portion remain unresolved until Wave 4 revenue input.
 
-- Per-show baseline cost = sum of FIXED creator costs + shift labor costs
-- `COMMISSION`/`HYBRID` creators appear in the response with `null` cost (pending GMV input)
-
-Reference: [Show Economics Baseline (deferred merge reference)](../features/show-economics.md)
+Reference: [Economics Cost Model (2.1)](../prd/economics-cost-model.md) · [Compensation Line Items (2.2)](../prd/compensation-line-items.md)
 
 ## Data Flow
 
@@ -109,11 +106,10 @@ GET /shows/:id/economics  →  { creator_cost, shift_cost, total_cost }
 
 ## Related Docs
 
-| Layer | Document |
-| --- | --- |
-| Feature (RBAC) | [docs/features/rbac-roles.md](../features/rbac-roles.md) |
-| Feature (Creator Mapping) | [docs/features/creator-mapping.md](../features/creator-mapping.md) |
-| Archived economics reference | [docs/features/show-economics.md](../features/show-economics.md) |
-| Phase 4 backend index | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md) |
-| Phase 4 frontend index | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md) |
-| Role visibility model | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
+| Layer                     | Document                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Feature (RBAC)            | [docs/features/rbac-roles.md](../features/rbac-roles.md)                                               |
+| Feature (Creator Mapping) | [docs/features/creator-mapping.md](../features/creator-mapping.md)                                     |
+| Phase 4 backend index     | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)                             |
+| Phase 4 frontend index    | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
+| Role visibility model     | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |

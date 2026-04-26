@@ -31,8 +31,3 @@ When a feature ships:
 | [Studio Show Management](./studio-show-management.md) | Phase 4 | [BE canonical](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md), [FE canonical](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md) |
 | [Internal Knowledge Base (`eridu_docs`)](./eridu-docs-knowledge-base.md) | Phase 4 | [Auth design](../../apps/eridu_docs/docs/AUTH_DESIGN.md) |
 
-## Archived / Deferred References
-
-| Reference | Status | Canonical Docs |
-| --- | --- | --- |
-| [Show Economics Baseline](./show-economics.md) | Deferred merge reference (`feat/show-economics-baseline`, commit `8de31ffe`) | [Phase 4 roadmap](../roadmap/PHASE_4.md), [BE design](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md), [FE design](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md) |
