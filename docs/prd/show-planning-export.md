@@ -1,10 +1,12 @@
-# PRD: Show Planning Export
+# PRD: Show Planning Export (3.2)
 
-> **Status**: Active
-> **Phase**: 4 — Extended Scope
-> **Workstream**: Operations planning — pre-show export with L-side cost preview
-> **Depends on**: Show Economics baseline — ✅ **Complete** (commit `8de31ffe`; estimated cost column sourced from economics endpoint), Studio Economics Review — 🔲 Planned (shared future-horizon cost semantics), Economics Cost Model (R) — 🔲 Planned ([PRD](./economics-cost-model.md))
-> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — planning export is future-horizon only, so `cost_state = PROJECTED` per R §1 is the only state in scope.
+> **Status: Visioning.** This document was drafted before [Phase 4 was simplified to a read-only viewer](./economics-cost-model.md). Treat as roadmap and future-feature reference, not a committed design — it will be redrafted when this workstream activates. Where this document conflicts with [`economics-cost-model.md`](./economics-cost-model.md), the cost model wins for Phase 4 scope.
+
+> **Status**: 🔲 Planned
+> **Phase**: 4 — Wave 3 (Finance Surfaces)
+> **Workstream**: Operations planning — pre-show export with L-side cost preview. Locked preset over the 3.1 economics engine.
+> **Depends on**: 2.1 Economics Cost Model 🔲 ([PRD](./economics-cost-model.md)) · 2.3 Economics Service 🔲 (estimated cost column sourced from this engine) · 3.1 Studio Economics Review 🔲 (shared engine)
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — planning export is future-horizon only, so `cost_state = PROJECTED` per [§2](./economics-cost-model.md#2-cost-state-machine) is the only state in scope.
 
 ## Problem
 
@@ -29,14 +31,14 @@ This feature is intentionally **upstream from task submission reporting**:
 
 ## Existing Infrastructure
 
-| Model / Endpoint | Fields / Behavior | Status |
-| --- | --- | --- |
-| `Show` | Metadata, status, standard, type, room, start/end time, schedule linkage | ✅ Exists |
-| `Client` | Client name, linked to show | ✅ Exists |
-| `ShowCreator` | Creator assignments per show | ✅ Exists |
-| `Creator` | Creator name | ✅ Exists |
-| `GET /studios/:studioId/shows/:showId/economics` | Variable cost; nullable for COMMISSION/HYBRID without revenue | ✅ Exists (`@preview`) |
-| Task report engine | Scope/filter/export patterns (reuse primitives only — see below) | ✅ Exists |
+| Model / Endpoint                                 | Fields / Behavior                                                        | Status                |
+| ------------------------------------------------ | ------------------------------------------------------------------------ | --------------------- |
+| `Show`                                           | Metadata, status, standard, type, room, start/end time, schedule linkage | ✅ Exists              |
+| `Client`                                         | Client name, linked to show                                              | ✅ Exists              |
+| `ShowCreator`                                    | Creator assignments per show                                             | ✅ Exists              |
+| `Creator`                                        | Creator name                                                             | ✅ Exists              |
+| `GET /studios/:studioId/shows/:showId/economics` | Variable cost; nullable for COMMISSION/HYBRID without revenue            | ✅ Exists (`@preview`) |
+| Task report engine                               | Scope/filter/export patterns (reuse primitives only — see below)         | ✅ Exists              |
 
 ## Requirements
 
@@ -48,18 +50,18 @@ This feature is intentionally **upstream from task submission reporting**:
 
 3. **Fixed output columns** — no column builder; the schema is fixed for the first version:
 
-   | Column | Source |
-   | --- | --- |
-   | `show_id` | `Show.uid` |
-   | `show_name` | `Show.name` |
-   | `client_name` | `Client.name` |
-   | `status` | `Show.status.name` |
-   | `standard` | `Show.showStandard.name` |
-   | `type` | `Show.showType.name` |
-   | `room` | `Show.room.name` |
-   | `start_time` | `Show.startTime` (ISO 8601) |
-   | `end_time` | `Show.endTime` (ISO 8601) |
-   | `assigned_creators` | Aggregated `Creator.name` list from `ShowCreator` |
+   | Column                 | Source                                                                                            |
+   | ---------------------- | ------------------------------------------------------------------------------------------------- |
+   | `show_id`              | `Show.uid`                                                                                        |
+   | `show_name`            | `Show.name`                                                                                       |
+   | `client_name`          | `Client.name`                                                                                     |
+   | `status`               | `Show.status.name`                                                                                |
+   | `standard`             | `Show.showStandard.name`                                                                          |
+   | `type`                 | `Show.showType.name`                                                                              |
+   | `room`                 | `Show.room.name`                                                                                  |
+   | `start_time`           | `Show.startTime` (ISO 8601)                                                                       |
+   | `end_time`             | `Show.endTime` (ISO 8601)                                                                         |
+   | `assigned_creators`    | Aggregated `Creator.name` list from `ShowCreator`                                                 |
    | `estimated_total_cost` | From economics service (nullable; null when COMMISSION/HYBRID without revenue, or no assignments) |
 
 4. **Filters** — date range (required), plus optional: `client_uid`, `status`, `standard`.
@@ -106,9 +108,9 @@ The export does not trigger a full economics computation per row on every export
 
 ## Routes
 
-| Method | Route | Description | Access |
-| --- | --- | --- | --- |
-| `GET` | `/studios/:studioId/shows/planning-export` | Paginated JSON rows (default) or CSV download | ADMIN, MANAGER |
+| Method | Route                                      | Description                                   | Access         |
+| ------ | ------------------------------------------ | --------------------------------------------- | -------------- |
+| `GET`  | `/studios/:studioId/shows/planning-export` | Paginated JSON rows (default) or CSV download | ADMIN, MANAGER |
 
 Query parameters: `date_from` (required, ISO date), `date_to` (required, ISO date), `format` (optional: `json` \| `csv`, default `json`), `client_uid` (optional), `status` (optional), `standard` (optional), `page` / `limit` (JSON only).
 
@@ -185,11 +187,11 @@ Standard paginated response following existing list conventions:
 
 ### Error Codes
 
-| Code | HTTP Status | Condition |
-| --- | --- | --- |
-| `DATE_RANGE_REQUIRED` | 400 | `date_from` or `date_to` missing |
-| `DATE_RANGE_EXCEEDED` | 400 | Date range exceeds 90-day cap |
-| `INVALID_DATE_FORMAT` | 400 | Date params not valid ISO date |
+| Code                  | HTTP Status | Condition                        |
+| --------------------- | ----------- | -------------------------------- |
+| `DATE_RANGE_REQUIRED` | 400         | `date_from` or `date_to` missing |
+| `DATE_RANGE_EXCEEDED` | 400         | Date range exceeds 90-day cap    |
+| `INVALID_DATE_FORMAT` | 400         | Date params not valid ISO date   |
 
 ## Design Reference
 

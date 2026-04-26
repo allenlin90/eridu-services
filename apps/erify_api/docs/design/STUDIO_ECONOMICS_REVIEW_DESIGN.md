@@ -1,10 +1,13 @@
-# Studio Economics Review Backend Design
+# Studio Economics Review Backend Design (3.1)
 
-> **Status**: Planning
-> **Phase scope**: Phase 4 Wave 2
+> **Status: Visioning — may be misaligned.** This design doc was written against the pre-simplification version of the Phase 4 cost model. The Phase 4 stack has since been narrowed to a read-only viewer (see [`economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md)). The corresponding sibling PRD is itself visioning. Treat this document as roadmap reference: it is **not committed**, may contain assumptions that no longer hold, and will be rewritten when this workstream activates.
+
+> **Status**: 🔲 Planned
+> **Phase scope**: Phase 4 — Wave 3 (Finance Surfaces)
 > **Owner app**: `apps/erify_api`
 > **Product source**: [`docs/prd/studio-economics-review.md`](../../../../docs/prd/studio-economics-review.md)
-> **Depends on**: Show economics baseline revision/merge ⏸️, compensation line items 🔲, studio show ownership/read paths ✅, schedule-ready show linkage 🔲
+> **Cost-model authority**: [`docs/prd/economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md) — `cost_state`, nullability, actuals priority cascade, response shape
+> **Depends on**: 1.5 Studio show management ✅ · 2.1 Economics Cost Model 🔲 · 2.2 Compensation Line Items + Freeze + Actuals 🔲 · 2.3 Economics Service 🔲 (the engine 3.1 calls)
 
 ## Purpose
 
@@ -163,16 +166,12 @@ Rows should also include hidden metadata fields when needed for FE-only result f
 
 ## Calculation Rules
 
-- **Projected** means current persisted projection from:
-  - `ShowCreator.agreedRate` → `StudioCreator.defaultRate`
-  - creator compensation type precedence
-  - shift projected cost inputs
-  - applicable show-scoped compensation line items already recorded
-- **Actual** means current occurred cost basis from:
-  - member shift cost `calculatedCost ?? projectedCost`
-  - creator base cost when resolvable under the current model
-  - applicable show-scoped compensation line items
-- Schedule-scoped and standing/global line items keep the same inclusion rules defined in compensation-line-items design; do not invent new allocation rules here.
+3.1 does not own calculation; it consumes 2.3's per-show and grouped reads. Authoritative rules live in [`economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md). Recap of what this PRD relies on:
+
+- **Projected** rows reflect current state: agreement (rate / type / commission rate, eager-filled at freeze), shift labor as `hourlyRate × scheduled minutes` (computed live; `projectedCost` field is dropped), and applicable show-scoped line items already recorded.
+- **Actual** rows reflect frozen agreement applied to **approved** actuals (cost-model §6) — actuals that have not yet been approved render with a "pending review" tag and the row stays `PARTIAL_ACTUAL`.
+- Grace-window normalization (cost-model §7) collapses near-on-schedule actuals to scheduled for cost computation; rows expose `grace_applied` when this fires.
+- Schedule-scoped and standing/global line items follow the inclusion rules in [cost-model §8](../../../../docs/prd/economics-cost-model.md#8-line-item-composition); do not invent new allocation rules here.
 - Phase 4 does **not** persist a frozen "planned at assignment time" snapshot. Do not expose fake variance fields that imply historical budget locking.
 - Phase 4 does **not** allocate full show cost across multi-platform associations for additive platform totals.
 

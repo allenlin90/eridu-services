@@ -31,7 +31,7 @@ Active (in progress):
 
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Planned follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
-3. [Show Economics Frontend Design](./design/SHOW_ECONOMICS_DESIGN.md) — ⏸️ Deferred pending baseline merge
+3. [Show Economics Frontend Design](./design/SHOW_ECONOMICS_DESIGN.md) — 📐 2.3 consumer plan (lands when 2.3 starts)
 4. [Studio Economics Review Frontend Design](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md) — 📐 Planned
 5. [Compensation Line Items Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — 📐 Planned
 6. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned

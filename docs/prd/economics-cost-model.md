@@ -1,302 +1,275 @@
-# PRD: Economics Cost Model (R — Cost Model Review)
+# PRD: Economics Cost Model (2.1)
 
-> **Status**: 🔲 Active — lock docs-only; no code
-> **Phase**: 4 — Post-Wave 1 critical-path gate
-> **Workstream**: L-side P&L visibility — canonical cost semantics
-> **Gates**: R+ Compensation Line Items, E0 Economics Baseline Merge, 2a Studio Economics Review, 2b Show Planning Export, Wave 3 P&L Revenue Workflow
-> **Depends on**: Studio Member Roster ✅ (1c), Studio Creator Roster ✅ (1b), Studio Show Management ✅ (1e); deferred branch [`feat/show-economics-baseline`](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
+> **Status**: 🔲 Active — docs-only; no code, no schema, no migrations
+> **Phase**: 4 — Wave 2 critical-path gate
+> **Workstream**: L-side P&L visibility — minimal cost reference + extensible foundation
+> **Gates**: 2.2 Compensation Line Items, 2.3 Economics Service, 3.1 Studio Economics Review, 3.2 Show Planning Export, 4.1 P&L Revenue Workflow
+> **Architecture**: Phase 4 [Architecture Guardrails](../roadmap/PHASE_4.md#architecture-guardrails) — monetary arithmetic, snapshot-on-write, soft-delete, fixture testing, `/me/` self-access pattern
 
 ## Purpose
 
-Lock the semantic contract for studio cost computation **before** R+ / E0 / 2a land code that encodes the rules. Every downstream economics document links here for definitions of "projected", "actualized", line-item composition, and nullability behavior. This document is authoritative; if it conflicts with an older doc, this wins and the older doc should be updated.
+Lock the **minimal** data model and computation rules for studio compensation and operational cost in Phase 4, before 2.2 / 2.3 land code. Phase 4's L-side stack is a **read-only reference viewer**, not a workflow system: it produces structured numbers for stakeholders to consult, and it provides a foundation that future workstreams (settlement, freeze, payment, acknowledgement, advanced compensation rules) can extend without schema reshape.
 
-R is docs-only. It does not introduce endpoints, schemas, or migrations. R+ implements the line-item channel; E0 integrates the semantics into the deferred economics branch; 2a consumes the resulting `cost_state` field in the review workspace.
+This document is authoritative for Phase 4 cost semantics. Sibling PRDs and design docs in this branch carry a **Visioning** banner — they describe future behavior that may change when their workstream becomes active. Where they conflict with this document, this wins for Phase 4 scope.
 
-## Non-Goals
+This PRD is docs-only.
 
-- Revenue (P-side) — Wave 3.
-- Automated rule engine for OT/tiered commission/bonus formulas — Phase 5.
-- Double-entry ledger or general-ledger export — out of product scope.
-- Proration of schedule-scoped or standing/global line items across shows — not in Phase 4.
-- Historical budget-vs-actual variance against a frozen plan snapshot — deferred.
-- Additive platform cost allocation across multi-platform shows — deferred until show-platform economics exist.
+## Scope & Stance
+
+- **Records are notice and reference, not source of truth.** Phase 4 stores enough data to *show* compensation and operational cost. It does not authorize, lock, settle, or pay anything. The real source of truth for "what was paid" lives outside this system (bank records, contracts, conversations) and will be cross-referenced when a payment workstream ships.
+- **All views are read-only.** Recipients (creators, members) inspect their own compensation; managers inspect operational rollups. No acknowledgement, dispute, or counter-signature exists in the backend.
+- **Computation is live and pure.** Cost is derived from current persisted inputs at read time. No stored derived totals, no state machine, no transitions to manage.
+- **The foundation is extensible.** Settlement gating, freeze guards, grace tolerance, payment processing, acknowledgement / dispute, advanced compensation rules, and bank-statement reconciliation each layer onto this base as additions when their workstream activates. See §4 Future Extensions.
+
+Phase 4's two targets:
+
+1. **Stakeholders refer to compensation and operational cost** — creator self-view, operator self-view, manager operational rollup.
+2. **Build a solid extensible foundation** — every dropped concept in the Non-Goals list has a one-paragraph extension sketch in §4 so the foundation can be sanity-checked.
+
+## Non-Goals (Phase 4)
+
+Everything in this list is deferred. Each has an extension sketch in §4.
+
+- Revenue (P-side) and commission resolution — Wave 4.
+- Settlement state machine, settled-actuals gating, reopen flow.
+- Freeze write guards at the entity-time boundary.
+- Grace windows for late-arrival / early-leave tolerance.
+- Adjustment-vs-agreement discrimination on line items (no `createdAt > boundary` enforcement).
+- Polymorphic audit log table; rule-engine-driven OT / tiered commission.
+- Sign enforcement on line items by `item_type`.
+- Cost-state enum (`PROJECTED` / `RESOLVED` / `PARTIAL` / `UNRESOLVED`) with stored transitions.
+- Payment processing, bank-statement reconciliation.
+- Recipient acknowledgement / dispute flow.
+- Recipient-initiated adjustment requests (in-product channel).
+- Notifications when manager edits actuals.
+- Proration of schedule-scoped or standing/global line items across shows.
+- Schedule-level cost aggregation; standing/global line-item aggregation.
+- Additive platform cost allocation across multi-platform shows.
+- Double-entry ledger, general-ledger export.
 
 ## Terminology
 
-| Term               | Definition                                                                                                       |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| **Show row**       | One row of economics output keyed by a `Show`. Rollups (schedule/client/platform) are aggregations of show rows. |
-| **Base cost**      | Resolvable cost from persisted rates and shifts alone — no line items applied.                                   |
-| **Line-item cost** | Sum of applicable `CompensationLineItem` records whose scope matches the row grain.                              |
-| **Resolved total** | `base + lineItems`. Null if base contains an unresolved input.                                                   |
-| **Cost state**     | One of four explicit labels on each row: `PROJECTED`, `ACTUALIZED`, `PARTIAL_ACTUAL`, `UNRESOLVED`.              |
-| **Horizon**        | Caller-supplied filter: `future`, `past`, `all`. Splits rows by `Show.endTime` relative to the request time.     |
+| Term                              | Definition                                                                                                                                                                                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Agreement**                     | The pre-show / pre-shift terms a creator or operator is paid by — rate, compensation type, commission rate, scheduled times.                                                                                                                                |
+| **Agreement snapshot**            | The persisted per-assignment copy of agreement terms, captured at assignment time from explicit input or roster defaults. Roster default edits do not rewrite snapshots.                                                                                    |
+| **Snapshot-field override audit** | When ADMIN/MANAGER updates a snapshot field (e.g. `ShowCreator.agreedRate`), the change is appended to that row's existing `metadata` column following the codebase's existing audit-in-metadata pattern. No separate audit table is introduced in Phase 4. |
+| **Compensation component**        | One independently-computed part of a creator agreement (`FIXED_BASE` / `HOURLY_BASE` / commission). `HYBRID` = more than one component.                                                                                                                     |
+| **Actuals**                       | Recorded measurements: actual show time, actual shift block time. Plain nullable timestamps; entered freely.                                                                                                                                                |
+| **Line item**                     | A `CompensationLineItem` record: a flat amount targeting a creator or membership, optionally scoped to a show. Phase 4 does not discriminate by author intent (agreement vs adjustment).                                                                    |
+| **Unresolved reason**             | A string label on a row identifying why a component has no value (`commission_pending_revenue`, `actuals_not_entered`). UI surfaces these instead of substituting `0`.                                                                                      |
+| **Settled-reference figure**      | The reconciled cost view for an assignment / shift / period: snapshot agreement + actuals + applicable line items, with null bubbling. The artifact stakeholders use as reference. "Settled" here is colloquial; no settlement state exists in Phase 4.     |
 
-## 1. Projected → Actualized State Machine
+## 1. Data Model
 
-Each show row carries exactly one `cost_state` value. The rules are evaluated in order; the first matching row wins.
+### Agreement snapshot
 
-| State            | Required conditions                                                                                                                                                                                                           | Meaning                                                                                                                                                                                                         |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PROJECTED`      | `Show.endTime` > now                                                                                                                                                                                                          | Future or in-flight. Totals use current persisted assignments, rates, and shifts. Line items with `effectiveDate` in the future are included.                                                                   |
-| `ACTUALIZED`     | `Show.endTime` ≤ now **AND** every linked `StudioShift` has `calculatedCost` set **AND** every linked `ShowCreator` has a resolvable base cost (`FIXED` / `HOURLY`, or `COMMISSION`/`HYBRID` with revenue resolved in Wave 3) | Fully resolved occurred cost. Safe for accounting roll-up.                                                                                                                                                      |
-| `PARTIAL_ACTUAL` | `Show.endTime` ≤ now **AND** one or more inputs still unresolved, but at least one input (shift or creator) is resolved                                                                                                       | Some cost is known; the rest is either pending confirmation (shift still using `projectedCost`) or awaiting Wave 3 (COMMISSION/HYBRID without revenue). Known subtotals are exposed; unresolved ones stay null. |
-| `UNRESOLVED`     | `Show.endTime` ≤ now **AND** no input resolves (no shifts exist and all creators are COMMISSION/HYBRID without revenue)                                                                                                       | Edge case. Typically a completed show for which no cost basis is yet knowable. Row surfaces explicitly as unresolved — not as zero.                                                                             |
+When a creator is assigned to a show, `ShowCreator` persists `agreedRate`, `compensationType`, and `commissionRate` from explicit input or `StudioCreator` defaults at the moment of assignment. The same snapshot pattern already exists for `StudioShift.hourlyRate` from `StudioMembership.baseHourlyRate`. After snapshot:
 
-### Rationale
+- Reads use the snapshot. Source-table edits (`StudioCreator.defaultRate`, `StudioMembership.baseHourlyRate`) never rewrite existing snapshots.
+- Snapshot fields (`ShowCreator.agreedRate`, `compensationType`, `commissionRate`; `StudioShift.hourlyRate`) are **intended-immutable**. ADMIN and MANAGER may update them through the normal update endpoint; the FE shows a warning explaining the downstream impact (historical references and cost rollups will recompute).
+- Each update appends an entry to the entity's `metadata` column (existing audit-in-metadata pattern in this codebase) capturing `{field, old, new, actorId, at, reason?}`. **No dedicated audit table.** The metadata trail is the audit.
 
-- Time-based-alone states (just `endTime` passed) would mislabel rows as actual while shifts are still in manager-projected state.
-- Human finalize actions were rejected in favor of automatic state derivation to keep the engine stateless and avoid a new confirmation workflow in Phase 4.
-- The `PARTIAL_ACTUAL` state exists specifically to keep unresolved creator cost honest until Wave 3 revenue ships.
+### Compensation components
 
-### Late adjustments after ACTUALIZED
+`compensationType` is the user-facing package label. The economics service resolves the package into components before calculation.
 
-Once a row is `ACTUALIZED`, later edits (e.g., a manager retroactively edits `StudioShift.calculatedCost`) recompute the row to the new value. The state remains `ACTUALIZED`. Phase 4 does **not** snapshot the prior actual. Historical variance is out of scope.
+| Package      | Components               | Phase 4 computation                                                     |
+| ------------ | ------------------------ | ----------------------------------------------------------------------- |
+| `FIXED`      | `FIXED_BASE`             | Fixed amount for the assignment.                                        |
+| `HOURLY`     | `HOURLY_BASE`            | `agreedRate × duration` (actual if recorded, scheduled otherwise).      |
+| `COMMISSION` | one commission component | `null` until Wave 4 revenue/sales input lands.                          |
+| `HYBRID`     | two or more components   | Sum of resolved components; `null` if any commission component pending. |
 
-## 2. Resolution Precedence — Base Cost
+The component model is the extensibility seam for future commission variants and the Phase 5 rule engine.
 
-### Member shift labor
+### Actuals
 
-- Per-block cost: `block.calculatedCost ?? block.projectedCost`.
-- Attribution: shift blocks attribute to the show they overlap in time.
-- If a block spans multiple shows (rare), cost is allocated proportionally by overlap minutes. This is the existing behavior on the deferred branch; R does not change it.
+- `Show.actualStartTime` / `Show.actualEndTime` — nullable, entered any time.
+- `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime` — nullable, entered any time.
 
-### Creator base cost
+No state machine, no settlement, no approval. Actuals exist or they don't. Computation uses them when present, falls back to scheduled times otherwise. Manager edits to past actuals are allowed; if the entity's `metadata` audit pattern is in scope (e.g., it already covers other fields), edits are appended there. Notifications to recipients are deferred (§4).
 
-Precedence for rate:
+### Compensation line items
 
-1. `ShowCreator.agreedRate` if set for this show
-2. `StudioCreator.defaultRate`
+`CompensationLineItem` is a flat record:
 
-Precedence for compensation type:
+| Field                        | Notes                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `target`                     | `CompensationTarget` enum: `MEMBERSHIP` or `STUDIO_CREATOR` (Architecture Guardrail 3 — Prisma enum discriminator).             |
+| `targetId`                   | FK to membership or studio-creator.                                                                                             |
+| `scope`                      | `show_id` (most common) or null (standing). Schedule-scope is captured by the `scheduleId` field but not aggregated in Phase 4. |
+| `itemType`                   | `BONUS` / `ALLOWANCE` / `OVERTIME` / `DEDUCTION` / `OTHER`. Label-only; no special computation.                                 |
+| `amount`                     | Signed decimal. **No sign enforcement in Phase 4** — UI surfaces direction.                                                     |
+| `reason`                     | Free text — required, since this is the human-readable explanation a stakeholder reads.                                         |
+| `effectiveDate`, `createdAt` | Informational. Not used to discriminate adjustment-vs-agreement in Phase 4.                                                     |
 
-1. `ShowCreator.compensationType` if set
-2. `StudioCreator.defaultRateType`
+No freeze, no adjustment-vs-agreement discrimination, no `createdAt > boundary` semantics in Phase 4. The calculator sums line items into target totals. Phase 5+ will discriminate when settlement and freeze ship — `createdAt` is preserved for that future use.
 
-Rules by compensation type:
+### Soft delete
 
-| Type         | Resolvable in Phase 4?                                                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FIXED`      | ✅ Rate × 1                                                                                                                                        |
-| `HOURLY`     | ✅ Rate × show duration                                                                                                                            |
-| `COMMISSION` | ❌ Base stays `null` until Wave 3 revenue                                                                                                          |
-| `HYBRID`     | ❌ Base stays `null` until Wave 3 revenue (fixed portion alone is not considered resolved — otherwise the hybrid model leaks an incomplete number) |
+All entities follow the existing soft-delete pattern (Architecture Guardrail 5). Aggregation queries exclude soft-deleted rows by default; admin/audit surfaces may include them via `includeDeleted`.
 
-`null` base propagates as described in §4.
+### Removed from prior thinking
 
-## 3. Line-Item Composition
+Things present in earlier drafts of this PRD that Phase 4 explicitly **does not introduce**:
 
-Canonical rules for how `CompensationLineItem` records combine with base cost. These supersede any earlier text in `SHOW_ECONOMICS_DESIGN.md` or `compensation-line-items.md` on the same points.
+- `Show.actualsSettledAt` / `actualsSettledBy`, `StudioShift.actualsSettledAt` / `actualsSettledBy` — no settlement.
+- A polymorphic actuals audit table — `metadata` column pattern handles snapshot overrides; actuals edits use the same pattern where applicable.
+- Freeze service-layer guards on agreement / line-item writes at entity-time boundary.
+- `Studio` grace-window settings (`graceLateShowMinutes`, etc.).
+- `StudioShift.projectedCost` — drop, compute live at read time.
+- Cost-state enum stored or enforced via transitions.
 
-### Item-type semantics (Phase 4)
+## 2. Computation
 
-Phase 4 stores **outcomes, not rules**. All five item types are flat monetary amounts. No item type carries special computation.
+The economics service is a **pure calculator** over current persisted state. No stored derived fields, no transitions.
 
-| `item_type` | Sign         | Special semantics in Phase 4?                                                                                                                                                                                                          |
-| ----------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BONUS`     | `amount > 0` | None — flat addition                                                                                                                                                                                                                   |
-| `ALLOWANCE` | `amount > 0` | None — flat addition                                                                                                                                                                                                                   |
-| `OVERTIME`  | `amount > 0` | **None**. Label-only distinction from `BONUS` for reporting filters. No shift-block binding in Phase 4. The Phase 5 Advanced Compensation Engine will *write* `OVERTIME` records as its output; it will not change how R+ stores them. |
-| `DEDUCTION` | `amount < 0` | None — flat subtraction                                                                                                                                                                                                                |
-| `OTHER`     | Any non-zero | Escape hatch for finance teams. No roll-up categorization beyond "other".                                                                                                                                                              |
+### Per-creator base
 
-### Sign enforcement
+Resolve compensation components from the snapshot, evaluate each against available data:
 
-- `amount` must be non-zero for every item type. A zero-amount line item has no finance meaning and is rejected at input validation.
-- `DEDUCTION` requires `amount < 0`.
-- All other types require `amount > 0`.
-- Enforced at R+ input validation; already specified in [compensation-line-items.md](./compensation-line-items.md).
+- `FIXED_BASE` → fixed amount.
+- `HOURLY_BASE` → `agreedRate × duration`. Duration uses `Show.actualStartTime/EndTime` if both present; otherwise `Show.startTime/endTime`.
+- Commission components → `null` in Phase 4 (Wave 4 resolves).
 
-### Target-level application
+### Per-shift labor
 
-Line items apply to their target first (`MEMBERSHIP` or `STUDIO_CREATOR`), then aggregate upward. **Target subtotals may go negative** when deductions exceed additions — this is intentional. Finance needs the correction to show explicitly rather than being clamped at zero.
+`StudioShift.hourlyRate × block-duration`, where block-duration uses `actualStartTime/EndTime` if present, else scheduled. Existing proportional-overlap allocation by minutes for blocks that span multiple shows is unchanged.
 
-Consequence: a creator subtotal of `-$100` is valid and appears in the show row as `-$100`, reducing the show total accordingly.
+### Per-target line items
 
-### Scope → grain attribution
+Sum line items targeting the creator or membership within the requested scope (show, period). Result may be negative — that is intentional and visible in rollups.
 
-| Line item scope                   | Show row | Schedule row                   | Client row                           | Platform row (Phase 4) |
-| --------------------------------- | -------- | ------------------------------ | ------------------------------------ | ---------------------- |
-| `show_id` set                     | ✅        | ✅ (rolled up through its show) | ✅ (rolled up through its show)       | filter/dimension only  |
-| `schedule_id` set, `show_id` null | ❌        | ✅                              | ✅ (rolled up through its schedule)   | ❌                      |
-| both null                         | ❌        | ❌                              | ❌                                    | ❌                      |
+### Row shape (read response)
 
-Client-grain rollup is a direct sum over its constituent show and schedule rows — no proration across shows is introduced. A schedule-scoped item appears once at the client grain via its schedule, not by being spread across individual shows.
+Each row exposes:
 
-Standing/global items (both scopes null) remain visible in compensation list/breakdown endpoints for the target and date range, but stay **out of economics aggregation** in Phase 4. An explicit allocation policy is a Phase 5 prerequisite for including them.
+- `cost` — nullable decimal. `base + lineItems` if all components resolved; `null` if any component unresolved.
+- `base_subtotal` — nullable decimal. The base portion alone (visible even when total is null because line items resolve and need to be shown).
+- `line_item_subtotal` — non-nullable decimal. `0` when no line items.
+- `unresolved_reasons` — string array. Examples: `["creator:smc_x:commission_pending_revenue"]`, `["show:show_y:actuals_not_entered"]`. UI consumes these instead of seeing `0`.
+- `actuals_source` — which input drove time-based components: `OPERATOR_RECORD` / `PLANNED` (Phase 4); the enum extends to `PLATFORM_API` / `PLATFORM_UPLOAD` / `CREATOR_APP` / `PUNCH_CLOCK` later.
+- `is_in_future` — boolean derived from entity-time vs request time. UI uses this to label the row "projected" if it likes; the backend does not store an enum.
 
-### Effective date → horizon filter
+### Null bubbling at rollup grains
 
-A line item enters a row's total when its `effectiveDate` falls within the row's effective range:
+- A row's `cost` is null if any component is unresolved.
+- A grouping (schedule, client, period) reports `cost` = sum of children where defined; if any child is null, the rollup `cost` is null and `unresolved_reasons` carries the union with counts (e.g. `"3 of 17 shows pending actuals"`).
+- Counts (`creator_count`, `show_count`) are always defined.
+- **Never silently coerce null to zero at any grain.**
 
-- Row `cost_state = PROJECTED`: include line items with `effectiveDate ≤ Show.endTime` (or unset, interpreted as "immediate"). Future-dated items that fall within the row's horizon are included — they represent committed future cost.
-- Row `cost_state ∈ {ACTUALIZED, PARTIAL_ACTUAL, UNRESOLVED}`: include line items with `effectiveDate ≤ now` (or unset). A future-dated item attached to a past show does not contribute to actual cost until its effective date passes.
-- Items with `effectiveDate = null` are treated as immediate/one-off and count as of `createdAt`.
+### Actuals priority cascade (extensibility seam)
 
-### Line-item subtotal exposure
+Time-based computation reads from a forward-compatible priority enum so Phase 4's operator-record source can be augmented later without API change.
 
-Rows always surface `line_item_cost` as a distinct field, even when base cost is null. This lets finance see "$200 of known supplemental cost on this creator" without waiting on the unresolved base.
+| Priority | Source                                                           | Phase 4 status |
+| -------- | ---------------------------------------------------------------- | -------------- |
+| 1        | Platform API (Shopee / Lazada / TikTok / etc.)                   | Deferred       |
+| 2        | Platform manual upload                                           | Deferred       |
+| 3        | Operator post-production record (`Show.actualStartTime/EndTime`) | ✅              |
+| 4        | Creator app self-record                                          | Deferred       |
+| 5        | Planned show time (`Show.startTime/endTime`)                     | ✅ fallback     |
 
-## 4. Nullability Bubbling
+Same shape for shift blocks (1: punch-clock; 2: operator manual entry — built; 3: scheduled — built). New sources slot in by extending the enum and resolver — no API restructure required. Row response carries `actuals_source` so the UI can show "calculated from Operator (priority 3)" and any lower-priority sources visible alongside.
 
-Rows must not silently coerce unknown cost to zero. Follow these rules:
+## 3. Three Views (Read-Only)
 
-### Per-target (creator or member)
+All three views read the same data through the same calculator. **All are read-only in Phase 4** — no write endpoints, no acknowledgement, no counter-signature.
 
-| Base                                       | Line items | `base_cost` | `line_item_cost` | `resolved_total_cost`                                              |
-| ------------------------------------------ | ---------- | ----------- | ---------------- | ------------------------------------------------------------------ |
-| Resolved                                   | Any        | Known       | Known            | `base + lineItems`                                                 |
-| `null` (COMMISSION/HYBRID, no revenue yet) | None       | `null`      | `0`              | `null`                                                             |
-| `null`                                     | Present    | `null`      | Known subtotal   | `null` — line-item cost is exposed but `resolved_total` stays null |
+### Creator compensation view
 
-### Per-show
+- **Self**: `GET /me/compensation/creator?from=&to=` — derives identity from auth.
+- **Cross-user**: `GET /studios/:studioId/creators/:creatorId/compensation?from=&to=` — accessible to TALENT_MANAGER (any creator in the studio they manage), ADMIN, MANAGER.
+- Returns `ShowCreator` rows over the period (snapshot agreement + actuals where present) + line items targeting that creator (show-scoped, standing).
 
-- Sum resolved targets. If **any** target has `resolved_total_cost = null`, the show's `resolved_total_cost` is also `null`. Row state per §1.
-- `projected_total_cost` and `actual_total_cost` (horizon-specific) follow the same rule within their horizon.
-- Counts (`creator_count`, `show_count`, unresolved count) never null.
+### Operator compensation view
 
-### Per-schedule / per-client / per-platform (rollup grains)
+- **Self**: `GET /me/compensation/operator?from=&to=`.
+- **Cross-user**: `GET /studios/:studioId/members/:membershipId/compensation?from=&to=` — ADMIN, MANAGER.
+- Returns `StudioShift` rows (rate × actual or scheduled minutes) + line items targeting that membership.
 
-- Rollup totals propagate null: if any child row is null, the rollup is null.
-- Rollup responses MUST expose the unresolved child count so the UI can render "2 of 17 shows unresolved" rather than silently hiding the rollup.
-- No silent null-to-zero coercion at any level.
+### Operational cost view
 
-This is stricter than a naive `SUM(...)` and matches 2a's acceptance criteria ([studio-economics-review.md L172](./studio-economics-review.md#L172)).
+- `GET /studios/:studioId/economics?from=&to=` — ADMIN, MANAGER.
+- Returns roll-up of creator and operator views grouped by show / schedule / client / platform.
+- This is the engine 3.1 (Studio Economics Review) targets.
 
-## 5. Response Shape Implications
+### Cross-cutting rules
 
-R doesn't define response schemas (R+/E0 do), but fixes these field-level requirements that E0 must honor:
+- Date range required.
+- Read-only — no writes accepted on any view.
+- Apply the actuals priority cascade (§2) for time-based components; expose `actuals_source` per row.
+- Apply null bubbling (§2); never coerce to zero.
+- Self-access lives under the existing `/me/` module (`apps/erify_api/src/me/`); cross-user lives under studio-scoped routes with role guards. No per-endpoint identity decorators (Architecture Guardrail 6).
 
-- `cost_state` — one of the four §1 values. Required on every show row.
-- `base_cost` — nullable. Shift + creator base only.
-- `line_item_cost` — non-nullable; `0` when no items.
-- `resolved_total_cost` — nullable. `null` if any underlying input is unresolved.
-- `projected_total_cost` / `actual_total_cost` — nullable; populated only in the matching horizon.
-- `unresolved_reason` — optional string array explaining *why* a row or rollup is partial/unresolved (e.g., `["creator:smc_alice:commission_pending_revenue"]`). Drives the UI "explain why" requirement in 2a.
+## 4. Future Extensions
 
-## 6. Worked Examples
+The Phase 4 base supports each of the deferred concepts as a clean addition. One paragraph each so the foundation can be sanity-checked. **Detailed designs land when the workstream activates** — the existing sibling PRDs and design docs are visioning, not committed.
 
-### Example A — Fully actualized
+**Settlement gating.** When payment processing arrives, manager review of actuals becomes meaningful. Add `Show.actualsSettledAt/By` and `StudioShift.actualsSettledAt/By` (nullable timestamps + FK). The calculator gains a flag (or a separate "settled view") that requires settlement before treating actuals as authoritative. Phase 4 read-paths remain unaffected by default.
 
-- Show ended yesterday.
-- Shift block has `calculatedCost = $120`.
-- Creator `FIXED`, `agreedRate = $300`.
-- One `BONUS` line item on creator, `amount = $50`, `effectiveDate = yesterday`.
+**Freeze write guards at entity-time boundary.** A service-layer check on agreement-field and pre-existing-line-item writes against `Show.endTime` / shift end. New line items remain creatable as adjustments. Pure service-layer addition; no schema change. Pairs with settlement.
 
-Result: `cost_state = ACTUALIZED`, `base = 420`, `line_item_cost = 50`, `resolved_total = 470`.
+**Adjustment-vs-agreement discrimination.** Once freeze ships, line items with `createdAt > entity-time boundary` are derived as adjustments; everything else is part of the frozen agreement. This is a derived field, not stored — `createdAt` is already preserved in Phase 4.
 
-### Example B — Partial actual, commission creator
+**Grace windows.** `Studio` configuration for late-arrival / early-leave tolerance per entity (show, shift block). The calculator gains a normalization step before duration math. Phase 4 default is no normalization; the addition is non-breaking.
 
-- Show ended yesterday.
-- Shift block has `calculatedCost = $120`.
-- Creator `COMMISSION`, no revenue yet.
-- One `BONUS` line item on creator, `amount = $200`, `effectiveDate = yesterday`.
+**Polymorphic audit log table.** When authoritativeness matters (typically with payment processing), the `metadata`-column audit pattern is supplemented (not replaced) with a polymorphic audit table for actuals edits, settlement events, reopen events. The `metadata` pattern remains for snapshot-field overrides.
 
-Result: `cost_state = PARTIAL_ACTUAL`, shift base `= 120`, creator base `= null`, `line_item_cost = 200` (visible, split out), creator `resolved_total = null`, show `resolved_total = null`, `unresolved_reason = ["creator:smc_x:commission_pending_revenue"]`.
+**Recipient acknowledgement / dispute.** Add `acknowledgedAt` / `disputedAt` per recipient view. Dispute reopens settlement (once settlement exists). Read-only Phase 4 views become two-party agreement views without changing the underlying computation.
 
-### Example C — Deduction drives target negative
+**Sign enforcement on line items.** A future workstream may enforce `DEDUCTION < 0` and `BONUS / ALLOWANCE / OVERTIME > 0` at input validation. Phase 4 keeps `amount` signed and unenforced.
 
-- Show in future, projected.
-- Creator `FIXED`, `agreedRate = $400`.
-- One `DEDUCTION` on creator, `amount = -$500`.
+**Wave 4 commission resolution.** Revenue / sales input populates commission components. The frozen `commissionRate` from the snapshot is what revenue is multiplied by. Rows transition from `cost = null` (component unresolved) to a known value as revenue lands. No change to the calculator's public shape — commission components simply stop returning null.
 
-Result: `cost_state = PROJECTED`, creator `base = 400`, `line_item_cost = -500`, creator `resolved_total = -100` (intentional, visible in the row), show `resolved_total = -100`.
+**Schedule-scoped and standing/global line item rollup.** Phase 4 keeps these out of operational aggregation. When the product defines schedule-level cost behavior (allocation policy, freeze), rollup rules are added; the storage shape doesn't change.
 
-### Example D — Schedule-scoped line item
+**Bank-statement reconciliation.** Once payment processing produces a `PaymentRun` record, future bank-statement integration compares PaymentRun amounts vs settled-reference figures and surfaces mismatches as new `CompensationLineItem` adjustments. This is a new feature on top of the cost model, not a change to it.
 
-- Schedule row aggregates 10 shows; each show resolved to `$400` total.
-- One schedule-scoped `ALLOWANCE` on a creator, `schedule_id = sched_x`, `show_id = null`, `amount = $1500`, `effectiveDate = within range`.
+**Notifications on manager edits to actuals / snapshot fields.** A subscriber on the `metadata` audit append. Out of scope for Phase 4; recipients see edits on next view read.
 
-Result: schedule `projected_total_cost = 10×400 + 1500 = 5500`. No show row changes (schedule-scoped items never touch show rows). Client row rolling up this schedule includes the `$5500`.
+**Advanced compensation rule engine (Phase 5).** Tiered commission, OT formulas, bonus rules. Engine output is *written* as `CompensationLineItem` records (or new computed components) through this same data model. The cost model stores outcomes; the rule engine produces them.
 
-### Example E — Future-dated line item on past show
+**Cost-state enum.** If downstream UI demands a single-label state per row beyond `is_in_future` and `unresolved_reasons`, a derived enum (`PROJECTED` / `RESOLVED` / `PARTIAL` / `UNRESOLVED`) can be computed in the response without persistence. Phase 4 leaves this to the UI.
 
-- Show ended last week.
-- Line item `effectiveDate = next week`, `BONUS`, `amount = $100`.
+## 5. Acceptance
 
-Result: `cost_state = ACTUALIZED` (if other inputs resolve), `line_item_cost = 0` in actualized view (line item effective date > now). The same item counts as `projected` contribution if the caller includes `next week` in their date range; in that case the row's horizon straddles both, and 2a's horizon filter decides visibility.
-
-## 7. Downstream Impact
-
-### R+ Compensation Line Items
-
-- Sign validation: per item_type (§3).
-- `OVERTIME` has no shift-binding requirement in Phase 4 (§3).
-- Target subtotal may go negative; input validation does NOT clamp (§3).
-- `effectiveDate` is the temporal anchor; `createdAt` is the fallback.
-
-### E0 Economics Baseline Merge
-
-- Add `cost_state` field (§1) to both show-level and grouped responses.
-- Add `unresolved_reason` field (§5) to rows and rollups.
-- Compute `base_cost` / `line_item_cost` / `resolved_total_cost` separately (§4).
-- Null-propagate per §4; do not coerce to zero.
-- Rebase the branch and ship with R+ integration.
-
-### 2a Studio Economics Review
-
-- Consume `cost_state` to color rows and filter by `cost_state ∈ {ACTUALIZED, PARTIAL_ACTUAL}` when horizon = past, `PROJECTED` when horizon = future.
-- Display `unresolved_reason` per row and as a rollup summary ("2 of 17 shows unresolved because…").
-- Preflight returns counts by `cost_state`.
-- 90-day range cap remains as stated in the 2a PRD.
-
-### 2b Show Planning Export
-
-- Inherits §1 and §2 unchanged. Planning export is future-horizon only → `cost_state = PROJECTED` is the only state it sees.
-
-### Wave 3 P&L Revenue Workflow
-
-- Revenue entry resolves `COMMISSION` / `HYBRID` base cost.
-- No other §1–§4 rules change; revenue arrival simply moves rows from `PARTIAL_ACTUAL` → `ACTUALIZED`.
-- Contribution margin = `revenue − resolved_total_cost`; null-propagates the same way.
-
-## 8. Edge Cases & Open Items
-
-These are called out so downstream implementers recognize them; R locks the resolution.
-
-- **Shift block spans multiple shows**: existing proportional-overlap allocation retained. R does not change it.
-- **Creator removed from a show after it ran**: historical line items remain attributed to the (now-deleted) `ShowCreator`; soft-delete is preserved per compensation-line-items soft-delete rule.
-- **Show soft-deleted after actualized**: excluded from aggregation. If a caller needs audit, admin tooling remains the surface. Studio economics excludes soft-deleted rows.
-- **Multiple line items on the same target with overlapping effective dates**: all apply additively (no dedup). If a manager enters duplicate records, that is an input-correctness problem, not an aggregation rule.
-- **Line item on a target that was later deactivated**: item stays valid (historical cost preserved per R+ PRD). R does not introduce deactivation-scrub behavior.
-
-## 9. Acceptance (for this PRD)
-
-R is complete when:
+This PRD is complete when:
 
 - [ ] This doc is merged on `master`.
-- [ ] [PHASE_4.md](../roadmap/PHASE_4.md) row R links here.
-- [ ] [compensation-line-items.md](./compensation-line-items.md) references this doc as the composition authority.
-- [ ] [studio-economics-review.md](./studio-economics-review.md) references this doc for `cost_state` and nullability.
-- [ ] [pnl-revenue-workflow.md](./pnl-revenue-workflow.md) references this doc for where revenue resolves COMMISSION/HYBRID.
-- [ ] [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md) flags this doc as the authoritative update target.
+- [ ] [PHASE_4.md](../roadmap/PHASE_4.md) row 2.1 links here and Definition of Done aligns with the simplified scope.
+- [ ] The four sibling PRDs (`compensation-line-items.md`, `pnl-revenue-workflow.md`, `show-planning-export.md`, `studio-economics-review.md`) carry a **Visioning** banner indicating they are pre-simplification roadmap documents and may change.
+- [ ] The six BE/FE design docs in `apps/erify_api/docs/design/` and `apps/erify_studios/docs/design/` for line items, show economics, and studio economics review carry a **Visioning + may be misaligned** banner.
 
-No code verification. R+, E0, and 2a each verify their respective slice when they ship.
+No code verification.
 
-## 10. Glossary Anchors
+## Glossary anchors
 
 For linking from other docs:
 
-- `#1-projected--actualized-state-machine` — cost state rules
-- `#2-resolution-precedence--base-cost` — rate and type precedence
-- `#3-line-item-composition` — item type semantics, scope attribution
-- `#4-nullability-bubbling` — null propagation rules
-- `#5-response-shape-implications` — required fields for E0
+- `#1-data-model` — snapshot fields, components, actuals, line items, metadata-column audit
+- `#2-computation` — pure calculator, unresolved reasons, actuals priority cascade
+- `#3-three-views-read-only` — creator / operator / operational, `/me/` pattern
+- `#4-future-extensions` — extensibility hooks for settlement, freeze, grace, audit, acknowledgement, payment, etc.
 
 ## Product Decisions
 
-- **Automatic state derivation, not human finalize.** Transitions happen from data alone (end time, `calculatedCost`, creator resolvability). Keeps the engine stateless and avoids a finalize workflow in Phase 4.
-- **OT is label-only in Phase 4.** No shift binding. The Phase 5 rule engine will produce `OVERTIME` records as its output without changing storage semantics.
-- **DEDUCTION applies at target level; target cost can go negative.** Finance-faithful; the correction is visible rather than clamped.
-- **Line-item subtotals always exposed, even when base is null.** Keeps known supplemental cost visible during COMMISSION/HYBRID pending-revenue states.
-- **Null propagates through rollups.** No silent zero-coercion at any grain. Partial-count surfaces explicitly to the UI.
-- **Phase 4 stores outcomes, not rules.** Rule engine, proration, allocation policies are all Phase 5.
+- **Phase 4 is a viewer, not a workflow.** Records are notice and reference; views are read-only; the calculator is pure.
+- **Snapshot at assignment time + metadata-column audit for snapshot overrides.** Stable historical references without freeze guards or a separate audit table. ADMIN and MANAGER may update intended-immutable fields; FE warns about downstream impact.
+- **Component-aware compensation.** `FIXED` / `HOURLY` / `COMMISSION` / `HYBRID` resolved into components. Single source of truth for projection arithmetic — `StudioShift.projectedCost` is removed.
+- **Null propagates through rollups; never coerce to zero.** Unresolved reasons surface explicitly to the UI.
+- **Forward-compatible actuals priority cascade.** Future sources slot in by enum extension, not API restructure.
+- **Three first-class views, single `/me/` pattern for self-access.** TALENT_MANAGER may view any creator's compensation in their studio.
+- **Phase 4 stores outcomes, not rules.** Rule engine, settlement, freeze, grace, payment processing, acknowledgement — all extension hooks documented in §4 and revisited when their workstream activates.
 
-## Design Reference
+## Design reference
 
-- R+ Compensation Line Items: [compensation-line-items.md](./compensation-line-items.md)
-- E0 Economics Baseline: [docs/features/show-economics.md](../features/show-economics.md), [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
-- 2a Studio Economics Review: [studio-economics-review.md](./studio-economics-review.md)
-- 2b Show Planning Export: [show-planning-export.md](./show-planning-export.md)
-- Wave 3 P&L Revenue: [pnl-revenue-workflow.md](./pnl-revenue-workflow.md)
+The sibling PRDs and design docs below are **visioning** for Phase 4. They were drafted before this simplification and will be redrafted when their workstream becomes active. Treat as roadmap, not committed design.
+
+- 2.2 Compensation Line Items: [compensation-line-items.md](./compensation-line-items.md)
+- 2.3 Economics Service: [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
+- 3.1 Studio Economics Review: [studio-economics-review.md](./studio-economics-review.md)
+- 3.2 Show Planning Export: [show-planning-export.md](./show-planning-export.md)
+- 4.1 P&L Revenue: [pnl-revenue-workflow.md](./pnl-revenue-workflow.md)
 - Phase 4 Roadmap: [PHASE_4.md](../roadmap/PHASE_4.md)

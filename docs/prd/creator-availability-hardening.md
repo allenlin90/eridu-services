@@ -1,11 +1,11 @@
-# PRD: Creator Availability Logic Hardening
+# PRD: Creator Availability Hardening (3.3)
 
-> **Status**: Active
-> **Phase**: 4 — Extended Scope
-> **Workstream**: Creator operations — assignment correctness
+> **Status**: 🔲 Planned
+> **Phase**: 4 — Wave 3 (Finance Surfaces)
+> **Workstream**: Creator operations — assignment correctness. Independent of the Wave 2 cost stack; may start in parallel with Wave 2 if capacity allows.
 > **Depends on**:
-> - Studio Creator Roster — ✅ **Complete** (`docs/features/studio-creator-roster.md` ships roster state and inactive enforcement)
-> - Studio Creator Onboarding & Roster-First Assignment — ✅ **Implemented** (`docs/features/studio-creator-onboarding.md` — removes the `/system/*` dependency and enforces roster membership at assignment write time)
+> - 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) — roster state and inactive enforcement
+> - 1.4 Studio Creator Onboarding ✅ ([feature](../features/studio-creator-onboarding.md)) — roster-first assignment enforcement
 
 ## Problem
 
