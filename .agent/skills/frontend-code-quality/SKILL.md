@@ -7,6 +7,22 @@ description: Provides code quality standards for frontend applications. This ski
 
 This skill defines the quality standards specific to frontend applications.
 
+## App-Level Refactor References
+
+Before proposing a frontend cleanup or refactor in `erify_studios`, consult both
+documents and reuse or extend them rather than starting a parallel register:
+
+- `apps/erify_studios/docs/FRONTEND_REFACTORING_REFERENCE.md` — implemented
+  baseline patterns (table pagination derivation, selected-row snapshots, typed
+  admin form display fields, search wiring on async lookups).
+- `apps/erify_studios/docs/FRONTEND_TECH_DEBT.md` — active register of known
+  follow-ups intentionally deferred from broad cleanup branches. Check first to
+  avoid duplicate proposals; when work resolves a row, move it to the
+  `Resolved In This Cleanup` section instead of deleting it.
+
+`erify_creators` should follow the same convention if/when a similar pair of
+docs is introduced there.
+
 ## Linting & Formatting
 
 We use **ESLint 9** with a shared configuration (`@eridu/eslint-config`).
