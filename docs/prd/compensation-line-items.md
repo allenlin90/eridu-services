@@ -219,11 +219,8 @@ This PRD does not lock endpoint names, request DTOs, or error-code names. The te
 
 ## Design Reference
 
-Design docs were drafted before this simplified PRD and must be reviewed after PRD confirmation. Wave 3 PRDs and designs are consumer context only; revise them when Wave 3 starts, not as part of the 2.2 scope.
+Pre-signoff design drafts were removed because they encoded freeze, approval, grace, and broader compensation assumptions that are out of Phase 4 scope. Redraft backend and frontend implementation designs from this PRD before 2.2 implementation starts. Wave 3 PRDs are consumer context only; revise them when Wave 3 starts, not as part of the 2.2 scope.
 
 - 2.1 Economics Cost Model: [economics-cost-model.md](./economics-cost-model.md)
 - 2.3 Economics Service: [economics-service.md](./economics-service.md)
-- 2.3 Backend Design: [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
-- Backend design: [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)
-- Frontend design: [COMPENSATION_LINE_ITEMS_DESIGN.md](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)
 - Architecture Guardrails: [PHASE_4.md#architecture-guardrails](../roadmap/PHASE_4.md#architecture-guardrails)

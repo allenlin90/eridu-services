@@ -215,10 +215,8 @@ If a recipient self endpoint returns summary totals, those totals must include o
 
 ## Design Reference
 
-Design docs were drafted before this simplified PRD and must be reviewed after PRD confirmation. Wave 3 PRDs and designs are consumer context only; revise them when Wave 3 starts, not as part of the 2.3 scope.
+Pre-signoff design drafts were removed because they encoded stale cost-state, approval, freeze, and grace assumptions. Redraft backend and frontend implementation designs from this PRD when 2.3 starts. Wave 3 PRDs are consumer context only; revise them when Wave 3 starts, not as part of the 2.3 scope.
 
 - 2.1 Economics Cost Model: [economics-cost-model.md](./economics-cost-model.md)
 - 2.2 Compensation Line Items + Actuals: [compensation-line-items.md](./compensation-line-items.md)
-- Backend design: [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
-- Frontend consumer design: [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_ECONOMICS_DESIGN.md)
 - Architecture Guardrails: [PHASE_4.md#architecture-guardrails](../roadmap/PHASE_4.md#architecture-guardrails)

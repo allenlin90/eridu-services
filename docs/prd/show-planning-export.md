@@ -3,7 +3,7 @@
 > **Status**: 🔲 Planned - required Phase 4 scope
 > **Phase**: 4 - Wave 3 (Finance Surfaces)
 > **Workstream**: Future-horizon operations planning export with show assignments and L-side cost preview.
-> **Depends on**: 2.1 Economics Cost Model 🔲 ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲
+> **Depends on**: 2.1 Economics Cost Model ✅ ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲
 > **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) owns cost calculation. Planning export reads show-level/operational cost rows; it does not calculate compensation itself.
 
 ## Purpose
@@ -274,10 +274,8 @@ The UI should:
 
 ## Design Reference
 
-Design docs were drafted before this simplified PRD and must be reviewed after PRD confirmation.
+Pre-signoff design drafts were removed because planning export must be redrafted against the implemented 2.3 read shape and the confirmed 3.1 review/export surface.
 
-- Backend design: [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_api/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)
-- Frontend design: [SHOW_PLANNING_EXPORT_DESIGN.md](../../apps/erify_studios/docs/design/SHOW_PLANNING_EXPORT_DESIGN.md)
 - Economics cost model: [economics-cost-model.md](./economics-cost-model.md)
 - Economics service: [economics-service.md](./economics-service.md)
 - Studio economics review: [studio-economics-review.md](./studio-economics-review.md)

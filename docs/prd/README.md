@@ -30,15 +30,15 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 
 | #   | PRD                                                                   | Wave   | Status                           |
 | --- | --------------------------------------------------------------------- | ------ | -------------------------------- |
-| 2.1 | [Economics Cost Model](./economics-cost-model.md)                     | 2      | 🔲 Active — docs-only             |
-| 2.2 | [Compensation Line Items + Actuals](./compensation-line-items.md)     | 2      | 🔲 Planned                        |
+| 2.1 | [Economics Cost Model](./economics-cost-model.md)                     | 2      | ✅ Signed off — docs locked       |
+| 2.2 | [Compensation Line Items + Actuals](./compensation-line-items.md)     | 2      | 📝 Design next                    |
 | 2.3 | [Economics Service](./economics-service.md)                           | 2      | 🔲 Planned                        |
 | 3.1 | [Studio Economics Review](./studio-economics-review.md)               | 3      | 🔲 Planned — revise before Wave 3 |
 | 3.2 | [Show Planning Export](./show-planning-export.md)                     | 3      | 🔲 Planned — revise before Wave 3 |
 | 3.3 | [Creator Availability Hardening](./creator-availability-hardening.md) | 3      | 🔲 Planned — revise before Wave 3 |
 | —   | [P&L Revenue Workflow](./pnl-revenue-workflow.md)                     | Future | ⏭️ Future target                  |
 
-The 2.3 design doc lands when the workstream starts; [Economics Service](./economics-service.md) is the product/API contract source.
+The previous Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they encoded stale pre-simplification assumptions. New app-local technical designs should be redrafted from the signed-off PRDs when each workstream starts.
 
 Studio schedule management is deferred (revisit with the Client Portal workstream): [PRD](./studio-schedule-management.md).
 

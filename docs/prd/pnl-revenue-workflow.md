@@ -5,7 +5,7 @@
 > **Status**: ⏭️ Future target
 > **Phase**: Future P&L workstream after simplified Phase 4
 > **Workstream**: P&L revenue ("P") side — completing the P&L model. Resolves the `COMMISSION` / `HYBRID` commission portion that remains pending in Phase 4.
-> **Depends on**: 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) · 2.1 Economics Cost Model 🔲 ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲
+> **Depends on**: 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) · 2.1 Economics Cost Model ✅ ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲
 > **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — Phase 4 leaves commission components unresolved; future revenue work must use the snapshotted `commissionRate` and the cost model's null-bubbling contract.
 
 ## Problem
@@ -120,12 +120,11 @@ Who enters revenue and when?
 
 ## Design Reference
 
+Future revenue design drafts were removed because revenue is no longer required to close Phase 4 and must be redrafted when revenue planning restarts.
+
 - 2.1 Cost Model: [`economics-cost-model.md`](./economics-cost-model.md)
 - 2.2 Compensation Line Items + Actuals: [`compensation-line-items.md`](./compensation-line-items.md)
 - 2.3 Economics Service: [`economics-service.md`](./economics-service.md)
-- 2.3 Backend Design: [`SHOW_ECONOMICS_DESIGN.md`](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
 - 3.1 Studio Economics Review: [`studio-economics-review.md`](./studio-economics-review.md)
-- 4.1 Backend design: [`PNL_REVENUE_WORKFLOW_DESIGN.md`](../../apps/erify_api/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md)
-- 4.1 Frontend design: [`PNL_REVENUE_WORKFLOW_DESIGN.md`](../../apps/erify_studios/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md)
 - Business domain definitions: [`docs/domain/BUSINESS.md`](../domain/BUSINESS.md) (GMV vs. sales distinction should be formally defined here before implementation)
 - Phase 4 roadmap: [`PHASE_4.md`](../roadmap/PHASE_4.md)

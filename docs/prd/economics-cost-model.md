@@ -1,6 +1,6 @@
 # PRD: Economics Cost Model (2.1)
 
-> **Status**: 🔲 Active — canonical Phase 4 cost semantics
+> **Status**: ✅ Signed off — canonical Phase 4 cost semantics locked
 > **Phase**: 4 — Wave 2 critical-path gate
 > **Workstream**: L-side P&L visibility — minimal cost reference + extensible foundation
 > **Gates**: 2.2 Compensation Line Items, 2.3 Economics Service

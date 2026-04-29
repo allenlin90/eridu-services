@@ -3,7 +3,7 @@
 > **Status**: 🔲 Planned - required Phase 4 scope
 > **Phase**: 4 - Wave 3 (Finance Surfaces)
 > **Workstream**: Manager-facing read/review/export surface for the operational cost view produced by 2.3.
-> **Depends on**: 1.5 Studio Show Management ✅ · 2.1 Economics Cost Model 🔲 ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲
+> **Depends on**: 1.5 Studio Show Management ✅ · 2.1 Economics Cost Model ✅ ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲
 > **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) owns calculation, null bubbling, actuals-source labels, and the read-only reference stance.
 
 ## Purpose
@@ -165,14 +165,11 @@ If 3.1 adds helper endpoints such as catalog or preflight, they are UX helpers o
 
 ## Design Reference
 
-Design docs were drafted before this simplified PRD and must be reviewed after PRD confirmation.
+Pre-signoff design drafts were removed because they encoded stale cost-state, approval, freeze, grace, and saved-definition assumptions. Redraft 3.1 backend and frontend designs after the 2.3 read shape lands.
 
 - 2.1 Cost Model: [economics-cost-model.md](./economics-cost-model.md)
 - 2.2 Compensation Line Items: [compensation-line-items.md](./compensation-line-items.md)
 - 2.3 Economics Service PRD: [economics-service.md](./economics-service.md)
-- 2.3 Economics Service design: [SHOW_ECONOMICS_DESIGN.md](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
-- 3.1 Backend design: [STUDIO_ECONOMICS_REVIEW_DESIGN.md](../../apps/erify_api/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)
-- 3.1 Frontend design: [STUDIO_ECONOMICS_REVIEW_DESIGN.md](../../apps/erify_studios/docs/design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)
 - 3.2 Show Planning Export PRD: [show-planning-export.md](./show-planning-export.md)
 - Task reporting feature reference: [task-submission-reporting.md](../features/task-submission-reporting.md)
 - Phase 4 roadmap: [PHASE_4.md](../roadmap/PHASE_4.md)

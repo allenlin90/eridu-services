@@ -31,9 +31,6 @@ Active (in progress):
 
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Planned follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
-3. [Show Economics Frontend Design](./design/SHOW_ECONOMICS_DESIGN.md) — 📐 2.3 consumer plan (lands when 2.3 starts)
-4. [Studio Economics Review Frontend Design](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md) — 📐 Planned
-5. [Compensation Line Items Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — 📐 Planned
-6. [Show Planning Export Frontend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md) — 📐 Planned
-7. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-8. [P&L Revenue Workflow Frontend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md) — 📐 Planned
+3. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
+
+Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
