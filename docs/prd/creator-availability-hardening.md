@@ -1,11 +1,11 @@
-# PRD: Creator Availability Logic Hardening
+# PRD: Creator Availability Hardening (3.3)
 
-> **Status**: Active
-> **Phase**: 4 — Extended Scope
-> **Workstream**: Creator operations — assignment correctness
+> **Status**: 🔲 Planned
+> **Phase**: 4 — Wave 3 (Finance Surfaces)
+> **Workstream**: Creator operations — assignment correctness. Independent of the Wave 2 cost stack; may start in parallel with Wave 2 if capacity allows.
 > **Depends on**:
-> - Studio Creator Roster — ✅ **Complete** (`docs/features/studio-creator-roster.md` ships roster state and inactive enforcement)
-> - Studio Creator Onboarding & Roster-First Assignment — ✅ **Implemented** (`docs/features/studio-creator-onboarding.md` — removes the `/system/*` dependency and enforces roster membership at assignment write time)
+> - 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) — roster state and inactive enforcement
+> - 1.4 Studio Creator Onboarding ✅ ([feature](../features/studio-creator-onboarding.md)) — roster-first assignment enforcement
 
 ## Problem
 
@@ -31,12 +31,12 @@ Key questions unanswered today:
 
 ## Existing Infrastructure
 
-| Endpoint / Model | Current Behavior | Status |
-| --- | --- | --- |
-| `GET /studios/:studioId/creators/availability` | Broad discovery mode, no conflict enforcement | ✅ Exists (intentionally loose) |
-| `ShowCreator` | Records current show–creator assignments | ✅ Exists |
-| `Creator.deletedAt` / roster active status | Soft-delete exists; roster active/inactive is now studio-operator-managed on `StudioCreator` | ✅ Exists |
-| Creator-mapping assignment endpoint | Accepts any creator without eligibility check | ✅ Exists |
+| Endpoint / Model                               | Current Behavior                                                                             | Status                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------ |
+| `GET /studios/:studioId/creators/availability` | Broad discovery mode, no conflict enforcement                                                | ✅ Exists (intentionally loose) |
+| `ShowCreator`                                  | Records current show–creator assignments                                                     | ✅ Exists                       |
+| `Creator.deletedAt` / roster active status     | Soft-delete exists; roster active/inactive is now studio-operator-managed on `StudioCreator` | ✅ Exists                       |
+| Creator-mapping assignment endpoint            | Accepts any creator without eligibility check                                                | ✅ Exists                       |
 
 ## Requirements
 
@@ -140,10 +140,10 @@ When `is_conflicted=false`, `conflict_reason` and `conflicting_show_id` are omit
 
 ### Error Codes (Assignment Endpoint)
 
-| Code | HTTP Status | Condition |
-| --- | --- | --- |
-| `CREATOR_OVERLAP_CONFLICT` | 409 | Creator already assigned to show with overlapping time window |
-| `CREATOR_NOT_IN_ROSTER` | 422 | Creator not in studio roster (enforced after creator roster feature ships) |
+| Code                       | HTTP Status | Condition                                                                  |
+| -------------------------- | ----------- | -------------------------------------------------------------------------- |
+| `CREATOR_OVERLAP_CONFLICT` | 409         | Creator already assigned to show with overlapping time window              |
+| `CREATOR_NOT_IN_ROSTER`    | 422         | Creator not in studio roster (enforced after creator roster feature ships) |
 
 These are distinct from 403 (authorization) and 404 (not found). Defined in `@eridu/api-types`.
 

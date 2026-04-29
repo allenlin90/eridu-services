@@ -1,299 +1,226 @@
-# PRD: Compensation Line Items
+# PRD: Compensation Line Items + Actuals (2.2)
 
-> **Status**: Active
-> **Phase**: 4 — Post-Wave 1 (Economics Cost Model Review)
-> **Workstream**: P&L cost visibility — supplemental compensation beyond base rates
-> **Depends on**: Studio Member Roster — ✅ **Complete** (PR #28), Studio Creator Roster — ✅ **Complete** ([feature doc](../features/studio-creator-roster.md))
+> **Status**: 🔲 Planned - required Phase 4 scope
+> **Phase**: 4 - Wave 2 (Cost Foundation)
+> **Workstream**: First L-side code. Persist compensation line items, show actuals, shift-block actuals, assignment snapshot overrides, and the data surfaces that the 2.3 economics service consumes.
+> **Depends on**: 1.2 Studio Creator Roster ✅ · 1.3 Studio Member Roster ✅ · 1.5 Studio Show Management ✅ · 2.1 Economics Cost Model ([PRD](./economics-cost-model.md))
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) owns Phase 4 cost rules: read-only reference views, pure live calculation, nullable unresolved components, actuals priority cascade, no freeze/settlement/grace workflow.
 
-## Problem
+## Purpose
 
-Base rates alone do not capture the full cost of studio labor:
+2.2 delivers the persisted cost inputs required by the 2.3 economics service. It is not a calculator and not a payment workflow.
 
-- **Studio members** have a single `baseHourlyRate` on `StudioMembership`, but real operations involve bonuses (show completion, performance), special allowances (transport, meals, equipment), overtime premiums, and deductions. These supplemental items are invisible to the economics endpoint, which underreports true L-side cost.
-- **Studio creators** have a 3-field compensation model (`defaultRate`, `defaultRateType`, `defaultCommissionRate`) with per-show overrides on `ShowCreator`, but no mechanism for bonuses, allowances, or ad-hoc adjustments beyond the base compensation type.
-- **Dual-role individuals** — a person can be both a studio member (staff) and a studio creator (talent) in the same studio. Their compensation in each capacity is independent and must be tracked separately.
+The required Phase 4 slice is:
 
-Key questions unanswered today:
+1. **Compensation line items** - flat signed supplemental cost records attached to concrete show or shift events / event participation, not standalone HR or payment records.
+2. **Show actuals** - nullable `Show.actualStartTime` / `Show.actualEndTime` entered by studio operators.
+3. **Shift-block actuals** - nullable `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime`.
+4. **Assignment snapshot override audit** - ADMIN/MANAGER updates to intended-immutable snapshot fields append to the row's existing `metadata` audit trail.
+5. **Existing assignment snapshot normalization** - assignments created before resolved `ShowCreator` terms were required are normalized or explicitly marked unresolved before 2.3 reads them.
+6. **Drop stored shift projection** - remove `StudioShift.projectedCost`; projection is computed live by 2.3.
 
-- *"What is the true total cost of this show, including bonuses and allowances?"*
-- *"How much did this member earn beyond their hourly rate this month?"*
-- *"What supplemental costs are attached to this creator for this show?"*
-- *"How do I communicate to a member what they're being compensated for?"*
+2.3 consumes these inputs to produce the creator, operator, and operational cost views defined in [economics-cost-model.md §3](./economics-cost-model.md#3-three-views-read-only).
 
-Members and creators currently have no way to review their full compensation breakdown. The economics endpoint has no mechanism to include supplemental cost items in its aggregation.
+## Scope Boundary
 
-## Users
-
-- **Studio ADMIN** (primary): create, update, and remove compensation line items for any member or creator
-- **Studio MANAGER** (secondary): read-only view of compensation line items for operational awareness
-- **Studio members** (self-review): view their own compensation breakdown (base rate + line items) for a given period
-- **Studio creators** (self-review via TALENT_MANAGER): view compensation summary through roster page
-
-## Existing Infrastructure
-
-| Model / Endpoint | Fields / Behavior | Status |
-| --- | --- | --- |
-| `StudioMembership` | `baseHourlyRate` — sole member cost input | ✅ Exists |
-| `StudioCreator` | `defaultRate`, `defaultRateType`, `defaultCommissionRate` — creator cost defaults | ✅ Exists |
-| `ShowCreator` | `agreedRate`, `compensationType`, `commissionRate` — per-show overrides | ✅ Exists |
-| `StudioShift` | `hourlyRate` (snapshot), `projectedCost` (hours × rate), `calculatedCost` (optional override) | ✅ Exists |
-| `TaskTarget` | Polymorphic pattern: `targetType` + `targetId` + nullable FK columns | ✅ Exists (reference pattern) |
-| Economics endpoints | Developed, merge deferred to after Wave 1 cost model review | ⏸️ Deferred |
-
-## Design Decisions
-
-### Single-Entry Journal, Not Double-Entry Ledger
-
-This system is an operations platform tracking **cost inputs for P&L visibility**, not a financial accounting system. The question it answers is "what did this show cost us?" — not "where did money flow between accounts?"
-
-| Concern | Double-Entry Ledger | Our System |
-|---------|-------------------|------------|
-| Core invariant | Debits = Credits across all accounts | Cost items sum correctly per show/schedule |
-| Account structure | Chart of accounts (assets, liabilities, equity) | None — costs attributed to shows/schedules |
-| Transaction model | Every entry touches 2+ accounts | A line item is a standalone cost fact |
-| Correction model | Reversing journal entries | Soft-delete + new line item, or PATCH |
-
-If the studio needs full accounting, they push data to external accounting software (QuickBooks, Xero). This system does not become a general ledger.
-
-### Unified Model with Single Intermediate Table
-
-Following the existing `TaskTarget` polymorphic pattern, compensation line items use:
-- A **base table** (`CompensationLineItem`) holding the compensation fact (amount, type, scope)
-- A **single intermediate table** (`CompensationTarget`) handling the polymorphic link to the association record
-
-This keeps CRUD, validation, and economics aggregation DRY across all engagement types while maintaining Prisma referential integrity.
-
-### Flat Amounts Only — No Calculation Rules
-
-Each line item is a flat monetary amount entered by a human (or written by a future rule engine). The `CompensationLineItem` model stores **outcomes**, not **rules**. OT multipliers, tiered commission formulas, and automated bonus calculations are Phase 5 scope ("Advanced Compensation Engine"). The architecture guardrail is unchanged: `metadata` is not a compensation rule engine.
-
-### No Implicit Proration Across Shows
-
-Phase 4 does **not** prorate one line item across multiple shows. Economics includes a line item only when the item scope matches the aggregation grain directly:
-
-- `show_id` set: attributable to exactly one show. Included in show-level economics, client grouping, planning export, and schedule grouping through that show's roll-up.
-- `schedule_id` set and `show_id` null: schedule-scoped. Included only in schedule-grouped economics and compensation breakdown endpoints.
-- `show_id` null and `schedule_id` null: standing/global. Visible in compensation list and breakdown endpoints for the relevant date window, but excluded from economics aggregation until an explicit allocation policy exists.
-
-Future automatic proration/allocation rules are Phase 5 scope.
-
-### Preserve Unknown Creator Base Cost
-
-Compensation line items must not coerce unresolved creator base compensation to zero. When a creator's base `computedCost` is `null` because compensation type is `COMMISSION` or `HYBRID` and revenue is not available yet:
-
-- the known supplemental amount is surfaced as `lineItemCost = SUM(line items)`
-- the fully resolved creator total remains `null`
-- any show/client/export total that depends on that creator's fully resolved total remains `null` until the revenue workflow ships
-
-## Requirements
+2.2 is required for Phase 4, but the simplified Phase 4 model excludes several concepts from earlier drafts.
 
 ### In Scope
 
-1. **Compensation line item CRUD** — ADMIN can create, update, and soft-delete line items. Each item has: `itemType` (BONUS, ALLOWANCE, OVERTIME, DEDUCTION, OTHER), `amount` (positive for additions, negative for deductions), optional `label`, optional `note`, optional `effectiveDate`.
-
-2. **Polymorphic target via CompensationTarget** — each line item links to exactly one association record via an intermediate table following the TaskTarget pattern. Current target types: `MEMBERSHIP` (→ `StudioMembership`) and `STUDIO_CREATOR` (→ `StudioCreator`). Extensible to future types (contractor, agency talent) by adding a nullable FK column.
-
-3. **Optional scope** — line items can be scoped to a specific `Show` (show-based bonus), a specific `Schedule` (schedule-based OT premium), or left unscoped (standing/global adjustment like monthly transport allowance). Scope does **not** imply automatic cross-show allocation in Phase 4.
-
-4. **Dual-role support** — a person who is both a studio member and a studio creator has independent line items under each association record. These are separate P&L cost buckets.
-
-5. **Economics integration** — the economics service aggregates line items only when the item scope matches the response grain directly. Member shift basis is `calculatedCost ?? projectedCost`, then applicable line items are added. Creator outputs track `baseComputedCost`, `lineItemCost`, and `resolvedTotalCost`; `resolvedTotalCost` is only returned when the base creator cost is known.
-
-6. **Self-review endpoint** — members can view their own compensation breakdown (base rate + line items) for a date range. Read-only, scoped to their own membership.
+- CRUD for active compensation line items.
+- Soft delete for line items.
+- Signed decimal `amount` with no type-based sign enforcement in Phase 4.
+- Required free-text `reason`.
+- Event-scoped attachment to supported show/shift entities such as show-creator assignment, show, shift, or shift block.
+- Event-attached line items included by the 2.3 direct compensation and operational calculators according to the attached event's date/time.
+- No separate `effectiveDate`; date inclusion comes from the attached event.
+- Explicit separation between calculated base compensation and persisted supplemental line items.
+- Show and shift-block actual time fields.
+- Metadata-column audit append for snapshot field overrides.
+- Existing soft-delete behavior respected by reads.
 
 ### Out of Scope
 
-- Calculation rules, formulas, automated OT detection — Phase 5 "Advanced Compensation Engine"
-- Formula storage in metadata — architecture guardrail unchanged
-- Revenue-based commission computation — P&L Revenue Workflow (Wave 3)
-- Double-entry accounting / general ledger
-- Payroll generation — line items are cost visibility, not payment instructions
-- Bulk import of line items (CSV upload)
-- Compensation history / audit trail beyond soft-delete
+- Economics aggregation, rollups, unresolved reason composition, and monetary formulas - owned by 2.3.
+- Studio economics review/export workspace - owned by 3.1.
+- Show planning export - owned by 3.2.
+- Revenue, commission resolution, and contribution margin - future target.
+- Settlement state machine, approval, reopen, or lock workflow.
+- Freeze write guards at show/shift end.
+- Grace-window settings or duration normalization.
+- Dedicated actuals audit table.
+- Adjustment-vs-agreement discrimination based on `createdAt`.
+- Type-based sign enforcement (`DEDUCTION < 0`, others `> 0`).
+- Payment processing, bank reconciliation, acknowledgement, dispute, or recipient-initiated adjustments.
+- Rule-engine formulas, OT multipliers, tiered commission, or payroll generation.
+- Generated line-item snapshots for base show compensation or base shift labor.
+- Standing/null-scope, schedule-scoped, global, recurring, HR, or payment-system line items.
 
-## Data Model
+## Users
 
-### CompensationLineItem (base table)
+| User                     | Need                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Studio ADMIN             | Maintain line items, enter actuals, update snapshot fields when operationally necessary, and understand that values affect read-only references. |
+| Studio MANAGER           | Maintain line items and actuals for shows/shifts they operate, with the same reference-only framing.                                             |
+| Studio creators          | Later read their own creator compensation view through 2.3 `/me/` endpoints.                                                                     |
+| Studio members/operators | Later read their own operator compensation view through 2.3 `/me/` endpoints.                                                                    |
 
-The compensation fact — amount, type, scope, audit fields.
+## Existing Infrastructure
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `uid` | String | Yes | Public identifier (prefix: `cli`) |
-| `studio_id` | FK → Studio | Yes | Studio scope |
-| `item_type` | String | Yes | `BONUS`, `ALLOWANCE`, `OVERTIME`, `DEDUCTION`, `OTHER` |
-| `amount` | Decimal(10,2) | Yes | Positive = cost addition, negative = deduction |
-| `label` | String | No | Human-readable override (null → derive from `item_type`) |
-| `note` | String | No | Free-text context |
-| `effective_date` | DateTime | No | When this applies (null = immediate/one-off) |
-| `show_id` | FK → Show | No | Show-scoped. If combined with `schedule_id`, the schedule must match the show's schedule. |
-| `schedule_id` | FK → Schedule | No | Schedule-scoped. May be provided alone, or alongside a show in the same schedule. |
-| `metadata` | Json | No | Descriptive context only |
-| `deleted_at` | DateTime | No | Soft-delete |
-
-### CompensationTarget (intermediate table)
-
-Polymorphic link following TaskTarget pattern. One table handles all target types.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `line_item_id` | FK → CompensationLineItem | Yes | 1:1 unique link |
-| `target_type` | String | Yes | `MEMBERSHIP`, `STUDIO_CREATOR`, future types |
-| `target_id` | BigInt | Yes | Generic reference to target record |
-| `membership_id` | FK → StudioMembership | No | Set when `target_type = MEMBERSHIP` |
-| `studio_creator_id` | FK → StudioCreator | No | Set when `target_type = STUDIO_CREATOR` |
-
-Exactly one typed FK column is set per record, matching `target_type`. New engagement types add a nullable FK column — additive migration only.
-
-## API Contract
-
-### Routes
-
-| Method | Route | Description | Access |
-| --- | --- | --- | --- |
-| `GET` | `/studios/:studioId/compensation-items` | List line items (filterable by targetType, showId, scheduleId, dateRange) | ADMIN, MANAGER |
-| `POST` | `/studios/:studioId/compensation-items` | Create a line item with target | ADMIN |
-| `PATCH` | `/studios/:studioId/compensation-items/:uid` | Update amount, label, note, effectiveDate | ADMIN |
-| `DELETE` | `/studios/:studioId/compensation-items/:uid` | Soft-delete | ADMIN |
-| `GET` | `/studios/:studioId/members/:membershipId/compensation` | Member self-review: base rate + line items for date range | ADMIN, self |
-| `GET` | `/studios/:studioId/creators/:creatorId/compensation` | Creator compensation summary: defaults + line items | ADMIN, MANAGER, TALENT_MANAGER |
-
-### Request DTO (POST — create line item)
-
-```json
-{
-  "target_type": "MEMBERSHIP",
-  "target_id": "smb_abc123",
-  "item_type": "BONUS",
-  "amount": 200.00,
-  "label": "Show completion bonus",
-  "note": "March 25 live show",
-  "effective_date": "2026-03-25T00:00:00Z",
-  "show_id": "show_xyz789"
-}
-```
-
-### Request DTO (PATCH — update line item)
-
-All fields optional.
-
-```json
-{
-  "amount": 250.00,
-  "label": "Show completion bonus (adjusted)",
-  "note": "Updated per manager review"
-}
-```
-
-### Response DTO (GET list)
-
-```json
-{
-  "uid": "cli_abc123",
-  "item_type": "BONUS",
-  "amount": 200.00,
-  "label": "Show completion bonus",
-  "note": "March 25 live show",
-  "effective_date": "2026-03-25T00:00:00Z",
-  "show_id": "show_xyz789",
-  "schedule_id": null,
-  "target": {
-    "target_type": "MEMBERSHIP",
-    "target_id": "smb_abc123",
-    "membership": {
-      "uid": "smb_abc123",
-      "user_name": "Alice Chen",
-      "role": "MANAGER"
-    }
-  },
-  "created_at": "2026-03-25T10:00:00Z"
-}
-```
-
-### Error Codes
-
-| Code | HTTP Status | Condition |
-| --- | --- | --- |
-| `TARGET_NOT_FOUND` | 404 | Target UID does not resolve to an active association record |
-| `INVALID_TARGET_TYPE` | 400 | Unknown target type |
-| `INVALID_AMOUNT_SIGN` | 400 | DEDUCTION type requires negative amount; others require non-negative |
-| `SCOPE_MISMATCH` | 400 | Provided `show_id` and `schedule_id` do not refer to the same schedule context |
-| `LINE_ITEM_NOT_FOUND` | 404 | Compensation line item UID not found in studio |
-
-All error codes to be defined in `@eridu/api-types`.
-
-### Validation Rules
-
-- `item_type`: one of `BONUS`, `ALLOWANCE`, `OVERTIME`, `DEDUCTION`, `OTHER`
-- `amount`: non-zero decimal. DEDUCTION requires `< 0`; all others require `>= 0`
-- `target_type`: one of `MEMBERSHIP`, `STUDIO_CREATOR` (extensible)
-- `target_id`: must resolve to an active (non-deleted) association record in the same studio
-- `show_id`: if provided, must be a valid show in the same studio
-- `schedule_id`: if provided, must be a valid schedule in the same studio
-- `show_id` and `schedule_id` may both be null
-- if both `show_id` and `schedule_id` are provided, the show must belong to that schedule; otherwise return 400 `SCOPE_MISMATCH`
-
-### Economics Aggregation Rules
-
-- Show-level economics, client grouping, and planning export include only line items whose `show_id` matches the show being aggregated.
-- Schedule grouping includes show-scoped items rolled up from shows in that schedule, plus schedule-scoped items whose `schedule_id` matches and `show_id` is null.
-- Unscoped items (`show_id = null`, `schedule_id = null`) remain visible in compensation list/breakdown endpoints and are excluded from economics aggregation in Phase 4.
-- Member cost uses the stored shift cost basis `calculatedCost ?? projectedCost`, then adds applicable line items.
-- Creator outputs surface `line_item_cost` separately. If base creator `computedCost` is `null` because revenue is missing for `COMMISSION` or `HYBRID`, `resolved_total_cost` remains `null`.
-
-### Edge Cases
-
-- **Dual-role person**: Alice is both `smb_alice` (member) and `smc_alice` (creator). A show bonus for her shift work targets `smb_alice`; a show bonus for her creator work targets `smc_alice`. These are independent line items in different P&L cost buckets.
-- **Schedule-scoped premium**: line item with `schedule_id=sched_march` and `show_id=null` appears in schedule-grouped economics for that schedule and in compensation breakdown endpoints, but not in per-show economics, client grouping, or planning export.
-- **Standing adjustment**: line item with `show_id=null` and `schedule_id=null` applies to the target's compensation breakdown for the relevant date window. Phase 4 does not allocate it into show-, client-, or schedule-level economics.
-- **Commission/hybrid creator with fixed bonus**: if revenue is not entered yet, the creator's line-item subtotal is still visible, but the fully resolved creator total and any dependent show/export total remain `null`.
-- **Target deactivation**: if a StudioMembership is soft-deleted or StudioCreator is deactivated, existing line items are preserved (historical cost data). New line items cannot be created for inactive targets.
-
-## Frontend Route
-
-`/studios/$studioId/compensation` — main compensation management page.
-
-Additionally, compensation line items surface as inline sections on:
-- `/studios/$studioId/members` — member roster page shows compensation summary per member
-- `/studios/$studioId/creators` — creator roster page shows compensation summary per creator
-
-`hasStudioRouteAccess` key to add: `compensation` — roles: `[ADMIN, MANAGER]`.
-
-## Acceptance Criteria
-
-- [ ] ADMIN can create a compensation line item targeting a studio membership or studio creator.
-- [ ] ADMIN can update amount, label, note, and effectiveDate of an existing line item.
-- [ ] ADMIN can soft-delete a line item.
-- [ ] Line items can be scoped to a show, a schedule, or left unscoped (standing).
-- [ ] Dual-role individuals have independent line items under their membership and creator records.
-- [ ] Economics service aggregates only grain-matching line items: show/client surfaces include show-scoped items only; schedule grouping also includes schedule-scoped items; unscoped items remain out of economics until allocation rules exist.
-- [ ] Member shift cost basis is `calculatedCost ?? projectedCost` before line items are applied.
-- [ ] Creator compensation surfaces expose `line_item_cost` even when base `computedCost` is unresolved; `resolved_total_cost` stays null until revenue is available.
-- [ ] Member self-review endpoint returns base rate + all line items for a date range.
-- [ ] MANAGER can view line items (read-only); PATCH/POST/DELETE return 403 for MANAGER.
-- [ ] Invalid target type or inactive target returns appropriate error code.
-- [ ] DEDUCTION type enforces negative amount; other types enforce non-negative amount.
-- [ ] Mismatched `show_id` / `schedule_id` combinations return 400 `SCOPE_MISMATCH`.
-- [ ] CompensationTarget follows TaskTarget polymorphic pattern with `targetType` + `targetId` + nullable FK columns.
+| Model / Endpoint   | Current Behavior                                                              | Required Change                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `StudioMembership` | `baseHourlyRate` source for `StudioShift.hourlyRate` snapshots                | No schema change; snapshot override audit uses metadata pattern when edited.                                          |
+| `StudioCreator`    | Default creator compensation fields                                           | No schema change; assignment snapshots remain on `ShowCreator`.                                                       |
+| `ShowCreator`      | `agreedRate`, `compensationType`, `commissionRate` assignment snapshot fields | No schema change; normal assignment writes must persist resolved terms. Override edits append metadata audit entries. |
+| `Show`             | Scheduled `startTime` / `endTime`                                             | Add nullable `actualStartTime` / `actualEndTime`.                                                                     |
+| `StudioShift`      | `hourlyRate`; legacy `projectedCost` may exist                                | Drop `projectedCost`; override edits to `hourlyRate` append metadata audit entries.                                   |
+| `StudioShiftBlock` | Scheduled `startTime` / `endTime`                                             | Add nullable `actualStartTime` / `actualEndTime`.                                                                     |
+| `/me/` module      | Existing self-access pattern                                                  | 2.3 uses this for read-only compensation views; 2.2 does not invent a new identity pattern.                           |
 
 ## Product Decisions
 
-- **Single-entry cost journal** — not double-entry. If full accounting is needed, integrate with external software.
-- **Flat amounts only** — no formulas or calculation rules. The model stores outcomes, not rules. Phase 5 "Advanced Compensation Engine" will write line items as its output.
-- **Soft-delete only** — line item removal uses `deletedAt`, not hard delete, to preserve historical cost data integrity.
-- **Label is optional** — can be derived from `itemType` when not explicitly set. UI can provide sensible defaults.
-- **Metadata is descriptive only** — architecture guardrail unchanged. No compensation logic in metadata.
-- **No implicit proration in Phase 4** — schedule-scoped and standing/global items are not spread across shows automatically. Economics includes them only where the aggregation grain matches directly.
-- **Unknown creator base cost stays unknown** — if `COMMISSION` / `HYBRID` base cost cannot be computed yet, the system exposes the known line-item subtotal separately and keeps the resolved total null.
-- **Extensible target types** — new engagement types (contractor, agency talent) add a nullable FK column to `CompensationTarget`. No rewrite of existing data.
+### Event-scoped adjustments, not a ledger
+
+`CompensationLineItem` stores a supplemental cost input attached to a concrete show or shift event / event participation. It is not a double-entry accounting transaction, payment instruction, payroll record, recurring HR cost, or generated base-compensation row. Phase 4 does not support free-floating line items that need their own effective date.
+
+### Base compensation is calculated from snapshots
+
+Normal creator/show base compensation is calculated from `ShowCreator` snapshot fields plus show planned/actual duration. Normal operator/shift base labor is calculated from `StudioShift.hourlyRate` plus shift-block planned/actual duration. 2.2 must not create `CompensationLineItem` rows to represent those base amounts. If the UI needs a breakdown table, 2.3 can return generated read-model rows for base components alongside persisted supplemental line items.
+
+### Store outcomes, not rules
+
+Line items are flat amounts entered by a user or a future rule engine. Phase 4 does not store formulas in `metadata`, infer OT, or calculate bonus rules.
+
+### Signed amounts are allowed without type enforcement
+
+`amount` is a signed decimal. UI should make direction obvious, but Phase 4 does not reject a positive `DEDUCTION` or negative `BONUS`. Sign validation can be added later without reshaping storage.
+
+### Event attachment is the Phase 4 scope
+
+Line items attach to supported show/shift entities. Date-ranged admin/manager direct views include a line item through its attached event. Recipient self-views only show monetary line-item impact when the row is countable under the actuals visibility rule. Operational views include show-attached line items directly; shift-attached line items follow the same show-overlap allocation rule as shift labor when shift cost is allocated across shows. Schedule-scoped, standing, global, and recurring line items are deferred.
+
+### Actuals are plain nullable facts
+
+Actuals can be entered any time by authorized studio users. There is no approval flag, settlement flag, freeze gate, or grace normalization in Phase 4. The 2.3 calculator chooses actual time only when both actual timestamps are present. If actuals are absent or incomplete, it falls back to planned time when planned timestamps exist and emits calculation warnings. If planned time is also missing, the row is unresolved.
+
+Frontend surfaces must handle missing actuals differently by audience:
+
+- Admin/manager surfaces may show planned-fallback values, but must warn that actuals are missing or incomplete and the displayed cost is calculated from planned time.
+- Creator and operator/helper self-views must not show compensation amounts for events with missing or incomplete actuals, even if the compensation package is fixed. They show the acknowledged event as pending/not countable yet, so the recipient can follow up with a line manager without forming a wrong expectation.
+- Supplemental line items attached to pending recipient events are also hidden from recipient monetary totals until the event has complete actuals and becomes countable. The pending event can still indicate that supplemental items exist if 2.3 exposes that context without revealing a misleading amount.
+
+### Snapshot fields are intended-immutable, not locked
+
+`ShowCreator` agreement fields and `StudioShift.hourlyRate` are snapshots. ADMIN/MANAGER may update them through normal update routes when needed, but the FE must warn that historical reference values and rollups recompute. Each override appends `{field, old, new, actorId, at, reason?}` to the row's existing `metadata` audit trail.
+
+### Existing assignments need explicit normalization
+
+2.2 must handle `ShowCreator` rows created before normal assignment writes resolved default terms. The default product expectation is to backfill missing snapshot fields from the current `StudioCreator` defaults when those defaults exist, append metadata noting the Wave 2 normalization, and leave rows unresolved only when no reliable default is available. 2.3 reads the normalized snapshot fields; it must not apply roster defaults live at read time.
+
+## Conceptual Model
+
+This PRD locks product semantics, not the final Prisma schema, DTO names, or route paths.
+
+### Compensation line item
+
+A compensation line item is a studio-scoped supplemental cost fact:
+
+- It has a signed amount, item label (`BONUS`, `ALLOWANCE`, `OVERTIME`, `DEDUCTION`, or `OTHER`), required human-readable reason, creator/updater audit metadata, and soft-delete behavior.
+- It attaches to exactly one supported operational event or event participation in the same studio.
+- Required Phase 4 attachment concepts are show, show-creator assignment, shift, and shift block.
+- It is included by date through the attached event. It does not carry its own `effectiveDate`.
+- It is never generated for normal base show compensation or normal base shift labor.
+
+### Polymorphic attachment direction
+
+The model must remain polymorphic because the same supplemental cost concept can attach to multiple operational entities. The implementation design should follow the codebase's Prisma-friendly polymorphism pattern, using `TaskTarget` as the local reference: a discriminator plus target identity, with optional typed FK columns where referential integrity, indexing, and query ergonomics justify them.
+
+Because this is financial data, new discriminators should use Prisma enum values where the technical design can do so cleanly. Exact enum names, typed FK column names, uniqueness constraints, indexes, route paths, DTO shapes, and error codes belong to the post-sign-off implementation design.
+
+The product constraints are:
+
+- external APIs use UIDs, not internal DB IDs;
+- unsupported attachment types are rejected;
+- line items cannot be free-floating, standing, schedule-scoped, global, recurring, HR, or payment-system records in Wave 2;
+- date inclusion comes from the attached event;
+- normal base compensation remains calculated from snapshots by 2.3, not persisted as line items.
+
+### Actuals and snapshot inputs
+
+2.2 also owns the input facts consumed by 2.3:
+
+- nullable show actual start/end timestamps;
+- nullable shift-block actual start/end timestamps;
+- removal of stored `StudioShift.projectedCost`;
+- metadata-audit append when ADMIN/MANAGER updates intended-immutable snapshot fields such as `ShowCreator` agreement fields or `StudioShift.hourlyRate`.
+
+No actuals approval, reopen, settlement, freeze, or dedicated actuals audit table ships in Phase 4.
+
+## API Direction
+
+2.2 must provide ADMIN/MANAGER input surfaces for:
+
+- creating, listing, editing, and soft-deleting supplemental line items;
+- setting or clearing show actual timestamps;
+- setting or clearing shift-block actual timestamps;
+- editing snapshot fields with an explicit warning and metadata-audit append.
+
+This PRD does not lock endpoint names, request DTOs, or error-code names. The technical design should choose those after the product scope is signed off.
+
+## Frontend Requirements
+
+| Surface                      | Requirement                                                                                                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compensation item management | ADMIN/MANAGER can create, edit, filter, and soft-delete line items.                                                                                                                                       |
+| Attachment selection         | Picker distinguishes supported event attachments such as show creator assignment, show, shift, and shift block, and uses UIDs, not internal DB IDs.                                                       |
+| Base vs supplemental display | Breakdown UI separates calculated base compensation from supplemental line items; users must not see generated base rows as editable line items.                                                          |
+| Actuals entry                | Show detail and shift-block surfaces expose compact actual-time inputs for ADMIN/MANAGER.                                                                                                                 |
+| Planned fallback warnings    | Admin/manager surfaces display warnings when costs are calculated from planned time because actuals are missing or incomplete.                                                                            |
+| Recipient pending state      | Creator/operator/helper self-views show acknowledged events as pending when actuals are missing or incomplete, and do not show compensation amounts or include pending rows in recipient monetary totals. |
+| Snapshot overrides           | Existing assignment/shift edit flows warn before changing snapshot fields and collect optional reason text for metadata audit.                                                                            |
+| Read-only compensation views | 2.3 exposes calculated read views; FE must not compute money locally.                                                                                                                                     |
+
+## Acceptance Criteria
+
+- [ ] ADMIN and MANAGER can create, update, list, and soft-delete compensation line items attached to supported show/shift event entities.
+- [ ] Line item API uses UIDs externally and never exposes internal DB IDs.
+- [ ] The line-item attachment model remains polymorphic and follows the repo's Prisma-friendly pattern, using `TaskTarget` as a local reference for discriminator plus target identity with optional typed FKs where needed.
+- [ ] New financial discriminators use Prisma enum values where the technical design can do so cleanly.
+- [ ] `CompensationItemType` supports `BONUS`, `ALLOWANCE`, `OVERTIME`, `DEDUCTION`, and `OTHER`.
+- [ ] `amount` is stored as decimal and serialized as a string at the API boundary.
+- [ ] Type-based sign enforcement is not implemented in Phase 4.
+- [ ] `reason` is required and returned in read responses.
+- [ ] Line items cannot be created without a supported show/shift event attachment.
+- [ ] No `effectiveDate`, standing/null scope, schedule-scoped, global, recurring, HR, or payment-system line items are introduced in Wave 2.
+- [ ] Normal base show compensation and base shift labor are not persisted as `CompensationLineItem` records.
+- [ ] Soft-deleted line items are excluded from default reads.
+- [ ] `Show.actualStartTime` and `Show.actualEndTime` are nullable and writable by ADMIN/MANAGER.
+- [ ] `StudioShiftBlock.actualStartTime` and `StudioShiftBlock.actualEndTime` are nullable and writable by ADMIN/MANAGER.
+- [ ] Missing or incomplete actual pairs are persisted as entered and may resolve through planned fallback for admin/manager 2.3 views when planned time exists.
+- [ ] Planned fallback rows expose calculation warnings so admin/manager FE surfaces can tell users that actuals are missing/incomplete.
+- [ ] Creator/operator/helper self-views do not show compensation amounts for rows with missing or incomplete actuals, including fixed-compensation rows; they show the event as pending/not countable until actuals are complete.
+- [ ] Creator/operator/helper self-view totals exclude pending rows and pending-row line items until actuals are complete.
+- [ ] No actuals approval, reopen, settlement, or freeze fields are added.
+- [ ] `StudioShift.projectedCost` is removed and no replacement cached projection field is introduced.
+- [ ] Normal app assignment writes persist resolved `ShowCreator` agreement snapshot fields from explicit input or current `StudioCreator` defaults.
+- [ ] Existing `ShowCreator` rows with missing snapshot fields are normalized before 2.3 reads them, or explicitly remain unresolved with `agreement_snapshot_missing` when no reliable default exists.
+- [ ] Roster default-rate update UX states that existing assignment snapshots are unchanged unless a manager explicitly edits those assignments.
+- [ ] ADMIN/MANAGER changes to `ShowCreator` snapshot fields and `StudioShift.hourlyRate` append metadata audit entries with field, old value, new value, actor, timestamp, and optional reason.
+- [ ] 2.3 calculator tests can consume fixtures containing line items, show actuals, shift-block actuals, and snapshot override history without needing extra Phase 4 workflow state.
+
+## Product Decisions
+
+- **2.2 is data input, not economics math.** The pure calculator and read endpoints land in 2.3.
+- **Read-only reference framing.** Values are for inspection and reconciliation; they do not authorize payment.
+- **Line items are flat signed event-scoped supplemental amounts.** They store add-ons, deductions, and explanations attached to show/shift events, not base compensation, recurring HR costs, payment records, or rules.
+- **No Phase 4 freeze/approval/grace.** Those are future extensions documented in [economics-cost-model.md §4](./economics-cost-model.md#4-future-extensions).
+- **Metadata audit is enough for snapshot overrides.** A separate audit table waits until settlement/payment workflows need stronger authority.
+- **Schedule/standing/global line items are deferred.** This avoids hidden date and allocation rules before the product defines whether those belong in this model or a future HR/payment model.
 
 ## Design Reference
 
-- TaskTarget polymorphic pattern: `apps/erify_api/prisma/schema.prisma` (line 636)
-- Backend API design: `apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`
-- Frontend design: `apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`
-- Economics baseline: `apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md`
-- Studio member roster: `docs/features/studio-member-roster.md`
-- Studio creator roster: `docs/features/studio-creator-roster.md`
-- Shift cost calculation: `apps/erify_api/src/models/studio-shift/studio-shift.service.ts`
-- Phase 4 roadmap: `docs/roadmap/PHASE_4.md`
+Pre-signoff design drafts were removed because they encoded freeze, approval, grace, and broader compensation assumptions that are out of Phase 4 scope. Redraft backend and frontend implementation designs from this PRD before 2.2 implementation starts. Wave 3 PRDs are consumer context only; revise them when Wave 3 starts, not as part of the 2.2 scope.
+
+- 2.1 Economics Cost Model: [economics-cost-model.md](./economics-cost-model.md)
+- 2.3 Economics Service: [economics-service.md](./economics-service.md)
+- Architecture Guardrails: [PHASE_4.md#architecture-guardrails](../roadmap/PHASE_4.md#architecture-guardrails)

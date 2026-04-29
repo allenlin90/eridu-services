@@ -37,16 +37,13 @@
 | Document                                                                                           | Status | Description                                                                    |
 | -------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                             | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
-| [Show Economics Backend Design](./design/SHOW_ECONOMICS_DESIGN.md)                                 | 📐      | Deferred merge target for economics endpoints and compensation-aware revisions |
-| [Studio Economics Review Backend Design](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)               | 📐      | Planned finance review workspace contract for projected and actual cost reads  |
-| [Compensation Line Items Backend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)               | 📐      | Planned supplemental compensation CRUD and aggregation model                   |
-| [Show Planning Export Backend Design](./design/SHOW_PLANNING_EXPORT_DESIGN.md)                     | 📐      | Planned planning-export endpoint and economics composition rules               |
 | [Creator Availability Hardening Backend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | 📐      | Planned strict availability enforcement and assignment errors                  |
-| [P&L Revenue Workflow Backend Design](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)                     | 📐      | Blocked Wave 3 revenue-side activation design                                  |
 | [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)          | 📐      | Planned studio-scoped resolution follow-up for cancelled shows                  |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for the operations-expansion track                  |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
+
+Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
 
 ## Roadmap
 
