@@ -16,10 +16,10 @@ Authoritative cross-cutting rules: [PHASE_4.md Architecture Guardrails](../../..
 - Query keys are scoped by studio/show and organized by feature.
 - Table filter and view state lives in the URL for list/report-oriented features.
 - Version-guarded write paths treat `409` as refetch + user-review flow.
-- Projected vs frozen vs adjustment labels are explicit in finance UI; never collapse into a single ambiguous "actual" number.
-- Compensation views surface the `actuals_source` and reference values per [economics-cost-model.md §4](../../../docs/prd/economics-cost-model.md#4-actuals-priority-cascade).
+- Projected, actual-backed, planned-fallback, pending, and unresolved labels are explicit in finance UI; never collapse them into a single ambiguous "actual" number.
+- Compensation views surface `actuals_source` and the recipient pending/countable-total rules per the [cost-model actuals priority cascade](../../../docs/prd/economics-cost-model.md#actuals-priority-cascade-extension-point).
 - FE never recomputes finance arithmetic locally; all monetary numbers come from the API as `Prisma.Decimal`-serialized strings.
-- Loading, empty, null, and partial-actual states are explicit on every economics and compensation surface.
+- Loading, empty, null, and unresolved reference states are explicit on every economics and compensation surface.
 
 ## Feature Doc Index
 
@@ -31,12 +31,12 @@ Authoritative cross-cutting rules: [PHASE_4.md Architecture Guardrails](../../..
 | 1.4 | Studio creator onboarding                  | ✅ Shipped      | [studio-creator-onboarding.md](../../../docs/features/studio-creator-onboarding.md)      | [STUDIO_CREATOR_ONBOARDING.md](./STUDIO_CREATOR_ONBOARDING.md)                              |
 | 1.5 | Studio show management                     | ✅ Shipped      | [studio-show-management.md](../../../docs/features/studio-show-management.md)            | [STUDIO_SHOW_MANAGEMENT.md](./STUDIO_SHOW_MANAGEMENT.md)                                    |
 | 2.1 | Economics cost model                       | 🔲 Active       | [economics-cost-model.md](../../../docs/prd/economics-cost-model.md)                     | N/A (docs-only PRD)                                                                         |
-| 2.2 | Compensation line items + freeze + actuals | 🔲 Planned      | [compensation-line-items.md](../../../docs/prd/compensation-line-items.md)               | [COMPENSATION_LINE_ITEMS_DESIGN.md](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)             |
-| 2.3 | Economics service                          | 🔲 Planned      | (greenfield against 2.1 + 2.2)                                                            | [SHOW_ECONOMICS_DESIGN.md](./design/SHOW_ECONOMICS_DESIGN.md) (lands when 2.3 starts)       |
+| 2.2 | Compensation line items + actuals          | 🔲 Planned      | [compensation-line-items.md](../../../docs/prd/compensation-line-items.md)               | [COMPENSATION_LINE_ITEMS_DESIGN.md](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)             |
+| 2.3 | Economics service                          | 🔲 Planned      | [economics-service.md](../../../docs/prd/economics-service.md)                            | [SHOW_ECONOMICS_DESIGN.md](./design/SHOW_ECONOMICS_DESIGN.md) *(review after PRD confirmation)* |
 | 3.1 | Studio economics review                    | 🔲 Planned      | [studio-economics-review.md](../../../docs/prd/studio-economics-review.md)               | [STUDIO_ECONOMICS_REVIEW_DESIGN.md](./design/STUDIO_ECONOMICS_REVIEW_DESIGN.md)             |
 | 3.2 | Show planning export                       | 🔲 Planned      | [show-planning-export.md](../../../docs/prd/show-planning-export.md)                     | [SHOW_PLANNING_EXPORT_DESIGN.md](./design/SHOW_PLANNING_EXPORT_DESIGN.md)                   |
 | 3.3 | Creator availability hardening             | 🔲 Planned      | [creator-availability-hardening.md](../../../docs/prd/creator-availability-hardening.md) | [CREATOR_AVAILABILITY_HARDENING_DESIGN.md](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
-| 4.1 | P&L revenue workflow                       | 🔲 Planned      | [pnl-revenue-workflow.md](../../../docs/prd/pnl-revenue-workflow.md)                     | [PNL_REVENUE_WORKFLOW_DESIGN.md](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)                   |
+| —   | P&L revenue workflow                       | ⏭️ Future target | [pnl-revenue-workflow.md](../../../docs/prd/pnl-revenue-workflow.md)                     | [PNL_REVENUE_WORKFLOW_DESIGN.md](./design/PNL_REVENUE_WORKFLOW_DESIGN.md)                   |
 | —   | Task submission reporting                  | ✅ Shipped      | [task-submission-reporting.md](../../../docs/features/task-submission-reporting.md)      | [TASK_SUBMISSION_REPORTING.md](./TASK_SUBMISSION_REPORTING.md)                              |
 
 ## Query-Key Families

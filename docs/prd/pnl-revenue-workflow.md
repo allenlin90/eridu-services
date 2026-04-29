@@ -1,16 +1,16 @@
 # PRD: P&L Revenue Workflow (4.1)
 
-> **Status: Visioning.** This document was drafted before [Phase 4 was simplified to a read-only viewer](./economics-cost-model.md). Treat as roadmap and future-feature reference, not a committed design — it will be redrafted when this workstream activates. Where this document conflicts with [`economics-cost-model.md`](./economics-cost-model.md), the cost model wins for Phase 4 scope.
+> **Status: Future target.** This document was drafted before [Phase 4 was simplified to a read-only cost reference viewer](./economics-cost-model.md). Treat it as future-feature context, not a Phase 4 close requirement. It must be redrafted when revenue planning restarts. Where this document conflicts with [`economics-cost-model.md`](./economics-cost-model.md), the cost model wins for Phase 4 scope.
 
-> **Status**: 🔲 Planned
-> **Phase**: 4 — Wave 4 (P&L Complete)
-> **Workstream**: P&L revenue ("P") side — completing the P&L model. Resolves the `COMMISSION` / `HYBRID` commission portion that 2.1 leaves pending.
-> **Depends on**: 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) · 2.1 Economics Cost Model 🔲 ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Freeze + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲 (this PRD extends the same engine)
-> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — revenue entry resolves `COMMISSION` and the `HYBRID` commission portion, applying the **frozen** `commissionRate` to revenue and promoting rows from `PARTIAL_ACTUAL` → `ACTUALIZED` per [§11](./economics-cost-model.md#11-downstream-impact). Contribution margin = `revenue − resolved_total_cost`, null-propagating per [§7](./economics-cost-model.md#7-nullability-bubbling).
+> **Status**: ⏭️ Future target
+> **Phase**: Future P&L workstream after simplified Phase 4
+> **Workstream**: P&L revenue ("P") side — completing the P&L model. Resolves the `COMMISSION` / `HYBRID` commission portion that remains pending in Phase 4.
+> **Depends on**: 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) · 2.1 Economics Cost Model 🔲 ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — Phase 4 leaves commission components unresolved; future revenue work must use the snapshotted `commissionRate` and the cost model's null-bubbling contract.
 
 ## Problem
 
-After Wave 2 ships, `COMMISSION` creators and the commission portion of `HYBRID` creators remain unresolved (`PARTIAL_ACTUAL`) because no revenue data exists to apply against the frozen `commissionRate`. The P&L model shows only costs with no revenue line, making contribution margin and full profitability analysis impossible.
+After the simplified Phase 4 cost stack ships, `COMMISSION` creators and the commission portion of `HYBRID` creators remain unresolved (`cost = null` with `unresolved_reasons`) because no revenue data exists to apply against the snapshotted `commissionRate`. The P&L model shows only costs with no revenue line, making contribution margin and full profitability analysis impossible.
 
 Key questions unanswered today:
 
@@ -32,9 +32,9 @@ Key questions unanswered today:
 | Model / Endpoint                                          | Fields / Behavior                                                              | Status                 |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------- |
 | `ShowPlatform`                                            | `viewerCount` (no GMV/sales yet)                                               | ✅ Exists (partial)     |
-| `GET /studios/:studioId/shows/:showId/economics`          | Built by 2.3; returns cost; commission rows are `PARTIAL_ACTUAL` until revenue | 🔲 Built by 2.3         |
+| `GET /studios/:studioId/shows/:showId/economics`          | Built by 2.3; returns cost; commission rows remain nullable until revenue      | 🔲 Built by 2.3         |
 | `GET /studios/:studioId/economics`                        | Built by 2.3; grouped read                                                     | 🔲 Built by 2.3         |
-| `ShowCreator.commissionRate` (frozen at show-end via 2.2) | Frozen commission rate; this PRD applies it to revenue                         | ✅ Frozen by 2.2 freeze |
+| `ShowCreator.commissionRate`                              | Assignment snapshot commission rate; this future PRD applies it to revenue     | ✅ Exists               |
 | `StudioCreator.defaultCommissionRate`                     | Default fallback (used at agreement time, not at revenue time)                 | ✅ Exists               |
 
 ## Requirements
@@ -45,11 +45,11 @@ Key questions unanswered today:
 
 2. **Revenue input UI** — ADMIN can enter GMV and net sales values on the show platform form in the studio app (`erify_studios`). Inputs are per-platform per show, reflecting that a show may stream on multiple platforms with different revenue figures.
 
-3. **Economics service applies revenue to compute `COMMISSION` / `HYBRID`-commission creator costs** — once revenue is present for a show-platform, the engine multiplies revenue by the **frozen** `ShowCreator.commissionRate` (set at show-end by 2.2's freeze rule) to compute commission cost. `StudioCreator.defaultCommissionRate` is never read at this stage — only the frozen per-show rate.
+3. **Economics service applies revenue to compute `COMMISSION` / `HYBRID`-commission creator costs** — once revenue is present for a show-platform, the engine multiplies revenue by the snapshotted `ShowCreator.commissionRate` to compute commission cost. `StudioCreator.defaultCommissionRate` is never read at this stage — only the per-show assignment snapshot.
 
 4. **Contribution margin calculation** — economics response includes `contribution_margin = total_revenue - resolved_total_cost`. Margin is null when revenue is absent (per [cost-model §7](./economics-cost-model.md#7-nullability-bubbling) null-bubbling).
 
-5. **Row state transitions** — when revenue resolves the last unresolved input on a row, `cost_state` transitions from `PARTIAL_ACTUAL` to `ACTUALIZED`.
+5. **Nullable cost resolution** — when revenue resolves the last unresolved input on a row, `cost` becomes non-null and the relevant `unresolved_reasons` disappear. The simplified Phase 4 model does not persist a `cost_state`.
 
 ### Out of Scope
 
@@ -59,11 +59,11 @@ Key questions unanswered today:
 - Full revenue audit trail / correction history
 - Fixed cost lines (rent, equipment) in the P&L model
 
-## Open Design Questions (Wave 4 Gate)
+## Open Design Questions (Future Revenue Gate)
 
-These must be resolved before technical design begins. Implementation is blocked until all four decisions are recorded. Recommended decisions are provided below — confirm or override before Wave 4 starts.
+These must be resolved before technical design begins. Implementation is blocked until all four decisions are recorded. Recommended decisions are provided below — confirm or override before future revenue work starts.
 
-> **Sequencing note**: These questions should be resolved during Wave 2/3 implementation so Wave 4 can start without delay.
+> **Sequencing note**: These questions can wait until the simplified Phase 4 cost stack is confirmed.
 
 ### 1. Revenue data model: `ShowPlatform` extension vs. `ShowPlatformMetrics` table
 
@@ -91,7 +91,7 @@ Who enters revenue and when?
 
 ### 4. Numerical precision
 
-**Resolved by [Phase 4 Architecture Guardrail 2](../roadmap/PHASE_4.md#architecture-guardrails).** All financial arithmetic uses `Prisma.Decimal` (backed by `decimal.js`, already in `@prisma/client`) end-to-end. No `Number` / `toFixed(2)` chains in aggregation paths. 4.1 inherits this rule from 2.2 / 2.3 — no separate decision needed.
+**Resolved by [Phase 4 Architecture Guardrail 2](../roadmap/PHASE_4.md#architecture-guardrails).** All financial arithmetic uses `Prisma.Decimal` (backed by `decimal.js`, already in `@prisma/client`) end-to-end. No `Number` / `toFixed(2)` chains in aggregation paths. Future revenue work inherits this rule from 2.2 / 2.3 — no separate decision needed.
 
 ## Backwards Compatibility
 
@@ -104,25 +104,26 @@ Who enters revenue and when?
 
 - [ ] GMV and net sales values are persisted per show-platform record.
 - [ ] Studio ADMIN can enter GMV and net sales via the show platform form in `erify_studios`.
-- [ ] Economics endpoint returns non-null commission creator cost when revenue is present for the show-platform, computed against the **frozen** `ShowCreator.commissionRate`.
+- [ ] Economics endpoint returns non-null commission creator cost when revenue is present for the show-platform, computed against the snapshotted `ShowCreator.commissionRate`.
 - [ ] Economics endpoint returns contribution margin (`revenue - resolved_total_cost`) when revenue is present; null otherwise.
-- [ ] `COMMISSION` and `HYBRID`-commission creator costs correctly reflect `frozen commissionRate × revenue`.
-- [ ] Revenue-absent shows remain `PARTIAL_ACTUAL` (commission portion null) — no regression on Wave 2 behavior.
-- [ ] When revenue is the last unresolved input, `cost_state` transitions to `ACTUALIZED`.
+- [ ] `COMMISSION` and `HYBRID`-commission creator costs correctly reflect `snapshotted commissionRate × revenue`.
+- [ ] Revenue-absent shows keep nullable commission cost and explicit `unresolved_reasons` — no regression on Phase 4 cost behavior.
+- [ ] When revenue is the last unresolved input, `cost` becomes non-null and commission-related `unresolved_reasons` clear.
 - [ ] All open design questions above resolved and recorded in the technical design doc before implementation starts.
 
 ## Product Decisions
 
-- **Revenue absence is not an error** — shows without revenue input remain `PARTIAL_ACTUAL` for COMMISSION / HYBRID-commission creators. The cost-state transition to `ACTUALIZED` happens only when revenue arrives.
+- **Revenue absence is not an error** — shows without revenue input keep nullable commission cost for COMMISSION / HYBRID-commission creators.
 - **Per-platform revenue** — revenue is tracked per `ShowPlatform` record, not as a single show-level aggregate, because different platforms may have materially different revenue figures for the same broadcast.
 - **Contribution margin is derived, not stored** — computed at query time from revenue and cost components. Not persisted.
-- **Commission rate is frozen at show-end, not read live** — 4.1 multiplies revenue by the rate snapshotted on `ShowCreator.commissionRate` by 2.2's freeze rule. `StudioCreator.defaultCommissionRate` is never read at revenue resolution time.
+- **Commission rate is snapshotted, not read live** — future revenue work multiplies revenue by the rate persisted on `ShowCreator.commissionRate`. `StudioCreator.defaultCommissionRate` is never read at revenue resolution time.
 
 ## Design Reference
 
 - 2.1 Cost Model: [`economics-cost-model.md`](./economics-cost-model.md)
-- 2.2 Compensation Line Items + Freeze + Actuals: [`compensation-line-items.md`](./compensation-line-items.md)
-- 2.3 Economics Service: [`SHOW_ECONOMICS_DESIGN.md`](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
+- 2.2 Compensation Line Items + Actuals: [`compensation-line-items.md`](./compensation-line-items.md)
+- 2.3 Economics Service: [`economics-service.md`](./economics-service.md)
+- 2.3 Backend Design: [`SHOW_ECONOMICS_DESIGN.md`](../../apps/erify_api/docs/design/SHOW_ECONOMICS_DESIGN.md)
 - 3.1 Studio Economics Review: [`studio-economics-review.md`](./studio-economics-review.md)
 - 4.1 Backend design: [`PNL_REVENUE_WORKFLOW_DESIGN.md`](../../apps/erify_api/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md)
 - 4.1 Frontend design: [`PNL_REVENUE_WORKFLOW_DESIGN.md`](../../apps/erify_studios/docs/design/PNL_REVENUE_WORKFLOW_DESIGN.md)

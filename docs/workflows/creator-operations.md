@@ -21,7 +21,7 @@ End-to-end flow for how a studio manages its creator talent — from role setup 
        ↓
 4. Talent Manager bulk-assigns creators to shows (with optional compensation override)
        ↓
-5. Wave 2 economics service (2.3) resolves show overrides over studio roster defaults using the contract model in 2.1
+5. Wave 2 economics service (2.3) reads assignment snapshots and line items using the cost model in 2.1
 ```
 
 ## Step-by-Step
@@ -77,9 +77,9 @@ Feature: [Creator Mapping](../features/creator-mapping.md)
 
 ### 5. Cost visibility
 
-Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed of frozen agreement (creator base + shift labor) plus pre-freeze line items, with adjustments surfaced separately. `COMMISSION` and the `HYBRID` commission portion remain unresolved until Wave 4 revenue input.
+Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed from assignment snapshots, shift labor, actuals/planned time, and show-scoped line items. `COMMISSION` and the `HYBRID` commission portion remain unresolved until a future revenue workflow.
 
-Reference: [Economics Cost Model (2.1)](../prd/economics-cost-model.md) · [Compensation Line Items (2.2)](../prd/compensation-line-items.md)
+Reference: [Economics Cost Model (2.1)](../prd/economics-cost-model.md) · [Compensation Line Items (2.2)](../prd/compensation-line-items.md) · [Economics Service (2.3)](../prd/economics-service.md)
 
 ## Data Flow
 
@@ -94,7 +94,7 @@ POST /shows/:id/creators/bulk-assign
         ↓
 ShowCreator { agreedRate, compensationType, commissionRate }
         ↓  [economics merge target]
-GET /shows/:id/economics  →  { creator_cost, shift_cost, total_cost }
+GET /shows/:id/economics  →  { cost, base_subtotal, line_item_subtotal, unresolved_reasons }
 ```
 
 ## Key Business Rules
@@ -102,7 +102,7 @@ GET /shows/:id/economics  →  { creator_cost, shift_cost, total_cost }
 - Creators are not studio-scoped — the same creator can be assigned to shows across different studios.
 - `ShowCreator.agreedRate` overrides `StudioCreator.defaultRate`; `ShowCreator.compensationType` overrides `StudioCreator.defaultRateType`.
 - `metadata` on `ShowCreator` is for audit context only (`source`, `operator_note`, `tags`) — not executable compensation logic.
-- Only `FIXED` type creators have a computable baseline cost; `COMMISSION`/`HYBRID` requires GMV input (full P&L, Phase 5 parking lot).
+- `FIXED` and `HOURLY` creator base components are computable from snapshots and time. `COMMISSION` and the commission portion of `HYBRID` require future revenue input.
 
 ## Related Docs
 
