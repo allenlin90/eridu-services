@@ -14,10 +14,10 @@ The user-facing goal is simple: ADMIN and MANAGER can choose a date range, revie
 
 ## Difference From 2.3 Economics Service
 
-| Workstream | Owns | Does Not Own |
-| --- | --- | --- |
-| 2.3 Economics Service | Backend pure calculator, data loading, `/me/` compensation reads, show-level economics read, operational `GET /studios/:studioId/economics?from=&to=` read, fixture-based calculator tests. | Manager workflow UX, saved report UX, client-side table review, export buttons. |
-| 3.1 Studio Economics Review | Studio app route, query controls, perspective/filter UI, table presentation, unresolved-state explanation, cached result handling, CSV/JSON export from returned rows. | Monetary formulas, actuals priority resolution, null bubbling, settlement state, revenue/margin logic. |
+| Workstream                  | Owns                                                                                                                                                                                        | Does Not Own                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 2.3 Economics Service       | Backend pure calculator, data loading, `/me/` compensation reads, show-level economics read, operational `GET /studios/:studioId/economics?from=&to=` read, fixture-based calculator tests. | Manager workflow UX, saved report UX, client-side table review, export buttons.                        |
+| 3.1 Studio Economics Review | Studio app route, query controls, perspective/filter UI, table presentation, unresolved-state explanation, cached result handling, CSV/JSON export from returned rows.                      | Monetary formulas, actuals priority resolution, null bubbling, settlement state, revenue/margin logic. |
 
 If 3.1 needs a small catalog/preflight helper for UX, that helper must describe or validate 2.3's existing operational view. It must not fork or duplicate calculator semantics.
 
@@ -35,21 +35,21 @@ Show-level assignment pages still need compact inline previews, but that is a se
 
 ## Users
 
-| Role | Need |
-| --- | --- |
-| Studio ADMIN | Review cost references across the studio, inspect unresolved values, and export results for finance follow-up. |
-| Studio MANAGER | Monitor projected, actual-backed, and planned-fallback reference cost for their operational window without leaving the studio workspace. |
-| Finance / Operations | Receive date-ranged CSV/JSON exports with stable fields and explicit unresolved values. |
+| Role                 | Need                                                                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Studio ADMIN         | Review cost references across the studio, inspect unresolved values, and export results for finance follow-up.                           |
+| Studio MANAGER       | Monitor projected, actual-backed, and planned-fallback reference cost for their operational window without leaving the studio workspace. |
+| Finance / Operations | Receive date-ranged CSV/JSON exports with stable fields and explicit unresolved values.                                                  |
 
 ## Existing Infrastructure
 
-| Surface / Model | Behavior | Status |
-| --- | --- | --- |
-| `GET /studios/:studioId/economics?from=&to=` | Operational cost view grouped by 2.3-supported grain(s). | Built by 2.3 |
-| `GET /studios/:studioId/shows/:showId/economics` | Show-level preview/drill-in. | Built by 2.3 |
-| `CompensationLineItem` and actual fields | Cost inputs. | Built by 2.2 |
-| Task Submission Reporting | Existing builder/result/export UX reference. | Shipped reference only |
-| Show Planning Export | Locked future-horizon preset over this cost data. | 3.2 |
+| Surface / Model                                  | Behavior                                                 | Status                 |
+| ------------------------------------------------ | -------------------------------------------------------- | ---------------------- |
+| `GET /studios/:studioId/economics?from=&to=`     | Operational cost view grouped by 2.3-supported grain(s). | Built by 2.3           |
+| `GET /studios/:studioId/shows/:showId/economics` | Show-level preview/drill-in.                             | Built by 2.3           |
+| `CompensationLineItem` and actual fields         | Cost inputs.                                             | Built by 2.2           |
+| Task Submission Reporting                        | Existing builder/result/export UX reference.             | Shipped reference only |
+| Show Planning Export                             | Locked future-horizon preset over this cost data.        | 3.2                    |
 
 ## Requirements
 
@@ -126,17 +126,17 @@ Show-level assignment pages still need compact inline previews, but that is a se
 
 3.1 should prefer the 2.3 operational endpoint:
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| `GET` | `/studios/:studioId/economics?from=&to=&perspective=` | Date-ranged operational cost rows. |
-| `GET` | `/studios/:studioId/shows/:showId/economics` | Show-level drill-in / assignment-side preview. |
+| Method | Route                                                 | Purpose                                        |
+| ------ | ----------------------------------------------------- | ---------------------------------------------- |
+| `GET`  | `/studios/:studioId/economics?from=&to=&perspective=` | Date-ranged operational cost rows.             |
+| `GET`  | `/studios/:studioId/shows/:showId/economics`          | Show-level drill-in / assignment-side preview. |
 
 If 3.1 adds helper endpoints such as catalog or preflight, they are UX helpers over this same service, not a separate calculation path.
 
 ### Frontend
 
-| Route | Purpose | Access |
-| --- | --- | --- |
+| Route                          | Purpose                                                | Access         |
+| ------------------------------ | ------------------------------------------------------ | -------------- |
 | `/studios/$studioId/economics` | Date-ranged economics review table and export actions. | ADMIN, MANAGER |
 
 ## Acceptance Criteria

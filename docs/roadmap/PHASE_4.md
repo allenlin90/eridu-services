@@ -21,20 +21,20 @@ Outcomes:
 
 ## Workstream Tracker
 
-| #   | Workstream                               | Doc                                                                | Status                 | Wave   |
-| --- | ---------------------------------------- | ------------------------------------------------------------------ | ---------------------- | ------ |
-| 1.1 | Sidebar redesign                         | [design](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔁 Incremental          | 1      |
-| 1.2 | Studio creator roster                    | [feature](../features/studio-creator-roster.md)                    | ✅ Shipped (PR #30)     | 1      |
-| 1.3 | Studio member roster                     | [feature](../features/studio-member-roster.md)                     | ✅ Shipped (PR #28)     | 1      |
-| 1.4 | Studio creator onboarding (roster-first) | [feature](../features/studio-creator-onboarding.md)                | ✅ Shipped (PR #32)     | 1      |
-| 1.5 | Studio show management                   | [feature](../features/studio-show-management.md)                   | ✅ Shipped              | 1      |
-| 2.1 | Economics cost model                     | [PRD](../prd/economics-cost-model.md)                              | ✅ Signed off           | 2      |
-| 2.2 | Compensation line items + actuals        | [PRD](../prd/compensation-line-items.md)                           | 📝 Design next          | 2      |
-| 2.3 | Economics service                        | [PRD](../prd/economics-service.md)                                 | 🔲 Planned              | 2      |
-| 3.1 | Studio economics review surface          | [PRD](../prd/studio-economics-review.md)                           | 🔲 Planned              | 3      |
-| 3.2 | Show planning export                     | [PRD](../prd/show-planning-export.md)                              | 🔲 Planned              | 3      |
-| 3.3 | Creator availability hardening           | [PRD](../prd/creator-availability-hardening.md)                    | 🔲 Planned              | 3      |
-| 4.1 | P&L revenue workflow                     | [PRD](../prd/pnl-revenue-workflow.md)                              | ⏭️ Future target        | Future |
+| #   | Workstream                               | Doc                                                                | Status             | Wave   |
+| --- | ---------------------------------------- | ------------------------------------------------------------------ | ------------------ | ------ |
+| 1.1 | Sidebar redesign                         | [design](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) | 🔁 Incremental      | 1      |
+| 1.2 | Studio creator roster                    | [feature](../features/studio-creator-roster.md)                    | ✅ Shipped (PR #30) | 1      |
+| 1.3 | Studio member roster                     | [feature](../features/studio-member-roster.md)                     | ✅ Shipped (PR #28) | 1      |
+| 1.4 | Studio creator onboarding (roster-first) | [feature](../features/studio-creator-onboarding.md)                | ✅ Shipped (PR #32) | 1      |
+| 1.5 | Studio show management                   | [feature](../features/studio-show-management.md)                   | ✅ Shipped          | 1      |
+| 2.1 | Economics cost model                     | [PRD](../prd/economics-cost-model.md)                              | ✅ Signed off       | 2      |
+| 2.2 | Compensation line items + actuals        | [PRD](../prd/compensation-line-items.md)                           | 📝 Design next      | 2      |
+| 2.3 | Economics service                        | [PRD](../prd/economics-service.md)                                 | 🔲 Planned          | 2      |
+| 3.1 | Studio economics review surface          | [PRD](../prd/studio-economics-review.md)                           | 🔲 Planned          | 3      |
+| 3.2 | Show planning export                     | [PRD](../prd/show-planning-export.md)                              | 🔲 Planned          | 3      |
+| 3.3 | Creator availability hardening           | [PRD](../prd/creator-availability-hardening.md)                    | 🔲 Planned          | 3      |
+| 4.1 | P&L revenue workflow                     | [PRD](../prd/pnl-revenue-workflow.md)                              | ⏭️ Future target    | Future |
 
 3.3 depends only on shipped 1.4 and is independent of the Wave 2 cost stack. It may start in parallel with Wave 2 if capacity allows.
 
@@ -113,11 +113,11 @@ flowchart TD
 
 Wave 2 is single-track. Each step gates the next.
 
-| Step | Workstream                                                   | Why                                                                                                                                                                                                                                                    |
-| ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2.1  | [Economics cost model](../prd/economics-cost-model.md)       | Signed off. Locks the simplified Phase 4 data model, computation rules, three read-only views, and extensibility hooks. Stale app design drafts were removed; implementation designs are redrafted from the signed-off PRDs.                                         |
+| Step | Workstream                                                   | Why                                                                                                                                                                                                                                                                                         |
+| ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.1  | [Economics cost model](../prd/economics-cost-model.md)       | Signed off. Locks the simplified Phase 4 data model, computation rules, three read-only views, and extensibility hooks. Stale app design drafts were removed; implementation designs are redrafted from the signed-off PRDs.                                                                |
 | 2.2  | [Compensation line items](../prd/compensation-line-items.md) | Next design/implementation slice. Prisma additions for event-attached `CompensationLineItem` + `Show.actualStartTime/EndTime` + `StudioShiftBlock.actualStartTime/EndTime`; line item and actuals input surfaces. **No freeze guards, no settlement, no grace, no audit table** in Phase 4. |
-| 2.3  | [Economics service](../prd/economics-service.md)             | Greenfield implementation of the pure calculator and read endpoints against 2.1, consuming line-items + actuals from 2.2. No state machine.                                                                                                            |
+| 2.3  | [Economics service](../prd/economics-service.md)             | Greenfield implementation of the pure calculator and read endpoints against 2.1, consuming line-items + actuals from 2.2. No state machine.                                                                                                                                                 |
 
 Wave 3 begins after 2.3 merges to master.
 
@@ -167,19 +167,19 @@ Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, ru
 
 ### Per-feature docs
 
-| Workstream                            | Product                                                 | BE                                                                                                         | FE                                                                                                             |
-| ------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 1.2 Studio creator roster             | [feature](../features/studio-creator-roster.md)         | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md)                                                   | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md)                                                   |
-| 1.3 Studio member roster              | [feature](../features/studio-member-roster.md)          | Shipped (PR #28)                                                                                           | Shipped (PR #28)                                                                                               |
-| 1.4 Studio creator onboarding         | [feature](../features/studio-creator-onboarding.md)     | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md)                                               | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ONBOARDING.md)                                               |
-| 1.5 Studio show management            | [feature](../features/studio-show-management.md)        | [BE](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md)                                                  | [FE](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md)                                                  |
-| 2.1 Economics cost model              | [PRD](../prd/economics-cost-model.md)                   | N/A (docs-only)                                                                                            | N/A                                                                                                            |
-| 2.2 Compensation line items + actuals | [PRD](../prd/compensation-line-items.md)                | Redraft after sign-off                                                                                     | Redraft after sign-off                                                                                         |
-| 2.3 Economics service                 | [PRD](../prd/economics-service.md)                      | Redraft when 2.3 starts                                                                                    | Redraft when 2.3 starts                                                                                        |
-| 3.1 Studio economics review           | [PRD](../prd/studio-economics-review.md)                | Redraft after 2.3 read shape lands                                                                         | Redraft after 2.3 read shape lands                                                                             |
-| 3.2 Show planning export              | [PRD](../prd/show-planning-export.md)                   | Redraft after 3.1 scope is confirmed                                                                       | Redraft after 3.1 scope is confirmed                                                                           |
-| 3.3 Creator availability hardening    | [PRD](../prd/creator-availability-hardening.md)         | [BE](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md)                            | [FE](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md)                            |
-| Future P&L revenue workflow           | [PRD](../prd/pnl-revenue-workflow.md) *(future target)* | Redraft when revenue planning restarts                                                                     | Redraft when revenue planning restarts                                                                         |
+| Workstream                            | Product                                                 | BE                                                                              | FE                                                                                  |
+| ------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 1.2 Studio creator roster             | [feature](../features/studio-creator-roster.md)         | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ROSTER.md)                        | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ROSTER.md)                        |
+| 1.3 Studio member roster              | [feature](../features/studio-member-roster.md)          | Shipped (PR #28)                                                                | Shipped (PR #28)                                                                    |
+| 1.4 Studio creator onboarding         | [feature](../features/studio-creator-onboarding.md)     | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md)                    | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ONBOARDING.md)                    |
+| 1.5 Studio show management            | [feature](../features/studio-show-management.md)        | [BE](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md)                       | [FE](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md)                       |
+| 2.1 Economics cost model              | [PRD](../prd/economics-cost-model.md)                   | N/A (docs-only)                                                                 | N/A                                                                                 |
+| 2.2 Compensation line items + actuals | [PRD](../prd/compensation-line-items.md)                | Redraft after sign-off                                                          | Redraft after sign-off                                                              |
+| 2.3 Economics service                 | [PRD](../prd/economics-service.md)                      | Redraft when 2.3 starts                                                         | Redraft when 2.3 starts                                                             |
+| 3.1 Studio economics review           | [PRD](../prd/studio-economics-review.md)                | Redraft after 2.3 read shape lands                                              | Redraft after 2.3 read shape lands                                                  |
+| 3.2 Show planning export              | [PRD](../prd/show-planning-export.md)                   | Redraft after 3.1 scope is confirmed                                            | Redraft after 3.1 scope is confirmed                                                |
+| 3.3 Creator availability hardening    | [PRD](../prd/creator-availability-hardening.md)         | [BE](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [FE](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
+| Future P&L revenue workflow           | [PRD](../prd/pnl-revenue-workflow.md) *(future target)* | Redraft when revenue planning restarts                                          | Redraft when revenue planning restarts                                              |
 
 ## Definition of Done
 

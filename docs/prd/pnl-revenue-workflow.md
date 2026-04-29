@@ -29,13 +29,13 @@ Key questions unanswered today:
 
 ## Existing Infrastructure
 
-| Model / Endpoint                                          | Fields / Behavior                                                              | Status                 |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------- |
-| `ShowPlatform`                                            | `viewerCount` (no GMV/sales yet)                                               | ✅ Exists (partial)     |
-| `GET /studios/:studioId/shows/:showId/economics`          | Built by 2.3; returns cost; commission rows remain nullable until revenue      | 🔲 Built by 2.3         |
-| `GET /studios/:studioId/economics`                        | Built by 2.3; grouped read                                                     | 🔲 Built by 2.3         |
-| `ShowCreator.commissionRate`                              | Assignment snapshot commission rate; this future PRD applies it to revenue     | ✅ Exists               |
-| `StudioCreator.defaultCommissionRate`                     | Default fallback (used at agreement time, not at revenue time)                 | ✅ Exists               |
+| Model / Endpoint                                 | Fields / Behavior                                                          | Status             |
+| ------------------------------------------------ | -------------------------------------------------------------------------- | ------------------ |
+| `ShowPlatform`                                   | `viewerCount` (no GMV/sales yet)                                           | ✅ Exists (partial) |
+| `GET /studios/:studioId/shows/:showId/economics` | Built by 2.3; returns cost; commission rows remain nullable until revenue  | 🔲 Built by 2.3     |
+| `GET /studios/:studioId/economics`               | Built by 2.3; grouped read                                                 | 🔲 Built by 2.3     |
+| `ShowCreator.commissionRate`                     | Assignment snapshot commission rate; this future PRD applies it to revenue | ✅ Exists           |
+| `StudioCreator.defaultCommissionRate`            | Default fallback (used at agreement time, not at revenue time)             | ✅ Exists           |
 
 ## Requirements
 

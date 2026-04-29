@@ -25,14 +25,14 @@ Consequences today:
 
 ### Scope Decision: Which Fields Should Studios Edit?
 
-| Field | Studio Edit? | Rationale |
-| --- | --- | --- |
-| `name` | ✅ Yes | Profile correction; common need |
-| `aliasName` | ✅ Yes | Stage name changes frequently |
-| `metadata` | ✅ Yes | Studio-relevant operational data |
-| `userId` | ⚠️ Conditional | Only if creator was onboarded by the studio and has no existing user link |
-| `isBanned` | ❌ No | Cross-studio governance; system admin only |
-| `defaultRate` / `defaultRateType` / `defaultCommissionRate` | ❌ No | Global defaults should be set by system admin; studios use `StudioCreator` overrides |
+| Field                                                       | Studio Edit?  | Rationale                                                                            |
+| ----------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
+| `name`                                                      | ✅ Yes         | Profile correction; common need                                                      |
+| `aliasName`                                                 | ✅ Yes         | Stage name changes frequently                                                        |
+| `metadata`                                                  | ✅ Yes         | Studio-relevant operational data                                                     |
+| `userId`                                                    | ⚠️ Conditional | Only if creator was onboarded by the studio and has no existing user link            |
+| `isBanned`                                                  | ❌ No          | Cross-studio governance; system admin only                                           |
+| `defaultRate` / `defaultRateType` / `defaultCommissionRate` | ❌ No          | Global defaults should be set by system admin; studios use `StudioCreator` overrides |
 
 ## Users
 
@@ -85,17 +85,17 @@ All fields optional. `user_id` accepted only when current value is null.
 
 ### Role Access
 
-| Operation | ADMIN | MANAGER | TALENT_MANAGER | MEMBER |
-| --- | --- | --- | --- | --- |
-| Edit profile | ✅ | ❌ | ❌ | ❌ |
+| Operation    | ADMIN | MANAGER | TALENT_MANAGER | MEMBER |
+| ------------ | ----- | ------- | -------------- | ------ |
+| Edit profile | ✅     | ❌       | ❌              | ❌      |
 
 ### Error Codes
 
-| Code | HTTP Status | Condition |
-| --- | --- | --- |
-| `CREATOR_NOT_IN_ROSTER` | 422 | Creator is not in the studio's active roster |
-| `USER_ALREADY_LINKED` | 400 | Attempting to set `user_id` when creator already has a linked user |
-| `USER_NOT_FOUND` | 404 | Provided `user_id` does not exist |
+| Code                    | HTTP Status | Condition                                                          |
+| ----------------------- | ----------- | ------------------------------------------------------------------ |
+| `CREATOR_NOT_IN_ROSTER` | 422         | Creator is not in the studio's active roster                       |
+| `USER_ALREADY_LINKED`   | 400         | Attempting to set `user_id` when creator already has a linked user |
+| `USER_NOT_FOUND`        | 404         | Provided `user_id` does not exist                                  |
 
 ## Acceptance Criteria
 

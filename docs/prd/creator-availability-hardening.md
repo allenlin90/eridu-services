@@ -31,12 +31,12 @@ Key questions unanswered today:
 
 ## Existing Infrastructure
 
-| Endpoint / Model | Current Behavior | Status |
-| --- | --- | --- |
-| `GET /studios/:studioId/creators/availability` | Broad discovery mode, no conflict enforcement | ✅ Exists (intentionally loose) |
-| `ShowCreator` | Records current show–creator assignments | ✅ Exists |
-| `Creator.deletedAt` / roster active status | Soft-delete exists; roster active/inactive is now studio-operator-managed on `StudioCreator` | ✅ Exists |
-| Creator-mapping assignment endpoint | Accepts any creator without eligibility check | ✅ Exists |
+| Endpoint / Model                               | Current Behavior                                                                             | Status                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------ |
+| `GET /studios/:studioId/creators/availability` | Broad discovery mode, no conflict enforcement                                                | ✅ Exists (intentionally loose) |
+| `ShowCreator`                                  | Records current show–creator assignments                                                     | ✅ Exists                       |
+| `Creator.deletedAt` / roster active status     | Soft-delete exists; roster active/inactive is now studio-operator-managed on `StudioCreator` | ✅ Exists                       |
+| Creator-mapping assignment endpoint            | Accepts any creator without eligibility check                                                | ✅ Exists                       |
 
 ## Requirements
 
@@ -140,10 +140,10 @@ When `is_conflicted=false`, `conflict_reason` and `conflicting_show_id` are omit
 
 ### Error Codes (Assignment Endpoint)
 
-| Code | HTTP Status | Condition |
-| --- | --- | --- |
-| `CREATOR_OVERLAP_CONFLICT` | 409 | Creator already assigned to show with overlapping time window |
-| `CREATOR_NOT_IN_ROSTER` | 422 | Creator not in studio roster (enforced after creator roster feature ships) |
+| Code                       | HTTP Status | Condition                                                                  |
+| -------------------------- | ----------- | -------------------------------------------------------------------------- |
+| `CREATOR_OVERLAP_CONFLICT` | 409         | Creator already assigned to show with overlapping time window              |
+| `CREATOR_NOT_IN_ROSTER`    | 422         | Creator not in studio roster (enforced after creator roster feature ships) |
 
 These are distinct from 403 (authorization) and 404 (not found). Defined in `@eridu/api-types`.
 

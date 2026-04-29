@@ -31,11 +31,11 @@ Key questions:
 
 ## Users
 
-| Role | Need |
-| --- | --- |
-| Studio ADMIN | Export upcoming show plans with projected cost references for budget review. |
-| Studio MANAGER | Verify assignments and current projected cost before execution. |
-| Operations | Work from a flat sheet that matches the show planning mental model. |
+| Role           | Need                                                                         |
+| -------------- | ---------------------------------------------------------------------------- |
+| Studio ADMIN   | Export upcoming show plans with projected cost references for budget review. |
+| Studio MANAGER | Verify assignments and current projected cost before execution.              |
+| Operations     | Work from a flat sheet that matches the show planning mental model.          |
 
 ## Relationship To Task Reporting
 
@@ -103,15 +103,15 @@ This keeps planning export useful for assignment verification without turning it
 
 ## Existing Infrastructure
 
-| Model / Endpoint | Behavior | Status |
-| --- | --- | --- |
-| `Show` | Metadata, status, standard, type, room, start/end time, schedule linkage. | Exists |
-| `Client` | Client name linked to show. | Exists |
-| `ShowCreator` | Creator assignments and snapshot agreement fields. | Exists |
-| `CompensationLineItem` | Event-attached supplemental costs. | Built by 2.2 |
-| `GET /studios/:studioId/shows/:showId/economics` | Show-level cost reference. | Built by 2.3 |
-| `GET /studios/:studioId/economics` | Operational grouped cost rows. | Built by 2.3 |
-| Task report export helpers | CSV/table utilities may be reusable if domain-neutral. | Pattern reference only |
+| Model / Endpoint                                 | Behavior                                                                  | Status                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------- | ---------------------- |
+| `Show`                                           | Metadata, status, standard, type, room, start/end time, schedule linkage. | Exists                 |
+| `Client`                                         | Client name linked to show.                                               | Exists                 |
+| `ShowCreator`                                    | Creator assignments and snapshot agreement fields.                        | Exists                 |
+| `CompensationLineItem`                           | Event-attached supplemental costs.                                        | Built by 2.2           |
+| `GET /studios/:studioId/shows/:showId/economics` | Show-level cost reference.                                                | Built by 2.3           |
+| `GET /studios/:studioId/economics`               | Operational grouped cost rows.                                            | Built by 2.3           |
+| Task report export helpers                       | CSV/table utilities may be reusable if domain-neutral.                    | Pattern reference only |
 
 ## Requirements
 
@@ -119,25 +119,25 @@ This keeps planning export useful for assignment verification without turning it
 
 The first version uses a fixed schema. Column builder can be revisited after operations validates the sheet.
 
-| Column | Source |
-| --- | --- |
-| `show_id` | `Show.uid` |
-| `show_name` | `Show.name` |
-| `client_name` | `Client.name` |
-| `status` | `Show.status.name` |
-| `standard` | `Show.showStandard.name` |
-| `type` | `Show.showType.name` |
-| `room` | `Show.room.name` |
-| `start_time` | `Show.startTime` |
-| `end_time` | `Show.endTime` |
-| `assigned_creators` | Aggregated active `ShowCreator -> Creator.name` values |
-| `creator_assignment_count` | Active creator assignment count |
-| `creator_base_subtotal` | 2.3 show economics creator base subtotal |
-| `operator_shift_subtotal` | 2.3 show economics operator/shift subtotal, if available |
-| `line_item_subtotal` | 2.3 show economics show/show-assignment-attached line item subtotal |
-| `estimated_total_cost` | 2.3 show economics `cost` |
-| `unresolved_reasons` | 2.3 unresolved reason list, joined for CSV |
-| `calculation_warnings` | 2.3 warning list, joined for CSV |
+| Column                     | Source                                                              |
+| -------------------------- | ------------------------------------------------------------------- |
+| `show_id`                  | `Show.uid`                                                          |
+| `show_name`                | `Show.name`                                                         |
+| `client_name`              | `Client.name`                                                       |
+| `status`                   | `Show.status.name`                                                  |
+| `standard`                 | `Show.showStandard.name`                                            |
+| `type`                     | `Show.showType.name`                                                |
+| `room`                     | `Show.room.name`                                                    |
+| `start_time`               | `Show.startTime`                                                    |
+| `end_time`                 | `Show.endTime`                                                      |
+| `assigned_creators`        | Aggregated active `ShowCreator -> Creator.name` values              |
+| `creator_assignment_count` | Active creator assignment count                                     |
+| `creator_base_subtotal`    | 2.3 show economics creator base subtotal                            |
+| `operator_shift_subtotal`  | 2.3 show economics operator/shift subtotal, if available            |
+| `line_item_subtotal`       | 2.3 show economics show/show-assignment-attached line item subtotal |
+| `estimated_total_cost`     | 2.3 show economics `cost`                                           |
+| `unresolved_reasons`       | 2.3 unresolved reason list, joined for CSV                          |
+| `calculation_warnings`     | 2.3 warning list, joined for CSV                                    |
 
 JSON preview may include richer nested assignment breakdown, but CSV remains one row per show.
 
@@ -162,9 +162,9 @@ Planning export is intended for future/in-flight planning windows. It should not
 
 ## Routes
 
-| Method | Route | Description | Access |
-| --- | --- | --- | --- |
-| `GET` | `/studios/:studioId/shows/planning-export` | Paginated JSON preview by default, or CSV download with `format=csv`. | ADMIN, MANAGER |
+| Method | Route                                      | Description                                                           | Access         |
+| ------ | ------------------------------------------ | --------------------------------------------------------------------- | -------------- |
+| `GET`  | `/studios/:studioId/shows/planning-export` | Paginated JSON preview by default, or CSV download with `format=csv`. | ADMIN, MANAGER |
 
 Query parameters:
 
@@ -239,11 +239,11 @@ The UI should:
 
 ## Error Codes
 
-| Code | HTTP | Condition |
-| --- | --- | --- |
-| `DATE_RANGE_REQUIRED` | 400 | `date_from` or `date_to` missing. |
-| `DATE_RANGE_EXCEEDED` | 400 | Date range exceeds 90-day cap. |
-| `INVALID_DATE_FORMAT` | 400 | Date params are not valid ISO dates. |
+| Code                  | HTTP | Condition                            |
+| --------------------- | ---- | ------------------------------------ |
+| `DATE_RANGE_REQUIRED` | 400  | `date_from` or `date_to` missing.    |
+| `DATE_RANGE_EXCEEDED` | 400  | Date range exceeds 90-day cap.       |
+| `INVALID_DATE_FORMAT` | 400  | Date params are not valid ISO dates. |
 
 ## Acceptance Criteria
 

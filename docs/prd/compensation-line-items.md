@@ -169,16 +169,16 @@ This PRD does not lock endpoint names, request DTOs, or error-code names. The te
 
 ## Frontend Requirements
 
-| Surface                      | Requirement                                                                                                                               |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Compensation item management | ADMIN/MANAGER can create, edit, filter, and soft-delete line items.                                                                       |
-| Attachment selection         | Picker distinguishes supported event attachments such as show creator assignment, show, shift, and shift block, and uses UIDs, not internal DB IDs. |
-| Base vs supplemental display | Breakdown UI separates calculated base compensation from supplemental line items; users must not see generated base rows as editable line items. |
-| Actuals entry                | Show detail and shift-block surfaces expose compact actual-time inputs for ADMIN/MANAGER.                                                 |
-| Planned fallback warnings    | Admin/manager surfaces display warnings when costs are calculated from planned time because actuals are missing or incomplete. |
+| Surface                      | Requirement                                                                                                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compensation item management | ADMIN/MANAGER can create, edit, filter, and soft-delete line items.                                                                                                                                       |
+| Attachment selection         | Picker distinguishes supported event attachments such as show creator assignment, show, shift, and shift block, and uses UIDs, not internal DB IDs.                                                       |
+| Base vs supplemental display | Breakdown UI separates calculated base compensation from supplemental line items; users must not see generated base rows as editable line items.                                                          |
+| Actuals entry                | Show detail and shift-block surfaces expose compact actual-time inputs for ADMIN/MANAGER.                                                                                                                 |
+| Planned fallback warnings    | Admin/manager surfaces display warnings when costs are calculated from planned time because actuals are missing or incomplete.                                                                            |
 | Recipient pending state      | Creator/operator/helper self-views show acknowledged events as pending when actuals are missing or incomplete, and do not show compensation amounts or include pending rows in recipient monetary totals. |
-| Snapshot overrides           | Existing assignment/shift edit flows warn before changing snapshot fields and collect optional reason text for metadata audit.            |
-| Read-only compensation views | 2.3 exposes calculated read views; FE must not compute money locally.                                                                     |
+| Snapshot overrides           | Existing assignment/shift edit flows warn before changing snapshot fields and collect optional reason text for metadata audit.                                                                            |
+| Read-only compensation views | 2.3 exposes calculated read views; FE must not compute money locally.                                                                                                                                     |
 
 ## Acceptance Criteria
 

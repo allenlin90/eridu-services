@@ -48,19 +48,19 @@ Everything in this list is deferred. Each has an extension sketch in §4.
 
 ## Terminology
 
-| Term                              | Definition                                                                                                                                                                                                                                              |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Agreement**                     | The pre-show / pre-shift terms a creator or operator is paid by — rate, compensation type, commission rate, scheduled times.                                                                                                                            |
-| **Agreement snapshot**            | The persisted per-assignment copy of agreement terms, captured at assignment time from explicit input or roster defaults. Roster default edits do not rewrite snapshots.                                                                                |
-| **Snapshot-field override audit** | When ADMIN/MANAGER updates a snapshot field (e.g. `ShowCreator.agreedRate`), the change is recorded on the row using the codebase's existing metadata-audit pattern. No separate audit table is introduced in Phase 4.                                  |
-| **Compensation component**        | One independently-computed part of a creator agreement (`FIXED_BASE` / `HOURLY_BASE` / commission). `HYBRID` = more than one component.                                                                                                                 |
-| **Actuals**                       | Recorded measurements: actual show time, actual shift block time. Plain nullable timestamps; entered freely. A complete pair is required before actual duration can drive calculation.                                                                   |
-| **Line item**                     | A `CompensationLineItem` record: a flat supplemental amount attached to a concrete operational event or event participation, such as a show assignment or shift block. It is not the base show/shift compensation snapshot.                              |
-| **Unresolved reason**             | A string label on a row identifying why a component has no value (`commission_pending_revenue`, `planned_time_missing`, `agreement_snapshot_missing`). UI surfaces these instead of substituting `0`.                                                |
-| **Calculation warning**           | A string label on a row identifying why a computed value is provisional but still calculable, such as `actuals_missing_using_planned` or `actuals_incomplete_using_planned`.                                                                           |
+| Term                              | Definition                                                                                                                                                                                                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Agreement**                     | The pre-show / pre-shift terms a creator or operator is paid by — rate, compensation type, commission rate, scheduled times.                                                                                                                     |
+| **Agreement snapshot**            | The persisted per-assignment copy of agreement terms, captured at assignment time from explicit input or roster defaults. Roster default edits do not rewrite snapshots.                                                                         |
+| **Snapshot-field override audit** | When ADMIN/MANAGER updates a snapshot field (e.g. `ShowCreator.agreedRate`), the change is recorded on the row using the codebase's existing metadata-audit pattern. No separate audit table is introduced in Phase 4.                           |
+| **Compensation component**        | One independently-computed part of a creator agreement (`FIXED_BASE` / `HOURLY_BASE` / commission). `HYBRID` = more than one component.                                                                                                          |
+| **Actuals**                       | Recorded measurements: actual show time, actual shift block time. Plain nullable timestamps; entered freely. A complete pair is required before actual duration can drive calculation.                                                           |
+| **Line item**                     | A `CompensationLineItem` record: a flat supplemental amount attached to a concrete operational event or event participation, such as a show assignment or shift block. It is not the base show/shift compensation snapshot.                      |
+| **Unresolved reason**             | A string label on a row identifying why a component has no value (`commission_pending_revenue`, `planned_time_missing`, `agreement_snapshot_missing`). UI surfaces these instead of substituting `0`.                                            |
+| **Calculation warning**           | A string label on a row identifying why a computed value is provisional but still calculable, such as `actuals_missing_using_planned` or `actuals_incomplete_using_planned`.                                                                     |
 | **Reference figure**              | The reconciled cost view for an assignment / shift / period. Admin/manager surfaces may include planned fallback with warnings; recipient self-views only show monetary values when actuals are complete. No settlement state exists in Phase 4. |
-| **Pending recipient event**       | A creator/operator/helper self-view row where the event is acknowledged but complete actuals are not available, so compensation cannot be counted yet and monetary totals are hidden. |
-| **Countable recipient total**     | A self-view total that includes only rows with complete actuals and otherwise resolved monetary components. Pending recipient events are counted separately and never included through planned fallback. |
+| **Pending recipient event**       | A creator/operator/helper self-view row where the event is acknowledged but complete actuals are not available, so compensation cannot be counted yet and monetary totals are hidden.                                                            |
+| **Countable recipient total**     | A self-view total that includes only rows with complete actuals and otherwise resolved monetary components. Pending recipient events are counted separately and never included through planned fallback.                                         |
 
 ## 1. Data Model
 
@@ -76,12 +76,12 @@ When a creator is assigned to a show, `ShowCreator` persists `agreedRate`, `comp
 
 `compensationType` is the user-facing package label. The economics service resolves the package into components before calculation.
 
-| Package      | Components               | Phase 4 computation                                                     |
-| ------------ | ------------------------ | ----------------------------------------------------------------------- |
-| `FIXED`      | `FIXED_BASE`             | Fixed amount for the assignment; recipient self-views still wait for complete actuals before showing/counting it. |
+| Package      | Components               | Phase 4 computation                                                                                                                           |
+| ------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FIXED`      | `FIXED_BASE`             | Fixed amount for the assignment; recipient self-views still wait for complete actuals before showing/counting it.                             |
 | `HOURLY`     | `HOURLY_BASE`            | `agreedRate × duration`; admin/manager surfaces may use planned fallback with warnings, while recipient self-views wait for complete actuals. |
-| `COMMISSION` | one commission component | `null` until a future revenue/sales input lands.                        |
-| `HYBRID`     | two or more components   | Sum of resolved components; `null` if any commission component pending. |
+| `COMMISSION` | one commission component | `null` until a future revenue/sales input lands.                                                                                              |
+| `HYBRID`     | two or more components   | Sum of resolved components; `null` if any commission component pending.                                                                       |
 
 The component model is the extension point for future commission variants and the Phase 5 rule engine.
 
@@ -185,12 +185,12 @@ Recipient self-view responses must include enough status/reason metadata for FE 
 
 Time-based computation carries a forward-compatible source category so Phase 4's operator-record source can be augmented later without changing consumer-facing semantics. The product contract only needs the source category; how platform data arrives is an implementation detail.
 
-| Priority | Source                                                           | Phase 4 status |
-| -------- | ---------------------------------------------------------------- | -------------- |
-| 1        | Platform source                                                  | Deferred       |
+| Priority | Source                                                           | Phase 4 status       |
+| -------- | ---------------------------------------------------------------- | -------------------- |
+| 1        | Platform source                                                  | Deferred             |
 | 2        | Operator post-production record (`Show.actualStartTime/EndTime`) | ✅ complete pair only |
-| 3        | Creator app self-record                                          | Deferred       |
-| 4        | Planned show time (`Show.startTime/endTime`)                     | ✅ fallback     |
+| 3        | Creator app self-record                                          | Deferred             |
+| 4        | Planned show time (`Show.startTime/endTime`)                     | ✅ fallback           |
 
 Same shape for shift blocks (1: punch-clock; 2: operator manual entry — built, complete pair only; 3: scheduled — built). New sources slot into the source resolution order without changing public row semantics. Row response carries `actuals_source` so admin/manager UI can show "calculated from Operator" or "calculated from Planned" without exposing ingestion implementation details. If an operator record is absent or incomplete and planned time exists, admin/manager rows may use planned time with a calculation warning; recipient self-view rows show pending instead.
 

@@ -41,13 +41,13 @@ Reference data presents a design tension:
 
 ## Existing Infrastructure
 
-| Surface / Model | Current Behavior | Status |
-| --- | --- | --- |
-| `/admin/clients` | Full CRUD, system-admin only | ✅ Exists |
-| `/admin/platforms` | Full CRUD, system-admin only | ✅ Exists |
-| `/admin/show-types` | Full CRUD, system-admin only | ✅ Exists |
-| `/admin/show-standards` | Full CRUD, system-admin only | ✅ Exists |
-| `/admin/show-statuses` | Full CRUD, system-admin only | ✅ Exists |
+| Surface / Model         | Current Behavior                  | Status   |
+| ----------------------- | --------------------------------- | -------- |
+| `/admin/clients`        | Full CRUD, system-admin only      | ✅ Exists |
+| `/admin/platforms`      | Full CRUD, system-admin only      | ✅ Exists |
+| `/admin/show-types`     | Full CRUD, system-admin only      | ✅ Exists |
+| `/admin/show-standards` | Full CRUD, system-admin only      | ✅ Exists |
+| `/admin/show-statuses`  | Full CRUD, system-admin only      | ✅ Exists |
 | Studio lookup endpoints | Read-only for all five categories | ✅ Exists |
 
 ## Requirements
@@ -111,11 +111,11 @@ Existing GET (lookup) endpoints remain unchanged for all roles.
 
 ### Error Codes
 
-| Code | HTTP Status | Condition |
-| --- | --- | --- |
-| `DUPLICATE_NAME` | 409 | Record with same name already exists in global catalog |
-| `REFERENCE_NOT_FOUND` | 404 | Record does not exist |
-| `UPDATE_NOT_PERMITTED` | 403 | Studio attempting to update a record created by a different studio or by system admin |
+| Code                   | HTTP Status | Condition                                                                             |
+| ---------------------- | ----------- | ------------------------------------------------------------------------------------- |
+| `DUPLICATE_NAME`       | 409         | Record with same name already exists in global catalog                                |
+| `REFERENCE_NOT_FOUND`  | 404         | Record does not exist                                                                 |
+| `UPDATE_NOT_PERMITTED` | 403         | Studio attempting to update a record created by a different studio or by system admin |
 
 ## Acceptance Criteria
 
