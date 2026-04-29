@@ -28,24 +28,25 @@ PRDs are **phase-scoped and transient**:
 
 Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4.md#implementation-sequencing).
 
-| #   | PRD                                                                  | Wave | Status                          |
-| --- | -------------------------------------------------------------------- | ---- | ------------------------------- |
-| 2.1 | [Economics Cost Model](./economics-cost-model.md)                    | 2    | 🔲 Active — docs-only            |
-| 2.2 | [Compensation Line Items + Freeze + Actuals](./compensation-line-items.md) | 2    | 🔲 Planned                       |
-| 3.1 | [Studio Economics Review](./studio-economics-review.md)              | 3    | 🔲 Planned                       |
-| 3.2 | [Show Planning Export](./show-planning-export.md)                    | 3    | 🔲 Planned                       |
-| 3.3 | [Creator Availability Hardening](./creator-availability-hardening.md) | 3    | 🔲 Planned                       |
-| 4.1 | [P&L Revenue Workflow](./pnl-revenue-workflow.md)                    | 4    | 🔲 Planned (4 open design Qs)    |
+| #   | PRD                                                                   | Wave   | Status                           |
+| --- | --------------------------------------------------------------------- | ------ | -------------------------------- |
+| 2.1 | [Economics Cost Model](./economics-cost-model.md)                     | 2      | 🔲 Active — docs-only             |
+| 2.2 | [Compensation Line Items + Actuals](./compensation-line-items.md)     | 2      | 🔲 Planned                        |
+| 2.3 | [Economics Service](./economics-service.md)                           | 2      | 🔲 Planned                        |
+| 3.1 | [Studio Economics Review](./studio-economics-review.md)               | 3      | 🔲 Planned — revise before Wave 3 |
+| 3.2 | [Show Planning Export](./show-planning-export.md)                     | 3      | 🔲 Planned — revise before Wave 3 |
+| 3.3 | [Creator Availability Hardening](./creator-availability-hardening.md) | 3      | 🔲 Planned — revise before Wave 3 |
+| —   | [P&L Revenue Workflow](./pnl-revenue-workflow.md)                     | Future | ⏭️ Future target                  |
 
-Wave 2.3 (Economics Service) does not have its own PRD — it's a backend implementation against 2.1 + 2.2; the design doc lands when the workstream starts.
+The 2.3 design doc lands when the workstream starts; [Economics Service](./economics-service.md) is the product/API contract source.
 
 Studio schedule management is deferred (revisit with the Client Portal workstream): [PRD](./studio-schedule-management.md).
 
 ### Phase 5 Candidates (PRDs created, implementation deferred)
 
-| PRD | Workstream | Track | Status |
-| --- | --- | --- | --- |
-| [Studio Reference Data](./studio-reference-data.md) | Studio-initiated creation of clients, platforms, types, standards, statuses | C | Deferred to Phase 5 |
-| [Studio Creator Profile](./studio-creator-profile.md) | Studio-level editing of creator name, alias, metadata | C | Deferred to Phase 5 |
+| PRD                                                   | Workstream                                                                  | Track | Status              |
+| ----------------------------------------------------- | --------------------------------------------------------------------------- | ----- | ------------------- |
+| [Studio Reference Data](./studio-reference-data.md)   | Studio-initiated creation of clients, platforms, types, standards, statuses | C     | Deferred to Phase 5 |
+| [Studio Creator Profile](./studio-creator-profile.md) | Studio-level editing of creator name, alias, metadata                       | C     | Deferred to Phase 5 |
 
 Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1, incremental rollout).
