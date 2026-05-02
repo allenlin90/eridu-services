@@ -83,12 +83,14 @@ If required snapshot fields are missing after 2.2 normalization, the row stays u
 
 ### 4. Actuals source resolution
 
-- For show time, use `Show.actualStartTime` / `actualEndTime` only when both are present.
+- Follow the cost model's actual ownership rule: use the narrowest scoped actual available for the component being calculated.
+- For Phase 4 show time, use `Show.actualStartTime` / `actualEndTime` only when both are present. If future creator-participation actuals ship, creator compensation should use `ShowCreator` actuals before falling back to show-level actuals.
 - If show actual timestamps are absent or incomplete, use `Show.startTime` / `endTime` when planned time exists and emit a calculation warning.
 - If neither actual nor planned show duration can be resolved, return an unresolved row.
 - For shift blocks, use block actuals only when both are present.
 - If block actual timestamps are absent or incomplete, use block scheduled times when scheduled time exists and emit a calculation warning.
 - If neither actual nor planned block duration can be resolved, return an unresolved row.
+- Future platform stream/performance actuals belong to `ShowPlatform` or a platform metrics child model and should feed platform/revenue/commission components, not creator attendance.
 - Expose `actuals_source` so consumers can distinguish `OPERATOR_RECORD` from `PLANNED`, and expose calculation warnings when `PLANNED` is used because actuals are missing or incomplete.
 - `/me/` recipient self-views must not expose monetary totals for events with missing or incomplete actuals, even when the compensation package is fixed. They should return enough event/status context for FE to show the row as pending and explain that actual inputs are not complete yet.
 - Keep the enum extensible for future `PLATFORM`, `CREATOR_APP`, and `PUNCH_CLOCK` source categories. How platform data arrives is an implementation detail behind `PLATFORM`.

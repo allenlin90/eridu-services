@@ -47,6 +47,10 @@ To keep the implementation aligned with Phase 4:
 9. **Aggregation reads exclude soft-deleted rows by default.** `includeDeleted` is permitted only on admin/audit surfaces (2.2 does not introduce one).
 10. **Mutations run inside `@Transactional()`.** Snapshot-override audit append, target resolution, and the underlying write are atomic.
 
+## Actuals Scope Reference
+
+This design follows [`economics-cost-model.md` actual ownership and scope](../../../../docs/prd/economics-cost-model.md#actual-ownership-and-scope): actual timestamps are recorded facts stored on the narrowest entity whose fact they represent. This 2.2 wave only adds overall show actuals and shift-block labor actuals. Future creator-participation actuals belong on `ShowCreator`; future platform stream/performance actuals belong on `ShowPlatform` or a platform metrics child model.
+
 ## Schema Additions
 
 All migrations are generated through Prisma tooling per repo rule; no hand-written SQL.

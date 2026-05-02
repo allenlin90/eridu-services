@@ -35,7 +35,7 @@ The required Phase 4 slice is:
 - Event-attached line items included by the 2.3 direct compensation and operational calculators according to the attached event's date/time.
 - No separate `effectiveDate`; date inclusion comes from the attached event.
 - Explicit separation between calculated base compensation and persisted supplemental line items.
-- Show and shift-block actual time fields.
+- Show and shift-block actual time fields, as the Phase 4 implementation slice of the broader actual-ownership rule in the cost model.
 - Metadata-column audit append for snapshot field overrides.
 - Existing soft-delete behavior respected by reads.
 
@@ -103,6 +103,8 @@ Line items attach to supported show/shift entities. Date-ranged admin/manager di
 
 Actuals can be entered any time by authorized studio users. There is no approval flag, settlement flag, freeze gate, or grace normalization in Phase 4. The 2.3 calculator chooses actual time only when both actual timestamps are present. If actuals are absent or incomplete, it falls back to planned time when planned timestamps exist and emits calculation warnings. If planned time is also missing, the row is unresolved.
 
+Actuals must be stored on the narrowest entity whose fact they describe. In this 2.2 slice, the persisted inputs are overall show actuals (`Show`) and operator/member labor actuals (`StudioShiftBlock`). If later work needs creator-specific attendance for multi-creator shows, that belongs on `ShowCreator`; if later work needs platform stream or performance windows, that belongs on `ShowPlatform` or a dedicated platform metrics child model. Those future fields can coexist with show actuals because they have different meanings.
+
 Frontend surfaces must handle missing actuals differently by audience:
 
 - Admin/manager surfaces may show planned-fallback values, but must warn that actuals are missing or incomplete and the displayed cost is calculated from planned time.
@@ -151,6 +153,7 @@ The product constraints are:
 
 - nullable show actual start/end timestamps;
 - nullable shift-block actual start/end timestamps;
+- no creator-participation or platform-performance actual fields in this wave; those are future scoped extensions if the product needs them;
 - removal of stored `StudioShift.projectedCost`;
 - metadata-audit append when ADMIN/MANAGER updates intended-immutable snapshot fields such as `ShowCreator` agreement fields or `StudioShift.hourlyRate`.
 

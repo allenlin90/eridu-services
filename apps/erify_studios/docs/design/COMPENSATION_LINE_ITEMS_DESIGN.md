@@ -14,6 +14,8 @@
 
 This design covers data **input** only. Calculator-driven money displays land with 2.3 (`/me/` recipient self-views) and 3.1 (studio economics review). 2.2 must not compute monetary totals locally.
 
+Actuals surfaces must follow the cost model's [actual ownership and scope](../../../../docs/prd/economics-cost-model.md#actual-ownership-and-scope). This 2.2 UI only exposes show actuals and shift-block actuals, but future creator participation actuals and platform performance actuals must be labeled, keyed, and mutated as distinct resources.
+
 ## UX Goals
 
 - Operators attach line items wherever they already work — directly from a show, a show-creator assignment, a shift, or a shift block — and from a dedicated workspace when they want to scan or filter across many.

@@ -74,6 +74,7 @@ Show-level assignment pages still need compact inline previews, but that is a se
    - All monetary values come from the API as decimal strings.
    - FE must not recompute finance amounts locally.
    - Rows expose cost-model fields such as `cost`, `base_subtotal`, `line_item_subtotal`, `unresolved_reasons`, `calculation_warnings`, `actuals_source`, and `is_in_future`.
+   - Actual labels must preserve the scoped source meaning returned by the backend; show actuals, creator participation actuals, platform performance actuals, and shift-block actuals are not interchangeable.
 
 5. **Projected vs actual-backed labels**
    - The backend does not store a cost-state enum in Phase 4.
