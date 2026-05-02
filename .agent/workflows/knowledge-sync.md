@@ -16,6 +16,8 @@ Run when any of these are true:
 4. A recurring implementation/review pattern should be reusable by future agents.
 5. A large route/component was decomposed and the extraction pattern should be standardized.
 
+> **Schema redesigns**: when the trigger is a backwards-incompatible schema change for an already-shipped feature (new storage-key strategy, new projection rules, etc.), use [feature-version-cutover.md](./feature-version-cutover.md) instead — it's a specialization of this workflow that handles the v1/v2 decision and the doc-folder promotion.
+
 ## Steps
 
 1. **Classify what changed**

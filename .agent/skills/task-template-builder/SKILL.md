@@ -7,6 +7,8 @@ description: Provides guidelines for the Task Template Builder architecture, inc
 
 This skill documents the architecture of the Task Template Builder in `erify_studios`.
 
+> **Documentation sync requirement**: any change to template schema shape, builder behavior, shared-field insertion semantics, or content-key strategy must update every artifact listed in the [Task Templates feature doc — Maintenance: Documentation Sync](../../../docs/features/task-templates.md#maintenance-documentation-sync) section in the same PR. Do not split doc updates into a follow-up. Run [.agent/workflows/knowledge-sync.md](../../workflows/knowledge-sync.md) for the general mechanism.
+
 ## Core Architecture
 
 ### 1. Schema Alignment (Single Source of Truth)

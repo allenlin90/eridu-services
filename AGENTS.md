@@ -134,6 +134,7 @@ Claude Code does **not** auto-load `AGENTS.md`; it auto-loads `.claude/CLAUDE.md
 #### Knowledge And Doc Lifecycle
 - After feature delivery, behavior changes, or refactors, run `.agent/workflows/knowledge-sync.md`.
 - When a phase closes, PRDs ship, or docs are reorganized, run `.agent/workflows/doc-lifecycle.md`.
+- When a backwards-incompatible schema redesign lands for a shipped feature, run `.agent/workflows/feature-version-cutover.md` (manual trigger). It decides whether to update docs in place or promote the feature doc to a versioned folder (`v1.md` archived, `README.md` describing v2), and enforces same-PR updates across all related docs and skills.
 - Before merging a PR, run `.agent/workflows/pr-review.md`.
 - During design review, optimization investigations, or phase planning, cross-check `.agent/workflows/ideation-lifecycle.md`.
 

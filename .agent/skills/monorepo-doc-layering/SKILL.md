@@ -49,6 +49,7 @@ Preserve a consistent documentation model in `eridu-services`:
 
 - Put cross-app roadmap and phase status in `docs/roadmap/`.
 - Put active in-flight requirements in `docs/prd/`; promote to `docs/features/` when shipped.
+- For features that undergo a backwards-incompatible schema redesign, promote the feature doc from a flat file to a versioned folder (`docs/features/<feature>/README.md` for the current version, `vN.md` for retired versions). See [docs/features/README.md § Versioning Convention](../../../docs/features/README.md#versioning-convention-schema-redesigns) and run [.agent/workflows/feature-version-cutover.md](../../workflows/feature-version-cutover.md).
 - Put cross-feature end-to-end flow guides in `docs/workflows/`.
 - Put business domain model and entity context in `docs/domain/`.
 - Put architecture overview and engineering policies in `docs/engineering/`.

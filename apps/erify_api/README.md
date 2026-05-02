@@ -94,6 +94,27 @@ pnpm run db:studio
 pnpm run db:generate
 ```
 
+### Production Data Sync (local development against real prod data)
+
+Mirror prod into your local databases for high-fidelity development and migration verification (e.g., before applying breaking schema changes, or when seed data does not capture real shapes).
+
+```bash
+bash ../../scripts/sync-prod-to-local.sh
+```
+
+**One-time setup:**
+- Add `PROD_DATABASE_URL` and `PROD_ERIDU_AUTH_DATABASE_URL` to your gitignored `.env` (placeholders in [`.env.example`](./.env.example)).
+- macOS Postgres client tools: `brew install libpq && export PATH="/opt/homebrew/opt/libpq/bin:$PATH"`.
+- bash >= 4.3: `brew install bash` (macOS ships 3.2).
+
+**Read-only on prod:** the script uses `pg_dump` only against `PROD_*` URLs; `psql` is invoked exclusively against your local DBs. Pre-flight aborts unless local URL hosts are `localhost` / `127.0.0.1` / `::1`.
+
+**See:**
+- [Skill](../../.agent/skills/prod-data-sync/SKILL.md) — when to use, governance roadmap.
+- [Workflow](../../.agent/workflows/prod-data-sync.md) — full operational recipe (pre-flight → sync → migrate → verify → revert).
+
+> ⚠️ Solo-dev tooling. **Never** run in CI. Tightening required as the team grows (secret manager, SELECT-only role, PII sanitization — see skill).
+
 ### Testing
 
 ```bash

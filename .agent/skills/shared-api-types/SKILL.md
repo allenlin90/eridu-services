@@ -32,6 +32,8 @@ packages/api-types/src/
 └── pagination/       # Shared utilities
 ```
 
+> **Cross-cutting domain note**: `task-management/template-definition.schema.ts` is the foundational contract for the Task Templates feature, which has multiple downstream consumers (task content storage, uploads, reporting). Any change to that file must follow the documentation-sync list in [docs/features/task-templates.md § Maintenance: Documentation Sync](../../../docs/features/task-templates.md#maintenance-documentation-sync) — update every listed artifact in the same PR.
+
 ## Import Strategy (Subpath Exports)
 
 Always use subpath imports to keep domains separated.
