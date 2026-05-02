@@ -145,6 +145,16 @@ export const createStudioShowInputSchema = createStudioShowInputObjectSchema.ref
 
 Use the refined schema at API boundaries and the base object schema when feature code needs to derive form-specific variants. This avoids Zod runtime errors from calling object helpers on schemas that already contain refinements.
 
+## Scoped Actuals and Finance Contracts
+
+Actuals and finance fields must be scoped in the contract name and payload shape so consumers do not confuse different facts that happen to share start/end timestamps.
+
+Rules:
+- Use resource-specific schemas such as `setShowActualsInputSchema`, `setShowCreatorActualsInputSchema`, `setShowPlatformActualsInputSchema`, or `setStudioShiftBlockActualsInputSchema`.
+- Keep field names and nesting explicit enough to reveal meaning. A `ShowCreator` actual is creator participation time; a `ShowPlatform` actual is platform stream/performance time; a `Show` actual is the overall event window.
+- Monetary reference figures must be backend-provided string decimals. Frontend contracts can submit recorded inputs, but should not define DTOs that require client-side finance arithmetic.
+- If an API response combines base components, line items, warnings, and unresolved reasons, expose that as an economics/read-model resource rather than adding calculated fields to operational CRUD DTOs.
+
 ## Transform Pattern for Prisma → DTO
 
 ### When a transform is required

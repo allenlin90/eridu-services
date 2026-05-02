@@ -41,6 +41,7 @@ Backend API
 3. **Error Handling**: API client handles auth errors, API declarations handle business errors
 4. **Query Keys**: Centralize query keys in API declaration files
 5. **No FE Data Joins for Required Display Fields**: If a view needs stable display fields (e.g. assignee name), the primary API response must include them.
+6. **Scoped Actuals and Finance Reads**: Actuals mutations and query keys must be resource-specific (`show`, `show-creator`, `show-platform`, `shift-block`). Finance reference values come from backend economics/read-model APIs, not frontend recomputation.
 
 ### No FE Data Join Rule (Required)
 

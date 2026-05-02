@@ -47,6 +47,23 @@ For implementation details, refer to the specific layer skills:
 - **Repository Boundary**: Repositories hide the Database/ORM. Services should NEVER write raw queries or know about SQL.
 - **Types Boundary**: Use Shared API Types (`@eridu/api-types`) at the external edges (Controller inputs/outputs). Use Domain/DB types internally.
 
+## Recorded Facts vs Derived Read Models
+
+Store operational facts on the entity whose real-world scope they describe, and keep derived reference figures in backend read models/calculators.
+
+| Fact type | Canonical entity scope |
+| :--- | :--- |
+| Overall show timing | `Show` |
+| Creator participation timing within a show | `ShowCreator` |
+| Platform stream/performance/revenue facts | `ShowPlatform` or a dedicated child metrics model |
+| Operator/member labor timing | `StudioShiftBlock` |
+
+Rules:
+- Actual timestamps are recorded facts, not calculated money.
+- Use the narrowest scoped entity that can answer the business question without ambiguity.
+- Multiple actual start/end fields can coexist when they mean different things; do not collapse creator participation, platform stream timing, and show timing into one generic "actuals" concept.
+- Do not persist calculated finance totals on operational tables. If a future workflow needs durable paid/settled/frozen numbers, model that as an explicit snapshot, settlement, or payment artifact rather than reusing live operational rows.
+
 ## Dependency Injection (High Level)
 
 **Pattern**: Inversion of Control.
