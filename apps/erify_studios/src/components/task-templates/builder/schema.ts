@@ -106,6 +106,32 @@ export function parseTemplateSchema(raw: unknown) {
   return TemplateSchema.parse(raw);
 }
 
+export function safeParseBuilderTemplateSchema(raw: unknown) {
+  try {
+    return {
+      success: true as const,
+      data: parseTemplateSchema(raw),
+    };
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return {
+        success: false as const,
+        error: err,
+      };
+    }
+
+    return {
+      success: false as const,
+      error: new z.ZodError([{
+        code: 'custom',
+        message: (err as Error).message,
+        path: [],
+        input: raw,
+      }]),
+    };
+  }
+}
+
 export const defaultField: FieldItem = {
   id: crypto.randomUUID(),
   key: '',

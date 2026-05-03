@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as idb from 'idb-keyval';
 import { toast } from 'sonner';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Import from the correct relative path
 import { TaskTemplateBuilderPage } from '@/routes/studios/$studioId/task-templates/new';
@@ -63,7 +63,7 @@ vi.mock('usehooks-ts', () => ({
 // Mock TaskTemplateBuilder component
 vi.mock('@/components/task-templates/builder/task-template-builder', () => ({
   TaskTemplateBuilder: ({ template, onChange, onSave, onCancel }: any) => (
-    <div data-testid="builder-mock">
+    <div data-testid="builder-mock" data-schema-engine={template.schema_engine ?? 'task_template_v1'}>
       <input
         data-testid="name-input"
         value={template.name}
@@ -74,7 +74,7 @@ vi.mock('@/components/task-templates/builder/task-template-builder', () => ({
         onClick={() => onChange({
           ...template,
           items: [{
-            id: 'test-item-1',
+            id: template.schema_engine === 'task_template_v2' ? 'fld_1234567890' : 'test-item-1',
             key: 'test_field',
             type: 'text',
             label: 'Test Field',
@@ -94,10 +94,17 @@ vi.mock('@/components/task-templates/builder/task-template-builder', () => ({
 // --- Tests ---
 
 describe('taskTemplateBuilderPage', () => {
+  const originalV2Flag = import.meta.env.VITE_TASK_TEMPLATE_V2_BUILDER;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    (import.meta.env as Record<string, string | undefined>).VITE_TASK_TEMPLATE_V2_BUILDER = 'false';
     // Default idb behavior: no draft
     vi.mocked(idb.get).mockResolvedValue(undefined);
+  });
+
+  afterAll(() => {
+    (import.meta.env as Record<string, string | undefined>).VITE_TASK_TEMPLATE_V2_BUILDER = originalV2Flag;
   });
 
   it('renders loading state initially', async () => {
@@ -130,6 +137,18 @@ describe('taskTemplateBuilderPage', () => {
     expect(idb.get).toHaveBeenCalledWith('task_template_draft');
     // Check initial name is empty
     expect(screen.getByTestId('name-input')).toHaveValue('');
+    expect(screen.getByTestId('builder-mock')).toHaveAttribute('data-schema-engine', 'task_template_v1');
+  });
+
+  it('initializes v2 builder only when the phase 4 flag is enabled', async () => {
+    (import.meta.env as Record<string, string | undefined>).VITE_TASK_TEMPLATE_V2_BUILDER = 'true';
+    vi.mocked(idb.get).mockResolvedValue(undefined);
+
+    render(<TaskTemplateBuilderPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('builder-mock')).toHaveAttribute('data-schema-engine', 'task_template_v2');
+    });
   });
 
   it('initializes with draft values when draft exists', async () => {
@@ -242,6 +261,34 @@ describe('taskTemplateBuilderPage', () => {
     expect(toast.error).toHaveBeenCalledWith('Error creating template', expect.objectContaining({
       description: 'API Failure',
     }));
+  });
+
+  it('sends the v2 schema envelope when the flagged builder creates a template', async () => {
+    const user = userEvent.setup();
+    (import.meta.env as Record<string, string | undefined>).VITE_TASK_TEMPLATE_V2_BUILDER = 'true';
+    vi.mocked(idb.get).mockResolvedValue(undefined);
+
+    mockCreateTemplate.mockImplementation((data, onSuccess) => {
+      onSuccess();
+    });
+
+    render(<TaskTemplateBuilderPage />);
+    await waitFor(() => screen.getByTestId('builder-mock'));
+
+    await user.type(screen.getByTestId('name-input'), 'Valid Name');
+    await user.click(screen.getByText('Add Valid Item'));
+    await user.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(mockCreateTemplate).toHaveBeenCalledWith(expect.objectContaining({
+        schema: expect.objectContaining({
+          schema_version: 2,
+          schema_engine: 'task_template_v2',
+          content_key_strategy: 'field_id',
+          report_projection_strategy: 'descriptor',
+        }),
+      }), expect.any(Function), expect.any(Function));
+    });
   });
 
   it('handles cancel properly', async () => {

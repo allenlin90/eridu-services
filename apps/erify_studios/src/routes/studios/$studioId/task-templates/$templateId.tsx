@@ -5,7 +5,12 @@ import { toast } from 'sonner';
 import { getSchemaEngine, safeParseTemplateSchema } from '@eridu/api-types/task-management';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { TemplateSchema, type TemplateSchemaType } from '@/components/task-templates/builder/schema';
+import {
+  buildTemplateSchemaPayload,
+  hasTemplateSchemaEngineMismatch,
+  isTaskTemplateV2BuilderEnabled,
+} from '@/components/task-templates/builder/payload';
+import { safeParseBuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import type { GetTaskTemplateResponse } from '@/features/task-templates/api/get-task-template';
@@ -66,8 +71,11 @@ function EditTaskTemplatePage() {
   const rawSchema = taskTemplate.current_schema;
   try {
     const engine = getSchemaEngine(rawSchema);
-    // TODO(phase-4): allow 'task_template_v2' once the v2 builder UX is wired
-    if (engine !== 'task_template_v1') {
+    // Phase 4: allow 'task_template_v2' and 'task_template_v1'
+    if (engine === 'task_template_v2' && !isTaskTemplateV2BuilderEnabled()) {
+      schemaError = 'Template uses task template v2, but the v2 builder is not enabled in this environment.';
+    }
+    else if (engine !== 'task_template_v1' && engine !== 'task_template_v2') {
       schemaError = `Template uses schema engine "${engine}" which requires a newer editor version. Contact support or use the normalization script's --validate-only output to inspect.`;
     }
   }
@@ -129,21 +137,46 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
       });
       navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
     },
+    onError: (error) => {
+      toast.error('Update failed', {
+        description: error.message,
+      });
+      // Engine-mismatch / version conflict check
+      if (error.message.includes('409') || error.message.toLowerCase().includes('version') || error.message.toLowerCase().includes('conflict')) {
+        toast.info('Template version conflict detected. Reloading to get the latest schema engine...');
+        setTimeout(() => window.location.reload(), 2000);
+      }
+    },
   });
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  const [template, setTemplate] = useState<TemplateSchemaType>(() => ({
-    name: taskTemplate.name,
-    description: taskTemplate.description ?? '',
-    task_type: taskTemplate.task_type,
-    items: taskTemplate.current_schema?.items ?? [],
-    metadata: taskTemplate.current_schema?.metadata as TemplateSchemaType['metadata'] | undefined,
-  }));
+  const [template, setTemplate] = useState<BuilderTemplateSchemaType>(() => {
+    const serverEngine = getSchemaEngine(taskTemplate.current_schema);
+    return {
+      name: taskTemplate.name,
+      description: taskTemplate.description ?? '',
+      task_type: taskTemplate.task_type,
+      items: taskTemplate.current_schema?.items ?? [],
+      metadata: taskTemplate.current_schema?.metadata as BuilderTemplateSchemaType['metadata'] | undefined,
+      ...(serverEngine === 'task_template_v2' ? {
+        schema_version: 2 as const,
+        schema_engine: 'task_template_v2' as const,
+        content_key_strategy: 'field_id' as const,
+        report_projection_strategy: 'descriptor' as const,
+      } : {}),
+    };
+  });
 
-  const onSave = useCallback((data: TemplateSchemaType) => {
+  const onSave = useCallback((data: BuilderTemplateSchemaType) => {
+    if (hasTemplateSchemaEngineMismatch(data, taskTemplate.current_schema)) {
+      toast.info('Template schema changed elsewhere. Reloading the latest editor state...');
+      setTimeout(() => window.location.reload(), 2000);
+      return;
+    }
+
     // Validate with Zod
-    const result = TemplateSchema.safeParse(data);
+    const result = safeParseBuilderTemplateSchema(data);
 
     if (!result.success) {
       setErrors(formatZodErrors(result.error));
@@ -155,35 +188,23 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
 
     setErrors({});
 
-    const schemaItems = data.items.map((item) => ({
-      ...item,
-      // Filter out empty options
-      options: item.options?.filter((o) => o.value.trim() !== ''),
-    }));
-
     // Transform structure to match backend API contract
-    const schemaMetadata = data.metadata && Object.keys(data.metadata).length > 0
-      ? data.metadata
-      : undefined;
     const payload = {
       name: data.name,
       description: data.description,
       task_type: data.task_type,
-      schema: {
-        items: schemaItems,
-        ...(schemaMetadata ? { metadata: schemaMetadata } : {}),
-      },
+      schema: buildTemplateSchemaPayload(data),
       version: taskTemplate.version,
     };
 
     updateTemplate(payload);
-  }, [updateTemplate, taskTemplate.version]);
+  }, [updateTemplate, taskTemplate.current_schema, taskTemplate.version]);
 
   const handleCancel = useCallback(() => {
     navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
   }, [navigate, studioId]);
 
-  const handleTemplateChange = useCallback((data: TemplateSchemaType) => {
+  const handleTemplateChange = useCallback((data: BuilderTemplateSchemaType) => {
     setTemplate(data);
     setErrors((prev) => (Object.keys(prev).length > 0 ? {} : prev));
   }, []);

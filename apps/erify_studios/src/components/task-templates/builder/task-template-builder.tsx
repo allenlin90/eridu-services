@@ -19,7 +19,7 @@ import { AlertCircle, ChevronDown, ChevronsUpDown, Copy, Plus, Trash2 } from 'lu
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { getSchemaEngine, type SharedField } from '@eridu/api-types/task-management';
+import { createTaskTemplateFieldId, getSchemaEngine, type SharedField } from '@eridu/api-types/task-management';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,16 +44,16 @@ import {
 } from '@eridu/ui';
 
 import { LivePreview } from './live-preview';
-import type { FieldItem, LoopMetadata, TemplateSchemaType } from './schema';
+import type { BuilderTemplateSchemaType, FieldItem, LoopMetadata, TemplateSchemaType } from './schema';
 import { SortableFieldList } from './sortable-field-list';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 export type TaskTemplateBuilderProps = {
-  template: TemplateSchemaType;
-  onChange: (template: TemplateSchemaType) => void;
-  onSave?: (data: TemplateSchemaType) => void;
+  template: BuilderTemplateSchemaType;
+  onChange: (template: BuilderTemplateSchemaType) => void;
+  onSave?: (data: BuilderTemplateSchemaType) => void;
   onCancel?: () => void;
   isSaving?: boolean;
   errors?: Record<string, string[]>;
@@ -64,7 +64,7 @@ export type TaskTemplateBuilderProps = {
 const DEFAULT_LOOP_DURATION_MIN = 15;
 const EMPTY_SHARED_FIELDS: SharedField[] = [];
 
-function buildLoopMetadataFromTemplate(template: TemplateSchemaType): LoopMetadata[] {
+function buildLoopMetadataFromTemplate(template: BuilderTemplateSchemaType): LoopMetadata[] {
   const metadataLoops = template.metadata?.loops;
   const normalizedFromMetadata = Array.isArray(metadataLoops)
     ? metadataLoops
@@ -92,7 +92,7 @@ function buildLoopMetadataFromTemplate(template: TemplateSchemaType): LoopMetada
   return normalizedFromMetadata;
 }
 
-function omitLoopsFromMetadata(metadata: TemplateSchemaType['metadata']): TemplateSchemaType['metadata'] | undefined {
+function omitLoopsFromMetadata(metadata: BuilderTemplateSchemaType['metadata']): BuilderTemplateSchemaType['metadata'] | undefined {
   if (!metadata) {
     return undefined;
   }
@@ -163,6 +163,22 @@ function createUniqueSharedFieldKey(
   }
   usedKeys.add(candidate);
   return candidate;
+}
+
+function createTextFieldForTemplate(
+  template: BuilderTemplateSchemaType,
+  group?: string,
+): FieldItem {
+  const engine = getSchemaEngine(template);
+
+  return {
+    id: engine === 'task_template_v2' ? createTaskTemplateFieldId() : crypto.randomUUID(),
+    key: `field_${Date.now()}`,
+    type: 'text',
+    label: 'New Question',
+    required: true,
+    ...(group ? { group } : {}),
+  };
 }
 
 function formatTotalLoopDuration(totalMinutes: number): string {
@@ -353,13 +369,7 @@ export function TaskTemplateBuilder({
 
   const addField = useCallback(() => {
     const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-    const newField: FieldItem = {
-      id: crypto.randomUUID(),
-      key: `field_${Date.now()}`,
-      type: 'text',
-      label: 'New Question',
-      required: true,
-    };
+    const newField = createTextFieldForTemplate(currentTemplate);
     setPendingScrollFieldId(newField.id);
 
     currentOnChange({
@@ -394,27 +404,42 @@ export function TaskTemplateBuilder({
     if (!selectedField) {
       return;
     }
+    const engine = getSchemaEngine(currentTemplate);
     const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
     const targetLoopId = isModerationMode ? resolvedSharedFieldLoopId : undefined;
-    const itemKey = createUniqueSharedFieldKey(selectedField.key, usedKeys, targetLoopId);
-    const isCanonicalSharedKey = itemKey === selectedField.key;
-    const newField: FieldItem = {
-      id: crypto.randomUUID(),
-      key: itemKey,
-      type: selectedField.type,
-      standard: isCanonicalSharedKey ? true : undefined,
-      label: selectedField.label,
-      description: selectedField.description ?? undefined,
-      required: true,
-      ...(targetLoopId ? { group: targetLoopId } : {}),
-    };
+
+    // For v2, we keep the canonical key and handle grouping separately.
+    const isV2 = engine === 'task_template_v2';
+    const itemKey = isV2 ? selectedField.key : createUniqueSharedFieldKey(selectedField.key, usedKeys, targetLoopId);
+
+    const newField: FieldItem = isV2
+      ? {
+          id: createTaskTemplateFieldId(),
+          key: itemKey,
+          shared_field_key: selectedField.key,
+          type: selectedField.type,
+          label: selectedField.label,
+          description: selectedField.description ?? undefined,
+          required: true,
+          ...(targetLoopId ? { group: targetLoopId } : {}),
+        }
+      : {
+          id: crypto.randomUUID(),
+          key: itemKey,
+          type: selectedField.type,
+          standard: itemKey === selectedField.key ? true : undefined,
+          label: selectedField.label,
+          description: selectedField.description ?? undefined,
+          required: true,
+          ...(targetLoopId ? { group: targetLoopId } : {}),
+        };
 
     setPendingScrollFieldId(newField.id);
     currentOnChange({
       ...currentTemplate,
       items: [...currentTemplate.items, newField],
     });
-    if (!isCanonicalSharedKey) {
+    if (!isV2 && itemKey !== selectedField.key) {
       toast.info(
         `Added "${selectedField.label}" as loop-scoped key "${itemKey}". Only canonical key "${selectedField.key}" is marked shared.`,
       );
@@ -788,12 +813,21 @@ export function TaskTemplateBuilder({
 
                                   const nextLoops = [...moderationLoops, clonedLoop];
                                   const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
-                                  const clonedItems = loopItems.map((item) => ({
-                                    ...structuredClone(item),
-                                    id: crypto.randomUUID(),
-                                    key: createUniqueCopiedKey(item.key, usedKeys),
-                                    group: clonedLoop.id,
-                                  }));
+                                  const clonedItems = loopItems.map((item) => {
+                                    if (engine === 'task_template_v2') {
+                                      return {
+                                        ...structuredClone(item),
+                                        id: createTaskTemplateFieldId(),
+                                        group: clonedLoop.id,
+                                      };
+                                    }
+                                    return {
+                                      ...structuredClone(item),
+                                      id: crypto.randomUUID(),
+                                      key: createUniqueCopiedKey(item.key, usedKeys),
+                                      group: clonedLoop.id,
+                                    };
+                                  });
 
                                   currentOnChange({
                                     ...currentTemplate,
@@ -948,14 +982,7 @@ export function TaskTemplateBuilder({
                                   className="h-7 px-2 text-xs shrink-0"
                                   onClick={() => {
                                     const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                    const newField: FieldItem = {
-                                      id: crypto.randomUUID(),
-                                      key: `field_${Date.now()}`,
-                                      type: 'text',
-                                      label: 'New Question',
-                                      required: true,
-                                      group: loop.id,
-                                    };
+                                    const newField = createTextFieldForTemplate(currentTemplate, loop.id);
                                     currentOnChange({
                                       ...currentTemplate,
                                       items: [...currentTemplate.items, newField],
@@ -985,14 +1012,7 @@ export function TaskTemplateBuilder({
                               className="w-full border-dashed"
                               onClick={() => {
                                 const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                const newField: FieldItem = {
-                                  id: crypto.randomUUID(),
-                                  key: `field_${Date.now()}`,
-                                  type: 'text',
-                                  label: 'New Question',
-                                  required: true,
-                                  group: loop.id,
-                                };
+                                const newField = createTextFieldForTemplate(currentTemplate, loop.id);
                                 currentOnChange({
                                   ...currentTemplate,
                                   items: [...currentTemplate.items, newField],
