@@ -2,7 +2,7 @@ import { extname } from 'node:path';
 
 import { Injectable } from '@nestjs/common';
 
-import { getFieldContentKey, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import { getFieldContentKey, safeParseTemplateSchema } from '@eridu/api-types/task-management';
 import {
   FILE_UPLOAD_USE_CASE,
   type FileUploadUseCase,
@@ -203,7 +203,7 @@ export class UploadService {
     }
 
     const parsedSchema = task.snapshot?.schema
-      ? TemplateSchemaValidator.safeParse(task.snapshot.schema)
+      ? safeParseTemplateSchema(task.snapshot.schema)
       : null;
     if (!parsedSchema?.success) {
       throw HttpError.badRequest('Task snapshot schema is invalid or unavailable');
