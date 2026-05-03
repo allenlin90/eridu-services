@@ -67,7 +67,11 @@ export function getFieldReportDescriptor(
 
   // v2 - Shared Fields
   if (field.shared_field_key) {
-    if (field.group) {
+    // When a non-canonicalized legacy suffix is preserved (e.g. shared_field_key "gmv_l1"
+    // with group "l1"), the key already encodes the loop position — use it verbatim to
+    // avoid double-suffixing ("gmv_l1_l1"). Canonicalized keys ("gmv" + group "l1")
+    // get the suffix appended as normal.
+    if (field.group && !field.shared_field_key.endsWith(`_${field.group}`)) {
       return `${field.shared_field_key}_${field.group}`;
     }
     return field.shared_field_key;

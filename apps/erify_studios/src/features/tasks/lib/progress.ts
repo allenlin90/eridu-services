@@ -1,6 +1,6 @@
 import { getFieldContentKey, type TaskDto } from '@eridu/api-types/task-management';
 
-import type { UiSchema } from '@/lib/zod-schema-builder';
+import type { UiSchema, UiSchemaV2 } from '@/lib/zod-schema-builder';
 
 export type ProgressResult = {
   completed: number;
@@ -8,10 +8,7 @@ export type ProgressResult = {
   percentage: number;
 };
 
-/**
- * Calculate task progress from content and schema
- */
-export function calculateTaskProgress(task: TaskDto, schema: UiSchema): ProgressResult {
+export function calculateTaskProgress(task: TaskDto, schema: UiSchema | UiSchemaV2): ProgressResult {
   const content = task.content || {};
 
   let completed = 0;

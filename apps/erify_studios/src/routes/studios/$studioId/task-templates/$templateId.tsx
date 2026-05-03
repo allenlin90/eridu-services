@@ -66,6 +66,7 @@ function EditTaskTemplatePage() {
   const rawSchema = taskTemplate.current_schema;
   try {
     const engine = getSchemaEngine(rawSchema);
+    // TODO(phase-4): allow 'task_template_v2' once the v2 builder UX is wired
     if (engine !== 'task_template_v1') {
       schemaError = `Template uses schema engine "${engine}" which requires a newer editor version. Contact support or use the normalization script's --validate-only output to inspect.`;
     }

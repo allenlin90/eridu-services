@@ -12,6 +12,7 @@ import {
   FieldTypeEnum,
   getFieldContentKey,
   getFieldReportDescriptor,
+  getFieldSharedKey,
   safeParseTemplateSchema,
   TASK_REPORT_SYSTEM_COLUMN,
   taskReportColumnSchema,
@@ -241,8 +242,8 @@ export class TaskReportRunService {
         return [];
       }
 
-      const isStandard = 'standard' in field && field.standard;
-      const sharedFieldKey = isStandard ? field.key : ('shared_field_key' in field ? field.shared_field_key : undefined);
+      const sharedFieldKey = getFieldSharedKey(parsedSnapshot.data, field) ?? undefined;
+      const isStandard = 'standard' in field && !!field.standard;
 
       return [{
         fieldKey: getFieldContentKey(parsedSnapshot.data, field),
@@ -251,8 +252,8 @@ export class TaskReportRunService {
           type: field.type,
           standard: isStandard || undefined,
           category: sharedFieldKey ? sharedFieldByKey.get(sharedFieldKey)?.category : undefined,
-          sourceTemplateId: isStandard ? undefined : task.templateUid,
-          sourceTemplateName: isStandard ? undefined : task.templateName,
+          sourceTemplateId: sharedFieldKey ? undefined : task.templateUid,
+          sourceTemplateName: sharedFieldKey ? undefined : task.templateName,
         },
       }];
     });
