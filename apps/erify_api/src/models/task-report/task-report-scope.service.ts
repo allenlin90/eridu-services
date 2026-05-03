@@ -9,7 +9,9 @@ import type {
   UiSchema,
 } from '@eridu/api-types/task-management';
 import {
-  TemplateSchemaValidator,
+  getFieldReportDescriptor,
+  getFieldSharedKey,
+  safeParseTemplateSchema,
 } from '@eridu/api-types/task-management';
 
 import {
@@ -64,7 +66,7 @@ export class TaskReportScopeService {
     const sharedFieldByKey = new Map(studioSharedFields.map((field) => [field.key, field]));
 
     for (const sourceSnapshot of orderedSourceSnapshots) {
-      const parsedSnapshot = TemplateSchemaValidator.safeParse(sourceSnapshot.snapshotSchema);
+      const parsedSnapshot = safeParseTemplateSchema(sourceSnapshot.snapshotSchema);
       if (!parsedSnapshot.success) {
         throw HttpError.internalServerError('Task template snapshot schema is invalid');
       }
@@ -82,27 +84,32 @@ export class TaskReportScopeService {
       source.submitted_task_count += sourceSnapshot.taskCount;
 
       for (const item of parsedSnapshot.data.items) {
-        // Keep the first encountered field definition per key. Snapshot input is
+        const columnKey = getFieldReportDescriptor(parsedSnapshot.data, sourceSnapshot.templateUid, item);
+
+        // Keep the first encountered field definition per semantic descriptor. Snapshot input is
         // pre-sorted by template + version DESC, so "first" means latest schema.
-        if (source.fieldsByKey.has(item.key)) {
+        if (source.fieldsByKey.has(columnKey)) {
           continue;
         }
 
-        const columnKey = item.standard ? item.key : `${sourceSnapshot.templateUid}:${item.key}`;
-        const sharedField = item.standard ? sharedFieldByKey.get(item.key) : undefined;
-        source.fieldsByKey.set(item.key, {
+        const sharedFieldKey = getFieldSharedKey(parsedSnapshot.data, item) ?? undefined;
+        const sharedField = sharedFieldKey ? sharedFieldByKey.get(sharedFieldKey) : undefined;
+
+        source.fieldsByKey.set(columnKey, {
           key: columnKey,
           field_key: item.key,
           label: item.label,
           type: item.type,
-          standard: item.standard || undefined,
+          standard: 'standard' in item ? item.standard : undefined,
           category: sharedField?.category,
+          group: 'group' in item ? item.group : undefined,
+          shared_field_key: sharedFieldKey,
           source_template_id: sourceSnapshot.templateUid,
           source_template_name: sourceSnapshot.templateName,
         });
 
-        if (item.standard) {
-          standardFieldKeys.add(item.key);
+        if (sharedFieldKey) {
+          standardFieldKeys.add(sharedFieldKey);
         }
       }
 

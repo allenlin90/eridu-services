@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
+import { getSchemaEngine, safeParseTemplateSchema } from '@eridu/api-types/task-management';
+
 import { PageLayout } from '@/components/layouts/page-layout';
 import { TemplateSchema, type TemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
@@ -52,6 +54,51 @@ function EditTaskTemplatePage() {
       >
         <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
           <div className="text-destructive">Failed to load template.</div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Block the editor for schemas with an unsupported engine or that fail validation.
+  // v1 (implicit or explicit) proceeds normally. Unknown engines and invalid documents
+  // render a blocking error — the builder is never mounted in that state.
+  let schemaError: string | null = null;
+  const rawSchema = taskTemplate.current_schema;
+  try {
+    const engine = getSchemaEngine(rawSchema);
+    // TODO(phase-4): allow 'task_template_v2' once the v2 builder UX is wired
+    if (engine !== 'task_template_v1') {
+      schemaError = `Template uses schema engine "${engine}" which requires a newer editor version. Contact support or use the normalization script's --validate-only output to inspect.`;
+    }
+  }
+  catch (err) {
+    schemaError = (err as Error).message;
+  }
+  if (!schemaError) {
+    const parsed = safeParseTemplateSchema(rawSchema);
+    if (!parsed.success) {
+      schemaError = parsed.error.issues[0]?.message ?? 'Template schema is invalid';
+    }
+  }
+
+  if (schemaError) {
+    return (
+      <PageLayout
+        title="Template Schema Error"
+        breadcrumbs={(
+          <span className="text-sm text-muted-foreground">
+            {`Studios / ${studioId} / Task Templates / ${taskTemplate.name}`}
+          </span>
+        )}
+      >
+        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
+          <div className="max-w-lg space-y-3 rounded-md border border-destructive/30 bg-destructive/10 p-6 text-sm">
+            <div className="font-semibold text-destructive">This template cannot be edited</div>
+            <div className="text-destructive/80">{schemaError}</div>
+            <div className="text-muted-foreground">
+              {`Template: ${taskTemplate.name} (${templateId})`}
+            </div>
+          </div>
         </div>
       </PageLayout>
     );

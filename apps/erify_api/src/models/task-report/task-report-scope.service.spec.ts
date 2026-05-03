@@ -123,6 +123,8 @@ describe('taskReportScopeService', () => {
           category: 'metric',
           source_template_id: 'ttpl_a',
           source_template_name: 'Template A',
+          group: undefined,
+          shared_field_key: 'gmv',
         },
         {
           key: 'ttpl_a:notes',
@@ -131,6 +133,10 @@ describe('taskReportScopeService', () => {
           type: 'text',
           source_template_id: 'ttpl_a',
           source_template_name: 'Template A',
+          group: undefined,
+          shared_field_key: undefined,
+          category: undefined,
+          standard: undefined,
         },
       ],
     });
@@ -255,6 +261,10 @@ describe('taskReportScopeService', () => {
         key: 'gmv',
         standard: true,
         category: 'metric',
+      }),
+      expect.objectContaining({
+        key: 'ttpl_a:gmv',
+        label: 'Legacy GMV',
       }),
     ]);
   });

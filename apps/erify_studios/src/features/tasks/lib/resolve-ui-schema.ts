@@ -1,4 +1,8 @@
-import { TemplateSchemaValidator, type UiSchema } from '@eridu/api-types/task-management';
+import {
+  safeParseTemplateSchema,
+  type UiSchema,
+  type UiSchemaV2,
+} from '@eridu/api-types/task-management';
 
 type RawSchemaContainer = {
   items?: unknown;
@@ -19,6 +23,10 @@ function pickUiSchemaShape(value: unknown): unknown {
 
   if ('items' in value) {
     const schema = value as RawSchemaContainer;
+    if (value.schema_engine === 'task_template_v2' || value.schema_version === 2) {
+      return value;
+    }
+
     return {
       items: schema.items,
       ...(schema.metadata !== undefined ? { metadata: schema.metadata } : {}),
@@ -40,14 +48,14 @@ function pickUiSchemaShape(value: unknown): unknown {
   return value;
 }
 
-export function resolveUiSchema(snapshotSchema: unknown): UiSchema | null {
-  const direct = TemplateSchemaValidator.safeParse(snapshotSchema);
+export function resolveUiSchema(snapshotSchema: unknown): UiSchema | UiSchemaV2 | null {
+  const direct = safeParseTemplateSchema(snapshotSchema);
   if (direct.success) {
     return direct.data;
   }
 
   const normalized = pickUiSchemaShape(snapshotSchema);
-  const fallback = TemplateSchemaValidator.safeParse(normalized);
+  const fallback = safeParseTemplateSchema(normalized);
   if (fallback.success) {
     return fallback.data;
   }

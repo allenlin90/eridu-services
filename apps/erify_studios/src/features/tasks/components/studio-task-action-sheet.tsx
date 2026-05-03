@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  getFieldContentKey,
   TASK_ACTION,
   type TaskAction,
   type TaskWithRelationsDto,
@@ -193,7 +194,7 @@ function StudioTaskActionSheetBody({
 
       const current = acc[item.group];
       current.total += 1;
-      const value = content[item.key];
+      const value = content[getFieldContentKey(schema, item)];
       const isCompleted = value !== undefined && value !== null && (typeof value !== 'string' || value.trim().length > 0);
       if (isCompleted) {
         current.completed += 1;
