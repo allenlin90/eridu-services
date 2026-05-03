@@ -5,7 +5,12 @@ import { toast } from 'sonner';
 import { getSchemaEngine, safeParseTemplateSchema } from '@eridu/api-types/task-management';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { BuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
+import {
+  buildTemplateSchemaPayload,
+  hasTemplateSchemaEngineMismatch,
+  isTaskTemplateV2BuilderEnabled,
+} from '@/components/task-templates/builder/payload';
+import { safeParseBuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import type { GetTaskTemplateResponse } from '@/features/task-templates/api/get-task-template';
@@ -67,7 +72,10 @@ function EditTaskTemplatePage() {
   try {
     const engine = getSchemaEngine(rawSchema);
     // Phase 4: allow 'task_template_v2' and 'task_template_v1'
-    if (engine !== 'task_template_v1' && engine !== 'task_template_v2') {
+    if (engine === 'task_template_v2' && !isTaskTemplateV2BuilderEnabled()) {
+      schemaError = 'Template uses task template v2, but the v2 builder is not enabled in this environment.';
+    }
+    else if (engine !== 'task_template_v1' && engine !== 'task_template_v2') {
       schemaError = `Template uses schema engine "${engine}" which requires a newer editor version. Contact support or use the normalization script's --validate-only output to inspect.`;
     }
   }
@@ -159,8 +167,14 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
   }));
 
   const onSave = useCallback((data: BuilderTemplateSchemaType) => {
+    if (hasTemplateSchemaEngineMismatch(data, taskTemplate.current_schema)) {
+      toast.info('Template schema changed elsewhere. Reloading the latest editor state...');
+      setTimeout(() => window.location.reload(), 2000);
+      return;
+    }
+
     // Validate with Zod
-    const result = BuilderTemplateSchema.safeParse(data);
+    const result = safeParseBuilderTemplateSchema(data);
 
     if (!result.success) {
       setErrors(formatZodErrors(result.error));
@@ -172,29 +186,17 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
 
     setErrors({});
 
-    const schemaItems = data.items.map((item) => ({
-      ...item,
-      // Filter out empty options
-      options: item.options?.filter((o) => o.value.trim() !== ''),
-    }));
-
     // Transform structure to match backend API contract
-    const schemaMetadata = data.metadata && Object.keys(data.metadata).length > 0
-      ? data.metadata
-      : undefined;
     const payload = {
       name: data.name,
       description: data.description,
       task_type: data.task_type,
-      schema: {
-        items: schemaItems,
-        ...(schemaMetadata ? { metadata: schemaMetadata } : {}),
-      },
+      schema: buildTemplateSchemaPayload(data),
       version: taskTemplate.version,
     };
 
     updateTemplate(payload);
-  }, [updateTemplate, taskTemplate.version]);
+  }, [updateTemplate, taskTemplate.current_schema, taskTemplate.version]);
 
   const handleCancel = useCallback(() => {
     navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });

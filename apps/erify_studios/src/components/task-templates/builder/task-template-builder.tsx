@@ -165,6 +165,22 @@ function createUniqueSharedFieldKey(
   return candidate;
 }
 
+function createTextFieldForTemplate(
+  template: BuilderTemplateSchemaType,
+  group?: string,
+): FieldItem {
+  const engine = getSchemaEngine(template);
+
+  return {
+    id: engine === 'task_template_v2' ? createTaskTemplateFieldId() : crypto.randomUUID(),
+    key: `field_${Date.now()}`,
+    type: 'text',
+    label: 'New Question',
+    required: true,
+    ...(group ? { group } : {}),
+  };
+}
+
 function formatTotalLoopDuration(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -353,22 +369,7 @@ export function TaskTemplateBuilder({
 
   const addField = useCallback(() => {
     const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-    const engine = getSchemaEngine(currentTemplate);
-    const newField: FieldItem = engine === 'task_template_v2'
-      ? {
-          id: createTaskTemplateFieldId(),
-          key: `field_${Date.now()}`,
-          type: 'text',
-          label: 'New Question',
-          required: true,
-        }
-      : {
-          id: crypto.randomUUID(),
-          key: `field_${Date.now()}`,
-          type: 'text',
-          label: 'New Question',
-          required: true,
-        };
+    const newField = createTextFieldForTemplate(currentTemplate);
     setPendingScrollFieldId(newField.id);
 
     currentOnChange({
@@ -982,14 +983,7 @@ export function TaskTemplateBuilder({
                                   className="h-7 px-2 text-xs shrink-0"
                                   onClick={() => {
                                     const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                    const newField: FieldItem = {
-                                      id: crypto.randomUUID(),
-                                      key: `field_${Date.now()}`,
-                                      type: 'text',
-                                      label: 'New Question',
-                                      required: true,
-                                      group: loop.id,
-                                    };
+                                    const newField = createTextFieldForTemplate(currentTemplate, loop.id);
                                     currentOnChange({
                                       ...currentTemplate,
                                       items: [...currentTemplate.items, newField],
@@ -1019,14 +1013,7 @@ export function TaskTemplateBuilder({
                               className="w-full border-dashed"
                               onClick={() => {
                                 const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                const newField: FieldItem = {
-                                  id: crypto.randomUUID(),
-                                  key: `field_${Date.now()}`,
-                                  type: 'text',
-                                  label: 'New Question',
-                                  required: true,
-                                  group: loop.id,
-                                };
+                                const newField = createTextFieldForTemplate(currentTemplate, loop.id);
                                 currentOnChange({
                                   ...currentTemplate,
                                   items: [...currentTemplate.items, newField],
