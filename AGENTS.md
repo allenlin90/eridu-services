@@ -259,7 +259,9 @@ method(@StudioParam() studioUid: string) {
 - Meta and tooling:
   - `agent-instruction-maintenance`
   - `code-quality`
+  - `doc-hygiene`
   - `engineering-best-practices-enforcer`
+  - `local-database-cli`
   - `playwright`
   - `security-threat-model`
   - `skill-creator`
