@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
-import type { UiSchema } from './template-definition.schema.js';
+import { getFieldContentKey } from './task-schema-engine.js';
+import type { UiSchema, UiSchemaV2 } from './template-definition.schema.js';
 
 /**
  * Builds a dynamic Zod schema based on a TaskTemplate UiSchema definition.
  * Can be used by both backend (API validation) and frontend (form validation).
  */
-export function buildTaskContentSchema(schema: UiSchema): z.ZodObject<z.ZodRawShape> {
+export function buildTaskContentSchema(schema: UiSchema | UiSchemaV2): z.ZodObject<z.ZodRawShape> {
   const shape: Record<string, z.ZodTypeAny> = {};
 
   for (const item of schema.items) {
@@ -91,7 +92,7 @@ export function buildTaskContentSchema(schema: UiSchema): z.ZodObject<z.ZodRawSh
       }
     }
 
-    shape[item.key] = validator;
+    shape[getFieldContentKey(schema, item)] = validator;
   }
 
   return z.object(shape).strict();

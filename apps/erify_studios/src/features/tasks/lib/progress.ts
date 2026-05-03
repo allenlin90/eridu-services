@@ -1,4 +1,4 @@
-import type { TaskDto } from '@eridu/api-types/task-management';
+import { getFieldContentKey, type TaskDto } from '@eridu/api-types/task-management';
 
 import type { UiSchema } from '@/lib/zod-schema-builder';
 
@@ -23,7 +23,7 @@ export function calculateTaskProgress(task: TaskDto, schema: UiSchema): Progress
 
     total++;
 
-    const value = content[item.key];
+    const value = content[getFieldContentKey(schema, item)];
     const isComplete = isFieldComplete(item.type, value);
 
     if (isComplete)

@@ -2,7 +2,7 @@ import { extname } from 'node:path';
 
 import { Injectable } from '@nestjs/common';
 
-import { TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import { getFieldContentKey, TemplateSchemaValidator } from '@eridu/api-types/task-management';
 import {
   FILE_UPLOAD_USE_CASE,
   type FileUploadUseCase,
@@ -209,7 +209,9 @@ export class UploadService {
       throw HttpError.badRequest('Task snapshot schema is invalid or unavailable');
     }
 
-    const item = parsedSchema.data.items.find((entry) => entry.key === input.fieldKey);
+    const item = parsedSchema.data.items.find(
+      (entry) => getFieldContentKey(parsedSchema.data, entry) === input.fieldKey,
+    );
     if (!item) {
       throw HttpError.badRequest(`field_key '${input.fieldKey}' was not found in task snapshot schema`);
     }

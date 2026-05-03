@@ -10,9 +10,11 @@ import type {
 } from '@eridu/api-types/task-management';
 import {
   FieldTypeEnum,
+  getFieldContentKey,
+  getFieldReportDescriptor,
+  safeParseTemplateSchema,
   TASK_REPORT_SYSTEM_COLUMN,
   taskReportColumnSchema,
-  TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 
 import { TaskReportScopeRepository } from './task-report-scope.repository';
@@ -228,26 +230,29 @@ export class TaskReportRunService {
     selectedColumnKeys: Set<string>,
     sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
   ): CompiledProjectionField[] {
-    const parsedSnapshot = TemplateSchemaValidator.safeParse(task.snapshotSchema);
+    const parsedSnapshot = safeParseTemplateSchema(task.snapshotSchema);
     if (!parsedSnapshot.success) {
       throw HttpError.internalServerError('Task template snapshot schema is invalid');
     }
 
     return parsedSnapshot.data.items.flatMap((field) => {
-      const columnKey = field.standard ? field.key : `${task.templateUid}:${field.key}`;
+      const columnKey = getFieldReportDescriptor(parsedSnapshot.data, task.templateUid, field);
       if (!selectedColumnKeys.has(columnKey)) {
         return [];
       }
 
+      const isStandard = 'standard' in field && field.standard;
+      const sharedFieldKey = isStandard ? field.key : ('shared_field_key' in field ? field.shared_field_key : undefined);
+
       return [{
-        fieldKey: field.key,
+        fieldKey: getFieldContentKey(parsedSnapshot.data, field),
         columnKey,
         meta: {
           type: field.type,
-          standard: field.standard || undefined,
-          category: field.standard ? sharedFieldByKey.get(field.key)?.category : undefined,
-          sourceTemplateId: field.standard ? undefined : task.templateUid,
-          sourceTemplateName: field.standard ? undefined : task.templateName,
+          standard: isStandard || undefined,
+          category: sharedFieldKey ? sharedFieldByKey.get(sharedFieldKey)?.category : undefined,
+          sourceTemplateId: isStandard ? undefined : task.templateUid,
+          sourceTemplateName: isStandard ? undefined : task.templateName,
         },
       }];
     });
