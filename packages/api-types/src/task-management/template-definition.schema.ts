@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { TASK_TEMPLATE_FIELD_ID_PATTERN } from './task-schema-engine.js';
+
 export const RequireReasonCriterion = z.object({
   op: z.enum(['lt', 'lte', 'gt', 'gte', 'eq', 'neq', 'in', 'not_in']),
   value: z.union([z.number(), z.string(), z.array(z.string())]),
@@ -88,10 +90,18 @@ export const LoopMetadataSchema = z.object({
   durationMin: z.number().int().positive().default(15),
 });
 
+export const LoopMetadataV2Schema = LoopMetadataSchema.extend({
+  id: z.string().regex(/^l\d+$/, 'Loop ID must be l followed by digits (e.g., l1, l2)'),
+});
+
 export type LoopMetadata = z.infer<typeof LoopMetadataSchema>;
 
 export const TemplateMetadataSchema = z.object({
   loops: z.array(LoopMetadataSchema).optional(),
+}).catchall(z.any());
+
+export const TemplateMetadataV2Schema = z.object({
+  loops: z.array(LoopMetadataV2Schema).optional(),
 }).catchall(z.any());
 
 export const TemplateSchemaValidator = z
@@ -115,5 +125,58 @@ export const TemplateSchemaValidator = z
     });
   });
 
+export const FieldItemV2BaseSchema = FieldItemBaseSchema.omit({ standard: true }).extend({
+  id: z.string().regex(TASK_TEMPLATE_FIELD_ID_PATTERN, 'Invalid field ID format (must be fld_ + 10+ alphanumeric)'),
+  shared_field_key: z.string().optional().describe('Canonical key for shared field mapping'),
+});
+
+export const FieldItemV2Schema = FieldItemV2BaseSchema.superRefine(validateFieldOptions);
+export type FieldItemV2 = z.infer<typeof FieldItemV2Schema>;
+
+export const TemplateSchemaV2Validator = z
+  .object({
+    schema_version: z.literal(2),
+    schema_engine: z.literal('task_template_v2'),
+    content_key_strategy: z.literal('field_id').optional(),
+    report_projection_strategy: z.literal('descriptor').optional(),
+    items: z.array(FieldItemV2Schema).min(1),
+    metadata: TemplateMetadataV2Schema.optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    // v2 key uniqueness: checks per-loop (key, group) uniqueness instead of global uniqueness
+    const seen = new Set<string>();
+    data.items.forEach((item, index) => {
+      const groupSegment = item.group ?? 'none';
+      const compositeKey = `${groupSegment}:${item.key}`;
+      if (seen.has(compositeKey)) {
+        ctx.issues.push({
+          code: 'custom',
+          message: `Duplicate key "${item.key}" detected in group "${item.group ?? 'root'}"`,
+          path: ['items', index, 'key'],
+          input: data,
+        });
+      }
+      seen.add(compositeKey);
+    });
+  });
+
+export function parseTemplateSchema(raw: unknown) {
+  const obj = raw as Record<string, unknown>;
+  if (obj?.schema_engine === 'task_template_v2' || obj?.schema_version === 2) {
+    return TemplateSchemaV2Validator.parse(raw);
+  }
+  return TemplateSchemaValidator.parse(raw);
+}
+
+export function safeParseTemplateSchema(raw: unknown) {
+  const obj = raw as Record<string, unknown>;
+  if (obj?.schema_engine === 'task_template_v2' || obj?.schema_version === 2) {
+    return TemplateSchemaV2Validator.safeParse(raw);
+  }
+  return TemplateSchemaValidator.safeParse(raw);
+}
+
 export type UiSchema = z.infer<typeof TemplateSchemaValidator>;
+export type UiSchemaV2 = z.infer<typeof TemplateSchemaV2Validator>;
 export type FieldItem = z.infer<typeof FieldItemSchema>;

@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import type { TaskStatus } from '@prisma/client';
 
 import {
+  getSchemaEngine,
+  safeParseTemplateSchema,
   type SharedField,
   TASK_TYPE,
-  TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 
 import type {
@@ -168,7 +169,8 @@ export class TaskTemplateService extends BaseModelService {
     schema: CreateTaskTemplatePayload['currentSchema'],
     sharedFieldsByKey: ReadonlyMap<string, SharedField> = new Map(),
   ): void {
-    const result = TemplateSchemaValidator.safeParse(schema);
+    const engine = getSchemaEngine(schema);
+    const result = safeParseTemplateSchema(schema);
 
     if (!result.success) {
       throw HttpError.badRequestWithDetails('Invalid template schema', result.error.issues);
@@ -235,7 +237,7 @@ export class TaskTemplateService extends BaseModelService {
 
     // Additional business rules
     for (const item of result.data.items) {
-      if (item.standard) {
+      if (engine === 'task_template_v1' && 'standard' in item && item.standard) {
         const sharedField = sharedFieldsByKey.get(item.key);
         if (!sharedField) {
           throw HttpError.badRequest(
@@ -246,6 +248,19 @@ export class TaskTemplateService extends BaseModelService {
         if (sharedField.type !== item.type) {
           throw HttpError.badRequest(
             `Shared field "${item.key}" must use type "${sharedField.type}"`,
+          );
+        }
+      } else if (engine === 'task_template_v2' && 'shared_field_key' in item && item.shared_field_key) {
+        const sharedField = sharedFieldsByKey.get(item.shared_field_key);
+        if (!sharedField) {
+          throw HttpError.badRequest(
+            `Shared field key "${item.shared_field_key}" is not configured in studio settings`,
+          );
+        }
+
+        if (sharedField.type !== item.type) {
+          throw HttpError.badRequest(
+            `Shared field "${item.shared_field_key}" must use type "${sharedField.type}"`,
           );
         }
       }
