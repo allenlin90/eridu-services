@@ -19,7 +19,7 @@ import { AlertCircle, ChevronDown, ChevronsUpDown, Copy, Plus, Trash2 } from 'lu
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { SharedField } from '@eridu/api-types/task-management';
+import { getSchemaEngine, type SharedField } from '@eridu/api-types/task-management';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -769,6 +769,16 @@ export function TaskTemplateBuilder({
                                 aria-label="Clone loop"
                                 onClick={() => {
                                   const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                  const engine = getSchemaEngine(currentTemplate);
+                                  const loopItems = currentTemplate.items.filter((item) => item.group === loop.id);
+
+                                  if (engine === 'task_template_v1' && loopItems.some((item) => 'standard' in item && item.standard)) {
+                                    toast.error(
+                                      'Shared fields can\'t be cloned on this template version. Add a new loop and use the shared field picker instead.',
+                                    );
+                                    return;
+                                  }
+
                                   const nextLoopBase = createNextLoop(moderationLoops);
                                   const clonedLoop: LoopMetadata = {
                                     ...nextLoopBase,
@@ -777,7 +787,6 @@ export function TaskTemplateBuilder({
                                   };
 
                                   const nextLoops = [...moderationLoops, clonedLoop];
-                                  const loopItems = currentTemplate.items.filter((item) => item.group === loop.id);
                                   const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
                                   const clonedItems = loopItems.map((item) => ({
                                     ...structuredClone(item),
