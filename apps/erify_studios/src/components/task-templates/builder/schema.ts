@@ -6,6 +6,7 @@ import {
   FieldItemV2Schema as SharedFieldItemV2Schema,
   FieldTypeEnum as SharedFieldTypeEnum,
   LoopMetadataSchema as SharedLoopMetadataSchema,
+  TemplateMetadataSchema as SharedTemplateMetadataSchema,
   TemplateMetadataV2Schema as SharedTemplateMetadataV2Schema,
   TASK_TYPE,
   validateFieldOptions,
