@@ -10,6 +10,7 @@ import type {
 } from '@eridu/api-types/task-management';
 import {
   getFieldReportDescriptor,
+  getFieldSharedKey,
   safeParseTemplateSchema,
 } from '@eridu/api-types/task-management';
 
@@ -91,9 +92,7 @@ export class TaskReportScopeService {
           continue;
         }
 
-        const sharedFieldKey = 'standard' in item && item.standard
-          ? item.key
-          : ('shared_field_key' in item ? item.shared_field_key : undefined);
+        const sharedFieldKey = getFieldSharedKey(parsedSnapshot.data, item) ?? undefined;
         const sharedField = sharedFieldKey ? sharedFieldByKey.get(sharedFieldKey) : undefined;
 
         source.fieldsByKey.set(columnKey, {
