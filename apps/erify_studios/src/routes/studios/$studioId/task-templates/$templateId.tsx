@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { getSchemaEngine, safeParseTemplateSchema } from '@eridu/api-types/task-management';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { TemplateSchema, type TemplateSchemaType } from '@/components/task-templates/builder/schema';
+import { BuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import type { GetTaskTemplateResponse } from '@/features/task-templates/api/get-task-template';
@@ -66,8 +66,8 @@ function EditTaskTemplatePage() {
   const rawSchema = taskTemplate.current_schema;
   try {
     const engine = getSchemaEngine(rawSchema);
-    // TODO(phase-4): allow 'task_template_v2' once the v2 builder UX is wired
-    if (engine !== 'task_template_v1') {
+    // Phase 4: allow 'task_template_v2' and 'task_template_v1'
+    if (engine !== 'task_template_v1' && engine !== 'task_template_v2') {
       schemaError = `Template uses schema engine "${engine}" which requires a newer editor version. Contact support or use the normalization script's --validate-only output to inspect.`;
     }
   }
@@ -129,21 +129,38 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
       });
       navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
     },
+    onError: (error) => {
+      toast.error('Update failed', {
+        description: error.message,
+      });
+      // Engine-mismatch / version conflict check
+      if (error.message.includes('409') || error.message.toLowerCase().includes('version') || error.message.toLowerCase().includes('conflict')) {
+        toast.info('Template version conflict detected. Reloading to get the latest schema engine...');
+        setTimeout(() => window.location.reload(), 2000);
+      }
+    },
   });
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  const [template, setTemplate] = useState<TemplateSchemaType>(() => ({
+  const [template, setTemplate] = useState<BuilderTemplateSchemaType>(() => ({
     name: taskTemplate.name,
     description: taskTemplate.description ?? '',
     task_type: taskTemplate.task_type,
     items: taskTemplate.current_schema?.items ?? [],
-    metadata: taskTemplate.current_schema?.metadata as TemplateSchemaType['metadata'] | undefined,
+    metadata: taskTemplate.current_schema?.metadata as BuilderTemplateSchemaType['metadata'] | undefined,
+    // Add v2 specific fields if present in the raw schema
+    ...((taskTemplate.current_schema as Record<string, unknown>)?.schema_version === 2 ? {
+      schema_version: 2 as const,
+      schema_engine: 'task_template_v2' as const,
+      content_key_strategy: 'field_id' as const,
+      report_projection_strategy: 'descriptor' as const,
+    } : {}),
   }));
 
-  const onSave = useCallback((data: TemplateSchemaType) => {
+  const onSave = useCallback((data: BuilderTemplateSchemaType) => {
     // Validate with Zod
-    const result = TemplateSchema.safeParse(data);
+    const result = BuilderTemplateSchema.safeParse(data);
 
     if (!result.success) {
       setErrors(formatZodErrors(result.error));
@@ -183,7 +200,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
     navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
   }, [navigate, studioId]);
 
-  const handleTemplateChange = useCallback((data: TemplateSchemaType) => {
+  const handleTemplateChange = useCallback((data: BuilderTemplateSchemaType) => {
     setTemplate(data);
     setErrors((prev) => (Object.keys(prev).length > 0 ? {} : prev));
   }, []);

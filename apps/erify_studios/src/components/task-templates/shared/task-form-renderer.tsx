@@ -16,7 +16,7 @@ import {
   Textarea,
 } from '@eridu/ui';
 
-import type { FieldItem, TemplateSchemaType } from '../builder/schema';
+import type { BuilderTemplateSchemaType, FieldItem } from '../builder/schema';
 
 import { MultiSelect } from './multi-select';
 import { shouldShowReason, validateField } from './validation-utils';
@@ -311,7 +311,7 @@ const FieldRenderer = memo(({ index, field, readOnly }: { index?: number; field:
 FieldRenderer.displayName = 'FieldRenderer';
 
 type TaskFormRendererProps = {
-  template: TemplateSchemaType;
+  template: BuilderTemplateSchemaType;
   readOnly?: boolean;
 };
 

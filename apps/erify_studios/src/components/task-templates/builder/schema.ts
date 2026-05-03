@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 import {
+  createTaskTemplateFieldId,
   getSchemaEngine,
   FieldItemBaseSchema as SharedFieldItemBaseSchema,
   FieldItemV2Schema as SharedFieldItemV2Schema,
@@ -108,6 +109,14 @@ export function parseTemplateSchema(raw: unknown) {
 
 export const defaultField: FieldItem = {
   id: crypto.randomUUID(),
+  key: '',
+  type: 'text',
+  label: 'New Field',
+  required: true,
+};
+
+export const defaultFieldV2: FieldItemV2 = {
+  id: createTaskTemplateFieldId(),
   key: '',
   type: 'text',
   label: 'New Field',
