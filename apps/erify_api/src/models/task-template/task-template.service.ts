@@ -4,6 +4,7 @@ import type { TaskStatus } from '@prisma/client';
 import {
   getSchemaEngine,
   safeParseTemplateSchema,
+  type SchemaEngineType,
   type SharedField,
   TASK_TYPE,
 } from '@eridu/api-types/task-management';
@@ -169,7 +170,12 @@ export class TaskTemplateService extends BaseModelService {
     schema: CreateTaskTemplatePayload['currentSchema'],
     sharedFieldsByKey: ReadonlyMap<string, SharedField> = new Map(),
   ): void {
-    const engine = getSchemaEngine(schema);
+    let engine: SchemaEngineType;
+    try {
+      engine = getSchemaEngine(schema);
+    } catch (err) {
+      throw HttpError.badRequest((err as Error).message);
+    }
     const result = safeParseTemplateSchema(schema);
 
     if (!result.success) {

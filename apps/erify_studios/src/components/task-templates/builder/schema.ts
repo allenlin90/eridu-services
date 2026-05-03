@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 import {
+  getSchemaEngine,
   FieldItemBaseSchema as SharedFieldItemBaseSchema,
   FieldItemV2Schema as SharedFieldItemV2Schema,
   FieldTypeEnum as SharedFieldTypeEnum,
@@ -87,8 +88,19 @@ export const BuilderTemplateSchema = z.union([TemplateSchema, TemplateSchemaV2])
 export type BuilderTemplateSchemaType = z.infer<typeof BuilderTemplateSchema>;
 
 export function parseTemplateSchema(raw: unknown) {
-  const obj = raw as Record<string, unknown>;
-  if (obj?.schema_engine === 'task_template_v2' || obj?.schema_version === 2) {
+  let engine: ReturnType<typeof getSchemaEngine>;
+  try {
+    engine = getSchemaEngine(raw);
+  } catch (err) {
+    throw new Error((err as Error).message);
+  }
+
+  // schema_version: 2 without a matching engine is an ambiguous document — fail closed.
+  if (engine === 'task_template_v1' && (raw as Record<string, unknown>)?.schema_version === 2) {
+    throw new Error('schema_version 2 requires schema_engine: "task_template_v2"');
+  }
+
+  if (engine === 'task_template_v2') {
     return TemplateSchemaV2.parse(raw);
   }
   return TemplateSchema.parse(raw);

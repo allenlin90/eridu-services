@@ -1,20 +1,3 @@
-/**
- * Task Schema Engine
- *
- * Provides schema engine routing and backwards-compatible getters
- * for task template metadata.
- *
- * Task templates migrated to v2 schema will have:
- * - schema_version: 2
- * - schema_engine: 'task_template_v2'
- *
- * Implicit (legacy) templates are treated as v1.
- */
-
-// We use crypto.getRandomValues in a cross-platform way if possible,
-// but since this is in api-types, we need to be careful about Node vs Browser.
-// We will just use nanoid or a custom generator. We'll use a simple fallback.
-
 export type SchemaEngineType = 'task_template_v1' | 'task_template_v2';
 
 export const TASK_TEMPLATE_FIELD_ID_PATTERN = /^fld_[a-z0-9]{10,}$/;
@@ -23,67 +6,60 @@ export function isTaskTemplateFieldId(value: string): boolean {
   return TASK_TEMPLATE_FIELD_ID_PATTERN.test(value);
 }
 
-export function createTaskTemplateFieldId(): string {
-  // Generate a random lowercase alphanumeric string
+export function createTaskTemplateFieldId(): `fld_${string}` {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let randomString = '';
-  // Simple fallback since we don't know the exact env here,
-  // but Math.random is sufficient for UI client generation of a nanoid-like string
-  for (let i = 0; i < 11; i++) {
-    randomString += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `fld_${randomString}`;
+  const bytes = new Uint8Array(11);
+  globalThis.crypto.getRandomValues(bytes);
+  const id = Array.from(bytes, (b) => chars[b % chars.length]).join('');
+  return `fld_${id}`;
 }
 
-export function getSchemaEngine(schema: any): SchemaEngineType {
-  if (!schema?.schema_engine) {
-    return 'task_template_v1';
+export function getSchemaEngine(schema: unknown): SchemaEngineType {
+  const engine = (schema as Record<string, unknown> | null | undefined)?.schema_engine;
+
+  if (!engine) {
+    return 'task_template_v1'; // absence of engine metadata is the permanent v1 marker
   }
 
-  if (schema.schema_engine === 'task_template_v2') {
-    return 'task_template_v2';
+  if (engine === 'task_template_v1' || engine === 'task_template_v2') {
+    return engine;
   }
 
-  throw new Error(`Unsupported schema engine: ${schema.schema_engine}`);
+  throw new Error(`Unsupported schema engine: ${String(engine)}`);
 }
 
-export function getFieldContentKey(schema: any, field: any): string {
+export function getFieldContentKey(schema: unknown, field: { key: string; id?: string }): string {
   const engine = getSchemaEngine(schema);
 
   if (engine === 'task_template_v1') {
     return field.key;
   }
 
-  if (engine === 'task_template_v2') {
-    if (!field.id) {
-      throw new Error('v2 field is missing an id');
-    }
-    return field.id;
+  if (!field.id) {
+    throw new Error('v2 field is missing an id');
   }
-
-  throw new Error(`Unsupported schema engine: ${engine}`);
+  return field.id;
 }
 
-export function getFieldSharedKey(schema: any, field: any): string | null {
+export function getFieldSharedKey(
+  schema: unknown,
+  field: { key: string; standard?: boolean; shared_field_key?: string },
+): string | null {
   const engine = getSchemaEngine(schema);
 
   if (engine === 'task_template_v1') {
     return field.standard ? field.key : null;
   }
 
-  if (engine === 'task_template_v2') {
-    return field.shared_field_key ?? null;
-  }
-
-  throw new Error(`Unsupported schema engine: ${engine}`);
+  return field.shared_field_key ?? null;
 }
 
-export function getFieldReportColumnKey(_schema: any, _templateUid: string, _field: any): string {
-  // Stub for Phase 3
-  throw new Error('Not implemented');
+export function getFieldReportColumnKey(_schema: unknown, _templateUid: string, _field: unknown): string {
+  // Phase 3 stub — not yet implemented
+  throw new Error('getFieldReportColumnKey is a Phase 3 stub — not yet implemented');
 }
 
-export function getFieldReportDescriptor(_schema: any, _templateUid: string, _field: any): string {
-  // Stub for Phase 3
-  throw new Error('Not implemented');
+export function getFieldReportDescriptor(_schema: unknown, _templateUid: string, _field: unknown): string {
+  // Phase 3 stub — not yet implemented
+  throw new Error('getFieldReportDescriptor is a Phase 3 stub — not yet implemented');
 }

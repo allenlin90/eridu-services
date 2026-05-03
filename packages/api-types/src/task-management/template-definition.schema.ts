@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { TASK_TEMPLATE_FIELD_ID_PATTERN } from './task-schema-engine.js';
+import { getSchemaEngine, TASK_TEMPLATE_FIELD_ID_PATTERN } from './task-schema-engine.js';
 
 export const RequireReasonCriterion = z.object({
   op: z.enum(['lt', 'lte', 'gt', 'gte', 'eq', 'neq', 'in', 'not_in']),
@@ -161,17 +161,43 @@ export const TemplateSchemaV2Validator = z
     });
   });
 
+function resolveEngine(raw: unknown): { engine: 'task_template_v1' | 'task_template_v2' } | { error: string } {
+  let engine: 'task_template_v1' | 'task_template_v2';
+  try {
+    engine = getSchemaEngine(raw);
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+
+  // schema_version: 2 without a matching engine means the writer forgot schema_engine — fail closed.
+  const version = (raw as Record<string, unknown>)?.schema_version;
+  if (engine === 'task_template_v1' && version === 2) {
+    return { error: 'schema_version 2 requires schema_engine: "task_template_v2"' };
+  }
+
+  return { engine };
+}
+
 export function parseTemplateSchema(raw: unknown) {
-  const obj = raw as Record<string, unknown>;
-  if (obj?.schema_engine === 'task_template_v2' || obj?.schema_version === 2) {
+  const resolved = resolveEngine(raw);
+  if ('error' in resolved) {
+    throw new z.ZodError([{ code: 'custom', message: resolved.error, path: ['schema_engine'], input: raw }]);
+  }
+  if (resolved.engine === 'task_template_v2') {
     return TemplateSchemaV2Validator.parse(raw);
   }
   return TemplateSchemaValidator.parse(raw);
 }
 
 export function safeParseTemplateSchema(raw: unknown) {
-  const obj = raw as Record<string, unknown>;
-  if (obj?.schema_engine === 'task_template_v2' || obj?.schema_version === 2) {
+  const resolved = resolveEngine(raw);
+  if ('error' in resolved) {
+    return {
+      success: false as const,
+      error: new z.ZodError([{ code: 'custom', message: resolved.error, path: ['schema_engine'], input: raw }]),
+    };
+  }
+  if (resolved.engine === 'task_template_v2') {
     return TemplateSchemaV2Validator.safeParse(raw);
   }
   return TemplateSchemaValidator.safeParse(raw);
