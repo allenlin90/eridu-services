@@ -151,20 +151,22 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  const [template, setTemplate] = useState<BuilderTemplateSchemaType>(() => ({
-    name: taskTemplate.name,
-    description: taskTemplate.description ?? '',
-    task_type: taskTemplate.task_type,
-    items: taskTemplate.current_schema?.items ?? [],
-    metadata: taskTemplate.current_schema?.metadata as BuilderTemplateSchemaType['metadata'] | undefined,
-    // Add v2 specific fields if present in the raw schema
-    ...((taskTemplate.current_schema as Record<string, unknown>)?.schema_version === 2 ? {
-      schema_version: 2 as const,
-      schema_engine: 'task_template_v2' as const,
-      content_key_strategy: 'field_id' as const,
-      report_projection_strategy: 'descriptor' as const,
-    } : {}),
-  }));
+  const [template, setTemplate] = useState<BuilderTemplateSchemaType>(() => {
+    const serverEngine = getSchemaEngine(taskTemplate.current_schema);
+    return {
+      name: taskTemplate.name,
+      description: taskTemplate.description ?? '',
+      task_type: taskTemplate.task_type,
+      items: taskTemplate.current_schema?.items ?? [],
+      metadata: taskTemplate.current_schema?.metadata as BuilderTemplateSchemaType['metadata'] | undefined,
+      ...(serverEngine === 'task_template_v2' ? {
+        schema_version: 2 as const,
+        schema_engine: 'task_template_v2' as const,
+        content_key_strategy: 'field_id' as const,
+        report_projection_strategy: 'descriptor' as const,
+      } : {}),
+    };
+  });
 
   const onSave = useCallback((data: BuilderTemplateSchemaType) => {
     if (hasTemplateSchemaEngineMismatch(data, taskTemplate.current_schema)) {

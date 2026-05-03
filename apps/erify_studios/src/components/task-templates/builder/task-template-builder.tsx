@@ -411,7 +411,6 @@ export function TaskTemplateBuilder({
     // For v2, we keep the canonical key and handle grouping separately.
     const isV2 = engine === 'task_template_v2';
     const itemKey = isV2 ? selectedField.key : createUniqueSharedFieldKey(selectedField.key, usedKeys, targetLoopId);
-    const isCanonicalSharedKey = isV2 || itemKey === selectedField.key;
 
     const newField: FieldItem = isV2
       ? {
@@ -428,7 +427,7 @@ export function TaskTemplateBuilder({
           id: crypto.randomUUID(),
           key: itemKey,
           type: selectedField.type,
-          standard: isCanonicalSharedKey ? true : undefined,
+          standard: itemKey === selectedField.key ? true : undefined,
           label: selectedField.label,
           description: selectedField.description ?? undefined,
           required: true,
@@ -440,7 +439,7 @@ export function TaskTemplateBuilder({
       ...currentTemplate,
       items: [...currentTemplate.items, newField],
     });
-    if (!isCanonicalSharedKey) {
+    if (!isV2 && itemKey !== selectedField.key) {
       toast.info(
         `Added "${selectedField.label}" as loop-scoped key "${itemKey}". Only canonical key "${selectedField.key}" is marked shared.`,
       );
