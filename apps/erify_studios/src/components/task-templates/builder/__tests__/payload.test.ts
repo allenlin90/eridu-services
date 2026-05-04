@@ -1,30 +1,28 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { hasTemplateSchemaEngineMismatch, shouldUseSavedBuilderDraft } from '../payload';
+import { createDefaultBuilderTemplate, hasTemplateSchemaEngineMismatch, shouldUseSavedBuilderDraft } from '../payload';
+
+describe('createDefaultBuilderTemplate', () => {
+  it('returns a v2 envelope by default', () => {
+    const tpl = createDefaultBuilderTemplate();
+    expect(tpl).toMatchObject({
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      task_type: 'SETUP',
+      items: [],
+    });
+  });
+});
 
 describe('shouldUseSavedBuilderDraft', () => {
-  const originalFlag = import.meta.env.VITE_TASK_TEMPLATE_V2_BUILDER;
-
-  beforeEach(() => {
-    (import.meta.env as Record<string, string | undefined>).VITE_TASK_TEMPLATE_V2_BUILDER = 'false';
-  });
-
-  afterEach(() => {
-    (import.meta.env as Record<string, string | undefined>).VITE_TASK_TEMPLATE_V2_BUILDER = originalFlag;
-  });
-
-  it('rejects a v2 draft when the v2 flag is disabled', () => {
-    const v2Draft = { schema_engine: 'task_template_v2', name: 'draft' };
-    expect(shouldUseSavedBuilderDraft(v2Draft)).toBe(false);
-  });
-
-  it('accepts a v2 draft when the v2 flag is enabled', () => {
-    (import.meta.env as Record<string, string | undefined>).VITE_TASK_TEMPLATE_V2_BUILDER = 'true';
+  it('accepts a v2 draft', () => {
     const v2Draft = { schema_engine: 'task_template_v2', name: 'draft' };
     expect(shouldUseSavedBuilderDraft(v2Draft)).toBe(true);
   });
 
-  it('accepts a v1 draft regardless of the flag', () => {
+  it('accepts a v1 draft', () => {
     const v1Draft = { name: 'draft', items: [] };
     expect(shouldUseSavedBuilderDraft(v1Draft)).toBe(true);
   });

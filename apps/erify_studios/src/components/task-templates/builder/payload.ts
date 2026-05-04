@@ -2,24 +2,12 @@ import { getSchemaEngine } from '@eridu/api-types/task-management';
 
 import type { BuilderTemplateSchemaType, FieldItem } from './schema';
 
-export function isTaskTemplateV2BuilderEnabled(): boolean {
-  return import.meta.env.VITE_TASK_TEMPLATE_V2_BUILDER === 'true';
-}
-
 export function createDefaultBuilderTemplate(): BuilderTemplateSchemaType {
-  const base = {
+  return {
     name: '',
     description: '',
     task_type: 'SETUP' as const,
     items: [],
-  };
-
-  if (!isTaskTemplateV2BuilderEnabled()) {
-    return base;
-  }
-
-  return {
-    ...base,
     schema_version: 2,
     schema_engine: 'task_template_v2',
     content_key_strategy: 'field_id',
@@ -28,15 +16,7 @@ export function createDefaultBuilderTemplate(): BuilderTemplateSchemaType {
 }
 
 export function shouldUseSavedBuilderDraft(saved: unknown): saved is Partial<BuilderTemplateSchemaType> {
-  if (!saved || typeof saved !== 'object') {
-    return false;
-  }
-
-  if (!isTaskTemplateV2BuilderEnabled() && (saved as { schema_engine?: unknown }).schema_engine === 'task_template_v2') {
-    return false;
-  }
-
-  return true;
+  return !!saved && typeof saved === 'object';
 }
 
 export function buildTemplateSchemaPayload(data: BuilderTemplateSchemaType) {

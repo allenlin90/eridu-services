@@ -8,7 +8,6 @@ import { PageLayout } from '@/components/layouts/page-layout';
 import {
   buildTemplateSchemaPayload,
   hasTemplateSchemaEngineMismatch,
-  isTaskTemplateV2BuilderEnabled,
 } from '@/components/task-templates/builder/payload';
 import { safeParseBuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
@@ -65,17 +64,12 @@ function EditTaskTemplatePage() {
   }
 
   // Block the editor for schemas with an unsupported engine or that fail validation.
-  // v1 (implicit or explicit) proceeds normally. Unknown engines and invalid documents
-  // render a blocking error — the builder is never mounted in that state.
+  // v1 and v2 schemas open normally; unknown engines render a blocking error.
   let schemaError: string | null = null;
   const rawSchema = taskTemplate.current_schema;
   try {
     const engine = getSchemaEngine(rawSchema);
-    // Phase 4: allow 'task_template_v2' and 'task_template_v1'
-    if (engine === 'task_template_v2' && !isTaskTemplateV2BuilderEnabled()) {
-      schemaError = 'Template uses task template v2, but the v2 builder is not enabled in this environment.';
-    }
-    else if (engine !== 'task_template_v1' && engine !== 'task_template_v2') {
+    if (engine !== 'task_template_v1' && engine !== 'task_template_v2') {
       schemaError = `Template uses schema engine "${engine}" which requires a newer editor version. Contact support or use the normalization script's --validate-only output to inspect.`;
     }
   }
