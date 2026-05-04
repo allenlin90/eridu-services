@@ -16,6 +16,7 @@ import {
 
 import { FieldEditor } from './field-editor';
 import type { FieldItem } from './schema';
+import { isSharedField } from './schema';
 
 type SortableFieldItemProps = {
   index?: number;
@@ -83,7 +84,7 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
                   <Badge variant="outline" className="text-[10px] h-5 px-1.5 uppercase">
                     {item.type}
                   </Badge>
-                  {item.standard && (
+                  {isSharedField(item) && (
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
                       Shared
                     </Badge>

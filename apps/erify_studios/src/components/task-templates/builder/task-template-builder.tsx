@@ -813,13 +813,30 @@ export function TaskTemplateBuilder({
 
                                   const nextLoops = [...moderationLoops, clonedLoop];
                                   const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
+                                  // When cloning a v2 loop, suffixed legacy values like
+                                  // `shared_field_key: "ads_cost_l12"` would project the cloned
+                                  // loop to a broken column ("ads_cost_l12_l13"). Strip the
+                                  // source-loop suffix so the canonical base is what gets
+                                  // re-grouped — descriptor logic then attaches the new loop
+                                  // suffix correctly.
+                                  const stripSourceLoopSuffix = (value: string | undefined, sourceGroup: string | undefined): string | undefined => {
+                                    if (!value || !sourceGroup) {
+                                      return value;
+                                    }
+                                    const suffix = `_${sourceGroup}`;
+                                    return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
+                                  };
                                   const clonedItems = loopItems.map((item) => {
                                     if (engine === 'task_template_v2') {
-                                      return {
-                                        ...structuredClone(item),
-                                        id: createTaskTemplateFieldId(),
-                                        group: clonedLoop.id,
-                                      };
+                                      const cloned = structuredClone(item);
+                                      cloned.id = createTaskTemplateFieldId();
+                                      cloned.key = stripSourceLoopSuffix(cloned.key, item.group) ?? cloned.key;
+                                      const sourceSharedKey = (cloned as { shared_field_key?: string }).shared_field_key;
+                                      if (sourceSharedKey) {
+                                        (cloned as { shared_field_key?: string }).shared_field_key = stripSourceLoopSuffix(sourceSharedKey, item.group);
+                                      }
+                                      cloned.group = clonedLoop.id;
+                                      return cloned;
                                     }
                                     return {
                                       ...structuredClone(item),

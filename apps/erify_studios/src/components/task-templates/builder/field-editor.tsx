@@ -19,7 +19,7 @@ import {
 import { MultiSelect } from '../shared/multi-select';
 
 import type { FieldItem, FieldType } from './schema';
-import { FieldTypeEnum } from './schema';
+import { FieldTypeEnum, isSharedField } from './schema';
 
 const FILE_TYPE_OPTIONS = [
   { label: 'Image', value: 'image/*' },
@@ -678,8 +678,10 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
     onUpdate({ [field]: value });
   }, [onUpdate]);
 
+  const fieldIsShared = isSharedField(item);
+
   const handleTypeChange = useCallback((newType: string) => {
-    if (item.standard) {
+    if (fieldIsShared) {
       return;
     }
 
@@ -706,7 +708,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
 
     updates.validation = newValidation;
     onUpdate(updates);
-  }, [item.standard, item.validation, onUpdate]);
+  }, [fieldIsShared, item.validation, onUpdate]);
 
   const handleDefaultValueChange = useCallback((val: any) => {
     handleChange('default_value', val);
@@ -738,7 +740,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={`type-${item.id}`}>Type</Label>
-          <Select value={item.type} onValueChange={handleTypeChange} disabled={item.standard}>
+          <Select value={item.type} onValueChange={handleTypeChange} disabled={fieldIsShared}>
             <SelectTrigger id={`type-${item.id}`}>
               <SelectValue />
             </SelectTrigger>
@@ -750,7 +752,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
               ))}
             </SelectContent>
           </Select>
-          {item.standard && (
+          {fieldIsShared && (
             <p className="text-xs text-muted-foreground">
               Shared-field type is locked by studio settings.
             </p>
