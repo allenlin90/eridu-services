@@ -88,11 +88,20 @@ One `Task` row per show per assignee. The moderator's entered values live in `Ta
 {
   "gmv": 1500,           // L1 GMV
   "gmv_l2": 1800,        // L2 GMV
-  "l1_pin": true
+  "l1_pin": true,
+  "l1_pin__reason": "Pinned comment was delayed",
+  "l1_pin__extra": { "cause": "Network retry" }
 }
 ```
 
 **No nesting by loop**. All loop fields coexist in one object so the entire form persists in one atomic PATCH. The frontend filters by `activeGroup` for display, but the storage is flat.
+
+Fields with explanation or auxiliary input data use flat sidecar keys derived from the field storage key:
+
+- `"<fieldKey>__reason"` stores the operator's explanation text.
+- `"<fieldKey>__extra"` stores optional structured input metadata.
+
+These sidecars do not become separate report columns by default. Report projection appends them to the selected field's cell so a show remains one row.
 
 ### Layer 4 — Loop view (UI partition only)
 
@@ -104,6 +113,8 @@ There is **no loop entity in the database**. The execution sheet computes loop t
 
 - `field.standard === true` → `columnKey = field.key` (canonical, e.g., `gmv`)
 - otherwise → `columnKey = "${task.templateUid}:${field.key}"` (template-local, e.g., `tpl_xyz:gmv_l2`)
+- Field sidecars (`__reason`, `__extra`) and object-shaped input extras are rendered into the same report cell as the field value.
+- For forward compatibility with the v2 template redesign, report extraction can read either `field.key`-keyed content or `field.id`-keyed content before projecting into the same descriptor column.
 
 This is why this feature is the **upstream** of [task-submission-reporting](./task-submission-reporting.md): the snapshot's shape and the `standard` flag are what determine whether a column is canonical (cross-template comparable) or template-local.
 
@@ -132,7 +143,7 @@ The template schema isn't only a storage contract — it also drives what the us
 | `validation`                   | Type-specific rule editor                                              | Inline validation feedback as the user types                               | Read-only; violations surfaced as warnings   |
 | `default_value`                | Default editor; also drives live preview completion proxy              | Pre-fills empty fields on open                                             | Reflected in displayed value                 |
 | `options` (select/multiselect) | Options list editor                                                    | Dropdown / chip control choices                                            | Choice rendering                             |
-| `require_reason`               | Conditional rule editor (operator/value pairs by type)                 | Reveals a "reason" textarea when the trigger condition fires               | Shows the captured reason inline             |
+| `require_reason`               | Conditional rule editor (operator/value pairs by type)                 | Reveals an explanation textarea and stores it under `<fieldKey>__reason` when the trigger condition fires | Shows the captured reason inline             |
 | `group` + `metadata.loops[]`   | Loop card grouping; loop reorder by position; loop name/duration edit  | Loop tabs + Previous/Next nav; live-loop indicator from `show.start_time`  | All loops visible at once (no tab filtering) |
 | `standard` (canonical link)    | Shared-field picker; locks `key`/`type` once linked                    | No direct UX effect (storage is the same)                                  | No direct UX effect                          |
 | `id`                           | dnd-kit drag handle stability                                          | React-hook-form field name; IndexedDB draft key component                  | Same as execution                            |

@@ -857,7 +857,7 @@ This layer runs only for `POST /run`. It takes the resolved scope context from L
    - submitted statuses
    - `targets: { some: { targetType: 'SHOW', showId: { in: resolvedShowIds } } }`
    - template/snapshot filters (from `source_templates` if provided)
-2. Iterate all matching tasks in internal batches (`skip`/`take` with batch size 200). Each batch: extract selected column values from `snapshot.schema` + `task.content`, merge into show-centric rows, flag duplicates.
+2. Iterate all matching tasks in internal batches (`skip`/`take` with batch size 200). Each batch: extract selected column values from `snapshot.schema` + `task.content`, merge field sidecars (`__reason`, `__extra`) into the selected field cell, merge into show-centric rows, and flag duplicates.
 3. After all batches: build flat table result with column metadata, warnings, and return inline.
 
 ### 9.2 Lean select/include
@@ -906,9 +906,10 @@ For each matched task:
 2. for each selected field, compute the column key:
    - **shared field** (`standard: true`): column key = `field.key` (e.g., `gmv`)
    - **custom field**: column key = `{template_uid}:{field.key}` (e.g., `tpl_abc:notes`)
-3. pull matching values from `task.content` using `field.key`,
-4. normalize by field type,
-5. **merge into the show's single row** using the column key.
+3. pull matching values from `task.content` using `field.key` (or `field.id` when reading schema-v2-style content),
+4. normalize the base value by field type,
+5. append same-field explanation/extra data from `<storageKey>__reason`, `<storageKey>__extra`, or object-shaped input values into that field's report cell,
+6. **merge into the show's single row** using the column key.
 
 **Shared fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
 

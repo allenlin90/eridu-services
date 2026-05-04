@@ -38,6 +38,8 @@ Studio managers need to review and export submitted task data across many shows 
 
 - **One row per show** — strictly enforced, no row expansion for multi-target tasks
 - **Snapshots as runtime source of truth** — extraction always reads from task.snapshot.schema + task.content
+- **Input extras stay in the selected field cell** — field sidecars such as `<fieldKey>__reason` and `<fieldKey>__extra`, plus object-shaped input extras, are appended to the field's exported value instead of adding columns or rows
+- **Descriptor projection is storage-key tolerant** — current snapshots still read `field.key` content, while report extraction can also read `field.id` content for schema-v2 compatibility before projecting to the same column descriptor
 - **Shared field metadata is immutable post-creation** — key, type, and category locked forever
 - **Client-side materialization** — no server-side file generation; inline JSON response cached by frontend
 - **10,000 show hard cap** per report run; 50 column hard cap

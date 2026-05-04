@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { getTaskContentExtraKey, getTaskContentReasonKey } from './task-content-extras.js';
 import type { UiSchema } from './template-definition.schema.js';
 
 /**
@@ -92,6 +93,8 @@ export function buildTaskContentSchema(schema: UiSchema): z.ZodObject<z.ZodRawSh
     }
 
     shape[item.key] = validator;
+    shape[getTaskContentReasonKey(item.key)] = z.string().optional();
+    shape[getTaskContentExtraKey(item.key)] = z.record(z.string(), z.unknown()).optional();
   }
 
   return z.object(shape).strict();
