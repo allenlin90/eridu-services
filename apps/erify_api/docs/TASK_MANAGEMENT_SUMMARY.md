@@ -105,7 +105,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 | `TaskOrchestrationService` | Bulk generation, show assignment, reassignment, studio show/task reads     |
 | `TaskGenerationProcessor`  | Per-show transactional processing (advisory lock, idempotency, resumption) |
 | `TaskService`              | Single-task content/status update with optimistic locking                  |
-| `TaskValidationService`    | Schema validation + dynamic content validation + require_reason logic      |
+| `TaskValidationService`    | Schema validation + dynamic content validation, including optional field sidecars such as `<fieldKey>__reason` and `<fieldKey>__extra` |
 
 ---
 

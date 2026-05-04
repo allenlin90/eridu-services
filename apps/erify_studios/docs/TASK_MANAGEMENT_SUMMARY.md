@@ -137,12 +137,12 @@ Readiness scope totals should be refreshed by query-key changes (for example `re
 ## Technical Integration
 
 - **State**: TanStack Query for server state; feature hooks own all query logic
-- **Forms**: `JsonForm` renders from `task.snapshot.schema`, auto-saves via debounced PATCH, and uses a two-phase submit flow for pending file uploads (see [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](./JSON_FORM_SUBMISSION_UPLOAD_FLOW.md))
+- **Forms**: `JsonForm` renders from `task.snapshot.schema`, captures `require_reason` explanations in `<fieldKey>__reason` sidecars, auto-saves via debounced PATCH, and uses a two-phase submit flow for pending file uploads (see [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](./JSON_FORM_SUBMISSION_UPLOAD_FLOW.md))
 - **Progress**: Frontend-calculated from `calculateTaskProgress(task, schema)` — required fields only
 - **Optimistic updates**: On field change → local state → debounce → PATCH → 409 conflict → revert + toast
 - **Cache strategy**: `staleTime: 60s`; invalidate only affected show/task queries on mutations
 - **Draft persistence**: `idb-keyval` (IndexedDB) keyed by `{prefix}:{taskId}` — hydrated on sheet open, cleared on submit
-- **Loop content**: Flat `task.content` JSON covering all loops; `JsonForm` filtered by `activeGroup` (loop ID) in execution sheet only
+- **Loop content**: Flat `task.content` JSON covering all loops, including sidecars such as `<fieldKey>__reason`; `JsonForm` filtered by `activeGroup` (loop ID) in execution sheet only
 
 ---
 
