@@ -15,6 +15,7 @@ import {
   TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 
+import { normalizeTaskReportContentValue } from './task-report-content-value';
 import { TaskReportScopeRepository } from './task-report-scope.repository';
 import { TaskReportScopeService } from './task-report-scope.service';
 
@@ -48,7 +49,9 @@ type RunProjection = {
   viewFilterMetaByShowUid: ViewFilterMetaByShowUid;
 };
 type CompiledProjectionField = {
+  fieldId: string;
   fieldKey: string;
+  fieldLabel: string;
   columnKey: string;
   meta: SelectedKeyMeta;
 };
@@ -210,7 +213,12 @@ export class TaskReportRunService {
         for (const projectedField of projectionFields) {
           const { columnKey } = projectedField;
           if (!(columnKey in row)) {
-            row[columnKey] = this.normalizeFieldValue(contentRecord[projectedField.fieldKey], projectedField.meta.type);
+            row[columnKey] = normalizeTaskReportContentValue(contentRecord, {
+              id: projectedField.fieldId,
+              key: projectedField.fieldKey,
+              label: projectedField.fieldLabel,
+              type: projectedField.meta.type,
+            });
           }
 
           if (!selectedKeyMeta.has(columnKey)) {
@@ -240,7 +248,9 @@ export class TaskReportRunService {
       }
 
       return [{
+        fieldId: field.id,
         fieldKey: field.key,
+        fieldLabel: field.label,
         columnKey,
         meta: {
           type: field.type,
@@ -391,39 +401,6 @@ export class TaskReportRunService {
     }
 
     return content as Record<string, unknown>;
-  }
-
-  private normalizeFieldValue(value: unknown, type: FieldType): unknown {
-    if (value === undefined || value === null) {
-      return null;
-    }
-
-    switch (type) {
-      case 'number': {
-        if (typeof value === 'number') {
-          return Number.isFinite(value) ? value : null;
-        }
-        const coerced = Number(value);
-        return Number.isFinite(coerced) ? coerced : null;
-      }
-      case 'checkbox':
-        if (typeof value === 'boolean') {
-          return value;
-        }
-        return String(value).toLowerCase() === 'true';
-      case 'multiselect':
-        return Array.isArray(value) ? value.map((item) => String(item)) : null;
-      case 'date':
-      case 'datetime':
-      case 'file':
-      case 'url':
-      case 'select':
-      case 'text':
-      case 'textarea':
-        return String(value);
-      default:
-        return value;
-    }
   }
 
   private readTemplateUidFromColumnKey(columnKey: string): string | null {

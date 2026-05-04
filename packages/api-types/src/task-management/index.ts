@@ -18,6 +18,7 @@
  */
 
 export * from './task.schema.js';
+export * from './task-content-extras.js';
 export * from './task-content-validator.js';
 export * from './task-report.schema.js';
 export * from './task-template.schema.js';

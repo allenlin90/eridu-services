@@ -4,6 +4,7 @@ import type { ControllerRenderProps, FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { type FieldItem, getTaskContentReasonKey } from '@eridu/api-types/task-management';
 import {
   FILE_UPLOAD_USE_CASE,
   FILE_UPLOAD_USE_CASE_RULES,
@@ -151,6 +152,116 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+function compareScalarValue(op: string, value: unknown, target: unknown): boolean {
+  switch (op) {
+    case 'eq':
+      return value === target;
+    case 'neq':
+      return value !== target;
+    case 'in':
+      return Array.isArray(target) && target.includes(String(value));
+    case 'not_in':
+      return Array.isArray(target) && !target.includes(String(value));
+    default:
+      return false;
+  }
+}
+
+function hasReasonEvaluableValue(item: FieldItem, value: unknown): boolean {
+  if (item.type === 'checkbox') {
+    return typeof value === 'boolean';
+  }
+
+  if (item.type === 'multiselect') {
+    return Array.isArray(value) && value.length > 0;
+  }
+
+  return value !== null && value !== undefined && value !== '';
+}
+
+function shouldShowReasonField(item: FieldItem, value: unknown): boolean {
+  const reason = item.validation?.require_reason;
+  if (!reason) {
+    return false;
+  }
+  if (reason === 'always') {
+    return true;
+  }
+
+  if (item.type === 'checkbox') {
+    if (reason === 'on-true') {
+      return value === true;
+    }
+    if (reason === 'on-false') {
+      return value === false;
+    }
+    return false;
+  }
+
+  if (!hasReasonEvaluableValue(item, value)) {
+    return false;
+  }
+
+  if (!Array.isArray(reason)) {
+    return false;
+  }
+
+  return reason.some((condition) => {
+    if (item.type === 'number' && typeof value === 'number') {
+      const target = Number(condition.value);
+      switch (condition.op) {
+        case 'lt':
+          return value < target;
+        case 'lte':
+          return value <= target;
+        case 'gt':
+          return value > target;
+        case 'gte':
+          return value >= target;
+        case 'eq':
+          return value === target;
+        case 'neq':
+          return value !== target;
+        default:
+          return false;
+      }
+    }
+
+    if ((item.type === 'date' || item.type === 'datetime') && typeof value === 'string') {
+      const valueTime = new Date(value).getTime();
+      const targetTime = new Date(String(condition.value)).getTime();
+      if (Number.isNaN(valueTime) || Number.isNaN(targetTime)) {
+        return false;
+      }
+      if (condition.op === 'lt') {
+        return valueTime < targetTime;
+      }
+      if (condition.op === 'gt') {
+        return valueTime > targetTime;
+      }
+      return condition.op === 'eq' && valueTime === targetTime;
+    }
+
+    if (item.type === 'multiselect' && Array.isArray(value)) {
+      const targets = Array.isArray(condition.value) ? condition.value : [String(condition.value)];
+      if (condition.op === 'in') {
+        return value.some((entry) => targets.includes(String(entry)));
+      }
+      if (condition.op === 'not_in') {
+        return !value.some((entry) => targets.includes(String(entry)));
+      }
+      const sortedValue = value.map(String).toSorted();
+      const sortedTarget = targets.toSorted();
+      if (condition.op === 'eq') {
+        return JSON.stringify(sortedValue) === JSON.stringify(sortedTarget);
+      }
+      return condition.op === 'neq' && JSON.stringify(sortedValue) !== JSON.stringify(sortedTarget);
+    }
+
+    return compareScalarValue(condition.op, value, condition.value);
+  });
+}
+
 function getFileFingerprint(file: File): string {
   return [file.name, file.size, file.type, file.lastModified].join(':');
 }
@@ -207,12 +318,28 @@ export const JsonForm = function JsonForm({
 
   useEffect(() => {
     if (onChange) {
-      const subscription = form.watch((value) => {
+      const subscription = form.watch((value, { name }) => {
+        if (name) {
+          const changedItem = itemsByKey.get(name);
+          if (changedItem) {
+            const nextReasonKey = getTaskContentReasonKey(changedItem.key);
+            const nextValue = value[changedItem.key];
+            const reasonValue = value[nextReasonKey];
+            if (
+              !shouldShowReasonField(changedItem, nextValue)
+              && typeof reasonValue === 'string'
+              && reasonValue.length > 0
+            ) {
+              form.setValue(nextReasonKey, '', { shouldDirty: true, shouldValidate: true });
+              return;
+            }
+          }
+        }
         onChange(value as Record<string, unknown>);
       });
       return () => subscription.unsubscribe();
     }
-  }, [form, onChange]);
+  }, [form, itemsByKey, onChange]);
 
   useEffect(() => {
     if (!onUploadStateChange) {
@@ -397,182 +524,215 @@ export const JsonForm = function JsonForm({
       >
         {schema.items
           .filter((item) => !activeGroup || item.group === activeGroup)
-          .map((item) => (
-            <FormField
-              key={item.key}
-              control={form.control}
-              name={item.key}
-              render={({ field }) => (
-                <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
-                  {item.type === 'checkbox'
-                    ? (
-                        <>
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value as boolean}
-                              onCheckedChange={field.onChange}
-                              disabled={readOnly}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>
-                              {item.label}
-                              {item.required && <span className="text-destructive ml-1">*</span>}
-                            </FormLabel>
-                            {item.description && (
-                              <FormDescription>
-                                {item.description}
-                              </FormDescription>
-                            )}
-                          </div>
-                        </>
-                      )
-                    : (
-                        <>
-                          <FormLabel>
-                            {item.label}
-                            {item.required && <span className="text-destructive ml-1">*</span>}
-                          </FormLabel>
-                          <FormControl>
-                            <FieldRenderer
-                              item={item}
-                              field={field}
-                              readOnly={readOnly}
-                              isUploading={uploadingByKey[item.key] ?? false}
-                              pendingUpload={pendingFilesByKey[item.key]}
-                              onClearPendingUpload={() => {
-                                clearPendingUpload(item.key);
-                                delete uploadedFileCacheRef.current[item.key];
-                              }}
-                              onClearCurrentUpload={() => {
-                                field.onChange('');
-                                delete uploadedFileCacheRef.current[item.key];
-                              }}
-                              onFileSelect={(file) => {
-                                if (!isSupportedUploadMimeType(file.type)) {
-                                  toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
-                                  return;
-                                }
+          .map((item) => {
+            const reasonKey = getTaskContentReasonKey(item.key);
+            const fieldValue = form.watch(item.key);
+            const reasonValue = form.watch(reasonKey);
+            const showReason = shouldShowReasonField(item, fieldValue)
+              || (typeof reasonValue === 'string' && reasonValue.length > 0);
 
-                                if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
-                                  toast.error('File does not match allowed types');
-                                  return;
-                                }
-
-                                const maxBytesForField = getFieldMaxBytes(item, file);
-                                delete uploadedFileCacheRef.current[item.key];
-                                setPendingFilesByKey((prev) => {
-                                  const previous = prev[item.key];
-                                  if (previous?.previewUrl) {
-                                    URL.revokeObjectURL(previous.previewUrl);
-                                  }
-                                  const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
-                                  return {
-                                    ...prev,
-                                    [item.key]: {
-                                      file,
-                                      previewUrl,
-                                      error: null,
-                                      isPreparing: file.type.startsWith('image/'),
-                                    },
-                                  };
-                                });
-
-                                const setFileError = (error: string | null) => {
-                                  setPendingFilesByKey((prev) => {
-                                    const current = prev[item.key];
-                                    if (!current || current.file !== file) {
-                                      return prev;
+            return (
+              <div key={item.key} className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name={item.key}
+                  render={({ field }) => (
+                    <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
+                      {item.type === 'checkbox'
+                        ? (
+                            <>
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value as boolean}
+                                  onCheckedChange={field.onChange}
+                                  disabled={readOnly}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  {item.label}
+                                  {item.required && <span className="text-destructive ml-1">*</span>}
+                                </FormLabel>
+                                {item.description && (
+                                  <FormDescription>
+                                    {item.description}
+                                  </FormDescription>
+                                )}
+                              </div>
+                            </>
+                          )
+                        : (
+                            <>
+                              <FormLabel>
+                                {item.label}
+                                {item.required && <span className="text-destructive ml-1">*</span>}
+                              </FormLabel>
+                              <FormControl>
+                                <FieldRenderer
+                                  item={item}
+                                  field={field}
+                                  readOnly={readOnly}
+                                  isUploading={uploadingByKey[item.key] ?? false}
+                                  pendingUpload={pendingFilesByKey[item.key]}
+                                  onClearPendingUpload={() => {
+                                    clearPendingUpload(item.key);
+                                    delete uploadedFileCacheRef.current[item.key];
+                                  }}
+                                  onClearCurrentUpload={() => {
+                                    field.onChange('');
+                                    delete uploadedFileCacheRef.current[item.key];
+                                  }}
+                                  onFileSelect={(file) => {
+                                    if (!isSupportedUploadMimeType(file.type)) {
+                                      toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
+                                      return;
                                     }
-                                    return {
-                                      ...prev,
-                                      [item.key]: {
-                                        ...current,
-                                        error,
-                                        isPreparing: false,
-                                      },
-                                    };
-                                  });
-                                };
 
-                                if (!file.type.startsWith('image/')) {
-                                  if (file.size > maxBytesForField) {
-                                    const error = getFileTooLargeMessage(item.label, maxBytesForField);
-                                    toast.error(error);
-                                    setFileError(error);
-                                    return;
-                                  }
-                                  setFileError(null);
-                                  return;
-                                }
+                                    if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
+                                      toast.error('File does not match allowed types');
+                                      return;
+                                    }
 
-                                void (async () => {
-                                  try {
-                                    const prepared = await prepareImageForUpload(file, {
-                                      targetMaxBytes: maxBytesForField,
-                                      accept: item.validation?.accept,
-                                      maxLongEdges: maxBytesForField <= SCREENSHOT_MAX_BYTES
-                                        ? SCREENSHOT_COMPRESSION_MAX_LONG_EDGES
-                                        : undefined,
-                                      preferWorker: true,
-                                    });
-                                    const preparedFile = prepared.file;
-
+                                    const maxBytesForField = getFieldMaxBytes(item, file);
+                                    delete uploadedFileCacheRef.current[item.key];
                                     setPendingFilesByKey((prev) => {
-                                      const current = prev[item.key];
-                                      if (!current || current.file !== file) {
-                                        return prev;
+                                      const previous = prev[item.key];
+                                      if (previous?.previewUrl) {
+                                        URL.revokeObjectURL(previous.previewUrl);
                                       }
-
-                                      let error: string | null = null;
-                                      if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
-                                        error = `Compressed file for '${item.label}' does not match allowed types`;
-                                      } else if (preparedFile.size > maxBytesForField) {
-                                        const limitKb = Math.round(maxBytesForField / 1024);
-                                        const achievedKb = Math.round(preparedFile.size / 1024);
-                                        error = prepared.wasCompressed
-                                          ? `Could not compress '${item.label}' below ${limitKb} KB (best: ${achievedKb} KB)`
-                                          : getFileTooLargeMessage(item.label, maxBytesForField);
-                                      }
-
-                                      if (error) {
-                                        toast.error(error);
-                                      }
-
+                                      const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
                                       return {
                                         ...prev,
                                         [item.key]: {
-                                          ...current,
-                                          file: preparedFile,
-                                          error,
-                                          isPreparing: false,
+                                          file,
+                                          previewUrl,
+                                          error: null,
+                                          isPreparing: file.type.startsWith('image/'),
                                         },
                                       };
                                     });
 
-                                    if (prepared.metTarget && prepared.wasCompressed && preparedFile.size < file.size) {
-                                      const method = prepared.usedWorker ? ' in background' : '';
-                                      toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                    const setFileError = (error: string | null) => {
+                                      setPendingFilesByKey((prev) => {
+                                        const current = prev[item.key];
+                                        if (!current || current.file !== file) {
+                                          return prev;
+                                        }
+                                        return {
+                                          ...prev,
+                                          [item.key]: {
+                                            ...current,
+                                            error,
+                                            isPreparing: false,
+                                          },
+                                        };
+                                      });
+                                    };
+
+                                    if (!file.type.startsWith('image/')) {
+                                      if (file.size > maxBytesForField) {
+                                        const error = getFileTooLargeMessage(item.label, maxBytesForField);
+                                        toast.error(error);
+                                        setFileError(error);
+                                        return;
+                                      }
+                                      setFileError(null);
+                                      return;
                                     }
-                                  } catch {
-                                    setFileError(`Failed to prepare '${item.label}' for upload`);
-                                  }
-                                })();
-                              }}
-                            />
-                          </FormControl>
-                          {item.description && (
-                            <FormDescription>
-                              {item.description}
-                            </FormDescription>
+
+                                    void (async () => {
+                                      try {
+                                        const prepared = await prepareImageForUpload(file, {
+                                          targetMaxBytes: maxBytesForField,
+                                          accept: item.validation?.accept,
+                                          maxLongEdges: maxBytesForField <= SCREENSHOT_MAX_BYTES
+                                            ? SCREENSHOT_COMPRESSION_MAX_LONG_EDGES
+                                            : undefined,
+                                          preferWorker: true,
+                                        });
+                                        const preparedFile = prepared.file;
+
+                                        setPendingFilesByKey((prev) => {
+                                          const current = prev[item.key];
+                                          if (!current || current.file !== file) {
+                                            return prev;
+                                          }
+
+                                          let error: string | null = null;
+                                          if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
+                                            error = `Compressed file for '${item.label}' does not match allowed types`;
+                                          } else if (preparedFile.size > maxBytesForField) {
+                                            const limitKb = Math.round(maxBytesForField / 1024);
+                                            const achievedKb = Math.round(preparedFile.size / 1024);
+                                            error = prepared.wasCompressed
+                                              ? `Could not compress '${item.label}' below ${limitKb} KB (best: ${achievedKb} KB)`
+                                              : getFileTooLargeMessage(item.label, maxBytesForField);
+                                          }
+
+                                          if (error) {
+                                            toast.error(error);
+                                          }
+
+                                          return {
+                                            ...prev,
+                                            [item.key]: {
+                                              ...current,
+                                              file: preparedFile,
+                                              error,
+                                              isPreparing: false,
+                                            },
+                                          };
+                                        });
+
+                                        if (prepared.metTarget && prepared.wasCompressed && preparedFile.size < file.size) {
+                                          const method = prepared.usedWorker ? ' in background' : '';
+                                          toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                        }
+                                      } catch {
+                                        setFileError(`Failed to prepare '${item.label}' for upload`);
+                                      }
+                                    })();
+                                  }}
+                                />
+                              </FormControl>
+                              {item.description && (
+                                <FormDescription>
+                                  {item.description}
+                                </FormDescription>
+                              )}
+                              <FormMessage />
+                            </>
                           )}
-                          <FormMessage />
-                        </>
-                      )}
-                </FormItem>
-              )}
-            />
-          ))}
+                    </FormItem>
+                  )}
+                />
+                {showReason && (
+                  <FormField
+                    control={form.control}
+                    name={reasonKey}
+                    render={({ field }) => (
+                      <FormItem className="rounded-md border border-amber-200 bg-amber-50/60 p-3">
+                        <FormLabel>
+                          Explanation for
+                          {' '}
+                          {item.label}
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            value={(field.value as string) ?? ''}
+                            disabled={readOnly}
+                            className="min-h-20 bg-white"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            );
+          })}
       </form>
     </Form>
   );
