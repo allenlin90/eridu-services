@@ -204,6 +204,130 @@ describe('taskReportRunService', () => {
     });
   });
 
+  it('includes sidecar explanations and extra input data in the selected report column', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fld_live_title',
+          key: 'live_title',
+          type: 'select',
+          label: 'Live title',
+          options: [
+            { value: 'correct', label: 'Correct' },
+            { value: 'not_correct', label: 'Not correct' },
+          ],
+          validation: {
+            require_reason: [{ op: 'neq', value: 'correct' }],
+          },
+        },
+      ],
+      metadata: {},
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow(),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        content: {
+          live_title: 'not_correct',
+          live_title__reason: 'Title does not match the approved run sheet.',
+          live_title__extra: {
+            cause: 'OBS scene was stale',
+            reported_by: 'Operator A',
+          },
+        },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:live_title', label: 'Live title' }],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:live_title': [
+        'not_correct',
+        'Explanation: Title does not match the approved run sheet.',
+        'Cause: OBS scene was stale',
+        'Reported By: Operator A',
+      ].join('\n'),
+    });
+  });
+
+  it('projects field-id keyed object input values with explanations into descriptor columns', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fld_product_sample',
+          key: 'product_sample',
+          type: 'select',
+          label: 'Product sample check',
+          options: [
+            { value: 'available', label: 'Available' },
+            { value: 'missing', label: 'Missing' },
+          ],
+          validation: {
+            require_reason: [{ op: 'neq', value: 'available' }],
+          },
+        },
+      ],
+      metadata: {},
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow(),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        content: {
+          fld_product_sample: {
+            value: 'missing',
+            explanation: 'Sample was not delivered before the show started.',
+            cause: 'Courier delay',
+          },
+        },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:product_sample', label: 'Product sample check' }],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:product_sample': [
+        'missing',
+        'Explanation: Sample was not delivered before the show started.',
+        'Cause: Courier delay',
+      ].join('\n'),
+    });
+  });
+
   it('rejects unknown column key with compatibility details', async () => {
     const snapshotSchema = TemplateSchemaValidator.parse({
       items: [
