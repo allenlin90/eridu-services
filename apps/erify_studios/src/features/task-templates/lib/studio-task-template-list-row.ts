@@ -43,7 +43,7 @@ export function toStudioTaskTemplateListRow(template: TaskTemplateDto): StudioTa
     task_type: template.task_type,
     template_kind: loops.length > 0 ? TASK_TEMPLATE_KIND.MODERATION : TASK_TEMPLATE_KIND.STANDARD,
     loop_count: loops.length,
-    shared_field_count: items.filter((item) => item.standard === true).length,
+    shared_field_count: items.filter((item) => item.standard === true || Boolean((item as { shared_field_key?: string }).shared_field_key)).length,
     field_count: items.length,
     is_active: template.is_active,
     version: template.version,

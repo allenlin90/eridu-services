@@ -76,4 +76,41 @@ describe('taskTemplateBuilder v2 field ids', () => {
     expect(clonedItem.id).not.toBe('fld_original1234');
     expect(clonedItem.key).toBe('gmv');
   });
+
+  it('strips the source-loop suffix from key and shared_field_key when cloning a v2 loop', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const legacySuffixedTemplate: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      metadata: {
+        loops: [{ id: 'l12', name: 'Loop 12', durationMin: 15 }],
+      },
+      items: [
+        {
+          id: 'fld_legacysrcab',
+          key: 'ads_cost_l12',
+          type: 'number',
+          label: 'Ads Cost',
+          required: true,
+          group: 'l12',
+          shared_field_key: 'ads_cost_l12',
+        },
+      ],
+    };
+
+    render(<TaskTemplateBuilder template={legacySuffixedTemplate} onChange={onChange} />);
+
+    await user.click(screen.getByRole('button', { name: 'Clone loop' }));
+
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+    const clonedItem = lastCall.items.find((item: { group: string }) => item.group !== 'l12');
+
+    expect(clonedItem).toBeDefined();
+    expect(clonedItem.group).not.toBe('l12');
+    // The source-loop suffix is stripped — both the editor handle and the shared
+    // field reference become canonical, so descriptor projection attaches the
+    // new loop id correctly instead of producing the broken double-suffix.
+    expect(clonedItem.key).toBe('ads_cost');
+    expect(clonedItem.shared_field_key).toBe('ads_cost');
+  });
 });

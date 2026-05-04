@@ -139,3 +139,11 @@ export const defaultField: FieldItem = {
   label: 'New Field',
   required: true,
 };
+
+// Engine-agnostic check: a field is "shared" when v1 marks it `standard: true`
+// or when v2 sets `shared_field_key`. Use this anywhere a UI needs to know
+// whether to render the "Shared" badge / lock the type / etc., without having
+// to thread the schema engine through.
+export function isSharedField(item: { standard?: boolean; shared_field_key?: string }): boolean {
+  return item.standard === true || Boolean(item.shared_field_key);
+}
