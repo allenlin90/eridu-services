@@ -40,7 +40,7 @@ Studio managers need to review and export submitted task data across many shows 
 - **Snapshots as runtime source of truth** — extraction always reads from task.snapshot.schema + task.content
 - **Engine-aware field identity** — v1 reports read content by `field.key`; v2 reports read content by `field.id`
 - **Descriptor-based shared columns** — v2 shared loop fields derive column keys from `(shared_field_key, group)`, e.g. `gmv_l8`
-- **Input extras stay in the selected field cell** — field sidecars such as `<fieldKey>__reason` and `<fieldKey>__extra`, plus object-shaped input extras, are appended to the field's exported value instead of adding columns or rows
+- **Input extras are opt-in export columns** — report definitions can set `include_extra` on a selected task field; the run result then adds an adjacent `<columnKey>__extra` column containing `<fieldKey>__reason` and `<fieldKey>__extra`
 - **Shared field metadata is immutable post-creation** — key, type, and category locked forever
 - **Client-side materialization** — no server-side file generation; inline JSON response cached by frontend
 - **10,000 show hard cap** per report run; 50 column hard cap

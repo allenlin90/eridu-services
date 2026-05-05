@@ -108,7 +108,7 @@ Fields with explanation or auxiliary input data use flat sidecar keys derived fr
 - `"<fieldKey>__reason"` stores the operator's explanation text.
 - `"<fieldKey>__extra"` stores optional structured input metadata.
 
-These sidecars do not become separate report columns by default. Report projection appends them to the selected field's cell so a show remains one row.
+These sidecars do not become report columns by default. Report definitions can opt a selected field into an adjacent extra column, keeping the base answer and explanation/metadata separate while preserving one row per show.
 
 ### Layer 4 — Loop view (UI partition only)
 
@@ -123,7 +123,8 @@ There is **no loop entity in the database**. The execution sheet computes loop t
 - v2 shared non-loop field (`shared_field_key: "session_review_feedback"`) → `columnKey = "session_review_feedback"`
 - v2 template-local loop field → `columnKey = "${task.templateUid}:${field.group}:${field.key}"`
 - v2 template-local non-loop field → `columnKey = "${task.templateUid}:${field.key}"`
-- Field sidecars (`__reason`, `__extra`) and object-shaped input extras are rendered into the same report cell as the field value.
+- When a selected report column has `include_extra: true`, field sidecars (`__reason`, `__extra`) render into an adjacent `{columnKey}__extra` column.
+- Base field values remain in the selected column; extra columns are an export-template option, not automatic schema expansion.
 
 This is why this feature is the **upstream** of [task-submission-reporting](./task-submission-reporting.md): the snapshot's engine and descriptor helpers determine whether a column is canonical (cross-template comparable) or template-local.
 

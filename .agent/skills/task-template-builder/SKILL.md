@@ -81,7 +81,7 @@ require_reason: z.union([
 - **Select**: `eq` (Is), `neq` (Is Not)
 - **Multiselect**: `in` (Is One Of), `not_in` (Is Not One Of)
 
-When `require_reason` is triggered during task execution, `JsonForm` stores the explanation in a flat sidecar key: `<fieldKey>__reason`. Optional structured metadata for the same field uses `<fieldKey>__extra`. Report exports append these sidecars to the selected field's cell instead of creating extra columns or rows.
+When `require_reason` is triggered during task execution, `JsonForm` stores the explanation in a flat sidecar key: `<fieldKey>__reason`. Optional structured metadata for the same field uses `<fieldKey>__extra`. Report definitions can opt a selected field into an adjacent extra column; without that option, exports include only the base field value.
 
 ### 5. Payload Transformation
 
@@ -131,7 +131,7 @@ This keeps template payloads compatible with backend validation that enforces:
 - [ ] `@dnd-kit` items have stable `fld_...` ids from `createTaskTemplateFieldId()`
 - [ ] Payload is transformed before API submission (empty options filtered)
 - [ ] `require_reason` operators match field type (number/date/select/multiselect)
-- [ ] Task execution reason sidecars (`<fieldKey>__reason`, `<fieldKey>__extra`) remain flat and report into the same selected field column
+- [ ] Task execution reason sidecars (`<fieldKey>__reason`, `<fieldKey>__extra`) remain flat and export only through explicit adjacent extra columns
 - [ ] Shared-field insertions use `shared_field_key` with locked canonical-link/type semantics
 - [ ] Shared-field queries are revalidated on template page mount and invalidated after settings mutations
 - [ ] Shared-field load failures are explicitly surfaced in template create/edit UI
