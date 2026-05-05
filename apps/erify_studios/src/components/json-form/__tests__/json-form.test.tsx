@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getTaskContentReasonKey, type UiSchema } from '@eridu/api-types/task-management';
+import { getTaskContentExtraKey, getTaskContentReasonKey, type UiSchema } from '@eridu/api-types/task-management';
 
 import { JsonForm } from '../json-form';
 
@@ -65,5 +65,39 @@ describe('jsonForm', () => {
     rerender(<JsonForm schema={schema} values={{ live_title: 'not_correct' }} onChange={vi.fn()} />);
 
     expect(screen.getByLabelText('Explanation for Live title')).toBeInTheDocument();
+  });
+
+  it('shows stored extra input metadata alongside the selected answer', () => {
+    const schema: UiSchema = {
+      items: [
+        {
+          id: 'fld_setup_status',
+          key: 'setup_status',
+          type: 'text',
+          label: 'Setup status',
+          required: true,
+        },
+      ],
+    };
+
+    render(
+      <JsonForm
+        schema={schema}
+        values={{
+          setup_status: 'Audio issue',
+          [getTaskContentExtraKey('setup_status')]: {
+            cause: 'Wrong mixer profile',
+            reported_by: 'Operator A',
+          },
+        }}
+        onChange={vi.fn()}
+        readOnly
+      />,
+    );
+
+    expect(screen.getByDisplayValue('Audio issue')).toBeInTheDocument();
+    expect(screen.getByText('Extra for Setup status')).toBeInTheDocument();
+    expect(screen.getByText('Cause: Wrong mixer profile')).toBeInTheDocument();
+    expect(screen.getByText('Reported By: Operator A')).toBeInTheDocument();
   });
 });

@@ -10,6 +10,7 @@ import type {
 } from '@eridu/api-types/task-management';
 import {
   FieldTypeEnum,
+  getFieldContentKey,
   getFieldReportDescriptor,
   getFieldSharedKey,
   safeParseTemplateSchema,
@@ -17,7 +18,7 @@ import {
   taskReportColumnSchema,
 } from '@eridu/api-types/task-management';
 
-import { normalizeTaskReportContentValue } from './task-report-content-value';
+import { projectTaskReportContentInput } from './task-report-content-value';
 import { TaskReportScopeRepository } from './task-report-scope.repository';
 import { TaskReportScopeService } from './task-report-scope.service';
 
@@ -26,6 +27,7 @@ import { StudioService } from '@/models/studio/studio.service';
 
 type FieldType = z.infer<typeof FieldTypeEnum>;
 type TaskReportColumn = z.infer<typeof taskReportColumnSchema>;
+type SelectedReportColumn = TaskReportRunRequest['columns'][number];
 type SelectedKeyMeta = {
   type: FieldType;
   standard?: boolean;
@@ -51,10 +53,9 @@ type RunProjection = {
   viewFilterMetaByShowUid: ViewFilterMetaByShowUid;
 };
 type CompiledProjectionField = {
-  fieldId: string;
   fieldKey: string;
-  fieldLabel: string;
   columnKey: string;
+  extraColumnKey: string | null;
   meta: SelectedKeyMeta;
 };
 type ScopedTask = Awaited<ReturnType<TaskReportScopeRepository['findSubmittedTasksInScope']>>[number];
@@ -94,20 +95,20 @@ export class TaskReportRunService {
    */
   async run(studioUid: string, payload: TaskReportRunRequest): Promise<TaskReportResult> {
     const selectedColumns = payload.columns;
-    const selectedColumnKeys = new Set(selectedColumns.map((column) => column.key));
+    const selectedColumnByKey = new Map(selectedColumns.map((column) => [column.key, column]));
 
     await this.enforcePreflightLimit(studioUid, payload.scope);
 
     const filters = this.taskReportScopeService.resolveScopeFilters(payload.scope);
     const [shows, tasks, sharedFieldByKey] = await this.loadRunInputs(studioUid, filters);
 
-    const projection = this.buildRunProjection(tasks, shows, selectedColumnKeys, sharedFieldByKey);
+    const projection = this.buildRunProjection(tasks, shows, selectedColumnByKey, sharedFieldByKey);
     this.addSystemColumnMeta(selectedColumns, projection.selectedKeyMeta);
     this.assertKnownSelectedColumns(selectedColumns, projection.selectedKeyMeta, sharedFieldByKey);
 
-    const rows = this.buildRows(shows, projection, selectedColumns);
     const warnings = this.buildWarnings(projection.duplicateSourceCount);
     const columns = this.buildColumns(selectedColumns, projection.selectedKeyMeta);
+    const rows = this.buildRows(shows, projection, columns);
     const columnMap = this.buildColumnMap(columns);
 
     return {
@@ -151,9 +152,10 @@ export class TaskReportRunService {
   private buildRunProjection(
     tasks: Awaited<ReturnType<TaskReportScopeRepository['findSubmittedTasksInScope']>>,
     shows: Awaited<ReturnType<TaskReportScopeRepository['findShowsInScope']>>,
-    selectedColumnKeys: Set<string>,
+    selectedColumnByKey: Map<string, SelectedReportColumn>,
     sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
   ): RunProjection {
+    const selectedColumnKeys = new Set(selectedColumnByKey.keys());
     const hasSelectedTaskColumns = Array.from(selectedColumnKeys).some((columnKey) => !this.isSystemColumn(columnKey));
     const rowsByShowUid: RowsByShowUid = new Map(shows.map((show) => [show.uid, {}]));
     const selectedKeyMeta = new Map<string, SelectedKeyMeta>();
@@ -194,7 +196,7 @@ export class TaskReportRunService {
       const cacheKey = `${task.templateUid}|${task.snapshotId}`;
       const projectionFields
         = projectorCache.get(cacheKey)
-        ?? this.compileProjectionFields(task, selectedColumnKeys, sharedFieldByKey);
+        ?? this.compileProjectionFields(task, selectedColumnByKey, sharedFieldByKey);
       if (!projectorCache.has(cacheKey)) {
         projectorCache.set(cacheKey, projectionFields);
       }
@@ -213,18 +215,28 @@ export class TaskReportRunService {
         duplicateSourceCount.set(duplicateKey, (duplicateSourceCount.get(duplicateKey) ?? 0) + 1);
 
         for (const projectedField of projectionFields) {
-          const { columnKey } = projectedField;
+          const { columnKey, extraColumnKey } = projectedField;
+          const input = projectTaskReportContentInput(contentRecord, {
+            key: projectedField.fieldKey,
+            type: projectedField.meta.type,
+          });
+
           if (!(columnKey in row)) {
-            row[columnKey] = normalizeTaskReportContentValue(contentRecord, {
-              id: projectedField.fieldId,
-              key: projectedField.fieldKey,
-              label: projectedField.fieldLabel,
-              type: projectedField.meta.type,
-            });
+            row[columnKey] = input.value;
+          }
+
+          if (extraColumnKey && !(extraColumnKey in row)) {
+            row[extraColumnKey] = input.extra;
           }
 
           if (!selectedKeyMeta.has(columnKey)) {
             selectedKeyMeta.set(columnKey, projectedField.meta);
+          }
+          if (extraColumnKey && !selectedKeyMeta.has(extraColumnKey)) {
+            selectedKeyMeta.set(extraColumnKey, {
+              ...projectedField.meta,
+              type: 'textarea',
+            });
           }
         }
       }
@@ -235,7 +247,7 @@ export class TaskReportRunService {
 
   private compileProjectionFields(
     task: ScopedTask,
-    selectedColumnKeys: Set<string>,
+    selectedColumnByKey: Map<string, SelectedReportColumn>,
     sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
   ): CompiledProjectionField[] {
     const parsedSnapshot = safeParseTemplateSchema(task.snapshotSchema);
@@ -245,7 +257,8 @@ export class TaskReportRunService {
 
     return parsedSnapshot.data.items.flatMap((field) => {
       const columnKey = getFieldReportDescriptor(parsedSnapshot.data, task.templateUid, field);
-      if (!selectedColumnKeys.has(columnKey)) {
+      const selectedColumn = selectedColumnByKey.get(columnKey);
+      if (!selectedColumn) {
         return [];
       }
 
@@ -262,10 +275,9 @@ export class TaskReportRunService {
         : undefined;
 
       return [{
-        fieldId: field.id,
-        fieldKey: field.key,
-        fieldLabel: field.label,
+        fieldKey: getFieldContentKey(parsedSnapshot.data, field),
         columnKey,
+        extraColumnKey: selectedColumn.include_extra ? this.buildInputExtraColumnKey(columnKey) : null,
         meta: {
           type: field.type,
           standard: isStandard || undefined,
@@ -318,7 +330,7 @@ export class TaskReportRunService {
   private buildRows(
     shows: ScopedShow[],
     projection: RunProjection,
-    selectedColumns: Array<{ key: string }>,
+    resultColumns: Array<{ key: string }>,
   ): Array<Record<string, unknown>> {
     return shows.map((show) => {
       const row = projection.rowsByShowUid.get(show.uid) ?? {};
@@ -338,7 +350,7 @@ export class TaskReportRunService {
       row.assignee_name = assigneeNames.length === 1 ? assigneeNames[0] : null;
 
       const systemRow = this.buildSystemRow(show);
-      for (const column of selectedColumns) {
+      for (const column of resultColumns) {
         if (Object.hasOwn(systemRow, column.key)) {
           row[column.key] = systemRow[column.key as TaskReportSystemColumnKey] ?? null;
           continue;
@@ -384,14 +396,13 @@ export class TaskReportRunService {
   }
 
   private buildColumns(
-    selectedColumns: Array<{ key: string; label: string; type?: FieldType }>,
+    selectedColumns: SelectedReportColumn[],
     selectedKeyMeta: Map<string, SelectedKeyMeta>,
   ): TaskReportColumn[] {
-    return selectedColumns.map((column) => {
+    return selectedColumns.flatMap((column) => {
       const selectedMeta = selectedKeyMeta.get(column.key);
       const fallbackTemplateId = this.readTemplateUidFromColumnKey(column.key);
-
-      return {
+      const valueColumn: TaskReportColumn = {
         key: column.key,
         label: column.label,
         type: selectedMeta?.type ?? this.readSystemColumnMeta(column.key)?.type ?? column.type ?? 'text',
@@ -399,7 +410,29 @@ export class TaskReportRunService {
         source_template_name: selectedMeta?.sourceTemplateName ?? null,
         standard: selectedMeta?.standard,
         category: selectedMeta?.category,
+        role: 'value',
       };
+
+      if (this.isSystemColumn(column.key) || !column.include_extra) {
+        return [valueColumn];
+      }
+
+      const extraColumnKey = this.buildInputExtraColumnKey(column.key);
+      const extraMeta = selectedKeyMeta.get(extraColumnKey);
+      return [
+        valueColumn,
+        {
+          key: extraColumnKey,
+          label: `${column.label} Extra`,
+          type: extraMeta?.type ?? 'textarea',
+          source_template_id: extraMeta?.sourceTemplateId ?? selectedMeta?.sourceTemplateId ?? fallbackTemplateId ?? null,
+          source_template_name: extraMeta?.sourceTemplateName ?? selectedMeta?.sourceTemplateName ?? null,
+          standard: extraMeta?.standard ?? selectedMeta?.standard,
+          category: extraMeta?.category ?? selectedMeta?.category,
+          role: 'extra',
+          value_column_key: column.key,
+        },
+      ];
     });
   }
 
@@ -415,6 +448,10 @@ export class TaskReportRunService {
     }
 
     return content as Record<string, unknown>;
+  }
+
+  private buildInputExtraColumnKey(columnKey: string): string {
+    return `${columnKey}__extra`;
   }
 
   private readTemplateUidFromColumnKey(columnKey: string): string | null {

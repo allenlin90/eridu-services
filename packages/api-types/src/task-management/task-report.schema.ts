@@ -255,6 +255,7 @@ export const taskReportSelectedColumnSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
   type: FieldTypeEnum.optional(),
+  include_extra: z.boolean().optional(),
 });
 
 export type TaskReportSelectedColumn = z.infer<typeof taskReportSelectedColumnSchema>;
@@ -290,6 +291,8 @@ export const taskReportColumnSchema = z.object({
   source_template_name: z.string().nullable().optional(),
   standard: z.boolean().optional(),
   category: sharedFieldCategorySchema.optional(),
+  role: z.enum(['value', 'extra']).optional(),
+  value_column_key: z.string().optional(),
 });
 
 export type TaskReportColumn = z.infer<typeof taskReportColumnSchema>;

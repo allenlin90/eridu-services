@@ -4,15 +4,12 @@ import {
   getTaskContentReasonKey,
 } from '@eridu/api-types/task-management';
 
-type ReportField = Pick<FieldItem, 'id' | 'key' | 'label' | 'type'>;
+type ReportField = Pick<FieldItem, 'key' | 'type'>;
 type FieldType = FieldItem['type'];
 
-const VALUE_KEYS = new Set(['value', 'selected_value', 'selectedValue', 'output', 'answer']);
-const EXTRA_CONTAINER_KEYS = new Set(['extra', 'extras', 'metadata']);
-
-type ExtractedInputValue = {
+type ProjectedInput = {
   value: unknown;
-  extras: Map<string, unknown>;
+  extra: string | null;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -25,9 +22,9 @@ function isBlankExtraValue(value: unknown): boolean {
     || (typeof value === 'string' && value.trim().length === 0);
 }
 
-function stringifyCellPart(value: unknown): string {
+function stringifyExtraValue(value: unknown): string {
   if (Array.isArray(value)) {
-    return value.map((item) => stringifyCellPart(item)).join('; ');
+    return value.map((item) => stringifyExtraValue(item)).join('; ');
   }
   if (typeof value === 'boolean') {
     return value ? 'Yes' : 'No';
@@ -39,10 +36,6 @@ function stringifyCellPart(value: unknown): string {
 }
 
 function humanizeExtraKey(key: string): string {
-  if (key === 'reason' || key === 'explanation') {
-    return 'Explanation';
-  }
-
   return key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/[_-]+/g, ' ')
@@ -50,68 +43,6 @@ function humanizeExtraKey(key: string): string {
     .split(/\s+/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
-}
-
-function addExtra(extras: Map<string, unknown>, key: string, value: unknown): void {
-  if (isBlankExtraValue(value)) {
-    return;
-  }
-
-  extras.set(humanizeExtraKey(key), value);
-}
-
-function addExtraRecord(extras: Map<string, unknown>, value: unknown): void {
-  if (!isRecord(value)) {
-    return;
-  }
-
-  for (const [key, item] of Object.entries(value)) {
-    addExtra(extras, key, item);
-  }
-}
-
-function readInputValue(rawValue: unknown): ExtractedInputValue {
-  const extras = new Map<string, unknown>();
-
-  if (!isRecord(rawValue)) {
-    return { value: rawValue, extras };
-  }
-
-  let value: unknown = rawValue;
-  for (const key of VALUE_KEYS) {
-    if (Object.hasOwn(rawValue, key)) {
-      value = rawValue[key];
-      break;
-    }
-  }
-
-  for (const [key, item] of Object.entries(rawValue)) {
-    if (VALUE_KEYS.has(key) || key === 'label') {
-      continue;
-    }
-    if (EXTRA_CONTAINER_KEYS.has(key)) {
-      addExtraRecord(extras, item);
-      continue;
-    }
-    addExtra(extras, key, item);
-  }
-
-  return { value, extras };
-}
-
-function readStoredValue(
-  contentRecord: Record<string, unknown>,
-  field: ReportField,
-): { storageKey: string; rawValue: unknown } {
-  if (Object.hasOwn(contentRecord, field.key)) {
-    return { storageKey: field.key, rawValue: contentRecord[field.key] };
-  }
-
-  if (Object.hasOwn(contentRecord, field.id)) {
-    return { storageKey: field.id, rawValue: contentRecord[field.id] };
-  }
-
-  return { storageKey: field.key, rawValue: undefined };
 }
 
 function normalizeFieldValue(value: unknown, type: FieldType): unknown {
@@ -147,50 +78,31 @@ function normalizeFieldValue(value: unknown, type: FieldType): unknown {
   }
 }
 
-function addSidecarExtras(
-  extras: Map<string, unknown>,
-  contentRecord: Record<string, unknown>,
-  field: ReportField,
-  storageKey: string,
-): void {
-  const candidateKeys = new Set([storageKey, field.key, field.id]);
-
-  for (const key of candidateKeys) {
-    addExtra(extras, 'explanation', contentRecord[getTaskContentReasonKey(key)]);
-  }
-
-  for (const key of candidateKeys) {
-    addExtraRecord(extras, contentRecord[getTaskContentExtraKey(key)]);
-  }
-}
-
-function combineValueAndExtras(value: unknown, extras: Map<string, unknown>): unknown {
-  if (extras.size === 0) {
-    return value;
-  }
-
+function formatInputExtra(contentRecord: Record<string, unknown>, fieldKey: string): string | null {
   const lines: string[] = [];
-  if (value !== null && value !== undefined) {
-    lines.push(stringifyCellPart(value));
+  const reason = contentRecord[getTaskContentReasonKey(fieldKey)];
+  if (!isBlankExtraValue(reason)) {
+    lines.push(`Explanation: ${stringifyExtraValue(reason)}`);
   }
 
-  for (const [label, extraValue] of extras.entries()) {
-    lines.push(`${label}: ${stringifyCellPart(extraValue)}`);
+  const extra = contentRecord[getTaskContentExtraKey(fieldKey)];
+  if (isRecord(extra)) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (!isBlankExtraValue(value)) {
+        lines.push(`${humanizeExtraKey(key)}: ${stringifyExtraValue(value)}`);
+      }
+    }
   }
 
-  return lines.join('\n');
+  return lines.length > 0 ? lines.join('\n') : null;
 }
 
-export function normalizeTaskReportContentValue(
+export function projectTaskReportContentInput(
   contentRecord: Record<string, unknown>,
   field: ReportField,
-): unknown {
-  const { storageKey, rawValue } = readStoredValue(contentRecord, field);
-  const inputValue = readInputValue(rawValue);
-  const extras = new Map(inputValue.extras);
-
-  addSidecarExtras(extras, contentRecord, field, storageKey);
-
-  const normalizedValue = normalizeFieldValue(inputValue.value, field.type);
-  return combineValueAndExtras(normalizedValue, extras);
+): ProjectedInput {
+  return {
+    value: normalizeFieldValue(contentRecord[field.key], field.type),
+    extra: formatInputExtra(contentRecord, field.key),
+  };
 }

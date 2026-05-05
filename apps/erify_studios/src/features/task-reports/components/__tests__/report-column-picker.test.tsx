@@ -257,4 +257,32 @@ describe('reportColumnPicker', () => {
     expect(screen.getByText('Unavailable')).toBeInTheDocument();
     expect(screen.getByText('gmv')).toBeInTheDocument();
   });
+
+  it('lets selected task columns opt into an adjacent extra input export column', async () => {
+    const user = userEvent.setup();
+    const templateOne = buildTemplateSource(1);
+    const data: TaskReportSourcesResponse = {
+      shared_fields: [],
+      sources: [templateOne],
+    };
+
+    const { onChange } = renderPicker(data, [
+      {
+        key: `${templateOne.template_id}:custom_1`,
+        label: 'Template 1 Custom',
+        type: 'text',
+      },
+    ]);
+
+    await user.click(screen.getByLabelText('Include extra input column for Template 1 Custom'));
+
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        key: `${templateOne.template_id}:custom_1`,
+        label: 'Template 1 Custom',
+        type: 'text',
+        include_extra: true,
+      },
+    ]);
+  });
 });

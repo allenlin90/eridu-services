@@ -4,7 +4,7 @@ import type { ControllerRenderProps, FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { type FieldItem, getFieldContentKey, getTaskContentReasonKey } from '@eridu/api-types/task-management';
+import { type FieldItem, getFieldContentKey, getTaskContentExtraKey, getTaskContentReasonKey } from '@eridu/api-types/task-management';
 import {
   FILE_UPLOAD_USE_CASE,
   FILE_UPLOAD_USE_CASE_RULES,
@@ -150,6 +150,43 @@ function formatFileSize(bytes: number): string {
     return `${(bytes / 1024).toFixed(1)} KB`;
   }
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function humanizeExtraKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function stringifyExtraValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((item) => stringifyExtraValue(item)).join('; ');
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+  if (isRecord(value)) {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function formatExtraItems(value: unknown): string[] {
+  if (!isRecord(value)) {
+    return [];
+  }
+
+  return Object.entries(value)
+    .filter(([, item]) => item !== null && item !== undefined && !(typeof item === 'string' && item.trim().length === 0))
+    .map(([key, item]) => `${humanizeExtraKey(key)}: ${stringifyExtraValue(item)}`);
 }
 
 function compareScalarValue(op: string, value: unknown, target: unknown): boolean {
@@ -527,8 +564,10 @@ export const JsonForm = function JsonForm({
           .map((item) => {
             const contentKey = getFieldContentKey(schema, item);
             const reasonKey = getTaskContentReasonKey(contentKey);
+            const extraKey = getTaskContentExtraKey(contentKey);
             const fieldValue = form.watch(contentKey);
             const reasonValue = form.watch(reasonKey);
+            const extraItems = formatExtraItems(form.watch(extraKey));
             const showReason = shouldShowReasonField(item, fieldValue)
               || (typeof reasonValue === 'string' && reasonValue.length > 0);
 
@@ -730,6 +769,22 @@ export const JsonForm = function JsonForm({
                       </FormItem>
                     )}
                   />
+                )}
+                {extraItems.length > 0 && (
+                  <div className="rounded-md border bg-muted/30 p-3">
+                    <div className="text-sm font-medium">
+                      Extra for
+                      {' '}
+                      {item.label}
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {extraItems.map((extraItem) => (
+                        <div key={extraItem} className="text-sm text-muted-foreground">
+                          {extraItem}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             );
