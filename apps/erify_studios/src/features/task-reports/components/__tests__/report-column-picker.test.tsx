@@ -189,7 +189,6 @@ describe('reportColumnPicker', () => {
             field_key: 'gmv',
             label: 'GMV (Loop 1)',
             type: 'number',
-            standard: true,
             group: 'l1',
             shared_field_key: 'gmv',
             source_template_id: templateOne.template_id,
@@ -200,7 +199,6 @@ describe('reportColumnPicker', () => {
             field_key: 'gmv',
             label: 'GMV (Loop 8)',
             type: 'number',
-            standard: true,
             group: 'l8',
             shared_field_key: 'gmv',
             source_template_id: templateOne.template_id,
@@ -215,6 +213,9 @@ describe('reportColumnPicker', () => {
     // The canonical entry is rendered as a section header with derived columns.
     // The bare canonical name is NOT itself a checkbox — only specific loops are.
     expect(screen.queryByRole('checkbox', { name: 'GMV' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Template 1 Custom')).toBeInTheDocument();
+    expect(screen.queryByLabelText('GMV (Loop 1)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('GMV (Loop 8)')).not.toBeInTheDocument();
 
     // Per-loop derived columns are selectable, with a Loop N label.
     const loop1 = screen.getByRole('checkbox', { name: 'Loop 1' });
@@ -226,5 +227,34 @@ describe('reportColumnPicker', () => {
     expect(onChange).toHaveBeenCalledWith([
       { key: 'gmv_l8', label: 'GMV (Loop 8)', type: 'number' },
     ]);
+  });
+
+  it('marks a stale bare canonical shared-field selection unavailable when only loop descriptors exist', () => {
+    const templateOne = buildTemplateSource(1);
+    const data: TaskReportSourcesResponse = {
+      shared_fields: [
+        { key: 'gmv', label: 'GMV', type: 'number', category: 'metric', is_active: true },
+      ],
+      sources: [{
+        ...templateOne,
+        fields: [
+          {
+            key: 'gmv_l1',
+            field_key: 'gmv',
+            label: 'GMV (Loop 1)',
+            type: 'number',
+            group: 'l1',
+            shared_field_key: 'gmv',
+            source_template_id: templateOne.template_id,
+            source_template_name: templateOne.template_name,
+          },
+        ],
+      }],
+    };
+
+    renderPicker(data, [{ key: 'gmv', label: 'GMV', type: 'number' }]);
+
+    expect(screen.getByText('Unavailable')).toBeInTheDocument();
+    expect(screen.getByText('gmv')).toBeInTheDocument();
   });
 });

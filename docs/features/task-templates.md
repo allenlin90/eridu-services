@@ -25,7 +25,7 @@ Studios need a reusable, versioned way to define what "doing a task" means — w
 - Immutable `TaskTemplateSnapshot` per task, decoupling future template edits from historical task content
 - Form schema engine: typed fields (`text`, `number`, `checkbox`, `select`, `multiselect`, `date`, `datetime`, `url`, `file`, …) with per-type validation and conditional `require_reason` rules
 - Loop-based moderation mode: `metadata.loops[]` plus `items[].group` partitions one template into N loops, rendered per-loop in the execution sheet but stored as one flat `task.content`
-- Studio shared-field registry integration (`standard: true` flags a template field as a canonical metric)
+- Studio shared-field registry integration (`shared_field_key` links v2 template fields to canonical metrics)
 - Builder UX with drag-and-drop, draft autosave (planned for IndexedDB), live preview, and clone-loop
 - Snapshot-driven downstream consumers: task execution form, file upload validation, and report projection all read from the snapshot, not the live template
 
@@ -64,10 +64,14 @@ Stored on `Studio.metadata.shared_fields[]`. The studio's controlled vocabulary 
       { "id": "l2", "name": "Flash Sale", "durationMin": 15 }
     ]
   },
+  "schema_version": 2,
+  "schema_engine": "task_template_v2",
+  "content_key_strategy": "field_id",
+  "report_projection_strategy": "descriptor",
   "items": [
-    { "id": "uuid-1", "key": "gmv",     "type": "number",   "group": "l1", "standard": true,  "required": true },
-    { "id": "uuid-2", "key": "gmv_l2",  "type": "number",   "group": "l2", "standard": false, "required": true },
-    { "id": "uuid-3", "key": "l1_pin",  "type": "checkbox", "group": "l1", "label": "Pin welcome comment" }
+    { "id": "fld_gmvl100001", "key": "gmv",    "type": "number",   "group": "l1", "shared_field_key": "gmv", "required": true },
+    { "id": "fld_gmvl200001", "key": "gmv",    "type": "number",   "group": "l2", "shared_field_key": "gmv", "required": true },
+    { "id": "fld_pin1000001", "key": "l1_pin", "type": "checkbox", "group": "l1", "label": "Pin welcome comment" }
   ]
 }
 ```
@@ -82,13 +86,16 @@ This is the layer the form, the upload validator, and the report projection all 
 
 ### Layer 3 — Task instance (the captured data)
 
-One `Task` row per show per assignee. The moderator's entered values live in `Task.content` as a **flat JSON object keyed by `field.key`**:
+One `Task` row per show per assignee. The moderator's entered values live in `Task.content` as a **flat JSON object**. The key is engine-routed:
+
+- v1 snapshots: `field.key`
+- v2 snapshots: `field.id`
 
 ```jsonc
 {
-  "gmv": 1500,           // L1 GMV
-  "gmv_l2": 1800,        // L2 GMV
-  "l1_pin": true
+  "fld_gmvl100001": 1500, // L1 GMV
+  "fld_gmvl200001": 1800, // L2 GMV
+  "fld_pin1000001": true
 }
 ```
 
@@ -102,22 +109,26 @@ There is **no loop entity in the database**. The execution sheet computes loop t
 
 `TaskReportRunService` walks each task's **snapshot** (not the live template) and projects fields into report columns:
 
-- `field.standard === true` → `columnKey = field.key` (canonical, e.g., `gmv`)
-- otherwise → `columnKey = "${task.templateUid}:${field.key}"` (template-local, e.g., `tpl_xyz:gmv_l2`)
+- v1 shared field (`standard: true`) → `columnKey = field.key` (canonical or legacy suffixed, e.g., `gmv_l1`)
+- v2 shared loop field (`shared_field_key: "gmv", group: "l1"`) → `columnKey = "gmv_l1"`
+- v2 shared non-loop field (`shared_field_key: "session_review_feedback"`) → `columnKey = "session_review_feedback"`
+- v2 template-local loop field → `columnKey = "${task.templateUid}:${field.group}:${field.key}"`
+- v2 template-local non-loop field → `columnKey = "${task.templateUid}:${field.key}"`
 
-This is why this feature is the **upstream** of [task-submission-reporting](./task-submission-reporting.md): the snapshot's shape and the `standard` flag are what determine whether a column is canonical (cross-template comparable) or template-local.
+This is why this feature is the **upstream** of [task-submission-reporting](./task-submission-reporting.md): the snapshot's engine and descriptor helpers determine whether a column is canonical (cross-template comparable) or template-local.
 
 ## Cross-Layer Attribute Map
 
-The current schema overloads `field.key` to play three roles at once. Reading down the column for a single attribute shows where it's interpreted:
+The v2 schema decouples editor handle, content storage key, and canonical reporting reference. Reading down the column for a single attribute shows where it is interpreted:
 
 | Attribute          | Layer 0 (studio)    | Layer 1 (template)                    | Layer 2 (snapshot)   | Layer 3 (task content)   | Layer 5 (report)                          |
 | ------------------ | ------------------- | ------------------------------------- | -------------------- | ------------------------ | ----------------------------------------- |
-| `key`              | canonical metric id | editor handle, unique within template | frozen with snapshot | **storage key**          | column key when `standard`                |
-| `id`               | —                   | dnd-kit / form state stable id        | frozen               | unused                   | unused                                    |
-| `standard`         | —                   | flag linking to Layer 0               | frozen               | —                        | branches `columnKey` shape                |
-| `group`            | —                   | binds field to a loop id              | frozen               | —                        | unused today                              |
-| `type`             | locked at creation  | must match Layer 0 if `standard`      | frozen               | drives content validator | drives column type                        |
+| `key`              | canonical metric id | editor handle, unique per loop group in v2 | frozen with snapshot | v1 storage key only      | v2 template-local descriptor segment      |
+| `id`               | —                   | stable `fld_...` field identity       | frozen               | **v2 storage key**       | unused                                    |
+| `shared_field_key` | —                   | link to Layer 0                       | frozen               | —                        | v2 shared descriptor base                 |
+| `standard`         | —                   | legacy v1 canonical flag              | frozen               | —                        | v1 shared descriptor branch               |
+| `group`            | —                   | binds field to a loop id              | frozen               | —                        | v2 shared/template-local loop descriptor segment |
+| `type`             | locked at creation  | must match Layer 0 if shared          | frozen               | drives content validator | drives column type                        |
 | `metadata.loops[]` | —                   | loop catalog                          | frozen               | —                        | unused today (per-loop pivot is deferred) |
 
 ## Schema → UX Bindings
@@ -134,8 +145,9 @@ The template schema isn't only a storage contract — it also drives what the us
 | `options` (select/multiselect) | Options list editor                                                    | Dropdown / chip control choices                                            | Choice rendering                             |
 | `require_reason`               | Conditional rule editor (operator/value pairs by type)                 | Reveals a "reason" textarea when the trigger condition fires               | Shows the captured reason inline             |
 | `group` + `metadata.loops[]`   | Loop card grouping; loop reorder by position; loop name/duration edit  | Loop tabs + Previous/Next nav; live-loop indicator from `show.start_time`  | All loops visible at once (no tab filtering) |
-| `standard` (canonical link)    | Shared-field picker; locks `key`/`type` once linked                    | No direct UX effect (storage is the same)                                  | No direct UX effect                          |
-| `id`                           | dnd-kit drag handle stability                                          | React-hook-form field name; IndexedDB draft key component                  | Same as execution                            |
+| `shared_field_key` (canonical link) | Shared-field picker; locks shared key/type once linked                  | No direct UX effect beyond engine-routed storage                           | No direct UX effect                          |
+| `standard`                     | Legacy v1 canonical link only                                          | Legacy v1 snapshots remain readable                                        | Legacy v1 snapshots remain readable          |
+| `id`                           | dnd-kit drag handle stability and v2 content key                       | React-hook-form field name; IndexedDB draft key component                  | Same as execution                            |
 | `task_type` (envelope-level)   | Mode selector affecting which template-type-specific rules apply       | Determines submission-window enforcement (SETUP before show, ACTIVE after) | Visible as a chip                            |
 
 ### Cross-surface invariants
@@ -163,7 +175,8 @@ When changing a schema attribute or adding a new one, walk this list before merg
 - **Snapshots are the runtime source of truth.** The form, validator, uploader, and report projection all read `task.snapshotSchema`, never `template.currentSchema`. This makes editing a template safe.
 - **Shared-field metadata (`key`, `type`, `category`) is locked post-creation.** Renaming or retyping a canonical metric would break every snapshot referencing it.
 - **`task.content` is flat across loops.** A loop is a UI partition computed from `metadata.loops[]` + `items[].group`, not a storage container. The whole form saves and submits atomically.
-- **Field `key` is globally unique within a template today.** This is the constraint that forces per-loop suffixing (`gmv`, `gmv_l2`, `gmv_l3`) and is the structural source of the limitation below.
+- **Field `id` is the v2 storage identity.** v2 `field.key` is an editor handle and may repeat across different loop groups; `field.id` is stable, unique, and used for `task.content`.
+- **Shared-field projection is descriptor-based.** v2 shared loop fields use `(shared_field_key, group)` for report columns, so `gmv` in loop `l8` projects to `gmv_l8` across templates.
 - **`metadata.loops[]` order, not item order, defines loop sequence.** Reordering items within a loop is reorder-only; reassigning loops happens by editing `group`.
 
 ## Downstream Consumers
@@ -172,14 +185,40 @@ When changing a schema attribute or adding a new one, walk this list before merg
 | ----------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Task Execution Sheet (operator)     | `task.snapshotSchema`, `task.content`, `metadata.loops` (for tabs) | [MODERATION_WORKFLOW.md](../../apps/erify_studios/docs/MODERATION_WORKFLOW.md)                                                               |
 | Studio Task Action Sheet (reviewer) | `task.snapshotSchema`, `task.content` (no loop filtering)          | [MODERATION_WORKFLOW.md](../../apps/erify_studios/docs/MODERATION_WORKFLOW.md)                                                               |
-| Material asset uploads              | `field.key` of file-typed items                                    | [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](../../apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)                                     |
-| Task Submission Reporting           | snapshot field catalog, `standard`, `field.key`, `task.content`    | [task-submission-reporting feature doc](./task-submission-reporting.md), [BE design](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md) |
+| Material asset uploads              | engine-routed content key for file-typed items                     | [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](../../apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)                                     |
+| Task Submission Reporting           | snapshot field catalog, descriptor helper, content-key helper      | [task-submission-reporting feature doc](./task-submission-reporting.md), [BE design](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md) |
 
-## Known Limitation
+## Version Coexistence
 
-The same canonical metric (e.g., GMV) cannot be repeated across loops of one template and still aggregate as a single canonical column, because `field.key` is the storage key and must be unique within the template. The current workaround is to suffix per-loop keys (`gmv_l2`, `gmv_l3`), which makes those fields template-local instead of canonical — so per-loop GMV never sums into the L1 GMV column in reports.
+Active templates use `task_template_v2`. Historical v1 snapshots remain valid and are read through the same engine helpers:
 
-A redesign that decouples editor handle, storage key, and canonical reference is in ideation: [task-template-redesign](../ideation/task-template-redesign.md). Not shipped.
+- `getFieldContentKey()` routes task-content reads/writes by schema engine.
+- `getFieldSharedKey()` normalizes v1 `standard` and v2 `shared_field_key`.
+- `getFieldReportDescriptor()` aligns v1 historical suffixed shared fields and v2 canonical loop fields into the same report columns.
+
+The normalization script (`apps/erify_api/scripts/normalize-task-template-schemas.ts`) upgrades active `TaskTemplate.currentSchema` records and creates matching latest v2 snapshots. It does not rewrite historical snapshots or existing `Task.content`.
+
+## Production Normalization Gates
+
+Run the normalization sequence from a server with the production `DATABASE_URL`:
+
+```bash
+pnpm --filter erify_api exec tsx scripts/normalize-task-template-schemas.ts --validate-only
+pnpm --filter erify_api exec tsx scripts/normalize-task-template-schemas.ts --current-to-v2 --dry-run
+pnpm --filter erify_api exec tsx scripts/normalize-task-template-schemas.ts --current-to-v2 --apply
+pnpm --filter erify_api exec tsx scripts/normalize-task-template-schemas.ts --cleanup-legacy-shared-fields --dry-run
+pnpm --filter erify_api exec tsx scripts/normalize-task-template-schemas.ts --cleanup-legacy-shared-fields --apply
+```
+
+Stop the rollout unless all of these are true:
+
+- `--validate-only` exits `0` and prints `summary.invalid: 0`.
+- Template-level `manualReviewItems` are empty or explicitly accepted by the rollout owner.
+- `--current-to-v2 --dry-run` planned counts match the expected template count.
+- `--current-to-v2 --apply` applies exactly the dry-run plan and creates one latest v2 snapshot per upgraded template.
+- A second `--current-to-v2 --dry-run` reports no additional planned upgrades.
+- `--cleanup-legacy-shared-fields --dry-run` removed counts match the expected legacy suffixed registry entries.
+- A second cleanup dry-run after apply reports `removed_count: 0`.
 
 ## Maintenance: Documentation Sync
 
@@ -212,7 +251,7 @@ Feature-specific artifact list:
 - [x] Immutable snapshot per task (`Task.snapshotId`)
 - [x] Form schema engine with typed fields and per-type validation
 - [x] Loop-based moderation mode (`metadata.loops[]` + `items[].group`)
-- [x] Studio shared-field registry integration (`standard: true`)
+- [x] Studio shared-field registry integration (`shared_field_key` in v2; `standard: true` retained for v1 snapshots)
 - [x] Builder UX (drag-and-drop, live preview, clone-loop)
 - [x] Snapshot-driven downstream readers (form, uploader, reporting)
 - [x] System-admin cross-studio template management

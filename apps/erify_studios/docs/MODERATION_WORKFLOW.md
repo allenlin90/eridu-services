@@ -34,16 +34,16 @@ A "loop-based moderation task" covers an entire livestream show as a single `Tas
   },
   "items": [
     {
-      "id": "uuid",
-      "key": "l1_pin_welcome",
+      "id": "fld_l1pin00001",
+      "key": "pin_welcome",
       "type": "checkbox",
       "label": "Pin welcome comment",
       "group": "l1",
       "required": true
     },
     {
-      "id": "uuid",
-      "key": "l2_announce_sale",
+      "id": "fld_l2sale0001",
+      "key": "announce_sale",
       "type": "text",
       "label": "Flash sale announcement copy",
       "group": "l2",
@@ -61,19 +61,19 @@ A "loop-based moderation task" covers an entire livestream show as a single `Tas
 | `metadata.loops[].name` | `string` | Display name shown to moderator |
 | `metadata.loops[].durationMin` | `number` | Loop duration in minutes. Defaults to `15` if absent or invalid |
 | `items[].group` | `string \| undefined` | Loop ID this field belongs to. Absent = ungrouped (standard checklist) |
-| `items[].key` | `string` | Must be globally unique across the entire template (not just per-loop) |
+| `items[].id` | `string` | v2 field identity (`fld_...`) and `task.content` storage key |
+| `items[].key` | `string` | Editor/report handle. In v2 it must be unique within a loop group, not globally |
 
 ### 2.2 Task Content (stored in `task.content`)
 
 ```json
 {
-  "l1_pin_welcome": true,
-  "l1_campaign_link": "https://example.com/sale",
-  "l2_announce_sale": "Flash sale starting now!"
+  "fld_l1pin00001": true,
+  "fld_l2sale0001": "Flash sale starting now!"
 }
 ```
 
-`task.content` is a **flat JSON object**, keyed by `item.key`. All loop data coexists in the same JSON object — there is no nesting by loop. `react-hook-form` tracks all fields in memory simultaneously; only the visual display is partitioned by `activeGroup`.
+`task.content` is a **flat JSON object**. v1 snapshots key content by `item.key`; v2 snapshots key content by `item.id`. All loop data coexists in the same JSON object — there is no nesting by loop. `react-hook-form` tracks all fields in memory simultaneously; only the visual display is partitioned by `activeGroup`.
 
 ### 2.3 Backend Contract
 
@@ -104,11 +104,12 @@ The backend (`erify_api`) validates only:
 - If `metadata.loops` is absent, the execution sheet falls back to inferring loop tabs from the set of unique `group` values in `items`, in the order they appear in the array
 - If `metadata.loops` is present but malformed, schema validation rejects it (strict shared schema); this is intentional for new rollout quality
 
-### Field Keys
-- Keys must be globally unique across the entire template (not per-loop)
-- New fields get auto-generated keys (`field_<timestamp>`)
-- Cloning a loop copies fields with new UUIDs and deduplicated keys (suffix appended on collision)
-- Cloning a template regenerates all field UUIDs but preserves keys
+### Field Identity
+- v2 field IDs are stable `fld_...` values and are globally unique within the template.
+- v2 field keys are editor handles and must be unique within the same loop group.
+- New fields get generated IDs and keys.
+- Cloning a loop copies fields with new IDs. Shared fields keep their canonical `shared_field_key`; source-loop suffixes are stripped when cloning legacy suffixed shared keys.
+- Cloning a template regenerates field IDs but preserves keys and canonical shared-field links.
 
 ### Mode Detection (Builder)
 `isModerationMode` is **derived, never stored**:

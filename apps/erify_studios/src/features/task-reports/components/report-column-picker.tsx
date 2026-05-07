@@ -86,6 +86,10 @@ function extractTemplateIdFromColumnKey(columnKey: string): string | null {
   return columnKey.slice(0, splitIndex);
 }
 
+function isSharedSourceField(field: { standard?: boolean; shared_field_key?: string }): boolean {
+  return field.standard === true || Boolean(field.shared_field_key);
+}
+
 export function ReportColumnPicker({
   studioId,
   scope,
@@ -252,8 +256,9 @@ export function ReportColumnPicker({
       return { ...column, groupLabel: 'System', detail: column.key };
     }
 
+    const directField = templateFieldByKey.get(column.key)?.field;
     const sharedField = sharedFieldByKey.get(column.key);
-    if (sharedField) {
+    if (sharedField && directField && isSharedSourceField(directField)) {
       return { ...column, groupLabel: 'Shared', detail: `${sharedField.type} · ${sharedField.key}` };
     }
 
@@ -398,7 +403,7 @@ export function ReportColumnPicker({
 
   const templatePanels = sortedSources
     .map((source) => {
-      const customFields = source.fields.filter((field) => !field.standard);
+      const customFields = source.fields.filter((field) => !isSharedSourceField(field));
       const templateMatchesSearch = matchesSearch([source.template_name, source.template_id]);
 
       const visibleFields = customFields.filter((field) => {
@@ -433,7 +438,7 @@ export function ReportColumnPicker({
 
   const totalSubmittedTaskCount = sortedSources.reduce((total, source) => total + source.submitted_task_count, 0);
   const totalCustomFieldCount = sortedSources.reduce((total, source) => (
-    total + source.fields.filter((field) => !field.standard).length
+    total + source.fields.filter((field) => !isSharedSourceField(field)).length
   ), 0);
 
   const hasAnyVisibleColumns = (

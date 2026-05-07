@@ -23,9 +23,10 @@ A show with 3 task types → 3 DB records instead of 60.
 ### Key Design Decisions
 
 1. **Snapshot Table** for schema versioning — tasks reference immutable snapshots, not templates
-2. **Polymorphic `TaskTarget`** — generic `targetType` + `targetId` with optional FKs for referential integrity
-3. **Advisory Locks** — `pg_advisory_xact_lock(showId)` in `@Transactional()` prevents duplicate task generation
-4. **Optimistic Locking** — version-based compare-and-swap on task updates (409 on conflict)
+2. **Schema Engine Routing** — v1 snapshots use `field.key` content keys; v2 templates use stable `fld_...` field ids and descriptor-based reporting
+3. **Polymorphic `TaskTarget`** — generic `targetType` + `targetId` with optional FKs for referential integrity
+4. **Advisory Locks** — `pg_advisory_xact_lock(showId)` in `@Transactional()` prevents duplicate task generation
+5. **Optimistic Locking** — version-based compare-and-swap on task updates (409 on conflict)
 
 ---
 

@@ -10,6 +10,8 @@ import {
   safeParseTemplateSchema,
 } from '@eridu/api-types/task-management';
 
+import { getNormalizationExitCode } from './normalize-task-template-rollout-gate';
+
 type Mode = 'validate-only' | 'current-to-v2' | 'cleanup-legacy-shared-fields';
 
 type Args = {
@@ -540,6 +542,12 @@ function postUpgradeSelfCheck(schema: SchemaEnvelope): string[] {
   return errors;
 }
 
+function printSummaryAndSetExitCode(summary: { invalid: number }): void {
+  // eslint-disable-next-line no-console
+  console.log(JSON.stringify({ summary }));
+  process.exitCode = getNormalizationExitCode(summary);
+}
+
 async function main() {
   const args = parseArgs();
   const connectionString = process.env.DATABASE_URL;
@@ -617,8 +625,7 @@ async function main() {
         }
       }
 
-      // eslint-disable-next-line no-console
-      console.log(JSON.stringify({ summary }));
+      printSummaryAndSetExitCode(summary);
       return;
     }
 
@@ -799,8 +806,7 @@ async function main() {
       console.log(JSON.stringify({ template: plan, action: 'applied' }));
     }
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({ summary }));
+    printSummaryAndSetExitCode(summary);
   }
   finally {
     await prisma.$disconnect();

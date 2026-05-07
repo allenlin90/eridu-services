@@ -7,6 +7,11 @@ Canonical behavior for task execution form submission when file fields are prese
 - `apps/erify_studios/src/components/json-form/json-form.tsx`
 - `apps/erify_studios/src/features/tasks/components/task-execution-sheet.tsx`
 - `apps/erify_studios/src/features/tasks/components/studio-task-action-sheet.tsx`
+- `apps/erify_api/src/uploads/upload.service.ts`
+
+## Field Identity
+
+File upload validation reads the pinned task snapshot and resolves file fields through the shared task-template engine helpers. v1 snapshots use `field.key` as the form/content key. v2 snapshots use `field.id` (`fld_...`) as the form/content key. Upload callers should pass the same field key that `JsonForm` uses for the rendered field name; do not derive upload field identity from `field.key` directly.
 
 ## Submission Phases
 
