@@ -109,6 +109,21 @@ function deterministicUid(prefix: string, index: number): string {
   return `${prefix}${String(index).padStart(6, '0')}`;
 }
 
+const V2_ENVELOPE = {
+  schema_version: 2 as const,
+  schema_engine: 'task_template_v2' as const,
+  content_key_strategy: 'field_id' as const,
+  report_projection_strategy: 'descriptor' as const,
+};
+
+// Deterministic v2 field id ("fld_" + 10+ lowercase alphanumeric).
+// Used in seed so re-running the seed reproduces stable ids and content matches.
+function v2Id(seed: string): string {
+  const cleaned = seed.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const padded = cleaned.length >= 10 ? cleaned : `${cleaned}${'0'.repeat(10 - cleaned.length)}`;
+  return `fld_${padded.slice(0, 18)}`;
+}
+
 function toObjectRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
@@ -197,60 +212,64 @@ function isModerationTemplateSchema(schema: unknown): boolean {
 function buildTemplateSchema(templateIndex: number) {
   if (templateIndex === MODERATION_TEMPLATE_INDEX) {
     return {
+      ...V2_ENVELOPE,
       items: [
         {
-          id: 'field_50_gmv',
+          id: v2Id(`tpl${templateIndex}gmvl1`),
           key: 'gmv',
           type: 'number',
-          standard: true,
+          shared_field_key: 'gmv',
           label: 'GMV',
           description: 'Sales value captured for this moderation loop',
           required: true,
           group: 'l1',
         },
         {
-          id: 'field_50_orders',
+          id: v2Id(`tpl${templateIndex}ordersl1`),
           key: 'orders',
           type: 'number',
-          standard: true,
+          shared_field_key: 'orders',
           label: 'Orders',
           description: 'Order count captured for this moderation loop',
           required: true,
           group: 'l1',
         },
         {
-          id: 'field_50_proof_link',
+          id: v2Id(`tpl${templateIndex}prooflinkl1`),
           key: 'proof_link',
           type: 'url',
-          standard: true,
+          shared_field_key: 'proof_link',
           label: 'Proof Link',
           description: 'Evidence URL for loop 1',
           required: false,
           group: 'l1',
         },
         {
-          id: 'field_50_gmv_l2',
-          key: 'gmv_l2',
+          id: v2Id(`tpl${templateIndex}gmvl2`),
+          key: 'gmv',
           type: 'number',
-          label: 'GMV (Loop 2)',
-          description: 'Loop-scoped GMV capture for repeated moderation flow',
+          shared_field_key: 'gmv',
+          label: 'GMV',
+          description: 'Sales value captured for this moderation loop',
           required: true,
           group: 'l2',
         },
         {
-          id: 'field_50_orders_l2',
-          key: 'orders_l2',
+          id: v2Id(`tpl${templateIndex}ordersl2`),
+          key: 'orders',
           type: 'number',
-          label: 'Orders (Loop 2)',
-          description: 'Loop-scoped order count for repeated moderation flow',
+          shared_field_key: 'orders',
+          label: 'Orders',
+          description: 'Order count captured for this moderation loop',
           required: true,
           group: 'l2',
         },
         {
-          id: 'field_50_proof_link_l2',
-          key: 'proof_link_l2',
+          id: v2Id(`tpl${templateIndex}prooflinkl2`),
+          key: 'proof_link',
           type: 'url',
-          label: 'Proof Link (Loop 2)',
+          shared_field_key: 'proof_link',
+          label: 'Proof Link',
           description: 'Evidence URL for loop 2',
           required: false,
           group: 'l2',
@@ -277,28 +296,28 @@ function buildTemplateSchema(templateIndex: number) {
   const taskType = TASK_TYPE_SEQUENCE[(templateIndex - 1) % TASK_TYPE_SEQUENCE.length];
   const baseItems = [
     {
-      id: `field_${templateIndex}_gmv`,
+      id: v2Id(`tpl${templateIndex}gmv`),
       key: 'gmv',
       type: 'number',
-      standard: true,
+      shared_field_key: 'gmv',
       label: 'GMV',
       description: 'Sales value captured for this show loop',
       required: true,
     },
     {
-      id: `field_${templateIndex}_orders`,
+      id: v2Id(`tpl${templateIndex}orders`),
       key: 'orders',
       type: 'number',
-      standard: true,
+      shared_field_key: 'orders',
       label: 'Orders',
       description: 'Order count captured for this show loop',
       required: true,
     },
     {
-      id: `field_${templateIndex}_proof_link`,
+      id: v2Id(`tpl${templateIndex}prooflink`),
       key: 'proof_link',
       type: 'url',
-      standard: true,
+      shared_field_key: 'proof_link',
       label: 'Proof Link',
       description: 'URL for screenshot/video evidence',
       required: false,
@@ -310,7 +329,7 @@ function buildTemplateSchema(templateIndex: number) {
       case TaskType.SETUP:
         return [
           {
-            id: `field_${templateIndex}_setup_note`,
+            id: v2Id(`tpl${templateIndex}setupnote`),
             key: 'setup_note',
             type: 'textarea',
             label: 'Setup Note',
@@ -321,7 +340,7 @@ function buildTemplateSchema(templateIndex: number) {
       case TaskType.ACTIVE:
         return [
           {
-            id: `field_${templateIndex}_peak_viewers`,
+            id: v2Id(`tpl${templateIndex}peakviewers`),
             key: 'peak_viewers',
             type: 'number',
             label: 'Peak Viewers',
@@ -332,7 +351,7 @@ function buildTemplateSchema(templateIndex: number) {
       case TaskType.CLOSURE:
         return [
           {
-            id: `field_${templateIndex}_closure_summary`,
+            id: v2Id(`tpl${templateIndex}closuresummary`),
             key: 'closure_summary',
             type: 'textarea',
             label: 'Closure Summary',
@@ -340,7 +359,7 @@ function buildTemplateSchema(templateIndex: number) {
             required: false,
           },
           {
-            id: `field_${templateIndex}_follow_up_required`,
+            id: v2Id(`tpl${templateIndex}followuprequired`),
             key: 'follow_up_required',
             type: 'checkbox',
             label: 'Follow Up Required',
@@ -351,7 +370,7 @@ function buildTemplateSchema(templateIndex: number) {
       case TaskType.ADMIN:
         return [
           {
-            id: `field_${templateIndex}_admin_note`,
+            id: v2Id(`tpl${templateIndex}adminnote`),
             key: 'admin_note',
             type: 'text',
             label: 'Admin Note',
@@ -362,7 +381,7 @@ function buildTemplateSchema(templateIndex: number) {
       case TaskType.ROUTINE:
         return [
           {
-            id: `field_${templateIndex}_routine_observation`,
+            id: v2Id(`tpl${templateIndex}routineobservation`),
             key: 'routine_observation',
             type: 'text',
             label: 'Routine Observation',
@@ -373,7 +392,7 @@ function buildTemplateSchema(templateIndex: number) {
       default:
         return [
           {
-            id: `field_${templateIndex}_general_note`,
+            id: v2Id(`tpl${templateIndex}generalnote`),
             key: 'general_note',
             type: 'text',
             label: 'General Note',
@@ -385,6 +404,7 @@ function buildTemplateSchema(templateIndex: number) {
   })();
 
   return {
+    ...V2_ENVELOPE,
     items: [...baseItems, ...taskTypeItems],
     metadata: {
       task_type: taskType,
@@ -418,9 +438,25 @@ function toSlug(value: string): string {
     .slice(0, 36);
 }
 
+// Returns the deterministic v2 field id for a simulation field. Both schema and
+// content builders call this so generated content keys line up with stored ids.
+function reportSimulationFieldId(
+  templateOrdinal: number,
+  loopIndex: number,
+  baseKey: string,
+): string {
+  return v2Id(`sim${templateOrdinal}l${loopIndex}${baseKey}`);
+}
+
 function buildReportSimulationTemplateSchema(templateOrdinal: number): Prisma.JsonObject {
   const items: Prisma.JsonObject[] = [];
   const loops: Prisma.JsonObject[] = [];
+
+  const baseFields = [
+    { key: 'gmv', label: 'GMV', type: 'number', shared: true },
+    { key: 'orders', label: 'Orders', type: 'number', shared: true },
+    { key: 'proof_link', label: 'Proof Link', type: 'url', shared: true },
+  ] as const;
 
   for (let loopIndex = 1; loopIndex <= REPORT_SIM_LOOPS_PER_TEMPLATE; loopIndex++) {
     const loopId = `l${loopIndex}`;
@@ -430,25 +466,12 @@ function buildReportSimulationTemplateSchema(templateOrdinal: number): Prisma.Js
       durationMin: 15,
     });
 
-    const loopBaseFieldEntries = loopIndex === 1
-      ? [
-          { key: 'gmv', label: 'GMV', type: 'number', standard: true },
-          { key: 'orders', label: 'Orders', type: 'number', standard: true },
-          { key: 'proof_link', label: 'Proof Link', type: 'url', standard: true },
-        ]
-      : [
-          { key: `gmv_l${loopIndex}`, label: `GMV (Loop ${loopIndex})`, type: 'number', standard: false },
-          { key: `orders_l${loopIndex}`, label: `Orders (Loop ${loopIndex})`, type: 'number', standard: false },
-          { key: `proof_link_l${loopIndex}`, label: `Proof Link (Loop ${loopIndex})`, type: 'url', standard: false },
-        ];
-
-    for (let fieldIndex = 0; fieldIndex < loopBaseFieldEntries.length; fieldIndex++) {
-      const baseField = loopBaseFieldEntries[fieldIndex];
+    for (const baseField of baseFields) {
       items.push({
-        id: `sim_${templateOrdinal}_${loopIndex}_base_${fieldIndex + 1}`,
+        id: reportSimulationFieldId(templateOrdinal, loopIndex, baseField.key),
         key: baseField.key,
         type: baseField.type,
-        standard: baseField.standard,
+        shared_field_key: baseField.key,
         label: baseField.label,
         description: `${baseField.label} captured for ${loopId}`,
         required: true,
@@ -456,7 +479,7 @@ function buildReportSimulationTemplateSchema(templateOrdinal: number): Prisma.Js
       });
     }
 
-    for (let fieldIndex = 1; fieldIndex <= REPORT_SIM_FIELDS_PER_LOOP - loopBaseFieldEntries.length; fieldIndex++) {
+    for (let fieldIndex = 1; fieldIndex <= REPORT_SIM_FIELDS_PER_LOOP - baseFields.length; fieldIndex++) {
       const key = `loop_${loopIndex}_field_${fieldIndex}`;
       const type
         = fieldIndex % 5 === 0
@@ -468,7 +491,7 @@ function buildReportSimulationTemplateSchema(templateOrdinal: number): Prisma.Js
               : 'text';
 
       items.push({
-        id: `sim_${templateOrdinal}_${loopIndex}_custom_${fieldIndex}`,
+        id: v2Id(`sim${templateOrdinal}l${loopIndex}custom${fieldIndex}`),
         key,
         type,
         label: `Loop ${loopIndex} Field ${fieldIndex}`,
@@ -480,6 +503,7 @@ function buildReportSimulationTemplateSchema(templateOrdinal: number): Prisma.Js
   }
 
   return {
+    ...V2_ENVELOPE,
     items,
     metadata: {
       task_type: TaskType.ACTIVE,
@@ -493,35 +517,32 @@ function buildReportSimulationTemplateSchema(templateOrdinal: number): Prisma.Js
 }
 
 function buildReportSimulationTaskContent(params: {
+  templateOrdinal: number;
   brandSlug: string;
   showExternalId: string;
   showSequence: number;
   submissionIndex: number;
 }): Prisma.JsonObject {
-  const { brandSlug, showExternalId, showSequence, submissionIndex } = params;
+  const { templateOrdinal, brandSlug, showExternalId, showSequence, submissionIndex } = params;
   const content: Prisma.JsonObject = {};
   const baseGmv = 2400 + showSequence * 22 + submissionIndex * 9;
   const baseOrders = 30 + (showSequence % 18) + submissionIndex;
 
-  content.gmv = baseGmv;
-  content.orders = baseOrders;
-  content.proof_link = `https://example.local/sim/${brandSlug}/${showExternalId}/proof/main`;
-
   for (let loopIndex = 1; loopIndex <= REPORT_SIM_LOOPS_PER_TEMPLATE; loopIndex++) {
-    content[`gmv_l${loopIndex}`] = baseGmv + loopIndex * 12;
-    content[`orders_l${loopIndex}`] = baseOrders + loopIndex;
-    content[`proof_link_l${loopIndex}`] = `https://example.local/sim/${brandSlug}/${showExternalId}/proof/loop-${loopIndex}`;
+    content[reportSimulationFieldId(templateOrdinal, loopIndex, 'gmv')] = baseGmv + loopIndex * 12;
+    content[reportSimulationFieldId(templateOrdinal, loopIndex, 'orders')] = baseOrders + loopIndex;
+    content[reportSimulationFieldId(templateOrdinal, loopIndex, 'proof_link')] = `https://example.local/sim/${brandSlug}/${showExternalId}/proof/loop-${loopIndex}`;
 
     for (let fieldIndex = 1; fieldIndex <= REPORT_SIM_FIELDS_PER_LOOP - 3; fieldIndex++) {
-      const fieldKey = `loop_${loopIndex}_field_${fieldIndex}`;
+      const customId = v2Id(`sim${templateOrdinal}l${loopIndex}custom${fieldIndex}`);
       if (fieldIndex % 5 === 0) {
-        content[fieldKey] = (showSequence + submissionIndex + fieldIndex) % 2 === 0;
+        content[customId] = (showSequence + submissionIndex + fieldIndex) % 2 === 0;
       } else if (fieldIndex % 4 === 0) {
-        content[fieldKey] = `Loop ${loopIndex} note ${fieldIndex} for ${brandSlug}`;
+        content[customId] = `Loop ${loopIndex} note ${fieldIndex} for ${brandSlug}`;
       } else if (fieldIndex % 3 === 0) {
-        content[fieldKey] = baseOrders + loopIndex + fieldIndex;
+        content[customId] = baseOrders + loopIndex + fieldIndex;
       } else {
-        content[fieldKey] = `${brandSlug}-l${loopIndex}-v${fieldIndex}`;
+        content[customId] = `${brandSlug}-l${loopIndex}-v${fieldIndex}`;
       }
     }
   }
@@ -2072,47 +2093,59 @@ async function main() {
 
       const reportTemplateByUid = new Map(reportTemplates.map((template) => [template.uid, template]));
 
+      const templateIndexByUid = new Map(
+        REPORT_SEED_TEMPLATE_INDEXES.map((idx) => [getTaskTemplateFixtureUid(idx), idx]),
+      );
+
       const reportTaskContent = (
         showIndex: number,
         templateUid: string,
         showExternalId: string,
       ): Prisma.JsonObject => {
-        const templateNumber = Number(templateUid.split('_').pop() || '0');
+        const templateIndex = templateIndexByUid.get(templateUid);
+        if (templateIndex === undefined) {
+          throw new Error(`Unknown report seed template uid: ${templateUid}`);
+        }
+        const templateNumber = templateIndex;
         const gmv = 1000 + showIndex * 180 + templateNumber * 35;
         const orders = 18 + showIndex * 4 + templateNumber;
+
+        if (templateIndex === MODERATION_TEMPLATE_INDEX) {
+          // Moderation seeds GMV/Orders/Proof Link in both loop 1 and loop 2.
+          return {
+            [v2Id(`tpl${templateIndex}gmvl1`)]: gmv,
+            [v2Id(`tpl${templateIndex}ordersl1`)]: orders,
+            [v2Id(`tpl${templateIndex}prooflinkl1`)]: `https://example.local/reports/${showExternalId}/${templateUid}/loop-1`,
+            [v2Id(`tpl${templateIndex}gmvl2`)]: gmv + 125,
+            [v2Id(`tpl${templateIndex}ordersl2`)]: orders + 6,
+            [v2Id(`tpl${templateIndex}prooflinkl2`)]: `https://example.local/reports/${showExternalId}/${templateUid}/loop-2`,
+          };
+        }
+
         const sharedContent: Prisma.JsonObject = {
-          gmv,
-          orders,
-          proof_link: `https://example.local/reports/${showExternalId}/${templateUid}`,
+          [v2Id(`tpl${templateIndex}gmv`)]: gmv,
+          [v2Id(`tpl${templateIndex}orders`)]: orders,
+          [v2Id(`tpl${templateIndex}prooflink`)]: `https://example.local/reports/${showExternalId}/${templateUid}`,
         };
 
         if (templateUid === getTaskTemplateFixtureUid(1)) {
           return {
             ...sharedContent,
-            setup_note: `Setup checklist completed for ${showExternalId}`,
+            [v2Id(`tpl${templateIndex}setupnote`)]: `Setup checklist completed for ${showExternalId}`,
           };
         }
 
         if (templateUid === getTaskTemplateFixtureUid(2)) {
           return {
             ...sharedContent,
-            peak_viewers: 120 + showIndex * 25,
-          };
-        }
-
-        if (templateUid === MODERATION_TEMPLATE_UID) {
-          return {
-            ...sharedContent,
-            gmv_l2: gmv + 125,
-            orders_l2: orders + 6,
-            proof_link_l2: `https://example.local/reports/${showExternalId}/${templateUid}/loop-2`,
+            [v2Id(`tpl${templateIndex}peakviewers`)]: 120 + showIndex * 25,
           };
         }
 
         return {
           ...sharedContent,
-          closure_summary: `Post-show summary for ${showExternalId}`,
-          follow_up_required: showIndex % 2 === 0,
+          [v2Id(`tpl${templateIndex}closuresummary`)]: `Post-show summary for ${showExternalId}`,
+          [v2Id(`tpl${templateIndex}followuprequired`)]: showIndex % 2 === 0,
         };
       };
 
@@ -2398,6 +2431,7 @@ async function main() {
                   snapshotId: templateForClient.snapshotId,
                   templateId: templateForClient.templateId,
                   content: buildReportSimulationTaskContent({
+                    templateOrdinal: clientIndex + 1,
                     brandSlug,
                     showExternalId: externalId,
                     showSequence: globalShowSequence,
@@ -2422,6 +2456,7 @@ async function main() {
                   snapshotId: templateForClient.snapshotId,
                   templateId: templateForClient.templateId,
                   content: buildReportSimulationTaskContent({
+                    templateOrdinal: clientIndex + 1,
                     brandSlug,
                     showExternalId: externalId,
                     showSequence: globalShowSequence,
