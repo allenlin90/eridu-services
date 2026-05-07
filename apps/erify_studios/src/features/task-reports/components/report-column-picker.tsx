@@ -218,6 +218,34 @@ export function ReportColumnPicker({
     return map;
   }, [sortedSources]);
 
+  // Map each canonical shared-field entry to the actual loop-scoped column
+  // descriptors that appear in source data — that's what the user can pick.
+  // The bare canonical name (e.g. `gmv`) is only itself selectable when a
+  // non-grouped source field projects directly to it (e.g. an unsuffixed
+  // `session_review_feedback` shared field on a non-moderation template).
+  const derivedSharedColumnsByKey = React.useMemo(() => {
+    const map = new Map<string, Map<string, { key: string; label: string; type: string; group?: string }>>();
+    for (const source of sortedSources) {
+      for (const field of source.fields) {
+        const sharedKey = field.shared_field_key;
+        if (!sharedKey) {
+          continue;
+        }
+        const inner = map.get(sharedKey) ?? new Map<string, { key: string; label: string; type: string; group?: string }>();
+        if (!inner.has(field.key)) {
+          inner.set(field.key, {
+            key: field.key,
+            label: field.label,
+            type: field.type,
+            group: field.group ?? undefined,
+          });
+        }
+        map.set(sharedKey, inner);
+      }
+    }
+    return map;
+  }, [sortedSources]);
+
   const selectedColumnDescriptors = React.useMemo(() => selectedColumns.map((column): SelectedColumnDescriptor => {
     const systemColumn = systemColumnMap.get(column.key);
     if (systemColumn) {
@@ -227,6 +255,22 @@ export function ReportColumnPicker({
     const sharedField = sharedFieldByKey.get(column.key);
     if (sharedField) {
       return { ...column, groupLabel: 'Shared', detail: `${sharedField.type} · ${sharedField.key}` };
+    }
+
+    // The selected column may be a per-loop derived column (e.g. `gmv_l8`)
+    // whose canonical entry lives in `sharedFieldByKey` under the base key
+    // `gmv`. Look it up via the descriptor map built from source fields.
+    for (const [sharedKey, derivedMap] of derivedSharedColumnsByKey.entries()) {
+      const derived = derivedMap.get(column.key);
+      if (derived) {
+        const canonical = sharedFieldByKey.get(sharedKey);
+        const groupSuffix = derived.group ? ` · Loop ${derived.group.replace(/^l/, '')}` : '';
+        return {
+          ...column,
+          groupLabel: canonical?.label ? `Shared · ${canonical.label}` : 'Shared',
+          detail: `${derived.type} · ${derived.key}${groupSuffix}`,
+        };
+      }
     }
 
     const templateField = templateFieldByKey.get(column.key);
@@ -239,7 +283,7 @@ export function ReportColumnPicker({
     }
 
     return { ...column, groupLabel: 'Unavailable', detail: column.key };
-  }), [selectedColumns, systemColumnMap, sharedFieldByKey, templateFieldByKey]);
+  }), [selectedColumns, systemColumnMap, sharedFieldByKey, templateFieldByKey, derivedSharedColumnsByKey]);
 
   const templatesSignature = sortedSources.map((source) => source.template_id).join('|');
   // Reset expansion to defaults only when the template list itself changes.
@@ -326,12 +370,28 @@ export function ReportColumnPicker({
 
   const filteredSharedFieldsByCategory = Object.entries(sharedFieldsByCategory)
     .map(([category, fields]) => {
-      const filteredFields = fields.filter((field) => {
-        if (showSelectedOnly && !isSelected(field.key)) {
-          return false;
-        }
-        return matchesSearch([field.label, field.key, field.type, category]);
-      });
+      const filteredFields = fields
+        .map((field) => {
+          const derivedMap = derivedSharedColumnsByKey.get(field.key);
+          // Sort loop columns by their numeric loop ordinal when available; fall
+          // back to lexical key otherwise (handles non-loop shared fields).
+          const derivedColumns = [...(derivedMap?.values() ?? [])].sort((a, b) => {
+            const ag = a.group ? Number.parseInt(a.group.replace(/^l/, ''), 10) : Number.NaN;
+            const bg = b.group ? Number.parseInt(b.group.replace(/^l/, ''), 10) : Number.NaN;
+            if (Number.isFinite(ag) && Number.isFinite(bg)) {
+              return ag - bg;
+            }
+            return a.key.localeCompare(b.key);
+          });
+          const visibleDerivedColumns = derivedColumns.filter((column) => {
+            if (showSelectedOnly && !isSelected(column.key)) {
+              return false;
+            }
+            return matchesSearch([field.label, field.key, field.type, category, column.label, column.key]);
+          });
+          return { ...field, derivedColumns, visibleDerivedColumns };
+        })
+        .filter((field) => field.visibleDerivedColumns.length > 0);
       return { category, fields: filteredFields };
     })
     .filter((group) => group.fields.length > 0);
@@ -565,41 +625,65 @@ export function ReportColumnPicker({
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b pb-1">
             <div className="text-sm font-medium">Shared Fields</div>
-            <Badge variant="outline">{filteredSharedFieldsByCategory.reduce((total, group) => total + group.fields.length, 0)}</Badge>
+            <Badge variant="outline">
+              {filteredSharedFieldsByCategory.reduce((total, group) => total + group.fields.reduce((acc, field) => acc + field.visibleDerivedColumns.length, 0), 0)}
+            </Badge>
           </div>
           <div className="space-y-4">
             {filteredSharedFieldsByCategory.map((group) => (
-              <div key={group.category} className="space-y-2">
+              <div key={group.category} className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {SHARED_FIELD_CATEGORY_LABELS[group.category as keyof typeof SHARED_FIELD_CATEGORY_LABELS] ?? group.category}
                   </div>
                   <Badge variant="outline">{group.fields.length}</Badge>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {group.fields.map((field) => {
-                    const selected = isSelected(field.key);
-                    return (
-                      <div key={field.key} className="flex items-start space-x-2">
-                        <Checkbox
-                          id={`field-shared-${field.key}`}
-                          checked={selected}
-                          disabled={!selected && isAtLimit}
-                          onCheckedChange={(checked) => {
-                            toggleColumn(field.key, field.label, field.type, checked === true);
-                          }}
-                        />
-                        <div className="grid gap-1 leading-none">
-                          <Label htmlFor={`field-shared-${field.key}`}>{field.label}</Label>
+                <div className="space-y-3">
+                  {group.fields.map((field) => (
+                    <div key={field.key} className="rounded-md border bg-muted/20 p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div className="text-sm font-medium">{field.label}</div>
                           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                             {field.type}
                             {' · '}
                             {field.key}
                           </div>
                         </div>
+                        <Badge variant="outline" className="text-[10px]">
+                          {field.visibleDerivedColumns.length}
+                          {' '}
+                          column
+                          {field.visibleDerivedColumns.length === 1 ? '' : 's'}
+                        </Badge>
                       </div>
-                    );
-                  })}
+                      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {field.visibleDerivedColumns.map((column) => {
+                          const selected = isSelected(column.key);
+                          return (
+                            <div key={column.key} className="flex items-start space-x-2">
+                              <Checkbox
+                                id={`field-shared-${field.key}-${column.key}`}
+                                checked={selected}
+                                disabled={!selected && isAtLimit}
+                                onCheckedChange={(checked) => {
+                                  toggleColumn(column.key, column.label, column.type, checked === true);
+                                }}
+                              />
+                              <div className="grid gap-0.5 leading-none">
+                                <Label htmlFor={`field-shared-${field.key}-${column.key}`}>
+                                  {column.group ? `Loop ${column.group.replace(/^l/, '')}` : column.label}
+                                </Label>
+                                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                  {column.key}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

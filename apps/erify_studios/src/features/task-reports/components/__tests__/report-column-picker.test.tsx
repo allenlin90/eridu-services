@@ -170,4 +170,61 @@ describe('reportColumnPicker', () => {
 
     expect(screen.queryByLabelText('GMV')).not.toBeInTheDocument();
   });
+
+  it('renders shared fields as per-loop derived columns (gmv_l1..gmv_l8) under a single canonical entry', async () => {
+    const user = userEvent.setup();
+    const templateOne = buildTemplateSource(1);
+    const data: TaskReportSourcesResponse = {
+      shared_fields: [
+        { key: 'gmv', label: 'GMV', type: 'number', category: 'metric', is_active: true },
+      ],
+      sources: [{
+        ...templateOne,
+        fields: [
+          ...templateOne.fields,
+          // Source field for loop 1's GMV column. After Phase 5 migration the
+          // descriptor key is `gmv_l1`, the canonical shared key is `gmv`.
+          {
+            key: 'gmv_l1',
+            field_key: 'gmv',
+            label: 'GMV (Loop 1)',
+            type: 'number',
+            standard: true,
+            group: 'l1',
+            shared_field_key: 'gmv',
+            source_template_id: templateOne.template_id,
+            source_template_name: templateOne.template_name,
+          },
+          {
+            key: 'gmv_l8',
+            field_key: 'gmv',
+            label: 'GMV (Loop 8)',
+            type: 'number',
+            standard: true,
+            group: 'l8',
+            shared_field_key: 'gmv',
+            source_template_id: templateOne.template_id,
+            source_template_name: templateOne.template_name,
+          },
+        ],
+      }],
+    };
+
+    const { onChange } = renderPicker(data);
+
+    // The canonical entry is rendered as a section header with derived columns.
+    // The bare canonical name is NOT itself a checkbox — only specific loops are.
+    expect(screen.queryByRole('checkbox', { name: 'GMV' })).not.toBeInTheDocument();
+
+    // Per-loop derived columns are selectable, with a Loop N label.
+    const loop1 = screen.getByRole('checkbox', { name: 'Loop 1' });
+    const loop8 = screen.getByRole('checkbox', { name: 'Loop 8' });
+    expect(loop1).toBeInTheDocument();
+    expect(loop8).toBeInTheDocument();
+
+    await user.click(loop8);
+    expect(onChange).toHaveBeenCalledWith([
+      { key: 'gmv_l8', label: 'GMV (Loop 8)', type: 'number' },
+    ]);
+  });
 });
