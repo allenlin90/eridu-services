@@ -22,6 +22,44 @@ import {
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioService } from '@/models/studio/studio.service';
 
+const LEGACY_SHARED_KEY_PATTERN = /^([a-z][a-z0-9_]*?)_l\d+$/;
+
+type ResolvedSharedField = {
+  key: string;
+  entry: Awaited<ReturnType<StudioService['getSharedFields']>>[number];
+};
+
+/**
+ * Resolve a field's `shared_field_key` against the studio registry, falling
+ * back to the canonical base (`<base>_l<N>` → `<base>`) when the suffixed
+ * entry is no longer registered. v1 historical snapshots reference the
+ * suffixed keys, but after the post-migration cleanup only the canonical
+ * base is in the registry. Returning the resolved key keeps source-discovery
+ * useful across both engines.
+ */
+function resolveSharedFieldEntry(
+  rawSharedKey: string | undefined,
+  sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
+): ResolvedSharedField | undefined {
+  if (!rawSharedKey) {
+    return undefined;
+  }
+  const direct = sharedFieldByKey.get(rawSharedKey);
+  if (direct) {
+    return { key: rawSharedKey, entry: direct };
+  }
+  const match = rawSharedKey.match(LEGACY_SHARED_KEY_PATTERN);
+  if (!match) {
+    return undefined;
+  }
+  const base = match[1];
+  const baseEntry = sharedFieldByKey.get(base);
+  if (!baseEntry) {
+    return undefined;
+  }
+  return { key: base, entry: baseEntry };
+}
+
 /**
  * Resolves reporting scope for lightweight operations shared by endpoints.
  * Use case: source discovery and preflight counts before expensive report generation.
@@ -92,8 +130,14 @@ export class TaskReportScopeService {
           continue;
         }
 
-        const sharedFieldKey = getFieldSharedKey(parsedSnapshot.data, item) ?? undefined;
-        const sharedField = sharedFieldKey ? sharedFieldByKey.get(sharedFieldKey) : undefined;
+        const rawSharedFieldKey = getFieldSharedKey(parsedSnapshot.data, item) ?? undefined;
+        // After the post-migration legacy cleanup, suffixed entries like
+        // `gmv_l1` are removed from the registry — only the canonical `gmv`
+        // remains. v1 historical snapshots still reference the suffixed keys,
+        // so we fall back to the canonical base when the direct lookup misses.
+        // The resolved key is the one that should appear in the response so
+        // the FE picker maps the column to the canonical shared-field entry.
+        const resolved = resolveSharedFieldEntry(rawSharedFieldKey, sharedFieldByKey);
 
         source.fieldsByKey.set(columnKey, {
           key: columnKey,
@@ -101,15 +145,15 @@ export class TaskReportScopeService {
           label: item.label,
           type: item.type,
           standard: 'standard' in item ? item.standard : undefined,
-          category: sharedField?.category,
+          category: resolved?.entry.category,
           group: 'group' in item ? item.group : undefined,
-          shared_field_key: sharedFieldKey,
+          shared_field_key: resolved?.key ?? rawSharedFieldKey,
           source_template_id: sourceSnapshot.templateUid,
           source_template_name: sourceSnapshot.templateName,
         });
 
-        if (sharedFieldKey) {
-          standardFieldKeys.add(sharedFieldKey);
+        if (resolved) {
+          standardFieldKeys.add(resolved.key);
         }
       }
 

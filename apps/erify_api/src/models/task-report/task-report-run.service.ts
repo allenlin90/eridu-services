@@ -244,6 +244,15 @@ export class TaskReportRunService {
 
       const sharedFieldKey = getFieldSharedKey(parsedSnapshot.data, field) ?? undefined;
       const isStandard = 'standard' in field && !!field.standard;
+      // Fall back to the canonical base when a v1 historical snapshot
+      // references a suffixed key that's been removed from the registry.
+      const sharedCategory = sharedFieldKey
+        ? (sharedFieldByKey.get(sharedFieldKey)?.category
+          ?? (() => {
+            const match = sharedFieldKey.match(/^([a-z][a-z0-9_]*?)_l\d+$/);
+            return match ? sharedFieldByKey.get(match[1])?.category : undefined;
+          })())
+        : undefined;
 
       return [{
         fieldKey: getFieldContentKey(parsedSnapshot.data, field),
@@ -251,7 +260,7 @@ export class TaskReportRunService {
         meta: {
           type: field.type,
           standard: isStandard || undefined,
-          category: sharedFieldKey ? sharedFieldByKey.get(sharedFieldKey)?.category : undefined,
+          category: sharedCategory,
           sourceTemplateId: sharedFieldKey ? undefined : task.templateUid,
           sourceTemplateName: sharedFieldKey ? undefined : task.templateName,
         },

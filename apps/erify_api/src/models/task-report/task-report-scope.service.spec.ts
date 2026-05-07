@@ -201,6 +201,104 @@ describe('taskReportScopeService', () => {
     ).rejects.toThrow('Task template snapshot schema is invalid');
   });
 
+  it('falls back to canonical base for v1 historical sources after the legacy registry cleanup', async () => {
+    // v1 snapshot referencing legacy suffixed key `gmv_l1` (the registry no
+    // longer contains `gmv_l1` after cleanup; only canonical `gmv` remains).
+    const v1Schema = TemplateSchemaValidator.parse({
+      items: [
+        { id: 'fi_1', key: 'gmv_l1', type: 'number', standard: true, label: 'GMV (Loop 1)', group: 'l1' },
+      ],
+      metadata: { task_type: 'ACTIVE', loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }] },
+    });
+
+    repository.findSourceSnapshotsInScope.mockResolvedValue([
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotVersion: 1, snapshotSchema: v1Schema, taskCount: 4 },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([
+      { key: 'gmv', type: 'number', category: 'metric', label: 'GMV', is_active: true },
+    ]);
+
+    const result = await service.getSources(
+      'std_123',
+      getTaskReportSourcesQuerySchema.parse({ ...defaultScope, show_standard_id: 'shsd_1' }),
+    );
+
+    expect(result.sources[0]?.fields).toEqual([
+      expect.objectContaining({
+        key: 'gmv_l1',
+        // The resolved shared key is the canonical base; the column key
+        // remains `gmv_l1` (descriptor) so saved report defs keep working.
+        shared_field_key: 'gmv',
+        category: 'metric',
+      }),
+    ]);
+    // Canonical entry surfaces in the picker even though only legacy v1
+    // snapshots are in scope.
+    expect(result.shared_fields.map((f) => f.key)).toEqual(['gmv']);
+  });
+
+  it('aligns column keys for v1 historical and v2 canonical snapshots of the same template', async () => {
+    // v1 snapshot of template A (historical task pinning).
+    const v1Schema = TemplateSchemaValidator.parse({
+      items: [
+        { id: 'fi_v1_1', key: 'gmv_l1', type: 'number', standard: true, label: 'GMV (Loop 1)', group: 'l1' },
+        { id: 'fi_v1_2', key: 'gmv_l2', type: 'number', standard: true, label: 'GMV (Loop 2)', group: 'l2' },
+      ],
+      metadata: {
+        task_type: 'ACTIVE',
+        loops: [
+          { id: 'l1', name: 'Loop 1', durationMin: 15 },
+          { id: 'l2', name: 'Loop 2', durationMin: 15 },
+        ],
+      },
+    });
+    // v2 snapshot of the SAME template after migration: canonical
+    // shared_field_key + group, fld_ ids.
+    const v2Schema = {
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        { id: 'fld_canon11111', key: 'gmv', type: 'number', shared_field_key: 'gmv', label: 'GMV', required: true, group: 'l1' },
+        { id: 'fld_canon22222', key: 'gmv', type: 'number', shared_field_key: 'gmv', label: 'GMV', required: true, group: 'l2' },
+      ],
+      metadata: {
+        task_type: 'ACTIVE',
+        loops: [
+          { id: 'l1', name: 'Loop 1', durationMin: 15 },
+          { id: 'l2', name: 'Loop 2', durationMin: 15 },
+        ],
+      },
+    };
+
+    repository.findSourceSnapshotsInScope.mockResolvedValue([
+      // Same templateUid, both snapshot versions in scope (mixed v1+v2 tasks).
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotVersion: 1, snapshotSchema: v1Schema, taskCount: 4 },
+      { templateUid: 'ttpl_a', templateName: 'Template A', snapshotVersion: 2, snapshotSchema: v2Schema, taskCount: 2 },
+    ]);
+    studioService.getSharedFields.mockResolvedValue([
+      { key: 'gmv', type: 'number', category: 'metric', label: 'GMV', is_active: true },
+    ]);
+
+    const result = await service.getSources(
+      'std_123',
+      getTaskReportSourcesQuerySchema.parse({ ...defaultScope, show_standard_id: 'shsd_1' }),
+    );
+
+    expect(result.sources).toHaveLength(1);
+    expect(result.sources[0]?.submitted_task_count).toBe(6);
+    // Column keys are descriptor-derived: `gmv_l1`/`gmv_l2` from BOTH engines.
+    // Latest snapshot (v2) wins on field metadata, but the column key contract
+    // is the same — so v1 and v2 tasks aggregate into the same report rows.
+    const fieldKeys = result.sources[0]?.fields.map((f) => f.key).sort();
+    expect(fieldKeys).toEqual(['gmv_l1', 'gmv_l2']);
+    for (const f of result.sources[0]?.fields ?? []) {
+      expect(f.shared_field_key).toBe('gmv');
+      expect(f.category).toBe('metric');
+    }
+  });
+
   it('returns preflight counts and within_limit true when task count is under default limit', async () => {
     repository.countShowsInScope.mockResolvedValue(5);
     repository.countSubmittedTasksInScope.mockResolvedValue(9999);
