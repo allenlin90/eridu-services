@@ -119,15 +119,19 @@ export function ReportColumnPicker({
     // Keep shared fields aligned with selected templates when parent-injected sources are unfiltered.
     if (!propSourcesData || !scope?.source_templates?.length)
       return raw;
-    const sharedFieldKeysInScope = new Set<string>();
+    // Engine-aware: v1 fields use `standard`; v2 fields use `shared_field_key`
+    // (canonical post-cleanup, e.g. `gmv` for loop column `gmv_l1`).
+    const sharedRegistryKeysInScope = new Set<string>();
     for (const source of sources) {
       for (const field of source.fields) {
-        if (field.standard) {
-          sharedFieldKeysInScope.add(field.key);
+        if (field.shared_field_key) {
+          sharedRegistryKeysInScope.add(field.shared_field_key);
+        } else if (field.standard) {
+          sharedRegistryKeysInScope.add(field.key);
         }
       }
     }
-    return raw.filter((sharedField) => sharedFieldKeysInScope.has(sharedField.key));
+    return raw.filter((sharedField) => sharedRegistryKeysInScope.has(sharedField.key));
   }, [activeSourcesData?.shared_fields, propSourcesData, scope, sources]);
   const systemColumnMap = React.useMemo(() => new Map(SYSTEM_COLUMNS.map((column) => [column.key, column])), []);
   const sharedFieldByKey = React.useMemo(() => new Map(sharedFields.map((f) => [f.key, f])), [sharedFields]);
