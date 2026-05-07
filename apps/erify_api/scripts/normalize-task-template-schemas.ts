@@ -10,7 +10,7 @@ import {
   safeParseTemplateSchema,
 } from '@eridu/api-types/task-management';
 
-type Mode = 'validate-only' | 'current-to-v2';
+type Mode = 'validate-only' | 'current-to-v2' | 'cleanup-legacy-shared-fields';
 
 type Args = {
   mode: Mode;
@@ -78,6 +78,9 @@ function parseArgs(): Args {
     else if (arg === '--current-to-v2') {
       mode = 'current-to-v2';
     }
+    else if (arg === '--cleanup-legacy-shared-fields') {
+      mode = 'cleanup-legacy-shared-fields';
+    }
     else if (arg === '--dry-run') {
       dryRun = true;
     }
@@ -87,10 +90,10 @@ function parseArgs(): Args {
   }
 
   if (!mode) {
-    throw new Error('One of --validate-only or --current-to-v2 is required.');
+    throw new Error('One of --validate-only, --current-to-v2, --cleanup-legacy-shared-fields is required.');
   }
-  if (mode === 'current-to-v2' && !dryRun && !apply) {
-    throw new Error('--current-to-v2 requires either --dry-run or --apply.');
+  if ((mode === 'current-to-v2' || mode === 'cleanup-legacy-shared-fields') && !dryRun && !apply) {
+    throw new Error(`--${mode} requires either --dry-run or --apply.`);
   }
   if (apply && dryRun) {
     throw new Error('--apply and --dry-run are mutually exclusive.');
@@ -223,6 +226,100 @@ function applyCanonicalBasesToMap(
       is_active: true,
     });
   }
+}
+
+type LegacyCleanupPlan = {
+  studioUid: string;
+  removed: string[];
+  retainedSuffixed: { key: string; reason: string }[];
+};
+
+/**
+ * Build the next studio metadata with suffixed `<base>_l<N>` shared-field
+ * entries removed. An entry is eligible for removal when its canonical
+ * `<base>` is also present in the registry AND no active v2 template
+ * references the suffixed key as `shared_field_key`.
+ */
+function planLegacySharedFieldsCleanup(
+  studioUid: string,
+  studioMetadata: unknown,
+  v2SharedFieldKeyReferences: Set<string>,
+): { plan: LegacyCleanupPlan; nextMetadata: Record<string, unknown> } {
+  const baseObj: Record<string, unknown> = isObject(studioMetadata) ? { ...studioMetadata } : {};
+  const existing = Array.isArray(baseObj.shared_fields) ? [...baseObj.shared_fields] : [];
+
+  const presentKeys = new Set<string>();
+  for (const entry of existing) {
+    if (isObject(entry) && typeof entry.key === 'string') {
+      presentKeys.add(entry.key);
+    }
+  }
+
+  const removed: string[] = [];
+  const retainedSuffixed: { key: string; reason: string }[] = [];
+  const retained: unknown[] = [];
+
+  for (const entry of existing) {
+    if (!isObject(entry) || typeof entry.key !== 'string') {
+      retained.push(entry);
+      continue;
+    }
+    const match = SUFFIX_PATTERN.exec(entry.key);
+    if (!match || !match.groups?.base) {
+      retained.push(entry);
+      continue;
+    }
+    const base = match.groups.base;
+    if (!presentKeys.has(base)) {
+      retained.push(entry);
+      retainedSuffixed.push({ key: entry.key, reason: `canonical base "${base}" not registered` });
+      continue;
+    }
+    if (v2SharedFieldKeyReferences.has(entry.key)) {
+      retained.push(entry);
+      retainedSuffixed.push({ key: entry.key, reason: 'still referenced by an active v2 template' });
+      continue;
+    }
+    removed.push(entry.key);
+  }
+
+  retained.sort((a, b) => {
+    const ak = isObject(a) && typeof a.key === 'string' ? a.key : '';
+    const bk = isObject(b) && typeof b.key === 'string' ? b.key : '';
+    return ak.localeCompare(bk);
+  });
+  baseObj.shared_fields = retained;
+
+  return {
+    plan: { studioUid, removed: removed.sort(), retainedSuffixed },
+    nextMetadata: baseObj,
+  };
+}
+
+function collectV2SharedFieldKeyReferences(
+  templates: { currentSchema: unknown }[],
+): Set<string> {
+  const refs = new Set<string>();
+  for (const t of templates) {
+    const schema = t.currentSchema as SchemaEnvelope;
+    let engine: 'task_template_v1' | 'task_template_v2' | null = null;
+    try {
+      engine = getSchemaEngine(schema);
+    }
+    catch {
+      engine = null;
+    }
+    if (engine !== 'task_template_v2') {
+      continue;
+    }
+    const items = Array.isArray(schema.items) ? (schema.items as FieldItem[]) : [];
+    for (const item of items) {
+      if (typeof item.shared_field_key === 'string' && item.shared_field_key.length > 0) {
+        refs.add(item.shared_field_key);
+      }
+    }
+  }
+  return refs;
 }
 
 function buildUpdatedStudioMetadata(
@@ -463,6 +560,8 @@ async function main() {
     snapshotsCreated: 0,
     studiosWithBasesAdded: 0,
     canonicalBasesAdded: 0,
+    studiosCleaned: 0,
+    legacyEntriesRemoved: 0,
   };
 
   try {
@@ -479,6 +578,49 @@ async function main() {
       },
       orderBy: { id: 'asc' },
     });
+
+    if (args.mode === 'cleanup-legacy-shared-fields') {
+      // Cleanup mode is independent of the v1→v2 upgrade pipeline. It removes
+      // suffixed `<base>_l<N>` entries from `studio.metadata.shared_fields[]`
+      // when the canonical base is registered and no active v2 template
+      // references the suffixed key as `shared_field_key`. Idempotent.
+      const studioRows = new Map<string, { studio: (typeof templates)[number]['studio']; templates: typeof templates }>();
+      for (const t of templates) {
+        const key = t.studio.uid;
+        const group = studioRows.get(key) ?? { studio: t.studio, templates: [] };
+        group.templates.push(t);
+        studioRows.set(key, group);
+      }
+
+      for (const [studioUid, group] of studioRows.entries()) {
+        const refs = collectV2SharedFieldKeyReferences(group.templates);
+        const { plan, nextMetadata } = planLegacySharedFieldsCleanup(studioUid, group.studio.metadata, refs);
+
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify({
+          studio: studioUid,
+          legacy_cleanup: {
+            removed_count: plan.removed.length,
+            removed: plan.removed,
+            retained_suffixed: plan.retainedSuffixed,
+          },
+          action: args.apply ? 'cleanup-applied' : 'cleanup-planned',
+        }));
+
+        if (args.apply && plan.removed.length > 0) {
+          await prisma.studio.update({
+            where: { id: group.studio.id },
+            data: { metadata: nextMetadata as never },
+          });
+          summary.studiosCleaned += 1;
+          summary.legacyEntriesRemoved += plan.removed.length;
+        }
+      }
+
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({ summary }));
+      return;
+    }
 
     // Group by studio so we can do the per-studio canonical-base pre-pass once
     // (deriving + writing the registry update) before iterating that studio's
