@@ -4,7 +4,7 @@ import type { ControllerRenderProps, FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { getFieldContentKey } from '@eridu/api-types/task-management';
+import { type FieldItem, getFieldContentKey, getTaskContentExtraKey, getTaskContentReasonKey } from '@eridu/api-types/task-management';
 import {
   FILE_UPLOAD_USE_CASE,
   FILE_UPLOAD_USE_CASE_RULES,
@@ -152,6 +152,177 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function humanizeExtraKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function stringifyExtraValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((item) => stringifyExtraValue(item)).join('; ');
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+  if (isRecord(value)) {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function formatExtraItems(value: unknown): string[] {
+  if (!isRecord(value)) {
+    return [];
+  }
+
+  return Object.entries(value)
+    .filter(([, item]) => item !== null && item !== undefined && !(typeof item === 'string' && item.trim().length === 0))
+    .map(([key, item]) => `${humanizeExtraKey(key)}: ${stringifyExtraValue(item)}`);
+}
+
+function compareScalarValue(op: string, value: unknown, target: unknown): boolean {
+  switch (op) {
+    case 'eq':
+      return value === target;
+    case 'neq':
+      return value !== target;
+    case 'in':
+      return Array.isArray(target) && target.includes(String(value));
+    case 'not_in':
+      return Array.isArray(target) && !target.includes(String(value));
+    default:
+      return false;
+  }
+}
+
+function hasReasonEvaluableValue(item: FieldItem, value: unknown): boolean {
+  if (item.type === 'checkbox') {
+    return typeof value === 'boolean';
+  }
+
+  if (item.type === 'multiselect') {
+    return Array.isArray(value) && value.length > 0;
+  }
+
+  return value !== null && value !== undefined && value !== '';
+}
+
+function shouldShowReasonField(item: FieldItem, value: unknown): boolean {
+  const reason = item.validation?.require_reason;
+  if (!reason) {
+    return false;
+  }
+  if (reason === 'always') {
+    return true;
+  }
+
+  if (item.type === 'checkbox') {
+    if (reason === 'on-true') {
+      return value === true;
+    }
+    if (reason === 'on-false') {
+      return value === false;
+    }
+    return false;
+  }
+
+  if (!hasReasonEvaluableValue(item, value)) {
+    return false;
+  }
+
+  if (!Array.isArray(reason)) {
+    return false;
+  }
+
+  return reason.some((condition) => {
+    if (item.type === 'number' && typeof value === 'number') {
+      const target = Number(condition.value);
+      switch (condition.op) {
+        case 'lt':
+          return value < target;
+        case 'lte':
+          return value <= target;
+        case 'gt':
+          return value > target;
+        case 'gte':
+          return value >= target;
+        case 'eq':
+          return value === target;
+        case 'neq':
+          return value !== target;
+        default:
+          return false;
+      }
+    }
+
+    if ((item.type === 'date' || item.type === 'datetime') && typeof value === 'string') {
+      const valueTime = new Date(value).getTime();
+      if (Number.isNaN(valueTime)) {
+        return false;
+      }
+
+      if (condition.op === 'in' || condition.op === 'not_in') {
+        const targets = Array.isArray(condition.value)
+          ? condition.value
+          : [String(condition.value)];
+        const targetTimes = targets
+          .map((entry) => new Date(String(entry)).getTime())
+          .filter((time) => !Number.isNaN(time));
+        const matches = targetTimes.includes(valueTime);
+        return condition.op === 'in' ? matches : !matches;
+      }
+
+      const targetTime = new Date(String(condition.value)).getTime();
+      if (Number.isNaN(targetTime)) {
+        return false;
+      }
+      switch (condition.op) {
+        case 'lt':
+          return valueTime < targetTime;
+        case 'lte':
+          return valueTime <= targetTime;
+        case 'gt':
+          return valueTime > targetTime;
+        case 'gte':
+          return valueTime >= targetTime;
+        case 'eq':
+          return valueTime === targetTime;
+        case 'neq':
+          return valueTime !== targetTime;
+        default:
+          return false;
+      }
+    }
+
+    if (item.type === 'multiselect' && Array.isArray(value)) {
+      const targets = Array.isArray(condition.value) ? condition.value : [String(condition.value)];
+      if (condition.op === 'in') {
+        return value.some((entry) => targets.includes(String(entry)));
+      }
+      if (condition.op === 'not_in') {
+        return !value.some((entry) => targets.includes(String(entry)));
+      }
+      const sortedValue = value.map(String).toSorted();
+      const sortedTarget = targets.toSorted();
+      if (condition.op === 'eq') {
+        return JSON.stringify(sortedValue) === JSON.stringify(sortedTarget);
+      }
+      return condition.op === 'neq' && JSON.stringify(sortedValue) !== JSON.stringify(sortedTarget);
+    }
+
+    return compareScalarValue(condition.op, value, condition.value);
+  });
+}
+
 function getFileFingerprint(file: File): string {
   return [file.name, file.size, file.type, file.lastModified].join(':');
 }
@@ -208,12 +379,28 @@ export const JsonForm = function JsonForm({
 
   useEffect(() => {
     if (onChange) {
-      const subscription = form.watch((value) => {
+      const subscription = form.watch((value, { name }) => {
+        if (name) {
+          const changedItem = itemsByKey.get(name);
+          if (changedItem) {
+            const nextReasonKey = getTaskContentReasonKey(name);
+            const nextValue = value[name];
+            const reasonValue = value[nextReasonKey];
+            if (
+              !shouldShowReasonField(changedItem, nextValue)
+              && typeof reasonValue === 'string'
+              && reasonValue.length > 0
+            ) {
+              form.setValue(nextReasonKey, '', { shouldDirty: true, shouldValidate: true });
+              return;
+            }
+          }
+        }
         onChange(value as Record<string, unknown>);
       });
       return () => subscription.unsubscribe();
     }
-  }, [form, onChange]);
+  }, [form, itemsByKey, onChange]);
 
   useEffect(() => {
     if (!onUploadStateChange) {
@@ -400,181 +587,230 @@ export const JsonForm = function JsonForm({
           .filter((item) => !activeGroup || item.group === activeGroup)
           .map((item) => {
             const contentKey = getFieldContentKey(schema, item);
+            const reasonKey = getTaskContentReasonKey(contentKey);
+            const extraKey = getTaskContentExtraKey(contentKey);
+            const fieldValue = form.watch(contentKey);
+            const reasonValue = form.watch(reasonKey);
+            const extraItems = formatExtraItems(form.watch(extraKey));
+            const showReason = shouldShowReasonField(item, fieldValue)
+              || (typeof reasonValue === 'string' && reasonValue.length > 0);
+
             return (
-              <FormField
-                key={contentKey}
-                control={form.control}
-                name={contentKey}
-                render={({ field }) => (
-                  <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
-                    {item.type === 'checkbox'
-                      ? (
-                          <>
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value as boolean}
-                                onCheckedChange={field.onChange}
-                                disabled={readOnly}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
+              <div key={contentKey} className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name={contentKey}
+                  render={({ field }) => (
+                    <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
+                      {item.type === 'checkbox'
+                        ? (
+                            <>
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value as boolean}
+                                  onCheckedChange={field.onChange}
+                                  disabled={readOnly}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  {item.label}
+                                  {item.required && <span className="text-destructive ml-1">*</span>}
+                                </FormLabel>
+                                {item.description && (
+                                  <FormDescription>
+                                    {item.description}
+                                  </FormDescription>
+                                )}
+                              </div>
+                            </>
+                          )
+                        : (
+                            <>
                               <FormLabel>
                                 {item.label}
                                 {item.required && <span className="text-destructive ml-1">*</span>}
                               </FormLabel>
-                              {item.description && (
-                                <FormDescription>
-                                  {item.description}
-                                </FormDescription>
-                              )}
-                            </div>
-                          </>
-                        )
-                      : (
-                          <>
-                            <FormLabel>
-                              {item.label}
-                              {item.required && <span className="text-destructive ml-1">*</span>}
-                            </FormLabel>
-                            <FormControl>
-                              <FieldRenderer
-                                item={item}
-                                field={field}
-                                readOnly={readOnly}
-                                isUploading={uploadingByKey[contentKey] ?? false}
-                                pendingUpload={pendingFilesByKey[contentKey]}
-                                onClearPendingUpload={() => {
-                                  clearPendingUpload(contentKey);
-                                  delete uploadedFileCacheRef.current[contentKey];
-                                }}
-                                onClearCurrentUpload={() => {
-                                  field.onChange('');
-                                  delete uploadedFileCacheRef.current[contentKey];
-                                }}
-                                onFileSelect={(file) => {
-                                  if (!isSupportedUploadMimeType(file.type)) {
-                                    toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
-                                    return;
-                                  }
-
-                                  if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
-                                    toast.error('File does not match allowed types');
-                                    return;
-                                  }
-
-                                  const maxBytesForField = getFieldMaxBytes(item, file);
-                                  delete uploadedFileCacheRef.current[contentKey];
-                                  setPendingFilesByKey((prev) => {
-                                    const previous = prev[contentKey];
-                                    if (previous?.previewUrl) {
-                                      URL.revokeObjectURL(previous.previewUrl);
+                              <FormControl>
+                                <FieldRenderer
+                                  item={item}
+                                  field={field}
+                                  readOnly={readOnly}
+                                  isUploading={uploadingByKey[contentKey] ?? false}
+                                  pendingUpload={pendingFilesByKey[contentKey]}
+                                  onClearPendingUpload={() => {
+                                    clearPendingUpload(contentKey);
+                                    delete uploadedFileCacheRef.current[contentKey];
+                                  }}
+                                  onClearCurrentUpload={() => {
+                                    field.onChange('');
+                                    delete uploadedFileCacheRef.current[contentKey];
+                                  }}
+                                  onFileSelect={(file) => {
+                                    if (!isSupportedUploadMimeType(file.type)) {
+                                      toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
+                                      return;
                                     }
-                                    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
-                                    return {
-                                      ...prev,
-                                      [contentKey]: {
-                                        file,
-                                        previewUrl,
-                                        error: null,
-                                        isPreparing: file.type.startsWith('image/'),
-                                      },
-                                    };
-                                  });
 
-                                  const setFileError = (error: string | null) => {
+                                    if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
+                                      toast.error('File does not match allowed types');
+                                      return;
+                                    }
+
+                                    const maxBytesForField = getFieldMaxBytes(item, file);
+                                    delete uploadedFileCacheRef.current[contentKey];
                                     setPendingFilesByKey((prev) => {
-                                      const current = prev[contentKey];
-                                      if (!current || current.file !== file) {
-                                        return prev;
+                                      const previous = prev[contentKey];
+                                      if (previous?.previewUrl) {
+                                        URL.revokeObjectURL(previous.previewUrl);
                                       }
+                                      const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
                                       return {
                                         ...prev,
                                         [contentKey]: {
-                                          ...current,
-                                          error,
-                                          isPreparing: false,
+                                          file,
+                                          previewUrl,
+                                          error: null,
+                                          isPreparing: file.type.startsWith('image/'),
                                         },
                                       };
                                     });
-                                  };
 
-                                  if (!file.type.startsWith('image/')) {
-                                    if (file.size > maxBytesForField) {
-                                      const error = getFileTooLargeMessage(item.label, maxBytesForField);
-                                      toast.error(error);
-                                      setFileError(error);
-                                      return;
-                                    }
-                                    setFileError(null);
-                                    return;
-                                  }
-
-                                  void (async () => {
-                                    try {
-                                      const prepared = await prepareImageForUpload(file, {
-                                        targetMaxBytes: maxBytesForField,
-                                        accept: item.validation?.accept,
-                                        maxLongEdges: maxBytesForField <= SCREENSHOT_MAX_BYTES
-                                          ? SCREENSHOT_COMPRESSION_MAX_LONG_EDGES
-                                          : undefined,
-                                        preferWorker: true,
-                                      });
-                                      const preparedFile = prepared.file;
-
+                                    const setFileError = (error: string | null) => {
                                       setPendingFilesByKey((prev) => {
                                         const current = prev[contentKey];
                                         if (!current || current.file !== file) {
                                           return prev;
                                         }
-
-                                        let error: string | null = null;
-                                        if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
-                                          error = `Compressed file for '${item.label}' does not match allowed types`;
-                                        } else if (preparedFile.size > maxBytesForField) {
-                                          const limitKb = Math.round(maxBytesForField / 1024);
-                                          const achievedKb = Math.round(preparedFile.size / 1024);
-                                          error = prepared.wasCompressed
-                                            ? `Could not compress '${item.label}' below ${limitKb} KB (best: ${achievedKb} KB)`
-                                            : getFileTooLargeMessage(item.label, maxBytesForField);
-                                        }
-
-                                        if (error) {
-                                          toast.error(error);
-                                        }
-
                                         return {
                                           ...prev,
                                           [contentKey]: {
                                             ...current,
-                                            file: preparedFile,
                                             error,
                                             isPreparing: false,
                                           },
                                         };
                                       });
+                                    };
 
-                                      if (prepared.metTarget && prepared.wasCompressed && preparedFile.size < file.size) {
-                                        const method = prepared.usedWorker ? ' in background' : '';
-                                        toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                    if (!file.type.startsWith('image/')) {
+                                      if (file.size > maxBytesForField) {
+                                        const error = getFileTooLargeMessage(item.label, maxBytesForField);
+                                        toast.error(error);
+                                        setFileError(error);
+                                        return;
                                       }
-                                    } catch {
-                                      setFileError(`Failed to prepare '${item.label}' for upload`);
+                                      setFileError(null);
+                                      return;
                                     }
-                                  })();
-                                }}
-                              />
-                            </FormControl>
-                            {item.description && (
-                              <FormDescription>
-                                {item.description}
-                              </FormDescription>
-                            )}
-                            <FormMessage />
-                          </>
-                        )}
-                  </FormItem>
+
+                                    void (async () => {
+                                      try {
+                                        const prepared = await prepareImageForUpload(file, {
+                                          targetMaxBytes: maxBytesForField,
+                                          accept: item.validation?.accept,
+                                          maxLongEdges: maxBytesForField <= SCREENSHOT_MAX_BYTES
+                                            ? SCREENSHOT_COMPRESSION_MAX_LONG_EDGES
+                                            : undefined,
+                                          preferWorker: true,
+                                        });
+                                        const preparedFile = prepared.file;
+
+                                        setPendingFilesByKey((prev) => {
+                                          const current = prev[contentKey];
+                                          if (!current || current.file !== file) {
+                                            return prev;
+                                          }
+
+                                          let error: string | null = null;
+                                          if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
+                                            error = `Compressed file for '${item.label}' does not match allowed types`;
+                                          } else if (preparedFile.size > maxBytesForField) {
+                                            const limitKb = Math.round(maxBytesForField / 1024);
+                                            const achievedKb = Math.round(preparedFile.size / 1024);
+                                            error = prepared.wasCompressed
+                                              ? `Could not compress '${item.label}' below ${limitKb} KB (best: ${achievedKb} KB)`
+                                              : getFileTooLargeMessage(item.label, maxBytesForField);
+                                          }
+
+                                          if (error) {
+                                            toast.error(error);
+                                          }
+
+                                          return {
+                                            ...prev,
+                                            [contentKey]: {
+                                              ...current,
+                                              file: preparedFile,
+                                              error,
+                                              isPreparing: false,
+                                            },
+                                          };
+                                        });
+
+                                        if (prepared.metTarget && prepared.wasCompressed && preparedFile.size < file.size) {
+                                          const method = prepared.usedWorker ? ' in background' : '';
+                                          toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                        }
+                                      } catch {
+                                        setFileError(`Failed to prepare '${item.label}' for upload`);
+                                      }
+                                    })();
+                                  }}
+                                />
+                              </FormControl>
+                              {item.description && (
+                                <FormDescription>
+                                  {item.description}
+                                </FormDescription>
+                              )}
+                              <FormMessage />
+                            </>
+                          )}
+                    </FormItem>
+                  )}
+                />
+                {showReason && (
+                  <FormField
+                    control={form.control}
+                    name={reasonKey}
+                    render={({ field }) => (
+                      <FormItem className="rounded-md border border-amber-200 bg-amber-50/60 p-3">
+                        <FormLabel>
+                          Explanation for
+                          {' '}
+                          {item.label}
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            value={(field.value as string) ?? ''}
+                            disabled={readOnly}
+                            className="min-h-20 bg-white"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+                {extraItems.length > 0 && (
+                  <div className="rounded-md border bg-muted/30 p-3">
+                    <div className="text-sm font-medium">
+                      Extra for
+                      {' '}
+                      {item.label}
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {extraItems.map((extraItem) => (
+                        <div key={extraItem} className="text-sm text-muted-foreground">
+                          {extraItem}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             );
           })}
       </form>

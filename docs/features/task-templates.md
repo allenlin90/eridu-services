@@ -95,11 +95,20 @@ One `Task` row per show per assignee. The moderator's entered values live in `Ta
 {
   "fld_gmvl100001": 1500, // L1 GMV
   "fld_gmvl200001": 1800, // L2 GMV
-  "fld_pin1000001": true
+  "fld_pin1000001": true,
+  "fld_pin1000001__reason": "Pinned comment was delayed",
+  "fld_pin1000001__extra": { "cause": "Network retry" }
 }
 ```
 
 **No nesting by loop**. All loop fields coexist in one object so the entire form persists in one atomic PATCH. The frontend filters by `activeGroup` for display, but the storage is flat.
+
+Fields with explanation or auxiliary input data use flat sidecar keys derived from the field storage key:
+
+- `"<fieldKey>__reason"` stores the operator's explanation text.
+- `"<fieldKey>__extra"` stores optional structured input metadata.
+
+These sidecars do not become report columns by default. Report definitions can opt a selected field into an adjacent extra column, keeping the base answer and explanation/metadata separate while preserving one row per show.
 
 ### Layer 4 — Loop view (UI partition only)
 
@@ -114,6 +123,8 @@ There is **no loop entity in the database**. The execution sheet computes loop t
 - v2 shared non-loop field (`shared_field_key: "session_review_feedback"`) → `columnKey = "session_review_feedback"`
 - v2 template-local loop field → `columnKey = "${task.templateUid}:${field.group}:${field.key}"`
 - v2 template-local non-loop field → `columnKey = "${task.templateUid}:${field.key}"`
+- When a selected report column has `include_extra: true`, field sidecars (`__reason`, `__extra`) render into an adjacent `{columnKey}__extra` column.
+- Base field values remain in the selected column; extra columns are an export-template option, not automatic schema expansion.
 
 This is why this feature is the **upstream** of [task-submission-reporting](./task-submission-reporting.md): the snapshot's engine and descriptor helpers determine whether a column is canonical (cross-template comparable) or template-local.
 
@@ -143,7 +154,7 @@ The template schema isn't only a storage contract — it also drives what the us
 | `validation`                   | Type-specific rule editor                                              | Inline validation feedback as the user types                               | Read-only; violations surfaced as warnings   |
 | `default_value`                | Default editor; also drives live preview completion proxy              | Pre-fills empty fields on open                                             | Reflected in displayed value                 |
 | `options` (select/multiselect) | Options list editor                                                    | Dropdown / chip control choices                                            | Choice rendering                             |
-| `require_reason`               | Conditional rule editor (operator/value pairs by type)                 | Reveals a "reason" textarea when the trigger condition fires               | Shows the captured reason inline             |
+| `require_reason`               | Conditional rule editor (operator/value pairs by type)                 | Reveals an explanation textarea and stores it under `<fieldKey>__reason` when the trigger condition fires | Shows the captured reason inline             |
 | `group` + `metadata.loops[]`   | Loop card grouping; loop reorder by position; loop name/duration edit  | Loop tabs + Previous/Next nav; live-loop indicator from `show.start_time`  | All loops visible at once (no tab filtering) |
 | `shared_field_key` (canonical link) | Shared-field picker; locks shared key/type once linked                  | No direct UX effect beyond engine-routed storage                           | No direct UX effect                          |
 | `standard`                     | Legacy v1 canonical link only                                          | Legacy v1 snapshots remain readable                                        | Legacy v1 snapshots remain readable          |

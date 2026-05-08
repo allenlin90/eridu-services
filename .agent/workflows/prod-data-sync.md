@@ -79,5 +79,6 @@ Two options:
 
 - **Script aborts pre-flight** — fix the env var or URL it complains about and re-run.
 - **`pg_dump` fails** (auth/network/perms) — local DB unchanged. Verify prod credentials by connecting with `psql "$PROD_DATABASE_URL" -c 'SELECT 1'`.
+- **Prod connection timeout / proxy close** — follow `.agent/skills/prod-data-sync/SKILL.md` § Failure Triage before retrying. Confirm prod reachability, try schema-only `pg_dump` if needed, then retry the standard sync once. Ask before using partial or table-excluded restores.
 - **`psql` fails mid-restore** — local DB is partially overwritten. Re-run the script; `--clean --if-exists` makes it idempotent.
 - **One DB succeeds, the other fails** — first DB is already restored. Re-run; the script will redo both DBs (idempotent).

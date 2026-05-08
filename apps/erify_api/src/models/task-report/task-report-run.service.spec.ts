@@ -204,6 +204,137 @@ describe('taskReportRunService', () => {
     });
   });
 
+  it('emits sidecar explanations and extra input data in an adjacent column when selected', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fld_live_title',
+          key: 'live_title',
+          type: 'select',
+          label: 'Live title',
+          options: [
+            { value: 'correct', label: 'Correct' },
+            { value: 'not_correct', label: 'Not correct' },
+          ],
+          validation: {
+            require_reason: [{ op: 'neq', value: 'correct' }],
+          },
+        },
+      ],
+      metadata: {},
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow(),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        content: {
+          live_title: 'not_correct',
+          live_title__reason: 'Title does not match the approved run sheet.',
+          live_title__extra: {
+            cause: 'OBS scene was stale',
+            reported_by: 'Operator A',
+          },
+        },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:live_title', label: 'Live title', include_extra: true }],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:live_title': 'not_correct',
+      'ttpl_1:live_title__extra': [
+        'Explanation: Title does not match the approved run sheet.',
+        'Cause: OBS scene was stale',
+        'Reported By: Operator A',
+      ].join('\n'),
+    });
+    expect(result.columns.map((column) => column.key)).toEqual([
+      'ttpl_1:live_title',
+      'ttpl_1:live_title__extra',
+    ]);
+    expect(result.columns[1]).toMatchObject({
+      label: 'Live title Extra',
+      type: 'textarea',
+      source_template_id: 'ttpl_1',
+    });
+  });
+
+  it('does not export sidecar explanations unless selected column opts in', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fld_live_title',
+          key: 'live_title',
+          type: 'select',
+          label: 'Live title',
+          options: [
+            { value: 'correct', label: 'Correct' },
+            { value: 'not_correct', label: 'Not correct' },
+          ],
+          validation: {
+            require_reason: [{ op: 'neq', value: 'correct' }],
+          },
+        },
+      ],
+      metadata: {},
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow(),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        content: {
+          live_title: 'not_correct',
+          live_title__reason: 'Title does not match the approved run sheet.',
+          live_title__extra: {
+            cause: 'OBS scene was stale',
+          },
+        },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:live_title', label: 'Live title' }],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:live_title': 'not_correct',
+    });
+    expect(result.rows[0]).not.toHaveProperty('ttpl_1:live_title__extra');
+    expect(result.columns.map((column) => column.key)).toEqual(['ttpl_1:live_title']);
+  });
+
   it('rejects unknown column key with compatibility details', async () => {
     const snapshotSchema = TemplateSchemaValidator.parse({
       items: [

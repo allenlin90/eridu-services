@@ -32,6 +32,7 @@ export function buildTaskReportResultCacheKey(input: {
       key: column.key,
       label: column.label,
       type: column.type ?? null,
+      include_extra: column.include_extra ?? false,
     })),
   });
 }

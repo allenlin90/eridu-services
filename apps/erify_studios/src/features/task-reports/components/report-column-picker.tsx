@@ -49,6 +49,7 @@ type ReportColumnPickerProps = {
 type SelectedColumnDescriptor = TaskReportSelectedColumn & {
   groupLabel: string;
   detail: string;
+  canIncludeExtra: boolean;
 };
 
 const MAX_COLUMNS = 50;
@@ -171,6 +172,18 @@ export function ReportColumnPicker({
     onChange(next);
   }, [onChange, selectedColumns]);
 
+  const updateSelectedColumnIncludeExtra = React.useCallback((columnKey: string, includeExtra: boolean) => {
+    onChange(selectedColumns.map((column) => {
+      if (column.key !== columnKey) {
+        return column;
+      }
+      return {
+        ...column,
+        include_extra: includeExtra ? true : undefined,
+      };
+    }));
+  }, [onChange, selectedColumns]);
+
   const handleSelectedColumnDragEnd = React.useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) {
@@ -253,13 +266,13 @@ export function ReportColumnPicker({
   const selectedColumnDescriptors = React.useMemo(() => selectedColumns.map((column): SelectedColumnDescriptor => {
     const systemColumn = systemColumnMap.get(column.key);
     if (systemColumn) {
-      return { ...column, groupLabel: 'System', detail: column.key };
+      return { ...column, groupLabel: 'System', detail: column.key, canIncludeExtra: false };
     }
 
     const directField = templateFieldByKey.get(column.key)?.field;
     const sharedField = sharedFieldByKey.get(column.key);
     if (sharedField && directField && isSharedSourceField(directField)) {
-      return { ...column, groupLabel: 'Shared', detail: `${sharedField.type} · ${sharedField.key}` };
+      return { ...column, groupLabel: 'Shared', detail: `${sharedField.type} · ${sharedField.key}`, canIncludeExtra: true };
     }
 
     // The selected column may be a per-loop derived column (e.g. `gmv_l8`)
@@ -274,6 +287,7 @@ export function ReportColumnPicker({
           ...column,
           groupLabel: canonical?.label ? `Shared · ${canonical.label}` : 'Shared',
           detail: `${derived.type} · ${derived.key}${groupSuffix}`,
+          canIncludeExtra: true,
         };
       }
     }
@@ -284,10 +298,11 @@ export function ReportColumnPicker({
         ...column,
         groupLabel: templateField.source.template_name,
         detail: `${templateField.field.type} · ${templateField.field.field_key}`,
+        canIncludeExtra: true,
       };
     }
 
-    return { ...column, groupLabel: 'Unavailable', detail: column.key };
+    return { ...column, groupLabel: 'Unavailable', detail: column.key, canIncludeExtra: false };
   }), [selectedColumns, systemColumnMap, sharedFieldByKey, templateFieldByKey, derivedSharedColumnsByKey]);
 
   const templatesSignature = sortedSources.map((source) => source.template_id).join('|');
@@ -577,6 +592,7 @@ export function ReportColumnPicker({
                   index={index}
                   total={selectedColumnDescriptors.length}
                   onMove={moveSelectedColumn}
+                  onIncludeExtraChange={updateSelectedColumnIncludeExtra}
                   onRemove={() => onChange(selectedColumns.filter((item) => item.key !== column.key))}
                 />
               ))}
@@ -790,6 +806,7 @@ type SortableSelectedColumnItemProps = {
   index: number;
   total: number;
   onMove: (index: number, direction: 'up' | 'down') => void;
+  onIncludeExtraChange: (columnKey: string, includeExtra: boolean) => void;
   onRemove: () => void;
 };
 
@@ -798,6 +815,7 @@ function SortableSelectedColumnItem({
   index,
   total,
   onMove,
+  onIncludeExtraChange,
   onRemove,
 }: SortableSelectedColumnItemProps) {
   const {
@@ -815,6 +833,7 @@ function SortableSelectedColumnItem({
     opacity: isDragging ? 0.65 : 1,
     zIndex: isDragging ? 1 : 0,
   };
+  const includeExtraId = `include-extra-${column.key.replaceAll(':', '-')}`;
 
   return (
     <div
@@ -847,6 +866,20 @@ function SortableSelectedColumnItem({
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground break-all">{column.detail}</div>
+          {column.canIncludeExtra && (
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id={includeExtraId}
+                checked={column.include_extra === true}
+                onCheckedChange={(checked) => onIncludeExtraChange(column.key, checked === true)}
+              />
+              <Label htmlFor={includeExtraId} className="text-xs font-normal text-muted-foreground">
+                Include extra input column for
+                {' '}
+                {column.label}
+              </Label>
+            </div>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">

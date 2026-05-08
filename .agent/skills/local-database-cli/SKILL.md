@@ -16,9 +16,10 @@ The local development databases run inside Docker containers. Connection strings
 ## Workflow
 
 1. **Identify the target database**: Choose `DATABASE_URL` or `ERIDU_AUTH_DATABASE_URL` from the relevant app's `.env` file.
-2. **Verify the DB container**: Ensure the local `database` Docker Compose service is running before attempting a connection.
+2. **Verify reachability**: Prefer a direct `psql "$DATABASE_URL" -c "select 1 as ok;"` check. If Docker socket access is blocked by sandboxing, do not assume the DB is down.
 3. **Execute the query**: Run `psql` when available; otherwise use `pgcli`.
-4. **Report results carefully**: Summarize the result and never print real connection strings or credentials.
+4. **Recover from query-shape mismatch**: If a query fails because a column or table name is wrong, inspect `information_schema.columns` before retrying with another guessed query.
+5. **Report results carefully**: Summarize the result and never print real connection strings or credentials.
 
 ## Core Rules
 
@@ -29,16 +30,23 @@ The local development databases run inside Docker containers. Connection strings
 ### 2. Formulating the Command
 Prefer sourcing the `.env` file and referencing the variable so real credentials do not appear in messages or copied command examples.
 
+**Reachability check:**
+```bash
+set -a
+source apps/erify_api/.env
+PATH="/opt/homebrew/opt/libpq/bin:$PATH" psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "select 1 as ok;"
+```
+
 **Using `psql`:**
 ```bash
 set -a
 source apps/erify_api/.env
-psql "$DATABASE_URL" -c "SELECT * FROM users LIMIT 10;"
+PATH="/opt/homebrew/opt/libpq/bin:$PATH" psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT * FROM users LIMIT 10;"
 ```
 
 For wider tables, use the `-x` flag (expanded display) to make the output readable in the terminal context:
 ```bash
-psql "$DATABASE_URL" -x -c "SELECT * FROM users LIMIT 1;"
+PATH="/opt/homebrew/opt/libpq/bin:$PATH" psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -x -c "SELECT * FROM users LIMIT 1;"
 ```
 
 **Using `pgcli`:**
@@ -53,6 +61,27 @@ printf "%s\n" "SELECT * FROM users LIMIT 10;" | pgcli "$DATABASE_URL"
 - **Limit Output**: Always append a `LIMIT` clause to your queries. Unbounded queries will flood the terminal output buffer and disrupt the agent context.
 - **Production Guardrail**: Never query URLs prefixed with `PROD_` (e.g., `PROD_DATABASE_URL`) without explicit user consent. This skill is intended for the local Docker DB.
 - **Sandbox Guardrail**: If Docker socket access, localhost database access, or CLI config/log writes are blocked by sandboxing, request the required permission instead of working around credentials or copying secrets into output.
+
+## Query Hygiene
+
+- Qualify ambiguous columns with table aliases. Names such as `current_schema` can collide with Postgres built-ins when unqualified.
+- For schema mismatches, inspect the actual table shape:
+  ```sql
+  select column_name, data_type
+  from information_schema.columns
+  where table_name = 'tasks'
+  order by ordinal_position;
+  ```
+- For JSONB shape checks, prefer key aggregation before printing full payloads:
+  ```sql
+  select key, count(*)
+  from tasks t
+  cross join lateral jsonb_object_keys(t.content::jsonb) as key
+  group by key
+  order by key;
+  ```
+- If a task query needs snapshot version, join `task_template_snapshots`; the `tasks` table stores `snapshot_id`, not `snapshot_version`.
+- If a query against `localhost` fails with `Operation not permitted`, rerun the same read-only command with escalation. Treat connection refused or authentication errors as DB issues; treat sandbox permission errors as tool-environment issues.
 
 ## Example Execution Plan
 
