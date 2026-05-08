@@ -23,7 +23,23 @@ When `validateContent` runs on a content payload whose snapshot uses the v2 engi
 
 ### 1. Lift reason logic into `@eridu/api-types`
 
-`shouldShowReasonField`, `hasReasonEvaluableValue`, and `compareScalarValue` currently live inline in [json-form.tsx](../../../apps/erify_studios/src/components/json-form/json-form.tsx). Move them into a new module — e.g. `packages/api-types/src/task-management/require-reason.ts` — and re-export from the package barrel. The validator (backend + frontend) and the form will both import from there, avoiding duplicated logic.
+The reason evaluator currently has **three parallel implementations** in the codebase:
+
+| Location | Consumer | Status today |
+|---|---|---|
+| [json-form.tsx](../../../apps/erify_studios/src/components/json-form/json-form.tsx) `shouldShowReasonField` | Real task submission/review (`studio-task-action-sheet.tsx`, `task-execution-sheet.tsx`) | Operator-complete after PR #49 (handles full `RequireReasonCriterion` set including date `lte`/`gte`/`neq`/`in`/`not_in`). |
+| [validation-utils.ts](../../../apps/erify_studios/src/components/task-templates/shared/validation-utils.ts) `shouldShowReason` | Template-builder live preview (`builder/live-preview.tsx` via `task-form-renderer.tsx`) | Pre-existing gap — date branch handles only `lt`/`gt`/`eq`. Latent because [field-editor.tsx](../../../apps/erify_studios/src/components/task-templates/builder/field-editor.tsx) only offers those three for date types in the UI. |
+| _(planned)_ schema refinement in `buildTaskContentSchema` | API + frontend submit-time validation | Does not exist yet — this PR. |
+
+Move `shouldShowReasonField`, `hasReasonEvaluableValue`, and `compareScalarValue` from `json-form.tsx` into a new module — e.g. `packages/api-types/src/task-management/require-reason.ts` — and re-export from the package barrel. Use the post-PR-#49 (operator-complete) version of `json-form.tsx` as the source of truth so the lifted module ships with full date/datetime operator coverage on day one.
+
+Then migrate every call site to the shared helper in the same PR:
+
+- `json-form.tsx` — replace inline functions with imports.
+- `validation-utils.ts` — delete the duplicate `shouldShowReason` (keep `validateField`, which is unrelated numeric/url validation) and update `task-form-renderer.tsx` to call the shared helper. This closes the latent date-operator gap in the builder preview as a side-effect.
+- The new `superRefine` introduced by step 2 imports the same helper.
+
+End state: one definition, three consumers, no drift.
 
 ### 2. Refine `buildTaskContentSchema`
 
@@ -51,7 +67,7 @@ The shape entry for `reasonKey` stays optional — the refinement is what enforc
 
 | Layer | Coverage |
 |---|---|
-| `@eridu/api-types` | Refinement unit tests: v2 triggering value + missing reason → fails; v2 triggering value + filled reason → passes; v2 non-triggering value + missing reason → passes; v1 schema + triggering value + missing reason → passes (grandfathered); blank/whitespace reason rejected. |
+| `@eridu/api-types` | Refinement unit tests: v2 triggering value + missing reason → fails; v2 triggering value + filled reason → passes; v2 non-triggering value + missing reason → passes; v1 schema + triggering value + missing reason → passes (grandfathered); blank/whitespace reason rejected. Also unit-test the lifted `shouldShowReasonField` directly across the full operator matrix (number `lt/lte/gt/gte/eq/neq`; date/datetime `lt/lte/gt/gte/eq/neq/in/not_in`; select `eq/neq`; multiselect `eq/neq/in/not_in`; checkbox `on-true/on-false/always`). |
 | `erify_api` | `task-validation.service.spec.ts`: extend with v2 + `require_reason` cases; v1 cases unchanged. |
 | `erify_studios` | `json-form.test.tsx`: selecting a triggering value with the reason left empty surfaces a form error and `form.handleSubmit` does not call `onSubmit`. |
 
@@ -71,3 +87,4 @@ The shape entry for `reasonKey` stays optional — the refinement is what enforc
 
 - A separate audit / report flagging historical v2 tasks with missing reasons (none exist today, but would be useful as v2 templates ramp).
 - A back-fill workflow for managers who want to add reasons retroactively to historical v1 tasks. Not required for this fix.
+- Expanding the [field-editor.tsx](../../../apps/erify_studios/src/components/task-templates/builder/field-editor.tsx) UI to expose the additional date operators (`lte`/`gte`/`neq`/`in`/`not_in`). The schema and runtime support them after this PR; the builder UI surfacing them is a separate UX decision.
