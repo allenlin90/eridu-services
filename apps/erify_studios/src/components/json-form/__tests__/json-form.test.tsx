@@ -67,6 +67,34 @@ describe('jsonForm', () => {
     expect(screen.getByLabelText('Explanation for Live title')).toBeInTheDocument();
   });
 
+  it.each([
+    { op: 'lte' as const, target: '2026-05-01', triggering: '2026-05-01', nonTriggering: '2026-05-10' },
+    { op: 'gte' as const, target: '2026-05-01', triggering: '2026-05-01', nonTriggering: '2026-04-10' },
+    { op: 'neq' as const, target: '2026-05-01', triggering: '2026-05-02', nonTriggering: '2026-05-01' },
+  ])('shows date explanation when value satisfies $op', ({ op, target, triggering, nonTriggering }) => {
+    const schema: UiSchema = {
+      items: [
+        {
+          id: 'fld_show_date',
+          key: 'show_date',
+          type: 'date',
+          label: 'Show date',
+          validation: {
+            require_reason: [{ op, value: target }],
+          },
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <JsonForm schema={schema} values={{ show_date: nonTriggering }} onChange={vi.fn()} />,
+    );
+    expect(screen.queryByLabelText('Explanation for Show date')).not.toBeInTheDocument();
+
+    rerender(<JsonForm schema={schema} values={{ show_date: triggering }} onChange={vi.fn()} />);
+    expect(screen.getByLabelText('Explanation for Show date')).toBeInTheDocument();
+  });
+
   it('shows stored extra input metadata alongside the selected answer', () => {
     const schema: UiSchema = {
       items: [

@@ -266,17 +266,41 @@ function shouldShowReasonField(item: FieldItem, value: unknown): boolean {
 
     if ((item.type === 'date' || item.type === 'datetime') && typeof value === 'string') {
       const valueTime = new Date(value).getTime();
-      const targetTime = new Date(String(condition.value)).getTime();
-      if (Number.isNaN(valueTime) || Number.isNaN(targetTime)) {
+      if (Number.isNaN(valueTime)) {
         return false;
       }
-      if (condition.op === 'lt') {
-        return valueTime < targetTime;
+
+      if (condition.op === 'in' || condition.op === 'not_in') {
+        const targets = Array.isArray(condition.value)
+          ? condition.value
+          : [String(condition.value)];
+        const targetTimes = targets
+          .map((entry) => new Date(String(entry)).getTime())
+          .filter((time) => !Number.isNaN(time));
+        const matches = targetTimes.includes(valueTime);
+        return condition.op === 'in' ? matches : !matches;
       }
-      if (condition.op === 'gt') {
-        return valueTime > targetTime;
+
+      const targetTime = new Date(String(condition.value)).getTime();
+      if (Number.isNaN(targetTime)) {
+        return false;
       }
-      return condition.op === 'eq' && valueTime === targetTime;
+      switch (condition.op) {
+        case 'lt':
+          return valueTime < targetTime;
+        case 'lte':
+          return valueTime <= targetTime;
+        case 'gt':
+          return valueTime > targetTime;
+        case 'gte':
+          return valueTime >= targetTime;
+        case 'eq':
+          return valueTime === targetTime;
+        case 'neq':
+          return valueTime !== targetTime;
+        default:
+          return false;
+      }
     }
 
     if (item.type === 'multiselect' && Array.isArray(value)) {
