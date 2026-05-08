@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
+import { shouldShowReasonField } from './require-reason.js';
 import { getTaskContentExtraKey, getTaskContentReasonKey } from './task-content-extras.js';
-import { getFieldContentKey } from './task-schema-engine.js';
+import { getFieldContentKey, getSchemaEngine } from './task-schema-engine.js';
 import type { UiSchema, UiSchemaV2 } from './template-definition.schema.js';
 
 /**
@@ -99,5 +100,27 @@ export function buildTaskContentSchema(schema: UiSchema | UiSchemaV2): z.ZodObje
     shape[getTaskContentExtraKey(contentKey)] = z.record(z.string(), z.unknown()).optional();
   }
 
-  return z.object(shape).strict();
+  return z.object(shape).strict().superRefine((data, ctx) => {
+    if (getSchemaEngine(schema) !== 'task_template_v2') {
+      return;
+    }
+
+    for (const item of schema.items) {
+      const contentKey = getFieldContentKey(schema, item);
+      const value = data[contentKey];
+      if (!shouldShowReasonField(item, value)) {
+        continue;
+      }
+
+      const reasonKey = getTaskContentReasonKey(contentKey);
+      const reason = data[reasonKey];
+      if (typeof reason !== 'string' || reason.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Explanation is required for "${item.label}"`,
+          path: [reasonKey],
+        });
+      }
+    }
+  });
 }

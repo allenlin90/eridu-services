@@ -17,6 +17,7 @@
  * ```
  */
 
+export * from './require-reason.js';
 export * from './task.schema.js';
 export * from './task-content-extras.js';
 export * from './task-content-validator.js';

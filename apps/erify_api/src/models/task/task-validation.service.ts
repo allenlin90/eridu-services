@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { UiSchema } from '@eridu/api-types/task-management';
+import type { UiSchema, UiSchemaV2 } from '@eridu/api-types/task-management';
 import { buildTaskContentSchema } from '@eridu/api-types/task-management';
 
 import { TaskValidationError } from '@/lib/errors/task-validation.error';
@@ -11,7 +11,7 @@ export class TaskValidationService {
    * Validates a task's content payload against the snapshot schema.
    * Throws TaskValidationError with detailed field errors if validation fails.
    */
-  validateContent(payload: any, schema: UiSchema): void {
+  validateContent(payload: any, schema: UiSchema | UiSchemaV2): void {
     if (!payload || typeof payload !== 'object') {
       throw new TaskValidationError('Content must be a JSON object', []);
     }
