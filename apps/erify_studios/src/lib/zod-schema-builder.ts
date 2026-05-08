@@ -1,4 +1,4 @@
-import type { UiSchema } from '@eridu/api-types/task-management';
+import type { UiSchema, UiSchemaV2 } from '@eridu/api-types/task-management';
 import { buildTaskContentSchema } from '@eridu/api-types/task-management';
 
 /**
@@ -9,4 +9,4 @@ export const zodSchemaBuilder = {
   buildTaskContentSchema,
 };
 
-export type { UiSchema };
+export type { UiSchema, UiSchemaV2 };

@@ -77,11 +77,16 @@ export function ReportBuilder({
     const filteredSources = sourceDataForTemplateLookup.sources.filter((source) =>
       draftScope.source_templates!.includes(source.template_id),
     );
-    const sharedFieldKeysInScope = new Set<string>();
+    // Engine-aware: v1 fields carry `standard: true`, v2 fields carry
+    // `shared_field_key` (which after the legacy cleanup is the canonical
+    // base, e.g. `gmv`, even when the column key is loop-scoped `gmv_l1`).
+    const sharedRegistryKeysInScope = new Set<string>();
     for (const source of filteredSources) {
       for (const field of source.fields) {
-        if (field.standard) {
-          sharedFieldKeysInScope.add(field.key);
+        if (field.shared_field_key) {
+          sharedRegistryKeysInScope.add(field.shared_field_key);
+        } else if (field.standard) {
+          sharedRegistryKeysInScope.add(field.key);
         }
       }
     }
@@ -89,7 +94,7 @@ export function ReportBuilder({
       ...sourceDataForTemplateLookup,
       sources: filteredSources,
       shared_fields: sourceDataForTemplateLookup.shared_fields.filter((sharedField) =>
-        sharedFieldKeysInScope.has(sharedField.key),
+        sharedRegistryKeysInScope.has(sharedField.key),
       ),
     };
   }, [sourceDataForTemplateLookup, draftScope]);
@@ -138,9 +143,6 @@ export function ReportBuilder({
 
     const availableKeys = new Set<string>(Object.values(TASK_REPORT_SYSTEM_COLUMN));
 
-    for (const sharedField of sourceDataForScope.shared_fields) {
-      availableKeys.add(sharedField.key);
-    }
     for (const source of sourceDataForScope.sources) {
       for (const field of source.fields) {
         availableKeys.add(field.key);

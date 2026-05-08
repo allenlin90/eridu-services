@@ -10,9 +10,12 @@ import type {
 } from '@eridu/api-types/task-management';
 import {
   FieldTypeEnum,
+  getFieldContentKey,
+  getFieldReportDescriptor,
+  getFieldSharedKey,
+  safeParseTemplateSchema,
   TASK_REPORT_SYSTEM_COLUMN,
   taskReportColumnSchema,
-  TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 
 import { TaskReportScopeRepository } from './task-report-scope.repository';
@@ -228,26 +231,38 @@ export class TaskReportRunService {
     selectedColumnKeys: Set<string>,
     sharedFieldByKey: Map<string, Awaited<ReturnType<StudioService['getSharedFields']>>[number]>,
   ): CompiledProjectionField[] {
-    const parsedSnapshot = TemplateSchemaValidator.safeParse(task.snapshotSchema);
+    const parsedSnapshot = safeParseTemplateSchema(task.snapshotSchema);
     if (!parsedSnapshot.success) {
       throw HttpError.internalServerError('Task template snapshot schema is invalid');
     }
 
     return parsedSnapshot.data.items.flatMap((field) => {
-      const columnKey = field.standard ? field.key : `${task.templateUid}:${field.key}`;
+      const columnKey = getFieldReportDescriptor(parsedSnapshot.data, task.templateUid, field);
       if (!selectedColumnKeys.has(columnKey)) {
         return [];
       }
 
+      const sharedFieldKey = getFieldSharedKey(parsedSnapshot.data, field) ?? undefined;
+      const isStandard = 'standard' in field && !!field.standard;
+      // Fall back to the canonical base when a v1 historical snapshot
+      // references a suffixed key that's been removed from the registry.
+      const sharedCategory = sharedFieldKey
+        ? (sharedFieldByKey.get(sharedFieldKey)?.category
+          ?? (() => {
+            const match = sharedFieldKey.match(/^([a-z][a-z0-9_]*?)_l\d+$/);
+            return match ? sharedFieldByKey.get(match[1])?.category : undefined;
+          })())
+        : undefined;
+
       return [{
-        fieldKey: field.key,
+        fieldKey: getFieldContentKey(parsedSnapshot.data, field),
         columnKey,
         meta: {
           type: field.type,
-          standard: field.standard || undefined,
-          category: field.standard ? sharedFieldByKey.get(field.key)?.category : undefined,
-          sourceTemplateId: field.standard ? undefined : task.templateUid,
-          sourceTemplateName: field.standard ? undefined : task.templateName,
+          standard: isStandard || undefined,
+          category: sharedCategory,
+          sourceTemplateId: sharedFieldKey ? undefined : task.templateUid,
+          sourceTemplateName: sharedFieldKey ? undefined : task.templateName,
         },
       }];
     });

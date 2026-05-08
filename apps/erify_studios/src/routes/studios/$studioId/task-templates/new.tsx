@@ -5,7 +5,12 @@ import { toast } from 'sonner';
 import { useDebounceCallback } from 'usehooks-ts';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { TemplateSchema, type TemplateSchemaType } from '@/components/task-templates/builder/schema';
+import {
+  buildTemplateSchemaPayload,
+  createDefaultBuilderTemplate,
+  shouldUseSavedBuilderDraft,
+} from '@/components/task-templates/builder/payload';
+import { type BuilderTemplateSchemaType, safeParseBuilderTemplateSchema } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import { useCreateTaskTemplate } from '@/features/task-templates/hooks/use-create-task-template';
@@ -46,20 +51,15 @@ export function TaskTemplateBuilderPage() {
   // Load draft from local storage on mount if no initial data is provided
   const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [template, setTemplate] = useState<TemplateSchemaType>({
-    name: '',
-    description: '',
-    task_type: 'SETUP',
-    items: [],
-  });
+  const [template, setTemplate] = useState<BuilderTemplateSchemaType>(() => createDefaultBuilderTemplate());
 
-  const debouncedSave = useDebounceCallback((data: TemplateSchemaType) => {
+  const debouncedSave = useDebounceCallback((data: BuilderTemplateSchemaType) => {
     set(DRAFT_KEY, data).catch(console.error);
   }, 1000);
 
-  const onSave = useCallback((data: TemplateSchemaType) => {
+  const onSave = useCallback((data: BuilderTemplateSchemaType) => {
     // Validate with Zod
-    const result = TemplateSchema.safeParse(data);
+    const result = safeParseBuilderTemplateSchema(data);
 
     if (!result.success) {
       setErrors(formatZodErrors(result.error));
@@ -71,24 +71,12 @@ export function TaskTemplateBuilderPage() {
 
     setErrors({});
 
-    const schemaItems = data.items.map((item) => ({
-      ...item,
-      // Filter out empty options
-      options: item.options?.filter((o) => o.value.trim() !== ''),
-    }));
-
     // Transform structure to match backend API contract
-    const schemaMetadata = data.metadata && Object.keys(data.metadata).length > 0
-      ? data.metadata
-      : undefined;
     const payload = {
       name: data.name,
       description: data.description,
       task_type: data.task_type,
-      schema: {
-        items: schemaItems,
-        ...(schemaMetadata ? { metadata: schemaMetadata } : {}),
-      },
+      schema: buildTemplateSchemaPayload(data),
     };
 
     createTemplate(payload);
@@ -99,7 +87,7 @@ export function TaskTemplateBuilderPage() {
     navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
   }, [navigate, studioId]);
 
-  const handleTemplateChange = useCallback((data: TemplateSchemaType) => {
+  const handleTemplateChange = useCallback((data: BuilderTemplateSchemaType) => {
     setTemplate(data);
 
     setErrors((prev) => (Object.keys(prev).length > 0 ? {} : prev));
@@ -107,11 +95,11 @@ export function TaskTemplateBuilderPage() {
 
   useEffect(() => {
     get(DRAFT_KEY).then((saved) => {
-      if (saved) {
+      if (shouldUseSavedBuilderDraft(saved)) {
         setTemplate((prev) => ({
           ...prev,
-          ...(saved as Partial<TemplateSchemaType>),
-          task_type: (saved as Partial<TemplateSchemaType>)?.task_type ?? prev.task_type,
+          ...saved,
+          task_type: saved.task_type ?? prev.task_type,
         }));
       }
       setIsLoading(false);

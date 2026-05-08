@@ -138,11 +138,12 @@ Readiness scope totals should be refreshed by query-key changes (for example `re
 
 - **State**: TanStack Query for server state; feature hooks own all query logic
 - **Forms**: `JsonForm` renders from `task.snapshot.schema`, auto-saves via debounced PATCH, and uses a two-phase submit flow for pending file uploads (see [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](./JSON_FORM_SUBMISSION_UPLOAD_FLOW.md))
+- **Schema engines**: v1 snapshots remain readable; v2 templates use stable `fld_...` ids for `task.content` and `shared_field_key` for canonical reporting links
 - **Progress**: Frontend-calculated from `calculateTaskProgress(task, schema)` — required fields only
 - **Optimistic updates**: On field change → local state → debounce → PATCH → 409 conflict → revert + toast
 - **Cache strategy**: `staleTime: 60s`; invalidate only affected show/task queries on mutations
 - **Draft persistence**: `idb-keyval` (IndexedDB) keyed by `{prefix}:{taskId}` — hydrated on sheet open, cleared on submit
-- **Loop content**: Flat `task.content` JSON covering all loops; `JsonForm` filtered by `activeGroup` (loop ID) in execution sheet only
+- **Loop content**: Flat `task.content` JSON covering all loops; v1 content is keyed by `field.key`, v2 content by `field.id`; `JsonForm` is filtered by `activeGroup` (loop ID) in execution sheet only
 
 ---
 

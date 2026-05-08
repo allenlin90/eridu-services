@@ -57,8 +57,8 @@ We use `@dnd-kit/core` and `@dnd-kit/sortable` for the field list.
 
 **Constraint**:
 - `dnd-kit` requires a stable `id` for every item.
-- We generate a frontend-only `id` (`crypto.randomUUID()`) for every field.
-- **IMPORTANT**: This `id` must be **stripped** before sending to the backend!
+- v2 template fields use shared `@eridu/api-types` field IDs (`fld_...`) as persistent field identity.
+- Do not strip `id` from v2 payloads. It is the task-content storage key and must remain stable across saves.
 
 ### 4. Advanced Validation Logic (`require_reason`)
 
@@ -85,7 +85,7 @@ require_reason: z.union([
 
 Before submitting to the API, the frontend payload must be transformed:
 
-1. **Include IDs**: Keep the stable `id` fields as they are part of the shared schema.
+1. **Include IDs**: Keep the stable `fld_...` `id` fields; v2 task content is keyed by them.
 2. **Nest Items**: specific API structure requires `{ schema: { items: [...] } }`.
 3. **Filter Empty**: Remove empty options or invalid rules.
 
@@ -108,9 +108,9 @@ Task template authors can insert studio-managed shared fields directly from the 
 - Source endpoint: `GET /studios/:studioId/settings/shared-fields`
 - Admin shortcut route in `erify_studios`: `/studios/$studioId/shared-fields`
 - Read access: `ADMIN` and `MANAGER` can load the shared-field catalog for template authoring.
-- Canonical shared-field insertion uses exact shared key/type and sets `standard: true`.
-- Repeated insertions (for loop-specific moderation data collection) should generate unique keys and be treated as loop-scoped template fields unless the key is exactly the canonical shared key.
-- UI must lock shared-field `key`/`type` editing (label/description remain editable).
+- Canonical shared-field insertion uses exact shared key/type and sets `shared_field_key` to the canonical shared key.
+- Repeated insertions for loop-specific moderation data collection keep the same `shared_field_key`, assign each field a stable `fld_...` id, and rely on `group` to derive loop-specific report descriptors such as `gmv_l8`.
+- UI must lock shared-field type and canonical link editing (label/description remain editable).
 - Only active shared fields (`is_active: true`) should appear in the insertion picker.
 - Template create/edit pages must revalidate shared fields on mount (`refetchOnMount: 'always'`) to avoid stale picker options after settings updates.
 - Shared-field settings mutations must invalidate shared-field query keys so downstream routes immediately observe updates.
@@ -118,7 +118,7 @@ Task template authors can insert studio-managed shared fields directly from the 
 - Admin-only settings shortcuts must not be shown to manager users; non-admin authors should see guidance to ask a studio admin to create shared fields when the catalog is empty.
 
 This keeps template payloads compatible with backend validation that enforces:
-- `standard: true` key must exist in studio shared fields
+- `shared_field_key` must exist in studio shared fields
 - shared-field type must match studio shared-field type exactly
 
 ## Checklist
@@ -126,10 +126,10 @@ This keeps template payloads compatible with backend validation that enforces:
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
 - [ ] Drafts are persisted to IndexedDB (not localStorage) — **not yet implemented in builder, see §2**
 - [ ] Auto-save uses debounced writes (1s)
-- [ ] `@dnd-kit` items have stable `id` from `crypto.randomUUID()`
+- [ ] `@dnd-kit` items have stable `fld_...` ids from `createTaskTemplateFieldId()`
 - [ ] Payload is transformed before API submission (empty options filtered)
 - [ ] `require_reason` operators match field type (number/date/select/multiselect)
-- [ ] Shared-field insertions use `standard: true` with locked key/type semantics
+- [ ] Shared-field insertions use `shared_field_key` with locked canonical-link/type semantics
 - [ ] Shared-field queries are revalidated on template page mount and invalidated after settings mutations
 - [ ] Shared-field load failures are explicitly surfaced in template create/edit UI
 - [ ] No duplicate validation logic between frontend and backend

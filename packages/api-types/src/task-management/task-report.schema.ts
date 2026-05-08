@@ -186,9 +186,13 @@ export type TaskReportScope = z.infer<typeof taskReportScopeSchema>;
  * Includes template provenance to distinguish custom fields across templates.
  */
 export const taskReportFieldCatalogItemSchema = z.object({
-  // Selectable column key expected by run endpoint:
-  // - standard field: "{field_key}"
-  // - custom field: "{template_uid}:{field_key}"
+  // Selectable column key expected by run endpoint (semantic descriptor):
+  // - v1 standard field: "{field_key}"
+  // - v1 custom field: "{template_uid}:{field_key}"
+  // - v2 shared loop: "{shared_field_key}_{group}"
+  // - v2 shared non-loop: "{shared_field_key}"
+  // - v2 custom loop: "{template_uid}:{group}:{field_key}"
+  // - v2 custom non-loop: "{template_uid}:{field_key}"
   key: z.string().min(1),
   // Raw field key in template snapshot schema.items[].key.
   field_key: z.string().min(1),
@@ -196,6 +200,8 @@ export const taskReportFieldCatalogItemSchema = z.object({
   type: FieldTypeEnum,
   standard: z.boolean().optional(),
   category: sharedFieldCategorySchema.optional(),
+  group: z.string().optional(),
+  shared_field_key: z.string().optional(),
   source_template_id: z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE),
   source_template_name: z.string(),
 });

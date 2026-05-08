@@ -34,6 +34,19 @@ packages/api-types/src/
 
 > **Cross-cutting domain note**: `task-management/template-definition.schema.ts` is the foundational contract for the Task Templates feature, which has multiple downstream consumers (task content storage, uploads, reporting). Any change to that file must follow the documentation-sync list in [docs/features/task-templates.md § Maintenance: Documentation Sync](../../../docs/features/task-templates.md#maintenance-documentation-sync) — update every listed artifact in the same PR.
 
+### Task Template Schema Engine Helpers
+
+For task-template consumers, never infer storage keys or report keys directly from a field object. Use the shared helpers exported from `@eridu/api-types/task-management`:
+
+| Helper | Use |
+| --- | --- |
+| `getSchemaEngine(schema)` | Distinguish implicit v1 snapshots from explicit `task_template_v2` schemas |
+| `getFieldContentKey(schema, field)` | Read/write `task.content` (`field.key` for v1, `field.id` for v2) |
+| `getFieldSharedKey(schema, field)` | Resolve canonical shared-field identity (`standard` for v1, `shared_field_key` for v2) |
+| `getFieldReportDescriptor(schema, templateUid, field)` | Build selectable/reportable column keys for source discovery and report run |
+
+Review rule: direct `content[field.key]`, direct shared checks against `field.standard`, and hand-built report descriptors are findings unless they are explicitly v1-only compatibility code.
+
 ## Import Strategy (Subpath Exports)
 
 Always use subpath imports to keep domains separated.

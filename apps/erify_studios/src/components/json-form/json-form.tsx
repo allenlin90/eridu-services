@@ -4,6 +4,7 @@ import type { ControllerRenderProps, FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { getFieldContentKey } from '@eridu/api-types/task-management';
 import {
   FILE_UPLOAD_USE_CASE,
   FILE_UPLOAD_USE_CASE_RULES,
@@ -178,7 +179,7 @@ export const JsonForm = function JsonForm({
     mode: 'onChange',
   });
 
-  const itemsByKey = useMemo(() => new Map(schema.items.map((item) => [item.key, item])), [schema.items]);
+  const itemsByKey = useMemo(() => new Map(schema.items.map((item) => [getFieldContentKey(schema, item), item])), [schema]);
 
   useEffect(() => {
     if (values) {
@@ -397,182 +398,185 @@ export const JsonForm = function JsonForm({
       >
         {schema.items
           .filter((item) => !activeGroup || item.group === activeGroup)
-          .map((item) => (
-            <FormField
-              key={item.key}
-              control={form.control}
-              name={item.key}
-              render={({ field }) => (
-                <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
-                  {item.type === 'checkbox'
-                    ? (
-                        <>
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value as boolean}
-                              onCheckedChange={field.onChange}
-                              disabled={readOnly}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
+          .map((item) => {
+            const contentKey = getFieldContentKey(schema, item);
+            return (
+              <FormField
+                key={contentKey}
+                control={form.control}
+                name={contentKey}
+                render={({ field }) => (
+                  <FormItem className={item.type === 'checkbox' ? 'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm' : ''}>
+                    {item.type === 'checkbox'
+                      ? (
+                          <>
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value as boolean}
+                                onCheckedChange={field.onChange}
+                                disabled={readOnly}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                {item.label}
+                                {item.required && <span className="text-destructive ml-1">*</span>}
+                              </FormLabel>
+                              {item.description && (
+                                <FormDescription>
+                                  {item.description}
+                                </FormDescription>
+                              )}
+                            </div>
+                          </>
+                        )
+                      : (
+                          <>
                             <FormLabel>
                               {item.label}
                               {item.required && <span className="text-destructive ml-1">*</span>}
                             </FormLabel>
-                            {item.description && (
-                              <FormDescription>
-                                {item.description}
-                              </FormDescription>
-                            )}
-                          </div>
-                        </>
-                      )
-                    : (
-                        <>
-                          <FormLabel>
-                            {item.label}
-                            {item.required && <span className="text-destructive ml-1">*</span>}
-                          </FormLabel>
-                          <FormControl>
-                            <FieldRenderer
-                              item={item}
-                              field={field}
-                              readOnly={readOnly}
-                              isUploading={uploadingByKey[item.key] ?? false}
-                              pendingUpload={pendingFilesByKey[item.key]}
-                              onClearPendingUpload={() => {
-                                clearPendingUpload(item.key);
-                                delete uploadedFileCacheRef.current[item.key];
-                              }}
-                              onClearCurrentUpload={() => {
-                                field.onChange('');
-                                delete uploadedFileCacheRef.current[item.key];
-                              }}
-                              onFileSelect={(file) => {
-                                if (!isSupportedUploadMimeType(file.type)) {
-                                  toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
-                                  return;
-                                }
-
-                                if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
-                                  toast.error('File does not match allowed types');
-                                  return;
-                                }
-
-                                const maxBytesForField = getFieldMaxBytes(item, file);
-                                delete uploadedFileCacheRef.current[item.key];
-                                setPendingFilesByKey((prev) => {
-                                  const previous = prev[item.key];
-                                  if (previous?.previewUrl) {
-                                    URL.revokeObjectURL(previous.previewUrl);
+                            <FormControl>
+                              <FieldRenderer
+                                item={item}
+                                field={field}
+                                readOnly={readOnly}
+                                isUploading={uploadingByKey[contentKey] ?? false}
+                                pendingUpload={pendingFilesByKey[contentKey]}
+                                onClearPendingUpload={() => {
+                                  clearPendingUpload(contentKey);
+                                  delete uploadedFileCacheRef.current[contentKey];
+                                }}
+                                onClearCurrentUpload={() => {
+                                  field.onChange('');
+                                  delete uploadedFileCacheRef.current[contentKey];
+                                }}
+                                onFileSelect={(file) => {
+                                  if (!isSupportedUploadMimeType(file.type)) {
+                                    toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
+                                    return;
                                   }
-                                  const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
-                                  return {
-                                    ...prev,
-                                    [item.key]: {
-                                      file,
-                                      previewUrl,
-                                      error: null,
-                                      isPreparing: file.type.startsWith('image/'),
-                                    },
-                                  };
-                                });
 
-                                const setFileError = (error: string | null) => {
+                                  if (!matchesAcceptRule(file.type, file.name, item.validation?.accept)) {
+                                    toast.error('File does not match allowed types');
+                                    return;
+                                  }
+
+                                  const maxBytesForField = getFieldMaxBytes(item, file);
+                                  delete uploadedFileCacheRef.current[contentKey];
                                   setPendingFilesByKey((prev) => {
-                                    const current = prev[item.key];
-                                    if (!current || current.file !== file) {
-                                      return prev;
+                                    const previous = prev[contentKey];
+                                    if (previous?.previewUrl) {
+                                      URL.revokeObjectURL(previous.previewUrl);
                                     }
+                                    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
                                     return {
                                       ...prev,
-                                      [item.key]: {
-                                        ...current,
-                                        error,
-                                        isPreparing: false,
+                                      [contentKey]: {
+                                        file,
+                                        previewUrl,
+                                        error: null,
+                                        isPreparing: file.type.startsWith('image/'),
                                       },
                                     };
                                   });
-                                };
 
-                                if (!file.type.startsWith('image/')) {
-                                  if (file.size > maxBytesForField) {
-                                    const error = getFileTooLargeMessage(item.label, maxBytesForField);
-                                    toast.error(error);
-                                    setFileError(error);
-                                    return;
-                                  }
-                                  setFileError(null);
-                                  return;
-                                }
-
-                                void (async () => {
-                                  try {
-                                    const prepared = await prepareImageForUpload(file, {
-                                      targetMaxBytes: maxBytesForField,
-                                      accept: item.validation?.accept,
-                                      maxLongEdges: maxBytesForField <= SCREENSHOT_MAX_BYTES
-                                        ? SCREENSHOT_COMPRESSION_MAX_LONG_EDGES
-                                        : undefined,
-                                      preferWorker: true,
-                                    });
-                                    const preparedFile = prepared.file;
-
+                                  const setFileError = (error: string | null) => {
                                     setPendingFilesByKey((prev) => {
-                                      const current = prev[item.key];
+                                      const current = prev[contentKey];
                                       if (!current || current.file !== file) {
                                         return prev;
                                       }
-
-                                      let error: string | null = null;
-                                      if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
-                                        error = `Compressed file for '${item.label}' does not match allowed types`;
-                                      } else if (preparedFile.size > maxBytesForField) {
-                                        const limitKb = Math.round(maxBytesForField / 1024);
-                                        const achievedKb = Math.round(preparedFile.size / 1024);
-                                        error = prepared.wasCompressed
-                                          ? `Could not compress '${item.label}' below ${limitKb} KB (best: ${achievedKb} KB)`
-                                          : getFileTooLargeMessage(item.label, maxBytesForField);
-                                      }
-
-                                      if (error) {
-                                        toast.error(error);
-                                      }
-
                                       return {
                                         ...prev,
-                                        [item.key]: {
+                                        [contentKey]: {
                                           ...current,
-                                          file: preparedFile,
                                           error,
                                           isPreparing: false,
                                         },
                                       };
                                     });
+                                  };
 
-                                    if (prepared.metTarget && prepared.wasCompressed && preparedFile.size < file.size) {
-                                      const method = prepared.usedWorker ? ' in background' : '';
-                                      toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                  if (!file.type.startsWith('image/')) {
+                                    if (file.size > maxBytesForField) {
+                                      const error = getFileTooLargeMessage(item.label, maxBytesForField);
+                                      toast.error(error);
+                                      setFileError(error);
+                                      return;
                                     }
-                                  } catch {
-                                    setFileError(`Failed to prepare '${item.label}' for upload`);
+                                    setFileError(null);
+                                    return;
                                   }
-                                })();
-                              }}
-                            />
-                          </FormControl>
-                          {item.description && (
-                            <FormDescription>
-                              {item.description}
-                            </FormDescription>
-                          )}
-                          <FormMessage />
-                        </>
-                      )}
-                </FormItem>
-              )}
-            />
-          ))}
+
+                                  void (async () => {
+                                    try {
+                                      const prepared = await prepareImageForUpload(file, {
+                                        targetMaxBytes: maxBytesForField,
+                                        accept: item.validation?.accept,
+                                        maxLongEdges: maxBytesForField <= SCREENSHOT_MAX_BYTES
+                                          ? SCREENSHOT_COMPRESSION_MAX_LONG_EDGES
+                                          : undefined,
+                                        preferWorker: true,
+                                      });
+                                      const preparedFile = prepared.file;
+
+                                      setPendingFilesByKey((prev) => {
+                                        const current = prev[contentKey];
+                                        if (!current || current.file !== file) {
+                                          return prev;
+                                        }
+
+                                        let error: string | null = null;
+                                        if (!matchesAcceptRule(preparedFile.type, preparedFile.name, item.validation?.accept)) {
+                                          error = `Compressed file for '${item.label}' does not match allowed types`;
+                                        } else if (preparedFile.size > maxBytesForField) {
+                                          const limitKb = Math.round(maxBytesForField / 1024);
+                                          const achievedKb = Math.round(preparedFile.size / 1024);
+                                          error = prepared.wasCompressed
+                                            ? `Could not compress '${item.label}' below ${limitKb} KB (best: ${achievedKb} KB)`
+                                            : getFileTooLargeMessage(item.label, maxBytesForField);
+                                        }
+
+                                        if (error) {
+                                          toast.error(error);
+                                        }
+
+                                        return {
+                                          ...prev,
+                                          [contentKey]: {
+                                            ...current,
+                                            file: preparedFile,
+                                            error,
+                                            isPreparing: false,
+                                          },
+                                        };
+                                      });
+
+                                      if (prepared.metTarget && prepared.wasCompressed && preparedFile.size < file.size) {
+                                        const method = prepared.usedWorker ? ' in background' : '';
+                                        toast.success(`Compressed '${item.label}' to ${Math.round(preparedFile.size / 1024)} KB${method}`);
+                                      }
+                                    } catch {
+                                      setFileError(`Failed to prepare '${item.label}' for upload`);
+                                    }
+                                  })();
+                                }}
+                              />
+                            </FormControl>
+                            {item.description && (
+                              <FormDescription>
+                                {item.description}
+                              </FormDescription>
+                            )}
+                            <FormMessage />
+                          </>
+                        )}
+                  </FormItem>
+                )}
+              />
+            );
+          })}
       </form>
     </Form>
   );

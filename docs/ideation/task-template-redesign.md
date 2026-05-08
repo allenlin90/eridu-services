@@ -1,6 +1,6 @@
 # Task Template Redesign: Decoupled Field Identity
 
-**Status:** Direction accepted. Implementation gates are being clarified before PRD authoring.
+**Status:** Implemented as `task_template_v2`. Active behavior is documented in [Task Templates](../features/task-templates.md).
 **Scope:** Schema v2 for task template field items. Versioned coexistence with v1 snapshots; controlled upgrade of active `TaskTemplate.currentSchema` records plus matching latest v2 snapshots after readers/writers support both. No historical `Task.content` migration.
 
 ---

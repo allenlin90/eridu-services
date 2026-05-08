@@ -21,7 +21,7 @@ Studio managers need to review and export submitted task data across many shows 
 
 - Studio-scoped report builder: scope filtering (date range, client, show type/standard, templates) → source discovery → column selection → preflight → run → view/export
 - Saved report definitions (studio-shared CRUD with creator/admin ownership)
-- One-row-per-show deterministic merge with standard field cross-template merging
+- One-row-per-show deterministic merge with engine-aware shared-field descriptors across v1 snapshots and v2 templates
 - Snapshot-driven data extraction preserving historical fidelity
 - Client-side view filters (client, status, room, assignee) and CSV export
 - 8 API endpoints: definition CRUD (5), sources, preflight, run
@@ -38,6 +38,8 @@ Studio managers need to review and export submitted task data across many shows 
 
 - **One row per show** — strictly enforced, no row expansion for multi-target tasks
 - **Snapshots as runtime source of truth** — extraction always reads from task.snapshot.schema + task.content
+- **Engine-aware field identity** — v1 reports read content by `field.key`; v2 reports read content by `field.id`
+- **Descriptor-based shared columns** — v2 shared loop fields derive column keys from `(shared_field_key, group)`, e.g. `gmv_l8`
 - **Shared field metadata is immutable post-creation** — key, type, and category locked forever
 - **Client-side materialization** — no server-side file generation; inline JSON response cached by frontend
 - **10,000 show hard cap** per report run; 50 column hard cap
