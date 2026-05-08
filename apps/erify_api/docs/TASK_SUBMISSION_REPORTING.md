@@ -50,8 +50,7 @@ These are non-negotiable constraints. Any implementation that violates these is 
 2. **Shared field keys, types, and categories are immutable after creation.** `key`, `type`, and `category` cannot be changed, renamed, or reused. If the key is wrong, create a new one; the old key stays reserved forever.
 3. **Snapshots are the runtime source of truth for data extraction.** The report engine always resolves selected fields from `snapshot.schema.items[]` + `task.content` — this is the only way to preserve historical fidelity across template versions.
    - In this phase, **shared field `category` metadata is sourced from `Studio.metadata.shared_fields[]`** at runtime to support FE grouping in the column picker and column descriptors. This is an accepted tradeoff because shared fields are rarely changed and only admin-managed.
-   - **Impact**: changing a shared field's label/category in studio settings can affect future `shared_fields[]` metadata and report column descriptors, but it does not change how values are extracted/merged (the merge key is still the snapshot field `key` when `standard: true`).
-   - **Follow-up (optional hardening)**: persist shared-field category into snapshot schema when `standard: true` so the reporting engine can become fully snapshot-driven for metadata as well.
+   - **Impact**: changing a shared field's label/category in studio settings can affect future `shared_fields[]` metadata and report column descriptors, but it does not change how values are extracted/merged (the merge key is the engine-aware report descriptor).
 4. **Scope resolution is shared across `/sources`, `/preflight`, and `/run`.** All three endpoints use `TaskReportScopeService` (Layer 1). The same scope input must produce the same resolved show set and task count across all three. If scope resolution diverges between endpoints, the preflight contract is broken.
 5. **`column_map` is presentation metadata only.** It maps columns to their source `template_uid` for display grouping (column headers, visual organization). It does not drive export splitting, row expansion, or any structural transformation. Export is always one flat file.
 6. **Preflight task counts must match run eligibility.** `task_count` only includes submitted tasks that can actually be processed in run (`templateId` and `snapshotId` are both non-null). Unsnapshotted tasks are excluded from both.
@@ -91,21 +90,26 @@ This means:
 
 ### 4.3.1 Column key format and cross-version merging
 
-Column keys depend on whether the field is a **standard field** or a **custom field**:
+Column keys are computed through `getFieldReportDescriptor(snapshot.schema, templateUid, field)`. The descriptor is semantic; it is not always the raw task-content key.
 
-- **Standard fields** (`standard: true` in `snapshot.schema.items`): column key = **`field.key`** (e.g., `gmv`). No template prefix — standard fields merge across all templates.
-- **Custom fields** (`standard` absent or `false`): column key = **`{template_uid}:{field.key}`** (e.g., `tpl_abc123:notes`). Template-scoped — same key in different templates produces separate columns.
+- **v1 shared fields** (`standard: true`): column key = `field.key` (for example `gmv_l1`).
+- **v1 custom fields**: column key = `{template_uid}:{field.key}`.
+- **v2 shared loop fields** (`shared_field_key: "gmv", group: "l1"`): column key = `gmv_l1`.
+- **v2 shared non-loop fields**: column key = `shared_field_key`.
+- **v2 template-local loop fields**: column key = `{template_uid}:{group}:{field.key}`.
+- **v2 template-local non-loop fields**: column key = `{template_uid}:{field.key}`.
 
 This ensures:
 
-- **Standard fields merge across templates.** A `gmv` standard field in 30 different moderation templates produces one `gmv` column. This is the primary mechanism for cross-client reporting.
-- **Same template, different snapshot versions → same column.** Field keys (`key` in `snapshot.schema.items`) are stable across snapshot versions. A field `key: "gmv"` in v1 and `key: "gmv"` in v2 of the same template merge into one column.
+- **Shared fields merge across templates.** A v1 field `key: "gmv_l1", standard: true` and a v2 field `shared_field_key: "gmv", group: "l1"` both produce `gmv_l1`.
+- **Same template, different snapshot versions → same column when descriptor semantics match.** The report descriptor, not raw field storage identity, is the stable reporting contract.
 - **Custom fields from different templates → different columns.** Two templates with custom `key: "notes"` produce `tpl_abc123:notes` and `tpl_xyz789:notes` — distinct columns.
 
 Why this works:
 
-- `TaskTemplateSnapshot.schema.items[].key` is the property name used in `Task.content`. It is user-defined (snake_case, regex-enforced), not auto-generated.
-- When a template is updated, a new snapshot is created but existing field keys are stable. Only adding, removing, or reordering fields changes the schema. Old tasks keep their old snapshot — their `content` keys don't change.
+- `TaskTemplateSnapshot.schema` declares its engine. v1 content is keyed by `field.key`; v2 content is keyed by stable `field.id`.
+- `getFieldContentKey()` and `getFieldReportDescriptor()` keep content extraction and report projection aligned with the snapshot engine.
+- When a template is updated, a new snapshot is created. Old tasks keep their old snapshot and content shape.
 - Adding a new field in a later version means tasks from older versions have `null` for that column — which is the correct behavior.
 
 **Version mismatch handling:**
@@ -190,14 +194,19 @@ Categories are immutable after creation (like key and type). They enable FE sub-
 
 #### 4.6.1 Schema change
 
-`FieldItemBaseSchema` in `@eridu/api-types` gains an optional `standard` property:
+`FieldItemV2Schema` in `@eridu/api-types/task-management` uses `shared_field_key` for canonical reporting links and `id` for content storage:
 
 ```typescript
-standard: z.boolean().optional()
-  .describe('True if this field uses a shared field key. Shared fields merge across templates in reports.')
+{
+  id: 'fld_gmvl800001',
+  key: 'gmv',
+  type: 'number',
+  group: 'l8',
+  shared_field_key: 'gmv',
+}
 ```
 
-When `standard: true`, the report engine uses `field.key` directly as the column key (no template prefix). The `key` must match one defined in the studio's shared fields list.
+When `shared_field_key` is present, the report engine derives the column key with `getFieldReportDescriptor()`. For looped moderation fields, `(shared_field_key: "gmv", group: "l8")` produces the selectable/reportable column `gmv_l8`. The field's submitted value is read from `task.content[field.id]`.
 
 #### 4.6.2 Storage and management
 
@@ -218,7 +227,7 @@ Shared fields are stored in `Studio.metadata.shared_fields[]` — an array of fi
 }
 ```
 
-**Shared fields support any `FieldType`** — not just `number`. Performance KPIs use `number` (category: `metric`), QC evidence fields use `file` or `url` (category: `evidence`), and compliance indicators use `checkbox` or `select` (category: `status`). The merge behavior is the same: fields with the same key + `standard: true` merge across templates into one column. In the export, `file`/`url` columns contain URL strings; in the table, they render as clickable links.
+**Shared fields support any `FieldType`** — not just `number`. Performance KPIs use `number` (category: `metric`), QC evidence fields use `file` or `url` (category: `evidence`), and compliance indicators use `checkbox` or `select` (category: `status`). The merge behavior is descriptor-based: fields with the same `(shared_field_key, group)` merge across templates into one column. In the export, `file`/`url` columns contain URL strings; in the table, they render as clickable links.
 
 **Validation schema** (Zod, in `@eridu/api-types`):
 
@@ -289,20 +298,20 @@ No DELETE — keys are reserved forever once created. Deactivate via `is_active:
 
 #### 4.6.3 Snapshot boundary
 
-When a template author adds a shared field field to a template, the full field definition (key, type, label, `standard: true`, validation rules) is captured in the `TaskTemplateSnapshot.schema.items[]` — just like any other field.
+When a template author adds a shared field to a v2 template, the field's `id`, `key`, `type`, label, `shared_field_key`, `group`, and validation rules are captured in `TaskTemplateSnapshot.schema.items[]` — just like any other field.
 
-**The snapshot is self-contained.** The report engine reads `standard: true` and `field.key` from the snapshot, not from `Studio.metadata`. This means:
+**The snapshot is the extraction source of truth.** The report engine reads field identity and descriptor inputs from the snapshot, then uses `Studio.metadata.shared_fields[]` only for current shared-field display metadata and canonical fallback after legacy registry cleanup. This means:
 
 - If a shared field's label is later updated in studio settings, old snapshots preserve their original label.
 - If a shared field is deactivated (`is_active: false`), existing snapshots that reference it still work — they have the full definition.
-- The report engine never queries `Studio.metadata` at runtime. It only reads `snapshot.schema.items[]`.
+- Removing legacy suffixed entries such as `gmv_l8` from the registry does not break v1 historical snapshots; source discovery and run fall back to the canonical base (`gmv`) when the suffix shape is recognized.
 
 ```
 Studio.metadata.shared_fields[]          ← current list for template editor picker
          ↓ (admin selects when building template)
 TaskTemplateSnapshot.schema.items[]       ← point-in-time record (immutable)
          ↓ (report engine reads)
-Report column with standard: true         ← merges across templates by key
+Report descriptor                         ← merges across templates by semantic key
 ```
 
 This clean separation means shared fields management and reporting are decoupled — changes to the shared fields list never break existing reports.
@@ -310,54 +319,40 @@ This clean separation means shared fields management and reporting are decoupled
 #### 4.6.4 Template editor integration
 
 When building a template, the author (ADMIN or MANAGER) sees two field sources:
-1. **Shared fields** — from `Studio.metadata.shared_fields[]` (only active ones). Selecting one inserts a field with the fixed key, type, and `standard: true`. The author can customize the label and validation rules in the template but **cannot change the key, type, or category** (locked to the shared field definition).
+1. **Shared fields** — from `Studio.metadata.shared_fields[]` (only active ones). Selecting one inserts a v2 field with a stable generated `fld_...` id, the shared key/type, and `shared_field_key` set to the canonical registry key. The author can customize the label and validation rules in the template but **cannot change the shared key, type, or category** (locked to the shared field definition).
 2. **Custom fields** — free-form fields the author defines with their own key. These are the majority of fields in any template.
 
 **Forward-only validation rule:** If a shared field is deactivated (`is_active: false`) after templates already reference it, the behavior is:
 - **Existing snapshots**: unaffected. The snapshot captured the full definition at save time — it is self-contained. Old tasks report correctly.
-- **New snapshots**: the template editor picker hides deactivated fields, so authors cannot add them to new templates. If an existing template already has the field and is re-saved, the field is preserved in the new snapshot (it was already part of the template schema). The `standard: true` flag and key remain valid — deactivation only removes it from the picker, not from the data model.
+- **New snapshots**: the template editor picker hides deactivated fields, so authors cannot add them to new templates. If an existing template already has the field and is re-saved, the field is preserved in the new snapshot (it was already part of the template schema). The `shared_field_key` remains valid — deactivation only removes it from the picker, not from the data model.
 - **No retroactive invalidation**: deactivating a shared field never breaks existing templates or tasks. The state only affects new records going forward.
 
-#### 4.6.5 Template rebuild (alpha-phase migration)
+#### 4.6.5 Template v2 normalization
 
-> **Context**: The system is in alpha testing with production data from Google Sheets. The apps are not yet in real operational usage. This significantly reduces migration risk.
+Active templates are upgraded in place with `apps/erify_api/scripts/normalize-task-template-schemas.ts`. The script:
 
-Existing ~30 moderation templates have shared field fields (GMV, views, etc.) with **different keys per brand template** that need alignment to the shared field vocabulary.
+1. validates current schemas and v2 post-conditions with `--validate-only`,
+2. adds canonical shared-field bases to each studio registry when consistent suffixed families exist,
+3. rewrites active `TaskTemplate.currentSchema` records to `task_template_v2`,
+4. generates stable `fld_...` ids for v2 content storage,
+5. maps approved suffixed shared families to canonical `shared_field_key` values,
+6. creates the matching latest v2 snapshot for future tasks,
+7. optionally removes legacy suffixed shared-field registry entries after v2 templates no longer reference them.
 
-**Strategy: rebuild templates, forward-only for existing data.**
-
-Because we are in alpha, the migration approach is straightforward — rebuild templates from the current Google Sheets source with correct shared field keys from the start. Existing task data (submitted against old snapshots) is **not retroactively migrated**. The shared fields and `standard: true` flags apply to new records only.
-
-**Rationale for forward-only**: What has happened has happened. Existing tasks retain their original snapshot references and content keys. They will appear in reports with template-scoped columns (the old key format) rather than merged shared field columns. This avoids confusion from partial data migration and keeps the boundary clean: old data uses old keys, new data uses standardized keys. Over time, as new tasks are submitted against rebuilt templates, the shared field columns will naturally populate.
-
-**Steps:**
-
-1. **Studio ADMIN creates shared fields** in studio settings (e.g., `gmv` / number, `views` / number). This defines the canonical vocabulary.
-
-2. **Rebuild templates from Google Sheets** — recreate each moderation template using the shared field keys for KPI fields and `standard: true` flag. Brand-specific custom fields are carried over as-is. Each rebuild creates a new snapshot via `updateTemplateWithSnapshot()`.
-
-3. **Verify** — confirm rebuilt templates pass schema validation and that the shared field fields correctly use the canonical keys.
-
-**What this means for reporting:**
-
-- **New tasks** (submitted after rebuild): shared field fields merge across templates as designed. Full cross-template reporting works.
-- **Old tasks** (submitted before rebuild): shared field data appears as template-scoped custom columns (e.g., `tpl_abc:gross_sales` instead of merged `gmv`). The data is still accessible but not merged. This is acceptable for alpha — the volume of old data is small and managers understand the transition.
-- **No data loss**: old snapshots are preserved, old tasks are untouched, old content keys still resolve correctly against their original snapshots.
-
-This approach eliminates the need for a content migration script, `snapshotId` reassignment, or batch processing — the complexity reduction is significant for alpha phase.
+The script does **not** rewrite historical snapshots or existing `Task.content`. v1 snapshots remain readable through engine-routed helpers.
 
 #### 4.6.6 Cross-doc impact
 
-This feature extends the existing task template and studio management systems. The following docs and skills must be updated when shared fields are implemented:
+Shared fields and template schema engines span task templates, studio settings, reporting, uploads, and frontend execution. The following docs and skills stay in sync with this contract:
 
 | Doc / Skill | What to update |
 |-------------|---------------|
-| **Task template design** (if exists) | Template editor gains shared fields picker; `FieldItemBaseSchema` adds `standard` property |
-| **Studio management** | New settings section for shared fields; `Studio.metadata` schema extends |
+| **Task Templates feature doc** | v2 schema engine, field ids, shared descriptors, content-key routing |
+| **Studio management** | Shared-field registry settings and `Studio.metadata` schema |
 | **`erify-authorization` skill** | ADMIN scope gains "manage shared fields"; MANAGER scope gains "read shared fields" |
 | **Role matrix** (`STUDIO_ROLE_USE_CASES_AND_VIEWS.md`) | Add shared-field management row for ADMIN and shared-field catalog read for MANAGER template authoring |
 | **`studio-route-access.ts`** | Add `sharedFields` key for ADMIN |
-| **`@eridu/api-types`** | Add `sharedFieldSchema`, update `FieldItemBaseSchema`, add settings endpoint schemas |
+| **`@eridu/api-types`** | Shared-field schemas, v1/v2 template validators, schema-engine helpers |
 
 ### 4.7 Date presets in definitions
 
@@ -613,13 +608,13 @@ sequenceDiagram
     DB-->>TaskRepo: snapshot schemas
     TaskRepo-->>QS: schemas
 
-    Note over QS: 4. Build field catalog per template,<br/>deduplicate standard fields,<br/>sort templates deterministically
+    Note over QS: 4. Build field catalog per template,<br/>derive shared descriptors,<br/>sort templates deterministically
     QS->>QS: buildSourceCatalog(templates, schemas)
-    Note over QS: For each template:<br/>- extract schema.items[]<br/>- classify standard vs custom<br/>- count submitted tasks<br/>Deduplicate standard fields across templates
+    Note over QS: For each template:<br/>- extract schema.items[]<br/>- compute report descriptors<br/>- count submitted tasks<br/>Deduplicate shared fields across templates
 
-    QS-->>Ctrl: { sources[], standard_fields[] }
+    QS-->>Ctrl: { sources[], shared_fields[] }
     Ctrl-->>FE: Source catalog JSON
-    Note over FE: Render column picker:<br/>Standard Fields group +<br/>per-template Custom Fields groups
+    Note over FE: Render column picker:<br/>Shared Fields group +<br/>per-template Custom Fields groups
 ```
 
 **Query params** (scope filters):
@@ -646,11 +641,12 @@ sources[]:
   submitted_task_count — number of submitted tasks for this template in scope
   fields[]:
     key                — selectable column key sent to run API
-                         (standard: {field_key}, custom: {template_uid}:{field_key})
+                         (engine-aware report descriptor)
     field_key          — raw field key from template snapshot schema
     label              — user-facing label
     type               — field type (text, number, checkbox, etc.)
-    standard           — true if this is a standard field
+    standard           — true for v1 shared fields
+    shared_field_key   — canonical shared-field key for v2 fields and resolved v1 fallbacks
 shared_fields[]:      — deduplicated list of shared fields across all sources
   key
   label
@@ -903,14 +899,12 @@ Each show produces **exactly one row** — no exceptions. All task data for a sh
 For each matched task:
 
 1. read selected field definitions from `snapshot.schema.items`,
-2. for each selected field, compute the column key:
-   - **shared field** (`standard: true`): column key = `field.key` (e.g., `gmv`)
-   - **custom field**: column key = `{template_uid}:{field.key}` (e.g., `tpl_abc:notes`)
-3. pull matching values from `task.content` using `field.key`,
+2. for each selected field, compute the column key with `getFieldReportDescriptor()`,
+3. pull matching values from `task.content` using `getFieldContentKey()`,
 4. normalize by field type,
 5. **merge into the show's single row** using the column key.
 
-**Shared fields** from different templates merge into the same column. If a show has moderation tasks from two different brand templates, both contributing `gmv` (standard), the values share the column key `gmv`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
+**Shared fields** from different templates merge into the same column when their descriptors match. If two moderation templates contribute `(shared_field_key: "gmv", group: "l8")`, both values share the column key `gmv_l8`. Since a show typically has one moderation task, this produces one value. If multiple tasks contribute to the same column on the same show, the duplicate-source handling (§9.4) applies — **the row stays single, conflicts are resolved within it**.
 
 **Custom fields** from different templates produce distinct column keys (`tpl_abc:notes` vs `tpl_xyz:notes`) and appear as **separate columns on the same row**. This is the expected behavior — the manager sees all data for a show in one row, with template-specific columns clearly labeled.
 
@@ -1074,7 +1068,7 @@ All reporting endpoints must return structured, meaningful error responses. Desi
 
 ### 12.1 Template evolution and definition stability
 
-Definitions reference **column keys** (e.g., `gmv`, `tpl_abc:notes`), not snapshot versions. Tasks are fixed to their assigned snapshot via `task.snapshotId` — template updates create new snapshots but don't change existing tasks.
+Definitions reference **column keys** (e.g., `gmv_l8`, `session_review_feedback`, `tpl_abc:notes`), not snapshot versions. Tasks are fixed to their assigned snapshot via `task.snapshotId` — template updates create new snapshots but don't change existing tasks.
 
 This means definitions are inherently stable:
 - Existing tasks' content keys don't change when the template is updated.

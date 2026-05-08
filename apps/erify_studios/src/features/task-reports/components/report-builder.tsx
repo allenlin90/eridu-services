@@ -143,9 +143,6 @@ export function ReportBuilder({
 
     const availableKeys = new Set<string>(Object.values(TASK_REPORT_SYSTEM_COLUMN));
 
-    for (const sharedField of sourceDataForScope.shared_fields) {
-      availableKeys.add(sharedField.key);
-    }
     for (const source of sourceDataForScope.sources) {
       for (const field of source.fields) {
         availableKeys.add(field.key);

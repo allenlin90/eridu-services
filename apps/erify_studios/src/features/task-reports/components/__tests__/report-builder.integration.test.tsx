@@ -2,14 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { TaskReportScope, TaskReportSelectedColumn } from '@eridu/api-types/task-management';
+import type { TaskReportScope, TaskReportSelectedColumn, TaskReportSourcesResponse } from '@eridu/api-types/task-management';
 
 import { ReportBuilder } from '../report-builder';
 
 const mockPreflightMutateAsync = vi.fn();
 const mockRunMutateAsync = vi.fn();
+const mockUseTaskReportSources = vi.fn();
 
 vi.mock('../../hooks/use-task-report-mutations', () => ({
   useTaskReportMutations: vi.fn(() => ({
@@ -25,34 +26,7 @@ vi.mock('../../hooks/use-task-report-mutations', () => ({
 }));
 
 vi.mock('../../hooks/use-task-report-sources', () => ({
-  useTaskReportSources: vi.fn(() => ({
-    data: {
-      shared_fields: [
-        { key: 'gmv', label: 'GMV', type: 'number', category: 'metric', is_active: true },
-      ],
-      sources: [
-        {
-          template_id: 'ttpl_00000000000000000001',
-          template_name: 'Template A',
-          task_type: 'CLOSURE',
-          submitted_task_count: 3,
-          fields: [
-            {
-              key: 'gmv',
-              field_key: 'gmv',
-              label: 'GMV',
-              type: 'number',
-              standard: true,
-              source_template_id: 'ttpl_00000000000000000001',
-              source_template_name: 'Template A',
-            },
-          ],
-        },
-      ],
-    },
-    isLoading: false,
-    isError: false,
-  })),
+  useTaskReportSources: (...args: unknown[]) => mockUseTaskReportSources(...args),
 }));
 
 vi.mock('../report-scope-filters', () => ({
@@ -113,7 +87,43 @@ function renderWithQueryClient(ui: ReactNode) {
   );
 }
 
+const defaultSourcesData: TaskReportSourcesResponse = {
+  shared_fields: [
+    { key: 'gmv', label: 'GMV', type: 'number', category: 'metric', is_active: true },
+  ],
+  sources: [
+    {
+      template_id: 'ttpl_00000000000000000001',
+      template_name: 'Template A',
+      task_type: 'CLOSURE',
+      submitted_task_count: 3,
+      fields: [
+        {
+          key: 'gmv',
+          field_key: 'gmv',
+          label: 'GMV',
+          type: 'number',
+          standard: true,
+          source_template_id: 'ttpl_00000000000000000001',
+          source_template_name: 'Template A',
+        },
+      ],
+    },
+  ],
+};
+
 describe('reportBuilder', () => {
+  beforeEach(() => {
+    mockPreflightMutateAsync.mockReset();
+    mockRunMutateAsync.mockReset();
+    mockUseTaskReportSources.mockReset();
+    mockUseTaskReportSources.mockReturnValue({
+      data: defaultSourcesData,
+      isLoading: false,
+      isError: false,
+    });
+  });
+
   it('keeps run disabled when mandatory date range is missing', () => {
     renderWithQueryClient(
       <ReportBuilderHarness
@@ -155,6 +165,49 @@ describe('reportBuilder', () => {
           source_templates: ['ttpl_00000000000000000099'],
           submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
         }}
+        initialColumns={[{ key: 'gmv', label: 'GMV', type: 'number' }]}
+      />,
+    );
+
+    expect(screen.getByText('Definition Conflict Detected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Preflight/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Run Report/i })).toBeDisabled();
+  });
+
+  it('treats stale bare canonical shared-field keys as incompatible when only loop descriptors exist', () => {
+    mockUseTaskReportSources.mockReturnValue({
+      data: {
+        shared_fields: [
+          { key: 'gmv', label: 'GMV', type: 'number', category: 'metric', is_active: true },
+        ],
+        sources: [
+          {
+            template_id: 'ttpl_00000000000000000001',
+            template_name: 'Template A',
+            task_type: 'ACTIVE',
+            submitted_task_count: 3,
+            fields: [
+              {
+                key: 'gmv_l1',
+                field_key: 'gmv',
+                label: 'GMV (Loop 1)',
+                type: 'number',
+                group: 'l1',
+                shared_field_key: 'gmv',
+                source_template_id: 'ttpl_00000000000000000001',
+                source_template_name: 'Template A',
+              },
+            ],
+          },
+        ],
+      } satisfies TaskReportSourcesResponse,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderWithQueryClient(
+      <ReportBuilderHarness
+        initialScope={{ date_from: '2026-03-01', date_to: '2026-03-07', submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'] }}
         initialColumns={[{ key: 'gmv', label: 'GMV', type: 'number' }]}
       />,
     );
