@@ -1,8 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getTaskContentExtraKey, getTaskContentReasonKey, type UiSchema } from '@eridu/api-types/task-management';
+import {
+  getTaskContentExtraKey,
+  getTaskContentReasonKey,
+  type UiSchema,
+  type UiSchemaV2,
+} from '@eridu/api-types/task-management';
 
 import { JsonForm } from '../json-form';
 
@@ -65,6 +70,42 @@ describe('jsonForm', () => {
     rerender(<JsonForm schema={schema} values={{ live_title: 'not_correct' }} onChange={vi.fn()} />);
 
     expect(screen.getByLabelText('Explanation for Live title')).toBeInTheDocument();
+  });
+
+  it('blocks v2 submission when a triggered explanation is empty', async () => {
+    const onSubmit = vi.fn();
+    const schema: UiSchemaV2 = {
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_livetitle1',
+          key: 'live_title',
+          type: 'select',
+          label: 'Live title',
+          options: [
+            { value: 'correct', label: 'Correct' },
+            { value: 'not_correct', label: 'Not correct' },
+          ],
+          validation: {
+            require_reason: [{ op: 'neq', value: 'correct' }],
+          },
+        },
+      ],
+    };
+
+    const { container } = render(
+      <JsonForm
+        schema={schema}
+        values={{ fld_livetitle1: 'not_correct' }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.submit(container.querySelector('form')!);
+
+    expect(await screen.findByText('Explanation is required for "Live title"')).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it.each([
