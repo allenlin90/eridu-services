@@ -21,6 +21,7 @@ Authoritative source: [PHASE_4.md Architecture Guardrails](../../../docs/roadmap
 - Fixture-based tests on economics aggregation services.
 - Zod schemas from `@eridu/api-types` are the request/response source of truth.
 - No DB internal IDs in public API responses — UIDs only.
+- Actual timestamps and performance/revenue facts are persisted on their narrowest entity scope; calculated finance reference values stay in backend economics read models.
 
 ## Feature Design Index
 

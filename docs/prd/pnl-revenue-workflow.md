@@ -31,7 +31,7 @@ Key questions unanswered today:
 
 | Model / Endpoint                                 | Fields / Behavior                                                          | Status             |
 | ------------------------------------------------ | -------------------------------------------------------------------------- | ------------------ |
-| `ShowPlatform`                                   | `viewerCount` (no GMV/sales yet)                                           | ✅ Exists (partial) |
+| `ShowPlatform`                                   | `viewerCount` (no GMV/sales yet); platform-scoped stream/performance facts belong here or on a platform metrics child model | ✅ Exists (partial) |
 | `GET /studios/:studioId/shows/:showId/economics` | Built by 2.3; returns cost; commission rows remain nullable until revenue  | 🔲 Built by 2.3     |
 | `GET /studios/:studioId/economics`               | Built by 2.3; grouped read                                                 | 🔲 Built by 2.3     |
 | `ShowCreator.commissionRate`                     | Assignment snapshot commission rate; this future PRD applies it to revenue | ✅ Exists           |
@@ -115,6 +115,7 @@ Who enters revenue and when?
 
 - **Revenue absence is not an error** — shows without revenue input keep nullable commission cost for COMMISSION / HYBRID-commission creators.
 - **Per-platform revenue** — revenue is tracked per `ShowPlatform` record, not as a single show-level aggregate, because different platforms may have materially different revenue figures for the same broadcast.
+- **Platform performance is not creator attendance** — platform stream timing, GMV, sales, viewer count, and similar performance facts are scoped to `ShowPlatform` or a dedicated platform metrics child model. Creator-specific actual attendance belongs to `ShowCreator` if that future feature ships.
 - **Contribution margin is derived, not stored** — computed at query time from revenue and cost components. Not persisted.
 - **Commission rate is snapshotted, not read live** — future revenue work multiplies revenue by the rate persisted on `ShowCreator.commissionRate`. `StudioCreator.defaultCommissionRate` is never read at revenue resolution time.
 

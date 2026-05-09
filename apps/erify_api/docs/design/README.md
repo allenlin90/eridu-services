@@ -10,8 +10,9 @@ Active design documents for planned and in-progress features. Once a feature shi
 4. [Material Management](./MATERIAL_MANAGEMENT_DESIGN.md) — Phase 5 candidate
 5. [Ad-hoc Task Ticketing](./AD_HOC_TASK_TICKETING.md) — Planned template-less task creation for pre-production tickets
 6. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
+7. [Compensation Line Items + Actuals Backend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — Phase 4 Wave 2 implementation breakdown
 
 ## Note
 
 - Phase 4 backend cross-feature context is tracked in [../PHASE_4_PNL_BACKEND.md](../PHASE_4_PNL_BACKEND.md); feature-specific design lives in this folder.
-- Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft them from the signed-off PRDs when each workstream starts.
+- Stale Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried pre-simplification assumptions. Active redrafts are listed in the index above.

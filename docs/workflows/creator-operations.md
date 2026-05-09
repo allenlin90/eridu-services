@@ -102,6 +102,7 @@ GET /shows/:id/economics  →  { cost, base_subtotal, line_item_subtotal, unreso
 - Creators are not studio-scoped — the same creator can be assigned to shows across different studios.
 - `ShowCreator.agreedRate` overrides `StudioCreator.defaultRate`; `ShowCreator.compensationType` overrides `StudioCreator.defaultRateType`.
 - `metadata` on `ShowCreator` is for audit context only (`source`, `operator_note`, `tags`) — not executable compensation logic.
+- Creator-scoped actual attendance for a show belongs on `ShowCreator` if that future input is introduced; platform stream/performance facts belong on `ShowPlatform`.
 - `FIXED` and `HOURLY` creator base components are computable from snapshots and time. `COMMISSION` and the commission portion of `HYBRID` require future revenue input.
 
 ## Related Docs

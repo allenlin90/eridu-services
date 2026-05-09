@@ -164,7 +164,29 @@ async processEntity(entityId: bigint) {
 
 ---
 
-## 10. Migration Generation and SQL Customization Policy
+## 10. Recorded Facts and Derived Values
+
+**Rule**: Persist recorded facts on the narrowest scoped table; compute derived finance values in backend read models.
+
+Use typed columns when the fact is queryable, filterable, or part of a calculator input:
+
+| Fact | Recommended persistence |
+| :--- | :--- |
+| Overall show actual start/end | `Show.actualStartTime` / `Show.actualEndTime` |
+| Creator-specific participation start/end | `ShowCreator.actualStartTime` / `ShowCreator.actualEndTime` when that feature ships |
+| Platform stream/performance window or revenue metrics | `ShowPlatform` columns or a `ShowPlatform*Metrics` child table, depending on audit/history needs |
+| Shift labor actual start/end | `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime` |
+
+Avoid:
+- generic `actualStartTime` / `actualEndTime` columns on a parent table when the fact is really child-scoped,
+- storing calculated `projectedCost`, `calculatedCost`, or similar live totals on operational rows,
+- executable formulas in `metadata`.
+
+If the business needs a durable payment, settlement, or frozen reference amount, introduce a purpose-built snapshot/settlement/payment model with explicit authority semantics.
+
+---
+
+## 11. Migration Generation and SQL Customization Policy
 
 **Rule**: New migration files must come from official tooling first, then optionally be customized.
 
@@ -236,7 +258,7 @@ If script-based backfill is chosen:
 
 ---
 
-## 11. Seed Contract Compatibility Gate (Required)
+## 12. Seed Contract Compatibility Gate (Required)
 
 **Rule**: Any schema or service contract change must include a seed/fixture compatibility review.
 

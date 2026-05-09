@@ -135,6 +135,7 @@ Business Rules:
 - MCs can be shared across multiple studios
 - Performance tracking enables quality management
 - Ban status prevents problematic MCs from future bookings
+- Creator-specific participation facts for a show, such as a future actual start/end for one host, belong on the show-creator association rather than the parent show or platform record.
 
 ## Studio Membership
 
@@ -269,6 +270,7 @@ Features:
 - Show-specific notes and feedback
 - Historical performance tracking
 - Admin API for managing MC assignments
+- Future creator-scoped actual attendance should be modeled on this association when the fact differs per creator.
 
 ### Show and Platform
 
@@ -282,6 +284,7 @@ Features:
 - Platform-specific stream links and IDs
 - Viewer count tracking
 - Admin API for managing platform integrations
+- Platform stream, performance, and revenue facts are scoped to this association or a dedicated platform metrics child model, not to `ShowCreator`.
 
 ### Show and Material
 

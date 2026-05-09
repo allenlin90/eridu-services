@@ -17,6 +17,7 @@ Authoritative cross-cutting rules: [PHASE_4.md Architecture Guardrails](../../..
 - Table filter and view state lives in the URL for list/report-oriented features.
 - Version-guarded write paths treat `409` as refetch + user-review flow.
 - Projected, actual-backed, planned-fallback, pending, and unresolved labels are explicit in finance UI; never collapse them into a single ambiguous "actual" number.
+- Actuals input/read surfaces are resource-scoped in labels, query keys, and API calls: show actuals, creator participation actuals, platform performance actuals, and shift-block actuals are distinct concepts.
 - Compensation views surface `actuals_source` and the recipient pending/countable-total rules per the [cost-model actuals priority cascade](../../../docs/prd/economics-cost-model.md#actuals-priority-cascade-extension-point).
 - FE never recomputes finance arithmetic locally; all monetary numbers come from the API as `Prisma.Decimal`-serialized strings.
 - Loading, empty, null, and unresolved reference states are explicit on every economics and compensation surface.

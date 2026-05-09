@@ -70,7 +70,7 @@ When a creator is assigned to a show, `ShowCreator` persists `agreedRate`, `comp
 
 - Reads use the snapshot. Source-table edits (`StudioCreator.defaultRate`, `StudioMembership.baseHourlyRate`) never rewrite existing snapshots.
 - Snapshot fields (`ShowCreator.agreedRate`, `compensationType`, `commissionRate`; `StudioShift.hourlyRate`) are **intended-immutable**. ADMIN and MANAGER may update them through normal edit surfaces; the UI shows a warning explaining the downstream impact (historical references and cost rollups will recompute).
-- Each update appends an entry to the existing metadata-audit trail capturing `{field, old, new, actorId, at, reason?}`. **No dedicated audit table.** The metadata trail is the audit.
+- Each update appends one entry to the row's `metadata.audit.snapshot_overrides[]` array (chronological; snake_case keys `field`, `old_value`, `new_value`, `actor_ext_id`, `at`, optional `reason`). Internal database IDs are never written into `metadata`. **No dedicated audit table.** The metadata trail is the audit.
 
 ### Compensation components
 
@@ -89,6 +89,19 @@ The component model is the extension point for future commission variants and th
 
 - `Show.actualStartTime` / `Show.actualEndTime` — nullable, entered any time.
 - `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime` — nullable, entered any time.
+
+#### Actual ownership and scope
+
+Actual timestamps are recorded facts, not calculated money. Store each actual on the narrowest entity whose fact it represents:
+
+| Scope | Meaning |
+| ----- | ------- |
+| `Show` | Overall operational show window. |
+| `ShowCreator` | One creator's participation window for a show, if creator-scoped actuals are introduced later. This matters for multi-creator shows, late joins, early leaves, or creator-specific hourly components. |
+| `ShowPlatform` | One platform stream/performance window for a show-platform pairing, if platform-scoped actuals are introduced later. This is the correct home for platform-sourced performance/revenue facts and future commission attribution inputs. |
+| `StudioShiftBlock` | One operator/member labor window. |
+
+The calculator should prefer the most specifically scoped actual for the component being calculated. Show actuals are valid for event-level duration and fallback, but they must not be treated as creator attendance or platform performance when narrower facts exist.
 
 No state machine, no settlement, no approval. Actuals may be absent, complete, or incomplete:
 
