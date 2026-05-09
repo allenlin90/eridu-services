@@ -91,7 +91,7 @@ Use `registerType: 'prompt'` or `registerType: 'autoUpdate'`.
 ### 2. Assets and Icons
 - **Maskable Icons:** Always provide `purpose: 'any maskable'` icons for Android compatibility.
 - **Theme Color:** Sync the `theme_color` in `manifest.json` with the `<meta name="theme-color">` in `index.html` and the app's CSS variables.
-- **SPA Fallback URL:** If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'` instead of relying on the default `index.html`. Otherwise navigation requests can fail with browser errors about service-worker responses containing redirections.
+- **SPA Fallback URL:** If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'` instead of relying on the default `index.html`. Also add `/` to Workbox precaching with `templatedURLs: { '/': ['index.html'] }`; `createHandlerBoundToURL('/')` throws `non-precached-url` unless `/` is present in the precache manifest. Otherwise navigation requests can fail with browser errors about service-worker responses containing redirections.
 
 ### 3. Offline UX
 - **Connectivity Status:** Implement a hook (e.g., `useOnlineStatus`) to show a non-intrusive banner when the app is offline.

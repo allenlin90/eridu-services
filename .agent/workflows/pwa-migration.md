@@ -20,7 +20,7 @@ Use this workflow when enabling or hardening PWA shell behavior in frontend apps
 3. Centralize service-worker registration in app runtime code.
 4. Register with `registerType: 'prompt'`, add periodic update checks, and install a controller-change reload guard that (a) bypasses iOS entirely and (b) caps forced reloads to once per tab session on other platforms (session-storage backed).
 5. On iOS, keep the waiting worker pending and expose an explicit "apply update" path (e.g. Check-for-Updates button) rather than reloading automatically.
-6. If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'`.
+6. If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'` and add `/` to the precache manifest with `templatedURLs: { '/': ['index.html'] }`. Workbox's `createHandlerBoundToURL()` requires the fallback URL itself to be precached.
 7. Add a user-facing recovery path that unregisters SW + clears caches + reloads.
 8. Document update and recovery behavior in app docs.
 
@@ -47,4 +47,3 @@ Manual checks:
 - installed-iOS update behavior: deploy new shell, confirm no reload loop and that "Check for updates" applies the waiting worker,
 - cache cleanup,
 - recovery action success.
-

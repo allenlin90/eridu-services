@@ -17,7 +17,7 @@ Push notification delivery and advanced offline mutation workflows are intention
   - initial + periodic update checks run automatically,
   - non-iOS browsers auto-apply the waiting worker once per tab session,
   - iOS browsers keep the waiting worker pending and require an explicit apply path to avoid standalone reload loops.
-- Navigation fallback is bound to `/` rather than `index.html` so hosts that canonicalize `index.html` do not return redirected document responses through the service worker.
+- Navigation fallback is bound to `/` rather than `index.html` so hosts that canonicalize `index.html` do not return redirected document responses through the service worker. `/` is also registered as a Workbox templated precache URL backed by `index.html`; otherwise `createHandlerBoundToURL('/')` fails with `non-precached-url`.
 - API responses remain `NetworkOnly` in service worker runtime caching to avoid double-caching with TanStack Query persistence.
 
 ## Recovery Entry Point
