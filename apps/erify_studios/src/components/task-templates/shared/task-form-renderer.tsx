@@ -1,6 +1,7 @@
 import { Eye, File as FileIcon, Upload, X } from 'lucide-react';
 import { memo, useState } from 'react';
 
+import { shouldShowReasonField } from '@eridu/api-types/task-management';
 import {
   Button,
   Checkbox,
@@ -19,7 +20,7 @@ import {
 import type { BuilderTemplateSchemaType, FieldItem } from '../builder/schema';
 
 import { MultiSelect } from './multi-select';
-import { shouldShowReason, validateField } from './validation-utils';
+import { validateField } from './validation-utils';
 
 const FieldRenderer = memo(({ index, field, readOnly }: { index?: number; field: FieldItem; readOnly: boolean }) => {
   const [value, setValue] = useState<any>(
@@ -33,7 +34,7 @@ const FieldRenderer = memo(({ index, field, readOnly }: { index?: number; field:
     setError(validationError);
   };
 
-  const showReason = shouldShowReason(field, value);
+  const showReason = shouldShowReasonField(field, value);
 
   const renderInput = () => {
     if (readOnly) {
