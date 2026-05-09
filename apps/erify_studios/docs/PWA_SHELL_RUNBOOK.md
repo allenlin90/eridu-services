@@ -7,6 +7,8 @@ This runbook covers app-shell PWA behavior for `erify_studios`:
 - service worker lifecycle and updates,
 - service worker/cache recovery.
 
+Feature-level context lives in [Frontend PWA App Shell](../../../docs/features/frontend-pwa-app-shell.md).
+
 Push notification delivery and advanced offline mutation workflows are intentionally deferred.
 
 ## Update Policy

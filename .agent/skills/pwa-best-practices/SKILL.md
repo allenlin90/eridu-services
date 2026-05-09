@@ -12,7 +12,7 @@ This skill provides architectural guidelines and patterns for building and maint
 Use this skill when introducing or refining PWA support in `apps/erify_studios` and `apps/erify_creators`.
 
 - Prefer an app-by-app rollout with one canonical migration checklist.
-- Start with `erify_studios` as the benchmark implementation.
+- Start with `erify_studios` as the benchmark implementation, documented in `docs/features/frontend-pwa-app-shell.md` and `apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md`.
 - Reuse the same PWA conventions in other FE apps unless there is a documented product constraint.
 - Keep changes incremental: infra/bootstrap first, then offline UX and advanced sync.
 
