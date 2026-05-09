@@ -7,11 +7,12 @@ Design/proposal/in-progress documents for `erify_studios`.
 1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned follow-up for studio resolve UX
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
 3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 3.3 strict availability UX
+4. [Compensation Line Items + Actuals Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — Phase 4 Wave 2 implementation breakdown
 
 ## Note
 
 - Phase 4 frontend cross-feature context is tracked in [../PHASE_4_PNL_FRONTEND.md](../PHASE_4_PNL_FRONTEND.md); feature-specific design lives in this folder.
-- Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft them from the signed-off PRDs when each workstream starts.
+- Stale Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried pre-simplification assumptions. Active redrafts are listed in the index above.
 - Promoted canonical frontend references now live at:
   - [../STUDIO_CREATOR_ROSTER.md](../STUDIO_CREATOR_ROSTER.md)
   - [../STUDIO_CREATOR_ONBOARDING.md](../STUDIO_CREATOR_ONBOARDING.md)
