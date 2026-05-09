@@ -12,7 +12,7 @@ This skill provides architectural guidelines and patterns for building and maint
 Use this skill when introducing or refining PWA support in `apps/erify_studios` and `apps/erify_creators`.
 
 - Prefer an app-by-app rollout with one canonical migration checklist.
-- Start with `erify_studios` as the benchmark implementation.
+- Start with `erify_studios` as the benchmark implementation, documented in `docs/features/frontend-pwa-app-shell.md` and `apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md`.
 - Reuse the same PWA conventions in other FE apps unless there is a documented product constraint.
 - Keep changes incremental: infra/bootstrap first, then offline UX and advanced sync.
 
@@ -91,7 +91,7 @@ Use `registerType: 'prompt'` or `registerType: 'autoUpdate'`.
 ### 2. Assets and Icons
 - **Maskable Icons:** Always provide `purpose: 'any maskable'` icons for Android compatibility.
 - **Theme Color:** Sync the `theme_color` in `manifest.json` with the `<meta name="theme-color">` in `index.html` and the app's CSS variables.
-- **SPA Fallback URL:** If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'` instead of relying on the default `index.html`. Otherwise navigation requests can fail with browser errors about service-worker responses containing redirections.
+- **SPA Fallback URL:** If the production host canonicalizes `/index.html` to `/`, set Workbox `navigateFallback: '/'` instead of relying on the default `index.html`. Also add `/` to Workbox precaching with `templatedURLs: { '/': ['index.html'] }`; `createHandlerBoundToURL('/')` throws `non-precached-url` unless `/` is present in the precache manifest. Otherwise navigation requests can fail with browser errors about service-worker responses containing redirections.
 
 ### 3. Offline UX
 - **Connectivity Status:** Implement a hook (e.g., `useOnlineStatus`) to show a non-intrusive banner when the app is offline.

@@ -112,7 +112,7 @@
 - react-hook-form 7.68.0
 - sonner 2.0.7 (toasts)
 - usehooks-ts 3.1.1
-- PWA shell via `vite-plugin-pwa`; Workbox SPA navigation fallback should bind to `/` rather than `index.html` on hosts that canonicalize `index.html`
+- PWA shell via `vite-plugin-pwa`; `docs/features/frontend-pwa-app-shell.md` and `apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md` are the canonical shipped references. Workbox SPA navigation fallback should bind to `/` rather than `index.html` on hosts that canonicalize `index.html`, and `/` must be included in the precache manifest via `templatedURLs: { '/': ['index.html'] }`
 - Runtime update policy is `prompt`-based so non-iOS browsers can auto-apply while iOS keeps updates pending until explicitly applied
 
 ### Browser Upload Notes
