@@ -30,7 +30,19 @@ A studio `compensation/line-items` or economics review workspace can be introduc
 
 ### Shift cost columns are a separate cleanup
 
-Dropping `StudioShift.projectedCost` and `StudioShift.calculatedCost` affects existing backend responses, frontend UI, and fixtures. That cleanup is intentionally isolated from the line-item and actuals workflows.
+Dropping `StudioShift.projectedCost` (currently `Decimal NOT NULL`) and `StudioShift.calculatedCost` affects existing backend responses, frontend UI, and fixtures. That cleanup is intentionally isolated from the line-item and actuals workflows. Because `projectedCost` is `NOT NULL`, the cleanup PR removes every writer in the same change set; a partial PR cannot land first.
+
+### Actuals fold into existing update routes
+
+Show actuals and shift-block actuals are added as optional fields on the existing `PATCH /studios/:studioId/shows/:showId` and shift-block update routes. There is no separate `/actuals` sub-resource. This keeps a single write path per resource and avoids two endpoints racing on the same row.
+
+### Studio scope is required on attached targets
+
+`CompensationLineItem.studioId` is `NOT NULL`. Targets whose owning studio cannot be resolved (currently: `Show.studioId IS NULL`, i.e. orphan / client-only shows) are rejected with `LINE_ITEM_TARGET_NOT_FOUND`. Client-only-show finance is intentionally out of scope; revisit only if a real product need lands.
+
+### Snapshot audit shape is an array
+
+`metadata.audit.snapshot_overrides` is an array of `{field, old_value, new_value, actor_ext_id, at, reason?}` entries with snake_case keys, in chronological order. This deviates from the single-object `metadata.audit.last_transition` pattern in `task.service.ts` because snapshot edits are rare and full history matters. Internal BigInt IDs are never written into `metadata`; `actor_ext_id` is the user's string ext id.
 
 ## PR Breakdown
 
@@ -50,18 +62,34 @@ Backend:
 
 - `/admin/compensation-line-items` accepts explicit `studio_id`, `target_type`, and `target_uid`.
 - Studio routes infer the target from the route and do not ask the client to select a target on create.
-- Actuals mutations are resource-specific: `setShowActualsInputSchema` and `setStudioShiftBlockActualsInputSchema`.
+- Actuals are part of the existing `updateStudioShowInputSchema` and the existing block update schema, not standalone setter schemas.
+- Studio target-scoped line-item write access is restricted to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER`. `TALENT_MANAGER` may continue to read assignments but does not gain finance write access in 2.2.
 - Snapshot audit append uses existing row `metadata`; no new audit table ships.
 
 Frontend:
 
 - `/system/compensation-line-items` is system-admin support tooling.
 - Studio workflow UI mounts target-scoped panels in show and shift workflows.
+- Show actuals and block actuals UI piggyback on the existing show / shift-block update mutations; no parallel mutation is introduced.
 - Future economics review screens consume backend read models and do not calculate money locally.
 
 ## Rollout Strategy
 
-- Merge each PR independently when it has isolated product value and verification.
+PR dependency order:
+
+```
+PR 1A ──┬──▶  PR 2  ──┬──▶  PR 4 (also depends on PR 3)
+        │             └──▶  PR 5 (also depends on PR 3)
+        └──▶  PR 1B
+PR 3 ─────────────────┘ (PR 4/5 require PR 3 for actuals fields on the existing update DTOs)
+cleanup PR is independent of all of the above.
+```
+
+- PR 1A and PR 3 are independent of each other; both can land first.
+- PR 2 needs PR 1A's model and contracts.
+- PR 1B needs PR 1A's admin endpoints.
+- PR 4/5 need both PR 2 (line-item APIs) and PR 3 (actuals fields on the existing update DTOs).
+- Merge each PR independently once its workflow is complete, tested, and safe to deploy.
 - Include minimal contract-sync changes in a PR only when needed to keep the monorepo compiling.
 - Group intentionally breaking shared-contract removals with affected consumers, especially the shift cost cleanup.
 - Use PR descriptions for rollout evidence and manual smoke notes.

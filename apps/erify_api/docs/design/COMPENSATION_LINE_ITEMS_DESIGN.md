@@ -18,8 +18,8 @@ This backend design covers:
 - a polymorphic `CompensationLineItem` model for event-attached supplemental cost rows;
 - system-admin CRUD for support and reconciliation;
 - studio target-scoped line-item APIs where the target is inferred from the route;
-- nullable show actuals (`Show.actualStartTime` / `Show.actualEndTime`);
-- nullable shift-block actuals (`StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime`);
+- nullable show actuals (`Show.actualStartTime` / `Show.actualEndTime`) added to the existing `PATCH /studios/:studioId/shows/:showId` route;
+- nullable shift-block actuals (`StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime`) added to the existing shift-block update route;
 - snapshot-override audit append on future `ShowCreator` agreement edits and `StudioShift.hourlyRate` edits;
 - a separate cleanup PR for `StudioShift.projectedCost` and `StudioShift.calculatedCost`.
 
@@ -50,16 +50,17 @@ Frontend implementation lands in separate workflow PRs after the corresponding b
 
 ## Hard Invariants
 
-1. **Polymorphic attachment with typed FKs.** `CompensationLineItem` uses a `targetType` enum discriminator plus `targetId BigInt` and nullable typed FK columns (`showId`, `showCreatorId`, `studioShiftId`, `studioShiftBlockId`). Unsupported target types are rejected at write time. The pattern mirrors `TaskTarget`.
+1. **Polymorphic attachment with typed FKs.** `CompensationLineItem` uses a `targetType` enum discriminator plus `targetId BigInt` and nullable typed FK columns (`showId`, `showCreatorId`, `studioShiftId`, `studioShiftBlockId`). Unsupported target types are rejected at write time. The pattern follows `TaskTarget` for shape, but `targetType` is a Prisma enum (not `String` like `TaskTarget.targetType`) because this is financial data and the discriminator set is closed.
 2. **Money is `Prisma.Decimal` end-to-end.** `amount` is signed `Decimal(12, 2)` and serialized as a string at the API boundary. No sign enforcement ships in Phase 4.
 3. **`reason` is required.** Stored as plain text and returned in read responses. Empty or whitespace-only values are rejected.
 4. **Date inclusion derives from the attached event.** The model has no `effectiveDate`; 2.3 filters line items by the attached event's time.
 5. **Base compensation is never persisted as a line item.** 2.3 generates base rows from `ShowCreator` and `StudioShift` snapshots.
 6. **Show/block actuals are nullable, free-write facts.** No approval, freeze, settlement, or grace fields ship in 2.2.
-7. **Snapshot override audits append to `metadata.audit.snapshot_overrides[]`.** No separate audit table. The array carries `{field, old, new, actorId, at, reason?}` per edit.
-8. **External APIs use UIDs only.** Internal BigInt IDs never leave the service boundary.
+7. **Snapshot override audits append to `metadata.audit.snapshot_overrides[]` as an array** of `{field, old_value, new_value, actor_ext_id, at, reason?}` entries, snake_case keys, in chronological order. No internal BigInt IDs are written into `metadata`. The array shape deviates from the single-object `metadata.audit.last_transition` pattern in [task.service.ts](../../src/models/task/task.service.ts) because snapshot edits benefit from full history.
+8. **External APIs use UIDs only.** Internal BigInt IDs never leave the service boundary, including persisted `metadata` payloads.
 9. **Reads exclude soft-deleted rows by default.** `includeDeleted` is permitted only on admin/audit support surfaces.
 10. **Mutations run inside `@Transactional()`.** Snapshot audit append, target resolution, and the underlying write are atomic.
+11. **Studio scope is required.** `CompensationLineItem.studioId` is `NOT NULL`. Targets whose own studio scope cannot be resolved (currently: `Show.studioId IS NULL`) are rejected with `LINE_ITEM_TARGET_NOT_FOUND`. Client-only-show finance is out of scope; revisit only if a real product need lands.
 
 ## Actuals Scope Reference
 
@@ -130,14 +131,22 @@ enum CompensationLineItemTargetType {
 - `actualStartTime DateTime?`
 - `actualEndTime DateTime?`
 
+Both follow the existing `startTime` / `endTime` storage convention on the same models. Time-zone semantics match the existing scheduled fields (Prisma `DateTime`, UTC at the storage layer; client/serializer behavior unchanged).
+
 ### Cleanup PR: shift cost fields
 
 Remove both stored cost columns in a separate migration:
 
-- `StudioShift.projectedCost`
-- `StudioShift.calculatedCost`
+- `StudioShift.projectedCost` — currently `Decimal NOT NULL`. Removing the column requires removing every writer in the same PR; a partial change cannot land alone because creating a shift today fails without `projectedCost`.
+- `StudioShift.calculatedCost` — `Decimal?`.
 
-This cleanup PR updates all producers and consumers in the same change set.
+The cleanup PR scope:
+
+- Backend: drop columns in a Prisma-generated migration; remove writes in `apps/erify_api/src/models/studio-shift/`, every shift orchestration path under `apps/erify_api/src/orchestration/shift-calendar/`, and any read-model serialization in `packages/api-types/src/studio-shifts/`.
+- Frontend: remove cost cells, summary cards, form fields, mocks, and fixtures in `apps/erify_studios/src/features/studio-shifts/` and any calendar surfaces.
+- Tests/specs that assert on these columns are updated in the same PR.
+
+The 98 in-tree references at the time of this design (rg `projectedCost|calculatedCost|projected_cost|calculated_cost`) are a search hint, not a final checklist.
 
 ## API Surface
 
@@ -162,16 +171,22 @@ The admin route is support tooling. It is not the primary studio workflow.
 | `/studios/:studioId/shifts/:shiftId/compensation-line-items` | shift | `ADMIN`, `MANAGER` |
 | `/studios/:studioId/shifts/:shiftId/blocks/:blockId/compensation-line-items` | shift block | `ADMIN`, `MANAGER` |
 
+All four families restrict write access to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER` regardless of who can read the parent target. `TALENT_MANAGER` may read assignments today but does not get write access to compensation line items in 2.2; widening the role surface is a Phase 5 product call.
+
 Each family supports list, create, update, and soft delete for that route target. Create bodies contain `amount`, `item_type`, `reason`, and optional `metadata`; the client does not send `target_type` or `target_uid` on contextual create.
 
 ### PR 3: actuals and snapshot readiness
 
-| Endpoint | Purpose | Roles |
-| -------- | ------- | ----- |
-| `PATCH /studios/:studioId/shows/:showId/actuals` | Set/clear `actual_start_time` / `actual_end_time` | `ADMIN`, `MANAGER` |
-| `PATCH /studios/:studioId/shifts/:shiftId/blocks/:blockId/actuals` | Set/clear block actuals | `ADMIN`, `MANAGER` |
+Actuals are added to the existing update routes rather than introduced as separate sub-resources. This keeps a single write path per resource and avoids two endpoints racing on the same row.
+
+| Endpoint | Change | Roles |
+| -------- | ------ | ----- |
+| `PATCH /studios/:studioId/shows/:showId` | Accept optional `actual_start_time` / `actual_end_time` in `UpdateStudioShowDto`; null clears the field | `STUDIO_SHOW_WRITE_ACCESS_ROLES` (ADMIN, MANAGER) |
+| `PATCH /studios/:studioId/shifts/:shiftId/blocks/:blockId` | Accept optional `actual_start_time` / `actual_end_time` on the existing block update DTO; null clears the field | `ADMIN`, `MANAGER` |
 | existing show-creator assignment update | Append audit when `agreed_rate`, `compensation_type`, or `commission_rate` changes | existing roles |
 | existing shift update | Append audit when `hourly_rate` changes | existing roles |
+
+If the existing shift-block update route does not yet exist in `apps/erify_api/src/studios/studio-shift/`, this PR introduces it as a normal block update endpoint that includes actuals fields in its DTO. There is no separate `/actuals` sub-resource.
 
 Route params use `UidValidationPipe` with the appropriate prefix. Studio routes use the existing `@StudioProtected(...)` guard and the route `studioId` as the scoping authority.
 
@@ -195,10 +210,12 @@ Required schemas:
 - `compensationLineItemApiResponseSchema`
 - `compensationLineItemListResponseSchema`
 
-Show and shift actuals reuse existing resource folders:
+Show and shift actuals are folded into the existing update DTOs in their resource folders:
 
-- `packages/api-types/src/shows/schemas.ts` -> `setShowActualsInputSchema`
-- `packages/api-types/src/studio-shifts/schemas.ts` -> `setStudioShiftBlockActualsInputSchema`
+- `packages/api-types/src/shows/schemas.ts` — `updateStudioShowInputSchema` gains optional `actual_start_time` / `actual_end_time` (nullable to support clear).
+- `packages/api-types/src/studio-shifts/schemas.ts` — the shift-block update schema gains the same two fields.
+
+Field names stay resource-specific in their containing schema. Future `ShowCreator` participation actuals or `ShowPlatform` performance actuals get their own scoped fields on those resources when introduced; they are not aliases of show actuals.
 
 `amount` round-trips as a string at the API boundary.
 
@@ -225,8 +242,8 @@ apps/erify_api/src/lib/audit/snapshot-audit.helper.ts
 
 Modifications:
 
-- `apps/erify_api/src/studios/studio-show/` adds show actuals and show/show-creator line-item routes.
-- `apps/erify_api/src/studios/studio-shift/` adds shift/shift-block line-item routes and block actuals.
+- `apps/erify_api/src/studios/studio-show/` extends the existing `PATCH /shows/:id` route to accept show actuals and adds the show / show-creator line-item routes.
+- `apps/erify_api/src/studios/studio-shift/` extends the existing block update route (or adds it if absent) to accept block actuals, and adds shift / shift-block line-item routes.
 - `apps/erify_api/src/show-orchestration/show-orchestration.service.ts` persists future assignment snapshot fields from explicit input or resolvable current defaults, and marks unresolved rows only at write time.
 - `apps/erify_api/src/models/studio-shift/` drops stored cost fields only in the cleanup PR.
 
@@ -242,8 +259,12 @@ Reuse:
 
 1. Resolve the actor from `@CurrentUser().ext_id` to an internal `User`.
 2. Resolve studio scope from either admin body `studio_id` or the studio route param.
-3. Resolve the target through `LineItemTargetResolver`.
-4. Reject missing, soft-deleted, or cross-studio targets with `LINE_ITEM_TARGET_NOT_FOUND`.
+3. Resolve the target through `LineItemTargetResolver`. Each target type traverses to its owning studio:
+   - `SHOW` → load `Show` and read `Show.studioId`. Reject if `studioId IS NULL` (orphan / client-only show) with `LINE_ITEM_TARGET_NOT_FOUND`.
+   - `SHOW_CREATOR` → load `ShowCreator`, then its `Show`, then `Show.studioId`. Same orphan rule.
+   - `STUDIO_SHIFT` → load `StudioShift` and read its `studioId` (NOT NULL).
+   - `STUDIO_SHIFT_BLOCK` → load `StudioShiftBlock`, then its `StudioShift`, then `studioId`.
+4. Reject missing, soft-deleted, or cross-studio (resolved studio ≠ caller scope) targets with `LINE_ITEM_TARGET_NOT_FOUND`.
 5. Insert one row with `targetId` and exactly one typed FK populated.
 6. Return the freshly read row through the shared response schema.
 
@@ -260,22 +281,36 @@ Reuse:
 2. Set `deletedAt = now()`.
 3. Exclude soft-deleted rows from default reads and future 2.3 calculator inputs.
 
-### Set/clear actuals
+### Set/clear actuals (within the existing show / shift-block update routes)
 
 1. Load the show or shift block scoped to the route studio.
-2. Allow either side to be `null` independently.
-3. If both actual timestamps are present, reject `actual_end_time <= actual_start_time`.
-4. Persist the actual fields directly. No actuals audit table ships in 2.2.
+2. If `actual_start_time` or `actual_end_time` is present in the payload, treat it as a write (including explicit `null` to clear).
+3. Allow either side to be `null` independently.
+4. If both actual timestamps end up non-null after the update, reject `actual_end_time <= actual_start_time`.
+5. Persist the actual fields directly. No actuals audit table ships in 2.2.
+6. Actuals writes coexist with other field writes in the same `PATCH` because there is one update path per resource. Snapshot-audit append (below) still triggers only on snapshot fields.
 
 ### Snapshot edit on assignment / shift
 
 1. Load the row in the transaction.
-2. Diff incoming payload against the loaded snapshot fields:
+2. Diff incoming payload against the loaded snapshot fields. Use `Prisma.Decimal.equals()` for `agreedRate`, `commissionRate`, and `hourlyRate` to avoid string/precision false positives:
    - `ShowCreator.{agreedRate, compensationType, commissionRate}`
    - `StudioShift.hourlyRate`
-3. For each changed snapshot field, append `{field, old, new, actorId, at, reason?}` to `metadata.audit.snapshot_overrides[]`.
+3. For each changed snapshot field, append one entry to `metadata.audit.snapshot_overrides[]` (array, chronological):
+
+   ```jsonc
+   {
+     "field": "agreed_rate",
+     "old_value": "120.00",          // Decimal serialized as string; null if cleared
+     "new_value": "150.00",
+     "actor_ext_id": "user_abc123",  // string ext id, never internal BigInt
+     "at": "2026-05-09T08:30:00.000Z",
+     "reason": "operator note text"  // optional; only present if supplied
+   }
+   ```
 4. Persist field changes and metadata in one update.
 5. Non-snapshot fields update normally with no audit append.
+6. The single-object `metadata.audit.last_transition` pattern from `task.service.ts` is intentionally not reused here. Snapshot edits benefit from full ordered history, and the array shape is documented as the canonical snapshot-audit format.
 
 ## No Historical Repair
 
@@ -286,14 +321,15 @@ Reuse:
 | Code | HTTP | Meaning |
 | ---- | ---- | ------- |
 | `LINE_ITEM_NOT_FOUND` | 404 | UID missing, soft-deleted, or outside caller scope |
-| `LINE_ITEM_TARGET_NOT_FOUND` | 404 | Attached entity missing, soft-deleted, or outside studio |
-| `LINE_ITEM_TARGET_UNSUPPORTED` | 422 | `target_type` outside supported enum |
+| `LINE_ITEM_TARGET_NOT_FOUND` | 404 | Attached entity missing, soft-deleted, outside studio, or unable to resolve a studio scope (e.g. `Show.studioId IS NULL`) |
 | `LINE_ITEM_AMOUNT_REQUIRED` | 422 | Missing or non-numeric `amount` |
 | `LINE_ITEM_REASON_REQUIRED` | 422 | Missing or whitespace-only `reason` |
 | `SHOW_NOT_FOUND` | 404 | Show missing or outside studio |
 | `SHIFT_BLOCK_NOT_FOUND` | 404 | Block missing or outside studio |
 | `SHOW_ACTUALS_INVERTED` | 422 | `actual_end_time <= actual_start_time` when both present |
 | `SHIFT_BLOCK_ACTUALS_INVERTED` | 422 | Same for block actuals |
+
+Unsupported `target_type` values are rejected by Zod enum validation as `400` before reaching the service, so a dedicated business-error code is unnecessary.
 
 Validation library errors are mapped through the existing `HttpError` utility per repo convention.
 
@@ -333,7 +369,8 @@ Migration smoke for schema PRs:
 
 ## Rollout Notes
 
-- PR 1A, PR 2, and PR 3 can ship independently when each passes its own tests.
-- Frontend workflow PRs can follow the corresponding backend API PRs.
-- The shift cost cleanup PR is coordinated because removing the columns changes existing API responses and FE fixtures.
+- **PR dependency order is not flat.** PR 1A is a hard prerequisite for PR 2 (studio target APIs reuse the model and contracts) and for PR 3 only where line items appear in actuals-related tests. PR 4 depends on PR 2 + PR 3. PR 5 depends on PR 2 + PR 3.
+- PR 1A and PR 3 can land in either order; both are independent of each other once contracts are merged.
+- Frontend workflow PRs (PR 1B, PR 4, PR 5) follow the corresponding backend API PRs.
+- The shift cost cleanup PR is coordinated because `StudioShift.projectedCost` is currently `NOT NULL`; removing the column requires removing every writer in the same PR. FE fixtures that read these fields are removed in the same PR.
 - No data backfill command exists for 2.2.

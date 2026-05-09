@@ -128,10 +128,12 @@ Mutation invalidation:
 | -------- | ----------- |
 | System create/update/delete | system list + target list when target is known |
 | Target-scoped create/update/delete | target list + parent target detail |
-| Set/clear show actuals | existing show detail key |
-| Set/clear block actuals | existing shift detail/list keys |
+| Show update (now includes actuals) | existing show detail / list keys |
+| Shift-block update (now includes actuals) | existing shift detail / list / calendar keys |
 | Snapshot edit on assignment | assignment/creator list key + show detail key |
 | Snapshot edit on shift `hourlyRate` | existing shift key |
+
+Show actuals and block actuals do not get their own mutations on the FE; they ride the existing show / shift-block update mutations and inherit those invalidation surfaces.
 
 No optimistic updates. Compensation inputs feed read-only economics views downstream, so consistency outranks perceived latency.
 
@@ -159,6 +161,7 @@ Searchable inputs must hit real scoped APIs. No no-op `onSearch` handlers or sil
 
 - System support route is visible only to system admins.
 - Studio target-scoped line-item and actuals surfaces are visible to studio `ADMIN` and `MANAGER`.
+- `TALENT_MANAGER` may continue to read show-creator assignments but does not see compensation-line-item write controls in 2.2; the role surface for finance writes stays narrow.
 - Other studio roles do not see 2.2 input surfaces.
 - Recipient self-views for creator/operator/helper ship with 2.3.
 
@@ -175,13 +178,17 @@ When a user submits an existing assignment edit or shift edit form:
 5. Cancel returns to the form without losing input.
 6. Non-snapshot edits skip the dialog.
 
+The backend records each confirmed override as one entry in `metadata.audit.snapshot_overrides[]` (array, chronological, snake_case keys, `actor_ext_id` as a string). The FE does not need to read this audit array in 2.2 — read-side rendering of override history lands with 2.3 economics views.
+
 ## Actuals Input Flow
 
+- Show actuals fields are part of the existing `PATCH /studios/:studioId/shows/:showId` payload (`UpdateStudioShowDto`); shift-block actuals fields are part of the existing block update payload. There is no separate `/actuals` sub-resource.
 - Show actuals represent the overall show window.
 - Shift-block actuals represent operator/member labor time.
-- Either side can be cleared independently.
+- Either side can be cleared independently by sending `null`.
 - If both values are present, the client blocks `end <= start` before submit and the backend enforces the same rule.
 - Missing or incomplete actuals are allowed; later economics reads decide whether a row is pending, unresolved, or planned-fallback.
+- Editing actuals from a workflow surface uses the standard show / shift-block update mutation and reuses its TanStack Query invalidation; FE does not maintain a parallel "actuals only" mutation.
 
 ## Shift Cost Cleanup
 
@@ -199,8 +206,7 @@ Replacement monetary displays come from 2.3 backend economics/read-model APIs, n
 | Backend code | UX response | Surface |
 | ------------ | ----------- | ------- |
 | `LINE_ITEM_NOT_FOUND` | Toast "This compensation line item is no longer available." and refresh the relevant list | system and target panels |
-| `LINE_ITEM_TARGET_NOT_FOUND` | Inline target error in system tooling; toast in target-scoped panels | form dialog |
-| `LINE_ITEM_TARGET_UNSUPPORTED` | Inline target error in system tooling | form dialog |
+| `LINE_ITEM_TARGET_NOT_FOUND` | Inline target error in system tooling; toast in target-scoped panels. Includes the orphan-show case (`Show.studioId IS NULL`). | form dialog |
 | `LINE_ITEM_AMOUNT_REQUIRED` | Inline field error on amount | form dialog |
 | `LINE_ITEM_REASON_REQUIRED` | Inline field error on reason | form dialog |
 | `SHOW_ACTUALS_INVERTED` | Inline error on end-time field | show actuals input |

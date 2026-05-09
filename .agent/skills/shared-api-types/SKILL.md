@@ -147,11 +147,11 @@ Use the refined schema at API boundaries and the base object schema when feature
 
 ## Scoped Actuals and Finance Contracts
 
-Actuals and finance fields must be scoped in the contract name and payload shape so consumers do not confuse different facts that happen to share start/end timestamps.
+Actuals and finance fields must be scoped in the contract by their owning resource so consumers do not confuse different facts that happen to share start/end timestamps.
 
 Rules:
-- Use resource-specific schemas such as `setShowActualsInputSchema`, `setShowCreatorActualsInputSchema`, `setShowPlatformActualsInputSchema`, or `setStudioShiftBlockActualsInputSchema`.
-- Keep field names and nesting explicit enough to reveal meaning. A `ShowCreator` actual is creator participation time; a `ShowPlatform` actual is platform stream/performance time; a `Show` actual is the overall event window.
+- Actuals fields live in the owning resource's update DTO (e.g. `updateStudioShowInputSchema`, the studio shift-block update schema, and any future `ShowCreator` / `ShowPlatform` update schemas), not in a shared "actuals" schema. There is no separate `/actuals` sub-resource — actuals ride the resource's existing PATCH route.
+- Field names and nesting must reveal meaning. A `ShowCreator` actual is creator participation time; a `ShowPlatform` actual is platform stream/performance time; a `Show` actual is the overall event window. They are not interchangeable even when the field name is `actual_start_time`.
 - Monetary reference figures must be backend-provided string decimals. Frontend contracts can submit recorded inputs, but should not define DTOs that require client-side finance arithmetic.
 - If an API response combines base components, line items, warnings, and unresolved reasons, expose that as an economics/read-model resource rather than adding calculated fields to operational CRUD DTOs.
 

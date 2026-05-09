@@ -70,7 +70,7 @@ When a creator is assigned to a show, `ShowCreator` persists `agreedRate`, `comp
 
 - Reads use the snapshot. Source-table edits (`StudioCreator.defaultRate`, `StudioMembership.baseHourlyRate`) never rewrite existing snapshots.
 - Snapshot fields (`ShowCreator.agreedRate`, `compensationType`, `commissionRate`; `StudioShift.hourlyRate`) are **intended-immutable**. ADMIN and MANAGER may update them through normal edit surfaces; the UI shows a warning explaining the downstream impact (historical references and cost rollups will recompute).
-- Each update appends an entry to the existing metadata-audit trail capturing `{field, old, new, actorId, at, reason?}`. **No dedicated audit table.** The metadata trail is the audit.
+- Each update appends one entry to the row's `metadata.audit.snapshot_overrides[]` array (chronological; snake_case keys `field`, `old_value`, `new_value`, `actor_ext_id`, `at`, optional `reason`). Internal database IDs are never written into `metadata`. **No dedicated audit table.** The metadata trail is the audit.
 
 ### Compensation components
 

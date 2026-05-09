@@ -129,7 +129,7 @@ Actuals must be stored on the narrowest entity whose fact they describe. In this
 
 ### Snapshot fields are intended-immutable, not locked
 
-`ShowCreator` agreement fields and `StudioShift.hourlyRate` are snapshots. ADMIN/MANAGER may update them through normal update routes when needed, but the FE must warn that historical reference values and rollups recompute. Each override appends `{field, old, new, actorId, at, reason?}` to the row's existing `metadata` audit trail.
+`ShowCreator` agreement fields and `StudioShift.hourlyRate` are snapshots. ADMIN/MANAGER may update them through normal update routes when needed, but the FE must warn that historical reference values and rollups recompute. Each override appends one entry to the row's existing `metadata.audit.snapshot_overrides[]` array (chronological, snake_case keys: `field`, `old_value`, `new_value`, `actor_ext_id`, `at`, optional `reason`). Internal database IDs are never written into `metadata`.
 
 ## Conceptual Model
 
@@ -142,6 +142,7 @@ A compensation line item is a studio-scoped supplemental cost fact:
 - Required Phase 4 attachment concepts are show, show creator assignment, shift, and shift block.
 - It is included by date through the attached event. It does not carry its own `effectiveDate`.
 - It is never generated for normal base show compensation or normal base shift labor.
+- The attached target must resolve to a non-null studio. A `Show` with no `studioId` (currently nullable in the schema for client-only shows) cannot have line items attached. Client-only-show finance is out of scope for Wave 2; revisit only if a real product need lands.
 
 ### Polymorphic attachment direction
 
@@ -163,7 +164,7 @@ The product constraints are:
 | ----- | ------------- | ------- |
 | System support CRUD | `/admin/compensation-line-items` | System-admin support and reconciliation across studios. |
 | Studio target APIs | Contextual show/show-creator/shift/shift-block line-item collections | Studio operator workflows where the target is known from the route. |
-| Actuals APIs | Show actuals and shift-block actuals mutations | Persist scoped actual facts for later calculators. |
+| Actuals fields | New optional fields on the existing show update and shift-block update routes (no separate `/actuals` sub-resource) | Persist scoped actual facts for later calculators on the same write path as the rest of the resource. |
 | Snapshot readiness | Existing assignment and shift update routes append audit on snapshot edits | Preserve future calculation traceability without a new audit table. |
 | Shift cost cleanup | Separate DB/API/FE cleanup | Remove stored calculated/reference cost columns after consumers are updated. |
 
@@ -203,7 +204,8 @@ The product constraints are:
 - [ ] Existing `ShowCreator` rows with missing snapshot fields are not backfilled by 2.2.
 - [ ] Normal app assignment writes persist explicit/resolved `ShowCreator` agreement snapshot fields when available; unresolved rows remain calculably unresolved.
 - [ ] Roster default-rate update UX states that existing assignment snapshots are unchanged unless a manager explicitly edits those assignments.
-- [ ] ADMIN/MANAGER changes to `ShowCreator` snapshot fields and `StudioShift.hourlyRate` append metadata audit entries with field, old value, new value, actor, timestamp, and optional reason.
+- [ ] ADMIN/MANAGER changes to `ShowCreator` snapshot fields and `StudioShift.hourlyRate` append entries to `metadata.audit.snapshot_overrides[]` (chronological array; snake_case keys `field`, `old_value`, `new_value`, `actor_ext_id`, `at`, optional `reason`). Internal DB IDs are not written into `metadata`.
+- [ ] Line items cannot be attached to a `Show` whose `studioId` is null (orphan / client-only show); the attempt is rejected with `LINE_ITEM_TARGET_NOT_FOUND`.
 - [ ] `StudioShift.projectedCost` and `StudioShift.calculatedCost` are removed only in the dedicated cleanup PR.
 - [ ] 2.3 calculator tests can consume fixtures containing line items, show actuals, shift-block actuals, and snapshot override history without needing extra Phase 4 workflow state.
 
