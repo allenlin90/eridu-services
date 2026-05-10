@@ -71,7 +71,7 @@ export function CompensationLineItemCreateDialog({
         },
         {
           name: 'target_uid',
-          label: 'Target UID',
+          label: 'Target ID',
           placeholder: 'Target identifier...',
         },
         {

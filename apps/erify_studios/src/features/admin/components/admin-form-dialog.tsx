@@ -179,7 +179,7 @@ export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={description ? undefined : undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

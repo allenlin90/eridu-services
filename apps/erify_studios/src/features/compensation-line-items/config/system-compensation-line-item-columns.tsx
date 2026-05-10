@@ -130,8 +130,8 @@ export const systemCompensationLineItemColumns: ColumnDef<CompensationLineItemAp
 
 export const systemCompensationLineItemSearchableColumns = [
   { id: 'studio_id', title: 'Studio ID', type: 'text' as const },
-  { id: 'target_uid', title: 'Target UID', type: 'text' as const },
-  { id: 'created_by_uid', title: 'Creator UID', type: 'text' as const },
+  { id: 'target_uid', title: 'Target ID', type: 'text' as const },
+  { id: 'created_by_uid', title: 'Creator ID', type: 'text' as const },
   {
     id: 'target_type',
     title: 'Target Type',
