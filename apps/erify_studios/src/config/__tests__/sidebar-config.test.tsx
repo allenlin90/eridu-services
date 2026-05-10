@@ -15,6 +15,7 @@ vi.mock('lucide-react', () => ({
   Layers: vi.fn(),
   ListTodo: vi.fn(),
   MonitorPlay: vi.fn(),
+  Receipt: vi.fn(),
   Ruler: vi.fn(),
   Settings: vi.fn(),
   ShieldCheck: vi.fn(),
@@ -162,6 +163,7 @@ describe('useSidebarConfig', () => {
         expect.objectContaining({ title: 'Tasks', url: '/system/tasks' }),
         expect.objectContaining({ title: 'Task Templates', url: '/system/task-templates' }),
         expect.objectContaining({ title: 'Shows', url: '/system/shows' }),
+        expect.objectContaining({ title: 'Compensation', url: '/system/compensation-line-items' }),
       ]),
     });
 

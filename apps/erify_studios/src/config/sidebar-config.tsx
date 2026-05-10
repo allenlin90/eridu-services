@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   ListTodo,
   MonitorPlay,
+  Receipt,
   Ruler,
   Settings,
   Shapes,
@@ -106,6 +107,11 @@ const SYSTEM_NAV_ITEMS: SidebarNavItem['items'] = [
     title: 'Shows',
     url: '/system/shows',
     icon: Film,
+  },
+  {
+    title: 'Compensation',
+    url: '/system/compensation-line-items',
+    icon: Receipt,
   },
 ];
 
