@@ -71,7 +71,11 @@ export const listCompensationLineItemsQuerySchema = paginationQuerySchema
       created_by_uid: z.string().startsWith(UID_PREFIXES.USER).optional(),
       from: z.iso.datetime().optional(),
       to: z.iso.datetime().optional(),
-      include_deleted: z.coerce.boolean().optional().default(false),
+      include_deleted: z
+        .union([z.boolean(), z.enum(['true', 'false'])])
+        .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+        .optional()
+        .default(false),
     }),
   )
   .transform((data) => ({
