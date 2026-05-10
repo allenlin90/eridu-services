@@ -15,7 +15,12 @@ import {
 
 import { AdminLayout } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
-import { CompensationLineItemFormDialog } from '@/features/compensation-line-items/components/compensation-line-item-form-dialog';
+import {
+  CompensationLineItemCreateDialog,
+  CompensationLineItemUpdateDialog,
+  type CreateCompensationLineItemFormData,
+  type UpdateCompensationLineItemFormData,
+} from '@/features/compensation-line-items/components/compensation-line-item-form-dialog';
 import {
   systemCompensationLineItemColumns,
   systemCompensationLineItemSearchableColumns,
@@ -53,12 +58,12 @@ function SystemCompensationLineItemsList() {
   const updateMutation = useUpdateAdminCompensationLineItem();
   const deleteMutation = useDeleteAdminCompensationLineItem();
 
-  const handleCreate = async (formData: any) => {
+  const handleCreate = async (formData: CreateCompensationLineItemFormData) => {
     await createMutation.mutateAsync(formData);
     setIsCreateOpen(false);
   };
 
-  const handleUpdate = async (formData: any) => {
+  const handleUpdate = async (formData: UpdateCompensationLineItemFormData) => {
     if (!editingItem)
       return;
     await updateMutation.mutateAsync({ id: editingItem.id, data: formData });
@@ -147,18 +152,17 @@ function SystemCompensationLineItemsList() {
         )}
       />
 
-      <CompensationLineItemFormDialog
+      <CompensationLineItemCreateDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         onSubmit={handleCreate}
         isLoading={createMutation.isPending}
       />
 
-      <CompensationLineItemFormDialog
+      <CompensationLineItemUpdateDialog
         key={editingItem?.id ?? 'empty'}
-        open={!!editingItem}
-        onOpenChange={(open) => !open && setEditingItem(null)}
         lineItem={editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
         onSubmit={handleUpdate}
         isLoading={updateMutation.isPending}
       />
