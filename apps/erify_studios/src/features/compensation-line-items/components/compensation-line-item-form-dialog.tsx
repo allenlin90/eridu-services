@@ -34,7 +34,7 @@ export function CompensationLineItemCreateDialog({
       defaultValues={{
         studio_id: '',
         target_type: 'SHOW',
-        target_uid: '',
+        target_id: '',
         amount: '',
         item_type: 'BONUS',
         reason: '',
@@ -70,7 +70,7 @@ export function CompensationLineItemCreateDialog({
           ),
         },
         {
-          name: 'target_uid',
+          name: 'target_id',
           label: 'Target ID',
           placeholder: 'Target identifier...',
         },

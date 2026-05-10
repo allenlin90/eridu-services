@@ -5,7 +5,7 @@ export const systemCompensationLineItemSearchSchema = z.object({
   limit: z.coerce.number().int().min(10).max(100).catch(10),
   studio_id: z.string().optional().catch(undefined),
   target_type: z.string().optional().catch(undefined),
-  target_uid: z.string().optional().catch(undefined),
+  target_id: z.string().optional().catch(undefined),
   item_type: z.string().optional().catch(undefined),
   created_by_uid: z.string().optional().catch(undefined),
   from: z.string().optional().catch(undefined),

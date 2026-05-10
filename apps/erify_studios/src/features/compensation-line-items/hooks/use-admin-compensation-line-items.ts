@@ -47,7 +47,7 @@ export function useAdminCompensationLineItems<TRoute extends string>({
 
   const studioId = columnFilters.find((filter) => filter.id === 'studio_id')
     ?.value as string | undefined;
-  const targetUid = columnFilters.find((filter) => filter.id === 'target_uid')
+  const targetId = columnFilters.find((filter) => filter.id === 'target_id')
     ?.value as string | undefined;
   const createdByUid = columnFilters.find((filter) => filter.id === 'created_by_uid')
     ?.value as string | undefined;
@@ -79,7 +79,7 @@ export function useAdminCompensationLineItems<TRoute extends string>({
     limit: pagination.pageSize,
     studio_id: studioId,
     target_type: targetType,
-    target_uid: targetUid,
+    target_id: targetId,
     item_type: itemType,
     created_by_uid: createdByUid,
     from: dateRange?.from ? startOfDay(dateRange.from).toISOString() : undefined,

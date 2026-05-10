@@ -137,7 +137,7 @@ function SystemCompensationLineItemsList() {
           <DataTableToolbar
             table={table}
             searchableColumns={systemCompensationLineItemSearchableColumns}
-            searchColumn="target_uid"
+            searchColumn="target_id"
             searchPlaceholder="Search by target ID..."
             featuredFilterColumns={['studio_id', 'target_type', 'item_type']}
           />

@@ -26,7 +26,7 @@ describe('adminCompensationLineItemController', () => {
     await controller.createLineItem({
       studioId: 'std_1',
       targetType: 'SHOW' as never,
-      targetUid: 'show_1',
+      targetId: 'show_1',
       amount: '10.00',
       itemType: 'BONUS' as never,
       reason: 'bonus',
@@ -36,7 +36,7 @@ describe('adminCompensationLineItemController', () => {
     expect(service.createAdminLineItem).toHaveBeenCalledWith({
       studioId: 'std_1',
       targetType: 'SHOW',
-      targetUid: 'show_1',
+      targetId: 'show_1',
       amount: '10.00',
       itemType: 'BONUS',
       reason: 'bonus',

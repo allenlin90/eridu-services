@@ -12,7 +12,7 @@ describe('compensation line item schemas', () => {
     const result = createAdminCompensationLineItemSchema.parse({
       studio_id: 'std_123',
       target_type: 'SHOW',
-      target_uid: 'show_123',
+      target_id: 'show_123',
       amount: '-25.5',
       item_type: 'DEDUCTION',
       reason: '  late arrival adjustment  ',
@@ -22,7 +22,7 @@ describe('compensation line item schemas', () => {
     expect(result).toEqual({
       studioId: 'std_123',
       targetType: CompensationLineItemTargetType.SHOW,
-      targetUid: 'show_123',
+      targetId: 'show_123',
       amount: '-25.50',
       itemType: CompensationItemType.DEDUCTION,
       reason: 'late arrival adjustment',
@@ -35,7 +35,7 @@ describe('compensation line item schemas', () => {
       createAdminCompensationLineItemSchema.parse({
         studio_id: 'std_123',
         target_type: 'SHOW',
-        target_uid: 'show_123',
+        target_id: 'show_123',
         amount: '10.00',
         item_type: 'BONUS',
         reason: '   ',
@@ -46,7 +46,7 @@ describe('compensation line item schemas', () => {
   it('rejects target updates because targets are immutable', () => {
     expect(() =>
       updateCompensationLineItemSchema.parse({
-        target_uid: 'show_456',
+        target_id: 'show_456',
       }),
     ).toThrow();
   });
@@ -57,7 +57,7 @@ describe('compensation line item schemas', () => {
       limit: '25',
       studio_id: 'std_123',
       target_type: 'STUDIO_SHIFT_BLOCK',
-      target_uid: 'ssb_123',
+      target_id: 'ssb_123',
       item_type: 'OVERTIME',
       created_by_uid: 'user_123',
       from: '2026-05-01T00:00:00.000Z',
@@ -73,7 +73,7 @@ describe('compensation line item schemas', () => {
       sort: 'desc',
       studioId: 'std_123',
       targetType: CompensationLineItemTargetType.STUDIO_SHIFT_BLOCK,
-      targetUid: 'ssb_123',
+      targetId: 'ssb_123',
       itemType: CompensationItemType.OVERTIME,
       createdByUid: 'user_123',
       from: new Date('2026-05-01T00:00:00.000Z'),

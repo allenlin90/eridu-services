@@ -25,7 +25,7 @@ export const systemCompensationLineItemColumns: ColumnDef<CompensationLineItemAp
   },
   {
     accessorKey: 'target_id',
-    id: 'target_uid',
+    id: 'target_id',
     header: 'Target ID',
     cell: ({ row }) => (
       <span className="font-mono text-xs text-muted-foreground">
@@ -130,7 +130,7 @@ export const systemCompensationLineItemColumns: ColumnDef<CompensationLineItemAp
 
 export const systemCompensationLineItemSearchableColumns = [
   { id: 'studio_id', title: 'Studio ID', type: 'text' as const },
-  { id: 'target_uid', title: 'Target ID', type: 'text' as const },
+  { id: 'target_id', title: 'Target ID', type: 'text' as const },
   { id: 'created_by_uid', title: 'Creator ID', type: 'text' as const },
   {
     id: 'target_type',

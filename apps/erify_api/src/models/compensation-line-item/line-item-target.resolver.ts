@@ -8,7 +8,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 type ResolveTargetInput = {
   studioUid: string;
   targetType: CompensationLineItemTargetType;
-  targetUid: string;
+  targetId: string;
 };
 
 export type ResolvedLineItemTarget = {
@@ -43,7 +43,7 @@ export class LineItemTargetResolver {
   private async resolveShow(input: ResolveTargetInput): Promise<ResolvedLineItemTarget> {
     const show = await this.txHost.tx.show.findFirst({
       where: {
-        uid: input.targetUid,
+        uid: input.targetId,
         deletedAt: null,
         studio: { deletedAt: null },
       },
@@ -60,7 +60,7 @@ export class LineItemTargetResolver {
   private async resolveShowCreator(input: ResolveTargetInput): Promise<ResolvedLineItemTarget> {
     const showCreator = await this.txHost.tx.showCreator.findFirst({
       where: {
-        uid: input.targetUid,
+        uid: input.targetId,
         deletedAt: null,
         show: {
           deletedAt: null,
@@ -93,7 +93,7 @@ export class LineItemTargetResolver {
   private async resolveStudioShift(input: ResolveTargetInput): Promise<ResolvedLineItemTarget> {
     const shift = await this.txHost.tx.studioShift.findFirst({
       where: {
-        uid: input.targetUid,
+        uid: input.targetId,
         deletedAt: null,
         studio: { deletedAt: null },
       },
@@ -112,7 +112,7 @@ export class LineItemTargetResolver {
   ): Promise<ResolvedLineItemTarget> {
     const block = await this.txHost.tx.studioShiftBlock.findFirst({
       where: {
-        uid: input.targetUid,
+        uid: input.targetId,
         deletedAt: null,
         shift: {
           deletedAt: null,

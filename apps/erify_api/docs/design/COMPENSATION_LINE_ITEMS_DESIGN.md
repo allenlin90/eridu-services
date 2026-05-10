@@ -169,8 +169,8 @@ The 98 in-tree references at the time of this design (rg `projectedCost|calculat
 
 | Endpoint                                            | Purpose                                                                                                                                     | Auth         |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| `POST /admin/compensation-line-items`               | Create a line item by supplying `studio_id`, `target_type`, and `target_uid`                                                                | system admin |
-| `GET /admin/compensation-line-items`                | List with filters: `studio_id`, `target_type`, `target_uid`, `item_type`, `from`, `to`, `created_by_uid`, pagination, optional deleted rows | system admin |
+| `POST /admin/compensation-line-items`               | Create a line item by supplying `studio_id`, `target_type`, and `target_id`                                                                | system admin |
+| `GET /admin/compensation-line-items`                | List with filters: `studio_id`, `target_type`, `target_id`, `item_type`, `from`, `to`, `created_by_uid`, pagination, optional deleted rows | system admin |
 | `GET /admin/compensation-line-items/:lineItemId`    | Read one                                                                                                                                    | system admin |
 | `PATCH /admin/compensation-line-items/:lineItemId`  | Update `amount`, `item_type`, `reason`, `metadata`; target is immutable                                                                     | system admin |
 | `DELETE /admin/compensation-line-items/:lineItemId` | Soft delete                                                                                                                                 | system admin |

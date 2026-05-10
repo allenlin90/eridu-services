@@ -69,7 +69,7 @@ export const createAdminCompensationLineItemSchema
   = createAdminCompensationLineItemInputSchema.transform((data) => ({
     studioId: data.studio_id,
     targetType: data.target_type as CompensationLineItemTargetType,
-    targetUid: data.target_uid,
+    targetId: data.target_id,
     amount: data.amount,
     itemType: data.item_type as CompensationItemType,
     reason: data.reason,
@@ -146,8 +146,8 @@ export const compensationLineItemDto = compensationLineItemInternalSchema
       throw new Error(`Compensation line item ${obj.uid} is missing its target row`);
     }
 
-    const targetUid = getTargetUid(obj.target);
-    if (!targetUid) {
+    const targetId = getTargetUid(obj.target);
+    if (!targetId) {
       throw new Error(`Missing target relation for compensation line item ${obj.uid}`);
     }
 
@@ -155,7 +155,7 @@ export const compensationLineItemDto = compensationLineItemInternalSchema
       id: obj.uid,
       studio_id: obj.studio.uid,
       target_type: obj.target.targetType,
-      target_id: targetUid,
+      target_id: targetId,
       amount: decimalToString(obj.amount),
       item_type: obj.itemType,
       reason: obj.reason,
@@ -186,7 +186,7 @@ export class ListCompensationLineItemsQueryDto extends createZodDto(
   declare sort: 'asc' | 'desc';
   declare studioId: string | undefined;
   declare targetType: CompensationLineItemTargetType | undefined;
-  declare targetUid: string | undefined;
+  declare targetId: string | undefined;
   declare itemType: CompensationItemType | undefined;
   declare createdByUid: string | undefined;
   declare from: Date | undefined;
