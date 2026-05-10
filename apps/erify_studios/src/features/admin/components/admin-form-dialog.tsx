@@ -179,7 +179,8 @@ export function AdminFormDialog<T extends z.ZodObject<z.ZodRawShape>>({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={description ? undefined : undefined}>
+      {/* aria-describedby={undefined} suppresses the Radix warning when no DialogDescription is rendered */}
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
