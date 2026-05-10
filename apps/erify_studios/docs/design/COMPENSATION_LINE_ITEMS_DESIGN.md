@@ -143,7 +143,7 @@ System support filters:
 
 - `studio_id`
 - `target_type`
-- `target_uid`
+- `target_id`
 - `item_type`
 - created date range
 - `created_by_uid`
