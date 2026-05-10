@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { FileEdit } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { CompensationLineItemApiResponse } from '@eridu/api-types/compensation-line-items';
@@ -100,7 +99,6 @@ function SystemCompensationLineItemsList() {
           row={row.original}
           onEdit={(item) => setEditingItem(item)}
           onDelete={(item) => setDeleteItem(item)}
-          customEditIcon={<FileEdit className="mr-2 h-4 w-4" />}
         />
       ),
       size: 50,
