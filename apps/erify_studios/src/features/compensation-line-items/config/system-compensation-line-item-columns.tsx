@@ -25,6 +25,7 @@ export const systemCompensationLineItemColumns: ColumnDef<CompensationLineItemAp
   },
   {
     accessorKey: 'target_id',
+    id: 'target_uid',
     header: 'Target ID',
     cell: ({ row }) => (
       <span className="font-mono text-xs text-muted-foreground">
@@ -85,6 +86,7 @@ export const systemCompensationLineItemColumns: ColumnDef<CompensationLineItemAp
   },
   {
     accessorKey: 'created_by_id',
+    id: 'created_by_uid',
     header: 'Created By',
     cell: ({ row }) => (
       <span className="font-mono text-xs text-muted-foreground">
