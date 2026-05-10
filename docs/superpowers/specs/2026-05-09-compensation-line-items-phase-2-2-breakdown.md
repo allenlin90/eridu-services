@@ -1,6 +1,6 @@
 # Design: Compensation Line Items Phase 2.2 Breakdown
 
-> **Status:** Spec - implementation pending.
+> **Status:** In progress — PR 1A (backend admin CRUD) merged; PR 1B (frontend system UI) shipped.
 > **Scope:** Phase 4 Wave 2 compensation line items, scoped actuals, snapshot readiness, and shift-cost cleanup split.
 > **Product source:** [docs/prd/compensation-line-items.md](../../prd/compensation-line-items.md)
 > **Backend design:** [apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md](../../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)

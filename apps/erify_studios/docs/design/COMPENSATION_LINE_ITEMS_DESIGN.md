@@ -1,6 +1,6 @@
 # Compensation Line Items + Actuals Frontend Design
 
-> **Status**: Planning
+> **Status**: In Progress (PR 1B shipped)
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/compensation-line-items.md`](../../../../docs/prd/compensation-line-items.md)
