@@ -13,6 +13,10 @@
       "types": "./dist/clients/index.d.ts",
       "default": "./dist/clients/index.js"
     },
+    "./compensation-line-items": {
+      "types": "./dist/compensation-line-items/index.d.ts",
+      "default": "./dist/compensation-line-items/index.js"
+    },
     "./constants": {
       "types": "./dist/constants.d.ts",
       "default": "./dist/constants.js"

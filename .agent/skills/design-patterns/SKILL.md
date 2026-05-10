@@ -142,7 +142,8 @@ Fold into the parent module when:
 Examples:
 - ShowMcModule (separate) → has restore/cascade methods, note field (DB model: `ShowMC`; API surface: "show-creator")
 - ShowPlatformModule (separate) → has liveStreamLink, viewerCount
-- TaskTargetModule (separate) → simple join, but kept separate for consistency
+- TaskTargetModule (separate) → 1:N polymorphic join, kept separate for consistency
+- `CompensationLineItemTarget` (folded into `CompensationLineItemModule`) → strict 1:1 polymorphism-only side table; no own service or repository, addressed exclusively through the parent line item. See the polymorphism guidance in the [Database Patterns skill, Rule 7](../database-patterns/SKILL.md#7-explicit-fks-over-polymorphism) for when to pick side table vs Exclusive Arc.
 
 
 ## Performance Optimization Strategy

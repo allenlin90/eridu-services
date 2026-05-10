@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AdminClientModule } from './clients/admin-client.module';
+import { AdminCompensationLineItemModule } from './compensation-line-items/admin-compensation-line-item.module';
 import { AdminCreatorModule } from './creators/admin-creator.module';
 import { AdminStudioMembershipModule } from './memberships/admin-studio-membership.module';
 import { AdminPlatformModule } from './platforms/admin-platform.module';
@@ -37,6 +38,7 @@ import { AdminUserModule } from './users/admin-user.module';
     AdminTaskTemplateModule,
     AdminScheduleModule,
     AdminSnapshotModule,
+    AdminCompensationLineItemModule,
   ],
   exports: [
     AdminUserModule,
@@ -56,6 +58,7 @@ import { AdminUserModule } from './users/admin-user.module';
     AdminTaskTemplateModule,
     AdminScheduleModule,
     AdminSnapshotModule,
+    AdminCompensationLineItemModule,
   ],
 })
 export class AdminModule {}

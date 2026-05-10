@@ -100,16 +100,34 @@ await prisma.show.create({ data: { client: { connect: { uid: 'client_123' } } } 
 
 ## 7. Explicit FKs over Polymorphism
 
-**Rule**: PREFER explicit nullable foreign keys over `entity_id + entity_type` polymorphic columns.
+**Rule**: NEVER use a bare `entity_id + entity_type` discriminator pair as the only way to model a polymorphic association. Always use typed nullable foreign keys for referential integrity.
 
-- Polymorphism bypasses FK constraints → orphan data risk.
-- Prisma cannot natively `include` polymorphic relations → N+1 forced.
-- Explicit FKs are fully typed and indexable.
+- A bare `(entity_id, entity_type)` pair bypasses FK constraints → orphan data risk.
+- Prisma cannot natively `include` such a relation → N+1 forced.
+- Typed FKs are fully typed and indexable.
 
 > 📖 See [`references/06-relationships-and-nested-writes.md`](references/06-relationships-and-nested-writes.md) for schema examples.
 
+### When polymorphism *is* required: pick by open vs closed target set
+
+Both shapes below are recognized Postgres + Prisma best practice. The decision rule is **whether the set of target entity types is expected to grow**:
+
+| Target set | Pattern | Shape |
+|---|---|---|
+| **Closed & stable** (won't grow — e.g. `Comment → Post \| Page`) | **Exclusive Arc on the entity** | Multiple typed nullable FKs directly on the entity. **MUST** include a CHECK constraint: `CHECK (num_nonnulls(fk1, fk2, ...) = 1)`. **NEVER** add a redundant `target_type` discriminator alongside the typed FKs — derive the type from "which FK is non-null". |
+| **Open & extensible** (will grow — e.g. `Task → Show \| Studio \| ...`, `CompensationLineItem` targets, audit-log subjects) | **Side table** | Polymorphism extracted into a dedicated child table. Keeps the entity's hot path narrow. New target types are migrations on the side table only, never on the entity. |
+
+This codebase trends toward **open** for entities like `Task`, `CompensationLineItem`, audit logs — pick side table by default unless the target set is genuinely fixed.
+
+### Side-table sub-pattern: cardinality
+
+| Cardinality | PK strategy | Reference |
+|---|---|---|
+| **1:N** (one parent → many target rows) | Side table has its own `id`. Carries discriminator + typed FKs. May have own `deletedAt` if individual targets need independent removal. | [`TaskTarget`](../../../apps/erify_api/prisma/schema.prisma) |
+| **1:1, polymorphism-only** (one parent → exactly one target row, immutable) | Parent FK IS the PK (`lineItemId @id`). No own audit fields, no own `deletedAt` — lifecycle inherits from parent. The relation field on the parent is `target ChildTarget?` — Prisma 1:1 forces the optional, but the application creates the child in the same transaction as the parent. | [`CompensationLineItemTarget`](../../../apps/erify_api/prisma/schema.prisma) |
+
 > [!IMPORTANT]
-> When a polymorphic **join table** is unavoidable (e.g., `TaskTarget` linking tasks to multiple target entity types), the Prisma `include` must traverse the join table explicitly. This means the raw Prisma shape is **nested** (`targets[].show`) rather than flat (`show`). The Zod DTO schema **MUST** include a `.transform()` to flatten and remap this to the API wire format. See the **Polymorphic relation DTO transform** pattern in the [Shared API Types skill](../shared-api-types/SKILL.md).
+> Whichever side-table cardinality you pick, the Prisma `include` traverses the side table explicitly. The raw Prisma shape is **nested** (`target.show.uid`, `targets[].show.uid`) rather than flat. The Zod DTO schema **MUST** include a `.transform()` to flatten and remap this to the API wire format. See the **Polymorphic relation DTO transform** pattern in the [Shared API Types skill](../shared-api-types/SKILL.md).
 
 ---
 

@@ -51,7 +51,7 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 - Test: backend model/service/controller specs for admin CRUD.
 
 - [ ] Add shared contracts for item type, target type, admin create input, update input, list query, response, and paginated response.
-- [ ] Generate a Prisma migration for `CompensationLineItem` and its enums using Prisma tooling. `targetType` is a Prisma enum (`CompensationLineItemTargetType`), not a `String` like `TaskTarget.targetType`.
+- [ ] Generate a Prisma migration for `CompensationLineItem`, the strict-1:1 polymorphism-only side table `CompensationLineItemTarget`, and the two enums using Prisma tooling. `targetType` is a Prisma enum (`CompensationLineItemTargetType`), not a `String` like `TaskTarget.targetType`. The target row uses `lineItemId` as PK and inherits its lifecycle from the parent (no own `deletedAt`), so soft-delete and queries always go through `CompensationLineItem`.
 - [ ] Implement the model repository/service with soft-delete, UID generation (prefix `cli`, consistent with `ssh`/`ssb`/`smc`/`tgt`), Decimal string serialization, and target immutability.
 - [ ] Implement `LineItemTargetResolver` with studio ownership checks. Target traversal:
   - `SHOW` → `Show.studioId`; reject when `studioId IS NULL` (orphan / client-only show) with `LINE_ITEM_TARGET_NOT_FOUND`.
