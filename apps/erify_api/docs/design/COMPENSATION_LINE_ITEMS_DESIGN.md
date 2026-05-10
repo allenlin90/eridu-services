@@ -27,11 +27,11 @@ This design does **not** introduce cost arithmetic, settlement state, freeze gua
 
 ## Workstream Breakdown
 
-| Slice | Backend scope | Merge shape |
-| ----- | ------------- | ----------- |
-| PR 1A | `CompensationLineItem` schema/contracts plus `/admin/compensation-line-items` CRUD | Backend-only, system support value |
-| PR 2 | Studio target-scoped line-item APIs | Backend-only or minimal contract-sync |
-| PR 3 | Show actuals, shift-block actuals, and future-only snapshot audit append | Backend-focused |
+| Slice      | Backend scope                                                                           | Merge shape                                       |
+| ---------- | --------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| PR 1A      | `CompensationLineItem` schema/contracts plus `/admin/compensation-line-items` CRUD      | Backend-only, system support value                |
+| PR 2       | Studio target-scoped line-item APIs                                                     | Backend-only or minimal contract-sync             |
+| PR 3       | Show actuals, shift-block actuals, and future-only snapshot audit append                | Backend-focused                                   |
 | Cleanup PR | Drop `StudioShift.projectedCost` / `StudioShift.calculatedCost` across DB/API/consumers | Coordinated BE/FE because it is contract-breaking |
 
 Frontend implementation lands in separate workflow PRs after the corresponding backend contracts stabilize.
@@ -50,7 +50,7 @@ Frontend implementation lands in separate workflow PRs after the corresponding b
 
 ## Hard Invariants
 
-1. **Polymorphic attachment with typed FKs.** `CompensationLineItem` uses a `targetType` enum discriminator plus `targetId BigInt` and nullable typed FK columns (`showId`, `showCreatorId`, `studioShiftId`, `studioShiftBlockId`). Unsupported target types are rejected at write time. The pattern follows `TaskTarget` for shape, but `targetType` is a Prisma enum (not `String` like `TaskTarget.targetType`) because this is financial data and the discriminator set is closed.
+1. **Polymorphic attachment via strict 1:1 side table.** `CompensationLineItem` stays narrow (business fields only). Polymorphism lives in `CompensationLineItemTarget`, a 1:1 child table whose PK is `lineItemId` — the row's identity is the parent. The target table holds the `targetType` enum discriminator, a `targetId BigInt`, and nullable typed FK columns (`showId`, `showCreatorId`, `studioShiftId`, `studioShiftBlockId`). It has no own audit fields and no own `deletedAt`; lifecycle follows the parent. Unsupported target types are rejected at write time. `targetType` is a Prisma enum (not `String` like `TaskTarget.targetType`) because this is financial data and the discriminator set is closed.
 2. **Money is `Prisma.Decimal` end-to-end.** `amount` is signed `Decimal(12, 2)` and serialized as a string at the API boundary. No sign enforcement ships in Phase 4.
 3. **`reason` is required.** Stored as plain text and returned in read responses. Empty or whitespace-only values are rejected.
 4. **Date inclusion derives from the attached event.** The model has no `effectiveDate`; 2.3 filters line items by the attached event's time.
@@ -70,33 +70,48 @@ This design follows [`economics-cost-model.md` actual ownership and scope](../..
 
 All migrations are generated through Prisma tooling per repo rule; no new migration file is hand-written.
 
-### PR 1A: new model and enums
+### PR 1A: new models and enums
 
-`CompensationLineItem`:
+`CompensationLineItem` (parent — business fields only):
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `BigInt` | PK, internal only |
-| `uid` | `String` | `cli_<nanoid>`; unique; external ID |
-| `studioId` | `BigInt` | FK to `Studio`; required |
-| `amount` | `Decimal(12, 2)` | Signed; required |
-| `itemType` | `CompensationItemType` | enum |
-| `reason` | `String` | required, trimmed, non-empty |
-| `targetType` | `CompensationLineItemTargetType` | discriminator enum |
-| `targetId` | `BigInt` | generic reference; matches the typed FK that is set |
-| `showId` | `BigInt?` | set iff `targetType = SHOW` |
-| `showCreatorId` | `BigInt?` | set iff `targetType = SHOW_CREATOR` |
-| `studioShiftId` | `BigInt?` | set iff `targetType = STUDIO_SHIFT` |
-| `studioShiftBlockId` | `BigInt?` | set iff `targetType = STUDIO_SHIFT_BLOCK` |
-| `createdById` | `BigInt` | FK to `User` |
-| `metadata` | `Json @default("{}")` | reserved for future flags |
-| `createdAt` / `updatedAt` / `deletedAt` | timestamps | soft-delete support |
+| Column                                  | Type                          | Notes                                                                 |
+| --------------------------------------- | ----------------------------- | --------------------------------------------------------------------- |
+| `id`                                    | `BigInt`                      | PK, internal only                                                     |
+| `uid`                                   | `String`                      | `cli_<nanoid>`; unique; external ID                                   |
+| `studioId`                              | `BigInt`                      | FK to `Studio`; required                                              |
+| `amount`                                | `Decimal(12, 2)`              | Signed; required                                                      |
+| `itemType`                              | `CompensationItemType`        | enum                                                                  |
+| `reason`                                | `String`                      | required, trimmed, non-empty                                          |
+| `createdById`                           | `BigInt`                      | FK to `User`                                                          |
+| `metadata`                              | `Json @default("{}")`         | reserved for future flags                                             |
+| `target`                                | `CompensationLineItemTarget?` | 1:1 side table; Prisma requires `?` but app always creates in same tx |
+| `createdAt` / `updatedAt` / `deletedAt` | timestamps                    | soft-delete support                                                   |
 
-Indexes:
+`CompensationLineItemTarget` (strict 1:1 polymorphism-only side table):
+
+| Column               | Type                             | Notes                                                               |
+| -------------------- | -------------------------------- | ------------------------------------------------------------------- |
+| `lineItemId`         | `BigInt`                         | **PK** and FK to `CompensationLineItem`; row identity is the parent |
+| `targetType`         | `CompensationLineItemTargetType` | discriminator enum                                                  |
+| `targetId`           | `BigInt`                         | generic reference; matches the typed FK that is set                 |
+| `showId`             | `BigInt?`                        | set iff `targetType = SHOW`                                         |
+| `showCreatorId`      | `BigInt?`                        | set iff `targetType = SHOW_CREATOR`                                 |
+| `studioShiftId`      | `BigInt?`                        | set iff `targetType = STUDIO_SHIFT`                                 |
+| `studioShiftBlockId` | `BigInt?`                        | set iff `targetType = STUDIO_SHIFT_BLOCK`                           |
+
+No own `id`, no own `createdAt`/`updatedAt`/`deletedAt` — lifecycle follows the parent. `ON DELETE CASCADE` from the parent ensures cleanup.
+
+Indexes on `CompensationLineItem`:
 
 - `@@unique([uid])`
+- `@@index([uid])`
 - `@@index([studioId, deletedAt])`
-- `@@index([targetType, targetId, deletedAt])`
+- `@@index([createdById])`
+- `@@index([deletedAt])`
+
+Indexes on `CompensationLineItemTarget`:
+
+- `@@index([targetType, targetId])`
 - single-column index on each typed FK
 - application-level validation that exactly one typed FK is non-null and matches `targetType`
 
@@ -152,24 +167,24 @@ The 98 in-tree references at the time of this design (rg `projectedCost|calculat
 
 ### PR 1A: system-admin CRUD
 
-| Endpoint | Purpose | Auth |
-| -------- | ------- | ---- |
-| `POST /admin/compensation-line-items` | Create a line item by supplying `studio_id`, `target_type`, and `target_uid` | system admin |
-| `GET /admin/compensation-line-items` | List with filters: `studio_id`, `target_type`, `target_uid`, `item_type`, `from`, `to`, `created_by_uid`, pagination, optional deleted rows | system admin |
-| `GET /admin/compensation-line-items/:lineItemId` | Read one | system admin |
-| `PATCH /admin/compensation-line-items/:lineItemId` | Update `amount`, `item_type`, `reason`, `metadata`; target is immutable | system admin |
-| `DELETE /admin/compensation-line-items/:lineItemId` | Soft delete | system admin |
+| Endpoint                                            | Purpose                                                                                                                                     | Auth         |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `POST /admin/compensation-line-items`               | Create a line item by supplying `studio_id`, `target_type`, and `target_uid`                                                                | system admin |
+| `GET /admin/compensation-line-items`                | List with filters: `studio_id`, `target_type`, `target_uid`, `item_type`, `from`, `to`, `created_by_uid`, pagination, optional deleted rows | system admin |
+| `GET /admin/compensation-line-items/:lineItemId`    | Read one                                                                                                                                    | system admin |
+| `PATCH /admin/compensation-line-items/:lineItemId`  | Update `amount`, `item_type`, `reason`, `metadata`; target is immutable                                                                     | system admin |
+| `DELETE /admin/compensation-line-items/:lineItemId` | Soft delete                                                                                                                                 | system admin |
 
 The admin route is support tooling. It is not the primary studio workflow.
 
 ### PR 2: studio target-scoped line-item APIs
 
-| Endpoint family | Target inferred from | Roles |
-| --------------- | -------------------- | ----- |
-| `/studios/:studioId/shows/:showId/compensation-line-items` | show | `ADMIN`, `MANAGER` |
+| Endpoint family                                                                   | Target inferred from    | Roles              |
+| --------------------------------------------------------------------------------- | ----------------------- | ------------------ |
+| `/studios/:studioId/shows/:showId/compensation-line-items`                        | show                    | `ADMIN`, `MANAGER` |
 | `/studios/:studioId/shows/:showId/creators/:assignmentId/compensation-line-items` | show creator assignment | `ADMIN`, `MANAGER` |
-| `/studios/:studioId/shifts/:shiftId/compensation-line-items` | shift | `ADMIN`, `MANAGER` |
-| `/studios/:studioId/shifts/:shiftId/blocks/:blockId/compensation-line-items` | shift block | `ADMIN`, `MANAGER` |
+| `/studios/:studioId/shifts/:shiftId/compensation-line-items`                      | shift                   | `ADMIN`, `MANAGER` |
+| `/studios/:studioId/shifts/:shiftId/blocks/:blockId/compensation-line-items`      | shift block             | `ADMIN`, `MANAGER` |
 
 All four families restrict write access to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER` regardless of who can read the parent target. `TALENT_MANAGER` may read assignments today but does not get write access to compensation line items in 2.2; widening the role surface is a Phase 5 product call.
 
@@ -179,12 +194,12 @@ Each family supports list, create, update, and soft delete for that route target
 
 Actuals are added to the existing update routes rather than introduced as separate sub-resources. This keeps a single write path per resource and avoids two endpoints racing on the same row.
 
-| Endpoint | Change | Roles |
-| -------- | ------ | ----- |
-| `PATCH /studios/:studioId/shows/:showId` | Accept optional `actual_start_time` / `actual_end_time` in `UpdateStudioShowDto`; null clears the field | `STUDIO_SHOW_WRITE_ACCESS_ROLES` (ADMIN, MANAGER) |
-| `PATCH /studios/:studioId/shifts/:shiftId/blocks/:blockId` | Accept optional `actual_start_time` / `actual_end_time` on the existing block update DTO; null clears the field | `ADMIN`, `MANAGER` |
-| existing show-creator assignment update | Append audit when `agreed_rate`, `compensation_type`, or `commission_rate` changes | existing roles |
-| existing shift update | Append audit when `hourly_rate` changes | existing roles |
+| Endpoint                                                   | Change                                                                                                          | Roles                                             |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `PATCH /studios/:studioId/shows/:showId`                   | Accept optional `actual_start_time` / `actual_end_time` in `UpdateStudioShowDto`; null clears the field         | `STUDIO_SHOW_WRITE_ACCESS_ROLES` (ADMIN, MANAGER) |
+| `PATCH /studios/:studioId/shifts/:shiftId/blocks/:blockId` | Accept optional `actual_start_time` / `actual_end_time` on the existing block update DTO; null clears the field | `ADMIN`, `MANAGER`                                |
+| existing show-creator assignment update                    | Append audit when `agreed_rate`, `compensation_type`, or `commission_rate` changes                              | existing roles                                    |
+| existing shift update                                      | Append audit when `hourly_rate` changes                                                                         | existing roles                                    |
 
 If the existing shift-block update route does not yet exist in `apps/erify_api/src/studios/studio-shift/`, this PR introduces it as a normal block update endpoint that includes actuals fields in its DTO. There is no separate `/actuals` sub-resource.
 
@@ -318,16 +333,16 @@ Reuse:
 
 ## Error Contract
 
-| Code | HTTP | Meaning |
-| ---- | ---- | ------- |
-| `LINE_ITEM_NOT_FOUND` | 404 | UID missing, soft-deleted, or outside caller scope |
-| `LINE_ITEM_TARGET_NOT_FOUND` | 404 | Attached entity missing, soft-deleted, outside studio, or unable to resolve a studio scope (e.g. `Show.studioId IS NULL`) |
-| `LINE_ITEM_AMOUNT_REQUIRED` | 422 | Missing or non-numeric `amount` |
-| `LINE_ITEM_REASON_REQUIRED` | 422 | Missing or whitespace-only `reason` |
-| `SHOW_NOT_FOUND` | 404 | Show missing or outside studio |
-| `SHIFT_BLOCK_NOT_FOUND` | 404 | Block missing or outside studio |
-| `SHOW_ACTUALS_INVERTED` | 422 | `actual_end_time <= actual_start_time` when both present |
-| `SHIFT_BLOCK_ACTUALS_INVERTED` | 422 | Same for block actuals |
+| Code                           | HTTP | Meaning                                                                                                                   |
+| ------------------------------ | ---- | ------------------------------------------------------------------------------------------------------------------------- |
+| `LINE_ITEM_NOT_FOUND`          | 404  | UID missing, soft-deleted, or outside caller scope                                                                        |
+| `LINE_ITEM_TARGET_NOT_FOUND`   | 404  | Attached entity missing, soft-deleted, outside studio, or unable to resolve a studio scope (e.g. `Show.studioId IS NULL`) |
+| `LINE_ITEM_AMOUNT_REQUIRED`    | 422  | Missing or non-numeric `amount`                                                                                           |
+| `LINE_ITEM_REASON_REQUIRED`    | 422  | Missing or whitespace-only `reason`                                                                                       |
+| `SHOW_NOT_FOUND`               | 404  | Show missing or outside studio                                                                                            |
+| `SHIFT_BLOCK_NOT_FOUND`        | 404  | Block missing or outside studio                                                                                           |
+| `SHOW_ACTUALS_INVERTED`        | 422  | `actual_end_time <= actual_start_time` when both present                                                                  |
+| `SHIFT_BLOCK_ACTUALS_INVERTED` | 422  | Same for block actuals                                                                                                    |
 
 Unsupported `target_type` values are rejected by Zod enum validation as `400` before reaching the service, so a dedicated business-error code is unnecessary.
 
