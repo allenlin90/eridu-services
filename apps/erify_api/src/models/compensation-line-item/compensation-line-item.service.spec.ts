@@ -29,8 +29,8 @@ describe('compensationLineItemService', () => {
       create: jest.fn(),
       findByUidWithRelations: jest.fn(),
       findPaginated: jest.fn(),
-      updateByUid: jest.fn(),
-      softDeleteByUid: jest.fn(),
+      update: jest.fn(),
+      softDelete: jest.fn(),
     } as unknown as jest.Mocked<CompensationLineItemRepository>;
     const targetResolver = {
       resolve: jest.fn(),
@@ -130,8 +130,8 @@ describe('compensationLineItemService', () => {
 
   it('updates only mutable fields', async () => {
     const { service, repository } = await buildService();
-    repository.findByUidWithRelations.mockResolvedValue({ uid: 'cli_1' } as never);
-    repository.updateByUid.mockResolvedValue({ uid: 'cli_1' } as never);
+    repository.findByUidWithRelations.mockResolvedValue({ id: 99n, uid: 'cli_1' } as never);
+    repository.update.mockResolvedValue({ uid: 'cli_1' } as never);
 
     await service.updateAdminLineItem('cli_1', {
       amount: '12.00',
@@ -140,11 +140,15 @@ describe('compensationLineItemService', () => {
       metadata: { source: 'support' },
     });
 
-    expect(repository.updateByUid).toHaveBeenCalledWith('cli_1', {
-      amount: '12.00',
-      itemType: CompensationItemType.OTHER,
-      reason: 'corrected',
-      metadata: { source: 'support' },
-    });
+    expect(repository.update).toHaveBeenCalledWith(
+      { id: 99n },
+      {
+        amount: '12.00',
+        itemType: CompensationItemType.OTHER,
+        reason: 'corrected',
+        metadata: { source: 'support' },
+      },
+      expect.any(Object),
+    );
   });
 });

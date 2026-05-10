@@ -2,10 +2,12 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { CompensationLineItemTargetType, Prisma } from '@prisma/client';
 
-import type {
-  CreateAdminCompensationLineItemPayload,
-  ListCompensationLineItemsQuery,
-  UpdateCompensationLineItemPayload,
+import {
+  compensationLineItemDefaultInclude,
+  type CompensationLineItemWithRelations,
+  type CreateAdminCompensationLineItemPayload,
+  type ListCompensationLineItemsQuery,
+  type UpdateCompensationLineItemPayload,
 } from './schemas/compensation-line-item.schema';
 import { CompensationLineItemRepository } from './compensation-line-item.repository';
 import { LineItemTargetResolver, type ResolvedLineItemTarget } from './line-item-target.resolver';
@@ -74,20 +76,24 @@ export class CompensationLineItemService extends BaseModelService {
   async updateAdminLineItem(
     uid: string,
     payload: UpdateCompensationLineItemPayload,
-  ) {
+  ): Promise<CompensationLineItemWithRelations | null> {
     const existing = await this.compensationLineItemRepository.findByUidWithRelations(uid);
     if (!existing) {
       return null;
     }
 
-    return this.compensationLineItemRepository.updateByUid(uid, {
-      ...(payload.amount !== undefined && { amount: payload.amount }),
-      ...(payload.itemType !== undefined && { itemType: payload.itemType }),
-      ...(payload.reason !== undefined && { reason: payload.reason }),
-      ...(payload.metadata !== undefined && {
-        metadata: this.toJsonObject(payload.metadata),
-      }),
-    });
+    return this.compensationLineItemRepository.update(
+      { id: existing.id },
+      {
+        ...(payload.amount !== undefined && { amount: payload.amount }),
+        ...(payload.itemType !== undefined && { itemType: payload.itemType }),
+        ...(payload.reason !== undefined && { reason: payload.reason }),
+        ...(payload.metadata !== undefined && {
+          metadata: this.toJsonObject(payload.metadata),
+        }),
+      },
+      compensationLineItemDefaultInclude,
+    ) as Promise<CompensationLineItemWithRelations>;
   }
 
   @Transactional()
@@ -97,7 +103,7 @@ export class CompensationLineItemService extends BaseModelService {
       return null;
     }
 
-    return this.compensationLineItemRepository.softDeleteByUid(uid);
+    return this.compensationLineItemRepository.softDelete({ id: existing.id });
   }
 
   private buildTargetCreate(

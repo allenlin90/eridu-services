@@ -71,26 +71,6 @@ export class CompensationLineItemRepository extends BaseRepository<
     return { data, total };
   }
 
-  async updateByUid(
-    uid: string,
-    data: Prisma.CompensationLineItemUpdateInput,
-  ): Promise<CompensationLineItemWithRelations | null> {
-    const existing = await this.findByUidWithRelations(uid);
-    if (!existing) {
-      return null;
-    }
-
-    return this.delegate.update({
-      where: { id: existing.id },
-      data,
-      include: compensationLineItemDefaultInclude,
-    });
-  }
-
-  async softDeleteByUid(uid: string): Promise<CompensationLineItemWithRelations | null> {
-    return this.updateByUid(uid, { deletedAt: new Date() });
-  }
-
   private buildWhere(
     query: ListCompensationLineItemsQuery,
   ): Prisma.CompensationLineItemWhereInput {
