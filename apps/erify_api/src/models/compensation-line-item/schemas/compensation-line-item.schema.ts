@@ -12,12 +12,9 @@ import {
   listCompensationLineItemsQuerySchema as sharedListCompensationLineItemsQuerySchema,
   updateCompensationLineItemInputSchema,
 } from '@eridu/api-types/compensation-line-items';
+import { UID_PREFIXES } from '@eridu/api-types/constants';
 
-import { StudioService } from '@/models/studio/studio.service';
-import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
-import { UserService } from '@/models/user/user.service';
-
-const COMPENSATION_LINE_ITEM_UID_PREFIX = 'cli';
+const COMPENSATION_LINE_ITEM_UID_PREFIX = UID_PREFIXES.COMPENSATION_LINE_ITEM;
 
 export type CreateAdminCompensationLineItemPayload = z.infer<
   typeof createAdminCompensationLineItemSchema
@@ -47,22 +44,24 @@ function decimalToString(value: unknown): string {
   return String(value);
 }
 
-function getTargetUid(obj: {
+type TargetRelations = {
   targetType: CompensationLineItemTargetType;
-  show?: { uid: string } | null;
-  showCreator?: { uid: string } | null;
-  studioShift?: { uid: string } | null;
-  studioShiftBlock?: { uid: string } | null;
-}) {
-  switch (obj.targetType) {
+  show: { uid: string } | null;
+  showCreator: { uid: string } | null;
+  studioShift: { uid: string } | null;
+  studioShiftBlock: { uid: string } | null;
+};
+
+function getTargetUid(target: TargetRelations): string | undefined {
+  switch (target.targetType) {
     case CompensationLineItemTargetType.SHOW:
-      return obj.show?.uid;
+      return target.show?.uid;
     case CompensationLineItemTargetType.SHOW_CREATOR:
-      return obj.showCreator?.uid;
+      return target.showCreator?.uid;
     case CompensationLineItemTargetType.STUDIO_SHIFT:
-      return obj.studioShift?.uid;
+      return target.studioShift?.uid;
     case CompensationLineItemTargetType.STUDIO_SHIFT_BLOCK:
-      return obj.studioShiftBlock?.uid;
+      return target.studioShiftBlock?.uid;
   }
 }
 
@@ -99,17 +98,13 @@ export const compensationLineItemDefaultInclude = {
   createdBy: {
     select: { uid: true },
   },
-  show: {
-    select: { uid: true },
-  },
-  showCreator: {
-    select: { uid: true },
-  },
-  studioShift: {
-    select: { uid: true },
-  },
-  studioShiftBlock: {
-    select: { uid: true },
+  target: {
+    include: {
+      show: { select: { uid: true } },
+      showCreator: { select: { uid: true } },
+      studioShift: { select: { uid: true } },
+      studioShiftBlock: { select: { uid: true } },
+    },
   },
 } as const;
 
@@ -120,32 +115,38 @@ const compensationLineItemInternalSchema = z.object({
   amount: z.unknown(),
   itemType: z.nativeEnum(CompensationItemType),
   reason: z.string(),
-  targetType: z.nativeEnum(CompensationLineItemTargetType),
-  targetId: z.bigint(),
-  showId: z.bigint().nullable(),
-  showCreatorId: z.bigint().nullable(),
-  studioShiftId: z.bigint().nullable(),
-  studioShiftBlockId: z.bigint().nullable(),
   createdById: z.bigint(),
   metadata: z.record(z.string(), z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
-  studio: z.object({ uid: z.string().startsWith(StudioService.UID_PREFIX) }),
-  createdBy: z.object({ uid: z.string().startsWith(UserService.UID_PREFIX) }),
-  show: z.object({ uid: z.string() }).nullable(),
-  showCreator: z.object({ uid: z.string() }).nullable(),
-  studioShift: z
-    .object({ uid: z.string().startsWith(StudioShiftService.UID_PREFIX) })
-    .nullable(),
-  studioShiftBlock: z
-    .object({ uid: z.string().startsWith(StudioShiftService.BLOCK_UID_PREFIX) })
+  studio: z.object({ uid: z.string().startsWith(UID_PREFIXES.STUDIO) }),
+  createdBy: z.object({ uid: z.string().startsWith(UID_PREFIXES.USER) }),
+  target: z
+    .object({
+      targetType: z.nativeEnum(CompensationLineItemTargetType),
+      targetId: z.bigint(),
+      show: z.object({ uid: z.string().startsWith(UID_PREFIXES.SHOW) }).nullable(),
+      showCreator: z
+        .object({ uid: z.string().startsWith(UID_PREFIXES.SHOW_CREATOR) })
+        .nullable(),
+      studioShift: z
+        .object({ uid: z.string().startsWith(UID_PREFIXES.STUDIO_SHIFT) })
+        .nullable(),
+      studioShiftBlock: z
+        .object({ uid: z.string().startsWith(UID_PREFIXES.STUDIO_SHIFT_BLOCK) })
+        .nullable(),
+    })
     .nullable(),
 });
 
 export const compensationLineItemDto = compensationLineItemInternalSchema
   .transform((obj) => {
-    const targetUid = getTargetUid(obj);
+    if (!obj.target) {
+      throw new Error(`Compensation line item ${obj.uid} is missing its target row`);
+    }
+
+    const targetUid = getTargetUid(obj.target);
     if (!targetUid) {
       throw new Error(`Missing target relation for compensation line item ${obj.uid}`);
     }
@@ -153,7 +154,7 @@ export const compensationLineItemDto = compensationLineItemInternalSchema
     return {
       id: obj.uid,
       studio_id: obj.studio.uid,
-      target_type: obj.targetType,
+      target_type: obj.target.targetType,
       target_id: targetUid,
       amount: decimalToString(obj.amount),
       item_type: obj.itemType,

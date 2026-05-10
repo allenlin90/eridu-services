@@ -110,34 +110,34 @@ model Platform {
 }
 
 model Show {
-  id                    BigInt                 @id @default(autoincrement())
-  uid                   String                 @unique
-  externalId            String?                @map("external_id")
-  name                  String
-  startTime             DateTime               @map("start_time")
-  endTime               DateTime               @map("end_time")
-  metadata              Json                   @default("{}")
-  clientId              BigInt                 @map("client_id")
-  client                Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  studioId              BigInt?                @map("studio_id")
-  studio                Studio?                @relation(fields: [studioId], references: [id], onDelete: SetNull)
-  studioRoomId          BigInt?                @map("studio_room_id")
-  studioRoom            StudioRoom?            @relation(fields: [studioRoomId], references: [id], onDelete: SetNull)
-  showTypeId            BigInt                 @map("show_type_id")
-  showType              ShowType               @relation(fields: [showTypeId], references: [id])
-  showStatusId          BigInt                 @map("show_status_id")
-  showStatus            ShowStatus             @relation(fields: [showStatusId], references: [id])
-  showStandardId        BigInt                 @map("show_standard_id")
-  showStandard          ShowStandard           @relation(fields: [showStandardId], references: [id])
-  scheduleId            BigInt?                @map("schedule_id")
-  Schedule              Schedule?              @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  showCreators          ShowCreator[]
-  showPlatforms         ShowPlatform[]
-  taskTargets           TaskTarget[]
-  compensationLineItems CompensationLineItem[]
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
-  deletedAt             DateTime?              @map("deleted_at")
+  id                          BigInt                       @id @default(autoincrement())
+  uid                         String                       @unique
+  externalId                  String?                      @map("external_id")
+  name                        String
+  startTime                   DateTime                     @map("start_time")
+  endTime                     DateTime                     @map("end_time")
+  metadata                    Json                         @default("{}")
+  clientId                    BigInt                       @map("client_id")
+  client                      Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  studioId                    BigInt?                      @map("studio_id")
+  studio                      Studio?                      @relation(fields: [studioId], references: [id], onDelete: SetNull)
+  studioRoomId                BigInt?                      @map("studio_room_id")
+  studioRoom                  StudioRoom?                  @relation(fields: [studioRoomId], references: [id], onDelete: SetNull)
+  showTypeId                  BigInt                       @map("show_type_id")
+  showType                    ShowType                     @relation(fields: [showTypeId], references: [id])
+  showStatusId                BigInt                       @map("show_status_id")
+  showStatus                  ShowStatus                   @relation(fields: [showStatusId], references: [id])
+  showStandardId              BigInt                       @map("show_standard_id")
+  showStandard                ShowStandard                 @relation(fields: [showStandardId], references: [id])
+  scheduleId                  BigInt?                      @map("schedule_id")
+  Schedule                    Schedule?                    @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  showCreators                ShowCreator[]
+  showPlatforms               ShowPlatform[]
+  taskTargets                 TaskTarget[]
+  compensationLineItemTargets CompensationLineItemTarget[]
+  createdAt                   DateTime                     @default(now()) @map("created_at")
+  updatedAt                   DateTime                     @updatedAt @map("updated_at")
+  deletedAt                   DateTime?                    @map("deleted_at")
 
   @@unique([clientId, externalId])
   @@index([uid])
@@ -170,24 +170,24 @@ model Show {
 }
 
 model ShowCreator {
-  id                    BigInt                 @id @default(autoincrement())
-  uid                   String                 @unique
-  note                  String?
+  id                          BigInt                       @id @default(autoincrement())
+  uid                         String                       @unique
+  note                        String?
   // Per-show fixed amount override for FIXED and HYBRID compensation.
-  agreedRate            Decimal?               @map("agreed_rate") @db.Decimal(10, 2)
+  agreedRate                  Decimal?                     @map("agreed_rate") @db.Decimal(10, 2)
   // Per-show compensation type override: FIXED | COMMISSION | HYBRID.
-  compensationType      String?                @map("compensation_type")
+  compensationType            String?                      @map("compensation_type")
   // Per-show commission percent (0-100) override for COMMISSION and HYBRID.
-  commissionRate        Decimal?               @map("commission_rate") @db.Decimal(10, 2)
-  metadata              Json                   @default("{}")
-  showId                BigInt                 @map("show_id")
-  show                  Show                   @relation(fields: [showId], references: [id], onDelete: Cascade)
-  creatorId             BigInt                 @map("mc_id")
-  creator               Creator                @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  compensationLineItems CompensationLineItem[]
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
-  deletedAt             DateTime?              @map("deleted_at")
+  commissionRate              Decimal?                     @map("commission_rate") @db.Decimal(10, 2)
+  metadata                    Json                         @default("{}")
+  showId                      BigInt                       @map("show_id")
+  show                        Show                         @relation(fields: [showId], references: [id], onDelete: Cascade)
+  creatorId                   BigInt                       @map("mc_id")
+  creator                     Creator                      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  compensationLineItemTargets CompensationLineItemTarget[]
+  createdAt                   DateTime                     @default(now()) @map("created_at")
+  updatedAt                   DateTime                     @updatedAt @map("updated_at")
+  deletedAt                   DateTime?                    @map("deleted_at")
 
   @@unique([showId, creatorId])
   @@index([uid])
@@ -394,25 +394,25 @@ enum CompensationLineItemTargetType {
 }
 
 model StudioShift {
-  id                    BigInt                 @id @default(autoincrement())
-  uid                   String                 @unique
-  studioId              BigInt                 @map("studio_id")
-  userId                BigInt                 @map("user_id")
-  date                  DateTime               @db.Date
-  hourlyRate            Decimal                @map("hourly_rate") @db.Decimal(10, 2)
-  projectedCost         Decimal                @map("projected_cost") @db.Decimal(10, 2)
-  calculatedCost        Decimal?               @map("calculated_cost") @db.Decimal(10, 2)
-  isApproved            Boolean                @default(false) @map("is_approved")
-  isDutyManager         Boolean                @default(false) @map("is_duty_manager")
-  status                StudioShiftStatus      @default(SCHEDULED)
-  metadata              Json                   @default("{}")
-  blocks                StudioShiftBlock[]
-  compensationLineItems CompensationLineItem[]
-  studio                Studio                 @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
-  deletedAt             DateTime?              @map("deleted_at")
+  id                          BigInt                       @id @default(autoincrement())
+  uid                         String                       @unique
+  studioId                    BigInt                       @map("studio_id")
+  userId                      BigInt                       @map("user_id")
+  date                        DateTime                     @db.Date
+  hourlyRate                  Decimal                      @map("hourly_rate") @db.Decimal(10, 2)
+  projectedCost               Decimal                      @map("projected_cost") @db.Decimal(10, 2)
+  calculatedCost              Decimal?                     @map("calculated_cost") @db.Decimal(10, 2)
+  isApproved                  Boolean                      @default(false) @map("is_approved")
+  isDutyManager               Boolean                      @default(false) @map("is_duty_manager")
+  status                      StudioShiftStatus            @default(SCHEDULED)
+  metadata                    Json                         @default("{}")
+  blocks                      StudioShiftBlock[]
+  compensationLineItemTargets CompensationLineItemTarget[]
+  studio                      Studio                       @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user                        User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt                   DateTime                     @default(now()) @map("created_at")
+  updatedAt                   DateTime                     @updatedAt @map("updated_at")
+  deletedAt                   DateTime?                    @map("deleted_at")
 
   @@index([studioId, date])
   @@index([userId, date])
@@ -424,17 +424,17 @@ model StudioShift {
 }
 
 model StudioShiftBlock {
-  id                    BigInt                 @id @default(autoincrement())
-  uid                   String                 @unique
-  shiftId               BigInt                 @map("shift_id")
-  startTime             DateTime               @map("start_time")
-  endTime               DateTime               @map("end_time")
-  metadata              Json                   @default("{}")
-  shift                 StudioShift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  compensationLineItems CompensationLineItem[]
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
-  deletedAt             DateTime?              @map("deleted_at")
+  id                          BigInt                       @id @default(autoincrement())
+  uid                         String                       @unique
+  shiftId                     BigInt                       @map("shift_id")
+  startTime                   DateTime                     @map("start_time")
+  endTime                     DateTime                     @map("end_time")
+  metadata                    Json                         @default("{}")
+  shift                       StudioShift                  @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  compensationLineItemTargets CompensationLineItemTarget[]
+  createdAt                   DateTime                     @default(now()) @map("created_at")
+  updatedAt                   DateTime                     @updatedAt @map("updated_at")
+  deletedAt                   DateTime?                    @map("deleted_at")
 
   @@index([shiftId])
   @@index([startTime, endTime])
@@ -444,13 +444,39 @@ model StudioShiftBlock {
 }
 
 model CompensationLineItem {
-  id                 BigInt                         @id @default(autoincrement())
-  uid                String                         @unique
-  studioId           BigInt                         @map("studio_id")
-  studio             Studio                         @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  amount             Decimal                        @db.Decimal(12, 2)
-  itemType           CompensationItemType           @map("item_type")
-  reason             String
+  id          BigInt                      @id @default(autoincrement())
+  uid         String                      @unique
+  studioId    BigInt                      @map("studio_id")
+  studio      Studio                      @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  amount      Decimal                     @db.Decimal(12, 2)
+  itemType    CompensationItemType        @map("item_type")
+  reason      String
+  createdById BigInt                      @map("created_by_id")
+  createdBy   User                        @relation("CompensationLineItemCreatedBy", fields: [createdById], references: [id])
+  metadata    Json                        @default("{}")
+  // 1:1 polymorphic target. Optional in Prisma per 1:1 modeling rules; the application
+  // creates a target alongside every line item in the same transaction.
+  target      CompensationLineItemTarget?
+  createdAt   DateTime                    @default(now()) @map("created_at")
+  updatedAt   DateTime                    @updatedAt @map("updated_at")
+  deletedAt   DateTime?                   @map("deleted_at")
+
+  @@index([uid])
+  @@index([studioId, deletedAt])
+  @@index([createdById])
+  @@index([deletedAt])
+  @@map("compensation_line_items")
+}
+
+// Polymorphism-only side table for CompensationLineItem (strict 1:1).
+// `lineItemId` IS the row's identity — every line item has exactly one target, created in
+// the same transaction. Lifecycle follows the parent (no own deletedAt; cascades on hard
+// delete). Target entities (Show, ShowCreator, StudioShift, StudioShiftBlock) are
+// removed via soft-delete in this codebase; the cascading typed FKs only fire on hard
+// deletes, which would orphan the parent line item.
+model CompensationLineItemTarget {
+  lineItemId         BigInt                         @id @map("line_item_id")
+  lineItem           CompensationLineItem           @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
   targetType         CompensationLineItemTargetType @map("target_type")
   targetId           BigInt                         @map("target_id")
   showId             BigInt?                        @map("show_id")
@@ -461,22 +487,13 @@ model CompensationLineItem {
   studioShift        StudioShift?                   @relation(fields: [studioShiftId], references: [id], onDelete: Cascade)
   studioShiftBlockId BigInt?                        @map("studio_shift_block_id")
   studioShiftBlock   StudioShiftBlock?              @relation(fields: [studioShiftBlockId], references: [id], onDelete: Cascade)
-  createdById        BigInt                         @map("created_by_id")
-  createdBy          User                           @relation("CompensationLineItemCreatedBy", fields: [createdById], references: [id])
-  metadata           Json                           @default("{}")
-  createdAt          DateTime                       @default(now()) @map("created_at")
-  updatedAt          DateTime                       @updatedAt @map("updated_at")
-  deletedAt          DateTime?                      @map("deleted_at")
 
-  @@index([studioId, deletedAt])
-  @@index([targetType, targetId, deletedAt])
+  @@index([targetType, targetId])
   @@index([showId])
   @@index([showCreatorId])
   @@index([studioShiftId])
   @@index([studioShiftBlockId])
-  @@index([createdById])
-  @@index([deletedAt])
-  @@map("compensation_line_items")
+  @@map("compensation_line_item_targets")
 }
 
 model Schedule {

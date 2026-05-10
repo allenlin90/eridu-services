@@ -11,17 +11,10 @@ type ResolveTargetInput = {
   targetUid: string;
 };
 
-type TypedForeignKey =
-  | { showId: bigint }
-  | { showCreatorId: bigint }
-  | { studioShiftId: bigint }
-  | { studioShiftBlockId: bigint };
-
 export type ResolvedLineItemTarget = {
   targetId: bigint;
   studioId: bigint;
   studioUid: string;
-  typedForeignKey: TypedForeignKey;
 };
 
 @Injectable()
@@ -40,6 +33,10 @@ export class LineItemTargetResolver {
         return this.resolveStudioShift(input);
       case CompensationLineItemTargetType.STUDIO_SHIFT_BLOCK:
         return this.resolveStudioShiftBlock(input);
+      default: {
+        const _exhaustive: never = input.targetType;
+        throw new Error(`Unhandled compensation target type: ${String(_exhaustive)}`);
+      }
     }
   }
 
@@ -57,7 +54,7 @@ export class LineItemTargetResolver {
       },
     });
 
-    return this.assertStudioTarget(input.studioUid, show, (id) => ({ showId: id }));
+    return this.assertStudioTarget(input.studioUid, show);
   }
 
   private async resolveShowCreator(input: ResolveTargetInput): Promise<ResolvedLineItemTarget> {
@@ -90,7 +87,6 @@ export class LineItemTargetResolver {
             studio: showCreator.show.studio,
           }
         : null,
-      (id) => ({ showCreatorId: id }),
     );
   }
 
@@ -108,9 +104,7 @@ export class LineItemTargetResolver {
       },
     });
 
-    return this.assertStudioTarget(input.studioUid, shift, (id) => ({
-      studioShiftId: id,
-    }));
+    return this.assertStudioTarget(input.studioUid, shift);
   }
 
   private async resolveStudioShiftBlock(
@@ -145,7 +139,6 @@ export class LineItemTargetResolver {
             studio: block.shift.studio,
           }
         : null,
-      (id) => ({ studioShiftBlockId: id }),
     );
   }
 
@@ -156,7 +149,6 @@ export class LineItemTargetResolver {
       studioId: bigint | null;
       studio: { uid: string } | null;
     } | null,
-    buildTypedForeignKey: (id: bigint) => TypedForeignKey,
   ): ResolvedLineItemTarget {
     if (!target?.studioId || !target.studio || target.studio.uid !== expectedStudioUid) {
       throw HttpError.custom('LINE_ITEM_TARGET_NOT_FOUND', HttpStatus.NOT_FOUND);
@@ -166,7 +158,6 @@ export class LineItemTargetResolver {
       targetId: target.id,
       studioId: target.studioId,
       studioUid: target.studio.uid,
-      typedForeignKey: buildTypedForeignKey(target.id),
     };
   }
 }

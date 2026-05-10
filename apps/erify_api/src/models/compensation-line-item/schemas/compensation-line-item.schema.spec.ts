@@ -91,12 +91,6 @@ describe('compensation line item schemas', () => {
       amount: { toString: () => '75.50' },
       itemType: CompensationItemType.BONUS,
       reason: 'Contest bonus',
-      targetType: CompensationLineItemTargetType.SHOW_CREATOR,
-      targetId: 301n,
-      showId: null,
-      showCreatorId: 301n,
-      studioShiftId: null,
-      studioShiftBlockId: null,
       createdById: 401n,
       metadata: { note: 'support' },
       createdAt: now,
@@ -104,10 +98,14 @@ describe('compensation line item schemas', () => {
       deletedAt: null,
       studio: { uid: 'std_123' },
       createdBy: { uid: 'user_123' },
-      show: null,
-      showCreator: { uid: 'show_mc_123' },
-      studioShift: null,
-      studioShiftBlock: null,
+      target: {
+        targetType: CompensationLineItemTargetType.SHOW_CREATOR,
+        targetId: 301n,
+        show: null,
+        showCreator: { uid: 'show_mc_123' },
+        studioShift: null,
+        studioShiftBlock: null,
+      },
     });
 
     expect(result).toEqual({

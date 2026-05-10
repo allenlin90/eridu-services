@@ -21,10 +21,11 @@ export const compensationLineItemTargetTypeSchema = z.enum([
   'STUDIO_SHIFT_BLOCK',
 ]);
 
+// Backed by Postgres DECIMAL(12,2): max 10 integer digits, max 2 fractional digits.
 const decimalAmountSchema = z
   .union([z.string(), z.number()])
   .transform((value) => String(value).trim())
-  .pipe(z.string().regex(/^-?\d+(?:\.\d{1,2})?$/))
+  .pipe(z.string().regex(/^-?\d{1,10}(?:\.\d{1,2})?$/))
   .transform((value) => {
     const [whole, fractional = ''] = value.split('.');
     return `${whole}.${fractional.padEnd(2, '0')}`;

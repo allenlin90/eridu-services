@@ -102,10 +102,6 @@ export class CompensationLineItemRepository extends BaseRepository<
       where.studio = { uid: query.studioId };
     }
 
-    if (query.targetType) {
-      where.targetType = query.targetType;
-    }
-
     if (query.itemType) {
       where.itemType = query.itemType;
     }
@@ -124,38 +120,56 @@ export class CompensationLineItemRepository extends BaseRepository<
       }
     }
 
-    if (query.targetUid) {
-      where.AND = [
-        ...(Array.isArray(where.AND) ? where.AND : []),
-        this.buildTargetUidFilter(query),
-      ];
+    const targetFilter = this.buildTargetFilter(query);
+    if (targetFilter) {
+      where.target = targetFilter;
     }
 
     return where;
   }
 
-  private buildTargetUidFilter(
+  private buildTargetFilter(
     query: ListCompensationLineItemsQuery,
-  ): Prisma.CompensationLineItemWhereInput {
-    if (query.targetType === 'SHOW') {
-      return { show: { uid: query.targetUid } };
+  ): Prisma.CompensationLineItemTargetWhereInput | undefined {
+    const filter: Prisma.CompensationLineItemTargetWhereInput = {};
+    let hasFilter = false;
+
+    if (query.targetType) {
+      filter.targetType = query.targetType;
+      hasFilter = true;
     }
-    if (query.targetType === 'SHOW_CREATOR') {
-      return { showCreator: { uid: query.targetUid } };
+
+    if (query.targetUid) {
+      hasFilter = true;
+      Object.assign(filter, this.buildTargetUidFilter(query.targetType, query.targetUid));
     }
-    if (query.targetType === 'STUDIO_SHIFT') {
-      return { studioShift: { uid: query.targetUid } };
+
+    return hasFilter ? filter : undefined;
+  }
+
+  private buildTargetUidFilter(
+    targetType: ListCompensationLineItemsQuery['targetType'],
+    targetUid: string,
+  ): Prisma.CompensationLineItemTargetWhereInput {
+    if (targetType === 'SHOW') {
+      return { show: { uid: targetUid } };
     }
-    if (query.targetType === 'STUDIO_SHIFT_BLOCK') {
-      return { studioShiftBlock: { uid: query.targetUid } };
+    if (targetType === 'SHOW_CREATOR') {
+      return { showCreator: { uid: targetUid } };
+    }
+    if (targetType === 'STUDIO_SHIFT') {
+      return { studioShift: { uid: targetUid } };
+    }
+    if (targetType === 'STUDIO_SHIFT_BLOCK') {
+      return { studioShiftBlock: { uid: targetUid } };
     }
 
     return {
       OR: [
-        { show: { uid: query.targetUid } },
-        { showCreator: { uid: query.targetUid } },
-        { studioShift: { uid: query.targetUid } },
-        { studioShiftBlock: { uid: query.targetUid } },
+        { show: { uid: targetUid } },
+        { showCreator: { uid: targetUid } },
+        { studioShift: { uid: targetUid } },
+        { studioShiftBlock: { uid: targetUid } },
       ],
     };
   }

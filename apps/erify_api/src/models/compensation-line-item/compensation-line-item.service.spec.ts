@@ -71,17 +71,15 @@ describe('compensationLineItemService', () => {
     return { service, repository, targetResolver, userService, utilityService };
   };
 
-  it('creates an admin line item with actor, studio, target, and typed FK mapping', async () => {
+  it('creates an admin line item with actor, studio, and nested target row', async () => {
     const { service, repository, targetResolver, userService } = await buildService();
     userService.getUserByExtId.mockResolvedValue({ id: 70n, uid: 'user_1' });
     targetResolver.resolve.mockResolvedValue({
       targetId: 11n,
       studioId: 22n,
       studioUid: 'std_1',
-      typedForeignKey: { showId: 11n },
     });
     repository.create.mockResolvedValue({ uid: 'cli_generated' } as never);
-    repository.findByUidWithRelations.mockResolvedValue({ uid: 'cli_generated' } as never);
 
     await service.createAdminLineItem({
       studioId: 'std_1',
@@ -98,12 +96,16 @@ describe('compensationLineItemService', () => {
       amount: '10.25',
       itemType: CompensationItemType.BONUS,
       reason: 'bonus',
-      targetType: CompensationLineItemTargetType.SHOW,
-      targetId: 11n,
-      show: { connect: { id: 11n } },
       studio: { connect: { id: 22n } },
       createdBy: { connect: { id: 70n } },
       metadata: { source: 'test' },
+      target: {
+        create: {
+          targetType: CompensationLineItemTargetType.SHOW,
+          targetId: 11n,
+          show: { connect: { id: 11n } },
+        },
+      },
     });
   });
 

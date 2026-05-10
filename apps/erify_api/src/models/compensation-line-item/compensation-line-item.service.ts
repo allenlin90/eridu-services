@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
-import { CompensationLineItemTargetType } from '@prisma/client';
+import { CompensationLineItemTargetType, Prisma } from '@prisma/client';
 
 import type {
   CreateAdminCompensationLineItemPayload,
@@ -48,28 +48,26 @@ export class CompensationLineItemService extends BaseModelService {
       targetUid: payload.targetUid,
     });
 
-    const created = await this.compensationLineItemRepository.create({
+    return this.compensationLineItemRepository.create({
       uid: this.generateUid(),
       amount: payload.amount,
       itemType: payload.itemType,
       reason: payload.reason,
-      targetType: payload.targetType,
-      targetId: resolvedTarget.targetId,
-      ...this.buildTypedTargetConnect(payload.targetType, resolvedTarget),
       studio: { connect: { id: resolvedTarget.studioId } },
       createdBy: { connect: { id: actor.id } },
       metadata: this.toJsonObject(payload.metadata ?? {}),
+      target: {
+        create: this.buildTargetCreate(payload.targetType, resolvedTarget),
+      },
     });
-
-    return this.compensationLineItemRepository.findByUidWithRelations(created.uid);
   }
 
   listAdminLineItems(query: ListCompensationLineItemsQuery) {
     return this.compensationLineItemRepository.findPaginated(query);
   }
 
-  getAdminLineItem(uid: string) {
-    return this.compensationLineItemRepository.findByUidWithRelations(uid);
+  getAdminLineItem(uid: string, params?: { includeDeleted?: boolean }) {
+    return this.compensationLineItemRepository.findByUidWithRelations(uid, params);
   }
 
   @Transactional()
@@ -102,19 +100,24 @@ export class CompensationLineItemService extends BaseModelService {
     return this.compensationLineItemRepository.softDeleteByUid(uid);
   }
 
-  private buildTypedTargetConnect(
+  private buildTargetCreate(
     targetType: CompensationLineItemTargetType,
     target: ResolvedLineItemTarget,
-  ) {
+  ): Prisma.CompensationLineItemTargetCreateWithoutLineItemInput {
+    const base = {
+      targetType,
+      targetId: target.targetId,
+    };
+
     switch (targetType) {
       case CompensationLineItemTargetType.SHOW:
-        return { show: { connect: { id: target.targetId } } };
+        return { ...base, show: { connect: { id: target.targetId } } };
       case CompensationLineItemTargetType.SHOW_CREATOR:
-        return { showCreator: { connect: { id: target.targetId } } };
+        return { ...base, showCreator: { connect: { id: target.targetId } } };
       case CompensationLineItemTargetType.STUDIO_SHIFT:
-        return { studioShift: { connect: { id: target.targetId } } };
+        return { ...base, studioShift: { connect: { id: target.targetId } } };
       case CompensationLineItemTargetType.STUDIO_SHIFT_BLOCK:
-        return { studioShiftBlock: { connect: { id: target.targetId } } };
+        return { ...base, studioShiftBlock: { connect: { id: target.targetId } } };
     }
   }
 

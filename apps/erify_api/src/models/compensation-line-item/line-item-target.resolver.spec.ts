@@ -34,7 +34,6 @@ describe('lineItemTargetResolver', () => {
       targetId: 11n,
       studioId: 22n,
       studioUid: 'std_1',
-      typedForeignKey: { showId: 11n },
     });
   });
 
@@ -82,25 +81,22 @@ describe('lineItemTargetResolver', () => {
       'show_mc_1',
       'showCreator',
       { id: 31n, show: { studioId: 22n, studio: { uid: 'std_1' } } },
-      { showCreatorId: 31n },
     ],
     [
       CompensationLineItemTargetType.STUDIO_SHIFT,
       'ssh_1',
       'studioShift',
       { id: 41n, studioId: 22n, studio: { uid: 'std_1' } },
-      { studioShiftId: 41n },
     ],
     [
       CompensationLineItemTargetType.STUDIO_SHIFT_BLOCK,
       'ssb_1',
       'studioShiftBlock',
       { id: 51n, shift: { studioId: 22n, studio: { uid: 'std_1' } } },
-      { studioShiftBlockId: 51n },
     ],
   ] as const)(
     'resolves %s targets',
-    async (targetType, targetUid, delegateName, dbTarget, typedForeignKey) => {
+    async (targetType, targetUid, delegateName, dbTarget) => {
       const { resolver, tx } = buildResolver();
       tx[delegateName].findFirst.mockResolvedValue(dbTarget);
 
@@ -114,7 +110,6 @@ describe('lineItemTargetResolver', () => {
         targetId: dbTarget.id,
         studioId: 22n,
         studioUid: 'std_1',
-        typedForeignKey,
       });
     },
   );
