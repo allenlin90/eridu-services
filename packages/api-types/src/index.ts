@@ -18,6 +18,7 @@
  */
 
 export * from './clients/index.js';
+export * from './compensation-line-items/index.js';
 export * from './constants.js';
 export * from './creators/index.js';
 export * from './memberships/index.js';
