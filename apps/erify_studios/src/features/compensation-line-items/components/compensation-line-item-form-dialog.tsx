@@ -55,7 +55,7 @@ export function CompensationLineItemCreateDialog({
             <Select
               disabled={isLoading}
               onValueChange={(value) => form.setValue('target_type', value as CreateCompensationLineItemFormData['target_type'])}
-              defaultValue={form.watch('target_type')}
+              value={form.watch('target_type')}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select target type" />
@@ -87,7 +87,7 @@ export function CompensationLineItemCreateDialog({
             <Select
               disabled={isLoading}
               onValueChange={(value) => form.setValue('item_type', value as CreateCompensationLineItemFormData['item_type'])}
-              defaultValue={form.watch('item_type')}
+              value={form.watch('item_type')}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select item type" />
@@ -157,7 +157,7 @@ export function CompensationLineItemUpdateDialog({
             <Select
               disabled={isLoading}
               onValueChange={(value) => form.setValue('item_type', value as UpdateCompensationLineItemFormData['item_type'])}
-              defaultValue={form.watch('item_type')}
+              value={form.watch('item_type')}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select item type" />

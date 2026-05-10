@@ -138,7 +138,7 @@ function SystemCompensationLineItemsList() {
             table={table}
             searchableColumns={systemCompensationLineItemSearchableColumns}
             searchColumn="target_uid"
-            searchPlaceholder="Search by target UID..."
+            searchPlaceholder="Search by target ID..."
             featuredFilterColumns={['studio_id', 'target_type', 'item_type']}
           />
         )}
