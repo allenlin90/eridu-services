@@ -3,22 +3,23 @@ import { describe, expect, it } from 'vitest';
 import { adminCompensationLineItemKeys } from '../compensation-line-items.api';
 
 describe('adminCompensationLineItemKeys', () => {
-  it('generates base keys correctly', () => {
-    expect(adminCompensationLineItemKeys.all).toEqual(['admin-compensation-line-items']);
-    expect(adminCompensationLineItemKeys.lists()).toEqual(['admin-compensation-line-items', 'list']);
-    expect(adminCompensationLineItemKeys.details()).toEqual(['admin-compensation-line-items', 'detail']);
+  it('generates the system list root key', () => {
+    expect(adminCompensationLineItemKeys.all).toEqual(['compensation-line-items', 'system']);
   });
 
   it('generates list keys with params', () => {
     expect(
       adminCompensationLineItemKeys.list({ page: 1, limit: 10, studio_id: 'stu_1' }),
-    ).toEqual(['admin-compensation-line-items', 'list', { page: 1, limit: 10, studio_id: 'stu_1' }]);
+    ).toEqual([
+      'compensation-line-items',
+      'system',
+      { page: 1, limit: 10, studio_id: 'stu_1' },
+    ]);
   });
 
-  it('generates detail key with id', () => {
+  it('generates detail key shared across system and target views', () => {
     expect(adminCompensationLineItemKeys.detail('cmp_123')).toEqual([
-      'admin-compensation-line-items',
-      'detail',
+      'compensation-line-item',
       'cmp_123',
     ]);
   });

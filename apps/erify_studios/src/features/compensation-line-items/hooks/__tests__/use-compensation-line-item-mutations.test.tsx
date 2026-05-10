@@ -33,7 +33,7 @@ const mockDeleteApi = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/features/compensation-line-items/api/compensation-line-items.api', () => ({
   adminCompensationLineItemKeys: {
-    lists: () => ['lists'],
+    all: ['lists'],
     detail: (id: string) => ['detail', id],
   },
   createAdminCompensationLineItem: (data: any) => mockCreateApi(data),

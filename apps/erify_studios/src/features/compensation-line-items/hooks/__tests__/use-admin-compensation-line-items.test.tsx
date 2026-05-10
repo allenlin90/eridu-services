@@ -70,7 +70,7 @@ describe('useAdminCompensationLineItems', () => {
     });
 
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['admin-compensation-line-items'],
+      queryKey: ['compensation-line-items', 'system'],
     });
   });
 });

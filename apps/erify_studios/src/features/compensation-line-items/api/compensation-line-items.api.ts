@@ -15,12 +15,10 @@ export type AdminCompensationLineItemsResponse = PaginatedResponse<CompensationL
 export type GetAdminCompensationLineItemsParams = z.input<typeof listCompensationLineItemsQuerySchema>;
 
 export const adminCompensationLineItemKeys = {
-  all: ['admin-compensation-line-items'] as const,
-  lists: () => [...adminCompensationLineItemKeys.all, 'list'] as const,
+  all: ['compensation-line-items', 'system'] as const,
   list: (params: GetAdminCompensationLineItemsParams) =>
-    [...adminCompensationLineItemKeys.lists(), params] as const,
-  details: () => [...adminCompensationLineItemKeys.all, 'detail'] as const,
-  detail: (id: string) => [...adminCompensationLineItemKeys.details(), id] as const,
+    [...adminCompensationLineItemKeys.all, params] as const,
+  detail: (id: string) => ['compensation-line-item', id] as const,
 };
 
 export async function getAdminCompensationLineItems(

@@ -19,7 +19,7 @@ export function useCreateAdminCompensationLineItem() {
     mutationFn: (data: CreateAdminCompensationLineItemInput) =>
       createAdminCompensationLineItem(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminCompensationLineItemKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminCompensationLineItemKeys.all });
     },
   });
 }
@@ -31,7 +31,7 @@ export function useUpdateAdminCompensationLineItem() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCompensationLineItemInput }) =>
       updateAdminCompensationLineItem(id, data),
     onSuccess: (updatedLineItem) => {
-      queryClient.invalidateQueries({ queryKey: adminCompensationLineItemKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminCompensationLineItemKeys.all });
       queryClient.invalidateQueries({
         queryKey: adminCompensationLineItemKeys.detail(updatedLineItem.id),
       });
@@ -45,7 +45,7 @@ export function useDeleteAdminCompensationLineItem() {
   return useMutation({
     mutationFn: (id: string) => deleteAdminCompensationLineItem(id),
     onSuccess: (_result, id) => {
-      queryClient.invalidateQueries({ queryKey: adminCompensationLineItemKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminCompensationLineItemKeys.all });
       queryClient.removeQueries({ queryKey: adminCompensationLineItemKeys.detail(id) });
     },
   });

@@ -14,6 +14,7 @@ import {
 
 import { AdminLayout } from '@/features/admin/components';
 import { DeleteConfirmDialog } from '@/features/admin/components/delete-confirm-dialog';
+import { adminCompensationLineItemKeys } from '@/features/compensation-line-items/api/compensation-line-items.api';
 import {
   CompensationLineItemCreateDialog,
   CompensationLineItemUpdateDialog,
@@ -111,7 +112,7 @@ function SystemCompensationLineItemsList() {
       title="Compensation Line Items"
       description="Manage and inspect compensation line items across all studios"
       onRefresh={handleRefresh}
-      refreshQueryKey={['admin-compensation-line-items']}
+      refreshQueryKey={adminCompensationLineItemKeys.all}
       action={{
         label: 'Create Line Item',
         onClick: () => setIsCreateOpen(true),
