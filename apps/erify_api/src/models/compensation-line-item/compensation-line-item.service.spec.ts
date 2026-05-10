@@ -84,7 +84,7 @@ describe('compensationLineItemService', () => {
     await service.createAdminLineItem({
       studioId: 'std_1',
       targetType: CompensationLineItemTargetType.SHOW,
-      targetUid: 'show_1',
+      targetId: 'show_1',
       amount: '10.25',
       itemType: CompensationItemType.BONUS,
       reason: 'bonus',
@@ -117,7 +117,7 @@ describe('compensationLineItemService', () => {
       service.createAdminLineItem({
         studioId: 'std_1',
         targetType: CompensationLineItemTargetType.SHOW,
-        targetUid: 'show_1',
+        targetId: 'show_1',
         amount: '10.25',
         itemType: CompensationItemType.BONUS,
         reason: 'bonus',

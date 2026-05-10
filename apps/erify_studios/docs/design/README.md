@@ -6,8 +6,8 @@ Design/proposal/in-progress documents for `erify_studios`.
 
 1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned follow-up for studio resolve UX
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
-3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 3.3 strict availability UX
-4. [Compensation Line Items + Actuals Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — Phase 4 Wave 2 implementation breakdown
+3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
+4. [Compensation Line Items + Actuals Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — ⏳ In Progress (PR 1B shipped)
 
 ## Note
 

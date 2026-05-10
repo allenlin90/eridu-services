@@ -119,9 +119,9 @@ export class CompensationLineItemRepository extends BaseRepository<
       hasFilter = true;
     }
 
-    if (query.targetUid) {
+    if (query.targetId) {
       hasFilter = true;
-      Object.assign(filter, this.buildTargetUidFilter(query.targetType, query.targetUid));
+      Object.assign(filter, this.buildTargetUidFilter(query.targetType, query.targetId));
     }
 
     return hasFilter ? filter : undefined;
@@ -129,27 +129,27 @@ export class CompensationLineItemRepository extends BaseRepository<
 
   private buildTargetUidFilter(
     targetType: ListCompensationLineItemsQuery['targetType'],
-    targetUid: string,
+    targetId: string,
   ): Prisma.CompensationLineItemTargetWhereInput {
     if (targetType === 'SHOW') {
-      return { show: { uid: targetUid } };
+      return { show: { uid: targetId } };
     }
     if (targetType === 'SHOW_CREATOR') {
-      return { showCreator: { uid: targetUid } };
+      return { showCreator: { uid: targetId } };
     }
     if (targetType === 'STUDIO_SHIFT') {
-      return { studioShift: { uid: targetUid } };
+      return { studioShift: { uid: targetId } };
     }
     if (targetType === 'STUDIO_SHIFT_BLOCK') {
-      return { studioShiftBlock: { uid: targetUid } };
+      return { studioShiftBlock: { uid: targetId } };
     }
 
     return {
       OR: [
-        { show: { uid: targetUid } },
-        { showCreator: { uid: targetUid } },
-        { studioShift: { uid: targetUid } },
-        { studioShiftBlock: { uid: targetUid } },
+        { show: { uid: targetId } },
+        { showCreator: { uid: targetId } },
+        { studioShift: { uid: targetId } },
+        { studioShiftBlock: { uid: targetId } },
       ],
     };
   }

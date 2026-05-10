@@ -27,6 +27,7 @@ import { Route as SystemSchedulesIndexRouteImport } from './routes/system/schedu
 import { Route as SystemPlatformsIndexRouteImport } from './routes/system/platforms/index'
 import { Route as SystemMembershipsIndexRouteImport } from './routes/system/memberships/index'
 import { Route as SystemCreatorsIndexRouteImport } from './routes/system/creators/index'
+import { Route as SystemCompensationLineItemsIndexRouteImport } from './routes/system/compensation-line-items/index'
 import { Route as SystemClientsIndexRouteImport } from './routes/system/clients/index'
 import { Route as StudiosStudioIdTaskTemplatesRouteImport } from './routes/studios/$studioId/task-templates'
 import { Route as StudiosStudioIdTaskReviewRouteImport } from './routes/studios/$studioId/task-review'
@@ -150,6 +151,12 @@ const SystemCreatorsIndexRoute = SystemCreatorsIndexRouteImport.update({
   path: '/creators/',
   getParentRoute: () => SystemRouteRoute,
 } as any)
+const SystemCompensationLineItemsIndexRoute =
+  SystemCompensationLineItemsIndexRouteImport.update({
+    id: '/compensation-line-items/',
+    path: '/compensation-line-items/',
+    getParentRoute: () => SystemRouteRoute,
+  } as any)
 const SystemClientsIndexRoute = SystemClientsIndexRouteImport.update({
   id: '/clients/',
   path: '/clients/',
@@ -344,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/task-review': typeof StudiosStudioIdTaskReviewRouteWithChildren
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/system/clients': typeof SystemClientsIndexRoute
+  '/system/compensation-line-items': typeof SystemCompensationLineItemsIndexRoute
   '/system/creators': typeof SystemCreatorsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
   '/system/platforms': typeof SystemPlatformsIndexRoute
@@ -387,6 +395,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/system/clients': typeof SystemClientsIndexRoute
+  '/system/compensation-line-items': typeof SystemCompensationLineItemsIndexRoute
   '/system/creators': typeof SystemCreatorsIndexRoute
   '/system/memberships': typeof SystemMembershipsIndexRoute
   '/system/platforms': typeof SystemPlatformsIndexRoute
@@ -438,6 +447,7 @@ export interface FileRoutesById {
   '/studios/$studioId/task-review': typeof StudiosStudioIdTaskReviewRouteWithChildren
   '/studios/$studioId/task-templates': typeof StudiosStudioIdTaskTemplatesRouteWithChildren
   '/system/clients/': typeof SystemClientsIndexRoute
+  '/system/compensation-line-items/': typeof SystemCompensationLineItemsIndexRoute
   '/system/creators/': typeof SystemCreatorsIndexRoute
   '/system/memberships/': typeof SystemMembershipsIndexRoute
   '/system/platforms/': typeof SystemPlatformsIndexRoute
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/task-review'
     | '/studios/$studioId/task-templates'
     | '/system/clients'
+    | '/system/compensation-line-items'
     | '/system/creators'
     | '/system/memberships'
     | '/system/platforms'
@@ -533,6 +544,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shared-fields'
     | '/system/clients'
+    | '/system/compensation-line-items'
     | '/system/creators'
     | '/system/memberships'
     | '/system/platforms'
@@ -583,6 +595,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/task-review'
     | '/studios/$studioId/task-templates'
     | '/system/clients/'
+    | '/system/compensation-line-items/'
     | '/system/creators/'
     | '/system/memberships/'
     | '/system/platforms/'
@@ -747,6 +760,13 @@ declare module '@tanstack/react-router' {
       path: '/creators'
       fullPath: '/system/creators'
       preLoaderRoute: typeof SystemCreatorsIndexRouteImport
+      parentRoute: typeof SystemRouteRoute
+    }
+    '/system/compensation-line-items/': {
+      id: '/system/compensation-line-items/'
+      path: '/compensation-line-items'
+      fullPath: '/system/compensation-line-items'
+      preLoaderRoute: typeof SystemCompensationLineItemsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
     '/system/clients/': {
@@ -1128,6 +1148,7 @@ const StudiosRouteRouteWithChildren = StudiosRouteRoute._addFileChildren(
 
 interface SystemRouteRouteChildren {
   SystemClientsIndexRoute: typeof SystemClientsIndexRoute
+  SystemCompensationLineItemsIndexRoute: typeof SystemCompensationLineItemsIndexRoute
   SystemCreatorsIndexRoute: typeof SystemCreatorsIndexRoute
   SystemMembershipsIndexRoute: typeof SystemMembershipsIndexRoute
   SystemPlatformsIndexRoute: typeof SystemPlatformsIndexRoute
@@ -1147,6 +1168,7 @@ interface SystemRouteRouteChildren {
 
 const SystemRouteRouteChildren: SystemRouteRouteChildren = {
   SystemClientsIndexRoute: SystemClientsIndexRoute,
+  SystemCompensationLineItemsIndexRoute: SystemCompensationLineItemsIndexRoute,
   SystemCreatorsIndexRoute: SystemCreatorsIndexRoute,
   SystemMembershipsIndexRoute: SystemMembershipsIndexRoute,
   SystemPlatformsIndexRoute: SystemPlatformsIndexRoute,

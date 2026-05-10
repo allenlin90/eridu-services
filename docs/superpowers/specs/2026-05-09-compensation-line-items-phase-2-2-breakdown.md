@@ -1,6 +1,6 @@
 # Design: Compensation Line Items Phase 2.2 Breakdown
 
-> **Status:** Spec - implementation pending.
+> **Status:** In progress — PR 1A (backend admin CRUD) merged; PR 1B (frontend system UI) shipped.
 > **Scope:** Phase 4 Wave 2 compensation line items, scoped actuals, snapshot readiness, and shift-cost cleanup split.
 > **Product source:** [docs/prd/compensation-line-items.md](../../prd/compensation-line-items.md)
 > **Backend design:** [apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md](../../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)
@@ -60,7 +60,7 @@ Show actuals and shift-block actuals are added as optional fields on the existin
 
 Backend:
 
-- `/admin/compensation-line-items` accepts explicit `studio_id`, `target_type`, and `target_uid`.
+- `/admin/compensation-line-items` accepts explicit `studio_id`, `target_type`, and `target_id`.
 - Studio routes infer the target from the route and do not ask the client to select a target on create.
 - Actuals are part of the existing `updateStudioShowInputSchema` and the existing block update schema, not standalone setter schemas.
 - Studio target-scoped line-item write access is restricted to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER`. `TALENT_MANAGER` may continue to read assignments but does not gain finance write access in 2.2.

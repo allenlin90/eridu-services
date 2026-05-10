@@ -47,7 +47,7 @@ export class CompensationLineItemService extends BaseModelService {
     const resolvedTarget = await this.targetResolver.resolve({
       studioUid: payload.studioId,
       targetType: payload.targetType,
-      targetUid: payload.targetUid,
+      targetId: payload.targetId,
     });
 
     return this.compensationLineItemRepository.create({

@@ -38,7 +38,7 @@ const metadataSchema = z.record(z.string(), z.unknown());
 export const createAdminCompensationLineItemInputSchema = z.object({
   studio_id: z.string().startsWith(UID_PREFIXES.STUDIO),
   target_type: compensationLineItemTargetTypeSchema,
-  target_uid: z.string().min(1),
+  target_id: z.string().min(1),
   amount: decimalAmountSchema,
   item_type: compensationItemTypeSchema,
   reason: reasonSchema,
@@ -49,7 +49,7 @@ export const createTargetCompensationLineItemInputSchema
   = createAdminCompensationLineItemInputSchema.omit({
     studio_id: true,
     target_type: true,
-    target_uid: true,
+    target_id: true,
   });
 
 export const updateCompensationLineItemInputSchema = z
@@ -66,7 +66,7 @@ export const listCompensationLineItemsQuerySchema = paginationQuerySchema
     z.object({
       studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).optional(),
       target_type: compensationLineItemTargetTypeSchema.optional(),
-      target_uid: z.string().min(1).optional(),
+      target_id: z.string().min(1).optional(),
       item_type: compensationItemTypeSchema.optional(),
       created_by_uid: z.string().startsWith(UID_PREFIXES.USER).optional(),
       from: z.iso.datetime().optional(),
@@ -86,7 +86,7 @@ export const listCompensationLineItemsQuerySchema = paginationQuerySchema
     sort: data.sort,
     studioId: data.studio_id,
     targetType: data.target_type,
-    targetUid: data.target_uid,
+    targetId: data.target_id,
     itemType: data.item_type,
     createdByUid: data.created_by_uid,
     from: data.from ? new Date(data.from) : undefined,

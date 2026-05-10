@@ -28,7 +28,7 @@ describe('lineItemTargetResolver', () => {
       resolver.resolve({
         studioUid: 'std_1',
         targetType: CompensationLineItemTargetType.SHOW,
-        targetUid: 'show_1',
+        targetId: 'show_1',
       }),
     ).resolves.toEqual({
       targetId: 11n,
@@ -49,7 +49,7 @@ describe('lineItemTargetResolver', () => {
       resolver.resolve({
         studioUid: 'std_1',
         targetType: CompensationLineItemTargetType.SHOW,
-        targetUid: 'show_1',
+        targetId: 'show_1',
       }),
     ).rejects.toMatchObject({
       response: expect.objectContaining({ message: 'LINE_ITEM_TARGET_NOT_FOUND' }),
@@ -68,7 +68,7 @@ describe('lineItemTargetResolver', () => {
       resolver.resolve({
         studioUid: 'std_1',
         targetType: CompensationLineItemTargetType.STUDIO_SHIFT,
-        targetUid: 'ssh_1',
+        targetId: 'ssh_1',
       }),
     ).rejects.toMatchObject({
       response: expect.objectContaining({ message: 'LINE_ITEM_TARGET_NOT_FOUND' }),
@@ -96,7 +96,7 @@ describe('lineItemTargetResolver', () => {
     ],
   ] as const)(
     'resolves %s targets',
-    async (targetType, targetUid, delegateName, dbTarget) => {
+    async (targetType, targetId, delegateName, dbTarget) => {
       const { resolver, tx } = buildResolver();
       tx[delegateName].findFirst.mockResolvedValue(dbTarget);
 
@@ -104,7 +104,7 @@ describe('lineItemTargetResolver', () => {
         resolver.resolve({
           studioUid: 'std_1',
           targetType,
-          targetUid,
+          targetId,
         }),
       ).resolves.toEqual({
         targetId: dbTarget.id,
