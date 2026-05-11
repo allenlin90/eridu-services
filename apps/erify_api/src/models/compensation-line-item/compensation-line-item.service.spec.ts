@@ -155,6 +155,40 @@ describe('compensationLineItemService', () => {
     }));
   });
 
+  it('rejects studio create when target resolves to a different studio', async () => {
+    const { service, targetResolver, userService, repository } = await buildService();
+    userService.getUserByExtId.mockResolvedValue({ id: 70n, uid: 'user_1' });
+    targetResolver.resolve.mockRejectedValue(
+      Object.assign(new Error('LINE_ITEM_TARGET_NOT_FOUND'), {
+        response: { message: 'LINE_ITEM_TARGET_NOT_FOUND', statusCode: 404 },
+      }),
+    );
+
+    await expect(
+      service.createStudioLineItem(
+        'std_1',
+        {
+          targetType: CompensationLineItemTargetType.SHOW,
+          targetId: 'show_owned_by_other_studio',
+          amount: '10.00',
+          itemType: CompensationItemType.BONUS,
+          reason: 'cross-studio attempt',
+          metadata: {},
+        },
+        'ext_1',
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ message: 'LINE_ITEM_TARGET_NOT_FOUND' }),
+    });
+
+    expect(targetResolver.resolve).toHaveBeenCalledWith({
+      studioUid: 'std_1',
+      targetType: CompensationLineItemTargetType.SHOW,
+      targetId: 'show_owned_by_other_studio',
+    });
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
   it('lists studio line items through studio-scoped filters', async () => {
     const { service, repository } = await buildService();
     repository.findPaginated.mockResolvedValue({ data: [], total: 0 });

@@ -94,6 +94,11 @@ export const listCompensationLineItemsQuerySchema = paginationQuerySchema
     includeDeleted: data.include_deleted,
   }));
 
+// Studio list intentionally omits `studio_id` (route is authoritative) and
+// `created_by_uid` (admin-only support filter). Built from `paginationBaseSchema`
+// + manual `transformPagination` because `.strict()` only works on a plain
+// object before any transform — keep in sync with `paginationQuerySchema` if
+// shared pagination contracts gain new fields.
 export const listStudioCompensationLineItemsQuerySchema = paginationBaseSchema
   .extend({
     sort: z.enum(['asc', 'desc']).optional().default('desc'),

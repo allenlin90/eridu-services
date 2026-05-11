@@ -128,4 +128,17 @@ describe('studioCompensationLineItemController', () => {
       }),
     });
   });
+
+  it('maps missing studio-scoped line items to not found on delete', async () => {
+    const { controller, service } = buildController();
+    service.deleteStudioLineItem.mockResolvedValue(null);
+
+    await expect(
+      controller.deleteLineItem('std_1', 'cli_missing'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        statusCode: 404,
+      }),
+    });
+  });
 });
