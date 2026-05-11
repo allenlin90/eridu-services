@@ -86,13 +86,13 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 - Create/modify: `apps/erify_api/src/studios/studio-compensation-line-item/`
 - Test: contextual controller/service specs.
 
-- [ ] Add `GET` / `POST` / `PATCH` / `DELETE` under `/studios/:studioId/compensation-line-items`.
-- [ ] Accept `target_type` and `target_id` on studio create; reject any client body/query attempt to supply `studio_id`.
-- [ ] Support list filters for `target_type`, `target_id`, `item_type`, created date range, pagination, and deleted-row visibility if exposed.
-- [ ] Scope create/list/update/delete by the route `studioId`; update/delete address the line-item resource by `lineItemId`.
-- [ ] Test target create/list filters plus studio-scoped update/delete not-found behavior.
-- [ ] Verify backend lint, typecheck, tests, and build.
-- [ ] Commit with a studio API message.
+- [x] Add `GET` / `POST` / `PATCH` / `DELETE` under `/studios/:studioId/compensation-line-items`.
+- [x] Accept `target_type` and `target_id` on studio create; reject any client body/query attempt to supply `studio_id`.
+- [x] Support list filters for `target_type`, `target_id`, `item_type`, created date range, pagination, and deleted-row visibility if exposed.
+- [x] Scope create/list/update/delete by the route `studioId`; update/delete address the line-item resource by `lineItemId`.
+- [x] Test target create/list filters plus studio-scoped update/delete not-found behavior.
+- [x] Verify backend lint, typecheck, tests, and build.
+- [x] Commit with a studio API message.
 
 ## Task 4: Actuals and snapshot readiness
 
