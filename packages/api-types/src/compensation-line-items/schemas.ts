@@ -3,7 +3,9 @@ import { z } from 'zod';
 import { UID_PREFIXES } from '../constants.js';
 import {
   createPaginatedResponseSchema,
+  paginationBaseSchema,
   paginationQuerySchema,
+  transformPagination,
 } from '../pagination/schemas.js';
 
 export const compensationItemTypeSchema = z.enum([
@@ -45,12 +47,10 @@ export const createAdminCompensationLineItemInputSchema = z.object({
   metadata: metadataSchema.optional().default({}),
 });
 
-export const createTargetCompensationLineItemInputSchema
+export const createStudioCompensationLineItemInputSchema
   = createAdminCompensationLineItemInputSchema.omit({
     studio_id: true,
-    target_type: true,
-    target_id: true,
-  });
+  }).strict();
 
 export const updateCompensationLineItemInputSchema = z
   .object({
@@ -89,6 +89,36 @@ export const listCompensationLineItemsQuerySchema = paginationQuerySchema
     targetId: data.target_id,
     itemType: data.item_type,
     createdByUid: data.created_by_uid,
+    from: data.from ? new Date(data.from) : undefined,
+    to: data.to ? new Date(data.to) : undefined,
+    includeDeleted: data.include_deleted,
+  }));
+
+export const listStudioCompensationLineItemsQuerySchema = paginationBaseSchema
+  .extend({
+    sort: z.enum(['asc', 'desc']).optional().default('desc'),
+    target_type: compensationLineItemTargetTypeSchema.optional(),
+    target_id: z.string().min(1).optional(),
+    item_type: compensationItemTypeSchema.optional(),
+    from: z.iso.datetime().optional(),
+    to: z.iso.datetime().optional(),
+    include_deleted: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+      .optional()
+      .default(false),
+  })
+  .strict()
+  .transform(transformPagination)
+  .transform((data) => ({
+    page: data.page,
+    limit: data.limit,
+    skip: data.skip,
+    take: data.take,
+    sort: data.sort,
+    targetType: data.target_type,
+    targetId: data.target_id,
+    itemType: data.item_type,
     from: data.from ? new Date(data.from) : undefined,
     to: data.to ? new Date(data.to) : undefined,
     includeDeleted: data.include_deleted,

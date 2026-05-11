@@ -326,6 +326,11 @@ pnpm sherif
 - Use the established response decorators for admin, studio, and me controllers.
 - Path params that represent UIDs should use `UidValidationPipe`.
 
+#### Route Shape
+- Prefer one canonical collection route per mutable resource under its authorization boundary, for example `studios/:studioId/compensation-line-items`.
+- Avoid deep parent chains that mirror UI location when the child has its own UID, audit trail, pagination, or soft-delete lifecycle.
+- For polymorphic or target-attached resources, use explicit create fields and list filters such as `target_type` and `target_id`; reserve `include` / `expand` for read-time embedding, not primary mutation contracts.
+
 #### Performance
 - Use `Promise.all` for independent reads.
 - Prefer bulk repository operations over loops of individual creates or updates.

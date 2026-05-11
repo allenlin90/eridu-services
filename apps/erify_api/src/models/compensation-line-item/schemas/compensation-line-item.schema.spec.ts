@@ -3,7 +3,9 @@ import { CompensationItemType, CompensationLineItemTargetType } from '@prisma/cl
 import {
   compensationLineItemDto,
   createAdminCompensationLineItemSchema,
+  createStudioCompensationLineItemSchema,
   listCompensationLineItemsQuerySchema,
+  listStudioCompensationLineItemsQuerySchema,
   updateCompensationLineItemSchema,
 } from './compensation-line-item.schema';
 
@@ -47,6 +49,69 @@ describe('compensation line item schemas', () => {
     expect(() =>
       updateCompensationLineItemSchema.parse({
         target_id: 'show_456',
+      }),
+    ).toThrow();
+  });
+
+  it('normalizes studio create input with body target and rejects studio overrides', () => {
+    const result = createStudioCompensationLineItemSchema.parse({
+      target_type: 'SHOW_CREATOR',
+      target_id: 'show_mc_123',
+      amount: '10',
+      item_type: 'BONUS',
+      reason: '  bonus  ',
+    });
+
+    expect(result).toEqual({
+      targetType: CompensationLineItemTargetType.SHOW_CREATOR,
+      targetId: 'show_mc_123',
+      amount: '10.00',
+      itemType: CompensationItemType.BONUS,
+      reason: 'bonus',
+      metadata: {},
+    });
+
+    expect(() =>
+      createStudioCompensationLineItemSchema.parse({
+        studio_id: 'std_123',
+        amount: '10.00',
+        item_type: 'BONUS',
+        reason: 'bonus',
+        target_type: 'SHOW_CREATOR',
+        target_id: 'show_mc_123',
+      }),
+    ).toThrow();
+  });
+
+  it('parses studio list target filters and rejects studio overrides', () => {
+    const result = listStudioCompensationLineItemsQuerySchema.parse({
+      page: '2',
+      limit: '10',
+      target_type: 'SHOW',
+      target_id: 'show_123',
+      item_type: 'BONUS',
+      from: '2026-05-01T00:00:00.000Z',
+      to: '2026-05-08T00:00:00.000Z',
+      include_deleted: 'false',
+    });
+
+    expect(result).toEqual({
+      page: 2,
+      limit: 10,
+      skip: 10,
+      take: 10,
+      sort: 'desc',
+      targetType: CompensationLineItemTargetType.SHOW,
+      targetId: 'show_123',
+      itemType: CompensationItemType.BONUS,
+      from: new Date('2026-05-01T00:00:00.000Z'),
+      to: new Date('2026-05-08T00:00:00.000Z'),
+      includeDeleted: false,
+    });
+
+    expect(() =>
+      listStudioCompensationLineItemsQuerySchema.parse({
+        studio_id: 'std_123',
       }),
     ).toThrow();
   });

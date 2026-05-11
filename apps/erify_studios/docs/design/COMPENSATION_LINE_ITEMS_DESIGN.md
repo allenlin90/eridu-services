@@ -60,8 +60,8 @@ A studio `compensation/line-items` or economics-adjacent workspace can land with
 | PR | Frontend scope | Backend prerequisite |
 | -- | -------------- | -------------------- |
 | PR 1B | `/system/compensation-line-items` support UI | PR 1A admin CRUD |
-| PR 4 | Show and show-creator workflow UI | PR 2 studio target APIs and PR 3 show actuals where needed |
-| PR 5 | Shift and shift-block workflow UI | PR 2 studio target APIs and PR 3 block actuals where needed |
+| PR 4 | Show and show-creator workflow UI | PR 2 studio line-item APIs and PR 3 show actuals where needed |
+| PR 5 | Shift and shift-block workflow UI | PR 2 studio line-item APIs and PR 3 block actuals where needed |
 | Cleanup PR | Remove shift cost UI and fixture assumptions | Backend cleanup removes stored cost fields |
 
 ## Surfaces & Routes
@@ -105,8 +105,8 @@ apps/erify_studios/src/components/finance/
 Component responsibilities:
 
 - **SystemCompensationLineItemsRoute** - support page with table, filters, and create/edit dialogs. Uses `useTableUrlState`, `DataTablePagination`, real API metadata, and `placeholderData: keepPreviousData`.
-- **TargetScopedLineItemsPanel** - reusable panel mounted by show, show-creator, shift, and shift-block workflows. The target is passed by props, not selected by the user.
-- **CompensationLineItemFormDialog** - shared create/edit form. Target fields are hidden/read-only in target-scoped panels and selectable only in system-admin support tooling.
+- **TargetScopedLineItemsPanel** - reusable panel mounted by show, show-creator, shift, and shift-block workflows. The target is passed by props and sent to the flat studio line-item API as `target_type` / `target_id`.
+- **CompensationLineItemFormDialog** - shared create/edit form. Target fields are controlled by the mounted workflow in target-scoped panels and selectable only in system-admin support tooling.
 - **CompensationLineItemsTable** - columns: target summary, item type, amount (`SignedAmountCell`), reason, created by, created at, actions.
 - **ShowActualsInput / ShiftBlockActualsInput** - paired datetime inputs with clear controls and client-side inverted-range guard.
 - **SnapshotOverrideWarningDialog** - confirmation gate around changes to `ShowCreator.{agreedRate, compensationType, commissionRate}` or `StudioShift.hourlyRate`.
@@ -118,7 +118,7 @@ Query key families:
 
 ```ts
 ['compensation-line-items', 'system', filters]
-['compensation-line-items', 'target', studioUid, targetType, targetUid]
+['compensation-line-items', 'studio', studioUid, targetType, targetUid]
 ['compensation-line-item', lineItemUid]
 ```
 
@@ -127,7 +127,7 @@ Mutation invalidation:
 | Mutation | Invalidates |
 | -------- | ----------- |
 | System create/update/delete | system list + target list when target is known |
-| Target-scoped create/update/delete | target list + parent target detail |
+| Target-scoped create/update/delete | studio target-filtered list + parent target detail |
 | Show update (now includes actuals) | existing show detail / list keys |
 | Shift-block update (now includes actuals) | existing shift detail / list / calendar keys |
 | Snapshot edit on assignment | assignment/creator list key + show detail key |
@@ -152,8 +152,9 @@ System support filters:
 Target-scoped panels:
 
 - no target picker;
+- call `/studios/:studioId/compensation-line-items` with explicit `target_type` and `target_id`;
 - optional local item-type filter only when the panel has enough rows to justify it;
-- server state keyed by explicit target type and target UID.
+- server state keyed by studio UID, target type, and target UID.
 
 Searchable inputs must hit real scoped APIs. No no-op `onSearch` handlers or silent fallback to preloaded bundles.
 

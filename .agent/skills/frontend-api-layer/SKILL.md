@@ -42,6 +42,7 @@ Backend API
 4. **Query Keys**: Centralize query keys in API declaration files
 5. **No FE Data Joins for Required Display Fields**: If a view needs stable display fields (e.g. assignee name), the primary API response must include them.
 6. **Scoped Actuals and Finance Reads**: Actuals fields ride the owning resource's existing update mutation and inherit its query keys (`show`, `show-creator`, `show-platform`, `shift-block`). Do not introduce parallel "set actuals" mutations or shared `actuals` query keys that obscure which resource the fact belongs to. Finance reference values come from backend economics/read-model APIs, not frontend recomputation.
+7. **Canonical Resource Routes**: Target-scoped UI panels may live inside show or shift workflows, but API declarations should call the canonical resource collection when the backend exposes one (for example `studios/:studioId/compensation-line-items` with `target_type` / `target_id` filters). Do not invent deeply nested frontend API paths to mirror component placement.
 
 ### No FE Data Join Rule (Required)
 

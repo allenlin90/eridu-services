@@ -13,7 +13,7 @@
 **PR dependency order:**
 
 ```
-Task 1 (PR 1A backend system CRUD)  ──┬──▶  Task 3 (PR 2 studio target APIs)  ──┬──▶  Task 5 (PR 4 show UI)
+Task 1 (PR 1A backend system CRUD)  ──┬──▶  Task 3 (PR 2 studio line-item APIs)  ──┬──▶  Task 5 (PR 4 show UI)
                                       │                                          ├──▶  Task 6 (PR 5 shift UI)
                                       └──▶  Task 2 (PR 1B FE system UI)
 Task 4 (PR 3 actuals + snapshot)  ────────────────────────────────────────────────┴──▶  Task 5/6 also depend on this
@@ -33,7 +33,7 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 | Shared contracts | `packages/api-types/src/compensation-line-items/`, `packages/api-types/src/shows/`, `packages/api-types/src/studio-shifts/` | Zod contracts and inferred types for backend/frontend. |
 | Backend model | `apps/erify_api/src/models/compensation-line-item/` | Model service, repository, target resolver, DTO transforms. |
 | Backend admin API | `apps/erify_api/src/admin/compensation-line-items/` | System-admin CRUD/list. |
-| Backend studio APIs | `apps/erify_api/src/studios/studio-compensation-line-item/`, existing show/shift studio modules | Contextual target-scoped line items and actuals. |
+| Backend studio APIs | `apps/erify_api/src/studios/studio-compensation-line-item/`, existing show/shift studio modules | Flat studio line-item collection plus target-scoped actuals. |
 | Backend audit helper | `apps/erify_api/src/lib/audit/snapshot-audit.helper.ts` | Pure metadata append helper for snapshot overrides. |
 | Frontend line items | `apps/erify_studios/src/features/compensation-line-items/` | API hooks, table, form, target-scoped panel. |
 | Frontend system route | `apps/erify_studios/src/routes/system/compensation-line-items/index.tsx` | System-admin support page. |
@@ -79,20 +79,18 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 - [ ] Verify with `pnpm --filter erify_studios lint`, `typecheck`, `test`, and `build`.
 - [ ] Commit with a frontend system-support message.
 
-## Task 3: Studio target-scoped APIs
+## Task 3: Studio line-item APIs
 
 **Files:**
-- Modify: shared compensation-line-item contracts to add target-scoped create input if it is not already present.
+- Modify: shared compensation-line-item contracts to add studio-scoped create and list inputs if they are not already present.
 - Create/modify: `apps/erify_api/src/studios/studio-compensation-line-item/`
-- Modify: `apps/erify_api/src/studios/studio-show/`
-- Modify: `apps/erify_api/src/studios/studio-shift/`
 - Test: contextual controller/service specs.
 
-- [ ] Add route families for show, show creator assignment, shift, and shift block line items.
-- [ ] Infer target type and target UID from route params on create.
-- [ ] Reject any client body attempt to override route target.
-- [ ] Scope list/update/delete through the same parent target route.
-- [ ] Test contextual create/list/update/delete per target family.
+- [ ] Add `GET` / `POST` / `PATCH` / `DELETE` under `/studios/:studioId/compensation-line-items`.
+- [ ] Accept `target_type` and `target_id` on studio create; reject any client body/query attempt to supply `studio_id`.
+- [ ] Support list filters for `target_type`, `target_id`, `item_type`, created date range, pagination, and deleted-row visibility if exposed.
+- [ ] Scope create/list/update/delete by the route `studioId`; update/delete address the line-item resource by `lineItemId`.
+- [ ] Test target create/list filters plus studio-scoped update/delete not-found behavior.
 - [ ] Verify backend lint, typecheck, tests, and build.
 - [ ] Commit with a studio API message.
 
@@ -121,7 +119,7 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 
 ## Task 5: Show workflow UI
 
-**Depends on:** Task 3 (studio target APIs) and Task 4 (actuals + snapshot fields on the existing PATCH route). Show actuals input mounts on the existing show update mutation; without Task 4 those fields do not exist in the contract.
+**Depends on:** Task 3 (studio line-item APIs) and Task 4 (actuals + snapshot fields on the existing PATCH route). Show actuals input mounts on the existing show update mutation; without Task 4 those fields do not exist in the contract.
 
 **Files:**
 - Modify/create show workflow components under `apps/erify_studios/src/features/studio-shows/` and `apps/erify_studios/src/features/studio-show-creators/`.
@@ -139,7 +137,7 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 
 ## Task 6: Shift workflow UI
 
-**Depends on:** Task 3 (studio target APIs) and Task 4 (block actuals fields on the existing block update route).
+**Depends on:** Task 3 (studio line-item APIs) and Task 4 (block actuals fields on the existing block update route).
 
 **Files:**
 - Modify/create shift workflow components under `apps/erify_studios/src/features/studio-shifts/`.

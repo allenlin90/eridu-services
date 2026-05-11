@@ -42,6 +42,8 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 
 ## Shared Rules
 
+- Prefer one canonical collection route per mutable resource. Use one parent for authorization/scope (`studios/:studioId/<resource>`), then address the resource by its own UID; avoid encoding grandparent chains such as `studios/:studioId/shows/:showId/creators/:assignmentId/<resource>` unless the child has no independent lifecycle or ID.
+- Use query/body fields for target filters and attachments when a resource can belong to several target types. Use `include`/`expand` only for read-time embedding of related resources, not as the primary create/update/delete surface for independently audited rows.
 - Use `@ZodResponse(schema, status?)` for standard responses.
 - Use `@ZodPaginatedResponse(schema)` for list endpoints.
 - Use `@AdminResponse()` and `@AdminPaginatedResponse()` for admin routes.
