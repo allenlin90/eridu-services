@@ -78,6 +78,25 @@ Example route style:
 POST /studios/:studioId/shows/:id/resolve-cancellation
 ```
 
+## Route Shape And Nesting
+
+Default to one stable collection route for each mutable resource. The route should carry the authorization boundary and canonical owner, then the resource UID:
+
+```text
+GET    /studios/:studioId/compensation-line-items?target_type=SHOW&target_id=show_123
+POST   /studios/:studioId/compensation-line-items
+PATCH  /studios/:studioId/compensation-line-items/:lineItemId
+DELETE /studios/:studioId/compensation-line-items/:lineItemId
+```
+
+Avoid deep parent chains for resources that already have their own UID and lifecycle:
+
+```text
+/studios/:studioId/shows/:showId/creators/:assignmentId/compensation-line-items/:lineItemId
+```
+
+Use query filters for target-scoped lists and body fields for target attachments. Use `include` or `expand` only for read-time embedding on parent detail endpoints; do not make embedded writes the primary API for independently audited, paginated, or soft-deletable child rows.
+
 ## Admin Audit Actor vs Payload User IDs
 
 Admin mutations often need two different identities:

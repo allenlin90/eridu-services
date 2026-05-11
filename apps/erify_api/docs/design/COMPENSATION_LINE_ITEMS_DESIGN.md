@@ -177,18 +177,18 @@ The 98 in-tree references at the time of this design (rg `projectedCost|calculat
 
 The admin route is support tooling. It is not the primary studio workflow.
 
-### PR 2: studio target-scoped line-item APIs
+### PR 2: studio line-item APIs
 
-| Endpoint family                                                                   | Target inferred from    | Roles              |
-| --------------------------------------------------------------------------------- | ----------------------- | ------------------ |
-| `/studios/:studioId/shows/:showId/compensation-line-items`                        | show                    | `ADMIN`, `MANAGER` |
-| `/studios/:studioId/shows/:showId/creators/:assignmentId/compensation-line-items` | show creator assignment | `ADMIN`, `MANAGER` |
-| `/studios/:studioId/shifts/:shiftId/compensation-line-items`                      | shift                   | `ADMIN`, `MANAGER` |
-| `/studios/:studioId/shifts/:shiftId/blocks/:blockId/compensation-line-items`      | shift block             | `ADMIN`, `MANAGER` |
+| Endpoint                                                       | Purpose                                                                                         | Roles              |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------ |
+| `POST /studios/:studioId/compensation-line-items`              | Create a line item by supplying `target_type` and `target_id`; route `studioId` is authoritative | `ADMIN`, `MANAGER` |
+| `GET /studios/:studioId/compensation-line-items`               | List with optional `target_type`, `target_id`, `item_type`, date, and pagination filters         | `ADMIN`, `MANAGER` |
+| `PATCH /studios/:studioId/compensation-line-items/:lineItemId` | Update `amount`, `item_type`, `reason`, `metadata`; target is immutable                          | `ADMIN`, `MANAGER` |
+| `DELETE /studios/:studioId/compensation-line-items/:lineItemId` | Soft delete                                                                                    | `ADMIN`, `MANAGER` |
 
-All four families restrict write access to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER` regardless of who can read the parent target. `TALENT_MANAGER` may read assignments today but does not get write access to compensation line items in 2.2; widening the role surface is a Phase 5 product call.
+The studio API is flat because compensation line items are the resource being created and mutated. Show, show-creator, shift, and shift-block workflows still mount target-scoped panels, but those panels call the same studio collection with explicit target fields instead of using deeply nested parent routes.
 
-Each family supports list, create, update, and soft delete for that route target. Create bodies contain `amount`, `item_type`, `reason`, and optional `metadata`; the client does not send `target_type` or `target_uid` on contextual create.
+All studio line-item routes restrict access to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER` regardless of who can read the parent target. `TALENT_MANAGER` may read assignments today but does not get write access to compensation line items in 2.2; widening the role surface is a Phase 5 product call.
 
 ### PR 3: actuals and snapshot readiness
 
@@ -219,7 +219,8 @@ Required schemas:
 - `compensationLineItemTargetTypeSchema`
 - `compensationItemTypeSchema`
 - `createAdminCompensationLineItemInputSchema`
-- `createTargetCompensationLineItemInputSchema`
+- `createStudioCompensationLineItemInputSchema`
+- `listStudioCompensationLineItemsQuerySchema`
 - `updateCompensationLineItemInputSchema`
 - `listCompensationLineItemsQuerySchema`
 - `compensationLineItemApiResponseSchema`
@@ -257,8 +258,9 @@ apps/erify_api/src/lib/audit/snapshot-audit.helper.ts
 
 Modifications:
 
-- `apps/erify_api/src/studios/studio-show/` extends the existing `PATCH /shows/:id` route to accept show actuals and adds the show / show-creator line-item routes.
-- `apps/erify_api/src/studios/studio-shift/` extends the existing block update route (or adds it if absent) to accept block actuals, and adds shift / shift-block line-item routes.
+- `apps/erify_api/src/studios/studio-compensation-line-item/` owns the flat studio line-item collection.
+- `apps/erify_api/src/studios/studio-show/` extends the existing `PATCH /shows/:id` route to accept show actuals.
+- `apps/erify_api/src/studios/studio-shift/` extends the existing block update route (or adds it if absent) to accept block actuals.
 - `apps/erify_api/src/show-orchestration/show-orchestration.service.ts` persists future assignment snapshot fields from explicit input or resolvable current defaults, and marks unresolved rows only at write time.
 - `apps/erify_api/src/models/studio-shift/` drops stored cost fields only in the cleanup PR.
 
@@ -384,7 +386,7 @@ Migration smoke for schema PRs:
 
 ## Rollout Notes
 
-- **PR dependency order is not flat.** PR 1A is a hard prerequisite for PR 2 (studio target APIs reuse the model and contracts) and for PR 3 only where line items appear in actuals-related tests. PR 4 depends on PR 2 + PR 3. PR 5 depends on PR 2 + PR 3.
+- **PR dependency order is not flat.** PR 1A is a hard prerequisite for PR 2 (studio line-item APIs reuse the model and contracts) and for PR 3 only where line items appear in actuals-related tests. PR 4 depends on PR 2 + PR 3. PR 5 depends on PR 2 + PR 3.
 - PR 1A and PR 3 can land in either order; both are independent of each other once contracts are merged.
 - Frontend workflow PRs (PR 1B, PR 4, PR 5) follow the corresponding backend API PRs.
 - The shift cost cleanup PR is coordinated because `StudioShift.projectedCost` is currently `NOT NULL`; removing the column requires removing every writer in the same PR. FE fixtures that read these fields are removed in the same PR.

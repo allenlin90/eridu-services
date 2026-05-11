@@ -1,16 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { CompensationLineItem, Prisma } from '@prisma/client';
+import {
+  CompensationItemType,
+  CompensationLineItem,
+  CompensationLineItemTargetType,
+  Prisma,
+} from '@prisma/client';
 
 import {
   compensationLineItemDefaultInclude,
   type CompensationLineItemWithRelations,
-  type ListCompensationLineItemsQuery,
 } from './schemas/compensation-line-item.schema';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
+
+type RepositoryListQuery = {
+  skip: number;
+  take: number;
+  sort: 'asc' | 'desc';
+  includeDeleted: boolean;
+  studioId?: string;
+  targetType?: CompensationLineItemTargetType;
+  targetId?: string;
+  itemType?: CompensationItemType;
+  createdByUid?: string;
+  from?: Date;
+  to?: Date;
+};
 
 @Injectable()
 export class CompensationLineItemRepository extends BaseRepository<
@@ -52,8 +70,22 @@ export class CompensationLineItemRepository extends BaseRepository<
     });
   }
 
+  async findByUidForStudio(params: {
+    uid: string;
+    studioId: string;
+  }): Promise<CompensationLineItemWithRelations | null> {
+    return this.delegate.findFirst({
+      where: {
+        uid: params.uid,
+        deletedAt: null,
+        studio: { uid: params.studioId },
+      },
+      include: compensationLineItemDefaultInclude,
+    });
+  }
+
   async findPaginated(
-    query: ListCompensationLineItemsQuery,
+    query: RepositoryListQuery,
   ): Promise<{ data: CompensationLineItemWithRelations[]; total: number }> {
     const where = this.buildWhere(query);
 
@@ -72,7 +104,7 @@ export class CompensationLineItemRepository extends BaseRepository<
   }
 
   private buildWhere(
-    query: ListCompensationLineItemsQuery,
+    query: RepositoryListQuery,
   ): Prisma.CompensationLineItemWhereInput {
     const where: Prisma.CompensationLineItemWhereInput = {
       ...(query.includeDeleted ? {} : { deletedAt: null }),
@@ -109,7 +141,7 @@ export class CompensationLineItemRepository extends BaseRepository<
   }
 
   private buildTargetFilter(
-    query: ListCompensationLineItemsQuery,
+    query: RepositoryListQuery,
   ): Prisma.CompensationLineItemTargetWhereInput | undefined {
     const filter: Prisma.CompensationLineItemTargetWhereInput = {};
     let hasFilter = false;
@@ -121,14 +153,17 @@ export class CompensationLineItemRepository extends BaseRepository<
 
     if (query.targetId) {
       hasFilter = true;
-      Object.assign(filter, this.buildTargetUidFilter(query.targetType, query.targetId));
+      Object.assign(filter, this.buildTargetUidFilter(
+        query.targetType,
+        query.targetId,
+      ));
     }
 
     return hasFilter ? filter : undefined;
   }
 
   private buildTargetUidFilter(
-    targetType: ListCompensationLineItemsQuery['targetType'],
+    targetType: CompensationLineItemTargetType | undefined,
     targetId: string,
   ): Prisma.CompensationLineItemTargetWhereInput {
     if (targetType === 'SHOW') {

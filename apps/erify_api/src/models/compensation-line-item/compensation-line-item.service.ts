@@ -6,7 +6,9 @@ import {
   compensationLineItemDefaultInclude,
   type CompensationLineItemWithRelations,
   type CreateAdminCompensationLineItemPayload,
+  type CreateStudioCompensationLineItemPayload,
   type ListCompensationLineItemsQuery,
+  type ListStudioCompensationLineItemsQuery,
   type UpdateCompensationLineItemPayload,
 } from './schemas/compensation-line-item.schema';
 import { CompensationLineItemRepository } from './compensation-line-item.repository';
@@ -19,6 +21,24 @@ import { UtilityService } from '@/utility/utility.service';
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
+
+type StudioLineItemScope = {
+  studioId: string;
+  lineItemId: string;
+};
+
+type StudioLineItemListQuery = {
+  studioId: string;
+  targetType?: ListStudioCompensationLineItemsQuery['targetType'];
+  targetId?: ListStudioCompensationLineItemsQuery['targetId'];
+  itemType?: ListStudioCompensationLineItemsQuery['itemType'];
+  from?: ListStudioCompensationLineItemsQuery['from'];
+  to?: ListStudioCompensationLineItemsQuery['to'];
+  skip: number;
+  take: number;
+  sort: ListStudioCompensationLineItemsQuery['sort'];
+  includeDeleted: boolean;
+};
 
 @Injectable()
 export class CompensationLineItemService extends BaseModelService {
@@ -36,6 +56,69 @@ export class CompensationLineItemService extends BaseModelService {
 
   @Transactional()
   async createAdminLineItem(
+    payload: CreateAdminCompensationLineItemPayload,
+    actorExtId: string,
+  ) {
+    return this.createLineItem(payload, actorExtId);
+  }
+
+  @Transactional()
+  async createStudioLineItem(
+    studioId: string,
+    payload: CreateStudioCompensationLineItemPayload,
+    actorExtId: string,
+  ) {
+    return this.createLineItem({
+      studioId,
+      targetType: payload.targetType,
+      targetId: payload.targetId,
+      amount: payload.amount,
+      itemType: payload.itemType,
+      reason: payload.reason,
+      metadata: payload.metadata,
+    }, actorExtId);
+  }
+
+  listStudioLineItems(
+    query: StudioLineItemListQuery,
+  ) {
+    return this.compensationLineItemRepository.findPaginated(query);
+  }
+
+  @Transactional()
+  async updateStudioLineItem(
+    scope: StudioLineItemScope,
+    payload: UpdateCompensationLineItemPayload,
+  ): Promise<CompensationLineItemWithRelations | null> {
+    const existing = await this.compensationLineItemRepository.findByUidForStudio({
+      uid: scope.lineItemId,
+      studioId: scope.studioId,
+    });
+    if (!existing) {
+      return null;
+    }
+
+    return this.compensationLineItemRepository.update(
+      { id: existing.id },
+      this.buildUpdateData(payload),
+      compensationLineItemDefaultInclude,
+    ) as Promise<CompensationLineItemWithRelations>;
+  }
+
+  @Transactional()
+  async deleteStudioLineItem(scope: StudioLineItemScope) {
+    const existing = await this.compensationLineItemRepository.findByUidForStudio({
+      uid: scope.lineItemId,
+      studioId: scope.studioId,
+    });
+    if (!existing) {
+      return null;
+    }
+
+    return this.compensationLineItemRepository.softDelete({ id: existing.id });
+  }
+
+  private async createLineItem(
     payload: CreateAdminCompensationLineItemPayload,
     actorExtId: string,
   ) {
@@ -84,14 +167,7 @@ export class CompensationLineItemService extends BaseModelService {
 
     return this.compensationLineItemRepository.update(
       { id: existing.id },
-      {
-        ...(payload.amount !== undefined && { amount: payload.amount }),
-        ...(payload.itemType !== undefined && { itemType: payload.itemType }),
-        ...(payload.reason !== undefined && { reason: payload.reason }),
-        ...(payload.metadata !== undefined && {
-          metadata: this.toJsonObject(payload.metadata),
-        }),
-      },
+      this.buildUpdateData(payload),
       compensationLineItemDefaultInclude,
     ) as Promise<CompensationLineItemWithRelations>;
   }
@@ -125,6 +201,19 @@ export class CompensationLineItemService extends BaseModelService {
       case CompensationLineItemTargetType.STUDIO_SHIFT_BLOCK:
         return { ...base, studioShiftBlock: { connect: { id: target.targetId } } };
     }
+  }
+
+  private buildUpdateData(
+    payload: UpdateCompensationLineItemPayload,
+  ): Prisma.CompensationLineItemUpdateInput {
+    return {
+      ...(payload.amount !== undefined && { amount: payload.amount }),
+      ...(payload.itemType !== undefined && { itemType: payload.itemType }),
+      ...(payload.reason !== undefined && { reason: payload.reason }),
+      ...(payload.metadata !== undefined && {
+        metadata: this.toJsonObject(payload.metadata),
+      }),
+    };
   }
 
   private toJsonObject(value: Record<string, unknown>): JsonObject {

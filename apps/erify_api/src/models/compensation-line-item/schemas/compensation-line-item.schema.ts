@@ -9,7 +9,9 @@ import { z } from 'zod';
 import {
   compensationLineItemApiResponseSchema,
   createAdminCompensationLineItemInputSchema,
+  createStudioCompensationLineItemInputSchema,
   listCompensationLineItemsQuerySchema as sharedListCompensationLineItemsQuerySchema,
+  listStudioCompensationLineItemsQuerySchema as sharedListStudioCompensationLineItemsQuerySchema,
   updateCompensationLineItemInputSchema,
 } from '@eridu/api-types/compensation-line-items';
 import { UID_PREFIXES } from '@eridu/api-types/constants';
@@ -24,6 +26,12 @@ export type UpdateCompensationLineItemPayload = z.infer<
 >;
 export type ListCompensationLineItemsQuery = z.infer<
   typeof listCompensationLineItemsQuerySchema
+>;
+export type CreateStudioCompensationLineItemPayload = z.infer<
+  typeof createStudioCompensationLineItemSchema
+>;
+export type ListStudioCompensationLineItemsQuery = z.infer<
+  typeof listStudioCompensationLineItemsQuerySchema
 >;
 
 export type CompensationLineItemWithRelations
@@ -76,6 +84,16 @@ export const createAdminCompensationLineItemSchema
     metadata: data.metadata,
   }));
 
+export const createStudioCompensationLineItemSchema
+  = createStudioCompensationLineItemInputSchema.transform((data) => ({
+    targetType: data.target_type as CompensationLineItemTargetType,
+    targetId: data.target_id,
+    amount: data.amount,
+    itemType: data.item_type as CompensationItemType,
+    reason: data.reason,
+    metadata: data.metadata,
+  }));
+
 export const updateCompensationLineItemSchema
   = updateCompensationLineItemInputSchema.transform((data) => ({
     amount: data.amount,
@@ -86,6 +104,13 @@ export const updateCompensationLineItemSchema
 
 export const listCompensationLineItemsQuerySchema
   = sharedListCompensationLineItemsQuerySchema.transform((data) => ({
+    ...data,
+    targetType: data.targetType as CompensationLineItemTargetType | undefined,
+    itemType: data.itemType as CompensationItemType | undefined,
+  }));
+
+export const listStudioCompensationLineItemsQuerySchema
+  = sharedListStudioCompensationLineItemsQuerySchema.transform((data) => ({
     ...data,
     targetType: data.targetType as CompensationLineItemTargetType | undefined,
     itemType: data.itemType as CompensationItemType | undefined,
@@ -172,9 +197,29 @@ export class CreateAdminCompensationLineItemDto extends createZodDto(
   createAdminCompensationLineItemSchema,
 ) {}
 
+export class CreateStudioCompensationLineItemDto extends createZodDto(
+  createStudioCompensationLineItemSchema,
+) {}
+
 export class UpdateCompensationLineItemDto extends createZodDto(
   updateCompensationLineItemSchema,
 ) {}
+
+export class ListStudioCompensationLineItemsQueryDto extends createZodDto(
+  listStudioCompensationLineItemsQuerySchema,
+) {
+  declare page: number;
+  declare limit: number;
+  declare skip: number;
+  declare take: number;
+  declare sort: 'asc' | 'desc';
+  declare targetType: CompensationLineItemTargetType | undefined;
+  declare targetId: string | undefined;
+  declare itemType: CompensationItemType | undefined;
+  declare from: Date | undefined;
+  declare to: Date | undefined;
+  declare includeDeleted: boolean;
+}
 
 export class ListCompensationLineItemsQueryDto extends createZodDto(
   listCompensationLineItemsQuerySchema,

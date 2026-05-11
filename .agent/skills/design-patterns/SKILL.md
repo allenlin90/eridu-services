@@ -64,6 +64,16 @@ Rules:
 - Multiple actual start/end fields can coexist when they mean different things; do not collapse creator participation, platform stream timing, and show timing into one generic "actuals" concept.
 - Do not persist calculated finance totals on operational tables. If a future workflow needs durable paid/settled/frozen numbers, model that as an explicit snapshot, settlement, or payment artifact rather than reusing live operational rows.
 
+## REST Resource Route Shape
+
+Use routes to expose the resource model, not the UI breadcrumb. A mutable resource should usually have one canonical collection under its authorization boundary, such as `studios/:studioId/compensation-line-items`, even when the UI is mounted inside a show or shift workflow.
+
+Rules:
+- Keep nesting shallow: one owner/scope segment plus the resource is the default.
+- If a resource has its own UID, audit trail, pagination, or soft-delete lifecycle, update and delete it through its canonical collection route.
+- When a resource attaches to multiple target types, use explicit target fields (`target_type`, `target_id`) for create and filters for list instead of creating one route family per target.
+- Reserve `include` / `expand` for read-time embedding of related data on parent detail endpoints; do not use it as the primary mutation contract for child resources.
+
 ## Dependency Injection (High Level)
 
 **Pattern**: Inversion of Control.

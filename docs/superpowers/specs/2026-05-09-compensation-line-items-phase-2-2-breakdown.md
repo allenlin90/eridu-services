@@ -12,9 +12,11 @@ Phase 2.2 lands as independent, value-producing PRs instead of one large integra
 
 ## Decisions
 
-### Target-scoped studio workflows are primary
+### Target-scoped studio workflows use a flat studio API
 
 Studio users manage compensation line items from the target being adjusted: show, show creator assignment, shift, or shift block. The target explains why the line item exists, so normal studio workflows should not start from a generic line-item model page.
+
+The backend route still treats compensation line items as the resource: `/studios/:studioId/compensation-line-items`. Studio create requests submit `target_type` and `target_id`; list requests can filter by those fields. This avoids deeply nested route families while preserving target-scoped UI workflows.
 
 ### System CRUD is support tooling
 
@@ -50,7 +52,7 @@ Show actuals and shift-block actuals are added as optional fields on the existin
 | -- | ---- | ----- | ----- |
 | 1A | Backend system CRUD foundation | Prisma model/enums, shared contracts, `/admin/compensation-line-items` CRUD/list | System admins can inspect and correct compensation line items across studios. |
 | 1B | Frontend system CRUD | `/system/compensation-line-items` support UI | Support tooling is usable before studio workflow UIs ship. |
-| 2 | Studio target-scoped APIs | Contextual line-item endpoints for show, show creator assignment, shift, and shift block | Backend contracts match real studio workflows. |
+| 2 | Studio line-item APIs | Flat studio line-item collection with target create fields and list filters | Backend contracts match real studio workflows without over-nested URLs. |
 | 3 | Actuals and snapshot readiness | Show actuals, shift-block actuals, future-only snapshot audit append | 2.3 can consume scoped actuals and snapshot audit facts. |
 | 4 | Show workflow UI | Show and show-creator panels plus show actuals | Operators can manage show-side compensation inputs in context. |
 | 5 | Shift workflow UI | Shift and shift-block panels plus block actuals | Operators can manage shift-side compensation inputs in context. |
@@ -61,15 +63,15 @@ Show actuals and shift-block actuals are added as optional fields on the existin
 Backend:
 
 - `/admin/compensation-line-items` accepts explicit `studio_id`, `target_type`, and `target_id`.
-- Studio routes infer the target from the route and do not ask the client to select a target on create.
+- `/studios/:studioId/compensation-line-items` accepts `target_type` and `target_id` on create and supports target filters on list. The route `studioId` remains authoritative; clients cannot supply or override `studio_id`.
 - Actuals are part of the existing `updateStudioShowInputSchema` and the existing block update schema, not standalone setter schemas.
-- Studio target-scoped line-item write access is restricted to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER`. `TALENT_MANAGER` may continue to read assignments but does not gain finance write access in 2.2.
+- Studio line-item write access is restricted to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER`. `TALENT_MANAGER` may continue to read assignments but does not gain finance write access in 2.2.
 - Snapshot audit append uses existing row `metadata`; no new audit table ships.
 
 Frontend:
 
 - `/system/compensation-line-items` is system-admin support tooling.
-- Studio workflow UI mounts target-scoped panels in show and shift workflows.
+- Studio workflow UI mounts target-scoped panels in show and shift workflows; those panels call the flat studio collection with explicit target type and UID.
 - Show actuals and block actuals UI piggyback on the existing show / shift-block update mutations; no parallel mutation is introduced.
 - Future economics review screens consume backend read models and do not calculate money locally.
 

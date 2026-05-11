@@ -163,7 +163,7 @@ The product constraints are:
 | Slice | API direction | Purpose |
 | ----- | ------------- | ------- |
 | System support CRUD | `/admin/compensation-line-items` | System-admin support and reconciliation across studios. |
-| Studio target APIs | Contextual show/show-creator/shift/shift-block line-item collections | Studio operator workflows where the target is known from the route. |
+| Studio line-item APIs | `/studios/:studioId/compensation-line-items` with `target_type` / `target_id` create fields and list filters | Studio operator workflows can stay target-scoped in the UI without encoding every parent resource in the mutation URL. |
 | Actuals fields | New optional fields on the existing show update and shift-block update routes (no separate `/actuals` sub-resource) | Persist scoped actual facts for later calculators on the same write path as the rest of the resource. |
 | Snapshot readiness | Existing assignment and shift update routes append audit on snapshot edits | Preserve future calculation traceability without a new audit table. |
 | Shift cost cleanup | Separate DB/API/FE cleanup | Remove stored calculated/reference cost columns after consumers are updated. |
@@ -173,7 +173,7 @@ The product constraints are:
 | Surface | Requirement |
 | ------- | ----------- |
 | System line-item support | System admins can inspect, filter, create, correct, and soft-delete line items across studios. |
-| Target-scoped studio panels | ADMIN/MANAGER can create, edit, and soft-delete line items from the show, show creator assignment, shift, or shift block being adjusted. |
+| Target-scoped studio panels | ADMIN/MANAGER can create, edit, and soft-delete line items from the show, show creator assignment, shift, or shift block being adjusted; panels call the flat studio line-item API with explicit target filters. |
 | Base vs supplemental display | Breakdown UI separates calculated base compensation from supplemental line items; users must not see generated base rows as editable line items. |
 | Actuals entry | Show detail and shift-block surfaces expose compact actual-time inputs for ADMIN/MANAGER. |
 | Planned fallback warnings | Admin/manager surfaces display warnings when costs are calculated from planned time because actuals are missing or incomplete. |
@@ -184,7 +184,7 @@ The product constraints are:
 ## Acceptance Criteria
 
 - [ ] System admins can manage line items through `/system/compensation-line-items` / `/admin/compensation-line-items`.
-- [ ] Studio ADMIN and MANAGER can create, update, list, and soft-delete compensation line items from supported target-specific workflows.
+- [ ] Studio ADMIN and MANAGER can create, update, list, and soft-delete compensation line items through `/studios/:studioId/compensation-line-items`, with target-specific workflows passing `target_type` and `target_id`.
 - [ ] Line item API uses UIDs externally and never exposes internal DB IDs.
 - [ ] The line-item attachment model remains polymorphic and follows the repo's Prisma-friendly pattern.
 - [ ] `CompensationItemType` supports `BONUS`, `ALLOWANCE`, `OVERTIME`, `DEDUCTION`, and `OTHER`.
