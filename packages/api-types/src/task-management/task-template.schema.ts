@@ -200,7 +200,7 @@ export const taskTemplateUsageSummaryDto = z.object({
   task_count_total: z.number().int(),
   task_count_active: z.number().int(),
   show_count_active: z.number().int(),
-  last_used_at: z.string().datetime().nullable(),
+  last_used_at: z.iso.datetime().nullable(),
 });
 
 export type TaskTemplateUsageSummaryDto = z.infer<typeof taskTemplateUsageSummaryDto>;
@@ -217,8 +217,8 @@ export const adminTaskTemplateDto = z.object({
   task_type: z.nativeEnum(TASK_TYPE),
   is_active: z.boolean(),
   version: z.number().int(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
   usage_summary: taskTemplateUsageSummaryDto,
 });
 
@@ -254,8 +254,8 @@ export type UpdateAdminTaskTemplateInput = z.infer<typeof updateAdminTaskTemplat
 export const listAdminTaskTemplateBindingsQuerySchema = paginationBaseSchema
   .extend({
     status: z.union([z.nativeEnum(TASK_STATUS), z.array(z.nativeEnum(TASK_STATUS))]).optional(),
-    show_start_from: z.string().datetime().optional(),
-    show_start_to: z.string().datetime().optional(),
+    show_start_from: z.iso.datetime().optional(),
+    show_start_to: z.iso.datetime().optional(),
     include_deleted: z.coerce.boolean().default(false),
     sort: z.enum(['asc', 'desc']).optional().default('desc'),
   })
@@ -269,14 +269,14 @@ export const adminTaskTemplateBindingDto = z.object({
     id: z.string().startsWith(UID_PREFIXES.TASK),
     status: z.nativeEnum(TASK_STATUS),
     type: z.nativeEnum(TASK_TYPE),
-    due_date: z.string().datetime().nullable(),
-    deleted_at: z.string().datetime().nullable(),
+    due_date: z.iso.datetime().nullable(),
+    deleted_at: z.iso.datetime().nullable(),
   }),
   show: z.object({
     id: z.string().startsWith(UID_PREFIXES.SHOW),
     name: z.string(),
-    start_time: z.string().datetime(),
-    end_time: z.string().datetime(),
+    start_time: z.iso.datetime(),
+    end_time: z.iso.datetime(),
     client_name: z.string().nullable(),
     studio_name: z.string().nullable(),
   }).nullable(),

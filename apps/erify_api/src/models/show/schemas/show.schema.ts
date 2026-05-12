@@ -159,7 +159,9 @@ const transformCreateShowSchema = createShowSchema.transform((data) => ({
   name: data.name,
   startTime: new Date(data.start_time),
   endTime: new Date(data.end_time),
-  metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
+  metadata: data.metadata,
+  actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined),
+  actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
 }));
 
 // API update schema (snake_case input, transforms to camelCase)
@@ -215,7 +217,9 @@ export const updateShowSchema = z
     name: data.name,
     startTime: data.start_time ? new Date(data.start_time) : undefined,
     endTime: data.end_time ? new Date(data.end_time) : undefined,
-    metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
+    metadata: data.metadata,
+    actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined),
+    actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
   }));
 
 // Schema for Show with relations (used in admin endpoints)
@@ -454,7 +458,9 @@ const createStudioShowTransformSchema = createStudioShowInputSchema.transform((d
   name: data.name,
   startTime: new Date(data.start_time),
   endTime: new Date(data.end_time),
-  metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
+  metadata: data.metadata,
+  actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined),
+  actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
   platformIds: data.platform_ids,
 }));
 export class CreateStudioShowDto extends createZodDto(createStudioShowTransformSchema) {
@@ -484,7 +490,9 @@ const updateStudioShowTransformSchema = updateStudioShowInputSchema.transform((d
   showStatusId: data.show_status_id,
   showStandardId: data.show_standard_id,
   studioRoomId: data.studio_room_id,
-  metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
+  metadata: data.metadata,
+  actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined),
+  actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
   platformIds: data.platform_ids,
 }));
 export class UpdateStudioShowDto extends createZodDto(updateStudioShowTransformSchema) {

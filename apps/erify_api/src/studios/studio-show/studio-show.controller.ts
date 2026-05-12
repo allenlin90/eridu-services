@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema } from '@eridu/api-types/studio-creators';
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
 
@@ -23,10 +24,10 @@ import {
 import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
+import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
-import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import {
@@ -43,7 +44,6 @@ import {
 } from '@/models/task/schemas/task.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
-import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 
 const STUDIO_SHOW_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,

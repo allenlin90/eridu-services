@@ -37,7 +37,7 @@ Relax the strictness around template associations and define the contract for cr
       show_uid: z.string().startsWith(UID_PREFIXES.SHOW),
       description: z.string().min(1),
       assignee_uid: z.string().nullable().optional(),
-      due_date: z.string().datetime().nullable().optional(),
+      due_date: z.iso.datetime().nullable().optional(),
       content: z.record(z.string(), z.any()).optional()
     });
     ```
