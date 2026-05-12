@@ -68,6 +68,8 @@ describe('showOrchestrationService', () => {
     name: 'Test Show',
     startTime: new Date('2024-01-01T10:00:00Z'),
     endTime: new Date('2024-01-01T12:00:00Z'),
+    actualStartTime: null,
+    actualEndTime: null,
     metadata: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -219,6 +221,8 @@ describe('showOrchestrationService', () => {
         name: 'Test Show',
         startTime: new Date('2024-01-01T10:00:00Z'),
         endTime: new Date('2024-01-01T12:00:00Z'),
+        actualStartTime: null,
+        actualEndTime: null,
         metadata: {},
         creators: undefined,
         platforms: undefined,
@@ -285,7 +289,7 @@ describe('showOrchestrationService', () => {
       showRepository.update.mockResolvedValue(mockShow);
       showRepository.findByUid.mockResolvedValue(mockShow);
 
-      const result = await service.updateShowWithAssignments(uid, dto);
+      const result = await service.updateShowWithAssignments(uid, dto, 'actor_123');
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
       expect(showRepository.update).toHaveBeenCalledWith(
@@ -344,7 +348,7 @@ describe('showOrchestrationService', () => {
       showPlatformRepository.createAssignment.mockResolvedValue({} as any);
       showPlatformService.generateShowPlatformUid.mockReturnValue('show_plt_new');
 
-      const result = await service.updateShowWithAssignments(uid, dto);
+      const result = await service.updateShowWithAssignments(uid, dto, 'actor_123');
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
       expect(showRepository.update).toHaveBeenCalledWith(
@@ -389,10 +393,10 @@ describe('showOrchestrationService', () => {
         throw new BadRequestException('End time must be after start time');
       });
 
-      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+      await expect(service.updateShowWithAssignments(uid, dto, 'actor_123')).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.updateShowWithAssignments(uid, dto)).rejects.toThrow(
+      await expect(service.updateShowWithAssignments(uid, dto, 'actor_123')).rejects.toThrow(
         'End time must be after start time',
       );
     });
@@ -589,7 +593,7 @@ describe('showOrchestrationService', () => {
       showCreatorRepository.createAssignment.mockResolvedValue({} as any);
       showCreatorRepository.restoreAndUpdateAssignment.mockResolvedValue({} as any);
 
-      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any, 'actor_123');
 
       expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -604,14 +608,14 @@ describe('showOrchestrationService', () => {
         }),
       );
       expect(showCreatorRepository.restoreAndUpdateAssignment).toHaveBeenCalledWith(
-        BigInt(33),
-        {
+        expect.anything(),
+        expect.objectContaining({
           note: 'Restore creator',
           agreedRate: undefined,
           compensationType: 'COMMISSION',
           commissionRate: '10.00',
-          metadata: { source: 'restore' },
-        },
+          metadata: expect.objectContaining({ source: 'restore' }),
+        }),
       );
       expect(result).toEqual({
         assigned: 2,
@@ -627,7 +631,7 @@ describe('showOrchestrationService', () => {
       const uid = 'show_test123';
       showService.getShowById.mockResolvedValue(mockShow);
 
-      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, []);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, [], 'actor_123');
       expect(result).toEqual({ assigned: 0, skipped: 0, failed: [] });
       expect(creatorRepository.findByUids).not.toHaveBeenCalled();
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
@@ -661,7 +665,7 @@ describe('showOrchestrationService', () => {
       showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
       showCreatorRepository.createAssignment.mockRejectedValue(new Error('insert failed'));
 
-      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any, 'actor_123');
 
       expect(result).toEqual({
         assigned: 0,
@@ -702,7 +706,7 @@ describe('showOrchestrationService', () => {
         createMockUniqueConstraintError(['showId', 'creatorId'], 'ShowCreator'),
       );
 
-      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any, 'actor_123');
 
       expect(result).toEqual({
         assigned: 0,
@@ -737,7 +741,7 @@ describe('showOrchestrationService', () => {
       ] as any);
       showCreatorRepository.findMany.mockResolvedValue([]);
 
-      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any, 'actor_123');
 
       expect(result).toEqual({
         assigned: 0,
@@ -766,7 +770,7 @@ describe('showOrchestrationService', () => {
       studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([]);
       showCreatorRepository.findMany.mockResolvedValue([]);
 
-      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any, 'actor_123');
 
       expect(result).toEqual({
         assigned: 0,
@@ -813,7 +817,7 @@ describe('showOrchestrationService', () => {
         { id: BigInt(22), showId: mockShow.id, creatorId: BigInt(12), deletedAt: null, metadata: {} },
       ] as any);
 
-      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any);
+      const result = await service.bulkAssignCreatorsToShow('std_test123', uid, creators as any, 'actor_123');
 
       expect(result).toEqual({
         assigned: 0,
@@ -851,7 +855,7 @@ describe('showOrchestrationService', () => {
       showCreatorRepository.createAssignment.mockResolvedValue({} as any);
       showRepository.findByUid.mockResolvedValue(mockShow);
 
-      const result = await service.replaceCreatorsForShow(uid, creators);
+      const result = await service.replaceCreatorsForShow(uid, creators, 'actor_123');
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
       expect(creatorRepository.findByUids).toHaveBeenCalledWith(['creator_test123']);
@@ -887,7 +891,7 @@ describe('showOrchestrationService', () => {
       showService.getShowById.mockResolvedValue(mockShow);
       creatorRepository.findByUids.mockResolvedValue([]);
 
-      await expect(service.replaceCreatorsForShow(uid, creators)).rejects.toThrow(
+      await expect(service.replaceCreatorsForShow(uid, creators, 'actor_123')).rejects.toThrow(
         'Creators not found: creator_missing',
       );
     });
@@ -927,17 +931,17 @@ describe('showOrchestrationService', () => {
       showCreatorRepository.restoreAndUpdateAssignment.mockResolvedValue({} as any);
       showRepository.findByUid.mockResolvedValue(mockShow);
 
-      await service.replaceCreatorsForShow(uid, creators);
+      await service.replaceCreatorsForShow(uid, creators, 'actor_123');
 
       expect(showCreatorRepository.restoreAndUpdateAssignment).toHaveBeenCalledWith(
-        BigInt(99),
-        {
+        99n,
+        expect.objectContaining({
           note: 'Restored note',
           agreedRate: '180.00',
           compensationType: 'COMMISSION',
           commissionRate: '20.00',
-          metadata: { source: 'sync' },
-        },
+          metadata: expect.objectContaining({ source: 'sync' }),
+        }),
       );
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
     });

@@ -60,6 +60,8 @@ describe('adminShowController', () => {
         showStandardId: 'shsd_123',
         startTime: new Date('2024-01-01T10:00:00Z'),
         endTime: new Date('2024-01-01T12:00:00Z'),
+        actualStartTime: undefined,
+        actualEndTime: undefined,
         metadata: {},
         creators: [],
         platforms: [],
@@ -177,11 +179,11 @@ describe('adminShowController', () => {
       mockShowOrchestrationService.updateShowWithAssignments.mockResolvedValue(
         updatedShow as any,
       );
-
-      const result = await controller.updateShow(showId, updateDto);
+      const mockUser = { ext_id: 'user_ext_1' } as any;
+      const result = await controller.updateShow(showId, updateDto, mockUser);
       expect(
         mockShowOrchestrationService.updateShowWithAssignments,
-      ).toHaveBeenCalledWith(showId, updateDto);
+      ).toHaveBeenCalledWith(showId, updateDto, mockUser.ext_id);
       expect(result).toEqual(updatedShow);
     });
   });
@@ -257,10 +259,11 @@ describe('adminShowController', () => {
         updatedShow as any,
       );
 
-      const result = await controller.replaceCreatorsOnShow(showId, replaceDto);
+      const mockUser = { ext_id: 'user_ext_1' } as any;
+      const result = await controller.replaceCreatorsOnShow(showId, replaceDto, mockUser);
       expect(
         mockShowOrchestrationService.replaceCreatorsForShow,
-      ).toHaveBeenCalledWith(showId, replaceDto.creators);
+      ).toHaveBeenCalledWith(showId, replaceDto.creators, mockUser.ext_id);
       expect(result).toEqual(updatedShow);
     });
   });

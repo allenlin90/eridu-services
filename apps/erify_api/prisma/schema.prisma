@@ -116,6 +116,8 @@ model Show {
   name                        String
   startTime                   DateTime                     @map("start_time")
   endTime                     DateTime                     @map("end_time")
+  actualStartTime             DateTime?                    @map("actual_start_time")
+  actualEndTime               DateTime?                    @map("actual_end_time")
   metadata                    Json                         @default("{}")
   clientId                    BigInt                       @map("client_id")
   client                      Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -429,6 +431,8 @@ model StudioShiftBlock {
   shiftId                     BigInt                       @map("shift_id")
   startTime                   DateTime                     @map("start_time")
   endTime                     DateTime                     @map("end_time")
+  actualStartTime             DateTime?                    @map("actual_start_time")
+  actualEndTime               DateTime?                    @map("actual_end_time")
   metadata                    Json                         @default("{}")
   shift                       StudioShift                  @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   compensationLineItemTargets CompensationLineItemTarget[]

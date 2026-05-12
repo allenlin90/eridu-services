@@ -10,11 +10,14 @@ import {
   Query,
 } from '@nestjs/common';
 
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
+
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import {
   AdminPaginatedResponse,
   AdminResponse,
 } from '@/admin/decorators/admin-response.decorator';
+import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
@@ -87,10 +90,12 @@ export class AdminShowController extends BaseAdminController {
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
     id: string,
     @Body() body: UpdateShowWithAssignmentsDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     const show = await this.showOrchestrationService.updateShowWithAssignments(
       id,
       body,
+      user.ext_id,
     );
     // Service already returns show with relations
     return show;
@@ -141,10 +146,12 @@ export class AdminShowController extends BaseAdminController {
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show'))
     id: string,
     @Body() body: ReplaceCreatorsOnShowDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return await this.showOrchestrationService.replaceCreatorsForShow(
       id,
       body.creators,
+      user.ext_id,
     );
   }
 

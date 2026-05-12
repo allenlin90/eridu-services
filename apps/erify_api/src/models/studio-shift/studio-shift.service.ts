@@ -23,7 +23,9 @@ type ShiftBlockInput = {
   uid?: string;
   startTime: Date;
   endTime: Date;
-  metadata: JsonObject;
+  actualStartTime?: Date | null;
+  actualEndTime?: Date | null;
+  metadata: Record<string, any>;
 };
 
 @Injectable()
@@ -71,6 +73,8 @@ export class StudioShiftService extends BaseModelService {
           uid: this.generateBlockUid(),
           startTime: block.startTime,
           endTime: block.endTime,
+          actualStartTime: block.actualStartTime,
+          actualEndTime: block.actualEndTime,
           metadata: block.metadata,
         })),
       },
@@ -149,6 +153,8 @@ export class StudioShiftService extends BaseModelService {
       : existing.blocks.map((block) => ({
           startTime: block.startTime,
           endTime: block.endTime,
+          actualStartTime: block.actualStartTime,
+          actualEndTime: block.actualEndTime,
           metadata: (block.metadata ?? {}) as JsonObject,
         }));
 
@@ -245,6 +251,10 @@ export class StudioShiftService extends BaseModelService {
           throw HttpError.badRequest('Shift blocks cannot overlap');
         }
       }
+
+      if (block.actualStartTime && block.actualEndTime && block.actualEndTime <= block.actualStartTime) {
+        throw HttpError.badRequest('Shift block actual_end_time must be after actual_start_time');
+      }
     }
 
     return normalizedBlocks;
@@ -279,6 +289,8 @@ export class StudioShiftService extends BaseModelService {
       uid: string;
       startTime: Date;
       endTime: Date;
+      actualStartTime: Date | null;
+      actualEndTime: Date | null;
       metadata: unknown;
     }>,
   ): BlocksReplacePayload {
@@ -287,6 +299,8 @@ export class StudioShiftService extends BaseModelService {
         uid: block.uid,
         startTime: block.startTime,
         endTime: block.endTime,
+        actualStartTime: block.actualStartTime,
+        actualEndTime: block.actualEndTime,
         // metadata always defaults to {} in schema — narrowing cast is safe here
         metadata: (block.metadata ?? {}) as JsonObject,
       })),
@@ -296,6 +310,8 @@ export class StudioShiftService extends BaseModelService {
       uid: sortedExistingBlocks[index]?.uid ?? this.generateBlockUid(),
       startTime: block.startTime,
       endTime: block.endTime,
+      actualStartTime: block.actualStartTime,
+      actualEndTime: block.actualEndTime,
       metadata: block.metadata,
     }));
 

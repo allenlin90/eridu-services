@@ -10,6 +10,7 @@ import {
   UpdateShowWithAssignmentsDto,
 } from './schemas/show-orchestration.schema';
 
+import { appendSnapshotAudit, isSnapshotValueEqual, SnapshotChange } from '@/lib/audit/snapshot-audit.helper';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { CreatorRepository } from '@/models/creator/creator.repository';
@@ -124,6 +125,7 @@ export class ShowOrchestrationService {
   async updateShowWithAssignments<T extends ShowInclude = Record<string, never>>(
     uid: string,
     dto: UpdateShowWithAssignmentsDto,
+    actorExtId: string,
     include?: T,
   ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
@@ -138,7 +140,7 @@ export class ShowOrchestrationService {
 
     // 2. Sync creator assignments if provided
     if (dto.showCreators) {
-      await this.syncShowCreators(showId, dto.showCreators);
+      await this.syncShowCreators(showId, dto.showCreators, actorExtId);
     }
 
     // 3. Sync platform assignments if provided
@@ -194,6 +196,7 @@ export class ShowOrchestrationService {
     studioUid: string,
     uid: string,
     creators: CreatorAssignmentPayload[],
+    actorExtId: string,
   ): Promise<BulkAssignCreatorsResult> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
@@ -272,12 +275,29 @@ export class ShowOrchestrationService {
 
       try {
         if (existingAssignment) {
+          const changes: SnapshotChange[] = [];
+          if (!isSnapshotValueEqual(existingAssignment.agreedRate, creator.agreedRate)) {
+            changes.push({ field: 'agreed_rate', old_value: existingAssignment.agreedRate, new_value: creator.agreedRate });
+          }
+          if (!isSnapshotValueEqual(existingAssignment.compensationType, creator.compensationType)) {
+            changes.push({ field: 'compensation_type', old_value: existingAssignment.compensationType, new_value: creator.compensationType });
+          }
+          if (!isSnapshotValueEqual(existingAssignment.commissionRate, creator.commissionRate)) {
+            changes.push({ field: 'commission_rate', old_value: existingAssignment.commissionRate, new_value: creator.commissionRate });
+          }
+
+          const newMetadata = appendSnapshotAudit(
+            creator.metadata ?? existingAssignment.metadata ?? {},
+            changes,
+            actorExtId,
+          );
+
           await this.showCreatorRepository.restoreAndUpdateAssignment(existingAssignment.id, {
             note: creator.note ?? null,
             agreedRate: creator.agreedRate,
             compensationType: creator.compensationType,
             commissionRate: creator.commissionRate,
-            metadata: creator.metadata ?? (existingAssignment.metadata as object) ?? {},
+            metadata: newMetadata,
           });
         } else {
           await this.showCreatorRepository.createAssignment({
@@ -359,12 +379,13 @@ export class ShowOrchestrationService {
   async replaceCreatorsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
     creators: CreatorAssignmentPayload[],
+    actorExtId: string,
     include?: T,
   ): Promise<Show | ShowWithPayload<T>> {
     const defaultInclude = include || this.getDefaultIncludes();
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
-    await this.syncShowCreators(showId, creators);
+    await this.syncShowCreators(showId, creators, actorExtId);
     return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
   }
 
@@ -469,6 +490,7 @@ export class ShowOrchestrationService {
   private async syncShowCreators(
     showId: bigint,
     creators: CreatorAssignmentPayload[],
+    actorExtId: string,
     missingEntityLabel = 'Creators',
   ): Promise<void> {
     const creatorUids = creators.map((c) => c.creatorId);
@@ -493,12 +515,29 @@ export class ShowOrchestrationService {
       const existing = existingAssignments.find((a) => a.creatorId === internalCreatorId);
 
       if (existing) {
+        const changes: SnapshotChange[] = [];
+        if (!isSnapshotValueEqual(existing.agreedRate, assignment.agreedRate)) {
+          changes.push({ field: 'agreed_rate', old_value: existing.agreedRate, new_value: assignment.agreedRate });
+        }
+        if (!isSnapshotValueEqual(existing.compensationType, assignment.compensationType)) {
+          changes.push({ field: 'compensation_type', old_value: existing.compensationType, new_value: assignment.compensationType });
+        }
+        if (!isSnapshotValueEqual(existing.commissionRate, assignment.commissionRate)) {
+          changes.push({ field: 'commission_rate', old_value: existing.commissionRate, new_value: assignment.commissionRate });
+        }
+
+        const newMetadata = appendSnapshotAudit(
+          assignment.metadata ?? existing.metadata ?? {},
+          changes,
+          actorExtId,
+        );
+
         await this.showCreatorRepository.restoreAndUpdateAssignment(existing.id, {
           note: assignment.note ?? null,
           agreedRate: assignment.agreedRate,
           compensationType: assignment.compensationType,
           commissionRate: assignment.commissionRate,
-          metadata: assignment.metadata ?? (existing.metadata as object) ?? {},
+          metadata: newMetadata,
         });
       } else {
         await this.showCreatorRepository.createAssignment({

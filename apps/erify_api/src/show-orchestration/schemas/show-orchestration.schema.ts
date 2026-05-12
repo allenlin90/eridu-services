@@ -51,6 +51,8 @@ const transformCreateShowWithAssignmentsSchema
       name: data.name,
       startTime: new Date(data.start_time),
       endTime: new Date(data.end_time),
+      actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined),
+      actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
       metadata: data.metadata,
       // Creator assignments normalized for orchestration service internals.
       creators: creatorAssignments?.map((creator) => ({
@@ -118,6 +120,8 @@ const transformUpdateShowWithAssignmentsSchema
       name: data.name,
       startTime: data.start_time ? new Date(data.start_time) : undefined,
       endTime: data.end_time ? new Date(data.end_time) : undefined,
+      actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined),
+      actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
       metadata: data.metadata,
       showCreators: creatorAssignments?.map((creator) => ({
         creatorId: creator.creator_id,

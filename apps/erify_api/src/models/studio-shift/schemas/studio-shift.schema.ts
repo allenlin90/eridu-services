@@ -73,6 +73,8 @@ const _internalShiftBlockShape = z.object({
   uid: z.string().startsWith(StudioShiftService.BLOCK_UID_PREFIX),
   startTime: z.date(),
   endTime: z.date(),
+  actualStartTime: z.date().nullable(),
+  actualEndTime: z.date().nullable(),
   metadata: z.record(z.string(), z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -121,6 +123,8 @@ const studioShiftApiResponseSchema = z.object({
       id: z.string(),
       start_time: z.iso.datetime(),
       end_time: z.iso.datetime(),
+      actual_start_time: z.iso.datetime().nullable(),
+      actual_end_time: z.iso.datetime().nullable(),
       metadata: studioShiftBlockMetadataSchema,
       created_at: z.iso.datetime(),
       updated_at: z.iso.datetime(),
@@ -148,6 +152,8 @@ export const studioShiftDto = _internalShiftWithRelationsShape
       id: block.uid,
       start_time: block.startTime.toISOString(),
       end_time: block.endTime.toISOString(),
+      actual_start_time: block.actualStartTime?.toISOString() ?? null,
+      actual_end_time: block.actualEndTime?.toISOString() ?? null,
       metadata: block.metadata,
       created_at: block.createdAt.toISOString(),
       updated_at: block.updatedAt.toISOString(),
@@ -160,6 +166,8 @@ export const studioShiftDto = _internalShiftWithRelationsShape
 const blockInputSchema = z.object({
   start_time: z.iso.datetime(),
   end_time: z.iso.datetime(),
+  actual_start_time: z.iso.datetime().nullable().optional(),
+  actual_end_time: z.iso.datetime().nullable().optional(),
   metadata: studioShiftBlockMetadataSchema.optional(),
 });
 
@@ -185,6 +193,8 @@ export const createStudioShiftSchema = z
     blocks: data.blocks.map((block) => ({
       startTime: new Date(block.start_time),
       endTime: new Date(block.end_time),
+      actualStartTime: block.actual_start_time ? new Date(block.actual_start_time) : undefined,
+      actualEndTime: block.actual_end_time ? new Date(block.actual_end_time) : undefined,
       metadata: block.metadata ?? {},
     })),
     status: data.status,
@@ -213,6 +223,8 @@ export const updateStudioShiftSchema = z
     blocks: data.blocks?.map((block) => ({
       startTime: new Date(block.start_time),
       endTime: new Date(block.end_time),
+      actualStartTime: block.actual_start_time ? new Date(block.actual_start_time) : (block.actual_start_time === null ? null : undefined),
+      actualEndTime: block.actual_end_time ? new Date(block.actual_end_time) : (block.actual_end_time === null ? null : undefined),
       metadata: block.metadata ?? {},
     })),
     status: data.status,
@@ -396,6 +408,8 @@ export type BlocksReplacePayload = {
     uid: string;
     startTime: Date;
     endTime: Date;
+    actualStartTime?: Date | null;
+    actualEndTime?: Date | null;
     metadata: Record<string, unknown>;
   }>;
   retainedUids: string[];

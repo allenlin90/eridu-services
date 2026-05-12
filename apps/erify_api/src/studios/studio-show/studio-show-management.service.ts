@@ -205,6 +205,13 @@ export class StudioShowManagementService {
     if (nextEnd <= nextStart) {
       throw HttpError.badRequest('End time must be after start time');
     }
+
+    const nextActualStart = dto.actualStartTime !== undefined ? dto.actualStartTime : null;
+    const nextActualEnd = dto.actualEndTime !== undefined ? dto.actualEndTime : null;
+
+    if (nextActualStart && nextActualEnd && nextActualEnd <= nextActualStart) {
+      throw HttpError.badRequest('Actual end time must be after actual start time');
+    }
   }
 
   private buildCreatePayload(
@@ -285,6 +292,10 @@ export class StudioShowManagementService {
         ? { connect: { uid: dto.studioRoomId } }
         : { disconnect: true };
     }
+    if (dto.actualStartTime !== undefined)
+      payload.actualStartTime = dto.actualStartTime;
+    if (dto.actualEndTime !== undefined)
+      payload.actualEndTime = dto.actualEndTime;
 
     return payload;
   }

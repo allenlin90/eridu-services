@@ -142,6 +142,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: ['plt_1'],
     });
@@ -179,6 +181,8 @@ describe('studioShowManagementService', () => {
       name: 'Restored Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     });
@@ -212,6 +216,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({
@@ -244,6 +250,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({
@@ -273,6 +281,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({
@@ -304,6 +314,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     });
@@ -332,6 +344,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({

@@ -26,6 +26,7 @@ import { StudioShowManagementService } from './studio-show-management.service';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import {
@@ -42,6 +43,7 @@ import {
 } from '@/models/task/schemas/task.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
+import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 
 const STUDIO_SHOW_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
@@ -146,9 +148,15 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
     @Body() body: BulkAssignStudioShowCreatorsDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
-    const result = await this.showOrchestrationService.bulkAssignCreatorsToShow(studioId, id, body.creators);
+    const result = await this.showOrchestrationService.bulkAssignCreatorsToShow(
+      studioId,
+      id,
+      body.creators,
+      user.ext_id,
+    );
     return {
       assigned: result.assigned,
       skipped: result.skipped,

@@ -108,6 +108,8 @@ export const showSchema = z.object({
   name: z.string(),
   startTime: z.date(),
   endTime: z.date(),
+  actualStartTime: z.date().nullable(),
+  actualEndTime: z.date().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -133,6 +135,8 @@ export const createShowObjectSchema = z.object({
   name: z.string().min(1, 'Show name is required'),
   start_time: z.iso.datetime(), // ISO 8601 datetime string
   end_time: z.iso.datetime(), // ISO 8601 datetime string
+  actual_start_time: z.iso.datetime().nullable().optional(),
+  actual_end_time: z.iso.datetime().nullable().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
@@ -155,7 +159,7 @@ const transformCreateShowSchema = createShowSchema.transform((data) => ({
   name: data.name,
   startTime: new Date(data.start_time),
   endTime: new Date(data.end_time),
-  metadata: data.metadata,
+  metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
 }));
 
 // API update schema (snake_case input, transforms to camelCase)
@@ -184,6 +188,8 @@ export const updateShowSchema = z
     name: z.string().min(1, 'Show name is required').optional(),
     start_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     end_time: z.iso.datetime().optional(), // ISO 8601 datetime string
+    actual_start_time: z.iso.datetime().nullable().optional(),
+    actual_end_time: z.iso.datetime().nullable().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .refine(
@@ -209,7 +215,7 @@ export const updateShowSchema = z
     name: data.name,
     startTime: data.start_time ? new Date(data.start_time) : undefined,
     endTime: data.end_time ? new Date(data.end_time) : undefined,
-    metadata: data.metadata,
+    metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
   }));
 
 // Schema for Show with relations (used in admin endpoints)
@@ -347,6 +353,8 @@ function transformShowToApi(obj: z.output<typeof showWithRelationsSchema>) {
     show_standard_name: obj.showStandard?.name ?? null,
     start_time: obj.startTime.toISOString(),
     end_time: obj.endTime.toISOString(),
+    actual_start_time: obj.actualStartTime?.toISOString() ?? null,
+    actual_end_time: obj.actualEndTime?.toISOString() ?? null,
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -446,7 +454,7 @@ const createStudioShowTransformSchema = createStudioShowInputSchema.transform((d
   name: data.name,
   startTime: new Date(data.start_time),
   endTime: new Date(data.end_time),
-  metadata: data.metadata,
+  metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
   platformIds: data.platform_ids,
 }));
 export class CreateStudioShowDto extends createZodDto(createStudioShowTransformSchema) {
@@ -461,6 +469,8 @@ export class CreateStudioShowDto extends createZodDto(createStudioShowTransformS
   declare startTime: Date;
   declare endTime: Date;
   declare metadata: Record<string, any> | undefined;
+  declare actualStartTime: Date | null | undefined;
+  declare actualEndTime: Date | null | undefined;
   declare platformIds: string[];
 }
 
@@ -474,7 +484,7 @@ const updateStudioShowTransformSchema = updateStudioShowInputSchema.transform((d
   showStatusId: data.show_status_id,
   showStandardId: data.show_standard_id,
   studioRoomId: data.studio_room_id,
-  metadata: data.metadata,
+  metadata: data.metadata, actualStartTime: data.actual_start_time ? new Date(data.actual_start_time) : (data.actual_start_time === null ? null : undefined), actualEndTime: data.actual_end_time ? new Date(data.actual_end_time) : (data.actual_end_time === null ? null : undefined),
   platformIds: data.platform_ids,
 }));
 export class UpdateStudioShowDto extends createZodDto(updateStudioShowTransformSchema) {
@@ -488,5 +498,7 @@ export class UpdateStudioShowDto extends createZodDto(updateStudioShowTransformS
   declare showStandardId: string | undefined;
   declare studioRoomId: string | null | undefined;
   declare metadata: Record<string, any> | undefined;
+  declare actualStartTime: Date | null | undefined;
+  declare actualEndTime: Date | null | undefined;
   declare platformIds: string[] | undefined;
 }

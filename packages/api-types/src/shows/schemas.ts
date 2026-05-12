@@ -28,6 +28,8 @@ export const showApiResponseSchema = z.object({
   show_standard_name: z.string().nullable(),
   start_time: z.string(), // ISO 8601 datetime string
   end_time: z.string(), // ISO 8601 datetime string
+  actual_start_time: z.string().nullable(), // ISO 8601 datetime string
+  actual_end_time: z.string().nullable(), // ISO 8601 datetime string
   metadata: z.record(z.string(), z.any()),
   created_at: z.string(), // ISO 8601 datetime string
   updated_at: z.string(), // ISO 8601 datetime string
@@ -88,6 +90,8 @@ export const createShowInputSchema = z
     name: z.string().min(1, 'Show name is required'),
     start_time: z.iso.datetime(), // ISO 8601 datetime string
     end_time: z.iso.datetime(), // ISO 8601 datetime string
+    actual_start_time: z.iso.datetime().nullable().optional(),
+    actual_end_time: z.iso.datetime().nullable().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
@@ -121,6 +125,8 @@ export const updateShowInputSchema = z
     name: z.string().min(1, 'Show name is required').optional(),
     start_time: z.iso.datetime().optional(), // ISO 8601 datetime string
     end_time: z.iso.datetime().optional(), // ISO 8601 datetime string
+    actual_start_time: z.iso.datetime().nullable().optional(),
+    actual_end_time: z.iso.datetime().nullable().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
     creators: z
       .array(
@@ -177,6 +183,8 @@ export const createStudioShowInputObjectSchema = z.object({
   name: z.string().min(1, 'Show name is required'),
   start_time: z.iso.datetime(),
   end_time: z.iso.datetime(),
+  actual_start_time: z.iso.datetime().nullable().optional(),
+  actual_end_time: z.iso.datetime().nullable().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
   platform_ids: z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)).default([]),
 });
@@ -208,6 +216,8 @@ export const updateStudioShowInputSchema = z
       .nullable()
       .optional(),
     metadata: z.record(z.string(), z.any()).optional(),
+    actual_start_time: z.iso.datetime().nullable().optional(),
+    actual_end_time: z.iso.datetime().nullable().optional(),
     platform_ids: z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)).optional(),
   })
   .refine(
