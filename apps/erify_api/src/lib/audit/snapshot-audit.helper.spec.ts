@@ -81,6 +81,16 @@ describe('snapshotAuditHelper', () => {
       expect(entry2.new_value).toBe('HYBRID');
     });
 
+    it('should omit reason when no reason is provided', () => {
+      const result = appendSnapshotAudit(
+        {},
+        [{ field: 'compensation_type', old_value: 'FIXED', new_value: 'HYBRID' }],
+        actorExtId,
+      );
+
+      expect(result.audit.snapshot_overrides[0]).not.toHaveProperty('reason');
+    });
+
     it('should preserve existing audit overrides', () => {
       const metadata = {
         audit: {

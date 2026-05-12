@@ -171,6 +171,14 @@ const blockInputSchema = z.object({
   metadata: studioShiftBlockMetadataSchema.optional(),
 });
 
+const updateBlockInputSchema = z.object({
+  start_time: z.iso.datetime().optional(),
+  end_time: z.iso.datetime().optional(),
+  actual_start_time: z.iso.datetime().nullable().optional(),
+  actual_end_time: z.iso.datetime().nullable().optional(),
+  metadata: studioShiftBlockMetadataSchema.optional(),
+});
+
 const validateUserUid = z.string().startsWith(UserService.UID_PREFIX);
 const validateStudioUid = z.string().startsWith(StudioService.UID_PREFIX);
 
@@ -214,6 +222,7 @@ export const updateStudioShiftSchema = z
     is_duty_manager: z.boolean().optional(),
     is_approved: z.boolean().optional(),
     calculated_cost: z.union([z.coerce.number().nonnegative(), z.null()]).optional(),
+    override_reason: z.string().trim().min(1).max(1000).optional(),
     metadata: studioShiftMetadataSchema.optional(),
   })
   .transform((data) => ({
@@ -235,8 +244,25 @@ export const updateStudioShiftSchema = z
       : data.calculated_cost !== undefined
         ? data.calculated_cost.toFixed(2)
         : undefined,
+    overrideReason: data.override_reason,
     metadata: data.metadata,
   }));
+
+export const updateStudioShiftBlockSchema = updateBlockInputSchema.transform((data) => ({
+  startTime: data.start_time ? new Date(data.start_time) : undefined,
+  endTime: data.end_time ? new Date(data.end_time) : undefined,
+  actualStartTime: data.actual_start_time
+    ? new Date(data.actual_start_time)
+    : data.actual_start_time === null
+      ? null
+      : undefined,
+  actualEndTime: data.actual_end_time
+    ? new Date(data.actual_end_time)
+    : data.actual_end_time === null
+      ? null
+      : undefined,
+  metadata: data.metadata,
+}));
 
 export const listStudioShiftsQuerySchema = paginationQuerySchema
   .and(
@@ -417,6 +443,13 @@ export type BlocksReplacePayload = {
 
 export type CreateStudioShiftInput = z.infer<typeof createStudioShiftSchema>;
 export type UpdateStudioShiftInput = z.infer<typeof updateStudioShiftSchema>;
+export type UpdateStudioShiftBlockInput = {
+  startTime?: Date;
+  endTime?: Date;
+  actualStartTime?: Date | null;
+  actualEndTime?: Date | null;
+  metadata?: z.infer<typeof studioShiftBlockMetadataSchema>;
+};
 export type ListStudioShiftsQuery = z.infer<typeof listStudioShiftsQuerySchema>;
 export type ListMyStudioShiftsQuery = z.infer<typeof listMyStudioShiftsQuerySchema>;
 export type AssignDutyManagerInput = z.infer<typeof assignDutyManagerSchema>;
@@ -425,6 +458,7 @@ export type ShiftAlignmentQuery = z.infer<typeof shiftAlignmentQuerySchema>;
 
 export class CreateStudioShiftDto extends createZodDto(createStudioShiftSchema) {}
 export class UpdateStudioShiftDto extends createZodDto(updateStudioShiftSchema) {}
+export class UpdateStudioShiftBlockDto extends createZodDto(updateStudioShiftBlockSchema) {}
 export class ListStudioShiftsQueryDto extends createZodDto(listStudioShiftsQuerySchema) {}
 export class ListMyStudioShiftsQueryDto extends createZodDto(listMyStudioShiftsQuerySchema) {}
 export class DutyManagerQueryDto extends createZodDto(dutyManagerQuerySchema) {}

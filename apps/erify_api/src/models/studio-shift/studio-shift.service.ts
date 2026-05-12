@@ -5,10 +5,12 @@ import type {
   CreateStudioShiftInput,
   ListMyStudioShiftsQuery,
   ListStudioShiftsQuery,
+  UpdateStudioShiftBlockInput,
   UpdateStudioShiftInput,
 } from './schemas/studio-shift.schema';
 import { StudioShiftRepository } from './studio-shift.repository';
 
+import { appendSnapshotAudit, isSnapshotValueEqual } from '@/lib/audit/snapshot-audit.helper';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
@@ -126,6 +128,7 @@ export class StudioShiftService extends BaseModelService {
     studioId: string,
     uid: string,
     payload: Partial<UpdateStudioShiftInput>,
+    actorExtId = 'system',
   ) {
     const existing = await this.studioShiftRepository.findByUidInStudio(studioId, uid);
     if (!existing) {
@@ -168,6 +171,15 @@ export class StudioShiftService extends BaseModelService {
     const blocksPayload = payload.blocks
       ? this.buildBlocksReplacePayload(normalizedBlocks, existing.blocks)
       : undefined;
+    const snapshotChanges = isSnapshotValueEqual(existing.hourlyRate, hourlyRate)
+      ? []
+      : [{ field: 'hourly_rate', old_value: existing.hourlyRate, new_value: hourlyRate }];
+    const metadata = appendSnapshotAudit(
+      this.mergeMetadata(existing.metadata, payload.metadata),
+      snapshotChanges,
+      actorExtId,
+      payload.overrideReason,
+    ) as JsonObject;
 
     return this.studioShiftRepository.updateShift(studioId, uid, {
       ...(payload.userId && { user: { connect: { uid: targetUserId } } }),
@@ -181,9 +193,53 @@ export class StudioShiftService extends BaseModelService {
       ...(payload.calculatedCost !== undefined && {
         calculatedCost: payload.calculatedCost,
       }),
+      ...((payload.metadata !== undefined || snapshotChanges.length > 0) && { metadata }),
       hourlyRate,
       projectedCost,
     }, existing.id, blocksPayload);
+  }
+
+  async updateShiftBlock(
+    studioId: string,
+    shiftUid: string,
+    blockUid: string,
+    payload: UpdateStudioShiftBlockInput,
+    actorExtId = 'system',
+  ) {
+    const existing = await this.studioShiftRepository.findByUidInStudio(studioId, shiftUid);
+    if (!existing) {
+      return null;
+    }
+
+    const targetBlock = existing.blocks.find((block) => block.uid === blockUid);
+    if (!targetBlock) {
+      return null;
+    }
+
+    const blocks = existing.blocks.map((block) => ({
+      uid: block.uid,
+      startTime: block.uid === blockUid
+        ? payload.startTime ?? block.startTime
+        : block.startTime,
+      endTime: block.uid === blockUid
+        ? payload.endTime ?? block.endTime
+        : block.endTime,
+      actualStartTime: block.uid === blockUid
+        ? payload.actualStartTime !== undefined
+          ? payload.actualStartTime
+          : block.actualStartTime
+        : block.actualStartTime,
+      actualEndTime: block.uid === blockUid
+        ? payload.actualEndTime !== undefined
+          ? payload.actualEndTime
+          : block.actualEndTime
+        : block.actualEndTime,
+      metadata: block.uid === blockUid
+        ? payload.metadata ?? ((block.metadata ?? {}) as JsonObject)
+        : (block.metadata ?? {}) as JsonObject,
+    }));
+
+    return this.updateShift(studioId, shiftUid, { blocks }, actorExtId);
   }
 
   async deleteShift(studioId: string, uid: string) {
@@ -306,8 +362,11 @@ export class StudioShiftService extends BaseModelService {
       })),
     );
 
+    const existingBlockUids = new Set(sortedExistingBlocks.map((block) => block.uid));
     const blocksToUpsert = blocks.map((block, index) => ({
-      uid: sortedExistingBlocks[index]?.uid ?? this.generateBlockUid(),
+      uid: block.uid && existingBlockUids.has(block.uid)
+        ? block.uid
+        : sortedExistingBlocks[index]?.uid ?? this.generateBlockUid(),
       startTime: block.startTime,
       endTime: block.endTime,
       actualStartTime: block.actualStartTime,
@@ -319,6 +378,19 @@ export class StudioShiftService extends BaseModelService {
       blocksToUpsert,
       retainedUids: blocksToUpsert.map((block) => block.uid),
     };
+  }
+
+  private mergeMetadata(existing: unknown, incoming: unknown): Record<string, unknown> {
+    return {
+      ...this.toMetadataObject(existing),
+      ...this.toMetadataObject(incoming),
+    };
+  }
+
+  private toMetadataObject(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : {};
   }
 
   private async ensureNoOverlapInStudio(

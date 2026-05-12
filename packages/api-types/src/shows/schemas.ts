@@ -138,6 +138,7 @@ export const updateShowInputSchema = z
             .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
             .optional(),
           commission_rate: z.coerce.number().min(0).max(100).optional(),
+          override_reason: z.string().trim().min(1).max(1000).optional(),
           metadata: z.record(z.string(), z.any()).optional(),
         }),
       )

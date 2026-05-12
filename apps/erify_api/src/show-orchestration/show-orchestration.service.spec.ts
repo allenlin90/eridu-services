@@ -240,7 +240,7 @@ describe('showOrchestrationService', () => {
           name: 'Test Show',
           startTime: dto.startTime,
           endTime: dto.endTime,
-          metadata: {},
+          metadata: dto.metadata,
           client: { connect: { uid: dto.clientId } },
           studioRoom: { connect: { uid: dto.studioRoomId } },
           showType: { connect: { uid: dto.showTypeId } },
@@ -365,7 +365,9 @@ describe('showOrchestrationService', () => {
           agreedRate: '120.00',
           compensationType: 'FIXED',
           commissionRate: '5.00',
-          metadata: {},
+          metadata: expect.objectContaining({
+            flags: { agreement_snapshot_missing: false },
+          }),
         }),
       );
       expect(platformRepository.findByUids).toHaveBeenCalledWith(['plt_test123']);
@@ -604,14 +606,17 @@ describe('showOrchestrationService', () => {
           agreedRate: '120.00',
           compensationType: 'FIXED',
           commissionRate: '5.00',
-          metadata: { source: 'bulk' },
+          metadata: expect.objectContaining({
+            source: 'bulk',
+            flags: { agreement_snapshot_missing: false },
+          }),
         }),
       );
       expect(showCreatorRepository.restoreAndUpdateAssignment).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           note: 'Restore creator',
-          agreedRate: undefined,
+          agreedRate: null,
           compensationType: 'COMMISSION',
           commissionRate: '10.00',
           metadata: expect.objectContaining({ source: 'restore' }),
@@ -635,6 +640,76 @@ describe('showOrchestrationService', () => {
       expect(result).toEqual({ assigned: 0, skipped: 0, failed: [] });
       expect(creatorRepository.findByUids).not.toHaveBeenCalled();
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
+    });
+
+    it('should resolve new assignment snapshots from roster defaults', async () => {
+      const uid = 'show_test123';
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_new' },
+      ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          creator: { uid: 'creator_new', name: 'New Creator', aliasName: 'New' },
+          isActive: true,
+          defaultRate: { toString: () => '500.00' },
+          defaultRateType: 'FIXED',
+          defaultCommissionRate: null,
+        },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
+      showCreatorRepository.createAssignment.mockResolvedValue({} as any);
+
+      await service.bulkAssignCreatorsToShow('std_test123', uid, [
+        { creatorId: 'creator_new', note: null, metadata: {} },
+      ] as any, 'actor_123');
+
+      expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agreedRate: '500.00',
+          compensationType: 'FIXED',
+          commissionRate: null,
+          metadata: expect.objectContaining({
+            flags: { agreement_snapshot_missing: false },
+          }),
+        }),
+      );
+    });
+
+    it('should mark new assignment metadata unresolved when roster defaults are incomplete', async () => {
+      const uid = 'show_test123';
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_new' },
+      ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          creator: { uid: 'creator_new', name: 'New Creator', aliasName: 'New' },
+          isActive: true,
+          defaultRate: null,
+          defaultRateType: null,
+          defaultCommissionRate: null,
+        },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new_bulk');
+      showCreatorRepository.createAssignment.mockResolvedValue({} as any);
+
+      await service.bulkAssignCreatorsToShow('std_test123', uid, [
+        { creatorId: 'creator_new', note: null, metadata: {} },
+      ] as any, 'actor_123');
+
+      expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agreedRate: null,
+          compensationType: null,
+          commissionRate: null,
+          metadata: expect.objectContaining({
+            flags: { agreement_snapshot_missing: true },
+          }),
+        }),
+      );
     });
 
     it('should convert create-assignment failures into failed summary rows', async () => {
@@ -868,7 +943,9 @@ describe('showOrchestrationService', () => {
           agreedRate: '150.00',
           compensationType: 'HYBRID',
           commissionRate: '12.50',
-          metadata: {},
+          metadata: expect.objectContaining({
+            flags: { agreement_snapshot_missing: false },
+          }),
         }),
       );
       expect(showRepository.findByUid).toHaveBeenCalledWith(
@@ -944,6 +1021,58 @@ describe('showOrchestrationService', () => {
         }),
       );
       expect(showCreatorRepository.createAssignment).not.toHaveBeenCalled();
+    });
+
+    it('should append snapshot override reason when replacing assignment compensation', async () => {
+      const uid = 'show_test123';
+      const creators = [
+        {
+          creatorId: 'creator_test123',
+          note: null,
+          agreedRate: '180.00',
+          compensationType: 'COMMISSION',
+          commissionRate: '20.00',
+          overrideReason: 'Back-office correction',
+          metadata: {},
+        },
+      ];
+      const mockCreator = { id: BigInt(1), uid: 'creator_test123', deletedAt: null };
+      const existingAssignment = {
+        id: BigInt(99),
+        showId: mockShow.id,
+        creatorId: BigInt(1),
+        note: null,
+        agreedRate: '150.00',
+        compensationType: 'FIXED',
+        commissionRate: null,
+        metadata: {},
+        deletedAt: null,
+      };
+
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([mockCreator] as any);
+      showCreatorRepository.findMany.mockResolvedValue([existingAssignment] as any);
+      showCreatorRepository.restoreAndUpdateAssignment.mockResolvedValue({} as any);
+      showRepository.findByUid.mockResolvedValue(mockShow);
+
+      await service.replaceCreatorsForShow(uid, creators, 'actor_123');
+
+      expect(showCreatorRepository.restoreAndUpdateAssignment).toHaveBeenCalledWith(
+        99n,
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            audit: expect.objectContaining({
+              snapshot_overrides: expect.arrayContaining([
+                expect.objectContaining({
+                  field: 'agreed_rate',
+                  reason: 'Back-office correction',
+                  actor_ext_id: 'actor_123',
+                }),
+              ]),
+            }),
+          }),
+        }),
+      );
     });
   });
 

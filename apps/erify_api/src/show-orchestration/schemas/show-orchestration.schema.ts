@@ -27,6 +27,7 @@ export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
         .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
         .optional(),
       commission_rate: z.coerce.number().min(0).max(100).optional(),
+      override_reason: z.string().trim().min(1).max(1000).optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
   ).optional(),
@@ -61,6 +62,7 @@ const transformCreateShowWithAssignmentsSchema
         agreedRate: creator.agreed_rate?.toFixed(2),
         compensationType: creator.compensation_type,
         commissionRate: creator.commission_rate?.toFixed(2),
+        ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
         metadata: creator.metadata,
       })),
       // Platform assignments
@@ -87,6 +89,7 @@ export const updateShowWithAssignmentsSchema = createShowObjectSchema
           .nullable()
           .optional(),
         commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+        override_reason: z.string().trim().min(1).max(1000).optional(),
         metadata: z.record(z.string(), z.any()).optional(),
       }),
     ).optional(),
@@ -139,6 +142,7 @@ const transformUpdateShowWithAssignmentsSchema
             : creator.commission_rate === null
               ? null
               : creator.commission_rate.toFixed(2),
+        ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
         metadata: creator.metadata,
       })),
       showPlatforms: data.platforms?.map((platform) => ({
@@ -260,6 +264,7 @@ export const replaceCreatorsOnShowSchema = z.object({
         .nullable()
         .optional(),
       commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+      override_reason: z.string().trim().min(1).max(1000).optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
   ),
@@ -293,6 +298,7 @@ export type ReplaceCreatorItem = {
   agreedRate: string | null;
   compensationType: string | null;
   commissionRate: string | null;
+  overrideReason?: string;
   metadata: object;
 };
 
@@ -337,6 +343,7 @@ export class ReplaceCreatorsOnShowDto extends createZodDto(
       agreedRate: creator.agreed_rate == null ? null : creator.agreed_rate.toFixed(2),
       compensationType: creator.compensation_type ?? null,
       commissionRate: creator.commission_rate == null ? null : creator.commission_rate.toFixed(2),
+      ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
       metadata: creator.metadata ?? {},
     })),
   })),
@@ -347,6 +354,7 @@ export class ReplaceCreatorsOnShowDto extends createZodDto(
     agreedRate: string | null;
     compensationType: string | null;
     commissionRate: string | null;
+    overrideReason?: string;
     metadata: Record<string, any>;
   }>;
 }

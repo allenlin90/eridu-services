@@ -12,9 +12,11 @@ import {
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
 
+import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
@@ -26,6 +28,7 @@ import {
   DutyManagerQueryDto,
   ListStudioShiftsQueryDto,
   studioShiftDto,
+  UpdateStudioShiftBlockDto,
   UpdateStudioShiftDto,
 } from '@/models/studio-shift/schemas/studio-shift.schema';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
@@ -86,9 +89,31 @@ export class StudioShiftController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(StudioShiftService.UID_PREFIX, 'StudioShift')) id: string,
     @Body() dto: UpdateStudioShiftDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    const updated = await this.studioShiftService.updateShift(studioId, id, dto);
+    const updated = await this.studioShiftService.updateShift(studioId, id, dto, user.ext_id);
     this.ensureResourceExists(updated, 'Studio shift', id);
+    return updated;
+  }
+
+  @Patch(':id/blocks/:blockId')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ZodResponse(studioShiftDto)
+  async updateBlock(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(StudioShiftService.UID_PREFIX, 'StudioShift')) id: string,
+    @Param('blockId', new UidValidationPipe(StudioShiftService.BLOCK_UID_PREFIX, 'StudioShiftBlock')) blockId: string,
+    @Body() dto: UpdateStudioShiftBlockDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const updated = await this.studioShiftService.updateShiftBlock(
+      studioId,
+      id,
+      blockId,
+      dto,
+      user.ext_id,
+    );
+    this.ensureResourceExists(updated, 'Studio shift block', blockId);
     return updated;
   }
 

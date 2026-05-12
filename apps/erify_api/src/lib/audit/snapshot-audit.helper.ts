@@ -2,8 +2,8 @@ import { Prisma } from '@prisma/client';
 
 export type SnapshotChange = {
   field: string;
-  old_value: any;
-  new_value: any;
+  old_value: unknown;
+  new_value: unknown;
 };
 
 /**
@@ -16,13 +16,13 @@ export type SnapshotChange = {
  * @param reason Optional reason for the override
  */
 export function appendSnapshotAudit(
-  metadata: any,
+  metadata: unknown,
   changes: SnapshotChange[],
   actorExtId: string,
   reason?: string,
-): any {
+): Record<string, any> {
   if (changes.length === 0) {
-    return metadata;
+    return toMetadataObject(metadata);
   }
 
   const at = new Date().toISOString();
@@ -32,12 +32,14 @@ export function appendSnapshotAudit(
     new_value: formatValue(c.new_value),
     actor_ext_id: actorExtId,
     at,
-    reason: reason ?? null,
+    ...(reason ? { reason } : {}),
   }));
 
-  const currentMetadata = metadata || {};
-  const currentAudit = currentMetadata.audit || {};
-  const currentOverrides = currentAudit.snapshot_overrides || [];
+  const currentMetadata = toMetadataObject(metadata);
+  const currentAudit = toMetadataObject(currentMetadata.audit);
+  const currentOverrides = Array.isArray(currentAudit.snapshot_overrides)
+    ? currentAudit.snapshot_overrides
+    : [];
 
   return {
     ...currentMetadata,
@@ -51,7 +53,7 @@ export function appendSnapshotAudit(
 /**
  * Compares two values for equality, handling Prisma.Decimal.
  */
-export function isSnapshotValueEqual(a: any, b: any): boolean {
+export function isSnapshotValueEqual(a: unknown, b: unknown): boolean {
   if (a === b) {
     return true;
   }
@@ -64,8 +66,8 @@ export function isSnapshotValueEqual(a: any, b: any): boolean {
   // Handle Prisma.Decimal
   if (a instanceof Prisma.Decimal || b instanceof Prisma.Decimal) {
     try {
-      const decA = a instanceof Prisma.Decimal ? a : new Prisma.Decimal(a);
-      const decB = b instanceof Prisma.Decimal ? b : new Prisma.Decimal(b);
+      const decA = a instanceof Prisma.Decimal ? a : new Prisma.Decimal(a as Prisma.Decimal.Value);
+      const decB = b instanceof Prisma.Decimal ? b : new Prisma.Decimal(b as Prisma.Decimal.Value);
       return decA.equals(decB);
     } catch {
       return false;
@@ -80,7 +82,13 @@ export function isSnapshotValueEqual(a: any, b: any): boolean {
   return false;
 }
 
-function formatValue(value: any): any {
+function toMetadataObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function formatValue(value: unknown): unknown {
   if (value === null || value === undefined) {
     return null;
   }

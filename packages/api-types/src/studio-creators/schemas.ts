@@ -236,6 +236,7 @@ export const studioShowCreatorAssignmentItemInputSchema = z.object({
   agreed_rate: z.coerce.number().positive().nullable().optional(),
   compensation_type: creatorCompensationTypeSchema.nullable().optional(),
   commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+  override_reason: z.string().trim().min(1).max(1000).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 

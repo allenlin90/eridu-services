@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import type { Show } from '@prisma/client';
 
+import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import {
@@ -33,6 +34,7 @@ type CreatorAssignmentPayload = {
   agreedRate?: string | null;
   compensationType?: string | null;
   commissionRate?: string | null;
+  overrideReason?: string;
   metadata?: object;
 };
 
@@ -53,6 +55,19 @@ type ShowCreatorListItem = {
   agreedRate: unknown | null;
   compensationType: string | null;
   commissionRate: unknown | null;
+  metadata: Record<string, unknown>;
+};
+
+type StudioCreatorSnapshotDefaults = {
+  defaultRate: { toString: () => string } | string | number | null;
+  defaultRateType: string | null;
+  defaultCommissionRate: { toString: () => string } | string | number | null;
+};
+
+type ResolvedCreatorSnapshot = {
+  agreedRate: string | null;
+  compensationType: string | null;
+  commissionRate: string | null;
   metadata: Record<string, unknown>;
 };
 
@@ -229,6 +244,9 @@ export class ShowOrchestrationService {
       },
     });
     const existingByCreatorId = new Map(existingAssignments.map((assignment) => [assignment.creatorId, assignment]));
+    const rosterEntryByCreatorUid = new Map(
+      studioCreatorRosterEntries.map((entry) => [entry.creator.uid, entry]),
+    );
     const processedCreatorUids = new Set<string>();
     const result: BulkAssignCreatorsResult = { assigned: 0, skipped: 0, failed: [] };
 
@@ -275,40 +293,44 @@ export class ShowOrchestrationService {
 
       try {
         if (existingAssignment) {
-          const changes: SnapshotChange[] = [];
-          if (!isSnapshotValueEqual(existingAssignment.agreedRate, creator.agreedRate)) {
-            changes.push({ field: 'agreed_rate', old_value: existingAssignment.agreedRate, new_value: creator.agreedRate });
-          }
-          if (!isSnapshotValueEqual(existingAssignment.compensationType, creator.compensationType)) {
-            changes.push({ field: 'compensation_type', old_value: existingAssignment.compensationType, new_value: creator.compensationType });
-          }
-          if (!isSnapshotValueEqual(existingAssignment.commissionRate, creator.commissionRate)) {
-            changes.push({ field: 'commission_rate', old_value: existingAssignment.commissionRate, new_value: creator.commissionRate });
-          }
+          const snapshot = this.resolveCreatorSnapshot(
+            creator,
+            rosterEntryByCreatorUid.get(creator.creatorId),
+            this.mergeMetadata(existingAssignment.metadata, creator.metadata),
+            existingAssignment.deletedAt === null ? existingAssignment : undefined,
+          );
+          const changes = this.buildCreatorSnapshotChanges(existingAssignment, snapshot);
 
           const newMetadata = appendSnapshotAudit(
-            creator.metadata ?? existingAssignment.metadata ?? {},
+            snapshot.metadata,
             changes,
             actorExtId,
+            creator.overrideReason,
           );
 
           await this.showCreatorRepository.restoreAndUpdateAssignment(existingAssignment.id, {
             note: creator.note ?? null,
-            agreedRate: creator.agreedRate,
-            compensationType: creator.compensationType,
-            commissionRate: creator.commissionRate,
+            agreedRate: snapshot.agreedRate,
+            compensationType: snapshot.compensationType,
+            commissionRate: snapshot.commissionRate,
             metadata: newMetadata,
           });
         } else {
+          const snapshot = this.resolveCreatorSnapshot(
+            creator,
+            rosterEntryByCreatorUid.get(creator.creatorId),
+            creator.metadata,
+          );
+
           await this.showCreatorRepository.createAssignment({
             uid: this.showCreatorService.generateShowCreatorUid(),
             showId,
             creatorId: internalCreatorId,
             note: creator.note ?? null,
-            agreedRate: creator.agreedRate ?? null,
-            compensationType: creator.compensationType ?? null,
-            commissionRate: creator.commissionRate ?? null,
-            metadata: creator.metadata ?? {},
+            agreedRate: snapshot.agreedRate,
+            compensationType: snapshot.compensationType,
+            commissionRate: snapshot.commissionRate,
+            metadata: snapshot.metadata,
           });
         }
       } catch (error) {
@@ -515,40 +537,40 @@ export class ShowOrchestrationService {
       const existing = existingAssignments.find((a) => a.creatorId === internalCreatorId);
 
       if (existing) {
-        const changes: SnapshotChange[] = [];
-        if (!isSnapshotValueEqual(existing.agreedRate, assignment.agreedRate)) {
-          changes.push({ field: 'agreed_rate', old_value: existing.agreedRate, new_value: assignment.agreedRate });
-        }
-        if (!isSnapshotValueEqual(existing.compensationType, assignment.compensationType)) {
-          changes.push({ field: 'compensation_type', old_value: existing.compensationType, new_value: assignment.compensationType });
-        }
-        if (!isSnapshotValueEqual(existing.commissionRate, assignment.commissionRate)) {
-          changes.push({ field: 'commission_rate', old_value: existing.commissionRate, new_value: assignment.commissionRate });
-        }
+        const snapshot = this.resolveCreatorSnapshot(
+          assignment,
+          undefined,
+          this.mergeMetadata(existing.metadata, assignment.metadata),
+          existing,
+        );
+        const changes = this.buildCreatorSnapshotChanges(existing, snapshot);
 
         const newMetadata = appendSnapshotAudit(
-          assignment.metadata ?? existing.metadata ?? {},
+          snapshot.metadata,
           changes,
           actorExtId,
+          assignment.overrideReason,
         );
 
         await this.showCreatorRepository.restoreAndUpdateAssignment(existing.id, {
           note: assignment.note ?? null,
-          agreedRate: assignment.agreedRate,
-          compensationType: assignment.compensationType,
-          commissionRate: assignment.commissionRate,
+          agreedRate: snapshot.agreedRate,
+          compensationType: snapshot.compensationType,
+          commissionRate: snapshot.commissionRate,
           metadata: newMetadata,
         });
       } else {
+        const snapshot = this.resolveCreatorSnapshot(assignment, undefined, assignment.metadata);
+
         await this.showCreatorRepository.createAssignment({
           uid: this.showCreatorService.generateShowCreatorUid(),
           showId,
           creatorId: internalCreatorId,
           note: assignment.note ?? null,
-          agreedRate: assignment.agreedRate ?? null,
-          compensationType: assignment.compensationType ?? null,
-          commissionRate: assignment.commissionRate ?? null,
-          metadata: assignment.metadata ?? {},
+          agreedRate: snapshot.agreedRate,
+          compensationType: snapshot.compensationType,
+          commissionRate: snapshot.commissionRate,
+          metadata: snapshot.metadata,
         });
       }
     }
@@ -568,6 +590,121 @@ export class ShowOrchestrationService {
     const creators = await this.creatorRepository.findByUids(creatorUids);
     const internalCreatorIds = creators.map((creator) => creator.id);
     await this.showCreatorRepository.softDeleteByCreatorIds(showId, internalCreatorIds);
+  }
+
+  private resolveCreatorSnapshot(
+    assignment: CreatorAssignmentPayload,
+    defaults: StudioCreatorSnapshotDefaults | undefined,
+    metadata: unknown,
+    current?: {
+      agreedRate: unknown | null;
+      compensationType: string | null;
+      commissionRate: unknown | null;
+    },
+  ): ResolvedCreatorSnapshot {
+    const compensationType = assignment.compensationType !== undefined
+      ? assignment.compensationType
+      : current?.compensationType ?? defaults?.defaultRateType ?? null;
+    const agreedRate = assignment.agreedRate !== undefined
+      ? assignment.agreedRate
+      : this.decimalLikeToString(current?.agreedRate ?? defaults?.defaultRate ?? null);
+    const commissionRate = assignment.commissionRate !== undefined
+      ? assignment.commissionRate
+      : this.decimalLikeToString(current?.commissionRate ?? defaults?.defaultCommissionRate ?? null);
+    const resolvedMetadata = this.withAgreementSnapshotFlag(
+      this.toMetadataObject(metadata),
+      this.isCreatorSnapshotMissing(compensationType, agreedRate, commissionRate),
+    );
+
+    return {
+      agreedRate,
+      compensationType,
+      commissionRate,
+      metadata: resolvedMetadata,
+    };
+  }
+
+  private buildCreatorSnapshotChanges(
+    current: {
+      agreedRate: unknown | null;
+      compensationType: string | null;
+      commissionRate: unknown | null;
+    },
+    next: ResolvedCreatorSnapshot,
+  ): SnapshotChange[] {
+    const changes: SnapshotChange[] = [];
+    if (!isSnapshotValueEqual(current.agreedRate, next.agreedRate)) {
+      changes.push({ field: 'agreed_rate', old_value: current.agreedRate, new_value: next.agreedRate });
+    }
+    if (!isSnapshotValueEqual(current.compensationType, next.compensationType)) {
+      changes.push({ field: 'compensation_type', old_value: current.compensationType, new_value: next.compensationType });
+    }
+    if (!isSnapshotValueEqual(current.commissionRate, next.commissionRate)) {
+      changes.push({ field: 'commission_rate', old_value: current.commissionRate, new_value: next.commissionRate });
+    }
+    return changes;
+  }
+
+  private isCreatorSnapshotMissing(
+    compensationType: string | null,
+    agreedRate: string | null,
+    commissionRate: string | null,
+  ): boolean {
+    if (!compensationType) {
+      return true;
+    }
+
+    if (
+      (compensationType === CREATOR_COMPENSATION_TYPE.FIXED
+        || compensationType === CREATOR_COMPENSATION_TYPE.HYBRID)
+      && !agreedRate
+    ) {
+      return true;
+    }
+
+    return (
+      (compensationType === CREATOR_COMPENSATION_TYPE.COMMISSION
+        || compensationType === CREATOR_COMPENSATION_TYPE.HYBRID)
+      && !commissionRate
+    );
+  }
+
+  private withAgreementSnapshotFlag(
+    metadata: Record<string, unknown>,
+    isMissing: boolean,
+  ): Record<string, unknown> {
+    const flags = this.toMetadataObject(metadata.flags);
+    return {
+      ...metadata,
+      flags: {
+        ...flags,
+        agreement_snapshot_missing: isMissing,
+      },
+    };
+  }
+
+  private mergeMetadata(
+    existing: unknown,
+    incoming: unknown,
+  ): Record<string, unknown> {
+    return {
+      ...this.toMetadataObject(existing),
+      ...this.toMetadataObject(incoming),
+    };
+  }
+
+  private toMetadataObject(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : {};
+  }
+
+  private decimalLikeToString(value: unknown): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    return value.toString();
   }
 
   /**

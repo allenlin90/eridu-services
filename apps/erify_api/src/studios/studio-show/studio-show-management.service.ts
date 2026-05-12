@@ -39,6 +39,7 @@ export class StudioShowManagementService {
   async createShow(studioUid: string, dto: CreateStudioShowDto) {
     const studio = await this.studioService.getStudioById(studioUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
+    this.ensureValidActualTimeRange(dto.actualStartTime ?? null, dto.actualEndTime ?? null);
     await this.ensureScheduleBelongsToStudioAndClient(
       studio.id,
       studioUid,
@@ -102,7 +103,13 @@ export class StudioShowManagementService {
       scheduleToValidate,
       dto.clientId ?? existingShow.client?.uid,
     );
-    this.ensureValidTimeRange(existingShow.startTime, existingShow.endTime, dto);
+    this.ensureValidTimeRange(
+      existingShow.startTime,
+      existingShow.endTime,
+      existingShow.actualStartTime,
+      existingShow.actualEndTime,
+      dto,
+    );
 
     await this.showRepository.update({ uid: showUid }, this.buildUpdatePayload(dto));
 
@@ -197,6 +204,8 @@ export class StudioShowManagementService {
   private ensureValidTimeRange(
     currentStartTime: Date,
     currentEndTime: Date,
+    currentActualStartTime: Date | null | undefined,
+    currentActualEndTime: Date | null | undefined,
     dto: UpdateStudioShowDto,
   ): void {
     const nextStart = dto.startTime ?? currentStartTime;
@@ -206,10 +215,21 @@ export class StudioShowManagementService {
       throw HttpError.badRequest('End time must be after start time');
     }
 
-    const nextActualStart = dto.actualStartTime !== undefined ? dto.actualStartTime : null;
-    const nextActualEnd = dto.actualEndTime !== undefined ? dto.actualEndTime : null;
+    const nextActualStart = dto.actualStartTime !== undefined
+      ? dto.actualStartTime
+      : currentActualStartTime ?? null;
+    const nextActualEnd = dto.actualEndTime !== undefined
+      ? dto.actualEndTime
+      : currentActualEndTime ?? null;
 
-    if (nextActualStart && nextActualEnd && nextActualEnd <= nextActualStart) {
+    this.ensureValidActualTimeRange(nextActualStart, nextActualEnd);
+  }
+
+  private ensureValidActualTimeRange(
+    actualStartTime: Date | null,
+    actualEndTime: Date | null,
+  ): void {
+    if (actualStartTime && actualEndTime && actualEndTime <= actualStartTime) {
       throw HttpError.badRequest('Actual end time must be after actual start time');
     }
   }
@@ -223,6 +243,8 @@ export class StudioShowManagementService {
       name: dto.name,
       startTime: dto.startTime,
       endTime: dto.endTime,
+      actualStartTime: dto.actualStartTime,
+      actualEndTime: dto.actualEndTime,
       metadata: dto.metadata ?? {},
       client: { connect: { uid: dto.clientId } },
       studio: { connect: { uid: studioUid } },
@@ -247,6 +269,8 @@ export class StudioShowManagementService {
       name: dto.name,
       startTime: dto.startTime,
       endTime: dto.endTime,
+      actualStartTime: dto.actualStartTime,
+      actualEndTime: dto.actualEndTime,
       metadata: dto.metadata ?? {},
       client: { connect: { uid: dto.clientId } },
       studio: { connect: { uid: studioUid } },
