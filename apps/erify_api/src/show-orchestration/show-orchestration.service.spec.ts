@@ -107,6 +107,7 @@ describe('showOrchestrationService', () => {
             deleteShow: jest.fn(),
             generateShowUid: jest.fn(),
             buildUpdatePayload: jest.fn(),
+            ensureValidActualTimeRange: jest.fn(),
           },
         },
         {
@@ -400,6 +401,32 @@ describe('showOrchestrationService', () => {
       );
       await expect(service.updateShowWithAssignments(uid, dto, 'actor_123')).rejects.toThrow(
         'End time must be after start time',
+      );
+    });
+
+    it('should validate actuals against the existing show on update', async () => {
+      const uid = 'show_test123';
+      const dto = {
+        actualEndTime: new Date('2024-01-01T09:00:00Z'),
+      } as UpdateShowWithAssignmentsDto;
+
+      showService.getShowById.mockResolvedValue({
+        ...mockShow,
+        actualStartTime: new Date('2024-01-01T10:00:00Z'),
+        actualEndTime: null,
+      });
+      showService.ensureValidActualTimeRange.mockImplementation(() => {
+        throw new BadRequestException('Actual end time must be after actual start time');
+      });
+
+      await expect(
+        service.updateShowWithAssignments(uid, dto, 'actor_123'),
+      ).rejects.toThrow('Actual end time must be after actual start time');
+
+      expect(showService.ensureValidActualTimeRange).toHaveBeenCalledWith(
+        new Date('2024-01-01T10:00:00Z'),
+        null,
+        { actualStartTime: undefined, actualEndTime: dto.actualEndTime },
       );
     });
   });

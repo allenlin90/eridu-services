@@ -113,5 +113,11 @@ describe('snapshotAuditHelper', () => {
       const result = appendSnapshotAudit(null, changes, actorExtId);
       expect(result.audit.snapshot_overrides).toHaveLength(1);
     });
+
+    it('should throw when reason is provided but no fields changed', () => {
+      expect(() =>
+        appendSnapshotAudit({ foo: 'bar' }, [], actorExtId, 'Stale reason'),
+      ).toThrow('override_reason was provided but no snapshot fields changed');
+    });
   });
 });

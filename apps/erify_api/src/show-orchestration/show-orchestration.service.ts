@@ -90,6 +90,10 @@ export class ShowOrchestrationService {
   async createShowWithAssignments(
     data: CreateShowWithAssignmentsDto,
   ): Promise<Show | ShowWithPayload<ShowInclude>> {
+    this.showService.ensureValidActualTimeRange(null, null, {
+      actualStartTime: data.actualStartTime,
+      actualEndTime: data.actualEndTime,
+    });
     const payload = this.createShowPayload(data);
 
     return this.showService.createShow(payload, this.getDefaultIncludes());
@@ -148,6 +152,12 @@ export class ShowOrchestrationService {
     // Pre-validate existence (throws 404 if not found)
     const existingShow = await this.showService.getShowById(uid);
     const showId = existingShow.id;
+
+    this.showService.ensureValidActualTimeRange(
+      existingShow.actualStartTime,
+      existingShow.actualEndTime,
+      { actualStartTime: dto.actualStartTime, actualEndTime: dto.actualEndTime },
+    );
 
     // 1. Update core show attributes directly via repository
     const updateData = this.showService.buildUpdatePayload(dto);
@@ -466,6 +476,8 @@ export class ShowOrchestrationService {
       name: data.name,
       startTime: data.startTime,
       endTime: data.endTime,
+      actualStartTime: data.actualStartTime,
+      actualEndTime: data.actualEndTime,
       metadata: data.metadata,
       client: { connect: { uid: data.clientId } },
       studioRoom: data.studioRoomId

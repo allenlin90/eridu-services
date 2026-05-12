@@ -39,7 +39,10 @@ export class StudioShowManagementService {
   async createShow(studioUid: string, dto: CreateStudioShowDto) {
     const studio = await this.studioService.getStudioById(studioUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
-    this.ensureValidActualTimeRange(dto.actualStartTime ?? null, dto.actualEndTime ?? null);
+    this.showService.ensureValidActualTimeRange(null, null, {
+      actualStartTime: dto.actualStartTime,
+      actualEndTime: dto.actualEndTime,
+    });
     await this.ensureScheduleBelongsToStudioAndClient(
       studio.id,
       studioUid,
@@ -103,12 +106,11 @@ export class StudioShowManagementService {
       scheduleToValidate,
       dto.clientId ?? existingShow.client?.uid,
     );
-    this.ensureValidTimeRange(
-      existingShow.startTime,
-      existingShow.endTime,
+    this.ensureValidTimeRange(existingShow.startTime, existingShow.endTime, dto);
+    this.showService.ensureValidActualTimeRange(
       existingShow.actualStartTime,
       existingShow.actualEndTime,
-      dto,
+      { actualStartTime: dto.actualStartTime, actualEndTime: dto.actualEndTime },
     );
 
     await this.showRepository.update({ uid: showUid }, this.buildUpdatePayload(dto));
@@ -204,8 +206,6 @@ export class StudioShowManagementService {
   private ensureValidTimeRange(
     currentStartTime: Date,
     currentEndTime: Date,
-    currentActualStartTime: Date | null | undefined,
-    currentActualEndTime: Date | null | undefined,
     dto: UpdateStudioShowDto,
   ): void {
     const nextStart = dto.startTime ?? currentStartTime;
@@ -213,24 +213,6 @@ export class StudioShowManagementService {
 
     if (nextEnd <= nextStart) {
       throw HttpError.badRequest('End time must be after start time');
-    }
-
-    const nextActualStart = dto.actualStartTime !== undefined
-      ? dto.actualStartTime
-      : currentActualStartTime ?? null;
-    const nextActualEnd = dto.actualEndTime !== undefined
-      ? dto.actualEndTime
-      : currentActualEndTime ?? null;
-
-    this.ensureValidActualTimeRange(nextActualStart, nextActualEnd);
-  }
-
-  private ensureValidActualTimeRange(
-    actualStartTime: Date | null,
-    actualEndTime: Date | null,
-  ): void {
-    if (actualStartTime && actualEndTime && actualEndTime <= actualStartTime) {
-      throw HttpError.badRequest('Actual end time must be after actual start time');
     }
   }
 

@@ -18,7 +18,6 @@ export const updateStudioShiftBlockInputSchema = z.object({
   end_time: z.iso.datetime().optional(),
   actual_start_time: z.iso.datetime().nullable().optional(),
   actual_end_time: z.iso.datetime().nullable().optional(),
-  override_reason: z.string().trim().min(1).max(1000).optional(),
   metadata: studioShiftBlockMetadataSchema.optional(),
 });
 

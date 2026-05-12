@@ -7,6 +7,7 @@ import { ClsModule } from 'nestjs-cls';
 
 import { StudioShowManagementService } from './studio-show-management.service';
 
+import { HttpError } from '@/lib/errors/http-error.util';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
@@ -44,6 +45,23 @@ describe('studioShowManagementService', () => {
   const showServiceMock = {
     createShow: jest.fn(),
     getShowById: jest.fn(),
+    ensureValidActualTimeRange: jest.fn(
+      (
+        currentActualStart: Date | null | undefined,
+        currentActualEnd: Date | null | undefined,
+        dto: { actualStartTime?: Date | null; actualEndTime?: Date | null },
+      ) => {
+        const nextStart = dto.actualStartTime !== undefined
+          ? dto.actualStartTime
+          : currentActualStart ?? null;
+        const nextEnd = dto.actualEndTime !== undefined
+          ? dto.actualEndTime
+          : currentActualEnd ?? null;
+        if (nextStart && nextEnd && nextEnd <= nextStart) {
+          throw HttpError.badRequest('Actual end time must be after actual start time');
+        }
+      },
+    ),
   };
   const showRepositoryMock = {
     findByClientUidAndExternalId: jest.fn(),

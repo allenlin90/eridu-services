@@ -239,6 +239,10 @@ export class ShowService extends BaseModelService {
       payload.startTime = dto.startTime;
     if (dto.endTime !== undefined)
       payload.endTime = dto.endTime;
+    if (dto.actualStartTime !== undefined)
+      payload.actualStartTime = dto.actualStartTime;
+    if (dto.actualEndTime !== undefined)
+      payload.actualEndTime = dto.actualEndTime;
     if (dto.metadata !== undefined)
       payload.metadata = dto.metadata;
 
@@ -278,5 +282,27 @@ export class ShowService extends BaseModelService {
     }
 
     return payload;
+  }
+
+  /**
+   * Throws when actual_start_time and actual_end_time would be inverted
+   * after merging the patch onto the current state. One-sided updates are
+   * validated against the stored other side.
+   */
+  ensureValidActualTimeRange(
+    currentActualStartTime: Date | null | undefined,
+    currentActualEndTime: Date | null | undefined,
+    dto: { actualStartTime?: Date | null; actualEndTime?: Date | null },
+  ): void {
+    const nextActualStart = dto.actualStartTime !== undefined
+      ? dto.actualStartTime
+      : currentActualStartTime ?? null;
+    const nextActualEnd = dto.actualEndTime !== undefined
+      ? dto.actualEndTime
+      : currentActualEndTime ?? null;
+
+    if (nextActualStart && nextActualEnd && nextActualEnd <= nextActualStart) {
+      throw HttpError.badRequest('Actual end time must be after actual start time');
+    }
   }
 }

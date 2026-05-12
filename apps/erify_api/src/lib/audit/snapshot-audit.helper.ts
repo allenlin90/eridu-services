@@ -1,5 +1,7 @@
 import { Prisma } from '@prisma/client';
 
+import { HttpError } from '@/lib/errors/http-error.util';
+
 export type SnapshotChange = {
   field: string;
   old_value: unknown;
@@ -9,6 +11,9 @@ export type SnapshotChange = {
 /**
  * Appends snapshot audit entries to the metadata object.
  * Each changed field results in a separate entry in metadata.audit.snapshot_overrides[].
+ *
+ * Throws if a reason is supplied but no fields actually changed — silently dropping
+ * the reason would leave the audit log incorrectly empty.
  *
  * @param metadata Existing metadata object
  * @param changes List of field changes to audit
@@ -22,6 +27,11 @@ export function appendSnapshotAudit(
   reason?: string,
 ): Record<string, any> {
   if (changes.length === 0) {
+    if (reason) {
+      throw HttpError.badRequest(
+        'override_reason was provided but no snapshot fields changed',
+      );
+    }
     return toMetadataObject(metadata);
   }
 
