@@ -45,6 +45,26 @@ vi.mock('@eridu/ui', () => ({
   DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Label: ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => <label {...props}>{children}</label>,
+  Select: ({
+    children,
+    value,
+    onValueChange,
+  }: {
+    children: ReactNode;
+    value?: string;
+    onValueChange?: (value: string) => void;
+  }) => (
+    <select aria-label="select" value={value} onChange={(event) => onValueChange?.(event.target.value)}>
+      {children}
+    </select>
+  ),
+  SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectItem: ({ children, value }: { children: ReactNode; value: string }) => <option value={value}>{children}</option>,
+  SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectValue: () => null,
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
 }));
 
 vi.mock('@/lib/hooks/use-studio-access', () => ({
@@ -72,6 +92,9 @@ describe('bulkCreatorAssignmentDialog', () => {
           name: 'Alice',
           alias_name: 'Ali',
           roster_state: STUDIO_CREATOR_ROSTER_STATE.NONE,
+          default_rate: '150.00',
+          default_rate_type: 'HYBRID',
+          default_commission_rate: '12.50',
         },
       ],
       isLoading: false,
@@ -118,5 +141,51 @@ describe('bulkCreatorAssignmentDialog', () => {
     expect(screen.getByText('Some assignments were not completed (1).')).toBeInTheDocument();
     expect(screen.getByText(/Creator is not in this studio roster\. Add them to the roster first\./)).toBeInTheDocument();
     expect(screen.getByText('Onboard missing creators in roster')).toBeInTheDocument();
+  });
+
+  it('prefills assignment compensation from roster defaults and submits initial line items', async () => {
+    const user = userEvent.setup();
+    const mutate = vi.fn();
+    mockUseBulkAssignCreatorsToShows.mockReturnValue({
+      mutate,
+      isPending: false,
+    });
+
+    render(
+      <BulkCreatorAssignmentDialog
+        studioId="std_1"
+        shows={[{ id: 'show_1', name: 'Morning Show' } as any]}
+        open
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'select-first-creator' }));
+
+    expect(screen.getByLabelText('Agreed rate for Alice')).toHaveValue(150);
+    expect(screen.getByLabelText('Commission rate for Alice')).toHaveValue(12.5);
+
+    await user.type(screen.getByLabelText('Initial item amount for Alice'), '25');
+    await user.type(screen.getByLabelText('Initial item reason for Alice'), 'Launch bonus');
+    await user.click(screen.getByRole('button', { name: 'Assign Creators' }));
+
+    expect(mutate).toHaveBeenCalledWith({
+      show_ids: ['show_1'],
+      creators: [
+        {
+          creator_id: 'creator_1',
+          compensation_type: 'HYBRID',
+          agreed_rate: 150,
+          commission_rate: 12.5,
+          compensation_line_items: [
+            {
+              amount: '25.00',
+              item_type: 'BONUS',
+              reason: 'Launch bonus',
+            },
+          ],
+        },
+      ],
+    });
   });
 });

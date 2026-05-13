@@ -1,10 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Plus, ReceiptText, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import type { StudioShowCreatorListItem } from '@eridu/api-types/studio-creators';
+import type {
+  StudioShowCreatorAssignmentItemInput,
+  StudioShowCreatorListItem,
+} from '@eridu/api-types/studio-creators';
 import {
   Badge,
   Button,
@@ -13,11 +16,15 @@ import {
 } from '@eridu/ui';
 
 import { useBulkAssignShowCreators } from '../api/bulk-assign-show-creators';
-import { useShowCreatorsQuery } from '../api/get-show-creators';
+import {
+  useShowCreatorCompensationSummary,
+  useShowCreatorsQuery,
+} from '../api/get-show-creators';
 import { useRemoveShowCreator } from '../api/remove-show-creator';
 import { getRosterAssignmentFailureMessage } from '../lib/creator-roster-guidance';
 
 import { AddCreatorDialog } from './add-creator-dialog';
+import { ShowCreatorCompensationDialog } from './show-creator-compensation-dialog';
 
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -76,25 +83,40 @@ function CompensationCell({ creator }: { creator: StudioShowCreatorListItem }) {
   );
 }
 
-function RemoveActionCell({
+function CreatorActionsCell({
   creator,
+  onManageCompensation,
   onRemove,
   disabled,
 }: {
   creator: StudioShowCreatorListItem;
+  onManageCompensation?: (creator: StudioShowCreatorListItem) => void;
   onRemove: (creatorId: string) => void;
   disabled: boolean;
 }) {
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label={`Remove ${creator.creator_name}`}
-      onClick={() => onRemove(creator.creator_id)}
-      disabled={disabled}
-    >
-      <Trash2 className="h-4 w-4 text-muted-foreground" />
-    </Button>
+    <div className="flex items-center justify-end gap-1">
+      {onManageCompensation && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Manage compensation for ${creator.creator_name}`}
+          onClick={() => onManageCompensation(creator)}
+          disabled={disabled}
+        >
+          <ReceiptText className="h-4 w-4 text-muted-foreground" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={`Remove ${creator.creator_name}`}
+        onClick={() => onRemove(creator.creator_id)}
+        disabled={disabled}
+      >
+        <Trash2 className="h-4 w-4 text-muted-foreground" />
+      </Button>
+    </div>
   );
 }
 
@@ -105,9 +127,11 @@ export function ShowCreatorList({
   showEndTime,
 }: ShowCreatorListProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [compensationCreator, setCompensationCreator] = useState<StudioShowCreatorListItem | null>(null);
   const [search, setSearch] = useState('');
   const { role } = useStudioAccess(studioId);
   const isAdmin = role === STUDIO_ROLE.ADMIN;
+  const canManageCreatorCompensation = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
 
   const {
     data: showCreators = [],
@@ -115,6 +139,11 @@ export function ShowCreatorList({
     isFetching,
     refetch,
   } = useShowCreatorsQuery(studioId, showId);
+  const { data: compensationSummary } = useShowCreatorCompensationSummary(
+    studioId,
+    showId,
+    canManageCreatorCompensation,
+  );
 
   const {
     mutate: bulkAssignCreators,
@@ -125,10 +154,10 @@ export function ShowCreatorList({
     isPending: isRemoving,
   } = useRemoveShowCreator(studioId, showId);
 
-  const handleAddCreator = useCallback((creatorId: string) => {
+  const handleAddCreator = useCallback((creatorInput: StudioShowCreatorAssignmentItemInput) => {
     bulkAssignCreators(
       {
-        creators: [{ creator_id: creatorId }],
+        creators: [creatorInput],
       },
       {
         onSuccess: (result) => {
@@ -200,24 +229,40 @@ export function ShowCreatorList({
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
-        <RemoveActionCell
+        <CreatorActionsCell
           creator={row.original}
+          onManageCompensation={canManageCreatorCompensation ? setCompensationCreator : undefined}
           onRemove={handleRemoveCreator}
           disabled={isAssigning || isRemoving}
         />
       ),
     },
-  ], [handleRemoveCreator, isAssigning, isRemoving]);
+  ], [canManageCreatorCompensation, handleRemoveCreator, isAssigning, isRemoving]);
 
   return (
     <div className="rounded-md border bg-background p-3 sm:p-4">
+      {compensationSummary && (
+        <div className="mb-3 flex flex-col gap-1 rounded-md border bg-muted/30 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <span className="font-medium">Creator compensation total</span>
+          <span>
+            {compensationSummary.total_amount}
+            {compensationSummary.unresolved_count > 0 && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                {compensationSummary.unresolved_count}
+                {' '}
+                unresolved
+              </span>
+            )}
+          </span>
+        </div>
+      )}
       <DataTable
         data={creatorRows}
         columns={columns}
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage={search.trim() ? 'No creators match your search.' : 'No creators assigned yet.'}
-        getRowId={(creator) => creator.creator_id}
+        getRowId={(creator) => creator.id}
         renderToolbar={() => (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-sm">
@@ -266,6 +311,19 @@ export function ShowCreatorList({
         isSubmitting={isAssigning}
         onSubmit={handleAddCreator}
       />
+      {canManageCreatorCompensation && (
+        <ShowCreatorCompensationDialog
+          open={Boolean(compensationCreator)}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setCompensationCreator(null);
+            }
+          }}
+          studioId={studioId}
+          showId={showId}
+          creator={compensationCreator}
+        />
+      )}
     </div>
   );
 }

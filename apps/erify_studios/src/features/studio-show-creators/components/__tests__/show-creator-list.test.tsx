@@ -11,15 +11,35 @@ import { ShowCreatorList } from '../show-creator-list';
 
 const mockUseStudioAccess = vi.fn();
 const mockUseShowCreatorsQuery = vi.fn();
+const mockUseShowCreatorCompensationSummary = vi.fn();
 const mockUseBulkAssignShowCreators = vi.fn();
 const mockUseRemoveShowCreator = vi.fn();
 
 vi.mock('@eridu/ui', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type={props.type ?? 'button'} {...props}>{children}</button>,
-  DataTable: ({ renderToolbar }: { renderToolbar?: () => ReactNode }) => (
+  DataTable: ({
+    data,
+    columns,
+    renderToolbar,
+  }: {
+    data?: any[];
+    columns?: any[];
+    renderToolbar?: () => ReactNode;
+  }) => (
     <div>
       {renderToolbar?.()}
+      {data?.map((item) => (
+        <div key={item.id}>
+          {columns?.map((column) => (
+            <div key={column.id ?? column.accessorKey}>
+              {typeof column.cell === 'function'
+                ? column.cell({ row: { original: item } })
+                : null}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   ),
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
@@ -39,6 +59,7 @@ vi.mock('@/lib/hooks/use-studio-access', () => ({
 
 vi.mock('@/features/studio-show-creators/api/get-show-creators', () => ({
   useShowCreatorsQuery: (...args: unknown[]) => mockUseShowCreatorsQuery(...args),
+  useShowCreatorCompensationSummary: (...args: unknown[]) => mockUseShowCreatorCompensationSummary(...args),
 }));
 
 vi.mock('@/features/studio-show-creators/api/bulk-assign-show-creators', () => ({
@@ -50,10 +71,23 @@ vi.mock('@/features/studio-show-creators/api/remove-show-creator', () => ({
 }));
 
 vi.mock('@/features/studio-show-creators/components/add-creator-dialog', () => ({
-  AddCreatorDialog: ({ onSubmit }: { onSubmit: (creatorId: string) => void }) => (
-    <button type="button" onClick={() => onSubmit('creator_1')}>
+  AddCreatorDialog: ({ onSubmit }: { onSubmit: (input: { creator_id: string }) => void }) => (
+    <button type="button" onClick={() => onSubmit({ creator_id: 'creator_1' })}>
       trigger-add-creator
     </button>
+  ),
+}));
+
+vi.mock('@/features/studio-show-creators/components/show-creator-compensation-dialog', () => ({
+  ShowCreatorCompensationDialog: ({ open, creator }: { open: boolean; creator: { id: string } | null }) => (
+    open
+      ? (
+          <div>
+            compensation-dialog-target:
+            {creator?.id}
+          </div>
+        )
+      : null
   ),
 }));
 
@@ -68,6 +102,14 @@ describe('showCreatorList', () => {
       isLoading: false,
       isFetching: false,
       refetch: vi.fn(),
+    });
+    mockUseShowCreatorCompensationSummary.mockReturnValue({
+      data: {
+        show_id: 'show_1',
+        creators: [],
+        total_amount: '0.00',
+        unresolved_count: 0,
+      },
     });
 
     mockUseBulkAssignShowCreators.mockReturnValue({
@@ -104,5 +146,51 @@ describe('showCreatorList', () => {
     expect(toast.error).toHaveBeenCalledWith(
       'Add failed: Creator is not in this studio roster. Add them to the roster first.',
     );
+  });
+
+  it('renders backend creator compensation totals and opens dialog with assignment UID', async () => {
+    const user = userEvent.setup();
+    mockUseShowCreatorsQuery.mockReturnValue({
+      data: [
+        {
+          id: 'show_mc_1',
+          creator_id: 'creator_1',
+          creator_name: 'Alice',
+          creator_alias_name: 'Ali',
+          note: null,
+          agreed_rate: '150.00',
+          compensation_type: 'FIXED',
+          commission_rate: null,
+          metadata: {},
+        },
+      ],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+    mockUseShowCreatorCompensationSummary.mockReturnValue({
+      data: {
+        show_id: 'show_1',
+        creators: [],
+        total_amount: '175.00',
+        unresolved_count: 0,
+      },
+    });
+
+    render(
+      <ShowCreatorList
+        studioId="std_1"
+        showId="show_1"
+        showStartTime="2026-03-20T10:00:00.000Z"
+        showEndTime="2026-03-20T12:00:00.000Z"
+      />,
+    );
+
+    expect(screen.getByText('Creator compensation total')).toBeInTheDocument();
+    expect(screen.getByText('175.00')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Manage compensation for Alice' }));
+
+    expect(screen.getByText('compensation-dialog-target:show_mc_1')).toBeInTheDocument();
   });
 });
