@@ -13,6 +13,7 @@ Monorepo-level source of truth for roadmap, product context, and cross-app plann
 | [domain/](./domain/BUSINESS.md) | Business domain model and entity context | Persistent — updated as domain evolves |
 | [engineering/](./engineering/README.md) | Architecture overview and engineering policies | Persistent — updated as conventions change |
 | [ideation/](./ideation/README.md) | Deferred ideas with preserved reasoning | Lifecycle-managed — promoted to PRD or dropped |
+| [tech-debt/](./tech-debt/README.md) | Known implementation gaps and cleanup issues | Lifecycle-managed — resolved or retired |
 | [adr/](./adr/) | Architecture decision records | Persistent — immutable after acceptance |
 
 App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design** for implemented features.
@@ -26,6 +27,7 @@ App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design*
 - `docs/domain/` — business entities, domain rules, and product vocabulary
 - `docs/engineering/` — architecture, patterns, and engineering governance
 - `docs/ideation/` — deferred ideas with preserved reasoning (lifecycle-managed)
+- `docs/tech-debt/` — known implementation gaps that should be fixed but are not new feature proposals
 - `apps/*/docs/` — canonical record of implemented behavior (persistent)
 
 ## Doc Lifecycle
@@ -35,7 +37,8 @@ App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design*
 3. **Feature docs** are permanent — updated as features evolve
 4. **Workflow docs** are permanent — updated as operational flows change
 5. **Ideation docs** are lifecycle-managed — promoted to PRD when selected for a phase, dropped when obsolete
-6. **App-local docs** are the canonical record of shipped behavior
+6. **Tech-debt docs** are lifecycle-managed — updated while the issue exists, then marked resolved or removed when fixed
+7. **App-local docs** are the canonical record of shipped behavior
 
 > PRDs own pre-ship intent. Feature docs own product decisions. App-local docs own behavior.
 

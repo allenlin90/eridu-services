@@ -147,6 +147,7 @@ Full reference: `.claude/memory/monorepo-package-rules.md`
 - [ ] PRD for shipped features promoted to `docs/features/` and deleted from `docs/prd/`.
 - [ ] `apps/*/docs/README.md` Features table lists promoted docs with `✅` and correct paths (not `design/` paths).
 - [ ] `apps/*/docs/design/README.md` contains only active design proposals; no shipped/implemented items remain in the design index.
+- [ ] Accepted non-blocking review issues are captured in `docs/tech-debt/` with scope, risk, trigger to fix, and acceptance criteria.
 - [ ] No stale links to deleted or moved files.
 
 ---

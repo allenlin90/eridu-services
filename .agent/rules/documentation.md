@@ -11,6 +11,7 @@ docs/
 ├── domain/           Business domain model and entity context (persistent)
 ├── engineering/      Architecture overview and engineering policies (persistent)
 ├── ideation/         Deferred ideas with preserved reasoning (lifecycle-managed)
+├── tech-debt/        Known implementation gaps and cleanup issues (lifecycle-managed)
 ├── adr/              Architecture decision records (persistent)
 └── README.md         Navigation hub
 
@@ -36,6 +37,9 @@ apps/*/docs/
   When a topic is promoted to a phase → rewrite as a fresh PRD, delete the ideation doc.
   When a topic is permanently dropped → delete the ideation doc, record in README.
   Cross-check during design, investigation, and review using `.agent/workflows/ideation-lifecycle.md`.
+- `docs/tech-debt/` — known implementation gaps, consistency issues, accepted follow-up risks, and cleanup work.
+  Use this when the issue is a concrete defect or debt item, not a new product idea.
+  When the issue is fixed → update or delete the tech-debt doc in the same PR.
 
 ### Phase-scoped docs (cleaned up after ship)
 - `docs/prd/` — PRDs are tied to the active phase. When features
@@ -59,6 +63,7 @@ apps/*/docs/
 3. Roadmap files are append-only status records, never deleted
 4. Design docs should reference the PRD, roadmap item, or archived branch reference that motivated them
 5. App-local docs own shipped behavior — feature docs own product decisions and user context
+6. Accepted review issues that should not block merge belong in `docs/tech-debt/`, not `docs/ideation/`
 
 ## Link Hygiene
 

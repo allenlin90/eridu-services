@@ -53,6 +53,7 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 - Keep services transport-agnostic: services must not accept HTTP DTOs, request objects, response objects, or Nest exceptions as public contracts.
 - When controller behavior changes, update adjacent `@ApiOperation`, `@ApiZodResponse`, `@AdminResponse`, and `@ZodResponse` descriptions in the same change.
 - For admin mutations, distinguish audit actor identity from target/change payload fields: infer the audit actor from authenticated admin context, but keep validated payload user IDs when the client intentionally selects a target user.
+- For admin mutations with domain side effects, use the same service/orchestration path as studio workflows. Do not use nested creates or broad update payloads when the child entity has its own lifecycle, audit metadata, snapshot fields, or downstream read-model impact. Known debt is tracked in [docs/tech-debt/admin-route-business-logic-bypass.md](../../../docs/tech-debt/admin-route-business-logic-bypass.md).
 
 ## Controller-Type Checklists
 
@@ -63,6 +64,7 @@ Use this skill for controller-layer work in `apps/erify_api`. Keep controllers t
 - [ ] Uses `@AdminResponse()` or `@AdminPaginatedResponse()`.
 - [ ] Uses `UidValidationPipe` for resource UID params.
 - [ ] Uses base helpers such as `ensureResourceExists()` for not-found responses.
+- [ ] Reuses the domain write path for child entities with business side effects instead of bypassing it with nested Prisma writes.
 
 ### Studio
 

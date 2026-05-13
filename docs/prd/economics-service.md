@@ -79,7 +79,7 @@ Resolve `ShowCreator.compensationType` into components:
 
 Future revenue work resolves commission components without changing the public row shape.
 
-If required snapshot fields are missing after 2.2 normalization, the row stays unresolved with `agreement_snapshot_missing`. 2.3 must not repair missing snapshots by reading mutable roster defaults live.
+If required snapshot fields are missing after 2.2 normalization, the row stays unresolved with `agreement_snapshot_missing`. 2.3 must detect this from the persisted snapshot fields. `metadata.flags.agreement_snapshot_missing` is an advisory write-time marker that can help explain why a row is incomplete, but its absence does not make the row calculable. 2.3 must not repair missing snapshots by reading mutable roster defaults live.
 
 ### 4. Actuals source resolution
 
@@ -193,7 +193,7 @@ If a recipient self endpoint returns summary totals, those totals must include o
 
 - [ ] Calculator composes creator base, operator shift labor, and line-item subtotals from persisted 2.2 inputs.
 - [ ] Calculator uses assignment/member snapshot fields and does not read mutable roster defaults for existing assignments.
-- [ ] Missing assignment snapshot fields return unresolved rows with `agreement_snapshot_missing`; they are not backfilled inside read endpoints.
+- [ ] Missing assignment snapshot fields return unresolved rows with `agreement_snapshot_missing` whether or not `metadata.flags.agreement_snapshot_missing` is present; they are not backfilled inside read endpoints.
 - [ ] Monetary aggregation uses `Prisma.Decimal` and serializes decimal strings.
 - [ ] Show and shift durations use actual timestamps only when both actual endpoints are present; admin/manager surfaces may fall back to planned timestamps when actuals are absent or incomplete and planned time exists.
 - [ ] Rows expose `actuals_source`.
