@@ -12,7 +12,10 @@ import {
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema } from '@eridu/api-types/studio-creators';
+import {
+  showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
+  studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
+} from '@eridu/api-types/studio-creators';
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
@@ -170,7 +173,7 @@ export class StudioShowController extends BaseStudioController {
 
   @Get(':id/creators/compensation-summary')
   @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
-  @ZodResponse(showCreatorCompensationSummaryDto)
+  @ZodResponse(showCreatorCompensationSummaryApiSchema)
   async creatorCompensationSummary(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,

@@ -1,6 +1,8 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { showCreatorCompensationSummarySchema } from '@eridu/api-types/studio-creators';
+
 import type { BulkAssignStudioShowCreatorsDto } from './schemas/studio-show-creator-assignment.schema';
 import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
@@ -213,6 +215,7 @@ describe('studioShowController', () => {
       expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
       expect(showOrchestrationServiceMock.getCreatorCompensationSummaryForShow)
         .toHaveBeenCalledWith(studioId, showId);
+      expect(() => showCreatorCompensationSummarySchema.parse(result)).not.toThrow();
       expect(result).toEqual(expect.objectContaining({
         show_id: showId,
         total_amount: '120.00',
