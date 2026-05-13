@@ -1200,8 +1200,8 @@ describe('showOrchestrationService', () => {
     });
   });
 
-  describe('bulkAssignCreatorsToShow compensation items', () => {
-    it('creates initial SHOW_CREATOR line items only after a new assignment exists', async () => {
+  describe('bulkAssignCreatorsToShow compensation item boundary', () => {
+    it('does not create compensation line items from bulk assignment payloads', async () => {
       showService.getShowById.mockResolvedValue(mockShow);
       creatorRepository.findByUids.mockResolvedValue([
         { id: 2n, uid: 'creator_1' },
@@ -1226,11 +1226,13 @@ describe('showOrchestrationService', () => {
         'std_123',
         mockShow.uid,
         [
-          {
+          ({
             creatorId: 'creator_1',
             compensationType: 'FIXED',
             agreedRate: '100.00',
             commissionRate: null,
+            // Bulk assignment is only for assignment membership. Compensation items
+            // are managed from the target-specific compensation surface.
             compensationLineItems: [
               {
                 amount: '25.00',
@@ -1239,69 +1241,12 @@ describe('showOrchestrationService', () => {
                 metadata: { source: 'bulk_mapping' },
               },
             ],
-          },
+          } as any),
         ],
         'actor_123',
       );
 
       expect(result).toEqual({ assigned: 1, skipped: 0, failed: [] });
-      expect(compensationLineItemService.createStudioLineItem).toHaveBeenCalledWith(
-        'std_123',
-        {
-          targetType: 'SHOW_CREATOR',
-          targetId: 'show_mc_1',
-          amount: '25.00',
-          itemType: 'BONUS',
-          reason: 'Launch bonus',
-          metadata: { source: 'bulk_mapping' },
-        },
-        'actor_123',
-      );
-    });
-
-    it('does not create initial line items for already-active assignments', async () => {
-      showService.getShowById.mockResolvedValue(mockShow);
-      creatorRepository.findByUids.mockResolvedValue([
-        { id: 2n, uid: 'creator_1' },
-      ] as any);
-      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
-        {
-          isActive: true,
-          creator: { uid: 'creator_1' },
-          defaultRate: '100.00',
-          defaultRateType: 'FIXED',
-          defaultCommissionRate: null,
-        },
-      ] as any);
-      showCreatorRepository.findMany.mockResolvedValue([
-        {
-          id: 11n,
-          uid: 'show_mc_1',
-          creatorId: 2n,
-          deletedAt: null,
-        },
-      ] as any);
-
-      const result = await service.bulkAssignCreatorsToShow(
-        'std_123',
-        mockShow.uid,
-        [
-          {
-            creatorId: 'creator_1',
-            compensationLineItems: [
-              {
-                amount: '25.00',
-                itemType: 'BONUS',
-                reason: 'Launch bonus',
-                metadata: {},
-              },
-            ],
-          },
-        ],
-        'actor_123',
-      );
-
-      expect(result).toEqual({ assigned: 0, skipped: 1, failed: [] });
       expect(compensationLineItemService.createStudioLineItem).not.toHaveBeenCalled();
     });
   });

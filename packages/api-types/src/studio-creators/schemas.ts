@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { createStudioCompensationLineItemInputSchema } from '../compensation-line-items/schemas.js';
 import { UID_PREFIXES } from '../constants.js';
 import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
 import { createPaginatedResponseSchema } from '../pagination/schemas.js';
@@ -240,14 +239,7 @@ export const creatorAvailabilityRequestSchema = z.object({
 export const studioShowCreatorAssignmentItemInputSchema = z.object({
   creator_id: creatorUidSchema,
   note: z.string().max(1000).nullable().optional(),
-  agreed_rate: z.coerce.number().positive().nullable().optional(),
-  compensation_type: creatorCompensationTypeSchema.nullable().optional(),
-  commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
-  override_reason: z.string().trim().min(1).max(1000).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
-  compensation_line_items: z
-    .array(createStudioCompensationLineItemInputSchema.omit({ target_type: true, target_id: true }))
-    .optional(),
 });
 
 export const studioShowCreatorListItemSchema = z.object({

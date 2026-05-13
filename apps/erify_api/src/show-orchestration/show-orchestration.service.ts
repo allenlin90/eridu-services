@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import type { Show } from '@prisma/client';
-import { CompensationItemType, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
@@ -38,12 +38,6 @@ type CreatorAssignmentPayload = {
   commissionRate?: string | null;
   overrideReason?: string;
   metadata?: object;
-  compensationLineItems?: Array<{
-    amount: string;
-    itemType: string;
-    reason: string;
-    metadata?: Record<string, unknown>;
-  }>;
 };
 
 type BulkAssignCreatorsResult = {
@@ -326,7 +320,6 @@ export class ShowOrchestrationService {
       }
 
       try {
-        let assignmentUid: string | null = null;
         if (existingAssignment) {
           const snapshot = this.resolveCreatorSnapshot(
             creator,
@@ -343,14 +336,13 @@ export class ShowOrchestrationService {
             creator.overrideReason,
           );
 
-          const restoredAssignment = await this.showCreatorRepository.restoreAndUpdateAssignment(existingAssignment.id, {
+          await this.showCreatorRepository.restoreAndUpdateAssignment(existingAssignment.id, {
             note: creator.note ?? null,
             agreedRate: snapshot.agreedRate,
             compensationType: snapshot.compensationType,
             commissionRate: snapshot.commissionRate,
             metadata: newMetadata,
           });
-          assignmentUid = restoredAssignment.uid;
         } else {
           const snapshot = this.resolveCreatorSnapshot(
             creator,
@@ -358,7 +350,7 @@ export class ShowOrchestrationService {
             creator.metadata,
           );
 
-          const createdAssignment = await this.showCreatorRepository.createAssignment({
+          await this.showCreatorRepository.createAssignment({
             uid: this.showCreatorService.generateShowCreatorUid(),
             showId,
             creatorId: internalCreatorId,
@@ -368,15 +360,7 @@ export class ShowOrchestrationService {
             commissionRate: snapshot.commissionRate,
             metadata: snapshot.metadata,
           });
-          assignmentUid = createdAssignment.uid;
         }
-
-        await this.createInitialCreatorLineItems(
-          studioUid,
-          assignmentUid,
-          creator.compensationLineItems,
-          actorExtId,
-        );
       } catch (error) {
         if (this.isPrismaUniqueConstraintError(error)) {
           // Duplicate assignment race: treat as skipped/idempotent-safe.
@@ -746,34 +730,6 @@ export class ShowOrchestrationService {
       commissionRate,
       metadata: resolvedMetadata,
     };
-  }
-
-  private async createInitialCreatorLineItems(
-    studioUid: string,
-    showCreatorUid: string | null,
-    lineItems: CreatorAssignmentPayload['compensationLineItems'],
-    actorExtId: string,
-  ) {
-    if (!showCreatorUid || !lineItems || lineItems.length === 0) {
-      return;
-    }
-
-    await Promise.all(
-      lineItems.map((lineItem) =>
-        this.compensationLineItemService.createStudioLineItem(
-          studioUid,
-          {
-            targetType: 'SHOW_CREATOR',
-            targetId: showCreatorUid,
-            amount: lineItem.amount,
-            itemType: lineItem.itemType as CompensationItemType,
-            reason: lineItem.reason,
-            metadata: lineItem.metadata ?? {},
-          },
-          actorExtId,
-        ),
-      ),
-    );
   }
 
   private resolveBaseCreatorAmount(

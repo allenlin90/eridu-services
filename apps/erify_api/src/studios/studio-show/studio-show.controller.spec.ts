@@ -67,11 +67,7 @@ describe('studioShowController', () => {
           {
             creatorId: 'creator_1',
             note: 'Host',
-            agreedRate: '100.00',
-            compensationType: 'FIXED',
-            commissionRate: '5.00',
             metadata: {},
-            compensationLineItems: undefined,
           },
         ],
       };
