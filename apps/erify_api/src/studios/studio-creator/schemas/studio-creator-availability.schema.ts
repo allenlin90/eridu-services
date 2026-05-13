@@ -10,6 +10,9 @@ export const studioCreatorAvailabilityItemSchema = z.object({
   uid: z.string(),
   name: z.string(),
   aliasName: z.string(),
+  defaultRate: z.string().nullable(),
+  defaultRateType: z.string().nullable(),
+  defaultCommissionRate: z.string().nullable(),
 });
 
 export const studioCreatorAvailabilityItemDto = studioCreatorAvailabilityItemSchema
@@ -17,6 +20,9 @@ export const studioCreatorAvailabilityItemDto = studioCreatorAvailabilityItemSch
     id: item.uid,
     name: item.name,
     alias_name: item.aliasName,
+    default_rate: item.defaultRate,
+    default_rate_type: item.defaultRateType,
+    default_commission_rate: item.defaultCommissionRate,
   }))
   .pipe(studioCreatorAvailabilityItemApiSchema);
 

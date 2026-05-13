@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { createStudioCompensationLineItemInputSchema } from '../compensation-line-items/schemas.js';
 import { UID_PREFIXES } from '../constants.js';
 import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
 import { createPaginatedResponseSchema } from '../pagination/schemas.js';
@@ -125,6 +126,9 @@ export const studioCreatorCatalogItemSchema = z.object({
   alias_name: z.string(),
   is_rostered: z.boolean(),
   roster_state: z.enum(Object.values(STUDIO_CREATOR_ROSTER_STATE) as [string, ...string[]]),
+  default_rate: z.string().nullable(),
+  default_rate_type: creatorCompensationTypeSchema.nullable(),
+  default_commission_rate: z.string().nullable(),
 });
 
 export const studioCreatorCatalogQuerySchema = z.object({
@@ -137,6 +141,9 @@ export const studioCreatorAvailabilityItemSchema = z.object({
   id: creatorUidSchema,
   name: z.string(),
   alias_name: z.string(),
+  default_rate: z.string().nullable(),
+  default_rate_type: creatorCompensationTypeSchema.nullable(),
+  default_commission_rate: z.string().nullable(),
 });
 
 export const studioCreatorAvailabilityQuerySchema = z.object({
@@ -238,9 +245,13 @@ export const studioShowCreatorAssignmentItemInputSchema = z.object({
   commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
   override_reason: z.string().trim().min(1).max(1000).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
+  compensation_line_items: z
+    .array(createStudioCompensationLineItemInputSchema.omit({ target_type: true, target_id: true }))
+    .optional(),
 });
 
 export const studioShowCreatorListItemSchema = z.object({
+  id: z.string().startsWith(`${UID_PREFIXES.SHOW_CREATOR}_`),
   creator_id: creatorUidSchema,
   creator_name: z.string(),
   creator_alias_name: z.string(),
@@ -273,7 +284,7 @@ export const bulkAssignStudioShowCreatorsResponseSchema = z.object({
 
 export const bulkShowCreatorAssignmentInputSchema = z.object({
   show_ids: z.array(showUidSchema).min(1).max(BULK_ASSIGN_MAX_SHOWS),
-  creator_ids: z.array(creatorUidSchema).min(1).max(BULK_ASSIGN_MAX_CREATORS_PER_SHOW),
+  creators: z.array(studioShowCreatorAssignmentItemInputSchema).min(1).max(BULK_ASSIGN_MAX_CREATORS_PER_SHOW),
 });
 
 export const bulkShowCreatorAssignmentErrorSchema = z.object({
@@ -286,6 +297,27 @@ export const bulkShowCreatorAssignmentResponseSchema = z.object({
   created: z.number().int().nonnegative(),
   skipped: z.number().int().nonnegative(),
   errors: z.array(bulkShowCreatorAssignmentErrorSchema),
+});
+
+export const showCreatorCompensationSummaryItemSchema = z.object({
+  show_creator_id: z.string().startsWith(`${UID_PREFIXES.SHOW_CREATOR}_`),
+  creator_id: creatorUidSchema,
+  creator_name: z.string(),
+  creator_alias_name: z.string(),
+  compensation_type: creatorCompensationTypeSchema.nullable(),
+  agreed_rate: z.string().nullable(),
+  commission_rate: z.string().nullable(),
+  base_amount: z.string().nullable(),
+  adjustment_total: z.string(),
+  total_amount: z.string().nullable(),
+  unresolved_reason: z.string().nullable(),
+});
+
+export const showCreatorCompensationSummarySchema = z.object({
+  show_id: showUidSchema,
+  creators: z.array(showCreatorCompensationSummaryItemSchema),
+  total_amount: z.string(),
+  unresolved_count: z.number().int().nonnegative(),
 });
 
 export type StudioCreatorCatalogItem = z.infer<typeof studioCreatorCatalogItemSchema>;
@@ -306,3 +338,5 @@ export type OnboardCreatorInput = z.infer<typeof onboardCreatorInputSchema>;
 export type BulkShowCreatorAssignmentInput = z.infer<typeof bulkShowCreatorAssignmentInputSchema>;
 export type BulkShowCreatorAssignmentError = z.infer<typeof bulkShowCreatorAssignmentErrorSchema>;
 export type BulkShowCreatorAssignmentResponse = z.infer<typeof bulkShowCreatorAssignmentResponseSchema>;
+export type ShowCreatorCompensationSummaryItem = z.infer<typeof showCreatorCompensationSummaryItemSchema>;
+export type ShowCreatorCompensationSummary = z.infer<typeof showCreatorCompensationSummarySchema>;

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { ShowOrchestrationService } from './show-orchestration.service';
 
+import { CompensationLineItemModule } from '@/models/compensation-line-item/compensation-line-item.module';
 import { CreatorModule } from '@/models/creator/creator.module';
 import { PlatformModule } from '@/models/platform/platform.module';
 import { ShowModule } from '@/models/show/show.module';
@@ -15,6 +16,7 @@ import { PrismaModule } from '@/prisma/prisma.module';
 @Module({
   imports: [
     PrismaModule,
+    CompensationLineItemModule,
     ShowModule,
     ShowCreatorModule,
     ShowPlatformModule,

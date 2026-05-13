@@ -57,6 +57,9 @@ describe('studioCreatorController', () => {
         uid: 'creator_00000000000000000001',
         name: 'Ann',
         aliasName: 'Ann',
+        defaultRate: '150.00',
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
       },
     ]);
 
@@ -87,6 +90,9 @@ describe('studioCreatorController', () => {
         aliasName: 'Ann',
         isRostered: false,
         rosterState: 'NONE',
+        defaultRate: '150.00',
+        defaultRateType: 'FIXED',
+        defaultCommissionRate: null,
       },
     ]);
 

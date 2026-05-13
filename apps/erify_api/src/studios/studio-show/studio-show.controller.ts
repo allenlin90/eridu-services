@@ -21,6 +21,7 @@ import {
   BulkAssignStudioShowCreatorsDto,
   bulkAssignStudioShowCreatorsResultSchema,
 } from './schemas/studio-show-creator-assignment.schema';
+import { showCreatorCompensationSummaryDto } from './schemas/studio-show-creator-compensation-summary.schema';
 import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
@@ -165,6 +166,18 @@ export class StudioShowController extends BaseStudioController {
         reason: item.reason,
       })),
     };
+  }
+
+  @Get(':id/creators/compensation-summary')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(showCreatorCompensationSummaryDto)
+  async creatorCompensationSummary(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    await this.taskOrchestrationService.getStudioShow(studioId, id);
+    const summary = await this.showOrchestrationService.getCreatorCompensationSummaryForShow(studioId, id);
+    return showCreatorCompensationSummaryDto.parse(summary);
   }
 
   @Delete(':id/creators/:creatorId')

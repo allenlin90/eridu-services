@@ -13,6 +13,7 @@ import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
+import { CompensationLineItemService } from '@/models/compensation-line-item/compensation-line-item.service';
 import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
@@ -43,6 +44,7 @@ class MockPrismaModule {}
 describe('showOrchestrationService', () => {
   let service: ShowOrchestrationService;
   let showService: jest.Mocked<ShowService>;
+  let compensationLineItemService: jest.Mocked<CompensationLineItemService>;
   let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let showRepository: jest.Mocked<ShowRepository>;
@@ -108,6 +110,13 @@ describe('showOrchestrationService', () => {
             generateShowUid: jest.fn(),
             buildUpdatePayload: jest.fn(),
             ensureValidActualTimeRange: jest.fn(),
+          },
+        },
+        {
+          provide: CompensationLineItemService,
+          useValue: {
+            createStudioLineItem: jest.fn(),
+            listStudioLineItems: jest.fn(),
           },
         },
         {
@@ -190,6 +199,7 @@ describe('showOrchestrationService', () => {
 
     service = module.get<ShowOrchestrationService>(ShowOrchestrationService);
     showService = module.get<ShowService>(ShowService) as jest.Mocked<ShowService>;
+    compensationLineItemService = module.get<CompensationLineItemService>(CompensationLineItemService) as jest.Mocked<CompensationLineItemService>;
     showCreatorService = module.get<ShowCreatorService>(ShowCreatorService) as jest.Mocked<ShowCreatorService>;
     showPlatformService = module.get<ShowPlatformService>(ShowPlatformService) as jest.Mocked<ShowPlatformService>;
     showRepository = module.get<ShowRepository>(ShowRepository) as jest.Mocked<ShowRepository>;
@@ -1150,7 +1160,7 @@ describe('showOrchestrationService', () => {
         showCreators: [
           {
             id: 1n,
-            uid: 'show_creator_1',
+            uid: 'show_mc_1',
             note: 'Primary',
             agreedRate: '100.00',
             compensationType: 'FIXED',
@@ -1180,12 +1190,175 @@ describe('showOrchestrationService', () => {
       );
       expect(result).toEqual([
         expect.objectContaining({
+          id: 'show_mc_1',
           creatorId: 'creator_1',
           creatorName: 'Alice',
           creatorAliasName: 'Ali',
           note: 'Primary',
         }),
       ]);
+    });
+  });
+
+  describe('bulkAssignCreatorsToShow compensation items', () => {
+    it('creates initial SHOW_CREATOR line items only after a new assignment exists', async () => {
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: 2n, uid: 'creator_1' },
+      ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          isActive: true,
+          creator: { uid: 'creator_1' },
+          defaultRate: '100.00',
+          defaultRateType: 'FIXED',
+          defaultCommissionRate: null,
+        },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([]);
+      showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_1');
+      showCreatorRepository.createAssignment.mockResolvedValue({
+        id: 11n,
+        uid: 'show_mc_1',
+      } as any);
+
+      const result = await service.bulkAssignCreatorsToShow(
+        'std_123',
+        mockShow.uid,
+        [
+          {
+            creatorId: 'creator_1',
+            compensationType: 'FIXED',
+            agreedRate: '100.00',
+            commissionRate: null,
+            compensationLineItems: [
+              {
+                amount: '25.00',
+                itemType: 'BONUS',
+                reason: 'Launch bonus',
+                metadata: { source: 'bulk_mapping' },
+              },
+            ],
+          },
+        ],
+        'actor_123',
+      );
+
+      expect(result).toEqual({ assigned: 1, skipped: 0, failed: [] });
+      expect(compensationLineItemService.createStudioLineItem).toHaveBeenCalledWith(
+        'std_123',
+        {
+          targetType: 'SHOW_CREATOR',
+          targetId: 'show_mc_1',
+          amount: '25.00',
+          itemType: 'BONUS',
+          reason: 'Launch bonus',
+          metadata: { source: 'bulk_mapping' },
+        },
+        'actor_123',
+      );
+    });
+
+    it('does not create initial line items for already-active assignments', async () => {
+      showService.getShowById.mockResolvedValue(mockShow);
+      creatorRepository.findByUids.mockResolvedValue([
+        { id: 2n, uid: 'creator_1' },
+      ] as any);
+      studioCreatorRepository.findByStudioUidAndCreatorUids.mockResolvedValue([
+        {
+          isActive: true,
+          creator: { uid: 'creator_1' },
+          defaultRate: '100.00',
+          defaultRateType: 'FIXED',
+          defaultCommissionRate: null,
+        },
+      ] as any);
+      showCreatorRepository.findMany.mockResolvedValue([
+        {
+          id: 11n,
+          uid: 'show_mc_1',
+          creatorId: 2n,
+          deletedAt: null,
+        },
+      ] as any);
+
+      const result = await service.bulkAssignCreatorsToShow(
+        'std_123',
+        mockShow.uid,
+        [
+          {
+            creatorId: 'creator_1',
+            compensationLineItems: [
+              {
+                amount: '25.00',
+                itemType: 'BONUS',
+                reason: 'Launch bonus',
+                metadata: {},
+              },
+            ],
+          },
+        ],
+        'actor_123',
+      );
+
+      expect(result).toEqual({ assigned: 0, skipped: 1, failed: [] });
+      expect(compensationLineItemService.createStudioLineItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getCreatorCompensationSummaryForShow', () => {
+    it('calculates fixed assignment totals from backend line items', async () => {
+      showService.getShowById.mockResolvedValue({
+        ...mockShow,
+        showCreators: [
+          {
+            uid: 'show_mc_1',
+            note: null,
+            agreedRate: '100.00',
+            compensationType: 'FIXED',
+            commissionRate: null,
+            metadata: {},
+            creator: {
+              uid: 'creator_1',
+              name: 'Alice',
+              aliasName: 'Ali',
+            },
+          },
+        ],
+      } as any);
+      compensationLineItemService.listStudioLineItems.mockResolvedValue({
+        data: [
+          { amount: '25.00' },
+          { amount: '-5.00' },
+        ],
+        total: 2,
+      } as any);
+
+      const result = await service.getCreatorCompensationSummaryForShow('std_123', mockShow.uid);
+
+      expect(compensationLineItemService.listStudioLineItems).toHaveBeenCalledWith(
+        expect.objectContaining({
+          studioId: 'std_123',
+          targetType: 'SHOW_CREATOR',
+          targetId: 'show_mc_1',
+          includeDeleted: false,
+        }),
+      );
+      expect(result).toEqual({
+        showId: mockShow.uid,
+        creators: [
+          expect.objectContaining({
+            showCreatorId: 'show_mc_1',
+            creatorId: 'creator_1',
+            baseAmount: '100.00',
+            adjustmentTotal: '20.00',
+            totalAmount: '120.00',
+            unresolvedReason: null,
+          }),
+        ],
+        totalAmount: '120.00',
+        unresolvedCount: 0,
+      });
     });
   });
 });
