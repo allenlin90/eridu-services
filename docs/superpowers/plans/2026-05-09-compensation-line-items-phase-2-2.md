@@ -13,7 +13,7 @@
 **PR dependency order:**
 
 ```
-Task 1 (PR 1A backend system CRUD)  ──┬──▶  Task 3 (PR 2 studio line-item APIs)  ──┬──▶  Task 5 (PR 4 show UI)
+Task 1 (PR 1A backend system CRUD)  ──┬──▶  Task 3 (PR 2 studio line-item APIs)  ──┬──▶  Task 5 (PR 4 creator mapping compensation UX)
                                       │                                          ├──▶  Task 6 (PR 5 shift UI)
                                       └──▶  Task 2 (PR 1B FE system UI)
 Task 4 (PR 3 actuals + snapshot)  ────────────────────────────────────────────────┴──▶  Task 5/6 also depend on this
@@ -117,23 +117,37 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 - [ ] Verify backend lint, typecheck, tests, and build.
 - [ ] Commit with an actuals/snapshot-readiness message.
 
-## Task 5: Show workflow UI
+## Task 5: Creator mapping compensation UX
 
-**Depends on:** Task 3 (studio line-item APIs) and Task 4 (actuals + snapshot fields on the existing PATCH route). Show actuals input mounts on the existing show update mutation; without Task 4 those fields do not exist in the contract.
+**Depends on:** Task 3 (studio line-item APIs) and the Task 4 snapshot/default-readiness work for future assignment writes. This task does **not** implement show actuals, `SHOW` line-item UI, task line-item UI, shift UI, shift-block UI, or shift-block compensation.
+
+**Routes:**
+- Bulk mapping: `/studios/$studioId/creator-mapping`
+- Per-show creator mapping: `/studios/$studioId/creator-mapping/$showId`
 
 **Files:**
-- Modify/create show workflow components under `apps/erify_studios/src/features/studio-shows/` and `apps/erify_studios/src/features/studio-show-creators/`.
+- Modify/create creator mapping components under `apps/erify_studios/src/features/studio-show-creators/`.
 - Reuse: `apps/erify_studios/src/features/compensation-line-items/`
-- Create/modify: `apps/erify_studios/src/components/finance/ShowActualsInput.tsx`
-- Test: show workflow component tests.
+- Modify: `packages/api-types/src/studio-creators/` for assignment UID, roster defaults, bulk assignment payloads, and summary response.
+- Modify: `apps/erify_api/src/studios/studio-show/`, `apps/erify_api/src/show-orchestration/`, creator lookup schemas/repositories.
+- Test: creator mapping component tests and backend creator assignment/summary tests.
 
-- [ ] Mount target-scoped line-item panels for show and show creator assignment contexts.
-- [ ] Add show actuals fields to the existing show update form; submit goes through the existing show update mutation (no new mutation).
-- [ ] Add snapshot warning dialog to assignment compensation edits; on confirm, the existing assignment update mutation carries the optional `override_reason`.
-- [ ] Invalidate target list and parent show/assignment queries after mutations.
-- [ ] Test create/update/delete line items without target picker, actuals validation, and snapshot warning confirm/cancel.
+- [ ] Revise this plan plus `docs/prd/compensation-line-items.md` and frontend/backend design docs before implementation so Task 5 scope is explicit.
+- [ ] Extend creator catalog/availability lookup responses with roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) for assignment prefill.
+- [ ] Add `id` to `StudioShowCreatorListItem`; it is the `ShowCreator` assignment UID and is the required `SHOW_CREATOR` `target_id`.
+- [ ] Extend bulk assignment contracts to accept `creators[]` objects with `compensation_type`, `agreed_rate`, `commission_rate`, and optional initial `SHOW_CREATOR` compensation line items.
+- [ ] In bulk mapping, prefill editable per-creator values from roster defaults and submit structured creator payloads. Do not calculate or display total costs in bulk assignment.
+- [ ] For skipped/existing assignments during bulk mapping, do not auto-create duplicate initial line items.
+- [ ] In `/creator-mapping/$showId`, add a compensation drawer/dialog per assigned MC row.
+- [ ] Show assignment base compensation from the `ShowCreator` snapshot plus `SHOW_CREATOR` adjustment items.
+- [ ] Add a backend-calculated creator compensation summary endpoint/response for the per-show creator mapping view. Frontend renders returned totals only.
+- [ ] Allow create/update/delete of `SHOW_CREATOR` compensation items with `target_type=SHOW_CREATOR` and `target_id=<showCreatorAssignmentUid>`.
+- [ ] Add a 2.3 design note: broader costs review does not belong in bulk assignment, but can reuse the creator mapping calculation/read model.
+- [ ] Test bulk dialog defaults, per-creator overrides, initial item payloads, assignment UID usage, line-item management, and total rendering.
+- [ ] Test backend assignment creation with compensation fields/initial line items and summary calculation from assignment snapshots plus line items.
 - [ ] Verify frontend lint, typecheck, tests, and build.
-- [ ] Commit with a show-workflow message.
+- [ ] Verify backend lint, typecheck, tests, and build.
+- [ ] Commit with a creator-mapping-compensation message.
 
 ## Task 6: Shift workflow UI
 

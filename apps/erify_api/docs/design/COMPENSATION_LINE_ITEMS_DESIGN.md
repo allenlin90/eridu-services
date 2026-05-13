@@ -25,6 +25,8 @@ This backend design covers:
 
 This design does **not** introduce cost arithmetic, settlement state, freeze guards, grace windows, dedicated audit tables, sign enforcement, generated base-compensation rows, standing/schedule-scoped/global/recurring line items, notifications, or historical snapshot backfill.
 
+Task 5 adds one backend read model for creator mapping UX: a per-show creator compensation summary derived from `ShowCreator` assignment snapshots plus active `SHOW_CREATOR` line items. This read model is backend-calculated and exists to keep `/studios/:studioId/creator-mapping/:showId` from doing frontend money arithmetic. It does not create persisted base-compensation line items.
+
 ## Workstream Breakdown
 
 | Slice      | Backend scope                                                                           | Merge shape                                       |
@@ -189,6 +191,17 @@ The admin route is support tooling. It is not the primary studio workflow.
 The studio API is flat because compensation line items are the resource being created and mutated. Show, show-creator, shift, and shift-block workflows still mount target-scoped panels, but those panels call the same studio collection with explicit target fields instead of using deeply nested parent routes.
 
 All studio line-item routes restrict access to `STUDIO_ROLE.ADMIN` and `STUDIO_ROLE.MANAGER` regardless of who can read the parent target. `TALENT_MANAGER` may read assignments today but does not get write access to compensation line items in 2.2; widening the role surface is a Phase 5 product call.
+
+### Task 5: creator mapping contracts
+
+| Endpoint | Change | Roles |
+| -------- | ------ | ----- |
+| `GET /studios/:studioId/creators/catalog` and availability lookup | Include roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) so assignment dialogs can prefill editable values | existing creator mapping roles |
+| `POST /studios/:studioId/shows/:showId/creators/bulk-assign` | Accept `creators[]` objects containing assignment compensation fields and optional initial line items. Initial line items are created only for newly created/restored assignments, not skipped existing assignments. | existing creator mapping write roles |
+| `GET /studios/:studioId/shows/:showId/creators` | Return `id` as the `ShowCreator` assignment UID for `SHOW_CREATOR` line-item targeting | existing creator mapping read roles |
+| `GET /studios/:studioId/shows/:showId/creators/compensation-summary` | Return backend-calculated base, adjustment, creator total, show total, and unresolved reason data for assigned MCs | existing creator mapping read roles |
+
+Task 5 does not add `SHOW`, task, shift, or shift-block compensation UI contracts. Those targets remain available at the flat line-item API layer for future workflow slices, but the creator mapping UX uses only `target_type=SHOW_CREATOR` with `target_id=<showCreatorAssignmentUid>`.
 
 ### PR 3: actuals and snapshot readiness
 

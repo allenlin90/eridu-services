@@ -15,6 +15,8 @@
 
 This design covers data input only. Calculator-driven money displays land with 2.3 (`/me/` recipient self-views and manager read models) and 3.1 (studio economics review). 2.2 must not compute monetary totals locally.
 
+Task 5 is the exception only in the sense that the per-show creator mapping view renders a backend-calculated creator compensation summary. The frontend still does not calculate money: it submits assignment inputs and `SHOW_CREATOR` line-item mutations, then renders totals returned by `/studios/:studioId/shows/:showId/creators/compensation-summary`.
+
 Actuals surfaces follow the cost model's [actual ownership and scope](../../../../docs/prd/economics-cost-model.md#actual-ownership-and-scope). This 2.2 UI exposes show actuals and shift-block actuals only; future creator participation actuals and platform performance actuals must be labeled, keyed, and mutated as distinct resources.
 
 ## Workflow Model
@@ -23,12 +25,12 @@ Actuals surfaces follow the cost model's [actual ownership and scope](../../../.
 
 Studio users add and review line items where the adjustment belongs:
 
-- show line items on the show workflow;
-- show-creator line items on the creator assignment workflow;
-- shift line items on the shift workflow;
-- shift-block line items on the block workflow.
+- Task 5: show-creator line items on the creator mapping workflow only;
+- later 2.2/2.3 work: show, shift, and shift-block line items when their product workflow is explicitly scheduled.
 
 The target context is the product explanation. The studio workflow should not depend on a generic line-item management page.
+
+Bulk creator mapping captures assignment compensation but does not show totals. Per-show creator mapping shows the backend summary for assigned MCs. A broader 2.3 cost review can reuse that summary/read model when it introduces an economics review workflow.
 
 ### System support workflow
 
@@ -69,10 +71,11 @@ A studio `compensation/line-items` or economics-adjacent workspace can land with
 | Surface | Location | Audience |
 | ------- | -------- | -------- |
 | System line-item support | `/system/compensation-line-items` | system admin |
-| Show line-item panel | existing show operational/detail surface | studio `ADMIN`, `MANAGER` |
-| Show-creator line-item panel | existing creator assignment surface | studio `ADMIN`, `MANAGER` |
-| Shift line-item panel | existing shift operational/detail surface | studio `ADMIN`, `MANAGER` |
-| Shift-block line-item panel | existing shift block surface | studio `ADMIN`, `MANAGER` |
+| Bulk creator assignment compensation inputs | `/studios/$studioId/creator-mapping` | studio `ADMIN`, `MANAGER` |
+| Show-creator line-item dialog and cost summary | `/studios/$studioId/creator-mapping/$showId` | studio `ADMIN`, `MANAGER` |
+| Show line-item panel | later show operational/detail surface, not Task 5 | studio `ADMIN`, `MANAGER` |
+| Shift line-item panel | later shift operational/detail surface, not Task 5 | studio `ADMIN`, `MANAGER` |
+| Shift-block line-item panel | later shift block surface, not Task 5 | studio `ADMIN`, `MANAGER` |
 | Show actuals input | show workflow | studio `ADMIN`, `MANAGER` |
 | Shift-block actuals input | shift block workflow | studio `ADMIN`, `MANAGER` |
 | Snapshot override warning dialog | existing assignment / shift edit forms | studio `ADMIN`, `MANAGER` |
@@ -93,6 +96,16 @@ apps/erify_studios/src/features/compensation-line-items/
   hooks/
     use-compensation-line-items.ts
 
+apps/erify_studios/src/features/studio-show-creators/
+  api/
+    get-show-creators.ts
+    bulk-assign-creators-to-shows.ts
+  components/
+    BulkCreatorAssignmentDialog.tsx
+    AddCreatorDialog.tsx
+    ShowCreatorList.tsx
+    ShowCreatorCompensationDialog.tsx
+
 apps/erify_studios/src/routes/system/compensation-line-items/
   index.tsx
 
@@ -106,6 +119,8 @@ Component responsibilities:
 
 - **SystemCompensationLineItemsRoute** - support page with table, filters, and create/edit dialogs. Uses `useTableUrlState`, `DataTablePagination`, real API metadata, and `placeholderData: keepPreviousData`.
 - **TargetScopedLineItemsPanel** - reusable panel mounted by show, show-creator, shift, and shift-block workflows. The target is passed by props and sent to the flat studio line-item API as `target_type` / `target_id`.
+- **BulkCreatorAssignmentDialog** - captures per-creator assignment `compensation_type`, `agreed_rate`, `commission_rate`, and optional initial `SHOW_CREATOR` line items. Defaults come from creator roster lookup fields. It does not display totals.
+- **ShowCreatorCompensationDialog** - mounted from `/creator-mapping/$showId` rows. Uses the row's `ShowCreator` assignment UID as `target_id`, manages `SHOW_CREATOR` line items, and renders backend summary values.
 - **CompensationLineItemFormDialog** - shared create/edit form. Target fields are controlled by the mounted workflow in target-scoped panels and selectable only in system-admin support tooling.
 - **CompensationLineItemsTable** - columns: target summary, item type, amount (`SignedAmountCell`), reason, created by, created at, actions.
 - **ShowActualsInput / ShiftBlockActualsInput** - paired datetime inputs with clear controls and client-side inverted-range guard.
@@ -120,6 +135,7 @@ Query key families:
 ['compensation-line-items', 'system', filters]
 ['compensation-line-items', 'studio', studioUid, targetType, targetUid]
 ['compensation-line-item', lineItemUid]
+['show-creators', 'compensation-summary', studioUid, showUid]
 ```
 
 Mutation invalidation:
@@ -127,7 +143,8 @@ Mutation invalidation:
 | Mutation | Invalidates |
 | -------- | ----------- |
 | System create/update/delete | system list + target list when target is known |
-| Target-scoped create/update/delete | studio target-filtered list + parent target detail |
+| Target-scoped create/update/delete | studio target-filtered list + parent target detail; `SHOW_CREATOR` invalidates the per-show creator compensation summary |
+| Bulk creator assignment | selected show creator lists, show details/lists, and no cost preview cache |
 | Show update (now includes actuals) | existing show detail / list keys |
 | Shift-block update (now includes actuals) | existing shift detail / list / calendar keys |
 | Snapshot edit on assignment | assignment/creator list key + show detail key |
@@ -229,7 +246,7 @@ Run for each frontend PR:
 Manual smoke by PR:
 
 - PR 1B: system admin can filter line items by studio, target type, target UID, item type, date range, and creator; create/update/delete round trips.
-- PR 4: show and show-creator panels create/update/delete line items without a target picker; show actuals set/clear/inverted paths work.
+- PR 4 / Task 5: bulk creator mapping submits assignment compensation inputs and optional initial `SHOW_CREATOR` items without totals; per-show creator mapping renders backend totals and creates/updates/deletes `SHOW_CREATOR` line items against the assignment UID.
 - PR 5: shift and shift-block panels create/update/delete line items without a target picker; block actuals set/clear/inverted paths work.
 - Snapshot dialog appears only for snapshot-field edits and preserves form input on cancel.
 - Cleanup PR: no `projected_cost` / `calculated_cost` UI, mocks, or fixtures remain.
