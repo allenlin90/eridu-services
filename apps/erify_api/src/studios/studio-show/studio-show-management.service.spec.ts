@@ -7,6 +7,7 @@ import { ClsModule } from 'nestjs-cls';
 
 import { StudioShowManagementService } from './studio-show-management.service';
 
+import { HttpError } from '@/lib/errors/http-error.util';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
@@ -44,6 +45,23 @@ describe('studioShowManagementService', () => {
   const showServiceMock = {
     createShow: jest.fn(),
     getShowById: jest.fn(),
+    ensureValidActualTimeRange: jest.fn(
+      (
+        currentActualStart: Date | null | undefined,
+        currentActualEnd: Date | null | undefined,
+        dto: { actualStartTime?: Date | null; actualEndTime?: Date | null },
+      ) => {
+        const nextStart = dto.actualStartTime !== undefined
+          ? dto.actualStartTime
+          : currentActualStart ?? null;
+        const nextEnd = dto.actualEndTime !== undefined
+          ? dto.actualEndTime
+          : currentActualEnd ?? null;
+        if (nextStart && nextEnd && nextEnd <= nextStart) {
+          throw HttpError.badRequest('Actual end time must be after actual start time');
+        }
+      },
+    ),
   };
   const showRepositoryMock = {
     findByClientUidAndExternalId: jest.fn(),
@@ -142,6 +160,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: ['plt_1'],
     });
@@ -179,6 +199,8 @@ describe('studioShowManagementService', () => {
       name: 'Restored Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     });
@@ -212,6 +234,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({
@@ -244,6 +268,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({
@@ -273,6 +299,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({
@@ -304,6 +332,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     });
@@ -332,6 +362,8 @@ describe('studioShowManagementService', () => {
       name: 'Studio Show',
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: undefined,
+      actualEndTime: undefined,
       metadata: {},
       platformIds: [],
     })).rejects.toMatchObject({
@@ -351,6 +383,40 @@ describe('studioShowManagementService', () => {
         message: 'End time must be after start time',
       }),
     });
+  });
+
+  it('rejects update when a one-sided actual change inverts the stored actual range', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      client: { uid: 'cli_1' },
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+      actualStartTime: new Date('2026-04-02T10:30:00.000Z'),
+      actualEndTime: null,
+    });
+
+    await expect(service.updateShow('std_123', 'show_123', {
+      actualEndTime: new Date('2026-04-02T10:00:00.000Z'),
+    } as UpdateStudioShowDto)).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Actual end time must be after actual start time',
+      }),
+    });
+  });
+
+  it('allows one-sided actual update when the other side is still missing', async () => {
+    await service.updateShow('std_123', 'show_123', {
+      actualStartTime: new Date('2026-04-02T10:05:00.000Z'),
+    } as UpdateStudioShowDto);
+
+    expect(showRepositoryMock.update).toHaveBeenCalledWith(
+      { uid: 'show_123' },
+      expect.objectContaining({
+        actualStartTime: new Date('2026-04-02T10:05:00.000Z'),
+      }),
+    );
   });
 
   it('allows update when target schedule is already published', async () => {

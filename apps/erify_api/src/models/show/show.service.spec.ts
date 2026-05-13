@@ -322,6 +322,45 @@ describe('showService', () => {
     });
   });
 
+  describe('ensureValidActualTimeRange', () => {
+    it('throws when both actuals are present and inverted', () => {
+      expect(() =>
+        service.ensureValidActualTimeRange(null, null, {
+          actualStartTime: new Date('2026-01-01T12:00:00Z'),
+          actualEndTime: new Date('2026-01-01T10:00:00Z'),
+        }),
+      ).toThrow('Actual end time must be after actual start time');
+    });
+
+    it('throws when one-sided update inverts against the stored other side', () => {
+      expect(() =>
+        service.ensureValidActualTimeRange(
+          new Date('2026-01-01T12:00:00Z'),
+          null,
+          { actualEndTime: new Date('2026-01-01T11:00:00Z') },
+        ),
+      ).toThrow('Actual end time must be after actual start time');
+    });
+
+    it('allows one-sided update when the stored other side is null', () => {
+      expect(() =>
+        service.ensureValidActualTimeRange(null, null, {
+          actualStartTime: new Date('2026-01-01T10:00:00Z'),
+        }),
+      ).not.toThrow();
+    });
+
+    it('allows clearing actuals to null', () => {
+      expect(() =>
+        service.ensureValidActualTimeRange(
+          new Date('2026-01-01T12:00:00Z'),
+          new Date('2026-01-01T13:00:00Z'),
+          { actualStartTime: null, actualEndTime: null },
+        ),
+      ).not.toThrow();
+    });
+  });
+
   describe('deleteShow', () => {
     it('soft deletes show', async () => {
       const existingShow = {

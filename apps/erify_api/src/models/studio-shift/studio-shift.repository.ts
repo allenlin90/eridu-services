@@ -77,8 +77,22 @@ export class StudioShiftRepository extends BaseRepository<
           },
           upsert: blocksPayload.blocksToUpsert.map((block) => ({
             where: { uid: block.uid },
-            update: { startTime: block.startTime, endTime: block.endTime, metadata: block.metadata as Prisma.InputJsonValue, deletedAt: null },
-            create: { uid: block.uid, startTime: block.startTime, endTime: block.endTime, metadata: block.metadata as Prisma.InputJsonValue },
+            update: {
+              startTime: block.startTime,
+              endTime: block.endTime,
+              actualStartTime: block.actualStartTime,
+              actualEndTime: block.actualEndTime,
+              metadata: block.metadata as Prisma.InputJsonValue,
+              deletedAt: null,
+            },
+            create: {
+              uid: block.uid,
+              startTime: block.startTime,
+              endTime: block.endTime,
+              actualStartTime: block.actualStartTime,
+              actualEndTime: block.actualEndTime,
+              metadata: block.metadata as Prisma.InputJsonValue,
+            },
           })),
         }
       : undefined;

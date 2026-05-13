@@ -139,9 +139,9 @@ export const compensationLineItemApiResponseSchema = z.object({
   reason: z.string(),
   metadata: metadataSchema,
   created_by_id: z.string().startsWith(UID_PREFIXES.USER),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-  deleted_at: z.string().datetime().nullable(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+  deleted_at: z.iso.datetime().nullable(),
 });
 
 export const compensationLineItemListResponseSchema

@@ -194,7 +194,7 @@ export type TaskWithRelationsDto = z.infer<typeof taskWithRelationsDto>;
 export const generateTasksRequestSchema = z.object({
   show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).min(1),
   template_uids: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).min(1),
-  due_dates: z.record(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE), z.string().datetime()).optional(),
+  due_dates: z.record(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE), z.iso.datetime()).optional(),
 });
 
 export type GenerateTasksRequest = z.infer<typeof generateTasksRequestSchema>;
@@ -341,8 +341,8 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
     show_standard_name: z.string().optional(),
     show_status_name: z.string().optional(),
     platform_name: z.string().optional(),
-    date_from: z.string().datetime().optional(),
-    date_to: z.string().datetime().optional(),
+    date_from: z.iso.datetime().optional(),
+    date_to: z.iso.datetime().optional(),
     planning_date_from: z.iso.date().optional(),
     planning_date_to: z.iso.date().optional(),
     has_tasks: z
@@ -375,7 +375,7 @@ export const updateTaskRequestSchema = z.object({
   version: z.number().int(),
   content: z.record(z.string(), z.any()).optional(),
   status: z.nativeEnum(TASK_STATUS).optional(),
-  due_date: z.string().datetime().nullable().optional(),
+  due_date: z.iso.datetime().nullable().optional(),
 });
 
 export type UpdateTaskRequest = z.infer<typeof updateTaskRequestSchema>;
@@ -407,10 +407,10 @@ export const listMyTasksQuerySchema = paginationBaseSchema
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
       .optional(),
-    due_date_from: z.string().datetime().optional(),
-    due_date_to: z.string().datetime().optional(),
-    show_start_from: z.string().datetime().optional(),
-    show_start_to: z.string().datetime().optional(),
+    due_date_from: z.iso.datetime().optional(),
+    due_date_to: z.iso.datetime().optional(),
+    show_start_from: z.iso.datetime().optional(),
+    show_start_to: z.iso.datetime().optional(),
     studio_name: z.string().trim().min(1).optional(),
     client_name: z.string().trim().min(1).optional(),
     assignee_name: z.string().trim().min(1).optional(),

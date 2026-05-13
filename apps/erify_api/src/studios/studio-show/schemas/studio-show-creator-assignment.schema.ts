@@ -26,6 +26,7 @@ export class BulkAssignStudioShowCreatorsDto extends createZodDto(
           : creator.commission_rate === null
             ? null
             : creator.commission_rate.toFixed(2),
+      ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
       metadata: creator.metadata, // undefined when omitted — service defaults per branch (new vs restore)
     })),
   })),
@@ -36,6 +37,7 @@ export class BulkAssignStudioShowCreatorsDto extends createZodDto(
     agreedRate: string | null | undefined;
     compensationType: string | null | undefined;
     commissionRate: string | null | undefined;
+    overrideReason?: string;
     metadata: Record<string, unknown> | undefined;
   }>;
 }

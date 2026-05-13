@@ -21,6 +21,7 @@ describe('studioShiftController', () => {
             findByUidInStudio: jest.fn(),
             createShift: jest.fn(),
             updateShift: jest.fn(),
+            updateShiftBlock: jest.fn(),
             deleteShift: jest.fn(),
           },
         },
@@ -122,12 +123,37 @@ describe('studioShiftController', () => {
 
     const result = await controller.update('std_1', 'ssh_1', {
       status: 'COMPLETED',
-    } as never);
+    } as never, { ext_id: 'actor_1' } as never);
 
     expect(service.updateShift).toHaveBeenCalledWith('std_1', 'ssh_1', {
       status: 'COMPLETED',
-    });
+    }, 'actor_1');
     expect(result).toEqual({ uid: 'ssh_1', status: 'COMPLETED' });
+  });
+
+  it('should update a shift block', async () => {
+    service.updateShiftBlock.mockResolvedValue({ uid: 'ssh_1' } as never);
+    const dto = {
+      actualStartTime: new Date('2026-03-05T09:15:00.000Z'),
+      actualEndTime: null,
+    };
+
+    const result = await controller.updateBlock(
+      'std_1',
+      'ssh_1',
+      'ssb_1',
+      dto as never,
+      { ext_id: 'actor_1' } as never,
+    );
+
+    expect(service.updateShiftBlock).toHaveBeenCalledWith(
+      'std_1',
+      'ssh_1',
+      'ssb_1',
+      dto,
+      'actor_1',
+    );
+    expect(result).toEqual({ uid: 'ssh_1' });
   });
 
   it('should delete shift when found', async () => {
@@ -150,7 +176,12 @@ describe('studioShiftController', () => {
     service.updateShift.mockResolvedValue(null);
 
     await expect(
-      controller.update('std_1', 'ssh_missing', { status: 'COMPLETED' } as never),
+      controller.update(
+        'std_1',
+        'ssh_missing',
+        { status: 'COMPLETED' } as never,
+        { ext_id: 'actor_1' } as never,
+      ),
     ).rejects.toThrow('Studio shift not found with id ssh_missing');
   });
 

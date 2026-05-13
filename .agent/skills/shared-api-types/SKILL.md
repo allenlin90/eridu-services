@@ -154,6 +154,7 @@ Rules:
 - Field names and nesting must reveal meaning. A `ShowCreator` actual is creator participation time; a `ShowPlatform` actual is platform stream/performance time; a `Show` actual is the overall event window. They are not interchangeable even when the field name is `actual_start_time`.
 - Monetary reference figures must be backend-provided string decimals. Frontend contracts can submit recorded inputs, but should not define DTOs that require client-side finance arithmetic.
 - If an API response combines base components, line items, warnings, and unresolved reasons, expose that as an economics/read-model resource rather than adding calculated fields to operational CRUD DTOs.
+- `metadata.flags.agreement_snapshot_missing` is advisory metadata for `ShowCreator` rows whose required agreement snapshot fields could not be resolved at write time. Read-model schemas and calculators must derive unresolved state from the snapshot fields themselves and surface `agreement_snapshot_missing` even when the flag is absent.
 
 ## Transform Pattern for Prisma → DTO
 

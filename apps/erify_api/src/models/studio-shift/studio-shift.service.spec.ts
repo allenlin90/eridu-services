@@ -1,5 +1,6 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 
 import { StudioShiftRepository } from './studio-shift.repository';
 import { StudioShiftService } from './studio-shift.service';
@@ -73,11 +74,15 @@ describe('studioShiftService', () => {
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
             endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
           {
             startTime: new Date('2026-03-05T13:00:00.000Z'),
             endTime: new Date('2026-03-05T14:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
         ],
@@ -117,11 +122,15 @@ describe('studioShiftService', () => {
               startTime: new Date('2026-03-05T09:00:00.000Z'),
               endTime: new Date('2026-03-05T12:00:00.000Z'),
               metadata: {},
+              actualStartTime: undefined,
+              actualEndTime: undefined,
             },
             {
               startTime: new Date('2026-03-05T11:00:00.000Z'),
               endTime: new Date('2026-03-05T13:00:00.000Z'),
               metadata: {},
+              actualStartTime: undefined,
+              actualEndTime: undefined,
             },
           ],
           status: undefined,
@@ -146,6 +155,8 @@ describe('studioShiftService', () => {
               startTime: new Date('2026-03-05T09:00:00.000Z'),
               endTime: new Date('2026-03-05T12:00:00.000Z'),
               metadata: {},
+              actualStartTime: undefined,
+              actualEndTime: undefined,
             },
           ],
           status: undefined,
@@ -172,6 +183,8 @@ describe('studioShiftService', () => {
             startTime: new Date('2026-03-05T22:00:00.000Z'),
             endTime: new Date('2026-03-06T02:00:00.000Z'),
             metadata: {},
+            actualStartTime: undefined,
+            actualEndTime: undefined,
           },
         ],
         status: undefined,
@@ -205,6 +218,8 @@ describe('studioShiftService', () => {
               startTime: new Date('2026-03-05T09:00:00.000Z'),
               endTime: new Date('2026-03-05T12:00:00.000Z'),
               metadata: {},
+              actualStartTime: undefined,
+              actualEndTime: undefined,
             },
           ],
           status: undefined,
@@ -244,6 +259,8 @@ describe('studioShiftService', () => {
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
             endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
         ],
@@ -275,12 +292,14 @@ describe('studioShiftService', () => {
         uid: 'ssh_1',
         status: 'SCHEDULED',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         blocks: [
           {
             uid: 'ssb_keep',
             startTime: new Date('2026-03-05T09:00:00.000Z'),
             endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
         ],
@@ -295,6 +314,8 @@ describe('studioShiftService', () => {
               startTime: new Date('2026-03-05T10:00:00.000Z'),
               endTime: new Date('2026-03-05T14:00:00.000Z'),
               metadata: {},
+              actualStartTime: undefined,
+              actualEndTime: undefined,
             },
           ],
         }),
@@ -307,11 +328,13 @@ describe('studioShiftService', () => {
         uid: 'ssh_1',
         status: 'SCHEDULED',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         blocks: [
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
             endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
         ],
@@ -338,6 +361,8 @@ describe('studioShiftService', () => {
             uid: 'ssb_keep',
             startTime: new Date('2026-03-05T09:00:00.000Z'),
             endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
           {
@@ -345,6 +370,8 @@ describe('studioShiftService', () => {
             startTime: new Date('2026-03-05T13:00:00.000Z'),
             endTime: new Date('2026-03-05T14:00:00.000Z'),
             metadata: {},
+            actualStartTime: undefined,
+            actualEndTime: undefined,
           },
         ],
       } as never);
@@ -357,6 +384,8 @@ describe('studioShiftService', () => {
             startTime: new Date('2026-03-05T09:30:00.000Z'),
             endTime: new Date('2026-03-05T12:30:00.000Z'),
             metadata: {},
+            actualStartTime: undefined,
+            actualEndTime: undefined,
           },
         ],
       });
@@ -393,6 +422,8 @@ describe('studioShiftService', () => {
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
             endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
         ],
@@ -428,6 +459,8 @@ describe('studioShiftService', () => {
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
             endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: undefined,
+            actualEndTime: undefined,
             metadata: {},
           },
         ],
@@ -462,6 +495,125 @@ describe('studioShiftService', () => {
         BigInt(1),
         undefined,
       );
+    });
+
+    it('should append snapshot audit when hourly rate changes', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: new Prisma.Decimal('20.00'),
+        metadata: { audit: { snapshot_overrides: [] } },
+        blocks: [
+          {
+            uid: 'ssb_keep',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: null,
+            actualEndTime: null,
+            metadata: {},
+          },
+        ],
+      } as never);
+      repository.updateShift.mockResolvedValue({ uid: 'ssh_1' } as never);
+
+      await service.updateShift('std_1', 'ssh_1', {
+        hourlyRate: '25.00',
+        overrideReason: 'Manager correction',
+      }, 'user_actor');
+
+      expect(repository.updateShift).toHaveBeenCalledWith(
+        'std_1',
+        'ssh_1',
+        expect.objectContaining({
+          hourlyRate: '25.00',
+          metadata: expect.objectContaining({
+            audit: expect.objectContaining({
+              snapshot_overrides: [
+                expect.objectContaining({
+                  field: 'hourly_rate',
+                  old_value: '20',
+                  new_value: '25.00',
+                  actor_ext_id: 'user_actor',
+                  reason: 'Manager correction',
+                }),
+              ],
+            }),
+          }),
+        }),
+        BigInt(1),
+        undefined,
+      );
+    });
+
+    it('should update one shift block actual side against the stored other side', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: { toString: () => '20.00' },
+        metadata: {},
+        blocks: [
+          {
+            uid: 'ssb_keep',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: null,
+            actualEndTime: new Date('2026-03-05T12:10:00.000Z'),
+            metadata: {},
+          },
+        ],
+      } as never);
+      repository.updateShift.mockResolvedValue({ uid: 'ssh_1' } as never);
+
+      await service.updateShiftBlock('std_1', 'ssh_1', 'ssb_keep', {
+        actualStartTime: new Date('2026-03-05T09:05:00.000Z'),
+      }, 'user_actor');
+
+      expect(repository.updateShift).toHaveBeenCalledWith(
+        'std_1',
+        'ssh_1',
+        expect.any(Object),
+        BigInt(1),
+        expect.objectContaining({
+          blocksToUpsert: [
+            expect.objectContaining({
+              uid: 'ssb_keep',
+              actualStartTime: new Date('2026-03-05T09:05:00.000Z'),
+              actualEndTime: new Date('2026-03-05T12:10:00.000Z'),
+            }),
+          ],
+        }),
+      );
+    });
+
+    it('should reject shift block actual updates that invert the stored range', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: { toString: () => '20.00' },
+        metadata: {},
+        blocks: [
+          {
+            uid: 'ssb_keep',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: new Date('2026-03-05T10:00:00.000Z'),
+            actualEndTime: null,
+            metadata: {},
+          },
+        ],
+      } as never);
+
+      await expect(
+        service.updateShiftBlock('std_1', 'ssh_1', 'ssb_keep', {
+          actualEndTime: new Date('2026-03-05T09:30:00.000Z'),
+        }, 'user_actor'),
+      ).rejects.toThrow('Shift block actual_end_time must be after actual_start_time');
     });
   });
 });

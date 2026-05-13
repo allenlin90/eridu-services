@@ -73,6 +73,8 @@ const _internalShiftBlockShape = z.object({
   uid: z.string().startsWith(StudioShiftService.BLOCK_UID_PREFIX),
   startTime: z.date(),
   endTime: z.date(),
+  actualStartTime: z.date().nullable(),
+  actualEndTime: z.date().nullable(),
   metadata: z.record(z.string(), z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -121,6 +123,8 @@ const studioShiftApiResponseSchema = z.object({
       id: z.string(),
       start_time: z.iso.datetime(),
       end_time: z.iso.datetime(),
+      actual_start_time: z.iso.datetime().nullable(),
+      actual_end_time: z.iso.datetime().nullable(),
       metadata: studioShiftBlockMetadataSchema,
       created_at: z.iso.datetime(),
       updated_at: z.iso.datetime(),
@@ -148,6 +152,8 @@ export const studioShiftDto = _internalShiftWithRelationsShape
       id: block.uid,
       start_time: block.startTime.toISOString(),
       end_time: block.endTime.toISOString(),
+      actual_start_time: block.actualStartTime?.toISOString() ?? null,
+      actual_end_time: block.actualEndTime?.toISOString() ?? null,
       metadata: block.metadata,
       created_at: block.createdAt.toISOString(),
       updated_at: block.updatedAt.toISOString(),
@@ -160,6 +166,16 @@ export const studioShiftDto = _internalShiftWithRelationsShape
 const blockInputSchema = z.object({
   start_time: z.iso.datetime(),
   end_time: z.iso.datetime(),
+  actual_start_time: z.iso.datetime().nullable().optional(),
+  actual_end_time: z.iso.datetime().nullable().optional(),
+  metadata: studioShiftBlockMetadataSchema.optional(),
+});
+
+const updateBlockInputSchema = z.object({
+  start_time: z.iso.datetime().optional(),
+  end_time: z.iso.datetime().optional(),
+  actual_start_time: z.iso.datetime().nullable().optional(),
+  actual_end_time: z.iso.datetime().nullable().optional(),
   metadata: studioShiftBlockMetadataSchema.optional(),
 });
 
@@ -185,6 +201,8 @@ export const createStudioShiftSchema = z
     blocks: data.blocks.map((block) => ({
       startTime: new Date(block.start_time),
       endTime: new Date(block.end_time),
+      actualStartTime: block.actual_start_time ? new Date(block.actual_start_time) : undefined,
+      actualEndTime: block.actual_end_time ? new Date(block.actual_end_time) : undefined,
       metadata: block.metadata ?? {},
     })),
     status: data.status,
@@ -204,6 +222,7 @@ export const updateStudioShiftSchema = z
     is_duty_manager: z.boolean().optional(),
     is_approved: z.boolean().optional(),
     calculated_cost: z.union([z.coerce.number().nonnegative(), z.null()]).optional(),
+    override_reason: z.string().trim().min(1).max(1000).optional(),
     metadata: studioShiftMetadataSchema.optional(),
   })
   .transform((data) => ({
@@ -213,6 +232,8 @@ export const updateStudioShiftSchema = z
     blocks: data.blocks?.map((block) => ({
       startTime: new Date(block.start_time),
       endTime: new Date(block.end_time),
+      actualStartTime: block.actual_start_time ? new Date(block.actual_start_time) : (block.actual_start_time === null ? null : undefined),
+      actualEndTime: block.actual_end_time ? new Date(block.actual_end_time) : (block.actual_end_time === null ? null : undefined),
       metadata: block.metadata ?? {},
     })),
     status: data.status,
@@ -223,8 +244,25 @@ export const updateStudioShiftSchema = z
       : data.calculated_cost !== undefined
         ? data.calculated_cost.toFixed(2)
         : undefined,
+    overrideReason: data.override_reason,
     metadata: data.metadata,
   }));
+
+export const updateStudioShiftBlockSchema = updateBlockInputSchema.transform((data) => ({
+  startTime: data.start_time ? new Date(data.start_time) : undefined,
+  endTime: data.end_time ? new Date(data.end_time) : undefined,
+  actualStartTime: data.actual_start_time
+    ? new Date(data.actual_start_time)
+    : data.actual_start_time === null
+      ? null
+      : undefined,
+  actualEndTime: data.actual_end_time
+    ? new Date(data.actual_end_time)
+    : data.actual_end_time === null
+      ? null
+      : undefined,
+  metadata: data.metadata,
+}));
 
 export const listStudioShiftsQuerySchema = paginationQuerySchema
   .and(
@@ -396,6 +434,8 @@ export type BlocksReplacePayload = {
     uid: string;
     startTime: Date;
     endTime: Date;
+    actualStartTime?: Date | null;
+    actualEndTime?: Date | null;
     metadata: Record<string, unknown>;
   }>;
   retainedUids: string[];
@@ -403,6 +443,13 @@ export type BlocksReplacePayload = {
 
 export type CreateStudioShiftInput = z.infer<typeof createStudioShiftSchema>;
 export type UpdateStudioShiftInput = z.infer<typeof updateStudioShiftSchema>;
+export type UpdateStudioShiftBlockInput = {
+  startTime?: Date;
+  endTime?: Date;
+  actualStartTime?: Date | null;
+  actualEndTime?: Date | null;
+  metadata?: z.infer<typeof studioShiftBlockMetadataSchema>;
+};
 export type ListStudioShiftsQuery = z.infer<typeof listStudioShiftsQuerySchema>;
 export type ListMyStudioShiftsQuery = z.infer<typeof listMyStudioShiftsQuerySchema>;
 export type AssignDutyManagerInput = z.infer<typeof assignDutyManagerSchema>;
@@ -411,6 +458,7 @@ export type ShiftAlignmentQuery = z.infer<typeof shiftAlignmentQuerySchema>;
 
 export class CreateStudioShiftDto extends createZodDto(createStudioShiftSchema) {}
 export class UpdateStudioShiftDto extends createZodDto(updateStudioShiftSchema) {}
+export class UpdateStudioShiftBlockDto extends createZodDto(updateStudioShiftBlockSchema) {}
 export class ListStudioShiftsQueryDto extends createZodDto(listStudioShiftsQuerySchema) {}
 export class ListMyStudioShiftsQueryDto extends createZodDto(listMyStudioShiftsQuerySchema) {}
 export class DutyManagerQueryDto extends createZodDto(dutyManagerQuerySchema) {}

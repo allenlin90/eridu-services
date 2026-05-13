@@ -39,6 +39,10 @@ export class StudioShowManagementService {
   async createShow(studioUid: string, dto: CreateStudioShowDto) {
     const studio = await this.studioService.getStudioById(studioUid);
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
+    this.showService.ensureValidActualTimeRange(null, null, {
+      actualStartTime: dto.actualStartTime,
+      actualEndTime: dto.actualEndTime,
+    });
     await this.ensureScheduleBelongsToStudioAndClient(
       studio.id,
       studioUid,
@@ -103,6 +107,11 @@ export class StudioShowManagementService {
       dto.clientId ?? existingShow.client?.uid,
     );
     this.ensureValidTimeRange(existingShow.startTime, existingShow.endTime, dto);
+    this.showService.ensureValidActualTimeRange(
+      existingShow.actualStartTime,
+      existingShow.actualEndTime,
+      { actualStartTime: dto.actualStartTime, actualEndTime: dto.actualEndTime },
+    );
 
     await this.showRepository.update({ uid: showUid }, this.buildUpdatePayload(dto));
 
@@ -216,6 +225,8 @@ export class StudioShowManagementService {
       name: dto.name,
       startTime: dto.startTime,
       endTime: dto.endTime,
+      actualStartTime: dto.actualStartTime,
+      actualEndTime: dto.actualEndTime,
       metadata: dto.metadata ?? {},
       client: { connect: { uid: dto.clientId } },
       studio: { connect: { uid: studioUid } },
@@ -240,6 +251,8 @@ export class StudioShowManagementService {
       name: dto.name,
       startTime: dto.startTime,
       endTime: dto.endTime,
+      actualStartTime: dto.actualStartTime,
+      actualEndTime: dto.actualEndTime,
       metadata: dto.metadata ?? {},
       client: { connect: { uid: dto.clientId } },
       studio: { connect: { uid: studioUid } },
@@ -285,6 +298,10 @@ export class StudioShowManagementService {
         ? { connect: { uid: dto.studioRoomId } }
         : { disconnect: true };
     }
+    if (dto.actualStartTime !== undefined)
+      payload.actualStartTime = dto.actualStartTime;
+    if (dto.actualEndTime !== undefined)
+      payload.actualEndTime = dto.actualEndTime;
 
     return payload;
   }

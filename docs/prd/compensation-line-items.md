@@ -113,6 +113,8 @@ Normal creator/show base compensation is calculated from `ShowCreator` snapshot 
 
 The feature is forward-looking. Calculators may calculate only when the required facts exist. Existing rows that lack reliable snapshots or actuals remain unresolved or pending in later read models; 2.2 does not backfill them from mutable current defaults.
 
+New `ShowCreator` assignment writes may set `metadata.flags.agreement_snapshot_missing = true` when required agreement snapshot fields cannot be resolved from explicit input or roster defaults. The flag is a readability marker for downstream warnings and debugging; economics reads must derive unresolved state from the snapshot fields themselves and not treat a missing flag as proof that the row is complete.
+
 ### Store outcomes, not rules
 
 Line items are flat amounts entered by a user or a future rule engine. Phase 4 does not store formulas in `metadata`, infer overtime, or calculate bonus rules.
@@ -203,6 +205,7 @@ The product constraints are:
 - [ ] No actuals approval, reopen, settlement, or freeze fields are added.
 - [ ] Existing `ShowCreator` rows with missing snapshot fields are not backfilled by 2.2.
 - [ ] Normal app assignment writes persist explicit/resolved `ShowCreator` agreement snapshot fields when available; unresolved rows remain calculably unresolved.
+- [ ] Rows with missing required agreement snapshot fields are unresolved even when `metadata.flags.agreement_snapshot_missing` is absent; the flag is advisory metadata, not the source of truth.
 - [ ] Roster default-rate update UX states that existing assignment snapshots are unchanged unless a manager explicitly edits those assignments.
 - [ ] ADMIN/MANAGER changes to `ShowCreator` snapshot fields and `StudioShift.hourlyRate` append entries to `metadata.audit.snapshot_overrides[]` (chronological array; snake_case keys `field`, `old_value`, `new_value`, `actor_ext_id`, `at`, optional `reason`). Internal DB IDs are not written into `metadata`.
 - [ ] Line items cannot be attached to a `Show` whose `studioId` is null (orphan / client-only show); the attempt is rejected with `LINE_ITEM_TARGET_NOT_FOUND`.
