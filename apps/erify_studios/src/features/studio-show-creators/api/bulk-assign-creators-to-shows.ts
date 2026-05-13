@@ -122,6 +122,9 @@ export function useBulkAssignCreatorsToShows({
         queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) }),
         ...uniqueShowIds.map((showId) => queryClient.invalidateQueries({ queryKey: studioShowKeys.detail(studioId, showId) })),
         ...uniqueShowIds.map((showId) => queryClient.invalidateQueries({ queryKey: showCreatorsKeys.list(studioId, showId) })),
+        ...uniqueShowIds.map((showId) =>
+          queryClient.invalidateQueries({ queryKey: showCreatorsKeys.compensationSummary(studioId, showId) }),
+        ),
       ]);
 
       if (response.created === 0 && response.errors.length === 0) {

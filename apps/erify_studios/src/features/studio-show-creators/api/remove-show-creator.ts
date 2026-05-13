@@ -21,6 +21,7 @@ export function useRemoveShowCreator(studioId: string, showId: string) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: showCreatorsKeys.list(studioId, showId) }),
+        queryClient.invalidateQueries({ queryKey: showCreatorsKeys.compensationSummary(studioId, showId) }),
         queryClient.invalidateQueries({ queryKey: studioShowKeys.detail(studioId, showId) }),
         queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) }),
       ]);
