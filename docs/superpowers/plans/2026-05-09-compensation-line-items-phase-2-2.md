@@ -128,23 +128,23 @@ Tasks 1 and 4 are independent; everything else has at least one upstream depende
 **Files:**
 - Modify/create creator mapping components under `apps/erify_studios/src/features/studio-show-creators/`.
 - Reuse: `apps/erify_studios/src/features/compensation-line-items/`
-- Modify: `packages/api-types/src/studio-creators/` for assignment UID, roster defaults, bulk assignment payloads, and summary response.
+- Modify: `packages/api-types/src/studio-creators/` for assignment UID, roster defaults, assignment payloads, and summary response.
 - Modify: `apps/erify_api/src/studios/studio-show/`, `apps/erify_api/src/show-orchestration/`, creator lookup schemas/repositories.
 - Test: creator mapping component tests and backend creator assignment/summary tests.
 
 - [ ] Revise this plan plus `docs/prd/compensation-line-items.md` and frontend/backend design docs before implementation so Task 5 scope is explicit.
-- [ ] Extend creator catalog/availability lookup responses with roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) for assignment prefill.
+- [ ] Extend creator catalog/availability lookup responses with roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) so backend assignment snapshots and later compensation review views can reference defaults.
 - [ ] Add `id` to `StudioShowCreatorListItem`; it is the `ShowCreator` assignment UID and is the required `SHOW_CREATOR` `target_id`.
-- [ ] Extend bulk assignment contracts to accept `creators[]` objects with `compensation_type`, `agreed_rate`, `commission_rate`, and optional initial `SHOW_CREATOR` compensation line items.
-- [ ] In bulk mapping, prefill editable per-creator values from roster defaults and submit structured creator payloads. Do not calculate or display total costs in bulk assignment.
-- [ ] For skipped/existing assignments during bulk mapping, do not auto-create duplicate initial line items.
+- [ ] Keep bulk mapping assignment-only: submit selected creator IDs for selected shows, with no rate, commission, compensation item, or total-cost controls.
+- [ ] Ensure bulk assignment does not auto-create initial compensation line items from assignment payloads.
 - [ ] In `/creator-mapping/$showId`, add a compensation drawer/dialog per assigned MC row.
 - [ ] Show assignment base compensation from the `ShowCreator` snapshot plus `SHOW_CREATOR` adjustment items.
 - [ ] Add a backend-calculated creator compensation summary endpoint/response for the per-show creator mapping view. Frontend renders returned totals only.
 - [ ] Allow create/update/delete of `SHOW_CREATOR` compensation items with `target_type=SHOW_CREATOR` and `target_id=<showCreatorAssignmentUid>`.
-- [ ] Add a 2.3 design note: broader costs review does not belong in bulk assignment, but can reuse the creator mapping calculation/read model.
-- [ ] Test bulk dialog defaults, per-creator overrides, initial item payloads, assignment UID usage, line-item management, and total rendering.
-- [ ] Test backend assignment creation with compensation fields/initial line items and summary calculation from assignment snapshots plus line items.
+- [ ] Widen the compensation dialog desktop layout so amount/type/reason inputs do not collapse into a cramped three-field row.
+- [ ] Add a 2.3 design note: broader costs review does not belong in bulk assignment; a future creator-based date-range review can reuse the creator mapping calculation/read model and provide bulk compensation edits for one creator's shows.
+- [ ] Test bulk/add dialogs do not expose compensation fields, assignment UID usage, line-item management, and total rendering.
+- [ ] Test backend assignment creation ignores initial compensation line-item payloads and summary calculation comes from assignment snapshots plus line items.
 - [ ] Verify frontend lint, typecheck, tests, and build.
 - [ ] Verify backend lint, typecheck, tests, and build.
 - [ ] Commit with a creator-mapping-compensation message.

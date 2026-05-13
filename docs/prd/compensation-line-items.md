@@ -46,11 +46,11 @@ A future `compensation/line-items` or economics-adjacent workspace can be introd
 
 Task 5 narrows the first studio-facing UI to creator compensation in creator mapping:
 
-- bulk creator mapping at `/studios/:studioId/creator-mapping` captures per-creator assignment compensation inputs and optional initial `SHOW_CREATOR` line items;
+- bulk creator mapping at `/studios/:studioId/creator-mapping` only assigns selected creators to selected shows and uses roster defaults for new assignment snapshots;
 - per-show creator mapping at `/studios/:studioId/creator-mapping/:showId` shows assigned MC compensation, manages `SHOW_CREATOR` adjustment items, and renders backend-calculated show creator totals;
 - Task 5 does not add `SHOW`, task, shift, or shift-block compensation UI.
 
-Bulk assignment is an input workflow only and does not preview totals. Broader cost review belongs to the 2.3 economics review/read-model workflow, which may reuse the same creator mapping calculation response.
+Bulk assignment is an assignment workflow only. It must not ask for rates, commission, or compensation items because each show creator assignment can have different compensation terms and adjustments. Broader cost review belongs to the 2.3 economics review/read-model workflow, which may reuse the same creator mapping calculation response. A future creator-based compensation review should list one creator's shows over a date range and allow managers to edit per-show assignment terms and `SHOW_CREATOR` items in bulk from that creator-centered context.
 
 ## Scope Boundary
 
@@ -119,7 +119,7 @@ Bulk assignment is an input workflow only and does not preview totals. Broader c
 
 Normal creator/show base compensation is calculated from `ShowCreator` snapshot fields plus show planned/actual duration. Normal operator/shift base labor is calculated from `StudioShift.hourlyRate` plus shift-block planned/actual duration. 2.2 must not create `CompensationLineItem` rows to represent those base amounts. If the UI needs a breakdown table, 2.3 can return generated read-model rows for base components alongside persisted supplemental line items.
 
-For Task 5, the base creator amount is stored as assignment snapshot fields on `ShowCreator` (`compensationType`, `agreedRate`, `commissionRate`) and calculated by backend read logic. A `CompensationLineItem` remains a manual signed adjustment, not the persisted representation of default/fixed rate compensation.
+For Task 5, new show creator assignments resolve their base compensation snapshot from creator roster defaults when explicit terms are not provided by a purpose-built compensation edit workflow. The base creator amount is stored as assignment snapshot fields on `ShowCreator` (`compensationType`, `agreedRate`, `commissionRate`) and calculated by backend read logic. A `CompensationLineItem` remains a manual signed adjustment, not the persisted representation of default/fixed rate compensation.
 
 ### Existing rows are not repaired
 
@@ -187,8 +187,9 @@ The product constraints are:
 | Surface | Requirement |
 | ------- | ----------- |
 | System line-item support | System admins can inspect, filter, create, correct, and soft-delete line items across studios. |
-| Bulk creator mapping | `/studios/:studioId/creator-mapping` captures per-creator `compensation_type`, `agreed_rate`, `commission_rate`, and optional initial `SHOW_CREATOR` adjustment items, prefilled from creator roster defaults. It does not calculate or display totals. |
+| Bulk creator mapping | `/studios/:studioId/creator-mapping` assigns selected creators to selected shows only. It does not expose rate, commission, compensation item, or total-cost controls. New assignments use creator roster defaults for their snapshots. |
 | Per-show creator mapping | `/studios/:studioId/creator-mapping/:showId` renders backend-calculated assigned-MC cost totals from `ShowCreator` snapshots plus `SHOW_CREATOR` line items, and lets ADMIN/MANAGER create/update/delete those line items by `target_type=SHOW_CREATOR` and the show-creator assignment UID. |
+| Future creator-based compensation review | Later 2.3 design should list shows for a selected creator over a date range and support manager review/edit of per-show assignment compensation and `SHOW_CREATOR` items from that creator-centered view. |
 | Target-scoped studio panels | ADMIN/MANAGER can create, edit, and soft-delete line items from the show, show creator assignment, shift, or shift block being adjusted; panels call the flat studio line-item API with explicit target filters. |
 | Base vs supplemental display | Breakdown UI separates calculated base compensation from supplemental line items; users must not see generated base rows as editable line items. |
 | Actuals entry | Show detail and shift-block surfaces expose compact actual-time inputs for ADMIN/MANAGER. |

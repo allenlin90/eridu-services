@@ -196,12 +196,14 @@ All studio line-item routes restrict access to `STUDIO_ROLE.ADMIN` and `STUDIO_R
 
 | Endpoint | Change | Roles |
 | -------- | ------ | ----- |
-| `GET /studios/:studioId/creators/catalog` and availability lookup | Include roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) so assignment dialogs can prefill editable values | existing creator mapping roles |
-| `POST /studios/:studioId/shows/:showId/creators/bulk-assign` | Accept `creators[]` objects containing assignment compensation fields and optional initial line items. Initial line items are created only for newly created/restored assignments, not skipped existing assignments. | existing creator mapping write roles |
+| `GET /studios/:studioId/creators/catalog` and availability lookup | Include roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) so new assignments can snapshot creator defaults server-side and future compensation review views can display defaults | existing creator mapping roles |
+| `POST /studios/:studioId/shows/:showId/creators/bulk-assign` | Accept `creators[]` objects for assignment membership only. The endpoint must not create initial compensation line items from assignment payloads. | existing creator mapping write roles |
 | `GET /studios/:studioId/shows/:showId/creators` | Return `id` as the `ShowCreator` assignment UID for `SHOW_CREATOR` line-item targeting | existing creator mapping read roles |
 | `GET /studios/:studioId/shows/:showId/creators/compensation-summary` | Return backend-calculated base, adjustment, creator total, show total, and unresolved reason data for assigned MCs | existing creator mapping read roles |
 
 Task 5 does not add `SHOW`, task, shift, or shift-block compensation UI contracts. Those targets remain available at the flat line-item API layer for future workflow slices, but the creator mapping UX uses only `target_type=SHOW_CREATOR` with `target_id=<showCreatorAssignmentUid>`.
+
+Bulk creator assignment is intentionally not a compensation edit contract. Base compensation snapshots come from creator roster defaults unless a dedicated assignment-compensation edit workflow supplies explicit terms. A later creator-based compensation review can add date-ranged read/write contracts for one creator's show assignments without overloading the multi-show assignment endpoint.
 
 ### PR 3: actuals and snapshot readiness
 
