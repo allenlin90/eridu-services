@@ -34,7 +34,9 @@ const lineItemsResponse = {
 vi.mock('@eridu/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type={props.type ?? 'button'} {...props}>{children}</button>,
   Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div>{children}</div> : null),
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <div data-testid="show-creator-compensation-dialog-content" className={className}>{children}</div>
+  ),
   DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -187,5 +189,12 @@ describe('showCreatorCompensationDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Delete compensation item Launch bonus' }));
 
     expect(mockDeleteMutate).toHaveBeenCalledWith('comp_item_1');
+  });
+
+  it('uses a wider desktop layout and avoids a cramped three-field form row', () => {
+    renderDialog();
+
+    expect(screen.getByTestId('show-creator-compensation-dialog-content')).toHaveClass('sm:max-w-[860px]');
+    expect(screen.getByLabelText('Reason').closest('div')).toHaveClass('md:col-span-2');
   });
 });

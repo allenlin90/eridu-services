@@ -164,7 +164,7 @@ export function ShowCreatorCompensationDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[860px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Creator Compensation</DialogTitle>
           <DialogDescription>
@@ -242,7 +242,7 @@ export function ShowCreatorCompensationDialog({
             ))}
           </div>
 
-          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-[140px_160px_1fr]">
+          <div className="grid gap-3 rounded-md border p-3 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="show-creator-line-item-amount">Amount</Label>
               <Input
@@ -268,7 +268,7 @@ export function ShowCreatorCompensationDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="show-creator-line-item-reason">Reason</Label>
               <Textarea
                 id="show-creator-line-item-reason"

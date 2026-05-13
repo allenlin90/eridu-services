@@ -18,32 +18,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
 } from '@eridu/ui';
 
 import { useBulkAssignCreatorsToShows } from '../api/bulk-assign-creators-to-shows';
 import { useCreatorCatalogQuery } from '../api/get-creator-catalog';
 import {
-  buildShowCreatorAssignmentInput,
-  type CreatorAssignmentCompensationDraft,
-} from '../lib/creator-assignment-compensation';
-import {
   getMissingCreatorGuidance,
   getRosterAssignmentFailureMessage,
 } from '../lib/creator-roster-guidance';
 
-import {
-  STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS,
-  type StudioCreatorCompensationTypeOption,
-  UNSET_COMPENSATION_TYPE,
-} from '@/features/studio-creator-roster/lib/studio-creator-compensation';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -65,7 +48,6 @@ export function BulkCreatorAssignmentDialog({
   onSuccess,
 }: BulkCreatorAssignmentDialogProps) {
   const [selectedCreatorIds, setSelectedCreatorIds] = useState<string[]>([]);
-  const [assignmentDrafts, setAssignmentDrafts] = useState<Record<string, CreatorAssignmentCompensationDraft>>({});
   const [creatorSearch, setCreatorSearch] = useState('');
   const [assignmentSummary, setAssignmentSummary] = useState<BulkShowCreatorAssignmentResponse | null>(null);
   const { role } = useStudioAccess(studioId);
@@ -101,53 +83,9 @@ export function BulkCreatorAssignmentDialog({
     () => new Map(creators.map((creator) => [creator.id, creator.name])),
     [creators],
   );
-  const creatorById = useMemo(
-    () => new Map(creators.map((creator) => [creator.id, creator])),
-    [creators],
-  );
-
-  const createDraftForCreator = (creatorId: string): CreatorAssignmentCompensationDraft => {
-    const creator = creatorById.get(creatorId);
-
-    return {
-      creatorId,
-      compensationType: creator?.default_rate_type ?? UNSET_COMPENSATION_TYPE,
-      agreedRate: creator?.default_rate ?? '',
-      commissionRate: creator?.default_commission_rate ?? '',
-      initialItemAmount: '',
-      initialItemType: 'BONUS',
-      initialItemReason: '',
-    };
-  };
-
-  const handleCreatorSelectionChange = (nextCreatorIds: string[]) => {
-    setSelectedCreatorIds(nextCreatorIds);
-    setAssignmentDrafts((current) => {
-      const nextDrafts: Record<string, CreatorAssignmentCompensationDraft> = {};
-      nextCreatorIds.forEach((creatorId) => {
-        nextDrafts[creatorId] = current[creatorId] ?? createDraftForCreator(creatorId);
-      });
-      return nextDrafts;
-    });
-  };
-
-  const updateDraft = (
-    creatorId: string,
-    patch: Partial<CreatorAssignmentCompensationDraft>,
-  ) => {
-    setAssignmentDrafts((current) => ({
-      ...current,
-      [creatorId]: {
-        ...(current[creatorId] ?? createDraftForCreator(creatorId)),
-        ...patch,
-      },
-    }));
-  };
-
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setSelectedCreatorIds([]);
-      setAssignmentDrafts({});
       setCreatorSearch('');
       setAssignmentSummary(null);
     }
@@ -180,8 +118,7 @@ export function BulkCreatorAssignmentDialog({
     setAssignmentSummary(null);
     assignCreators({
       show_ids: shows.map((show) => show.id),
-      creators: selectedCreatorIds.map((creatorId) =>
-        buildShowCreatorAssignmentInput(assignmentDrafts[creatorId] ?? createDraftForCreator(creatorId))),
+      creators: selectedCreatorIds.map((creatorId) => ({ creator_id: creatorId })),
     });
   };
 
@@ -227,7 +164,7 @@ export function BulkCreatorAssignmentDialog({
             <p className="text-sm font-medium">Creators</p>
             <AsyncMultiCombobox
               value={selectedCreatorIds}
-              onChange={handleCreatorSelectionChange}
+              onChange={setSelectedCreatorIds}
               onSearch={setCreatorSearch}
               options={creatorOptions}
               isLoading={isLoadingCreators}
@@ -260,121 +197,6 @@ export function BulkCreatorAssignmentDialog({
               {creatorLimitExceeded && ' — limit exceeded'}
             </p>
           </div>
-
-          {selectedCreatorIds.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Assignment Compensation</p>
-              {selectedCreatorIds.map((creatorId) => {
-                const draft = assignmentDrafts[creatorId] ?? createDraftForCreator(creatorId);
-                const creatorName = creatorNameById.get(creatorId) ?? creatorId;
-                const commissionDisabled = draft.compensationType === UNSET_COMPENSATION_TYPE
-                  || draft.compensationType === 'FIXED';
-
-                return (
-                  <div key={creatorId} className="space-y-3 rounded-md border p-3">
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-sm font-medium">{creatorName}</span>
-                      <span className="text-xs text-muted-foreground">Prefilled from roster defaults</span>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor={`assignment-compensation-type-${creatorId}`}>
-                          Compensation type for
-                          {' '}
-                          {creatorName}
-                        </Label>
-                        <Select
-                          value={draft.compensationType}
-                          onValueChange={(value) => updateDraft(creatorId, {
-                            compensationType: value as StudioCreatorCompensationTypeOption,
-                            commissionRate: value === 'FIXED' || value === UNSET_COMPENSATION_TYPE
-                              ? ''
-                              : draft.commissionRate,
-                          })}
-                          disabled={isAssigning}
-                        >
-                          <SelectTrigger id={`assignment-compensation-type-${creatorId}`}>
-                            <SelectValue placeholder="Select compensation type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor={`assignment-agreed-rate-${creatorId}`}>
-                          Agreed rate for
-                          {' '}
-                          {creatorName}
-                        </Label>
-                        <Input
-                          id={`assignment-agreed-rate-${creatorId}`}
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={draft.agreedRate}
-                          onChange={(event) => updateDraft(creatorId, { agreedRate: event.target.value })}
-                          disabled={isAssigning}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor={`assignment-commission-rate-${creatorId}`}>
-                          Commission rate for
-                          {' '}
-                          {creatorName}
-                        </Label>
-                        <Input
-                          id={`assignment-commission-rate-${creatorId}`}
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          value={draft.commissionRate}
-                          onChange={(event) => updateDraft(creatorId, { commissionRate: event.target.value })}
-                          disabled={isAssigning || commissionDisabled}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
-                      <div className="space-y-1.5">
-                        <Label htmlFor={`assignment-initial-item-amount-${creatorId}`}>
-                          Initial item amount for
-                          {' '}
-                          {creatorName}
-                        </Label>
-                        <Input
-                          id={`assignment-initial-item-amount-${creatorId}`}
-                          type="number"
-                          step="0.01"
-                          value={draft.initialItemAmount}
-                          onChange={(event) => updateDraft(creatorId, { initialItemAmount: event.target.value })}
-                          disabled={isAssigning}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor={`assignment-initial-item-reason-${creatorId}`}>
-                          Initial item reason for
-                          {' '}
-                          {creatorName}
-                        </Label>
-                        <Textarea
-                          id={`assignment-initial-item-reason-${creatorId}`}
-                          value={draft.initialItemReason}
-                          onChange={(event) => updateDraft(creatorId, { initialItemReason: event.target.value })}
-                          disabled={isAssigning}
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
 
           {assignmentSummary && assignmentSummary.errors.length > 0 && (
             <div className="space-y-1 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900">
