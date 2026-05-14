@@ -163,7 +163,9 @@ interface StudioMembership {
   - `/studios/$studioId/creator-mapping/$showId` (show-level creator add/remove)
 - Creator mapping API endpoints (guarded by `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`):
   - `GET /studios/:studioId/shows/:showId/creators`
-  - `POST /studios/:studioId/shows/:showId/creators/bulk-assign`
+  - `POST /studios/:studioId/shows/:showId/creators/bulk-assign` (assignment-only since PR #64; no compensation fields in payload)
+- Creator compensation endpoint (tighter guard — `@StudioProtected([ADMIN, MANAGER])`, excludes `TALENT_MANAGER`):
+  - `GET /studios/:studioId/shows/:showId/creators/compensation-summary` — backend-calculated per-MC totals; `HYBRID` and `COMMISSION` rows return `total_amount: null` with `unresolved_reason: COMMISSION_REVENUE_NOT_AVAILABLE`
 
 ## Guard Implementation Pattern
 

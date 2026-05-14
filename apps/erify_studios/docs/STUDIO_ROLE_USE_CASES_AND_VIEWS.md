@@ -190,12 +190,14 @@ Define what each studio role can see and do across all studio-scoped routes.
 ### Creator mapping data sources
 
 1. `GET /studios/:studioId/shows` — show list for mapping context
-2. `GET /studios/:studioId/shows/:showId/creators` — assigned creators per show
-3. `POST /studios/:studioId/shows/:showId/creators/bulk-assign` — bulk assign
-4. `DELETE /studios/:studioId/shows/:showId/creators/:creatorId` — remove one mapping
-5. `GET /studios/:studioId/creators/catalog` — searchable creator picker
-6. `GET /studios/:studioId/creators` — studio creator roster
-7. `POST /studios/:studioId/creators` / `PATCH /studios/:studioId/creators/:creatorId` — roster management for admin users
+2. `GET /studios/:studioId/shows/:showId/creators` — assigned creators per show; row `id` is the `ShowCreator` assignment UID
+3. `POST /studios/:studioId/shows/:showId/creators/bulk-assign` — bulk assign (assignment-only payload since PR #64; no compensation fields)
+4. `GET /studios/:studioId/shows/:showId/creators/compensation-summary` — backend-calculated per-MC compensation totals (`ADMIN`/`MANAGER` only; `TALENT_MANAGER` cannot see money totals)
+5. `DELETE /studios/:studioId/shows/:showId/creators/:creatorId` — remove one mapping
+6. `GET /studios/:studioId/creators/catalog` — searchable creator picker (includes roster defaults since PR #64)
+7. `GET /studios/:studioId/creators` — studio creator roster
+8. `POST /studios/:studioId/creators` / `PATCH /studios/:studioId/creators/:creatorId` — roster management for admin users
+9. `POST|PATCH|DELETE /studios/:studioId/compensation-line-items` with `target_type=SHOW_CREATOR` and `target_id=<ShowCreator assignment uid>` — supplemental per-assignment adjustments (`ADMIN`/`MANAGER` only)
 
 ## Change Control
 
