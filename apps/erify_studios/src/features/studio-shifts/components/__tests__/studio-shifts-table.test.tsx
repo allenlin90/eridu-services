@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { StudioShiftsTable } from '../studio-shifts-table';
 
+import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
+
 const mockDeleteMutateAsync = vi.fn();
+const mockUpdateMutateAsync = vi.fn();
 const mockUpdateSearch = vi.fn();
 const mockUseStudioShiftsPageController = vi.fn();
 
@@ -25,7 +28,7 @@ vi.mock('@/features/studio-shifts/api/create-studio-shift', () => ({
 }));
 
 vi.mock('@/features/studio-shifts/api/update-studio-shift', () => ({
-  useUpdateStudioShift: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateStudioShift: () => ({ mutateAsync: mockUpdateMutateAsync, isPending: false }),
 }));
 
 vi.mock('@/features/studio-shifts/api/assign-duty-manager', () => ({
@@ -63,18 +66,31 @@ vi.mock('@/features/studio-shifts/components/shift-toolbar', () => ({
   ),
 }));
 
+vi.mock('@/features/studio-shifts/components/shift-compensation-dialog', () => ({
+  ShiftCompensationDialog: ({ open }: { open: boolean }) => (
+    <p data-testid="compensation-dialog">{open ? 'open' : 'closed'}</p>
+  ),
+}));
+
 vi.mock('@/features/studio-shifts/components/shift-roster-card', () => ({
   ShiftRosterCard: ({
     shifts,
+    onEdit,
     onDelete,
     onPaginationChange,
   }: {
     shifts: Array<{ id: string }>;
+    onEdit: (shift: unknown) => void;
     onDelete: (shiftId: string) => void;
     onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   }) => (
     <div>
       <p data-testid="shift-order">{shifts.map((shift) => shift.id).join(',')}</p>
+      {shifts[0] && (
+        <button type="button" onClick={() => onEdit(shifts[0])}>
+          edit-first-shift
+        </button>
+      )}
       <button type="button" onClick={() => onDelete('ssh_1')}>
         delete-ssh-1
       </button>
@@ -89,13 +105,40 @@ vi.mock('@/features/studio-shifts/components/studio-shift-form-dialog', () => ({
   StudioShiftFormDialog: ({
     idPrefix,
     open,
+    formState,
+    onFormChange,
+    onSubmit,
   }: {
     idPrefix: string;
     open: boolean;
+    formState: ShiftFormState;
+    onFormChange: (next: ShiftFormState) => void;
+    onSubmit: () => void;
   }) => (
-    <p data-testid={`dialog-${idPrefix}`}>
-      {open ? 'open' : 'closed'}
-    </p>
+    <div>
+      <p data-testid={`dialog-${idPrefix}`}>
+        {open ? 'open' : 'closed'}
+      </p>
+      {open && idPrefix === 'edit' && (
+        <div>
+          <button
+            type="button"
+            onClick={() => onFormChange({ ...formState, hourlyRate: '25.00' })}
+          >
+            set-hourly-rate-25
+          </button>
+          <button
+            type="button"
+            onClick={() => onFormChange({ ...formState, hourlyRate: '20' })}
+          >
+            set-hourly-rate-20
+          </button>
+          <button type="button" onClick={onSubmit}>
+            submit-edit
+          </button>
+        </div>
+      )}
+    </div>
   ),
 }));
 
@@ -130,6 +173,7 @@ function createShift(id: string, startIso: string) {
 describe('studioShiftsTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUpdateMutateAsync.mockResolvedValue(undefined);
 
     mockUseStudioShiftsPageController.mockReturnValue({
       data: undefined,
@@ -233,5 +277,83 @@ describe('studioShiftsTable', () => {
     await user.click(screen.getByRole('button', { name: 'pagination-change' }));
 
     expect(mockOnPaginationChange).toHaveBeenCalledWith({ pageIndex: 0, pageSize: 20 });
+  });
+
+  it('warns before submitting a changed hourly-rate snapshot with an override reason', async () => {
+    const user = userEvent.setup();
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: undefined,
+      shifts: [createShift('ssh_1', '2026-03-05T09:00:00.000Z')],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 10, total: 1, pageCount: 1 },
+      onPaginationChange: vi.fn(),
+    });
+
+    render(
+      <StudioShiftsTable
+        studioId="std_1"
+        isStudioAdmin
+        search={{ view: 'table', page: 1, limit: 10 }}
+        updateSearch={mockUpdateSearch}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'edit-first-shift' }));
+    await user.click(screen.getByRole('button', { name: 'set-hourly-rate-25' }));
+    await user.click(screen.getByRole('button', { name: 'submit-edit' }));
+
+    expect(screen.getByText(/Changing hourly rate updates a compensation snapshot/i)).toBeInTheDocument();
+    expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText('Override reason'), 'Corrected overtime rate');
+    await user.click(screen.getByRole('button', { name: 'Confirm rate change' }));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        shiftId: 'ssh_1',
+        payload: expect.objectContaining({
+          hourly_rate: 25,
+          override_reason: 'Corrected overtime rate',
+        }),
+      });
+    });
+  });
+
+  it('skips the hourly-rate warning for equivalent rate values', async () => {
+    const user = userEvent.setup();
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: undefined,
+      shifts: [createShift('ssh_1', '2026-03-05T09:00:00.000Z')],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 10, total: 1, pageCount: 1 },
+      onPaginationChange: vi.fn(),
+    });
+
+    render(
+      <StudioShiftsTable
+        studioId="std_1"
+        isStudioAdmin
+        search={{ view: 'table', page: 1, limit: 10 }}
+        updateSearch={mockUpdateSearch}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'edit-first-shift' }));
+    await user.click(screen.getByRole('button', { name: 'set-hourly-rate-20' }));
+    await user.click(screen.getByRole('button', { name: 'submit-edit' }));
+
+    expect(screen.queryByText(/Changing hourly rate updates a compensation snapshot/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        shiftId: 'ssh_1',
+        payload: expect.not.objectContaining({
+          override_reason: expect.anything(),
+        }),
+      });
+    });
   });
 });

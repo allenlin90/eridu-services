@@ -46,6 +46,7 @@ type ShiftRosterCardProps = {
   getShiftWindowLabel: (shift: StudioShift) => string;
   onToggleDutyManager: (shiftId: string, nextDutyManager: boolean) => void;
   onEdit: (shift: StudioShift) => void;
+  onManageCompensation: (shift: StudioShift) => void;
   onDelete: (shiftId: string) => void;
 };
 
@@ -64,6 +65,7 @@ export function ShiftRosterCard({
   getShiftWindowLabel,
   onToggleDutyManager,
   onEdit,
+  onManageCompensation,
   onDelete,
 }: ShiftRosterCardProps) {
   const formatShiftDurationHours = (shift: StudioShift): string => {
@@ -204,6 +206,9 @@ export function ShiftRosterCard({
                                     <DropdownMenuContent align="end">
                                       <DropdownMenuItem onClick={() => onEdit(shift)}>
                                         Edit Shift
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => onManageCompensation(shift)}>
+                                        Manage Compensation
                                       </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => onToggleDutyManager(shift.id, !shift.is_duty_manager)}>
                                         {shift.is_duty_manager ? 'Remove Duty Manager' : 'Set as Duty Manager'}

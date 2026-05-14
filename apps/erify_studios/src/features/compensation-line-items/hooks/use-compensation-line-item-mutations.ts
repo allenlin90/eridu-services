@@ -16,6 +16,8 @@ import {
   updateAdminCompensationLineItem,
   updateStudioCompensationLineItem,
 } from '@/features/compensation-line-items/api/compensation-line-items.api';
+import { shiftCalendarKeys } from '@/features/studio-shifts/api/get-shift-calendar';
+import { studioShiftsKeys } from '@/features/studio-shifts/api/get-studio-shifts';
 import { showCreatorsKeys } from '@/features/studio-show-creators/api/get-show-creators';
 
 export function useCreateAdminCompensationLineItem() {
@@ -60,11 +62,12 @@ export function useDeleteAdminCompensationLineItem() {
 type StudioMutationContext = {
   studioId: string;
   showId?: string;
+  invalidateShiftWorkflow?: boolean;
 };
 
 function invalidateStudioCompensationQueries(
   queryClient: ReturnType<typeof useQueryClient>,
-  { studioId, showId }: StudioMutationContext,
+  { studioId, showId, invalidateShiftWorkflow }: StudioMutationContext,
 ) {
   queryClient.invalidateQueries({
     queryKey: studioCompensationLineItemKeys.listPrefix(studioId),
@@ -73,6 +76,10 @@ function invalidateStudioCompensationQueries(
     queryClient.invalidateQueries({
       queryKey: showCreatorsKeys.compensationSummary(studioId, showId),
     });
+  }
+  if (invalidateShiftWorkflow) {
+    queryClient.invalidateQueries({ queryKey: studioShiftsKeys.listPrefix(studioId) });
+    queryClient.invalidateQueries({ queryKey: shiftCalendarKeys.all(studioId) });
   }
 }
 
