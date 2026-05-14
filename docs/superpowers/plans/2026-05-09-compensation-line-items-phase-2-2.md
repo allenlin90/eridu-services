@@ -195,13 +195,16 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - Test: backend and frontend shift specs/fixtures.
 
 > **Why this is one PR, not several:** `StudioShift.projectedCost` is currently `Decimal NOT NULL`. Dropping the column requires removing every writer in the same change set, otherwise shift creation fails between the two PRs. Use the search hint `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` to find all touchpoints (~98 references at the time of this plan).
+>
+> **Replacement table column:** the admin shift table keeps a monetary column, but it changes from stored `Projected Cost` to backend-provided `Total Cost`. The value must come from a live backend read/calculator path and include shift base labor plus active `STUDIO_SHIFT` and `STUDIO_SHIFT_BLOCK` line items for that shift. The frontend renders the returned `total_cost` string only; it does not sum money locally.
 
 - [ ] Generate a Prisma migration removing `StudioShift.projectedCost` and `StudioShift.calculatedCost`.
 - [ ] Remove backend create/update/persistence logic and response serialization for the dropped fields. Confirm shift creation no longer requires `projectedCost`.
-- [ ] Remove shift calendar cost aggregation based on stored shift costs.
-- [ ] Remove the fields from `packages/api-types/src/studio-shifts/` schemas and any inferred types.
-- [ ] Remove frontend cost cards, cells, form fields, mocks, and tests that assume the dropped fields.
-- [ ] Keep replacement monetary displays out of FE until 2.3 backend economics read models exist.
+- [ ] Replace shift list/table response cost fields with a backend-calculated `total_cost` string for the shift row. The calculation must use `StudioShift.hourlyRate`, shift-block duration semantics, and active shift/shift-block line items; do not persist the total.
+- [ ] Remove shift calendar cost aggregation based on stored shift costs and either replace it with the same live total-cost path or remove calendar money totals if they cannot be made live in the same PR.
+- [ ] Remove the stored cost fields from `packages/api-types/src/studio-shifts/` schemas and any inferred types; add the replacement `total_cost` contract where the shift table consumes it.
+- [ ] Replace the frontend shift table `Projected Cost` column with `Total Cost` backed by the API `total_cost` string.
+- [ ] Remove frontend cost cards, cells, form fields, mocks, and tests that assume the dropped stored fields.
 - [ ] Verify backend and frontend lint, typecheck, tests, and builds.
 - [ ] Commit with a shift-cost-cleanup message.
 
