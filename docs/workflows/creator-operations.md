@@ -87,7 +87,7 @@ ADMIN and MANAGER review and adjust per-show creator compensation from `/studios
 
 ### 6. Cost visibility
 
-Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed from assignment snapshots, shift labor, actuals/planned time, and show-scoped line items. `COMMISSION` and the `HYBRID` commission portion remain unresolved until a future revenue workflow.
+Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed from flat creator assignment snapshots, time-multiplied shift labor (actuals with planned-time fallback), and show-scoped line items. `COMMISSION` and the `HYBRID` commission portion remain unresolved until a future revenue workflow.
 
 Reference: [Economics Cost Model (2.1)](../prd/economics-cost-model.md) · [Compensation Line Items (2.2)](../prd/compensation-line-items.md) · [Economics Service (2.3)](../prd/economics-service.md)
 
@@ -118,7 +118,8 @@ GET /shows/:id/economics  →  { cost, base_subtotal, line_item_subtotal, unreso
 - `ShowCreator.agreedRate` overrides `StudioCreator.defaultRate`; `ShowCreator.compensationType` overrides `StudioCreator.defaultRateType`.
 - `metadata` on `ShowCreator` is for audit context only (`source`, `operator_note`, `tags`) — not executable compensation logic.
 - Creator-scoped actual attendance for a show belongs on `ShowCreator` if that future input is introduced; platform stream/performance facts belong on `ShowPlatform`.
-- `FIXED` and `HOURLY` creator base components are computable from snapshots and time. `COMMISSION` and the commission portion of `HYBRID` require future revenue input.
+- Creator pay is **not** time-multiplied. `CREATOR_COMPENSATION_TYPE` is `FIXED`, `COMMISSION`, or `HYBRID` — there is no `HOURLY` creator type. `FIXED` base is the per-show `agreedRate` snapshot, applied as a flat amount regardless of `Show.startTime`/`endTime` or `actualStartTime`/`actualEndTime`. `COMMISSION` and the commission portion of `HYBRID` require future revenue input and surface as `COMMISSION_REVENUE_NOT_AVAILABLE` in the compensation summary.
+- Time-multiplied pay applies to **operator shift labor**, not creators: `StudioShift.hourlyRate × shift-block duration`, with `actualStartTime`/`actualEndTime` falling back to planned `startTime`/`endTime` when actuals are null. That path is separate from the creator mapping workflow.
 
 ## Related Docs
 
