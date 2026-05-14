@@ -184,7 +184,7 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - [ ] Verify frontend lint, typecheck, tests, and build.
 - [ ] Commit with a shift-workflow message.
 
-## Task 7: Shift cost column cleanup
+## Task 7: Shift DB cost-column cleanup and FE total-cost table column
 
 **Files:**
 - Modify: `apps/erify_api/prisma/schema.prisma`
@@ -194,16 +194,18 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - Modify: `apps/erify_studios/src/features/studio-shifts/`
 - Test: backend and frontend shift specs/fixtures.
 
-> **Why this is one PR, not several:** `StudioShift.projectedCost` is currently `Decimal NOT NULL`. Dropping the column requires removing every writer in the same change set, otherwise shift creation fails between the two PRs. Use the search hint `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` to find all touchpoints (~98 references at the time of this plan).
+> **Two separate concepts:** this task drops two persisted database columns from the `StudioShift` table: `projected_cost` (`StudioShift.projectedCost`) and `calculated_cost` (`StudioShift.calculatedCost`). Separately, the `erify_studios` frontend shift table gains a display-only `Total Cost` table column backed by a live backend response field. The FE table column is not a replacement database column.
 >
-> **Replacement table column:** the admin shift table keeps a monetary column, but it changes from stored `Projected Cost` to backend-provided `Total Cost`. The value must come from a live backend read/calculator path and include shift base labor plus active `STUDIO_SHIFT` and `STUDIO_SHIFT_BLOCK` line items for that shift. The frontend renders the returned `total_cost` string only; it does not sum money locally.
+> **Why this is one PR, not several:** `StudioShift.projectedCost` is currently `Decimal NOT NULL`. Dropping the DB column requires removing every writer in the same change set, otherwise shift creation fails between the two PRs. Use the search hint `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` to find all touchpoints (~98 references at the time of this plan).
+>
+> **Frontend table column:** the admin shift table keeps a monetary display column, but the FE column changes from stored `Projected Cost` to backend-provided `Total Cost`. The value must come from a live backend read/calculator path and include shift base labor plus active `STUDIO_SHIFT` and `STUDIO_SHIFT_BLOCK` line items for that shift. The frontend renders the returned `total_cost` string only; it does not sum money locally.
 
-- [ ] Generate a Prisma migration removing `StudioShift.projectedCost` and `StudioShift.calculatedCost`.
-- [ ] Remove backend create/update/persistence logic and response serialization for the dropped fields. Confirm shift creation no longer requires `projectedCost`.
+- [ ] Generate a Prisma migration removing the `projected_cost` and `calculated_cost` database columns from `StudioShift`.
+- [ ] Remove backend create/update/persistence logic and response serialization for the dropped DB fields. Confirm shift creation no longer requires `projectedCost`.
 - [ ] Replace shift list/table response cost fields with a backend-calculated `total_cost` string for the shift row. The calculation must use `StudioShift.hourlyRate`, shift-block duration semantics, and active shift/shift-block line items; do not persist the total.
 - [ ] Remove shift calendar cost aggregation based on stored shift costs and either replace it with the same live total-cost path or remove calendar money totals if they cannot be made live in the same PR.
-- [ ] Remove the stored cost fields from `packages/api-types/src/studio-shifts/` schemas and any inferred types; add the replacement `total_cost` contract where the shift table consumes it.
-- [ ] Replace the frontend shift table `Projected Cost` column with `Total Cost` backed by the API `total_cost` string.
+- [ ] Remove the stored DB cost fields from `packages/api-types/src/studio-shifts/` schemas and any inferred types; add the live `total_cost` response contract where the shift table consumes it.
+- [ ] In `apps/erify_studios`, replace the shift table's `Projected Cost` display column with a `Total Cost` display column backed by the API `total_cost` string.
 - [ ] Remove frontend cost cards, cells, form fields, mocks, and tests that assume the dropped stored fields.
 - [ ] Verify backend and frontend lint, typecheck, tests, and builds.
 - [ ] Commit with a shift-cost-cleanup message.

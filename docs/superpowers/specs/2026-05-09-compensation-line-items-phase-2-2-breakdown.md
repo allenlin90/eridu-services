@@ -32,11 +32,11 @@ A studio `compensation/line-items` or economics review workspace can be introduc
 
 2.2 does not normalize existing `ShowCreator` rows. Calculators can calculate only when required facts exist after the feature starts working. Missing historical snapshots or actuals remain unresolved or pending in later read models.
 
-### Shift cost columns are a separate cleanup
+### Shift DB cost columns and FE table columns are separate concepts
 
-Dropping `StudioShift.projectedCost` (currently `Decimal NOT NULL`) and `StudioShift.calculatedCost` affects existing backend responses, frontend UI, and fixtures. That cleanup is intentionally isolated from the line-item and actuals workflows. Because `projectedCost` is `NOT NULL`, the cleanup PR removes every writer in the same change set; a partial PR cannot land first.
+Task 7 drops two persisted database columns from the `StudioShift` table: `projected_cost` (`StudioShift.projectedCost`, currently `Decimal NOT NULL`) and `calculated_cost` (`StudioShift.calculatedCost`). That DB cleanup affects existing backend responses, frontend UI, and fixtures, so it is intentionally isolated from the line-item and actuals workflows. Because `projectedCost` is `NOT NULL`, the cleanup PR removes every writer in the same change set; a partial PR cannot land first.
 
-The cleanup preserves the admin shift table's monetary read by replacing the stored `Projected Cost` column with a backend-provided `Total Cost` column. That replacement value is live, not persisted: it is calculated from shift base labor plus active `STUDIO_SHIFT` and `STUDIO_SHIFT_BLOCK` line items and serialized as a money string for frontend display. The frontend does not calculate or sum the total locally.
+Separately, the cleanup preserves the `erify_studios` admin shift table's monetary read by replacing the FE table's `Projected Cost` display column with a backend-provided `Total Cost` display column. That FE column is not a database column. Its value is live, not persisted: it is calculated from shift base labor plus active `STUDIO_SHIFT` and `STUDIO_SHIFT_BLOCK` line items and serialized as a money string for frontend display. The frontend does not calculate or sum the total locally.
 
 ### Actuals fold into existing update routes
 
@@ -82,7 +82,7 @@ Task numbers here align with the implementation plan. PRs already merged are not
 | 4 / PR 3 | Actuals and snapshot readiness | Show actuals, shift-block actuals, snapshot audit helper | 2.3 can consume scoped actuals and snapshot audit facts. | ✅ Merged (#63) |
 | 5 / PR 4 | Creator mapping compensation UX | Per-show creator mapping view, `SHOW_CREATOR` line items keyed by assignment UID, assignment-only bulk-assign, per-show compensation summary endpoint | Managers can review and adjust per-show creator compensation in the creator-mapping workflow. | ✅ Merged (#64) |
 | 6 / PR 5 | Shift workflow UI | Shift and shift-block panels plus block actuals input | Operators can manage shift-side compensation inputs in context. | 🚧 Planned |
-| 7 / cleanup | Shift cost columns | Remove stored shift cost columns across DB/API/FE and replace the shift table money column with backend-provided `Total Cost` | Stored live-reference totals leave operational rows while the table keeps a live total-cost read. | 🚧 Planned |
+| 7 / cleanup | Shift DB cost columns + FE total-cost table column | Drop `projected_cost` and `calculated_cost` from `StudioShift`, then replace the `erify_studios` shift table money display with API-backed `Total Cost` | Stored live-reference totals leave operational rows while the FE table keeps a live total-cost read. | 🚧 Planned |
 | 8 / PR 6 | Assignment-compensation edit + per-creator review | `PATCH` on `ShowCreator` assignment with snapshot audit, per-creator compensation summary endpoint, per-show edit panel, per-creator review view with bulk edit | Closes the editability gap so creator assignment terms match the shift-block workflow. | 🆕 Added post-Task-5 |
 | 9 / PR 7 | Actuals input workflows | `ShowActualsInput` and `ShiftBlockActualsInput` on existing update mutations; optional manager collection view | Closes the input-surface gap that Tasks 5 and 6 scoped out; lets actuals get collected so the actuals-vs-planned fallback in 2.3 has data. | 🆕 Added post-Task-5 |
 | 10 / PR 8 | Cost review by perspective | Per-member shift compensation summary endpoint + view; documented `actualStart/End → plannedStart/End` fallback contract with `ACTUALS_INCOMPLETE` for partial actuals | Closes the per-perspective read gap so managers can review costs from the operator side and the talent side (creator-side ships in Task 8). | 🆕 Added post-Task-5 |
