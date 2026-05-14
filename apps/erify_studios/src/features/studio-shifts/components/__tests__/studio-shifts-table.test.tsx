@@ -321,6 +321,45 @@ describe('studioShiftsTable', () => {
     });
   });
 
+  it('keeps the snapshot confirm button disabled until an override reason is entered', async () => {
+    const user = userEvent.setup();
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: undefined,
+      shifts: [createShift('ssh_1', '2026-03-05T09:00:00.000Z')],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 10, total: 1, pageCount: 1 },
+      onPaginationChange: vi.fn(),
+    });
+
+    render(
+      <StudioShiftsTable
+        studioId="std_1"
+        isStudioAdmin
+        search={{ view: 'table', page: 1, limit: 10 }}
+        updateSearch={mockUpdateSearch}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'edit-first-shift' }));
+    await user.click(screen.getByRole('button', { name: 'set-hourly-rate-25' }));
+    await user.click(screen.getByRole('button', { name: 'submit-edit' }));
+
+    const confirmButton = screen.getByRole('button', { name: 'Confirm rate change' });
+    expect(confirmButton).toBeDisabled();
+
+    // Clicking the disabled button must not dispatch the mutation, even if the user manages it.
+    await user.click(confirmButton);
+    expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText('Override reason'), '   ');
+    expect(confirmButton).toBeDisabled();
+
+    await user.type(screen.getByLabelText('Override reason'), 'rate corrected');
+    expect(confirmButton).not.toBeDisabled();
+  });
+
   it('skips the hourly-rate warning for equivalent rate values', async () => {
     const user = userEvent.setup();
     mockUseStudioShiftsPageController.mockReturnValue({

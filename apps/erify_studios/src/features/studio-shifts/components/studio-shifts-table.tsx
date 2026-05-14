@@ -13,6 +13,7 @@ import {
 } from '@eridu/ui';
 
 import { DeleteConfirmDialog } from '@/features/admin/components';
+import { toMoneyString } from '@/features/compensation-line-items/utils/money-input';
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
 import { useAssignDutyManager } from '@/features/studio-shifts/api/assign-duty-manager';
 import {
@@ -82,8 +83,11 @@ function normalizeRate(value: string | number | null | undefined): string | null
   if (value === null || value === undefined || value === '') {
     return null;
   }
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric.toFixed(2) : null;
+  try {
+    return toMoneyString(String(value));
+  } catch {
+    return null;
+  }
 }
 
 export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearch }: StudioShiftsTableProps) {
@@ -272,7 +276,18 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     };
 
     if (formState.hourlyRate.trim()) {
-      payload.hourly_rate = Number(formState.hourlyRate);
+      let normalizedRate: string;
+      try {
+        normalizedRate = toMoneyString(formState.hourlyRate);
+      } catch (error) {
+        setEditDialogState((previous) => (
+          previous
+            ? { ...previous, error: error instanceof Error ? error.message : 'Invalid hourly rate' }
+            : null
+        ));
+        return;
+      }
+      payload.hourly_rate = Number(normalizedRate);
     }
 
     const nextHourlyRate = normalizeRate(payload.hourly_rate);
@@ -301,9 +316,15 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     }
 
     const trimmedReason = snapshotOverrideReason.trim();
-    const payload = trimmedReason
-      ? { ...pendingSnapshotUpdate.payload, override_reason: trimmedReason }
-      : pendingSnapshotUpdate.payload;
+    if (!trimmedReason) {
+      // Belt-and-suspenders: the Confirm button is also disabled when this is empty,
+      // but bail here too so a determined user can't dispatch an audit-less snapshot edit.
+      return;
+    }
+    const payload: UpdateStudioShiftPayload = {
+      ...pendingSnapshotUpdate.payload,
+      override_reason: trimmedReason,
+    };
 
     try {
       await updateShiftMutation.mutateAsync({ shiftId: pendingSnapshotUpdate.shiftId, payload });
@@ -505,7 +526,11 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
               onChange={(event) => setSnapshotOverrideReason(event.target.value)}
               rows={3}
               placeholder="Reason for changing this snapshot..."
+              required
             />
+            <p className="text-xs text-muted-foreground">
+              A reason is required so the snapshot audit captures why this rate changed.
+            </p>
           </div>
           <DialogFooter>
             <Button
@@ -519,7 +544,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
             <Button
               type="button"
               onClick={() => void handleConfirmSnapshotUpdate()}
-              disabled={updateShiftMutation.isPending}
+              disabled={updateShiftMutation.isPending || !snapshotOverrideReason.trim()}
             >
               Confirm rate change
             </Button>

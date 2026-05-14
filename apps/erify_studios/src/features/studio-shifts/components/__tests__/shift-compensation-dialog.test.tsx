@@ -7,6 +7,8 @@ import { ShiftCompensationDialog } from '../shift-compensation-dialog';
 
 const mockUseStudioCompensationLineItems = vi.fn();
 const mockCreateLineItem = vi.fn();
+const mockUpdateLineItem = vi.fn();
+const mockDeleteLineItem = vi.fn();
 const mockUpdateBlockActuals = vi.fn();
 
 vi.mock('@eridu/ui', () => ({
@@ -66,11 +68,11 @@ vi.mock('@/features/compensation-line-items/hooks/use-compensation-line-item-mut
     isPending: false,
   }),
   useUpdateStudioCompensationLineItem: () => ({
-    mutateAsync: vi.fn(),
+    mutateAsync: mockUpdateLineItem,
     isPending: false,
   }),
   useDeleteStudioCompensationLineItem: () => ({
-    mutate: vi.fn(),
+    mutate: mockDeleteLineItem,
     isPending: false,
   }),
 }));
@@ -118,6 +120,7 @@ describe('shiftCompensationDialog', () => {
       data: { data: [], meta: { total: 0, page: 1, limit: 100, totalPages: 0 } },
     });
     mockCreateLineItem.mockResolvedValue({});
+    mockUpdateLineItem.mockResolvedValue({});
     mockUpdateBlockActuals.mockResolvedValue({});
   });
 
@@ -202,5 +205,102 @@ describe('shiftCompensationDialog', () => {
         },
       });
     });
+  });
+
+  it('edits an existing shift line item via the shift-target panel', async () => {
+    const user = userEvent.setup();
+    mockUseStudioCompensationLineItems.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 'cli_shift_1',
+            studio_id: 'std_1',
+            target_type: 'STUDIO_SHIFT',
+            target_id: 'ssh_1',
+            amount: '15.00',
+            item_type: 'BONUS',
+            reason: 'Pickup shift',
+            metadata: {},
+            created_by_id: 'user_1',
+            created_at: '2026-03-05T10:00:00.000Z',
+            updated_at: '2026-03-05T10:00:00.000Z',
+            deleted_at: null,
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+      },
+    });
+
+    render(
+      <ShiftCompensationDialog
+        open
+        onOpenChange={vi.fn()}
+        studioId="std_1"
+        shift={shift}
+      />,
+    );
+
+    const shiftPanel = screen.getByTestId('line-item-panel-STUDIO_SHIFT-ssh_1');
+    await user.click(within(shiftPanel).getByRole('button', { name: 'Edit compensation item Pickup shift' }));
+
+    const amountInput = within(shiftPanel).getByLabelText('Amount');
+    await user.clear(amountInput);
+    await user.type(amountInput, '22.5');
+    await user.click(within(shiftPanel).getByRole('button', { name: 'Update item' }));
+
+    await waitFor(() => {
+      expect(mockUpdateLineItem).toHaveBeenCalledWith({
+        id: 'cli_shift_1',
+        data: {
+          amount: '22.50',
+          item_type: 'BONUS',
+          reason: 'Pickup shift',
+        },
+      });
+    });
+  });
+
+  it('deletes an existing block line item via the block-target panel', async () => {
+    const user = userEvent.setup();
+    mockUseStudioCompensationLineItems.mockImplementation((_studioId: string, params: { target_type: string }) => {
+      if (params.target_type === 'STUDIO_SHIFT_BLOCK') {
+        return {
+          data: {
+            data: [
+              {
+                id: 'cli_block_1',
+                studio_id: 'std_1',
+                target_type: 'STUDIO_SHIFT_BLOCK',
+                target_id: 'ssb_1',
+                amount: '-5.00',
+                item_type: 'DEDUCTION',
+                reason: 'Late by 15min',
+                metadata: {},
+                created_by_id: 'user_1',
+                created_at: '2026-03-05T10:00:00.000Z',
+                updated_at: '2026-03-05T10:00:00.000Z',
+                deleted_at: null,
+              },
+            ],
+            meta: { total: 1, page: 1, limit: 100, totalPages: 1 },
+          },
+        };
+      }
+      return { data: { data: [], meta: { total: 0, page: 1, limit: 100, totalPages: 0 } } };
+    });
+
+    render(
+      <ShiftCompensationDialog
+        open
+        onOpenChange={vi.fn()}
+        studioId="std_1"
+        shift={shift}
+      />,
+    );
+
+    const blockPanel = screen.getByTestId('line-item-panel-STUDIO_SHIFT_BLOCK-ssb_1');
+    await user.click(within(blockPanel).getByRole('button', { name: 'Delete compensation item Late by 15min' }));
+
+    expect(mockDeleteLineItem).toHaveBeenCalledWith('cli_block_1');
   });
 });
