@@ -1,6 +1,8 @@
 # Compensation Line Items Phase 2.2 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Before starting any task** (and before sign-off on any new task added here), run the workflow at [`.agent/workflows/plan-completeness-audit.md`](../../../.agent/workflows/plan-completeness-audit.md) against the latest scope. The five-invariant check in [`.agent/skills/plan-workflow-completeness/`](../../../.agent/skills/plan-workflow-completeness/SKILL.md) is how Tasks 8/9/10 below were discovered after Task 5 shipped — running it earlier would have caught the gaps at plan time instead of code-review time.
 
 **Goal:** Implement Compensation Line Items + Actuals 2.2 as independent, reviewable PRs that can merge to `master` separately.
 
