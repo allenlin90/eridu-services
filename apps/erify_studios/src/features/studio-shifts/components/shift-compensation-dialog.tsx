@@ -20,6 +20,19 @@ type ShiftCompensationDialogProps = {
   shift: StudioShift | null;
 };
 
+function formatMoneyString(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '$0.00';
+  }
+
+  if (trimmed.startsWith('-')) {
+    return `-$${trimmed.slice(1)}`;
+  }
+
+  return `$${trimmed}`;
+}
+
 export function ShiftCompensationDialog({
   open,
   onOpenChange,
@@ -43,6 +56,20 @@ export function ShiftCompensationDialog({
 
         {shift && (
           <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-md border bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Hourly rate</p>
+                <p className="text-lg font-semibold">
+                  {formatMoneyString(shift.hourly_rate)}
+                  <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                </p>
+              </div>
+              <div className="rounded-md border bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Projected base total</p>
+                <p className="text-lg font-semibold">{formatMoneyString(shift.projected_cost)}</p>
+              </div>
+            </div>
+
             <StudioTargetCompensationLineItemPanel
               studioId={studioId}
               targetType="STUDIO_SHIFT"

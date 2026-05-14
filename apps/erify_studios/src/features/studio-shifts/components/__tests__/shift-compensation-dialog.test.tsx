@@ -152,6 +152,20 @@ describe('shiftCompensationDialog', () => {
     );
   });
 
+  it('renders the projected base total from the shift snapshot', () => {
+    render(
+      <ShiftCompensationDialog
+        open
+        onOpenChange={vi.fn()}
+        studioId="std_1"
+        shift={shift}
+      />,
+    );
+
+    expect(screen.getByText('Projected base total')).toBeInTheDocument();
+    expect(screen.getByText('$60.00')).toBeInTheDocument();
+  });
+
   it('creates block line items with the block target id', async () => {
     const user = userEvent.setup();
     render(
