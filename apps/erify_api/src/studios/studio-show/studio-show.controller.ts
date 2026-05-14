@@ -58,6 +58,12 @@ const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
+// Compensation totals are restricted to ADMIN/MANAGER (line-item write surface);
+// TALENT_MANAGER can read the assignment list but not the money totals.
+const STUDIO_SHOW_COMPENSATION_READ_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+];
 const STUDIO_SHOW_DELETE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
 ];
@@ -172,7 +178,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/creators/compensation-summary')
-  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @StudioProtected(STUDIO_SHOW_COMPENSATION_READ_ROLES)
   @ZodResponse(showCreatorCompensationSummaryApiSchema)
   async creatorCompensationSummary(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

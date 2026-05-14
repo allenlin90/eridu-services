@@ -50,16 +50,44 @@ const ITEM_TYPE_OPTIONS = [
 
 type ItemType = (typeof ITEM_TYPE_OPTIONS)[number]['value'];
 
+const KNOWN_ITEM_TYPES = new Set<string>(ITEM_TYPE_OPTIONS.map((option) => option.value));
+
+const UNRESOLVED_REASON_COPY: Record<string, string> = {
+  AGREEMENT_SNAPSHOT_MISSING:
+    'Compensation terms are missing from this assignment. Edit the assignment to set rate, type, or commission before totals can be calculated.',
+  COMMISSION_REVENUE_NOT_AVAILABLE:
+    'Commission-based pay cannot be totaled until show revenue is recorded.',
+};
+
+const MONEY_INPUT_PATTERN = /^(-?)(\d+)(?:\.(\d+))?$/;
+
 function formatOptionalAmount(value: string | null | undefined) {
   return value ?? 'Unresolved';
 }
 
-function toMoneyString(value: string) {
-  const parsed = Number.parseFloat(value.trim());
-  if (Number.isNaN(parsed)) {
+function formatUnresolvedReason(code: string): string {
+  return UNRESOLVED_REASON_COPY[code] ?? code;
+}
+
+function coerceItemType(value: string): ItemType {
+  return KNOWN_ITEM_TYPES.has(value) ? (value as ItemType) : 'OTHER';
+}
+
+/**
+ * Normalizes a typed money string to two-decimal form without going through a binary float.
+ * Accepts an optional leading sign and an optional decimal portion. Rejects anything else.
+ */
+function toMoneyString(raw: string): string {
+  const trimmed = raw.trim();
+  const match = trimmed.match(MONEY_INPUT_PATTERN);
+  if (!match) {
     throw new TypeError('Amount must be a number');
   }
-  return parsed.toFixed(2);
+  const sign = match[1] ?? '';
+  const whole = match[2];
+  const fraction = match[3] ?? '';
+  const padded = (`${fraction}00`).slice(0, 2);
+  return `${sign}${whole}.${padded}`;
 }
 
 export function ShowCreatorCompensationDialog({
@@ -112,7 +140,7 @@ export function ShowCreatorCompensationDialog({
   const handleEdit = (lineItem: CompensationLineItemApiResponse) => {
     setEditingItem(lineItem);
     setAmount(lineItem.amount);
-    setItemType(lineItem.item_type);
+    setItemType(coerceItemType(lineItem.item_type));
     setReason(lineItem.reason);
   };
 
@@ -194,7 +222,7 @@ export function ShowCreatorCompensationDialog({
 
           {creatorSummary?.unresolved_reason && (
             <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
-              {creatorSummary.unresolved_reason}
+              {formatUnresolvedReason(creatorSummary.unresolved_reason)}
             </p>
           )}
 

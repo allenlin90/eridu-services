@@ -197,4 +197,76 @@ describe('showCreatorCompensationDialog', () => {
     expect(screen.getByTestId('show-creator-compensation-dialog-content')).toHaveClass('sm:max-w-[860px]');
     expect(screen.getByLabelText('Reason').closest('div')).toHaveClass('md:col-span-2');
   });
+
+  it('renders human-readable copy for known unresolved reasons', () => {
+    mockUseShowCreatorCompensationSummary.mockReturnValue({
+      data: {
+        show_id: 'show_1',
+        total_amount: '0.00',
+        unresolved_count: 1,
+        creators: [
+          {
+            show_creator_id: 'show_mc_1',
+            creator_id: 'creator_1',
+            creator_name: 'Alice',
+            creator_alias_name: 'Ali',
+            compensation_type: null,
+            agreed_rate: null,
+            commission_rate: null,
+            base_amount: null,
+            adjustment_total: '0.00',
+            total_amount: null,
+            unresolved_reason: 'AGREEMENT_SNAPSHOT_MISSING',
+          },
+        ],
+      },
+    });
+
+    renderDialog();
+
+    expect(screen.getByText(/Compensation terms are missing/i)).toBeInTheDocument();
+    expect(screen.queryByText('AGREEMENT_SNAPSHOT_MISSING')).not.toBeInTheDocument();
+  });
+
+  it('falls back to OTHER when editing a line item whose backend item_type is unknown', async () => {
+    const user = userEvent.setup();
+    mockUseStudioCompensationLineItems.mockReturnValue({
+      data: {
+        ...lineItemsResponse,
+        data: [
+          {
+            ...lineItemsResponse.data[0],
+            item_type: 'NEW_TYPE_FROM_BACKEND' as any,
+          },
+        ],
+      },
+    });
+
+    renderDialog();
+
+    await user.click(screen.getByRole('button', { name: 'Edit compensation item Launch bonus' }));
+
+    expect(screen.getByLabelText('item-type')).toHaveValue('OTHER');
+  });
+
+  it('normalizes long-precision amounts via string padding (no binary float drift)', async () => {
+    const user = userEvent.setup();
+
+    renderDialog();
+
+    await user.clear(screen.getByLabelText('Amount'));
+    await user.type(screen.getByLabelText('Amount'), '0.1');
+    await user.type(screen.getByLabelText('Reason'), 'Penny');
+    await user.click(screen.getByRole('button', { name: 'Create Item' }));
+
+    await waitFor(() => {
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith({
+        target_type: 'SHOW_CREATOR',
+        target_id: 'show_mc_1',
+        amount: '0.10',
+        item_type: 'BONUS',
+        reason: 'Penny',
+      });
+    });
+  });
 });

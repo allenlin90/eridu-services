@@ -2,7 +2,7 @@
 import { BadRequestException, Module } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
-import { Show } from '@prisma/client';
+import { Prisma, Show } from '@prisma/client';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule } from 'nestjs-cls';
@@ -117,6 +117,7 @@ describe('showOrchestrationService', () => {
           useValue: {
             createStudioLineItem: jest.fn(),
             listStudioLineItems: jest.fn(),
+            sumActiveAmountsByShowCreatorUids: jest.fn(),
           },
         },
         {
@@ -1271,24 +1272,16 @@ describe('showOrchestrationService', () => {
           },
         ],
       } as any);
-      compensationLineItemService.listStudioLineItems.mockResolvedValue({
-        data: [
-          { amount: '25.00' },
-          { amount: '-5.00' },
-        ],
-        total: 2,
-      } as any);
+      compensationLineItemService.sumActiveAmountsByShowCreatorUids.mockResolvedValue(
+        new Map([['show_mc_1', new Prisma.Decimal('20.00')]]),
+      );
 
       const result = await service.getCreatorCompensationSummaryForShow('std_123', mockShow.uid);
 
-      expect(compensationLineItemService.listStudioLineItems).toHaveBeenCalledWith(
-        expect.objectContaining({
-          studioId: 'std_123',
-          targetType: 'SHOW_CREATOR',
-          targetId: 'show_mc_1',
-          includeDeleted: false,
-        }),
-      );
+      expect(compensationLineItemService.sumActiveAmountsByShowCreatorUids).toHaveBeenCalledWith({
+        studioId: 'std_123',
+        showCreatorUids: ['show_mc_1'],
+      });
       expect(result).toEqual({
         showId: mockShow.uid,
         creators: [

@@ -432,24 +432,18 @@ export class ShowOrchestrationService {
       },
     });
 
+    const showCreators = show.showCreators ?? [];
+    const adjustmentTotals = await this.compensationLineItemService.sumActiveAmountsByShowCreatorUids({
+      studioId: studioUid,
+      showCreatorUids: showCreators.map((showCreator) => showCreator.uid),
+    });
+
     const creators: ShowCreatorCompensationSummaryRow[] = [];
     let totalAmount = new Prisma.Decimal(0);
     let unresolvedCount = 0;
 
-    for (const showCreator of show.showCreators ?? []) {
-      const lineItems = await this.compensationLineItemService.listStudioLineItems({
-        studioId: studioUid,
-        targetType: 'SHOW_CREATOR',
-        targetId: showCreator.uid,
-        skip: 0,
-        take: 100,
-        sort: 'asc',
-        includeDeleted: false,
-      });
-      const adjustmentTotal = lineItems.data.reduce(
-        (sum, lineItem) => sum.plus(this.toDecimal(lineItem.amount)),
-        new Prisma.Decimal(0),
-      );
+    for (const showCreator of showCreators) {
+      const adjustmentTotal = adjustmentTotals.get(showCreator.uid) ?? new Prisma.Decimal(0);
       const baseAmount = this.resolveBaseCreatorAmount(
         showCreator.compensationType,
         showCreator.agreedRate,
