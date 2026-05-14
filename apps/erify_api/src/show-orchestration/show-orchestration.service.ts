@@ -453,7 +453,9 @@ export class ShowOrchestrationService {
         showCreator.agreedRate,
         showCreator.commissionRate,
       );
-      const rowTotal = baseAmount === null ? null : baseAmount.plus(adjustmentTotal);
+      const rowTotal = unresolvedReason !== null || baseAmount === null
+        ? null
+        : baseAmount.plus(adjustmentTotal);
 
       if (rowTotal === null) {
         unresolvedCount += 1;
@@ -753,7 +755,10 @@ export class ShowOrchestrationService {
       return 'AGREEMENT_SNAPSHOT_MISSING';
     }
 
-    if (compensationType === CREATOR_COMPENSATION_TYPE.COMMISSION) {
+    if (
+      compensationType === CREATOR_COMPENSATION_TYPE.COMMISSION
+      || compensationType === CREATOR_COMPENSATION_TYPE.HYBRID
+    ) {
       return 'COMMISSION_REVENUE_NOT_AVAILABLE';
     }
 

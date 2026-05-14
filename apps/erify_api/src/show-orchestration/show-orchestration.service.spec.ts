@@ -1298,5 +1298,46 @@ describe('showOrchestrationService', () => {
         unresolvedCount: 0,
       });
     });
+
+    it('marks HYBRID rows unresolved because their total depends on commission revenue', async () => {
+      showService.getShowById.mockResolvedValue({
+        ...mockShow,
+        showCreators: [
+          {
+            uid: 'show_mc_hybrid',
+            note: null,
+            agreedRate: '50.00',
+            compensationType: 'HYBRID',
+            commissionRate: '10.00',
+            metadata: {},
+            creator: {
+              uid: 'creator_2',
+              name: 'Bea',
+              aliasName: 'Bea',
+            },
+          },
+        ],
+      } as any);
+      compensationLineItemService.sumActiveAmountsByShowCreatorUids.mockResolvedValue(
+        new Map([['show_mc_hybrid', new Prisma.Decimal('5.00')]]),
+      );
+
+      const result = await service.getCreatorCompensationSummaryForShow('std_123', mockShow.uid);
+
+      expect(result).toEqual({
+        showId: mockShow.uid,
+        creators: [
+          expect.objectContaining({
+            showCreatorId: 'show_mc_hybrid',
+            baseAmount: '50.00',
+            adjustmentTotal: '5.00',
+            totalAmount: null,
+            unresolvedReason: 'COMMISSION_REVENUE_NOT_AVAILABLE',
+          }),
+        ],
+        totalAmount: '0.00',
+        unresolvedCount: 1,
+      });
+    });
   });
 });

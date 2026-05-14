@@ -269,4 +269,38 @@ describe('showCreatorCompensationDialog', () => {
       });
     });
   });
+
+  it('rounds amounts with more than two decimals half-away-from-zero instead of truncating', async () => {
+    const user = userEvent.setup();
+
+    renderDialog();
+
+    await user.clear(screen.getByLabelText('Amount'));
+    await user.type(screen.getByLabelText('Amount'), '1.239');
+    await user.type(screen.getByLabelText('Reason'), 'Long precision');
+    await user.click(screen.getByRole('button', { name: 'Create Item' }));
+
+    await waitFor(() => {
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: '1.24' }),
+      );
+    });
+  });
+
+  it('carries cents into the whole part when rounding pushes 99 → 100', async () => {
+    const user = userEvent.setup();
+
+    renderDialog();
+
+    await user.clear(screen.getByLabelText('Amount'));
+    await user.type(screen.getByLabelText('Amount'), '0.999');
+    await user.type(screen.getByLabelText('Reason'), 'Round up');
+    await user.click(screen.getByRole('button', { name: 'Create Item' }));
+
+    await waitFor(() => {
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: '1.00' }),
+      );
+    });
+  });
 });

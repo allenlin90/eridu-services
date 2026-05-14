@@ -75,7 +75,9 @@ function coerceItemType(value: string): ItemType {
 
 /**
  * Normalizes a typed money string to two-decimal form without going through a binary float.
- * Accepts an optional leading sign and an optional decimal portion. Rejects anything else.
+ * Accepts an optional leading sign and an optional decimal portion. Extra precision is
+ * rounded half-away-from-zero on the cent boundary so `1.239` becomes `1.24` rather than
+ * silently dropping the `9`. Rejects anything that does not match the numeric pattern.
  */
 function toMoneyString(raw: string): string {
   const trimmed = raw.trim();
@@ -86,8 +88,23 @@ function toMoneyString(raw: string): string {
   const sign = match[1] ?? '';
   const whole = match[2];
   const fraction = match[3] ?? '';
-  const padded = (`${fraction}00`).slice(0, 2);
-  return `${sign}${whole}.${padded}`;
+
+  if (fraction.length <= 2) {
+    const padded = (`${fraction}00`).slice(0, 2);
+    return `${sign}${whole}.${padded}`;
+  }
+
+  const firstTwo = fraction.slice(0, 2);
+  const roundingDigit = fraction.charCodeAt(2) - 48;
+  if (roundingDigit < 5) {
+    return `${sign}${whole}.${firstTwo}`;
+  }
+
+  // Round half-away-from-zero. Use BigInt so a 99 → 100 carry pushes into the whole part.
+  const combined = (BigInt(whole) * 100n) + BigInt(firstTwo) + 1n;
+  const newWhole = (combined / 100n).toString();
+  const newCents = (combined % 100n).toString().padStart(2, '0');
+  return `${sign}${newWhole}.${newCents}`;
 }
 
 export function ShowCreatorCompensationDialog({
