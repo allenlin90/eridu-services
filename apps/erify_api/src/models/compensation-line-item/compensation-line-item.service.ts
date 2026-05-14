@@ -85,6 +85,23 @@ export class CompensationLineItemService extends BaseModelService {
     return this.compensationLineItemRepository.findPaginated(query);
   }
 
+  /**
+   * Returns active SHOW_CREATOR adjustment amounts grouped by show-creator assignment UID.
+   * Used by callers that need to aggregate adjustments across many assignments in one query.
+   */
+  async sumActiveAmountsByShowCreatorUids(params: {
+    studioId: string;
+    showCreatorUids: string[];
+  }): Promise<Map<string, Prisma.Decimal>> {
+    const rows = await this.compensationLineItemRepository.findActiveAmountsByShowCreatorUids(params);
+    const totals = new Map<string, Prisma.Decimal>();
+    for (const row of rows) {
+      const current = totals.get(row.showCreatorUid) ?? new Prisma.Decimal(0);
+      totals.set(row.showCreatorUid, current.plus(row.amount));
+    }
+    return totals;
+  }
+
   @Transactional()
   async updateStudioLineItem(
     scope: StudioLineItemScope,

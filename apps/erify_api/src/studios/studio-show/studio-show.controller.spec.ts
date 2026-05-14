@@ -1,6 +1,8 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { showCreatorCompensationSummarySchema } from '@eridu/api-types/studio-creators';
+
 import type { BulkAssignStudioShowCreatorsDto } from './schemas/studio-show-creator-assignment.schema';
 import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
@@ -20,6 +22,7 @@ describe('studioShowController', () => {
 
   const showOrchestrationServiceMock = {
     listCreatorsForShow: jest.fn(),
+    getCreatorCompensationSummaryForShow: jest.fn(),
     bulkAssignCreatorsToShow: jest.fn(),
     removeCreatorsFromShow: jest.fn(),
   };
@@ -66,9 +69,6 @@ describe('studioShowController', () => {
           {
             creatorId: 'creator_1',
             note: 'Host',
-            agreedRate: '100.00',
-            compensationType: 'FIXED',
-            commissionRate: '5.00',
             metadata: {},
           },
         ],
@@ -159,6 +159,7 @@ describe('studioShowController', () => {
       showOrchestrationServiceMock.listCreatorsForShow.mockResolvedValue([
         {
           creatorId: 'creator_1',
+          id: 'show_mc_1',
           creatorName: 'Alice',
           creatorAliasName: 'Ali',
           note: 'Primary host',
@@ -175,11 +176,51 @@ describe('studioShowController', () => {
       expect(showOrchestrationServiceMock.listCreatorsForShow).toHaveBeenCalledWith(showId);
       expect(result).toEqual([
         expect.objectContaining({
+          id: 'show_mc_1',
           creator_id: 'creator_1',
           creator_name: 'Alice',
           creator_alias_name: 'Ali',
         }),
       ]);
+    });
+
+    it('should validate studio show and return creator compensation summary', async () => {
+      const studioId = 'std_123';
+      const showId = 'show_123';
+
+      taskOrchestrationServiceMock.getStudioShow.mockResolvedValue({ uid: showId });
+      showOrchestrationServiceMock.getCreatorCompensationSummaryForShow.mockResolvedValue({
+        showId,
+        totalAmount: '120.00',
+        unresolvedCount: 0,
+        creators: [
+          {
+            showCreatorId: 'show_mc_1',
+            creatorId: 'creator_1',
+            creatorName: 'Alice',
+            creatorAliasName: 'Ali',
+            compensationType: 'FIXED',
+            agreedRate: '100.00',
+            commissionRate: null,
+            baseAmount: '100.00',
+            adjustmentTotal: '20.00',
+            totalAmount: '120.00',
+            unresolvedReason: null,
+          },
+        ],
+      });
+
+      const result = await controller.creatorCompensationSummary(studioId, showId);
+
+      expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
+      expect(showOrchestrationServiceMock.getCreatorCompensationSummaryForShow)
+        .toHaveBeenCalledWith(studioId, showId);
+      expect(() => showCreatorCompensationSummarySchema.parse(result)).not.toThrow();
+      expect(result).toEqual(expect.objectContaining({
+        show_id: showId,
+        total_amount: '120.00',
+        unresolved_count: 0,
+      }));
     });
   });
 

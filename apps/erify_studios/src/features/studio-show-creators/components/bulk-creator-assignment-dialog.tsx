@@ -83,7 +83,6 @@ export function BulkCreatorAssignmentDialog({
     () => new Map(creators.map((creator) => [creator.id, creator.name])),
     [creators],
   );
-
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setSelectedCreatorIds([]);
@@ -119,7 +118,7 @@ export function BulkCreatorAssignmentDialog({
     setAssignmentSummary(null);
     assignCreators({
       show_ids: shows.map((show) => show.id),
-      creator_ids: selectedCreatorIds,
+      creators: selectedCreatorIds.map((creatorId) => ({ creator_id: creatorId })),
     });
   };
 

@@ -6,6 +6,9 @@ export type StudioCreatorCatalogItemPayload = {
   aliasName: string;
   isRostered: boolean;
   rosterState: StudioCreatorRosterState;
+  defaultRate: string | null;
+  defaultRateType: string | null;
+  defaultCommissionRate: string | null;
 };
 
 export type CreateStudioCreatorRosterPayload = {

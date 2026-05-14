@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 
+import type { StudioShowCreatorAssignmentItemInput } from '@eridu/api-types/studio-creators';
 import {
   AsyncCombobox,
   Button,
@@ -23,7 +24,7 @@ type AddCreatorDialogProps = {
   showStartTime: string;
   showEndTime: string;
   isSubmitting: boolean;
-  onSubmit: (creatorId: string) => void;
+  onSubmit: (input: StudioShowCreatorAssignmentItemInput) => void;
 };
 
 export function AddCreatorDialog({
@@ -61,6 +62,9 @@ export function AddCreatorDialog({
       })),
     [availableCreators],
   );
+  const handleCreatorChange = (creatorId: string) => {
+    setSelectedCreatorId(creatorId);
+  };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -74,7 +78,7 @@ export function AddCreatorDialog({
     if (!selectedCreatorId) {
       return;
     }
-    onSubmit(selectedCreatorId);
+    onSubmit({ creator_id: selectedCreatorId });
   };
 
   return (
@@ -90,7 +94,7 @@ export function AddCreatorDialog({
         <div className="py-3">
           <AsyncCombobox
             value={selectedCreatorId}
-            onChange={setSelectedCreatorId}
+            onChange={handleCreatorChange}
             onSearch={setSearch}
             options={options}
             isLoading={isLoading}

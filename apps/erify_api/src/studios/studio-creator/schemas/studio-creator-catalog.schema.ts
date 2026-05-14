@@ -13,6 +13,9 @@ export const studioCreatorCatalogItemSchema = z.object({
   aliasName: z.string(),
   isRostered: z.boolean(),
   rosterState: z.enum(Object.values(STUDIO_CREATOR_ROSTER_STATE) as [string, ...string[]]),
+  defaultRate: z.string().nullable(),
+  defaultRateType: z.string().nullable(),
+  defaultCommissionRate: z.string().nullable(),
 });
 
 export const studioCreatorCatalogItemDto = studioCreatorCatalogItemSchema
@@ -22,6 +25,9 @@ export const studioCreatorCatalogItemDto = studioCreatorCatalogItemSchema
     alias_name: item.aliasName,
     is_rostered: item.isRostered,
     roster_state: item.rosterState,
+    default_rate: item.defaultRate,
+    default_rate_type: item.defaultRateType,
+    default_commission_rate: item.defaultCommissionRate,
   }))
   .pipe(studioCreatorCatalogItemApiSchema);
 

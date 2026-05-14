@@ -141,12 +141,20 @@ Platform-level rules. Domain-specific decisions (line item types, view shapes, e
 
 7. **Economics aggregation services ship with fixture-based tests.** Coverage includes the actuals priority cascade resolution, null-bubbling cases at each grain, and the read shape defined in [economics-cost-model.md](../prd/economics-cost-model.md). Phase 4 has no cost-state machine — tests target the calculator's resolved-vs-unresolved branches directly.
 
+8. **Symmetry by default across parallel entities.** When two entities share an architectural pattern (e.g., `ShowCreator` and `StudioShift` both use snapshot + line items + actuals + audit), they share a UX pattern by default. Asymmetry is a deliberate, documented decision with a written reason in the plan. New plans must run the symmetry diff in [`.agent/skills/plan-workflow-completeness/`](../../.agent/skills/plan-workflow-completeness/SKILL.md) before sign-off.
+
+9. **Every snapshot field has a documented post-creation edit path with audit.** Snapshot-on-write fields (`ShowCreator.{agreedRate, compensationType, commissionRate}`, `StudioShift.hourlyRate`) must ship with: (a) the write path that creates the snapshot, (b) the edit path that updates it after creation via `appendSnapshotAudit()`, and (c) the UI surface that exposes the edit to the right role. A snapshot without an edit path produces data managers cannot correct without admin intervention and must be flagged as a planning bug.
+
 ## Documentation
 
 ### Doc flow per feature
 
 ```
+docs/workflows/<journey>.md                          ← Workflow trace (pre-PRD; required for new journeys)
+    ↓
 docs/prd/<feature>.md                                ← PRD (pre-ship)
+    ↓
+docs/superpowers/plans/<date>-<feature>.md           ← Implementation plan (audited per .agent/skills/plan-workflow-completeness/)
     ↓
 apps/erify_api/docs/design/<FEATURE>_DESIGN.md       ← BE design
 apps/erify_studios/docs/design/<FEATURE>_DESIGN.md   ← FE design
@@ -155,6 +163,8 @@ Implementation PR (code + tests)
     ↓
 Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, run knowledge-sync
 ```
+
+The workflow trace is the pre-PRD artifact that catches planning gaps cheapest. It names every actor, every state transition, every read, every write, and every role for every step. PRDs written without a workflow trace tend to orphan input surfaces and per-perspective read views — the Wave 2 expansion to Tasks 8/9/10 in the compensation-line-items plan exists because the original Wave 2 plan was sliced by data layer (storage → calc → UI) without a journey-level pass.
 
 ### Phase-level reference
 
@@ -185,19 +195,32 @@ Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, ru
 
 Phase 4 explicitly does not process payments. Every figure produced is a read-only reference value. Admin/manager planned-fallback values must carry warnings; creator/operator/helper self-views must hide money for any event with missing or incomplete actuals and show pending events until actuals are complete.
 
-- [x] Studio member roster with `baseHourlyRate` editing
-- [x] Studio creator roster CRUD with compensation defaults
-- [x] Studio-side creator onboarding with roster-first assignment enforcement
-- [x] Studio show CRUD (create / update / delete before start time)
-- [x] Internal docs knowledge base (`eridu_docs`) with authenticated SSR access
-- [x] 2.1 Economics cost model locked (simplified data model + pure calculator + three read-only views + planned-fallback warnings + future-extensions surface)
-- [ ] 2.2 event-attached `CompensationLineItem` + actuals fields (`Show.actualStartTime/EndTime`, `StudioShiftBlock.actualStartTime/EndTime`) + line-item and actuals input surfaces. **No freeze guards, no settlement, no grace, no audit table in Phase 4.** Snapshot-field overrides audited via existing `metadata`-column pattern.
-- [ ] 2.3 Economics service implemented as a pure calculator + three read endpoints; merged to `master`
-- [ ] 3.1 Studio economics review surface (date-ranged, read-only) consuming the operational view and surfacing actuals-missing/incomplete warnings
-- [ ] 3.2 Show planning export
-- [ ] 3.3 Creator availability hardening (overlap + roster conflict)
-- [ ] Sidebar Finance group landed alongside 3.1
+DoD is scenario-based: each bullet names *who* does *what* and ends with a *verifiable observable outcome*. A scenario cannot be partially satisfied — either the loop closes or it doesn't.
+
+**Wave 1 — Studio autonomy**
+
+- [x] A studio admin edits a member's `baseHourlyRate` from the studio member roster and the change is reflected in subsequent shift snapshots.
+- [x] A studio admin creates a creator roster entry with default compensation; a talent manager can then assign that creator to a show using the roster-first enforcement.
+- [x] A studio admin creates, updates, and deletes a show from the studio workspace without `/system/*` access.
+- [x] An internal user reads phase docs via the authenticated `eridu_docs` SSR site.
+
+**Wave 2 — Cost foundation**
+
+- [x] 2.1 Economics cost model is signed off — data model, pure calculator, three read views, planned-fallback warnings, and future-extension surface are locked.
+- [ ] 2.2a Studio admin/manager creates, updates, and soft-deletes `SHOW_CREATOR` adjustment line items from the per-show creator mapping view; the per-show compensation summary refreshes with no client-side money arithmetic.
+- [ ] 2.2b Manager edits an unresolved `ShowCreator` assignment's `agreedRate` / `compensationType` / `commissionRate`; the per-show summary transitions the row out of `AGREEMENT_SNAPSHOT_MISSING` on next refetch and `metadata.audit.snapshot_overrides[]` records the change.
+- [ ] 2.2c Operator (or manager, depending on 2.1 role) enters `Show.actualStartTime`/`actualEndTime` on a finished show; the per-show summary moves out of any `ACTUALS_INCOMPLETE` state, and `ShiftBlockActualsInput` provides the same loop for shift blocks.
+- [ ] 2.2d Manager reviews one member's shift compensation over a date range from `/studios/:studioId/shifts/by-member/:membershipId?from=...&to=...`; rows with missing actuals are flagged and link to the actuals input surface.
+- [ ] 2.2e Manager reviews one creator's show compensation over a date range from `/studios/:studioId/creator-mapping/by-creator/:creatorId?from=...&to=...` and bulk-edits per-assignment terms with snapshot audit recorded.
+- [ ] 2.3 Economics service exposes the pure calculator and the three read endpoints against signed-off 2.1 + persisted 2.2 data; merged to `master`.
+
+**Wave 3 — Finance surfaces**
+
+- [ ] 3.1 A studio admin reviews date-ranged, read-only economics with actuals-missing/incomplete warnings consuming the 2.3 operational view.
+- [ ] 3.2 A show planner exports planning data as a single preset of 3.1.
+- [ ] 3.3 Creator availability hardening prevents overlapping and off-roster assignments at write time, not only at discovery time.
+- [ ] Sidebar Finance group lands alongside 3.1.
 
 Future target, not a Phase 4 close requirement:
 
-- [ ] P&L revenue workflow (revenue input, COMMISSION/HYBRID activation, contribution margin)
+- [ ] P&L revenue workflow (revenue input, `COMMISSION` / `HYBRID` activation, contribution margin).

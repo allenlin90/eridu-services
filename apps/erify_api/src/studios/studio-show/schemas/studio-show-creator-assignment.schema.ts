@@ -13,20 +13,6 @@ export class BulkAssignStudioShowCreatorsDto extends createZodDto(
     creators: data.creators.map((creator) => ({
       creatorId: creator.creator_id,
       note: creator.note,
-      agreedRate:
-        creator.agreed_rate === undefined
-          ? undefined
-          : creator.agreed_rate === null
-            ? null
-            : creator.agreed_rate.toFixed(2),
-      compensationType: creator.compensation_type,
-      commissionRate:
-        creator.commission_rate === undefined
-          ? undefined
-          : creator.commission_rate === null
-            ? null
-            : creator.commission_rate.toFixed(2),
-      ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
       metadata: creator.metadata, // undefined when omitted — service defaults per branch (new vs restore)
     })),
   })),
@@ -34,10 +20,6 @@ export class BulkAssignStudioShowCreatorsDto extends createZodDto(
   declare creators: Array<{
     creatorId: string;
     note: string | null | undefined;
-    agreedRate: string | null | undefined;
-    compensationType: string | null | undefined;
-    commissionRate: string | null | undefined;
-    overrideReason?: string;
     metadata: Record<string, unknown> | undefined;
   }>;
 }

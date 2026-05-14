@@ -181,6 +181,9 @@ export class CreatorRepository extends BaseRepository<
       aliasName: string;
       isRostered: boolean;
       rosterState: StudioCreatorRosterState;
+      defaultRate: string | null;
+      defaultRateType: string | null;
+      defaultCommissionRate: string | null;
     }>> {
     const search = params.search?.trim();
     const where: Prisma.CreatorWhereInput = {
@@ -226,6 +229,9 @@ export class CreatorRepository extends BaseRepository<
           select: {
             id: true,
             isActive: true,
+            defaultRate: true,
+            defaultRateType: true,
+            defaultCommissionRate: true,
           },
           take: 1,
         },
@@ -242,6 +248,9 @@ export class CreatorRepository extends BaseRepository<
         : creator.studioCreators[0]?.isActive
           ? STUDIO_CREATOR_ROSTER_STATE.ACTIVE
           : STUDIO_CREATOR_ROSTER_STATE.INACTIVE,
+      defaultRate: creator.studioCreators[0]?.defaultRate?.toString() ?? null,
+      defaultRateType: creator.studioCreators[0]?.defaultRateType ?? null,
+      defaultCommissionRate: creator.studioCreators[0]?.defaultCommissionRate?.toString() ?? null,
     }));
   }
 
@@ -255,6 +264,9 @@ export class CreatorRepository extends BaseRepository<
       uid: string;
       name: string;
       aliasName: string;
+      defaultRate: string | null;
+      defaultRateType: string | null;
+      defaultCommissionRate: string | null;
     }>> {
     // TODO(phase-5): restore strict overlap-based availability constraints.
     // Current behavior is intentionally loose to support broad creator discovery in mapping flows.
@@ -289,8 +301,32 @@ export class CreatorRepository extends BaseRepository<
         uid: true,
         name: true,
         aliasName: true,
+        studioCreators: {
+          where: {
+            deletedAt: null,
+            studio: {
+              uid: params.studioUid,
+              deletedAt: null,
+            },
+          },
+          select: {
+            defaultRate: true,
+            defaultRateType: true,
+            defaultCommissionRate: true,
+          },
+          take: 1,
+        },
       },
-    });
+    }).then((creators) =>
+      creators.map((creator) => ({
+        uid: creator.uid,
+        name: creator.name,
+        aliasName: creator.aliasName,
+        defaultRate: creator.studioCreators[0]?.defaultRate?.toString() ?? null,
+        defaultRateType: creator.studioCreators[0]?.defaultRateType ?? null,
+        defaultCommissionRate: creator.studioCreators[0]?.defaultCommissionRate?.toString() ?? null,
+      })),
+    );
   }
 
   private buildWhereClause(params: {

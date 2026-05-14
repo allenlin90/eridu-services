@@ -103,6 +103,47 @@ export class CompensationLineItemRepository extends BaseRepository<
     return { data, total };
   }
 
+  /**
+   * Batch-fetches active line item amounts for a set of show-creator assignment UIDs.
+   * Used by the per-show creator compensation summary to avoid N+1 queries.
+   */
+  async findActiveAmountsByShowCreatorUids(params: {
+    studioId: string;
+    showCreatorUids: string[];
+  }): Promise<Array<{ showCreatorUid: string; amount: Prisma.Decimal }>> {
+    if (params.showCreatorUids.length === 0) {
+      return [];
+    }
+
+    const rows = await this.delegate.findMany({
+      where: {
+        deletedAt: null,
+        studio: { uid: params.studioId },
+        target: {
+          targetType: 'SHOW_CREATOR',
+          showCreator: { uid: { in: params.showCreatorUids } },
+        },
+      },
+      select: {
+        amount: true,
+        target: {
+          select: {
+            showCreator: { select: { uid: true } },
+          },
+        },
+      },
+    });
+
+    const result: Array<{ showCreatorUid: string; amount: Prisma.Decimal }> = [];
+    for (const row of rows) {
+      const uid = row.target?.showCreator?.uid;
+      if (uid) {
+        result.push({ showCreatorUid: uid, amount: row.amount });
+      }
+    }
+    return result;
+  }
+
   private buildWhere(
     query: RepositoryListQuery,
   ): Prisma.CompensationLineItemWhereInput {

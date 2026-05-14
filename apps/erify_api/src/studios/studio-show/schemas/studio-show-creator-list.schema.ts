@@ -5,6 +5,7 @@ import { studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema }
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 
 const studioShowCreatorListItemSchema = z.object({
+  id: z.string(),
   creatorId: z.string(),
   creatorName: z.string(),
   creatorAliasName: z.string(),
@@ -17,6 +18,7 @@ const studioShowCreatorListItemSchema = z.object({
 
 export const studioShowCreatorListItemDto = studioShowCreatorListItemSchema
   .transform((item) => ({
+    id: item.id,
     creator_id: item.creatorId,
     creator_name: item.creatorName,
     creator_alias_name: item.creatorAliasName,

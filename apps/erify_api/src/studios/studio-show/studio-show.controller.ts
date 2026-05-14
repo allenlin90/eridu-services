@@ -12,7 +12,10 @@ import {
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema } from '@eridu/api-types/studio-creators';
+import {
+  showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
+  studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
+} from '@eridu/api-types/studio-creators';
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
@@ -21,6 +24,7 @@ import {
   BulkAssignStudioShowCreatorsDto,
   bulkAssignStudioShowCreatorsResultSchema,
 } from './schemas/studio-show-creator-assignment.schema';
+import { showCreatorCompensationSummaryDto } from './schemas/studio-show-creator-compensation-summary.schema';
 import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
@@ -51,6 +55,12 @@ const STUDIO_SHOW_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.TALENT_MANAGER,
 ];
 const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+];
+// Compensation totals are restricted to ADMIN/MANAGER (line-item write surface);
+// TALENT_MANAGER can read the assignment list but not the money totals.
+const STUDIO_SHOW_COMPENSATION_READ_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
@@ -165,6 +175,18 @@ export class StudioShowController extends BaseStudioController {
         reason: item.reason,
       })),
     };
+  }
+
+  @Get(':id/creators/compensation-summary')
+  @StudioProtected(STUDIO_SHOW_COMPENSATION_READ_ROLES)
+  @ZodResponse(showCreatorCompensationSummaryApiSchema)
+  async creatorCompensationSummary(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    await this.taskOrchestrationService.getStudioShow(studioId, id);
+    const summary = await this.showOrchestrationService.getCreatorCompensationSummaryForShow(studioId, id);
+    return showCreatorCompensationSummaryDto.parse(summary);
   }
 
   @Delete(':id/creators/:creatorId')

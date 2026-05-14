@@ -72,6 +72,9 @@ describe('bulkCreatorAssignmentDialog', () => {
           name: 'Alice',
           alias_name: 'Ali',
           roster_state: STUDIO_CREATOR_ROSTER_STATE.NONE,
+          default_rate: '150.00',
+          default_rate_type: 'HYBRID',
+          default_commission_rate: '12.50',
         },
       ],
       isLoading: false,
@@ -118,5 +121,40 @@ describe('bulkCreatorAssignmentDialog', () => {
     expect(screen.getByText('Some assignments were not completed (1).')).toBeInTheDocument();
     expect(screen.getByText(/Creator is not in this studio roster\. Add them to the roster first\./)).toBeInTheDocument();
     expect(screen.getByText('Onboard missing creators in roster')).toBeInTheDocument();
+  });
+
+  it('assigns selected creators without bulk compensation fields', async () => {
+    const user = userEvent.setup();
+    const mutate = vi.fn();
+    mockUseBulkAssignCreatorsToShows.mockReturnValue({
+      mutate,
+      isPending: false,
+    });
+
+    render(
+      <BulkCreatorAssignmentDialog
+        studioId="std_1"
+        shows={[{ id: 'show_1', name: 'Morning Show' } as any]}
+        open
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'select-first-creator' }));
+
+    expect(screen.queryByText('Assignment Compensation')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Agreed rate for Alice')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Commission rate for Alice')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Assign Creators' }));
+
+    expect(mutate).toHaveBeenCalledWith({
+      show_ids: ['show_1'],
+      creators: [
+        {
+          creator_id: 'creator_1',
+        },
+      ],
+    });
   });
 });

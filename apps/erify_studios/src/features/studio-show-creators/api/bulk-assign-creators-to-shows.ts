@@ -3,6 +3,7 @@ import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 
 import type {
+  BulkAssignStudioShowCreatorsInput,
   BulkAssignStudioShowCreatorsResponse,
   BulkShowCreatorAssignmentInput,
   BulkShowCreatorAssignmentResponse,
@@ -19,16 +20,10 @@ type UseBulkAssignCreatorsToShowsProps = {
   onSuccess?: (response: BulkShowCreatorAssignmentResponse) => void;
 };
 
-type StudioShowCreatorAssignmentInput = {
-  creators: Array<{
-    creator_id: string;
-  }>;
-};
-
 async function assignCreatorsToSingleShow(
   studioId: string,
   showId: string,
-  data: StudioShowCreatorAssignmentInput,
+  data: BulkAssignStudioShowCreatorsInput,
 ): Promise<BulkAssignStudioShowCreatorsResponse> {
   const response = await apiClient.post<BulkAssignStudioShowCreatorsResponse>(
     `/studios/${studioId}/shows/${showId}/creators/bulk-assign`,
@@ -55,8 +50,9 @@ async function bulkAssignCreatorsToShows(
   payload: BulkShowCreatorAssignmentInput,
 ): Promise<BulkShowCreatorAssignmentResponse> {
   const showIds = [...new Set(payload.show_ids)];
-  const creatorIds = [...new Set(payload.creator_ids)];
-  const creators = creatorIds.map((creatorId) => ({ creator_id: creatorId }));
+  const creatorById = new Map(payload.creators.map((creator) => [creator.creator_id, creator]));
+  const creators = [...creatorById.values()];
+  const creatorIds = creators.map((creator) => creator.creator_id);
 
   // TODO(phase5/query-optimization): add concurrency cap (e.g. p-limit with concurrency=5)
   // to prevent abuse when many shows are selected simultaneously.
@@ -126,6 +122,9 @@ export function useBulkAssignCreatorsToShows({
         queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) }),
         ...uniqueShowIds.map((showId) => queryClient.invalidateQueries({ queryKey: studioShowKeys.detail(studioId, showId) })),
         ...uniqueShowIds.map((showId) => queryClient.invalidateQueries({ queryKey: showCreatorsKeys.list(studioId, showId) })),
+        ...uniqueShowIds.map((showId) =>
+          queryClient.invalidateQueries({ queryKey: showCreatorsKeys.compensationSummary(studioId, showId) }),
+        ),
       ]);
 
       if (response.created === 0 && response.errors.length === 0) {

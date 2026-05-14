@@ -19,9 +19,11 @@ End-to-end flow for how a studio manages its creator talent — from role setup 
        ↓
 3. Talent Manager browses creator catalog / checks availability
        ↓
-4. Talent Manager bulk-assigns creators to shows (with optional compensation override)
+4. Talent Manager bulk-assigns creators to shows (assignment-only; snapshots resolve from roster defaults)
        ↓
-5. Wave 2 economics service (2.3) reads assignment snapshots and line items using the cost model in 2.1
+5. ADMIN/MANAGER reviews and adjusts per-show creator compensation via `SHOW_CREATOR` line items
+       ↓
+6. Wave 2 economics service (2.3) reads assignment snapshots and line items using the cost model in 2.1
 ```
 
 ## Step-by-Step
@@ -57,27 +59,35 @@ The talent manager uses two discovery surfaces:
 
 ### 4. Show assignment
 
-The talent manager assigns one or more creators to a show via bulk assign:
+The talent manager assigns one or more creators to a show via bulk assign. The endpoint is **assignment-only** — it does not accept rate, commission, or compensation-item fields, because each show-creator assignment can have different compensation terms that belong on the per-show compensation surface:
 
 ```
 POST /studios/:studioId/shows/:showId/creators/bulk-assign
 {
   "creators": [
-    { "creator_id": "creator_abc", "agreed_rate": 500, "compensation_type": "FIXED" },
-    { "creator_id": "creator_xyz", "compensation_type": "COMMISSION", "commission_rate": 5 }
+    { "creator_id": "creator_abc" },
+    { "creator_id": "creator_xyz", "note": "Co-host", "metadata": { "source": "bulk_mapping" } }
   ]
 }
 ```
 
-- Idempotent: existing active assignments are skipped.
-- Per-show compensation overrides (`agreed_rate`, `compensation_type`, `commission_rate`) are stored on `ShowCreator` and take precedence over creator defaults.
+- Idempotent: existing active assignments are skipped; soft-deleted ones are restored.
+- New assignments resolve their compensation snapshot (`agreedRate`, `compensationType`, `commissionRate`) server-side from the creator's `StudioCreator` roster defaults. If roster defaults are incomplete, the assignment is still created and the row surfaces as `AGREEMENT_SNAPSHOT_MISSING` in the per-show compensation summary until a dedicated assignment-compensation edit workflow supplies explicit terms.
 - Response: `{ assigned, skipped, failed }`.
 
 Feature: [Creator Mapping](../features/creator-mapping.md)
 
-### 5. Cost visibility
+### 5. Per-show creator compensation
 
-Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed from assignment snapshots, shift labor, actuals/planned time, and show-scoped line items. `COMMISSION` and the `HYBRID` commission portion remain unresolved until a future revenue workflow.
+ADMIN and MANAGER review and adjust per-show creator compensation from `/studios/:studioId/creator-mapping/:showId`:
+
+- `GET /studios/:studioId/shows/:showId/creators/compensation-summary` — backend-calculated base, adjustment total, creator total, show total, and `unresolved_reason` per assigned MC. Restricted to ADMIN/MANAGER; `TALENT_MANAGER` can see the assignment list but not the money totals.
+- `POST|PATCH|DELETE /studios/:studioId/compensation-line-items` with `target_type=SHOW_CREATOR` and `target_id=<ShowCreator assignment UID>` — supplemental signed adjustments on top of the base snapshot.
+- `HYBRID` and `COMMISSION` rows are explicitly marked `COMMISSION_REVENUE_NOT_AVAILABLE`; their row total is `null` and they do not contribute to the show total until revenue is recorded.
+
+### 6. Cost visibility
+
+Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed from flat creator assignment snapshots, time-multiplied shift labor (actuals with planned-time fallback), and show-scoped line items. `COMMISSION` and the `HYBRID` commission portion remain unresolved until a future revenue workflow.
 
 Reference: [Economics Cost Model (2.1)](../prd/economics-cost-model.md) · [Compensation Line Items (2.2)](../prd/compensation-line-items.md) · [Economics Service (2.3)](../prd/economics-service.md)
 
@@ -90,9 +100,14 @@ GET/POST/PATCH /creators
         ↓
 GET /creators/catalog|availability
         ↓
-POST /shows/:id/creators/bulk-assign
+POST /shows/:id/creators/bulk-assign        (assignment-only)
         ↓
-ShowCreator { agreedRate, compensationType, commissionRate }
+ShowCreator { agreedRate, compensationType, commissionRate }  (snapshot resolved from roster defaults)
+        ↓                              ↘
+        ↓                               POST/PATCH/DELETE /compensation-line-items
+        ↓                               (target_type=SHOW_CREATOR, target_id=<assignment uid>)
+        ↓                              ↙
+GET /shows/:id/creators/compensation-summary  →  { creators[], total_amount, unresolved_count }
         ↓  [economics merge target]
 GET /shows/:id/economics  →  { cost, base_subtotal, line_item_subtotal, unresolved_reasons }
 ```
@@ -103,7 +118,8 @@ GET /shows/:id/economics  →  { cost, base_subtotal, line_item_subtotal, unreso
 - `ShowCreator.agreedRate` overrides `StudioCreator.defaultRate`; `ShowCreator.compensationType` overrides `StudioCreator.defaultRateType`.
 - `metadata` on `ShowCreator` is for audit context only (`source`, `operator_note`, `tags`) — not executable compensation logic.
 - Creator-scoped actual attendance for a show belongs on `ShowCreator` if that future input is introduced; platform stream/performance facts belong on `ShowPlatform`.
-- `FIXED` and `HOURLY` creator base components are computable from snapshots and time. `COMMISSION` and the commission portion of `HYBRID` require future revenue input.
+- Creator pay is **not** time-multiplied. `CREATOR_COMPENSATION_TYPE` is `FIXED`, `COMMISSION`, or `HYBRID` — there is no `HOURLY` creator type. `FIXED` base is the per-show `agreedRate` snapshot, applied as a flat amount regardless of `Show.startTime`/`endTime` or `actualStartTime`/`actualEndTime`. `COMMISSION` and the commission portion of `HYBRID` require future revenue input and surface as `COMMISSION_REVENUE_NOT_AVAILABLE` in the compensation summary.
+- Time-multiplied pay applies to **operator shift labor**, not creators: `StudioShift.hourlyRate × shift-block duration`, with `actualStartTime`/`actualEndTime` falling back to planned `startTime`/`endTime` when actuals are null. That path is separate from the creator mapping workflow.
 
 ## Related Docs
 
