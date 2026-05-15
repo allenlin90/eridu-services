@@ -9,6 +9,7 @@ These are **navigation guides**, not specs or API references. They orient a deve
 | Workflow | Description |
 | --- | --- |
 | [Creator Operations](./creator-operations.md) | RBAC roles → creator roster → show assignment → economics |
+| [Shift Operations](./shift-operations.md) | Member roster → shift creation → actuals entry → cost review (operator side) |
 
 ## When to Add a Workflow Doc
 

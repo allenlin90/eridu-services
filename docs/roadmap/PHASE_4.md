@@ -1,7 +1,7 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active — Wave 1 shipped; Wave 2 (Cost Foundation) is the current critical path
-> **Last updated**: 2026-04-29
+> **Status**: 🚧 Active — Wave 1 shipped; Wave 2 (Cost Foundation) in progress (2.2 Tasks 1-5 merged, Task 6 in PR #65, Tasks 7-11 ahead)
+> **Last updated**: 2026-05-15
 
 ## Goal
 
@@ -29,7 +29,7 @@ Outcomes:
 | 1.4 | Studio creator onboarding (roster-first) | [feature](../features/studio-creator-onboarding.md)                | ✅ Shipped (PR #32) | 1      |
 | 1.5 | Studio show management                   | [feature](../features/studio-show-management.md)                   | ✅ Shipped          | 1      |
 | 2.1 | Economics cost model                     | [PRD](../prd/economics-cost-model.md)                              | ✅ Signed off       | 2      |
-| 2.2 | Compensation line items + actuals        | [PRD](../prd/compensation-line-items.md)                           | 📝 Design next      | 2      |
+| 2.2 | Compensation line items + actuals        | [PRD](../prd/compensation-line-items.md)                           | 🚧 In progress (Tasks 1-5 merged; Task 6 in PR #65; Tasks 7-11 ahead) | 2      |
 | 2.3 | Economics service                        | [PRD](../prd/economics-service.md)                                 | 🔲 Planned          | 2      |
 | 3.1 | Studio economics review surface          | [PRD](../prd/studio-economics-review.md)                           | 🔲 Planned          | 3      |
 | 3.2 | Show planning export                     | [PRD](../prd/show-planning-export.md)                              | 🔲 Planned          | 3      |
@@ -73,8 +73,10 @@ flowchart TD
     end
 
     subgraph wave2["Wave 2 — Cost Foundation"]
-        W2_1["2.1 Cost Model"]
-        W2_2["2.2 Line Items + Actuals"]
+        W2_1["2.1 Cost Model ✅"]
+        W2_2a["2.2 Backend persistence (T1-4) ✅"]
+        W2_2b["2.2 Creator + Shift workflow (T5-6)"]
+        W2_2c["2.2 Editability + Reviews (T7-11)"]
         W2_3["2.3 Economics Service"]
     end
 
@@ -91,7 +93,7 @@ flowchart TD
     W1_2 --> W1_4
     W1_3 --> W1_4
     W1_5 --> W2_3
-    W2_1 --> W2_2 --> W2_3
+    W2_1 --> W2_2a --> W2_2b --> W2_2c --> W2_3
     W2_3 --> W3_1
     W3_1 --> W3_2
     W1_4 --> W3_3
@@ -103,9 +105,9 @@ flowchart TD
     classDef planned fill:#e2e3e5,stroke:#6c757d,color:#000
     classDef future fill:#f8f9fa,stroke:#adb5bd,color:#000
 
-    class W1_1,W1_2,W1_3,W1_4,W1_5,W2_1 done
-    class W2_2 active
-    class W2_3,W3_1,W3_2,W3_3 planned
+    class W1_1,W1_2,W1_3,W1_4,W1_5,W2_1,W2_2a done
+    class W2_2b active
+    class W2_2c,W2_3,W3_1,W3_2,W3_3 planned
     class W4_1 future
 ```
 
@@ -115,13 +117,27 @@ Wave 2 is single-track. Each step gates the next.
 
 | Step | Workstream                                                   | Why                                                                                                                                                                                                                                                                                         |
 | ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2.1  | [Economics cost model](../prd/economics-cost-model.md)       | Signed off. Locks the simplified Phase 4 data model, computation rules, three read-only views, and extensibility hooks. Stale app design drafts were removed; implementation designs are redrafted from the signed-off PRDs.                                                                |
-| 2.2  | [Compensation line items](../prd/compensation-line-items.md) | Next design/implementation slice. Prisma additions for event-attached `CompensationLineItem` + `Show.actualStartTime/EndTime` + `StudioShiftBlock.actualStartTime/EndTime`; line item and actuals input surfaces. **No freeze guards, no settlement, no grace, no audit table** in Phase 4. |
-| 2.3  | [Economics service](../prd/economics-service.md)             | Greenfield implementation of the pure calculator and read endpoints against 2.1, consuming line-items + actuals from 2.2. No state machine.                                                                                                                                                 |
+| 2.1  | [Economics cost model](../prd/economics-cost-model.md)       | ✅ Signed off and **realigned 2026-05-15**: `HOURLY` removed from creator types (legal-compliance product constraint); show actuals locked as the only Phase 4 creator-attendance source with `ShowCreator`/`ShowPlatform` participation actuals retained as extension points only. |
+| 2.2  | [Compensation line items](../prd/compensation-line-items.md) | 🚧 In progress. Tasks 1-5 merged; Task 6 in PR #65; Tasks 7-11 ahead. Prisma additions for event-attached `CompensationLineItem` + `Show.actualStartTime/EndTime` + `StudioShiftBlock.actualStartTime/EndTime`; line item and actuals input surfaces. **No freeze guards, no settlement, no grace, no audit table** in Phase 4. |
+| 2.3  | [Economics service](../prd/economics-service.md)             | Greenfield implementation of the pure calculator and read endpoints against 2.1, consuming line-items + actuals from 2.2. No state machine. Now also owns `POST /me/compensation/pending-events/:eventKey/flag-missing-actuals` for the recipient escalation loop and `GET /studios/:studioId/unresolved-rows` for the manager queue. |
 
 Wave 3 begins after 2.3 merges to master.
 
 Wave 3 PRDs and app design docs are planning placeholders until that point. Review and revise them against the confirmed 2.3 backend read shape before starting Wave 3 implementation.
+
+### Phase 4 realignment (2026-05-15)
+
+After Task 5 shipped, an audit per [`.agent/skills/plan-workflow-completeness/`](../../.agent/skills/plan-workflow-completeness/SKILL.md) surfaced PRD-↔-code drift and UX gaps. The realignment locks three product constraints across PRDs, plan, and design docs:
+
+1. **No `HOURLY` for creators.** Creator pay is `FIXED` / `COMMISSION` / `HYBRID` only — flat per show, never time-multiplied. The earlier `HOURLY` row in 2.1/2.3 was a planning artifact, not a product requirement; legal compliance forbids time-multiplied creator pay.
+2. **Show actuals are the only creator-attendance source in Phase 4.** `ShowCreator` and `ShowPlatform` participation actuals are extension points the calculator must remain structured to consume later, but they are not active fields. One actual window per show covers every creator and every platform on that show.
+3. **Actuals are typed by `ADMIN`/`MANAGER`.** The `actuals_source: OPERATOR_RECORD` label means "typed into the system by an authorized user," not "the operator who was on set." When/if creator-app or punch-clock sources ship, they fit into the existing enum without re-naming.
+
+The realignment also closes three UX gaps as new tasks in the 2.2 plan:
+
+- **Task 8** ships `ShowCreator` assignment-compensation edit + the per-creator review view, so creator-side editability matches the shift side.
+- **Task 9** scopes to **show actuals only** plus a missing-actuals manager collection view; the block-actuals input is already shipped in Task 6 (PR #65).
+- **Task 11** ships the recipient escalation affordance (in-product "flag missing actuals" loop) and the inline notice on roster-default edits.
 
 ## Architecture Guardrails
 
@@ -209,10 +225,12 @@ DoD is scenario-based: each bullet names *who* does *what* and ends with a *veri
 - [x] 2.1 Economics cost model is signed off — data model, pure calculator, three read views, planned-fallback warnings, and future-extension surface are locked.
 - [ ] 2.2a Studio admin/manager creates, updates, and soft-deletes `SHOW_CREATOR` adjustment line items from the per-show creator mapping view; the per-show compensation summary refreshes with no client-side money arithmetic.
 - [ ] 2.2b Manager edits an unresolved `ShowCreator` assignment's `agreedRate` / `compensationType` / `commissionRate`; the per-show summary transitions the row out of `AGREEMENT_SNAPSHOT_MISSING` on next refetch and `metadata.audit.snapshot_overrides[]` records the change.
-- [ ] 2.2c Operator (or manager, depending on 2.1 role) enters `Show.actualStartTime`/`actualEndTime` on a finished show; the per-show summary moves out of any `ACTUALS_INCOMPLETE` state, and `ShiftBlockActualsInput` provides the same loop for shift blocks.
+- [ ] 2.2c ADMIN/MANAGER enters `Show.actualStartTime`/`actualEndTime` on a finished show through the existing show update endpoint; the per-show summary moves out of any `ACTUALS_INCOMPLETE` state. The shift-block-actuals counterpart (`ShiftBlockActualsInput`) shipped in Task 6 (PR #65) and exposes the same loop for blocks.
 - [ ] 2.2d Manager reviews one member's shift compensation over a date range from `/studios/:studioId/shifts/by-member/:membershipId?from=...&to=...`; rows with missing actuals are flagged and link to the actuals input surface.
 - [ ] 2.2e Manager reviews one creator's show compensation over a date range from `/studios/:studioId/creator-mapping/by-creator/:creatorId?from=...&to=...` and bulk-edits per-assignment terms with snapshot audit recorded.
-- [ ] 2.3 Economics service exposes the pure calculator and the three read endpoints against signed-off 2.1 + persisted 2.2 data; merged to `master`.
+- [ ] 2.2f Admin/manager editing `StudioCreator.defaultRate` or `StudioMembership.baseHourlyRate` sees an inline notice stating existing assignment snapshots are unchanged unless explicitly edited.
+- [ ] 2.2g Creator/operator on `/me/compensation/*` flags a pending event for missing actuals; the row surfaces in the studio missing-actuals queue with a "Recipient flagged" badge.
+- [ ] 2.3 Economics service exposes the pure calculator and the three read endpoints (plus the missing-actuals flag endpoint and unresolved-rows queue) against signed-off 2.1 + persisted 2.2 data; merged to `master`.
 
 **Wave 3 — Finance surfaces**
 

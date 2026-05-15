@@ -54,7 +54,7 @@ Everything in this list is deferred. Each has an extension sketch in §4.
 | **Agreement snapshot**            | The persisted per-assignment copy of agreement terms, captured at assignment time from explicit input or roster defaults. Roster default edits do not rewrite snapshots.                                                                         |
 | **Agreement snapshot missing marker** | `metadata.flags.agreement_snapshot_missing = true` on a `ShowCreator` row means required agreement snapshot fields could not be resolved at write time. It is an explanatory marker, not the calculator's only detection mechanism.          |
 | **Snapshot-field override audit** | When ADMIN/MANAGER updates a snapshot field (e.g. `ShowCreator.agreedRate`), the change is recorded on the row using the codebase's existing metadata-audit pattern. No separate audit table is introduced in Phase 4.                           |
-| **Compensation component**        | One independently-computed part of a creator agreement (`FIXED_BASE` / `HOURLY_BASE` / commission). `HYBRID` = more than one component.                                                                                                          |
+| **Compensation component**        | One independently-computed part of a creator agreement (`FIXED_BASE` or commission). `HYBRID` = `FIXED_BASE` + commission. There is no `HOURLY_BASE` for creators — creator pay is never time-multiplied. |
 | **Actuals**                       | Recorded measurements: actual show time, actual shift block time. Plain nullable timestamps; entered freely. A complete pair is required before actual duration can drive calculation.                                                           |
 | **Line item**                     | A `CompensationLineItem` record: a flat supplemental amount attached to a concrete operational event or event participation, such as a show assignment or shift block. It is not the base show/shift compensation snapshot.                      |
 | **Unresolved reason**             | A string label on a row identifying why a component has no value (`commission_pending_revenue`, `planned_time_missing`, `agreement_snapshot_missing`). UI surfaces these instead of substituting `0`.                                            |
@@ -80,10 +80,11 @@ When a creator is assigned to a show, `ShowCreator` persists `agreedRate`, `comp
 
 | Package      | Components               | Phase 4 computation                                                                                                                           |
 | ------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FIXED`      | `FIXED_BASE`             | Fixed amount for the assignment; recipient self-views still wait for complete actuals before showing/counting it.                             |
-| `HOURLY`     | `HOURLY_BASE`            | `agreedRate × duration`; admin/manager surfaces may use planned fallback with warnings, while recipient self-views wait for complete actuals. |
+| `FIXED`      | `FIXED_BASE`             | Fixed amount for the assignment, **applied per show regardless of duration**. Recipient self-views still wait for complete actuals on the show event before showing/counting it. |
 | `COMMISSION` | one commission component | `null` until a future revenue/sales input lands.                                                                                              |
-| `HYBRID`     | two or more components   | Sum of resolved components; `null` if any commission component pending.                                                                       |
+| `HYBRID`     | `FIXED_BASE` + commission | Sum of resolved components: fixed base is the per-show flat amount; commission is `null` until revenue lands. Row total is `null` while commission is pending. |
+
+> **Legal-compliance constraint:** Creator pay is **not** time-multiplied. There is no `HOURLY` creator package — neither `FIXED` nor `HYBRID` scales with `Show.duration`. Time-multiplied pay applies to operator shift labor only (`StudioShift.hourlyRate × shift-block duration`), not to creator assignments. This is a deliberate product/legal decision, not a Phase 4 deferral; do not add `HOURLY` to `CREATOR_COMPENSATION_TYPE`.
 
 The component model is the extension point for future commission variants and the Phase 5 rule engine.
 
@@ -94,16 +95,20 @@ The component model is the extension point for future commission variants and th
 
 #### Actual ownership and scope
 
-Actual timestamps are recorded facts, not calculated money. Store each actual on the narrowest entity whose fact it represents:
+Actual timestamps are recorded facts, not calculated money. Phase 4 records two scopes:
 
-| Scope | Meaning |
-| ----- | ------- |
-| `Show` | Overall operational show window. |
-| `ShowCreator` | One creator's participation window for a show, if creator-scoped actuals are introduced later. This matters for multi-creator shows, late joins, early leaves, or creator-specific hourly components. |
-| `ShowPlatform` | One platform stream/performance window for a show-platform pairing, if platform-scoped actuals are introduced later. This is the correct home for platform-sourced performance/revenue facts and future commission attribution inputs. |
-| `StudioShiftBlock` | One operator/member labor window. |
+| Scope | Meaning | Phase 4 status |
+| ----- | ------- | -------------- |
+| `Show` | Overall operational show window. All creators and platforms on the show share this single timeline. | ✅ In scope |
+| `StudioShiftBlock` | One operator/member labor window. | ✅ In scope |
+| `ShowCreator` (participation window) | One creator's distinct start/end for a multi-creator show, late join, or early leave. | 🟡 Extension point (do not ship in Phase 4) |
+| `ShowPlatform` (stream/performance window) | One platform stream's distinct start/end and performance facts. | 🟡 Extension point (do not ship in Phase 4) |
 
-The calculator should prefer the most specifically scoped actual for the component being calculated. Show actuals are valid for event-level duration and fallback, but they must not be treated as creator attendance or platform performance when narrower facts exist.
+For Phase 4, **show actual time is the only creator-attendance source**: all assigned creators on a show inherit the show's `actualStartTime` / `actualEndTime`. There is no creator-specific actual timeline. The same applies to platforms: a show's actual window covers every platform stream on that show.
+
+This is a deliberate simplification — Phase 4 operations enter one actual per show, not one per creator and one per platform. If future product needs distinct creator or platform windows (late-join, multi-stream, platform-staggered start), the calculator must consume the narrower entity actuals when they exist. Until then, narrower-scope actuals are **extension points**, not active fields: do not add columns, schemas, or input UI for them in Phase 4. The cost-model section "Actuals priority cascade" below names where the extension slots in without breaking the public row shape.
+
+The calculator should prefer the most specifically scoped actual for the component being calculated *when narrower facts exist*. In Phase 4 that is always `Show` for creator attendance and `StudioShiftBlock` for operator labor.
 
 No state machine, no settlement, no approval. Actuals may be absent, complete, or incomplete:
 
@@ -161,8 +166,7 @@ The economics service is a **pure calculator** over current persisted state. No 
 
 Resolve compensation components from the snapshot, evaluate each against available data:
 
-- `FIXED_BASE` → fixed amount; recipient self-view countability still requires complete actuals for the event.
-- `HOURLY_BASE` → `agreedRate × duration`. Duration uses `Show.actualStartTime/EndTime` if both are present. If actuals are absent or incomplete, duration falls back to `Show.startTime/endTime` when planned time exists and emits a warning. If neither actual nor planned duration can be resolved, the component is unresolved.
+- `FIXED_BASE` → `agreedRate` as a flat per-show amount. **Not** multiplied by `Show.duration`, `actualStart/EndTime` deltas, or any other time term. Recipient self-view countability still requires complete actuals on the show event, but the value itself does not depend on duration.
 - Commission components → `null` in Phase 4 (future revenue workflow resolves).
 
 ### Per-shift labor
@@ -285,7 +289,7 @@ For linking from other docs:
 
 - **Phase 4 is a viewer, not a workflow.** Records are notice and reference; views are read-only; the calculator is pure.
 - **Snapshot at assignment time + metadata audit for snapshot overrides.** Stable historical references without freeze guards or a separate audit table. ADMIN and MANAGER may update intended-immutable fields; UI warns about downstream impact.
-- **Component-aware compensation.** `FIXED` / `HOURLY` / `COMMISSION` / `HYBRID` resolved into components. Single source of truth for projection arithmetic — `StudioShift.projectedCost` is removed.
+- **Component-aware compensation.** Creator packages — `FIXED` / `COMMISSION` / `HYBRID` — resolved into components (`FIXED_BASE` + commission). No `HOURLY` for creators; that's a legal-compliance product constraint. Operator shift labor is always `hourlyRate × duration`. Single source of truth for projection arithmetic — `StudioShift.projectedCost` is removed.
 - **Base compensation is calculated, not stored as line items.** `ShowCreator` and `StudioShift` snapshots own normal base pay; `CompensationLineItem` stores event-attached supplemental add-ons and deductions only.
 - **Null propagates through rollups; never coerce to zero.** Unresolved reasons surface explicitly to the UI.
 - **Planned fallback is manager-visible only.** Missing or incomplete actuals may still produce a cost from planned time for admin/manager planning and operational rollups, but every affected row carries warnings. Creator/operator/helper self-views do not show money for those events; they show pending events until actuals are complete.
