@@ -4,10 +4,7 @@ import { useTableUrlState } from '@eridu/ui';
 
 import { useStudioShifts } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import type { StudioShiftsRouteSearch } from '@/features/studio-shifts/utils/studio-shifts-route-search.utils';
-import {
-  buildStudioShiftsQueryParams,
-  sortShiftsByFirstBlockStart,
-} from '@/features/studio-shifts/utils/studio-shifts-table.utils';
+import { buildStudioShiftsQueryParams } from '@/features/studio-shifts/utils/studio-shifts-table.utils';
 
 type UseStudioShiftsPageControllerParams = {
   studioId: string;
@@ -47,9 +44,7 @@ export function useStudioShiftsPageController({
     }
   }, [data?.meta?.totalPages, setPageCount]);
 
-  const shifts = useMemo(() => {
-    return sortShiftsByFirstBlockStart(data?.data ?? []);
-  }, [data?.data]);
+  const shifts = data?.data ?? [];
 
   const tablePagination = data?.meta
     ? {
