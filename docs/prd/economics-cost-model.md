@@ -300,4 +300,4 @@ For linking from other docs:
 
 ## Downstream work
 
-All downstream Phase 4 work — compensation line items + actuals, economics service, review surface, page-local exports, availability hardening — is tracked PR-by-PR in [`docs/roadmap/PHASE_4_REMAINING.md`](../roadmap/PHASE_4_REMAINING.md). This PRD remains the locked semantic contract those PRs must conform to.
+All downstream Phase 4 work — compensation line items + actuals, economics service, review surface, page-local exports, availability hardening — is tracked PR-by-PR in [`docs/roadmap/PHASE_4.md`](../roadmap/PHASE_4.md). This PRD remains the locked semantic contract those PRs must conform to.

@@ -35,7 +35,7 @@ Talent managers assigned creators to shows one at a time through system-admin en
 
 ### Compensation fields and fallback contract
 
-Per-show compensation inputs live on `ShowCreator` and are consumed by the Wave 2 economics service per the canonical contract in [`economics-cost-model.md`](../prd/economics-cost-model.md); remaining 2.3 calculator work is tracked in [`PHASE_4_REMAINING.md`](../roadmap/PHASE_4_REMAINING.md):
+Per-show compensation inputs live on `ShowCreator` and are consumed by the Wave 2 economics service per the canonical contract in [`economics-cost-model.md`](../prd/economics-cost-model.md); remaining 2.3 calculator work is tracked in [`PHASE_4.md`](../roadmap/PHASE_4.md):
 
 | Field | Description |
 | --- | --- |
@@ -75,4 +75,4 @@ For `HYBRID` and `COMMISSION` assignments the compensation summary returns `tota
 ## Forward References
 
 - Studio onboarding (resolving off-roster failures): [studio-creator-onboarding.md](./studio-creator-onboarding.md)
-- Full discovery-side gating: [PHASE_4_REMAINING.md §PR 15](../roadmap/PHASE_4_REMAINING.md#pr-15--strict-mode-creator-availability-with-conflict-metadata)
+- Full discovery-side gating: [PHASE_4.md §PR 15](../roadmap/PHASE_4.md#pr-15--strict-mode-creator-availability-with-conflict-metadata)

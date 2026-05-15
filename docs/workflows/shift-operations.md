@@ -156,5 +156,5 @@ GET /studios/:studioId/economics  →  operational rollups (3.1 consumer)
 | Feature (RBAC)              | [docs/features/rbac-roles.md](../features/rbac-roles.md)                                               |
 | Workflow (Creator side)     | [docs/workflows/creator-operations.md](./creator-operations.md)                                        |
 | PRD (Cost model)            | [docs/prd/economics-cost-model.md](../prd/economics-cost-model.md)                                     |
-| Tracker (remaining 2.2-2.3) | [docs/roadmap/PHASE_4_REMAINING.md](../roadmap/PHASE_4_REMAINING.md)                                   |
+| Tracker (remaining 2.2-2.3) | [docs/roadmap/PHASE_4.md](../roadmap/PHASE_4.md)                                   |
 | Phase 4 roadmap             | [PHASE_4.md](../roadmap/PHASE_4.md)                                                                    |

@@ -38,13 +38,13 @@ PRDs are **phase-scoped and transient**:
 
 ## Phase 4 PRDs
 
-Phase 4 was re-scoped mid-flight to a read-only cost reference viewer. Downstream PRDs that restated or extended the locked 2.1 cost model were consolidated into [PHASE_4_REMAINING.md](../roadmap/PHASE_4_REMAINING.md) as 15 user-flow-first PR entries.
+Phase 4 was re-scoped mid-flight to a read-only cost reference viewer. Downstream PRDs that restated or extended the locked 2.1 cost model were consolidated into [PHASE_4.md](../roadmap/PHASE_4.md) as 15 user-flow-first PR entries.
 
 | #   | PRD                                                | Wave | Status                          |
 | --- | -------------------------------------------------- | ---- | ------------------------------- |
 | 2.1 | [Economics Cost Model](./economics-cost-model.md)  | 2    | ✅ Signed off — locked contract |
 
-All other Phase 4 work — 2.2 compensation line items, 2.3 economics service, 3.1 economics review surface, 3.2 page-local exports, 3.3 creator availability hardening — is tracked PR-by-PR in [PHASE_4_REMAINING.md](../roadmap/PHASE_4_REMAINING.md).
+All other Phase 4 work — 2.2 compensation line items, 2.3 economics service, 3.1 economics review surface, 3.2 page-local exports, 3.3 creator availability hardening — is tracked PR-by-PR in [PHASE_4.md](../roadmap/PHASE_4.md).
 
 Studio schedule management is deferred (revisit with the Client Portal workstream); its PRD has been retired with the deferral noted in [PHASE_4.md](../roadmap/PHASE_4.md).
 
