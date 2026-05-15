@@ -1,6 +1,6 @@
 # PRD: Compensation Line Items + Actuals (2.2)
 
-> **Status**: Planned - design breakdown recorded
+> **Status**: In progress — Tasks 1-6 merged; Task 7 shift cost cleanup is next
 > **Phase**: 4 - Wave 2 (Cost Foundation)
 > **Workstream**: Persist compensation adjustment inputs, scoped actuals, and snapshot-readiness facts that later economics read models consume.
 > **Depends on**: 1.2 Studio Creator Roster ✅ · 1.3 Studio Member Roster ✅ · 1.5 Studio Show Management ✅ · 2.1 Economics Cost Model ([PRD](./economics-cost-model.md))
@@ -50,7 +50,7 @@ Task 5 narrows the first studio-facing UI to creator compensation in creator map
 - per-show creator mapping at `/studios/:studioId/creator-mapping/:showId` shows assigned MC compensation, manages `SHOW_CREATOR` adjustment items, and renders backend-calculated show creator totals;
 - Task 5 does not add `SHOW`, task, shift, or shift-block compensation UI.
 
-Bulk assignment is an assignment workflow only. It must not ask for rates, commission, or compensation items because each show creator assignment can have different compensation terms and adjustments. Broader cost review belongs to the 2.3 economics review/read-model workflow, which may reuse the same creator mapping calculation response. A future creator-based compensation review should list one creator's shows over a date range and allow managers to edit per-show assignment terms and `SHOW_CREATOR` items in bulk from that creator-centered context.
+Bulk assignment is an assignment workflow only. It must not ask for rates, commission, or compensation items because each show creator assignment can have different compensation terms and adjustments. Broader cost review belongs to the economics review/read-model workflow, which may reuse the same creator mapping calculation response. Task 8 lists one creator's shows over a date range and allows managers to edit per-show assignment terms and `SHOW_CREATOR` items in bulk from that creator-centered context.
 
 ## Scope Boundary
 
@@ -117,7 +117,7 @@ Bulk assignment is an assignment workflow only. It must not ask for rates, commi
 
 ### Base compensation is calculated from snapshots
 
-Normal creator/show base compensation is calculated from `ShowCreator` snapshot fields plus show planned/actual duration. Normal operator/shift base labor is calculated from `StudioShift.hourlyRate` plus shift-block planned/actual duration. 2.2 must not create `CompensationLineItem` rows to represent those base amounts. If the UI needs a breakdown table, 2.3 can return generated read-model rows for base components alongside persisted supplemental line items.
+Normal creator/show base compensation is calculated from `ShowCreator` snapshot fields (`agreedRate`, `compensationType`, `commissionRate`); the `FIXED_BASE` component is a flat per-show amount, never multiplied by show duration. Normal operator/shift base labor is calculated from `StudioShift.hourlyRate` plus shift-block planned/actual duration. 2.2 must not create `CompensationLineItem` rows to represent those base amounts. If the UI needs a breakdown table, 2.3 can return generated read-model rows for base components alongside persisted supplemental line items.
 
 For Task 5, new show creator assignments resolve their base compensation snapshot from creator roster defaults when explicit terms are not provided by a purpose-built compensation edit workflow. The base creator amount is stored as assignment snapshot fields on `ShowCreator` (`compensationType`, `agreedRate`, `commissionRate`) and calculated by backend read logic. A `CompensationLineItem` remains a manual signed adjustment, not the persisted representation of default/fixed rate compensation.
 
@@ -189,7 +189,7 @@ The product constraints are:
 | System line-item support | System admins can inspect, filter, create, correct, and soft-delete line items across studios. |
 | Bulk creator mapping | `/studios/:studioId/creator-mapping` assigns selected creators to selected shows only. It does not expose rate, commission, compensation item, or total-cost controls. New assignments use creator roster defaults for their snapshots. |
 | Per-show creator mapping | `/studios/:studioId/creator-mapping/:showId` renders backend-calculated assigned-MC cost totals from `ShowCreator` snapshots plus `SHOW_CREATOR` line items, and lets ADMIN/MANAGER create/update/delete those line items by `target_type=SHOW_CREATOR` and the show-creator assignment UID. |
-| Future creator-based compensation review | Later 2.3 design should list shows for a selected creator over a date range and support manager review/edit of per-show assignment compensation and `SHOW_CREATOR` items from that creator-centered view. |
+| Creator-based compensation review | Task 8 lists shows for a selected creator over a date range and supports manager review/edit of per-show assignment compensation and `SHOW_CREATOR` items from that creator-centered view. |
 | Target-scoped studio panels | ADMIN/MANAGER can create, edit, and soft-delete line items from the show, show creator assignment, shift, or shift block being adjusted; panels call the flat studio line-item API with explicit target filters. |
 | Base vs supplemental display | Breakdown UI separates calculated base compensation from supplemental line items; users must not see generated base rows as editable line items. |
 | Actuals entry | Show detail and shift-block surfaces expose compact actual-time inputs for ADMIN/MANAGER. |
@@ -200,30 +200,30 @@ The product constraints are:
 
 ## Acceptance Criteria
 
-- [ ] System admins can manage line items through `/system/compensation-line-items` / `/admin/compensation-line-items`.
+- [x] System admins can manage line items through `/system/compensation-line-items` / `/admin/compensation-line-items`.
 - [ ] Studio ADMIN and MANAGER can create, update, list, and soft-delete compensation line items through `/studios/:studioId/compensation-line-items`, with target-specific workflows passing `target_type` and `target_id`.
-- [ ] Line item API uses UIDs externally and never exposes internal DB IDs.
-- [ ] The line-item attachment model remains polymorphic and follows the repo's Prisma-friendly pattern.
-- [ ] `CompensationItemType` supports `BONUS`, `ALLOWANCE`, `OVERTIME`, `DEDUCTION`, and `OTHER`.
-- [ ] `amount` is stored as decimal and serialized as a string at the API boundary.
-- [ ] Type-based sign enforcement is not implemented in Phase 4.
-- [ ] `reason` is required and returned in read responses.
-- [ ] Line items cannot be created without a supported show/shift event attachment.
-- [ ] No `effectiveDate`, standing/null scope, schedule-scoped, global, recurring, HR, or payment-system line items are introduced in Wave 2.
-- [ ] Normal base show compensation and base shift labor are not persisted as `CompensationLineItem` records.
-- [ ] Soft-deleted line items are excluded from default reads.
-- [ ] `Show.actualStartTime` and `Show.actualEndTime` are nullable and writable by ADMIN/MANAGER.
-- [ ] `StudioShiftBlock.actualStartTime` and `StudioShiftBlock.actualEndTime` are nullable and writable by ADMIN/MANAGER.
-- [ ] Missing or incomplete actual pairs are persisted as entered and may resolve through planned fallback for admin/manager 2.3 views when planned time exists.
+- [x] Line item API uses UIDs externally and never exposes internal DB IDs.
+- [x] The line-item attachment model remains polymorphic and follows the repo's Prisma-friendly pattern.
+- [x] `CompensationItemType` supports `BONUS`, `ALLOWANCE`, `OVERTIME`, `DEDUCTION`, and `OTHER`.
+- [x] `amount` is stored as decimal and serialized as a string at the API boundary.
+- [x] Type-based sign enforcement is not implemented in Phase 4.
+- [x] `reason` is required and returned in read responses.
+- [x] Line items cannot be created without a supported show/shift event attachment.
+- [x] No `effectiveDate`, standing/null scope, schedule-scoped, global, recurring, HR, or payment-system line items are introduced in Wave 2.
+- [x] Normal base show compensation and base shift labor are not persisted as `CompensationLineItem` records.
+- [x] Soft-deleted line items are excluded from default reads.
+- [x] `Show.actualStartTime` and `Show.actualEndTime` are nullable and writable by ADMIN/MANAGER.
+- [x] `StudioShiftBlock.actualStartTime` and `StudioShiftBlock.actualEndTime` are nullable and writable by ADMIN/MANAGER.
+- [x] Missing or incomplete actual pairs are persisted as entered and may resolve through planned fallback for admin/manager 2.3 views when planned time exists.
 - [ ] Creator/operator/helper self-views do not show compensation amounts for rows with missing or incomplete actuals, including fixed-compensation rows.
 - [ ] Creator/operator/helper self-view totals exclude pending rows and pending-row line items until actuals are complete.
-- [ ] No actuals approval, reopen, settlement, or freeze fields are added.
-- [ ] Existing `ShowCreator` rows with missing snapshot fields are not backfilled by 2.2.
-- [ ] Normal app assignment writes persist explicit/resolved `ShowCreator` agreement snapshot fields when available; unresolved rows remain calculably unresolved.
-- [ ] Rows with missing required agreement snapshot fields are unresolved even when `metadata.flags.agreement_snapshot_missing` is absent; the flag is advisory metadata, not the source of truth.
+- [x] No actuals approval, reopen, settlement, or freeze fields are added.
+- [x] Existing `ShowCreator` rows with missing snapshot fields are not backfilled by 2.2.
+- [x] Normal app assignment writes persist explicit/resolved `ShowCreator` agreement snapshot fields when available; unresolved rows remain calculably unresolved.
+- [x] Rows with missing required agreement snapshot fields are unresolved even when `metadata.flags.agreement_snapshot_missing` is absent; the flag is advisory metadata, not the source of truth.
 - [ ] Roster default-rate update UX states that existing assignment snapshots are unchanged unless a manager explicitly edits those assignments.
 - [ ] ADMIN/MANAGER changes to `ShowCreator` snapshot fields and `StudioShift.hourlyRate` append entries to `metadata.audit.snapshot_overrides[]` (chronological array; snake_case keys `field`, `old_value`, `new_value`, `actor_ext_id`, `at`, optional `reason`). Internal DB IDs are not written into `metadata`.
-- [ ] Line items cannot be attached to a `Show` whose `studioId` is null (orphan / client-only show); the attempt is rejected with `LINE_ITEM_TARGET_NOT_FOUND`.
+- [x] Line items cannot be attached to a `Show` whose `studioId` is null (orphan / client-only show); the attempt is rejected with `LINE_ITEM_TARGET_NOT_FOUND`.
 - [ ] `StudioShift.projectedCost` and `StudioShift.calculatedCost` are removed only in the dedicated cleanup PR.
 - [ ] 2.3 calculator tests can consume fixtures containing line items, show actuals, shift-block actuals, and snapshot override history without needing extra Phase 4 workflow state.
 

@@ -72,10 +72,11 @@ Resolve `ShowCreator.compensationType` into components:
 
 | Type         | Phase 4 behavior                                                               |
 | ------------ | ------------------------------------------------------------------------------ |
-| `FIXED`      | Fixed amount from `agreedRate`; recipient self-views still require complete actuals before exposing/counting it. |
-| `HOURLY`     | `agreedRate × duration`.                                                       |
+| `FIXED`      | Flat per-show amount from `agreedRate`. **Not** multiplied by show duration. Recipient self-views still require complete actuals on the show before exposing/counting the amount. |
 | `COMMISSION` | `cost = null`, `unresolved_reasons` includes commission pending revenue.       |
-| `HYBRID`     | Sum resolved components; total is null if any commission component is pending. |
+| `HYBRID`     | `FIXED_BASE` + commission component. Fixed portion is the flat per-show amount; commission stays `null` until revenue lands. Row total is `null` while commission is pending. |
+
+> **No `HOURLY` creator package.** Per a legal-compliance product constraint locked in 2.1, creator pay is never time-multiplied. `CREATOR_COMPENSATION_TYPE` is `FIXED` / `COMMISSION` / `HYBRID` only. Time-multiplied pay applies to operator shift labor (`StudioShift.hourlyRate × shift-block duration`).
 
 Future revenue work resolves commission components without changing the public row shape.
 
@@ -83,16 +84,16 @@ If required snapshot fields are missing after 2.2 normalization, the row stays u
 
 ### 4. Actuals source resolution
 
-- Follow the cost model's actual ownership rule: use the narrowest scoped actual available for the component being calculated.
-- For Phase 4 show time, use `Show.actualStartTime` / `actualEndTime` only when both are present. If future creator-participation actuals ship, creator compensation should use `ShowCreator` actuals before falling back to show-level actuals.
-- If show actual timestamps are absent or incomplete, use `Show.startTime` / `endTime` when planned time exists and emit a calculation warning.
-- If neither actual nor planned show duration can be resolved, return an unresolved row.
-- For shift blocks, use block actuals only when both are present.
+- Phase 4 records two actuals scopes: `Show.actualStartTime/EndTime` and `StudioShiftBlock.actualStartTime/EndTime`. All creators on a show share the show's actual window; there is no creator-participation timeline in Phase 4.
+- For show time, use `Show.actualStartTime` / `actualEndTime` only when both are present. Creator-scoped actuals (`ShowCreator.actualStartTime/EndTime`) and platform-scoped actuals (`ShowPlatform`) are documented extension points in 2.1 but are **not** active fields in Phase 4. The calculator must remain structured so that introducing a narrower entity's actuals later does not change the public row shape — at that point, "prefer narrowest actual" kicks in and creator/platform compensation switches to the narrower source.
+- For creator compensation specifically, duration plays no role in the *amount* (`FIXED_BASE` is flat). The actuals check exists only to control recipient countability: a recipient cannot count a row until the show actuals are complete.
+- If show actual timestamps are absent or incomplete, admin/manager surfaces fall back to `Show.startTime` / `endTime` for visibility and emit a calculation warning; recipient self-views show pending.
+- If neither actual nor planned show time can be resolved, return an unresolved row.
+- For shift blocks, use block actuals only when both are present. Block actuals **do** drive the duration term for `StudioShift.hourlyRate × duration`.
 - If block actual timestamps are absent or incomplete, use block scheduled times when scheduled time exists and emit a calculation warning.
 - If neither actual nor planned block duration can be resolved, return an unresolved row.
-- Future platform stream/performance actuals belong to `ShowPlatform` or a platform metrics child model and should feed platform/revenue/commission components, not creator attendance.
-- Expose `actuals_source` so consumers can distinguish `OPERATOR_RECORD` from `PLANNED`, and expose calculation warnings when `PLANNED` is used because actuals are missing or incomplete.
-- `/me/` recipient self-views must not expose monetary totals for events with missing or incomplete actuals, even when the compensation package is fixed. They should return enough event/status context for FE to show the row as pending and explain that actual inputs are not complete yet.
+- Expose `actuals_source` so consumers can distinguish `OPERATOR_RECORD` (typed into the system by an authorized user) from `PLANNED`, and expose calculation warnings when `PLANNED` is used because actuals are missing or incomplete.
+- `/me/` recipient self-views must not expose monetary totals for events with missing or incomplete actuals, even when the compensation package is fixed. They should return enough event/status context for FE to show the row as pending and explain that actual inputs are not complete yet. The pending state must include a discoverable affordance (see §7 below) for the recipient to flag missing actuals back to the studio.
 - Keep the enum extensible for future `PLATFORM`, `CREATOR_APP`, and `PUNCH_CLOCK` source categories. How platform data arrives is an implementation detail behind `PLATFORM`.
 
 ### 5. Line item composition
@@ -117,18 +118,26 @@ If required snapshot fields are missing after 2.2 normalization, the row stays u
 
 ### 7. Read endpoints
 
-All routes are read-only and require a date range except show drill-in.
+All read routes are read-only and require a date range except show drill-in. One write endpoint exists on the recipient side: the missing-actuals flag (see §7a).
 
 | Method | Route                                                           | Purpose                                                | Access                         |
 | ------ | --------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------ |
 | `GET`  | `/me/compensation/creator?studioId&from&to`                     | Current user's actual-backed creator compensation plus pending events. | Authenticated self             |
 | `GET`  | `/me/compensation/operator?studioId&from&to`                    | Current user's actual-backed operator/member compensation plus pending events. | Authenticated self             |
+| `POST` | `/me/compensation/pending-events/:eventKey/flag-missing-actuals` | Recipient flags a pending event so studio managers see the request in their unresolved-rows queue. Idempotent. | Authenticated self             |
 | `GET`  | `/studios/:studioId/creators/:creatorId/compensation?from&to`   | Cross-user creator compensation reference.             | ADMIN, MANAGER, TALENT_MANAGER |
 | `GET`  | `/studios/:studioId/members/:membershipId/compensation?from&to` | Cross-user operator/member compensation reference.     | ADMIN, MANAGER                 |
 | `GET`  | `/studios/:studioId/shows/:showId/economics`                    | Show-level cost reference and drill-in source.         | ADMIN, MANAGER                 |
 | `GET`  | `/studios/:studioId/economics?from&to&perspective=`             | Operational rollup rows for 3.1 and 3.2 consumers.     | ADMIN, MANAGER                 |
+| `GET`  | `/studios/:studioId/unresolved-rows?from&to`                    | Operational queue of rows missing actuals or snapshot fields, including recipient-flagged ones. | ADMIN, MANAGER                 |
 
 Self routes live under the existing `/me/` module and derive identity from auth context. Cross-user reads use studio-scoped routes and role guards.
+
+### 7a. Recipient escalation affordance
+
+The flag endpoint is the in-product input loop that closes the recipient-side pending state. When a creator or operator sees a row as pending on their self-view, the FE renders a *"Flag missing actuals to manager"* affordance. POSTing records a flag on the underlying row (idempotent — repeated calls do not stack). The `/studios/:studioId/unresolved-rows` queue surfaces flagged rows so ADMIN/MANAGER can prioritize them; this is a queue signal, not a Slack/email notification stack (out of scope in Phase 4).
+
+The flag is stored on the pending entity's `metadata` (e.g. `metadata.flags.actuals_missing_flagged = { actor_ext_id, at }`), mirroring the snapshot-audit pattern — no new audit table. `eventKey` is the entity UID being flagged (typically the `Show` UID or `StudioShiftBlock` UID). Cross-user write paths remain studio-routed; recipients can only flag their own pending events.
 
 ### 8. Operational perspectives and filters
 

@@ -32,6 +32,6 @@ Active (in progress):
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Planned follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
 3. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-4. [Compensation Line Items + Actuals Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — ⏳ In Progress (PR 1B shipped)
+4. [Compensation Line Items + Actuals Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — ⏳ In Progress (Tasks 1-6 merged; Task 7 cleanup next)
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.

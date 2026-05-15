@@ -45,7 +45,7 @@ Per-show compensation inputs live on `ShowCreator` and are consumed by the Wave 
 
 Studio-scoped creator defaults live on `StudioCreator`: `defaultRate`, `defaultRateType`, `defaultCommissionRate`.
 
-The bulk-assign endpoint **no longer carries** these compensation fields (Task 5). Assignments resolve their snapshot server-side from creator roster defaults; a dedicated assignment-compensation edit workflow is the future home for explicit per-assignment terms. Supplemental adjustments on top of an assigned creator are managed as `SHOW_CREATOR` line items via `/studios/:studioId/compensation-line-items` with `target_id=<ShowCreator assignment uid>`. The compensation summary endpoint above is the single read source for totals; the frontend does not compute money locally.
+The bulk-assign endpoint **no longer carries** these compensation fields (Task 5). Assignments resolve their snapshot server-side from creator roster defaults; Task 8 owns explicit per-assignment term edits. Supplemental adjustments on top of an assigned creator are managed as `SHOW_CREATOR` line items via `/studios/:studioId/compensation-line-items` with `target_id=<ShowCreator assignment uid>`. The compensation summary endpoint above is the single read source for totals; the frontend does not compute money locally.
 
 For `HYBRID` and `COMMISSION` assignments the compensation summary returns `total_amount: null` with `unresolved_reason: COMMISSION_REVENUE_NOT_AVAILABLE` and counts them in `unresolved_count`, since the total cannot be computed without future revenue input. Rows missing snapshot fields surface as `AGREEMENT_SNAPSHOT_MISSING`.
 

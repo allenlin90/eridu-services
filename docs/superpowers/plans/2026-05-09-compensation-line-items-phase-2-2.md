@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **Before starting any task** (and before sign-off on any new task added here), run the workflow at [`.agent/workflows/plan-completeness-audit.md`](../../../.agent/workflows/plan-completeness-audit.md) against the latest scope. The five-invariant check in [`.agent/skills/plan-workflow-completeness/`](../../../.agent/skills/plan-workflow-completeness/SKILL.md) is how Tasks 8/9/10 below were discovered after Task 5 shipped — running it earlier would have caught the gaps at plan time instead of code-review time.
+> **Before starting any task** (and before sign-off on any new task added here), run the workflow at [`.agent/workflows/plan-completeness-audit.md`](../../../.agent/workflows/plan-completeness-audit.md) against the latest scope. The five-invariant check in [`.agent/skills/plan-workflow-completeness/`](../../../.agent/skills/plan-workflow-completeness/SKILL.md) keeps actor surfaces, snapshot edit paths, read views, and symmetry gaps represented in Tasks 8/9/10/11.
 
 **Goal:** Implement Compensation Line Items + Actuals 2.2 as independent, reviewable PRs that can merge to `master` separately.
 
@@ -15,30 +15,42 @@
 **PR dependency order:**
 
 ```
-Task 1 (PR 1A backend system CRUD)  ──┬──▶  Task 3 (PR 2 studio line-item APIs)  ──┬──▶  Task 5 (PR 4 creator mapping compensation UX)
-                                      │                                          ├──▶  Task 6 (PR 5 shift workflow UI)
+Task 1 (PR 1A backend system CRUD)  ──┬──▶  Task 3 (PR 2 studio line-item APIs)  ──┬──▶  Task 5 (PR 4 creator mapping compensation UX) ✅
+                                      │                                          ├──▶  Task 6 (PR 5 shift workflow UI) ✅
                                       └──▶  Task 2 (PR 1B FE system UI)
 Task 4 (PR 3 actuals + snapshot)  ────────────────────────────────────────────────┴──▶  Task 5/6/8/9 also depend on this
 
-Task 7 (cleanup PR) is independent and may land any time once consumers are updated in the same PR.
+Task 7 (cleanup PR) is the next independent PR; it may land once the stored shift-cost fields and every consumer are removed in the same change set.
 
-After Task 6 ships:
-  Task 8  (assignment compensation edit + creator-based compensation review)
-  Task 9  (actuals input workflows for show and shift-block)
-  Task 10 (cost review by perspective — per-member shifts, per-creator shows)
+Remaining sequence:
+  Task 8  (ShowCreator assignment compensation edit + creator-based compensation review)
+  Task 9  (Show actuals input + missing-actuals collection view — block actuals already shipped in Task 6)
+  Task 10 (Cost review by perspective — per-member shifts, per-creator shows)
+  Task 11 (Recipient escalation affordance + roster default edit warning UX)
 ```
 
-Tasks 1 and 4 are independent; everything else has at least one upstream dependency. Tasks 8/9/10 are the post-2.2 expansion that closes the editability and review gaps that Tasks 5 and 6 did not own.
+Tasks 1 and 4 were independent; Tasks 1-6 are merged. Task 7 is the next cleanup PR. Tasks 8/9/10/11 close the editability, input, review, and recipient-loop gaps.
 
-### Workstream Expansion Notes (post Task 5 review)
+**Status:** Tasks 1 ✅ (PR #59), 2 ✅ (PR #60), 3 ✅ (PR #62), 4 ✅ (PR #63), 5 ✅ (PR #64), and 6 ✅ (PR #65) are merged. Block actuals input shipped in Task 6, so Task 9 is scoped to **show actuals only** plus the missing-actuals collection view. Task 7 is ready to process as the next cleanup PR.
 
-Task 5 deliberately kept bulk mapping and the per-show creator mapping view assignment-only — the `ShowCreator` base snapshot (`agreedRate`, `compensationType`, `commissionRate`) is populated from `StudioCreator` roster defaults and is not editable from the per-show UI. That mirrors the v1 product for creator mapping, but it is **not** aligned with the shift-block workflow, where a manager sets explicit `hourlyRate` and per-shift terms at assignment time. The plan now expands to close three gaps:
+### Remaining Workflow Coverage
+
+Task 5 deliberately kept bulk mapping and the per-show creator mapping view assignment-only — the `ShowCreator` base snapshot (`agreedRate`, `compensationType`, `commissionRate`) is populated from `StudioCreator` roster defaults and is not editable from the per-show UI. That mirrors the v1 product for creator mapping, but it is **not** aligned with the shift-block workflow, where a manager sets explicit `hourlyRate` and per-shift terms at assignment time. The plan now expands to close four gaps:
 
 1. **Assignment-compensation editability for creators** (Task 8). A manager must be able to override `agreedRate` / `compensationType` / `commissionRate` for one `ShowCreator` assignment without going through the bulk-assign endpoint — both from the per-show creator mapping view (after assignment) and from a new per-creator review view that lists one creator's shows over a date range.
-2. **Actuals input UX** (Task 9). Task 4 added `actualStartTime` / `actualEndTime` columns to `Show` and `StudioShiftBlock`, but Tasks 5/6 scoped out the input UI. Without an input surface, actuals never get collected, and the actuals-vs-planned fallback in 2.3 reads has nothing to fall forward from.
+2. **Show actuals input UX** (Task 9). Task 4 added `Show.actualStartTime` / `actualEndTime` columns; Task 6 already shipped the block-actuals input (`ShiftBlockActualsInput`). Task 9 now closes the remaining show-side input gap and adds a missing-actuals collection view for managers.
 3. **Cost review by perspective** (Task 10). The per-show creator compensation summary added in Task 5 is the only cost read model in 2.2. Managers also need to review costs from the operator side (one member's shifts over a date range) and from the talent side (one creator's shows over a date range). These read models are 2.2-scoped because they only aggregate the snapshots and line items 2.2 already persists; calculator-driven economics still ship with 2.3.
+4. **Recipient escalation + roster default warning UX** (Task 11). Closes the recipient-side pending-state loop with an in-product "Flag missing actuals" affordance (consumed by the manager collection view from Task 9), and ships the missing inline notice on roster edit dialogs that existing assignment snapshots are not retroactively rewritten.
 
 Each expansion task remains assignment-only on the bulk endpoint (no regression of the Task 5 boundary). Money totals always come from backend read models, never from frontend arithmetic.
+
+### Locked Phase 4 Constraints (from PRD realignment)
+
+The plan honors three product/legal constraints locked in the realigned 2.1 cost-model PRD:
+
+- **No `HOURLY` creator type.** Creator pay is `FIXED` / `COMMISSION` / `HYBRID` only; `FIXED_BASE` is a flat per-show amount that does not multiply by show duration. This is a legal-compliance product decision, not a Phase 4 deferral. No task in this plan or any sibling adds `HOURLY` to `CREATOR_COMPENSATION_TYPE`.
+- **Show actuals are the only creator-attendance source.** All creators on a show inherit the show's actual window; no `ShowCreator.actualStartTime/EndTime` columns or UI ship in Phase 4. The cost model documents `ShowCreator` and `ShowPlatform` as extension points so the calculator can later prefer narrower actuals without breaking the public row shape, but those fields are dormant in Phase 4.
+- **Actuals are typed by `ADMIN`/`MANAGER`.** The `actuals_source: OPERATOR_RECORD` label means "typed into the system by an authorized user," not "the operator who was on set." When/if a creator-app or operator-app self-record source ships, the enum's `CREATOR_APP` / `PUNCH_CLOCK` categories cover it without restructuring.
 
 ---
 
@@ -67,18 +79,18 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - Create: `apps/erify_api/src/admin/compensation-line-items/`
 - Test: backend model/service/controller specs for admin CRUD.
 
-- [ ] Add shared contracts for item type, target type, admin create input, update input, list query, response, and paginated response.
-- [ ] Generate a Prisma migration for `CompensationLineItem`, the strict-1:1 polymorphism-only side table `CompensationLineItemTarget`, and the two enums using Prisma tooling. `targetType` is a Prisma enum (`CompensationLineItemTargetType`), not a `String` like `TaskTarget.targetType`. The target row uses `lineItemId` as PK and inherits its lifecycle from the parent (no own `deletedAt`), so soft-delete and queries always go through `CompensationLineItem`.
-- [ ] Implement the model repository/service with soft-delete, UID generation (prefix `cli`, consistent with `ssh`/`ssb`/`smc`/`tgt`), Decimal string serialization, and target immutability.
-- [ ] Implement `LineItemTargetResolver` with studio ownership checks. Target traversal:
+- [x] Add shared contracts for item type, target type, admin create input, update input, list query, response, and paginated response.
+- [x] Generate a Prisma migration for `CompensationLineItem`, the strict-1:1 polymorphism-only side table `CompensationLineItemTarget`, and the two enums using Prisma tooling. `targetType` is a Prisma enum (`CompensationLineItemTargetType`), not a `String` like `TaskTarget.targetType`. The target row uses `lineItemId` as PK and inherits its lifecycle from the parent (no own `deletedAt`), so soft-delete and queries always go through `CompensationLineItem`.
+- [x] Implement the model repository/service with soft-delete, UID generation (prefix `cli`, consistent with `ssh`/`ssb`/`smc`/`tgt`), Decimal string serialization, and target immutability.
+- [x] Implement `LineItemTargetResolver` with studio ownership checks. Target traversal:
   - `SHOW` → `Show.studioId`; reject when `studioId IS NULL` (orphan / client-only show) with `LINE_ITEM_TARGET_NOT_FOUND`.
   - `SHOW_CREATOR` → `ShowCreator → Show.studioId`; same orphan rule.
   - `STUDIO_SHIFT` → `StudioShift.studioId` (NOT NULL).
   - `STUDIO_SHIFT_BLOCK` → `StudioShiftBlock → StudioShift.studioId`.
-- [ ] Implement `/admin/compensation-line-items` CRUD/list using admin controller patterns and `@CurrentUser` actor resolution.
-- [ ] Test every target type, missing/cross-studio target rejection, orphan-show rejection, signed decimal round-trip, reason validation, update, and soft delete.
-- [ ] Verify with `pnpm --filter erify_api db:validate`, `db:generate`, `lint`, `typecheck`, `test`, and `build`.
-- [ ] Commit with a backend-scoped message.
+- [x] Implement `/admin/compensation-line-items` CRUD/list using admin controller patterns and `@CurrentUser` actor resolution.
+- [x] Test every target type, missing/cross-studio target rejection, orphan-show rejection, signed decimal round-trip, reason validation, update, and soft delete.
+- [x] Verify with `pnpm --filter erify_api db:validate`, `db:generate`, `lint`, `typecheck`, `test`, and `build`.
+- [x] Commit with a backend-scoped message. **Shipped in PR #59.**
 
 ## Task 2: Frontend system support UI
 
@@ -88,13 +100,13 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - Modify: system navigation config if required by the existing route/sidebar pattern.
 - Test: route/component tests for support CRUD.
 
-- [ ] Add typed API hooks and query keys for admin line-item list, create, update, and delete.
-- [ ] Build the system support table with filters for studio, target type, target UID, item type, created date range, creator, and deleted-row visibility if available.
-- [ ] Build create/edit dialogs where target is selectable only for system admin support tooling.
-- [ ] Reuse shared pagination and `placeholderData: keepPreviousData`.
-- [ ] Test filter state, create/update/delete invalidation, and signed amount rendering.
-- [ ] Verify with `pnpm --filter erify_studios lint`, `typecheck`, `test`, and `build`.
-- [ ] Commit with a frontend system-support message.
+- [x] Add typed API hooks and query keys for admin line-item list, create, update, and delete.
+- [x] Build the system support table with filters for studio, target type, target UID, item type, created date range, creator, and deleted-row visibility if available.
+- [x] Build create/edit dialogs where target is selectable only for system admin support tooling.
+- [x] Reuse shared pagination and `placeholderData: keepPreviousData`.
+- [x] Test filter state, create/update/delete invalidation, and signed amount rendering.
+- [x] Verify with `pnpm --filter erify_studios lint`, `typecheck`, `test`, and `build`.
+- [x] Commit with a frontend system-support message. **Shipped in PR #60.**
 
 ## Task 3: Studio line-item APIs
 
@@ -109,7 +121,7 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - [x] Scope create/list/update/delete by the route `studioId`; update/delete address the line-item resource by `lineItemId`.
 - [x] Test target create/list filters plus studio-scoped update/delete not-found behavior.
 - [x] Verify backend lint, typecheck, tests, and build.
-- [x] Commit with a studio API message.
+- [x] Commit with a studio API message. **Shipped in PR #62.**
 
 ## Task 4: Actuals and snapshot readiness
 
@@ -123,16 +135,16 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - Create: `apps/erify_api/src/lib/audit/snapshot-audit.helper.ts`
 - Test: actuals and snapshot audit specs.
 
-- [ ] Generate a Prisma migration adding `Show.actualStartTime`/`actualEndTime` and `StudioShiftBlock.actualStartTime`/`actualEndTime`. Time-zone semantics match the existing `startTime`/`endTime` columns.
-- [ ] Extend the existing show and block update DTOs to accept actuals fields. Do **not** add a separate `/actuals` sub-resource.
-- [ ] Inverted-range validation runs against the post-update state (a partial PATCH may set only one side; do not reject a one-sided write when the other side is null).
-- [ ] Implement `appendSnapshotAudit()` as a pure helper. Output shape: append one entry per changed snapshot field to `metadata.audit.snapshot_overrides[]` with snake_case keys `{field, old_value, new_value, actor_ext_id, at, reason?}`. Decimal fields use `Prisma.Decimal.equals()` for diffing; `old_value`/`new_value` are serialized as decimal strings (or `null` when cleared). `actor_ext_id` is a string ext id, never an internal BigInt.
-- [ ] Wire future snapshot edits in the existing show-creator assignment update path and the existing shift update path to call `appendSnapshotAudit()` for changed `ShowCreator.{agreedRate, compensationType, commissionRate}` and `StudioShift.hourlyRate`.
-- [ ] Persist resolvable future ShowCreator assignment snapshots; mark unresolved new writes when required defaults are unavailable.
-- [ ] Do not add a backfill script.
-- [ ] Test set/clear/inverted actuals (including one-sided PATCH), snapshot audit append/no-append (including a no-op same-Decimal edit), override reason, and unresolved new-write metadata. Test that internal BigInt IDs never appear in `metadata`.
-- [ ] Verify backend lint, typecheck, tests, and build.
-- [ ] Commit with an actuals/snapshot-readiness message.
+- [x] Generate a Prisma migration adding `Show.actualStartTime`/`actualEndTime` and `StudioShiftBlock.actualStartTime`/`actualEndTime`. Time-zone semantics match the existing `startTime`/`endTime` columns.
+- [x] Extend the existing show and block update DTOs to accept actuals fields. Do **not** add a separate `/actuals` sub-resource.
+- [x] Inverted-range validation runs against the post-update state (a partial PATCH may set only one side; do not reject a one-sided write when the other side is null).
+- [x] Implement `appendSnapshotAudit()` as a pure helper. Output shape: append one entry per changed snapshot field to `metadata.audit.snapshot_overrides[]` with snake_case keys `{field, old_value, new_value, actor_ext_id, at, reason?}`. Decimal fields use `Prisma.Decimal.equals()` for diffing; `old_value`/`new_value` are serialized as decimal strings (or `null` when cleared). `actor_ext_id` is a string ext id, never an internal BigInt.
+- [x] Wire future snapshot edits in the existing show-creator assignment update path and the existing shift update path to call `appendSnapshotAudit()` for changed `ShowCreator.{agreedRate, compensationType, commissionRate}` and `StudioShift.hourlyRate`.
+- [x] Persist resolvable future ShowCreator assignment snapshots; mark unresolved new writes when required defaults are unavailable.
+- [x] Do not add a backfill script.
+- [x] Test set/clear/inverted actuals (including one-sided PATCH), snapshot audit append/no-append (including a no-op same-Decimal edit), override reason, and unresolved new-write metadata. Test that internal BigInt IDs never appear in `metadata`.
+- [x] Verify backend lint, typecheck, tests, and build.
+- [x] Commit with an actuals/snapshot-readiness message. **Shipped in PR #63.**
 
 ## Task 5: Creator mapping compensation UX
 
@@ -149,22 +161,22 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - Modify: `apps/erify_api/src/studios/studio-show/`, `apps/erify_api/src/show-orchestration/`, creator lookup schemas/repositories.
 - Test: creator mapping component tests and backend creator assignment/summary tests.
 
-- [ ] Revise this plan plus `docs/prd/compensation-line-items.md` and frontend/backend design docs before implementation so Task 5 scope is explicit.
-- [ ] Extend creator catalog/availability lookup responses with roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) so backend assignment snapshots and later compensation review views can reference defaults.
-- [ ] Add `id` to `StudioShowCreatorListItem`; it is the `ShowCreator` assignment UID and is the required `SHOW_CREATOR` `target_id`.
-- [ ] Keep bulk mapping assignment-only: submit selected creator IDs for selected shows, with no rate, commission, compensation item, or total-cost controls.
-- [ ] Ensure bulk assignment does not auto-create initial compensation line items from assignment payloads.
-- [ ] In `/creator-mapping/$showId`, add a compensation drawer/dialog per assigned MC row.
-- [ ] Show assignment base compensation from the `ShowCreator` snapshot plus `SHOW_CREATOR` adjustment items.
-- [ ] Add a backend-calculated creator compensation summary endpoint/response for the per-show creator mapping view. Frontend renders returned totals only.
-- [ ] Allow create/update/delete of `SHOW_CREATOR` compensation items with `target_type=SHOW_CREATOR` and `target_id=<showCreatorAssignmentUid>`.
-- [ ] Widen the compensation dialog desktop layout so amount/type/reason inputs do not collapse into a cramped three-field row.
-- [ ] Add a 2.3 design note: broader costs review does not belong in bulk assignment; a future creator-based date-range review can reuse the creator mapping calculation/read model and provide bulk compensation edits for one creator's shows.
-- [ ] Test bulk/add dialogs do not expose compensation fields, assignment UID usage, line-item management, and total rendering.
-- [ ] Test backend assignment creation ignores initial compensation line-item payloads and summary calculation comes from assignment snapshots plus line items.
-- [ ] Verify frontend lint, typecheck, tests, and build.
-- [ ] Verify backend lint, typecheck, tests, and build.
-- [ ] Commit with a creator-mapping-compensation message.
+- [x] Revise this plan plus `docs/prd/compensation-line-items.md` and frontend/backend design docs before implementation so Task 5 scope is explicit.
+- [x] Extend creator catalog/availability lookup responses with roster defaults (`default_rate`, `default_rate_type`, `default_commission_rate`) so backend assignment snapshots and later compensation review views can reference defaults.
+- [x] Add `id` to `StudioShowCreatorListItem`; it is the `ShowCreator` assignment UID and is the required `SHOW_CREATOR` `target_id`.
+- [x] Keep bulk mapping assignment-only: submit selected creator IDs for selected shows, with no rate, commission, compensation item, or total-cost controls.
+- [x] Ensure bulk assignment does not auto-create initial compensation line items from assignment payloads.
+- [x] In `/creator-mapping/$showId`, add a compensation drawer/dialog per assigned MC row.
+- [x] Show assignment base compensation from the `ShowCreator` snapshot plus `SHOW_CREATOR` adjustment items.
+- [x] Add a backend-calculated creator compensation summary endpoint/response for the per-show creator mapping view. Frontend renders returned totals only.
+- [x] Allow create/update/delete of `SHOW_CREATOR` compensation items with `target_type=SHOW_CREATOR` and `target_id=<showCreatorAssignmentUid>`.
+- [x] Widen the compensation dialog desktop layout so amount/type/reason inputs do not collapse into a cramped three-field row.
+- [x] Add a design note: broader costs review does not belong in bulk assignment; Task 8's creator-based date-range review reuses the creator mapping calculation/read model and provides bulk compensation edits for one creator's shows.
+- [x] Test bulk/add dialogs do not expose compensation fields, assignment UID usage, line-item management, and total rendering.
+- [x] Test backend assignment creation ignores initial compensation line-item payloads and summary calculation comes from assignment snapshots plus line items.
+- [x] Verify frontend lint, typecheck, tests, and build.
+- [x] Verify backend lint, typecheck, tests, and build.
+- [x] Commit with a creator-mapping-compensation message. **Shipped in PR #64.**
 
 ## Task 6: Shift workflow UI
 
@@ -176,13 +188,13 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - Create/modify: `apps/erify_studios/src/components/finance/ShiftBlockActualsInput.tsx`
 - Test: shift workflow component tests.
 
-- [ ] Mount target-scoped line-item panels for shift and shift-block contexts.
-- [ ] Add shift-block actuals fields to the existing block update form; submit goes through the existing block update mutation (no new mutation).
-- [ ] Add snapshot warning dialog to `hourly_rate` edits.
-- [ ] Invalidate target list and parent shift queries after mutations.
-- [ ] Test create/update/delete line items without target picker, block actuals validation, and snapshot warning confirm/cancel.
-- [ ] Verify frontend lint, typecheck, tests, and build.
-- [ ] Commit with a shift-workflow message.
+- [x] Mount target-scoped line-item panels for shift and shift-block contexts.
+- [x] Add shift-block actuals fields to the existing block update form; submit goes through the existing block update mutation (no new mutation).
+- [x] Add snapshot warning dialog to `hourly_rate` edits.
+- [x] Invalidate target list and parent shift queries after mutations.
+- [x] Test create/update/delete line items without target picker, block actuals validation, and snapshot warning confirm/cancel.
+- [x] Verify frontend lint, typecheck, tests, and build.
+- [x] Commit with a shift-workflow message. **Shipped in PR #65.**
 
 ## Task 7: Shift DB cost-column cleanup and FE total-cost table column
 
@@ -196,7 +208,7 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 
 > **Two separate concepts:** this task drops two persisted database columns from the `StudioShift` table: `projected_cost` (`StudioShift.projectedCost`) and `calculated_cost` (`StudioShift.calculatedCost`). Separately, the `erify_studios` frontend shift table gains a display-only `Total Cost` table column backed by a live backend response field. The FE table column is not a replacement database column.
 >
-> **Why this is one PR, not several:** `StudioShift.projectedCost` is currently `Decimal NOT NULL`. Dropping the DB column requires removing every writer in the same change set, otherwise shift creation fails between the two PRs. Use the search hint `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` to find all touchpoints (~98 references at the time of this plan).
+> **Why this is one PR, not several:** `StudioShift.projectedCost` is currently `Decimal NOT NULL`. Dropping the DB column requires removing every writer in the same change set, otherwise shift creation fails between the two PRs. Use `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` to find the current touchpoints.
 >
 > **Frontend table column:** the admin shift table keeps a monetary display column, but the FE column changes from stored `Projected Cost` to backend-provided `Total Cost`. The value must come from a live backend read/calculator path and include shift base labor plus active `STUDIO_SHIFT` and `STUDIO_SHIFT_BLOCK` line items for that shift. The frontend renders the returned `total_cost` string only; it does not sum money locally.
 
@@ -236,27 +248,30 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - [ ] Verify backend and frontend lint, typecheck, tests, and builds.
 - [ ] Commit with an assignment-compensation-edit message.
 
-## Task 9: Actuals input workflows (show + shift-block)
+## Task 9: Show actuals input + missing-actuals collection view
 
-**Depends on:** Task 4 (actuals columns on `Show` and `StudioShiftBlock`, update DTOs). This is the input-surface counterpart to Task 4 that Tasks 5 and 6 deliberately scoped out.
+**Depends on:** Task 4 (`Show.actualStartTime`/`EndTime` columns and update DTO). The shift-block actuals counterpart already shipped in Task 6 (PR #65); this task closes the remaining show-side input gap and adds a manager collection view for rows still missing actuals.
+
+**Role contract (from 2.2 PRD and PHASE_4 DoD):** show actuals are entered by `ADMIN`/`MANAGER` only. The wire label `actuals_source: OPERATOR_RECORD` means "typed into the system by an authorized user," not "the operator who was on set." This naming is preserved so future operator-facing or platform-driven sources can slot into the existing `actuals_source` enum.
 
 **Routes:**
-- Show actuals: existing show detail / show operations surface in `/studios/$studioId/show-operations` and the per-show detail route.
-- Shift-block actuals: existing shift-block edit affordance in `/studios/$studioId/shifts` and the studio shift-block calendar.
+- Show actuals input: existing show detail / show operations form (extend, do not introduce a new mutation).
+- Missing-actuals collection: `/studios/$studioId/show-operations/actuals` — lists finished shows whose `actualStartTime`/`actualEndTime` are still null, plus shifts/blocks in the same state if product wants a single queue.
 
 **Files:**
-- Create: `apps/erify_studios/src/components/finance/ShowActualsInput.tsx` and `ShiftBlockActualsInput.tsx` — paired datetime inputs with clear controls and a client-side inverted-range guard. Submission goes through the existing show-update and block-update mutations (no new mutation).
-- Modify: show detail / show operations forms and shift-block edit forms to mount the inputs.
-- Optional (out of scope unless needed): a lightweight `/studios/$studioId/show-operations/actuals` or `/studios/$studioId/shifts/actuals` operator-facing collection view that lists recent shows/blocks needing actuals, gated on `ADMIN`/`MANAGER`/`OPERATIONS_LEAD` (whichever role is established in 2.1).
-- Test: input set/clear/inverted-range paths, mutation invalidation, and visibility per role.
+- Create: `apps/erify_studios/src/components/finance/ShowActualsInput.tsx` — paired datetime inputs with clear controls and a client-side inverted-range guard, mirroring the shipped `ShiftBlockActualsInput.tsx`.
+- Modify: show detail / show operations form to mount the input. Submission goes through the existing show-update mutation.
+- Create: `apps/erify_studios/src/routes/studios/$studioId/show-operations/actuals.tsx` (or analogous location) — date-ranged list backed by a backend "missing actuals" query (`GET /studios/:studioId/unresolved-rows?from&to` from 2.3 or a 2.2-shaped precursor). Each row exposes the inline inputs so a manager can clear the queue without page navigation.
+- Test: input set/clear/inverted-range paths, mutation invalidation, queue refresh after a successful save, role visibility.
 
-- [ ] Build `ShowActualsInput` and `ShiftBlockActualsInput` with set/clear controls and an inline inverted-range warning that disables submit.
-- [ ] Mount them on the existing show update form and existing shift-block update form. No new mutation.
-- [ ] Invalidate `studioShowKeys.detail`, the per-show creator compensation summary, and shift-block-related calendar/list keys after a successful actuals write.
-- [ ] If product wants a dedicated collection surface for managers, add a list view that surfaces shows/blocks whose end-time is in the past and whose actuals are still null; submit-in-place rows reuse the same inputs.
-- [ ] Test: typing a valid actual range, clearing one side, attempting an inverted range, and confirming the appropriate cache keys are invalidated.
+- [ ] Build `ShowActualsInput` with set/clear controls and an inline inverted-range warning that disables submit. Match the API of the existing `ShiftBlockActualsInput`.
+- [ ] Mount it on the existing show update form. No new mutation. Restrict to `ADMIN`/`MANAGER` per role contract above.
+- [ ] Invalidate `studioShowKeys.detail`, the per-show creator compensation summary, and any show-list keys touched by status filters after a successful actuals write.
+- [ ] Add the missing-actuals collection route. Lists rows whose end-time is in the past and whose actuals are still null. Inline submit per row reuses the same input component.
+- [ ] Show recipient-flag annotations on rows the recipient has flagged (`metadata.flags.actuals_missing_flagged`) when present so managers can prioritize. The flag itself is written by Task 11 — this row just reads it.
+- [ ] Test: valid actual range, clearing one side, inverted range, queue refresh on save, role gating.
 - [ ] Verify frontend lint, typecheck, tests, and build.
-- [ ] Commit with an actuals-input message.
+- [ ] Commit with a show-actuals-input message.
 
 ## Task 10: Cost review by perspective
 
@@ -280,13 +295,35 @@ Each expansion task remains assignment-only on the bulk endpoint (no regression 
 - [ ] Verify backend and frontend lint, typecheck, tests, and builds.
 - [ ] Commit with a cost-review-by-perspective message.
 
+## Task 11: Recipient escalation + roster default warning UX
+
+**Depends on:** Task 9 (the manager collection view is the consumer of recipient flags). The escalation endpoint itself is owned by 2.3 in the PRD, but this task ships the in-product loop that closes the recipient-side pending state and the missing roster-default warning copy.
+
+**Files:**
+- Modify: `apps/erify_studios/src/features/studio-creator-roster/` (roster edit dialog) — add inline notice on rate/compensation-type/commission-rate edits stating *"Existing assignment snapshots are unchanged unless a manager explicitly edits those assignments."*
+- Modify: `apps/erify_studios/src/features/studio-members/` (member-roster edit dialog) — same notice for `baseHourlyRate` edits.
+- Add (when 2.3 ships `/me/`): the recipient-side "Flag missing actuals to manager" affordance in `/me/compensation/{creator,operator}` views. The button POSTs to `/me/compensation/pending-events/:eventKey/flag-missing-actuals` (idempotent) and updates local state to show "Manager notified" until the row resolves.
+- Modify: Task 9's missing-actuals collection view — surface flagged rows at the top of the queue with a "Recipient flagged" badge.
+
+- [ ] Add the roster-default warning copy on both creator-roster and member-roster edit dialogs. Acceptance: 2.2 PRD criterion at compensation-line-items.md says *"Roster default-rate update UX states that existing assignment snapshots are unchanged unless a manager explicitly edits those assignments"* — must be satisfied.
+- [ ] Ship the recipient flag affordance once 2.3 `/me/` endpoints exist. Until then, document the path as a deferred bullet that 2.3 must include.
+- [ ] Read the flag in Task 9's queue: rows with `metadata.flags.actuals_missing_flagged` render a "Recipient flagged" badge and sort to the top by default.
+- [ ] Test: roster-edit dialog renders the warning, flag affordance POSTs idempotently and updates UI state, manager queue surfaces flagged rows.
+- [ ] Verify frontend lint, typecheck, tests, and build.
+- [ ] Commit with an escalation-and-roster-warning message.
+
 ## Completion Criteria
 
 - Each PR has isolated product value and can merge independently.
 - No PR introduces frontend money calculation.
 - No PR backfills historical `ShowCreator` snapshots.
+- No PR adds `HOURLY` to `CREATOR_COMPENSATION_TYPE`. Creator pay is flat per show by legal-compliance constraint; time-multiplied pay is operator-side only.
+- All actuals input is restricted to `ADMIN`/`MANAGER` in Phase 4. `actuals_source: OPERATOR_RECORD` is the *typed-by-authorized-user* category and remains stable across role evolutions.
+- Show actuals are the only creator-attendance source in Phase 4; `ShowCreator` and `ShowPlatform` participation-window actuals are extension points only and are not introduced until product needs the distinction.
 - Shared-contract breaking removals ship with affected consumers.
 - PR descriptions include rollout notes and manual smoke evidence.
 - The bulk-assign endpoints stay assignment-only across all tasks; per-assignment compensation editing is a separate write path with snapshot audit.
 - Read views (per-show, per-creator, per-member) share one response shape and one frontend rendering pattern.
 - Actuals reads always have a documented fallback contract; partial actuals never silently masquerade as complete.
+- Every snapshot-field edit surface (creator assignment terms, shift hourly rate, roster defaults) carries the appropriate UX warning per Architecture Guardrail #9.
+- Recipient pending-event self-views have an in-product escalation affordance (Task 11) before 2.3 closes.

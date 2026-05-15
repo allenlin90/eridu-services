@@ -31,7 +31,7 @@ Sequencing follows the wave structure defined in [PHASE_4.md](../roadmap/PHASE_4
 | #   | PRD                                                                   | Wave   | Status                           |
 | --- | --------------------------------------------------------------------- | ------ | -------------------------------- |
 | 2.1 | [Economics Cost Model](./economics-cost-model.md)                     | 2      | ✅ Signed off — docs locked       |
-| 2.2 | [Compensation Line Items + Actuals](./compensation-line-items.md)     | 2      | 📝 Design breakdown recorded      |
+| 2.2 | [Compensation Line Items + Actuals](./compensation-line-items.md)     | 2      | 🚧 In progress — Tasks 1-6 merged |
 | 2.3 | [Economics Service](./economics-service.md)                           | 2      | 🔲 Planned                        |
 | 3.1 | [Studio Economics Review](./studio-economics-review.md)               | 3      | 🔲 Planned — revise before Wave 3 |
 | 3.2 | [Show Planning Export](./show-planning-export.md)                     | 3      | 🔲 Planned — revise before Wave 3 |
