@@ -1,6 +1,6 @@
 # Compensation Line Items + Actuals Frontend Design
 
-> **Status**: In Progress (PR 1B shipped)
+> **Status**: In Progress — Tasks 1-6 merged; Task 7 shift cost cleanup is next
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/prd/compensation-line-items.md`](../../../../docs/prd/compensation-line-items.md)
@@ -32,7 +32,7 @@ The target context is the product explanation. The studio workflow should not de
 
 Bulk creator mapping is assignment-only. It does not collect rates, commission, or initial compensation items because those values are per-show creator compensation terms, not multi-show assignment controls. Per-show creator mapping shows the backend summary for assigned MCs and manages `SHOW_CREATOR` adjustment items. A broader 2.3 cost review can reuse that summary/read model when it introduces an economics review workflow.
 
-A future creator-based compensation review should list shows for one creator over a date range and let managers review or bulk-edit the per-show assignment terms and `SHOW_CREATOR` items from that creator-centered context. That workflow is distinct from assigning creators to shows.
+Task 8 adds a creator-based compensation review that lists shows for one creator over a date range and lets managers review or bulk-edit the per-show assignment terms and `SHOW_CREATOR` items from that creator-centered context. That workflow is distinct from assigning creators to shows.
 
 ### System support workflow
 
@@ -61,12 +61,12 @@ A studio `compensation/line-items` or economics-adjacent workspace can land with
 
 ## PR Split
 
-| PR | Frontend scope | Backend prerequisite |
-| -- | -------------- | -------------------- |
-| PR 1B | `/system/compensation-line-items` support UI | PR 1A admin CRUD |
-| PR 4 | Show and show-creator workflow UI | PR 2 studio line-item APIs and PR 3 show actuals where needed |
-| PR 5 | Shift and shift-block workflow UI | PR 2 studio line-item APIs and PR 3 block actuals where needed |
-| Cleanup PR | Remove shift cost UI and fixture assumptions | Backend cleanup removes stored cost fields |
+| PR | Frontend scope | Status |
+| -- | -------------- | ------ |
+| PR 1B | `/system/compensation-line-items` support UI | ✅ Merged (#60) |
+| PR 4 | Show-creator workflow UI and backend-calculated per-show creator compensation summary | ✅ Merged (#64) |
+| PR 5 | Shift and shift-block workflow UI, including block actuals input and snapshot warning | ✅ Merged (#65) |
+| Cleanup PR | Remove shift stored-cost UI and fixture assumptions; replace the shift table money display with API-backed `Total Cost` | Next coordinated BE/FE cleanup |
 
 ## Surfaces & Routes
 
@@ -75,7 +75,7 @@ A studio `compensation/line-items` or economics-adjacent workspace can land with
 | System line-item support | `/system/compensation-line-items` | system admin |
 | Bulk creator assignment | `/studios/$studioId/creator-mapping` | studio `ADMIN`, `MANAGER` |
 | Show-creator line-item dialog and cost summary | `/studios/$studioId/creator-mapping/$showId` | studio `ADMIN`, `MANAGER` |
-| Future creator-based compensation review | date-ranged creator compensation review route, not Task 5 | studio `ADMIN`, `MANAGER` |
+| Creator-based compensation review | Task 8 date-ranged creator compensation review route | studio `ADMIN`, `MANAGER` |
 | Show line-item panel | later show operational/detail surface, not Task 5 | studio `ADMIN`, `MANAGER` |
 | Shift line-item panel | later shift operational/detail surface, not Task 5 | studio `ADMIN`, `MANAGER` |
 | Shift-block line-item panel | later shift block surface, not Task 5 | studio `ADMIN`, `MANAGER` |
@@ -220,7 +220,7 @@ Removal of `projected_cost` and `calculated_cost` from shift contracts is a dedi
 - shift form fields or fixtures that submit/read calculated cost;
 - tests and mocks that assume `projected_cost` or `calculated_cost`.
 
-Replacement monetary displays come from 2.3 backend economics/read-model APIs, not frontend recomputation.
+The shift table's replacement monetary display comes from the Task 7 backend `total_cost` response field. Broader economics review screens still come from 2.3 backend economics/read-model APIs, never frontend recomputation.
 
 ## Error Mapping
 
@@ -252,4 +252,4 @@ Manual smoke by PR:
 - PR 4 / Task 5: bulk creator mapping assigns creators only; per-show creator mapping renders backend totals and creates/updates/deletes `SHOW_CREATOR` line items against the assignment UID. The compensation dialog is wide enough on desktop that amount/type/reason controls do not collapse into a cramped three-field row.
 - PR 5: shift and shift-block panels create/update/delete line items without a target picker; block actuals set/clear/inverted paths work.
 - Snapshot dialog appears only for snapshot-field edits and preserves form input on cancel.
-- Cleanup PR: no `projected_cost` / `calculated_cost` UI, mocks, or fixtures remain.
+- Cleanup PR: no `projected_cost` / `calculated_cost` UI, mocks, or fixtures remain; the shift table renders backend-provided `total_cost`.

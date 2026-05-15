@@ -1,6 +1,6 @@
 # Compensation Line Items + Actuals Backend Design
 
-> **Status**: In Progress (PR 1A shipped)
+> **Status**: In Progress — Tasks 1-6 merged; Task 7 shift cost cleanup is next
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_api`
 > **Product source**: [`docs/prd/compensation-line-items.md`](../../../../docs/prd/compensation-line-items.md)
@@ -29,14 +29,16 @@ Task 5 adds one backend read model for creator mapping UX: a per-show creator co
 
 ## Workstream Breakdown
 
-| Slice      | Backend scope                                                                           | Merge shape                                       |
+| Slice      | Backend scope                                                                           | Status                                            |
 | ---------- | --------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| PR 1A      | `CompensationLineItem` schema/contracts plus `/admin/compensation-line-items` CRUD      | Backend-only, system support value                |
-| PR 2       | Studio target-scoped line-item APIs                                                     | Backend-only or minimal contract-sync             |
-| PR 3       | Show actuals, shift-block actuals, and future-only snapshot audit append                | Backend-focused                                   |
-| Cleanup PR | Drop `StudioShift.projectedCost` / `StudioShift.calculatedCost` across DB/API/consumers | Coordinated BE/FE because it is contract-breaking |
+| PR 1A      | `CompensationLineItem` schema/contracts plus `/admin/compensation-line-items` CRUD      | ✅ Merged (#59)                                   |
+| PR 2       | Studio target-scoped line-item APIs                                                     | ✅ Merged (#62)                                   |
+| PR 3       | Show actuals, shift-block actuals, and snapshot audit append helper                     | ✅ Merged (#63)                                   |
+| PR 4       | Creator mapping compensation summary and assignment snapshot defaults                   | ✅ Merged (#64)                                   |
+| PR 5       | Shift workflow contracts consumed by the frontend shift workflow UI                     | ✅ Merged (#65)                                   |
+| Cleanup PR | Drop `StudioShift.projectedCost` / `StudioShift.calculatedCost` across DB/API/consumers | Next coordinated BE/FE cleanup                    |
 
-Frontend implementation lands in separate workflow PRs after the corresponding backend contracts stabilize.
+Frontend workflow slices consume these backend contracts in their corresponding PRs.
 
 ## Out of Scope
 
@@ -163,7 +165,7 @@ The cleanup PR scope:
 - Frontend: remove cost cells, summary cards, form fields, mocks, and fixtures in `apps/erify_studios/src/features/studio-shifts/` and any calendar surfaces.
 - Tests/specs that assert on these columns are updated in the same PR.
 
-The 98 in-tree references at the time of this design (rg `projectedCost|calculatedCost|projected_cost|calculated_cost`) are a search hint, not a final checklist.
+Use `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` as the implementation search for the cleanup PR; the final checklist is every remaining writer, serializer, fixture, and UI consumer.
 
 ## API Surface
 

@@ -1,12 +1,12 @@
 # Design: Compensation Line Items Phase 2.2 Breakdown
 
-> **Status:** In progress — Tasks 1-5 merged to `master` (PR #59, #60, #62, #63, #64). Task 6 (shift workflow UI), Task 7 (shift cost cleanup), and the post-Task-5 expansion Tasks 8/9/10 are still ahead.
-> **Scope:** Phase 4 Wave 2 compensation line items, scoped actuals, snapshot readiness, shift-cost cleanup, and the post-Task-5 expansion (assignment-compensation editability, actuals input UX, per-perspective cost review).
+> **Status:** In progress — Tasks 1-6 merged to `master` (PR #59, #60, #62, #63, #64, #65). Task 7 (shift cost cleanup) is the next cleanup PR; Tasks 8/9/10/11 remain ahead.
+> **Scope:** Phase 4 Wave 2 compensation line items, scoped actuals, snapshot readiness, shift-cost cleanup, assignment-compensation editability, actuals input UX, per-perspective cost review, and recipient escalation.
 > **Product source:** [docs/prd/compensation-line-items.md](../../prd/compensation-line-items.md)
 > **Implementation plan:** [docs/superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md](../plans/2026-05-09-compensation-line-items-phase-2-2.md) — task-by-task checklist, authoritative for execution order.
 > **Backend design:** [apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md](../../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)
 > **Frontend design:** [apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md](../../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)
-> **Plan completeness audit:** This spec was audited per [`.agent/skills/plan-workflow-completeness/`](../../../.agent/skills/plan-workflow-completeness/SKILL.md) after Task 5 shipped, which surfaced the editability / actuals-input / per-perspective-review gaps now addressed by Tasks 8/9/10. Future revisions should re-run the audit before sign-off.
+> **Plan completeness audit:** This spec follows [`.agent/skills/plan-workflow-completeness/`](../../../.agent/skills/plan-workflow-completeness/SKILL.md). The open expansion tasks cover assignment editability, show actuals input, per-perspective review, and recipient escalation.
 
 ## Goal
 
@@ -81,11 +81,12 @@ Task numbers here align with the implementation plan. PRs already merged are not
 | 3 / PR 2 | Studio line-item APIs | Flat studio line-item collection with target create fields and list filters | Backend contracts match real studio workflows without over-nested URLs. | ✅ Merged (#62) |
 | 4 / PR 3 | Actuals and snapshot readiness | Show actuals, shift-block actuals, snapshot audit helper | 2.3 can consume scoped actuals and snapshot audit facts. | ✅ Merged (#63) |
 | 5 / PR 4 | Creator mapping compensation UX | Per-show creator mapping view, `SHOW_CREATOR` line items keyed by assignment UID, assignment-only bulk-assign, per-show compensation summary endpoint | Managers can review and adjust per-show creator compensation in the creator-mapping workflow. | ✅ Merged (#64) |
-| 6 / PR 5 | Shift workflow UI | Shift and shift-block panels plus block actuals input | Operators can manage shift-side compensation inputs in context. | 🚧 Planned |
-| 7 / cleanup | Shift DB cost columns + FE total-cost table column | Drop `projected_cost` and `calculated_cost` from `StudioShift`, then replace the `erify_studios` shift table money display with API-backed `Total Cost` | Stored live-reference totals leave operational rows while the FE table keeps a live total-cost read. | 🚧 Planned |
-| 8 / PR 6 | Assignment-compensation edit + per-creator review | `PATCH` on `ShowCreator` assignment with snapshot audit, per-creator compensation summary endpoint, per-show edit panel, per-creator review view with bulk edit | Closes the editability gap so creator assignment terms match the shift-block workflow. | 🆕 Added post-Task-5 |
-| 9 / PR 7 | Actuals input workflows | `ShowActualsInput` and `ShiftBlockActualsInput` on existing update mutations; optional manager collection view | Closes the input-surface gap that Tasks 5 and 6 scoped out; lets actuals get collected so the actuals-vs-planned fallback in 2.3 has data. | 🆕 Added post-Task-5 |
-| 10 / PR 8 | Cost review by perspective | Per-member shift compensation summary endpoint + view; documented `actualStart/End → plannedStart/End` fallback contract with `ACTUALS_INCOMPLETE` for partial actuals | Closes the per-perspective read gap so managers can review costs from the operator side and the talent side (creator-side ships in Task 8). | 🆕 Added post-Task-5 |
+| 6 / PR 5 | Shift workflow UI | Shift and shift-block panels plus block actuals input | Operators can manage shift-side compensation inputs in context. | ✅ Merged (#65) |
+| 7 / cleanup | Shift DB cost columns + FE total-cost table column | Drop `projected_cost` and `calculated_cost` from `StudioShift`, then replace the `erify_studios` shift table money display with API-backed `Total Cost` | Stored live-reference totals leave operational rows while the FE table keeps a live total-cost read. | 🚧 Next |
+| 8 / PR 6 | Assignment-compensation edit + per-creator review | `PATCH` on `ShowCreator` assignment with snapshot audit, per-creator compensation summary endpoint, per-show edit panel, per-creator review view with bulk edit | Closes the editability gap so creator assignment terms match the shift-block workflow. | 🚧 Planned |
+| 9 / PR 7 | Show actuals input workflows | `ShowActualsInput` on the existing show update mutation plus a manager missing-actuals collection view | Closes the remaining show-side input gap; block actuals input already shipped in Task 6. | 🚧 Planned |
+| 10 / PR 8 | Cost review by perspective | Per-member shift compensation summary endpoint + view; documented `actualStart/End → plannedStart/End` fallback contract with `ACTUALS_INCOMPLETE` for partial actuals | Closes the per-perspective read gap so managers can review costs from the operator side and the talent side (creator-side ships in Task 8). | 🚧 Planned |
+| 11 / PR 9 | Recipient escalation + roster warning UX | Missing-actuals flag affordance, flagged-row queue priority, and roster-default warning copy | Closes the recipient pending-state loop and warns managers that roster default edits do not rewrite snapshots. | 🚧 Planned |
 
 ## Interface Direction
 
@@ -118,21 +119,23 @@ PR dependency order (task numbers align with the implementation plan):
 
 ```
 Task 1 (PR 1A) ──┬──▶ Task 3 (PR 2) ──┬──▶ Task 5 (PR 4, merged)  ──┐
-                 │                    ├──▶ Task 6 (PR 5)            │
+                 │                    ├──▶ Task 6 (PR 5, merged)    │
                  └──▶ Task 2 (PR 1B)                                ├──▶ Task 8 (PR 6: assignment-comp edit + per-creator review)
-Task 4 (PR 3) ────────────────────────┘                             ├──▶ Task 9 (PR 7: actuals input workflows)
-                                                                    └──▶ Task 10 (PR 8: cost review by perspective)
+Task 4 (PR 3) ────────────────────────┘                             ├──▶ Task 9 (PR 7: show actuals input + queue)
+                                                                    ├──▶ Task 10 (PR 8: cost review by perspective)
+                                                                    └──▶ Task 11 (PR 9: recipient escalation + roster warning)
 
-Task 7 (cleanup PR) is independent of the above once consumers are updated in the same change set.
+Task 7 (cleanup PR) is the next independent cleanup PR once consumers are updated in the same change set.
 ```
 
 - Tasks 1 and 4 are independent of each other; both can land first. ✅ Both merged.
 - Task 3 needs Task 1's model and contracts. ✅ Merged.
 - Task 2 needs Task 1's admin endpoints. ✅ Merged.
-- Task 5 / 6 need both Task 3 (line-item APIs) and Task 4 (actuals fields on the existing update DTOs). Task 5 ✅ merged; Task 6 pending.
+- Task 5 / 6 need both Task 3 (line-item APIs) and Task 4 (actuals fields on the existing update DTOs). ✅ Both merged.
 - Task 8 needs Task 5 (per-show summary pattern + assignment UID exposure) and Task 4 (`appendSnapshotAudit()`). Sequenced after Task 6 so the editability pattern is consistent across creator and shift surfaces.
-- Task 9 only needs Task 4. It is the input-surface counterpart that Tasks 5 and 6 deliberately scoped out.
+- Task 9 only needs Task 4 for show actuals. It is the show-side input counterpart that Tasks 5 and 6 deliberately scoped out; block actuals input shipped in Task 6.
 - Task 10 needs Tasks 4 + 5 + 6 + 8 + 9 — it's the synthesizing read view that exercises everything below it.
+- Task 11 depends on Task 9 for the manager queue consumer and on the roster edit dialogs for warning copy.
 - Merge each PR independently once its workflow is complete, tested, and safe to deploy.
 - Include minimal contract-sync changes in a PR only when needed to keep the monorepo compiling.
 - Group intentionally breaking shared-contract removals with affected consumers, especially the shift cost cleanup.
