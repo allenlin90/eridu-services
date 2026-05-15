@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [Creator Availability Hardening](../prd/creator-availability-hardening.md), [P&L Revenue Workflow](../prd/pnl-revenue-workflow.md)
+> **Related**: [Creator availability hardening (PR 15 in PHASE_4.md)](../roadmap/PHASE_4.md#pr-15--strict-mode-creator-availability-with-conflict-metadata), [P&L Revenue Workflow (future PRD)](../prd/future/pnl-revenue-workflow.md)
 
 ## What
 

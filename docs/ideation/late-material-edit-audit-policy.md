@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from compensation line items Phase 2.2 actuals and snapshot readiness, May 2026
 > **Origin**: Actuals and snapshot audit policy discussion
-> **Related**: [show-change-notification-audit-ledger.md](./show-change-notification-audit-ledger.md), [compensation-line-items.md](../prd/compensation-line-items.md), [2026-05-09 compensation line items Phase 2.2 plan](../superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md)
+> **Related**: [show-change-notification-audit-ledger.md](./show-change-notification-audit-ledger.md), [Phase 4 roadmap (compensation line items PRs)](../roadmap/PHASE_4.md), [Economics cost model](../prd/economics-cost-model.md)
 
 ## What
 
