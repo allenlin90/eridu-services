@@ -1,39 +1,42 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { z } from 'zod';
 
+import type { updateStudioShiftBlockInputSchema } from '@eridu/api-types/studio-shifts';
+
+import { shiftCalendarKeys } from './get-shift-calendar';
 import { studioShiftsKeys } from './get-studio-shifts';
 import type { StudioShift, StudioShiftsResponse } from './studio-shifts.types';
 
 import { apiClient } from '@/lib/api/client';
 
-export type UpdateStudioShiftPayload = {
-  user_id?: string;
-  date?: string;
-  hourly_rate?: number;
-  is_duty_manager?: boolean;
-  status?: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
-  override_reason?: string;
-  blocks?: Array<{
-    start_time: string;
-    end_time: string;
-    metadata?: Record<string, unknown>;
-  }>;
-};
+export type UpdateStudioShiftBlockPayload = z.input<typeof updateStudioShiftBlockInputSchema>;
 
-async function updateStudioShift(
+async function updateStudioShiftBlock(
   studioId: string,
   shiftId: string,
-  payload: UpdateStudioShiftPayload,
+  blockId: string,
+  payload: UpdateStudioShiftBlockPayload,
 ): Promise<StudioShift> {
-  const response = await apiClient.patch<StudioShift>(`/studios/${studioId}/shifts/${shiftId}`, payload);
+  const response = await apiClient.patch<StudioShift>(
+    `/studios/${studioId}/shifts/${shiftId}/blocks/${blockId}`,
+    payload,
+  );
   return response.data;
 }
 
-export function useUpdateStudioShift(studioId: string) {
+export function useUpdateStudioShiftBlock(studioId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ shiftId, payload }: { shiftId: string; payload: UpdateStudioShiftPayload }) =>
-      updateStudioShift(studioId, shiftId, payload),
+    mutationFn: ({
+      shiftId,
+      blockId,
+      payload,
+    }: {
+      shiftId: string;
+      blockId: string;
+      payload: UpdateStudioShiftBlockPayload;
+    }) => updateStudioShiftBlock(studioId, shiftId, blockId, payload),
     onSuccess: async (updatedShift) => {
       queryClient.setQueriesData<StudioShiftsResponse>(
         { queryKey: studioShiftsKeys.listPrefix(studioId) },
@@ -49,12 +52,8 @@ export function useUpdateStudioShift(studioId: string) {
         },
       );
 
-      if (updatedShift.is_duty_manager) {
-        queryClient.setQueryData<StudioShift>(studioShiftsKeys.dutyManager(studioId), updatedShift);
-      }
-
       await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.listPrefix(studioId) });
-      await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.dutyManager(studioId) });
+      await queryClient.invalidateQueries({ queryKey: shiftCalendarKeys.all(studioId) });
     },
   });
 }
