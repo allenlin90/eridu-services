@@ -138,7 +138,7 @@ No standalone, standing, schedule-scoped, global, recurring, or HR/payroll-style
 
 Base compensation remains separate:
 
-- Creator/show base compensation is calculated from `ShowCreator.agreedRate`, `compensationType`, `commissionRate`, and show planned/actual duration.
+- Creator/show base compensation is calculated from `ShowCreator.agreedRate`, `compensationType`, and `commissionRate`. The `FIXED_BASE` component is a flat per-show amount and is **not** multiplied by show duration; commission components depend on future revenue input, not duration.
 - Operator/shift base labor is calculated from `StudioShift.hourlyRate` and shift-block planned/actual duration.
 - These base components may appear as generated rows in API responses, but they are not persisted as `CompensationLineItem` rows.
 

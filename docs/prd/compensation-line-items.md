@@ -117,7 +117,7 @@ Bulk assignment is an assignment workflow only. It must not ask for rates, commi
 
 ### Base compensation is calculated from snapshots
 
-Normal creator/show base compensation is calculated from `ShowCreator` snapshot fields plus show planned/actual duration. Normal operator/shift base labor is calculated from `StudioShift.hourlyRate` plus shift-block planned/actual duration. 2.2 must not create `CompensationLineItem` rows to represent those base amounts. If the UI needs a breakdown table, 2.3 can return generated read-model rows for base components alongside persisted supplemental line items.
+Normal creator/show base compensation is calculated from `ShowCreator` snapshot fields (`agreedRate`, `compensationType`, `commissionRate`); the `FIXED_BASE` component is a flat per-show amount, never multiplied by show duration. Normal operator/shift base labor is calculated from `StudioShift.hourlyRate` plus shift-block planned/actual duration. 2.2 must not create `CompensationLineItem` rows to represent those base amounts. If the UI needs a breakdown table, 2.3 can return generated read-model rows for base components alongside persisted supplemental line items.
 
 For Task 5, new show creator assignments resolve their base compensation snapshot from creator roster defaults when explicit terms are not provided by a purpose-built compensation edit workflow. The base creator amount is stored as assignment snapshot fields on `ShowCreator` (`compensationType`, `agreedRate`, `commissionRate`) and calculated by backend read logic. A `CompensationLineItem` remains a manual signed adjustment, not the persisted representation of default/fixed rate compensation.
 
