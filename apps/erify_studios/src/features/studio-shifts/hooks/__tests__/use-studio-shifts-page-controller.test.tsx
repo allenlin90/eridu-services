@@ -81,7 +81,7 @@ describe('useStudioShiftsPageController', () => {
     });
   });
 
-  it('syncs page count and returns sorted shifts from the API response', () => {
+  it('syncs page count and returns shifts in API response order (no client-side re-sort)', () => {
     mockUseStudioShifts.mockReturnValue({
       data: {
         data: [
@@ -117,7 +117,7 @@ describe('useStudioShiftsPageController', () => {
       total: 53,
       pageCount: 3,
     });
-    expect(result.current.shifts.map((shift) => shift.id)).toEqual(['ssh_early', 'ssh_late']);
+    expect(result.current.shifts.map((shift) => shift.id)).toEqual(['ssh_late', 'ssh_early']);
     expect(result.current.onPaginationChange).toBe(mockOnPaginationChange);
   });
 });
