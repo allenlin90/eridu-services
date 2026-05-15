@@ -298,9 +298,6 @@ For linking from other docs:
 - **Three first-class views, identity-derived self-access.** TALENT_MANAGER may view any creator's compensation in their studio.
 - **Phase 4 stores outcomes, not rules.** Rule engine, settlement, freeze, grace, payment processing, acknowledgement — all extension hooks documented in §4 and revisited when their workstream activates.
 
-## Downstream PRDs
+## Downstream work
 
-The required Wave 2 downstream PRDs below are aligned to this simplified Phase 4 scope. Wave 3 PRDs consume this model, but they should be reviewed and revised again after 2.3 confirms the backend read shape.
-
-- 2.2 Compensation Line Items: [compensation-line-items.md](./compensation-line-items.md)
-- 2.3 Economics Service: [economics-service.md](./economics-service.md)
+All downstream Phase 4 work — compensation line items + actuals, economics service, review surface, page-local exports, availability hardening — is tracked PR-by-PR in [`docs/roadmap/PHASE_4_REMAINING.md`](../roadmap/PHASE_4_REMAINING.md). This PRD remains the locked semantic contract those PRs must conform to.

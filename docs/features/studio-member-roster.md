@@ -48,4 +48,4 @@ Studio operators previously depended on system-admin-only membership tooling for
 
 - Shift labor cost semantics: [economics-cost-model.md](../prd/economics-cost-model.md)
 - Creator-side cost input governance: [studio-creator-roster.md](./studio-creator-roster.md)
-- Supplemental cost inputs: [compensation-line-items.md](../prd/compensation-line-items.md)
+- Supplemental cost inputs: [PHASE_4_REMAINING.md §PR 3-10](../roadmap/PHASE_4_REMAINING.md)

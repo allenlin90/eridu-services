@@ -156,7 +156,5 @@ GET /studios/:studioId/economics  →  operational rollups (3.1 consumer)
 | Feature (RBAC)              | [docs/features/rbac-roles.md](../features/rbac-roles.md)                                               |
 | Workflow (Creator side)     | [docs/workflows/creator-operations.md](./creator-operations.md)                                        |
 | PRD (Cost model)            | [docs/prd/economics-cost-model.md](../prd/economics-cost-model.md)                                     |
-| PRD (Compensation line items) | [docs/prd/compensation-line-items.md](../prd/compensation-line-items.md)                             |
-| PRD (Economics service)     | [docs/prd/economics-service.md](../prd/economics-service.md)                                           |
-| Implementation plan         | [2026-05-09 Compensation Line Items 2.2 plan](../superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md) |
+| Tracker (remaining 2.2-2.3) | [docs/roadmap/PHASE_4_REMAINING.md](../roadmap/PHASE_4_REMAINING.md)                                   |
 | Phase 4 roadmap             | [PHASE_4.md](../roadmap/PHASE_4.md)                                                                    |

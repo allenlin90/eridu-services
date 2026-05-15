@@ -3,9 +3,9 @@
 > **Status**: In Progress — Tasks 1-6 merged; Task 7 shift cost cleanup is next
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_studios`
-> **Product source**: [`docs/prd/compensation-line-items.md`](../../../../docs/prd/compensation-line-items.md)
+> **Tracker**: [`docs/roadmap/PHASE_4_REMAINING.md`](../../../../docs/roadmap/PHASE_4_REMAINING.md) — PRs 3-10 are the remaining 2.2 work; PRs 1-6 shipped (this design doc covers shipped + remaining).
 > **Backend design**: [`apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`](../../../erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)
-> **Implementation breakdown**: [`docs/superpowers/specs/2026-05-09-compensation-line-items-phase-2-2-breakdown.md`](../../../../docs/superpowers/specs/2026-05-09-compensation-line-items-phase-2-2-breakdown.md) and [`docs/superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md`](../../../../docs/superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md)
+> **Canonical semantics**: [`docs/prd/economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md)
 > **Depends on**: 2.2 backend contracts; 1.5 Studio Show Management ✅; 1.3 Studio Member Roster ✅
 > **Gates**: 3.1 Studio Economics Review (read-only consumer)
 

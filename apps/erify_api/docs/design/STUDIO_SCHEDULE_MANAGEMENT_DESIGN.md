@@ -3,7 +3,7 @@
 > **Status**: ⏸️ Deferred from Phase 4 (2026-04-22). Retained for reference.
 > **Phase scope**: Revisit as part of the Client Portal workstream
 > **Owner app**: `apps/erify_api`
-> **Product source**: [`docs/prd/studio-schedule-management.md`](../../../../docs/prd/studio-schedule-management.md)
+> **Product source**: [`docs/prd/future/studio-schedule-management.md`](../../../../docs/prd/future/studio-schedule-management.md) (relocated to `future/` after Phase 4 deferral)
 > **Depends on**: studio show management shipped on `master`, existing admin schedule planning/publishing flows, schedule continuity rules
 
 > **Deferral note**: This design was reviewed in April 2026 and deferred from Phase 4. The Google Sheets publish flow remains the production source of truth for schedule creation and publishing. Studio-native schedule management is paused pending Client Portal direction, at which point this design should be revisited against the then-current intake surface rather than retrofitted onto the current admin-centric model. Content below is preserved unchanged as reference.

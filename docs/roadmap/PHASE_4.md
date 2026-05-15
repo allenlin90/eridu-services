@@ -29,16 +29,20 @@ Outcomes:
 | 1.4 | Studio creator onboarding (roster-first) | [feature](../features/studio-creator-onboarding.md)                | ✅ Shipped (PR #32) | 1      |
 | 1.5 | Studio show management                   | [feature](../features/studio-show-management.md)                   | ✅ Shipped          | 1      |
 | 2.1 | Economics cost model                     | [PRD](../prd/economics-cost-model.md)                              | ✅ Signed off       | 2      |
-| 2.2 | Compensation line items + actuals        | [PRD](../prd/compensation-line-items.md)                           | 🚧 In progress (Tasks 1-6 merged; Task 7 next; Tasks 8-11 ahead) | 2      |
-| 2.3 | Economics service                        | [PRD](../prd/economics-service.md)                                 | 🔲 Planned          | 2      |
-| 3.1 | Studio economics review surface          | [PRD](../prd/studio-economics-review.md)                           | 🔲 Planned          | 3      |
-| 3.2 | Show planning export                     | [PRD](../prd/show-planning-export.md)                              | 🔲 Planned          | 3      |
-| 3.3 | Creator availability hardening           | [PRD](../prd/creator-availability-hardening.md)                    | 🔲 Planned          | 3      |
-| 4.1 | P&L revenue workflow                     | [PRD](../prd/pnl-revenue-workflow.md)                              | ⏭️ Future target    | Future |
+| 2.2 | Compensation line items + actuals        | [Tracker §PR 3-10](./PHASE_4_REMAINING.md)                         | 🚧 Tasks 1-6 merged; PR 3 next; PRs 4-10 ahead | 2 |
+| 2.3 | Economics service                        | [Tracker §PR 11-13](./PHASE_4_REMAINING.md)                        | 🔲 Planned          | 2      |
+| 3.1 | Studio economics review surface          | [Tracker §PR 14](./PHASE_4_REMAINING.md)                           | 🔲 Planned          | 3      |
+| 3.2 | Page-local exports (shifts + show-operations) | [Tracker §PR 1-2](./PHASE_4_REMAINING.md)                     | 🔲 Planned          | 3      |
+| 3.3 | Creator availability hardening           | [Tracker §PR 15](./PHASE_4_REMAINING.md)                           | 🔲 Planned          | 3      |
+| 4.1 | P&L revenue workflow                     | [Future PRD](../prd/future/pnl-revenue-workflow.md)                | ⏭️ Future target    | Future |
+
+Single source of truth for remaining work: [PHASE_4_REMAINING.md](./PHASE_4_REMAINING.md) — 15 focused PRs, user-flow-first.
 
 3.3 depends only on shipped 1.4 and is independent of the Wave 2 cost stack. It may start in parallel with Wave 2 if capacity allows.
 
-4.1 is no longer required to close Phase 4. Keep the PRD as future-target context until revenue planning restarts.
+3.2 is no longer a separate "show planning export" workstream — operations export the page they already review. Page-local exports on `/shifts` and `/show-operations` cover the use case (Tracker PRs 1-2).
+
+4.1 is no longer required to close Phase 4. The PRD has been moved to `docs/prd/future/` until revenue planning restarts.
 
 Studio schedule management is deferred — Google Sheets is the production scheduling path; revisit with the Client Portal workstream.
 
@@ -58,7 +62,7 @@ Studio schedule management is deferred — Google Sheets is the production sched
 | Notifications when manager edits actuals                               | —                                       | B     |
 | Review-period close lock for standing/schedule line items              | —                                       | A     |
 | Platform and creator-app actuals sources                               | —                                       | A     |
-| P&L revenue workflow, commission resolution, contribution margin       | [PRD](../prd/pnl-revenue-workflow.md)   | A     |
+| P&L revenue workflow, commission resolution, contribution margin       | [Future PRD](../prd/future/pnl-revenue-workflow.md) | A     |
 
 ## Implementation Sequencing
 
@@ -113,17 +117,13 @@ flowchart TD
 
 ### Wave 2 critical path
 
-Wave 2 is single-track. Each step gates the next.
-
 | Step | Workstream                                                   | Why                                                                                                                                                                                                                                                                                         |
 | ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2.1  | [Economics cost model](../prd/economics-cost-model.md)       | ✅ Signed off: creator pay is `FIXED` / `COMMISSION` / `HYBRID` only; show actuals are the only Phase 4 creator-attendance source, with `ShowCreator` / `ShowPlatform` participation actuals retained as extension points only. |
-| 2.2  | [Compensation line items](../prd/compensation-line-items.md) | 🚧 In progress. Tasks 1-6 merged; Task 7 is the next cleanup PR; Tasks 8-11 ahead. Prisma additions for event-attached `CompensationLineItem` + `Show.actualStartTime/EndTime` + `StudioShiftBlock.actualStartTime/EndTime`; line item and actuals input surfaces. **No freeze guards, no settlement, no grace, no audit table** in Phase 4. |
-| 2.3  | [Economics service](../prd/economics-service.md)             | Greenfield implementation of the pure calculator and read endpoints against 2.1, consuming line-items + actuals from 2.2. No state machine. Now also owns `POST /me/compensation/pending-events/:eventKey/flag-missing-actuals` for the recipient escalation loop and `GET /studios/:studioId/unresolved-rows` for the manager queue. |
+| 2.2  | [Tracker PR 3-10](./PHASE_4_REMAINING.md)                    | 🚧 Tasks 1-6 merged. Remaining work tracked PR-by-PR: cleanup (PR 3), creator/manager edit + review (PR 4-5), show actuals + queue (PR 6-7), per-member review (PR 8), roster warning (PR 9), recipient escalation (PR 10). |
+| 2.3  | [Tracker PR 11-13](./PHASE_4_REMAINING.md)                   | Greenfield economics service split into recipient self-views (PR 11), cross-user reads + show drill-in (PR 12), and the operational rollup endpoint (PR 13). Pure calculator over persisted 2.2 inputs. No state machine. |
 
-Wave 3 begins after 2.3 merges to master.
-
-Wave 3 PRDs and app design docs are planning placeholders until that point. Review and revise them against the confirmed 2.3 backend read shape before starting Wave 3 implementation.
+Wave 3 (PR 14) begins after PR 13 merges to master. PR 15 (creator availability hardening) is independent and may ship in parallel.
 
 ### Phase 4 Product Constraints
 
@@ -133,11 +133,7 @@ The compensation-line-items plan, PRDs, and app design docs share three product 
 2. **Show actuals are the only creator-attendance source in Phase 4.** `ShowCreator` and `ShowPlatform` participation actuals are extension points the calculator must remain structured to consume later, but they are not active fields. One actual window per show covers every creator and every platform on that show.
 3. **Actuals are typed by `ADMIN`/`MANAGER`.** The `actuals_source: OPERATOR_RECORD` label means "typed into the system by an authorized user," not "the operator who was on set." When/if creator-app or punch-clock sources ship, they fit into the existing enum without re-naming.
 
-The 2.2 plan includes the remaining UX tasks that close this workstream:
-
-- **Task 8** ships `ShowCreator` assignment-compensation edit + the per-creator review view, so creator-side editability matches the shift side.
-- **Task 9** scopes to **show actuals only** plus a missing-actuals manager collection view; the block-actuals input is already shipped in Task 6 (PR #65).
-- **Task 11** ships the recipient escalation affordance (in-product "flag missing actuals" loop) and the inline notice on roster-default edits.
+The remaining UX work that closes Phase 4 is tracked PR-by-PR in [PHASE_4_REMAINING.md](./PHASE_4_REMAINING.md). Each PR entry is user-flow-first and sized for focused review.
 
 ## Architecture Guardrails
 
@@ -165,22 +161,31 @@ Platform-level rules. Domain-specific decisions (line item types, view shapes, e
 
 ### Doc flow per feature
 
+The default flow for **novel features** (new domain, new pattern):
+
 ```
-docs/workflows/<journey>.md                          ← Workflow trace (pre-PRD; required for new journeys)
+docs/workflows/<journey>.md         ← Workflow trace (required for new journeys)
     ↓
-docs/prd/<feature>.md                                ← PRD (pre-ship)
+docs/prd/<feature>.md               ← PRD (pre-ship requirements)
     ↓
-docs/superpowers/plans/<date>-<feature>.md           ← Implementation plan (audited per .agent/skills/plan-workflow-completeness/)
-    ↓
-apps/erify_api/docs/design/<FEATURE>_DESIGN.md       ← BE design
-apps/erify_studios/docs/design/<FEATURE>_DESIGN.md   ← FE design
+apps/*/docs/design/<FEATURE>.md     ← BE / FE design (when implementation introduces a novel pattern)
     ↓
 Implementation PR (code + tests)
     ↓
-Post-ship: promote PRD → docs/features/, promote app docs → apps/*/docs/, run knowledge-sync
+Post-ship: promote PRD → docs/features/, run knowledge-sync
 ```
 
-The workflow trace is the pre-PRD artifact that catches planning gaps cheapest. It names every actor, every state transition, every read, every write, and every role for every step. PRDs written without a workflow trace tend to orphan input surfaces and per-perspective read views — the Wave 2 expansion to Tasks 8/9/10 in the compensation-line-items plan exists because the original Wave 2 plan was sliced by data layer (storage → calc → UI) without a journey-level pass.
+The lightweight flow for **additive work that replicates a shipped pattern**:
+
+```
+Tracker entry in PHASE_<n>_REMAINING.md  ← User flow + UX target + scope + acceptance
+    ↓
+Implementation PR (code + tests)
+```
+
+No PRD, no design doc unless the change introduces something new. The tracker entry is the spec.
+
+The workflow trace is still the right starting artifact when an end-to-end user journey crosses multiple features — it names every actor, every state transition, every read/write, and every role for every step. PRDs written without a workflow trace tend to orphan input surfaces and per-perspective read views; the Wave 2 expansion in `PHASE_4_REMAINING.md` exists because the original Wave 2 plan was sliced by data layer (storage → calc → UI) without a journey-level pass.
 
 ### Phase-level reference
 
@@ -199,13 +204,13 @@ The workflow trace is the pre-PRD artifact that catches planning gaps cheapest. 
 | 1.3 Studio member roster              | [feature](../features/studio-member-roster.md)          | Shipped (PR #28)                                                                | Shipped (PR #28)                                                                    |
 | 1.4 Studio creator onboarding         | [feature](../features/studio-creator-onboarding.md)     | [BE](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md)                    | [FE](../../apps/erify_studios/docs/STUDIO_CREATOR_ONBOARDING.md)                    |
 | 1.5 Studio show management            | [feature](../features/studio-show-management.md)        | [BE](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md)                       | [FE](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md)                       |
-| 2.1 Economics cost model              | [PRD](../prd/economics-cost-model.md)                   | N/A (docs-only)                                                                 | N/A                                                                                 |
-| 2.2 Compensation line items + actuals | [PRD](../prd/compensation-line-items.md)                | [BE design](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) | [FE design](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
-| 2.3 Economics service                 | [PRD](../prd/economics-service.md)                      | Redraft when 2.3 starts                                                         | Redraft when 2.3 starts                                                             |
-| 3.1 Studio economics review           | [PRD](../prd/studio-economics-review.md)                | Redraft after 2.3 read shape lands                                              | Redraft after 2.3 read shape lands                                                  |
-| 3.2 Show planning export              | [PRD](../prd/show-planning-export.md)                   | Redraft after 3.1 scope is confirmed                                            | Redraft after 3.1 scope is confirmed                                                |
-| 3.3 Creator availability hardening    | [PRD](../prd/creator-availability-hardening.md)         | [BE](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [FE](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
-| Future P&L revenue workflow           | [PRD](../prd/pnl-revenue-workflow.md) *(future target)* | Redraft when revenue planning restarts                                          | Redraft when revenue planning restarts                                              |
+| 2.1 Economics cost model              | [PRD](../prd/economics-cost-model.md)                          | N/A (docs-only)                                                                 | N/A                                                                                 |
+| 2.2 Compensation line items + actuals | [Tracker §PR 3-10](./PHASE_4_REMAINING.md)                     | [BE design](../../apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) | [FE design](../../apps/erify_studios/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md) |
+| 2.3 Economics service                 | [Tracker §PR 11-13](./PHASE_4_REMAINING.md)                    | Design doc on the first PR that introduces a novel pattern                      | Same                                                                                |
+| 3.1 Studio economics review           | [Tracker §PR 14](./PHASE_4_REMAINING.md)                       | n/a (FE-only consumer of PR 13)                                                 | Design doc on PR 14                                                                 |
+| 3.2 Page-local exports                | [Tracker §PR 1-2](./PHASE_4_REMAINING.md)                      | n/a (FE-only)                                                                   | n/a (no new pattern)                                                                |
+| 3.3 Creator availability hardening    | [Tracker §PR 15](./PHASE_4_REMAINING.md)                       | [BE](../../apps/erify_api/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | [FE](../../apps/erify_studios/docs/design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) |
+| Future P&L revenue workflow           | [Future PRD](../prd/future/pnl-revenue-workflow.md)            | Redraft when revenue planning restarts                                          | Redraft when revenue planning restarts                                              |
 
 ## Definition of Done
 
@@ -213,32 +218,23 @@ Phase 4 explicitly does not process payments. Every figure produced is a read-on
 
 DoD is scenario-based: each bullet names *who* does *what* and ends with a *verifiable observable outcome*. A scenario cannot be partially satisfied — either the loop closes or it doesn't.
 
-**Wave 1 — Studio autonomy**
+**Wave 1 — Studio autonomy** (shipped)
 
 - [x] A studio admin edits a member's `baseHourlyRate` from the studio member roster and the change is reflected in subsequent shift snapshots.
 - [x] A studio admin creates a creator roster entry with default compensation; a talent manager can then assign that creator to a show using the roster-first enforcement.
 - [x] A studio admin creates, updates, and deletes a show from the studio workspace without `/system/*` access.
 - [x] An internal user reads phase docs via the authenticated `eridu_docs` SSR site.
 
-**Wave 2 — Cost foundation**
+**Wave 2 — Cost foundation** (in progress)
 
 - [x] 2.1 Economics cost model is signed off — data model, pure calculator, three read views, planned-fallback warnings, and future-extension surface are locked.
-- [x] 2.2a Studio admin/manager creates, updates, and soft-deletes `SHOW_CREATOR` adjustment line items from the per-show creator mapping view; the per-show compensation summary refreshes with no client-side money arithmetic.
-- [ ] 2.2b Manager edits an unresolved `ShowCreator` assignment's `agreedRate` / `compensationType` / `commissionRate`; the per-show summary transitions the row out of `AGREEMENT_SNAPSHOT_MISSING` on next refetch and `metadata.audit.snapshot_overrides[]` records the change.
-- [ ] 2.2c ADMIN/MANAGER enters `Show.actualStartTime`/`actualEndTime` on a finished show through the existing show update endpoint; the per-show summary moves out of any `ACTUALS_INCOMPLETE` state. The shift-block-actuals counterpart (`ShiftBlockActualsInput`) shipped in Task 6 (PR #65) and exposes the same loop for blocks.
-- [ ] 2.2d Manager reviews one member's shift compensation over a date range from `/studios/:studioId/shifts/by-member/:membershipId?from=...&to=...`; rows with missing actuals are flagged and link to the actuals input surface.
-- [ ] 2.2e Manager reviews one creator's show compensation over a date range from `/studios/:studioId/creator-mapping/by-creator/:creatorId?from=...&to=...` and bulk-edits per-assignment terms with snapshot audit recorded.
-- [ ] 2.2f Admin/manager editing `StudioCreator.defaultRate` or `StudioMembership.baseHourlyRate` sees an inline notice stating existing assignment snapshots are unchanged unless explicitly edited.
-- [ ] 2.2g Creator/operator on `/me/compensation/*` flags a pending event for missing actuals; the row surfaces in the studio missing-actuals queue with a "Recipient flagged" badge.
-- [ ] 2.3 Economics service exposes the pure calculator and the three read endpoints (plus the missing-actuals flag endpoint and unresolved-rows queue) against signed-off 2.1 + persisted 2.2 data; merged to `master`.
+- [x] 2.2 Tasks 1-6 merged (PRs #59, #60, #62, #63, #64, #65) — see [PHASE_4_REMAINING.md](./PHASE_4_REMAINING.md) for shipped checkboxes.
+- [ ] 2.2 Tasks 7-11 + 2.3 economics service — tracked PR-by-PR in [PHASE_4_REMAINING.md § Definition of Done](./PHASE_4_REMAINING.md#definition-of-done).
 
-**Wave 3 — Finance surfaces**
+**Wave 3 — Finance surfaces** (planned)
 
-- [ ] 3.1 A studio admin reviews date-ranged, read-only economics with actuals-missing/incomplete warnings consuming the 2.3 operational view.
-- [ ] 3.2 A show planner exports planning data as a single preset of 3.1.
-- [ ] 3.3 Creator availability hardening prevents overlapping and off-roster assignments at write time, not only at discovery time.
-- [ ] Sidebar Finance group lands alongside 3.1.
+Tracked PR-by-PR in [PHASE_4_REMAINING.md](./PHASE_4_REMAINING.md) (PRs 1, 2, 14, 15).
 
 Future target, not a Phase 4 close requirement:
 
-- [ ] P&L revenue workflow (revenue input, `COMMISSION` / `HYBRID` activation, contribution margin).
+- [ ] P&L revenue workflow (revenue input, `COMMISSION` / `HYBRID` activation, contribution margin) — relocated to [`docs/prd/future/`](../prd/future/pnl-revenue-workflow.md).

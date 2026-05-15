@@ -3,7 +3,7 @@
 > **Status**: Planning
 > **Phase scope**: Phase 4 Wave 2
 > **Owner app**: `apps/erify_api`
-> **Product source**: [`docs/prd/creator-availability-hardening.md`](../../../../docs/prd/creator-availability-hardening.md)
+> **Tracker entry**: [`docs/roadmap/PHASE_4_REMAINING.md` § PR 15](../../../../docs/roadmap/PHASE_4_REMAINING.md#pr-15--strict-mode-creator-availability-with-conflict-metadata)
 > **Depends on**: Studio creator roster write path 🔲
 
 ## Purpose
