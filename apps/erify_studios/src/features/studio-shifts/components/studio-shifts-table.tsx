@@ -101,7 +101,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
 
   const [editDialogState, setEditDialogState] = useState<EditDialogState | null>(null);
   const [editMemberSearch, setEditMemberSearch] = useState('');
-  const [compensationShift, setCompensationShift] = useState<StudioShift | null>(null);
+  const [compensationShiftId, setCompensationShiftId] = useState<string | null>(null);
   const [pendingSnapshotUpdate, setPendingSnapshotUpdate] = useState<PendingSnapshotUpdate | null>(null);
   const [snapshotOverrideReason, setSnapshotOverrideReason] = useState('');
 
@@ -163,6 +163,14 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
 
     return tableShifts.find((shift) => shift.id === editDialogState.shiftId) ?? null;
   }, [editDialogState, tableShifts]);
+
+  const compensationShift = useMemo(() => {
+    if (!compensationShiftId) {
+      return null;
+    }
+
+    return tableShifts.find((shift) => shift.id === compensationShiftId) ?? null;
+  }, [compensationShiftId, tableShifts]);
 
   const handleCreateShift = useCallback(async () => {
     setCreateFormError(null);
@@ -240,7 +248,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   }, []);
 
   const handleManageCompensation = useCallback((shift: StudioShift) => {
-    setCompensationShift(shift);
+    setCompensationShiftId(shift.id);
   }, []);
 
   const handleUpdateShift = useCallback(async () => {
@@ -438,10 +446,10 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       />
 
       <ShiftCompensationDialog
-        open={Boolean(compensationShift)}
+        open={Boolean(compensationShiftId)}
         onOpenChange={(open) => {
           if (!open) {
-            setCompensationShift(null);
+            setCompensationShiftId(null);
           }
         }}
         studioId={studioId}

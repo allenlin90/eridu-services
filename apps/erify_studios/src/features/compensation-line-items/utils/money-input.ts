@@ -1,4 +1,4 @@
-const MONEY_INPUT_PATTERN = /^(-?)(\d+)(?:\.(\d+))?$/;
+const MONEY_INPUT_PATTERN = /^(-?)(\d*)(?:\.(\d+))?$/;
 
 /**
  * Normalizes a typed money string to two-decimal form without using binary floats.
@@ -11,8 +11,11 @@ export function toMoneyString(raw: string): string {
     throw new TypeError('Amount must be a number');
   }
   const sign = match[1] ?? '';
-  const whole = match[2];
+  const whole = match[2] || '0';
   const fraction = match[3] ?? '';
+  if (!match[2] && !match[3]) {
+    throw new TypeError('Amount must be a number');
+  }
 
   if (fraction.length <= 2) {
     const padded = (`${fraction}00`).slice(0, 2);
