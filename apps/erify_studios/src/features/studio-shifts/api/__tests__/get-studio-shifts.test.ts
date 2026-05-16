@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   getAllStudioShiftsForExport,
+  getDutyManager,
+  getStudioShifts,
   SHIFT_EXPORT_MAX_RECORDS,
   ShiftExportTooLargeError,
 } from '../get-studio-shifts';
@@ -138,5 +140,71 @@ describe('getAllStudioShiftsForExport', () => {
       getAllStudioShiftsForExport('std_big', { date_from: '2026-04-01', date_to: '2026-05-31' }),
     ).rejects.toBeInstanceOf(ShiftExportTooLargeError);
     expect(apiClient.get).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('getStudioShifts', () => {
+  beforeEach(() => {
+    (apiClient.get as any).mockReset();
+  });
+
+  it('normalizes legacy numeric shift cost fields before table rendering', async () => {
+    (apiClient.get as any).mockResolvedValueOnce({
+      data: {
+        data: [
+          {
+            id: 'ssh_legacy_number',
+            hourly_rate: 20,
+            planned_cost: 60,
+            actual_cost: 45,
+          },
+          {
+            id: 'ssh_legacy_renamed',
+            hourly_rate: '25.00',
+            projected_cost: 75,
+            calculated_cost: null,
+          },
+        ],
+        meta: { page: 1, limit: 20, total: 2, totalPages: 1 },
+      },
+    });
+
+    const response = await getStudioShifts('std_123', { page: 1, limit: 20 });
+
+    expect(response.data[0]).toMatchObject({
+      hourly_rate: '20.00',
+      planned_cost: '60.00',
+      actual_cost: '45.00',
+    });
+    expect(response.data[1]).toMatchObject({
+      hourly_rate: '25.00',
+      planned_cost: '75.00',
+      actual_cost: null,
+    });
+  });
+});
+
+describe('getDutyManager', () => {
+  beforeEach(() => {
+    (apiClient.get as any).mockReset();
+  });
+
+  it('normalizes legacy numeric shift cost fields for the duty manager response', async () => {
+    (apiClient.get as any).mockResolvedValueOnce({
+      data: {
+        id: 'ssh_duty',
+        hourly_rate: 20,
+        planned_cost: 60,
+        actual_cost: null,
+      },
+    });
+
+    const response = await getDutyManager('std_123');
+
+    expect(response).toMatchObject({
+      hourly_rate: '20.00',
+      planned_cost: '60.00',
+      actual_cost: null,
+    });
   });
 });

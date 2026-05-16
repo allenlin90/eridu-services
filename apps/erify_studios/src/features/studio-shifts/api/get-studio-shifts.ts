@@ -34,6 +34,74 @@ export const studioShiftsKeys = {
   dutyManager: (studioId: string, time?: string) => [...studioShiftsKeys.all(studioId), 'duty-manager', time] as const,
 };
 
+type ShiftCostCompatibilityShape = {
+  hourly_rate?: unknown;
+  planned_cost?: unknown;
+  actual_cost?: unknown;
+  projected_cost?: unknown;
+  calculated_cost?: unknown;
+};
+
+// Disposable workaround for the Phase 4 shift-cost cleanup rollout.
+// Remove once deployed API responses and persisted query caches can no longer
+// contain numeric decimals or legacy projected_cost/calculated_cost fields.
+function normalizeDecimalString(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value.toFixed(2);
+  }
+
+  return undefined;
+}
+
+function normalizeNullableDecimalString(value: unknown): string | null | undefined {
+  if (value === null) {
+    return null;
+  }
+
+  return normalizeDecimalString(value);
+}
+
+function normalizeShiftCostFields(shift: StudioShift): StudioShift {
+  const costFields = shift as unknown as ShiftCostCompatibilityShape;
+  const normalizedShift = { ...shift };
+  const hourlyRate = normalizeDecimalString(costFields.hourly_rate);
+  const plannedCost = normalizeDecimalString(costFields.planned_cost)
+    ?? normalizeDecimalString(costFields.projected_cost);
+
+  const hasActualCost = Object.prototype.hasOwnProperty.call(costFields, 'actual_cost');
+  const hasCalculatedCost = Object.prototype.hasOwnProperty.call(costFields, 'calculated_cost');
+  const actualCost = hasActualCost
+    ? normalizeNullableDecimalString(costFields.actual_cost)
+    : hasCalculatedCost
+      ? normalizeNullableDecimalString(costFields.calculated_cost)
+      : undefined;
+
+  if (hourlyRate !== undefined) {
+    normalizedShift.hourly_rate = hourlyRate;
+  }
+
+  if (plannedCost !== undefined) {
+    normalizedShift.planned_cost = plannedCost;
+  }
+
+  if (actualCost !== undefined) {
+    normalizedShift.actual_cost = actualCost;
+  }
+
+  return normalizedShift;
+}
+
+function normalizeStudioShiftsResponse(response: StudioShiftsResponse): StudioShiftsResponse {
+  return {
+    ...response,
+    data: response.data.map(normalizeShiftCostFields),
+  };
+}
+
 export async function getStudioShifts(
   studioId: string,
   params: GetStudioShiftsParams,
@@ -43,7 +111,7 @@ export async function getStudioShifts(
     params,
     signal: options?.signal,
   });
-  return response.data;
+  return normalizeStudioShiftsResponse(response.data);
 }
 
 export async function getAllStudioShiftsForExport(
@@ -92,5 +160,5 @@ export async function getDutyManager(
     params: time ? { time } : undefined,
     signal: options?.signal,
   });
-  return response.data;
+  return response.data ? normalizeShiftCostFields(response.data) : null;
 }
