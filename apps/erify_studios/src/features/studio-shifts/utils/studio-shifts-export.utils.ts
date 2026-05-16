@@ -1,17 +1,16 @@
-import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
+import type { StudioShift, StudioShiftBlock } from '@/features/studio-shifts/api/studio-shifts.types';
 import { type CsvColumn, serializeRowsToCsv } from '@/lib/csv';
 
 type MemberInfo = { name: string; email: string };
 
 export type StudioShiftExportFormat = 'csv' | 'json';
 
-export type StudioShiftExportRow = {
+export type StudioShiftStaticExportRow = {
   id: string;
   member_name: string;
   member_email: string;
   date: string;
   window: string;
-  blocks: string;
   total_hours: string;
   planned_cost: string;
   actual_cost: string;
@@ -20,11 +19,20 @@ export type StudioShiftExportRow = {
   updated_at: string;
 };
 
+// Per-block columns are dynamic — the column set depends on the max number of
+// blocks across all exported shifts. The key shape is
+// `block_${N}_(planned|actual)_(start|end)` (1-indexed). Sparse cells are empty strings.
+export type StudioShiftExportRow = StudioShiftStaticExportRow & Record<string, string>;
+
+export type StudioShiftExportResult = {
+  rows: StudioShiftExportRow[];
+  columns: CsvColumn<StudioShiftExportRow>[];
+};
+
 type BuildStudioShiftExportRowsParams = {
   shifts: StudioShift[];
   memberMap: Map<string, MemberInfo>;
   getShiftDisplayDate: (shift: StudioShift) => string;
-  getShiftBlockLabels: (shift: StudioShift) => string[];
   getShiftWindowLabel: (shift: StudioShift) => string;
   formatDateTime: (value: string) => string;
 };
@@ -44,13 +52,12 @@ function formatShiftDurationHours(shift: StudioShift): string {
   return (totalMs / (1000 * 60 * 60)).toFixed(2);
 }
 
-const STUDIO_SHIFT_EXPORT_COLUMNS: CsvColumn<StudioShiftExportRow>[] = [
+const STATIC_EXPORT_COLUMNS: CsvColumn<StudioShiftExportRow>[] = [
   { key: 'id', label: 'Shift ID' },
   { key: 'member_name', label: 'Member' },
   { key: 'member_email', label: 'Member Email' },
   { key: 'date', label: 'Date' },
   { key: 'window', label: 'Window' },
-  { key: 'blocks', label: 'Blocks' },
   { key: 'total_hours', label: 'Total Hours' },
   { key: 'planned_cost', label: 'Planned Cost' },
   { key: 'actual_cost', label: 'Actual Cost' },
@@ -59,24 +66,48 @@ const STUDIO_SHIFT_EXPORT_COLUMNS: CsvColumn<StudioShiftExportRow>[] = [
   { key: 'updated_at', label: 'Updated At' },
 ];
 
+function sortedShiftBlocks(shift: StudioShift): StudioShiftBlock[] {
+  // Backend orders blocks by startTime ascending; sort defensively in case any
+  // caller passes an unsorted shape.
+  return [...shift.blocks].sort(
+    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+  );
+}
+
+function buildBlockColumns(maxBlocks: number): CsvColumn<StudioShiftExportRow>[] {
+  const columns: CsvColumn<StudioShiftExportRow>[] = [];
+  for (let n = 1; n <= maxBlocks; n += 1) {
+    columns.push(
+      { key: `block_${n}_planned_start`, label: `Block ${n} Planned Start` },
+      { key: `block_${n}_planned_end`, label: `Block ${n} Planned End` },
+      { key: `block_${n}_actual_start`, label: `Block ${n} Actual Start` },
+      { key: `block_${n}_actual_end`, label: `Block ${n} Actual End` },
+    );
+  }
+  return columns;
+}
+
 export function buildStudioShiftExportRows({
   shifts,
   memberMap,
   getShiftDisplayDate,
-  getShiftBlockLabels,
   getShiftWindowLabel,
   formatDateTime,
-}: BuildStudioShiftExportRowsParams): StudioShiftExportRow[] {
-  return shifts.map((shift) => {
-    const member = memberMap.get(shift.user_id);
+}: BuildStudioShiftExportRowsParams): StudioShiftExportResult {
+  const maxBlocks = shifts.reduce((max, shift) => Math.max(max, shift.blocks.length), 0);
+  const blockColumns = buildBlockColumns(maxBlocks);
+  const columns = [...STATIC_EXPORT_COLUMNS, ...blockColumns];
 
-    return {
+  const rows = shifts.map((shift) => {
+    const member = memberMap.get(shift.user_id);
+    const orderedBlocks = sortedShiftBlocks(shift);
+
+    const row: StudioShiftExportRow = {
       id: shift.id,
       member_name: shift.user_name,
       member_email: member?.email ?? '',
       date: getShiftDisplayDate(shift),
       window: getShiftWindowLabel(shift),
-      blocks: getShiftBlockLabels(shift).join('; '),
       total_hours: formatShiftDurationHours(shift),
       planned_cost: shift.planned_cost,
       actual_cost: shift.actual_cost ?? '',
@@ -84,11 +115,25 @@ export function buildStudioShiftExportRows({
       duty_manager: shift.is_duty_manager ? 'Yes' : 'No',
       updated_at: formatDateTime(shift.updated_at),
     };
+
+    // Per-block columns: planned_start/end always present (the block defines them);
+    // actual_start/end empty when the actuals haven't been recorded yet.
+    for (let n = 1; n <= maxBlocks; n += 1) {
+      const block = orderedBlocks[n - 1];
+      row[`block_${n}_planned_start`] = block ? formatDateTime(block.start_time) : '';
+      row[`block_${n}_planned_end`] = block ? formatDateTime(block.end_time) : '';
+      row[`block_${n}_actual_start`] = block?.actual_start_time ? formatDateTime(block.actual_start_time) : '';
+      row[`block_${n}_actual_end`] = block?.actual_end_time ? formatDateTime(block.actual_end_time) : '';
+    }
+
+    return row;
   });
+
+  return { rows, columns };
 }
 
-export function serializeStudioShiftExportCsv(rows: StudioShiftExportRow[]): string {
-  return serializeRowsToCsv({ rows, columns: STUDIO_SHIFT_EXPORT_COLUMNS });
+export function serializeStudioShiftExportCsv({ rows, columns }: StudioShiftExportResult): string {
+  return serializeRowsToCsv({ rows, columns });
 }
 
 export function serializeStudioShiftExportJson(rows: StudioShiftExportRow[]): string {
@@ -107,12 +152,12 @@ export function buildStudioShiftExportFilename({
 }
 
 export function createStudioShiftExportContent(
-  rows: StudioShiftExportRow[],
+  result: StudioShiftExportResult,
   format: StudioShiftExportFormat,
 ): string {
   if (format === 'json') {
-    return serializeStudioShiftExportJson(rows);
+    return serializeStudioShiftExportJson(result.rows);
   }
 
-  return serializeStudioShiftExportCsv(rows);
+  return serializeStudioShiftExportCsv(result);
 }

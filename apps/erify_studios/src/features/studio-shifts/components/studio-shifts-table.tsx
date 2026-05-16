@@ -412,16 +412,15 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       if (controller.signal.aborted) {
         return;
       }
-      const rows = buildStudioShiftExportRows({
+      const exportResult = buildStudioShiftExportRows({
         shifts: exportShifts,
         memberMap,
         getShiftDisplayDate,
-        getShiftBlockLabels,
         getShiftWindowLabel,
         formatDateTime,
       });
       triggerBrowserDownload({
-        content: createStudioShiftExportContent(rows, format),
+        content: createStudioShiftExportContent(exportResult, format),
         mimeType: format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;',
         filename: buildStudioShiftExportFilename({
           format,
