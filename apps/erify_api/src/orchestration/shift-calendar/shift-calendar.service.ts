@@ -12,8 +12,8 @@ type DayShift = {
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
   is_duty_manager: boolean;
   hourly_rate: string;
-  projected_cost: string;
-  calculated_cost: string | null;
+  planned_cost: string;
+  actual_cost: string | null;
   total_hours: number;
   blocks: Array<{
     block_id: string;
@@ -27,7 +27,7 @@ type DayUser = {
   user_id: string;
   user_name: string;
   total_hours: number;
-  total_projected_cost: string;
+  total_planned_cost: string;
   shifts: DayShift[];
 };
 
@@ -40,8 +40,10 @@ type CalendarSummary = {
   shift_count: number;
   block_count: number;
   total_hours: number;
-  total_projected_cost: string;
-  total_calculated_cost: string;
+  total_planned_cost: string;
+  total_actual_cost: string;
+  actual_cost_resolved_shift_count: number;
+  actual_cost_pending_shift_count: number;
 };
 
 @Injectable()
@@ -56,10 +58,13 @@ export class ShiftCalendarService {
   /**
    * Calendar/cost orchestration for studio-admin planning.
    *
-   * Purpose:
-   * - Return shift timeline grouped by UTC day and member for calendar/table rendering.
-   * - Return period-level totals (hours, projected cost, calculated cost).
-   * - Keep aggregation read-only and deterministic from existing shifts/blocks.
+   * Cost figures are live-computed from current shift inputs (cost-model:
+   * `StudioShift.projected_cost` removed). Per-shift and rollups use clipped
+   * block durations against the calendar window for hours-based aggregation.
+   * Compensation line items are intentionally excluded from this surface in
+   * Phase 4 PR 3 — the studio-shifts table at /shifts is the canonical
+   * line-item-inclusive total. If the calendar later needs to mirror that,
+   * pro-rate line items per shift's window overlap as the extension point.
    */
   async getCalendar(studioUid: string, query: ShiftCalendarQuery) {
     const studio = await this.studioService.findByUid(studioUid);
@@ -100,28 +105,34 @@ export class ShiftCalendarService {
       user_id: string;
       user_name: string;
       total_hours: number;
-      projected_cost_acc: number;
-      shifts: Map<string, DayShift>;
+      planned_cost_acc: number;
+      shifts: Map<string, DayShift & { actual_cost_acc: number }>;
     }>>();
 
     let totalHours = 0;
-    let totalProjectedCost = 0;
-    let totalCalculatedCost = 0;
+    let totalPlannedCost = 0;
+    let totalActualCost = 0;
     let totalBlockCount = 0;
 
     const shiftIds = new Set<string>();
+    let resolvedShiftCount = 0;
+    let pendingShiftCount = 0;
 
     for (const shift of shifts) {
       shiftIds.add(shift.uid);
       const hourlyRate = this.toNumber(shift.hourlyRate);
       const shiftBlocks = shift.blocks ?? [];
-      // Full shift duration is used to pro-rate manual calculated cost across clipped range.
-      const shiftTotalBlockHours = shiftBlocks.reduce(
-        (acc, block) => acc + this.hoursBetween(block.startTime, block.endTime),
-        0,
-      );
 
-      let shiftOverlapHours = 0;
+      // Shift-wide actual completeness — used to null per-shift `actual_cost` and to
+      // count resolved/pending. A shift is "resolved" when every block has both
+      // actualStartTime AND actualEndTime.
+      const shiftHasCompleteActuals = shiftBlocks.length > 0
+        && shiftBlocks.every((block) => block.actualStartTime !== null && block.actualEndTime !== null);
+      if (shiftHasCompleteActuals) {
+        resolvedShiftCount += 1;
+      } else {
+        pendingShiftCount += 1;
+      }
 
       for (const block of shiftBlocks) {
         const clipped = this.clipInterval(block.startTime, block.endTime, rangeStart, rangeEnd);
@@ -131,10 +142,25 @@ export class ShiftCalendarService {
 
         totalBlockCount += 1;
         const clippedHours = this.hoursBetween(clipped.start, clipped.end);
-        shiftOverlapHours += clippedHours;
+
+        // Per-block clipped actual hours: only contribute when the block itself has a
+        // complete actual pair AND the actual interval overlaps the visible window.
+        let clippedActualHours = 0;
+        if (block.actualStartTime !== null && block.actualEndTime !== null) {
+          const clippedActual = this.clipInterval(
+            block.actualStartTime,
+            block.actualEndTime,
+            rangeStart,
+            rangeEnd,
+          );
+          if (clippedActual) {
+            clippedActualHours = this.hoursBetween(clippedActual.start, clippedActual.end);
+          }
+        }
 
         // Split cross-midnight blocks so each segment is aggregated into the correct day bucket.
         const segments = this.splitIntervalByDay(clipped.start, clipped.end);
+        const segmentRatio = clippedHours > 0 ? 1 / segments.length : 0;
         for (const segment of segments) {
           const dateKey = this.toDateKey(segment.start);
 
@@ -148,7 +174,7 @@ export class ShiftCalendarService {
               user_id: shift.user.uid,
               user_name: shift.user.name,
               total_hours: 0,
-              projected_cost_acc: 0,
+              planned_cost_acc: 0,
               shifts: new Map(),
             });
           }
@@ -160,8 +186,9 @@ export class ShiftCalendarService {
               status: shift.status,
               is_duty_manager: shift.isDutyManager,
               hourly_rate: this.formatMoney(hourlyRate),
-              projected_cost: '0.00',
-              calculated_cost: shift.calculatedCost ? this.formatMoney(this.toNumber(shift.calculatedCost)) : null,
+              planned_cost: '0.00',
+              actual_cost: shiftHasCompleteActuals ? '0.00' : null,
+              actual_cost_acc: 0,
               total_hours: 0,
               blocks: [],
             });
@@ -169,6 +196,10 @@ export class ShiftCalendarService {
 
           const dayShift = dayUser.shifts.get(shift.uid)!;
           const segmentHours = this.hoursBetween(segment.start, segment.end);
+          const segmentPlannedCost = segmentHours * hourlyRate;
+          // Pro-rate the block's clipped actual hours across the day segments derived from
+          // its clipped planned window. Matches existing planned semantics (split blocks per day).
+          const segmentActualCost = clippedActualHours * segmentRatio * hourlyRate;
 
           dayShift.total_hours += segmentHours;
           dayShift.blocks.push({
@@ -179,17 +210,17 @@ export class ShiftCalendarService {
           });
 
           dayUser.total_hours += segmentHours;
-          dayUser.projected_cost_acc += segmentHours * hourlyRate;
+          dayUser.planned_cost_acc += segmentPlannedCost;
+          if (shiftHasCompleteActuals) {
+            dayShift.actual_cost_acc += segmentActualCost;
+          }
+
+          totalHours += segmentHours;
+          totalPlannedCost += segmentPlannedCost;
+          if (shiftHasCompleteActuals) {
+            totalActualCost += segmentActualCost;
+          }
         }
-      }
-
-      totalHours += shiftOverlapHours;
-      totalProjectedCost += shiftOverlapHours * hourlyRate;
-
-      // calculated_cost is a shift-level final amount; distribute by effective hourly rate for clipped windows.
-      if (shift.calculatedCost && shiftTotalBlockHours > 0) {
-        const calculatedRate = this.toNumber(shift.calculatedCost) / shiftTotalBlockHours;
-        totalCalculatedCost += shiftOverlapHours * calculatedRate;
       }
     }
 
@@ -200,9 +231,15 @@ export class ShiftCalendarService {
           .map((user) => {
             const shiftsForDay = [...user.shifts.values()]
               .map((shift) => ({
-                ...shift,
+                shift_id: shift.shift_id,
+                status: shift.status,
+                is_duty_manager: shift.is_duty_manager,
+                hourly_rate: shift.hourly_rate,
+                planned_cost: this.formatMoney(this.toNumber(shift.hourly_rate) * shift.total_hours),
+                actual_cost: shift.actual_cost === null
+                  ? null
+                  : this.formatMoney(shift.actual_cost_acc),
                 total_hours: this.roundHours(shift.total_hours),
-                projected_cost: this.formatMoney(this.toNumber(shift.hourly_rate) * shift.total_hours),
                 blocks: shift.blocks
                   .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
                   .map((block) => ({
@@ -220,7 +257,7 @@ export class ShiftCalendarService {
               user_id: user.user_id,
               user_name: user.user_name,
               total_hours: this.roundHours(user.total_hours),
-              total_projected_cost: this.formatMoney(user.projected_cost_acc),
+              total_planned_cost: this.formatMoney(user.planned_cost_acc),
               shifts: shiftsForDay,
             };
           })
@@ -235,8 +272,10 @@ export class ShiftCalendarService {
         shift_count: shiftIds.size,
         block_count: totalBlockCount,
         total_hours: this.roundHours(totalHours),
-        total_projected_cost: this.formatMoney(totalProjectedCost),
-        total_calculated_cost: this.formatMoney(totalCalculatedCost),
+        total_planned_cost: this.formatMoney(totalPlannedCost),
+        total_actual_cost: this.formatMoney(totalActualCost),
+        actual_cost_resolved_shift_count: resolvedShiftCount,
+        actual_cost_pending_shift_count: pendingShiftCount,
       },
     };
   }

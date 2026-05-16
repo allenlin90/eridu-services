@@ -8,13 +8,22 @@ import type { BlocksReplacePayload } from './schemas/studio-shift.schema';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
+const lineItemTargetInclude = {
+  where: { lineItem: { is: { deletedAt: null } } },
+  include: { lineItem: { select: { amount: true } } },
+} as const;
+
 const defaultShiftInclude = {
   user: true,
   studio: true,
   blocks: {
     where: { deletedAt: null },
     orderBy: { startTime: 'asc' },
+    include: {
+      compensationLineItemTargets: lineItemTargetInclude,
+    },
   },
+  compensationLineItemTargets: lineItemTargetInclude,
 } as const;
 
 export type StudioShiftWithRelations = Prisma.StudioShiftGetPayload<{
@@ -288,7 +297,11 @@ export class StudioShiftRepository extends BaseRepository<
             endTime: { gt: params.start },
           },
           orderBy: { startTime: 'asc' },
+          include: {
+            compensationLineItemTargets: lineItemTargetInclude,
+          },
         },
+        compensationLineItemTargets: lineItemTargetInclude,
       },
     });
   }

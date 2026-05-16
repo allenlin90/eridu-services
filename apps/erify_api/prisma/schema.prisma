@@ -402,8 +402,6 @@ model StudioShift {
   userId                      BigInt                       @map("user_id")
   date                        DateTime                     @db.Date
   hourlyRate                  Decimal                      @map("hourly_rate") @db.Decimal(10, 2)
-  projectedCost               Decimal                      @map("projected_cost") @db.Decimal(10, 2)
-  calculatedCost              Decimal?                     @map("calculated_cost") @db.Decimal(10, 2)
   isApproved                  Boolean                      @default(false) @map("is_approved")
   isDutyManager               Boolean                      @default(false) @map("is_duty_manager")
   status                      StudioShiftStatus            @default(SCHEDULED)

@@ -27,7 +27,7 @@ Rows are ordered top-to-bottom as execution order. Rows with `—` in the depend
 | - | -- | ---------- | ------ | ------- |
 | 1 | Money library standardization — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2 | — | ✅ Merged | [#69](https://github.com/allenlin90/eridu-services/pull/69) |
 | 2 | Shift unified date range + export at `/shifts` — one picker drives the cost snapshot, records list, and current-view export | — | ✅ Merged | [#71](https://github.com/allenlin90/eridu-services/pull/71) |
-| 3 | [Shift cost-column cleanup at `/shifts`](#pr-3--shift-cost-column-cleanup) — drop stored shift cost columns, add live `total_cost`, revise FE columns | PR 2 | 🔲 Planned | — |
+| 3 | [Shift cost-column cleanup at `/shifts`](#pr-3--shift-cost-column-cleanup) — drop stored shift cost columns, add live `planned_cost` / `actual_cost`, revise FE columns | PR 2 | 🚧 In progress | — |
 | 4 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
 | 5 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |
 | 6 | Roster snapshot-warning copy on member/creator roster edit dialogs | — | 🔲 Planned | — |
@@ -46,7 +46,7 @@ Rows are ordered top-to-bottom as execution order. Rows with `—` in the depend
 
 ### PR 3 · Shift cost-column cleanup
 
-**Brief** — The shift records list shows a stored `Projected Cost` column that drifts from current state. This PR renames the FE column to `Total Cost`, backs it with a live calculation from `hourlyRate × block-duration + STUDIO_SHIFT(_BLOCK) line items`, and drops the stored `projected_cost` / `calculated_cost` columns (every writer in the same change set since `projected_cost` is `NOT NULL`). No new BE endpoints — `total_cost` joins the existing shift list response shape. Money rendering uses `toDecimalDisplayString` from `@/lib/decimal-format` (shipped in PR 1).
+**Brief** — The shift records list shows a stored `Projected Cost` column that drifts from current state. This PR drops `StudioShift.projected_cost` (NOT NULL) and `StudioShift.calculated_cost`, replacing them with two live-computed response fields: `planned_cost` (hourlyRate × planned block-duration + attached `STUDIO_SHIFT(_BLOCK)` line items, always non-null) and `actual_cost` (same formula on actual block timestamps; null when any block has incomplete actuals). The manager shift table at `/shifts` shows both columns; the page summary card uses a partial-sum + explicit pending counts pattern (`total_actual_cost` + `actual_cost_pending_shift_count`) instead of bubbling null, to keep the running total usable when some shifts are still pending. The `/me/shifts` member self-view collapses to a single `Cost` column rendering actuals only (showing planned creates expectations the actual rarely meets), with null cells rendered as `Pending — actuals not recorded yet`; richer member compensation surfaces stay in PR 10's scope. The compensation dialog gains a two-row Planned / Actual treatment. CSV export columns become `planned_cost` / `actual_cost`. The `calculated_cost` request input on `POST/PATCH /studios/:id/shifts` is removed — overrides now flow through `STUDIO_SHIFT` line items per cost-model §1. Money rendering via `toDecimalDisplayString` from `@/lib/decimal-format`.
 
 ### PR 8 · Member `base_hourly_rate` wire-type migration
 

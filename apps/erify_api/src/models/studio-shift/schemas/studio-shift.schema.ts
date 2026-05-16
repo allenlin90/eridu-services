@@ -1,6 +1,8 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { computeShiftCosts } from '../studio-shift-cost.utils';
+
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
@@ -69,6 +71,10 @@ function decimalToString(value: unknown): string {
 
 // Internal transform-only shape — never exposed as a response validator.
 // BigInt PKs/FKs are omitted; only fields consumed by studioShiftDto transform are declared.
+const _internalLineItemTargetShape = z.object({
+  lineItem: z.object({ amount: z.unknown() }),
+});
+
 const _internalShiftBlockShape = z.object({
   uid: z.string().startsWith(StudioShiftService.BLOCK_UID_PREFIX),
   startTime: z.date(),
@@ -79,6 +85,7 @@ const _internalShiftBlockShape = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
+  compensationLineItemTargets: z.array(_internalLineItemTargetShape).default([]),
 });
 
 // Internal transform-only shape — never exposed as a response validator.
@@ -88,13 +95,12 @@ const _internalShiftWithRelationsShape = z.object({
   uid: z.string().startsWith(StudioShiftService.UID_PREFIX),
   date: z.date(),
   hourlyRate: z.unknown(),
-  projectedCost: z.unknown(),
-  calculatedCost: z.unknown().nullable(),
   isApproved: z.boolean(),
   isDutyManager: z.boolean(),
   status: studioShiftStatusSchema,
   metadata: z.record(z.string(), z.unknown()),
   blocks: z.array(_internalShiftBlockShape),
+  compensationLineItemTargets: z.array(_internalLineItemTargetShape).default([]),
   user: z.object({
     uid: z.string().startsWith(UserService.UID_PREFIX),
     name: z.string(),
@@ -112,8 +118,8 @@ const studioShiftApiResponseSchema = z.object({
   user_name: z.string(),
   date: z.iso.date(),
   hourly_rate: z.string(),
-  projected_cost: z.string(),
-  calculated_cost: z.string().nullable(),
+  planned_cost: z.string(),
+  actual_cost: z.string().nullable(),
   is_approved: z.boolean(),
   is_duty_manager: z.boolean(),
   status: studioShiftStatusSchema,
@@ -135,32 +141,50 @@ const studioShiftApiResponseSchema = z.object({
 });
 
 export const studioShiftDto = _internalShiftWithRelationsShape
-  .transform((obj) => ({
-    id: obj.uid,
-    studio_id: obj.studio.uid,
-    user_id: obj.user.uid,
-    user_name: obj.user.name,
-    date: obj.date.toISOString().slice(0, 10),
-    hourly_rate: decimalToString(obj.hourlyRate),
-    projected_cost: decimalToString(obj.projectedCost),
-    calculated_cost: obj.calculatedCost ? decimalToString(obj.calculatedCost) : null,
-    is_approved: obj.isApproved,
-    is_duty_manager: obj.isDutyManager,
-    status: obj.status,
-    metadata: obj.metadata,
-    blocks: obj.blocks.map((block) => ({
-      id: block.uid,
-      start_time: block.startTime.toISOString(),
-      end_time: block.endTime.toISOString(),
-      actual_start_time: block.actualStartTime?.toISOString() ?? null,
-      actual_end_time: block.actualEndTime?.toISOString() ?? null,
-      metadata: block.metadata,
-      created_at: block.createdAt.toISOString(),
-      updated_at: block.updatedAt.toISOString(),
-    })),
-    created_at: obj.createdAt.toISOString(),
-    updated_at: obj.updatedAt.toISOString(),
-  }))
+  .transform((obj) => {
+    const { plannedCost, actualCost } = computeShiftCosts({
+      hourlyRate: decimalToString(obj.hourlyRate),
+      blocks: obj.blocks.map((block) => ({
+        startTime: block.startTime,
+        endTime: block.endTime,
+        actualStartTime: block.actualStartTime,
+        actualEndTime: block.actualEndTime,
+        lineItemAmounts: block.compensationLineItemTargets.map(
+          (target) => decimalToString(target.lineItem.amount),
+        ),
+      })),
+      shiftLineItemAmounts: obj.compensationLineItemTargets.map(
+        (target) => decimalToString(target.lineItem.amount),
+      ),
+    });
+
+    return {
+      id: obj.uid,
+      studio_id: obj.studio.uid,
+      user_id: obj.user.uid,
+      user_name: obj.user.name,
+      date: obj.date.toISOString().slice(0, 10),
+      hourly_rate: decimalToString(obj.hourlyRate),
+      planned_cost: plannedCost.toFixed(2),
+      actual_cost: actualCost === null ? null : actualCost.toFixed(2),
+      is_approved: obj.isApproved,
+      is_duty_manager: obj.isDutyManager,
+      status: obj.status,
+      metadata: obj.metadata,
+      blocks: obj.blocks.map((block) => ({
+        id: block.uid,
+        start_time: block.startTime.toISOString(),
+        end_time: block.endTime.toISOString(),
+        actual_start_time: block.actualStartTime?.toISOString() ?? null,
+        actual_end_time: block.actualEndTime?.toISOString() ?? null,
+        metadata: block.metadata,
+        created_at: block.createdAt.toISOString(),
+        updated_at: block.updatedAt.toISOString(),
+      })),
+      created_at: obj.createdAt.toISOString(),
+      updated_at: obj.updatedAt.toISOString(),
+    };
+  })
   .pipe(studioShiftApiResponseSchema);
 
 const blockInputSchema = z.object({
@@ -191,7 +215,6 @@ export const createStudioShiftSchema = z
     status: studioShiftStatusSchema.optional(),
     is_duty_manager: z.boolean().optional(),
     is_approved: z.boolean().optional(),
-    calculated_cost: z.coerce.number().nonnegative().optional(),
     metadata: studioShiftMetadataSchema.optional(),
   })
   .transform((data) => ({
@@ -208,7 +231,6 @@ export const createStudioShiftSchema = z
     status: data.status,
     isDutyManager: data.is_duty_manager,
     isApproved: data.is_approved,
-    calculatedCost: data.calculated_cost !== undefined ? data.calculated_cost.toFixed(2) : undefined,
     metadata: data.metadata ?? {},
   }));
 
@@ -221,7 +243,6 @@ export const updateStudioShiftSchema = z
     status: studioShiftStatusSchema.optional(),
     is_duty_manager: z.boolean().optional(),
     is_approved: z.boolean().optional(),
-    calculated_cost: z.union([z.coerce.number().nonnegative(), z.null()]).optional(),
     override_reason: z.string().trim().min(1).max(1000).optional(),
     metadata: studioShiftMetadataSchema.optional(),
   })
@@ -239,11 +260,6 @@ export const updateStudioShiftSchema = z
     status: data.status,
     isDutyManager: data.is_duty_manager,
     isApproved: data.is_approved,
-    calculatedCost: data.calculated_cost === null
-      ? null
-      : data.calculated_cost !== undefined
-        ? data.calculated_cost.toFixed(2)
-        : undefined,
     overrideReason: data.override_reason,
     metadata: data.metadata,
   }));
@@ -353,8 +369,10 @@ export const shiftCalendarDto = z.object({
     shift_count: z.number().int().nonnegative(),
     block_count: z.number().int().nonnegative(),
     total_hours: z.number().nonnegative(),
-    total_projected_cost: z.string(),
-    total_calculated_cost: z.string(),
+    total_planned_cost: z.string(),
+    total_actual_cost: z.string(),
+    actual_cost_resolved_shift_count: z.number().int().nonnegative(),
+    actual_cost_pending_shift_count: z.number().int().nonnegative(),
   }),
   timeline: z.array(z.object({
     date: z.iso.date(),
@@ -362,14 +380,14 @@ export const shiftCalendarDto = z.object({
       user_id: z.string(),
       user_name: z.string(),
       total_hours: z.number().nonnegative(),
-      total_projected_cost: z.string(),
+      total_planned_cost: z.string(),
       shifts: z.array(z.object({
         shift_id: z.string(),
         status: studioShiftStatusSchema,
         is_duty_manager: z.boolean(),
         hourly_rate: z.string(),
-        projected_cost: z.string(),
-        calculated_cost: z.string().nullable(),
+        planned_cost: z.string(),
+        actual_cost: z.string().nullable(),
         total_hours: z.number().nonnegative(),
         blocks: z.array(z.object({
           block_id: z.string(),

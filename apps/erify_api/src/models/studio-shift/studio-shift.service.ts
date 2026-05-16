@@ -53,17 +53,12 @@ export class StudioShiftService extends BaseModelService {
 
     const hourlyRate = payload.hourlyRate
       ?? this.resolveMembershipHourlyRateOrThrow(membership.baseHourlyRate);
-
-    const projectedCost = this.calculateProjectedCost(hourlyRate, normalizedBlocks);
+    this.assertPositiveHourlyRate(hourlyRate);
 
     return this.studioShiftRepository.createShift({
       uid: this.generateUid(),
       date: payload.date,
       hourlyRate,
-      projectedCost,
-      ...(payload.calculatedCost !== undefined && {
-        calculatedCost: payload.calculatedCost,
-      }),
       ...(payload.isApproved !== undefined && { isApproved: payload.isApproved }),
       ...(payload.isDutyManager !== undefined && { isDutyManager: payload.isDutyManager }),
       ...(payload.status && { status: payload.status }),
@@ -165,8 +160,7 @@ export class StudioShiftService extends BaseModelService {
     if (nextStatus !== 'CANCELLED') {
       await this.ensureNoOverlapInStudio(studioId, targetUserId, normalizedBlocks, uid);
     }
-
-    const projectedCost = this.calculateProjectedCost(hourlyRate, normalizedBlocks);
+    this.assertPositiveHourlyRate(hourlyRate);
 
     const blocksPayload = payload.blocks
       ? this.buildBlocksReplacePayload(normalizedBlocks, existing.blocks)
@@ -190,12 +184,8 @@ export class StudioShiftService extends BaseModelService {
       }),
       ...(payload.isApproved !== undefined && { isApproved: payload.isApproved }),
       ...(payload.metadata !== undefined && { metadata: payload.metadata }),
-      ...(payload.calculatedCost !== undefined && {
-        calculatedCost: payload.calculatedCost,
-      }),
       ...((payload.metadata !== undefined || snapshotChanges.length > 0) && { metadata }),
       hourlyRate,
-      projectedCost,
     }, existing.id, blocksPayload);
   }
 
@@ -316,23 +306,11 @@ export class StudioShiftService extends BaseModelService {
     return normalizedBlocks;
   }
 
-  private calculateProjectedCost(
-    hourlyRate: string,
-    blocks: ShiftBlockInput[],
-  ): string {
-    const totalMilliseconds = blocks.reduce(
-      (sum, block) => sum + (block.endTime.getTime() - block.startTime.getTime()),
-      0,
-    );
-
-    const totalHours = totalMilliseconds / (1000 * 60 * 60);
+  private assertPositiveHourlyRate(hourlyRate: string): void {
     const rate = Number(hourlyRate);
-
     if (!Number.isFinite(rate) || rate <= 0) {
       throw HttpError.badRequest('Hourly rate must be a positive number');
     }
-
-    return (totalHours * rate).toFixed(2);
   }
 
   private generateBlockUid(): string {
