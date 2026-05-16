@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); 11 PRs remaining.
+> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); shift unified date range + export shipped (PR [#71](https://github.com/allenlin90/eridu-services/pull/71)); 10 PRs remaining.
 > **Last updated**: 2026-05-16
 > **Cost contract**: [`docs/domain/economics-cost-model.md`](../domain/economics-cost-model.md) — locked semantics, read first.
 > **Finance guardrails**: [`docs/engineering/FINANCE_GUARDRAILS.md`](../engineering/FINANCE_GUARDRAILS.md)
@@ -26,7 +26,7 @@ Rows are ordered top-to-bottom as execution order. Rows with `—` in the depend
 | # | PR | Depends on | Status | PR link |
 | - | -- | ---------- | ------ | ------- |
 | 1 | Money library standardization — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2 | — | ✅ Merged | [#69](https://github.com/allenlin90/eridu-services/pull/69) |
-| 2 | [Shift unified date range + export at `/shifts`](#pr-2--shift-unified-date-range--export) — one picker drives the cost snapshot, records list, and current-view export | — | 🚧 In progress | — |
+| 2 | Shift unified date range + export at `/shifts` — one picker drives the cost snapshot, records list, and current-view export | — | ✅ Merged | [#71](https://github.com/allenlin90/eridu-services/pull/71) |
 | 3 | [Shift cost-column cleanup at `/shifts`](#pr-3--shift-cost-column-cleanup) — drop stored shift cost columns, add live `total_cost`, revise FE columns | PR 2 | 🔲 Planned | — |
 | 4 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
 | 5 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |
@@ -43,10 +43,6 @@ Rows are ordered top-to-bottom as execution order. Rows with `—` in the depend
 - **Picking up a PR**: write a 1-3 sentence brief in a sub-section below (or just open the PR with that as the description). Mark status `🚧 In progress`.
 - **Wrapping up a PR (before merge, not after)**: as part of the PR's own commits, flip the row to `✅`, replace the brief with the PR link in the table, and update any other docs the PR's outcome affects — canonical docs in `docs/features/` and `apps/*/docs/` reflecting what actually shipped, and forward-looking roadmaps (e.g. drop now-shipped items from [`PHASE_5.md`](./PHASE_5.md) deferrals). Land docs atomically with the code so `master` always matches the roadmap; do not leave status flips for a follow-up commit. Prefer squash-merging the PR.
 - **Discovering a new boundary or dependency**: re-cluster the rows and re-check the "no row depends on a row below" invariant. Predictions made before code drift; this list should match reality, not the original guess.
-
-### PR 2 · Shift unified date range + export
-
-**Brief** — Studio admin opens `/studios/:id/shifts?view=table`. Two sections today (cost snapshot + records list) each have their own date picker, so the page does not have one current-view range to export. This PR lifts the date range to one picker driving both sections and adds an "Export" button that downloads the current view as CSV/JSON. No DB migration, cost-column rename, or `total_cost` response-shape change in this PR.
 
 ### PR 3 · Shift cost-column cleanup
 
