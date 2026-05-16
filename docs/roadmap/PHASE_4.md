@@ -21,29 +21,34 @@ Build the L-side (cost) of P&L on existing studio entities, while completing stu
 
 Each row is one user-facing change. A row with a brief sub-section below means work is being picked up — the brief is written when the PR starts and deleted when the PR merges (the PR description + the canonical doc become the record).
 
+Rows are ordered top-to-bottom as execution order: rows 1-6 have no dependencies and can ship in any order or in parallel; rows 7-10 each depend on a row above. **No row depends on a row below it.**
+
 | # | PR | Depends on | Status | PR link |
 | - | -- | ---------- | ------ | ------- |
-| 1 | [Shift export at `/shifts`](#pr-1--shift-export) — unified date range, export, live `total_cost` (drops stored cost columns) | — | 🚧 Next | — |
-| 2 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
-| 3 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |
-| 4 | Per-member shift compensation review (date-range) | PR 2 | 🔲 Planned | — |
+| 1 | [Money library standardization](#pr-1--money-library-standardization) — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2 | — | 🚧 Next | — |
+| 2 | [Shift export at `/shifts`](#pr-2--shift-export) — unified date range, export, live `total_cost` (drops stored cost columns) | — | 🚧 Next | — |
+| 3 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
+| 4 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |
 | 5 | Roster snapshot-warning copy on member/creator roster edit dialogs | — | 🔲 Planned | — |
-| 6 | Self-view compensation reads + flag-missing-actuals affordance (`/me/compensation/*`) | PR 2, PR 3 | 🔲 Planned | — |
-| 7 | Cross-user creator/member compensation reads + show drill-in | PR 6 | 🔲 Planned | — |
-| 8 | Operational rollup endpoint + economics review surface (`/studios/:id/finance/economics`) | PR 7 | 🔲 Planned | — |
-| 9 | Strict-mode creator availability with conflict metadata | — | 🔲 Planned | — |
-
-PRs 1, 2, 3, 5, 9 can start in parallel. PR 4 needs PR 2 (uses the missing-actuals surface). PR 6 needs PR 2 + PR 3. PR 7 needs PR 6. PR 8 needs PR 7.
+| 6 | Strict-mode creator availability with conflict metadata | — | 🔲 Planned | — |
+| 7 | Per-member shift compensation review (date-range) | PR 3 | 🔲 Planned | — |
+| 8 | Self-view compensation reads + flag-missing-actuals affordance (`/me/compensation/*`) | PR 3, PR 4 | 🔲 Planned | — |
+| 9 | Cross-user creator/member compensation reads + show drill-in | PR 8 | 🔲 Planned | — |
+| 10 | Operational rollup endpoint + economics review surface (`/studios/:id/finance/economics`) | PR 9 | 🔲 Planned | — |
 
 ### How to use this list
 
 - **Picking up a PR**: write a 1-3 sentence brief in a sub-section below (or just open the PR with that as the description). Mark status `🚧 In progress`.
 - **PR merged**: replace the brief with the PR link in the table. Update the relevant `docs/features/` and `apps/*/docs/` canonical docs with what actually shipped (not what was predicted). Mark the row `✅`.
-- **Discovering a new boundary**: re-cluster the rows. Predictions made before code drift; this list should match reality, not the original guess.
+- **Discovering a new boundary or dependency**: re-cluster the rows and re-check the "no row depends on a row below" invariant. Predictions made before code drift; this list should match reality, not the original guess.
 
-### PR 1 · Shift export
+### PR 1 · Money library standardization
 
-**Brief** — Studio admin opens `/studios/:id/shifts?view=table`. Two sections today (cost snapshot + records list) each have their own date picker; the records list shows a stored `Projected Cost` column that drifts from current state. This PR lifts the date range to one picker driving both sections, renames the column to `Total Cost` backed by a live calculation from `hourlyRate × block-duration + STUDIO_SHIFT(_BLOCK) line items`, drops the stored `projected_cost` / `calculated_cost` columns (every writer in the same change set since `projected_cost` is `NOT NULL`), and adds an "Export" button that downloads the current view as CSV/JSON. No new BE endpoints — `total_cost` joins the existing shift list response shape.
+**Brief** — Today the FE has two money-formatting paths: a safe BigInt-based `toMoneyString` util (used in input dialogs) and ad-hoc `Number(value).toFixed(2)` display calls in column renderers (4 sites). The BE serializer at `apps/erify_api/src/lib/utils/decimal-to-string.util.ts` silently calls `.toFixed(2)` on JS numbers, which violates Finance Guardrail #2. This PR adopts `Big` (big.js, ~2.5 KB gzipped, same author and rounding defaults as `Prisma.Decimal` / decimal.js used on BE), rewrites the FE util as a thin wrapper around `Big`, replaces the unsafe display calls with `Big(value).toFixed(2)`, tightens the BE util to throw on JS-number inputs instead of silently rounding, and updates Finance Guardrail #2 to name the libraries explicitly. Adds `big.js` + `@types/big.js` to `apps/erify_studios`; no other dependency changes.
+
+### PR 2 · Shift export
+
+**Brief** — Studio admin opens `/studios/:id/shifts?view=table`. Two sections today (cost snapshot + records list) each have their own date picker; the records list shows a stored `Projected Cost` column that drifts from current state. This PR lifts the date range to one picker driving both sections, renames the column to `Total Cost` backed by a live calculation from `hourlyRate × block-duration + STUDIO_SHIFT(_BLOCK) line items`, drops the stored `projected_cost` / `calculated_cost` columns (every writer in the same change set since `projected_cost` is `NOT NULL`), and adds an "Export" button that downloads the current view as CSV/JSON. No new BE endpoints — `total_cost` joins the existing shift list response shape. Money rendering uses `Big()` from PR 1 if PR 1 has merged; otherwise picks up the convention when PR 1 lands.
 
 ## Out of scope (post-Phase-4)
 
