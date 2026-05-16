@@ -93,6 +93,8 @@ Delivered:
 - Added block-awareness:
   - Date display follows block ISO timestamps.
   - Blocks column shows block count and block time labels.
+- **Unified date range with the Shift Cost Snapshot card**: one date picker on the snapshot card drives both the cost summary and the records table. The toolbar no longer owns a date picker; resetting toolbar filters preserves the shared date scope. The default 7-day range is written to the URL on first mount so shared links carry the active scope.
+- **Current-view export (CSV / JSON)**: an Export dropdown downloads every shift matching the current filters (not only the visible page), via `getAllStudioShiftsForExport` which paginates through results in parallel, caps the request at 5000 shifts (`ShiftExportTooLargeError` raised with a user toast naming the matched count), and forwards an `AbortSignal` so navigation or filter changes mid-export cancel in-flight requests. CSV output ships UTF-8 BOM, CRLF line endings, and `'`-prefix neutralization for cells starting with `=`, `+`, `-`, `@`, tab, or CR. CSV serialization and the browser-download trigger are shared primitives (`@/lib/csv`, `@/lib/file-download`) reused by `/studios/:id/task-reports/results`.
 
 ### 6. Studio-wide Visibility Workflow (Non-admin)
 
@@ -346,7 +348,6 @@ Pending scope:
 3. **Calendar event interactivity** — Admin: click → edit dialog. Member: click → read-only detail popover. Deferred to Phase 4 planning.
 4. **Member availability** — members set availability for admin reference.
 5. **Recurring shift templates** — weekly pattern creation.
-6. **Shift data export** — CSV/Excel for payroll.
 
 ### Frontend Test Gaps
 
