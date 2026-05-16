@@ -25,4 +25,9 @@ describe('toMoneyString', () => {
     expect(() => toMoneyString('.')).toThrow();
     expect(() => toMoneyString('abc')).toThrow();
   });
+
+  it('rejects scientific notation that Big would otherwise accept', () => {
+    expect(() => toMoneyString('1e3')).toThrow();
+    expect(() => toMoneyString('-1.5e2')).toThrow();
+  });
 });
