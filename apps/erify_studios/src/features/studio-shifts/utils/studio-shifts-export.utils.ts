@@ -13,8 +13,8 @@ export type StudioShiftExportRow = {
   window: string;
   blocks: string;
   total_hours: string;
-  projected_cost: string;
-  calculated_cost: string;
+  planned_cost: string;
+  actual_cost: string;
   status: string;
   duty_manager: string;
   updated_at: string;
@@ -52,8 +52,8 @@ const STUDIO_SHIFT_EXPORT_COLUMNS: CsvColumn<StudioShiftExportRow>[] = [
   { key: 'window', label: 'Window' },
   { key: 'blocks', label: 'Blocks' },
   { key: 'total_hours', label: 'Total Hours' },
-  { key: 'projected_cost', label: 'Projected Cost' },
-  { key: 'calculated_cost', label: 'Calculated Cost' },
+  { key: 'planned_cost', label: 'Planned Cost' },
+  { key: 'actual_cost', label: 'Actual Cost' },
   { key: 'status', label: 'Status' },
   { key: 'duty_manager', label: 'Duty Manager' },
   { key: 'updated_at', label: 'Updated At' },
@@ -78,8 +78,8 @@ export function buildStudioShiftExportRows({
       window: getShiftWindowLabel(shift),
       blocks: getShiftBlockLabels(shift).join('; '),
       total_hours: formatShiftDurationHours(shift),
-      projected_cost: shift.projected_cost,
-      calculated_cost: shift.calculated_cost ?? '',
+      planned_cost: shift.planned_cost,
+      actual_cost: shift.actual_cost ?? '',
       status: shift.status,
       duty_manager: shift.is_duty_manager ? 'Yes' : 'No',
       updated_at: formatDateTime(shift.updated_at),

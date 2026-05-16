@@ -12,6 +12,7 @@ import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.typ
 import { useUpdateStudioShiftBlock } from '@/features/studio-shifts/api/update-studio-shift-block';
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDateTime } from '@/features/studio-shifts/utils/shift-form.utils';
+import { toDecimalDisplayString } from '@/lib/decimal-format';
 
 type ShiftCompensationDialogProps = {
   open: boolean;
@@ -21,16 +22,11 @@ type ShiftCompensationDialogProps = {
 };
 
 function formatMoneyString(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return '$0.00';
+  const formatted = toDecimalDisplayString(value);
+  if (formatted.startsWith('-')) {
+    return `-$${formatted.slice(1)}`;
   }
-
-  if (trimmed.startsWith('-')) {
-    return `-$${trimmed.slice(1)}`;
-  }
-
-  return `$${trimmed}`;
+  return `$${formatted}`;
 }
 
 export function ShiftCompensationDialog({
@@ -56,7 +52,7 @@ export function ShiftCompensationDialog({
 
         {shift && (
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-md border bg-muted/20 p-3">
                 <p className="text-xs font-medium text-muted-foreground">Hourly rate</p>
                 <p className="text-lg font-semibold">
@@ -65,8 +61,14 @@ export function ShiftCompensationDialog({
                 </p>
               </div>
               <div className="rounded-md border bg-muted/20 p-3">
-                <p className="text-xs font-medium text-muted-foreground">Projected base total</p>
-                <p className="text-lg font-semibold">{formatMoneyString(shift.projected_cost)}</p>
+                <p className="text-xs font-medium text-muted-foreground">Planned</p>
+                <p className="text-lg font-semibold">{formatMoneyString(shift.planned_cost)}</p>
+              </div>
+              <div className="rounded-md border bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Actual</p>
+                {shift.actual_cost === null
+                  ? <p className="text-lg font-semibold text-muted-foreground">Pending</p>
+                  : <p className="text-lg font-semibold">{formatMoneyString(shift.actual_cost)}</p>}
               </div>
             </div>
 

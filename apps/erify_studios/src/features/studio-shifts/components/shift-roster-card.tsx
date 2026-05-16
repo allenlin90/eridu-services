@@ -23,6 +23,7 @@ import {
 } from '@eridu/ui';
 
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
+import { toDecimalDisplayString } from '@/lib/decimal-format';
 
 type MemberInfo = { name: string; email: string };
 
@@ -75,14 +76,7 @@ export function ShiftRosterCard({
     return `${(totalMs / (1000 * 60 * 60)).toFixed(2)}h`;
   };
 
-  const formatProjectedCost = (shift: StudioShift): string => {
-    const numeric = Number(shift.projected_cost);
-    if (Number.isNaN(numeric)) {
-      return shift.projected_cost;
-    }
-
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(numeric);
-  };
+  const formatCost = (value: string): string => `$${toDecimalDisplayString(value)}`;
 
   return (
     <Card>
@@ -97,7 +91,7 @@ export function ShiftRosterCard({
           ? (
               <div className="overflow-x-auto rounded-md border">
                 <TableSkeleton
-                  columnCount={7}
+                  columnCount={8}
                   rowCount={Math.max(1, pagination.pageSize)}
                   showButton={canManageShifts}
                 />
@@ -125,7 +119,8 @@ export function ShiftRosterCard({
                           <TableHead>Date / Window</TableHead>
                           <TableHead className="hidden lg:table-cell">Blocks</TableHead>
                           <TableHead className="hidden md:table-cell">Total Hours</TableHead>
-                          <TableHead className="hidden lg:table-cell">Projected Cost</TableHead>
+                          <TableHead className="hidden lg:table-cell">Planned Cost</TableHead>
+                          <TableHead className="hidden lg:table-cell">Actual Cost</TableHead>
                           <TableHead className="hidden xl:table-cell">Status</TableHead>
                           <TableHead className="hidden md:table-cell">Updated</TableHead>
                           {canManageShifts && <TableHead className="text-right">Actions</TableHead>}
@@ -187,7 +182,10 @@ export function ShiftRosterCard({
                                 {formatShiftDurationHours(shift)}
                               </TableCell>
                               <TableCell className="hidden lg:table-cell">
-                                {formatProjectedCost(shift)}
+                                {formatCost(shift.planned_cost)}
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                {shift.actual_cost === null ? '—' : formatCost(shift.actual_cost)}
                               </TableCell>
                               <TableCell className="hidden xl:table-cell">
                                 <Badge variant="outline">{shift.status}</Badge>

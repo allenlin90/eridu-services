@@ -35,6 +35,7 @@ import {
   getShiftDisplayDate,
   getShiftWindowLabel,
 } from '@/features/studio-shifts/utils/shift-form.utils';
+import { toDecimalDisplayString } from '@/lib/decimal-format';
 
 type MyShiftsTableCardProps = {
   search: MyShiftsRouteSearch;
@@ -61,13 +62,11 @@ function formatShiftDurationHours(shift: StudioShift): string {
   return `${(totalMs / (1000 * 60 * 60)).toFixed(2)}h`;
 }
 
-function formatProjectedCost(shift: StudioShift): string {
-  const numeric = Number(shift.projected_cost);
-  if (Number.isNaN(numeric)) {
-    return shift.projected_cost;
+function formatActualCost(shift: StudioShift): string {
+  if (shift.actual_cost === null) {
+    return '—';
   }
-
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(numeric);
+  return `$${toDecimalDisplayString(shift.actual_cost)}`;
 }
 
 export function MyShiftsTableCard({
@@ -151,7 +150,7 @@ export function MyShiftsTableCard({
                           <TableHead>Date / Window</TableHead>
                           <TableHead className="hidden lg:table-cell">Blocks</TableHead>
                           <TableHead className="hidden md:table-cell">Total Hours</TableHead>
-                          <TableHead className="hidden lg:table-cell">Projected Cost</TableHead>
+                          <TableHead className="hidden lg:table-cell">Cost</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="hidden md:table-cell">Updated</TableHead>
                         </TableRow>
@@ -175,7 +174,12 @@ export function MyShiftsTableCard({
                               {formatShiftDurationHours(shift)}
                             </TableCell>
                             <TableCell className="hidden lg:table-cell">
-                              {formatProjectedCost(shift)}
+                              <div className="space-y-0.5">
+                                <p>{formatActualCost(shift)}</p>
+                                {shift.actual_cost === null && (
+                                  <p className="text-xs text-muted-foreground">Pending — actuals not recorded yet</p>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">

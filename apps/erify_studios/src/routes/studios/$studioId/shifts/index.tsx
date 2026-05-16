@@ -105,20 +105,33 @@ const ShiftCostSnapshotCard = memo(({
           : (
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
-                  Projected:
+                  Planned:
                   {' '}
                   <span className="font-medium text-foreground">
                     $
-                    {shiftCalendarResponse?.summary.total_projected_cost ?? '0.00'}
+                    {shiftCalendarResponse?.summary.total_planned_cost ?? '0.00'}
                   </span>
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Calculated:
+                  Actual:
                   {' '}
                   <span className="font-medium text-foreground">
                     $
-                    {shiftCalendarResponse?.summary.total_calculated_cost ?? '0.00'}
+                    {shiftCalendarResponse?.summary.total_actual_cost ?? '0.00'}
                   </span>
+                  {(shiftCalendarResponse?.summary.actual_cost_pending_shift_count ?? 0) > 0 && (
+                    <span className="ml-2 text-xs">
+                      (
+                      {shiftCalendarResponse?.summary.actual_cost_pending_shift_count}
+                      {' '}
+                      of
+                      {' '}
+                      {(shiftCalendarResponse?.summary.actual_cost_resolved_shift_count ?? 0)
+                      + (shiftCalendarResponse?.summary.actual_cost_pending_shift_count ?? 0)}
+                      {' '}
+                      pending)
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {shiftCalendarResponse?.summary.shift_count ?? 0}
