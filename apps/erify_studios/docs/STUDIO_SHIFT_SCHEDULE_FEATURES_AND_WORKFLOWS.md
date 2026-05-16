@@ -250,6 +250,14 @@ Pending scope:
 - Fixed `combineDateAndTime` timezone bug in `shift-form.utils.ts`: form inputs are local-time values, so `new Date("YYYY-MM-DDTHH:MM:00").toISOString()` is now used instead of UTC construction to avoid local-offset drift.
 - Moved `StudioShiftCalendarResponse`/`StudioShiftAlignmentResponse` TypeScript types into `@eridu/api-types/studio-shifts`; `studio-shifts.types.ts` now re-exports them from the shared package instead of declaring local duplicates.
 
+8. Phase 4 PR 3 shift cost-column cleanup ([#72](https://github.com/allenlin90/eridu-services/pull/72)):
+- Dropped `StudioShift.projectedCost` (was `Decimal NOT NULL`) and `StudioShift.calculatedCost` (was `Decimal?`) — the entry above mentioning `z.unknown()` for these fields is historical; both columns and their internal schema fields are gone.
+- Added two live-computed response fields per cost-model §2: `planned_cost: string` (always non-null) and `actual_cost: string | null` (null when any block on the shift has an incomplete actual pair).
+- Manager `/shifts` table shows both columns; member `/my-shifts` shows only `Actual Cost` with `Pending — actuals not recorded yet` micro-copy when null. Compensation dialog gained a three-tile Hourly Rate / Planned / Actual header.
+- Shift-calendar summary uses partial-sum + explicit pending counts (`total_planned_cost`, `total_actual_cost`, `actual_cost_resolved_shift_count`, `actual_cost_pending_shift_count`) instead of strict null-bubbling, so manager rollups stay usable when some shifts are still pending. Per-day per-shift `actual_cost` is attributed by actual-interval-per-day split (not planned ratio), so cross-midnight blocks correctly skip days with no actual overlap. Shift-wide resolved/pending uses the full block set (not just window-overlapping blocks) so a shift with one out-of-window incomplete block is correctly treated as pending.
+- `calculated_cost` request input removed from `POST/PATCH /studios/:id/shifts` — overrides flow through `STUDIO_SHIFT` compensation line items per cost-model §1.
+- CSV/JSON export gained per-block `Block N Planned Start/End` + `Block N Actual Start/End` columns (column set grows to the max blocks across exported shifts; pending actual cells empty). Legacy combined `Blocks` column dropped from export.
+
 ## Current Operational Workflows
 
 ### A. Admin Shift Setup Workflow

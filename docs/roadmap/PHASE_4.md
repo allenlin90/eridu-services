@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); shift unified date range + export shipped (PR [#71](https://github.com/allenlin90/eridu-services/pull/71)); 10 PRs remaining.
+> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); shift unified date range + export shipped (PR [#71](https://github.com/allenlin90/eridu-services/pull/71)); shift cost-column cleanup shipped with live `planned_cost` / `actual_cost` (PR [#72](https://github.com/allenlin90/eridu-services/pull/72)); 10 PRs remaining.
 > **Last updated**: 2026-05-16
 > **Cost contract**: [`docs/domain/economics-cost-model.md`](../domain/economics-cost-model.md) — locked semantics, read first.
 > **Finance guardrails**: [`docs/engineering/FINANCE_GUARDRAILS.md`](../engineering/FINANCE_GUARDRAILS.md)
@@ -23,31 +23,27 @@ Each row is one user-facing change. A row with a brief sub-section below means w
 
 Rows are ordered top-to-bottom as execution order. Rows with `—` in the dependency column can ship in any order or in parallel; rows with an explicit dependency should ship after the named row. **No row depends on a row below it.**
 
-| # | PR | Depends on | Status | PR link |
-| - | -- | ---------- | ------ | ------- |
-| 1 | Money library standardization — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2 | — | ✅ Merged | [#69](https://github.com/allenlin90/eridu-services/pull/69) |
-| 2 | Shift unified date range + export at `/shifts` — one picker drives the cost snapshot, records list, and current-view export | — | ✅ Merged | [#71](https://github.com/allenlin90/eridu-services/pull/71) |
-| 3 | [Shift cost-column cleanup at `/shifts`](#pr-3--shift-cost-column-cleanup) — drop stored shift cost columns, add live `planned_cost` / `actual_cost`, revise FE columns | PR 2 | 🚧 In progress | — |
-| 3.5 | [Shift hourly-rate editing in compensation dialog](#pr-35--shift-hourly-rate-editing-in-compensation-dialog) — make the compensation dialog the single surface for all per-shift money fields; remove rate input from edit-shift dialog | PR 3 | 🔲 Planned | — |
-| 4 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
-| 5 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |
-| 6 | Roster snapshot-warning copy on member/creator roster edit dialogs | — | 🔲 Planned | — |
-| 7 | Strict-mode creator availability with conflict metadata | — | 🔲 Planned | — |
-| 8 | [Member `base_hourly_rate` wire-type migration](#pr-8--member-base_hourly_rate-wire-type-migration) — `z.number()` → `z.string()` end-to-end (Finance Guardrail #2 follow-up surfaced by PR 1) | — | 🔲 Planned | — |
-| 9 | Per-member shift compensation review (date-range) | PR 4 | 🔲 Planned | — |
-| 10 | Self-view compensation reads + flag-missing-actuals affordance (`/me/compensation/*`) | PR 4, PR 5 | 🔲 Planned | — |
-| 11 | Cross-user creator/member compensation reads + show drill-in | PR 10 | 🔲 Planned | — |
-| 12 | Operational rollup endpoint + economics review surface (`/studios/:id/finance/economics`) | PR 11 | 🔲 Planned | — |
+| #   | PR                                                                                                                                                                                                                                      | Depends on | Status    | PR link                                                     |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------- | ----------------------------------------------------------- |
+| 1   | Money library standardization — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2                                                                                                                   | —          | ✅ Merged  | [#69](https://github.com/allenlin90/eridu-services/pull/69) |
+| 2   | Shift unified date range + export at `/shifts` — one picker drives the cost snapshot, records list, and current-view export                                                                                                             | —          | ✅ Merged  | [#71](https://github.com/allenlin90/eridu-services/pull/71) |
+| 3   | Shift cost-column cleanup at `/shifts` — drop stored shift cost columns, add live `planned_cost` / `actual_cost`, revise FE columns                                                                                                     | PR 2       | ✅ Merged  | [#72](https://github.com/allenlin90/eridu-services/pull/72) |
+| 3.5 | [Shift hourly-rate editing in compensation dialog](#pr-35--shift-hourly-rate-editing-in-compensation-dialog) — make the compensation dialog the single surface for all per-shift money fields; remove rate input from edit-shift dialog | PR 3       | 🔲 Planned | —                                                           |
+| 4   | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue                                                                                                          | —          | 🔲 Planned | —                                                           |
+| 5   | Creator compensation editability — per-show edit dialog + per-creator date-range review                                                                                                                                                 | —          | 🔲 Planned | —                                                           |
+| 6   | Roster snapshot-warning copy on member/creator roster edit dialogs                                                                                                                                                                      | —          | 🔲 Planned | —                                                           |
+| 7   | Strict-mode creator availability with conflict metadata                                                                                                                                                                                 | —          | 🔲 Planned | —                                                           |
+| 8   | [Member `base_hourly_rate` wire-type migration](#pr-8--member-base_hourly_rate-wire-type-migration) — `z.number()` → `z.string()` end-to-end (Finance Guardrail #2 follow-up surfaced by PR 1)                                          | —          | 🔲 Planned | —                                                           |
+| 9   | Per-member shift compensation review (date-range)                                                                                                                                                                                       | PR 4       | 🔲 Planned | —                                                           |
+| 10  | Self-view compensation reads + flag-missing-actuals affordance (`/me/compensation/*`)                                                                                                                                                   | PR 4, PR 5 | 🔲 Planned | —                                                           |
+| 11  | Cross-user creator/member compensation reads + show drill-in                                                                                                                                                                            | PR 10      | 🔲 Planned | —                                                           |
+| 12  | Operational rollup endpoint + economics review surface (`/studios/:id/finance/economics`)                                                                                                                                               | PR 11      | 🔲 Planned | —                                                           |
 
 ### How to use this list
 
 - **Picking up a PR**: write a 1-3 sentence brief in a sub-section below (or just open the PR with that as the description). Mark status `🚧 In progress`.
 - **Wrapping up a PR (before merge, not after)**: as part of the PR's own commits, flip the row to `✅`, replace the brief with the PR link in the table, and update any other docs the PR's outcome affects — canonical docs in `docs/features/` and `apps/*/docs/` reflecting what actually shipped, and forward-looking roadmaps (e.g. drop now-shipped items from [`PHASE_5.md`](./PHASE_5.md) deferrals). Land docs atomically with the code so `master` always matches the roadmap; do not leave status flips for a follow-up commit. Prefer squash-merging the PR.
 - **Discovering a new boundary or dependency**: re-cluster the rows and re-check the "no row depends on a row below" invariant. Predictions made before code drift; this list should match reality, not the original guess.
-
-### PR 3 · Shift cost-column cleanup
-
-**Brief** — The shift records list shows a stored `Projected Cost` column that drifts from current state. This PR drops `StudioShift.projected_cost` (NOT NULL) and `StudioShift.calculated_cost`, replacing them with two live-computed response fields: `planned_cost` (hourlyRate × planned block-duration + attached `STUDIO_SHIFT(_BLOCK)` line items, always non-null) and `actual_cost` (same formula on actual block timestamps; null when any block has incomplete actuals). The manager shift table at `/shifts` shows both columns; the page summary card uses a partial-sum + explicit pending counts pattern (`total_actual_cost` + `actual_cost_pending_shift_count`) instead of bubbling null, to keep the running total usable when some shifts are still pending. The `/me/shifts` member self-view collapses to a single `Cost` column rendering actuals only (showing planned creates expectations the actual rarely meets), with null cells rendered as `Pending — actuals not recorded yet`; richer member compensation surfaces stay in PR 10's scope. The compensation dialog gains a two-row Planned / Actual treatment. CSV/JSON export columns become `planned_cost` / `actual_cost`, and gain per-block `Block N Planned Start/End` + `Block N Actual Start/End` columns (column set grows to the max blocks across exported shifts; pending actual cells render as empty strings) so reconciliation can happen in-spreadsheet without re-pulling block detail. The legacy combined `Blocks` column is dropped from the export to avoid duplication with the new per-block planned columns. The `calculated_cost` request input on `POST/PATCH /studios/:id/shifts` is removed — overrides now flow through `STUDIO_SHIFT` line items per cost-model §1. Money rendering via `toDecimalDisplayString` from `@/lib/decimal-format`.
 
 ### PR 3.5 · Shift hourly-rate editing in compensation dialog
 
@@ -86,17 +82,17 @@ App-local design docs land alongside the implementation PR only when a PR introd
 
 ## Phase 5 Deferrals
 
-| Workstream | Reference | Track |
-| ---------- | --------- | ----- |
-| Studio reference data (clients, platforms, types, standards, statuses) | [PRD](../prd/studio-reference-data.md) | C |
-| Studio creator profile editing | [PRD](../prd/studio-creator-profile.md) | C |
-| Studio snapshot/audit trail visibility | — | C |
-| Advanced compensation rule engine | — | A |
-| Creator HR & operations (HRMS, fixed costs) | — | A |
-| Ticketing, material management, inventory | — | B |
-| Payment processing and bank-statement reconciliation | — | A |
-| Recipient acknowledgement / dispute on read-only reference figures | — | A |
-| Recipient-initiated adjustment requests | — | A |
-| Notifications when manager edits actuals | — | B |
-| Platform and creator-app actuals sources | [PRD](../prd/future/member-actuals-attestation.md) | A |
-| P&L revenue workflow, commission resolution, contribution margin | [Future PRD](../prd/future/pnl-revenue-workflow.md) | A |
+| Workstream                                                             | Reference                                           | Track |
+| ---------------------------------------------------------------------- | --------------------------------------------------- | ----- |
+| Studio reference data (clients, platforms, types, standards, statuses) | [PRD](../prd/studio-reference-data.md)              | C     |
+| Studio creator profile editing                                         | [PRD](../prd/studio-creator-profile.md)             | C     |
+| Studio snapshot/audit trail visibility                                 | —                                                   | C     |
+| Advanced compensation rule engine                                      | —                                                   | A     |
+| Creator HR & operations (HRMS, fixed costs)                            | —                                                   | A     |
+| Ticketing, material management, inventory                              | —                                                   | B     |
+| Payment processing and bank-statement reconciliation                   | —                                                   | A     |
+| Recipient acknowledgement / dispute on read-only reference figures     | —                                                   | A     |
+| Recipient-initiated adjustment requests                                | —                                                   | A     |
+| Notifications when manager edits actuals                               | —                                                   | B     |
+| Platform and creator-app actuals sources                               | [PRD](../prd/future/member-actuals-attestation.md)  | A     |
+| P&L revenue workflow, commission resolution, contribution margin       | [Future PRD](../prd/future/pnl-revenue-workflow.md) | A     |
