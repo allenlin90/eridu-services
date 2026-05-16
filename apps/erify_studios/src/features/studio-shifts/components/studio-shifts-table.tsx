@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   Button,
@@ -21,6 +22,11 @@ import {
   useCreateStudioShift,
 } from '@/features/studio-shifts/api/create-studio-shift';
 import { useDeleteStudioShift } from '@/features/studio-shifts/api/delete-studio-shift';
+import {
+  getAllStudioShiftsForExport,
+  SHIFT_EXPORT_MAX_RECORDS,
+  ShiftExportTooLargeError,
+} from '@/features/studio-shifts/api/get-studio-shifts';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
 import {
   type UpdateStudioShiftPayload,
@@ -41,6 +47,12 @@ import {
   getShiftDisplayDate,
   getShiftWindowLabel,
 } from '@/features/studio-shifts/utils/shift-form.utils';
+import {
+  buildStudioShiftExportFilename,
+  buildStudioShiftExportRows,
+  createStudioShiftExportContent,
+  type StudioShiftExportFormat,
+} from '@/features/studio-shifts/utils/studio-shifts-export.utils';
 import type { StudioShiftsRouteSearch } from '@/features/studio-shifts/utils/studio-shifts-route-search.utils';
 import {
   getApiErrorMessage,
@@ -48,6 +60,7 @@ import {
   type ShiftListStatus,
   validateShiftBlocks,
 } from '@/features/studio-shifts/utils/studio-shifts-table.utils';
+import { triggerBrowserDownload } from '@/lib/file-download';
 
 export type StudioShiftsTableSearch = StudioShiftsRouteSearch;
 
@@ -75,8 +88,6 @@ type ToolbarSearchParams = {
   user_id?: string;
   status?: ShiftListStatus;
   duty?: ShiftListDutyFilter;
-  date_from?: string;
-  date_to?: string;
 };
 
 function normalizeRate(value: string | number | null | undefined): string | null {
@@ -104,13 +115,19 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const [compensationShiftId, setCompensationShiftId] = useState<string | null>(null);
   const [pendingSnapshotUpdate, setPendingSnapshotUpdate] = useState<PendingSnapshotUpdate | null>(null);
   const [snapshotOverrideReason, setSnapshotOverrideReason] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const exportAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      exportAbortRef.current?.abort();
+    };
+  }, []);
 
   const hasAnyFilters = Boolean(
     search.user_id
     || search.status
-    || search.duty
-    || search.date_from
-    || search.date_to,
+    || search.duty,
   );
 
   const { memberMap } = useStudioMemberMap(studioId, { enabled: isStudioAdmin });
@@ -137,6 +154,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     pagination,
     onPaginationChange,
     shifts: tableShifts,
+    data: tableData,
   } = useStudioShiftsPageController({
     studioId,
     search,
@@ -362,8 +380,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       user_id: undefined,
       status: undefined,
       duty: undefined,
-      date_from: undefined,
-      date_to: undefined,
     }));
   }, [updateSearch]);
 
@@ -376,6 +392,59 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const handleRefresh = useCallback(() => {
     void refetchTableShifts();
   }, [refetchTableShifts]);
+
+  const handleExport = useCallback(async (format: StudioShiftExportFormat) => {
+    exportAbortRef.current?.abort();
+    const controller = new AbortController();
+    exportAbortRef.current = controller;
+
+    const exportParams = {
+      ...(search.user_id ? { user_id: search.user_id } : {}),
+      ...(search.date_from ? { date_from: search.date_from } : {}),
+      ...(search.date_to ? { date_to: search.date_to } : {}),
+      ...(search.status ? { status: search.status } : {}),
+      ...(search.duty ? { is_duty_manager: search.duty === 'true' } : {}),
+    };
+    setIsExporting(true);
+
+    try {
+      const exportShifts = await getAllStudioShiftsForExport(studioId, exportParams, { signal: controller.signal });
+      if (controller.signal.aborted) {
+        return;
+      }
+      const rows = buildStudioShiftExportRows({
+        shifts: exportShifts,
+        memberMap,
+        getShiftDisplayDate,
+        getShiftBlockLabels,
+        getShiftWindowLabel,
+        formatDateTime,
+      });
+      triggerBrowserDownload({
+        content: createStudioShiftExportContent(rows, format),
+        mimeType: format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;',
+        filename: buildStudioShiftExportFilename({
+          format,
+          dateFrom: search.date_from,
+          dateTo: search.date_to,
+        }),
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+      if (error instanceof ShiftExportTooLargeError) {
+        toast.error(`Selection exceeds the ${SHIFT_EXPORT_MAX_RECORDS.toLocaleString()}-shift export limit (${error.totalRecords.toLocaleString()} matched). Narrow the date range or filters and retry.`);
+        return;
+      }
+      toast.error(getApiErrorMessage(error, 'Failed to export shifts. Please try again.'));
+    } finally {
+      if (exportAbortRef.current === controller) {
+        exportAbortRef.current = null;
+      }
+      setIsExporting(false);
+    }
+  }, [memberMap, search, studioId]);
 
   const handleCreateDialogOpenChange = useCallback((open: boolean) => {
     setIsCreateDialogOpen(open);
@@ -408,8 +477,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
           user_id: search.user_id,
           status: search.status,
           duty: search.duty,
-          date_from: search.date_from,
-          date_to: search.date_to,
         }}
         onSearchChange={handleSearchChange}
         onResetFilters={handleResetFilters}
@@ -420,6 +487,8 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         onCreateClick={handleOpenCreateDialog}
         onRefresh={handleRefresh}
         isRefreshing={isFetchingTableShifts}
+        onExport={handleExport}
+        canExport={!isExporting && ((tableData?.meta.total ?? tableShifts.length) > 0)}
       />
 
       <ShiftRosterCard

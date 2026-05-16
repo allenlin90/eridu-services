@@ -15,6 +15,8 @@ import { buildViewFilterOptions } from '../lib/view-filter-options';
 
 import { ReportViewFilters } from './report-view-filters';
 
+import { triggerBrowserDownload } from '@/lib/file-download';
+
 type ReportResultTableProps = {
   result: TaskReportResult;
 };
@@ -146,17 +148,11 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
     if (!exportRows.length || !columns.length)
       return;
 
-    const csvContent = serializeCsv(exportRows, columns);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `task-report-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    triggerBrowserDownload({
+      content: serializeCsv(exportRows, columns),
+      mimeType: 'text/csv;charset=utf-8;',
+      filename: `task-report-${new Date().toISOString().split('T')[0]}.csv`,
+    });
   };
 
   const handleSort = (key: string) => {

@@ -1,11 +1,9 @@
-import { ChevronDown, Filter, MoreVertical, Plus, RefreshCw } from 'lucide-react';
+import { ChevronDown, Download, Filter, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { DateRange } from 'react-day-picker';
 
 import {
   AsyncCombobox,
   Button,
-  DatePickerWithRange,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -20,7 +18,7 @@ import {
   SelectValue,
 } from '@eridu/ui';
 
-import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
+import type { StudioShiftExportFormat } from '@/features/studio-shifts/utils/studio-shifts-export.utils';
 import type { ShiftListDutyFilter, ShiftListStatus } from '@/features/studio-shifts/utils/studio-shifts-table.utils';
 import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
 
@@ -29,8 +27,6 @@ type ShiftToolbarProps = {
     user_id?: string;
     status?: ShiftListStatus;
     duty?: ShiftListDutyFilter;
-    date_from?: string;
-    date_to?: string;
   };
   onSearchChange: (updates: Partial<ShiftToolbarProps['searchParams']>) => void;
   onResetFilters: () => void;
@@ -41,6 +37,8 @@ type ShiftToolbarProps = {
   onCreateClick: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  onExport: (format: StudioShiftExportFormat) => void;
+  canExport: boolean;
 };
 
 export function ShiftToolbar({
@@ -54,6 +52,8 @@ export function ShiftToolbar({
   onCreateClick,
   onRefresh,
   isRefreshing,
+  onExport,
+  canExport,
 }: ShiftToolbarProps) {
   const [localMemberSearch, setLocalMemberSearch] = useState('');
   const debouncedMemberSearch = useAppDebounce(localMemberSearch, { delay: 300 });
@@ -61,13 +61,6 @@ export function ShiftToolbar({
   useEffect(() => {
     onMemberSearch(debouncedMemberSearch);
   }, [debouncedMemberSearch, onMemberSearch]);
-
-  const dateRange: DateRange | undefined = (searchParams.date_from || searchParams.date_to)
-    ? {
-        from: searchParams.date_from ? new Date(`${searchParams.date_from}T00:00:00`) : undefined,
-        to: searchParams.date_to ? new Date(`${searchParams.date_to}T00:00:00`) : undefined,
-      }
-    : undefined;
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 px-3 py-2 w-full">
@@ -82,18 +75,6 @@ export function ShiftToolbar({
               options={memberOptions}
               isLoading={isLoadingMembers}
               placeholder="Search a studio member..."
-            />
-          </div>
-
-          <div className="hidden lg:block max-w-[260px]">
-            <DatePickerWithRange
-              date={dateRange}
-              setDate={(range) => {
-                onSearchChange({
-                  date_from: range?.from ? toLocalDateInputValue(range.from) : undefined,
-                  date_to: range?.to ? toLocalDateInputValue(range.to) : undefined,
-                });
-              }}
             />
           </div>
 
@@ -112,19 +93,6 @@ export function ShiftToolbar({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 space-y-4" align="start">
-              <div className="space-y-2 lg:hidden">
-                <p className="text-sm font-medium leading-none">Date Range</p>
-                <DatePickerWithRange
-                  date={dateRange}
-                  setDate={(range) => {
-                    onSearchChange({
-                      date_from: range?.from ? toLocalDateInputValue(range.from) : undefined,
-                      date_to: range?.to ? toLocalDateInputValue(range.to) : undefined,
-                    });
-                  }}
-                />
-              </div>
-
               <div className="space-y-2">
                 <p className="text-sm font-medium leading-none">Shift Status</p>
                 <Select
@@ -186,6 +154,27 @@ export function ShiftToolbar({
         <div className="flex items-center gap-2">
           {/* Desktop Actions */}
           <div className="hidden sm:flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9"
+                  disabled={!canExport}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onExport('csv')} disabled={!canExport}>
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('json')} disabled={!canExport}>
+                  Export JSON
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="outline"
               size="icon"
@@ -215,6 +204,14 @@ export function ShiftToolbar({
                 <DropdownMenuItem onClick={onCreateClick}>
                   <Plus className="mr-2 h-4 w-4" />
                   Create Shift
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('csv')} disabled={!canExport}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('json')} disabled={!canExport}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export JSON
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onRefresh} disabled={isRefreshing}>
                   <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />

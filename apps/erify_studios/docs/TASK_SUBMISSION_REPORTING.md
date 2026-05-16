@@ -39,7 +39,7 @@ Technical reference for the shipped studio-scoped reporting UI, including the de
 - query keys are centralized in `src/features/task-reports/api/keys.ts`
 - report results are cached client-side using a scope/columns cache key built by `build-task-report-result-cache-key.ts`
 - the result viewer reads cached run output instead of forcing a rerun when the same scope + column selection is reopened
-- client-side filtering/sorting/export stays in `src/features/task-reports/lib/` so table operations remain framework-free and reusable
+- client-side filtering/sorting/export stays in `src/features/task-reports/lib/` so table operations remain framework-free and reusable; CSV serialization delegates to the app-shared `src/lib/csv.ts` (UTF-8 BOM, CRLF line endings, `'`-prefix injection neutralization) and the download dance delegates to `src/lib/file-download.ts`
 
 ## UX Rules
 

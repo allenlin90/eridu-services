@@ -10,9 +10,10 @@ const mockDeleteMutateAsync = vi.fn();
 const mockUpdateMutateAsync = vi.fn();
 const mockUpdateSearch = vi.fn();
 const mockUseStudioShiftsPageController = vi.fn();
+const mockGetAllStudioShiftsForExport = vi.fn();
 
 vi.mock('@/features/studio-shifts/hooks/use-studio-member-map', () => ({
-  useStudioMemberMap: () => ({ memberMap: {} }),
+  useStudioMemberMap: () => ({ memberMap: new Map([['user_1', { name: 'Ava Manager', email: 'ava@example.com' }]]) }),
 }));
 
 vi.mock('@/features/memberships/api/get-studio-memberships', () => ({
@@ -22,6 +23,22 @@ vi.mock('@/features/memberships/api/get-studio-memberships', () => ({
 vi.mock('@/features/studio-shifts/hooks/use-studio-shifts-page-controller', () => ({
   useStudioShiftsPageController: (...args: unknown[]) => mockUseStudioShiftsPageController(...args),
 }));
+
+vi.mock('@/features/studio-shifts/api/get-studio-shifts', () => {
+  class MockShiftExportTooLargeError extends Error {
+    readonly totalRecords: number;
+    constructor(totalRecords: number) {
+      super(`mock-too-large:${totalRecords}`);
+      this.name = 'ShiftExportTooLargeError';
+      this.totalRecords = totalRecords;
+    }
+  }
+  return {
+    getAllStudioShiftsForExport: (...args: unknown[]) => mockGetAllStudioShiftsForExport(...args),
+    SHIFT_EXPORT_MAX_RECORDS: 5000,
+    ShiftExportTooLargeError: MockShiftExportTooLargeError,
+  };
+});
 
 vi.mock('@/features/studio-shifts/api/create-studio-shift', () => ({
   useCreateStudioShift: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -59,10 +76,21 @@ vi.mock('@/features/admin/components', () => ({
 }));
 
 vi.mock('@/features/studio-shifts/components/shift-toolbar', () => ({
-  ShiftToolbar: ({ onCreateClick }: { onCreateClick: () => void }) => (
-    <button type="button" onClick={onCreateClick}>
-      open-create
-    </button>
+  ShiftToolbar: ({
+    onCreateClick,
+    onExport,
+  }: {
+    onCreateClick: () => void;
+    onExport: (format: 'csv' | 'json') => void;
+  }) => (
+    <div>
+      <button type="button" onClick={onCreateClick}>
+        open-create
+      </button>
+      <button type="button" onClick={() => onExport('csv')}>
+        export-csv
+      </button>
+    </div>
   ),
 }));
 
@@ -147,6 +175,7 @@ function createShift(id: string, startIso: string) {
     id,
     studio_id: 'std_1',
     user_id: 'user_1',
+    user_name: 'Ava Manager',
     date: '2026-03-05',
     hourly_rate: '20.00',
     projected_cost: '60.00',
@@ -174,6 +203,7 @@ describe('studioShiftsTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdateMutateAsync.mockResolvedValue(undefined);
+    mockGetAllStudioShiftsForExport.mockResolvedValue([]);
 
     mockUseStudioShiftsPageController.mockReturnValue({
       data: undefined,
@@ -183,6 +213,64 @@ describe('studioShiftsTable', () => {
       refetch: vi.fn(),
       pagination: { pageIndex: 0, pageSize: 10, total: 0, pageCount: 0 },
       onPaginationChange: vi.fn(),
+    });
+  });
+
+  it('exports all shifts that match the selected date range and filters, not only the visible page', async () => {
+    const user = userEvent.setup();
+    const visibleShift = createShift('ssh_visible', '2026-04-01T09:00:00.000Z');
+    const nextPageShift = createShift('ssh_next_page', '2026-04-02T09:00:00.000Z');
+    mockGetAllStudioShiftsForExport.mockResolvedValue([visibleShift, nextPageShift]);
+    mockUseStudioShiftsPageController.mockReturnValue({
+      data: {
+        data: [visibleShift],
+        meta: {
+          page: 1,
+          limit: 20,
+          total: 103,
+          totalPages: 6,
+        },
+      },
+      shifts: [visibleShift],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      pagination: { pageIndex: 0, pageSize: 20, total: 103, pageCount: 6 },
+      onPaginationChange: vi.fn(),
+    });
+
+    render(
+      <StudioShiftsTable
+        studioId="std_1"
+        isStudioAdmin
+        search={{
+          view: 'table',
+          page: 1,
+          limit: 20,
+          date_from: '2026-04-01',
+          date_to: '2026-04-30',
+          status: 'SCHEDULED',
+          duty: 'true',
+          user_id: 'user_1',
+        }}
+        updateSearch={mockUpdateSearch}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'export-csv' }));
+
+    await waitFor(() => {
+      expect(mockGetAllStudioShiftsForExport).toHaveBeenCalledWith(
+        'std_1',
+        {
+          date_from: '2026-04-01',
+          date_to: '2026-04-30',
+          status: 'SCHEDULED',
+          is_duty_manager: true,
+          user_id: 'user_1',
+        },
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
   });
 

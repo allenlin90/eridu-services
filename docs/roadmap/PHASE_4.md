@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); 9 PRs remaining.
+> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); shift unified date range + export shipped (PR [#71](https://github.com/allenlin90/eridu-services/pull/71)); 10 PRs remaining.
 > **Last updated**: 2026-05-16
 > **Cost contract**: [`docs/domain/economics-cost-model.md`](../domain/economics-cost-model.md) — locked semantics, read first.
 > **Finance guardrails**: [`docs/engineering/FINANCE_GUARDRAILS.md`](../engineering/FINANCE_GUARDRAILS.md)
@@ -21,21 +21,22 @@ Build the L-side (cost) of P&L on existing studio entities, while completing stu
 
 Each row is one user-facing change. A row with a brief sub-section below means work is being picked up — the brief is written when the PR starts and deleted when the PR merges (the PR description + the canonical doc become the record).
 
-Rows are ordered top-to-bottom as execution order: rows 1-7 have no dependencies and can ship in any order or in parallel; rows 8-11 each depend on a row above. **No row depends on a row below it.**
+Rows are ordered top-to-bottom as execution order. Rows with `—` in the dependency column can ship in any order or in parallel; rows with an explicit dependency should ship after the named row. **No row depends on a row below it.**
 
 | # | PR | Depends on | Status | PR link |
 | - | -- | ---------- | ------ | ------- |
 | 1 | Money library standardization — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2 | — | ✅ Merged | [#69](https://github.com/allenlin90/eridu-services/pull/69) |
-| 2 | [Shift export at `/shifts`](#pr-2--shift-export) — unified date range, export, live `total_cost` (drops stored cost columns) | — | 🚧 Next | — |
-| 3 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
-| 4 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |
-| 5 | Roster snapshot-warning copy on member/creator roster edit dialogs | — | 🔲 Planned | — |
-| 6 | Strict-mode creator availability with conflict metadata | — | 🔲 Planned | — |
-| 7 | [Member `base_hourly_rate` wire-type migration](#pr-7--member-base_hourly_rate-wire-type-migration) — `z.number()` → `z.string()` end-to-end (Finance Guardrail #2 follow-up surfaced by PR 1) | — | 🔲 Planned | — |
-| 8 | Per-member shift compensation review (date-range) | PR 3 | 🔲 Planned | — |
-| 9 | Self-view compensation reads + flag-missing-actuals affordance (`/me/compensation/*`) | PR 3, PR 4 | 🔲 Planned | — |
-| 10 | Cross-user creator/member compensation reads + show drill-in | PR 9 | 🔲 Planned | — |
-| 11 | Operational rollup endpoint + economics review surface (`/studios/:id/finance/economics`) | PR 10 | 🔲 Planned | — |
+| 2 | Shift unified date range + export at `/shifts` — one picker drives the cost snapshot, records list, and current-view export | — | ✅ Merged | [#71](https://github.com/allenlin90/eridu-services/pull/71) |
+| 3 | [Shift cost-column cleanup at `/shifts`](#pr-3--shift-cost-column-cleanup) — drop stored shift cost columns, add live `total_cost`, revise FE columns | PR 2 | 🔲 Planned | — |
+| 4 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
+| 5 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |
+| 6 | Roster snapshot-warning copy on member/creator roster edit dialogs | — | 🔲 Planned | — |
+| 7 | Strict-mode creator availability with conflict metadata | — | 🔲 Planned | — |
+| 8 | [Member `base_hourly_rate` wire-type migration](#pr-8--member-base_hourly_rate-wire-type-migration) — `z.number()` → `z.string()` end-to-end (Finance Guardrail #2 follow-up surfaced by PR 1) | — | 🔲 Planned | — |
+| 9 | Per-member shift compensation review (date-range) | PR 4 | 🔲 Planned | — |
+| 10 | Self-view compensation reads + flag-missing-actuals affordance (`/me/compensation/*`) | PR 4, PR 5 | 🔲 Planned | — |
+| 11 | Cross-user creator/member compensation reads + show drill-in | PR 10 | 🔲 Planned | — |
+| 12 | Operational rollup endpoint + economics review surface (`/studios/:id/finance/economics`) | PR 11 | 🔲 Planned | — |
 
 ### How to use this list
 
@@ -43,11 +44,11 @@ Rows are ordered top-to-bottom as execution order: rows 1-7 have no dependencies
 - **Wrapping up a PR (before merge, not after)**: as part of the PR's own commits, flip the row to `✅`, replace the brief with the PR link in the table, and update any other docs the PR's outcome affects — canonical docs in `docs/features/` and `apps/*/docs/` reflecting what actually shipped, and forward-looking roadmaps (e.g. drop now-shipped items from [`PHASE_5.md`](./PHASE_5.md) deferrals). Land docs atomically with the code so `master` always matches the roadmap; do not leave status flips for a follow-up commit. Prefer squash-merging the PR.
 - **Discovering a new boundary or dependency**: re-cluster the rows and re-check the "no row depends on a row below" invariant. Predictions made before code drift; this list should match reality, not the original guess.
 
-### PR 2 · Shift export
+### PR 3 · Shift cost-column cleanup
 
-**Brief** — Studio admin opens `/studios/:id/shifts?view=table`. Two sections today (cost snapshot + records list) each have their own date picker; the records list shows a stored `Projected Cost` column that drifts from current state. This PR lifts the date range to one picker driving both sections, renames the column to `Total Cost` backed by a live calculation from `hourlyRate × block-duration + STUDIO_SHIFT(_BLOCK) line items`, drops the stored `projected_cost` / `calculated_cost` columns (every writer in the same change set since `projected_cost` is `NOT NULL`), and adds an "Export" button that downloads the current view as CSV/JSON. No new BE endpoints — `total_cost` joins the existing shift list response shape. Money rendering uses `toDecimalDisplayString` from `@/lib/decimal-format` (shipped in PR 1).
+**Brief** — The shift records list shows a stored `Projected Cost` column that drifts from current state. This PR renames the FE column to `Total Cost`, backs it with a live calculation from `hourlyRate × block-duration + STUDIO_SHIFT(_BLOCK) line items`, and drops the stored `projected_cost` / `calculated_cost` columns (every writer in the same change set since `projected_cost` is `NOT NULL`). No new BE endpoints — `total_cost` joins the existing shift list response shape. Money rendering uses `toDecimalDisplayString` from `@/lib/decimal-format` (shipped in PR 1).
 
-### PR 7 · Member `base_hourly_rate` wire-type migration
+### PR 8 · Member `base_hourly_rate` wire-type migration
 
 **Brief** — Surfaced during PR 1 review. `StudioMemberResponse.base_hourly_rate` and the add/update request schemas are typed as `z.number()` in `packages/api-types/src/memberships/schemas.ts`, so the BE Prisma.Decimal is coerced through a JS number on serialize and the FE receives a number that has already lost precision past `Number.MAX_SAFE_INTEGER` before any formatter runs. This PR migrates the wire type to `z.string()` end-to-end: response schema, add/update request schemas, BE serializer (use `decimalToString`), FE input parsing in `add-member-dialog` / `edit-member-dialog` (use `toMoneyString`), and the column renderer in `member-columns.tsx` (use `toDecimalDisplayString`). Closes the last JS-number money path on the studio-members surface and brings it in line with the creator-roster fields already migrated in PR 1. No DB migration required (`StudioMembership.baseHourlyRate` is already `Decimal` in Prisma).
 
