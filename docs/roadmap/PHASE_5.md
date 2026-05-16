@@ -17,7 +17,6 @@ Potential scope:
 - **P&L revenue workflow** — GMV/sales inputs, commission cost activation, contribution margin (currently a Phase 4 Wave 3 PRD — may carry forward if not completed in Phase 4)
 - **Advanced compensation engine** — automated rule-based computation (OT multipliers, tiered/volume commission, bonus formulas) that **writes `CompensationLineItem` records** as output. The data model and manual CRUD ship in Phase 4; the rule engine that automates line item creation is Phase 5. Double-entry ledger is out of scope unless the platform evolves into a financial product.
 - **Creator HR & operations** — fixed cost tracking (rent, equipment depreciation), creator HRMS, platform API integrations
-- **Financial arithmetic** — `big.js` adoption for production-grade financial reporting
 - **Economics FE** — dashboard pages consuming the shipped economics endpoints
 
 Related ideation topics:
