@@ -1,6 +1,6 @@
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import { RefreshCw } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
@@ -164,6 +164,17 @@ function StudioShiftsPage() {
       replace: options?.replace ?? true,
     });
   }, [routeNavigate, studioId]);
+
+  useEffect(() => {
+    if (search.date_from && search.date_to) {
+      return;
+    }
+    updateSearch((previous) => ({
+      ...previous,
+      date_from: previous.date_from ?? defaultPlanningRange.date_from,
+      date_to: previous.date_to ?? defaultPlanningRange.date_to,
+    }), { replace: true });
+  }, [search.date_from, search.date_to, defaultPlanningRange.date_from, defaultPlanningRange.date_to, updateSearch]);
 
   const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
     const fallbackRange = createDefaultShiftPlanningRange();

@@ -1,5 +1,7 @@
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
 
+const UTF8_BOM = '﻿';
+
 type MemberInfo = { name: string; email: string };
 
 export type StudioShiftExportFormat = 'csv' | 'json';
@@ -43,8 +45,11 @@ function formatShiftDurationHours(shift: StudioShift): string {
   return (totalMs / (1000 * 60 * 60)).toFixed(2);
 }
 
+const CSV_INJECTION_PREFIX = /^[=+\-@\t\r]/;
+
 function escapeCsvCell(value: string): string {
-  return `"${value.replace(/"/g, '""')}"`;
+  const safe = CSV_INJECTION_PREFIX.test(value) ? `'${value}` : value;
+  return `"${safe.replace(/"/g, '""')}"`;
 }
 
 export function buildStudioShiftExportRows({
@@ -96,7 +101,7 @@ export function serializeStudioShiftExportCsv(rows: StudioShiftExportRow[]): str
     return columns.map((column) => escapeCsvCell(row[column.key])).join(',');
   });
 
-  return [header, ...body].join('\n');
+  return `${UTF8_BOM}${[header, ...body].join('\r\n')}`;
 }
 
 export function serializeStudioShiftExportJson(rows: StudioShiftExportRow[]): string {

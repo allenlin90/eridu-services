@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -22,7 +22,11 @@ import {
   useCreateStudioShift,
 } from '@/features/studio-shifts/api/create-studio-shift';
 import { useDeleteStudioShift } from '@/features/studio-shifts/api/delete-studio-shift';
-import { getAllStudioShiftsForExport } from '@/features/studio-shifts/api/get-studio-shifts';
+import {
+  getAllStudioShiftsForExport,
+  SHIFT_EXPORT_MAX_RECORDS,
+  ShiftExportTooLargeError,
+} from '@/features/studio-shifts/api/get-studio-shifts';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
 import {
   type UpdateStudioShiftPayload,
@@ -111,6 +115,13 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const [pendingSnapshotUpdate, setPendingSnapshotUpdate] = useState<PendingSnapshotUpdate | null>(null);
   const [snapshotOverrideReason, setSnapshotOverrideReason] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const exportAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      exportAbortRef.current?.abort();
+    };
+  }, []);
 
   const hasAnyFilters = Boolean(
     search.user_id
@@ -382,6 +393,10 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   }, [refetchTableShifts]);
 
   const handleExport = useCallback(async (format: StudioShiftExportFormat) => {
+    exportAbortRef.current?.abort();
+    const controller = new AbortController();
+    exportAbortRef.current = controller;
+
     const exportParams = {
       ...(search.user_id ? { user_id: search.user_id } : {}),
       ...(search.date_from ? { date_from: search.date_from } : {}),
@@ -392,7 +407,10 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     setIsExporting(true);
 
     try {
-      const exportShifts = await getAllStudioShiftsForExport(studioId, exportParams);
+      const exportShifts = await getAllStudioShiftsForExport(studioId, exportParams, { signal: controller.signal });
+      if (controller.signal.aborted) {
+        return;
+      }
       const rows = buildStudioShiftExportRows({
         shifts: exportShifts,
         memberMap,
@@ -405,21 +423,34 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       const mimeType = format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;';
       const blob = new Blob([content], { type: mimeType });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
 
-      link.href = url;
-      link.setAttribute('download', buildStudioShiftExportFilename({
-        format,
-        dateFrom: search.date_from,
-        dateTo: search.date_to,
-      }));
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      try {
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', buildStudioShiftExportFilename({
+          format,
+          dateFrom: search.date_from,
+          dateTo: search.date_to,
+        }));
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
     } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+      if (error instanceof ShiftExportTooLargeError) {
+        toast.error(`Selection exceeds the ${SHIFT_EXPORT_MAX_RECORDS.toLocaleString()}-shift export limit (${error.totalRecords.toLocaleString()} matched). Narrow the date range or filters and retry.`);
+        return;
+      }
       toast.error(getApiErrorMessage(error, 'Failed to export shifts. Please try again.'));
     } finally {
+      if (exportAbortRef.current === controller) {
+        exportAbortRef.current = null;
+      }
       setIsExporting(false);
     }
   }, [memberMap, search, studioId]);

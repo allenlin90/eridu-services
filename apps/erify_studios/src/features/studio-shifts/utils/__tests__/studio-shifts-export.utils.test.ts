@@ -67,7 +67,7 @@ describe('studioShiftsExportUtils', () => {
     ]);
   });
 
-  it('serializes CSV with escaped cells', () => {
+  it('serializes CSV with escaped cells, a UTF-8 BOM, and CRLF line endings', () => {
     const csv = serializeStudioShiftExportCsv([
       {
         id: 'ssh_1',
@@ -85,8 +85,36 @@ describe('studioShiftsExportUtils', () => {
       },
     ]);
 
+    expect(csv.charCodeAt(0)).toBe(0xFEFF);
+    expect(csv).toContain('\r\n');
+    expect(csv).not.toMatch(/[^\r]\n/);
     expect(csv).toContain('"Member"');
     expect(csv).toContain('"Ava ""Lead"""');
+  });
+
+  it('neutralizes CSV-injection-prone leading characters', () => {
+    const csv = serializeStudioShiftExportCsv([
+      {
+        id: 'ssh_inject',
+        member_name: '=SUM(A1:A2)',
+        member_email: '+ava@example.com',
+        date: '-1',
+        window: '@formula',
+        blocks: '\tindented',
+        total_hours: '0.00',
+        projected_cost: '0.00',
+        calculated_cost: '',
+        status: 'SCHEDULED',
+        duty_manager: 'No',
+        updated_at: 'Mar 5, 2026',
+      },
+    ]);
+
+    expect(csv).toContain('"\'=SUM(A1:A2)"');
+    expect(csv).toContain('"\'+ava@example.com"');
+    expect(csv).toContain('"\'-1"');
+    expect(csv).toContain('"\'@formula"');
+    expect(csv).toContain('"\'\tindented"');
   });
 
   it('creates JSON content and stable filenames', () => {

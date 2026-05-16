@@ -24,9 +24,21 @@ vi.mock('@/features/studio-shifts/hooks/use-studio-shifts-page-controller', () =
   useStudioShiftsPageController: (...args: unknown[]) => mockUseStudioShiftsPageController(...args),
 }));
 
-vi.mock('@/features/studio-shifts/api/get-studio-shifts', () => ({
-  getAllStudioShiftsForExport: (...args: unknown[]) => mockGetAllStudioShiftsForExport(...args),
-}));
+vi.mock('@/features/studio-shifts/api/get-studio-shifts', () => {
+  class MockShiftExportTooLargeError extends Error {
+    readonly totalRecords: number;
+    constructor(totalRecords: number) {
+      super(`mock-too-large:${totalRecords}`);
+      this.name = 'ShiftExportTooLargeError';
+      this.totalRecords = totalRecords;
+    }
+  }
+  return {
+    getAllStudioShiftsForExport: (...args: unknown[]) => mockGetAllStudioShiftsForExport(...args),
+    SHIFT_EXPORT_MAX_RECORDS: 5000,
+    ShiftExportTooLargeError: MockShiftExportTooLargeError,
+  };
+});
 
 vi.mock('@/features/studio-shifts/api/create-studio-shift', () => ({
   useCreateStudioShift: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -248,13 +260,17 @@ describe('studioShiftsTable', () => {
     await user.click(screen.getByRole('button', { name: 'export-csv' }));
 
     await waitFor(() => {
-      expect(mockGetAllStudioShiftsForExport).toHaveBeenCalledWith('std_1', {
-        date_from: '2026-04-01',
-        date_to: '2026-04-30',
-        status: 'SCHEDULED',
-        is_duty_manager: true,
-        user_id: 'user_1',
-      });
+      expect(mockGetAllStudioShiftsForExport).toHaveBeenCalledWith(
+        'std_1',
+        {
+          date_from: '2026-04-01',
+          date_to: '2026-04-30',
+          status: 'SCHEDULED',
+          is_duty_manager: true,
+          user_id: 'user_1',
+        },
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
   });
 
