@@ -150,7 +150,7 @@ export function MyShiftsTableCard({
                           <TableHead>Date / Window</TableHead>
                           <TableHead className="hidden lg:table-cell">Blocks</TableHead>
                           <TableHead className="hidden md:table-cell">Total Hours</TableHead>
-                          <TableHead className="hidden lg:table-cell">Cost</TableHead>
+                          <TableHead className="hidden lg:table-cell">Actual Cost</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="hidden md:table-cell">Updated</TableHead>
                         </TableRow>

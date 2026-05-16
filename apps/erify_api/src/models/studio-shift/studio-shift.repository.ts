@@ -26,8 +26,21 @@ const defaultShiftInclude = {
   compensationLineItemTargets: lineItemTargetInclude,
 } as const;
 
+// Lighter include for window/range queries used by orchestration surfaces
+// (calendar, alignment) that compute hours-and-rate rollups only. Line items
+// are intentionally excluded — those surfaces don't render them, so pulling
+// them just inflates payload size on the highest-fan-out query.
+const windowShiftInclude = {
+  user: true,
+  studio: true,
+} as const;
+
 export type StudioShiftWithRelations = Prisma.StudioShiftGetPayload<{
   include: typeof defaultShiftInclude;
+}>;
+
+export type StudioShiftWithWindowBlocks = Prisma.StudioShiftGetPayload<{
+  include: typeof windowShiftInclude & { blocks: true };
 }>;
 
 @Injectable()
@@ -269,7 +282,7 @@ export class StudioShiftRepository extends BaseRepository<
     start: Date;
     end: Date;
     includeCancelled?: boolean;
-  }): Promise<StudioShiftWithRelations[]> {
+  }): Promise<StudioShiftWithWindowBlocks[]> {
     return this.delegate.findMany({
       where: {
         studio: {
@@ -288,8 +301,7 @@ export class StudioShiftRepository extends BaseRepository<
       },
       orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
       include: {
-        user: true,
-        studio: true,
+        ...windowShiftInclude,
         blocks: {
           where: {
             deletedAt: null,
@@ -297,11 +309,7 @@ export class StudioShiftRepository extends BaseRepository<
             endTime: { gt: params.start },
           },
           orderBy: { startTime: 'asc' },
-          include: {
-            compensationLineItemTargets: lineItemTargetInclude,
-          },
         },
-        compensationLineItemTargets: lineItemTargetInclude,
       },
     });
   }

@@ -243,6 +243,9 @@ export const updateStudioShiftSchema = z
     status: studioShiftStatusSchema.optional(),
     is_duty_manager: z.boolean().optional(),
     is_approved: z.boolean().optional(),
+    // Justification recorded into the shift's metadata snapshot audit when
+    // hourly_rate changes (e.g. manager re-rates a shift). Cost overrides
+    // now flow through STUDIO_SHIFT compensation line items per cost-model §1.
     override_reason: z.string().trim().min(1).max(1000).optional(),
     metadata: studioShiftMetadataSchema.optional(),
   })

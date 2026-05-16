@@ -160,7 +160,6 @@ export class ShiftCalendarService {
 
         // Split cross-midnight blocks so each segment is aggregated into the correct day bucket.
         const segments = this.splitIntervalByDay(clipped.start, clipped.end);
-        const segmentRatio = clippedHours > 0 ? 1 / segments.length : 0;
         for (const segment of segments) {
           const dateKey = this.toDateKey(segment.start);
 
@@ -197,9 +196,11 @@ export class ShiftCalendarService {
           const dayShift = dayUser.shifts.get(shift.uid)!;
           const segmentHours = this.hoursBetween(segment.start, segment.end);
           const segmentPlannedCost = segmentHours * hourlyRate;
-          // Pro-rate the block's clipped actual hours across the day segments derived from
-          // its clipped planned window. Matches existing planned semantics (split blocks per day).
-          const segmentActualCost = clippedActualHours * segmentRatio * hourlyRate;
+          // Pro-rate the block's clipped actual hours by each segment's share of the
+          // block's clipped planned hours, so cross-midnight blocks with asymmetric
+          // day spans attribute actuals proportionally rather than uniformly.
+          const segmentShare = clippedHours > 0 ? segmentHours / clippedHours : 0;
+          const segmentActualCost = clippedActualHours * segmentShare * hourlyRate;
 
           dayShift.total_hours += segmentHours;
           dayShift.blocks.push({

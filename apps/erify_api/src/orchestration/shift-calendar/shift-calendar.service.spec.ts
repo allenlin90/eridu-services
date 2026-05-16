@@ -152,4 +152,42 @@ describe('shiftCalendarService', () => {
     expect(result.summary.actual_cost_pending_shift_count).toBe(1);
     expect(result.timeline[0].users[0].shifts[0].actual_cost).toBeNull();
   });
+
+  it('pro-rates a cross-midnight block by each day-segment\'s share of the planned window', async () => {
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    // Planned 23:00 → 03:00 (4h): day 1 gets 1h, day 2 gets 3h.
+    // Actual 23:00 → 02:00 (3h): proportionally day 1 gets 0.75h ($15), day 2 gets 2.25h ($45).
+    studioShiftService.findShiftsInWindow.mockResolvedValue([
+      {
+        uid: 'ssh_xmidnight',
+        status: 'COMPLETED',
+        isDutyManager: false,
+        hourlyRate: '20.00',
+        user: { uid: 'user_1', name: 'Alice' },
+        blocks: [
+          {
+            uid: 'ssb_1',
+            startTime: new Date('2026-03-05T23:00:00.000Z'),
+            endTime: new Date('2026-03-06T03:00:00.000Z'),
+            actualStartTime: new Date('2026-03-05T23:00:00.000Z'),
+            actualEndTime: new Date('2026-03-06T02:00:00.000Z'),
+          },
+        ],
+      },
+    ] as never);
+
+    const result = await service.getCalendar('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-06'),
+      includeCancelled: true,
+    });
+
+    expect(result.summary.total_planned_cost).toBe('80.00');
+    expect(result.summary.total_actual_cost).toBe('60.00');
+
+    const day1 = result.timeline.find((d) => d.date === '2026-03-05')!;
+    const day2 = result.timeline.find((d) => d.date === '2026-03-06')!;
+    expect(day1.users[0].shifts[0].actual_cost).toBe('15.00');
+    expect(day2.users[0].shifts[0].actual_cost).toBe('45.00');
+  });
 });

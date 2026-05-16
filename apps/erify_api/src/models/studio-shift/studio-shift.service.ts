@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import type {
   BlocksReplacePayload,
@@ -307,8 +308,13 @@ export class StudioShiftService extends BaseModelService {
   }
 
   private assertPositiveHourlyRate(hourlyRate: string): void {
-    const rate = Number(hourlyRate);
-    if (!Number.isFinite(rate) || rate <= 0) {
+    let rate: Prisma.Decimal;
+    try {
+      rate = new Prisma.Decimal(hourlyRate);
+    } catch {
+      throw HttpError.badRequest('Hourly rate must be a positive number');
+    }
+    if (!rate.isFinite() || rate.lte(0)) {
       throw HttpError.badRequest('Hourly rate must be a positive number');
     }
   }
