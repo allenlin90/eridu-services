@@ -42,4 +42,4 @@ Promote to a PRD when **any** of these are true:
 
 ### Dependency on P&L economics
 
-Fixed cost tracking is a P&L concern. This item should be sequenced after Wave 2 (cost foundation) ships, so the variable-cost model from [`economics-cost-model.md`](../prd/economics-cost-model.md) is established before additional cost types are added.
+Fixed cost tracking is a P&L concern. This item should be sequenced after Wave 2 (cost foundation) ships, so the variable-cost model from [`economics-cost-model.md`](../domain/economics-cost-model.md) is established before additional cost types are added.

@@ -14,5 +14,5 @@ Active design documents for planned and in-progress features. Once a feature shi
 
 ## Note
 
-- Phase 4 backend cross-feature context is tracked in [../PHASE_4_PNL_BACKEND.md](../PHASE_4_PNL_BACKEND.md); feature-specific design lives in this folder.
+- Phase 4 cross-feature context lives in [PHASE_4.md](../../../../docs/roadmap/PHASE_4.md); feature-specific design lives in this folder. The Phase 4 endpoint→role matrix lives in [AUTHORIZATION_GUIDE.md](./AUTHORIZATION_GUIDE.md#phase-4-endpoint--role-matrix).
 - Stale Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried pre-simplification assumptions. Active redrafts are listed in the index above.

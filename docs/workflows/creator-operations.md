@@ -89,7 +89,7 @@ ADMIN and MANAGER review and adjust per-show creator compensation from `/studios
 
 Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed from flat creator assignment snapshots, time-multiplied shift labor (actuals with planned-time fallback), and show-scoped line items. `COMMISSION` and the `HYBRID` commission portion remain unresolved until a future revenue workflow.
 
-Reference: [Economics Cost Model (2.1)](../prd/economics-cost-model.md) · [Phase 4 remaining-work tracker (2.2 + 2.3)](../roadmap/PHASE_4.md)
+Reference: [Economics Cost Model (2.1)](../domain/economics-cost-model.md) · [Phase 4 remaining-work tracker (2.2 + 2.3)](../roadmap/PHASE_4.md)
 
 ## Data Flow
 
@@ -127,6 +127,5 @@ GET /shows/:id/economics  →  { cost, base_subtotal, line_item_subtotal, unreso
 | ------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Feature (RBAC)            | [docs/features/rbac-roles.md](../features/rbac-roles.md)                                               |
 | Feature (Creator Mapping) | [docs/features/creator-mapping.md](../features/creator-mapping.md)                                     |
-| Phase 4 backend index     | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)                             |
-| Phase 4 frontend index    | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
+| Phase 4 roadmap           | [PHASE_4.md](../roadmap/PHASE_4.md)                                                                    |
 | Role visibility model     | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |

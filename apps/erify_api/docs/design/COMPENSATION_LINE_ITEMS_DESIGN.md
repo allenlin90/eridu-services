@@ -4,7 +4,7 @@
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_api`
 > **Tracker**: [`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md) — PRs 3-10 are the remaining 2.2 work; PRs 1-6 shipped (this design doc covers shipped + remaining).
-> **Canonical semantics**: [`docs/prd/economics-cost-model.md`](../../../../docs/prd/economics-cost-model.md)
+> **Canonical semantics**: [`docs/domain/economics-cost-model.md`](../../../../docs/domain/economics-cost-model.md)
 > **Depends on**: 1.2 Studio Creator Roster ✅ · 1.3 Studio Member Roster ✅ · 1.5 Studio Show Management ✅ · 2.1 Economics Cost Model ✅
 > **Gates**: 2.3 Economics Service
 
@@ -67,7 +67,7 @@ Frontend workflow slices consume these backend contracts in their corresponding 
 
 ## Actuals Scope Reference
 
-This design follows [`economics-cost-model.md` actual ownership and scope](../../../../docs/prd/economics-cost-model.md#actual-ownership-and-scope): actual timestamps are recorded facts stored on the narrowest entity whose fact they represent. This 2.2 wave only adds overall show actuals and shift-block labor actuals. Future creator-participation actuals belong on `ShowCreator`; future platform stream/performance actuals belong on `ShowPlatform` or a platform metrics child model.
+This design follows [`economics-cost-model.md` actual ownership and scope](../../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope): actual timestamps are recorded facts stored on the narrowest entity whose fact they represent. This 2.2 wave only adds overall show actuals and shift-block labor actuals. Future creator-participation actuals belong on `ShowCreator`; future platform stream/performance actuals belong on `ShowPlatform` or a platform metrics child model.
 
 ## Schema Direction
 

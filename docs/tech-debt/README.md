@@ -15,4 +15,4 @@ Use this register for accepted risk, consistency gaps, migration cleanup, and re
 
 | Issue | Area | Trigger To Fix | Related Context |
 | --- | --- | --- | --- |
-| [Admin Route Business Logic Bypass](./admin-route-business-logic-bypass.md) | `erify_api` admin mutations | Any admin mutation touches finance, assignment snapshots, actuals, lifecycle transitions, or cross-domain side effects | [Economics cost model](../prd/economics-cost-model.md), [Phase 4 remaining-work tracker](../roadmap/PHASE_4.md) |
+| [Admin Route Business Logic Bypass](./admin-route-business-logic-bypass.md) | `erify_api` admin mutations | Any admin mutation touches finance, assignment snapshots, actuals, lifecycle transitions, or cross-domain side effects | [Economics cost model](../domain/economics-cost-model.md), [Phase 4 remaining-work tracker](../roadmap/PHASE_4.md) |

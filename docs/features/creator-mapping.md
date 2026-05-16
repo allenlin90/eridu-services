@@ -35,7 +35,7 @@ Talent managers assigned creators to shows one at a time through system-admin en
 
 ### Compensation fields and fallback contract
 
-Per-show compensation inputs live on `ShowCreator` and are consumed by the Wave 2 economics service per the canonical contract in [`economics-cost-model.md`](../prd/economics-cost-model.md); remaining 2.3 calculator work is tracked in [`PHASE_4.md`](../roadmap/PHASE_4.md):
+Per-show compensation inputs live on `ShowCreator` and are consumed by the Wave 2 economics service per the canonical contract in [`economics-cost-model.md`](../domain/economics-cost-model.md); remaining 2.3 calculator work is tracked in [`PHASE_4.md`](../roadmap/PHASE_4.md):
 
 | Field | Description |
 | --- | --- |

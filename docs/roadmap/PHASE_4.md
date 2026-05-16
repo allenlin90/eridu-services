@@ -2,7 +2,7 @@
 
 > **Status**: 🚧 Active — Wave 1 shipped; 2.1 cost model signed off; 2.2 Tasks 1-6 merged; 15 focused PRs remaining (PR 1 in this list, not GitHub PR numbers).
 > **Last updated**: 2026-05-15
-> **Canonical contract**: [docs/prd/economics-cost-model.md](../prd/economics-cost-model.md) — locked semantics, read first.
+> **Canonical contract**: [docs/domain/economics-cost-model.md](../domain/economics-cost-model.md) — locked semantics, read first.
 > **Journey traces**: [creator-operations.md](../workflows/creator-operations.md) · [shift-operations.md](../workflows/shift-operations.md)
 
 ## Goal
@@ -30,7 +30,7 @@ Outcomes:
 | 1.3 | Studio member roster                            | [feature](../features/studio-member-roster.md)                     | ✅ Shipped (PR #28) | 1 |
 | 1.4 | Studio creator onboarding (roster-first)        | [feature](../features/studio-creator-onboarding.md)                | ✅ Shipped (PR #32) | 1 |
 | 1.5 | Studio show management                          | [feature](../features/studio-show-management.md)                   | ✅ Shipped | 1     |
-| 2.1 | Economics cost model                            | [PRD](../prd/economics-cost-model.md)                              | ✅ Signed off | 2  |
+| 2.1 | Economics cost model                            | [Domain contract](../domain/economics-cost-model.md)                  | ✅ Locked     | 2  |
 | 2.2 | Compensation line items + actuals               | [§PR 3-10](#pr-roadmap)                                            | 🚧 Tasks 1-6 merged (PRs #59, #60, #62, #63, #64, #65); PR 3 next | 2 |
 | 2.3 | Economics service                               | [§PR 11-13](#pr-roadmap)                                           | 🔲 Planned | 2     |
 | 3.1 | Studio economics review surface                 | [§PR 14](#pr-14--studio-economics-review-surface)                  | 🔲 Planned | 3     |
@@ -72,7 +72,7 @@ Platform-level rules. Domain-specific decisions (line item types, view shapes, e
 
 6. **Self-access uses the existing `/me/` module.** Endpoints where a user reads their own data live under `/me/<resource>` (`apps/erify_api/src/me/`) and derive identity from auth context. Cross-user reads (admin viewing another user's data) live under studio-scoped routes with role guards. Do not invent new self-access decorators or per-endpoint identity checks.
 
-7. **Economics aggregation services ship with fixture-based tests.** Coverage includes the actuals priority cascade resolution, null-bubbling cases at each grain, and the read shape defined in [economics-cost-model.md](../prd/economics-cost-model.md). Phase 4 has no cost-state machine — tests target the calculator's resolved-vs-unresolved branches directly.
+7. **Economics aggregation services ship with fixture-based tests.** Coverage includes the actuals priority cascade resolution, null-bubbling cases at each grain, and the read shape defined in [economics-cost-model.md](../domain/economics-cost-model.md). Phase 4 has no cost-state machine — tests target the calculator's resolved-vs-unresolved branches directly.
 
 8. **Symmetry by default across parallel entities.** When two entities share an architectural pattern (e.g., `ShowCreator` and `StudioShift` both use snapshot + line items + actuals + audit), they share a UX pattern by default. Asymmetry is a deliberate, documented decision with a written reason. New plans must run the symmetry diff in [`.agent/skills/plan-workflow-completeness/`](../../.agent/skills/plan-workflow-completeness/SKILL.md) before sign-off.
 
@@ -110,12 +110,11 @@ The workflow trace is still the right starting artifact when an end-to-end user 
 
 | Scope          | Doc                                                                                                    |
 | -------------- | ------------------------------------------------------------------------------------------------------ |
-| BE index       | [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md)                             |
-| FE index       | [PHASE_4_PNL_FRONTEND.md](../../apps/erify_studios/docs/PHASE_4_PNL_FRONTEND.md)                       |
-| Authorization  | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)                      |
+| Cost contract  | [economics-cost-model.md](../domain/economics-cost-model.md)                                           |
+| Authorization  | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md) (includes Phase 4 endpoint→role matrix) |
 | Role use cases | [STUDIO_ROLE_USE_CASES_AND_VIEWS.md](../../apps/erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md) |
 
-Per-feature design references for shipped features live in the BE/FE index docs above. Remaining work is tracked PR-by-PR in the next section.
+Per-feature design docs for shipped Phase 4 features are indexed in `apps/erify_api/docs/README.md` and `apps/erify_studios/docs/README.md`. Remaining work is tracked PR-by-PR in the next section.
 
 ## PR Roadmap
 
