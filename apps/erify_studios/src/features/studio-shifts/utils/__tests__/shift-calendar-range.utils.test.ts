@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createDefaultShiftCalendarRange,
+  createDefaultShiftPlanningRange,
   createShiftCalendarJumpRange,
+  createShiftPlanningRangeFromStart,
   extractDateStringFromUnknown,
   getShiftCalendarRangeLimit,
   getShiftCalendarViewBucket,
@@ -19,6 +21,21 @@ describe('shiftCalendarRangeUtils', () => {
     expect(range).toEqual({
       date_from: '2026-03-09',
       date_to: '2026-03-15',
+    });
+  });
+
+  it('creates the default shift planning range for current-view cost planning', () => {
+    const range = createDefaultShiftPlanningRange(new Date('2026-03-10T08:00:00.000Z'));
+    expect(range).toEqual({
+      date_from: '2026-03-10',
+      date_to: '2026-03-16',
+    });
+  });
+
+  it('creates a shift planning range from an explicit start date', () => {
+    expect(createShiftPlanningRangeFromStart('2026-03-12')).toEqual({
+      date_from: '2026-03-12',
+      date_to: '2026-03-18',
     });
   });
 

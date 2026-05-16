@@ -17,63 +17,51 @@ import { PageLayout } from '@/components/layouts/page-layout';
 import { StudioShiftsCalendar } from '@/features/studio-shifts/components/studio-shifts-calendar';
 import { StudioShiftsTable } from '@/features/studio-shifts/components/studio-shifts-table';
 import { useShiftCalendar } from '@/features/studio-shifts/hooks/use-studio-shifts';
-import { addDays, fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
+import {
+  createDefaultShiftPlanningRange,
+  createShiftPlanningRangeFromStart,
+  type ShiftCalendarDateRange,
+} from '@/features/studio-shifts/utils/shift-calendar-range.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import {
   toCalendarViewSearch,
   toTableViewSearch,
 } from '@/features/studio-shifts/utils/studio-shifts-route-search.utils';
 
-const SUMMARY_RANGE_DAYS = 7;
 const shiftsRouteApi = getRouteApi('/studios/$studioId/shifts');
 
 export const Route = createFileRoute('/studios/$studioId/shifts/')({
   component: StudioShiftsPage,
 });
 
-function getDefaultSummaryPlanningRange() {
-  const from = toLocalDateInputValue(new Date());
-  const to = toLocalDateInputValue(addDays(fromLocalDateInput(from), SUMMARY_RANGE_DAYS - 1));
-  return { from, to };
-}
+type ShiftCostSnapshotCardProps = {
+  studioId: string;
+  dateRange: ShiftCalendarDateRange;
+  onDateRangeChange: (range: DateRange | undefined) => void;
+  onResetDateRange: () => void;
+};
 
-const ShiftCostSnapshotCard = memo(({ studioId }: { studioId: string }) => {
-  const [planningDateFrom, setPlanningDateFrom] = useState(() => getDefaultSummaryPlanningRange().from);
-  const [planningDateTo, setPlanningDateTo] = useState(() => getDefaultSummaryPlanningRange().to);
+const ShiftCostSnapshotCard = memo(({
+  studioId,
+  dateRange,
+  onDateRangeChange,
+  onResetDateRange,
+}: ShiftCostSnapshotCardProps) => {
   const orchestrationQueryParams = useMemo(() => ({
-    date_from: planningDateFrom,
-    date_to: planningDateTo,
+    date_from: dateRange.date_from,
+    date_to: dateRange.date_to,
     include_cancelled: false,
-  }), [planningDateFrom, planningDateTo]);
-  const planningDateRange: DateRange | undefined = planningDateFrom || planningDateTo
-    ? {
-        from: planningDateFrom ? new Date(`${planningDateFrom}T00:00:00`) : undefined,
-        to: planningDateTo ? new Date(`${planningDateTo}T00:00:00`) : undefined,
-      }
-    : undefined;
+  }), [dateRange.date_from, dateRange.date_to]);
+  const planningDateRange: DateRange = {
+    from: new Date(`${dateRange.date_from}T00:00:00`),
+    to: new Date(`${dateRange.date_to}T00:00:00`),
+  };
   const {
     data: shiftCalendarResponse,
     isLoading: isLoadingShiftCalendar,
     isFetching: isFetchingShiftCalendar,
     refetch: refetchShiftCalendar,
   } = useShiftCalendar(studioId, orchestrationQueryParams, { enabled: true });
-
-  const handleSummaryDateRangeChange = useCallback((range: DateRange | undefined) => {
-    const fallbackFrom = toLocalDateInputValue(new Date());
-    const nextFrom = range?.from ? toLocalDateInputValue(range.from) : fallbackFrom;
-    const nextTo = range?.to
-      ? toLocalDateInputValue(range.to)
-      : toLocalDateInputValue(addDays(fromLocalDateInput(nextFrom), SUMMARY_RANGE_DAYS - 1));
-
-    setPlanningDateFrom(nextFrom);
-    setPlanningDateTo(nextTo);
-  }, []);
-
-  const handleResetPlanningRange = useCallback(() => {
-    const nextRange = getDefaultSummaryPlanningRange();
-    setPlanningDateFrom(nextRange.from);
-    setPlanningDateTo(nextRange.to);
-  }, []);
 
   return (
     <Card>
@@ -87,12 +75,12 @@ const ShiftCostSnapshotCard = memo(({ studioId }: { studioId: string }) => {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <DatePickerWithRange
             date={planningDateRange}
-            setDate={handleSummaryDateRangeChange}
+            setDate={onDateRangeChange}
           />
           <Button
             variant="outline"
             size="sm"
-            onClick={handleResetPlanningRange}
+            onClick={onResetDateRange}
             disabled={isFetchingShiftCalendar}
           >
             Next 7 Days
@@ -152,8 +140,18 @@ function StudioShiftsPage() {
   const { studioId } = shiftsRouteApi.useParams();
   const search = shiftsRouteApi.useSearch();
   const routeNavigate = shiftsRouteApi.useNavigate();
+  const [defaultPlanningRange] = useState(() => createDefaultShiftPlanningRange());
 
   const viewMode = search.view;
+  const effectivePlanningRange = useMemo(() => ({
+    date_from: search.date_from ?? defaultPlanningRange.date_from,
+    date_to: search.date_to ?? defaultPlanningRange.date_to,
+  }), [
+    defaultPlanningRange.date_from,
+    defaultPlanningRange.date_to,
+    search.date_from,
+    search.date_to,
+  ]);
 
   const updateSearch = useCallback((
     updater: (previous: typeof search) => typeof search,
@@ -166,6 +164,31 @@ function StudioShiftsPage() {
       replace: options?.replace ?? true,
     });
   }, [routeNavigate, studioId]);
+
+  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
+    const fallbackRange = createDefaultShiftPlanningRange();
+    const nextFrom = range?.from ? toLocalDateInputValue(range.from) : fallbackRange.date_from;
+    const nextTo = range?.to
+      ? toLocalDateInputValue(range.to)
+      : createShiftPlanningRangeFromStart(nextFrom).date_to;
+
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      date_from: nextFrom,
+      date_to: nextTo,
+    }));
+  }, [updateSearch]);
+
+  const handleResetDateRange = useCallback(() => {
+    const nextRange = createDefaultShiftPlanningRange();
+    updateSearch((previous) => ({
+      ...previous,
+      page: 1,
+      date_from: nextRange.date_from,
+      date_to: nextRange.date_to,
+    }));
+  }, [updateSearch]);
 
   const handleToggleView = (mode: 'calendar' | 'table') => {
     updateSearch((prev) => {
@@ -201,7 +224,12 @@ function StudioShiftsPage() {
     >
       <div className="space-y-4">
         <div className="grid gap-4">
-          <ShiftCostSnapshotCard studioId={studioId} />
+          <ShiftCostSnapshotCard
+            studioId={studioId}
+            dateRange={effectivePlanningRange}
+            onDateRangeChange={handleDateRangeChange}
+            onResetDateRange={handleResetDateRange}
+          />
         </div>
 
         {viewMode === 'calendar'
@@ -214,7 +242,11 @@ function StudioShiftsPage() {
               <StudioShiftsTable
                 studioId={studioId}
                 isStudioAdmin
-                search={search}
+                search={{
+                  ...search,
+                  date_from: effectivePlanningRange.date_from,
+                  date_to: effectivePlanningRange.date_to,
+                }}
                 updateSearch={updateSearch}
               />
             )}

@@ -41,6 +41,12 @@ import {
   getShiftDisplayDate,
   getShiftWindowLabel,
 } from '@/features/studio-shifts/utils/shift-form.utils';
+import {
+  buildStudioShiftExportFilename,
+  buildStudioShiftExportRows,
+  createStudioShiftExportContent,
+  type StudioShiftExportFormat,
+} from '@/features/studio-shifts/utils/studio-shifts-export.utils';
 import type { StudioShiftsRouteSearch } from '@/features/studio-shifts/utils/studio-shifts-route-search.utils';
 import {
   getApiErrorMessage,
@@ -75,8 +81,6 @@ type ToolbarSearchParams = {
   user_id?: string;
   status?: ShiftListStatus;
   duty?: ShiftListDutyFilter;
-  date_from?: string;
-  date_to?: string;
 };
 
 function normalizeRate(value: string | number | null | undefined): string | null {
@@ -108,9 +112,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const hasAnyFilters = Boolean(
     search.user_id
     || search.status
-    || search.duty
-    || search.date_from
-    || search.date_to,
+    || search.duty,
   );
 
   const { memberMap } = useStudioMemberMap(studioId, { enabled: isStudioAdmin });
@@ -362,8 +364,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       user_id: undefined,
       status: undefined,
       duty: undefined,
-      date_from: undefined,
-      date_to: undefined,
     }));
   }, [updateSearch]);
 
@@ -376,6 +376,33 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const handleRefresh = useCallback(() => {
     void refetchTableShifts();
   }, [refetchTableShifts]);
+
+  const handleExport = useCallback((format: StudioShiftExportFormat) => {
+    const rows = buildStudioShiftExportRows({
+      shifts: tableShifts,
+      memberMap,
+      getShiftDisplayDate,
+      getShiftBlockLabels,
+      getShiftWindowLabel,
+      formatDateTime,
+    });
+    const content = createStudioShiftExportContent(rows, format);
+    const mimeType = format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;';
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.setAttribute('download', buildStudioShiftExportFilename({
+      format,
+      dateFrom: search.date_from,
+      dateTo: search.date_to,
+    }));
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [memberMap, search.date_from, search.date_to, tableShifts]);
 
   const handleCreateDialogOpenChange = useCallback((open: boolean) => {
     setIsCreateDialogOpen(open);
@@ -408,8 +435,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
           user_id: search.user_id,
           status: search.status,
           duty: search.duty,
-          date_from: search.date_from,
-          date_to: search.date_to,
         }}
         onSearchChange={handleSearchChange}
         onResetFilters={handleResetFilters}
@@ -420,6 +445,8 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         onCreateClick={handleOpenCreateDialog}
         onRefresh={handleRefresh}
         isRefreshing={isFetchingTableShifts}
+        onExport={handleExport}
+        canExport={tableShifts.length > 0}
       />
 
       <ShiftRosterCard

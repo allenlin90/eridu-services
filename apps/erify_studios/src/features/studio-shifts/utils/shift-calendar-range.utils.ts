@@ -1,4 +1,4 @@
-import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
+import { addDays, fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 
 export type ShiftCalendarDateRange = {
@@ -8,6 +8,7 @@ export type ShiftCalendarDateRange = {
 
 export type ShiftCalendarViewBucket = 'day' | 'week' | 'month';
 
+const DEFAULT_SHIFT_PLANNING_RANGE_DAYS = 7;
 const DEFAULT_BUFFER_BEFORE_DAYS = 1;
 const DEFAULT_BUFFER_AFTER_DAYS = 8;
 const CALENDAR_QUERY_LIMIT_FALLBACK = 90;
@@ -55,6 +56,22 @@ export function createDefaultShiftCalendarRange(baseDate = new Date()): ShiftCal
   return {
     date_from: toLocalDateInputValue(startOfWeek),
     date_to: toLocalDateInputValue(endOfWeek),
+  };
+}
+
+export function createDefaultShiftPlanningRange(baseDate = new Date()): ShiftCalendarDateRange {
+  const from = toLocalDateInputValue(baseDate);
+
+  return createShiftPlanningRangeFromStart(from);
+}
+
+export function createShiftPlanningRangeFromStart(dateFrom: string): ShiftCalendarDateRange {
+  const from = dateFrom;
+  const to = toLocalDateInputValue(addDays(fromLocalDateInput(from), DEFAULT_SHIFT_PLANNING_RANGE_DAYS - 1));
+
+  return {
+    date_from: from,
+    date_to: to,
   };
 }
 
