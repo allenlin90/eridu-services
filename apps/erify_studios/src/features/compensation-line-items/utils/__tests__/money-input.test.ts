@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toMoneyString } from '../money-input';
+import { toDisplayMoneyString, toMoneyString } from '../money-input';
 
 describe('toMoneyString', () => {
   it('accepts leading-decimal forms like .5 and -.5', () => {
@@ -24,5 +24,9 @@ describe('toMoneyString', () => {
     expect(() => toMoneyString('-')).toThrow();
     expect(() => toMoneyString('.')).toThrow();
     expect(() => toMoneyString('abc')).toThrow();
+  });
+
+  it('formats display money without JS number precision loss', () => {
+    expect(toDisplayMoneyString('9007199254740993.01')).toBe('9007199254740993.01');
   });
 });

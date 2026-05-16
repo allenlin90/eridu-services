@@ -25,7 +25,7 @@ Rows are ordered top-to-bottom as execution order: rows 1-6 have no dependencies
 
 | # | PR | Depends on | Status | PR link |
 | - | -- | ---------- | ------ | ------- |
-| 1 | [Money library standardization](#pr-1--money-library-standardization) — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2 | — | 🚧 Next | — |
+| 1 | [Money library standardization](#pr-1--money-library-standardization) — adopt `Big` (big.js) on FE, tighten BE `decimalToString`, update Finance Guardrail #2 | — | 🚧 In progress | — |
 | 2 | [Shift export at `/shifts`](#pr-2--shift-export) — unified date range, export, live `total_cost` (drops stored cost columns) | — | 🚧 Next | — |
 | 3 | Show-operations export + actuals at `/show-operations` — unified date range, export, show-actuals input, missing-actuals queue | — | 🔲 Planned | — |
 | 4 | Creator compensation editability — per-show edit dialog + per-creator date-range review | — | 🔲 Planned | — |

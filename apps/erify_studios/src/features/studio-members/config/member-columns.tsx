@@ -7,6 +7,8 @@ import { Badge } from '@eridu/ui';
 import { StudioMemberActionsCell } from '../components/studio-member-actions-cell';
 import { ROLE_LABELS } from '../lib/roles';
 
+import { toDisplayMoneyString } from '@/features/compensation-line-items/utils/money-input';
+
 export const memberSearchableColumns: SearchableColumn[] = [
   { id: 'user_name', title: 'Name or Email' },
 ];
@@ -45,7 +47,7 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
         const rate = row.original.base_hourly_rate;
         return (
           <span className="text-sm">
-            {rate !== null && rate !== undefined ? `$${Number(rate).toFixed(2)}` : '—'}
+            {rate !== null && rate !== undefined ? `$${toDisplayMoneyString(rate)}` : '—'}
           </span>
         );
       },

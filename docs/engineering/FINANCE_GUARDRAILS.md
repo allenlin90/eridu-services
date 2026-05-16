@@ -8,9 +8,9 @@ The Phase 4 cost model in [`docs/domain/economics-cost-model.md`](../domain/econ
 
 Controllers stay transport-only (authz, DTO parsing, response shaping). Orchestration services coordinate flows but do not own financial formulas.
 
-## 2. Monetary arithmetic uses `Prisma.Decimal` end-to-end
+## 2. Monetary arithmetic uses decimal libraries end-to-end
 
-Do not convert to JS `Number` before aggregation. Serialize to string at the API boundary. `toFixed(2)` is forbidden inside aggregation paths. `Prisma.Decimal` is backed by `decimal.js` and ships with `@prisma/client` — no new dependency required.
+Do not convert to JS `Number` before aggregation or display formatting. Backend money values use `Prisma.Decimal`, which is backed by `decimal.js` and ships with `@prisma/client`. Frontend money formatting uses `Big` from `big.js`. Serialize money to string at the API boundary, and reject JS-number inputs in shared decimal serializers. `toFixed(2)` is forbidden inside aggregation paths unless it is called on an approved decimal-library value.
 
 ## 3. Polymorphic discriminators on financial tables use Prisma enums where cleanly supported
 

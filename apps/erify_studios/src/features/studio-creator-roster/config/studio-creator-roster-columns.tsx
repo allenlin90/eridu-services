@@ -7,6 +7,8 @@ import { Badge } from '@eridu/ui';
 
 import { StudioCreatorActionsCell } from '../components/studio-creator-actions-cell';
 
+import { toDisplayMoneyString } from '@/features/compensation-line-items/utils/money-input';
+
 export const studioCreatorRosterSearchableColumns: SearchableColumn[] = [
   { id: 'creator_name', title: 'Creator' },
   {
@@ -39,14 +41,14 @@ function formatMoney(value: string | null) {
   if (value === null) {
     return '—';
   }
-  return `$${Number(value).toFixed(2)}`;
+  return `$${toDisplayMoneyString(value)}`;
 }
 
 function formatCommission(value: string | null) {
   if (value === null) {
     return '—';
   }
-  return `${Number(value).toFixed(2)}%`;
+  return `${toDisplayMoneyString(value)}%`;
 }
 
 export function getStudioCreatorRosterColumns(ctx: ColumnContext): ColumnDef<StudioCreatorRosterItem>[] {

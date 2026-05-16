@@ -10,10 +10,7 @@ export function decimalToString(value: unknown): string | null {
   }
 
   if (typeof value === 'number') {
-    // TODO(phase5/financial): native number loses precision beyond 15 significant digits.
-    // If monetary values ever flow through as JS numbers rather than Prisma Decimal objects,
-    // this toFixed(2) silently rounds. Audit and enforce Decimal-only inputs in phase 5.
-    return value.toFixed(2);
+    throw new TypeError('Decimal values must not be JS numbers');
   }
 
   if (typeof value === 'string') {
