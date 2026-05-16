@@ -75,4 +75,4 @@ For `HYBRID` and `COMMISSION` assignments the compensation summary returns `tota
 ## Forward References
 
 - Studio onboarding (resolving off-roster failures): [studio-creator-onboarding.md](./studio-creator-onboarding.md)
-- Full discovery-side gating: [PHASE_4.md §PR 15](../roadmap/PHASE_4.md#pr-15--strict-mode-creator-availability-with-conflict-metadata)
+- Full discovery-side gating: [PHASE_4.md §PR 9](../roadmap/PHASE_4.md#remaining-prs)

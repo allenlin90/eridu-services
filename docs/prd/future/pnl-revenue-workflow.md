@@ -91,7 +91,7 @@ Who enters revenue and when?
 
 ### 4. Numerical precision
 
-**Resolved by [Phase 4 Architecture Guardrail 2](../roadmap/PHASE_4.md#architecture-guardrails).** All financial arithmetic uses `Prisma.Decimal` (backed by `decimal.js`, already in `@prisma/client`) end-to-end. No `Number` / `toFixed(2)` chains in aggregation paths. Future revenue work inherits this rule from 2.2 / 2.3 — no separate decision needed.
+**Resolved by [Finance Guardrail #2](../roadmap/../engineering/FINANCE_GUARDRAILS.md).** All financial arithmetic uses `Prisma.Decimal` (backed by `decimal.js`, already in `@prisma/client`) end-to-end. No `Number` / `toFixed(2)` chains in aggregation paths. Future revenue work inherits this rule from 2.2 / 2.3 — no separate decision needed.
 
 ## Backwards Compatibility
 

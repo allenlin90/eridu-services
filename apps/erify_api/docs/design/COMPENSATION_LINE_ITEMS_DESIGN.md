@@ -3,7 +3,7 @@
 > **Status**: In Progress — Tasks 1-6 merged; Task 7 shift cost cleanup is next
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_api`
-> **Tracker**: [`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md) — PRs 3-10 are the remaining 2.2 work; PRs 1-6 shipped (this design doc covers shipped + remaining).
+> **Tracker**: [`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md) — PRs 1-7 cover the remaining 2.2 work; PRs 1-6 shipped (this design doc covers shipped + remaining).
 > **Canonical semantics**: [`docs/domain/economics-cost-model.md`](../../../../docs/domain/economics-cost-model.md)
 > **Depends on**: 1.2 Studio Creator Roster ✅ · 1.3 Studio Member Roster ✅ · 1.5 Studio Show Management ✅ · 2.1 Economics Cost Model ✅
 > **Gates**: 2.3 Economics Service

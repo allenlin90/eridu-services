@@ -118,8 +118,8 @@ Already shipped on `master`. The current slug remains `/studios/$studioId/shared
 | `/studios/$studioId/members` | Studio member roster — shipped | `docs/features/studio-member-roster.md` |
 | `/studios/$studioId/creators` | Creator roster — shipped | `docs/features/studio-creator-roster.md` |
 | `/studios/$studioId/compensation` | Compensation management | [`docs/roadmap/PHASE_4.md` §PR 3-10](../../../../docs/roadmap/PHASE_4.md) |
-| `/studios/$studioId/show-operations` | Show ops with unified date range + export | [`docs/roadmap/PHASE_4.md` §PR 2](../../../../docs/roadmap/PHASE_4.md#pr-2--show-operations--unify-date-range-and-add-export) |
-| `/studios/$studioId/finance/economics` | Studio economics review | [`docs/roadmap/PHASE_4.md` §PR 14](../../../../docs/roadmap/PHASE_4.md#pr-14--studio-economics-review-surface) |
+| `/studios/$studioId/show-operations` | Show ops with unified date range + export | [`docs/roadmap/PHASE_4.md` §PR 2](../../../../docs/roadmap/PHASE_4.md#remaining-prs) |
+| `/studios/$studioId/finance/economics` | Studio economics review | [`docs/roadmap/PHASE_4.md` §PR 8](../../../../docs/roadmap/PHASE_4.md#remaining-prs) |
 
 ---
 

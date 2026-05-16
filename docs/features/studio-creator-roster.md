@@ -52,5 +52,5 @@ Studio operators could map creators to shows, but they could not maintain the st
 - Creator assignment flows: [creator-mapping.md](./creator-mapping.md)
 - Studio onboarding (brand-new creators): [studio-creator-onboarding.md](./studio-creator-onboarding.md)
 - Show economics snapshot and actuals contract: [economics-cost-model.md](../domain/economics-cost-model.md)
-- Full overlap/conflict enforcement: [PHASE_4.md §PR 15](../roadmap/PHASE_4.md#pr-15--strict-mode-creator-availability-with-conflict-metadata)
+- Full overlap/conflict enforcement: [PHASE_4.md §PR 9](../roadmap/PHASE_4.md#remaining-prs)
 - Supplemental compensation: [PHASE_4.md §PR 3-10](../roadmap/PHASE_4.md)

@@ -5,7 +5,7 @@
 > **Workstream**: L-side P&L visibility — minimal cost reference + extensible foundation
 > **Gates**: 2.2 Compensation Line Items, 2.3 Economics Service
 > **Future target**: P&L Revenue Workflow (commission resolution + contribution margin)
-> **Constraints**: Phase 4 [Architecture Guardrails](../roadmap/PHASE_4.md#architecture-guardrails) — monetary arithmetic, snapshot-on-write, soft-delete, fixture testing, identity-derived self-access
+> **Constraints**: Phase 4 [Architecture Guardrails](../roadmap/../engineering/FINANCE_GUARDRAILS.md) — monetary arithmetic, snapshot-on-write, soft-delete, fixture testing, identity-derived self-access
 
 ## Purpose
 
