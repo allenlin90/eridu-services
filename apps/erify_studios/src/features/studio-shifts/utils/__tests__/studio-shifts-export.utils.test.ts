@@ -110,7 +110,7 @@ describe('studioShiftsExportUtils', () => {
       format: 'csv',
       dateFrom: '2026-03-01',
       dateTo: '2026-03-07',
-      exportedAt: new Date('2026-03-08T12:00:00.000Z'),
-    })).toBe('studio-shifts-2026-03-01_to_2026-03-07-2026-03-08.csv');
+      exportedAt: new Date('2026-03-08T12:34:56.000Z'),
+    })).toBe('studio-shifts-2026-03-01_to_2026-03-07-2026-03-08_12-34-56.csv');
   });
 });

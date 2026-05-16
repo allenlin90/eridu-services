@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   Button,
@@ -21,6 +22,7 @@ import {
   useCreateStudioShift,
 } from '@/features/studio-shifts/api/create-studio-shift';
 import { useDeleteStudioShift } from '@/features/studio-shifts/api/delete-studio-shift';
+import { getAllStudioShiftsForExport } from '@/features/studio-shifts/api/get-studio-shifts';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
 import {
   type UpdateStudioShiftPayload,
@@ -108,6 +110,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const [compensationShiftId, setCompensationShiftId] = useState<string | null>(null);
   const [pendingSnapshotUpdate, setPendingSnapshotUpdate] = useState<PendingSnapshotUpdate | null>(null);
   const [snapshotOverrideReason, setSnapshotOverrideReason] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const hasAnyFilters = Boolean(
     search.user_id
@@ -139,6 +142,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     pagination,
     onPaginationChange,
     shifts: tableShifts,
+    data: tableData,
   } = useStudioShiftsPageController({
     studioId,
     search,
@@ -377,32 +381,48 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     void refetchTableShifts();
   }, [refetchTableShifts]);
 
-  const handleExport = useCallback((format: StudioShiftExportFormat) => {
-    const rows = buildStudioShiftExportRows({
-      shifts: tableShifts,
-      memberMap,
-      getShiftDisplayDate,
-      getShiftBlockLabels,
-      getShiftWindowLabel,
-      formatDateTime,
-    });
-    const content = createStudioShiftExportContent(rows, format);
-    const mimeType = format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;';
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+  const handleExport = useCallback(async (format: StudioShiftExportFormat) => {
+    const exportParams = {
+      ...(search.user_id ? { user_id: search.user_id } : {}),
+      ...(search.date_from ? { date_from: search.date_from } : {}),
+      ...(search.date_to ? { date_to: search.date_to } : {}),
+      ...(search.status ? { status: search.status } : {}),
+      ...(search.duty ? { is_duty_manager: search.duty === 'true' } : {}),
+    };
+    setIsExporting(true);
 
-    link.href = url;
-    link.setAttribute('download', buildStudioShiftExportFilename({
-      format,
-      dateFrom: search.date_from,
-      dateTo: search.date_to,
-    }));
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, [memberMap, search.date_from, search.date_to, tableShifts]);
+    try {
+      const exportShifts = await getAllStudioShiftsForExport(studioId, exportParams);
+      const rows = buildStudioShiftExportRows({
+        shifts: exportShifts,
+        memberMap,
+        getShiftDisplayDate,
+        getShiftBlockLabels,
+        getShiftWindowLabel,
+        formatDateTime,
+      });
+      const content = createStudioShiftExportContent(rows, format);
+      const mimeType = format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;';
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.setAttribute('download', buildStudioShiftExportFilename({
+        format,
+        dateFrom: search.date_from,
+        dateTo: search.date_to,
+      }));
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to export shifts. Please try again.'));
+    } finally {
+      setIsExporting(false);
+    }
+  }, [memberMap, search, studioId]);
 
   const handleCreateDialogOpenChange = useCallback((open: boolean) => {
     setIsCreateDialogOpen(open);
@@ -446,7 +466,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         onRefresh={handleRefresh}
         isRefreshing={isFetchingTableShifts}
         onExport={handleExport}
-        canExport={tableShifts.length > 0}
+        canExport={!isExporting && ((tableData?.meta.total ?? tableShifts.length) > 0)}
       />
 
       <ShiftRosterCard

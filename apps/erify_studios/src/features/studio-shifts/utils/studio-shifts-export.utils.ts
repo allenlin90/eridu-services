@@ -110,7 +110,7 @@ export function buildStudioShiftExportFilename({
   exportedAt = new Date(),
 }: BuildStudioShiftExportFilenameParams): string {
   const scope = dateFrom && dateTo ? `${dateFrom}_to_${dateTo}` : 'current-view';
-  const stamp = exportedAt.toISOString().split('T')[0];
+  const stamp = exportedAt.toISOString().replace(/\.\d{3}Z$/, '').replace('T', '_').replace(/:/g, '-');
   return `studio-shifts-${scope}-${stamp}.${format}`;
 }
 

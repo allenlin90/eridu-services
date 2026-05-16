@@ -2,6 +2,8 @@ import type { StudioShift, StudioShiftsResponse } from './studio-shifts.types';
 
 import { apiClient } from '@/lib/api/client';
 
+const SHIFT_EXPORT_PAGE_SIZE = 100;
+
 export type GetStudioShiftsParams = {
   page?: number;
   limit?: number;
@@ -30,6 +32,29 @@ export async function getStudioShifts(
     signal: options?.signal,
   });
   return response.data;
+}
+
+export async function getAllStudioShiftsForExport(
+  studioId: string,
+  params: Omit<GetStudioShiftsParams, 'page' | 'limit'>,
+): Promise<StudioShift[]> {
+  const firstPage = await getStudioShifts(studioId, {
+    ...params,
+    page: 1,
+    limit: SHIFT_EXPORT_PAGE_SIZE,
+  });
+  const shifts = [...firstPage.data];
+
+  for (let page = 2; page <= firstPage.meta.totalPages; page += 1) {
+    const nextPage = await getStudioShifts(studioId, {
+      ...params,
+      page,
+      limit: SHIFT_EXPORT_PAGE_SIZE,
+    });
+    shifts.push(...nextPage.data);
+  }
+
+  return shifts;
 }
 
 export async function getDutyManager(
