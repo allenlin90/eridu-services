@@ -92,31 +92,6 @@ describe('studioShiftsExportUtils', () => {
     expect(csv).toContain('"Ava ""Lead"""');
   });
 
-  it('neutralizes CSV-injection-prone leading characters', () => {
-    const csv = serializeStudioShiftExportCsv([
-      {
-        id: 'ssh_inject',
-        member_name: '=SUM(A1:A2)',
-        member_email: '+ava@example.com',
-        date: '-1',
-        window: '@formula',
-        blocks: '\tindented',
-        total_hours: '0.00',
-        projected_cost: '0.00',
-        calculated_cost: '',
-        status: 'SCHEDULED',
-        duty_manager: 'No',
-        updated_at: 'Mar 5, 2026',
-      },
-    ]);
-
-    expect(csv).toContain('"\'=SUM(A1:A2)"');
-    expect(csv).toContain('"\'+ava@example.com"');
-    expect(csv).toContain('"\'-1"');
-    expect(csv).toContain('"\'@formula"');
-    expect(csv).toContain('"\'\tindented"');
-  });
-
   it('creates JSON content and stable filenames', () => {
     const rows = [{
       id: 'ssh_1',

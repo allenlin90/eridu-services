@@ -1,41 +1,50 @@
 import type { TaskReportColumn } from '@eridu/api-types/task-management';
 
+import { type CsvColumn, serializeRowsToCsv } from '@/lib/csv';
+
+function stringifyCell(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (Array.isArray(value)) {
+    return (value as unknown[]).join('; ');
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+  return String(value);
+}
+
+function buildColumnLabel(column: TaskReportColumn): string {
+  if (column.source_template_name && !column.standard) {
+    return `${column.label} (${column.source_template_name})`;
+  }
+  return column.label;
+}
+
 export function serializeCsv(
   rows: Record<string, unknown>[],
   columns: TaskReportColumn[],
 ): string {
-  if (!columns.length)
+  if (columns.length === 0) {
     return '';
+  }
 
-  // Append template origin to column headers for custom (non-standard) fields so
-  // the exported CSV is self-explanatory when multiple templates are included.
-  const header = columns.map((col) => {
-    let title = col.label;
-    if (col.source_template_name && !col.standard) {
-      title = `${title} (${col.source_template_name})`;
+  const csvColumns: CsvColumn<Record<string, string>>[] = columns.map((column) => ({
+    key: column.key,
+    label: buildColumnLabel(column),
+  }));
+
+  const csvRows: Record<string, string>[] = rows.map((row) => {
+    const stringified: Record<string, string> = {};
+    for (const column of columns) {
+      stringified[column.key] = stringifyCell(row[column.key]);
     }
-    return `"${title.replace(/"/g, '""')}"`;
-  }).join(',');
-
-  const csvRows = rows.map((row) => {
-    return columns.map((col) => {
-      let val = row[col.key];
-
-      if (val === null || val === undefined) {
-        val = '';
-      } else if (Array.isArray(val)) {
-        val = (val as unknown[]).join('; ');
-      } else if (typeof val === 'object') {
-        val = JSON.stringify(val);
-      } else if (typeof val === 'boolean') {
-        val = val ? 'Yes' : 'No';
-      } else {
-        val = String(val);
-      }
-
-      return `"${(val as string).replace(/"/g, '""')}"`;
-    }).join(',');
+    return stringified;
   });
 
-  return [header, ...csvRows].join('\n');
+  return serializeRowsToCsv({ rows: csvRows, columns: csvColumns });
 }

@@ -60,6 +60,7 @@ import {
   type ShiftListStatus,
   validateShiftBlocks,
 } from '@/features/studio-shifts/utils/studio-shifts-table.utils';
+import { triggerBrowserDownload } from '@/lib/file-download';
 
 export type StudioShiftsTableSearch = StudioShiftsRouteSearch;
 
@@ -419,25 +420,15 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         getShiftWindowLabel,
         formatDateTime,
       });
-      const content = createStudioShiftExportContent(rows, format);
-      const mimeType = format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;';
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-
-      try {
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', buildStudioShiftExportFilename({
+      triggerBrowserDownload({
+        content: createStudioShiftExportContent(rows, format),
+        mimeType: format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;',
+        filename: buildStudioShiftExportFilename({
           format,
           dateFrom: search.date_from,
           dateTo: search.date_to,
-        }));
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } finally {
-        URL.revokeObjectURL(url);
-      }
+        }),
+      });
     } catch (error) {
       if (controller.signal.aborted) {
         return;

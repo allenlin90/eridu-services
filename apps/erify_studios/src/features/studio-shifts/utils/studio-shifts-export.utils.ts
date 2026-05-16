@@ -1,6 +1,5 @@
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
-
-const UTF8_BOM = '﻿';
+import { type CsvColumn, serializeRowsToCsv } from '@/lib/csv';
 
 type MemberInfo = { name: string; email: string };
 
@@ -45,12 +44,20 @@ function formatShiftDurationHours(shift: StudioShift): string {
   return (totalMs / (1000 * 60 * 60)).toFixed(2);
 }
 
-const CSV_INJECTION_PREFIX = /^[=+\-@\t\r]/;
-
-function escapeCsvCell(value: string): string {
-  const safe = CSV_INJECTION_PREFIX.test(value) ? `'${value}` : value;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
+const STUDIO_SHIFT_EXPORT_COLUMNS: CsvColumn<StudioShiftExportRow>[] = [
+  { key: 'id', label: 'Shift ID' },
+  { key: 'member_name', label: 'Member' },
+  { key: 'member_email', label: 'Member Email' },
+  { key: 'date', label: 'Date' },
+  { key: 'window', label: 'Window' },
+  { key: 'blocks', label: 'Blocks' },
+  { key: 'total_hours', label: 'Total Hours' },
+  { key: 'projected_cost', label: 'Projected Cost' },
+  { key: 'calculated_cost', label: 'Calculated Cost' },
+  { key: 'status', label: 'Status' },
+  { key: 'duty_manager', label: 'Duty Manager' },
+  { key: 'updated_at', label: 'Updated At' },
+];
 
 export function buildStudioShiftExportRows({
   shifts,
@@ -81,27 +88,7 @@ export function buildStudioShiftExportRows({
 }
 
 export function serializeStudioShiftExportCsv(rows: StudioShiftExportRow[]): string {
-  const columns: Array<{ key: keyof StudioShiftExportRow; label: string }> = [
-    { key: 'id', label: 'Shift ID' },
-    { key: 'member_name', label: 'Member' },
-    { key: 'member_email', label: 'Member Email' },
-    { key: 'date', label: 'Date' },
-    { key: 'window', label: 'Window' },
-    { key: 'blocks', label: 'Blocks' },
-    { key: 'total_hours', label: 'Total Hours' },
-    { key: 'projected_cost', label: 'Projected Cost' },
-    { key: 'calculated_cost', label: 'Calculated Cost' },
-    { key: 'status', label: 'Status' },
-    { key: 'duty_manager', label: 'Duty Manager' },
-    { key: 'updated_at', label: 'Updated At' },
-  ];
-
-  const header = columns.map((column) => escapeCsvCell(column.label)).join(',');
-  const body = rows.map((row) => {
-    return columns.map((column) => escapeCsvCell(row[column.key])).join(',');
-  });
-
-  return `${UTF8_BOM}${[header, ...body].join('\r\n')}`;
+  return serializeRowsToCsv({ rows, columns: STUDIO_SHIFT_EXPORT_COLUMNS });
 }
 
 export function serializeStudioShiftExportJson(rows: StudioShiftExportRow[]): string {
