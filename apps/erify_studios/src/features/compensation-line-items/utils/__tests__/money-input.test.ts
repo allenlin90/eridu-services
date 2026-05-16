@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toDisplayMoneyString, toMoneyString } from '../money-input';
+import { toMoneyString } from '../money-input';
 
 describe('toMoneyString', () => {
   it('accepts leading-decimal forms like .5 and -.5', () => {
@@ -26,7 +26,8 @@ describe('toMoneyString', () => {
     expect(() => toMoneyString('abc')).toThrow();
   });
 
-  it('formats display money without JS number precision loss', () => {
-    expect(toDisplayMoneyString('9007199254740993.01')).toBe('9007199254740993.01');
+  it('rejects scientific notation that Big would otherwise accept', () => {
+    expect(() => toMoneyString('1e3')).toThrow();
+    expect(() => toMoneyString('-1.5e2')).toThrow();
   });
 });

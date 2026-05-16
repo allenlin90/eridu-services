@@ -10,7 +10,7 @@ Controllers stay transport-only (authz, DTO parsing, response shaping). Orchestr
 
 ## 2. Monetary arithmetic uses decimal libraries end-to-end
 
-Do not convert to JS `Number` before aggregation or display formatting. Backend money values use `Prisma.Decimal`, which is backed by `decimal.js` and ships with `@prisma/client`. Frontend money formatting uses `Big` from `big.js`. Serialize money to string at the API boundary, and reject JS-number inputs in shared decimal serializers. `toFixed(2)` is forbidden inside aggregation paths unless it is called on an approved decimal-library value.
+Do not convert to JS `Number` before aggregation or display formatting. Backend money values use `Prisma.Decimal` (backed by `decimal.js`, ships with `@prisma/client`). Frontend money formatting uses `Big` from `big.js`. Serialize money to string at the API boundary, and reject JS-number inputs in shared decimal serializers (`decimalToString` on the backend, `toDecimalDisplayString` on the frontend). `toFixed(2)` is forbidden inside aggregation paths unless it is called on an approved decimal-library value (`Prisma.Decimal` or `Big`).
 
 ## 3. Polymorphic discriminators on financial tables use Prisma enums where cleanly supported
 

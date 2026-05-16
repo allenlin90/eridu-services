@@ -7,7 +7,7 @@ import { Badge } from '@eridu/ui';
 
 import { StudioCreatorActionsCell } from '../components/studio-creator-actions-cell';
 
-import { toDisplayMoneyString } from '@/features/compensation-line-items/utils/money-input';
+import { toDecimalDisplayString } from '@/lib/decimal-format';
 
 export const studioCreatorRosterSearchableColumns: SearchableColumn[] = [
   { id: 'creator_name', title: 'Creator' },
@@ -41,14 +41,14 @@ function formatMoney(value: string | null) {
   if (value === null) {
     return '—';
   }
-  return `$${toDisplayMoneyString(value)}`;
+  return `$${toDecimalDisplayString(value)}`;
 }
 
 function formatCommission(value: string | null) {
   if (value === null) {
     return '—';
   }
-  return `${toDisplayMoneyString(value)}%`;
+  return `${toDecimalDisplayString(value)}%`;
 }
 
 export function getStudioCreatorRosterColumns(ctx: ColumnContext): ColumnDef<StudioCreatorRosterItem>[] {
