@@ -302,12 +302,14 @@ export class StudioShiftRepository extends BaseRepository<
       orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
       include: {
         ...windowShiftInclude,
+        // All non-deleted blocks of any matched shift — NOT just in-window blocks.
+        // Out-of-window blocks are needed so consumers can compute shift-wide
+        // attributes (e.g. whether *every* block has complete actuals) correctly;
+        // otherwise a shift with one in-window complete block and one out-of-window
+        // incomplete block would be misclassified as resolved.
+        // Consumers clip per-block to the visible window themselves.
         blocks: {
-          where: {
-            deletedAt: null,
-            startTime: { lt: params.end },
-            endTime: { gt: params.start },
-          },
+          where: { deletedAt: null },
           orderBy: { startTime: 'asc' },
         },
       },

@@ -121,11 +121,15 @@ export class ShiftCalendarService {
     for (const shift of shifts) {
       shiftIds.add(shift.uid);
       const hourlyRate = this.toNumber(shift.hourlyRate);
+      // ALL blocks of the shift (not just in-window) — needed so a shift with one
+      // out-of-window incomplete block is correctly classified as pending shift-wide.
+      // Per-block window clipping happens below via `clipInterval`.
       const shiftBlocks = shift.blocks ?? [];
 
       // Shift-wide actual completeness — used to null per-shift `actual_cost` and to
-      // count resolved/pending. A shift is "resolved" when every block has both
-      // actualStartTime AND actualEndTime.
+      // count resolved/pending. A shift is "resolved" when every block on the shift
+      // has both actualStartTime AND actualEndTime, even blocks outside the visible
+      // window. Strict-null per cost-model §2.
       const shiftHasCompleteActuals = shiftBlocks.length > 0
         && shiftBlocks.every((block) => block.actualStartTime !== null && block.actualEndTime !== null);
       if (shiftHasCompleteActuals) {
@@ -141,26 +145,10 @@ export class ShiftCalendarService {
         }
 
         totalBlockCount += 1;
-        const clippedHours = this.hoursBetween(clipped.start, clipped.end);
 
-        // Per-block clipped actual hours: only contribute when the block itself has a
-        // complete actual pair AND the actual interval overlaps the visible window.
-        let clippedActualHours = 0;
-        if (block.actualStartTime !== null && block.actualEndTime !== null) {
-          const clippedActual = this.clipInterval(
-            block.actualStartTime,
-            block.actualEndTime,
-            rangeStart,
-            rangeEnd,
-          );
-          if (clippedActual) {
-            clippedActualHours = this.hoursBetween(clippedActual.start, clippedActual.end);
-          }
-        }
-
-        // Split cross-midnight blocks so each segment is aggregated into the correct day bucket.
-        const segments = this.splitIntervalByDay(clipped.start, clipped.end);
-        for (const segment of segments) {
+        // Split planned cross-midnight blocks so each segment is aggregated into the correct day bucket.
+        const plannedSegments = this.splitIntervalByDay(clipped.start, clipped.end);
+        for (const segment of plannedSegments) {
           const dateKey = this.toDateKey(segment.start);
 
           if (!dayMap.has(dateKey)) {
@@ -196,11 +184,6 @@ export class ShiftCalendarService {
           const dayShift = dayUser.shifts.get(shift.uid)!;
           const segmentHours = this.hoursBetween(segment.start, segment.end);
           const segmentPlannedCost = segmentHours * hourlyRate;
-          // Pro-rate the block's clipped actual hours by each segment's share of the
-          // block's clipped planned hours, so cross-midnight blocks with asymmetric
-          // day spans attribute actuals proportionally rather than uniformly.
-          const segmentShare = clippedHours > 0 ? segmentHours / clippedHours : 0;
-          const segmentActualCost = clippedActualHours * segmentShare * hourlyRate;
 
           dayShift.total_hours += segmentHours;
           dayShift.blocks.push({
@@ -212,14 +195,40 @@ export class ShiftCalendarService {
 
           dayUser.total_hours += segmentHours;
           dayUser.planned_cost_acc += segmentPlannedCost;
-          if (shiftHasCompleteActuals) {
-            dayShift.actual_cost_acc += segmentActualCost;
-          }
 
           totalHours += segmentHours;
           totalPlannedCost += segmentPlannedCost;
-          if (shiftHasCompleteActuals) {
-            totalActualCost += segmentActualCost;
+        }
+
+        // Actual cost is attributed to each day the actuals actually overlap — not pro-rated
+        // by planned span — so a block whose actuals concentrate on one day of a cross-midnight
+        // window doesn't bleed cost into the other day where no actual time was recorded.
+        // Only contributes when the block has a complete actual pair AND the shift as a whole
+        // is resolved (strict null when any block on the shift is pending).
+        if (shiftHasCompleteActuals && block.actualStartTime !== null && block.actualEndTime !== null) {
+          const clippedActual = this.clipInterval(
+            block.actualStartTime,
+            block.actualEndTime,
+            rangeStart,
+            rangeEnd,
+          );
+          if (clippedActual) {
+            const actualSegments = this.splitIntervalByDay(clippedActual.start, clippedActual.end);
+            for (const aSeg of actualSegments) {
+              const aSegHours = this.hoursBetween(aSeg.start, aSeg.end);
+              const aSegCost = aSegHours * hourlyRate;
+              totalActualCost += aSegCost;
+
+              // Attribute to the matching day-shift cell if it exists (i.e., the shift has
+              // planned coverage on this day). If actuals leaked into a day with no planned
+              // coverage, the cost still counts toward the period summary but isn't surfaced
+              // in any per-day cell — there's no row to attach it to.
+              const aDateKey = this.toDateKey(aSeg.start);
+              const dayShift = dayMap.get(aDateKey)?.get(shift.user.uid)?.shifts.get(shift.uid);
+              if (dayShift) {
+                dayShift.actual_cost_acc += aSegCost;
+              }
+            }
           }
         }
       }

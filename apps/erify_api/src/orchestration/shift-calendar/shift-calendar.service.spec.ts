@@ -153,10 +153,11 @@ describe('shiftCalendarService', () => {
     expect(result.timeline[0].users[0].shifts[0].actual_cost).toBeNull();
   });
 
-  it('pro-rates a cross-midnight block by each day-segment\'s share of the planned window', async () => {
+  it('attributes cross-midnight actual cost by the actual interval per day, not by planned ratio', async () => {
     studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
-    // Planned 23:00 → 03:00 (4h): day 1 gets 1h, day 2 gets 3h.
-    // Actual 23:00 → 02:00 (3h): proportionally day 1 gets 0.75h ($15), day 2 gets 2.25h ($45).
+    // Planned 23:00 → 03:00 (4h): day 1 gets 1h ($20), day 2 gets 3h ($60).
+    // Actual 23:00 → 02:00 (3h): day 1 has 1h of actuals ($20), day 2 has 2h ($40).
+    // (A planned-ratio attribution would incorrectly give day 1 $15 and day 2 $45.)
     studioShiftService.findShiftsInWindow.mockResolvedValue([
       {
         uid: 'ssh_xmidnight',
@@ -187,7 +188,90 @@ describe('shiftCalendarService', () => {
 
     const day1 = result.timeline.find((d) => d.date === '2026-03-05')!;
     const day2 = result.timeline.find((d) => d.date === '2026-03-06')!;
-    expect(day1.users[0].shifts[0].actual_cost).toBe('15.00');
-    expect(day2.users[0].shifts[0].actual_cost).toBe('45.00');
+    expect(day1.users[0].shifts[0].actual_cost).toBe('20.00');
+    expect(day2.users[0].shifts[0].actual_cost).toBe('40.00');
+  });
+
+  it('drops per-day actual cost to zero on days a cross-midnight block has planned but no actual time', async () => {
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    // Planned 23:00 → 03:00 (4h spans both days).
+    // Actual 00:00 → 02:00 (2h, entirely on day 2). Day 1 should get $0, day 2 $40.
+    // (Planned-ratio attribution would incorrectly bleed cost into day 1.)
+    studioShiftService.findShiftsInWindow.mockResolvedValue([
+      {
+        uid: 'ssh_xmidnight_lateonly',
+        status: 'COMPLETED',
+        isDutyManager: false,
+        hourlyRate: '20.00',
+        user: { uid: 'user_1', name: 'Alice' },
+        blocks: [
+          {
+            uid: 'ssb_1',
+            startTime: new Date('2026-03-05T23:00:00.000Z'),
+            endTime: new Date('2026-03-06T03:00:00.000Z'),
+            actualStartTime: new Date('2026-03-06T00:00:00.000Z'),
+            actualEndTime: new Date('2026-03-06T02:00:00.000Z'),
+          },
+        ],
+      },
+    ] as never);
+
+    const result = await service.getCalendar('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-06'),
+      includeCancelled: true,
+    });
+
+    expect(result.summary.total_actual_cost).toBe('40.00');
+
+    const day1 = result.timeline.find((d) => d.date === '2026-03-05')!;
+    const day2 = result.timeline.find((d) => d.date === '2026-03-06')!;
+    expect(day1.users[0].shifts[0].actual_cost).toBe('0.00');
+    expect(day2.users[0].shifts[0].actual_cost).toBe('40.00');
+  });
+
+  it('marks a shift as pending shift-wide when an out-of-window block has incomplete actuals', async () => {
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    // Shift has two blocks: one in the requested window (complete actuals), one outside
+    // the window (incomplete actuals). The repository now returns all blocks of a matched
+    // shift so the calendar can apply the strict-null cost-model semantic shift-wide.
+    studioShiftService.findShiftsInWindow.mockResolvedValue([
+      {
+        uid: 'ssh_outofwindow_incomplete',
+        status: 'SCHEDULED',
+        isDutyManager: false,
+        hourlyRate: '20.00',
+        user: { uid: 'user_1', name: 'Alice' },
+        blocks: [
+          {
+            uid: 'ssb_in_window',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T13:00:00.000Z'),
+            actualStartTime: new Date('2026-03-05T09:00:00.000Z'),
+            actualEndTime: new Date('2026-03-05T13:00:00.000Z'),
+          },
+          {
+            uid: 'ssb_out_of_window',
+            startTime: new Date('2026-03-07T09:00:00.000Z'),
+            endTime: new Date('2026-03-07T13:00:00.000Z'),
+            actualStartTime: new Date('2026-03-07T09:00:00.000Z'),
+            actualEndTime: null,
+          },
+        ],
+      },
+    ] as never);
+
+    const result = await service.getCalendar('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-05'),
+      includeCancelled: true,
+    });
+
+    // Whole shift is pending because the out-of-window block has incomplete actuals.
+    expect(result.summary.total_planned_cost).toBe('80.00');
+    expect(result.summary.total_actual_cost).toBe('0.00');
+    expect(result.summary.actual_cost_resolved_shift_count).toBe(0);
+    expect(result.summary.actual_cost_pending_shift_count).toBe(1);
+    expect(result.timeline[0].users[0].shifts[0].actual_cost).toBeNull();
   });
 });
