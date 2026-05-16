@@ -217,6 +217,11 @@ export const createStudioShiftSchema = z
     is_approved: z.boolean().optional(),
     metadata: studioShiftMetadataSchema.optional(),
   })
+  // .strict() so legacy clients still sending the now-removed `calculated_cost`
+  // (or any other deprecated field) get a clear Zod validation error instead of
+  // a silently-stripped silent-success — overrides flow through STUDIO_SHIFT
+  // compensation line items per cost-model §1.
+  .strict()
   .transform((data) => ({
     userId: data.user_id,
     date: new Date(data.date),
@@ -249,6 +254,10 @@ export const updateStudioShiftSchema = z
     override_reason: z.string().trim().min(1).max(1000).optional(),
     metadata: studioShiftMetadataSchema.optional(),
   })
+  // .strict() — same rationale as createStudioShiftSchema: legacy clients still
+  // sending `calculated_cost` (or any other deprecated/typo field) must fail
+  // fast rather than silently dropping the value.
+  .strict()
   .transform((data) => ({
     userId: data.user_id,
     date: data.date ? new Date(data.date) : undefined,
