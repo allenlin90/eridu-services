@@ -45,8 +45,10 @@ describe('shiftCalendarController', () => {
         shift_count: 1,
         block_count: 1,
         total_hours: 8,
-        total_projected_cost: '160.00',
-        total_calculated_cost: '0.00',
+        total_planned_cost: '160.00',
+        total_actual_cost: '0.00',
+        actual_cost_resolved_shift_count: 0,
+        actual_cost_pending_shift_count: 1,
       },
       timeline: [],
     });

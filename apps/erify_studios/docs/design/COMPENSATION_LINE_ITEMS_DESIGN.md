@@ -211,16 +211,17 @@ The backend records each confirmed override as one entry in `metadata.audit.snap
 - Missing or incomplete actuals are allowed; later economics reads decide whether a row is pending, unresolved, or planned-fallback.
 - Editing actuals from a workflow surface uses the standard show / shift-block update mutation and reuses its TanStack Query invalidation; FE does not maintain a parallel "actuals only" mutation.
 
-## Shift Cost Cleanup
+## Shift Cost Cleanup — ✅ shipped ([#72](https://github.com/allenlin90/eridu-services/pull/72))
 
-Removal of `projected_cost` and `calculated_cost` from shift contracts is a dedicated cleanup PR. That PR removes:
+`projected_cost` and `calculated_cost` were removed from shift contracts end-to-end in Phase 4 PR 3:
 
-- shift list/detail cost cells;
-- shift calendar summary cost cards;
-- shift form fields or fixtures that submit/read calculated cost;
-- tests and mocks that assume `projected_cost` or `calculated_cost`.
+- shift list/detail cost cells now render `planned_cost` and `actual_cost` (live-computed by the backend);
+- shift calendar summary cards show `Planned: $X` and `Actual: $Y — N of M pending` using the new `total_planned_cost` / `total_actual_cost` / `actual_cost_pending_shift_count` fields;
+- shift form fields no longer submit `calculated_cost` — manager overrides flow through `STUDIO_SHIFT` compensation line items per cost-model §1;
+- the compensation dialog gained a three-tile Hourly Rate / Planned / Actual header;
+- tests and mocks were updated to the new `planned_cost` / `actual_cost` shape across studio-shifts, my-shifts, compensation dialog, and table exports.
 
-The shift table's replacement monetary display comes from the Task 7 backend `total_cost` response field. Broader economics review screens still come from 2.3 backend economics/read-model APIs, never frontend recomputation.
+The manager `/shifts` page shows both planned and actual columns; the member `/my-shifts` view collapses to a single `Actual Cost` column (showing planned would create expectations the actual rarely meets) with null cells rendered as `Pending — actuals not recorded yet`. The CSV/JSON export gained per-block `Block N Planned Start/End` + `Block N Actual Start/End` columns so reconciliation can happen in-spreadsheet; the legacy combined `Blocks` column was dropped from the export. Broader economics review screens still come from 2.3 backend economics/read-model APIs, never frontend recomputation.
 
 ## Error Mapping
 
@@ -252,4 +253,4 @@ Manual smoke by PR:
 - PR 4 / Task 5: bulk creator mapping assigns creators only; per-show creator mapping renders backend totals and creates/updates/deletes `SHOW_CREATOR` line items against the assignment UID. The compensation dialog is wide enough on desktop that amount/type/reason controls do not collapse into a cramped three-field row.
 - PR 5: shift and shift-block panels create/update/delete line items without a target picker; block actuals set/clear/inverted paths work.
 - Snapshot dialog appears only for snapshot-field edits and preserves form input on cancel.
-- Cleanup PR: no `projected_cost` / `calculated_cost` UI, mocks, or fixtures remain; the shift table renders backend-provided `total_cost`.
+- Cleanup PR ([#72](https://github.com/allenlin90/eridu-services/pull/72)): no `projected_cost` / `calculated_cost` UI, mocks, or fixtures remain; the manager shift table renders backend-provided `planned_cost` + `actual_cost` columns, and `/my-shifts` renders `actual_cost` only.

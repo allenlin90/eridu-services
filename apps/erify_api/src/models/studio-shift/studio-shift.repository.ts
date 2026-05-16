@@ -8,17 +8,39 @@ import type { BlocksReplacePayload } from './schemas/studio-shift.schema';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
+const lineItemTargetInclude = {
+  where: { lineItem: { is: { deletedAt: null } } },
+  include: { lineItem: { select: { amount: true } } },
+} as const;
+
 const defaultShiftInclude = {
   user: true,
   studio: true,
   blocks: {
     where: { deletedAt: null },
     orderBy: { startTime: 'asc' },
+    include: {
+      compensationLineItemTargets: lineItemTargetInclude,
+    },
   },
+  compensationLineItemTargets: lineItemTargetInclude,
+} as const;
+
+// Lighter include for window/range queries used by orchestration surfaces
+// (calendar, alignment) that compute hours-and-rate rollups only. Line items
+// are intentionally excluded — those surfaces don't render them, so pulling
+// them just inflates payload size on the highest-fan-out query.
+const windowShiftInclude = {
+  user: true,
+  studio: true,
 } as const;
 
 export type StudioShiftWithRelations = Prisma.StudioShiftGetPayload<{
   include: typeof defaultShiftInclude;
+}>;
+
+export type StudioShiftWithWindowBlocks = Prisma.StudioShiftGetPayload<{
+  include: typeof windowShiftInclude & { blocks: true };
 }>;
 
 @Injectable()
@@ -260,7 +282,7 @@ export class StudioShiftRepository extends BaseRepository<
     start: Date;
     end: Date;
     includeCancelled?: boolean;
-  }): Promise<StudioShiftWithRelations[]> {
+  }): Promise<StudioShiftWithWindowBlocks[]> {
     return this.delegate.findMany({
       where: {
         studio: {
@@ -279,14 +301,15 @@ export class StudioShiftRepository extends BaseRepository<
       },
       orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
       include: {
-        user: true,
-        studio: true,
+        ...windowShiftInclude,
+        // All non-deleted blocks of any matched shift — NOT just in-window blocks.
+        // Out-of-window blocks are needed so consumers can compute shift-wide
+        // attributes (e.g. whether *every* block has complete actuals) correctly;
+        // otherwise a shift with one in-window complete block and one out-of-window
+        // incomplete block would be misclassified as resolved.
+        // Consumers clip per-block to the visible window themselves.
         blocks: {
-          where: {
-            deletedAt: null,
-            startTime: { lt: params.end },
-            endTime: { gt: params.start },
-          },
+          where: { deletedAt: null },
           orderBy: { startTime: 'asc' },
         },
       },

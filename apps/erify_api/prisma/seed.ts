@@ -1702,7 +1702,6 @@ async function main() {
           userId: mcUser1.id,
           isDutyManager: true,
           hourlyRate: '25.00',
-          projectedCost: '200.00',
           blocks: [
             {
               uid: fixtures.studioShiftBlocks.mc1CurrentDutyBlockMorning,
@@ -1721,7 +1720,6 @@ async function main() {
           userId: mcUser2.id,
           isDutyManager: false,
           hourlyRate: '18.50',
-          projectedCost: '111.00',
           blocks: [
             {
               uid: fixtures.studioShiftBlocks.mc2CurrentShiftBlock,
@@ -1745,7 +1743,6 @@ async function main() {
                 userId: shiftSeed.userId,
                 date: scheduleDate,
                 hourlyRate: shiftSeed.hourlyRate,
-                projectedCost: shiftSeed.projectedCost,
                 isDutyManager: shiftSeed.isDutyManager,
                 status: 'SCHEDULED',
                 metadata: {},
@@ -1758,7 +1755,6 @@ async function main() {
                 userId: shiftSeed.userId,
                 date: scheduleDate,
                 hourlyRate: shiftSeed.hourlyRate,
-                projectedCost: shiftSeed.projectedCost,
                 isDutyManager: shiftSeed.isDutyManager,
                 status: 'SCHEDULED',
                 metadata: {},

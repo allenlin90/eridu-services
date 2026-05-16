@@ -91,8 +91,8 @@ const shift = {
   user_name: 'Alex Manager',
   date: '2026-03-05',
   hourly_rate: '20.00',
-  projected_cost: '60.00',
-  calculated_cost: null,
+  planned_cost: '60.00',
+  actual_cost: null,
   is_approved: false,
   is_duty_manager: false,
   status: 'SCHEDULED' as const,
@@ -152,7 +152,7 @@ describe('shiftCompensationDialog', () => {
     );
   });
 
-  it('renders the projected base total from the shift snapshot', () => {
+  it('renders planned and actual cost rows; actual is "Pending" when actuals are incomplete', () => {
     render(
       <ShiftCompensationDialog
         open
@@ -162,8 +162,10 @@ describe('shiftCompensationDialog', () => {
       />,
     );
 
-    expect(screen.getByText('Projected base total')).toBeInTheDocument();
+    expect(screen.getByText('Planned')).toBeInTheDocument();
     expect(screen.getByText('$60.00')).toBeInTheDocument();
+    expect(screen.getByText('Actual')).toBeInTheDocument();
+    expect(screen.getByText('Pending')).toBeInTheDocument();
   });
 
   it('creates block line items with the block target id', async () => {

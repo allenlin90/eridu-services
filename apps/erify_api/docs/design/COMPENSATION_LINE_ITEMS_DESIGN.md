@@ -20,7 +20,7 @@ This backend design covers:
 - nullable show actuals (`Show.actualStartTime` / `Show.actualEndTime`) added to the existing `PATCH /studios/:studioId/shows/:showId` route;
 - nullable shift-block actuals (`StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime`) added to the existing shift-block update route;
 - snapshot-override audit append on future `ShowCreator` agreement edits and `StudioShift.hourlyRate` edits;
-- a separate cleanup PR for `StudioShift.projectedCost` and `StudioShift.calculatedCost`.
+- a separate cleanup PR for `StudioShift.projectedCost` and `StudioShift.calculatedCost` (✅ shipped via Phase 4 PR 3 — [#72](https://github.com/allenlin90/eridu-services/pull/72)).
 
 This design does **not** introduce cost arithmetic, settlement state, freeze guards, grace windows, dedicated audit tables, sign enforcement, generated base-compensation rows, standing/schedule-scoped/global/recurring line items, notifications, or historical snapshot backfill.
 
@@ -35,7 +35,7 @@ Task 5 adds one backend read model for creator mapping UX: a per-show creator co
 | PR 3       | Show actuals, shift-block actuals, and snapshot audit append helper                     | ✅ Merged (#63)                                   |
 | PR 4       | Creator mapping compensation summary and assignment snapshot defaults                   | ✅ Merged (#64)                                   |
 | PR 5       | Shift workflow contracts consumed by the frontend shift workflow UI                     | ✅ Merged (#65)                                   |
-| Cleanup PR | Drop `StudioShift.projectedCost` / `StudioShift.calculatedCost` across DB/API/consumers | Next coordinated BE/FE cleanup                    |
+| Cleanup PR | Drop `StudioShift.projectedCost` / `StudioShift.calculatedCost`; add live `planned_cost` / `actual_cost` per cost-model §2 | ✅ Merged ([#72](https://github.com/allenlin90/eridu-services/pull/72)) |
 
 Frontend workflow slices consume these backend contracts in their corresponding PRs.
 
@@ -151,20 +151,21 @@ enum CompensationLineItemTargetType {
 
 Both follow the existing `startTime` / `endTime` storage convention on the same models. Time-zone semantics match the existing scheduled fields (Prisma `DateTime`, UTC at the storage layer; client/serializer behavior unchanged).
 
-### Cleanup PR: shift cost fields
+### Cleanup PR: shift cost fields — ✅ shipped ([#72](https://github.com/allenlin90/eridu-services/pull/72))
 
-Remove both stored cost columns in a separate migration:
+Both stored cost columns were removed in Phase 4 PR 3:
 
-- `StudioShift.projectedCost` — currently `Decimal NOT NULL`. Removing the column requires removing every writer in the same PR; a partial change cannot land alone because creating a shift today fails without `projectedCost`.
-- `StudioShift.calculatedCost` — `Decimal?`.
+- `StudioShift.projectedCost` (was `Decimal NOT NULL`) — dropped.
+- `StudioShift.calculatedCost` (was `Decimal?`) — dropped.
 
-The cleanup PR scope:
+Replaced by two live-computed response fields per cost-model §2:
 
-- Backend: drop columns in a Prisma-generated migration; remove writes in `apps/erify_api/src/models/studio-shift/`, every shift orchestration path under `apps/erify_api/src/orchestration/shift-calendar/`, and any read-model serialization in `packages/api-types/src/studio-shifts/`.
-- Frontend: remove cost cells, summary cards, form fields, mocks, and fixtures in `apps/erify_studios/src/features/studio-shifts/` and any calendar surfaces.
-- Tests/specs that assert on these columns are updated in the same PR.
+- `planned_cost: string` (always non-null) = `hourlyRate × Σ planned block-duration + Σ attached STUDIO_SHIFT(_BLOCK) line-item amounts`.
+- `actual_cost: string | null` = same formula on actual block timestamps; **null when any block on the shift has an incomplete actual pair**. Strict-null per cost-model §2.
 
-Use `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` as the implementation search for the cleanup PR; the final checklist is every remaining writer, serializer, fixture, and UI consumer.
+The `calculated_cost` request input on `POST/PATCH /studios/:id/shifts` was also removed — overrides now flow through `STUDIO_SHIFT` compensation line items per cost-model §1, and `hourly_rate` changes still write a snapshot-audit entry justified by `override_reason`. The shift-calendar summary departs from strict null-bubbling in favor of partial-sum + explicit pending counts (`total_actual_cost` + `actual_cost_resolved_shift_count` + `actual_cost_pending_shift_count`) so manager rollups stay usable when some shifts are still pending. Per-day per-shift `actual_cost` is attributed by actual-interval-per-day split (not planned ratio), so cross-midnight blocks correctly skip days with no actual overlap.
+
+For any future grep audit: `rg 'projectedCost|calculatedCost|projected_cost|calculated_cost'` against the working tree should match only this design doc, the FE design doc, and migration files — no live code references remain.
 
 ## API Surface
 
@@ -380,7 +381,7 @@ Backend coverage targets by PR:
 - PR 3: snapshot edit appends one audit entry per changed snapshot field in deterministic order.
 - PR 3: non-snapshot edit does not append audit.
 - PR 3: optional `override_reason` flows to the audit entry.
-- Cleanup PR: shift create/update/calendar flows no longer read or write `projectedCost` / `calculatedCost`.
+- Cleanup PR ([#72](https://github.com/allenlin90/eridu-services/pull/72)): shift create/update/calendar flows no longer read or write `projectedCost` / `calculatedCost`; `planned_cost` / `actual_cost` are computed at serialize time from current shift inputs.
 - All PRs: soft-deleted line items are excluded from default reads.
 
 ## Verification
@@ -398,12 +399,12 @@ Migration smoke for schema PRs:
 
 - Apply the generated migration on a clean local DB.
 - Confirm created tables/columns/enums exist.
-- Confirm cleanup PR removes `StudioShift.projectedCost` / `StudioShift.calculatedCost` only when that PR is intentionally shipped.
+- Cleanup PR ([#72](https://github.com/allenlin90/eridu-services/pull/72)) removed `StudioShift.projectedCost` / `StudioShift.calculatedCost` via migration `20260516094040_drop_studio_shift_cost_columns`.
 
 ## Rollout Notes
 
 - **PR dependency order is not flat.** PR 1A is a hard prerequisite for PR 2 (studio line-item APIs reuse the model and contracts) and for PR 3 only where line items appear in actuals-related tests. PR 4 depends on PR 2 + PR 3. PR 5 depends on PR 2 + PR 3.
 - PR 1A and PR 3 can land in either order; both are independent of each other once contracts are merged.
 - Frontend workflow PRs (PR 1B, PR 4, PR 5) follow the corresponding backend API PRs.
-- The shift cost cleanup PR is coordinated because `StudioShift.projectedCost` is currently `NOT NULL`; removing the column requires removing every writer in the same PR. FE fixtures that read these fields are removed in the same PR.
+- The shift cost cleanup PR ([#72](https://github.com/allenlin90/eridu-services/pull/72)) coordinated the `NOT NULL` removal of `StudioShift.projectedCost` with every BE writer, every FE consumer, and the matching fixture cleanup in a single migration.
 - No data backfill command exists for 2.2.

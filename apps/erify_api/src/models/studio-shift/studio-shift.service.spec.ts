@@ -59,7 +59,7 @@ describe('studioShiftService', () => {
   });
 
   describe('createShift', () => {
-    it('should calculate projected cost and create shift with generated UIDs', async () => {
+    it('should create a shift with generated UIDs without persisting derived cost', async () => {
       membershipService.findOne.mockResolvedValue({
         baseHourlyRate: { toString: () => '20.00' },
       } as never);
@@ -89,7 +89,6 @@ describe('studioShiftService', () => {
         status: undefined,
         isDutyManager: undefined,
         isApproved: undefined,
-        calculatedCost: undefined,
         metadata: {},
       });
 
@@ -102,11 +101,12 @@ describe('studioShiftService', () => {
         expect.objectContaining({
           uid: 'ssh_1',
           hourlyRate: '20.00',
-          projectedCost: '80.00',
           studio: { connect: { uid: 'std_1' } },
           user: { connect: { uid: 'user_1' } },
         }),
       );
+      expect(repository.createShift.mock.calls[0]?.[0]).not.toHaveProperty('projectedCost');
+      expect(repository.createShift.mock.calls[0]?.[0]).not.toHaveProperty('calculatedCost');
       expect(repository.findOverlappingShift).toHaveBeenCalled();
       expect(result).toEqual({ uid: 'ssh_1' });
     });
@@ -136,7 +136,6 @@ describe('studioShiftService', () => {
           status: undefined,
           isDutyManager: undefined,
           isApproved: undefined,
-          calculatedCost: undefined,
           metadata: {},
         }),
       ).rejects.toThrow('Shift blocks cannot overlap');
@@ -162,7 +161,6 @@ describe('studioShiftService', () => {
           status: undefined,
           isDutyManager: undefined,
           isApproved: undefined,
-          calculatedCost: undefined,
           metadata: {},
         }),
       ).rejects.toThrow('User must be a member of the studio');
@@ -190,15 +188,11 @@ describe('studioShiftService', () => {
         status: undefined,
         isDutyManager: undefined,
         isApproved: undefined,
-        calculatedCost: undefined,
         metadata: {},
       });
 
-      expect(repository.createShift).toHaveBeenCalledWith(
-        expect.objectContaining({
-          projectedCost: '80.00',
-        }),
-      );
+      expect(repository.createShift).toHaveBeenCalled();
+      expect(repository.createShift.mock.calls[0]?.[0]).not.toHaveProperty('projectedCost');
     });
 
     it('should reject create when user already has an overlapping shift', async () => {
@@ -225,7 +219,6 @@ describe('studioShiftService', () => {
           status: undefined,
           isDutyManager: undefined,
           isApproved: undefined,
-          calculatedCost: undefined,
           metadata: {},
         }),
       ).rejects.toThrow('Shift blocks overlap with an existing non-cancelled shift for this user.');
@@ -241,7 +234,6 @@ describe('studioShiftService', () => {
           status: undefined,
           isDutyManager: undefined,
           isApproved: undefined,
-          calculatedCost: undefined,
           metadata: {},
         }),
       ).rejects.toThrow('Shift must contain at least one block');
@@ -278,11 +270,11 @@ describe('studioShiftService', () => {
         expect.objectContaining({
           isDutyManager: true,
           hourlyRate: '20.00',
-          projectedCost: '60.00',
         }),
         BigInt(1),
         undefined,
       );
+      expect(repository.updateShift.mock.calls[0]?.[2]).not.toHaveProperty('projectedCost');
       expect(repository.findOverlappingShift).toHaveBeenCalled();
     });
 
@@ -490,7 +482,6 @@ describe('studioShiftService', () => {
         expect.objectContaining({
           user: { connect: { uid: 'user_2' } },
           hourlyRate: '35.50',
-          projectedCost: '106.50',
         }),
         BigInt(1),
         undefined,

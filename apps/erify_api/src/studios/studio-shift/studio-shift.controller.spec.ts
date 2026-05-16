@@ -107,7 +107,6 @@ describe('studioShiftController', () => {
       status: 'SCHEDULED',
       isDutyManager: false,
       isApproved: false,
-      calculatedCost: undefined,
       metadata: {},
     };
     service.createShift.mockResolvedValue({ uid: 'ssh_1' } as never);
