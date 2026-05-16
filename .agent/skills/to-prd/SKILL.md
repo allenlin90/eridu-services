@@ -7,6 +7,20 @@ This skill takes the current conversation context and codebase understanding and
 
 The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
 
+## Pre-step — Should you write a PRD at all?
+
+Before producing a PRD, classify the work:
+
+| Trait | Right artifact |
+| --- | --- |
+| Introduces a new domain, new pattern, or unresolved product decisions | **PRD** in `docs/prd/` |
+| Additive work that mirrors a shipped pattern (e.g., per-creator analogue of an existing per-show summary) | **PR entry** in `docs/roadmap/PHASE_<n>.md` § PR Roadmap |
+| Locked semantic contract that active features conform to | **Domain doc** in `docs/domain/` |
+
+If the work mirrors a shipped pattern, stop here — open the active phase doc, add a PR entry with `User flow → UX target → Scope → Out of scope → Acceptance`, and skip the rest of this skill. The tracker entry IS the spec. Writing a PRD in that case is overhead with no payoff.
+
+Only continue if you're producing a novel-feature PRD.
+
 ## Process
 
 1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the PRD, and respect any ADRs in the area you're touching.

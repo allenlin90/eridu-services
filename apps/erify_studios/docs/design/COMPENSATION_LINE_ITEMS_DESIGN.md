@@ -3,9 +3,9 @@
 > **Status**: In Progress — Tasks 1-6 merged; Task 7 shift cost cleanup is next
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_studios`
-> **Product source**: [`docs/prd/compensation-line-items.md`](../../../../docs/prd/compensation-line-items.md)
+> **Tracker**: [`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md) — PRs 1-7 cover the remaining 2.2 work; PRs 1-6 shipped (this design doc covers shipped + remaining).
 > **Backend design**: [`apps/erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md`](../../../erify_api/docs/design/COMPENSATION_LINE_ITEMS_DESIGN.md)
-> **Implementation breakdown**: [`docs/superpowers/specs/2026-05-09-compensation-line-items-phase-2-2-breakdown.md`](../../../../docs/superpowers/specs/2026-05-09-compensation-line-items-phase-2-2-breakdown.md) and [`docs/superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md`](../../../../docs/superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md)
+> **Canonical semantics**: [`docs/domain/economics-cost-model.md`](../../../../docs/domain/economics-cost-model.md)
 > **Depends on**: 2.2 backend contracts; 1.5 Studio Show Management ✅; 1.3 Studio Member Roster ✅
 > **Gates**: 3.1 Studio Economics Review (read-only consumer)
 
@@ -17,7 +17,7 @@ This design covers data input only. Calculator-driven money displays land with 2
 
 Task 5 is the exception only in the sense that the per-show creator mapping view renders a backend-calculated creator compensation summary. The frontend still does not calculate money: it submits `SHOW_CREATOR` line-item mutations, then renders totals returned by `/studios/:studioId/shows/:showId/creators/compensation-summary`.
 
-Actuals surfaces follow the cost model's [actual ownership and scope](../../../../docs/prd/economics-cost-model.md#actual-ownership-and-scope). This 2.2 UI exposes show actuals and shift-block actuals only; future creator participation actuals and platform performance actuals must be labeled, keyed, and mutated as distinct resources.
+Actuals surfaces follow the cost model's [actual ownership and scope](../../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope). This 2.2 UI exposes show actuals and shift-block actuals only; future creator participation actuals and platform performance actuals must be labeled, keyed, and mutated as distinct resources.
 
 ## Workflow Model
 

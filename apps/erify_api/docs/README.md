@@ -29,7 +29,6 @@
 | [Studio Show Management](./STUDIO_SHOW_MANAGEMENT.md)                                                | ✅ Phase 4    | Studio-scoped show create/update/delete, lookup bundling, and last-write-wins semantics              |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                                                | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries                              |
 | [Studios Internal Read Traffic Hardening](../../erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md) | ✅ Ops        | Internal-read burst handling, query cancellation, and readBurst throttle coverage                    |
-| [Phase 4 P&L Backend Index](./PHASE_4_PNL_BACKEND.md)                                                | ⏳ Phase 4    | Phase-level backend index and shared rules for per-feature Phase 4 design docs                       |
 | [DB Migration Policy](../../../docs/engineering/DB_MIGRATION_POLICY.md)                              | ✅ Ops        | Canonical migration governance, tool-first generation, and branch-local scoping rule                 |
 
 ## Design

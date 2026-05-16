@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [Creator Availability Hardening](../prd/creator-availability-hardening.md), [P&L Revenue Workflow](../prd/pnl-revenue-workflow.md)
+> **Related**: [Creator availability hardening (PR 9 in PHASE_4.md)](../roadmap/PHASE_4.md#remaining-prs), [P&L Revenue Workflow (future PRD)](../prd/future/pnl-revenue-workflow.md)
 
 ## What
 
@@ -42,4 +42,4 @@ Promote to a PRD when **any** of these are true:
 
 ### Dependency on P&L economics
 
-Fixed cost tracking is a P&L concern. This item should be sequenced after Wave 2 (cost foundation) ships, so the variable-cost model from [`economics-cost-model.md`](../prd/economics-cost-model.md) is established before additional cost types are added.
+Fixed cost tracking is a P&L concern. This item should be sequenced after Wave 2 (cost foundation) ships, so the variable-cost model from [`economics-cost-model.md`](../domain/economics-cost-model.md) is established before additional cost types are added.

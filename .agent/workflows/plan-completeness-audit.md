@@ -10,17 +10,28 @@ Run this whenever a plan is being written, revised, signed off, or when an unexp
 
 ---
 
-## Step 0 — Identify the plan and the PRD
+## Step 0 — Identify the plan and the contract
+
+A "plan" here means any document that breaks work into multiple PRs. In this repo that takes two shapes:
+
+- A standalone plan at `docs/superpowers/plans/<date>-<feature>.md`.
+- The **PR Roadmap** section of `docs/roadmap/PHASE_<n>.md` (consolidated tracker).
+
+A "contract" means the truth source the plan is implementing against. In this repo:
+
+- A PRD at `docs/prd/<feature>.md`.
+- A locked operating contract at `docs/domain/<name>.md` (e.g., `economics-cost-model.md`).
 
 ```bash
-# Plan
-ls docs/superpowers/plans/ | grep -i <feature>
+# Find the plan (either shape)
+ls docs/superpowers/plans/ 2>/dev/null | grep -i <feature>
+rg -n "^## PR Roadmap|^### PR " docs/roadmap/
 
-# PRD it implements
-grep -l "<feature>" docs/prd/
+# Find the contract
+ls docs/prd/ docs/domain/ | grep -i <feature>
 ```
 
-You need both open at once. The plan is the candidate; the PRD is the truth source.
+You need both open at once. The plan is the candidate; the contract is the truth source.
 
 ## Step 1 — Build the actor-coverage matrix
 
@@ -138,10 +149,10 @@ A scenario cannot be partially satisfied; a deliverable can.
 
 ## Worked example
 
-The compensation-line-items 2.2 plan ([docs/superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md](../../docs/superpowers/plans/2026-05-09-compensation-line-items-phase-2-2.md)) was audited post-Task-5 and produced three gaps:
+The Phase 4 compensation-line-items work was audited post-Task-5 (now PR 4 in [PHASE_4.md](../../docs/roadmap/PHASE_4.md) — git history preserves the original standalone plan). Audit against [economics-cost-model.md](../../docs/domain/economics-cost-model.md) produced three gaps:
 
-1. **Snapshot edit path missing for `ShowCreator`**. Write row was Task 5 (bulk-assign), but no edit row existed. → New Task 8.
-2. **Actuals input UX orphaned**. Task 4 added actuals columns; Tasks 5/6 scoped out the UI; no forwarding address. → New Task 9.
-3. **Read views unreachable from the operator perspective**. PRD named three views, plan shipped only the per-show creator view. → New Task 10 (per-member shifts) + Task 8 (per-creator shows).
+1. **Snapshot edit path missing for `ShowCreator`.** Write row was the bulk-assign endpoint, but no edit row existed. → New PR 4 (per-show edit) + PR 5 (per-creator review).
+2. **Actuals input UX orphaned.** Schema columns were added by an earlier task; UI was scoped out across two tasks with no forwarding address. → New PR 6 (show-actuals input) + PR 7 (missing-actuals queue).
+3. **Read views unreachable from the operator perspective.** Contract named three views; plan shipped only the per-show creator view. → New PR 8 (per-member shifts) + PR 5 (per-creator shows).
 
-All three would have been caught at plan time with this audit. They were caught at PR-review time instead, which cost one extra round trip.
+All three would have been caught at plan time with this audit. They were caught at PR-review time instead, which cost one extra round trip. The 2026-05-15 plan→tracker consolidation absorbed all of these as named PR entries.

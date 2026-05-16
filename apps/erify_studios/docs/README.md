@@ -17,13 +17,12 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 5. [Studio Role Use Cases and Views](./STUDIO_ROLE_USE_CASES_AND_VIEWS.md)
 6. [Studio Shift Schedule Features and Workflows](./STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md)
 7. [Studio Creator Roster](./STUDIO_CREATOR_ROSTER.md)
-8. [Phase 4 P&L Frontend Index](./PHASE_4_PNL_FRONTEND.md)
-9. [PWA Shell Runbook](./PWA_SHELL_RUNBOOK.md)
-10. [Studios Internal Read Traffic Hardening](./STUDIOS_INTERNAL_READ_TRAFFIC.md)
-11. [Task Submission Reporting Frontend Reference](./TASK_SUBMISSION_REPORTING.md)
-12. [Studio Creator Onboarding Frontend Reference](./STUDIO_CREATOR_ONBOARDING.md)
-13. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md)
-14. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
+8. [PWA Shell Runbook](./PWA_SHELL_RUNBOOK.md)
+9. [Studios Internal Read Traffic Hardening](./STUDIOS_INTERNAL_READ_TRAFFIC.md)
+10. [Task Submission Reporting Frontend Reference](./TASK_SUBMISSION_REPORTING.md)
+11. [Studio Creator Onboarding Frontend Reference](./STUDIO_CREATOR_ONBOARDING.md)
+12. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md)
+13. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
 
 ## Design Docs
 

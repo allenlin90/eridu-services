@@ -18,6 +18,8 @@ Run when any of these are true:
 4. A cross-feature workstream is complete enough to document as an end-to-end flow.
 5. `docs/prd/` contains documents that no longer reflect the current active work.
 6. An `apps/*/docs/design/` document describes behavior that has shipped — promote it via the **Design Doc Promotion** section below.
+7. A mid-phase scope simplification has made multiple downstream PRDs stale — consolidate the remaining work into `docs/roadmap/PHASE_<n>.md` via the **Tracker Consolidation** section below.
+8. A PRD has become a locked operating contract that active features conform to (rather than pre-ship requirements) — promote it to `docs/domain/<name>.md` via classification **Operating Contract** in Step 2.
 
 ---
 
@@ -72,6 +74,17 @@ For each PRD in `docs/prd/` (excluding `README.md`):
 
 - Ensure the acceptance criteria still reflect what's actually in scope.
 - Update if the scope changed during implementation.
+
+**Operating Contract → promote to `docs/domain/`**
+
+When a PRD becomes a locked semantic specification that shipped + remaining features all conform to (the contract is "how this domain works" rather than "what we're going to build"), it has outgrown `docs/prd/`. Move it:
+
+1. `git mv docs/prd/<name>.md docs/domain/<name>.md`.
+2. Update all cross-references (`rg -l "prd/<name>.md"` → repoint to `domain/<name>.md`).
+3. Update `docs/prd/README.md` Phase N table to remove the row.
+4. Note the promotion in the phase doc if the PRD was previously listed there.
+
+The Phase 4 `economics-cost-model.md` move (2026-05-16) is the canonical example. Distinguishing trait: every active feature reads this doc as the canonical source, not as pre-ship requirements.
 
 ### 3. Evaluate whether a workflow doc is needed
 
@@ -136,6 +149,31 @@ grep -r "docs/product/" . --include="*.md" --exclude-dir=node_modules --exclude-
 - Fix any stale path references in skills, rules, app READMEs, and design docs.
 - Check that `docs/features/README.md` and `docs/workflows/README.md` index entries are accurate.
 - Check that PHASE_N.md canonical specs table points to files that actually exist.
+
+---
+
+## Tracker Consolidation
+
+Run this when a mid-phase scope change retires multiple downstream PRDs at once. Symptoms:
+
+- The phase's scope narrowed; downstream PRDs now restate or extend a single locked contract rather than introducing new product decisions.
+- Per-feature design pipeline (`workflow → PRD → spec → plan`) is overkill — most remaining work mirrors a shipped pattern.
+
+### Procedure
+
+1. **Promote the contract.** If one PRD encodes the locked semantic contract the remaining work conforms to, promote it to `docs/domain/` per the Operating Contract path in Step 2.
+2. **Rewrite remaining work as PR entries inside `docs/roadmap/PHASE_<n>.md`.** Each entry is sized for one user-observable outcome: user flow → UX target → scope → out-of-scope → acceptance. The shape is user-flow-first, not schema-first.
+3. **Delete the retired PRDs and any standalone breakdown specs / implementation plans.** Git history preserves the prior structure if anyone needs to trace it.
+4. **Update cross-references.** Anything pointing at the deleted PRDs or the moved contract gets repointed.
+5. **Shrink phase-level index files.** When all that's left is a small reference card (auth matrix, query keys), fold the unique content into a more natural home (e.g., `AUTHORIZATION_GUIDE.md`) and delete the index.
+
+The Phase 4 consolidation (2026-05-16) is the canonical example: 5 PRDs + 1 breakdown spec + 1 implementation plan → 15 PR entries in `PHASE_4.md`, with `economics-cost-model.md` promoted to `docs/domain/`.
+
+### When NOT to consolidate
+
+- A truly novel feature is in flight — write a PRD instead.
+- Scope is stable and PRDs are being implemented as-written — leave them alone.
+- The phase is closing soon — promote shipped PRDs to `docs/features/` per Step 2 rather than consolidating mid-flight.
 
 ---
 

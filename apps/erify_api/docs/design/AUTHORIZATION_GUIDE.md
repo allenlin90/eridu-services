@@ -338,7 +338,34 @@ This enables:
 3. Ensure `ROLE_PERMISSIONS` is defined in both `AdminGuard` and `/me` endpoint
 4. Consider extracting `ROLE_PERMISSIONS` to shared constants file
 
+## Phase 4 Endpoint → Role Matrix
+
+The matrix below is the Phase-4 authoritative endpoint→role mapping. It complements the role/permission model above with concrete endpoint groupings introduced by the Phase 4 cost workstreams.
+
+| Endpoint group                                | Required roles                                  |
+| --------------------------------------------- | ----------------------------------------------- |
+| Catalog / roster / availability reads         | `[ADMIN, MANAGER, TALENT_MANAGER]`              |
+| Show creator list read                        | `[ADMIN, MANAGER, TALENT_MANAGER]`              |
+| Bulk assign / remove creators                 | `[ADMIN, MANAGER, TALENT_MANAGER]`              |
+| Studio member roster reads                    | `[ADMIN, MANAGER]`                              |
+| Studio member roster writes                   | `[ADMIN]`                                       |
+| Studio creator roster writes                  | `[ADMIN]`                                       |
+| Studio show writes                            | `[ADMIN, MANAGER]`                              |
+| Show / shift-block actuals writes             | `[ADMIN, MANAGER]`                              |
+| Compensation line item reads                  | `[ADMIN, MANAGER]`                              |
+| Compensation line item writes                 | `[ADMIN, MANAGER]`                              |
+| Snapshot-field override writes                | `[ADMIN, MANAGER]`                              |
+| Member self-compensation view                 | `[ADMIN, MANAGER, self]`                        |
+| Creator self-compensation view                | `[ADMIN, MANAGER, TALENT_MANAGER, self]`        |
+| Operational economics reads (PR 8)        | `[ADMIN, MANAGER]`                              |
+| Show planning export (page-local, PR 2)       | `[ADMIN, MANAGER]`                              |
+| Recipient missing-actuals flag (PR 6)        | `[self]`                                        |
+
+PR numbers reference [PHASE_4.md § PR Roadmap](../../../../docs/roadmap/PHASE_4.md#remaining-prs).
+
 ## Related Documentation
 
 - [System Architecture Overview](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) - System architecture and module design
 - [Business Domain](../../../../docs/domain/BUSINESS.md) - Business domain and entity relationships
+- [Economics Cost Model](../../../../docs/domain/economics-cost-model.md) - L-side cost contract for Phase 4
+- [Phase 4 Roadmap](../../../../docs/roadmap/PHASE_4.md) - Workstream tracker and PR roadmap

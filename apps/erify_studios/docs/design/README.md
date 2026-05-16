@@ -11,7 +11,7 @@ Design/proposal/in-progress documents for `erify_studios`.
 
 ## Note
 
-- Phase 4 frontend cross-feature context is tracked in [../PHASE_4_PNL_FRONTEND.md](../PHASE_4_PNL_FRONTEND.md); feature-specific design lives in this folder.
+- Phase 4 cross-feature context lives in [PHASE_4.md](../../../../docs/roadmap/PHASE_4.md); feature-specific design lives in this folder.
 - Stale Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried pre-simplification assumptions. Active redrafts are listed in the index above.
 - Promoted canonical frontend references now live at:
   - [../STUDIO_CREATOR_ROSTER.md](../STUDIO_CREATOR_ROSTER.md)

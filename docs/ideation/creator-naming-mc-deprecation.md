@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4 feature branch merge
 > **Origin**: Phase 4 feature branch merge gap (`feat/phase-4-p-and-l`), March 2026
-> **Related**: [PHASE_4_PNL_BACKEND.md](../../apps/erify_api/docs/PHASE_4_PNL_BACKEND.md), [domain-refactor-cutover-strategy skill](../../.agent/skills/domain-refactor-cutover-strategy/SKILL.md), [data-compatibility-migration skill](../../.agent/skills/data-compatibility-migration/SKILL.md)
+> **Related**: [PHASE_4.md](../roadmap/PHASE_4.md), [domain-refactor-cutover-strategy skill](../../.agent/skills/domain-refactor-cutover-strategy/SKILL.md), [data-compatibility-migration skill](../../.agent/skills/data-compatibility-migration/SKILL.md)
 
 ## What
 
