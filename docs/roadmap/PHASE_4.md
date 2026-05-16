@@ -40,7 +40,7 @@ Rows are ordered top-to-bottom as execution order: rows 1-7 have no dependencies
 ### How to use this list
 
 - **Picking up a PR**: write a 1-3 sentence brief in a sub-section below (or just open the PR with that as the description). Mark status `🚧 In progress`.
-- **PR merged**: replace the brief with the PR link in the table. Update the relevant `docs/features/` and `apps/*/docs/` canonical docs with what actually shipped (not what was predicted). Mark the row `✅`.
+- **Wrapping up a PR (before merge, not after)**: as part of the PR's own commits, flip the row to `✅`, replace the brief with the PR link in the table, and update any other docs the PR's outcome affects — canonical docs in `docs/features/` and `apps/*/docs/` reflecting what actually shipped, and forward-looking roadmaps (e.g. drop now-shipped items from [`PHASE_5.md`](./PHASE_5.md) deferrals). Land docs atomically with the code so `master` always matches the roadmap; do not leave status flips for a follow-up commit. Prefer squash-merging the PR.
 - **Discovering a new boundary or dependency**: re-cluster the rows and re-check the "no row depends on a row below" invariant. Predictions made before code drift; this list should match reality, not the original guess.
 
 ### PR 2 · Shift export
