@@ -164,6 +164,23 @@ Use text labels only for dropdown menu items where needed for mobile action menu
 
 ---
 
+## 📤 Current-View Table Export
+
+For paginated studio table exports, export the current server-filtered view rather than only the loaded page:
+
+- keep URL/query parameter construction in the route hook and reuse it for export
+- omit `page` and `limit` when exporting, then fetch fixed-size pages with an explicit max-row cap
+- forward `AbortSignal` through every page request
+- serialize CSV through `src/lib/csv.ts` and download through `src/lib/file-download.ts`
+
+Canonical implementation references:
+
+- `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts`
+- `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts`
+- `.agent/skills/table-view-pattern/SKILL.md`
+
+---
+
 ## 📊 Task Report Key Contracts
 
 ### Source-scope vs run-scope

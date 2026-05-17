@@ -7,7 +7,7 @@ description: Provides patterns for building and optimizing large frontend tabula
 
 Standard patterns for large tabular views in `erify_studios`, `erify_creators`, and `@eridu/ui`.
 
-> See [references/table-view-details.md](references/table-view-details.md) for extended guidance, code examples, virtualization patterns, CRUD consistency rules, and anti-patterns.
+> See [references/table-view-details.md](references/table-view-details.md) for extended guidance, code examples, virtualization patterns, CRUD consistency rules, current-view export details, and anti-patterns.
 
 ## Read First
 
@@ -56,6 +56,18 @@ Standard patterns for large tabular views in `erify_studios`, `erify_creators`, 
 - **Local state**: Selected row id (not full objects), dialog/drawer open state, draft inline edits
 - Row selection surviving page changes: use `useSelectedRowSnapshots` feature hook
 
+## Current-View Export
+
+When a table supports CSV/JSON export, export the current server-filtered view, not just the visible page:
+
+- Derive export params from the same hook-owned API params as the table query; omit only `page`/`limit`.
+- Page through the list endpoint with a fixed export page size and a documented max row cap.
+- Forward an `AbortSignal` to every page request; abort in-flight exports on unmount or new export.
+- Use shared primitives (`src/lib/csv.ts`, `src/lib/file-download.ts`) for escaping, UTF-8 BOM, CRLF, and downloads.
+- Disable the export action when the matching count is zero or an export is already running.
+
+See [references/table-view-details.md](references/table-view-details.md) for reference implementations.
+
 ## Checklist
 
 - [ ] Shared `DataTable` primitives reused unless justified exception
@@ -65,6 +77,7 @@ Standard patterns for large tabular views in `erify_studios`, `erify_creators`, 
 - [ ] `isLoading` and `isFetching` both handled
 - [ ] Mutation invalidation scoped correctly
 - [ ] Stable row ids for selection/editing
+- [ ] Current-view export (if present) uses shared params + `AbortSignal` + shared CSV/download helpers
 - [ ] Route decomposition clean and maintainable
 - [ ] Layout compared against nearest canonical table
 
