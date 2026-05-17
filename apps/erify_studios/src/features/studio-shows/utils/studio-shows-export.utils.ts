@@ -77,6 +77,13 @@ function formatCreators(show: StudioShow): string {
     .join('; ');
 }
 
+function formatPlatforms(show: StudioShow): string {
+  return show.platforms
+    .map((platform) => platform.name)
+    .filter((name) => name.length > 0)
+    .join('; ');
+}
+
 function getActualsStatus(show: StudioShow): string {
   if (show.actual_start_time && show.actual_end_time) {
     return 'Complete';
@@ -101,7 +108,7 @@ export function buildStudioShowExportRows({
     show_status: show.show_status_name ?? '',
     show_type: show.show_type_name ?? '',
     show_standard: show.show_standard_name ?? '',
-    platforms: '',
+    platforms: formatPlatforms(show),
     creators: formatCreators(show),
     planned_start: formatDateTime(show.start_time),
     planned_end: formatDateTime(show.end_time),

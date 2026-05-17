@@ -254,6 +254,15 @@ describe('taskOrchestrationService', () => {
                 },
               },
             ],
+            showPlatforms: [
+              {
+                uid: 'showplatform_1',
+                platform: {
+                  uid: 'platform_1',
+                  name: 'YouTube',
+                },
+              },
+            ],
             taskTargets: [
               { task: { status: TaskStatus.COMPLETED, assigneeId: BigInt(1) } },
               { task: { status: TaskStatus.PENDING, assigneeId: null } },
@@ -276,6 +285,12 @@ describe('taskOrchestrationService', () => {
           creator_id: 'creator_1',
           creator_name: 'Alice',
           creator_alias_name: 'Alice A',
+        },
+      ]);
+      expect(result.data[0].platforms).toEqual([
+        {
+          id: 'platform_1',
+          name: 'YouTube',
         },
       ]);
     });

@@ -43,6 +43,10 @@ function createShow(overrides: Partial<StudioShow> = {}): StudioShow {
         creator_alias_name: 'Ari',
       },
     ],
+    platforms: [
+      { id: 'platform_1', name: 'YouTube' },
+      { id: 'platform_2', name: 'TikTok' },
+    ],
     task_summary: {
       total: 3,
       assigned: 2,
@@ -94,7 +98,7 @@ describe('studioShowsExportUtils', () => {
         show_status: 'Scheduled',
         show_type: 'Live',
         show_standard: 'Premium',
-        platforms: '',
+        platforms: 'YouTube; TikTok',
         creators: 'Ari Creator (Ari)',
         planned_start: 'fmt(2026-04-01T09:00:00.000Z)',
         planned_end: 'fmt(2026-04-01T10:00:00.000Z)',
@@ -108,6 +112,19 @@ describe('studioShowsExportUtils', () => {
         updated_at: 'fmt(2026-04-01T11:00:00.000Z)',
       },
     ]);
+  });
+
+  it('formats multiple platforms and treats no platforms as empty', () => {
+    const { rows } = buildStudioShowExportRows({
+      shows: [
+        createShow({ id: 'show_with_platforms' }),
+        createShow({ id: 'show_no_platforms', platforms: [] }),
+      ],
+      formatDateTime: fixedFormat,
+    });
+
+    expect(rows[0].platforms).toBe('YouTube; TikTok');
+    expect(rows[1].platforms).toBe('');
   });
 
   it('marks complete and incomplete actuals distinctly', () => {
