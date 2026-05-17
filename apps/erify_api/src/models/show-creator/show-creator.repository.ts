@@ -11,6 +11,28 @@ type ShowCreatorWithIncludes<T extends Prisma.ShowCreatorInclude> =
     include: T;
   }>;
 
+const showCreatorCompensationReviewInclude = {
+  show: {
+    select: {
+      uid: true,
+      name: true,
+      startTime: true,
+      endTime: true,
+    },
+  },
+  creator: {
+    select: {
+      uid: true,
+      name: true,
+      aliasName: true,
+    },
+  },
+} satisfies Prisma.ShowCreatorInclude;
+
+export type ShowCreatorCompensationReviewRecord = Prisma.ShowCreatorGetPayload<{
+  include: typeof showCreatorCompensationReviewInclude;
+}>;
+
 // Custom model wrapper that implements IBaseModel with ShowCreatorWhereInput
 
 @Injectable()
@@ -115,6 +137,39 @@ export class ShowCreatorRepository extends BaseRepository<
     include?: Prisma.ShowCreatorInclude;
   }): Promise<ShowCreator[]> {
     return this.delegate.findMany(params);
+  }
+
+  async findCompensationReviewRows(params: {
+    studioUid: string;
+    creatorUid: string;
+    dateFrom: Date;
+    dateTo: Date;
+  }): Promise<ShowCreatorCompensationReviewRecord[]> {
+    return this.delegate.findMany({
+      where: {
+        deletedAt: null,
+        creator: {
+          uid: params.creatorUid,
+          deletedAt: null,
+        },
+        show: {
+          deletedAt: null,
+          studio: {
+            uid: params.studioUid,
+            deletedAt: null,
+          },
+          startTime: {
+            gte: params.dateFrom,
+            lte: params.dateTo,
+          },
+        },
+      },
+      include: showCreatorCompensationReviewInclude,
+      orderBy: [
+        { show: { startTime: 'asc' } },
+        { id: 'asc' },
+      ],
+    });
   }
 
   /**

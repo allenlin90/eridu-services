@@ -242,6 +242,47 @@ export const studioShowCreatorAssignmentItemInputSchema = z.object({
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
+export const updateStudioShowCreatorInputSchema = z.object({
+  note: z.string().max(1000).nullable().optional(),
+  agreed_rate: defaultRateInputSchema,
+  compensation_type: creatorCompensationTypeSchema.nullable().optional(),
+  commission_rate: defaultCommissionRateInputSchema,
+  override_reason: z.string().trim().max(1000).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+}).superRefine((data, ctx) => {
+  if (
+    data.compensation_type === CREATOR_COMPENSATION_TYPE.FIXED
+    && data.commission_rate !== undefined
+    && data.commission_rate !== null
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['commission_rate'],
+      message: 'commission_rate must be null when compensation_type is FIXED',
+    });
+  }
+
+  if (
+    (data.compensation_type === CREATOR_COMPENSATION_TYPE.COMMISSION
+      || data.compensation_type === CREATOR_COMPENSATION_TYPE.HYBRID)
+    && data.commission_rate === null
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['commission_rate'],
+      message: 'commission_rate cannot be null when compensation_type is COMMISSION or HYBRID',
+    });
+  }
+
+  if (data.compensation_type === null && data.commission_rate !== undefined && data.commission_rate !== null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['commission_rate'],
+      message: 'commission_rate must be null when compensation_type is null',
+    });
+  }
+});
+
 export const studioShowCreatorListItemSchema = z.object({
   id: z.string().startsWith(`${UID_PREFIXES.SHOW_CREATOR}_`),
   creator_id: creatorUidSchema,
@@ -312,6 +353,37 @@ export const showCreatorCompensationSummarySchema = z.object({
   unresolved_count: z.number().int().nonnegative(),
 });
 
+export const studioCreatorCompensationReviewQuerySchema = z.object({
+  date_from: z.iso.datetime(),
+  date_to: z.iso.datetime(),
+}).superRefine((data, ctx) => {
+  if (new Date(data.date_to).getTime() <= new Date(data.date_from).getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['date_to'],
+      message: 'date_to must be later than date_from',
+    });
+  }
+});
+
+export const studioCreatorCompensationReviewShowSchema = showCreatorCompensationSummaryItemSchema.extend({
+  show_id: showUidSchema,
+  show_name: z.string(),
+  show_start_time: z.iso.datetime(),
+  show_end_time: z.iso.datetime(),
+});
+
+export const studioCreatorCompensationReviewSchema = z.object({
+  creator_id: creatorUidSchema,
+  creator_name: z.string(),
+  creator_alias_name: z.string(),
+  date_from: z.iso.datetime(),
+  date_to: z.iso.datetime(),
+  shows: z.array(studioCreatorCompensationReviewShowSchema),
+  total_amount: z.string(),
+  unresolved_count: z.number().int().nonnegative(),
+});
+
 export type StudioCreatorCatalogItem = z.infer<typeof studioCreatorCatalogItemSchema>;
 export type StudioCreatorCatalogQuery = z.infer<typeof studioCreatorCatalogQuerySchema>;
 export type StudioCreatorAvailabilityItem = z.infer<typeof studioCreatorAvailabilityItemSchema>;
@@ -322,6 +394,7 @@ export type CreateStudioCreatorRosterInput = z.infer<typeof createStudioCreatorR
 export type UpdateStudioCreatorRosterInput = z.infer<typeof updateStudioCreatorRosterInputSchema>;
 export type CreatorAvailabilityRequest = z.infer<typeof creatorAvailabilityRequestSchema>;
 export type StudioShowCreatorAssignmentItemInput = z.infer<typeof studioShowCreatorAssignmentItemInputSchema>;
+export type UpdateStudioShowCreatorInput = z.infer<typeof updateStudioShowCreatorInputSchema>;
 export type StudioShowCreatorListItem = z.infer<typeof studioShowCreatorListItemSchema>;
 export type BulkAssignStudioShowCreatorsInput = z.infer<typeof bulkAssignStudioShowCreatorsInputSchema>;
 export type BulkAssignStudioShowCreatorsFailure = z.infer<typeof bulkAssignStudioShowCreatorsFailureSchema>;
@@ -332,3 +405,6 @@ export type BulkShowCreatorAssignmentError = z.infer<typeof bulkShowCreatorAssig
 export type BulkShowCreatorAssignmentResponse = z.infer<typeof bulkShowCreatorAssignmentResponseSchema>;
 export type ShowCreatorCompensationSummaryItem = z.infer<typeof showCreatorCompensationSummaryItemSchema>;
 export type ShowCreatorCompensationSummary = z.infer<typeof showCreatorCompensationSummarySchema>;
+export type StudioCreatorCompensationReviewQuery = z.infer<typeof studioCreatorCompensationReviewQuerySchema>;
+export type StudioCreatorCompensationReviewShow = z.infer<typeof studioCreatorCompensationReviewShowSchema>;
+export type StudioCreatorCompensationReview = z.infer<typeof studioCreatorCompensationReviewSchema>;

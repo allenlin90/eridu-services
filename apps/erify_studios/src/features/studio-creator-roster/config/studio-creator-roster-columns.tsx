@@ -35,6 +35,7 @@ export const studioCreatorRosterSearchableColumns: SearchableColumn[] = [
 type ColumnContext = {
   studioId: string;
   isAdmin: boolean;
+  canManageCompensation: boolean;
 };
 
 function formatMoney(value: string | null) {
@@ -95,7 +96,7 @@ export function getStudioCreatorRosterColumns(ctx: ColumnContext): ColumnDef<Stu
     },
   ];
 
-  if (ctx.isAdmin) {
+  if (ctx.canManageCompensation) {
     columns.push({
       id: 'actions',
       header: 'Actions',
@@ -103,6 +104,7 @@ export function getStudioCreatorRosterColumns(ctx: ColumnContext): ColumnDef<Stu
         <StudioCreatorActionsCell
           creator={row.original}
           studioId={ctx.studioId}
+          canEditRoster={ctx.isAdmin}
         />
       ),
     });

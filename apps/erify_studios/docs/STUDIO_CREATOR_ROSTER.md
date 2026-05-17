@@ -14,14 +14,15 @@ Technical reference for the shipped studio creator roster page, including route 
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/studios/$studioId/creators` | Creator roster CRUD surface | `ADMIN` write, `MANAGER` + `TALENT_MANAGER` read |
+| `/studios/$studioId/creators` | Creator roster CRUD surface plus per-creator compensation review | `ADMIN` roster write, `ADMIN` + `MANAGER` compensation review/edit, `TALENT_MANAGER` read |
 
 Route guard requirements:
 
 - add `creatorRoster` to `src/lib/constants/studio-route-access.ts`
 - roles: `[ADMIN, MANAGER, TALENT_MANAGER]`
 - add sidebar item under the **Creators** group before **Creator Mapping**
-- hide row actions and add button for non-admin roles, but keep compensation data visible
+- hide roster write actions and add button for non-admin roles, but keep compensation data visible
+- show compensation review actions for `ADMIN` and `MANAGER`; `TALENT_MANAGER` remains read-only
 
 ## File Structure
 
@@ -35,6 +36,7 @@ Follow the shipped member-roster split instead of a single route file:
 - `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx`
 - `src/features/studio-creator-roster/components/edit-studio-creator-dialog.tsx`
 - `src/features/studio-creator-roster/components/studio-creator-actions-cell.tsx`
+- `src/features/studio-creator-roster/components/creator-compensation-review-dialog.tsx`
 - `src/features/studio-creator-roster/api/*` => list/create/update API declarations and query keys
 
 ## Table And Search State
@@ -58,7 +60,7 @@ Columns:
 - compensation type
 - commission rate
 - active badge
-- actions (admin only)
+- actions (`ADMIN` roster edit; `ADMIN` and `MANAGER` compensation review)
 
 ## Data And Query Model
 
@@ -70,6 +72,8 @@ Columns:
   - creator availability list family
 - use shared API types from `@eridu/api-types/studio-creators`
 - PATCH flows must send `version` and treat 409 as a refetch-and-review conflict path
+- compensation review uses `GET /studios/:studioId/creators/:creatorId/compensation-review`
+- assignment-term edits from review use `PATCH /studios/:studioId/shows/:showId/creators/:showCreatorId` and invalidate show creator list/summary caches
 
 ## Dialog Behavior
 
@@ -99,9 +103,18 @@ Columns:
   - replace stale assumptions with fresh server state or prompt reload
   - show conflict feedback instead of silent overwrite
 
+### Compensation review dialog
+
+- opens from the row actions cell for admins and managers
+- default range is today through 30 days ahead
+- shows per-show base, adjustment, total, and unresolved reason
+- edit action opens the show-creator compensation dialog for that `ShowCreator` row
+- assignment-term save edits only the show assignment snapshot, not `StudioCreator` defaults
+
 ## UX Rules
 
-- hide write actions for non-admin roles, but keep compensation fields visible
+- hide roster write actions for non-admin roles, but keep compensation fields visible
+- keep manager compensation actions scoped to per-show assignment snapshots and line items
 - keep creator-first naming and identifiers in UI copy
 - do not expose raw `StudioCreator` bigint IDs; wire contract stays on UIDs only
 - use the existing roster/table visual patterns; do not invent a one-off creator page layout

@@ -29,6 +29,8 @@ Technical reference for the shipped studio-scoped `StudioCreator` roster surface
 | `GET /studios/:studioId/creators` | List studio creator roster with compensation defaults |
 | `POST /studios/:studioId/creators` | Add creator from catalog to roster |
 | `PATCH /studios/:studioId/creators/:creatorId` | Update defaults or active state with optimistic concurrency |
+| `GET /studios/:studioId/creators/:creatorId/compensation-review` | Review one creator's show compensation over a date range |
+| `PATCH /studios/:studioId/shows/:showId/creators/:showCreatorId` | Update one `ShowCreator` assignment compensation snapshot |
 
 Shared contracts come from `packages/api-types/src/studio-creators/schemas.ts`.
 
@@ -68,6 +70,8 @@ The list response stays based on the existing studio-creator roster item and may
 - `GET /creators` returns paginated roster results using the existing list query DTO (`search`, `is_active`, `default_rate_type`, pagination).
 - `POST /creators` accepts the shared add payload, then returns the roster item DTO for the created or reactivated row.
 - `PATCH /creators/:creatorId` accepts the shared update payload and returns the updated roster item DTO.
+- `GET /creators/:creatorId/compensation-review` accepts `date_from` / `date_to`, verifies the creator belongs to the studio roster, and returns show assignment rows with base, adjustment, total, and unresolved reason fields.
+- `PATCH /shows/:showId/creators/:showCreatorId` validates studio/show scope before updating `ShowCreator.note`, `agreedRate`, `compensationType`, `commissionRate`, and metadata audit entries.
 
 ## Service
 
@@ -144,6 +148,7 @@ This keeps the API aligned with the product rule that inactive creators cannot b
 
 - API remains creator-first on the wire (`creator_id`), even though the writable record is `StudioCreator`.
 - Defaults are studio-scoped fallbacks for economics only; they never overwrite existing `ShowCreator` overrides.
+- Per-show assignment edits update only `ShowCreator` snapshot fields and append metadata snapshot override audit entries when monetary terms change.
 - Re-adding a previously inactive creator should restore the existing roster association instead of creating a second row.
 - No compatibility alias is retained for `/creators/roster`.
 

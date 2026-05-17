@@ -9,6 +9,7 @@ const mockUseStudioCompensationLineItems = vi.fn();
 const mockUseShowCreatorCompensationSummary = vi.fn();
 const mockCreateMutateAsync = vi.fn();
 const mockUpdateMutateAsync = vi.fn();
+const mockUpdateAssignmentMutateAsync = vi.fn();
 const mockDeleteMutate = vi.fn();
 
 const lineItemsResponse = {
@@ -91,6 +92,10 @@ vi.mock('@/features/compensation-line-items/hooks/use-compensation-line-item-mut
 
 vi.mock('@/features/studio-show-creators/api/get-show-creators', () => ({
   useShowCreatorCompensationSummary: (...args: unknown[]) => mockUseShowCreatorCompensationSummary(...args),
+  useUpdateShowCreatorAssignment: () => ({
+    mutateAsync: mockUpdateAssignmentMutateAsync,
+    isPending: false,
+  }),
 }));
 
 function renderDialog() {
@@ -163,6 +168,31 @@ describe('showCreatorCompensationDialog', () => {
         amount: '10.00',
         item_type: 'BONUS',
         reason: 'Extra prep',
+      });
+    });
+  });
+
+  it('updates per-show assignment compensation terms from the dialog', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    expect(screen.getByText('Assignment Terms')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Agreed Rate'));
+    await user.type(screen.getByLabelText('Agreed Rate'), '175');
+    await user.type(screen.getByLabelText('Override Reason'), 'Negotiated for this show');
+    await user.type(screen.getByLabelText('Assignment Note'), 'Updated host note');
+    await user.click(screen.getByRole('button', { name: 'Save Terms' }));
+
+    await waitFor(() => {
+      expect(mockUpdateAssignmentMutateAsync).toHaveBeenCalledWith({
+        id: 'show_mc_1',
+        data: {
+          note: 'Updated host note',
+          agreed_rate: '175.00',
+          compensation_type: 'FIXED',
+          commission_rate: null,
+          override_reason: 'Negotiated for this show',
+        },
       });
     });
   });
@@ -246,7 +276,7 @@ describe('showCreatorCompensationDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit compensation item Launch bonus' }));
 
-    expect(screen.getByLabelText('item-type')).toHaveValue('OTHER');
+    expect(screen.getAllByLabelText('item-type')[1]).toHaveValue('OTHER');
   });
 
   it('normalizes long-precision amounts via string padding (no binary float drift)', async () => {

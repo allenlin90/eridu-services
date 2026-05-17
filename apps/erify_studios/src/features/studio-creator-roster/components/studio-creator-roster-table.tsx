@@ -24,6 +24,7 @@ type StudioCreatorRosterTableProps = {
   isLoading: boolean;
   isFetching: boolean;
   isAdmin: boolean;
+  canManageCompensation: boolean;
   pagination: PaginationState & { total?: number; pageCount?: number };
   onPaginationChange: OnChangeFn<PaginationState>;
   columnFilters: ColumnFiltersState;
@@ -37,6 +38,7 @@ export function StudioCreatorRosterTable({
   isLoading,
   isFetching,
   isAdmin,
+  canManageCompensation,
   pagination,
   onPaginationChange,
   columnFilters,
@@ -46,7 +48,7 @@ export function StudioCreatorRosterTable({
   const [addOpen, setAddOpen] = useState(false);
   const [onboardOpen, setOnboardOpen] = useState(false);
 
-  const columns = getStudioCreatorRosterColumns({ studioId, isAdmin });
+  const columns = getStudioCreatorRosterColumns({ studioId, isAdmin, canManageCompensation });
 
   return (
     <>

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { CompensationLineItemApiResponse } from '@eridu/api-types/compensation-line-items';
+import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import type { StudioShowCreatorListItem } from '@eridu/api-types/studio-creators';
 import {
   Button,
@@ -31,7 +32,10 @@ import {
   useUpdateStudioCompensationLineItem,
 } from '@/features/compensation-line-items/hooks/use-compensation-line-item-mutations';
 import { toMoneyString } from '@/features/compensation-line-items/utils/money-input';
-import { useShowCreatorCompensationSummary } from '@/features/studio-show-creators/api/get-show-creators';
+import {
+  useShowCreatorCompensationSummary,
+  useUpdateShowCreatorAssignment,
+} from '@/features/studio-show-creators/api/get-show-creators';
 
 type ShowCreatorCompensationDialogProps = {
   open: boolean;
@@ -52,6 +56,14 @@ const ITEM_TYPE_OPTIONS = [
 type ItemType = (typeof ITEM_TYPE_OPTIONS)[number]['value'];
 
 const KNOWN_ITEM_TYPES = new Set<string>(ITEM_TYPE_OPTIONS.map((option) => option.value));
+const NO_COMPENSATION_TYPE = 'NONE';
+const COMPENSATION_TYPE_OPTIONS = [
+  { value: NO_COMPENSATION_TYPE, label: 'Not set' },
+  { value: CREATOR_COMPENSATION_TYPE.FIXED, label: 'Fixed' },
+  { value: CREATOR_COMPENSATION_TYPE.COMMISSION, label: 'Commission' },
+  { value: CREATOR_COMPENSATION_TYPE.HYBRID, label: 'Hybrid' },
+] as const;
+type CompensationTypeOption = (typeof COMPENSATION_TYPE_OPTIONS)[number]['value'];
 
 const UNRESOLVED_REASON_COPY: Record<string, string> = {
   AGREEMENT_SNAPSHOT_MISSING:
@@ -70,6 +82,147 @@ function formatUnresolvedReason(code: string): string {
 
 function coerceItemType(value: string): ItemType {
   return KNOWN_ITEM_TYPES.has(value) ? (value as ItemType) : 'OTHER';
+}
+
+function normalizeOptionalMoneyInput(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed ? toMoneyString(trimmed) : null;
+}
+
+function getLineItemButtonLabel(isSaving: boolean, isEditing: boolean) {
+  if (isSaving) {
+    return 'Saving...';
+  }
+
+  return isEditing ? 'Update Item' : 'Create Item';
+}
+
+function CreatorAssignmentTermsForm({
+  studioId,
+  showId,
+  creator,
+}: {
+  studioId: string;
+  showId: string;
+  creator: StudioShowCreatorListItem | null;
+}) {
+  const [assignmentNote, setAssignmentNote] = useState(creator?.note ?? '');
+  const [agreedRate, setAgreedRate] = useState(creator?.agreed_rate ?? '');
+  const [compensationType, setCompensationType] = useState<CompensationTypeOption>(
+    (creator?.compensation_type ?? NO_COMPENSATION_TYPE) as CompensationTypeOption,
+  );
+  const [commissionRate, setCommissionRate] = useState(creator?.commission_rate ?? '');
+  const [overrideReason, setOverrideReason] = useState('');
+  const updateAssignment = useUpdateShowCreatorAssignment(studioId, showId);
+
+  const handleAssignmentSubmit = async () => {
+    if (!creator) {
+      return;
+    }
+
+    let normalizedAgreedRate: string | null;
+    let normalizedCommissionRate: string | null;
+    try {
+      normalizedAgreedRate = normalizeOptionalMoneyInput(agreedRate);
+      normalizedCommissionRate = normalizeOptionalMoneyInput(commissionRate);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Invalid compensation terms');
+      return;
+    }
+
+    const nextCompensationType = compensationType === NO_COMPENSATION_TYPE ? null : compensationType;
+    const trimmedOverrideReason = overrideReason.trim();
+    await updateAssignment.mutateAsync({
+      id: creator.id,
+      data: {
+        note: assignmentNote.trim() || null,
+        agreed_rate: normalizedAgreedRate,
+        compensation_type: nextCompensationType,
+        commission_rate: normalizedCommissionRate,
+        override_reason: trimmedOverrideReason || undefined,
+      },
+    });
+    toast.success('Assignment terms updated');
+    setOverrideReason('');
+  };
+
+  return (
+    <div className="space-y-3 rounded-md border p-3">
+      <div>
+        <p className="text-sm font-medium">Assignment Terms</p>
+        <p className="text-xs text-muted-foreground">
+          Applies only to this show assignment.
+        </p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="show-creator-agreed-rate">Agreed Rate</Label>
+          <Input
+            id="show-creator-agreed-rate"
+            type="number"
+            step="0.01"
+            value={agreedRate}
+            onChange={(event) => setAgreedRate(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="show-creator-compensation-type">Compensation Type</Label>
+          <Select
+            value={compensationType}
+            onValueChange={(value) => setCompensationType(value as CompensationTypeOption)}
+          >
+            <SelectTrigger id="show-creator-compensation-type">
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              {COMPENSATION_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="show-creator-commission-rate">Commission Rate</Label>
+          <Input
+            id="show-creator-commission-rate"
+            type="number"
+            step="0.01"
+            value={commissionRate}
+            onChange={(event) => setCommissionRate(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="show-creator-override-reason">Override Reason</Label>
+          <Input
+            id="show-creator-override-reason"
+            value={overrideReason}
+            onChange={(event) => setOverrideReason(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5 md:col-span-2">
+          <Label htmlFor="show-creator-note">Assignment Note</Label>
+          <Textarea
+            id="show-creator-note"
+            value={assignmentNote}
+            onChange={(event) => setAssignmentNote(event.target.value)}
+            rows={2}
+          />
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void handleAssignmentSubmit()}
+          disabled={updateAssignment.isPending}
+        >
+          {updateAssignment.isPending ? 'Saving...' : 'Save Terms'}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function ShowCreatorCompensationDialog({
@@ -208,6 +361,13 @@ export function ShowCreatorCompensationDialog({
             </p>
           )}
 
+          <CreatorAssignmentTermsForm
+            key={creator?.id ?? 'empty-assignment'}
+            studioId={studioId}
+            showId={showId}
+            creator={creator}
+          />
+
           <div className="space-y-2">
             <p className="text-sm font-medium">Adjustment Items</p>
             {lineItems.length === 0 && (
@@ -297,7 +457,7 @@ export function ShowCreatorCompensationDialog({
             </Button>
           )}
           <Button type="button" onClick={() => void handleSubmit()} disabled={isSaving}>
-            {isSaving ? 'Saving...' : editingItem ? 'Update Item' : 'Create Item'}
+            {getLineItemButtonLabel(isSaving, Boolean(editingItem))}
           </Button>
         </DialogFooter>
       </DialogContent>
