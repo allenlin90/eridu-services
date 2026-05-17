@@ -25,6 +25,7 @@ type StudioShiftFormDialogProps = {
   formState: ShiftFormState;
   onFormChange: (next: ShiftFormState) => void;
   includeStatus?: boolean;
+  includeHourlyRate?: boolean;
   formError: string | null;
   isSubmitting: boolean;
   submitLabel: string;
@@ -44,6 +45,7 @@ export function StudioShiftFormDialog({
   formState,
   onFormChange,
   includeStatus = false,
+  includeHourlyRate = true,
   formError,
   isSubmitting,
   submitLabel,
@@ -68,6 +70,7 @@ export function StudioShiftFormDialog({
             formState={formState}
             onChange={onFormChange}
             includeStatus={includeStatus}
+            includeHourlyRate={includeHourlyRate}
           />
 
           {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}

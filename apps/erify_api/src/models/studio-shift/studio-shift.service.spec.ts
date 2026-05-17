@@ -246,7 +246,7 @@ describe('studioShiftService', () => {
         id: BigInt(1),
         uid: 'ssh_1',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         blocks: [
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
@@ -269,7 +269,7 @@ describe('studioShiftService', () => {
         'ssh_1',
         expect.objectContaining({
           isDutyManager: true,
-          hourlyRate: '20.00',
+          hourlyRate: '20',
         }),
         BigInt(1),
         undefined,
@@ -347,7 +347,7 @@ describe('studioShiftService', () => {
         uid: 'ssh_1',
         status: 'SCHEDULED',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         blocks: [
           {
             uid: 'ssb_keep',
@@ -409,7 +409,7 @@ describe('studioShiftService', () => {
         uid: 'ssh_1',
         status: 'SCHEDULED',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         blocks: [
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
@@ -433,7 +433,7 @@ describe('studioShiftService', () => {
         'ssh_1',
         expect.objectContaining({
           isDutyManager: true,
-          hourlyRate: '20.00',
+          hourlyRate: '20',
         }),
         BigInt(1),
         undefined,
@@ -446,7 +446,7 @@ describe('studioShiftService', () => {
         uid: 'ssh_1',
         status: 'SCHEDULED',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         blocks: [
           {
             startTime: new Date('2026-03-05T09:00:00.000Z'),
@@ -538,13 +538,72 @@ describe('studioShiftService', () => {
       );
     });
 
+    it('should reject hourly rate change when override_reason is missing', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: new Prisma.Decimal('20.00'),
+        metadata: { audit: { snapshot_overrides: [] } },
+        blocks: [
+          {
+            uid: 'ssb_keep',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: null,
+            actualEndTime: null,
+            metadata: {},
+          },
+        ],
+      } as never);
+
+      await expect(
+        service.updateShift('std_1', 'ssh_1', { hourlyRate: '25.00' }, 'user_actor'),
+      ).rejects.toThrow('override_reason is required when hourly_rate changes');
+
+      expect(repository.updateShift).not.toHaveBeenCalled();
+    });
+
+    it('should reject hourly rate change when override_reason is blank whitespace', async () => {
+      repository.findByUidInStudio.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'ssh_1',
+        status: 'SCHEDULED',
+        user: { uid: 'user_1' },
+        hourlyRate: new Prisma.Decimal('20.00'),
+        metadata: { audit: { snapshot_overrides: [] } },
+        blocks: [
+          {
+            uid: 'ssb_keep',
+            startTime: new Date('2026-03-05T09:00:00.000Z'),
+            endTime: new Date('2026-03-05T12:00:00.000Z'),
+            actualStartTime: null,
+            actualEndTime: null,
+            metadata: {},
+          },
+        ],
+      } as never);
+
+      await expect(
+        service.updateShift(
+          'std_1',
+          'ssh_1',
+          { hourlyRate: '25.00', overrideReason: '   ' },
+          'user_actor',
+        ),
+      ).rejects.toThrow('override_reason is required when hourly_rate changes');
+
+      expect(repository.updateShift).not.toHaveBeenCalled();
+    });
+
     it('should update one shift block actual side against the stored other side', async () => {
       repository.findByUidInStudio.mockResolvedValue({
         id: BigInt(1),
         uid: 'ssh_1',
         status: 'SCHEDULED',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         metadata: {},
         blocks: [
           {
@@ -586,7 +645,7 @@ describe('studioShiftService', () => {
         uid: 'ssh_1',
         status: 'SCHEDULED',
         user: { uid: 'user_1' },
-        hourlyRate: { toString: () => '20.00' },
+        hourlyRate: new Prisma.Decimal('20.00'),
         metadata: {},
         blocks: [
           {

@@ -1,20 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Label,
-  Textarea,
-} from '@eridu/ui';
-
 import { DeleteConfirmDialog } from '@/features/admin/components';
-import { toMoneyString } from '@/features/compensation-line-items/utils/money-input';
 import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
 import { useAssignDutyManager } from '@/features/studio-shifts/api/assign-duty-manager';
 import {
@@ -79,27 +66,11 @@ type EditDialogState = {
   error: string | null;
 };
 
-type PendingSnapshotUpdate = {
-  shiftId: string;
-  payload: UpdateStudioShiftPayload;
-};
-
 type ToolbarSearchParams = {
   user_id?: string;
   status?: ShiftListStatus;
   duty?: ShiftListDutyFilter;
 };
-
-function normalizeRate(value: string | number | null | undefined): string | null {
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-  try {
-    return toMoneyString(String(value));
-  } catch {
-    return null;
-  }
-}
 
 export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearch }: StudioShiftsTableProps) {
   const [deleteDialogShiftId, setDeleteDialogShiftId] = useState<string | null>(null);
@@ -113,8 +84,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const [editDialogState, setEditDialogState] = useState<EditDialogState | null>(null);
   const [editMemberSearch, setEditMemberSearch] = useState('');
   const [compensationShiftId, setCompensationShiftId] = useState<string | null>(null);
-  const [pendingSnapshotUpdate, setPendingSnapshotUpdate] = useState<PendingSnapshotUpdate | null>(null);
-  const [snapshotOverrideReason, setSnapshotOverrideReason] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const exportAbortRef = useRef<AbortController | null>(null);
 
@@ -301,29 +270,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       blocks,
     };
 
-    if (formState.hourlyRate.trim()) {
-      let normalizedRate: string;
-      try {
-        normalizedRate = toMoneyString(formState.hourlyRate);
-      } catch (error) {
-        setEditDialogState((previous) => (
-          previous
-            ? { ...previous, error: error instanceof Error ? error.message : 'Invalid hourly rate' }
-            : null
-        ));
-        return;
-      }
-      payload.hourly_rate = Number(normalizedRate);
-    }
-
-    const nextHourlyRate = normalizeRate(payload.hourly_rate);
-    const previousHourlyRate = normalizeRate(editingShift.hourly_rate);
-    if (nextHourlyRate !== null && previousHourlyRate !== nextHourlyRate) {
-      setPendingSnapshotUpdate({ shiftId: editingShift.id, payload });
-      setSnapshotOverrideReason('');
-      return;
-    }
-
     try {
       await updateShiftMutation.mutateAsync({ shiftId: editingShift.id, payload });
       setEditDialogState(null);
@@ -335,42 +281,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       ));
     }
   }, [editDialogState, editingShift, updateShiftMutation]);
-
-  const handleConfirmSnapshotUpdate = useCallback(async () => {
-    if (!pendingSnapshotUpdate) {
-      return;
-    }
-
-    const trimmedReason = snapshotOverrideReason.trim();
-    if (!trimmedReason) {
-      // Belt-and-suspenders: the Confirm button is also disabled when this is empty,
-      // but bail here too so a determined user can't dispatch an audit-less snapshot edit.
-      return;
-    }
-    const payload: UpdateStudioShiftPayload = {
-      ...pendingSnapshotUpdate.payload,
-      override_reason: trimmedReason,
-    };
-
-    try {
-      await updateShiftMutation.mutateAsync({ shiftId: pendingSnapshotUpdate.shiftId, payload });
-      setPendingSnapshotUpdate(null);
-      setSnapshotOverrideReason('');
-      setEditDialogState(null);
-    } catch (error) {
-      setEditDialogState((previous) => (
-        previous
-          ? { ...previous, error: getApiErrorMessage(error, 'Failed to update shift. Please try again.') }
-          : null
-      ));
-      setPendingSnapshotUpdate(null);
-    }
-  }, [pendingSnapshotUpdate, snapshotOverrideReason, updateShiftMutation]);
-
-  const handleCancelSnapshotUpdate = useCallback(() => {
-    setPendingSnapshotUpdate(null);
-    setSnapshotOverrideReason('');
-  }, []);
 
   const handleResetFilters = useCallback(() => {
     setTableMemberSearch('');
@@ -568,6 +478,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
           setEditDialogState((previous) => (previous ? { ...previous, formState: next } : null));
         }}
         includeStatus
+        includeHourlyRate={false}
         formError={editDialogState?.error ?? null}
         isSubmitting={updateShiftMutation.isPending}
         submitLabel="Save Changes"
@@ -577,56 +488,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         onOpenChange={handleEditDialogOpenChange}
         onCancel={handleCloseEditDialog}
       />
-
-      <Dialog
-        open={Boolean(pendingSnapshotUpdate)}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCancelSnapshotUpdate();
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Hourly Rate Change</DialogTitle>
-            <DialogDescription>
-              Changing hourly rate updates a compensation snapshot. Future reference costs for this shift
-              will recompute from the new rate.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="shift-hourly-rate-override-reason">Override reason</Label>
-            <Textarea
-              id="shift-hourly-rate-override-reason"
-              value={snapshotOverrideReason}
-              onChange={(event) => setSnapshotOverrideReason(event.target.value)}
-              rows={3}
-              placeholder="Reason for changing this snapshot..."
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              A reason is required so the snapshot audit captures why this rate changed.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancelSnapshotUpdate}
-              disabled={updateShiftMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => void handleConfirmSnapshotUpdate()}
-              disabled={updateShiftMutation.isPending || !snapshotOverrideReason.trim()}
-            >
-              Confirm rate change
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

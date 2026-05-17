@@ -66,7 +66,7 @@ POST /studios/:studioId/shifts
 }
 ```
 
-- `StudioShift.hourlyRate` is snapshotted at create time. Editing the snapshot post-creation requires the snapshot-warning dialog and captures `override_reason` per the cost-model PRD (shipped in PR #65 / Task 6).
+- `StudioShift.hourlyRate` is snapshotted at create time. Editing the snapshot post-creation is done from the **shift compensation dialog** — the `Hourly rate` tile is inline-editable and requires `override_reason`, which is enforced both client-side and by a service-layer guard (shipped in PR 3.5; previously a separate confirmation modal from the edit-shift dialog).
 - Shifts can carry multiple blocks; each block has independent planned and actual times.
 
 ### 3. Shift execution
@@ -143,7 +143,7 @@ GET /studios/:studioId/economics  →  operational rollups (3.1 consumer)
 
 - Shift labor **is** time-multiplied: `StudioShift.hourlyRate × block duration`. This contrasts with creator pay, which is flat per show.
 - `StudioShift.hourlyRate` is a snapshot from `StudioMembership.baseHourlyRate` at shift-create time. Roster-default edits do not retroactively rewrite shift snapshots.
-- ADMIN/MANAGER may edit `StudioShift.hourlyRate` post-creation through the normal update endpoint; the FE shows the snapshot-warning dialog and records `override_reason` in `metadata.audit.snapshot_overrides[]` (shipped in PR #65).
+- ADMIN/MANAGER may edit `StudioShift.hourlyRate` post-creation through `PATCH /studios/:id/shifts/:id`. The edit lives in the **shift compensation dialog** (inline tile editor); the edit-shift dialog itself no longer carries an `hourly_rate` field. The service-layer guard rejects PATCHes where `hourly_rate` is present and differs from stored but `override_reason` is missing (shipped in PR 3.5; consolidates the prior snapshot-warning modal from PR #65 into a single surface).
 - Block actuals follow the actuals-vs-planned cascade: both present → use actuals; absent → planned fallback with warning; one-sided → unresolved `ACTUALS_INCOMPLETE` for the recipient self-view, planned fallback with warning for manager surfaces.
 - Operator pay never uses commission components. The `compensationType` enum applies to creators only; shift labor is always `hourlyRate × duration` plus line-item adjustments.
 - Actuals are typed by ADMIN/MANAGER only in Phase 4. The wire label `OPERATOR_RECORD` is the *source category* in the priority cascade and does not imply the operator typed it.

@@ -36,14 +36,23 @@ The compensation dialog becomes the single canonical surface for all per-shift m
 After deriving `snapshotChanges` and before calling `appendSnapshotAudit`, insert:
 
 ```ts
-if (snapshotChanges.length > 0 && !payload.overrideReason?.trim()) {
+// Cost-model §1: an explicit hourly_rate edit (rate present in PATCH and different
+// from stored) must be justified. Rate changes driven by user reassignment (inherited
+// from the new member's base rate) are out of scope and continue to flow through.
+if (
+  payload.hourlyRate !== undefined
+  && snapshotChanges.length > 0
+  && !payload.overrideReason?.trim()
+) {
   throw HttpError.badRequest(
     'override_reason is required when hourly_rate changes',
   );
 }
 ```
 
-This mirrors the reverse check that already lives in [`snapshot-audit.helper.ts:29-34`](../../../apps/erify_api/src/lib/audit/snapshot-audit.helper.ts) (reason without change → 400). Together they enforce: **reason ⇔ change**.
+This mirrors the reverse check that already lives in [`snapshot-audit.helper.ts:29-34`](../../../apps/erify_api/src/lib/audit/snapshot-audit.helper.ts) (reason without change → 400). Together they enforce: **explicit rate edit ⇔ reason**.
+
+**Why the `payload.hourlyRate !== undefined` predicate.** The brief in [`PHASE_4.md`](../../roadmap/PHASE_4.md) PR 3.5 specifies the guard fires *"when hourly_rate is present in the PATCH body and differs from the stored value"*. Reassignment (`payload.userId` to a different user) also produces a `snapshotChanges` entry because the service overwrites `hourlyRate` from the new membership's base rate. Per the brief, that path is out of scope — managers reassigning a shift shouldn't be forced to write a justification for the inherited rate. A follow-up could tighten reassignment-driven rate changes; that's not this PR.
 
 `updateStudioShiftSchema` is **unchanged**. The brief suggested a "Zod cross-field validation", but Zod can't read the stored DB value at parse time, so a Zod-only refinement would either be over-strict (rejecting valid same-rate re-sends) or wrong (passing rate-change with no reason). The service is the only layer that knows both inputs.
 
