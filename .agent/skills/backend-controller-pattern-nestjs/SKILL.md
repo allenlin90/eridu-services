@@ -5,117 +5,58 @@ description: NestJS controller patterns for erify_api. Use when adding, changing
 
 # NestJS Controller Patterns
 
-Use this skill for controller-layer work in `apps/erify_api`. Keep controllers thin: validate and translate HTTP input, apply the correct auth boundary, call services, serialize responses, and map resource absence to the established HTTP response helpers.
+Controller-layer patterns for `apps/erify_api`. Controllers validate/translate HTTP input, apply auth, call services, and serialize responses.
 
 ## First Read
 
-- Existing implementation closest to the route type:
-  - Admin: [admin-client.controller.ts](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts)
-  - Studio: [studio-task-template.controller.ts](../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts)
-  - Me: [me-task.controller.ts](../../../apps/erify_api/src/me/me-task/me-task.controller.ts)
-  - Base controllers: [base-admin.controller.ts](../../../apps/erify_api/src/admin/base-admin.controller.ts), [base-studio.controller.ts](../../../apps/erify_api/src/studios/base-studio.controller.ts), [base.controller.ts](../../../apps/erify_api/src/lib/controllers/base.controller.ts)
-- Detailed rules: [controller-rules.md](references/controller-rules.md)
-- Full examples: [controller-examples.md](references/controller-examples.md)
+- Canonical controllers: [admin-client](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts), [studio-task-template](../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts), [me-task](../../../apps/erify_api/src/me/me-task/me-task.controller.ts)
+- Base controllers: [base-admin](../../../apps/erify_api/src/admin/base-admin.controller.ts), [base-studio](../../../apps/erify_api/src/studios/base-studio.controller.ts), [base](../../../apps/erify_api/src/lib/controllers/base.controller.ts)
+- Detailed rules: [controller-rules.md](references/controller-rules.md) | Examples: [controller-examples.md](references/controller-examples.md)
 
 ## Choose The Controller Type
 
-| Route type | Prefix | Base/auth pattern | Use when |
-| --- | --- | --- | --- |
+| Route type | Prefix | Base/auth | Use when |
+|---|---|---|---|
 | Admin | `admin/<resource>` | `BaseAdminController` | System admins manage global resources |
-| Studio | `studios/:studioId/<resource>` | `BaseStudioController`, optional `@StudioProtected([roles])` | A resource belongs to one studio |
-| Studio lookup | `studios/:studioId/<lookup>` | `BaseStudioController`, `@StudioProtected()` | Studio members read global lookup/reference data through a studio guard |
-| Me | `me/<resource>` | `BaseController`, `@CurrentUser()` | A signed-in user acts on their own resources |
-| Backdoor | `backdoor/<resource>` | `BaseBackdoorController` | Service-to-service or internal API-key calls |
-| Integration | integration-specific | Integration-specific base/decorator | External integrations such as Google Sheets or webhooks |
+| Studio | `studios/:studioId/<resource>` | `BaseStudioController` + `@StudioProtected` | Resource belongs to one studio |
+| Me | `me/<resource>` | `BaseController` + `@CurrentUser()` | User acts on own resources |
+| Backdoor | `backdoor/<resource>` | `BaseBackdoorController` | Service-to-service API-key calls |
 
-## Controller Workflow
+## Workflow
 
-1. Pick the controller type from the route boundary above.
-2. Validate all UID params with `UidValidationPipe`.
-3. Use the route context as the authority for scoping (`studioId`, `@CurrentUser()`, API key identity).
-4. Extract only the fields required by the service contract; do not pass whole DTOs through.
-5. Call a service or orchestration service; do not query Prisma from the controller.
-6. Serialize all responses with Zod decorators.
-7. Keep OpenAPI summaries, descriptions, and response descriptions synchronized with the actual controller behavior and canonical docs.
-8. Return paginated lists with the shared pagination helper.
-9. Apply a named throttle profile only when the endpoint is a high-frequency read path.
+1. Pick controller type → 2. Validate UID params with `UidValidationPipe` → 3. Use route context as scope authority → 4. Extract only service-needed fields → 5. Call service (no Prisma) → 6. Serialize with Zod decorators → 7. Return paginated lists with shared helper
 
-## Shared Rules
+## Key Rules
 
-- Prefer one canonical collection route per mutable resource. Use one parent for authorization/scope (`studios/:studioId/<resource>`), then address the resource by its own UID; avoid encoding grandparent chains such as `studios/:studioId/shows/:showId/creators/:assignmentId/<resource>` unless the child has no independent lifecycle or ID.
-- Use query/body fields for target filters and attachments when a resource can belong to several target types. Use `include`/`expand` only for read-time embedding of related resources, not as the primary create/update/delete surface for independently audited rows.
-- Use `@ZodResponse(schema, status?)` for standard responses.
-- Use `@ZodPaginatedResponse(schema)` for list endpoints.
-- Use `@AdminResponse()` and `@AdminPaginatedResponse()` for admin routes.
-- Use `PaginationQueryDto` or a feature-specific query schema that extends the shared pagination shape.
-- For deletes, use `@ZodResponse(undefined, HttpStatus.NO_CONTENT)`.
-- For semantic state transitions, prefer action endpoints such as `POST .../resolve-cancellation` over generic `PATCH`.
-- Keep services transport-agnostic: services must not accept HTTP DTOs, request objects, response objects, or Nest exceptions as public contracts.
-- When controller behavior changes, update adjacent `@ApiOperation`, `@ApiZodResponse`, `@AdminResponse`, and `@ZodResponse` descriptions in the same change.
-- For admin mutations, distinguish audit actor identity from target/change payload fields: infer the audit actor from authenticated admin context, but keep validated payload user IDs when the client intentionally selects a target user.
-- For admin mutations with domain side effects, use the same service/orchestration path as studio workflows. Do not use nested creates or broad update payloads when the child entity has its own lifecycle, audit metadata, snapshot fields, or downstream read-model impact. Known debt is tracked in [docs/tech-debt/admin-route-business-logic-bypass.md](../../../docs/tech-debt/admin-route-business-logic-bypass.md).
+- One canonical collection route per mutable resource under its auth boundary
+- `@ZodResponse`/`@ZodPaginatedResponse`/`@AdminResponse` for all responses
+- Semantic action endpoints (`POST .../resolve-cancellation`) over generic `PATCH`
+- Services must not accept HTTP DTOs, request/response objects, or Nest exceptions
+- Admin mutations use domain write paths, not nested Prisma creates
 
-## Controller-Type Checklists
+## Checklists
 
-### Admin
+**Admin**: extends `BaseAdminController`, `admin/<resource>` prefix, `@AdminResponse`, `UidValidationPipe`, `ensureResourceExists()`, reuses domain write path.
 
-- [ ] Extends `BaseAdminController`.
-- [ ] Route prefix is `admin/<resource>`.
-- [ ] Uses `@AdminResponse()` or `@AdminPaginatedResponse()`.
-- [ ] Uses `UidValidationPipe` for resource UID params.
-- [ ] Uses base helpers such as `ensureResourceExists()` for not-found responses.
-- [ ] Reuses the domain write path for child entities with business side effects instead of bypassing it with nested Prisma writes.
+**Studio**: extends `BaseStudioController`, validates `studioId` + resource UID, `@StudioProtected([roles])`, scopes by route `studioId` (rejects body-supplied studio IDs).
 
-### Studio
+**Me**: `me/` prefix, `@CurrentUser()` only, dedicated `Me{Domain}Service`, JWT `ext_id` resolved in me service, ownership in query predicate.
 
-- [ ] Extends `BaseStudioController`.
-- [ ] Route prefix is `studios/:studioId/<resource>`.
-- [ ] Validates both `studioId` and resource UID params.
-- [ ] Applies role restrictions with `@StudioProtected([roles])` when membership alone is insufficient.
-- [ ] Scopes every read, update, and delete by the route `studioId`.
-- [ ] Create operations connect the studio relation from the route `studioId`.
-- [ ] Ignores or rejects client-supplied studio IDs in body/query; route `studioId` is authoritative.
+**Backdoor**: extends `BaseBackdoorController`, no `@CurrentUser()`.
 
-### Studio Lookup
+## Review
 
-- [ ] Uses `@StudioProtected()` so only studio members can read lookups through a studio route.
-- [ ] Prefixes unused route params with `_` when the guard validates the studio but the global lookup service is unscoped.
-- [ ] Does not export the lookup module from `StudiosModule` unless another module injects its providers.
+- [ ] Correct boundary, base class, and guard
+- [ ] No internal DB IDs exposed, all Zod serialization
+- [ ] UID params use `UidValidationPipe`
+- [ ] DTOs translated to service payloads
+- [ ] Studio/user ownership enforced at query level
+- [ ] Lists paginated and bounded
+- [ ] High-frequency reads use `@ReadBurstThrottle()`
+- [ ] No Prisma queries in controller
 
-### Me
+## Open References
 
-- [ ] Route prefix starts with `me/`.
-- [ ] Uses `@CurrentUser()` and never trusts a user ID from params or body.
-- [ ] Uses a dedicated `Me{Domain}Service` when internal DB user resolution or ownership scoping is needed.
-- [ ] Resolves JWT `ext_id` to the internal user in the me service, not in the controller.
-- [ ] Enforces ownership in the query predicate, not as a post-query check.
-
-### Backdoor And Integration
-
-- [ ] Backdoor routes extend `BaseBackdoorController` and use the `backdoor/<resource>` prefix.
-- [ ] Backdoor routes do not use `@CurrentUser()`.
-- [ ] Integration routes use their integration-specific base class and auth decorator.
-- [ ] External integration responses keep the expected wire format, including snake_case where required.
-
-## Open References When Needed
-
-- Open [controller-rules.md](references/controller-rules.md) when deciding route semantics, DTO mapping, me-service ownership, studio lookups, or throttle profiles.
-- Open [controller-examples.md](references/controller-examples.md) when writing or reviewing concrete controller code.
-- Open [../erify-authorization/SKILL.md](../erify-authorization/SKILL.md) when choosing studio/admin guards or roles.
-- Open [../data-validation/SKILL.md](../data-validation/SKILL.md) when changing schemas, pipes, or response serialization.
-- Open [../service-pattern-nestjs/SKILL.md](../service-pattern-nestjs/SKILL.md) when shaping the service payload contract.
-
-## Review Checklist
-
-- [ ] Correct controller boundary and base class.
-- [ ] Correct guard/decorator for the route audience.
-- [ ] OpenAPI operation and response descriptions match current implementation and canonical docs.
-- [ ] No internal database IDs exposed.
-- [ ] All responses use Zod serialization.
-- [ ] UID params use `UidValidationPipe`.
-- [ ] DTOs are explicitly translated to service payloads.
-- [ ] Admin audit actor fields are derived from auth context and not confused with target user IDs in the payload.
-- [ ] Studio/user ownership is enforced at query level.
-- [ ] Lists are paginated and bounded.
-- [ ] High-frequency app reads use `@ReadBurstThrottle()` instead of skipping throttling; integration exceptions are documented and separately authenticated.
-- [ ] No Prisma queries or domain workflows live in the controller.
+- [controller-rules.md](references/controller-rules.md) — route semantics, DTO mapping, throttle profiles
+- [controller-examples.md](references/controller-examples.md) — concrete code
+- [erify-authorization](../erify-authorization/SKILL.md) — guard/role decisions

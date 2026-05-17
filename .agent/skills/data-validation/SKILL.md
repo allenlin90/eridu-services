@@ -3,359 +3,69 @@ name: data-validation
 description: Provides comprehensive guidance for input validation, data serialization, and ID management in backend APIs. This skill should be used when designing validation schemas, transforming request/response data, mapping database IDs to external identifiers, and ensuring type safety across API boundaries.
 ---
 
-# Data Validation Skill
+# Data Validation
 
-Provides comprehensive guidance for input validation, response serialization, and ID management.
+Input validation, response serialization, and ID management patterns.
 
-## Core Concepts
+> See [references/validation-examples.md](references/validation-examples.md) for detailed code examples.
 
-**API Contract vs Internal Implementation**:
+## Three-Layer Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│          Client (External)              │
-│    snake_case IDs, user-friendly        │
-└──────────────┬──────────────────────────┘
-               │
-         HTTP API Boundary
-               │
-┌──────────────▼──────────────────────────┐
-│    Your Application (Internal)          │
-│    camelCase IDs, database structure    │
-└─────────────────────────────────────────┘
+Client (snake_case) → HTTP API Boundary → Application (camelCase) → Database
 ```
 
-**Responsibilities at each layer**:
-
-| Layer      | Responsibility                                     |
-| ---------- | -------------------------------------------------- |
+| Layer | Responsibility |
+|---|---|
 | Controller | Validate input (schema), serialize output (schema) |
-| Service    | Business logic with internal format                |
-| Repository | Database access with internal format               |
-| Database   | Storage with primary keys                          |
+| Service | Business logic with internal format |
+| Repository | Database access with internal format |
 
-## ID Management Pattern
+## ID Management
 
 ### External API Contract
-
-```
-URL:
-  GET /admin/users/:id     // id = uid (user_abc123)
-
-Response:
-{
-  "id": "user_abc123",                  // UID mapped as id
-  "email": "user@example.com",
-  "name": "John Doe",
-  // NO "uid" field
-  // NO database "id" field (bigint primary key)
-}
-```
-
-### Internal Implementation
-
-```
-Database:
-{
-  id: 12345,                // bigint primary key (NEVER exposed)
-  uid: "user_abc123",       // Branded UID
-  email: "user@example.com",
-  name: "John Doe",
-}
-
-Services and Repositories:
-- Use uid: "user_abc123"
-- Never expose id: 12345
-- Query by uid: WHERE uid = 'user_abc123'
-```
+- URL params and response `id` fields use UIDs (`user_abc123`)
+- No `uid` field in responses — map `uid → id`
+- Never expose database primary keys (`bigint`)
 
 ### UID Format
+- Pattern: `{PREFIX}_{RANDOM_ID}` (e.g., `user_abc123`, `studio_ghi012`)
+- Prefix has no trailing underscore
+- Use cryptographically secure random
 
-```
-Pattern: {PREFIX}_{RANDOM_ID}
+### 🔴 Never Compare Database IDs with UIDs
+Database IDs (`BigInt`) and UIDs (`string`) are different types. Use query-based scoping or resolve UID to ID first.
 
-Examples:
-- user_abc123
-- show_xyz789
-- client_def456
-- studio_ghi012
+## Input Validation
 
-Key Rules:
-- ✅ Prefix has no trailing underscore
-- ✅ Use cryptographically secure random
-- ✅ Make globally unique
-- ❌ Never expose database ID pattern
-- ❌ Never expose prefix pattern in error messages
-```
+Validate at API boundary, transform format:
+- snake_case → camelCase on input
+- Check required fields, format, references
+- Use Zod schemas and `createZodDto` at boundaries
+- For date/time fields, use `z.iso.datetime()` / `z.iso.date()`, not `z.coerce.date()`
 
-### 🔴 Critical: Never Compare Database IDs with UIDs
+### Action Validation (Workflow Endpoints)
+Validate action intent explicitly: action enum, required reason/metadata for audited transitions, deterministic error payloads.
 
-Database IDs (`BigInt`) and UIDs (`string`) are fundamentally different types. **Never** compare them directly — this is a common source of bugs that silently fails.
+## Response Serialization
 
-```
-❌ BAD: Comparing BigInt database ID with UID string
-// entity.studioId is BigInt (e.g., 12345n)
-// studioId is a UID string (e.g., "std_abc123")
-if (entity.studioId?.toString() !== studioId) { ... }
-// BigInt.toString() gives "12345", which NEVER equals "std_abc123"
-// This comparison ALWAYS fails!
-
-✅ GOOD: Use query-based scoping
-// Let the database handle the scoping in the query itself
-const entity = await this.service.findOne({
-  uid: entityUid,
-  studio: { uid: studioId },  // Prisma resolves the relation
-  deletedAt: null,
-});
-if (!entity) { throw HttpError.notFound(...); }
-
-✅ ACCEPTABLE: Resolve UID to ID first, then compare BigInt-to-BigInt
-const studio = await this.studioService.findByUid(studioUid);
-if (entity.studioId !== studio.id) { ... }  // BigInt === BigInt
-```
-
-## Input Validation Pattern
-
-**Validate at API boundary, transform format**:
-
-```
-Client Request (snake_case):
-{
-  "email": "user@example.com",
-  "user_id": "user_123",
-  "is_banned": false
-}
-    ↓
-Validation Layer:
-- Check required fields
-- Check format (email, length, etc.)
-- Check references exist (user_id)
-    ↓
-Transform Layer (snake_case → camelCase):
-{
-  email: "user@example.com",
-  userId: "user_123",
-  isBanned: false
-}
-    ↓
-Service Layer (processes camelCase)
-```
-
-**Validation Schema Example**:
-
-```
-Input schema:
-- email: string, email format, required
-- name: string, min 1 char, max 255 chars
-- is_banned: boolean, optional
-- user_id: string, matches UID format
-
-Validation rules:
-- Transform snake_case → camelCase
-- Check format of IDs (startsWith prefix)
-- Check required fields
-- Check string lengths
-
-### Action Validation Rule (Workflow Endpoints)
-
-For workflow/action endpoints, validate action intent explicitly instead of relying on generic update schemas.
-
-Required patterns:
-
-1. action enum validation (`resolution_action`, etc.),
-2. required reason/metadata fields for audited transitions,
-3. deterministic domain error payloads for policy violations (for example active-task blocking),
-4. consistent external field naming in contract (`id`, `external_id`, snake_case).
-```
-
-## Response Serialization Pattern
-
-**Transform internal format to API format**:
-
-```
-Service returns (camelCase, internal):
-{
-  id: 12345n,                 // database ID (never in response!)
-  uid: "user_abc123",         // UID (maps to "id")
-  email: "user@example.com",
-  isBanned: false,
-  createdAt: Date,
-  updatedAt: Date,
-}
-    ↓
-Serialization Layer:
-- Map uid → id
-- Hide database id field
-- Transform camelCase → snake_case
+- Map `uid → id`, hide database `id` field
+- Transform camelCase → snake_case on output
 - Transform dates to ISO format
-    ↓
-Client receives (snake_case, friendly):
-{
-  "id": "user_abc123",        // UID as id
-  "email": "user@example.com",
-  "is_banned": false,
-  "created_at": "2025-01-14T10:00:00Z",
-  "updated_at": "2025-01-14T10:00:00Z"
-  // NO "uid" field
-  // NO database "id" field
-}
-```
 
-**Serialization Schema Example**:
+## Checklist
 
-```
-Output schema (from service):
-- uid: string
-- email: string
-- isBanned: boolean
-- createdAt: Date
-- updatedAt: Date
-
-Transform to DTO:
-- uid → id
-- isBanned → is_banned
-- createdAt → created_at
-- updatedAt → updated_at
-```
-
-## Nested Validation
-
-**Validate related entities by UID**:
-
-```
-Input (user creating a show):
-{
-  "name": "Studio A Show",
-  "client_id": "client_123",      // Client UID
-  "studio_room_id": "room_456",   // StudioRoom UID
-  "show_type_id": "type_bau",     // ShowType UID
-}
-
-Validation:
-1. Check string format (looks like UID)
-2. Service verifies entity exists
-3. Service queries by UID
-4. If not found, throw not-found error
-```
-
-**Key Rules**:
-- ✅ Validate UID format (starts with prefix)
-- ✅ Service verifies entity exists (query)
-- ✅ Return not-found error if missing
-- ❌ Never assume IDs exist without checking
-- ❌ Never expose missing ID in error details
-
-## Type Mapping
-
-**Database → Service → API**:
-
-```
-Database     | Service       | API Response
-─────────────┼───────────────┼──────────────
-bigint       | bigint        | string (UID)
-string (uid) | string (uid)  | string (id)
-boolean      | boolean       | boolean
-timestamp    | Date          | ISO string
-```
-
-**Transformation Examples**:
-
-```
-Database integer → API string (UID):
-  DB: { id: 12345, uid: "user_abc123" }
-  Service: { uid: "user_abc123" }
-  API: { "id": "user_abc123" }
-
-Database TIMESTAMP → API ISO string:
-  DB: { created_at: 2025-01-14 10:00:00 }
-  Service: { createdAt: Date(2025-01-14 10:00:00) }
-  API: { "created_at": "2025-01-14T10:00:00Z" }
-
-Database boolean → API boolean:
-  DB: { is_banned: true }
-  Service: { isBanned: true }
-  API: { "is_banned": true }
-```
-
-## Pagination Validation
-
-**Validate pagination parameters**:
-
-```
-Input:
-{
-  "page": "1",      // String from query param
-  "limit": "10"
-}
-
-Validation:
-- Convert to number
-- Check >= 1
-- Check <= max (e.g., 100)
-- Provide defaults (page: 1, limit: 10)
-
-Output:
-{
-  page: 1,
-  limit: 10
-}
-```
-
-## Error Messages
-
-**Security-conscious error messages**:
-
-```
-✅ GOOD: Context-specific, doesn't expose internals
-{
-  "statusCode": 404,
-  "message": "User not found",
-  "error": "NotFound"
-}
-
-✅ GOOD: Validation error with field info
-{
-  "statusCode": 400,
-  "message": "Validation failed",
-  "error": "BadRequest",
-  "details": [
-    { "field": "email", "message": "Invalid email format" }
-  ]
-}
-
-❌ BAD: Exposes internal ID format
-{
-  "statusCode": 404,
-  "message": "User uid_123 not found"  // Reveals UID pattern
-}
-
-❌ BAD: Exposes database structure
-{
-  "statusCode": 404,
-  "message": "No row with id 12345 found"  // Reveals database ID
-}
-```
-
-## Best Practices Checklist
-
-- [ ] Validate all input at controller boundary
-- [ ] Use Zod schemas and `createZodDto` at API boundaries
-- [ ] Transform snake_case → camelCase on input
-- [ ] Map uid → id in API responses
-- [ ] Hide database primary keys completely
-- [ ] Transform camelCase → snake_case on output
-- [ ] Check UID format (matches prefix pattern)
+- [ ] Validate all input at controller boundary with Zod schemas
+- [ ] Transform snake_case ↔ camelCase at boundary
+- [ ] Map `uid → id` in responses, hide database primary keys
+- [ ] Check UID format (prefix pattern)
 - [ ] Validate referenced entities exist
-- [ ] Return not-found error if entity missing
-- [ ] Support pagination with validation
-- [ ] Convert timestamps to ISO format
+- [ ] Timestamps as ISO strings
 - [ ] Error messages don't expose internal structure
-- [ ] Error messages are actionable for clients
-- [ ] Serialization is consistent across endpoints
-- [ ] No sensitive data in responses
+- [ ] Pagination validated with defaults and max caps
 
 ## Related Skills
 
-- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)** - Validation at HTTP boundary
-- **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)** - Business logic validation
-- **[Repository Pattern NestJS](../repository-pattern-nestjs/SKILL.md)** - Data access layer
+- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Validation at HTTP boundary
+- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Business logic validation
+- [Repository Pattern](../repository-pattern-nestjs/SKILL.md) — Data access layer
