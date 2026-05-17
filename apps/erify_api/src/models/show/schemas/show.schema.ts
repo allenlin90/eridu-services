@@ -304,6 +304,17 @@ export const showWithTaskSummaryInclude = {
       },
     },
   },
+  showPlatforms: {
+    where: { deletedAt: null },
+    include: {
+      platform: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+    },
+  },
   taskTargets: {
     where: {
       deletedAt: null,

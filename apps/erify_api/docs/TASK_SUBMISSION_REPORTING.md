@@ -243,6 +243,9 @@ const reservedSystemColumnKeys = new Set([
   'show_type_name',
   'start_time',
   'end_time',
+  'actual_start_time',
+  'actual_end_time',
+  'actuals_status',
 ]);
 
 const sharedFieldSchema = z.object({
@@ -272,7 +275,7 @@ POST /studios/:studioId/settings/shared-fields     → create a new shared field
 PATCH /studios/:studioId/settings/shared-fields/:key → update label, description, or is_active only
 ```
 
-No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker. Reserved system-column keys are also blocked (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`) to prevent collisions with built-in report columns.
+No DELETE — keys are reserved forever once created. Deactivate via `is_active: false` to hide from the template editor picker. Reserved system-column keys are also blocked (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`, `actual_start_time`, `actual_end_time`, `actuals_status`) to prevent collisions with built-in report columns.
 
 **Immutability rules:**
 

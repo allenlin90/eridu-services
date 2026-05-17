@@ -30,6 +30,8 @@ export type TaskReportScopedShow = {
   externalId: string | null;
   startTime: Date;
   endTime: Date;
+  actualStartTime: Date | null;
+  actualEndTime: Date | null;
   clientUid: string | null;
   clientName: string | null;
   studioRoomUid: string | null;
@@ -202,6 +204,8 @@ export class TaskReportScopeRepository {
         externalId: true,
         startTime: true,
         endTime: true,
+        actualStartTime: true,
+        actualEndTime: true,
         client: {
           select: {
             uid: true,
@@ -243,6 +247,8 @@ export class TaskReportScopeRepository {
       externalId: show.externalId,
       startTime: show.startTime,
       endTime: show.endTime,
+      actualStartTime: show.actualStartTime,
+      actualEndTime: show.actualEndTime,
       clientUid: show.client?.uid ?? null,
       clientName: show.client?.name ?? null,
       studioRoomUid: show.studioRoom?.uid ?? null,

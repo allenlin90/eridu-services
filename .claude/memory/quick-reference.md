@@ -164,6 +164,53 @@ Use text labels only for dropdown menu items where needed for mobile action menu
 
 ---
 
+## 📱 Responsive Dialog → Drawer (Frontend)
+
+Mobile-reachable Dialogs become vaul Drawers below `md` (768px) to avoid viewport overflow.
+
+```tsx
+import { useIsMobile, Drawer, DrawerContent, Dialog, DialogContent } from '@eridu/ui';
+
+const isMobile = useIsMobile();
+
+if (isMobile) {
+  return <Drawer open={open} onOpenChange={onOpenChange}><DrawerContent>{/* shared body */}</DrawerContent></Drawer>;
+}
+return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent>{/* shared body */}</DialogContent></Dialog>;
+```
+
+Rules:
+- Extract the form/picker body into one shared component — never duplicate logic between branches.
+- For datetime pickers in dialogs, use `ResponsiveDateTimePicker` from `@eridu/ui` (built-in switch).
+- Test at iPhone SE (375×667) before merging any responsive dialog.
+- Plain confirmations (one or two buttons) can stay as `Dialog`.
+
+Canonical references:
+- `packages/ui/src/components/date-picker.tsx` — `ResponsiveDateTimePicker`
+- `apps/erify_studios/src/features/studio-shows/components/show-actuals-dialog.tsx`
+- `.agent/skills/frontend-ui-components/SKILL.md` § Responsive Dialog → Drawer Pattern
+
+---
+
+## 📤 Current-View Table Export
+
+For paginated studio table exports, export the current server-filtered view rather than only the loaded page:
+
+- keep URL/query parameter construction in the route hook and reuse it for export
+- omit `page` and `limit` when exporting, then fetch fixed-size pages with an explicit max-row cap
+- cap concurrent page fetches at a small constant (e.g. 4); never `Promise.all` the full remaining-page list — a 5000-row export must not burst 49 simultaneous requests at the API
+- forward `AbortSignal` through every page request; check `signal.aborted` between batches
+- show a `Loader2` spinner + "Exporting…" label on the trigger while pagination runs
+- serialize CSV through `src/lib/csv.ts` and download through `src/lib/file-download.ts`
+
+Canonical implementation references:
+
+- `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts` — concurrency-capped batched pagination
+- `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts` — older fan-out form (legacy)
+- `.agent/skills/table-view-pattern/SKILL.md`
+
+---
+
 ## 📊 Task Report Key Contracts
 
 ### Source-scope vs run-scope
@@ -208,7 +255,17 @@ When populating view-filter state from result rows, prefer setting `*_name` over
 ### Guardrails (2026-03-20)
 
 - Preflight `task_count` must match run eligibility: count only submitted tasks with both `templateId` and `snapshotId` (unsnapshotted tasks are excluded from both preflight and run).
-- Shared-field keys must not collide with report system column keys (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`).
+- Shared-field keys must not collide with report system column keys (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`, `actual_start_time`, `actual_end_time`, `actuals_status`).
+
+### Show actuals system columns
+
+`TASK_REPORT_SYSTEM_COLUMN` exposes three actuals columns alongside the planned `start_time` / `end_time`:
+
+- `actual_start_time` — `datetime`, ISO string or `null`
+- `actual_end_time` — `datetime`, ISO string or `null`
+- `actuals_status` — `text`, derived BE-side: `complete` (both set), `incomplete` (one set), `missing` (neither)
+
+Run pipeline emits these from `Show.actualStartTime` / `Show.actualEndTime` via `TaskReportRunService.buildSystemRow`. The column picker (`report-column-picker.tsx`) exposes them next to Start/End; rendering relies on the existing `column.type === 'datetime'` path.
 
 ---
 

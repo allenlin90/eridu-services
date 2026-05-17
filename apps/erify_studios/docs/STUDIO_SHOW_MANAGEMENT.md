@@ -8,14 +8,14 @@
 
 ## Purpose
 
-Technical reference for the shipped studio show-management UI, including the dedicated CRUD route, dialog-based create/edit/delete flows, studio-safe searchable lookups, and the separation from the existing operations page.
+Technical reference for the shipped studio show-management UI, including the dedicated CRUD route, dialog-based create/edit/delete flows, studio-safe searchable lookups, and the operations page for task readiness, show actuals, and current-view export.
 
 ## Route And Access
 
 | Route | Purpose | Access |
 | --- | --- | --- |
 | `/studios/$studioId/shows` | Show lifecycle CRUD page | `ADMIN`, `MANAGER` |
-| `/studios/$studioId/show-operations` | Readiness, bulk generation, and assignment operations | `ADMIN`, `MANAGER` |
+| `/studios/$studioId/show-operations` | Readiness, bulk generation, assignment, show actuals, and current-view export operations | `ADMIN`, `MANAGER` |
 
 Access rules:
 
@@ -42,6 +42,9 @@ Access rules:
   - `studioShowKeys`
 - the CRUD page gets its own route/view-model hook: `useStudioShowManagement()`
 - the operations page keeps its existing route/view-model hook: `useStudioShows()`
+- show actuals are edited through the existing studio show update mutation (`PATCH /studios/:studioId/shows/:showId`); there is no separate frontend actuals API family
+- the operations page supports `actuals_state=missing|complete` as URL-backed server filtering for the missing-actuals queue
+- current-view export calls `getAllStudioShowsForExport()`, which pages through every result matching the current server-side filters, caps exports at 5000 rows, batches concurrent page fetches at 4 at a time (no `Promise.all` fan-out so a single click cannot burst dozens of requests), forwards `AbortSignal` and bails between batches when aborted, and serializes CSV/JSON through the shared `csv` and `file-download` primitives. The trigger button renders a `Loader2` spinner with "Exporting…" while pagination runs.
 - shared `show-lookups` stays lightweight for list/filter surfaces; searchable schedule and room inputs use dedicated studio endpoints instead
 - successful create/update/delete invalidates the shared studio show list family and task-related dependent queries via `invalidate-studio-task-queries.ts`
 
@@ -59,7 +62,8 @@ Access rules:
 
 ## UX Rules
 
-- keep `show-operations` focused on readiness, task generation, and assignment
+- keep `show-operations` focused on readiness, task generation, assignment, show actuals, and operational export
 - do not mix admin-only `/system/shows` assumptions into the studio CRUD page
 - keep route guard and sidebar visibility aligned through the shared access-policy source
 - keep schedule search remote and documented; no dead local-only search affordances
+- keep show actuals scoped to `Show.actual_start_time` / `Show.actual_end_time`; Phase 4 does not add creator-specific or platform-specific actuals inputs

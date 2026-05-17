@@ -40,7 +40,7 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
   const filters = useMemo(() => {
     const f: Record<string, string | boolean | undefined> = {};
     columnFilters.forEach((filter) => {
-      if (['client_name', 'show_type_name', 'show_standard_name', 'show_status_name', 'platform_name'].includes(filter.id)) {
+      if (['client_name', 'show_type_name', 'show_standard_name', 'show_status_name', 'platform_name', 'actuals_state'].includes(filter.id)) {
         f[filter.id] = filter.value as string;
       }
       if (filter.id === 'has_tasks') {
@@ -61,31 +61,32 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
   );
   const planningDateFrom = useMemo(() => normalizeScopeDate(dateFrom), [dateFrom]);
   const planningDateTo = useMemo(() => normalizeScopeDate(dateTo), [dateTo]);
+  const queryParams = useMemo(() => ({
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
+    search: searchQuery || undefined,
+    date_from: scopeDateBounds.date_from,
+    date_to: scopeDateBounds.date_to,
+    planning_date_from: planningDateFrom,
+    planning_date_to: planningDateTo,
+    needs_attention: needsAttention,
+    ...filters,
+  }), [
+    filters,
+    needsAttention,
+    pagination.pageIndex,
+    pagination.pageSize,
+    planningDateFrom,
+    planningDateTo,
+    scopeDateBounds.date_from,
+    scopeDateBounds.date_to,
+    searchQuery,
+  ]);
 
   const query = useQuery({
-    queryKey: studioShowsKeys.list(studioId, {
-      page: pagination.pageIndex + 1,
-      limit: pagination.pageSize,
-      search: searchQuery,
-      date_from: scopeDateBounds.date_from,
-      date_to: scopeDateBounds.date_to,
-      planning_date_from: planningDateFrom,
-      planning_date_to: planningDateTo,
-      needs_attention: needsAttention,
-      ...filters,
-    }),
+    queryKey: studioShowsKeys.list(studioId, queryParams),
     queryFn: ({ signal }) =>
-      getStudioShows(studioId, {
-        page: pagination.pageIndex + 1,
-        limit: pagination.pageSize,
-        search: searchQuery || undefined,
-        date_from: scopeDateBounds.date_from,
-        date_to: scopeDateBounds.date_to,
-        planning_date_from: planningDateFrom,
-        planning_date_to: planningDateTo,
-        needs_attention: needsAttention,
-        ...filters,
-      }, { signal }),
+      getStudioShows(studioId, queryParams, { signal }),
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
@@ -125,5 +126,6 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
     onColumnFiltersChange,
     sorting,
     onSortingChange,
+    queryParams,
   };
 }

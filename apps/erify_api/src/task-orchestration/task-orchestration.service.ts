@@ -322,12 +322,19 @@ export class TaskOrchestrationService {
         creator_name: showCreator.creator.name,
         creator_alias_name: showCreator.creator.aliasName,
       }));
+      const platforms = (show.showPlatforms ?? [])
+        .filter((showPlatform) => showPlatform.platform != null)
+        .map((showPlatform) => ({
+          id: showPlatform.platform.uid,
+          name: showPlatform.platform.name,
+        }));
 
       // prisma include type complexity
       const taskSummaries = show.taskTargets.map((tt) => tt.task);
       return {
         ...baseShow,
         creators,
+        platforms,
         task_summary: {
           total: taskSummaries.length,
           assigned: taskSummaries.filter((t) => t.assigneeId !== null).length,

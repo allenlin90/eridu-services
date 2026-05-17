@@ -2,11 +2,12 @@
 import { Link, useParams } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { CheckCircle2, ChevronRight } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Clock3 } from 'lucide-react';
 
-import { Badge, Checkbox } from '@eridu/ui';
+import { Badge, Checkbox, DataTableActions, DropdownMenuItem } from '@eridu/ui';
 
 import type { StudioShow } from '../../api/get-studio-shows';
+import { getShowActualsStatus, toShowActualsServerFilter } from '../../utils/show-actuals.utils';
 
 function ShowNameCell({ show }: { show: StudioShow }) {
   // Extract studioId from the current route context as a robust fallback
@@ -39,6 +40,8 @@ function ShowNameCell({ show }: { show: StudioShow }) {
             show_standard_name: show.show_standard_name,
             start_time: show.start_time,
             end_time: show.end_time,
+            actual_start_time: show.actual_start_time,
+            actual_end_time: show.actual_end_time,
             metadata: show.metadata,
             created_at: show.created_at,
             updated_at: show.updated_at,
@@ -60,154 +63,220 @@ function ShowNameCell({ show }: { show: StudioShow }) {
   );
 }
 
-export const columns: ColumnDef<StudioShow>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected()
-          || table.getIsSomePageRowsSelected()
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-    size: 40,
-  },
-  {
-    accessorKey: 'name',
-    header: 'Show Name',
-    cell: ({ row }) => <ShowNameCell show={row.original} />,
-  },
-  {
-    accessorKey: 'start_time',
-    header: 'Start Time',
-    cell: ({ row }) => {
-      const startTime = row.getValue<string>('start_time');
-      const endTime = row.original.end_time;
-      if (!startTime)
-        return <span className="text-muted-foreground">-</span>;
+function ShowActualsCell({ show }: { show: StudioShow }) {
+  const status = getShowActualsStatus(show);
 
-      return (
-        <div className="flex flex-col gap-1">
-          <span className="text-sm">{format(new Date(startTime), 'MMM d, yyyy')}</span>
-          <span className="text-xs text-muted-foreground">
-            {format(new Date(startTime), 'h:mm a')}
-            {endTime && ` - ${format(new Date(endTime), 'h:mm a')}`}
-          </span>
-        </div>
-      );
-    },
-  },
-  {
-    id: 'task_status',
-    header: 'Task Status',
-    cell: ({ row }) => {
-      const summary = row.original.task_summary;
-
-      if (summary.total === 0) {
-        return <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-normal">No tasks</Badge>;
-      }
-
-      if (summary.total === summary.completed) {
-        return (
-          <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 font-normal shadow-sm">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            {summary.total}
-            {' '}
-            tasks
-          </Badge>
-        );
-      }
-
-      if (summary.unassigned > 0) {
-        return (
-          <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 font-normal shadow-sm hover:cursor-help" title={`${summary.unassigned} tasks unassigned`}>
-            {summary.total}
-            {' '}
-            tasks
-            <span className="text-amber-600/70 ml-1">
-              (
-              {summary.unassigned}
-              {' '}
-              unassigned)
-            </span>
-          </Badge>
-        );
-      }
-
-      return (
-        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 font-normal shadow-sm">
-          {summary.total}
-          {' '}
-          tasks
+  if (status === 'complete') {
+    return (
+      <div className="flex flex-col gap-1">
+        <Badge variant="outline" className="w-fit border-green-200 bg-green-50 text-green-700 font-normal">
+          Complete
         </Badge>
-      );
+        <span className="text-xs text-muted-foreground">
+          {format(new Date(show.actual_start_time!), 'h:mm a')}
+          {' - '}
+          {format(new Date(show.actual_end_time!), 'h:mm a')}
+        </span>
+      </div>
+    );
+  }
+
+  if (status === 'incomplete') {
+    return (
+      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 font-normal">
+        Incomplete
+      </Badge>
+    );
+  }
+
+  return <Badge variant="secondary" className="font-normal">Missing</Badge>;
+}
+
+type StudioShowOperationsColumnActions = {
+  onEditActuals: (show: StudioShow) => void;
+};
+
+export function getStudioShowOperationsColumns({
+  onEditActuals,
+}: StudioShowOperationsColumnActions): ColumnDef<StudioShow>[] {
+  return [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+            || table.getIsSomePageRowsSelected()
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 40,
     },
-  },
-  {
-    id: 'assignee',
-    header: 'Assignee',
-    cell: ({ row }) => {
-      const summary = row.original.task_summary;
-      if (summary.total === 0) {
-        return <span className="text-xs text-muted-foreground">—</span>;
-      }
-      if (summary.assigned === 0) {
-        return <span className="text-xs text-muted-foreground italic">Unassigned</span>;
-      }
-      if (summary.unassigned > 0 && summary.assigned > 0) {
-        return <span className="text-xs text-muted-foreground">Mixed</span>;
-      }
-      return <span className="text-xs">Assigned</span>;
+    {
+      accessorKey: 'name',
+      header: 'Show Name',
+      cell: ({ row }) => <ShowNameCell show={row.original} />,
     },
-  },
-  // Hidden filter-support columns so toolbar filters can bind non-visible fields.
-  {
-    accessorKey: 'client_name',
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-  {
-    accessorKey: 'show_type_name',
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-  {
-    accessorKey: 'show_standard_name',
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-  {
-    accessorKey: 'show_status_name',
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-  {
-    accessorKey: 'platform_name',
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-  {
-    id: 'has_tasks',
-    accessorFn: (row) => String(row.task_summary.total > 0),
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-];
+    {
+      accessorKey: 'start_time',
+      header: 'Start Time',
+      cell: ({ row }) => {
+        const startTime = row.getValue<string>('start_time');
+        const endTime = row.original.end_time;
+        if (!startTime)
+          return <span className="text-muted-foreground">-</span>;
+
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="text-sm">{format(new Date(startTime), 'MMM d, yyyy')}</span>
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(startTime), 'h:mm a')}
+              {endTime && ` - ${format(new Date(endTime), 'h:mm a')}`}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actuals_status',
+      accessorFn: (row) => getShowActualsStatus(row),
+      header: 'Actuals',
+      cell: ({ row }) => <ShowActualsCell show={row.original} />,
+    },
+    {
+      id: 'task_status',
+      header: 'Task Status',
+      cell: ({ row }) => {
+        const summary = row.original.task_summary;
+
+        if (summary.total === 0) {
+          return <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-normal">No tasks</Badge>;
+        }
+
+        if (summary.total === summary.completed) {
+          return (
+            <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 font-normal shadow-sm">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              {summary.total}
+              {' '}
+              tasks
+            </Badge>
+          );
+        }
+
+        if (summary.unassigned > 0) {
+          return (
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 font-normal shadow-sm hover:cursor-help" title={`${summary.unassigned} tasks unassigned`}>
+              {summary.total}
+              {' '}
+              tasks
+              <span className="text-amber-600/70 ml-1">
+                (
+                {summary.unassigned}
+                {' '}
+                unassigned)
+              </span>
+            </Badge>
+          );
+        }
+
+        return (
+          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 font-normal shadow-sm">
+            {summary.total}
+            {' '}
+            tasks
+          </Badge>
+        );
+      },
+    },
+    {
+      id: 'assignee',
+      header: 'Assignee',
+      cell: ({ row }) => {
+        const summary = row.original.task_summary;
+        if (summary.total === 0) {
+          return <span className="text-xs text-muted-foreground">—</span>;
+        }
+        if (summary.assigned === 0) {
+          return <span className="text-xs text-muted-foreground italic">Unassigned</span>;
+        }
+        if (summary.unassigned > 0 && summary.assigned > 0) {
+          return <span className="text-xs text-muted-foreground">Mixed</span>;
+        }
+        return <span className="text-xs">Assigned</span>;
+      },
+    },
+    // Hidden filter-support columns so toolbar filters can bind non-visible fields.
+    {
+      accessorKey: 'client_name',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      accessorKey: 'show_type_name',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      accessorKey: 'show_standard_name',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      accessorKey: 'show_status_name',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      accessorKey: 'platform_name',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      id: 'has_tasks',
+      accessorFn: (row) => String(row.task_summary.total > 0),
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      id: 'actuals_state',
+      accessorFn: (row) => toShowActualsServerFilter(getShowActualsStatus(row)),
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DataTableActions
+          row={row.original}
+          renderExtraActions={(show) => (
+            <DropdownMenuItem onClick={() => onEditActuals(show)}>
+              <Clock3 className="mr-2 h-4 w-4" />
+              Record actuals
+            </DropdownMenuItem>
+          )}
+        />
+      ),
+      size: 56,
+      enableHiding: false,
+    },
+  ];
+}

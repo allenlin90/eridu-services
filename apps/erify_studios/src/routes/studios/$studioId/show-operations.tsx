@@ -18,6 +18,7 @@ const showOperationsSearchSchema = z.object({
   show_standard_name: z.string().optional().catch(undefined),
   show_status_name: z.string().optional().catch(undefined),
   platform_name: z.string().optional().catch(undefined),
+  actuals_state: z.enum(['missing', 'complete']).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/studios/$studioId/show-operations')({

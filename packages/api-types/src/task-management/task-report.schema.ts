@@ -33,6 +33,9 @@ export const TASK_REPORT_SYSTEM_COLUMN = {
   SHOW_TYPE_NAME: 'show_type_name',
   START_TIME: 'start_time',
   END_TIME: 'end_time',
+  ACTUAL_START_TIME: 'actual_start_time',
+  ACTUAL_END_TIME: 'actual_end_time',
+  ACTUALS_STATUS: 'actuals_status',
 } as const;
 
 export type TaskReportSystemColumnKey

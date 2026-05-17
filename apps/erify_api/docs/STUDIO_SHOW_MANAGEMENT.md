@@ -20,9 +20,9 @@ Studio-owned show lifecycle management without reusing `/admin/shows`:
 | `GET /studios/:studioId/schedules`        | Searchable studio-scoped schedule lookup for show create/edit     | All studio members |
 | `GET /studios/:studioId/studio-rooms`     | Searchable studio-scoped room lookup for show create/edit         | All studio members |
 | `GET /studios/:studioId/shows/:showId`    | Enriched show detail for read + edit, including schedule summary  | All studio members |
-| `GET /studios/:studioId/shows`            | Shared show list/read model with schedule-assignment filtering    | All studio members |
+| `GET /studios/:studioId/shows`            | Shared show list/read model with schedule, task, creator, platform, and actuals-state filtering | All studio members |
 | `POST /studios/:studioId/shows`           | Create a studio-scoped show                                       | `ADMIN`, `MANAGER` |
-| `PATCH /studios/:studioId/shows/:showId`  | Update show metadata + platform assignments                       | `ADMIN`, `MANAGER` |
+| `PATCH /studios/:studioId/shows/:showId`  | Update show metadata, platform assignments, and show actuals       | `ADMIN`, `MANAGER` |
 | `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show and remove disposable workflow state | `ADMIN`            |
 
 Note: the backend does not split CRUD and operations into separate endpoint families. FE may present separate pages, but both pages reuse the same studio show read APIs and cache families.
@@ -37,27 +37,29 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 4. **Platform editing is folded into the general studio show update payload**. No separate studio-only `PATCH .../platforms/replace` endpoint — the form edits the entire show document at once.
 
-5. **Create-time required fields follow DB constraints, not the original PRD wording**. Final create requirements: `name`, `start_time`, `end_time`, `client_id`, `show_type_id`, `show_standard_id`, `show_status_id`. Optional: `external_id`, `studio_room_id`, `schedule_id`, `metadata`, `platform_ids`.
+5. **Show actuals ride the show update payload**. `Show.actualStartTime` / `Show.actualEndTime` are owning-resource facts, so studio operations edit them through `PATCH /studios/:studioId/shows/:showId` using `actual_start_time` / `actual_end_time`. Do not introduce a parallel `/actuals` endpoint for Phase 4 show operations.
 
-6. **Delete uses a hard time gate**. A studio admin can delete a show only when `now < show.startTime`. Started shows return a business error.
+6. **Create-time required fields follow DB constraints, not the original PRD wording**. Final create requirements: `name`, `start_time`, `end_time`, `client_id`, `show_type_id`, `show_standard_id`, `show_status_id`. Optional: `external_id`, `studio_room_id`, `schedule_id`, `metadata`, `platform_ids`.
 
-7. **Delete treats pre-start workflow state as disposable**. Soft-deletes the `Show` row and removes pre-start task workflow records so restore does not revive stale task state.
+7. **Delete uses a hard time gate**. A studio admin can delete a show only when `now < show.startTime`. Started shows return a business error.
 
-8. **Restore by external identity starts a new lifecycle**. If create receives an `external_id` and a soft-deleted show already exists under the same identity, restore that row, apply the latest payload, and do not revive old creator/platform/task workflow state beyond what the new payload recreates.
+8. **Delete treats pre-start workflow state as disposable**. Soft-deletes the `Show` row and removes pre-start task workflow records so restore does not revive stale task state.
 
-9. **`external_id` is optional in the contract but exposed in create UX**. Because restore/adopt logic depends on stable external identity, the studio app should expose `external_id` as an optional create-only input instead of hiding it behind backend-only behavior.
+9. **Restore by external identity starts a new lifecycle**. If create receives an `external_id` and a soft-deleted show already exists under the same identity, restore that row, apply the latest payload, and do not revive old creator/platform/task workflow state beyond what the new payload recreates.
 
-10. **`schedule_id` is optional in BE, required in normal FE UX**. The backend contract stays flexible and allows shows without schedules. The studio app should require schedule selection in the normal create/edit flow and expose unassigned-schedule discovery/repair on the shows page.
+10. **`external_id` is optional in the contract but exposed in create UX**. Because restore/adopt logic depends on stable external identity, the studio app should expose `external_id` as an optional create-only input instead of hiding it behind backend-only behavior.
 
-11. **Schedule publish can reclaim restored/manual rows**. Schedule publishing matches active shows by external identity globally, adopts valid restored/manual rows, and replaces creators/platforms from schedule data when available.
+11. **`schedule_id` is optional in BE, required in normal FE UX**. The backend contract stays flexible and allows shows without schedules. The studio app should require schedule selection in the normal create/edit flow and expose unassigned-schedule discovery/repair on the shows page.
 
-12. **Schedule linkage must preserve client consistency**. A studio show may link only to schedules belonging to the same studio and the same client as the show.
+12. **Schedule publish can reclaim restored/manual rows**. Schedule publishing matches active shows by external identity globally, adopts valid restored/manual rows, and replaces creators/platforms from schedule data when available.
 
-13. **Studio detail is an enriched superset response**. `GET /studios/:studioId/shows/:showId` includes current platform assignments and schedule summary, while staying compatible with current read consumers that only use base show fields.
+13. **Schedule linkage must preserve client consistency**. A studio show may link only to schedules belonging to the same studio and the same client as the show.
 
-14. **`ShowRepository.findPaginatedWithTaskSummary` is a named method, not an inlined where clause**. The list query composes AND-joined multi-field filters, OR conditions for studio-room and schedule matching, and an optional `_count` aggregate join for task summaries. These semantics cannot be expressed as a flat where clause passed from the service layer without coupling the service to Prisma query structures. The method is intentionally retained as a named repository method.
+14. **Studio detail is an enriched superset response**. `GET /studios/:studioId/shows/:showId` includes current platform assignments and schedule summary, while staying compatible with current read consumers that only use base show fields.
 
-15. **`ShowRepository.findByClientUidAndExternalId` is a named method, not an inlined where clause**. The restore-on-create lookup requires a client-relation where clause (`client: { uid }`) combined with an explicit `includeDeleted` opt-in that inverts the default `deletedAt: null` guard. Neither can be expressed as a caller-supplied flat where clause without leaking relation semantics into the service layer.
+15. **`ShowRepository.findPaginatedWithTaskSummary` is a named method, not an inlined where clause**. The list query composes AND-joined multi-field filters, OR conditions for actuals-state and task filters, AND filters for creator matching, and include joins for task summaries. These semantics cannot be expressed as a flat where clause passed from the service layer without coupling the service to Prisma query structures. The method is intentionally retained as a named repository method.
+
+16. **`ShowRepository.findByClientUidAndExternalId` is a named method, not an inlined where clause**. The restore-on-create lookup requires a client-relation where clause (`client: { uid }`) combined with an explicit `includeDeleted` opt-in that inverts the default `deletedAt: null` guard. Neither can be expressed as a caller-supplied flat where clause without leaking relation semantics into the service layer.
 
 ## Key Business Rules
 
@@ -112,3 +114,4 @@ The platform-replacement path is shared across admin and studio flows:
 - Studio show updates intentionally use last-write-wins. If manual studio editing becomes common enough to create real overwrite pain, revisit with a dedicated concurrency token strategy.
 - Nullable `scheduleId` is a deliberate backend flexibility point. FE should treat shows without schedules as exceptional and surface a repair workflow.
 - Studio room and schedule lookups now have dedicated studio-scoped search endpoints for the create/edit modal, and shared show lookups should stay lightweight for non-modal pages. Keep review pressure on lookup parity so future searchable fields do not regress into dead local-only search.
+- `actuals_state=missing` means either actual timestamp is absent; `actuals_state=complete` means both are recorded. This powers the Phase 4 missing-actuals queue without adding settlement, approval, or creator/platform-specific actual facts.

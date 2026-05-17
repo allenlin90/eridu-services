@@ -8,7 +8,7 @@ import { scheduleApiResponseSchema } from '../schedules/index.js';
 import { showStandardApiResponseSchema } from '../show-standards/index.js';
 import { showStatusApiResponseSchema } from '../show-statuses/index.js';
 import { showTypeApiResponseSchema } from '../show-types/index.js';
-import { showApiResponseSchema } from '../shows/index.js';
+import { showApiResponseSchema, studioShowPlatformSummarySchema } from '../shows/index.js';
 import { studioRoomApiResponseSchema } from '../studio-rooms/index.js';
 
 /**
@@ -301,6 +301,7 @@ const showSummaryCreatorSchema = z.object({
 export const showWithTaskSummaryDto = showApiResponseSchema
   .extend({
     creators: z.array(showSummaryCreatorSchema).default([]),
+    platforms: z.array(studioShowPlatformSummarySchema).default([]),
     task_summary: z.object({
       total: z.number().int(),
       assigned: z.number().int(),
@@ -345,6 +346,7 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
     date_to: z.iso.datetime().optional(),
     planning_date_from: z.iso.date().optional(),
     planning_date_to: z.iso.date().optional(),
+    actuals_state: z.enum(['missing', 'complete']).optional(),
     has_tasks: z
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))

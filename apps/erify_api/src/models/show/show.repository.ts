@@ -322,6 +322,7 @@ export class ShowRepository extends BaseRepository<
       show_standard_name?: string;
       show_status_name?: string;
       platform_name?: string;
+      actuals_state?: 'missing' | 'complete';
     },
   ) {
     const where: Prisma.ShowWhereInput = {
@@ -344,6 +345,18 @@ export class ShowRepository extends BaseRepository<
         ...(query.date_from && { gte: new Date(query.date_from) }),
         ...(inclusiveDateTo && { lte: inclusiveDateTo }),
       };
+    }
+
+    if (query.actuals_state === 'missing') {
+      where.OR = [
+        { actualStartTime: null },
+        { actualEndTime: null },
+      ];
+    }
+
+    if (query.actuals_state === 'complete') {
+      where.actualStartTime = { not: null };
+      where.actualEndTime = { not: null };
     }
 
     if (query.has_tasks !== undefined) {
