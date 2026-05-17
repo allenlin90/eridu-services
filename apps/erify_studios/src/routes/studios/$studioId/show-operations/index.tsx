@@ -58,6 +58,7 @@ import {
   createStudioShowExportContent,
   type StudioShowExportFormat,
 } from '@/features/studio-shows/utils/studio-shows-export.utils';
+import { useAbortableAction } from '@/hooks/use-abortable-action';
 import { triggerBrowserDownload } from '@/lib/file-download';
 
 export const Route = createFileRoute('/studios/$studioId/show-operations/')({
@@ -396,14 +397,7 @@ function StudioShowsTableSection({
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
   const [actualsShowId, setActualsShowId] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const exportAbortRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => {
-      exportAbortRef.current?.abort();
-    };
-  }, []);
+  const { isRunning: isExporting, run: runExport } = useAbortableAction();
 
   const {
     data,
@@ -495,51 +489,43 @@ function StudioShowsTableSection({
     [showLookups],
   );
   const handleExport = useCallback(async (format: StudioShowExportFormat) => {
-    exportAbortRef.current?.abort();
-    const controller = new AbortController();
-    exportAbortRef.current = controller;
-    setIsExporting(true);
+    await runExport(async (signal) => {
+      try {
+        const {
+          page: _page,
+          limit: _limit,
+          ...exportParams
+        } = queryParams;
+        const exportShows = await getAllStudioShowsForExport(studioId, exportParams, { signal });
+        if (signal.aborted) {
+          return;
+        }
 
-    try {
-      const {
-        page: _page,
-        limit: _limit,
-        ...exportParams
-      } = queryParams;
-      const exportShows = await getAllStudioShowsForExport(studioId, exportParams, { signal: controller.signal });
-      if (controller.signal.aborted) {
-        return;
+        const exportResult = buildStudioShowExportRows({
+          shows: exportShows,
+          formatDateTime,
+        });
+        triggerBrowserDownload({
+          content: createStudioShowExportContent(exportResult, format),
+          mimeType: format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;',
+          filename: buildStudioShowExportFilename({
+            format,
+            dateFrom: queryParams.planning_date_from,
+            dateTo: queryParams.planning_date_to,
+          }),
+        });
+      } catch (error) {
+        if (signal.aborted) {
+          return;
+        }
+        if (error instanceof ShowExportTooLargeError) {
+          toast.error(`Selection exceeds the ${SHOW_EXPORT_MAX_RECORDS.toLocaleString()}-show export limit (${error.totalRecords.toLocaleString()} matched). Narrow the date range or filters and retry.`);
+          return;
+        }
+        toast.error(error instanceof Error ? error.message : 'Failed to export shows. Please try again.');
       }
-
-      const exportResult = buildStudioShowExportRows({
-        shows: exportShows,
-        formatDateTime,
-      });
-      triggerBrowserDownload({
-        content: createStudioShowExportContent(exportResult, format),
-        mimeType: format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;',
-        filename: buildStudioShowExportFilename({
-          format,
-          dateFrom: queryParams.planning_date_from,
-          dateTo: queryParams.planning_date_to,
-        }),
-      });
-    } catch (error) {
-      if (controller.signal.aborted) {
-        return;
-      }
-      if (error instanceof ShowExportTooLargeError) {
-        toast.error(`Selection exceeds the ${SHOW_EXPORT_MAX_RECORDS.toLocaleString()}-show export limit (${error.totalRecords.toLocaleString()} matched). Narrow the date range or filters and retry.`);
-        return;
-      }
-      toast.error(error instanceof Error ? error.message : 'Failed to export shows. Please try again.');
-    } finally {
-      if (exportAbortRef.current === controller) {
-        exportAbortRef.current = null;
-        setIsExporting(false);
-      }
-    }
-  }, [queryParams, studioId]);
+    });
+  }, [queryParams, studioId, runExport]);
 
   return (
     <>
