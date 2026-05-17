@@ -169,6 +169,16 @@ export class StudioShiftService extends BaseModelService {
     const snapshotChanges = isSnapshotValueEqual(existing.hourlyRate, hourlyRate)
       ? []
       : [{ field: 'hourly_rate', old_value: existing.hourlyRate, new_value: hourlyRate }];
+    // Cost-model §1: an explicit hourly_rate edit (rate present in PATCH and different
+    // from stored) must be justified. Rate changes driven by user reassignment (inherited
+    // from the new member's base rate) are out of scope and continue to flow through.
+    if (
+      payload.hourlyRate !== undefined
+      && snapshotChanges.length > 0
+      && !payload.overrideReason?.trim()
+    ) {
+      throw HttpError.badRequest('override_reason is required when hourly_rate changes');
+    }
     const metadata = appendSnapshotAudit(
       this.mergeMetadata(existing.metadata, payload.metadata),
       snapshotChanges,

@@ -165,6 +165,18 @@ if (isReassignment) {
 
 ## Frontend Contracts
 
+### Hourly Rate Editor Decimal Comparison
+
+`StudioShift.hourly_rate` is a string decimal from the API, but equal values can arrive with different scale (`20` vs `20.00`). Any shift-rate edit surface must normalize both the stored API value and the typed value with the same money helper before comparing, enabling Save, deciding whether `override_reason` is required, or skipping a no-op PATCH.
+
+Reference pattern:
+
+```typescript
+const normalizedStoredRate = toMoneyString(shift.hourly_rate);
+const normalizedInputRate = toMoneyString(rateInput);
+const rateChanged = normalizedInputRate !== normalizedStoredRate;
+```
+
 ### FE Block Sorting and Cross-Midnight Sequential Normalization
 
 Frontend `validateShiftBlocks()` must sort blocks by `startTime` **before** processing to ensure correct cross-midnight normalization and ISO string generation.

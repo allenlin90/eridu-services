@@ -152,4 +152,45 @@ describe('shiftFormFields', () => {
 
     expect(screen.getByText('+1 day')).toBeInTheDocument();
   });
+
+  it('renders the Hourly Rate input by default', () => {
+    render(
+      <ShiftFormFields
+        idPrefix="create"
+        members={[]}
+        onMemberSearch={vi.fn()}
+        formState={{
+          userId: '',
+          date: '2026-03-05',
+          blocks: [{ id: 'block_1', startTime: '09:00', endTime: '12:00' }],
+          hourlyRate: '20.00',
+          isDutyManager: false,
+        }}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Hourly Rate')).toBeInTheDocument();
+  });
+
+  it('hides the Hourly Rate input when includeHourlyRate is false', () => {
+    render(
+      <ShiftFormFields
+        idPrefix="edit"
+        members={[]}
+        onMemberSearch={vi.fn()}
+        includeHourlyRate={false}
+        formState={{
+          userId: '',
+          date: '2026-03-05',
+          blocks: [{ id: 'block_1', startTime: '09:00', endTime: '12:00' }],
+          hourlyRate: '20.00',
+          isDutyManager: false,
+        }}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByLabelText('Hourly Rate')).not.toBeInTheDocument();
+  });
 });

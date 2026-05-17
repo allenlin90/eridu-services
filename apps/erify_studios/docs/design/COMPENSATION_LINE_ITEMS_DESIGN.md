@@ -188,16 +188,12 @@ Searchable inputs must hit real scoped APIs. No no-op `onSearch` handlers or sil
 
 ## Snapshot-Override Edit Flow
 
-When a user submits an existing assignment edit or shift edit form:
+Snapshot edits live on the surface that owns the field, not in a separate confirmation dialog:
 
-1. The form detects dirty snapshot fields:
-   - assignment: `agreed_rate`, `compensation_type`, `commission_rate`;
-   - shift: `hourly_rate`.
-2. If any snapshot field is dirty, submit opens `SnapshotOverrideWarningDialog`.
-3. The dialog lists changed fields with old and new values, explains that reference values can recompute, and accepts optional `override_reason`.
-4. Confirm posts the original payload plus `override_reason`.
-5. Cancel returns to the form without losing input.
-6. Non-snapshot edits skip the dialog.
+- **Assignment fields** (`agreed_rate`, `compensation_type`, `commission_rate`): on the per-show creator-compensation edit dialog. The form detects dirty snapshot fields; if dirty, the existing `SnapshotOverrideWarningDialog` collects `override_reason` before posting (2.2 PR 5 / PR #65).
+- **`StudioShift.hourly_rate`**: inline on the **shift compensation dialog**'s `Hourly rate` tile (PR 3.5). The tile flips to a money input + required `override_reason` textarea + Save / Cancel. Save with the unchanged rate just closes the editor without firing a PATCH; a changed rate without a reason keeps Save disabled. The unchanged-rate check compares normalized decimal values, not raw API strings, so equivalent scales such as `20` and `20.00` do not trigger a false override. The edit-shift dialog no longer carries an `hourly_rate` field.
+
+The backend service-layer guard in `studio-shift.service.ts#updateShift` rejects PATCHes where `hourly_rate` is present in the body and differs from the stored value but `override_reason` is missing — mirroring the existing reverse check in `appendSnapshotAudit` (reason supplied without change → 400). Reassignment-driven rate changes (different `user_id` with no explicit `hourly_rate` in the body) are out of scope of the guard and continue to flow through.
 
 The backend records each confirmed override as one entry in `metadata.audit.snapshot_overrides[]` (array, chronological, snake_case keys, `actor_ext_id` as a string). The FE does not need to read this audit array in 2.2 — read-side rendering of override history lands with 2.3 economics views.
 

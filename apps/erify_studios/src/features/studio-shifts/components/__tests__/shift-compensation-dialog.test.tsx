@@ -10,6 +10,7 @@ const mockCreateLineItem = vi.fn();
 const mockUpdateLineItem = vi.fn();
 const mockDeleteLineItem = vi.fn();
 const mockUpdateBlockActuals = vi.fn();
+const mockUpdateShift = vi.fn();
 
 vi.mock('@eridu/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
@@ -84,6 +85,13 @@ vi.mock('@/features/studio-shifts/api/update-studio-shift-block', () => ({
   }),
 }));
 
+vi.mock('@/features/studio-shifts/api/update-studio-shift', () => ({
+  useUpdateStudioShift: () => ({
+    mutateAsync: mockUpdateShift,
+    isPending: false,
+  }),
+}));
+
 const shift = {
   id: 'ssh_1',
   studio_id: 'std_1',
@@ -122,6 +130,7 @@ describe('shiftCompensationDialog', () => {
     mockCreateLineItem.mockResolvedValue({});
     mockUpdateLineItem.mockResolvedValue({});
     mockUpdateBlockActuals.mockResolvedValue({});
+    mockUpdateShift.mockResolvedValue({});
   });
 
   it('renders shift and block-scoped panels without a target picker', () => {
@@ -318,5 +327,154 @@ describe('shiftCompensationDialog', () => {
     await user.click(within(blockPanel).getByRole('button', { name: 'Delete compensation item Late by 15min' }));
 
     expect(mockDeleteLineItem).toHaveBeenCalledWith('cli_block_1');
+  });
+
+  describe('inline rate edit', () => {
+    it('shows the stored rate and an Edit button by default; clicking Edit reveals the inputs', async () => {
+      const user = userEvent.setup();
+      render(
+        <ShiftCompensationDialog
+          open
+          onOpenChange={vi.fn()}
+          studioId="std_1"
+          shift={shift}
+        />,
+      );
+
+      const tile = screen.getByTestId('shift-hourly-rate-tile');
+      expect(within(tile).queryByLabelText('Hourly rate')).not.toBeInTheDocument();
+      await user.click(within(tile).getByRole('button', { name: 'Edit hourly rate' }));
+
+      expect(within(tile).getByLabelText('Hourly rate')).toBeInTheDocument();
+      expect(within(tile).getByPlaceholderText('Why is this rate being changed?')).toBeInTheDocument();
+      expect(within(tile).getByRole('button', { name: /Save/ })).toBeInTheDocument();
+      expect(within(tile).getByRole('button', { name: /Cancel/ })).toBeInTheDocument();
+    });
+
+    it('disables Save until a reason is provided when the rate changes', async () => {
+      const user = userEvent.setup();
+      render(
+        <ShiftCompensationDialog
+          open
+          onOpenChange={vi.fn()}
+          studioId="std_1"
+          shift={shift}
+        />,
+      );
+
+      const tile = screen.getByTestId('shift-hourly-rate-tile');
+      await user.click(within(tile).getByRole('button', { name: 'Edit hourly rate' }));
+
+      const rateInput = within(tile).getByLabelText('Hourly rate') as HTMLInputElement;
+      await user.clear(rateInput);
+      await user.type(rateInput, '25.00');
+
+      const saveButton = within(tile).getByRole('button', { name: /Save/ });
+      expect(saveButton).toBeDisabled();
+
+      await user.type(within(tile).getByPlaceholderText('Why is this rate being changed?'), 'Manager correction');
+
+      expect(saveButton).not.toBeDisabled();
+    });
+
+    it('submits the PATCH with hourly_rate and override_reason when the rate changes', async () => {
+      const user = userEvent.setup();
+      render(
+        <ShiftCompensationDialog
+          open
+          onOpenChange={vi.fn()}
+          studioId="std_1"
+          shift={shift}
+        />,
+      );
+
+      const tile = screen.getByTestId('shift-hourly-rate-tile');
+      await user.click(within(tile).getByRole('button', { name: 'Edit hourly rate' }));
+      const rateInput = within(tile).getByLabelText('Hourly rate');
+      await user.clear(rateInput);
+      await user.type(rateInput, '25.50');
+      await user.type(within(tile).getByPlaceholderText('Why is this rate being changed?'), 'Manager correction');
+      await user.click(within(tile).getByRole('button', { name: /Save/ }));
+
+      await waitFor(() => {
+        expect(mockUpdateShift).toHaveBeenCalledWith({
+          shiftId: 'ssh_1',
+          payload: {
+            hourly_rate: 25.5,
+            override_reason: 'Manager correction',
+          },
+        });
+      });
+    });
+
+    it('does not fire the mutation when the rate is unchanged on Save', async () => {
+      const user = userEvent.setup();
+      render(
+        <ShiftCompensationDialog
+          open
+          onOpenChange={vi.fn()}
+          studioId="std_1"
+          shift={shift}
+        />,
+      );
+
+      const tile = screen.getByTestId('shift-hourly-rate-tile');
+      await user.click(within(tile).getByRole('button', { name: 'Edit hourly rate' }));
+      // rate is prefilled to the stored 20.00 — typing nothing means no change.
+      await user.click(within(tile).getByRole('button', { name: /Save/ }));
+
+      expect(mockUpdateShift).not.toHaveBeenCalled();
+      // Editor should close (Edit button visible again).
+      expect(within(tile).getByRole('button', { name: 'Edit hourly rate' })).toBeInTheDocument();
+    });
+
+    it('treats API decimal strings with different scale as unchanged on Save', async () => {
+      const user = userEvent.setup();
+      render(
+        <ShiftCompensationDialog
+          open
+          onOpenChange={vi.fn()}
+          studioId="std_1"
+          shift={{ ...shift, hourly_rate: '20' }}
+        />,
+      );
+
+      const tile = screen.getByTestId('shift-hourly-rate-tile');
+      await user.click(within(tile).getByRole('button', { name: 'Edit hourly rate' }));
+
+      const saveButton = within(tile).getByRole('button', { name: /Save/ });
+      expect(saveButton).not.toBeDisabled();
+      await user.click(saveButton);
+
+      expect(mockUpdateShift).not.toHaveBeenCalled();
+      expect(within(tile).getByRole('button', { name: 'Edit hourly rate' })).toBeInTheDocument();
+    });
+
+    it('surfaces an error inline when the mutation rejects', async () => {
+      const user = userEvent.setup();
+      mockUpdateShift.mockRejectedValueOnce(new Error('override_reason is required when hourly_rate changes'));
+
+      render(
+        <ShiftCompensationDialog
+          open
+          onOpenChange={vi.fn()}
+          studioId="std_1"
+          shift={shift}
+        />,
+      );
+
+      const tile = screen.getByTestId('shift-hourly-rate-tile');
+      await user.click(within(tile).getByRole('button', { name: 'Edit hourly rate' }));
+      await user.clear(within(tile).getByLabelText('Hourly rate'));
+      await user.type(within(tile).getByLabelText('Hourly rate'), '30.00');
+      await user.type(within(tile).getByPlaceholderText('Why is this rate being changed?'), 'Pickup shift');
+      await user.click(within(tile).getByRole('button', { name: /Save/ }));
+
+      await waitFor(() => {
+        expect(within(tile).getByText(/override_reason is required when hourly_rate changes/)).toBeInTheDocument();
+      });
+      // Editor stays open after an error.
+      expect(within(tile).queryByRole('button', { name: 'Edit hourly rate' })).not.toBeInTheDocument();
+    });
   });
 });

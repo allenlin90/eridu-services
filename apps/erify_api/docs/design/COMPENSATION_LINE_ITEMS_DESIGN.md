@@ -345,6 +345,8 @@ Reuse:
 4. Persist field changes and metadata in one update.
 5. Non-snapshot fields update normally with no audit append.
 6. The single-object `metadata.audit.last_transition` pattern from `task.service.ts` is intentionally not reused here. Snapshot edits benefit from full ordered history, and the array shape is documented as the canonical snapshot-audit format.
+7. **Service-layer guard on explicit `StudioShift.hourly_rate` edits (PR 3.5):** in `studio-shift.service.ts#updateShift`, if `payload.hourlyRate !== undefined` AND the resulting `snapshotChanges` is non-empty AND `payload.overrideReason` is missing or blank, throw `HttpError.badRequest('override_reason is required when hourly_rate changes')`. The narrow `payload.hourlyRate !== undefined` predicate excludes reassignment-driven rate changes (different `user_id` with no explicit rate) — those continue to flow through and silently append the audit entry without a reason.
+8. **Helper no-op tolerance (PR 3.5):** `appendSnapshotAudit` no longer throws when a reason is supplied alongside zero changes. It silently ignores the reason and returns metadata unchanged. The audit log has nothing to append to in that case, so rejecting the call was hostile to a common no-op edit shape (manager re-submits an unchanged value with a justification). This affects both shift and `ShowCreator` agreement edit flows.
 
 ## No Historical Repair
 

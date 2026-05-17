@@ -34,6 +34,7 @@ type ShiftFormFieldsProps = {
   formState: ShiftFormState;
   onChange: (next: ShiftFormState) => void;
   includeStatus?: boolean;
+  includeHourlyRate?: boolean;
 };
 
 export function ShiftFormFields({
@@ -44,6 +45,7 @@ export function ShiftFormFields({
   formState,
   onChange,
   includeStatus = false,
+  includeHourlyRate = true,
 }: ShiftFormFieldsProps) {
   const blockFeedback = useMemo(() => {
     const feedbackByBlockId = new Map<string, { inlineError: string | null; endWrapsToNextDay: boolean }>();
@@ -130,18 +132,20 @@ export function ShiftFormFields({
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor={`${idPrefix}-rate`}>Hourly Rate</Label>
-          <Input
-            id={`${idPrefix}-rate`}
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            value={formState.hourlyRate}
-            onChange={(event) => onChange({ ...formState, hourlyRate: event.target.value })}
-          />
-        </div>
+        {includeHourlyRate && (
+          <div className="space-y-2">
+            <Label htmlFor={`${idPrefix}-rate`}>Hourly Rate</Label>
+            <Input
+              id={`${idPrefix}-rate`}
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={formState.hourlyRate}
+              onChange={(event) => onChange({ ...formState, hourlyRate: event.target.value })}
+            />
+          </div>
+        )}
 
         <div className="col-span-2 space-y-4">
           <div className="flex items-center justify-between">
