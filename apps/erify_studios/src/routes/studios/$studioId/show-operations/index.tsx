@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import { AlertTriangle, ListTodo, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Download, ListTodo, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { toast } from 'sonner';
 
 import {
   adaptColumnFiltersChange,
@@ -17,6 +18,10 @@ import {
   DataTablePagination,
   DataTableToolbar,
   DatePickerWithRange,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -28,11 +33,18 @@ import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
 import { useShiftAlignment } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
-import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-import { getStudioShows, type StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { formatDateTime, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
+import {
+  getAllStudioShowsForExport,
+  getStudioShows,
+  SHOW_EXPORT_MAX_RECORDS,
+  ShowExportTooLargeError,
+  type StudioShow,
+} from '@/features/studio-shows/api/get-studio-shows';
 import { SelectedShowsMobileActions } from '@/features/studio-shows/components/selected-shows-mobile-actions';
+import { ShowActualsDialog } from '@/features/studio-shows/components/show-actuals-dialog';
 import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/show-readiness/show-readiness-triage-panel';
-import { columns } from '@/features/studio-shows/components/studio-shows-table/columns';
+import { getStudioShowOperationsColumns } from '@/features/studio-shows/components/studio-shows-table/columns';
 import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
 import {
@@ -40,6 +52,13 @@ import {
   parseScopeDateAsLocal,
   toShowScopeDateTimeBounds,
 } from '@/features/studio-shows/utils/show-scope.utils';
+import {
+  buildStudioShowExportFilename,
+  buildStudioShowExportRows,
+  createStudioShowExportContent,
+  type StudioShowExportFormat,
+} from '@/features/studio-shows/utils/studio-shows-export.utils';
+import { triggerBrowserDownload } from '@/lib/file-download';
 
 export const Route = createFileRoute('/studios/$studioId/show-operations/')({
   component: StudioShowOperationsPage,
@@ -101,7 +120,7 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 }
 
 const QUICK_FILTER_COLUMNS: string[] = [];
-const FEATURED_FILTER_COLUMNS = ['has_tasks', 'client_name', 'show_status_name'];
+const FEATURED_FILTER_COLUMNS = ['actuals_state', 'has_tasks', 'client_name', 'show_status_name'];
 
 function StudioShowOperationsPage() {
   const { studioId } = showOperationsRouteApi.useParams();
@@ -376,8 +395,18 @@ function StudioShowsTableSection({
 }) {
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
+  const [actualsShowId, setActualsShowId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      exportAbortRef.current?.abort();
+    };
+  }, []);
 
   const {
+    data,
     shows,
     isLoading,
     isFetching,
@@ -388,7 +417,20 @@ function StudioShowsTableSection({
     onColumnFiltersChange,
     sorting,
     onSortingChange,
+    queryParams,
   } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo, needsAttention });
+
+  const actualsShow = useMemo(() => {
+    if (!actualsShowId) {
+      return null;
+    }
+
+    return shows.find((show) => show.id === actualsShowId) ?? null;
+  }, [actualsShowId, shows]);
+  const tableColumns = useMemo(
+    () => getStudioShowOperationsColumns({ onEditActuals: (show) => setActualsShowId(show.id) }),
+    [],
+  );
 
   const {
     rowSelection,
@@ -402,6 +444,15 @@ function StudioShowsTableSection({
   const searchableColumns = useMemo(
     () => [
       { id: 'name', title: 'Show Name', type: 'text' as const },
+      {
+        id: 'actuals_state',
+        title: 'Actuals',
+        type: 'select' as const,
+        options: [
+          { value: 'missing', label: 'Missing / incomplete' },
+          { value: 'complete', label: 'Complete' },
+        ],
+      },
       {
         id: 'has_tasks',
         title: 'Tasks',
@@ -443,6 +494,52 @@ function StudioShowsTableSection({
     ],
     [showLookups],
   );
+  const handleExport = useCallback(async (format: StudioShowExportFormat) => {
+    exportAbortRef.current?.abort();
+    const controller = new AbortController();
+    exportAbortRef.current = controller;
+    setIsExporting(true);
+
+    try {
+      const {
+        page: _page,
+        limit: _limit,
+        ...exportParams
+      } = queryParams;
+      const exportShows = await getAllStudioShowsForExport(studioId, exportParams, { signal: controller.signal });
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      const exportResult = buildStudioShowExportRows({
+        shows: exportShows,
+        formatDateTime,
+      });
+      triggerBrowserDownload({
+        content: createStudioShowExportContent(exportResult, format),
+        mimeType: format === 'json' ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;',
+        filename: buildStudioShowExportFilename({
+          format,
+          dateFrom: queryParams.planning_date_from,
+          dateTo: queryParams.planning_date_to,
+        }),
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+      if (error instanceof ShowExportTooLargeError) {
+        toast.error(`Selection exceeds the ${SHOW_EXPORT_MAX_RECORDS.toLocaleString()}-show export limit (${error.totalRecords.toLocaleString()} matched). Narrow the date range or filters and retry.`);
+        return;
+      }
+      toast.error(error instanceof Error ? error.message : 'Failed to export shows. Please try again.');
+    } finally {
+      if (exportAbortRef.current === controller) {
+        exportAbortRef.current = null;
+      }
+      setIsExporting(false);
+    }
+  }, [queryParams, studioId]);
 
   return (
     <>
@@ -454,7 +551,7 @@ function StudioShowsTableSection({
 
       <DataTable
         data={shows}
-        columns={columns}
+        columns={tableColumns}
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage="No shows found."
@@ -484,6 +581,33 @@ function StudioShowsTableSection({
             featuredFilterColumns={FEATURED_FILTER_COLUMNS}
             searchPlaceholder="Search shows..."
           >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9"
+                  disabled={isExporting || ((data?.meta.total ?? shows.length) === 0)}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => void handleExport('csv')}
+                  disabled={isExporting || ((data?.meta.total ?? shows.length) === 0)}
+                >
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => void handleExport('json')}
+                  disabled={isExporting || ((data?.meta.total ?? shows.length) === 0)}
+                >
+                  Export JSON
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -600,6 +724,21 @@ function StudioShowsTableSection({
           shows={bulkAssigningShows}
         />
       )}
+
+      <ShowActualsDialog
+        open={Boolean(actualsShowId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActualsShowId(null);
+          }
+        }}
+        studioId={studioId}
+        show={actualsShow}
+        onSaved={() => {
+          void refetch();
+          onShowsMutated();
+        }}
+      />
     </>
   );
 }

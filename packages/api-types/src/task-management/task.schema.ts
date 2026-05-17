@@ -345,6 +345,7 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
     date_to: z.iso.datetime().optional(),
     planning_date_from: z.iso.date().optional(),
     planning_date_to: z.iso.date().optional(),
+    actuals_state: z.enum(['missing', 'complete']).optional(),
     has_tasks: z
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))

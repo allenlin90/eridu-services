@@ -239,4 +239,46 @@ describe('showRepository', () => {
       include: showWithTaskSummaryInclude,
     }));
   });
+
+  it('maps actuals_state=missing to shows with absent or incomplete actuals', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      actuals_state: 'missing',
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      OR?: Array<{
+        actualStartTime?: null;
+        actualEndTime?: null;
+      }>;
+    };
+    expect(where.OR).toEqual([
+      { actualStartTime: null },
+      { actualEndTime: null },
+    ]);
+  });
+
+  it('maps actuals_state=complete to shows with both actual timestamps recorded', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      actuals_state: 'complete',
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      actualStartTime?: { not: null };
+      actualEndTime?: { not: null };
+    };
+    expect(where.actualStartTime).toEqual({ not: null });
+    expect(where.actualEndTime).toEqual({ not: null });
+  });
 });
