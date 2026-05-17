@@ -50,7 +50,7 @@ if (
 }
 ```
 
-This mirrors the reverse check that already lives in [`snapshot-audit.helper.ts:29-34`](../../../apps/erify_api/src/lib/audit/snapshot-audit.helper.ts) (reason without change → 400). Together they enforce: **explicit rate edit ⇔ reason**.
+This is a one-way guard: it requires a reason when an actual change is happening. The historical reverse check in [`snapshot-audit.helper.ts`](../../../apps/erify_api/src/lib/audit/snapshot-audit.helper.ts) (*"reason supplied but no fields changed → 400"*) is **relaxed in this PR**: when there are no changes, the helper now silently ignores the reason and returns the metadata unchanged. The 400 was hostile to a common no-op edit shape (user types the same value plus a reason); the audit log has nothing to append to, so dropping the reason is the correct behavior. This affects both shift edits and `ShowCreator` agreement edits (the other helper caller).
 
 **Why the `payload.hourlyRate !== undefined` predicate.** The brief in [`PHASE_4.md`](../../roadmap/PHASE_4.md) PR 3.5 specifies the guard fires *"when hourly_rate is present in the PATCH body and differs from the stored value"*. Reassignment (`payload.userId` to a different user) also produces a `snapshotChanges` entry because the service overwrites `hourlyRate` from the new membership's base rate. Per the brief, that path is out of scope — managers reassigning a shift shouldn't be forced to write a justification for the inherited rate. A follow-up could tighten reassignment-driven rate changes; that's not this PR.
 
@@ -61,6 +61,7 @@ This mirrors the reverse check that already lives in [`snapshot-audit.helper.ts:
 | # | Scenario | Expected |
 |---|---|---|
 | a | PATCH with same rate, no reason | 200, no snapshot entry appended |
+| a' | PATCH with same rate **and** a reason | 200, no snapshot entry appended (reason silently ignored — helper-level change) |
 | b | PATCH with different rate, no reason | 400 `'override_reason is required when hourly_rate changes'` |
 | c | PATCH with different rate + reason | 200, snapshot entry appended with reason |
 

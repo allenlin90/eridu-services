@@ -114,10 +114,10 @@ describe('snapshotAuditHelper', () => {
       expect(result.audit.snapshot_overrides).toHaveLength(1);
     });
 
-    it('should throw when reason is provided but no fields changed', () => {
-      expect(() =>
-        appendSnapshotAudit({ foo: 'bar' }, [], actorExtId, 'Stale reason'),
-      ).toThrow('override_reason was provided but no snapshot fields changed');
+    it('silently ignores reason when no fields changed (no-op edit shape)', () => {
+      const result = appendSnapshotAudit({ foo: 'bar' }, [], actorExtId, 'Stale reason');
+      expect(result).toEqual({ foo: 'bar' });
+      expect(result.audit).toBeUndefined();
     });
   });
 });
