@@ -82,7 +82,8 @@ Convert the existing read-only `Hourly rate` tile (lines 56-62) into a stateful 
 - **Save-enable rules:**
   - Disabled when rate field is blank.
   - Disabled when reason field is blank **and** the entered rate differs from the stored rate.
-  - If the entered rate equals the stored rate (same value): reason is not required, Save just closes edit mode without firing a PATCH. This matches the existing FE convention from `studio-shifts-table.tsx:319-325` and avoids the BE 400 from `appendSnapshotAudit`.
+  - Compare the entered rate to the stored rate only after normalizing both sides through `toMoneyString`; API decimals can be equivalent with different scale (`20` vs `20.00`).
+  - If the entered rate equals the stored rate (same decimal value): reason is not required, Save just closes edit mode without firing a PATCH. This matches the existing FE convention from `studio-shifts-table.tsx:319-325` and avoids the BE 400 from `appendSnapshotAudit`.
 - **On success:** flip back to display mode. The existing `setQueriesData` patch inside `useUpdateStudioShift` refreshes the tile and the table.
 - **On error:** surface `getApiErrorMessage(...)` inside the tile; stay in edit mode.
 

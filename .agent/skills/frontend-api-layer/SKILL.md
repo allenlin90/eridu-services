@@ -43,6 +43,7 @@ Backend API
 5. **No FE Data Joins for Required Display Fields**: If a view needs stable display fields (e.g. assignee name), the primary API response must include them.
 6. **Scoped Actuals and Finance Reads**: Actuals fields ride the owning resource's existing update mutation and inherit its query keys (`show`, `show-creator`, `show-platform`, `shift-block`). Do not introduce parallel "set actuals" mutations or shared `actuals` query keys that obscure which resource the fact belongs to. Finance reference values come from backend economics/read-model APIs, not frontend recomputation.
 7. **Canonical Resource Routes**: Target-scoped UI panels may live inside show or shift workflows, but API declarations should call the canonical resource collection when the backend exposes one (for example `studios/:studioId/compensation-line-items` with `target_type` / `target_id` filters). Do not invent deeply nested frontend API paths to mirror component placement.
+8. **Decimal String Normalization**: API money responses are string decimals, but equivalent values may not have identical scale (`20` and `20.00`). UI dirty-state, equality, and override-reason checks must normalize both the stored API value and the typed value through the same decimal/money helper before comparing.
 
 ### No FE Data Join Rule (Required)
 
@@ -58,6 +59,20 @@ Example anti-pattern:
 Correct approach:
 - include `user_name` (or equivalent display field) in the primary shifts response contract
 - keep frontend fetch scope to the feature API only
+
+---
+
+### Money Value Equality
+
+When a component compares an editable money input against a stored API value, normalize both sides first.
+
+```typescript
+const normalizedStoredRate = toMoneyString(shift.hourly_rate);
+const normalizedInputRate = toMoneyString(rateInput);
+const rateChanged = normalizedInputRate !== normalizedStoredRate;
+```
+
+Do not compare raw API strings to input-normalized strings. Prisma Decimal serialization may produce `20`, while input helpers usually produce fixed-scale strings like `20.00`; raw string comparison turns a no-op edit into a false change.
 
 ---
 

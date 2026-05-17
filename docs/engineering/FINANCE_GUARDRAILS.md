@@ -12,6 +12,8 @@ Controllers stay transport-only (authz, DTO parsing, response shaping). Orchestr
 
 Do not convert to JS `Number` before aggregation or display formatting. Backend money values use `Prisma.Decimal` (backed by `decimal.js`, ships with `@prisma/client`). Frontend money formatting uses `Big` from `big.js`. Serialize money to string at the API boundary, and reject JS-number inputs in shared decimal serializers (`decimalToString` on the backend, `toDecimalDisplayString` on the frontend). `toFixed(2)` is forbidden inside aggregation paths unless it is called on an approved decimal-library value (`Prisma.Decimal` or `Big`).
 
+Frontend equality and dirty-state checks for money must compare normalized decimal values, not raw wire strings. The API may serialize decimal-equivalent values with different scale (for example, `20` vs `20.00`), so editable money controls should normalize both the stored API value and the typed value through the same decimal helper before deciding whether a value changed or whether an override reason is required.
+
 ## 3. Polymorphic discriminators on financial tables use Prisma enums where cleanly supported
 
 Applies to the compensation line-item attachment discriminator and any future financial / audit-bearing tables. Use the repo's `TaskTarget` pattern as the local Prisma polymorphism reference, but do not migrate `TaskTarget` itself.
