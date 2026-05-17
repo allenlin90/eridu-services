@@ -1,6 +1,6 @@
 ---
 name: frontend-i18n
-description: Provides guidelines for implementing internationalization (i18n) in frontend applications using Paraglide JS and the shared @eridu/i18n package.
+description: Provides guidelines for implementing internationalization (i18n) in frontend applications using Paraglide JS and the shared @eridu/i18n package. Use when adding translations, configuring i18n, or working with the @eridu/i18n package.
 ---
 
 # Frontend i18n Pattern

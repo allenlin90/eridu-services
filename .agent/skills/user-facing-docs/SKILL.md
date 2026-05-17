@@ -1,6 +1,6 @@
 ---
 name: user-facing-docs
-description: Convert PRDs and feature docs into non-technical user documentation for eridu_docs. In this repo, organize output by workflow and function first, with guide, SOP, and FAQ pages grouped inside the same area rather than separate top-level buckets.
+description: Convert PRDs and feature docs into non-technical user documentation for eridu_docs. In this repo, organize output by workflow and function first, with guide, SOP, and FAQ pages grouped inside the same area rather than separate top-level buckets. Use when writing help articles, user guides, or onboarding docs for eridu_docs.
 ---
 
 # User-Facing Documentation Generator

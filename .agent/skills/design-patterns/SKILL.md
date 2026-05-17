@@ -1,6 +1,6 @@
 ---
 name: design-patterns
-description: Provides comprehensive architectural patterns for building scalable systems. This skill focuses on high-level architecture, layer boundaries, and package organization.
+description: Provides comprehensive architectural patterns for building scalable systems. This skill focuses on high-level architecture, layer boundaries, and package organization. Use when making architecture decisions, defining layer boundaries, or organizing packages.
 ---
 
 # Design Patterns Skill

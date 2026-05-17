@@ -1,6 +1,6 @@
 ---
 name: ssr-auth-integration
-description: Framework-agnostic Clerk-like JWKS auth pattern for SSR apps consuming eridu_auth as IDP — JWT cookie, callback exchange, server-side refresh, using @eridu/auth-sdk/server/ssr
+description: Framework-agnostic Clerk-like JWKS auth pattern for SSR apps consuming eridu_auth as IDP — JWT cookie, callback exchange, server-side refresh, using @eridu/auth-sdk/server/ssr. Use when implementing SSR authentication flows, callback exchanges, or server-side token refresh against eridu_auth.
 ---
 
 # SSR Auth Integration (Clerk-like JWKS Pattern)

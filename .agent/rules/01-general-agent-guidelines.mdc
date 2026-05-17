@@ -1,92 +1,16 @@
 ---
-description: Core behavior guidelines and workflows for Antigravity in Eridu Services.
+description: Core behavior guidelines and workflows for coding agents in Eridu Services.
 globs: *
 ---
-# Eridu Services - General Antigravity Guidelines
+# Eridu Services - General Agent Guidelines
 
-You are an expert full-stack developer working on Eridu Services. As an Antigravity agent, you must strictly follow these rules:
+Canonical guidance lives in `AGENTS.md` at the repo root. Read that file first.
 
-## 1. Skill Utilization (CRITICAL)
-Before starting ANY task, you MUST check if there are relevant skills in the `.agent/skills/` directory and read them using `view_file` on the `SKILL.md` file.
+## Quick Pointers
 
-**Common Skill Mappings:**
-- **Backend (NestJS)**: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `orchestration-service-nestjs`, `erify-authorization`, `authentication-authorization-nestjs`, `database-patterns`, `data-validation`
-- **Frontend (React)**: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`, `frontend-error-handling`, `frontend-performance`, `frontend-i18n`, `frontend-code-quality`, `pwa-best-practices`
-- **Architecture & Types**: `design-patterns`, `shared-api-types`, `solid-principles`
-- **Code Quality & Review**: `code-quality`, `engineering-best-practices-enforcer`
-- **Feature-Specific**: `admin-list-pattern`, `studio-list-pattern`, `task-template-builder`, `schedule-continuity-workflow`, `jsonb-analytics-snapshot`, `shift-schedule-pattern`, `file-upload-presign`
-- **Meta**: `skill-creator`
-
-*If you are unsure of how to build something, look for a skill first.*
-
-## 2. Code Verification Workflow (CRITICAL)
-**🚨 NEVER skip verification.** After generating, modifying, or refactoring code, you MUST invoke the verification workflow before considering your work complete.
-
-1. **Invoke the workflow:** Call `/verification` if acting in a context where slash commands are available, or manually run the equivalent steps:
-2. **Steps to manual verification:**
-   - `pnpm --filter <app_or_package> lint`
-   - `pnpm --filter <app_or_package> typecheck`
-   - `pnpm --filter <app_or_package> test`
-   - `pnpm --filter <app_or_package> build`
-3. **Fix Errors:** If ANY of the above fail, you MUST fix the errors. DO NOT use `any` or `@ts-ignore` to bypass type errors unless absolutely unavoidable and explicitly requested by the user.
-
-## 2.1 Knowledge Sync Workflow (CRITICAL for Feature/Refactor Work)
-After feature delivery, behavior changes, or refactors, you MUST sync agent knowledge artifacts before considering work complete.
-
-1. **Invoke the workflow:** Use `.agent/workflows/knowledge-sync.md`.
-2. **Required sync targets:**
-   - docs (`docs/` vs `docs/design/` + README status/index)
-   - relevant skills in `.agent/skills/`
-   - workflows/rules when process became reusable/mandatory
-   - memory references in `.claude/memory/` for durable project knowledge
-3. **Goal:** ensure future agents can discover and apply the updated behavior/process without re-deriving context.
-
-
-## 2.2 Frontend PWA Workflow (MANDATORY for PWA changes)
-When enabling or modifying PWA behavior in frontend apps, you MUST follow `.agent/workflows/pwa-migration.md` and the `pwa-best-practices` skill.
-
-Required baseline for PWA tasks:
-- Preserve TanStack Query ownership of API data caching (avoid SW/API double-caching).
-- Keep route URL/search-param behavior parity while introducing PWA support.
-- Register the service worker with `registerType: 'prompt'` and apply waiting workers via an explicit "Check for updates" path; never auto-reload on `controllerchange` in iOS standalone mode.
-- Verify update flow on installed iOS PWA after any change to SW registration, controllerchange handling, or Workbox navigation config.
-- Run `lint`, `typecheck`, `test`, and `build` for each changed frontend app.
-
-## 3. General Best Practices
-- **Code Style:** Follow the established patterns in the codebase.
-- **Type Safety:** Maintain strict typing.
-- **Error Handling:** Use centralized error handling patterns (e.g., `HttpError` utility for backend APIs).
-- **Communication:** If uncertain about requirements or if a proposed architecture requires user approval, stop and use `notify_user` to gather feedback.
-- **Frontend Access Control Consistency:** For `erify_studios` studio routes, do not duplicate per-page membership/role checks. Use shared route-access policy + shared guard, and keep sidebar visibility derived from the same policy source.
-- **Frontend Refresh Action Consistency (MANDATORY):** For manual data refetch controls in frontend toolbars/headers, use icon-only refresh buttons (`size="icon"`) with explicit `aria-label` and spinning icon state while fetching; avoid text-labeled "Refresh" buttons. Existing text items in older mobile action menus are refactor debt and should be migrated toward this pattern when touched.
-- **Frontend Form Contract & Date/Time Input Consistency (MANDATORY):**
-  1. During planning for any frontend form/dialog/sheet, inventory the intended user-editable field set from the shared API schema plus the feature/design doc.
-  2. During implementation, do not silently omit contract-backed fields from the UX. If a field is intentionally excluded, document the product reason in the design doc and leave a short code comment near the form/schema composition.
-  3. Use `DatePicker` / `DateTimePicker` from `@eridu/ui` for date and datetime editing. Older native `<input type="date">` / `<input type="datetime-local">` usages are refactor debt and should be migrated when those surfaces are touched; require a documented reason before introducing or retaining native inputs.
-  4. During code review and PR review, treat undocumented form-field omissions and unjustified native date/datetime inputs as review findings.
-- **Frontend Searchable Lookup Completeness (MANDATORY):**
-  1. During planning, inventory every searchable input/filter and record its intended data source per field: scoped API endpoint, preloaded lookup bundle, or deliberate client-side filtering.
-  2. During implementation, do not ship search affordances with dead wiring. `onSearch={() => {}}`, partial field parity, or silent fallback from remote search to local filtering are implementation gaps unless explicitly documented.
-  3. If a remote endpoint does not exist yet, document the temporary local-filter behavior in the design doc and keep the UI semantics honest.
-  4. Add or update tests that prove typing into each searchable field changes query state or the documented local-filter state.
-  5. During code review and PR review, treat undocumented local fallback, no-op search handlers, and mixed remote/local behavior across same-form fields as blocking findings.
-- **Frontend Async Lookup Field Isolation (MANDATORY):** For forms/dialogs with two or more `AsyncCombobox`/`AsyncMultiCombobox` fields backed by async lookup hooks, each field must be extracted into its own `memo()` component that owns its hook internally. Every inline `setSearch` call on a hook at the parent-form level causes a full form re-render on every keystroke; isolated field components prevent this. Reference: `show-form-fields.tsx`. During planning, flag any form with 2+ async lookups and design the field components upfront. During code review, treat async lookup hooks called at the parent-form level (when 2+ exist) as a blocking performance and architecture finding.
-- **Frontend Searchable Lookup Hook Deduplication (MANDATORY):**
-  1. When a file exports two or more hooks that share the same `useState('')` + `useQuery` + `staleTime`/`gcTime`/`enabled` structure, extract a shared internal helper (e.g. `useSearchQuery`) and reduce each exported hook to only the parts that differ: query segment, API call, and option-mapping logic.
-  2. During planning, flag any new lookup hook file that will contain three or more hooks — design the shared helper upfront rather than retrofitting.
-  3. During implementation, do not copy-paste the boilerplate block; call the shared helper instead.
-  4. During code review and PR review, treat three or more hooks in the same file with duplicated search/query boilerplate as a blocking finding.
-- **Frontend Pagination Consistency (MANDATORY):**
-  1. For paginated table/list views that follow the standard server-driven route pattern, use the shared stack: `useTableUrlState`, `DataTablePagination`, `setPageCount` from real API metadata, and `placeholderData: keepPreviousData`.
-  2. Do not hand-roll route-local pagination state, next/prev handlers, or page-clamp effects unless the surface has a materially different UX and that exception is documented.
-  3. Never clamp against fallback metadata such as `totalPages ?? 1` while a new page is loading; only correct out-of-range pages after real API pagination metadata arrives.
-  4. During planning, identify the nearest existing paginated route in the same app and match its URL contract and pagination ownership model.
-  5. Routes that still use custom pagination should be unified toward this shared stack when touched. During code review and PR review, treat custom pagination state machines, fallback page clamps, and missing previous-data preservation on standard paginated routes as blocking findings unless a materially different UX is documented.
-- **Frontend Collapsible Toggle Consistency (MANDATORY):** For show/hide section toggles in frontend pages, use icon-only toggle buttons with `ChevronUp` (expanded) and `ChevronDown` (collapsed), with explicit `aria-label`. Keep placement consistent across breakpoints (prefer top-right of the section header).
-- **Frontend Route Wrapper Consistency (MANDATORY):** For route groups with shared page chrome/padding (for example `studios/$studioId/*`, `system/*`), define one parent route layout (`route.tsx`) with `Outlet` and shared wrapper component. Child pages must not hardcode duplicated page wrapper class strings.
-- **Frontend Leaf Header Wrapper Consistency (MANDATORY):** Inside one route set, leaf pages must use the same shared page-shell component (for example: `/system/*` -> `AdminLayout`, `studios/$studioId/*` -> `PageLayout`). Avoid manual duplicated `<h1>` + description blocks in leaf routes.
-- **Frontend Large Route Refactor Checklist (MANDATORY):**
-  1. If a route component exceeds ~200 LOC or mixes 3+ concerns, decompose into route container + extracted sections (and hooks when state/query logic is dense).
-  2. Keep canonical search param validation in the route schema (`validateSearch`), not ad-hoc fallback logic in render.
-  3. Preserve URL contract and behavior parity (pagination, filters, date defaults).
-  4. Add/update tests covering loading/empty/data and route-state transitions affected by refactor.
+- **Skills:** discover from `.agent/skills/`. Each `SKILL.md` has a name and description.
+- **Verification:** run `.agent/workflows/verification.md` after every code change.
+- **Knowledge sync:** run `.agent/workflows/knowledge-sync.md` after feature delivery or refactors.
+- **PWA changes:** follow `.agent/workflows/pwa-migration.md` + `pwa-best-practices` skill.
+- **Type safety:** do not bypass with `any` or `@ts-ignore` unless explicitly requested.
+- **Frontend patterns:** see the relevant frontend skills for form contracts, pagination, refresh actions, searchable controls, route decomposition, and access control consistency.
