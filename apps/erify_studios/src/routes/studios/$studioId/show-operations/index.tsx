@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import { AlertTriangle, Download, ListTodo, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Download, ListTodo, Loader2, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
@@ -588,9 +588,12 @@ function StudioShowsTableSection({
                   size="sm"
                   className="h-9"
                   disabled={isExporting || ((data?.meta.total ?? shows.length) === 0)}
+                  aria-busy={isExporting}
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
+                  {isExporting
+                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    : <Download className="mr-2 h-4 w-4" />}
+                  {isExporting ? 'Exporting…' : 'Export'}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

@@ -104,4 +104,47 @@ describe('getAllStudioShowsForExport', () => {
     ).rejects.toBeInstanceOf(ShowExportTooLargeError);
     expect(apiClient.get).toHaveBeenCalledTimes(1);
   });
+
+  it('fetches remaining pages in concurrency-capped batches and preserves order', async () => {
+    // 10 total pages: first request + 9 remaining, batched 4 at a time → 4, 4, 1.
+    const totalPages = 10;
+    const total = 1000;
+    const inFlight = { current: 0, peak: 0 };
+
+    mockedApiGet.mockImplementation(async (_url, config) => {
+      const page = (config?.params as { page: number }).page;
+      inFlight.current += 1;
+      inFlight.peak = Math.max(inFlight.peak, inFlight.current);
+      try {
+        await Promise.resolve();
+        return {
+          data: {
+            data: [{ id: `show_p${page}` }],
+            meta: { page, limit: 100, total, totalPages },
+          },
+        };
+      } finally {
+        inFlight.current -= 1;
+      }
+    });
+
+    const shows = await getAllStudioShowsForExport('std_concurrent', {
+      date_from: '2026-04-01T00:00:00.000Z',
+    });
+
+    expect(shows.map((s) => (s as { id: string }).id)).toEqual([
+      'show_p1',
+      'show_p2',
+      'show_p3',
+      'show_p4',
+      'show_p5',
+      'show_p6',
+      'show_p7',
+      'show_p8',
+      'show_p9',
+      'show_p10',
+    ]);
+    expect(mockedApiGet).toHaveBeenCalledTimes(totalPages);
+    expect(inFlight.peak).toBeLessThanOrEqual(4);
+  });
 });

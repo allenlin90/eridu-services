@@ -4,6 +4,7 @@ import { apiClient } from '@/lib/api/client';
 
 const SHOW_EXPORT_PAGE_SIZE = 100;
 const SHOW_EXPORT_MAX_PAGES = 50;
+const SHOW_EXPORT_CONCURRENCY = 4;
 
 export const SHOW_EXPORT_MAX_RECORDS = SHOW_EXPORT_PAGE_SIZE * SHOW_EXPORT_MAX_PAGES;
 
@@ -93,16 +94,24 @@ export async function getAllStudioShowsForExport(
     { length: firstPage.meta.totalPages - 1 },
     (_, index) => index + 2,
   );
-  const remainingResponses = await Promise.all(
-    remainingPages.map((page) => getStudioShows(
-      studioId,
-      { ...params, page, limit: SHOW_EXPORT_PAGE_SIZE },
-      { signal: options?.signal },
-    )),
-  );
 
-  return [
-    ...firstPage.data,
-    ...remainingResponses.flatMap((response) => response.data),
-  ];
+  const results: StudioShow[] = [...firstPage.data];
+  for (let i = 0; i < remainingPages.length; i += SHOW_EXPORT_CONCURRENCY) {
+    if (options?.signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+    const batch = remainingPages.slice(i, i + SHOW_EXPORT_CONCURRENCY);
+    const responses = await Promise.all(
+      batch.map((page) => getStudioShows(
+        studioId,
+        { ...params, page, limit: SHOW_EXPORT_PAGE_SIZE },
+        { signal: options?.signal },
+      )),
+    );
+    for (const response of responses) {
+      results.push(...response.data);
+    }
+  }
+
+  return results;
 }

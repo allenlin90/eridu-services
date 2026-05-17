@@ -71,7 +71,20 @@ const SYSTEM_COLUMN_META: Record<TaskReportSystemColumnKey, { type: FieldType }>
   [TASK_REPORT_SYSTEM_COLUMN.SHOW_TYPE_NAME]: { type: 'text' },
   [TASK_REPORT_SYSTEM_COLUMN.START_TIME]: { type: 'datetime' },
   [TASK_REPORT_SYSTEM_COLUMN.END_TIME]: { type: 'datetime' },
+  [TASK_REPORT_SYSTEM_COLUMN.ACTUAL_START_TIME]: { type: 'datetime' },
+  [TASK_REPORT_SYSTEM_COLUMN.ACTUAL_END_TIME]: { type: 'datetime' },
+  [TASK_REPORT_SYSTEM_COLUMN.ACTUALS_STATUS]: { type: 'text' },
 };
+
+function deriveActualsStatus(actualStartTime: Date | null, actualEndTime: Date | null): 'complete' | 'incomplete' | 'missing' {
+  if (actualStartTime && actualEndTime) {
+    return 'complete';
+  }
+  if (actualStartTime || actualEndTime) {
+    return 'incomplete';
+  }
+  return 'missing';
+}
 
 /**
  * Executes the report generation pipeline for the run endpoint.
@@ -469,6 +482,9 @@ export class TaskReportRunService {
       [TASK_REPORT_SYSTEM_COLUMN.SHOW_TYPE_NAME]: show.showTypeName,
       [TASK_REPORT_SYSTEM_COLUMN.START_TIME]: show.startTime.toISOString(),
       [TASK_REPORT_SYSTEM_COLUMN.END_TIME]: show.endTime.toISOString(),
+      [TASK_REPORT_SYSTEM_COLUMN.ACTUAL_START_TIME]: show.actualStartTime?.toISOString() ?? null,
+      [TASK_REPORT_SYSTEM_COLUMN.ACTUAL_END_TIME]: show.actualEndTime?.toISOString() ?? null,
+      [TASK_REPORT_SYSTEM_COLUMN.ACTUALS_STATUS]: deriveActualsStatus(show.actualStartTime, show.actualEndTime),
     };
   }
 

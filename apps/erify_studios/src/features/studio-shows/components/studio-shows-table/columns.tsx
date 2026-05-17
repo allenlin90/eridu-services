@@ -7,6 +7,7 @@ import { CheckCircle2, ChevronRight, Clock3 } from 'lucide-react';
 import { Badge, Checkbox, DataTableActions, DropdownMenuItem } from '@eridu/ui';
 
 import type { StudioShow } from '../../api/get-studio-shows';
+import { getShowActualsStatus, toShowActualsServerFilter } from '../../utils/show-actuals.utils';
 
 function ShowNameCell({ show }: { show: StudioShow }) {
   // Extract studioId from the current route context as a robust fallback
@@ -62,20 +63,8 @@ function ShowNameCell({ show }: { show: StudioShow }) {
   );
 }
 
-function getActualsStatus(show: StudioShow): 'complete' | 'incomplete' | 'missing' {
-  if (show.actual_start_time && show.actual_end_time) {
-    return 'complete';
-  }
-
-  if (show.actual_start_time || show.actual_end_time) {
-    return 'incomplete';
-  }
-
-  return 'missing';
-}
-
 function ShowActualsCell({ show }: { show: StudioShow }) {
-  const status = getActualsStatus(show);
+  const status = getShowActualsStatus(show);
 
   if (status === 'complete') {
     return (
@@ -161,7 +150,7 @@ export function getStudioShowOperationsColumns({
     },
     {
       id: 'actuals_status',
-      accessorFn: (row) => getActualsStatus(row),
+      accessorFn: (row) => getShowActualsStatus(row),
       header: 'Actuals',
       cell: ({ row }) => <ShowActualsCell show={row.original} />,
     },
@@ -268,7 +257,7 @@ export function getStudioShowOperationsColumns({
     },
     {
       id: 'actuals_state',
-      accessorFn: (row) => (getActualsStatus(row) === 'complete' ? 'complete' : 'missing'),
+      accessorFn: (row) => toShowActualsServerFilter(getShowActualsStatus(row)),
       header: () => null,
       cell: () => null,
       meta: { className: 'hidden' },

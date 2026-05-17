@@ -1,7 +1,15 @@
 import type { StudioShow } from '../api/get-studio-shows';
 
+import { getShowActualsStatus, type ShowActualsStatus } from './show-actuals.utils';
+
 import type { CsvColumn } from '@/lib/csv';
 import { serializeRowsToCsv } from '@/lib/csv';
+
+const ACTUALS_STATUS_LABELS: Record<ShowActualsStatus, string> = {
+  complete: 'Complete',
+  incomplete: 'Incomplete',
+  missing: 'Missing',
+};
 
 export type StudioShowExportFormat = 'csv' | 'json';
 
@@ -84,18 +92,6 @@ function formatPlatforms(show: StudioShow): string {
     .join('; ');
 }
 
-function getActualsStatus(show: StudioShow): string {
-  if (show.actual_start_time && show.actual_end_time) {
-    return 'Complete';
-  }
-
-  if (show.actual_start_time || show.actual_end_time) {
-    return 'Incomplete';
-  }
-
-  return 'Missing';
-}
-
 export function buildStudioShowExportRows({
   shows,
   formatDateTime,
@@ -114,7 +110,7 @@ export function buildStudioShowExportRows({
     planned_end: formatDateTime(show.end_time),
     actual_start: show.actual_start_time ? formatDateTime(show.actual_start_time) : '',
     actual_end: show.actual_end_time ? formatDateTime(show.actual_end_time) : '',
-    actuals_status: getActualsStatus(show),
+    actuals_status: ACTUALS_STATUS_LABELS[getShowActualsStatus(show)],
     task_total: String(show.task_summary.total),
     task_assigned: String(show.task_summary.assigned),
     task_unassigned: String(show.task_summary.unassigned),

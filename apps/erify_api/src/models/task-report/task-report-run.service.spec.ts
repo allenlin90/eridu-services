@@ -21,6 +21,8 @@ describe('taskReportRunService', () => {
     externalId: 'EXT-1',
     startTime: new Date('2026-03-16T00:00:00.000Z'),
     endTime: new Date('2026-03-16T02:00:00.000Z'),
+    actualStartTime: null,
+    actualEndTime: null,
     clientUid: 'client_1',
     clientName: 'Client A',
     studioRoomUid: 'room_1',
@@ -714,6 +716,76 @@ describe('taskReportRunService', () => {
       client_name: null,
       start_time: null,
     });
+  });
+
+  it('fills show actuals system columns and derives actuals_status', async () => {
+    scopeService.preflight.mockResolvedValue({
+      show_count: 3,
+      task_count: 0,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow({
+        uid: 'show_complete',
+        actualStartTime: new Date('2026-03-16T00:05:00.000Z'),
+        actualEndTime: new Date('2026-03-16T02:03:00.000Z'),
+      }),
+      createScopedShow({
+        uid: 'show_incomplete',
+        actualStartTime: new Date('2026-03-16T00:05:00.000Z'),
+        actualEndTime: null,
+      }),
+      createScopedShow({
+        uid: 'show_missing',
+        actualStartTime: null,
+        actualEndTime: null,
+      }),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [
+        { key: 'show_id', label: 'Show' },
+        { key: 'actual_start_time', label: 'Actual Start' },
+        { key: 'actual_end_time', label: 'Actual End' },
+        { key: 'actuals_status', label: 'Actuals Status' },
+      ],
+    }));
+
+    expect(result.row_count).toBe(3);
+    expect(result.rows).toEqual([
+      expect.objectContaining({
+        show_id: 'show_complete',
+        actual_start_time: '2026-03-16T00:05:00.000Z',
+        actual_end_time: '2026-03-16T02:03:00.000Z',
+        actuals_status: 'complete',
+      }),
+      expect.objectContaining({
+        show_id: 'show_incomplete',
+        actual_start_time: '2026-03-16T00:05:00.000Z',
+        actual_end_time: null,
+        actuals_status: 'incomplete',
+      }),
+      expect.objectContaining({
+        show_id: 'show_missing',
+        actual_start_time: null,
+        actual_end_time: null,
+        actuals_status: 'missing',
+      }),
+    ]);
+    expect(result.columns).toMatchObject([
+      { key: 'show_id', type: 'text' },
+      { key: 'actual_start_time', type: 'datetime' },
+      { key: 'actual_end_time', type: 'datetime' },
+      { key: 'actuals_status', type: 'text' },
+    ]);
   });
 
   it('includes show-status and multi-assignee metadata for FE-side view filters', async () => {
