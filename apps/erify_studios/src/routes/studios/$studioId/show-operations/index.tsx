@@ -536,8 +536,8 @@ function StudioShowsTableSection({
     } finally {
       if (exportAbortRef.current === controller) {
         exportAbortRef.current = null;
+        setIsExporting(false);
       }
-      setIsExporting(false);
     }
   }, [queryParams, studioId]);
 
