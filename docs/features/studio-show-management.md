@@ -60,7 +60,8 @@ Studios could assign creators to shows and read show details, but could not cont
 - [x] Studio ADMIN can soft-delete shows before start time.
 - [x] Studio ADMIN and MANAGER can manage platform assignments on shows.
 - [x] Studio ADMIN and MANAGER can record, clear, and filter by show actuals from `/show-operations`.
-- [x] `/show-operations` CSV/JSON export uses the active date range and server-side filters for all matching rows.
+- [x] `/show-operations` CSV/JSON export uses the active date range and server-side filters for all matching rows, paginates with a small concurrency cap (no fan-out), and shows in-progress feedback on the trigger.
+- [x] Task report builder exposes `actual_start_time`, `actual_end_time`, and `actuals_status` as system columns alongside the planned `start_time` / `end_time`.
 - [x] Studio ADMIN and MANAGER can assign a show to a same-studio, same-client schedule, move it between schedules, or clear its schedule linkage.
 - [x] The studio shows page can identify orphan shows with no schedule so operators can repair schedule linkage.
 - [x] Shows are automatically scoped to the studio from the route — no cross-studio creation.

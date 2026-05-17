@@ -108,15 +108,17 @@ Required pattern:
 - derive export params from the same hook-owned API params as the table query
 - omit only pagination fields (`page`, `limit`) before export
 - page through the list endpoint with a fixed export page size and a documented max row cap
-- forward an `AbortSignal` to every page request and abort in-flight exports on unmount or a new export
+- cap concurrent page fetches at a small constant (e.g. 4). Never fan out the full remaining-page list with `Promise.all` — a single user click can burst dozens of identical-shape requests at the API. Use `for (let i = 0; i < pages.length; i += BATCH_SIZE)` and `await Promise.all` on a slice. Some additional wait time is acceptable; bursting the API is not.
+- forward an `AbortSignal` to every page request and abort in-flight exports on unmount or a new export; check `signal.aborted` between batches
+- show a spinner (`Loader2 animate-spin`) plus "Exporting…" label on the trigger button while pagination runs; set `aria-busy` so screen readers announce the in-progress state
 - use shared CSV/download primitives (`src/lib/csv.ts`, `src/lib/file-download.ts`) so escaping, UTF-8 BOM, CRLF line endings, and browser download behavior stay consistent
 - make the export action disabled when the matching result count is zero or an export is already running
 
 Reference implementations:
-- `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts`
-- `apps/erify_studios/src/features/studio-shifts/utils/studio-shifts-export.utils.ts`
-- `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts`
+- `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts` — concurrency-capped batched pagination (canonical)
 - `apps/erify_studios/src/features/studio-shows/utils/studio-shows-export.utils.ts`
+- `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts` — older fan-out (to be migrated to the batched form)
+- `apps/erify_studios/src/features/studio-shifts/utils/studio-shifts-export.utils.ts`
 
 ## CRUD Table UX Consistency Rules
 

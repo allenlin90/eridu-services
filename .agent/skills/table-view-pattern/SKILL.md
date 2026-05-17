@@ -62,7 +62,9 @@ When a table supports CSV/JSON export, export the current server-filtered view, 
 
 - Derive export params from the same hook-owned API params as the table query; omit only `page`/`limit`.
 - Page through the list endpoint with a fixed export page size and a documented max row cap.
+- Cap concurrent page fetches at a small constant (e.g. 4). Do not fan out every remaining page with `Promise.all` — accept some wait time over bursting up to N simultaneous requests at the API.
 - Forward an `AbortSignal` to every page request; abort in-flight exports on unmount or new export.
+- Show a spinner + "Exporting…" label on the trigger button while pagination runs (do not leave the button silently disabled).
 - Use shared primitives (`src/lib/csv.ts`, `src/lib/file-download.ts`) for escaping, UTF-8 BOM, CRLF, and downloads.
 - Disable the export action when the matching count is zero or an export is already running.
 
@@ -77,7 +79,7 @@ See [references/table-view-details.md](references/table-view-details.md) for ref
 - [ ] `isLoading` and `isFetching` both handled
 - [ ] Mutation invalidation scoped correctly
 - [ ] Stable row ids for selection/editing
-- [ ] Current-view export (if present) uses shared params + `AbortSignal` + shared CSV/download helpers
+- [ ] Current-view export (if present) uses shared params + `AbortSignal` + shared CSV/download helpers + concurrency cap (no `Promise.all` fan-out) + spinner on trigger
 - [ ] Route decomposition clean and maintainable
 - [ ] Layout compared against nearest canonical table
 

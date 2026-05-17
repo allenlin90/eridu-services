@@ -44,7 +44,7 @@ Access rules:
 - the operations page keeps its existing route/view-model hook: `useStudioShows()`
 - show actuals are edited through the existing studio show update mutation (`PATCH /studios/:studioId/shows/:showId`); there is no separate frontend actuals API family
 - the operations page supports `actuals_state=missing|complete` as URL-backed server filtering for the missing-actuals queue
-- current-view export calls `getAllStudioShowsForExport()`, which pages through every result matching the current server-side filters, caps exports at 5000 rows, forwards `AbortSignal`, and serializes CSV/JSON through the shared `csv` and `file-download` primitives
+- current-view export calls `getAllStudioShowsForExport()`, which pages through every result matching the current server-side filters, caps exports at 5000 rows, batches concurrent page fetches at 4 at a time (no `Promise.all` fan-out so a single click cannot burst dozens of requests), forwards `AbortSignal` and bails between batches when aborted, and serializes CSV/JSON through the shared `csv` and `file-download` primitives. The trigger button renders a `Loader2` spinner with "Exporting…" while pagination runs.
 - shared `show-lookups` stays lightweight for list/filter surfaces; searchable schedule and room inputs use dedicated studio endpoints instead
 - successful create/update/delete invalidates the shared studio show list family and task-related dependent queries via `invalidate-studio-task-queries.ts`
 

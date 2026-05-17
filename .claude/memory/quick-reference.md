@@ -198,13 +198,15 @@ For paginated studio table exports, export the current server-filtered view rath
 
 - keep URL/query parameter construction in the route hook and reuse it for export
 - omit `page` and `limit` when exporting, then fetch fixed-size pages with an explicit max-row cap
-- forward `AbortSignal` through every page request
+- cap concurrent page fetches at a small constant (e.g. 4); never `Promise.all` the full remaining-page list — a 5000-row export must not burst 49 simultaneous requests at the API
+- forward `AbortSignal` through every page request; check `signal.aborted` between batches
+- show a `Loader2` spinner + "Exporting…" label on the trigger while pagination runs
 - serialize CSV through `src/lib/csv.ts` and download through `src/lib/file-download.ts`
 
 Canonical implementation references:
 
-- `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts`
-- `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts`
+- `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts` — concurrency-capped batched pagination
+- `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts` — older fan-out form (legacy)
 - `.agent/skills/table-view-pattern/SKILL.md`
 
 ---
@@ -253,7 +255,17 @@ When populating view-filter state from result rows, prefer setting `*_name` over
 ### Guardrails (2026-03-20)
 
 - Preflight `task_count` must match run eligibility: count only submitted tasks with both `templateId` and `snapshotId` (unsnapshotted tasks are excluded from both preflight and run).
-- Shared-field keys must not collide with report system column keys (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`).
+- Shared-field keys must not collide with report system column keys (`show_id`, `show_name`, `show_external_id`, `client_name`, `studio_room_name`, `show_standard_name`, `show_type_name`, `start_time`, `end_time`, `actual_start_time`, `actual_end_time`, `actuals_status`).
+
+### Show actuals system columns
+
+`TASK_REPORT_SYSTEM_COLUMN` exposes three actuals columns alongside the planned `start_time` / `end_time`:
+
+- `actual_start_time` — `datetime`, ISO string or `null`
+- `actual_end_time` — `datetime`, ISO string or `null`
+- `actuals_status` — `text`, derived BE-side: `complete` (both set), `incomplete` (one set), `missing` (neither)
+
+Run pipeline emits these from `Show.actualStartTime` / `Show.actualEndTime` via `TaskReportRunService.buildSystemRow`. The column picker (`report-column-picker.tsx`) exposes them next to Start/End; rendering relies on the existing `column.type === 'datetime'` path.
 
 ---
 
