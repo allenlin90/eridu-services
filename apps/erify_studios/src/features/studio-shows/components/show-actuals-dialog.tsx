@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import {
   Button,
-  DateTimePicker,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -10,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   Label,
+  ResponsiveDateTimePicker,
 } from '@eridu/ui';
 
 import type { StudioShow } from '../api/get-studio-shows';
@@ -73,10 +73,11 @@ function ShowActualsDialogForm({
               Clear
             </Button>
           </div>
-          <DateTimePicker
+          <ResponsiveDateTimePicker
             value={actualStartTime}
             onChange={setActualStartTime}
             className="w-full"
+            label="Actual start"
           />
         </div>
         <div className="space-y-1.5">
@@ -94,10 +95,11 @@ function ShowActualsDialogForm({
               Clear
             </Button>
           </div>
-          <DateTimePicker
+          <ResponsiveDateTimePicker
             value={actualEndTime}
             onChange={setActualEndTime}
             className="w-full"
+            label="Actual end"
           />
         </div>
       </div>
