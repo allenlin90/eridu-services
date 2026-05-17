@@ -1,118 +1,52 @@
 ---
 name: frontend-i18n
-description: Provides guidelines for implementing internationalization (i18n) in frontend applications using Paraglide JS and the shared @eridu/i18n package.
+description: Provides guidelines for implementing internationalization (i18n) in frontend applications using Paraglide JS and the shared @eridu/i18n package. Use when adding translations, configuring i18n, or working with the @eridu/i18n package.
 ---
 
 # Frontend i18n Pattern
 
-This skill outlines the standard pattern for implementing internationalization in Eridu frontend applications. We use [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) for type-safe, lightweight i18n.
+Internationalization using Paraglide JS and the shared `@eridu/i18n` package.
 
 ## Architecture
 
 - **Tooling**: `@inlang/paraglide-js` (v2+)
-- **Configuration**: Defined in `project.inlang` at the app root.
-- **Message Storage**: JSON files in `src/i18n/messages/{lang}.json`.
-- **Output**: Generated code in `src/paraglide` (typically gitignored).
-- **Shared Library**: `@eridu/i18n` (workspace package) for common translations and locale definitions.
+- **Config**: `project.inlang` at app root
+- **Messages**: `src/i18n/messages/{lang}.json`
+- **Output**: Generated in `src/paraglide` (gitignored)
+- **Shared**: `@eridu/i18n` for common translations and locale definitions
 
-## Workflow: Adding Translations
+## Adding Translations
 
-1.  **Locate the Message File**: Open `src/i18n/messages/en.json` (English is the source language).
-2.  **Add Your Key**: Add a new key-value pair. You can nest keys for better organization.
-    ```json
-    {
-      "dashboard": {
-        "title": "My Dashboard",
-        "welcomeUser": "Welcome back, {name}!"
-      }
-    }
-    ```
-3.  **Automatic Compilation**: If the dev server (`pnpm dev`) is running, Paraglide will automatically detect changes and regenerate `src/paraglide`.
-4.  **Use in Component**: Import the messages and use them.
+1. Add key-value pair to `src/i18n/messages/en.json` (source language)
+2. Dev server auto-regenerates `src/paraglide`
+3. Use in component via `import * as m from '@/paraglide/messages'`
 
-## Usage in Components
-
-### 1. App-Specific Messages
-
-Import from the generated local alias (usually configured as `@/paraglide/messages`).
+## Usage
 
 ```tsx
+// App-specific (bracket notation for nested dot keys)
 import * as m from '@/paraglide/messages';
+const title = m['dashboard.title']();
+const welcome = m['dashboard.welcomeUser']({ name: userName });
 
-export function Dashboard({ userName }) {
-  // Simple message
-  const title = m['dashboard.title'](); 
-
-  // Message with parameters
-  const welcomeUserMessage = m['dashboard.welcomeUser'];
-  const welcome = welcomeUserMessage({ name: userName });
-
-  return (
-    <div>
-      <h1>{title}</h1>
-      <p>{welcome}</p>
-    </div>
-  );
-}
-```
-
-> **Note**: Because we use nested keys in JSON (e.g. `dashboard.title`), Paraglide exports them with the exact path as the name. Since these contain dots, you must use bracket notation: `m['dashboard.title']()`.
-
-### 2. Shared Messages
-
-For common terms (Save, Cancel, Table headers, etc.), use the shared `@eridu/i18n` package to ensure consistency.
-
-```tsx
+// Shared terms (Save, Cancel, etc.)
 import * as sharedM from '@eridu/i18n';
-
-// Usage
 <Button>{sharedM['common.save']()}</Button>
-<Button>{sharedM['common.cancel']()}</Button>
 ```
 
-### 3. Shared UI Abstraction (`@eridu/ui`)
+## Shared UI Abstraction (`@eridu/ui`)
 
-When building generic shared UI components inside `@eridu/ui` (such as `DataTable`), the component should ideally be ignorant of upstream application context while still providing localized defaults.
-
-1. **Default to Shared Translations:** Import `@eridu/i18n` inside `@eridu/ui/components/...` to provide default labels.
-2. **Expose `textOverrides` Props:** Always allow downstream applications (like `erify_creators` or `erify_studios`) to inject their own specific terminology through props (e.g., `textOverrides={{ searchPlaceholder: m['specific.search']() }}`).
-
-Example:
-```tsx
-import * as sharedM from '@eridu/i18n';
-
-interface DataTableToolbarProps {
-  searchPlaceholder?: string; // Optional app-specific override
-}
-
-export function DataTableToolbar({ searchPlaceholder = sharedM['common.search']() }: DataTableToolbarProps) {
-  return <Input placeholder={searchPlaceholder} />;
-}
-```
-
-### 4. Locale Management
-
-Use the `LocaleEnum` and helper functions from `@eridu/i18n` when dealing with locale logic (e.g., language switchers).
-
-```tsx
-import { LocaleEnum, LOCALE_LABELS } from '@eridu/i18n';
-
-// Access available locales and their labels
-{Object.entries(LOCALE_LABELS).map(([code, label]) => (
-  <option key={code} value={code}>{label}</option>
-))}
-```
+Generic `@eridu/ui` components import `@eridu/i18n` for defaults and expose `textOverrides` props for app-specific terminology.
 
 ## Best Practices
 
-1.  **Grouping**: Group messages by feature or page (e.g., `admin`, `auth`, `settings`).
-2.  **Naming**: Use `camelCase` for keys (e.g., `welcomeUser` not `welcome-user`).
-3.  **Parameters**: Use named parameters `{param}` instead of positional arguments.
-4.  **No Hardcoding**: Never hardcode user-facing strings in components. Always extract them to `en.json`.
-5.  **Review Shared**: Before adding a generic term like "Submit" or "Error", check `packages/i18n/messages/en.json` to see if it already exists in the shared library.
+1. **Group** by feature/page (`admin`, `auth`, `settings`)
+2. **camelCase** keys (`welcomeUser` not `welcome-user`)
+3. **Named parameters** `{param}` not positional
+4. **No hardcoding** — always extract to `en.json`
+5. **Check shared first** before adding generic terms
 
 ## Troubleshooting
 
--   **"Property '...' does not exist on type..."**: Run `pnpm dev` or `pnpm build` to force regeneration of the Paraglide files.
--   **Missing Translations**: Ensure you've added the key to `en.json`. Other languages (e.g., `zh-TW`) can be filled in later or via translation tools.
--   **TypeScript Error TS1005: ',' expected during build**: `tsc` contains a bug where it strips quotes around string exports when generating `.d.ts` files from Paraglide JS (e.g., `export { foo as foo.bar }`). The `@eridu/i18n` package includes a `patch-dts` script in its `package.json` build step to regex-replace this invalid syntax. If a new shared package exhibits this behavior, apply the fix to its `package.json`.
+- **Missing type**: Run `pnpm dev` or `pnpm build` to regenerate Paraglide files
+- **TS1005 build error**: Paraglide `.d.ts` bug — apply `patch-dts` script (see `@eridu/i18n` `package.json`)

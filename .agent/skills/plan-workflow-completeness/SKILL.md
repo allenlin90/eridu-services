@@ -1,101 +1,58 @@
 ---
 name: plan-workflow-completeness
-description: Audit a multi-PR implementation plan for workflow-and-cycle gaps before it ships. Use when writing or revising any plan under `docs/superpowers/plans/`, or when a phase or workstream is being signed off. Catches: orphaned input surfaces, un-edited snapshot fields, missing per-perspective read views, asymmetric UX across parallel entities, and "scoped out" deferrals with no forwarding address. Pairs with `superpowers:writing-plans`.
+description: Audit a multi-PR implementation plan for workflow-and-cycle gaps before it ships. Use when writing or revising any plan under docs/superpowers/plans/, or when a phase or workstream is being signed off.
 ---
 
 # Plan Workflow Completeness
 
-`superpowers:writing-plans` covers *how* to break a spec into PRs. This skill covers *what makes a plan complete*: does every actor have surfaces for every read and write in their journey, or are there orphaned bits of work that will be discovered at code review or worse, after merge?
+Ensures every actor has surfaces for every read and write in their journey. Run BEFORE the plan ships and BEFORE starting each task.
 
-Run this skill BEFORE the plan ships and BEFORE starting each task. The cost of finding a gap during planning is a paragraph edit; the cost of finding it during implementation is a follow-up PR; the cost of finding it after merge is a workflow that doesn't close for the user.
+## When to Invoke
 
-## When to invoke
+- Writing/revising a plan under `docs/superpowers/plans/`
+- Reviewing a plan before sign-off
+- Discovering a gap in a shipped task — audit the rest
+- Phase-close: every plan must pass
 
-- Writing a new plan under `docs/superpowers/plans/`
-- Revising an existing plan when scope changes
-- Reviewing a sibling or upstream's plan before sign-off
-- Discovering a gap in a shipped task — run the audit on the rest of the plan to find peer gaps
-- Phase-close: every plan in the phase must pass before the phase is marked done
+## The Five Invariants
 
-## The five invariants
+### 1. Actor Coverage
+Every actor in the PRD has ≥1 surface (read or write) for every workflow step involving them. Build an actor × step matrix. Blank cells are gaps or intentional.
 
-A complete plan satisfies all of these. Failing any one is a planning bug, not a code bug.
+### 2. "Scoped Out" Has a Forwarding Address
+Every "this does NOT include X" names the task that picks X up. No forwarding task → create a placeholder.
 
-### 1. Actor coverage
+### 3. Every Snapshot Field Has an Edit Path
+If plan persists a snapshot field → schedule: write path, edit path, UI surface. Missing edit path = "data we can't fix without admin script."
 
-Every actor named in the PRD has at least one surface — read or write — for every workflow step that involves them. Build a matrix:
+### 4. Read Views Paired with Writes
+Every read view in the PRD has feeder writes scheduled. A view reading unwritten fields is unreachable.
 
-| Actor | Workflow step 1 | Step 2 | ... | Step N |
-| --- | --- | --- | --- | --- |
-| Admin | read+write | ... | | |
-| Manager | read | read+write | | |
-| Talent Manager | — | read | | |
-| Operator | — | — | write | |
+### 5. Symmetry Across Parallel Entities
+Entities sharing a pattern (snapshot + line items + actuals) share UX by default. Asymmetry requires written justification.
 
-Blank cells are intentional or are gaps. Gaps must be filled or explicitly deferred with a forwarding address (see invariant 2).
+## How to Run
 
-### 2. "Scoped out" has a forwarding address
+1. Read PRD + plan side-by-side; build actor-coverage matrix
+2. For each scoped-out item, find forwarding address; list orphans
+3. For each snapshot field, find write/edit/UI rows; list missing
+4. For each read view, find feeder writes; list unreachable
+5. For each parallel-entity pair, run symmetry diff; list unjustified asymmetries
+6. Produce single report: gaps, orphans, missing paths, unreachable views
+7. Land fixes in plan before resuming implementation
 
-Any task that says "this does NOT include X" must name the task that picks X up. Example:
+## Common Failure Modes
 
-> Task 5 does **not** implement show actuals, SHOW line-item UI, ...
-> **Deferred to:** Task 9 (show actuals input), Task 10 (per-perspective review).
+- **Vertical-stack slicing** orphans input UX — cut by user journey instead
+- **Read-view rhetoric without write rows** — verify each view has feeder writes
+- **"Same as other entity" by default** — force the asymmetry question
+- **DoD lists deliverables, not scenarios** — convert to actor-completes-journey
 
-If the forwarding task does not yet exist, create a placeholder task in the same plan. Orphaned deferrals are how workflows go missing for entire phases.
+## Acceptance Criteria
 
-### 3. Every snapshot field has an edit path
-
-If the plan persists a snapshot field (`agreedRate`, `hourlyRate`, etc.), the plan must also schedule:
-
-- The **write path** that creates the snapshot (assignment endpoint or default-resolution logic).
-- The **edit path** that updates the snapshot after creation (manager override, with audit append).
-- The **UI surface** that exposes the edit path to its role.
-
-A snapshot-on-write entity without a post-creation edit path produces "data we can't fix without an admin script." That's a planning bug.
-
-### 4. Read views are paired with the writes that produce their data
-
-If the plan defines N read views (per-show, per-creator, per-member, dashboard), the writes that feed each view must be scheduled in the same plan (or an explicit upstream plan). A view that reads a field nothing in the plan writes is unreachable.
-
-When the PRD lists "three read views," the plan must name three rows that schedule the writes for each, and one row per view for the read endpoint + UI surface.
-
-### 5. Symmetry by default across parallel entities
-
-If two entities share an architectural pattern (e.g., `ShowCreator` and `StudioShift` both have snapshot + line items + actuals + audit), they share a UX pattern by default. Asymmetry is a deliberate, justified decision and must be written down with a reason.
-
-When reviewing a plan, list the parallel-entity pairs and run a one-paragraph diff:
-
-> Shift gets X, Y, Z. Does creator? If not, why not?
-
-A missing match is a gap unless the asymmetry is the deliberate point.
-
-## How to run the audit
-
-1. **Read the PRD and plan side-by-side.** Build the actor-coverage matrix on paper.
-2. **For each task that scopes something out**, find the forwarding address. List the orphans.
-3. **For each snapshot field** in the data model section, find its write/edit/UI rows in the plan. List the missing ones.
-4. **For each read view** named in the PRD, find the write rows that produce its data. List the unreachable views.
-5. **For each parallel-entity pair**, run the symmetry diff. List the asymmetries without written reasons.
-6. **Produce a single report**: gaps, orphans, missing edit paths, unreachable views, unjustified asymmetries.
-7. **Land fixes in the plan first**, before resuming implementation.
-
-The companion workflow at `.agent/workflows/plan-completeness-audit.md` walks through this on a real plan with examples.
-
-## Common failure modes
-
-- **Vertical-stack slicing.** Workstreams cut by data layer (storage → calc → UI) orphan input UX between layers. Cut by user journey instead.
-- **Read-view rhetoric without write rows.** "Three read-only views" in the PRD does not mean three rows in the plan. Verify.
-- **"Same as the other entity" by default.** Asymmetry between parallel entities is common and almost always unintentional. Force the question.
-- **DoD lists deliverables, not scenarios.** "X shipped" can be partially satisfied; "actor A completes journey Z" cannot. Convert DoD to scenarios.
-- **Workflow docs written after implementation.** They become validation theater. Pre-PRD workflow docs are the artifact that catches gaps at the cheapest stage.
-
-## Acceptance criteria for "plan is complete"
-
-- [ ] Every actor in the PRD has at least one surface for every workflow step that involves them.
-- [ ] Every "this task does not include X" has a `Deferred to: Task N` annotation.
-- [ ] Every snapshot field has a write row, an edit row, and a UI row (or an explicit phase-defer with a reason).
-- [ ] Every read view in the PRD has its feeder writes scheduled.
-- [ ] Every parallel-entity pair has either the same UX pattern or a written asymmetry reason.
-- [ ] Completion criteria are scenario-based, not deliverable-based.
-
-When all six boxes are checked, the plan is auditable for completeness. It may still be wrong on technical details — that's what code review is for — but it will not be hiding a missing workflow.
+- [ ] Every actor has surface for every relevant workflow step
+- [ ] Every "does not include" has `Deferred to: Task N`
+- [ ] Every snapshot field has write, edit, and UI rows
+- [ ] Every read view has feeder writes scheduled
+- [ ] Parallel entities: same UX or written asymmetry reason
+- [ ] Completion criteria are scenario-based

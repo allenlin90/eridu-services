@@ -5,267 +5,50 @@ description: Provides guidelines for using keys, schemas, and types from the sha
 
 # Shared API Types & Schemas
 
-This skill outlines the standards for using the `@eridu/api-types` package. This package is the **Single Source of Truth** for API contracts between Backend, Frontend, and external services.
+`@eridu/api-types` is the **Single Source of Truth** for API contracts between backend, frontend, and external services.
 
-## When to Use
-
-| Use Case                   | Location               | Reason                                       |
-| :------------------------- | :--------------------- | :------------------------------------------- |
-| **API Responses**          | `packages/api-types`   | Ensures FE and BE agree on response shape    |
-| **API Requests**           | `packages/api-types`   | Ensures inputs are validated consistently    |
-| **Shared Enums**           | `packages/api-types`   | Consistency (e.g., `ShowStatus`, `UserRole`) |
-| **Internal Service Logic** | `apps/erify_api/...`   | Keep implementation details private          |
-| **DB Models**              | `prisma/schema.prisma` | DB layer should be separate from API layer   |
+> See [references/api-types-details.md](references/api-types-details.md) for extended code examples, Prisma-to-DTO transforms, and finance contracts.
 
 ## Directory Structure
 
-Organize by **Domain Resource**:
-
-```
-packages/api-types/src/
-├── shows/        # Domain: Shows
-├── users/        # Domain: Users
-├── task-management/ # Domain: Task Management
-│   ├── index.ts      # Exports
-│   ├── task-template.schema.ts
-│   └── template-definition.schema.ts
-└── pagination/       # Shared utilities
-```
-
-> **Cross-cutting domain note**: `task-management/template-definition.schema.ts` is the foundational contract for the Task Templates feature, which has multiple downstream consumers (task content storage, uploads, reporting). Any change to that file must follow the documentation-sync list in [docs/features/task-templates.md § Maintenance: Documentation Sync](../../../docs/features/task-templates.md#maintenance-documentation-sync) — update every listed artifact in the same PR.
-
-### Task Template Schema Engine Helpers
-
-For task-template consumers, never infer storage keys or report keys directly from a field object. Use the shared helpers exported from `@eridu/api-types/task-management`:
-
-| Helper | Use |
-| --- | --- |
-| `getSchemaEngine(schema)` | Distinguish implicit v1 snapshots from explicit `task_template_v2` schemas |
-| `getFieldContentKey(schema, field)` | Read/write `task.content` (`field.key` for v1, `field.id` for v2) |
-| `getFieldSharedKey(schema, field)` | Resolve canonical shared-field identity (`standard` for v1, `shared_field_key` for v2) |
-| `getFieldReportDescriptor(schema, templateUid, field)` | Build selectable/reportable column keys for source discovery and report run |
-
-Review rule: direct `content[field.key]`, direct shared checks against `field.standard`, and hand-built report descriptors are findings unless they are explicitly v1-only compatibility code.
+Organized by domain: `src/shows/`, `src/users/`, `src/task-management/`, `src/pagination/`.
 
 ## Import Strategy (Subpath Exports)
-
-Always use subpath imports to keep domains separated.
 
 ```typescript
 // ✅ Correct
 import { TaskTemplate } from '@eridu/api-types/task-management';
-import { User } from '@eridu/api-types/users';
-
-// ❌ Avoid (if root export exists)
-import { TaskTemplate } from '@eridu/api-types'; 
+// ❌ Avoid barrel root
+import { TaskTemplate } from '@eridu/api-types';
 ```
 
-> [!NOTE]
-> Default preference is to keep schema-derived exports close together, but the current `@eridu/api-types` package still has a mixed layout: several domains export both `schemas.ts` and `types.ts`. Preserve the existing layout inside a touched domain unless the task explicitly includes a domain-local consolidation/refactor.
+## Task Template Schema Engine Helpers
 
-## Implementation Pattern
+Never infer storage/report keys directly from a field object. Use shared helpers from `@eridu/api-types/task-management`:
 
-### 1. Define Zod Schemas (`schemas.ts`)
+| Helper | Use |
+|---|---|
+| `getSchemaEngine(schema)` | Distinguish v1 vs v2 schemas |
+| `getFieldContentKey(schema, field)` | Read/write `task.content` key |
+| `getFieldSharedKey(schema, field)` | Resolve canonical shared-field identity |
+| `getFieldReportDescriptor(schema, templateUid, field)` | Build reportable column keys |
 
-Define schemas that represent the **wire format** (usually `snake_case`).
+## Key Rules
 
-```typescript
-import { z } from 'zod';
-
-export const userApiResponseSchema = z.object({
-  id: z.string(),
-  email: z.email(),
-  created_at: z.string(),
-});
-
-export const createUserDtoSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(2),
-});
-```
-
-### 2. Infer TypeScript Types (`types.ts`)
-
-ALWAYS infer types from the Zod schemas. Never manually duplicate interfaces.
-
-```typescript
-import type { z } from 'zod';
-import { userApiResponseSchema, createUserDtoSchema } from './schemas.js';
-
-export type UserApiResponse = z.infer<typeof userApiResponseSchema>;
-export type CreateUserDto = z.infer<typeof createUserDtoSchema>;
-```
-
-### 3. Usage in Backend (`erify_api`)
-
-Import schemas for validation decortors and types for strongly-typed services.
-
-```typescript
-// Controller
-import { createUserDtoSchema, CreateUserDto } from '@eridu/api-types/users';
-
-@Post()
-// Validate input body with shared schema
-@UsePipes(new ZodValidationPipe(createUserDtoSchema))
-create(@Body() body: CreateUserDto) { ... }
-```
-
-### 4. Usage in Frontend (`erify_creators`)
-
-Import types for API clients and schemas for form validation.
-
-```typescript
-import { type CreateUserDto, createUserDtoSchema } from '@eridu/api-types/users';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-
-// Use shared schema for form validation
-const form = useForm<CreateUserDto>({
-  resolver: zodResolver(createUserDtoSchema)
-});
-```
-
-## Schema Composition Rule
-
-When a shared Zod schema needs downstream composition with `.omit()`, `.pick()`, `.partial()`, or `.extend()`, export an unrefined object schema alongside the refined contract schema.
-
-```typescript
-export const createStudioShowInputObjectSchema = z.object({
-  // fields
-});
-
-export const createStudioShowInputSchema = createStudioShowInputObjectSchema.refine(
-  (data) => new Date(data.end_time) > new Date(data.start_time),
-  {
-    message: 'End time must be after start time',
-    path: ['end_time'],
-  },
-);
-```
-
-Use the refined schema at API boundaries and the base object schema when feature code needs to derive form-specific variants. This avoids Zod runtime errors from calling object helpers on schemas that already contain refinements.
-
-## Scoped Actuals and Finance Contracts
-
-Actuals and finance fields must be scoped in the contract by their owning resource so consumers do not confuse different facts that happen to share start/end timestamps.
-
-Rules:
-- Actuals fields live in the owning resource's update DTO (e.g. `updateStudioShowInputSchema`, the studio shift-block update schema, and any future `ShowCreator` / `ShowPlatform` update schemas), not in a shared "actuals" schema. There is no separate `/actuals` sub-resource — actuals ride the resource's existing PATCH route.
-- Field names and nesting must reveal meaning. A `ShowCreator` actual is creator participation time; a `ShowPlatform` actual is platform stream/performance time; a `Show` actual is the overall event window. They are not interchangeable even when the field name is `actual_start_time`.
-- Monetary reference figures must be backend-provided string decimals. Frontend contracts can submit recorded inputs, but should not define DTOs that require client-side finance arithmetic.
-- If an API response combines base components, line items, warnings, and unresolved reasons, expose that as an economics/read-model resource rather than adding calculated fields to operational CRUD DTOs.
-- `metadata.flags.agreement_snapshot_missing` is advisory metadata for `ShowCreator` rows whose required agreement snapshot fields could not be resolved at write time. Read-model schemas and calculators must derive unresolved state from the snapshot fields themselves and surface `agreement_snapshot_missing` even when the flag is absent.
-
-## Transform Pattern for Prisma → DTO
-
-### When a transform is required
-
-A Zod schema needs a `.transform()` whenever the raw Prisma output **does not match** the wire-format directly. This happens when:
-
-- **Fields need renaming**: `createdAt` → `created_at`, `dueDate` → `due_date`
-- **Types need converting**: `Date` → ISO string, `bigint` → string
-- **`uid` maps to `id`**: Prisma exposes both a bigint `id` and a string `uid`; the API always exposes `uid` as `id`
-- **Relations are nested differently**: Polymorphic joins (see below)
-
-### Standard DTO transform
-
-```typescript
-// Entity schema (matches Prisma output exactly — camelCase, bigint ids, Date objects)
-export const taskSchema = z.object({
-  id: z.bigint(),
-  uid: z.string().startsWith('task_'),
-  createdAt: z.date(),
-  // ...
-});
-
-// Base DTO schema (wire format — snake_case, string ids, ISO strings)
-export const baseTaskDtoSchema = z.object({
-  id: z.string(),          // maps from uid
-  created_at: z.string(),  // maps from createdAt.toISOString()
-  // ...
-});
-
-// DTO with transform
-export const taskDto = taskSchema.transform((obj): z.infer<typeof baseTaskDtoSchema> => ({
-  id: obj.uid,
-  created_at: obj.createdAt.toISOString(),
-  // ...
-}));
-```
-
-### Polymorphic relation DTO transform
-
-When a Prisma model uses a **polymorphic join table** (e.g., `TaskTarget` that links tasks to shows, studios, etc.), Prisma cannot use a simple `include: { show: true }` — you must include the join table and then include the relation from there.
-
-The join table field name in the Prisma model (e.g., `targets`) is **not** the same as the target resource name (`show`). The schema transform must explicitly flatten this.
-
-```typescript
-// ❌ WRONG — no transform, mismatch at runtime
-export const taskWithRelationsDto = baseTaskDtoSchema.extend({
-  show: z.object({ ... }).nullable(),  // Prisma doesn't return a flat `show`
-});
-
-// ✅ CORRECT — include task.targets[0].show, then flatten in transform
-
-// Step 1: Entity schema that mirrors the Prisma include shape
-export const taskWithRelationsSchema = taskSchema.extend({
-  assignee: z.object({ uid: z.string(), name: z.string() }).nullable().optional(),
-  template: z.object({ uid: z.string(), name: z.string() }).nullable().optional(),
-  // Prisma field is `targets` (TaskTarget[]), NOT `shows`
-  targets: z.array(z.object({
-    show: z.object({
-      uid: z.string(),
-      name: z.string(),
-      startTime: z.date(),   // Prisma camelCase of start_time
-      endTime: z.date(),
-    }).nullable(),
-  })).optional(),
-});
-
-// Step 2: DTO schema (output wire format)
-export const baseTaskWithRelationsDtoSchema = baseTaskDtoSchema.extend({
-  assignee: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
-  template: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
-  show: z.object({ id: z.string(), name: z.string(), start_time: z.string(), end_time: z.string() }).nullable().optional(),
-});
-
-// Step 3: Transform — flatten targets[0].show into a top-level show field
-export const taskWithRelationsDto = taskWithRelationsSchema.transform(
-  (obj): z.infer<typeof baseTaskWithRelationsDtoSchema> => {
-    let show = null;
-    const s = obj.targets?.[0]?.show;
-    if (s) {
-      show = { id: s.uid, name: s.name, start_time: s.startTime.toISOString(), end_time: s.endTime.toISOString() };
-    }
-    return {
-      id: obj.uid,
-      // ... other mapped fields
-      assignee: obj.assignee ? { id: obj.assignee.uid, name: obj.assignee.name } : obj.assignee,
-      template: obj.template ? { id: obj.template.uid, name: obj.template.name } : obj.template,
-      show,
-    };
-  }
-);
-```
-
-> [!IMPORTANT]
-> When the Prisma query includes a join table (e.g., `targets: { include: { show: true } }`), the repository **MUST filter** the join table to the correct `targetType` to ensure `targets[0]` is always a show. Use: `targets: { where: { targetType: 'SHOW', deletedAt: null }, include: { show: true } }`.
-
-> [!NOTE]
-> Always use `uid` (not `id`) when mapping relation `id` fields in the transform. Prisma `id` columns are `bigint` and cannot be serialized to JSON; `uid` is the public string identifier.
-
----
-
-## Package API Discipline
-
-Always use the API recommended by the **installed version** of each package. Do not use deprecated APIs even if they still work — and do not copy patterns from older files in the codebase without verifying they are current. If autocomplete or docs mark an API as `@deprecated`, find the replacement first.
+1. **Schemas define wire format** — `snake_case` for API JSON
+2. **Types inferred from Zod** — never manually duplicate interfaces (`z.infer<typeof schema>`)
+3. **Schema composition** — export unrefined object schema alongside refined schema for downstream `.omit()`/`.extend()`
+4. **Prisma → DTO transforms** — use `.transform()` when raw Prisma output doesn't match wire format
+5. **Subpath imports** — always import from domain subpath, never barrel root
+6. **Non-deprecated APIs** — verify installed package version before using any API
+7. **Doc sync** — changes to `template-definition.schema.ts` must update all artifacts in task-templates feature doc
 
 ## Checklist
 
-- [ ] New API contract? Add to `@eridu/api-types` first.
-- [ ] Group by domain folder (`src/my-domain/`).
-- [ ] Export `schemas` (runtime) and `types` (static).
-- [ ] Use `snake_case` for wire formats.
-- [ ] Infer types using `z.infer`.
-- [ ] Use only non-deprecated APIs for the installed package version.
-- [ ] All consumers (service, schema, controller, specs) import from subpath, never barrel root.
+- [ ] New API contract added to `@eridu/api-types` first
+- [ ] Grouped by domain folder (`src/my-domain/`)
+- [ ] Exports: `schemas` (runtime) + `types` (static)
+- [ ] Wire format uses `snake_case`
+- [ ] Types inferred via `z.infer`
+- [ ] Consumers import from subpath, never barrel root
+- [ ] Only non-deprecated APIs used

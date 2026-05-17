@@ -5,175 +5,55 @@ description: Provides full-stack patterns for implementing searchable, paginated
 
 # Admin List Integration Pattern
 
-This skill outlines the standard pattern for implementing searchable, paginated lists in the `erify_studios` (frontend) and `erify_api` (backend) applications.
+Standard pattern for searchable, paginated lists in admin sections across `erify_studios` (frontend) and `erify_api` (backend).
 
 ## Canonical Examples
 
-Study these real implementations:
-- **Backend**: [admin-client.controller.ts](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts)
+- **Controller**: [admin-client.controller.ts](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts)
 - **Repository**: [client.repository.ts](../../../apps/erify_api/src/models/client/client.repository.ts)
 
 ## Integration Overview
 
-The pattern relies on synchronized parameter names and behaviors across the stack:
-1.  **Frontend**: Uses `useTableUrlState` to sync URL params (e.g., `?name=...`) with the table's `columnFilters`.
-2.  **API Boundary**: A specialized `List<Resource>QueryDto` extends the base pagination schema.
-3.  **Repository**: Builds a Prisma `where` clause to handle partial matches and other filters. The Service is a thin pass-through.
+```
+Frontend (useTableUrlState → URL params) → API (QueryDto) → Service (pass-through) → Repository (Prisma where)
+```
 
----
+## Backend Pattern
 
-## Backend Pattern (`erify_api`)
-
-### 1. Define the Query DTO (`schemas.ts`)
-
-Nest the filters inside a Zod schema and extend the base pagination. Following the pattern in `models/client/schemas/client.schema.ts`:
-
+### 1. Query DTO
+Extend base pagination with filters. Transform to `take`/`skip`:
 ```typescript
-export const listResourceFilterSchema = z.object({
-  name: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
-});
-
 export const listResourceQuerySchema = z
-  .object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).optional().default(10),
-  })
+  .object({ page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).default(10) })
   .and(listResourceFilterSchema)
-  .transform((data) => ({
-    ...data,
-    take: data.limit,
-    skip: (data.page - 1) * data.limit,
-  }));
-
-export class ListResourceQueryDto extends createZodDto(listResourceQuerySchema) {}
+  .transform((d) => ({ ...d, take: d.limit, skip: (d.page - 1) * d.limit }));
 ```
 
-### 2. Repository Logic (`repository.ts`)
+### 2. Repository
+Build `where` clause with `contains` + `insensitive`. Use `Promise.all` for data + count.
 
-Build the `where` clause in the repository. Ensure case-insensitive partial matching for strings.
+### 3. Service
+Thin pass-through to `repository.findPaginated()`.
 
-```typescript
-async findPaginated(params: {
-  skip?: number;
-  take?: number;
-  name?: string;
-  includeDeleted?: boolean;
-}): Promise<{ data: Resource[]; total: number }> {
-  const where: Prisma.ResourceWhereInput = {};
+### 4. Controller
+Use `@AdminPaginatedResponse` decorator, pass query DTO to service.
 
-  if (!params.includeDeleted) {
-    where.deletedAt = null;
-  }
+## Frontend Pattern
 
-  if (params.name) {
-    where.name = {
-      contains: params.name,
-      mode: 'insensitive',
-    };
-  }
-
-  const [data, total] = await Promise.all([
-    this.model.findMany({ skip: params.skip, take: params.take, where }),
-    this.model.count({ where }),
-  ]);
-
-  return { data, total };
-}
-```
-
-### 3. Service Logic (`service.ts`)
-
-Service passes parameters to repository without building Prisma where clauses.
-
-```typescript
-async getResources(
-  ...args: Parameters<ResourceRepository['findPaginated']>
-): Promise<{ data: Resource[]; total: number }> {
-  return this.repository.findPaginated(...args);
-}
-```
-
-### 4. Controller Integration (`controller.ts`)
-
-Pass the query DTO to the service and use `@AdminPaginatedResponse`.
-
-```typescript
-@Get()
-@AdminPaginatedResponse(ResourceDto, 'List resources')
-async getResources(@Query() query: ListResourceQueryDto) {
-  const { data, total } = await this.service.getResources(query);
-  return this.createPaginatedResponse(data, total, query);
-}
-```
-
----
-
-## Frontend Pattern (`erify_studios`)
-
-### 1. Route Search Schema
-
-Ensure the `Route` search schema includes the filter field. Always use `limit` (not `pageSize`) as the URL param name.
-
-```typescript
-const searchSchema = z.object({
-  page: z.coerce.number().int().min(1).catch(1),
-  limit: z.coerce.number().int().min(10).max(100).catch(10),
-  name: z.string().optional().catch(undefined),
-});
-```
-
-> **`limit` vs `pageSize`**: `limit` is the URL param used in route schemas and navigation objects. TanStack Table's `PaginationState` type uses `pageSize` internally — this appears as `pagination.pageSize` in feature hooks and `paginationState={{ pageSize }}` in `DataTable` props. Do not rename those: `useTableUrlState` bridges the two by reading `limit` from the URL and returning TanStack's `PaginationState`. See `table-view-pattern` for the full breakdown.
-
-### 2. DataTable Configuration
-
-Pass `searchColumn` and `onColumnFiltersChange` to `DataTable` via `DataTableToolbar`.
-
-```typescript
-const { 
-  pagination, 
-  onPaginationChange, 
-  columnFilters, 
-  onColumnFiltersChange 
-} = useTableUrlState({ from: '/system/resources/' });
-
-const nameFilter = columnFilters.find(f => f.id === 'name')?.value as string;
-
-const { data, isLoading } = useAdminList<Resource>('resources', {
-  page: pagination.pageIndex + 1,
-  limit: pagination.pageSize,
-  name: nameFilter,
-});
-
-// ... inside render
-<DataTable
-  // ...
-  columnFilters={columnFilters}
-  onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
-  renderToolbar={(table) => (
-    <DataTableToolbar
-      table={table}
-      searchColumn="name"
-      searchableColumns={resourceSearchableColumns}
-    />
-  )}
-/>
-```
-
-### 3. Toolbar UX (Debouncing)
-
-The `DataTableToolbar` (generic component) should handle internal debouncing of the input to avoid immediate server queries on every keystroke.
-
-- **Timeout**: Use a 500ms debounce.
-- **Visibility**: Only show the search input when `searchColumn` is provided.
-
----
+- **Route search schema**: Use `limit` (not `pageSize`) as URL param
+- **`useTableUrlState`**: Owns URL synchronization, bridges `limit` → TanStack Table's `pageSize`
+- **DataTable + DataTableToolbar**: Pass `searchColumn`, debounced input (500ms)
 
 ## Checklist
 
-- [ ] Backend: `QueryDto` extends pagination and includes filters.
-- [ ] Backend: **Repository** builds `where` clause with `contains` and `insensitive` (NOT the service).
-- [ ] Backend: Service delegates directly to `repository.findPaginated()` using `Parameters<>` spread.
-- [ ] Frontend: `useTableUrlState` used for URL synchronization.
-- [ ] Frontend: `searchColumn` passed to `DataTableToolbar`.
-- [ ] Frontend: Verification of debounced input behavior.
+- [ ] Backend: QueryDto extends pagination with filters
+- [ ] Backend: Repository builds `where` with `contains`/`insensitive`
+- [ ] Backend: Service delegates to `repository.findPaginated()`
+- [ ] Frontend: `useTableUrlState` for URL sync
+- [ ] Frontend: `searchColumn` passed to `DataTableToolbar`
+- [ ] Frontend: Debounced search behavior verified
+
+## Related Skills
+
+- [table-view-pattern](../table-view-pattern/SKILL.md) — Table view patterns
+- [studio-list-pattern](../studio-list-pattern/SKILL.md) — Studio infinite scroll

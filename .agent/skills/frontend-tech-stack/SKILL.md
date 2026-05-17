@@ -5,153 +5,57 @@ description: Provides standards for the frontend application technology stack. T
 
 # Frontend Tech Stack
 
-This skill defines the standard technology stack for all frontend applications (`erify_creators`, `erify_studios`, etc.) in the project.
+Standard technology stack for all frontend applications.
 
 ## Core Technologies
 
-| Category        | Technology          | Version  | Notes                                     |
-| :-------------- | :------------------ | :------- | :---------------------------------------- |
-| **Framework**   | **React**           | **19.x** | Use functional components and hooks.      |
-| **Build Tool**  | **Vite**            | **7.x**  | Fast HMR, uses `@vitejs/plugin-react`.    |
-| **Styling**     | **Tailwind CSS**    | **4.x**  | Use the `@tailwindcss/vite` plugin.       |
-| **Routing**     | **TanStack Router** | **1.x**  | File-based routing, type-safe navigation. |
-| **State/Query** | **TanStack Query**  | **5.x**  | For async server state management.        |
-| **I18n**        | **Paraglide JS**    | **2.x**  | Type-safe internationalization.           |
+| Category | Technology | Version |
+|---|---|---|
+| Framework | React | 19.x |
+| Build Tool | Vite | 7.x |
+| Styling | Tailwind CSS | 4.x |
+| Routing | TanStack Router | 1.x |
+| State/Query | TanStack Query | 5.x |
+| I18n | Paraglide JS | 2.x |
 
 ## Project Structure
-
-Frontend apps should follow this structure:
 
 ```
 src/
 ├── routes/             # TanStack Router file-based routes
-│   ├── __root.tsx      # Root layout
-│   ├── index.tsx       # Homepage
-│   └── feature.tsx     # Feature route
-├── features/           # Feature-based modules (see below)
-├── components/         # Shared components used across features
-├── hooks/              # Shared hooks used across features
+├── features/           # Feature-based modules (self-contained)
+│   └── awesome-feature/
+│       ├── api/        # API calls
+│       ├── components/ # Feature-only components
+│       ├── hooks/      # Feature hooks
+│       └── types/      # Feature types
+├── components/         # Shared components (cross-feature)
+├── hooks/              # Shared hooks (cross-feature)
 ├── lib/                # Utilities and API clients
-├── stores/             # Global state stores
-├── types/              # Shared types
-├── main.tsx            # Entry point
-└── index.css           # Global styles (Tailwind imports)
+└── stores/             # Global state stores
 ```
 
-### Feature-Based Architecture
+## Key Principles
 
-For scalability and maintainability, organize most code within the `features/` folder. Each feature should be **self-contained** with its own components, hooks, API calls, and types.
-
-**Feature Structure**:
-
-```
-src/features/awesome-feature/
-├── api/                # API calls specific to this feature
-│   ├── get-items.ts
-│   └── create-item.ts
-├── components/         # Components used only in this feature
-│   ├── ItemList.tsx
-│   └── ItemForm.tsx
-├── hooks/              # Hooks specific to this feature
-│   └── useItemFilters.ts
-├── stores/             # State stores for this feature (if needed)
-│   └── item-store.ts
-├── types/              # TypeScript types for this feature
-│   └── item.types.ts
-└── utils/              # Utility functions for this feature
-    └── format-item.ts
-```
-
-**Key Principles**:
-
-1. **Colocation**: Keep related code together. If a component is only used in one feature, it belongs in that feature's `components/` folder, not the global one.
-
-2. **No Cross-Feature Imports**: Features should not import from each other. Instead, compose features at the application level (in routes or app-level components).
-
-3. **Shared Code**: Only code used by multiple features should live in the global folders (`src/components/`, `src/hooks/`, etc.).
-
-### Route Composition Boundary
-
-For route-heavy pages (dashboard, list/detail with filters, calendar pages):
-- Keep the route file as a composition boundary, not a monolith.
-- Put route-only presentational sections under the closest feature/component area.
-- Colocate route-specific hooks with the feature they serve.
-
-Example placement for studio dashboard:
-
-```
-src/
-├── routes/studios/$studioId/dashboard.tsx            # route container
-├── components/studio-dashboard/dashboard-*.tsx       # route-specific UI sections
-└── features/studio-shows/hooks/use-*.ts              # server/query hooks
-```
-
-If a route file grows large, extract sections first; if state/query logic is still dense, extract a view-model hook next.
-
-**Preventing Cross-Feature Imports**:
-
-If feature isolation needs lint enforcement, add it to the app's flat ESLint config (`eslint.config.js`), not a legacy `.eslintrc.cjs` file:
-
-```javascript
-// eslint.config.js
-export default createConfig(
-  { type: 'app', react: true },
-  {
-    rules: {
-      'import/no-restricted-paths': [
-        'error',
-        {
-          zones: [
-            {
-              target: './src/features/auth',
-              from: './src/features',
-              except: ['./auth'],
-            },
-          ],
-        },
-      ],
-    },
-  },
-);
-```
+1. **Colocation**: Keep related code in the feature that uses it
+2. **No Cross-Feature Imports**: Compose features at route/app level
+3. **Shared Code**: Only code used by multiple features goes in global folders
+4. **Route Composition**: Keep route files as composition boundaries, not monoliths
 
 ## Configuration
 
-### Vite Config ("vite.config.ts")
+**Vite**: `@tailwindcss/vite` + `@tanstack/router-plugin/vite` + `@vitejs/plugin-react`
 
-Ensures Tailwind v4 and TanStack Router integration:
-
-```typescript
-import tailwindcss from '@tailwindcss/vite';
-import { tanstackRouter } from '@tanstack/router-plugin/vite';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-  plugins: [
-    tanstackRouter(),
-    react(),
-    tailwindcss(),
-  ],
-});
-```
-
-### Tailwind Config (v4)
-
-Tailwind v4 uses CSS-first configuration. Your `index.css` should look like:
-
-```css
-@import "tailwindcss";
-
-@theme {
-  --font-sans: "Inter", sans-serif;
-  /* Define custom tokens here */
-}
-```
+**Tailwind v4**: CSS-first config in `index.css` using `@import "tailwindcss"` + `@theme { ... }`
 
 ## Checklist
 
-- [ ] Project is initialized with Vite + React + TypeScript.
-- [ ] Uses Tailwind CSS v4 plugin.
-- [ ] Uses TanStack Router for navigation.
-- [ ] Depends on workspace packages (`@eridu/ui`, `@eridu/api-types`) where appropriate.
+- [ ] Vite + React + TypeScript
+- [ ] Tailwind CSS v4 plugin
+- [ ] TanStack Router for navigation
+- [ ] Workspace packages (`@eridu/ui`, `@eridu/api-types`)
+
+## Related Skills
+
+- [frontend-code-quality](../frontend-code-quality/SKILL.md) — Quality standards
+- [frontend-ui-components](../frontend-ui-components/SKILL.md) — UI component patterns

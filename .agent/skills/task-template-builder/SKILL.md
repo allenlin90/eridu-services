@@ -1,138 +1,50 @@
 ---
 name: task-template-builder
-description: Provides guidelines for the Task Template Builder architecture, including Schema alignment, Draft storage, Drag-and-Drop, and Validation logic.
+description: Provides guidelines for the Task Template Builder architecture, including Schema alignment, Draft storage, Drag-and-Drop, and Validation logic. Use when implementing or modifying the task template builder UI, draft persistence, or template validation flows.
 ---
 
 # Task Template Builder Pattern
 
-This skill documents the architecture of the Task Template Builder in `erify_studios`.
+Architecture of the Task Template Builder in `erify_studios`.
 
-> **Documentation sync requirement**: any change to template schema shape, builder behavior, shared-field insertion semantics, or content-key strategy must update every artifact listed in the [Task Templates feature doc — Maintenance: Documentation Sync](../../../docs/features/task-templates.md#maintenance-documentation-sync) section in the same PR. Do not split doc updates into a follow-up. Run [.agent/workflows/knowledge-sync.md](../../workflows/knowledge-sync.md) for the general mechanism.
+> **Doc sync requirement**: Changes to template schema, builder behavior, shared-field semantics, or content-key strategy must update all artifacts in the [Task Templates feature doc — Maintenance: Documentation Sync](../../../docs/features/task-templates.md#maintenance-documentation-sync) section in the same PR.
 
 ## Core Architecture
 
 ### 1. Schema Alignment (Single Source of Truth)
-
-The Task Template Builder uses a **Shared Zod Schema** to ensure frontend and backend are always in sync.
-
 - **Source**: `packages/api-types/src/task-management/template-definition.schema.ts`
-- **Frontend Usage**: `import { FieldItemSchema } from '@eridu/api-types/task-management'`
-- **Backend Usage**: `import { TemplateSchemaValidator } from '@eridu/api-types/task-management'`
-
-> **Crucial Rule**: Never duplicate validation logic. If you need a new field or rule, update `api-types` first.
+- 🔴 Never duplicate validation logic. Update `api-types` first.
 
 ### 2. Draft Storage (IndexedDB)
+Not yet implemented in builder (React-only state). Pattern established in task execution sheets via `idb-keyval`. When implemented: use `idb-keyval`, debounced 1s auto-save.
 
-> **Note**: IndexedDB draft persistence is **not yet implemented** in the template builder. The builder currently holds state in React only (lost on unmount). This section documents the intended pattern for future implementation.
->
-> `idb-keyval` IS used elsewhere in the codebase — for task execution and action sheet drafts (`task-execution-sheet.tsx`, `studio-task-action-sheet.tsx`) — so the pattern is established and proven.
+### 3. Drag and Drop (`@dnd-kit`)
+- `DndContext` → `SortableContext` → `SortableFieldItem`
+- v2 fields use `fld_...` IDs as persistent identity — do not strip from payloads
 
-**Why IndexedDB over localStorage (when implemented)?**
-- **Capacity**: Task templates can be large (HTML descriptions, many fields). localStorage (5MB) runs out quickly.
-- **Async**: Prevents blocking the main thread during auto-save of large objects.
-
-**Intended Implementation**:
-```typescript
-const DRAFT_KEY = 'task_template_draft';
-
-// Load
-useEffect(() => {
-  get(DRAFT_KEY).then(saved => setTemplate(saved || defaultTemplate));
-}, []);
-
-// Save (Debounced)
-const debouncedSave = useDebounceCallback((data) => {
-  set(DRAFT_KEY, data);
-}, 1000);
-```
-
-### 3. Drag and Drop (@dnd-kit)
-
-We use `@dnd-kit/core` and `@dnd-kit/sortable` for the field list.
-
-**Key Components**:
-- `DndContext`: Wraps the list.
-- `SortableContext`: Wraps the items.
-- `SortableFieldItem`: Individual item component using `useSortable`.
-
-**Constraint**:
-- `dnd-kit` requires a stable `id` for every item.
-- v2 template fields use shared `@eridu/api-types` field IDs (`fld_...`) as persistent field identity.
-- Do not strip `id` from v2 payloads. It is the task-content storage key and must remain stable across saves.
-
-### 4. Advanced Validation Logic (`require_reason`)
-
-The builder supports complex conditional validation based on field type.
-
-**Structure**:
-```typescript
-require_reason: z.union([
-  z.enum(['always', 'on-true', 'on-false']), // Primitive (checkbox)
-  z.array(z.object({                         // Complex (number, date, select)
-    op: z.enum(['lt', 'eq', 'in', ...]),
-    value: z.any()
-  }))
-])
-```
-
-**Supported Operators per Type**:
-- **Number**: `lt`, `lte`, `gt`, `gte`, `eq`, `neq`
-- **Date/Datetime**: `lt` (Before), `gt` (After), `eq` (On)
-- **Select**: `eq` (Is), `neq` (Is Not)
-- **Multiselect**: `in` (Is One Of), `not_in` (Is Not One Of)
-
-When `require_reason` is triggered during task execution, `JsonForm` stores the explanation in a flat sidecar key: `<fieldKey>__reason`. Optional structured metadata for the same field uses `<fieldKey>__extra`. Report definitions can opt a selected field into an adjacent extra column; without that option, exports include only the base field value.
+### 4. Validation Logic (`require_reason`)
+- Checkbox: `z.enum(['always', 'on-true', 'on-false'])`
+- Number: `lt`, `lte`, `gt`, `gte`, `eq`, `neq`
+- Date/Datetime: `lt`, `gt`, `eq`
+- Select: `eq`, `neq`; Multiselect: `in`, `not_in`
+- Reason sidecar: `<fieldKey>__reason`, `<fieldKey>__extra` (flat keys)
 
 ### 5. Payload Transformation
+Keep `fld_...` IDs, nest as `{ schema: { items: [...] } }`, filter empty options.
 
-Before submitting to the API, the frontend payload must be transformed:
-
-1. **Include IDs**: Keep the stable `fld_...` `id` fields; v2 task content is keyed by them.
-2. **Nest Items**: specific API structure requires `{ schema: { items: [...] } }`.
-3. **Filter Empty**: Remove empty options or invalid rules.
-
-```typescript
-const payload = {
-  name: data.name,
-  schema: {
-    items: data.items.map((item) => ({
-      ...item,
-      options: item.options?.filter(o => o.value)
-    }))
-  }
-};
-```
-
-### 6. Shared Fields Insertion (Studio Settings Integration)
-
-Task template authors can insert studio-managed shared fields directly from the builder.
-
-- Source endpoint: `GET /studios/:studioId/settings/shared-fields`
-- Admin shortcut route in `erify_studios`: `/studios/$studioId/shared-fields`
-- Read access: `ADMIN` and `MANAGER` can load the shared-field catalog for template authoring.
-- Canonical shared-field insertion uses exact shared key/type and sets `shared_field_key` to the canonical shared key.
-- Repeated insertions for loop-specific moderation data collection keep the same `shared_field_key`, assign each field a stable `fld_...` id, and rely on `group` to derive loop-specific report descriptors such as `gmv_l8`.
-- UI must lock shared-field type and canonical link editing (label/description remain editable).
-- Only active shared fields (`is_active: true`) should appear in the insertion picker.
-- Template create/edit pages must revalidate shared fields on mount (`refetchOnMount: 'always'`) to avoid stale picker options after settings updates.
-- Shared-field settings mutations must invalidate shared-field query keys so downstream routes immediately observe updates.
-- If shared fields fail to load, template pages must show a visible warning that shared-field insertion is temporarily unavailable.
-- Admin-only settings shortcuts must not be shown to manager users; non-admin authors should see guidance to ask a studio admin to create shared fields when the catalog is empty.
-
-This keeps template payloads compatible with backend validation that enforces:
-- `shared_field_key` must exist in studio shared fields
-- shared-field type must match studio shared-field type exactly
+### 6. Shared Fields (Studio Settings)
+- Source: `GET /studios/:studioId/settings/shared-fields`
+- `shared_field_key` links to canonical shared key; type locked, label/description editable
+- Revalidate on mount (`refetchOnMount: 'always'`), invalidate after settings mutations
+- Show warning if shared fields fail to load; hide admin-only shortcuts from managers
 
 ## Checklist
 
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
-- [ ] Drafts are persisted to IndexedDB (not localStorage) — **not yet implemented in builder, see §2**
-- [ ] Auto-save uses debounced writes (1s)
-- [ ] `@dnd-kit` items have stable `fld_...` ids from `createTaskTemplateFieldId()`
-- [ ] Payload is transformed before API submission (empty options filtered)
-- [ ] `require_reason` operators match field type (number/date/select/multiselect)
-- [ ] Task execution reason sidecars (`<fieldKey>__reason`, `<fieldKey>__extra`) remain flat and export only through explicit adjacent extra columns
-- [ ] Shared-field insertions use `shared_field_key` with locked canonical-link/type semantics
-- [ ] Shared-field queries are revalidated on template page mount and invalidated after settings mutations
-- [ ] Shared-field load failures are explicitly surfaced in template create/edit UI
+- [ ] `@dnd-kit` items have stable `fld_...` ids
+- [ ] Payload transformed before API submission (empty options filtered)
+- [ ] `require_reason` operators match field type
+- [ ] Shared-field insertions use `shared_field_key` with locked type
+- [ ] Shared-field queries revalidated on mount, invalidated after mutations
+- [ ] Shared-field load failures surfaced in UI
 - [ ] No duplicate validation logic between frontend and backend

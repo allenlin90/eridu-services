@@ -1,66 +1,15 @@
 ---
 description: Monorepo Package & Dependency Management guidelines.
-globs: packages/**/*, apps/**/* 
+globs: packages/**/*, apps/**/*
 ---
-# Monorepo Package & Dependency Management Guide
+# Monorepo Package & Dependency Management
 
-You are an expert monorepo architect for Eridu Services. 
+Canonical guidance lives in `AGENTS.md` § Monorepo Package Rules.
 
-## Core Principles (CRITICAL)
-**🚨 Default pattern: packages should export compiled JavaScript from `dist/`.**
+## Key Rules
 
-1. Export runtime code from `dist/`; this is the convergence target for the monorepo.
-2. Consuming apps use `package.json` exports - never direct path mappings to source (`../../packages/.../src`).
-3. Current repo reality is mixed:
-   - `@eridu/api-types` and `@eridu/auth-sdk` export runtime from `dist/`
-   - `@eridu/ui` and `@eridu/browser-upload` still export runtime entries from `src/` while types come from `dist/`
-4. Existing mixed export packages are legacy drift, not a second preferred pattern. Do not make unrelated drive-by package rewires, but when package export/build behavior is in scope, align toward compiled `dist/` exports unless a concrete compatibility blocker is documented.
-
-## Package.json Configuration
-- **Exports Pattern (Conditional Exports)**:
-  ```json
-  "exports": {
-    "./path/*": {
-      "types": "./dist/path/*.d.ts",
-      "default": "./dist/path/*.js"
-    }
-  }
-  ```
-  *Always provide both `types` and `default`.*
-
-- **Dependencies (Workspace Protocol)**:
-  ```json
-  "dependencies": {
-    "@eridu/auth-service": "workspace:*"
-  }
-  ```
-  *Never use `file:` or explicit versions (e.g., `^1.0.0`) for workspace packages.*
-
-## TypeScript Configuration
-- **Package `tsconfig.json`**:
-  Must include: `declaration: true`, `declarationMap: true`, `sourceMap: true`, `outDir: "dist"`.
-  Must exclude `dist` and include `src`.
-- **App `tsconfig.json`**:
-  No path mappings (`paths: {}`) to workspace packages. TS resolves via `package.json` exports.
-
-## Vite Configuration (Consuming Apps)
-Must use:
-```typescript
-resolve: {
-  preserveSymlinks: false, // Required for pnpm workspaces
-}
-```
-
-For `optimizeDeps`, follow the current app convention instead of forcing one universal setting:
-- current frontend apps exclude workspace packages such as `@eridu/ui` / `@eridu/i18n` from prebundling
-- do not flip an app between `include` and `exclude` without a concrete package-resolution reason
-
-## Development Workflow
-- **Dev script**: Packages should use watch mode: `"dev": "tsc --watch --preserveWatchOutput"`.
-- **Turbo**: `dev` relies on `dependsOn: ["^build"]` so dependencies build first.
-
-## Anti-Patterns to Avoid
-- ❌ **Path mappings to workspace sources in TS config or imports.**
-- ❌ **Introducing new source-export packages without an explicit package-build/export decision.**
-- ❌ **Omitting `preserveSymlinks: false` in Vite.**
-- ❌ **Using specific versions or `file:*` instead of `workspace:*` for internal packages.**
+- Default pattern: export compiled JavaScript from `dist/`, not `src/`.
+- Use `workspace:*` for internal package dependencies — never `file:` or explicit versions.
+- Both `types` and `default` in package.json conditional exports.
+- No TS path mappings to workspace package sources.
+- For detailed patterns: load `package-extraction-strategy` skill.
