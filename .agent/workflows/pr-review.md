@@ -107,7 +107,9 @@ Full reference: `.agent/skills/frontend-state-management/SKILL.md`
 
 - [ ] Shared primitives come from `@eridu/ui` — no local re-implementations of Radix/Tailwind primitives.
 - [ ] Form/dialog field inventory matches the intended product/API contract; any intentionally excluded fields (for example `external_id`) are documented in the design doc and called out near form/schema composition.
-- [ ] Date and datetime editing uses `DatePicker` / `DateTimePicker` from `@eridu/ui`; native `type="date"` / `type="datetime-local"` inputs only appear with a documented exception.
+- [ ] Date and datetime editing uses `DatePicker` / `DateTimePicker` / `ResponsiveDateTimePicker` from `@eridu/ui`; native `type="date"` / `type="datetime-local"` inputs only appear with a documented exception.
+- [ ] Datetime pickers on any mobile-reachable form use `ResponsiveDateTimePicker` (not `DateTimePicker`) so the picker becomes a vaul `Drawer` below `md`.
+- [ ] Any new Dialog reachable on a mobile route follows the responsive dialog → drawer pattern (`useIsMobile()` switch, shared body component, vaul `Drawer` below `md`). Exceptions: plain confirmations or surfaces never rendered below `md`, documented near the component. See `.agent/skills/frontend-ui-components/SKILL.md` § Responsive Dialog → Drawer Pattern.
 - [ ] `AsyncCombobox` / `AsyncMultiCombobox` search wiring is complete: no `onSearch={() => {}}`, no dead “search” affordances, and no undocumented mixed remote/local behavior across fields in the same form.
 - [ ] Forms with 2+ async lookup fields use isolated `memo()` field components — async lookup hooks are not called at the parent-form level when two or more exist.
 - [ ] Review evidence exists for searchable fields: either tests or direct verification that typing changes the intended query state or the documented local-filter state.

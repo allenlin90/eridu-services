@@ -164,6 +164,34 @@ Use text labels only for dropdown menu items where needed for mobile action menu
 
 ---
 
+## 📱 Responsive Dialog → Drawer (Frontend)
+
+Mobile-reachable Dialogs become vaul Drawers below `md` (768px) to avoid viewport overflow.
+
+```tsx
+import { useIsMobile, Drawer, DrawerContent, Dialog, DialogContent } from '@eridu/ui';
+
+const isMobile = useIsMobile();
+
+if (isMobile) {
+  return <Drawer open={open} onOpenChange={onOpenChange}><DrawerContent>{/* shared body */}</DrawerContent></Drawer>;
+}
+return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent>{/* shared body */}</DialogContent></Dialog>;
+```
+
+Rules:
+- Extract the form/picker body into one shared component — never duplicate logic between branches.
+- For datetime pickers in dialogs, use `ResponsiveDateTimePicker` from `@eridu/ui` (built-in switch).
+- Test at iPhone SE (375×667) before merging any responsive dialog.
+- Plain confirmations (one or two buttons) can stay as `Dialog`.
+
+Canonical references:
+- `packages/ui/src/components/date-picker.tsx` — `ResponsiveDateTimePicker`
+- `apps/erify_studios/src/features/studio-shows/components/show-actuals-dialog.tsx`
+- `.agent/skills/frontend-ui-components/SKILL.md` § Responsive Dialog → Drawer Pattern
+
+---
+
 ## 📤 Current-View Table Export
 
 For paginated studio table exports, export the current server-filtered view rather than only the loaded page:

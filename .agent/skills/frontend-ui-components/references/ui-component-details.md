@@ -5,17 +5,141 @@ Extended code examples and component patterns.
 ## Date and Time Pickers
 
 ```typescript
-import { DatePicker, DateTimePicker } from '@eridu/ui/components/date-picker';
+import { DatePicker, DateTimePicker, ResponsiveDateTimePicker } from '@eridu/ui';
 
-// ✅ GOOD
-<DatePicker value={dateStr} onChange={setDateStr} />
+// ✅ Desktop-only or always-narrow surface
 <DateTimePicker value={dateTimeStr} onChange={setDateTimeStr} />
+
+// ✅ Mobile-reachable surface (forms, dialogs visible on phone routes)
+<ResponsiveDateTimePicker
+  value={dateTimeStr}
+  onChange={setDateTimeStr}
+  label="Actual start"
+/>
 
 // ❌ BAD (Avoid native inputs)
 <input type="date" value={dateStr} />
 ```
 
-Native browser date/datetime inputs require a documented reason.
+`ResponsiveDateTimePicker` renders the same Popover on desktop and a vaul `Drawer` below the `md` breakpoint, so the picker never overflows on phone-class viewports. Native browser date/datetime inputs require a documented reason.
+
+## Responsive Dialog Pattern
+
+Below the `md` breakpoint (`useIsMobile()` returns `true`), Radix `Popover`/`Dialog` content frequently overflows or clips, especially when nested or anchored near a viewport edge. House rule: **desktop Dialog → mobile Drawer**, sharing one body component.
+
+### When to apply
+
+Apply when the dialog/popover is reachable from a route that renders on phone-class viewports AND any of:
+
+- Contains a form with two or more fields
+- Contains a date/datetime picker, async combobox, or calendar
+- Contains a multi-step flow, table, or chart
+- Has content wider than ~280px at its natural size
+
+Skip (keep plain `Dialog`) when:
+
+- Plain confirmation with one or two buttons
+- Static informational modal that fits within a 320px column
+- Surface is never rendered below the `md` breakpoint (e.g., admin-only desktop tools)
+
+### Recipe
+
+```tsx
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  useIsMobile,
+} from '@eridu/ui';
+
+type FormBodyProps = { value: string; onChange: (v: string) => void };
+
+function FeatureFormBody({ value, onChange }: FormBodyProps) {
+  // shared body — never duplicated between Dialog and Drawer
+  return <div className="space-y-4">{/* fields */}</div>;
+}
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /* domain props */
+};
+
+export function FeatureFormDialog({ open, onOpenChange }: Props) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Feature title</DrawerTitle>
+            <DrawerDescription>Short description.</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4">
+            <FeatureFormBody {/* ...props */} />
+          </div>
+          <DrawerFooter>
+            <Button onClick={/* submit */}>Save</Button>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[560px]">
+        <DialogHeader>
+          <DialogTitle>Feature title</DialogTitle>
+          <DialogDescription>Short description.</DialogDescription>
+        </DialogHeader>
+        <FeatureFormBody {/* ...props */} />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={/* submit */}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+Rules:
+
+- The form/picker body MUST be one shared component. Never copy logic between Dialog and Drawer branches.
+- Drawer titles/descriptions are required for accessibility — use `sr-only` text if the visible header is implicit.
+- Drawers steal focus and lock scroll via vaul; the desktop Dialog does the same via Radix. Do not nest a Drawer inside another modal unless you have verified focus management.
+- Keep one `useIsMobile()` call at the component root — do not branch deep in the tree.
+- Test at iPhone SE (375×667) before merging any responsive dialog.
+
+### Reference implementation
+
+- `packages/ui/src/components/date-picker.tsx` — `ResponsiveDateTimePicker` (shared body via `DateTimePickerBody`, Popover on desktop, vaul Drawer on mobile)
+- `apps/erify_studios/src/features/studio-shows/components/show-actuals-dialog.tsx` — first consumer
+
+### Migration guide for existing Dialogs
+
+1. Identify the form/content body inside `DialogContent`.
+2. Extract it to a sibling component (`FeatureFormBody`) — no behavior change.
+3. Add a `useIsMobile()` switch at the component root.
+4. Wire the same `open`/`onOpenChange` to both `Dialog` and `Drawer`.
+5. Match `DialogHeader`/`DialogFooter` content in `DrawerHeader`/`DrawerFooter` (keep the same primary action label).
+6. Mobile-verify at 375×667: every interactive element reachable, no off-screen content, keyboard does not push controls under the viewport edge.
 
 ## Async Lookup Field Isolation
 
