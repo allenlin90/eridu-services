@@ -21,7 +21,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 9. [Studios Internal Read Traffic Hardening](./STUDIOS_INTERNAL_READ_TRAFFIC.md)
 10. [Task Submission Reporting Frontend Reference](./TASK_SUBMISSION_REPORTING.md)
 11. [Studio Creator Onboarding Frontend Reference](./STUDIO_CREATOR_ONBOARDING.md)
-12. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md)
+12. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md) — CRUD, show actuals, and current-view export
 13. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
 
 ## Design Docs
