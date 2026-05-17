@@ -258,6 +258,23 @@ Review gate for pagination work:
 - if a route manually reads/writes `page` and `limit`, ask why `useTableUrlState` is not the owner
 - if a paginated query drops previous metadata during transitions, ask why `keepPreviousData` is missing
 - if the UI renders custom pagination buttons, ask why `DataTablePagination` is not reused
+
+### Current-View Export
+For server-driven table exports, export the current server-filtered view rather than only the visible page.
+
+Required pattern:
+- derive export params from the same hook-owned API params as the table query
+- omit only pagination fields (`page`, `limit`) before export
+- page through the list endpoint with a fixed export page size and a documented max row cap
+- forward an `AbortSignal` to every page request and abort in-flight exports on unmount or a new export
+- use shared CSV/download primitives (`src/lib/csv.ts`, `src/lib/file-download.ts`) so escaping, UTF-8 BOM, CRLF line endings, and browser download behavior stay consistent
+- make the export action disabled when the matching result count is zero or an export is already running
+
+Reference implementations:
+- `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts`
+- `apps/erify_studios/src/features/studio-shifts/utils/studio-shifts-export.utils.ts`
+- `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts`
+- `apps/erify_studios/src/features/studio-shows/utils/studio-shows-export.utils.ts`
 - if page correction depends on fallback values instead of real API metadata, treat it as a correctness bug rather than a style preference
 
 ## Virtualized Table Pattern
