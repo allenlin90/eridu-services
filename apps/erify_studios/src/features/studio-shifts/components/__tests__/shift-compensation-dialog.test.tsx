@@ -428,6 +428,28 @@ describe('shiftCompensationDialog', () => {
       expect(within(tile).getByRole('button', { name: 'Edit hourly rate' })).toBeInTheDocument();
     });
 
+    it('treats API decimal strings with different scale as unchanged on Save', async () => {
+      const user = userEvent.setup();
+      render(
+        <ShiftCompensationDialog
+          open
+          onOpenChange={vi.fn()}
+          studioId="std_1"
+          shift={{ ...shift, hourly_rate: '20' }}
+        />,
+      );
+
+      const tile = screen.getByTestId('shift-hourly-rate-tile');
+      await user.click(within(tile).getByRole('button', { name: 'Edit hourly rate' }));
+
+      const saveButton = within(tile).getByRole('button', { name: /Save/ });
+      expect(saveButton).not.toBeDisabled();
+      await user.click(saveButton);
+
+      expect(mockUpdateShift).not.toHaveBeenCalled();
+      expect(within(tile).getByRole('button', { name: 'Edit hourly rate' })).toBeInTheDocument();
+    });
+
     it('surfaces an error inline when the mutation rejects', async () => {
       const user = userEvent.setup();
       mockUpdateShift.mockRejectedValueOnce(new Error('override_reason is required when hourly_rate changes'));

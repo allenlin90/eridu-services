@@ -51,9 +51,10 @@ type HourlyRateTileProps = {
 function HourlyRateTile({ studioId, shift }: HourlyRateTileProps) {
   const updateShift = useUpdateStudioShift(studioId);
   const storedRate = shift.hourly_rate;
+  const normalizedStoredRate = toMoneyString(storedRate);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [rateInput, setRateInput] = useState(storedRate);
+  const [rateInput, setRateInput] = useState(normalizedStoredRate);
   const [reasonInput, setReasonInput] = useState('');
   const [rateError, setRateError] = useState<string | null>(null);
 
@@ -68,7 +69,7 @@ function HourlyRateTile({ studioId, shift }: HourlyRateTileProps) {
       return null;
     }
   })();
-  const rateChanged = normalizedInputRate !== null && normalizedInputRate !== storedRate;
+  const rateChanged = normalizedInputRate !== null && normalizedInputRate !== normalizedStoredRate;
   const saveDisabled
     = updateShift.isPending
     || !rateInput.trim()
@@ -77,14 +78,14 @@ function HourlyRateTile({ studioId, shift }: HourlyRateTileProps) {
 
   function handleStartEdit() {
     setIsEditing(true);
-    setRateInput(storedRate);
+    setRateInput(normalizedStoredRate);
     setReasonInput('');
     setRateError(null);
   }
 
   function handleCancelEdit() {
     setIsEditing(false);
-    setRateInput(storedRate);
+    setRateInput(normalizedStoredRate);
     setReasonInput('');
     setRateError(null);
   }
@@ -98,7 +99,7 @@ function HourlyRateTile({ studioId, shift }: HourlyRateTileProps) {
       return;
     }
 
-    if (normalizedRate === storedRate) {
+    if (normalizedRate === normalizedStoredRate) {
       // Same rate — no PATCH, no audit entry. Just close edit mode.
       handleCancelEdit();
       return;
