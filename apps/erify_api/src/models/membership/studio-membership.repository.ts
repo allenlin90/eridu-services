@@ -224,14 +224,14 @@ export class StudioMembershipRepository extends BaseRepository<
    */
   async updateStudioMember(
     uid: string,
-    payload: { role?: string; baseHourlyRate?: number },
+    payload: { role?: string; baseHourlyRate?: string },
   ): Promise<Prisma.StudioMembershipGetPayload<{ include: { user: true } }>> {
     const data: Prisma.StudioMembershipUpdateInput = {};
     if (payload.role !== undefined) {
       data.role = payload.role;
     }
     if (payload.baseHourlyRate !== undefined) {
-      data.baseHourlyRate = payload.baseHourlyRate.toFixed(2);
+      data.baseHourlyRate = payload.baseHourlyRate;
     }
 
     return this.prisma.studioMembership.update({

@@ -67,6 +67,21 @@ export type UpdateMembershipInput = z.infer<typeof updateMembershipInputSchema>;
 // Studio Member Roster — /studios/:studioId/members
 // ---------------------------------------------------------------------------
 
+// `StudioMembership.baseHourlyRate` is `Decimal(10, 2)` in Prisma: up to 8
+// integer digits + 2 fractional, non-negative on this surface. The wire type
+// is a decimal string so money never round-trips through a JS number.
+const hourlyRateInputSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^\d{1,8}(?:\.\d{1,2})?$/,
+    'Hourly rate must be a non-negative number with up to 2 decimal places',
+  )
+  .transform((value) => {
+    const [whole, fractional = ''] = value.split('.');
+    return `${whole}.${fractional.padEnd(2, '0')}`;
+  });
+
 /**
  * Response DTO for a single studio member (with embedded user info).
  */
@@ -76,7 +91,7 @@ export const studioMemberResponseSchema = z.object({
   user_name: z.string(),
   user_email: z.string().email(),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-  base_hourly_rate: z.number().nullable(),
+  base_hourly_rate: z.string().nullable(),
   created_at: z.string(),
 });
 
@@ -88,10 +103,10 @@ export type StudioMemberResponse = z.infer<typeof studioMemberResponseSchema>;
 export const addStudioMemberRequestSchema = z.object({
   email: z.string().email('A valid email address is required'),
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]),
-  base_hourly_rate: z.number().min(0, 'Hourly rate must be a non-negative number'),
+  base_hourly_rate: hourlyRateInputSchema,
 });
 
-export type AddStudioMemberRequest = z.infer<typeof addStudioMemberRequestSchema>;
+export type AddStudioMemberRequest = z.input<typeof addStudioMemberRequestSchema>;
 
 /**
  * Request DTO for updating a studio member (PATCH /studios/:studioId/members/:membershipId).
@@ -99,7 +114,7 @@ export type AddStudioMemberRequest = z.infer<typeof addStudioMemberRequestSchema
  */
 export const updateStudioMemberRequestSchema = z.object({
   role: z.enum(Object.values(STUDIO_ROLE) as [string, ...string[]]).optional(),
-  base_hourly_rate: z.number().min(0, 'Hourly rate must be a non-negative number').optional(),
+  base_hourly_rate: hourlyRateInputSchema.optional(),
 });
 
-export type UpdateStudioMemberRequest = z.infer<typeof updateStudioMemberRequestSchema>;
+export type UpdateStudioMemberRequest = z.input<typeof updateStudioMemberRequestSchema>;

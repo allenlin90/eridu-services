@@ -47,7 +47,7 @@ function createMember(overrides: Partial<StudioMemberResponse> = {}): StudioMemb
     user_name: 'Jane Doe',
     user_email: 'jane@example.com',
     role: STUDIO_ROLE.MEMBER,
-    base_hourly_rate: 25,
+    base_hourly_rate: '25.00',
     created_at: '2026-03-27T00:00:00.000Z',
     ...overrides,
   };

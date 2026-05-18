@@ -84,7 +84,7 @@ describe('studioMembersController', () => {
   describe('addMember', () => {
     it('should add a member to the studio', async () => {
       const studioId = 'std_test123';
-      const dto = { email: 'jane@example.com', role: 'manager', base_hourly_rate: 25 };
+      const dto = { email: 'jane@example.com', role: 'manager', base_hourly_rate: '25.00' };
       studioMembershipService.addStudioMember.mockResolvedValue(mockMembership as any);
 
       await controller.addMember(studioId, dto as any);
@@ -92,7 +92,7 @@ describe('studioMembersController', () => {
       expect(studioMembershipService.addStudioMember).toHaveBeenCalledWith({
         email: 'jane@example.com',
         role: 'manager',
-        baseHourlyRate: 25,
+        baseHourlyRate: '25.00',
         studioUid: studioId,
       });
     });
@@ -102,7 +102,7 @@ describe('studioMembersController', () => {
     it('should update an existing membership', async () => {
       const studioId = 'std_test123';
       const membershipId = 'smb_test123';
-      const dto = { role: 'manager', base_hourly_rate: 30 };
+      const dto = { role: 'manager', base_hourly_rate: '30.00' };
       const mockRequest = { studioMembership: { uid: 'smb_actor456' } };
 
       studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(mockMembership as any);
@@ -116,7 +116,7 @@ describe('studioMembersController', () => {
       );
       expect(studioMembershipService.updateStudioMember).toHaveBeenCalledWith(
         membershipId,
-        { role: 'manager', baseHourlyRate: 30 },
+        { role: 'manager', baseHourlyRate: '30.00' },
         'smb_actor456',
       );
     });

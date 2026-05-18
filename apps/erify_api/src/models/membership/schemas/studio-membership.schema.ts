@@ -17,6 +17,7 @@ import {
   paginationQuerySchema,
   transformPagination,
 } from '@/lib/pagination/pagination.schema';
+import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
@@ -341,9 +342,7 @@ export const studioMemberDto = studioMemberWithUserSchema.transform(
     user_name: obj.user.name,
     user_email: obj.user.email,
     role: obj.role,
-    base_hourly_rate: obj.baseHourlyRate !== null && obj.baseHourlyRate !== undefined
-      ? Number(obj.baseHourlyRate)
-      : null,
+    base_hourly_rate: decimalToString(obj.baseHourlyRate),
     created_at: obj.createdAt.toISOString(),
   }),
 ).pipe(studioMemberResponseSchema);
@@ -380,18 +379,22 @@ export class UpdateStudioMemberDto extends createZodDto(updateStudioMemberReques
 
 /**
  * Service payload for adding a studio member via the member roster endpoint.
+ * `baseHourlyRate` is a normalized decimal string (e.g. `"25.00"`) — the
+ * request schema validates + pads input to 2 decimal places, so service code
+ * can persist it directly without further rounding.
  */
 export type AddStudioMemberPayload = {
   email: string;
   role: string;
-  baseHourlyRate: number;
+  baseHourlyRate: string;
   studioUid: string;
 };
 
 /**
  * Service payload for updating a studio member via the member roster endpoint.
+ * See `AddStudioMemberPayload.baseHourlyRate` for the normalization contract.
  */
 export type UpdateStudioMemberPayload = {
   role?: string;
-  baseHourlyRate?: number;
+  baseHourlyRate?: string;
 };
