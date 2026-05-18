@@ -73,9 +73,9 @@ Readiness scope totals should be refreshed by query-key changes (for example `re
 ## Navigation & Studio Context
 
 - **Studio Switcher**: `TeamSwitcher` from `@eridu/ui` — maps `studio_memberships` from `/me/profile`
-- **Sidebar Nav**: Dashboard, My Tasks (all roles) + Show Operations, Task Review, Task Templates (admin/manager only)
+- **Sidebar Nav**: My Workspace contains personal tasks; Tasks contains Show Operations, Task Review, and Task Reports; Studio Settings contains Task Templates.
 - **Active Studio**: persisted in `localStorage`, auto-initializes, invalidates queries on switch
-- **Role-Based Access**: admin sees Shows + Templates nav items; non-admin sees only Dashboard + My Tasks
+- **Role-Based Access**: admin/manager task operators see the Tasks and Task Templates entries; non-admin task executors see My Workspace only.
 
 ---
 

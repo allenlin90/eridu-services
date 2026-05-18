@@ -156,72 +156,86 @@ function getStudioCommonItems(
 }
 
 /**
- * Generates manager workspace navigation items.
+ * Generates upstream planning navigation items.
  */
-function getStudioManagerItems(
+function getStudioPlanningItems(
   studioId: string,
   role: string,
 ): SidebarNavItem['items'] {
-  const managerItems: SidebarNavItem['items'] = [];
+  const planningItems: SidebarNavItem['items'] = [];
 
-  if (hasStudioRouteAccess(role as StudioRole, 'reviewQueue')) {
-    managerItems.push({
-      title: 'Task Review',
-      url: `/studios/${studioId}/task-review`,
-      icon: ClipboardCheck,
+  if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
+    planningItems.push({
+      title: 'Shows',
+      url: `/studios/${studioId}/shows`,
+      icon: Film,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'creatorMapping')) {
+    planningItems.push({
+      title: 'Creator Mapping',
+      url: `/studios/${studioId}/creator-mapping`,
+      icon: MonitorPlay,
     });
   }
 
   if (hasStudioRouteAccess(role as StudioRole, 'shifts')) {
-    managerItems.push({
+    planningItems.push({
       title: 'Shift Schedule',
       url: `/studios/${studioId}/shifts`,
       icon: CalendarDays,
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
-    managerItems.push({
-      title: 'Shows',
-      url: `/studios/${studioId}/shows`,
-      icon: Film,
-    });
+  return planningItems;
+}
 
-    managerItems.push({
+/**
+ * Generates downstream task navigation items.
+ */
+function getStudioTaskItems(
+  studioId: string,
+  role: string,
+): SidebarNavItem['items'] {
+  const taskItems: SidebarNavItem['items'] = [];
+
+  if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
+    taskItems.push({
       title: 'Show Operations',
       url: `/studios/${studioId}/show-operations`,
       icon: Clapperboard,
     });
   }
 
+  if (hasStudioRouteAccess(role as StudioRole, 'reviewQueue')) {
+    taskItems.push({
+      title: 'Task Review',
+      url: `/studios/${studioId}/task-review`,
+      icon: ClipboardCheck,
+    });
+  }
+
   if (hasStudioRouteAccess(role as StudioRole, 'taskReports')) {
-    managerItems.push({
+    taskItems.push({
       title: 'Task Reports',
       url: `/studios/${studioId}/task-reports`,
       icon: ClipboardCheck,
     });
   }
 
-  return managerItems;
+  return taskItems;
 }
 
 /**
- * Generates Studio Settings navigation items (was "Studio Admin").
- * Includes: Members, Shared Fields, Task Templates.
+ * Generates Studio Settings navigation items.
+ * Includes configuration surfaces only.
  */
 function getStudioSettingsItems(
   studioId: string,
   role: string,
 ): SidebarNavItem['items'] {
   const settingsItems: SidebarNavItem['items'] = [];
-
-  if (hasStudioRouteAccess(role as StudioRole, 'members')) {
-    settingsItems.push({
-      title: 'Members',
-      url: `/studios/${studioId}/members`,
-      icon: Users,
-    });
-  }
 
   if (hasStudioRouteAccess(role as StudioRole, 'sharedFields')) {
     settingsItems.push({
@@ -243,31 +257,31 @@ function getStudioSettingsItems(
 }
 
 /**
- * Generates creator-related studio navigation items.
+ * Generates people and roster navigation items.
  */
-function getStudioCreatorItems(
+function getStudioPeopleItems(
   studioId: string,
   role: string,
 ): SidebarNavItem['items'] {
-  const creatorItems: SidebarNavItem['items'] = [];
+  const peopleItems: SidebarNavItem['items'] = [];
+
+  if (hasStudioRouteAccess(role as StudioRole, 'members')) {
+    peopleItems.push({
+      title: 'Members',
+      url: `/studios/${studioId}/members`,
+      icon: Users,
+    });
+  }
 
   if (hasStudioRouteAccess(role as StudioRole, 'creatorRoster')) {
-    creatorItems.push({
-      title: 'Creator Roster',
+    peopleItems.push({
+      title: 'Creators',
       url: `/studios/${studioId}/creators`,
       icon: Users,
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'creatorMapping')) {
-    creatorItems.push({
-      title: 'Creator Mapping',
-      url: `/studios/${studioId}/creator-mapping`,
-      icon: MonitorPlay,
-    });
-  }
-
-  return creatorItems;
+  return peopleItems;
 }
 
 /**
@@ -315,9 +329,10 @@ export function useSidebarConfig(
     }
     if (activeStudio) {
       const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
-      const studioManagerItems = buildActiveItems(getStudioManagerItems(activeStudio.studio.uid, activeStudio.role));
+      const studioPlanningItems = buildActiveItems(getStudioPlanningItems(activeStudio.studio.uid, activeStudio.role));
+      const studioTaskItems = buildActiveItems(getStudioTaskItems(activeStudio.studio.uid, activeStudio.role));
+      const studioPeopleItems = buildActiveItems(getStudioPeopleItems(activeStudio.studio.uid, activeStudio.role));
       const studioSettingsItems = buildActiveItems(getStudioSettingsItems(activeStudio.studio.uid, activeStudio.role));
-      const studioCreatorItems = buildActiveItems(getStudioCreatorItems(activeStudio.studio.uid, activeStudio.role));
 
       navItems.push({
         title: 'My Workspace',
@@ -327,13 +342,33 @@ export function useSidebarConfig(
         items: studioCommonItems,
       });
 
-      if (studioManagerItems.length > 0) {
+      if (studioPlanningItems.length > 0) {
         navItems.push({
-          title: 'Operations',
-          url: studioManagerItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
-          icon: Settings,
-          isActive: studioManagerItems.some((item) => item.isActive),
-          items: studioManagerItems,
+          title: 'Planning',
+          url: studioPlanningItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
+          icon: CalendarDays,
+          isActive: studioPlanningItems.some((item) => item.isActive),
+          items: studioPlanningItems,
+        });
+      }
+
+      if (studioTaskItems.length > 0) {
+        navItems.push({
+          title: 'Tasks',
+          url: studioTaskItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
+          icon: ClipboardCheck,
+          isActive: studioTaskItems.some((item) => item.isActive),
+          items: studioTaskItems,
+        });
+      }
+
+      if (studioPeopleItems.length > 0) {
+        navItems.push({
+          title: 'People',
+          url: studioPeopleItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/members`,
+          icon: Users,
+          isActive: studioPeopleItems.some((item) => item.isActive),
+          items: studioPeopleItems,
         });
       }
 
@@ -344,16 +379,6 @@ export function useSidebarConfig(
           icon: ShieldCheck,
           isActive: studioSettingsItems.some((item) => item.isActive),
           items: studioSettingsItems,
-        });
-      }
-
-      if (studioCreatorItems.length > 0) {
-        navItems.push({
-          title: 'Creators',
-          url: studioCreatorItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/creators`,
-          icon: Users,
-          isActive: studioCreatorItems.some((item) => item.isActive),
-          items: studioCreatorItems,
         });
       }
     }

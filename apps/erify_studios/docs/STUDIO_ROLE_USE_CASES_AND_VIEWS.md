@@ -46,9 +46,13 @@ Define what each studio role can see and do across all studio-scoped routes.
 
 | Section | Shown to |
 |---------|----------|
-| Studio Common (Dashboard, My Tasks, My Shifts) | All roles |
-| Studio Admin (Task Review, Shift Schedule, Show Operations, Task Templates) | ADMIN, MANAGER |
-| Creators (Creator Roster, Creator Mapping) | ADMIN, MANAGER, TALENT_MANAGER |
+| My Workspace (Dashboard, My Tasks, My Shifts) | All roles |
+| Planning (Shift Schedule, Shows, Creator Mapping; future Schedules) | ADMIN, MANAGER, TALENT_MANAGER |
+| Tasks (Show Operations, Task Review, Task Reports) | ADMIN, MANAGER, MODERATION_MANAGER |
+| People (Members, Creators) | ADMIN, MANAGER, TALENT_MANAGER |
+| Studio Settings (Shared Fields, Task Templates) | ADMIN, MANAGER |
+
+`Schedules` refers to the Schedule model and belongs beside `Shows` in Planning when a studio-scoped schedule route ships. `Shift Schedule` remains the existing labor planning surface.
 
 ## Dashboard View (All Studio Roles)
 

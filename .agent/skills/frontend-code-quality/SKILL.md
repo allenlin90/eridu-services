@@ -54,6 +54,8 @@ Pattern: route container + `useFeatureViewModel()` hook + presentation component
 - Central access map in `src/lib/constants/studio-route-access.ts`
 - Shared `StudioRouteGuard` + `useStudioAccess` — no duplicated role checks
 - Sidebar visibility from same policy map
+- Studio sidebar groups are purpose-based: `Planning` for schedules/shows/assignment setup, `Tasks` for downstream task operations, `People` for member/creator rosters, and `Studio Settings` for configuration surfaces.
+- Keep `Creator Mapping` with `Planning`, not `People`; it assigns creators to shows rather than managing creator records.
 - Consistent wrappers: `AdminLayout` for `/system/*`, `PageLayout` for studio pages
 
 ## Checklist

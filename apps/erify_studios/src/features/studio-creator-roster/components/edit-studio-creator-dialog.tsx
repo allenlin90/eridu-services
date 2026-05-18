@@ -102,6 +102,10 @@ function EditStudioCreatorForm({
 
   return (
     <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
+      <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+        Roster edits update defaults for future show assignments only. Existing show assignments
+        keep their saved compensation snapshot; edit assignment compensation to change a show.
+      </p>
       <div className="space-y-1.5">
         <Label htmlFor="edit-default-rate">Default Rate</Label>
         <Input

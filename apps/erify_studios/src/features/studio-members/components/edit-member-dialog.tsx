@@ -79,6 +79,10 @@ function EditMemberForm({
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+      <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+        Roster edits update the default for future shifts only. Existing shift snapshots keep
+        their saved hourly rate; edit shift compensation to change a scheduled shift.
+      </p>
       <div className="space-y-1.5">
         <Label htmlFor="edit-role">Role</Label>
         <Select value={role} onValueChange={setRole} disabled={isSelf}>
