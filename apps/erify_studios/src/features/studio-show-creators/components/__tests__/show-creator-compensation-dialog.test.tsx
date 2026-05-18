@@ -206,6 +206,47 @@ describe('showCreatorCompensationDialog', () => {
     });
   });
 
+  it('forces commission_rate to null when switching HYBRID → FIXED with a leftover commission value', async () => {
+    const user = userEvent.setup();
+    render(
+      <ShowCreatorCompensationDialog
+        open
+        onOpenChange={vi.fn()}
+        studioId="std_1"
+        showId="show_1"
+        creator={{
+          id: 'show_mc_1',
+          creator_id: 'creator_1',
+          creator_name: 'Alice',
+          creator_alias_name: 'Ali',
+          note: null,
+          agreed_rate: '100.00',
+          compensation_type: 'HYBRID',
+          commission_rate: '25.00',
+          metadata: {},
+        }}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText('Compensation Type'), 'FIXED');
+    expect(screen.getByLabelText('Commission Rate')).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Save Terms' }));
+
+    await waitFor(() => {
+      expect(mockUpdateAssignmentMutateAsync).toHaveBeenCalledWith({
+        id: 'show_mc_1',
+        data: {
+          note: null,
+          agreed_rate: '100.00',
+          compensation_type: 'FIXED',
+          commission_rate: null,
+          override_reason: undefined,
+        },
+      });
+    });
+  });
+
   it('updates and deletes existing adjustment items', async () => {
     const user = userEvent.setup();
     renderDialog();

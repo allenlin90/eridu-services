@@ -88,6 +88,19 @@ When a creator is assigned to a show, `ShowCreator` persists `agreedRate`, `comp
 
 The component model is the extension point for future commission variants and the Phase 5 rule engine.
 
+#### Cross-field validation invariants
+
+The relationship between `compensationType` and the rate fields is enforced at the API boundary (Zod `superRefine` on `updateStudioShowCreatorInputSchema` and `updateStudioCreatorRosterInputSchema`). Calculators above assume these invariants hold:
+
+| `compensationType` | `agreedRate` (per-show: `agreed_rate`, roster default: `default_rate`) | `commissionRate` (per-show: `commission_rate`, roster default: `default_commission_rate`) |
+| ------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `FIXED`            | required (else snapshot incomplete)                                   | **must be `null`**                                                                        |
+| `COMMISSION`       | ignored by calculators; FE clears it for clarity                       | **required**                                                                              |
+| `HYBRID`           | required                                                              | **required**                                                                              |
+| `null` (unset)     | unconstrained but ignored                                              | **must be `null`**                                                                        |
+
+FE forms editing these fields **must** clear the irrelevant rate fields before submit (don't rely on the user to delete a stale value when switching types). See `apps/erify_studios/src/features/studio-show-creators/lib/show-creator-assignment-terms.ts` and `apps/erify_studios/src/features/studio-creator-roster/lib/studio-creator-compensation.ts` for the canonical helpers, and the `frontend-ui-components` skill for the form pattern.
+
 ### Actuals
 
 - `Show.actualStartTime` / `Show.actualEndTime` — nullable, entered any time.

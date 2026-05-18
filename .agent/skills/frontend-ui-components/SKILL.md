@@ -29,6 +29,7 @@ import { cn } from '@eridu/ui/lib/utils';
 | Searchable Inputs | `onSearch` must update query state — never leave as no-op |
 | Refresh Buttons | Icon-only (`RotateCw`) + `aria-label` + spinning state while fetching |
 | Collapsible Sections | `ChevronUp`/`ChevronDown` toggle, smooth animated transitions |
+| Cross-Field Form Invariants | When BE Zod `superRefine` ties one field's value to another's, build the payload through a `buildXxxPayload(form)` helper that **clears irrelevant fields** (don't trust user residue). Disable the irrelevant inputs. Never submit raw state directly. |
 
 ## Responsive Dialog → Drawer Pattern
 
@@ -77,6 +78,7 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 - [ ] Mobile-reachable Dialogs render as `Drawer` below `md` (responsive dialog → drawer pattern) with a shared body
 - [ ] 2+ async lookups → isolated `memo()` field components
 - [ ] `onSearch` wired to real search state
+- [ ] Cross-field invariants enforced via `buildXxxPayload` helper + disabled inputs (not by trusting form state on submit)
 
 ## Related Skills
 

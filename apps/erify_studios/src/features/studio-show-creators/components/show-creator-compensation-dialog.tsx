@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { CompensationLineItemApiResponse } from '@eridu/api-types/compensation-line-items';
-import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import type { StudioShowCreatorListItem } from '@eridu/api-types/studio-creators';
 import {
   Button,
@@ -36,6 +35,14 @@ import {
   useShowCreatorCompensationSummary,
   useUpdateShowCreatorAssignment,
 } from '@/features/studio-show-creators/api/get-show-creators';
+import {
+  buildShowCreatorAssignmentTermsPayload,
+  isAgreedRateEnabled,
+  isCommissionRateEnabled,
+  NO_COMPENSATION_TYPE,
+  SHOW_CREATOR_COMPENSATION_TYPE_OPTIONS,
+  type ShowCreatorCompensationTypeOption,
+} from '@/features/studio-show-creators/lib/show-creator-assignment-terms';
 
 type ShowCreatorCompensationDialogProps = {
   open: boolean;
@@ -56,14 +63,6 @@ const ITEM_TYPE_OPTIONS = [
 type ItemType = (typeof ITEM_TYPE_OPTIONS)[number]['value'];
 
 const KNOWN_ITEM_TYPES = new Set<string>(ITEM_TYPE_OPTIONS.map((option) => option.value));
-const NO_COMPENSATION_TYPE = 'NONE';
-const COMPENSATION_TYPE_OPTIONS = [
-  { value: NO_COMPENSATION_TYPE, label: 'Not set' },
-  { value: CREATOR_COMPENSATION_TYPE.FIXED, label: 'Fixed' },
-  { value: CREATOR_COMPENSATION_TYPE.COMMISSION, label: 'Commission' },
-  { value: CREATOR_COMPENSATION_TYPE.HYBRID, label: 'Hybrid' },
-] as const;
-type CompensationTypeOption = (typeof COMPENSATION_TYPE_OPTIONS)[number]['value'];
 
 const UNRESOLVED_REASON_COPY: Record<string, string> = {
   AGREEMENT_SNAPSHOT_MISSING:
@@ -82,11 +81,6 @@ function formatUnresolvedReason(code: string): string {
 
 function coerceItemType(value: string): ItemType {
   return KNOWN_ITEM_TYPES.has(value) ? (value as ItemType) : 'OTHER';
-}
-
-function normalizeOptionalMoneyInput(value: string): string | null {
-  const trimmed = value.trim();
-  return trimmed ? toMoneyString(trimmed) : null;
 }
 
 function getLineItemButtonLabel(isSaving: boolean, isEditing: boolean) {
@@ -108,40 +102,36 @@ function CreatorAssignmentTermsForm({
 }) {
   const [assignmentNote, setAssignmentNote] = useState(creator?.note ?? '');
   const [agreedRate, setAgreedRate] = useState(creator?.agreed_rate ?? '');
-  const [compensationType, setCompensationType] = useState<CompensationTypeOption>(
-    (creator?.compensation_type ?? NO_COMPENSATION_TYPE) as CompensationTypeOption,
+  const [compensationType, setCompensationType] = useState<ShowCreatorCompensationTypeOption>(
+    (creator?.compensation_type ?? NO_COMPENSATION_TYPE) as ShowCreatorCompensationTypeOption,
   );
   const [commissionRate, setCommissionRate] = useState(creator?.commission_rate ?? '');
   const [overrideReason, setOverrideReason] = useState('');
   const updateAssignment = useUpdateShowCreatorAssignment(studioId, showId);
+
+  const agreedRateEnabled = isAgreedRateEnabled(compensationType);
+  const commissionRateEnabled = isCommissionRateEnabled(compensationType);
 
   const handleAssignmentSubmit = async () => {
     if (!creator) {
       return;
     }
 
-    let normalizedAgreedRate: string | null;
-    let normalizedCommissionRate: string | null;
+    let payload;
     try {
-      normalizedAgreedRate = normalizeOptionalMoneyInput(agreedRate);
-      normalizedCommissionRate = normalizeOptionalMoneyInput(commissionRate);
+      payload = buildShowCreatorAssignmentTermsPayload({
+        note: assignmentNote,
+        agreedRate,
+        compensationType,
+        commissionRate,
+        overrideReason,
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Invalid compensation terms');
       return;
     }
 
-    const nextCompensationType = compensationType === NO_COMPENSATION_TYPE ? null : compensationType;
-    const trimmedOverrideReason = overrideReason.trim();
-    await updateAssignment.mutateAsync({
-      id: creator.id,
-      data: {
-        note: assignmentNote.trim() || null,
-        agreed_rate: normalizedAgreedRate,
-        compensation_type: nextCompensationType,
-        commission_rate: normalizedCommissionRate,
-        override_reason: trimmedOverrideReason || undefined,
-      },
-    });
+    await updateAssignment.mutateAsync({ id: creator.id, data: payload });
     toast.success('Assignment terms updated');
     setOverrideReason('');
   };
@@ -161,21 +151,22 @@ function CreatorAssignmentTermsForm({
             id="show-creator-agreed-rate"
             type="number"
             step="0.01"
-            value={agreedRate}
+            value={agreedRateEnabled ? agreedRate : ''}
             onChange={(event) => setAgreedRate(event.target.value)}
+            disabled={!agreedRateEnabled}
           />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="show-creator-compensation-type">Compensation Type</Label>
           <Select
             value={compensationType}
-            onValueChange={(value) => setCompensationType(value as CompensationTypeOption)}
+            onValueChange={(value) => setCompensationType(value as ShowCreatorCompensationTypeOption)}
           >
             <SelectTrigger id="show-creator-compensation-type">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              {COMPENSATION_TYPE_OPTIONS.map((option) => (
+              {SHOW_CREATOR_COMPENSATION_TYPE_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -189,8 +180,9 @@ function CreatorAssignmentTermsForm({
             id="show-creator-commission-rate"
             type="number"
             step="0.01"
-            value={commissionRate}
+            value={commissionRateEnabled ? commissionRate : ''}
             onChange={(event) => setCommissionRate(event.target.value)}
+            disabled={!commissionRateEnabled}
           />
         </div>
         <div className="space-y-1.5">

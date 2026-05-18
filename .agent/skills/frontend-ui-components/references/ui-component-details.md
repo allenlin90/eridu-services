@@ -192,6 +192,33 @@ Rules:
 - Smooth animated collapse/expand with `overflow-hidden transition-all duration-300 ease-in-out`
 - `aria-hidden` when collapsed
 
+## Cross-Field Form Invariants
+
+When a BE Zod schema uses `superRefine` to gate one field on another's value (e.g. `commission_rate` must be `null` when `compensation_type` is `FIXED`), three things must happen on the FE:
+
+1. **A `buildXxxPayload(form)` helper** owns the cross-field invariant — it forces irrelevant fields to `null` and validates required ones. The submit handler calls only this helper; never builds the payload inline from raw state.
+2. **The irrelevant input is `disabled`** when the gating field's value would make it nullable — so users see why their input is being ignored. Bind `value={enabled ? state : ''}` so the displayed value also clears.
+3. **Unit tests cover each transition** (e.g. HYBRID → FIXED with a leftover non-null commission rate must produce `commission_rate: null`).
+
+The bug this prevents: when a user switches type from `HYBRID` to `FIXED` without clearing the commission input, a naive `normalizeOptionalMoneyInput("0")` returns `"0.00"` (not `null`), so the BE `superRefine` rejects the payload.
+
+```typescript
+// apps/erify_studios/src/features/studio-show-creators/lib/show-creator-assignment-terms.ts
+export function buildShowCreatorAssignmentTermsPayload(form: Form): UpdatePayload {
+  const compensationType = form.compensationType === NO_COMPENSATION_TYPE ? null : form.compensationType;
+  const agreedRate = isAgreedRateEnabled(form.compensationType) ? normalize(form.agreedRate) : null;
+  const commissionRate = isCommissionRateEnabled(form.compensationType) ? normalize(form.commissionRate) : null;
+  // ...required-field assertions, trim, return shape
+}
+```
+
+Canonical examples in-repo:
+
+- `apps/erify_studios/src/features/studio-show-creators/lib/show-creator-assignment-terms.ts` (per-show creator compensation)
+- `apps/erify_studios/src/features/studio-creator-roster/lib/studio-creator-compensation.ts` (roster defaults)
+
+The invariant table that drives these helpers is in [`docs/domain/economics-cost-model.md`](../../../../docs/domain/economics-cost-model.md#cross-field-validation-invariants).
+
 ## Composition Over Large Components
 
 Build complex UIs by composing small, focused components.

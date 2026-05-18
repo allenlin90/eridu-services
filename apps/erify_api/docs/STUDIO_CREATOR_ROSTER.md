@@ -34,6 +34,16 @@ Technical reference for the shipped studio-scoped `StudioCreator` roster surface
 
 Shared contracts come from `packages/api-types/src/studio-creators/schemas.ts`.
 
+### Validation invariants
+
+`updateStudioCreatorRosterInputSchema` and `updateStudioShowCreatorInputSchema` enforce the cross-field rule between compensation type and the rate fields via `superRefine`:
+
+- `compensation_type === 'FIXED'` → `commission_rate` (and `default_commission_rate`) must be `null`.
+- `compensation_type` is `'COMMISSION'` or `'HYBRID'` → commission rate cannot be `null`.
+- `compensation_type === null` → commission rate must be `null`.
+
+These mirror the calculator assumptions documented in [`docs/domain/economics-cost-model.md`](../../../docs/domain/economics-cost-model.md#cross-field-validation-invariants). FE forms must clear the irrelevant rate field on type change rather than submitting stale `0`/`0.00` values; canonical helpers live at `apps/erify_studios/src/features/studio-show-creators/lib/show-creator-assignment-terms.ts` and `apps/erify_studios/src/features/studio-creator-roster/lib/studio-creator-compensation.ts`. The `frontend-ui-components` skill has the form pattern.
+
 Implemented contract updates:
 
 - add `STUDIO_CREATOR_ROSTER_ERROR`
