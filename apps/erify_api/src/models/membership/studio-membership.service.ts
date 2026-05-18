@@ -309,8 +309,13 @@ export class StudioMembershipService extends BaseModelService {
   }
 
   /**
-   * Find a studio member by UID scoped to a specific studio.
-   * Returns null if not found or not in the given studio.
+   * Find a studio member by UID scoped to a specific studio, eagerly loading
+   * the minimum user fields needed by the studio-member surfaces (roster +
+   * compensation review). Returns null if not found or not in the given studio.
+   *
+   * The cast is required because `BaseRepository.findOne` returns the bare
+   * entity type regardless of the include shape; the runtime result is
+   * validated by the Zod DTO pipeline before reaching the wire.
    */
   async findStudioMemberByUidAndStudio(
     membershipUid: string,
