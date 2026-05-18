@@ -17,7 +17,7 @@ Studio operators previously depended on system-admin-only membership tooling for
 
 ## What Was Delivered
 
-- Studio-scoped member roster page at `/studios/$studioId/members` under the **Studio Settings** sidebar group.
+- Studio-scoped member roster page at `/studios/$studioId/members` under the **People** sidebar group.
 - Manager/Admin read access for active memberships with user name, email, role, hourly rate, and created timestamp.
 - Admin-only write flows for add, edit, and remove actions from the roster UI and API.
 - Email-based add-member workflow against the existing user catalog. Unknown users return `USER_NOT_FOUND`.

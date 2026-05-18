@@ -20,7 +20,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 ## What Was Delivered
 
 - Canonical roster API cut over to `GET /studios/:studioId/creators` with matching `POST` and `PATCH` write routes.
-- Studio roster page at `/studios/$studioId/creators` under the **Creators** sidebar group.
+- Studio roster page at `/studios/$studioId/creators` under the **People** sidebar group.
 - Read access for `ADMIN`, `MANAGER`, and `TALENT_MANAGER`; write actions restricted to `ADMIN`.
 - Catalog-based add flow with roster-state awareness: new creators can be added, inactive entries can be reactivated, and active duplicates are rejected.
 - Studio-scoped default compensation management on `StudioCreator` with non-negative `default_rate`, compensation-type validation, and optimistic concurrency via `version`.

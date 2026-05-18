@@ -136,7 +136,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(6); // Dashboard + System + My Workspace + Operations + Studio Settings + Creators
+    expect(result.current.navMain).toHaveLength(7); // Dashboard + System + My Workspace + Planning + Tasks + People + Studio Settings
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -189,15 +189,11 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[3]).toEqual(expect.objectContaining({
-      title: 'Operations',
-      url: '/studios/studio-1/task-review',
+      title: 'Planning',
+      url: '/studios/studio-1/shows',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
-        expect.objectContaining({
-          title: 'Task Review',
-          url: '/studios/studio-1/task-review',
-        }),
         expect.objectContaining({
           title: 'Shift Schedule',
           url: '/studios/studio-1/shifts',
@@ -207,8 +203,25 @@ describe('useSidebarConfig', () => {
           url: '/studios/studio-1/shows',
         }),
         expect.objectContaining({
+          title: 'Creator Mapping',
+          url: '/studios/studio-1/creator-mapping',
+        }),
+      ]),
+    }));
+
+    expect(result.current.navMain[4]).toEqual(expect.objectContaining({
+      title: 'Tasks',
+      url: '/studios/studio-1/show-operations',
+      icon: expect.any(Function),
+      isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
           title: 'Show Operations',
           url: '/studios/studio-1/show-operations',
+        }),
+        expect.objectContaining({
+          title: 'Task Review',
+          url: '/studios/studio-1/task-review',
         }),
         expect.objectContaining({
           title: 'Task Reports',
@@ -217,8 +230,8 @@ describe('useSidebarConfig', () => {
       ]),
     }));
 
-    expect(result.current.navMain[4]).toEqual(expect.objectContaining({
-      title: 'Studio Settings',
+    expect(result.current.navMain[5]).toEqual(expect.objectContaining({
+      title: 'People',
       url: '/studios/studio-1/members',
       icon: expect.any(Function),
       isActive: false,
@@ -228,29 +241,25 @@ describe('useSidebarConfig', () => {
           url: '/studios/studio-1/members',
         }),
         expect.objectContaining({
+          title: 'Creators',
+          url: '/studios/studio-1/creators',
+        }),
+      ]),
+    }));
+
+    expect(result.current.navMain[6]).toEqual(expect.objectContaining({
+      title: 'Studio Settings',
+      url: '/studios/studio-1/shared-fields',
+      icon: expect.any(Function),
+      isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
           title: 'Shared Fields',
           url: '/studios/studio-1/shared-fields',
         }),
         expect.objectContaining({
           title: 'Task Templates',
           url: '/studios/studio-1/task-templates',
-        }),
-      ]),
-    }));
-
-    expect(result.current.navMain[5]).toEqual(expect.objectContaining({
-      title: 'Creators',
-      url: '/studios/studio-1/creators',
-      icon: expect.any(Function),
-      isActive: false,
-      items: expect.arrayContaining([
-        expect.objectContaining({
-          title: 'Creators',
-          url: '/studios/studio-1/creators',
-        }),
-        expect.objectContaining({
-          title: 'Creator Mapping',
-          url: '/studios/studio-1/creator-mapping',
         }),
       ]),
     }));

@@ -20,7 +20,7 @@ Route guard requirements:
 
 - add `creatorRoster` to `src/lib/constants/studio-route-access.ts`
 - roles: `[ADMIN, MANAGER, TALENT_MANAGER]`
-- add sidebar item under the **Creators** group before **Creator Mapping**
+- add sidebar item under the **People** group beside **Members**
 - hide roster write actions and add button for non-admin roles, but keep compensation data visible
 - show compensation review actions for `ADMIN` and `MANAGER`; `TALENT_MANAGER` remains read-only
 
