@@ -37,10 +37,10 @@ function formatMoney(value: string | null) {
   return value === null ? 'Pending' : `$${toDecimalDisplayString(value)}`;
 }
 
-function actualsBadgeVariant(status: 'resolved' | 'pending' | 'cancelled') {
-  if (status === 'resolved')
+function shiftStatusBadgeVariant(status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED') {
+  if (status === 'COMPLETED')
     return 'default' as const;
-  if (status === 'cancelled')
+  if (status === 'CANCELLED')
     return 'secondary' as const;
   return 'outline' as const;
 }
@@ -152,8 +152,8 @@ export function MemberCompensationsView({
                 <TableRow key={shift.shift_id}>
                   <TableCell>{shift.date}</TableCell>
                   <TableCell>
-                    <Badge variant={actualsBadgeVariant(shift.actuals_status)}>
-                      {shift.actuals_status}
+                    <Badge variant={shiftStatusBadgeVariant(shift.status)}>
+                      {shift.status}
                     </Badge>
                   </TableCell>
                   <TableCell>{formatMoney(shift.hourly_rate)}</TableCell>

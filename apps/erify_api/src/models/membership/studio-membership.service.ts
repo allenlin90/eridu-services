@@ -313,6 +313,10 @@ export class StudioMembershipService extends BaseModelService {
    * the minimum user fields needed by the studio-member surfaces (roster +
    * compensation review). Returns null if not found or not in the given studio.
    *
+   * Filters out memberships whose user has been soft-deleted so this read
+   * path stays consistent with the roster visibility rules in
+   * `listStudioMembersWithUser`.
+   *
    * The cast is required because `BaseRepository.findOne` returns the bare
    * entity type regardless of the include shape; the runtime result is
    * validated by the Zod DTO pipeline before reaching the wire.
@@ -325,6 +329,7 @@ export class StudioMembershipService extends BaseModelService {
       uid: membershipUid,
       studio: { uid: studioUid },
       deletedAt: null,
+      user: { deletedAt: null },
     }, {
       user: {
         select: {

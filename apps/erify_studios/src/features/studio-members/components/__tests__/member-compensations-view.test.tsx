@@ -119,7 +119,7 @@ describe('memberCompensationsView', () => {
 
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
     expect(screen.getByText('2026-05-12')).toBeInTheDocument();
-    expect(screen.getByText('resolved')).toBeInTheDocument();
+    expect(screen.getByText('COMPLETED')).toBeInTheDocument();
     expect(screen.getByText('$25.00')).toBeInTheDocument();
     expect(screen.getAllByText('$125.00')).toHaveLength(2);
     expect(screen.getAllByText('$100.00')).toHaveLength(2);
@@ -142,7 +142,6 @@ describe('memberCompensationsView', () => {
 
     // "Pending" matches both the summary card title and the unresolved actual_cost cell.
     expect(screen.getAllByText('Pending').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('pending')).toBeInTheDocument();
   });
 
   it('renders cancelled shifts with the cancelled badge and zeroed costs', () => {
@@ -169,7 +168,7 @@ describe('memberCompensationsView', () => {
       />,
     );
 
-    expect(screen.getByText('cancelled')).toBeInTheDocument();
+    expect(screen.getByText('CANCELLED')).toBeInTheDocument();
     // $0.00 appears in summary cards (planned + actual) and the row's planned cell.
     expect(screen.getAllByText('$0.00').length).toBeGreaterThanOrEqual(3);
     // "Pending" matches both the summary "Pending" card title and the null actual_cost cell.
