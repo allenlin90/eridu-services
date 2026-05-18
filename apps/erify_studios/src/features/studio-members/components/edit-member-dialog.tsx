@@ -46,11 +46,7 @@ function EditMemberForm({
   onOpenChange: (open: boolean) => void;
 }) {
   const [role, setRole] = useState(member.role);
-  const [baseHourlyRate, setBaseHourlyRate] = useState(
-    member.base_hourly_rate !== null && member.base_hourly_rate !== undefined
-      ? String(member.base_hourly_rate)
-      : '',
-  );
+  const [baseHourlyRate, setBaseHourlyRate] = useState(member.base_hourly_rate ?? '');
   const updateMutation = useUpdateStudioMember(studioId);
 
   const handleSubmit = async (event: React.FormEvent) => {

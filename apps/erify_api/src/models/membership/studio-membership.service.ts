@@ -258,7 +258,7 @@ export class StudioMembershipService extends BaseModelService {
         {
           deletedAt: null,
           role: payload.role,
-          baseHourlyRate: payload.baseHourlyRate.toFixed(2),
+          baseHourlyRate: payload.baseHourlyRate,
         },
         { user: true },
       );
@@ -271,7 +271,7 @@ export class StudioMembershipService extends BaseModelService {
         user: { connect: { uid: user.uid } },
         studio: { connect: { uid: payload.studioUid } },
         role: payload.role,
-        baseHourlyRate: payload.baseHourlyRate.toFixed(2),
+        baseHourlyRate: payload.baseHourlyRate,
         metadata: {},
       },
       { user: true },

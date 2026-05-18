@@ -22,6 +22,8 @@ import {
 import { useAddStudioMember } from '../api/members';
 import { ROLE_OPTIONS } from '../lib/roles';
 
+import { toMoneyString } from '@/features/compensation-line-items/utils/money-input';
+
 type AddMemberDialogProps = {
   studioId: string;
   open: boolean;
@@ -49,8 +51,14 @@ export function AddMemberDialog({ studioId, open, onOpenChange }: AddMemberDialo
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    const rate = Number.parseFloat(baseHourlyRate);
-    if (Number.isNaN(rate) || rate < 0) {
+    let normalizedRate: string;
+    try {
+      normalizedRate = toMoneyString(baseHourlyRate);
+    } catch {
+      toast.error('Hourly rate must be a non-negative number');
+      return;
+    }
+    if (normalizedRate.startsWith('-')) {
       toast.error('Hourly rate must be a non-negative number');
       return;
     }
@@ -59,7 +67,7 @@ export function AddMemberDialog({ studioId, open, onOpenChange }: AddMemberDialo
       await addMutation.mutateAsync({
         email: email.trim(),
         role,
-        base_hourly_rate: rate,
+        base_hourly_rate: normalizedRate,
       });
       toast.success('Member added successfully');
       setEmail('');

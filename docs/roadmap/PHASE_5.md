@@ -69,6 +69,7 @@ These are explicitly out of Phase 4 scope and candidates for Phase 5:
 | Studio creator profile editing (name/alias at studio level) | Phase 4 gap analysis (2026-03-28) | C |
 | Studio-native schedule management | Phase 4 re-sequencing (2026-04-22); likely folded into Client Portal | C |
 | Studio snapshot/audit trail visibility | Phase 4 gap analysis (2026-03-28) | C |
+| Strict-mode creator availability with conflict metadata | Phase 4 re-sequencing (2026-05-18); availability is currently advisory — strict-mode + conflict metadata payload is the next layer once a business driver pulls it in | C |
 
 ## Promotion Rule
 

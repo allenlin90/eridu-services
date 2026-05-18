@@ -222,7 +222,7 @@ describe('studioMembershipService', () => {
     const payload = {
       email: 'jane@example.com',
       role: 'manager',
-      baseHourlyRate: 25,
+      baseHourlyRate: '25.00',
       studioUid: 'std_123',
     };
 
@@ -304,7 +304,7 @@ describe('studioMembershipService', () => {
 
   describe('updateStudioMember', () => {
     const membershipUid = 'smb_member123';
-    const payload = { role: 'manager', baseHourlyRate: 30 };
+    const payload = { role: 'manager', baseHourlyRate: '30.00' };
 
     it('should update role and hourly rate successfully', async () => {
       const mockUpdated = { uid: membershipUid, role: 'manager', user: {} };
@@ -332,7 +332,7 @@ describe('studioMembershipService', () => {
 
     it('should allow admin to update their own hourly rate without role change', async () => {
       const actorUid = membershipUid;
-      const rateOnlyPayload = { baseHourlyRate: 50 };
+      const rateOnlyPayload = { baseHourlyRate: '50.00' };
       const mockUpdated = { uid: membershipUid, baseHourlyRate: '50.00', user: {} };
       membershipRepository.updateStudioMember.mockResolvedValue(mockUpdated);
 
