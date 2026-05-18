@@ -148,7 +148,7 @@ export const studioMemberCompensationShiftSchema = z.object({
   hourly_rate: z.string(),
   planned_cost: z.string(),
   actual_cost: z.string().nullable(),
-  actuals_status: z.enum(['resolved', 'pending']),
+  actuals_status: z.enum(['resolved', 'pending', 'cancelled']),
   blocks: z.array(studioMemberCompensationBlockSchema),
 });
 

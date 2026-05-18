@@ -145,6 +145,37 @@ describe('memberCompensationsView', () => {
     expect(screen.getByText('pending')).toBeInTheDocument();
   });
 
+  it('renders cancelled shifts with the cancelled badge and zeroed costs', () => {
+    render(
+      <MemberCompensationsView
+        {...baseProps}
+        data={{
+          ...mockData,
+          summary: { ...mockData.summary, shift_count: 0, total_planned_cost: '0.00', total_actual_cost: '0.00' },
+          shifts: [
+            {
+              ...mockData.shifts[0],
+              shift_id: 'ssh_cancelled',
+              status: 'CANCELLED',
+              planned_cost: '0.00',
+              actual_cost: null,
+              actuals_status: 'cancelled',
+            },
+          ],
+        }}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+      />,
+    );
+
+    expect(screen.getByText('cancelled')).toBeInTheDocument();
+    // $0.00 appears in summary cards (planned + actual) and the row's planned cell.
+    expect(screen.getAllByText('$0.00').length).toBeGreaterThanOrEqual(3);
+    // "Pending" matches both the summary "Pending" card title and the null actual_cost cell.
+    expect(screen.getAllByText('Pending').length).toBeGreaterThanOrEqual(2);
+  });
+
   it('fires onRefresh when the refresh button is clicked', async () => {
     const onRefresh = vi.fn();
     const user = userEvent.setup();

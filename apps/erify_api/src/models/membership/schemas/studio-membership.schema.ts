@@ -397,7 +397,13 @@ export const studioMemberCompensationDto = studioMemberCompensationInternalSchem
           ),
         })),
       }));
-    const summary = summarizeShiftCosts(shiftCosts);
+    // Cancelled shifts are surfaced in the list for context but excluded from
+    // cost totals and resolved/pending counts — no compensation is earned.
+    const billableShiftCosts = obj.shifts
+      .map((shift, index) => ({ shift, cost: shiftCosts[index] }))
+      .filter(({ shift }) => shift.status !== 'CANCELLED')
+      .map(({ cost }) => cost!);
+    const summary = summarizeShiftCosts(billableShiftCosts);
 
     return {
       membership_id: obj.member.uid,
@@ -407,13 +413,14 @@ export const studioMemberCompensationDto = studioMemberCompensationInternalSchem
       date_from: obj.dateFrom.toISOString().slice(0, 10),
       date_to: obj.dateTo.toISOString().slice(0, 10),
       summary: {
-        shift_count: obj.shifts.length,
+        shift_count: billableShiftCosts.length,
         total_planned_cost: summary.totalPlanned.toFixed(2),
         total_actual_cost: summary.totalActual.toFixed(2),
         actual_cost_resolved_shift_count: summary.resolvedShiftCount,
         actual_cost_pending_shift_count: summary.pendingShiftCount,
       },
       shifts: obj.shifts.map((shift, index) => {
+        const isCancelled = shift.status === 'CANCELLED';
         const actualCost = shiftCosts[index]?.actualCost ?? null;
         return {
           shift_id: shift.uid,
@@ -421,9 +428,11 @@ export const studioMemberCompensationDto = studioMemberCompensationInternalSchem
           status: shift.status,
           is_duty_manager: shift.isDutyManager,
           hourly_rate: decimalToString(shift.hourlyRate) ?? '0.00',
-          planned_cost: shiftCosts[index]?.plannedCost.toFixed(2) ?? '0.00',
-          actual_cost: actualCost === null ? null : actualCost.toFixed(2),
-          actuals_status: actualCost === null ? 'pending' as const : 'resolved' as const,
+          planned_cost: isCancelled ? '0.00' : (shiftCosts[index]?.plannedCost.toFixed(2) ?? '0.00'),
+          actual_cost: isCancelled ? null : (actualCost === null ? null : actualCost.toFixed(2)),
+          actuals_status: isCancelled
+            ? 'cancelled' as const
+            : (actualCost === null ? 'pending' as const : 'resolved' as const),
           blocks: shift.blocks.map((block) => ({
             block_id: block.uid,
             start_time: block.startTime.toISOString(),

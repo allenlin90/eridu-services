@@ -37,6 +37,14 @@ function formatMoney(value: string | null) {
   return value === null ? 'Pending' : `$${toDecimalDisplayString(value)}`;
 }
 
+function actualsBadgeVariant(status: 'resolved' | 'pending' | 'cancelled') {
+  if (status === 'resolved')
+    return 'default' as const;
+  if (status === 'cancelled')
+    return 'secondary' as const;
+  return 'outline' as const;
+}
+
 export function MemberCompensationsView({
   studioId,
   dateRange,
@@ -144,7 +152,7 @@ export function MemberCompensationsView({
                 <TableRow key={shift.shift_id}>
                   <TableCell>{shift.date}</TableCell>
                   <TableCell>
-                    <Badge variant={shift.actuals_status === 'resolved' ? 'default' : 'outline'}>
+                    <Badge variant={actualsBadgeVariant(shift.actuals_status)}>
                       {shift.actuals_status}
                     </Badge>
                   </TableCell>

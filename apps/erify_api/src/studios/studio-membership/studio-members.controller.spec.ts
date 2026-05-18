@@ -275,5 +275,93 @@ describe('studioMembersController', () => {
         ),
       ).rejects.toThrow();
     });
+
+    it('excludes cancelled shifts from cost totals but surfaces them in the list', async () => {
+      const dateFrom = new Date('2026-05-01T00:00:00.000Z');
+      const dateTo = new Date('2026-05-31T00:00:00.000Z');
+      studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(mockMembership as any);
+      studioShiftService.listMemberCompensationShifts.mockResolvedValue([
+        {
+          uid: 'ssh_scheduled',
+          date: new Date('2026-05-12T00:00:00.000Z'),
+          hourlyRate: '25.00',
+          isApproved: false,
+          isDutyManager: false,
+          status: 'SCHEDULED',
+          metadata: {},
+          createdAt: new Date('2026-05-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-05-01T00:00:00.000Z'),
+          deletedAt: null,
+          studio: { uid: 'std_test123' },
+          user: { uid: 'user_abc123', name: 'Jane Doe' },
+          compensationLineItemTargets: [],
+          blocks: [
+            {
+              uid: 'ssb_scheduled',
+              startTime: new Date('2026-05-12T09:00:00.000Z'),
+              endTime: new Date('2026-05-12T11:00:00.000Z'),
+              actualStartTime: new Date('2026-05-12T09:00:00.000Z'),
+              actualEndTime: new Date('2026-05-12T11:00:00.000Z'),
+              metadata: {},
+              createdAt: new Date('2026-05-01T00:00:00.000Z'),
+              updatedAt: new Date('2026-05-01T00:00:00.000Z'),
+              deletedAt: null,
+              compensationLineItemTargets: [],
+            },
+          ],
+        },
+        {
+          uid: 'ssh_cancelled',
+          date: new Date('2026-05-14T00:00:00.000Z'),
+          hourlyRate: '25.00',
+          isApproved: false,
+          isDutyManager: false,
+          status: 'CANCELLED',
+          metadata: {},
+          createdAt: new Date('2026-05-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-05-01T00:00:00.000Z'),
+          deletedAt: null,
+          studio: { uid: 'std_test123' },
+          user: { uid: 'user_abc123', name: 'Jane Doe' },
+          compensationLineItemTargets: [],
+          blocks: [
+            {
+              uid: 'ssb_cancelled',
+              startTime: new Date('2026-05-14T09:00:00.000Z'),
+              endTime: new Date('2026-05-14T15:00:00.000Z'),
+              actualStartTime: null,
+              actualEndTime: null,
+              metadata: {},
+              createdAt: new Date('2026-05-01T00:00:00.000Z'),
+              updatedAt: new Date('2026-05-01T00:00:00.000Z'),
+              deletedAt: null,
+              compensationLineItemTargets: [],
+            },
+          ],
+        },
+      ] as any);
+
+      const result = await controller.listMemberCompensations(
+        'std_test123',
+        'smb_test123',
+        { dateFrom, dateTo } as any,
+      );
+
+      expect(result.summary).toEqual({
+        shift_count: 1,
+        total_planned_cost: '50.00',
+        total_actual_cost: '50.00',
+        actual_cost_resolved_shift_count: 1,
+        actual_cost_pending_shift_count: 0,
+      });
+      expect(result.shifts).toHaveLength(2);
+      expect(result.shifts[1]).toMatchObject({
+        shift_id: 'ssh_cancelled',
+        status: 'CANCELLED',
+        planned_cost: '0.00',
+        actual_cost: null,
+        actuals_status: 'cancelled',
+      });
+    });
   });
 });
