@@ -97,6 +97,18 @@ Avoid deep parent chains for resources that already have their own UID and lifec
 
 Use query filters for target-scoped lists and body fields for target attachments. Use `include` or `expand` only for read-time embedding on parent detail endpoints; do not make embedded writes the primary API for independently audited, paginated, or soft-deletable child rows.
 
+### Noun sub-resources for reads, verb actions for writes
+
+Read endpoints should use noun sub-resources, not verb forms:
+
+```text
+✅ GET /studios/:studioId/members/:memberId/compensations
+✅ GET /studios/:studioId/creators/:creatorId/compensations
+❌ GET /studios/:studioId/creators/:creatorId/compensation-review   // verb form for a read
+```
+
+Reserve verb forms (`/resolve-cancellation`, `/approve`, `/restore`) for the *Action Endpoints* style above — they encode a state transition, not a sub-collection. If a read returns derived data over a date range, that data is still a (computed) collection of the parent entity, so the noun form applies.
+
 ## Admin Audit Actor vs Payload User IDs
 
 Admin mutations often need two different identities:
