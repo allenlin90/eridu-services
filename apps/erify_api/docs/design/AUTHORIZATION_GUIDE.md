@@ -349,6 +349,7 @@ The matrix below is the Phase-4 authoritative endpoint→role mapping. It comple
 | Bulk assign / remove creators                 | `[ADMIN, MANAGER, TALENT_MANAGER]`              |
 | Studio member roster reads                    | `[ADMIN, MANAGER]`                              |
 | Studio member roster writes                   | `[ADMIN]`                                       |
+| Studio member compensation reads              | `[ADMIN, MANAGER]`                              |
 | Studio creator roster writes                  | `[ADMIN]`                                       |
 | Studio show writes                            | `[ADMIN, MANAGER]`                              |
 | Show / shift-block actuals writes             | `[ADMIN, MANAGER]`                              |

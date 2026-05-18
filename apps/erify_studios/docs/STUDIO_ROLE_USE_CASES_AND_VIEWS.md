@@ -20,7 +20,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 ## High-Level Principles
 
 1. **Dashboard is shared visibility**: all studio roles can check today's shows and duty-manager coverage.
-2. **ADMIN and MANAGER are operationally equivalent**: both can manage shifts, shows, tasks, templates. The only ADMIN-exclusive action is studio membership management (not a frontend route — handled via admin API).
+2. **ADMIN and MANAGER are operationally equivalent**: both can manage shifts, shows, tasks, templates. ADMIN owns studio membership writes; MANAGER can read the roster and review member compensations.
 3. **TALENT_MANAGER has a focused scope**: creator catalog/roster reads and show creator assignment. No task ops, shift ops, or template access.
 4. **DESIGNER and MODERATION_MANAGER are member-level**: access is limited to their own tasks and shifts.
 5. **Single-purpose routes**: show-operations route = task ops only; creator-mapping route = creator assignment only.
@@ -38,6 +38,8 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/show-operations/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-templates` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/shared-fields` | View + Manage | No access | No access | No access | No access | No access |
+| `/studios/:studioId/members` | View + Manage | View | No access | No access | No access | No access |
+| `/studios/:studioId/members/:memberId/compensations` | View | View | No access | No access | No access | No access |
 | `/studios/:studioId/creators` | View + Manage | View | View | No access | No access | No access |
 | `/studios/:studioId/creator-mapping` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 | `/studios/:studioId/creator-mapping/:showId` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
@@ -49,7 +51,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | My Workspace (Dashboard, My Tasks, My Shifts) | All roles |
 | Planning (Shift Schedule, Shows, Creator Mapping; future Schedules) | ADMIN, MANAGER, TALENT_MANAGER |
 | Tasks (Show Operations, Task Review, Task Reports) | ADMIN, MANAGER, MODERATION_MANAGER |
-| People (Members, Creators) | ADMIN, MANAGER, TALENT_MANAGER |
+| People (Members, Creators) | Members: ADMIN, MANAGER. Creators: ADMIN, MANAGER, TALENT_MANAGER |
 | Studio Settings (Shared Fields, Task Templates) | ADMIN, MANAGER |
 
 `Schedules` refers to the Schedule model and belongs beside `Shows` in Planning when a studio-scoped schedule route ships. `Shift Schedule` remains the existing labor planning surface.
@@ -87,6 +89,22 @@ Define what each studio role can see and do across all studio-scoped routes.
 | Access shifts route | Yes | Yes | No | No | No | No |
 | Create/update/delete shift | Yes | Yes | No | No | No | No |
 | Assign/unset duty manager | Yes | Yes | No | No | No | No |
+
+## Member Roster And Compensation Review (`/members`, ADMIN + MANAGER)
+
+### Use Cases
+
+1. Review studio members, roles, and hourly rates.
+2. Maintain member roles and base hourly rates as an admin.
+3. Review one member's date-ranged shift compensation on `/studios/:studioId/members/:memberId/compensations`.
+
+### Functions by Role
+
+| Function | ADMIN | MANAGER | TALENT_MANAGER |
+| -------- | ----- | ------- | -------------- |
+| Access members route | Yes | Yes | No |
+| Add/edit/remove members | Yes | No | No |
+| Review member shift compensations | Yes | Yes | No |
 
 ## Show Operations View (`/show-operations`, ADMIN + MANAGER — task ops only)
 
