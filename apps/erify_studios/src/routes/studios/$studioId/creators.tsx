@@ -44,6 +44,7 @@ function StudioCreatorRosterContent({ studioId }: { studioId: string }) {
   } = useStudioCreatorRoster({ studioId });
 
   const isAdmin = role === STUDIO_ROLE.ADMIN;
+  const canManageCompensation = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
 
   return (
     <PageLayout
@@ -56,6 +57,7 @@ function StudioCreatorRosterContent({ studioId }: { studioId: string }) {
         isLoading={isLoading}
         isFetching={isFetching}
         isAdmin={isAdmin}
+        canManageCompensation={canManageCompensation}
         pagination={pagination}
         onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}

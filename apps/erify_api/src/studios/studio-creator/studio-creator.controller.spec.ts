@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 
 import type { StudioCreatorAvailabilityQueryDto } from './schemas/studio-creator-availability.schema';
 import type { StudioCreatorCatalogQueryDto } from './schemas/studio-creator-catalog.schema';
+import type { StudioCreatorCompensationReviewQueryDto } from './schemas/studio-creator-compensation-review.schema';
 import type { OnboardStudioCreatorDto } from './schemas/studio-creator-onboard.schema';
 import type { StudioCreatorOnboardingUserSearchQueryDto } from './schemas/studio-creator-onboarding-user-search.schema';
 import type { ListStudioCreatorRosterQueryDto } from './schemas/studio-creator-roster-list.schema';
@@ -13,10 +14,12 @@ import type {
 import { StudioCreatorController } from './studio-creator.controller';
 
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
+import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
 describe('studioCreatorController', () => {
   let controller: StudioCreatorController;
   let studioCreatorService: jest.Mocked<StudioCreatorService>;
+  let showOrchestrationService: jest.Mocked<ShowOrchestrationService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -34,11 +37,18 @@ describe('studioCreatorController', () => {
             updateRosterEntry: jest.fn(),
           },
         },
+        {
+          provide: ShowOrchestrationService,
+          useValue: {
+            getCreatorCompensationReview: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<StudioCreatorController>(StudioCreatorController);
     studioCreatorService = module.get(StudioCreatorService);
+    showOrchestrationService = module.get(ShowOrchestrationService);
   });
 
   it('should list available creators by studio and date window', async () => {
@@ -265,6 +275,68 @@ describe('studioCreatorController', () => {
       default_rate: '650.00',
       is_active: false,
       version: 3,
+    }));
+  });
+
+  it('should return creator compensation review scoped by studio and date range', async () => {
+    const studioId = 'std_00000000000000000001';
+    const creatorId = 'creator_00000000000000000001';
+    const query = {
+      dateFrom: new Date('2026-05-01T00:00:00.000Z'),
+      dateTo: new Date('2026-05-31T23:59:59.999Z'),
+    } as StudioCreatorCompensationReviewQueryDto;
+
+    showOrchestrationService.getCreatorCompensationReview.mockResolvedValue({
+      creatorId,
+      creatorName: 'Ann',
+      creatorAliasName: 'Ann',
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+      totalAmount: '125.00',
+      unresolvedCount: 0,
+      shows: [
+        {
+          showId: 'show_00000000000000000001',
+          showName: 'May Show',
+          showStartTime: new Date('2026-05-10T10:00:00.000Z'),
+          showEndTime: new Date('2026-05-10T12:00:00.000Z'),
+          showCreatorId: 'show_mc_00000000000000000001',
+          creatorId,
+          creatorName: 'Ann',
+          creatorAliasName: 'Ann',
+          note: 'Existing note',
+          compensationType: 'FIXED',
+          agreedRate: '100.00',
+          commissionRate: null,
+          baseAmount: '100.00',
+          adjustmentTotal: '25.00',
+          totalAmount: '125.00',
+          unresolvedReason: null,
+        },
+      ],
+    });
+
+    const result = await controller.compensationReview(studioId, creatorId, query);
+
+    expect(showOrchestrationService.getCreatorCompensationReview).toHaveBeenCalledWith(
+      studioId,
+      creatorId,
+      {
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+      },
+    );
+    expect(result).toEqual(expect.objectContaining({
+      creator_id: creatorId,
+      total_amount: '125.00',
+      unresolved_count: 0,
+      shows: [
+        expect.objectContaining({
+          show_id: 'show_00000000000000000001',
+          show_creator_id: 'show_mc_00000000000000000001',
+          note: 'Existing note',
+        }),
+      ],
     }));
   });
 

@@ -1,8 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type {
   ShowCreatorCompensationSummary,
   StudioShowCreatorListItem,
+  UpdateStudioShowCreatorInput,
 } from '@eridu/api-types/studio-creators';
 
 import { apiClient } from '@/lib/api/client';
@@ -21,12 +22,41 @@ export async function getShowCreators(studioId: string, showId: string): Promise
   return response.data;
 }
 
+export async function updateShowCreatorAssignment(
+  studioId: string,
+  showId: string,
+  showCreatorId: string,
+  payload: UpdateStudioShowCreatorInput,
+): Promise<StudioShowCreatorListItem> {
+  const response = await apiClient.patch<StudioShowCreatorListItem>(
+    `/studios/${studioId}/shows/${showId}/creators/${showCreatorId}`,
+    payload,
+  );
+  return response.data;
+}
+
 export function useShowCreatorsQuery(studioId: string, showId: string) {
   return useQuery({
     queryKey: showCreatorsKeys.list(studioId, showId),
     queryFn: () => getShowCreators(studioId, showId),
     enabled: Boolean(studioId && showId),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useUpdateShowCreatorAssignment(studioId: string, showId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateStudioShowCreatorInput }) =>
+      updateShowCreatorAssignment(studioId, showId, id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: showCreatorsKeys.list(studioId, showId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: showCreatorsKeys.compensationSummary(studioId, showId),
+      });
+    },
   });
 }
 

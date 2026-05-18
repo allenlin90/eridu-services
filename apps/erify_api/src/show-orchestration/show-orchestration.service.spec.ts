@@ -144,6 +144,7 @@ describe('showOrchestrationService', () => {
           provide: ShowCreatorRepository,
           useValue: {
             findMany: jest.fn(),
+            findCompensationReviewRows: jest.fn(),
             createAssignment: jest.fn(),
             restoreAndUpdateAssignment: jest.fn(),
             softDelete: jest.fn(),
@@ -177,6 +178,7 @@ describe('showOrchestrationService', () => {
         {
           provide: StudioCreatorRepository,
           useValue: {
+            findByStudioUidAndCreatorUid: jest.fn(),
             findByStudioUidAndCreatorUids: jest.fn(),
           },
         },
@@ -1201,6 +1203,125 @@ describe('showOrchestrationService', () => {
     });
   });
 
+  describe('updateCreatorForShow', () => {
+    it('updates per-show creator compensation terms and appends snapshot audit metadata', async () => {
+      showService.getShowById.mockResolvedValue({
+        ...mockShow,
+        showCreators: [
+          {
+            id: 11n,
+            uid: 'show_mc_1',
+            note: 'Old note',
+            agreedRate: new Prisma.Decimal('100.00'),
+            compensationType: 'FIXED',
+            commissionRate: null,
+            metadata: { flags: { agreement_snapshot_missing: false } },
+            creator: {
+              uid: 'creator_1',
+              name: 'Alice',
+              aliasName: 'Ali',
+            },
+          },
+        ],
+      } as any);
+      showCreatorRepository.restoreAndUpdateAssignment.mockResolvedValue({
+        uid: 'show_mc_1',
+        note: 'Updated note',
+        agreedRate: new Prisma.Decimal('175.00'),
+        compensationType: 'FIXED',
+        commissionRate: null,
+        metadata: {
+          flags: { agreement_snapshot_missing: false },
+          audit: { snapshot_overrides: [] },
+        },
+      } as any);
+
+      const result = await service.updateCreatorForShow(
+        mockShow.uid,
+        'show_mc_1',
+        {
+          note: 'Updated note',
+          agreedRate: '175.00',
+          compensationType: 'FIXED',
+          commissionRate: null,
+          overrideReason: 'Negotiated for show',
+        },
+        'actor_123',
+      );
+
+      expect(showService.getShowById).toHaveBeenCalledWith(
+        mockShow.uid,
+        expect.objectContaining({
+          showCreators: expect.objectContaining({
+            where: expect.objectContaining({ uid: 'show_mc_1' }),
+          }),
+        }),
+      );
+      expect(showCreatorRepository.restoreAndUpdateAssignment).toHaveBeenCalledWith(
+        11n,
+        expect.objectContaining({
+          note: 'Updated note',
+          agreedRate: '175.00',
+          compensationType: 'FIXED',
+          commissionRate: null,
+          metadata: expect.objectContaining({
+            audit: expect.objectContaining({
+              snapshot_overrides: expect.arrayContaining([
+                expect.objectContaining({
+                  field: 'agreed_rate',
+                  old_value: '100',
+                  new_value: '175.00',
+                  actor_ext_id: 'actor_123',
+                  reason: 'Negotiated for show',
+                }),
+              ]),
+            }),
+          }),
+        }),
+      );
+      expect(result).toEqual(expect.objectContaining({
+        id: 'show_mc_1',
+        creatorId: 'creator_1',
+        agreedRate: new Prisma.Decimal('175.00'),
+      }));
+    });
+
+    it('rejects a partial update whose merged snapshot has FIXED with a leftover commission rate', async () => {
+      showService.getShowById.mockResolvedValue({
+        ...mockShow,
+        showCreators: [
+          {
+            id: 11n,
+            uid: 'show_mc_1',
+            note: 'Old note',
+            agreedRate: new Prisma.Decimal('100.00'),
+            compensationType: 'COMMISSION',
+            commissionRate: new Prisma.Decimal('25.00'),
+            metadata: {},
+            creator: {
+              uid: 'creator_1',
+              name: 'Alice',
+              aliasName: 'Ali',
+            },
+          },
+        ],
+      } as any);
+
+      await expect(
+        service.updateCreatorForShow(
+          mockShow.uid,
+          'show_mc_1',
+          {
+            compensationType: 'FIXED',
+          },
+          'actor_123',
+        ),
+      ).rejects.toThrow(/commission_rate must be null when compensation_type is FIXED/);
+
+      expect(showCreatorRepository.restoreAndUpdateAssignment).not.toHaveBeenCalled();
+    });
+  });
+
   describe('bulkAssignCreatorsToShow compensation item boundary', () => {
     it('does not create compensation line items from bulk assignment payloads', async () => {
       showService.getShowById.mockResolvedValue(mockShow);
@@ -1338,6 +1459,100 @@ describe('showOrchestrationService', () => {
         totalAmount: '0.00',
         unresolvedCount: 1,
       });
+    });
+  });
+
+  describe('getCreatorCompensationReview', () => {
+    it('aggregates creator compensation across show assignments in the date range', async () => {
+      const dateFrom = new Date('2026-05-01T00:00:00.000Z');
+      const dateTo = new Date('2026-05-31T23:59:59.999Z');
+      studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue({
+        creator: {
+          uid: 'creator_1',
+          name: 'Alice',
+          aliasName: 'Ali',
+        },
+      } as any);
+      showCreatorRepository.findCompensationReviewRows.mockResolvedValue([
+        {
+          uid: 'show_mc_1',
+          note: 'Existing note',
+          agreedRate: new Prisma.Decimal('100.00'),
+          compensationType: 'FIXED',
+          commissionRate: null,
+          show: {
+            uid: 'show_1',
+            name: 'May Show',
+            startTime: new Date('2026-05-10T10:00:00.000Z'),
+            endTime: new Date('2026-05-10T12:00:00.000Z'),
+          },
+          creator: {
+            uid: 'creator_1',
+            name: 'Alice',
+            aliasName: 'Ali',
+          },
+        },
+        {
+          uid: 'show_mc_2',
+          note: null,
+          agreedRate: null,
+          compensationType: null,
+          commissionRate: null,
+          show: {
+            uid: 'show_2',
+            name: 'Incomplete Show',
+            startTime: new Date('2026-05-12T10:00:00.000Z'),
+            endTime: new Date('2026-05-12T12:00:00.000Z'),
+          },
+          creator: {
+            uid: 'creator_1',
+            name: 'Alice',
+            aliasName: 'Ali',
+          },
+        },
+      ] as any);
+      compensationLineItemService.sumActiveAmountsByShowCreatorUids.mockResolvedValue(
+        new Map([
+          ['show_mc_1', new Prisma.Decimal('25.00')],
+          ['show_mc_2', new Prisma.Decimal('5.00')],
+        ]),
+      );
+
+      const result = await service.getCreatorCompensationReview('std_123', 'creator_1', {
+        dateFrom,
+        dateTo,
+      });
+
+      expect(studioCreatorRepository.findByStudioUidAndCreatorUid)
+        .toHaveBeenCalledWith('std_123', 'creator_1');
+      expect(showCreatorRepository.findCompensationReviewRows).toHaveBeenCalledWith({
+        studioUid: 'std_123',
+        creatorUid: 'creator_1',
+        dateFrom,
+        dateTo,
+      });
+      expect(compensationLineItemService.sumActiveAmountsByShowCreatorUids).toHaveBeenCalledWith({
+        studioId: 'std_123',
+        showCreatorUids: ['show_mc_1', 'show_mc_2'],
+      });
+      expect(result).toEqual(expect.objectContaining({
+        creatorId: 'creator_1',
+        totalAmount: '125.00',
+        unresolvedCount: 1,
+        shows: [
+          expect.objectContaining({
+            showId: 'show_1',
+            note: 'Existing note',
+            totalAmount: '125.00',
+          }),
+          expect.objectContaining({
+            showId: 'show_2',
+            note: null,
+            totalAmount: null,
+            unresolvedReason: 'AGREEMENT_SNAPSHOT_MISSING',
+          }),
+        ],
+      }));
     });
   });
 });

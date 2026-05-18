@@ -24,17 +24,25 @@ function createCreator(overrides: Partial<StudioCreatorRosterItem> = {}): Studio
 }
 
 describe('getStudioCreatorRosterColumns', () => {
-  it('shows the actions column only for admins', () => {
+  it('shows the actions column for compensation managers', () => {
     const adminColumns = getStudioCreatorRosterColumns({
       studioId: 'std_1',
       isAdmin: true,
+      canManageCompensation: true,
+    });
+    const managerColumns = getStudioCreatorRosterColumns({
+      studioId: 'std_1',
+      isAdmin: false,
+      canManageCompensation: true,
     });
     const readOnlyColumns = getStudioCreatorRosterColumns({
       studioId: 'std_1',
       isAdmin: false,
+      canManageCompensation: false,
     });
 
     expect(adminColumns.some((column) => column.id === 'actions')).toBe(true);
+    expect(managerColumns.some((column) => column.id === 'actions')).toBe(true);
     expect(readOnlyColumns.some((column) => column.id === 'actions')).toBe(false);
   });
 
@@ -42,6 +50,7 @@ describe('getStudioCreatorRosterColumns', () => {
     const columns = getStudioCreatorRosterColumns({
       studioId: 'std_1',
       isAdmin: false,
+      canManageCompensation: false,
     });
     const creator = createCreator({
       default_rate: '9007199254740993.01',

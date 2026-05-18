@@ -14,7 +14,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 | Role | Need |
 | --- | --- |
 | Studio Admin | Add creators to the studio roster, maintain default compensation, activate/deactivate roster entries |
-| Studio Manager | Read-only roster visibility for planning and operations |
+| Studio Manager | Roster visibility plus per-show creator compensation review and assignment-term edits |
 | Studio Talent Manager | Read-only roster visibility for creator assignment planning |
 
 ## What Was Delivered
@@ -26,6 +26,8 @@ Studio operators could map creators to shows, but they could not maintain the st
 - Studio-scoped default compensation management on `StudioCreator` with non-negative `default_rate`, compensation-type validation, and optimistic concurrency via `version`.
 - Active/inactive roster management with inactive creators excluded from creator-availability discovery and rejected by bulk assignment writes.
 - Compatibility-preserving creator catalog contract with both `is_rostered` and `roster_state`.
+- Per-show creator assignment compensation editability for `ShowCreator` snapshot terms: note, `agreed_rate`, `compensation_type`, `commission_rate`, and override audit reason.
+- Per-creator date-range compensation review for admins/managers, with show drill-in and the same assignment compensation dialog used by show operations.
 
 ## Key Product Decisions
 
@@ -45,6 +47,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 - [x] Inactive roster creators are excluded from availability discovery and rejected by bulk assignment writes.
 - [x] Creator catalog exposes `roster_state` while retaining `is_rostered` for compatibility.
 - [x] Manager and Talent Manager remain read-only on the roster surface.
+- [x] Admin and Manager can review a creator's show compensation over a date range and edit the selected `ShowCreator` terms.
 - [x] The frontend handles `409 VERSION_CONFLICT` by refetching and prompting user review instead of silently overwriting.
 
 ## Forward References

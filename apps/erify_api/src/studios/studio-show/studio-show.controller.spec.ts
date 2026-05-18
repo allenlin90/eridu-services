@@ -22,6 +22,7 @@ describe('studioShowController', () => {
 
   const showOrchestrationServiceMock = {
     listCreatorsForShow: jest.fn(),
+    updateCreatorForShow: jest.fn(),
     getCreatorCompensationSummaryForShow: jest.fn(),
     bulkAssignCreatorsToShow: jest.fn(),
     removeCreatorsFromShow: jest.fn(),
@@ -220,6 +221,53 @@ describe('studioShowController', () => {
         show_id: showId,
         total_amount: '120.00',
         unresolved_count: 0,
+      }));
+    });
+
+    it('should validate studio show and update creator assignment compensation terms', async () => {
+      const studioId = 'std_123';
+      const showId = 'show_123';
+      const showCreatorId = 'show_mc_1';
+      const dto = {
+        note: 'Updated assignment',
+        agreedRate: '175',
+        compensationType: 'FIXED',
+        commissionRate: null,
+        overrideReason: 'Negotiated for this show',
+      } as any;
+
+      taskOrchestrationServiceMock.getStudioShow.mockResolvedValue({ uid: showId });
+      showOrchestrationServiceMock.updateCreatorForShow.mockResolvedValue({
+        creatorId: 'creator_1',
+        id: showCreatorId,
+        creatorName: 'Alice',
+        creatorAliasName: 'Ali',
+        note: 'Updated assignment',
+        agreedRate: '175.00',
+        compensationType: 'FIXED',
+        commissionRate: null,
+        metadata: {},
+      });
+
+      const result = await controller.updateCreatorAssignment(
+        studioId,
+        showId,
+        showCreatorId,
+        dto,
+        { ext_id: 'actor_123' } as any,
+      );
+
+      expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
+      expect(showOrchestrationServiceMock.updateCreatorForShow).toHaveBeenCalledWith(
+        showId,
+        showCreatorId,
+        dto,
+        'actor_123',
+      );
+      expect(result).toEqual(expect.objectContaining({
+        id: showCreatorId,
+        agreed_rate: '175.00',
+        compensation_type: 'FIXED',
       }));
     });
   });

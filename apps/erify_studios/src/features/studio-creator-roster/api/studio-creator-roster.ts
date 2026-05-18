@@ -3,6 +3,8 @@ import { keepPreviousData, type QueryClient, useMutation, useQuery, useQueryClie
 import type {
   CreateStudioCreatorRosterInput,
   OnboardCreatorInput,
+  StudioCreatorCompensationReview,
+  StudioCreatorCompensationReviewQuery,
   StudioCreatorRosterItem,
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
@@ -30,6 +32,8 @@ export const studioCreatorRosterKeys = {
   listPrefix: (studioId: string) => [...studioCreatorRosterKeys.lists(), studioId] as const,
   list: (studioId: string, params?: GetStudioCreatorRosterParams) =>
     [...studioCreatorRosterKeys.listPrefix(studioId), params] as const,
+  compensationReview: (studioId: string, creatorId: string, params: StudioCreatorCompensationReviewQuery) =>
+    [...studioCreatorRosterKeys.all, 'compensation-review', studioId, creatorId, params] as const,
 };
 
 export async function getStudioCreatorRoster(
@@ -87,6 +91,22 @@ export async function onboardStudioCreator(
   return data;
 }
 
+export async function getStudioCreatorCompensationReview(
+  studioId: string,
+  creatorId: string,
+  params: StudioCreatorCompensationReviewQuery,
+  options?: { signal?: AbortSignal },
+): Promise<StudioCreatorCompensationReview> {
+  const { data } = await apiClient.get<StudioCreatorCompensationReview>(
+    `/studios/${studioId}/creators/${creatorId}/compensation-review`,
+    {
+      params,
+      signal: options?.signal,
+    },
+  );
+  return data;
+}
+
 export function useStudioCreatorRosterQuery(
   studioId: string,
   params?: GetStudioCreatorRosterParams,
@@ -97,6 +117,20 @@ export function useStudioCreatorRosterQuery(
     queryFn: ({ signal }) => getStudioCreatorRoster(studioId, params, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
     staleTime: 20_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useStudioCreatorCompensationReview(
+  studioId: string,
+  creatorId: string,
+  params: StudioCreatorCompensationReviewQuery,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: studioCreatorRosterKeys.compensationReview(studioId, creatorId, params),
+    queryFn: ({ signal }) => getStudioCreatorCompensationReview(studioId, creatorId, params, { signal }),
+    enabled: Boolean(studioId && creatorId && params.date_from && params.date_to) && (options?.enabled ?? true),
     placeholderData: keepPreviousData,
   });
 }

@@ -26,6 +26,7 @@ import {
 } from './schemas/studio-show-creator-assignment.schema';
 import { showCreatorCompensationSummaryDto } from './schemas/studio-show-creator-compensation-summary.schema';
 import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list.schema';
+import { UpdateStudioShowCreatorDto } from './schemas/studio-show-creator-update.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
@@ -40,6 +41,7 @@ import {
   UpdateStudioShowDto,
 } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { StudioService } from '@/models/studio/studio.service';
 import {
   ListStudioShowsQueryDto,
@@ -60,7 +62,7 @@ const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
 ];
 // Compensation totals are restricted to ADMIN/MANAGER (line-item write surface);
 // TALENT_MANAGER can read the assignment list but not the money totals.
-const STUDIO_SHOW_COMPENSATION_READ_ROLES = [
+const STUDIO_SHOW_COMPENSATION_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
@@ -178,7 +180,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/creators/compensation-summary')
-  @StudioProtected(STUDIO_SHOW_COMPENSATION_READ_ROLES)
+  @StudioProtected(STUDIO_SHOW_COMPENSATION_ACCESS_ROLES)
   @ZodResponse(showCreatorCompensationSummaryApiSchema)
   async creatorCompensationSummary(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -187,6 +189,26 @@ export class StudioShowController extends BaseStudioController {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
     const summary = await this.showOrchestrationService.getCreatorCompensationSummaryForShow(studioId, id);
     return showCreatorCompensationSummaryDto.parse(summary);
+  }
+
+  @Patch(':id/creators/:showCreatorId')
+  @StudioProtected(STUDIO_SHOW_COMPENSATION_ACCESS_ROLES)
+  @ZodResponse(studioShowCreatorListItemApiSchema)
+  async updateCreatorAssignment(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Param('showCreatorId', new UidValidationPipe(ShowCreatorService.UID_PREFIX, 'ShowCreator')) showCreatorId: string,
+    @Body() body: UpdateStudioShowCreatorDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    await this.taskOrchestrationService.getStudioShow(studioId, id);
+    const updated = await this.showOrchestrationService.updateCreatorForShow(
+      id,
+      showCreatorId,
+      body,
+      user.ext_id,
+    );
+    return studioShowCreatorListItemDto.parse(updated);
   }
 
   @Delete(':id/creators/:creatorId')

@@ -6,6 +6,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   studioCreatorAvailabilityItemSchema as studioCreatorAvailabilityItemApiSchema,
   studioCreatorCatalogItemSchema as studioCreatorCatalogItemApiSchema,
+  studioCreatorCompensationReviewSchema as studioCreatorCompensationReviewApiSchema,
   studioCreatorRosterItemSchema as studioCreatorRosterItemApiSchema,
 } from '@eridu/api-types/studio-creators';
 import { userApiResponseSchema } from '@eridu/api-types/users';
@@ -20,6 +21,10 @@ import {
   studioCreatorCatalogItemDto,
   StudioCreatorCatalogQueryDto,
 } from './schemas/studio-creator-catalog.schema';
+import {
+  studioCreatorCompensationReviewDto,
+  StudioCreatorCompensationReviewQueryDto,
+} from './schemas/studio-creator-compensation-review.schema';
 import { OnboardStudioCreatorDto } from './schemas/studio-creator-onboard.schema';
 import { StudioCreatorOnboardingUserSearchQueryDto } from './schemas/studio-creator-onboarding-user-search.schema';
 import {
@@ -38,11 +43,16 @@ import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 import { userDto } from '@/models/user/schemas/user.schema';
+import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
 const STUDIO_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
   STUDIO_ROLE.TALENT_MANAGER,
+];
+const STUDIO_CREATOR_COMPENSATION_REVIEW_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
 ];
 
 @ApiTags('Studio Creators')
@@ -50,6 +60,7 @@ const STUDIO_CREATOR_ACCESS_ROLES = [
 export class StudioCreatorController extends BaseStudioController {
   constructor(
     private readonly studioCreatorService: StudioCreatorService,
+    private readonly showOrchestrationService: ShowOrchestrationService,
   ) {
     super();
   }
@@ -137,6 +148,27 @@ export class StudioCreatorController extends BaseStudioController {
     });
 
     return studioCreatorRosterItemDto.parse(creator);
+  }
+
+  @ApiOperation({ summary: 'Review creator compensation across shows in a date range' })
+  @StudioProtected(STUDIO_CREATOR_COMPENSATION_REVIEW_ROLES)
+  @Get(':creatorId/compensation-review')
+  @ReadBurstThrottle()
+  @ZodResponse(studioCreatorCompensationReviewApiSchema)
+  async compensationReview(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
+    @Query() query: StudioCreatorCompensationReviewQueryDto,
+  ) {
+    const review = await this.showOrchestrationService.getCreatorCompensationReview(
+      studioId,
+      creatorId,
+      {
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+      },
+    );
+    return studioCreatorCompensationReviewDto.parse(review);
   }
 
   @ApiOperation({ summary: 'List creators available for show assignment discovery' })

@@ -75,6 +75,14 @@ type ShowCreatorCompensationSummaryRow = {
   unresolvedReason: string | null;
 };
 
+type StudioCreatorCompensationReviewRow = ShowCreatorCompensationSummaryRow & {
+  showId: string;
+  showName: string;
+  showStartTime: Date;
+  showEndTime: Date;
+  note: string | null;
+};
+
 type StudioCreatorSnapshotDefaults = {
   defaultRate: { toString: () => string } | string | number | null;
   defaultRateType: string | null;
@@ -413,6 +421,76 @@ export class ShowOrchestrationService {
     }));
   }
 
+  @Transactional()
+  async updateCreatorForShow(
+    uid: string,
+    showCreatorUid: string,
+    payload: Omit<CreatorAssignmentPayload, 'creatorId'>,
+    actorExtId: string,
+  ): Promise<ShowCreatorListItem> {
+    const show = await this.showService.getShowById(uid, {
+      showCreators: {
+        where: {
+          uid: showCreatorUid,
+          deletedAt: null,
+          creator: { deletedAt: null },
+        },
+        include: {
+          creator: {
+            select: {
+              uid: true,
+              name: true,
+              aliasName: true,
+            },
+          },
+        },
+      },
+    });
+    const existing = show.showCreators?.[0];
+
+    if (!existing) {
+      throw HttpError.notFound('Show creator', showCreatorUid);
+    }
+
+    const snapshot = this.resolveCreatorSnapshot(
+      {
+        creatorId: existing.creator.uid,
+        ...payload,
+      },
+      undefined,
+      this.mergeMetadata(existing.metadata, payload.metadata),
+      existing,
+    );
+    this.assertCreatorSnapshotInvariants(snapshot);
+    const changes = this.buildCreatorSnapshotChanges(existing, snapshot);
+    const metadata = appendSnapshotAudit(
+      snapshot.metadata,
+      changes,
+      actorExtId,
+      payload.overrideReason,
+    );
+
+    const updated = await this.showCreatorRepository.restoreAndUpdateAssignment(existing.id, {
+      note: payload.note !== undefined ? payload.note : existing.note,
+      agreedRate: snapshot.agreedRate,
+      compensationType: snapshot.compensationType,
+      commissionRate: snapshot.commissionRate,
+      metadata,
+    });
+
+    return {
+      id: updated.uid,
+      creatorId: existing.creator.uid,
+      creatorName: existing.creator.name,
+      creatorAliasName: existing.creator.aliasName,
+      note: updated.note,
+      agreedRate: updated.agreedRate ?? null,
+      compensationType: updated.compensationType ?? null,
+      commissionRate: updated.commissionRate ?? null,
+      metadata: (updated.metadata as Record<string, unknown>) ?? {},
+    };
+  }
+
   async getCreatorCompensationSummaryForShow(studioUid: string, uid: string) {
     const show = await this.showService.getShowById(uid, {
       showCreators: {
@@ -481,6 +559,70 @@ export class ShowOrchestrationService {
     return {
       showId: uid,
       creators,
+      totalAmount: this.toMoneyString(totalAmount),
+      unresolvedCount,
+    };
+  }
+
+  async getCreatorCompensationReview(
+    studioUid: string,
+    creatorUid: string,
+    params: {
+      dateFrom: Date;
+      dateTo: Date;
+    },
+  ) {
+    const rosterEntry = await this.studioCreatorRepository.findByStudioUidAndCreatorUid(
+      studioUid,
+      creatorUid,
+    );
+    if (!rosterEntry) {
+      throw HttpError.notFound('Studio creator', creatorUid);
+    }
+
+    const rows = await this.showCreatorRepository.findCompensationReviewRows({
+      studioUid,
+      creatorUid,
+      dateFrom: params.dateFrom,
+      dateTo: params.dateTo,
+    });
+    const adjustmentTotals = await this.compensationLineItemService.sumActiveAmountsByShowCreatorUids({
+      studioId: studioUid,
+      showCreatorUids: rows.map((row) => row.uid),
+    });
+
+    const shows: StudioCreatorCompensationReviewRow[] = [];
+    let totalAmount = new Prisma.Decimal(0);
+    let unresolvedCount = 0;
+
+    for (const row of rows) {
+      const adjustmentTotal = adjustmentTotals.get(row.uid) ?? new Prisma.Decimal(0);
+      const reviewRow = this.buildCreatorCompensationRow(row, adjustmentTotal);
+      const showTotal = reviewRow.totalAmount === null ? null : new Prisma.Decimal(reviewRow.totalAmount);
+
+      if (showTotal === null) {
+        unresolvedCount += 1;
+      } else {
+        totalAmount = totalAmount.plus(showTotal);
+      }
+
+      shows.push({
+        ...reviewRow,
+        showId: row.show.uid,
+        showName: row.show.name,
+        showStartTime: row.show.startTime,
+        showEndTime: row.show.endTime,
+        note: row.note ?? null,
+      });
+    }
+
+    return {
+      creatorId: rosterEntry.creator.uid,
+      creatorName: rosterEntry.creator.name,
+      creatorAliasName: rosterEntry.creator.aliasName,
+      dateFrom: params.dateFrom,
+      dateTo: params.dateTo,
+      shows,
       totalAmount: this.toMoneyString(totalAmount),
       unresolvedCount,
     };
@@ -765,6 +907,48 @@ export class ShowOrchestrationService {
     return null;
   }
 
+  private buildCreatorCompensationRow(
+    showCreator: {
+      uid: string;
+      compensationType: string | null;
+      agreedRate: unknown | null;
+      commissionRate: unknown | null;
+      creator: {
+        uid: string;
+        name: string;
+        aliasName: string;
+      };
+    },
+    adjustmentTotal: Prisma.Decimal,
+  ): ShowCreatorCompensationSummaryRow {
+    const baseAmount = this.resolveBaseCreatorAmount(
+      showCreator.compensationType,
+      showCreator.agreedRate,
+    );
+    const unresolvedReason = this.resolveCreatorCompensationUnresolvedReason(
+      showCreator.compensationType,
+      showCreator.agreedRate,
+      showCreator.commissionRate,
+    );
+    const rowTotal = unresolvedReason !== null || baseAmount === null
+      ? null
+      : baseAmount.plus(adjustmentTotal);
+
+    return {
+      showCreatorId: showCreator.uid,
+      creatorId: showCreator.creator.uid,
+      creatorName: showCreator.creator.name,
+      creatorAliasName: showCreator.creator.aliasName,
+      compensationType: showCreator.compensationType,
+      agreedRate: this.decimalLikeToString(showCreator.agreedRate),
+      commissionRate: this.decimalLikeToString(showCreator.commissionRate),
+      baseAmount: baseAmount === null ? null : this.toMoneyString(baseAmount),
+      adjustmentTotal: this.toMoneyString(adjustmentTotal),
+      totalAmount: rowTotal === null ? null : this.toMoneyString(rowTotal),
+      unresolvedReason,
+    };
+  }
+
   private toDecimal(value: unknown): Prisma.Decimal {
     if (value instanceof Prisma.Decimal) {
       return value;
@@ -796,6 +980,19 @@ export class ShowOrchestrationService {
       changes.push({ field: 'commission_rate', old_value: current.commissionRate, new_value: next.commissionRate });
     }
     return changes;
+  }
+
+  private assertCreatorSnapshotInvariants(snapshot: ResolvedCreatorSnapshot): void {
+    if (
+      (snapshot.compensationType === CREATOR_COMPENSATION_TYPE.FIXED || snapshot.compensationType === null)
+      && snapshot.commissionRate !== null
+    ) {
+      throw HttpError.badRequest(
+        snapshot.compensationType === null
+          ? 'commission_rate must be null when compensation_type is null'
+          : 'commission_rate must be null when compensation_type is FIXED',
+      );
+    }
   }
 
   private isCreatorSnapshotMissing(

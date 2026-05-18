@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import { Children, isValidElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ShowCreatorCompensationDialog } from '../show-creator-compensation-dialog';
@@ -9,6 +9,7 @@ const mockUseStudioCompensationLineItems = vi.fn();
 const mockUseShowCreatorCompensationSummary = vi.fn();
 const mockCreateMutateAsync = vi.fn();
 const mockUpdateMutateAsync = vi.fn();
+const mockUpdateAssignmentMutateAsync = vi.fn();
 const mockDeleteMutate = vi.fn();
 
 const lineItemsResponse = {
@@ -51,11 +52,20 @@ vi.mock('@eridu/ui', () => ({
     children: ReactNode;
     value?: string;
     onValueChange?: (value: string) => void;
-  }) => (
-    <select aria-label="item-type" value={value} onChange={(event) => onValueChange?.(event.target.value)}>
-      {children}
-    </select>
-  ),
+  }) => {
+    let triggerId: string | undefined;
+    // eslint-disable-next-line react/no-children-for-each -- test-only mock; reading id off SelectTrigger child
+    Children.forEach(children, (child) => {
+      if (isValidElement(child) && (child.props as { id?: string }).id) {
+        triggerId = (child.props as { id?: string }).id;
+      }
+    });
+    return (
+      <select id={triggerId} value={value} onChange={(event) => onValueChange?.(event.target.value)}>
+        {children}
+      </select>
+    );
+  },
   SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
   SelectItem: ({ children, value }: { children: ReactNode; value: string }) => <option value={value}>{children}</option>,
   SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -91,6 +101,10 @@ vi.mock('@/features/compensation-line-items/hooks/use-compensation-line-item-mut
 
 vi.mock('@/features/studio-show-creators/api/get-show-creators', () => ({
   useShowCreatorCompensationSummary: (...args: unknown[]) => mockUseShowCreatorCompensationSummary(...args),
+  useUpdateShowCreatorAssignment: () => ({
+    mutateAsync: mockUpdateAssignmentMutateAsync,
+    isPending: false,
+  }),
 }));
 
 function renderDialog() {
@@ -163,6 +177,72 @@ describe('showCreatorCompensationDialog', () => {
         amount: '10.00',
         item_type: 'BONUS',
         reason: 'Extra prep',
+      });
+    });
+  });
+
+  it('updates per-show assignment compensation terms from the dialog', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    expect(screen.getByText('Assignment Terms')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Agreed Rate'));
+    await user.type(screen.getByLabelText('Agreed Rate'), '175');
+    await user.type(screen.getByLabelText('Override Reason'), 'Negotiated for this show');
+    await user.type(screen.getByLabelText('Assignment Note'), 'Updated host note');
+    await user.click(screen.getByRole('button', { name: 'Save Terms' }));
+
+    await waitFor(() => {
+      expect(mockUpdateAssignmentMutateAsync).toHaveBeenCalledWith({
+        id: 'show_mc_1',
+        data: {
+          note: 'Updated host note',
+          agreed_rate: '175.00',
+          compensation_type: 'FIXED',
+          commission_rate: null,
+          override_reason: 'Negotiated for this show',
+        },
+      });
+    });
+  });
+
+  it('forces commission_rate to null when switching HYBRID → FIXED with a leftover commission value', async () => {
+    const user = userEvent.setup();
+    render(
+      <ShowCreatorCompensationDialog
+        open
+        onOpenChange={vi.fn()}
+        studioId="std_1"
+        showId="show_1"
+        creator={{
+          id: 'show_mc_1',
+          creator_id: 'creator_1',
+          creator_name: 'Alice',
+          creator_alias_name: 'Ali',
+          note: null,
+          agreed_rate: '100.00',
+          compensation_type: 'HYBRID',
+          commission_rate: '25.00',
+          metadata: {},
+        }}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText('Compensation Type'), 'FIXED');
+    expect(screen.getByLabelText('Commission Rate')).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Save Terms' }));
+
+    await waitFor(() => {
+      expect(mockUpdateAssignmentMutateAsync).toHaveBeenCalledWith({
+        id: 'show_mc_1',
+        data: {
+          note: null,
+          agreed_rate: '100.00',
+          compensation_type: 'FIXED',
+          commission_rate: null,
+          override_reason: undefined,
+        },
       });
     });
   });
@@ -246,7 +326,7 @@ describe('showCreatorCompensationDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit compensation item Launch bonus' }));
 
-    expect(screen.getByLabelText('item-type')).toHaveValue('OTHER');
+    expect(screen.getByLabelText('Item Type')).toHaveValue('OTHER');
   });
 
   it('normalizes long-precision amounts via string padding (no binary float drift)', async () => {
