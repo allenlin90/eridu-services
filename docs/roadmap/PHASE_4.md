@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); shift unified date range + export shipped (PR [#71](https://github.com/allenlin90/eridu-services/pull/71)); shift cost-column cleanup shipped with live `planned_cost` / `actual_cost` (PR [#72](https://github.com/allenlin90/eridu-services/pull/72)); shift rate editing consolidated into the compensation dialog + BE service-layer guard (PR [#73](https://github.com/allenlin90/eridu-services/pull/73)); show-operations export + actuals (+ responsive DateTime picker, the desktop-Dialog/mobile-Drawer house pattern, and task-report show-actuals system columns) ready in PR [#75](https://github.com/allenlin90/eridu-services/pull/75) (supersedes [#74](https://github.com/allenlin90/eridu-services/pull/74)); creator compensation editability ready in PR [#77](https://github.com/allenlin90/eridu-services/pull/77); 10 PRs remaining (added row 15: studio-shifts export loading-state race fix follow-up).
+> **Status**: 🚧 Active — Wave 1 shipped; cost model locked; 2.2 Tasks 1-6 merged; money library standardized (PR [#69](https://github.com/allenlin90/eridu-services/pull/69)); shift unified date range + export shipped (PR [#71](https://github.com/allenlin90/eridu-services/pull/71)); shift cost-column cleanup shipped with live `planned_cost` / `actual_cost` (PR [#72](https://github.com/allenlin90/eridu-services/pull/72)); shift rate editing consolidated into the compensation dialog + BE service-layer guard (PR [#73](https://github.com/allenlin90/eridu-services/pull/73)); show-operations export + actuals (+ responsive DateTime picker, the desktop-Dialog/mobile-Drawer house pattern, and task-report show-actuals system columns) ready in PR [#75](https://github.com/allenlin90/eridu-services/pull/75) (supersedes [#74](https://github.com/allenlin90/eridu-services/pull/74)); creator compensation editability ready in PR [#77](https://github.com/allenlin90/eridu-services/pull/77); 11 PRs remaining (added row 15: studio-shifts export loading-state race fix follow-up; added row 16: entity edit dialogs → dedicated routes audit + roll-out, surfaced during PR 5 retrospective).
 > **Last updated**: 2026-05-17
 > **Cost contract**: [`docs/domain/economics-cost-model.md`](../domain/economics-cost-model.md) — locked semantics, read first.
 > **Finance guardrails**: [`docs/engineering/FINANCE_GUARDRAILS.md`](../engineering/FINANCE_GUARDRAILS.md)
@@ -41,6 +41,7 @@ Rows are ordered top-to-bottom as execution order. Rows with `—` in the depend
 | 13  | [Responsive Dialog → Drawer rollout in `erify_studios`](#pr-13--responsive-dialog--drawer-rollout-in-erify_studios) — migrate remaining mobile-reachable `DateTimePicker` consumers and Dialog modals to the responsive pattern established in PR 4. `erify_creators` follows once `erify_studios` is converted.                                                                            | PR 4       | 🔲 Planned | —                                                           |
 | 14  | [Operator-recorded show actuals via CLOSURE task template](#pr-14--operator-recorded-show-actuals-via-closure-task-template) — move show `actual_start_time` / `actual_end_time` capture into a post-production CLOSURE task surface for operators; admin/manager `/show-operations` remains the audit/override surface. Requires design.                                                  | PR 4       | 🔲 Planned (design) | —                                                  |
 | 15  | [Studio-shifts export loading-state race fix](#pr-15--studio-shifts-export-loading-state-race-fix) — apply the same active-controller guard PR 4 added to `/show-operations` to `studio-shifts-table.tsx`, where `setIsExporting(false)` still runs unconditionally in `finally` and can clear the loading state mid-flight when exports overlap                                                                                          | —          | 🔲 Planned | —                                                           |
+| 16  | [Entity edit dialogs → dedicated routes (audit + roll-out)](#pr-16--entity-edit-dialogs--dedicated-routes-audit--roll-out) — replace per-entity edit dialogs (creator, member, show, shift, show-creator, etc.) with `/studios/:studioId/<entity>/:entityId` routes for shareable links, history navigation, and room for richer detail surfaces. This row covers the audit + first conversion (creator detail); each subsequent entity ships as its own follow-up PR (16a, 16b, …). | PR 5 | 🔲 Planned (audit) | — |
 
 ### How to use this list
 
@@ -59,6 +60,42 @@ Rows are ordered top-to-bottom as execution order. Rows with `—` in the depend
 ### PR 15 · Studio-shifts export loading-state race fix
 
 **Brief** — Surfaced during PR 4 review (Codex P2 on `/show-operations` export). PR 4 fixed the active-controller guard in `apps/erify_studios/src/routes/studios/$studioId/show-operations/index.tsx` so an aborted earlier export can no longer clear `isExporting` while a newer export is still in flight. The same copied pattern exists in `apps/erify_studios/src/features/studio-shifts/components/studio-shifts-table.tsx` (predates PR 4) and has the same bug: `setIsExporting(false)` runs unconditionally in `finally`, so a second export started before the first aborted request resolves will see the loading/disabled state cleared mid-flight, exposing extra clicks. Move `setIsExporting(false)` inside the existing `exportAbortRef.current === controller` guard (one-line scope change, mirrors PR 4). No new test needed beyond the existing shifts export coverage.
+
+### PR 16 · Entity edit dialogs → dedicated routes (audit + roll-out)
+
+**Brief** — Surfaced during PR 5 retrospective. Today most per-entity edits in `erify_studios` open a Dialog from a row action: creator roster (`edit-studio-creator-dialog`), member roster (`edit-member-dialog`), show (`show-update-dialog`), studio shift (`studio-shift-form-dialog`), per-show creator compensation (`show-creator-compensation-dialog`), shift compensation (`shift-compensation-dialog`), creator compensation review (`creator-compensation-review-dialog`). Dialogs lose URL state — you can't link a teammate to "Alice's roster row" or hit back/forward through edits, and they constrain the surface to whatever fits in a modal even when the entity wants tabs (terms, history, audit, related shows). `task-templates/$templateId.tsx` is the existing precedent in the repo for dedicated entity routes.
+
+Goal: convert each entity-edit dialog into a `/studios/:studioId/<entity>/:entityId` (or `…/<entity>/:entityId/edit`) route, shareable by URL. Confirmation modals, bulk dialogs, and inline create-from-list dialogs stay as `Dialog` — only **single-entity detail/edit** surfaces convert. Each conversion gets its own scoped PR (one route per PR) for review tractability; this row covers (a) the audit of every conversion candidate with the target route shape and (b) the first conversion (recommend creator roster as the pilot since the compensation review dialog is already a heavy modal that wants tabs).
+
+**Conversion candidates (initial audit, refine in the audit PR):**
+
+| # | Today | Target route | Notes |
+| --- | --- | --- | --- |
+| 16a | `edit-studio-creator-dialog` + `creator-compensation-review-dialog` | `/studios/:studioId/creators/:creatorId` | Pilot. Detail page hosts defaults edit, compensation review (now a tab), and the per-show drill-in. |
+| 16b | `edit-member-dialog` | `/studios/:studioId/members/:memberId` | Wait for PR 8 (`base_hourly_rate` wire-type migration) so the route uses the string wire type. |
+| 16c | `show-update-dialog` | `/studios/:studioId/shows/:showId` (already a list page; add detail route alongside) | Show-creator compensation (`show-creator-compensation-dialog`) becomes a section on the show detail rather than a sub-dialog. |
+| 16d | `studio-shift-form-dialog` + `shift-compensation-dialog` | `/studios/:studioId/shifts/:shiftId` | Single detail surface for the shift; compensation becomes a tab/section. |
+| 16e | `show-actuals-dialog` | absorbed into show detail (16c) | Don't ship as separate route; fold into the show detail surface alongside the operator-CLOSURE flow (PR 14). |
+
+**Out of scope for this row:**
+- Confirmation/destructive dialogs (`delete-confirm-dialog`, `remove-member-dialog`, `delete-tasks-dialog`) — one-action confirms stay as `Dialog`.
+- Inline add-to-list (`add-studio-creator-dialog`, `add-member-dialog`, `add-creator-dialog`) — creation flows stay dialog-based to keep the list context.
+- Bulk dialogs (`bulk-task-generation-dialog`, `bulk-creator-assignment-dialog`).
+- `system-task-details-dialog`, `task-due-date-dialog`, `compensation-line-item-form-dialog` — task-scoped or inline sub-form modals where URL state isn't useful.
+
+**Invariants to maintain through each conversion:**
+- Studio scoping + roles unchanged (route uses the same `@StudioProtected` semantics).
+- Optimistic-concurrency `version` round-trip preserved.
+- Cross-field invariant helpers (`buildShowCreatorAssignmentTermsPayload`, `buildUpdateStudioCreatorRosterPayload`) continue to own the payload-building logic — the route just hosts the form body that used to live in the dialog.
+- Mobile pattern: detail routes don't need the Dialog→Drawer responsive pattern (full-page on mobile), but inline sub-modals within the detail route still follow PR 13's pattern.
+
+**Verification gates per conversion PR:**
+- Route loads with valid studio+entity UIDs; 404s on unknown/cross-studio IDs (mirror existing route guards).
+- Existing row actions navigate to the new route; legacy dialog removed (no dead component).
+- All existing dialog tests migrated to route-level tests (TanStack Router test render).
+- Confirm app sidebar / breadcrumb wiring still works.
+
+Audit deliverable for the lead row (16): a short doc at `apps/erify_studios/docs/ENTITY_DETAIL_ROUTES.md` listing the final target route per entity, the share-link contract (which query params survive), and the migration order. Then 16a opens with the pilot conversion (creator detail).
 
 ### PR 14 · Operator-recorded show actuals via CLOSURE task template
 
