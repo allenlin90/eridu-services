@@ -80,6 +80,7 @@ type StudioCreatorCompensationReviewRow = ShowCreatorCompensationSummaryRow & {
   showName: string;
   showStartTime: Date;
   showEndTime: Date;
+  note: string | null;
 };
 
 type StudioCreatorSnapshotDefaults = {
@@ -611,6 +612,7 @@ export class ShowOrchestrationService {
         showName: row.show.name,
         showStartTime: row.show.startTime,
         showEndTime: row.show.endTime,
+        note: row.note ?? null,
       });
     }
 

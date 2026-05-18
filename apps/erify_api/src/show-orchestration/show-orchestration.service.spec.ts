@@ -1476,6 +1476,7 @@ describe('showOrchestrationService', () => {
       showCreatorRepository.findCompensationReviewRows.mockResolvedValue([
         {
           uid: 'show_mc_1',
+          note: 'Existing note',
           agreedRate: new Prisma.Decimal('100.00'),
           compensationType: 'FIXED',
           commissionRate: null,
@@ -1493,6 +1494,7 @@ describe('showOrchestrationService', () => {
         },
         {
           uid: 'show_mc_2',
+          note: null,
           agreedRate: null,
           compensationType: null,
           commissionRate: null,
@@ -1540,10 +1542,12 @@ describe('showOrchestrationService', () => {
         shows: [
           expect.objectContaining({
             showId: 'show_1',
+            note: 'Existing note',
             totalAmount: '125.00',
           }),
           expect.objectContaining({
             showId: 'show_2',
+            note: null,
             totalAmount: null,
             unresolvedReason: 'AGREEMENT_SNAPSHOT_MISSING',
           }),

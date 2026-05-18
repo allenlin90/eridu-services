@@ -60,7 +60,7 @@ function toDialogCreator(show: StudioCreatorCompensationReviewShow): StudioShowC
     creator_id: show.creator_id,
     creator_name: show.creator_name,
     creator_alias_name: show.creator_alias_name,
-    note: null,
+    note: show.note,
     agreed_rate: show.agreed_rate,
     compensation_type: show.compensation_type,
     commission_rate: show.commission_rate,

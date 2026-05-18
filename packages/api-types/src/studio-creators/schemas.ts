@@ -371,6 +371,7 @@ export const studioCreatorCompensationReviewShowSchema = showCreatorCompensation
   show_name: z.string(),
   show_start_time: z.iso.datetime(),
   show_end_time: z.iso.datetime(),
+  note: z.string().nullable(),
 });
 
 export const studioCreatorCompensationReviewSchema = z.object({

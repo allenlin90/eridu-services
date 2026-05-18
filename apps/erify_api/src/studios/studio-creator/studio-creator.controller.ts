@@ -6,6 +6,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   studioCreatorAvailabilityItemSchema as studioCreatorAvailabilityItemApiSchema,
   studioCreatorCatalogItemSchema as studioCreatorCatalogItemApiSchema,
+  studioCreatorCompensationReviewSchema as studioCreatorCompensationReviewApiSchema,
   studioCreatorRosterItemSchema as studioCreatorRosterItemApiSchema,
 } from '@eridu/api-types/studio-creators';
 import { userApiResponseSchema } from '@eridu/api-types/users';
@@ -153,7 +154,7 @@ export class StudioCreatorController extends BaseStudioController {
   @StudioProtected(STUDIO_CREATOR_COMPENSATION_REVIEW_ROLES)
   @Get(':creatorId/compensation-review')
   @ReadBurstThrottle()
-  @ZodResponse(studioCreatorCompensationReviewDto)
+  @ZodResponse(studioCreatorCompensationReviewApiSchema)
   async compensationReview(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,

@@ -50,6 +50,7 @@ describe('creatorCompensationReviewDialog', () => {
             creator_id: 'creator_1',
             creator_name: 'Alice',
             creator_alias_name: 'Ali',
+            note: 'Existing note',
             compensation_type: 'FIXED',
             agreed_rate: '100.00',
             commission_rate: null,

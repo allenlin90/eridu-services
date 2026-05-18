@@ -304,6 +304,7 @@ describe('studioCreatorController', () => {
           creatorId,
           creatorName: 'Ann',
           creatorAliasName: 'Ann',
+          note: 'Existing note',
           compensationType: 'FIXED',
           agreedRate: '100.00',
           commissionRate: null,
@@ -333,6 +334,7 @@ describe('studioCreatorController', () => {
         expect.objectContaining({
           show_id: 'show_00000000000000000001',
           show_creator_id: 'show_mc_00000000000000000001',
+          note: 'Existing note',
         }),
       ],
     }));
