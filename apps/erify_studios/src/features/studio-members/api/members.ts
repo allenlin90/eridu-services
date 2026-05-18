@@ -2,6 +2,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 
 import type {
   AddStudioMemberRequest,
+  StudioMemberCompensationQuery,
+  StudioMemberCompensationResponse,
   StudioMemberResponse,
   UpdateStudioMemberRequest,
 } from '@eridu/api-types/memberships';
@@ -27,6 +29,11 @@ export const studioMemberKeys = {
   listPrefix: (studioId: string) => [...studioMemberKeys.lists(), studioId] as const,
   list: (studioId: string, params?: GetStudioMembersParams) =>
     [...studioMemberKeys.listPrefix(studioId), params] as const,
+  compensation: (
+    studioId: string,
+    membershipId: string,
+    params: StudioMemberCompensationQuery,
+  ) => [...studioMemberKeys.all, 'compensation', studioId, membershipId, params] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -82,6 +89,22 @@ export async function removeStudioMember(
   await apiClient.delete(`/studios/${studioId}/members/${membershipId}`);
 }
 
+export async function getStudioMemberCompensations(
+  studioId: string,
+  membershipId: string,
+  params: StudioMemberCompensationQuery,
+  options?: { signal?: AbortSignal },
+): Promise<StudioMemberCompensationResponse> {
+  const { data } = await apiClient.get<StudioMemberCompensationResponse>(
+    `/studios/${studioId}/members/${membershipId}/compensations`,
+    {
+      params,
+      signal: options?.signal,
+    },
+  );
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // TanStack Query hooks
 // ---------------------------------------------------------------------------
@@ -134,5 +157,21 @@ export function useRemoveStudioMember(studioId: string) {
         queryKey: studioMemberKeys.listPrefix(studioId),
       });
     },
+  });
+}
+
+export function useStudioMemberCompensations(
+  studioId: string,
+  membershipId: string,
+  params: StudioMemberCompensationQuery,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: studioMemberKeys.compensation(studioId, membershipId, params),
+    queryFn: ({ signal }) =>
+      getStudioMemberCompensations(studioId, membershipId, params, { signal }),
+    enabled: Boolean(studioId && membershipId) && (options?.enabled ?? true),
+    staleTime: 20_000,
+    placeholderData: keepPreviousData,
   });
 }

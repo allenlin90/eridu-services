@@ -18,7 +18,7 @@ export function useStudioMembers({ studioId }: UseStudioMembersProps) {
     setPageCount,
     columnFilters,
     onColumnFiltersChange,
-  } = useTableUrlState({ from: '/studios/$studioId/members', searchColumnId: 'user_name' });
+  } = useTableUrlState({ from: '/studios/$studioId/members/', searchColumnId: 'user_name' });
 
   const search = columnFilters.find((f) => f.id === 'user_name')?.value as string | undefined;
 

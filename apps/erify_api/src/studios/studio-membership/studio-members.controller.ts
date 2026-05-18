@@ -13,7 +13,11 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { STUDIO_MEMBER_ERROR, STUDIO_ROLE } from '@eridu/api-types/memberships';
+import {
+  STUDIO_MEMBER_ERROR,
+  STUDIO_ROLE,
+  studioMemberCompensationResponseSchema,
+} from '@eridu/api-types/memberships';
 
 import { BaseStudioController } from '../base-studio.controller';
 
@@ -26,17 +30,21 @@ import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import {
   AddStudioMemberDto,
   ListStudioMembersQueryDto,
+  studioMemberCompensationDto,
+  StudioMemberCompensationQueryDto,
   studioMemberDto,
   UpdateStudioMemberDto,
 } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { StudioService } from '@/models/studio/studio.service';
+import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 
 @ApiTags('Studio Members')
 @Controller('studios/:studioId/members')
 export class StudioMembersController extends BaseStudioController {
   constructor(
     private readonly studioMembershipService: StudioMembershipService,
+    private readonly studioShiftService: StudioShiftService,
   ) {
     super();
   }
@@ -132,5 +140,36 @@ export class StudioMembersController extends BaseStudioController {
     }
 
     await this.studioMembershipService.removeStudioMember(membershipId);
+  }
+
+  @ApiOperation({ summary: 'Review member shift compensation across a date range' })
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @Get(':memberId/compensations')
+  @ReadBurstThrottle()
+  @ZodResponse(studioMemberCompensationResponseSchema)
+  async listMemberCompensations(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('memberId', new UidValidationPipe(StudioMembershipService.UID_PREFIX, 'Membership')) memberId: string,
+    @Query() query: StudioMemberCompensationQueryDto,
+  ) {
+    const member = await this.studioMembershipService.findStudioMemberByUidAndStudio(
+      memberId,
+      studioId,
+    );
+    this.ensureResourceExists(member, 'Membership', memberId);
+
+    const shifts = await this.studioShiftService.listMemberCompensationShifts({
+      studioId,
+      userId: member.user.uid,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+    });
+
+    return studioMemberCompensationDto.parse({
+      member,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+      shifts,
+    });
   }
 }

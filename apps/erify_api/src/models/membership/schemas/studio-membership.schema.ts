@@ -7,6 +7,8 @@ import {
   createMembershipInputSchema,
   membershipApiResponseSchema,
   STUDIO_ROLE,
+  studioMemberCompensationQuerySchema,
+  studioMemberCompensationResponseSchema,
   studioMemberResponseSchema,
   updateMembershipInputSchema,
   updateStudioMemberRequestSchema,
@@ -21,6 +23,8 @@ import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { studioSchema } from '@/models/studio/schemas/studio.schema';
 import { StudioService } from '@/models/studio/studio.service';
+import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
+import { computeShiftCosts, summarizeShiftCosts } from '@/models/studio-shift/studio-shift-cost.utils';
 import { userDto, userSchema } from '@/models/user/schemas/user.schema';
 import { UserService } from '@/models/user/user.service';
 
@@ -347,6 +351,101 @@ export const studioMemberDto = studioMemberWithUserSchema.transform(
   }),
 ).pipe(studioMemberResponseSchema);
 
+const _internalMemberCompensationLineItemTargetShape = z.object({
+  lineItem: z.object({ amount: z.unknown() }),
+});
+
+const _internalMemberCompensationShiftShape = z.object({
+  uid: z.string().startsWith(StudioShiftService.UID_PREFIX),
+  date: z.date(),
+  hourlyRate: z.unknown(),
+  isDutyManager: z.boolean(),
+  status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']),
+  compensationLineItemTargets: z.array(_internalMemberCompensationLineItemTargetShape).default([]),
+  blocks: z.array(z.object({
+    uid: z.string().startsWith(StudioShiftService.BLOCK_UID_PREFIX),
+    startTime: z.date(),
+    endTime: z.date(),
+    actualStartTime: z.date().nullable(),
+    actualEndTime: z.date().nullable(),
+    compensationLineItemTargets: z.array(_internalMemberCompensationLineItemTargetShape).default([]),
+  })),
+});
+
+const studioMemberCompensationInternalSchema = z.object({
+  member: studioMemberWithUserSchema,
+  dateFrom: z.date(),
+  dateTo: z.date(),
+  shifts: z.array(_internalMemberCompensationShiftShape),
+});
+
+export const studioMemberCompensationDto = studioMemberCompensationInternalSchema
+  .transform((obj) => {
+    const shiftCosts = obj.shifts.map((shift) =>
+      computeShiftCosts({
+        hourlyRate: decimalToString(shift.hourlyRate) ?? '0.00',
+        shiftLineItemAmounts: shift.compensationLineItemTargets.map(
+          (target) => decimalToString(target.lineItem.amount) ?? '0.00',
+        ),
+        blocks: shift.blocks.map((block) => ({
+          startTime: block.startTime,
+          endTime: block.endTime,
+          actualStartTime: block.actualStartTime,
+          actualEndTime: block.actualEndTime,
+          lineItemAmounts: block.compensationLineItemTargets.map(
+            (target) => decimalToString(target.lineItem.amount) ?? '0.00',
+          ),
+        })),
+      }));
+    // Cancelled shifts are surfaced in the list for context but excluded from
+    // cost totals and resolved/pending counts — no compensation is earned.
+    const billableShiftCosts = obj.shifts
+      .map((shift, index) => ({ shift, cost: shiftCosts[index] }))
+      .filter(({ shift }) => shift.status !== 'CANCELLED')
+      .map(({ cost }) => cost!);
+    const summary = summarizeShiftCosts(billableShiftCosts);
+
+    return {
+      membership_id: obj.member.uid,
+      user_id: obj.member.user.uid,
+      user_name: obj.member.user.name,
+      user_email: obj.member.user.email,
+      date_from: obj.dateFrom.toISOString().slice(0, 10),
+      date_to: obj.dateTo.toISOString().slice(0, 10),
+      summary: {
+        shift_count: billableShiftCosts.length,
+        total_planned_cost: summary.totalPlanned.toFixed(2),
+        total_actual_cost: summary.totalActual.toFixed(2),
+        actual_cost_resolved_shift_count: summary.resolvedShiftCount,
+        actual_cost_pending_shift_count: summary.pendingShiftCount,
+      },
+      shifts: obj.shifts.map((shift, index) => {
+        const isCancelled = shift.status === 'CANCELLED';
+        const actualCost = shiftCosts[index]?.actualCost ?? null;
+        return {
+          shift_id: shift.uid,
+          date: shift.date.toISOString().slice(0, 10),
+          status: shift.status,
+          is_duty_manager: shift.isDutyManager,
+          hourly_rate: decimalToString(shift.hourlyRate) ?? '0.00',
+          planned_cost: isCancelled ? '0.00' : (shiftCosts[index]?.plannedCost.toFixed(2) ?? '0.00'),
+          actual_cost: isCancelled ? null : (actualCost === null ? null : actualCost.toFixed(2)),
+          actuals_status: isCancelled
+            ? 'cancelled' as const
+            : (actualCost === null ? 'pending' as const : 'resolved' as const),
+          blocks: shift.blocks.map((block) => ({
+            block_id: block.uid,
+            start_time: block.startTime.toISOString(),
+            end_time: block.endTime.toISOString(),
+            actual_start_time: block.actualStartTime?.toISOString() ?? null,
+            actual_end_time: block.actualEndTime?.toISOString() ?? null,
+          })),
+        };
+      }),
+    };
+  })
+  .pipe(studioMemberCompensationResponseSchema);
+
 /**
  * Query DTO for listing studio members (GET /studios/:studioId/members).
  */
@@ -365,6 +464,16 @@ export class ListStudioMembersQueryDto extends createZodDto(listStudioMembersQue
   declare skip: number;
   declare sort: 'asc' | 'desc';
   declare search: string | undefined;
+}
+
+export class StudioMemberCompensationQueryDto extends createZodDto(
+  studioMemberCompensationQuerySchema.transform((data) => ({
+    dateFrom: new Date(data.date_from),
+    dateTo: new Date(data.date_to),
+  })),
+) {
+  declare dateFrom: Date;
+  declare dateTo: Date;
 }
 
 /**

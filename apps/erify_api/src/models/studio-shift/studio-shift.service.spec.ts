@@ -27,6 +27,7 @@ describe('studioShiftService', () => {
             findPaginated: jest.fn(),
             findPaginatedForUser: jest.fn(),
             findByStudioAndBlockWindow: jest.fn(),
+            findMemberCompensationRows: jest.fn(),
             findOverlappingShift: jest.fn(),
             updateShift: jest.fn(),
             softDeleteInStudio: jest.fn(),
@@ -664,6 +665,31 @@ describe('studioShiftService', () => {
           actualEndTime: new Date('2026-03-05T09:30:00.000Z'),
         }, 'user_actor'),
       ).rejects.toThrow('Shift block actual_end_time must be after actual_start_time');
+    });
+  });
+
+  describe('listMemberCompensationShifts', () => {
+    it('delegates to the repository with studio, user, and date range scope', async () => {
+      const dateFrom = new Date('2026-05-01T00:00:00.000Z');
+      const dateTo = new Date('2026-05-31T00:00:00.000Z');
+      repository.findMemberCompensationRows.mockResolvedValue([
+        { uid: 'ssh_1' },
+      ] as never);
+
+      const result = await service.listMemberCompensationShifts({
+        studioId: 'std_1',
+        userId: 'user_1',
+        dateFrom,
+        dateTo,
+      });
+
+      expect(repository.findMemberCompensationRows).toHaveBeenCalledWith({
+        studioId: 'std_1',
+        userId: 'user_1',
+        dateFrom,
+        dateTo,
+      });
+      expect(result).toEqual([{ uid: 'ssh_1' }]);
     });
   });
 });

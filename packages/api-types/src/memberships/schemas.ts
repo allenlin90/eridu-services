@@ -118,3 +118,58 @@ export const updateStudioMemberRequestSchema = z.object({
 });
 
 export type UpdateStudioMemberRequest = z.input<typeof updateStudioMemberRequestSchema>;
+
+export const studioMemberCompensationQuerySchema = z.object({
+  date_from: z.iso.date(),
+  date_to: z.iso.date(),
+}).superRefine((data, ctx) => {
+  if (new Date(data.date_to).getTime() < new Date(data.date_from).getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['date_to'],
+      message: 'date_to must be on or after date_from',
+    });
+  }
+});
+
+export const studioMemberCompensationBlockSchema = z.object({
+  block_id: z.string(),
+  start_time: z.iso.datetime(),
+  end_time: z.iso.datetime(),
+  actual_start_time: z.iso.datetime().nullable(),
+  actual_end_time: z.iso.datetime().nullable(),
+});
+
+export const studioMemberCompensationShiftSchema = z.object({
+  shift_id: z.string(),
+  date: z.iso.date(),
+  status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']),
+  is_duty_manager: z.boolean(),
+  hourly_rate: z.string(),
+  planned_cost: z.string(),
+  actual_cost: z.string().nullable(),
+  actuals_status: z.enum(['resolved', 'pending', 'cancelled']),
+  blocks: z.array(studioMemberCompensationBlockSchema),
+});
+
+export const studioMemberCompensationResponseSchema = z.object({
+  membership_id: z.string(),
+  user_id: z.string(),
+  user_name: z.string(),
+  user_email: z.string().email(),
+  date_from: z.iso.date(),
+  date_to: z.iso.date(),
+  summary: z.object({
+    shift_count: z.number().int().nonnegative(),
+    total_planned_cost: z.string(),
+    total_actual_cost: z.string(),
+    actual_cost_resolved_shift_count: z.number().int().nonnegative(),
+    actual_cost_pending_shift_count: z.number().int().nonnegative(),
+  }),
+  shifts: z.array(studioMemberCompensationShiftSchema),
+});
+
+export type StudioMemberCompensationQuery = z.infer<typeof studioMemberCompensationQuerySchema>;
+export type StudioMemberCompensationBlock = z.infer<typeof studioMemberCompensationBlockSchema>;
+export type StudioMemberCompensationShift = z.infer<typeof studioMemberCompensationShiftSchema>;
+export type StudioMemberCompensationResponse = z.infer<typeof studioMemberCompensationResponseSchema>;

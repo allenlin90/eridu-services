@@ -54,6 +54,7 @@ Controller-layer patterns for `apps/erify_api`. Controllers validate/translate H
 - [ ] Lists paginated and bounded
 - [ ] High-frequency reads use `@ReadBurstThrottle()`
 - [ ] No Prisma queries in controller
+- [ ] `@ZodResponse(...)` schema matches handler return shape — pass the transformer DTO when the handler returns the raw aggregate, or the public response schema (`@eridu/api-types`) when the handler already called `xxxDto.parse(...)`. Lock with a `Reflect.getMetadata('ZOD_SERIALIZER_DTO_OPTIONS', Controller.prototype.method)` assertion in the spec. See [controller-rules.md §`@ZodResponse(...)` must match the controller's return shape](references/controller-rules.md#zodresponse-must-match-the-controllers-return-shape).
 
 ## Open References
 

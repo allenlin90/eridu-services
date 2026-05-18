@@ -372,6 +372,15 @@ describe('studioMembershipService', () => {
         uid: membershipUid,
         studio: { uid: studioUid },
         deletedAt: null,
+        user: { deletedAt: null },
+      }, {
+        user: {
+          select: {
+            uid: true,
+            name: true,
+            email: true,
+          },
+        },
       });
       expect(result).toEqual(mockResult);
     });
