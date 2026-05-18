@@ -1,6 +1,8 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { studioMemberCompensationResponseSchema } from '@eridu/api-types/memberships';
+
 import { StudioMembersController } from './studio-members.controller';
 
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
@@ -177,6 +179,15 @@ describe('studioMembersController', () => {
   });
 
   describe('listMemberCompensations', () => {
+    it('uses the serialized API response schema for response serialization', () => {
+      const serializerSchema = Reflect.getMetadata(
+        'ZOD_SERIALIZER_DTO_OPTIONS',
+        StudioMembersController.prototype.listMemberCompensations,
+      );
+
+      expect(serializerSchema).toBe(studioMemberCompensationResponseSchema);
+    });
+
     it('returns a date-ranged member shift compensation review', async () => {
       const dateFrom = new Date('2026-05-01T00:00:00.000Z');
       const dateTo = new Date('2026-05-31T00:00:00.000Z');

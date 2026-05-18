@@ -13,7 +13,11 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { STUDIO_MEMBER_ERROR, STUDIO_ROLE } from '@eridu/api-types/memberships';
+import {
+  STUDIO_MEMBER_ERROR,
+  STUDIO_ROLE,
+  studioMemberCompensationResponseSchema,
+} from '@eridu/api-types/memberships';
 
 import { BaseStudioController } from '../base-studio.controller';
 
@@ -142,7 +146,7 @@ export class StudioMembersController extends BaseStudioController {
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Get(':memberId/compensations')
   @ReadBurstThrottle()
-  @ZodResponse(studioMemberCompensationDto)
+  @ZodResponse(studioMemberCompensationResponseSchema)
   async listMemberCompensations(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('memberId', new UidValidationPipe(StudioMembershipService.UID_PREFIX, 'Membership')) memberId: string,
