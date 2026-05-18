@@ -253,7 +253,7 @@ function getStudioCreatorItems(
 
   if (hasStudioRouteAccess(role as StudioRole, 'creatorRoster')) {
     creatorItems.push({
-      title: 'Creator Roster',
+      title: 'Creators',
       url: `/studios/${studioId}/creators`,
       icon: Users,
     });

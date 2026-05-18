@@ -245,7 +245,7 @@ describe('useSidebarConfig', () => {
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
-          title: 'Creator Roster',
+          title: 'Creators',
           url: '/studios/studio-1/creators',
         }),
         expect.objectContaining({
