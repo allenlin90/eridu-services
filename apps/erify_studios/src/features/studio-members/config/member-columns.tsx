@@ -15,12 +15,18 @@ export const memberSearchableColumns: SearchableColumn[] = [
 
 type ColumnContext = {
   studioId: string;
-  isAdmin: boolean;
+  canManageMembers: boolean;
+  canReviewCompensations: boolean;
   currentUserEmail: string | undefined;
 };
 
 export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResponse>[] {
-  const { studioId, isAdmin, currentUserEmail } = ctx;
+  const {
+    studioId,
+    canManageMembers,
+    canReviewCompensations,
+    currentUserEmail,
+  } = ctx;
 
   const columns: ColumnDef<StudioMemberResponse>[] = [
     {
@@ -54,18 +60,20 @@ export function getMemberColumns(ctx: ColumnContext): ColumnDef<StudioMemberResp
     },
   ];
 
-  if (isAdmin) {
+  if (canManageMembers || canReviewCompensations) {
     columns.push({
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
         const member = row.original;
-        const isSelf = Boolean(currentUserEmail) && currentUserEmail!.toLowerCase() === member.user_email.toLowerCase();
+        const isSelf = currentUserEmail?.toLowerCase() === member.user_email.toLowerCase();
         return (
           <StudioMemberActionsCell
             member={member}
             studioId={studioId}
             isSelf={isSelf}
+            canManageMembers={canManageMembers}
+            canReviewCompensations={canReviewCompensations}
           />
         );
       },

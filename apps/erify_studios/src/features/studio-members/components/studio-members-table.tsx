@@ -19,7 +19,8 @@ type StudioMembersTableProps = {
   members: StudioMemberResponse[];
   isLoading: boolean;
   isFetching: boolean;
-  isAdmin: boolean;
+  canManageMembers: boolean;
+  canReviewCompensations: boolean;
   currentUserEmail: string | undefined;
   pagination: PaginationState & { total?: number; pageCount?: number };
   onPaginationChange: OnChangeFn<PaginationState>;
@@ -33,7 +34,8 @@ export function StudioMembersTable({
   members,
   isLoading,
   isFetching,
-  isAdmin,
+  canManageMembers,
+  canReviewCompensations,
   currentUserEmail,
   pagination,
   onPaginationChange,
@@ -43,7 +45,12 @@ export function StudioMembersTable({
 }: StudioMembersTableProps) {
   const [addOpen, setAddOpen] = useState(false);
 
-  const columns = getMemberColumns({ studioId, isAdmin, currentUserEmail });
+  const columns = getMemberColumns({
+    studioId,
+    canManageMembers,
+    canReviewCompensations,
+    currentUserEmail,
+  });
 
   return (
     <>
@@ -78,7 +85,7 @@ export function StudioMembersTable({
             >
               <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
-            {isAdmin && (
+            {canManageMembers && (
               <Button size="sm" onClick={() => setAddOpen(true)}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add Member
@@ -101,7 +108,7 @@ export function StudioMembersTable({
         )}
       />
 
-      {isAdmin && (
+      {canManageMembers && (
         <AddMemberDialog
           studioId={studioId}
           open={addOpen}
