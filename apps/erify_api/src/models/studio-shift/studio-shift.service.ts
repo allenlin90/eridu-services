@@ -120,6 +120,12 @@ export class StudioShiftService extends BaseModelService {
     return this.studioShiftRepository.findByStudioAndBlockWindow(params);
   }
 
+  async listMemberCompensationShifts(
+    params: Parameters<StudioShiftRepository['findMemberCompensationRows']>[0],
+  ) {
+    return this.studioShiftRepository.findMemberCompensationRows(params);
+  }
+
   async updateShift(
     studioId: string,
     uid: string,

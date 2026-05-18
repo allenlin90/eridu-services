@@ -6,6 +6,7 @@ import { STUDIO_MEMBER_ERROR, STUDIO_ROLE } from '@eridu/api-types/memberships';
 import type {
   AddStudioMemberPayload,
   CreateStudioMembershipPayload,
+  StudioMemberWithUser,
   UpdateStudioMemberPayload,
   UpdateStudioMembershipPayload,
 } from './schemas/studio-membership.schema';
@@ -311,11 +312,22 @@ export class StudioMembershipService extends BaseModelService {
    * Find a studio member by UID scoped to a specific studio.
    * Returns null if not found or not in the given studio.
    */
-  async findStudioMemberByUidAndStudio(membershipUid: string, studioUid: string) {
+  async findStudioMemberByUidAndStudio(
+    membershipUid: string,
+    studioUid: string,
+  ): Promise<StudioMemberWithUser | null> {
     return this.studioMembershipRepository.findOne({
       uid: membershipUid,
       studio: { uid: studioUid },
       deletedAt: null,
-    });
+    }, {
+      user: {
+        select: {
+          uid: true,
+          name: true,
+          email: true,
+        },
+      },
+    }) as Promise<StudioMemberWithUser | null>;
   }
 }

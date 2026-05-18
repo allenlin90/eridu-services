@@ -316,6 +316,33 @@ export class StudioShiftRepository extends BaseRepository<
     });
   }
 
+  async findMemberCompensationRows(params: {
+    studioId: string;
+    userId: string;
+    dateFrom: Date;
+    dateTo: Date;
+  }): Promise<StudioShiftWithRelations[]> {
+    return this.delegate.findMany({
+      where: {
+        studio: {
+          uid: params.studioId,
+          deletedAt: null,
+        },
+        user: {
+          uid: params.userId,
+          deletedAt: null,
+        },
+        date: {
+          gte: params.dateFrom,
+          lte: params.dateTo,
+        },
+        deletedAt: null,
+      },
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      include: defaultShiftInclude,
+    });
+  }
+
   async findOverlappingShift(params: {
     studioUid: string;
     userUid: string;
