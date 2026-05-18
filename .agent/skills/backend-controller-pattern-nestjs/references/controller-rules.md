@@ -29,6 +29,59 @@ Every endpoint must serialize through Zod decorators so internal data cannot lea
 
 Use response schemas that exclude internal database IDs and sensitive fields. Prefer schemas from `@eridu/api-types` or local model schemas that already implement the API snake_case to service/domain camelCase boundary.
 
+### `@ZodResponse(...)` must match the controller's return shape
+
+`@ZodResponse` (and `@ZodPaginatedResponse`, `@AdminResponse`) wires `ZodSerializerDto` under the hood — the schema you pass is `.parse(...)`'d against whatever the handler returns. Pick the schema based on what the controller actually returns:
+
+| Controller returns | Pass to `@ZodResponse` |
+| --- | --- |
+| Raw service result (camelCase Prisma shape, internal aggregate) — the transform should run at serialization | The transformer DTO (e.g. `studioShiftDto`, `taskDto`) |
+| Already-transformed output (the controller called `xxxDto.parse(...)` itself, or assembled an aggregate from multiple sources and parsed) | The public response schema from `@eridu/api-types` (e.g. `studioMemberCompensationResponseSchema`) — *not* the DTO |
+
+A transformer DTO is the chain `internalSchema.transform(...).pipe(responseSchema)`. Its **input** is the internal shape; its **output** is the response schema. If the controller has already piped a value through the transform, passing the same DTO to `@ZodResponse` makes the serializer try to re-apply `.transform()` on already-transformed output, which either throws a Zod validation error at runtime or silently produces the wrong shape. Pass the output schema instead — the serializer then validates only (no double transform).
+
+The cleanest default is to return the raw aggregate and let `@ZodResponse(dto)` transform once at serialization. Manual `xxxDto.parse(...)` in the controller is fine when the handler has to assemble an aggregate input that no service method returns directly (e.g. `{ member, dateFrom, dateTo, shifts }`); when you do that, the decorator must use the response schema.
+
+```typescript
+// ✅ Pattern A — return raw, transform at serialization
+@Get(':id')
+@ZodResponse(studioShiftDto)
+async show(...) {
+  const shift = await this.studioShiftService.findByUidInStudio(studioId, id);
+  return shift; // raw camelCase Prisma shape
+}
+
+// ✅ Pattern B — manual .parse() in handler, decorate with response schema
+@Get(':memberId/compensations')
+@ZodResponse(studioMemberCompensationResponseSchema) // not the DTO
+async listMemberCompensations(...) {
+  return studioMemberCompensationDto.parse({ member, dateFrom, dateTo, shifts });
+}
+
+// ❌ Anti-pattern — DTO on both sides causes a double transform
+@ZodResponse(studioMemberCompensationDto)
+async listMemberCompensations(...) {
+  return studioMemberCompensationDto.parse({ ... }); // serializer re-runs .transform() on output
+}
+```
+
+#### Lock it with a metadata test
+
+This bug is invisible to TypeScript (both `dto` and the response schema match `ZodType`) and to handler-level unit tests that mock the service. The reliable guard is a one-line metadata assertion in the controller spec:
+
+```typescript
+it('uses the serialized API response schema for response serialization', () => {
+  const serializerSchema = Reflect.getMetadata(
+    'ZOD_SERIALIZER_DTO_OPTIONS',
+    MyController.prototype.myMethod,
+  );
+
+  expect(serializerSchema).toBe(myExpectedResponseSchema);
+});
+```
+
+Add one of these per `@ZodResponse` decorated handler, asserting against the *schema you intended to declare*. The check runs in milliseconds and pins the contract.
+
 ## OpenAPI Documentation Sync
 
 Controller OpenAPI text is part of the public API contract. When changing route behavior, side effects, validation, status transitions, throttling, or response shape, update the adjacent documentation decorators in the same change:
