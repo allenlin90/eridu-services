@@ -1285,6 +1285,41 @@ describe('showOrchestrationService', () => {
         agreedRate: new Prisma.Decimal('175.00'),
       }));
     });
+
+    it('rejects a partial update whose merged snapshot has FIXED with a leftover commission rate', async () => {
+      showService.getShowById.mockResolvedValue({
+        ...mockShow,
+        showCreators: [
+          {
+            id: 11n,
+            uid: 'show_mc_1',
+            note: 'Old note',
+            agreedRate: new Prisma.Decimal('100.00'),
+            compensationType: 'COMMISSION',
+            commissionRate: new Prisma.Decimal('25.00'),
+            metadata: {},
+            creator: {
+              uid: 'creator_1',
+              name: 'Alice',
+              aliasName: 'Ali',
+            },
+          },
+        ],
+      } as any);
+
+      await expect(
+        service.updateCreatorForShow(
+          mockShow.uid,
+          'show_mc_1',
+          {
+            compensationType: 'FIXED',
+          },
+          'actor_123',
+        ),
+      ).rejects.toThrow(/commission_rate must be null when compensation_type is FIXED/);
+
+      expect(showCreatorRepository.restoreAndUpdateAssignment).not.toHaveBeenCalled();
+    });
   });
 
   describe('bulkAssignCreatorsToShow compensation item boundary', () => {

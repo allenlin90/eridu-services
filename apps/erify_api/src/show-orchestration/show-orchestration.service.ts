@@ -460,6 +460,7 @@ export class ShowOrchestrationService {
       this.mergeMetadata(existing.metadata, payload.metadata),
       existing,
     );
+    this.assertCreatorSnapshotInvariants(snapshot);
     const changes = this.buildCreatorSnapshotChanges(existing, snapshot);
     const metadata = appendSnapshotAudit(
       snapshot.metadata,
@@ -977,6 +978,19 @@ export class ShowOrchestrationService {
       changes.push({ field: 'commission_rate', old_value: current.commissionRate, new_value: next.commissionRate });
     }
     return changes;
+  }
+
+  private assertCreatorSnapshotInvariants(snapshot: ResolvedCreatorSnapshot): void {
+    if (
+      (snapshot.compensationType === CREATOR_COMPENSATION_TYPE.FIXED || snapshot.compensationType === null)
+      && snapshot.commissionRate !== null
+    ) {
+      throw HttpError.badRequest(
+        snapshot.compensationType === null
+          ? 'commission_rate must be null when compensation_type is null'
+          : 'commission_rate must be null when compensation_type is FIXED',
+      );
+    }
   }
 
   private isCreatorSnapshotMissing(

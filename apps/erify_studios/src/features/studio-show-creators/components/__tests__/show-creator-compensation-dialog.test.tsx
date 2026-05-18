@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import { Children, isValidElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ShowCreatorCompensationDialog } from '../show-creator-compensation-dialog';
@@ -52,11 +52,20 @@ vi.mock('@eridu/ui', () => ({
     children: ReactNode;
     value?: string;
     onValueChange?: (value: string) => void;
-  }) => (
-    <select aria-label="item-type" value={value} onChange={(event) => onValueChange?.(event.target.value)}>
-      {children}
-    </select>
-  ),
+  }) => {
+    let triggerId: string | undefined;
+    // eslint-disable-next-line react/no-children-for-each -- test-only mock; reading id off SelectTrigger child
+    Children.forEach(children, (child) => {
+      if (isValidElement(child) && (child.props as { id?: string }).id) {
+        triggerId = (child.props as { id?: string }).id;
+      }
+    });
+    return (
+      <select id={triggerId} value={value} onChange={(event) => onValueChange?.(event.target.value)}>
+        {children}
+      </select>
+    );
+  },
   SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
   SelectItem: ({ children, value }: { children: ReactNode; value: string }) => <option value={value}>{children}</option>,
   SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -276,7 +285,7 @@ describe('showCreatorCompensationDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit compensation item Launch bonus' }));
 
-    expect(screen.getAllByLabelText('item-type')[1]).toHaveValue('OTHER');
+    expect(screen.getByLabelText('Item Type')).toHaveValue('OTHER');
   });
 
   it('normalizes long-precision amounts via string padding (no binary float drift)', async () => {
