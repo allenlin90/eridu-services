@@ -1,25 +1,10 @@
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
 import { Link } from '@tanstack/react-router';
-import { AlertCircle, ChevronDown, ChevronsUpDown, Copy, Plus, Trash2 } from 'lucide-react';
-import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { get, set } from 'idb-keyval';
+import { AlertCircle, ChevronsUpDown, Plus } from 'lucide-react';
+import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { createTaskTemplateFieldId, getSchemaEngine, type SharedField } from '@eridu/api-types/task-management';
+import type { SharedField } from '@eridu/api-types/task-management';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,14 +26,24 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  useIsMobile,
 } from '@eridu/ui';
 
 import { LivePreview } from './live-preview';
-import type { BuilderTemplateSchemaType, FieldItem, LoopMetadata, TemplateSchemaType } from './schema';
-import { SortableFieldList } from './sortable-field-list';
+import type { BuilderTemplateSchemaType, FieldItem, TemplateSchemaType } from './schema';
+import { TaskTemplateCardsView } from './task-template-cards-view';
+import {
+  buildLoopMetadataFromTemplate,
+  createNextLoop,
+  createTextFieldForTemplate,
+  createUniqueSharedFieldKey,
+  omitLoopsFromMetadata,
+} from './task-template-helpers';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
+
+const TaskTemplateLoopGrid = lazy(() => import('./task-template-loop-grid'));
 
 export type TaskTemplateBuilderProps = {
   template: BuilderTemplateSchemaType;
@@ -61,125 +56,7 @@ export type TaskTemplateBuilderProps = {
   studioId?: string;
 };
 
-const DEFAULT_LOOP_DURATION_MIN = 15;
 const EMPTY_SHARED_FIELDS: SharedField[] = [];
-
-function buildLoopMetadataFromTemplate(template: BuilderTemplateSchemaType): LoopMetadata[] {
-  const metadataLoops = template.metadata?.loops;
-  const normalizedFromMetadata = Array.isArray(metadataLoops)
-    ? metadataLoops
-        .filter((loop): loop is LoopMetadata => !!loop?.id && !!loop?.name)
-        .map((loop) => ({
-          id: loop.id,
-          name: loop.name,
-          durationMin: loop.durationMin > 0 ? loop.durationMin : DEFAULT_LOOP_DURATION_MIN,
-        }))
-    : [];
-
-  const knownIds = new Set(normalizedFromMetadata.map((loop) => loop.id));
-  const fallbackGroups = Array.from(new Set(template.items.map((item) => item.group).filter((group): group is string => !!group)));
-
-  for (const group of fallbackGroups) {
-    if (!knownIds.has(group)) {
-      normalizedFromMetadata.push({
-        id: group,
-        name: group,
-        durationMin: DEFAULT_LOOP_DURATION_MIN,
-      });
-    }
-  }
-
-  return normalizedFromMetadata;
-}
-
-function omitLoopsFromMetadata(metadata: BuilderTemplateSchemaType['metadata']): BuilderTemplateSchemaType['metadata'] | undefined {
-  if (!metadata) {
-    return undefined;
-  }
-
-  const { loops: _ignored, ...rest } = metadata;
-  return Object.keys(rest).length > 0 ? rest : undefined;
-}
-
-function createNextLoop(existingLoops: LoopMetadata[]): LoopMetadata {
-  const existingIds = new Set(existingLoops.map((loop) => loop.id));
-  let ordinal = existingLoops.length + 1;
-  let id = `l${ordinal}`;
-
-  while (existingIds.has(id)) {
-    ordinal += 1;
-    id = `l${ordinal}`;
-  }
-
-  return {
-    id,
-    name: `Loop ${ordinal}`,
-    durationMin: DEFAULT_LOOP_DURATION_MIN,
-  };
-}
-
-function createUniqueCopiedKey(originalKey: string, usedKeys: Set<string>): string {
-  const baseWithCopy = originalKey.endsWith('_copy') ? originalKey : `${originalKey}_copy`;
-  const normalizedBase = baseWithCopy.slice(0, 50);
-
-  let candidate = normalizedBase;
-  let counter = 2;
-  while (usedKeys.has(candidate)) {
-    const suffix = `_${counter}`;
-    candidate = `${normalizedBase.slice(0, 50 - suffix.length)}${suffix}`;
-    counter += 1;
-  }
-
-  usedKeys.add(candidate);
-  return candidate;
-}
-
-function createUniqueSharedFieldKey(
-  sharedKey: string,
-  usedKeys: Set<string>,
-  targetLoopId?: string,
-): string {
-  // Always prefer the canonical shared key first — even in moderation mode.
-  // Only fall back to a loop-scoped variant when the canonical key is already taken.
-  if (!usedKeys.has(sharedKey)) {
-    usedKeys.add(sharedKey);
-    return sharedKey;
-  }
-
-  const preferredBase = targetLoopId ? `${sharedKey}_${targetLoopId}` : sharedKey;
-  const normalizedBase = preferredBase.slice(0, 50);
-
-  if (!usedKeys.has(normalizedBase)) {
-    usedKeys.add(normalizedBase);
-    return normalizedBase;
-  }
-
-  let counter = 2;
-  let candidate = normalizedBase;
-  while (usedKeys.has(candidate)) {
-    const suffix = `_${counter}`;
-    candidate = `${normalizedBase.slice(0, 50 - suffix.length)}${suffix}`;
-    counter += 1;
-  }
-  usedKeys.add(candidate);
-  return candidate;
-}
-
-function createTextFieldForTemplate(
-  template: BuilderTemplateSchemaType,
-  group?: string,
-): FieldItem {
-  const engine = getSchemaEngine(template);
-
-  return {
-    id: engine === 'task_template_v2' ? createTaskTemplateFieldId() : crypto.randomUUID(),
-    key: `field_${Date.now()}`,
-    type: 'text',
-    label: 'New Question',
-    required: true,
-    ...(group ? { group } : {}),
-  };
-}
 
 function formatTotalLoopDuration(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
@@ -208,10 +85,25 @@ export function TaskTemplateBuilder({
   const [isHeaderOpen, setIsHeaderOpen] = useState(true);
   const [pendingFocusLoopId, setPendingFocusLoopId] = useState<string | null>(null);
   const [pendingScrollFieldId, setPendingScrollFieldId] = useState<string | null>(null);
-  const [collapsedLoops, setCollapsedLoops] = useState<Record<string, boolean>>({});
   const [selectedSharedFieldKey, setSelectedSharedFieldKey] = useState<string>('');
   const [selectedSharedFieldLoopId, setSelectedSharedFieldLoopId] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'cards' | 'grid'>('cards');
   const { hasAccess } = useStudioAccess(studioId ?? '');
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    get('taskTemplateBuilderView').then((val) => {
+      if (val === 'grid' || val === 'cards')
+        setViewMode(val);
+    });
+  }, []);
+
+  const handleViewModeChange = (mode: 'cards' | 'grid') => {
+    setViewMode(mode);
+    set('taskTemplateBuilderView', mode).catch(console.error);
+  };
+
+  const effectiveViewMode = isMobile ? 'cards' : viewMode;
 
   const isModerationMode = template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0;
   const moderationLoops = useMemo(() => {
@@ -226,20 +118,6 @@ export function TaskTemplateBuilder({
     [moderationLoops],
   );
   const canManageSharedFields = studioId ? hasAccess('sharedFields') : false;
-
-  const emptyLoopItems: FieldItem[] = useMemo(() => [], []);
-  const loopItemsById = useMemo(() => {
-    const record: Record<string, FieldItem[]> = {};
-    for (const item of template.items) {
-      if (item.group) {
-        if (!record[item.group]) {
-          record[item.group] = [];
-        }
-        record[item.group].push(item);
-      }
-    }
-    return record;
-  }, [template.items]);
 
   const [localName, setLocalName] = useState(template.name);
   const [localDescription, setLocalDescription] = useState(template.description || '');
@@ -314,58 +192,9 @@ export function TaskTemplateBuilder({
 
   // Keep latest props in a ref to avoid re-creating callbacks
   const propsRef = useRef({ template, onChange });
-  const loopCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   useEffect(() => {
     propsRef.current = { template, onChange };
   }, [template, onChange]);
-
-  useEffect(() => {
-    if (!pendingFocusLoopId) {
-      return;
-    }
-
-    const loopExists = moderationLoops.some((loop) => loop.id === pendingFocusLoopId);
-    if (!loopExists) {
-      return;
-    }
-
-    const rafId = requestAnimationFrame(() => {
-      loopCardRefs.current[pendingFocusLoopId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setPendingFocusLoopId(null);
-    });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, [moderationLoops, pendingFocusLoopId]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = currentTemplate.items.findIndex((item) => item.id === active.id);
-      const newIndex = currentTemplate.items.findIndex((item) => item.id === over.id);
-
-      currentOnChange({
-        ...currentTemplate,
-        items: arrayMove(currentTemplate.items, oldIndex, newIndex),
-      });
-    }
-  }, []);
 
   const addField = useCallback(() => {
     const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
@@ -375,22 +204,6 @@ export function TaskTemplateBuilder({
     currentOnChange({
       ...currentTemplate,
       items: [...currentTemplate.items, newField],
-    });
-  }, []);
-
-  const updateField = useCallback((id: string, updates: Partial<FieldItem>) => {
-    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-    currentOnChange({
-      ...currentTemplate,
-      items: currentTemplate.items.map((item) => (item.id === id ? { ...item, ...updates } : item)),
-    });
-  }, []);
-
-  const removeField = useCallback((id: string) => {
-    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-    currentOnChange({
-      ...currentTemplate,
-      items: currentTemplate.items.filter((item) => item.id !== id),
     });
   }, []);
 
@@ -596,6 +409,27 @@ export function TaskTemplateBuilder({
                   </SelectContent>
                 </Select>
               </div>
+              {isModerationMode && (
+                <div className="grid gap-2 hidden lg:grid">
+                  <Label>Editor View</Label>
+                  <div className="inline-flex shrink-0 rounded-md border bg-background p-1 w-fit">
+                    <Button
+                      variant={effectiveViewMode === 'cards' ? 'default' : 'ghost'}
+                      onClick={() => handleViewModeChange('cards')}
+                      size="sm"
+                    >
+                      Cards
+                    </Button>
+                    <Button
+                      variant={effectiveViewMode === 'grid' ? 'default' : 'ghost'}
+                      onClick={() => handleViewModeChange('grid')}
+                      size="sm"
+                    >
+                      Grid
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CollapsibleContent>
           </Collapsible>
         </div>
@@ -741,349 +575,28 @@ export function TaskTemplateBuilder({
           : null}
 
         <div className="flex-1 min-h-0 overflow-visible lg:overflow-y-auto lg:pr-2">
-          {isModerationMode
+          {isModerationMode && effectiveViewMode === 'grid'
             ? (
-                <div className="space-y-6 pb-6">
-                  {moderationLoops.map((loop, loopIndex) => {
-                    const loopItems = loopItemsById[loop.id] || emptyLoopItems;
-                    const isCollapsed = collapsedLoops[loop.id] ?? false;
-                    return (
-                      <div
-                        key={loop.id}
-                        ref={(node) => {
-                          loopCardRefs.current[loop.id] = node;
-                        }}
-                        className="border rounded-md p-4 space-y-4 bg-muted/10 transition-all"
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <span className="text-xs font-medium text-muted-foreground">
-                                Loop
-                                {' '}
-                                {loopIndex + 1}
-                              </span>
-                              <span className="inline-flex h-5 items-center rounded-full bg-background px-2 text-[11px] text-muted-foreground">
-                                {loopItems.length}
-                                {' '}
-                                items
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title={isCollapsed ? 'Expand loop' : 'Collapse loop'}
-                                aria-label={isCollapsed ? 'Expand loop' : 'Collapse loop'}
-                                onClick={() => {
-                                  setCollapsedLoops((prev) => ({
-                                    ...prev,
-                                    [loop.id]: !(prev[loop.id] ?? false),
-                                  }));
-                                }}
-                              >
-                                <ChevronDown className={`h-4 w-4 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
-                                <span className="sr-only">{isCollapsed ? 'Expand Loop' : 'Collapse Loop'}</span>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground"
-                                title="Clone loop"
-                                aria-label="Clone loop"
-                                onClick={() => {
-                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                  const engine = getSchemaEngine(currentTemplate);
-                                  const loopItems = currentTemplate.items.filter((item) => item.group === loop.id);
-
-                                  if (engine === 'task_template_v1' && loopItems.some((item) => 'standard' in item && item.standard)) {
-                                    toast.error(
-                                      'Shared fields can\'t be cloned on this template version. Add a new loop and use the shared field picker instead.',
-                                    );
-                                    return;
-                                  }
-
-                                  const nextLoopBase = createNextLoop(moderationLoops);
-                                  const clonedLoop: LoopMetadata = {
-                                    ...nextLoopBase,
-                                    name: `${loop.name} (Copy)`,
-                                    durationMin: loop.durationMin,
-                                  };
-
-                                  const nextLoops = [...moderationLoops, clonedLoop];
-                                  const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
-                                  // When cloning a v2 loop, suffixed legacy values like
-                                  // `shared_field_key: "ads_cost_l12"` would project the cloned
-                                  // loop to a broken column ("ads_cost_l12_l13"). Strip the
-                                  // source-loop suffix so the canonical base is what gets
-                                  // re-grouped — descriptor logic then attaches the new loop
-                                  // suffix correctly.
-                                  const stripSourceLoopSuffix = (value: string | undefined, sourceGroup: string | undefined): string | undefined => {
-                                    if (!value || !sourceGroup) {
-                                      return value;
-                                    }
-                                    const suffix = `_${sourceGroup}`;
-                                    return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
-                                  };
-                                  const clonedItems = loopItems.map((item) => {
-                                    if (engine === 'task_template_v2') {
-                                      const cloned = structuredClone(item);
-                                      cloned.id = createTaskTemplateFieldId();
-                                      cloned.key = stripSourceLoopSuffix(cloned.key, item.group) ?? cloned.key;
-                                      const sourceSharedKey = (cloned as { shared_field_key?: string }).shared_field_key;
-                                      if (sourceSharedKey) {
-                                        (cloned as { shared_field_key?: string }).shared_field_key = stripSourceLoopSuffix(sourceSharedKey, item.group);
-                                      }
-                                      cloned.group = clonedLoop.id;
-                                      return cloned;
-                                    }
-                                    return {
-                                      ...structuredClone(item),
-                                      id: crypto.randomUUID(),
-                                      key: createUniqueCopiedKey(item.key, usedKeys),
-                                      group: clonedLoop.id,
-                                    };
-                                  });
-
-                                  currentOnChange({
-                                    ...currentTemplate,
-                                    metadata: {
-                                      ...(currentTemplate.metadata ?? {}),
-                                      loops: nextLoops,
-                                    },
-                                    items: [...currentTemplate.items, ...clonedItems],
-                                  });
-                                  setCollapsedLoops((prev) => ({ ...prev, [clonedLoop.id]: false }));
-                                }}
-                              >
-                                <Copy className="h-4 w-4" />
-                                <span className="sr-only">Clone Loop</span>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                title="Remove loop"
-                                aria-label="Remove loop"
-                                onClick={() => {
-                                  const newLoops = [...moderationLoops];
-                                  newLoops.splice(loopIndex, 1);
-
-                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                  setCollapsedLoops((prev) => {
-                                    const next = { ...prev };
-                                    delete next[loop.id];
-                                    return next;
-                                  });
-                                  currentOnChange({
-                                    ...currentTemplate,
-                                    metadata: newLoops.length > 0
-                                      ? {
-                                          ...(currentTemplate.metadata ?? {}),
-                                          loops: newLoops,
-                                        }
-                                      : omitLoopsFromMetadata(currentTemplate.metadata),
-                                    items: currentTemplate.items.filter((item) => item.group !== loop.id),
-                                  });
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Remove Loop</span>
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="flex min-w-0 flex-wrap items-start gap-3">
-                            <div className="min-w-0 flex-1 basis-[220px] space-y-1">
-                              <label className="text-[11px] font-medium text-muted-foreground leading-none">Loop Name</label>
-                              <Input
-                                value={loop.name}
-                                onChange={(e) => {
-                                  const newName = e.target.value;
-                                  const nextLoops = moderationLoops.map((item, i) => (i === loopIndex ? { ...item, name: newName } : item));
-
-                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                  currentOnChange({
-                                    ...currentTemplate,
-                                    metadata: {
-                                      ...(currentTemplate.metadata ?? {}),
-                                      loops: nextLoops,
-                                    },
-                                  });
-                                }}
-                                className="font-semibold"
-                                placeholder="Loop Name"
-                              />
-                            </div>
-                            <div className="w-[130px] space-y-1">
-                              <label className="text-[11px] font-medium text-muted-foreground leading-none">Duration (mins)</label>
-                              <div className="relative">
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  step={1}
-                                  value={loop.durationMin}
-                                  onChange={(e) => {
-                                    const parsed = Number.parseInt(e.target.value, 10);
-                                    const durationMin = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_LOOP_DURATION_MIN;
-                                    const nextLoops = moderationLoops.map((item, i) => (
-                                      i === loopIndex ? { ...item, durationMin } : item
-                                    ));
-
-                                    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                    currentOnChange({
-                                      ...currentTemplate,
-                                      metadata: {
-                                        ...(currentTemplate.metadata ?? {}),
-                                        loops: nextLoops,
-                                      },
-                                    });
-                                  }}
-                                  aria-label="Loop duration in minutes"
-                                  placeholder="15"
-                                  title="How many minutes this loop runs"
-                                  className="pr-10"
-                                />
-                                <span className="pointer-events-none absolute inset-y-0 right-3 inline-flex items-center text-xs text-muted-foreground">
-                                  min
-                                </span>
-                              </div>
-                            </div>
-                            <div className="w-[140px] space-y-1">
-                              <label className="text-[11px] font-medium text-muted-foreground leading-none">Position</label>
-                              <Select
-                                value={String(loopIndex + 1)}
-                                onValueChange={(value) => {
-                                  const targetPosition = Number.parseInt(value, 10);
-                                  const targetIndex = Number.isFinite(targetPosition) ? targetPosition - 1 : loopIndex;
-
-                                  if (targetIndex === loopIndex || targetIndex < 0 || targetIndex >= moderationLoops.length) {
-                                    return;
-                                  }
-
-                                  const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                  const nextLoops = arrayMove(moderationLoops, loopIndex, targetIndex);
-                                  currentOnChange({
-                                    ...currentTemplate,
-                                    metadata: {
-                                      ...(currentTemplate.metadata ?? {}),
-                                      loops: nextLoops,
-                                    },
-                                  });
-                                }}
-                              >
-                                <SelectTrigger aria-label="Loop position">
-                                  <SelectValue placeholder="Position" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {moderationLoops.map((_, index) => (
-                                    <SelectItem key={`${loop.id}-position-${index + 1}`} value={String(index + 1)}>
-                                      {index + 1}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        </div>
-
-                        {!isCollapsed && (
-                          <>
-                            {loopItems.length === 0 && (
-                              <div className="rounded-md border border-dashed bg-background/70 p-3 text-xs text-muted-foreground flex items-center justify-between gap-3">
-                                <span>This loop is empty. Add at least one field to make it actionable.</span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs shrink-0"
-                                  onClick={() => {
-                                    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                    const newField = createTextFieldForTemplate(currentTemplate, loop.id);
-                                    currentOnChange({
-                                      ...currentTemplate,
-                                      items: [...currentTemplate.items, newField],
-                                    });
-                                  }}
-                                >
-                                  Add First Field
-                                </Button>
-                              </div>
-                            )}
-
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                              <SortableContext items={loopItems} strategy={verticalListSortingStrategy}>
-                                <SortableFieldList
-                                  items={loopItems}
-                                  templateItems={template.items}
-                                  onUpdate={updateField}
-                                  onRemove={removeField}
-                                  errors={errors}
-                                />
-                              </SortableContext>
-                            </DndContext>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full border-dashed"
-                              onClick={() => {
-                                const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                const newField = createTextFieldForTemplate(currentTemplate, loop.id);
-                                currentOnChange({
-                                  ...currentTemplate,
-                                  items: [...currentTemplate.items, newField],
-                                });
-                              }}
-                            >
-                              <Plus className="mr-2 h-4 w-4" />
-                              {' '}
-                              Add Field to
-                              {' '}
-                              Loop
-                              {' '}
-                              {loopIndex + 1}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {!moderationLoops.length && (
-                    <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-                      <p>No loops yet. Click "Add Loop" to start building.</p>
-                    </div>
-                  )}
-                </div>
+                <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading grid...</div>}>
+                  <TaskTemplateLoopGrid
+                    template={template}
+                    onChange={(newTemplate) => propsRef.current.onChange(newTemplate)}
+                    errors={errors}
+                  />
+                </Suspense>
               )
             : (
-                <>
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext items={template.items} strategy={verticalListSortingStrategy}>
-                      <SortableFieldList
-                        items={template.items}
-                        templateItems={template.items}
-                        onUpdate={updateField}
-                        onRemove={removeField}
-                        errors={errors}
-                        scrollToItemId={pendingScrollFieldId}
-                        onScrolledToItem={() => {
-                          setPendingScrollFieldId(null);
-                        }}
-                      />
-                    </SortableContext>
-                  </DndContext>
-
-                  {!template.items.length && (
-                    <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-                      <p>No fields yet. Click "Add Field" to start building your template.</p>
-                    </div>
-                  )}
-                </>
+                <TaskTemplateCardsView
+                  template={template}
+                  onChange={(newTemplate) => propsRef.current.onChange(newTemplate)}
+                  errors={errors}
+                  isModerationMode={isModerationMode}
+                  moderationLoops={moderationLoops}
+                  pendingFocusLoopId={pendingFocusLoopId}
+                  onScrolledToLoop={() => setPendingFocusLoopId(null)}
+                  pendingScrollFieldId={pendingScrollFieldId}
+                  onScrolledToField={() => setPendingScrollFieldId(null)}
+                />
               )}
         </div>
         <div className="flex items-center justify-between pt-4 border-t mt-4">
