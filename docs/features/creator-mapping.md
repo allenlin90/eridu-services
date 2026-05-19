@@ -49,6 +49,10 @@ The bulk-assign endpoint **no longer carries** these compensation fields (Task 5
 
 For `HYBRID` and `COMMISSION` assignments the compensation summary returns `total_amount: null` with `unresolved_reason: COMMISSION_REVENUE_NOT_AVAILABLE` and counts them in `unresolved_count`, since the total cannot be computed without future revenue input. Rows missing snapshot fields surface as `AGREEMENT_SNAPSHOT_MISSING`.
 
+### Show context on per-show compensation review
+
+The per-show creator-mapping detail route (`/studios/:studioId/creator-mapping/:showId`) shows the operational show context above the creator compensation table: client, platforms, scheduled and actual times, studio, room, type, standard, status, and show UID. This keeps admin/manager review anchored to the show being costed while the table continues to render backend-calculated creator compensation totals.
+
 ## Key Product Decisions
 
 - Creators are **not** studio-scoped — a creator can work across multiple studios.
@@ -70,6 +74,7 @@ For `HYBRID` and `COMMISSION` assignments the compensation summary returns `tota
 - [x] Bulk assignment dialog stays open when errors remain that require user action (PR #32)
 - [x] Bulk assignment is assignment-only — no rate/commission/compensation-item fields in payload (PR #64)
 - [x] Per-show creator mapping renders backend-calculated compensation totals and manages `SHOW_CREATOR` line items by assignment UID (PR #64)
+- [x] Per-show creator mapping shows client, platform, timing, and show classification context next to creator compensation review (PR 11.5)
 - [x] `HYBRID` and `COMMISSION` rows return `total_amount: null` with `COMMISSION_REVENUE_NOT_AVAILABLE` until revenue is available (PR #64)
 
 ## Forward References
