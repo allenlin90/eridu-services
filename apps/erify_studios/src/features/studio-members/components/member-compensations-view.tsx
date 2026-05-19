@@ -31,6 +31,14 @@ export type MemberCompensationsViewProps = {
   isError: boolean;
   onDateRangeChange: (range: DateRange | undefined) => void;
   onRefresh: () => void;
+  /** Page title — defaults to the manager surface label. */
+  title?: string;
+  /** Page description override — defaults to data.user_name. */
+  description?: string;
+  /** Optional override for the back-link rendered in the header actions slot. */
+  backLink?: { to: string; params: Record<string, string>; label: string };
+  /** Override for the refresh button's aria-label. */
+  refreshAriaLabel?: string;
 };
 
 function formatMoney(value: string | null) {
@@ -54,20 +62,29 @@ export function MemberCompensationsView({
   isError,
   onDateRangeChange,
   onRefresh,
+  title,
+  description,
+  backLink,
+  refreshAriaLabel,
 }: MemberCompensationsViewProps) {
   const summary = data?.summary;
   const shifts = data?.shifts ?? [];
   const pendingCount = summary?.actual_cost_pending_shift_count ?? 0;
+  const resolvedBackLink = backLink ?? {
+    to: '/studios/$studioId/members',
+    params: { studioId },
+    label: 'Members',
+  };
 
   return (
     <PageLayout
-      title="Member Compensations"
-      description={data?.user_name ?? 'Review shift compensation by date range.'}
+      title={title ?? 'Member Compensations'}
+      description={description ?? data?.user_name ?? 'Review shift compensation by date range.'}
       actions={(
         <Button variant="outline" size="sm" asChild>
-          <Link to="/studios/$studioId/members" params={{ studioId }}>
+          <Link to={resolvedBackLink.to} params={resolvedBackLink.params}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Members
+            {resolvedBackLink.label}
           </Link>
         </Button>
       )}
@@ -81,7 +98,7 @@ export function MemberCompensationsView({
             className="h-9 w-9"
             onClick={onRefresh}
             disabled={isFetching}
-            aria-label="Refresh member compensations"
+            aria-label={refreshAriaLabel ?? 'Refresh member compensations'}
           >
             <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
           </Button>
