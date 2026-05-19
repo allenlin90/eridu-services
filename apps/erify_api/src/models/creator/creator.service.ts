@@ -60,6 +60,10 @@ export class CreatorService extends BaseModelService {
     return this.creatorRepository.findByUserIdentifier(identifier);
   }
 
+  async findByUserUid(userUid: string): Promise<Creator | null> {
+    return this.creatorRepository.findByUserUid(userUid);
+  }
+
   /**
    * Lists creators with pagination and filtering.
    */
