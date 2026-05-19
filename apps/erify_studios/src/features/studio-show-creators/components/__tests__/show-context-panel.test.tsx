@@ -49,8 +49,10 @@ describe('showContextPanel', () => {
     expect(screen.getByText('TikTok')).toBeInTheDocument();
     expect(screen.getByText('Studio 1')).toBeInTheDocument();
     expect(screen.getByText('Room 1')).toBeInTheDocument();
-    expect(screen.getAllByText('Live').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Standard').length).toBeGreaterThan(0);
+    expect(screen.getByText('Confirmed')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByText('Standard')).toBeInTheDocument();
+    expect(screen.getByText('Show UID')).toBeInTheDocument();
     expect(screen.getByText('show_1')).toBeInTheDocument();
   });
 
@@ -67,5 +69,18 @@ describe('showContextPanel', () => {
 
     expect(screen.getByText('No platform')).toBeInTheDocument();
     expect(screen.getByText('Not recorded')).toBeInTheDocument();
+  });
+
+  it('marks actuals partially recorded when only one timestamp exists', () => {
+    render(
+      <ShowContextPanel
+        show={createShow({
+          actual_start_time: '2026-03-15T10:15:00.000Z',
+          actual_end_time: null,
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Partially recorded')).toBeInTheDocument();
   });
 });

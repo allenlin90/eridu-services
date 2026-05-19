@@ -1,4 +1,5 @@
 import { format, isSameDay } from 'date-fns';
+import { useId } from 'react';
 
 import { Badge } from '@eridu/ui';
 
@@ -41,31 +42,21 @@ function buildDetailItems(show: StudioShowDetail): DetailItem[] {
     { label: 'Actuals', value: formatActualsRange(show) },
     { label: 'Studio', value: show.studio_name ?? '-' },
     { label: 'Room', value: show.studio_room_name ?? '-' },
-    { label: 'Type', value: show.show_type_name ?? '-' },
-    { label: 'Standard', value: show.show_standard_name ?? '-' },
-    { label: 'Show ID', value: show.id },
+    { label: 'Show UID', value: show.id },
   ];
 }
 
 export function ShowContextPanel({ show }: ShowContextPanelProps) {
+  const headingId = useId();
   const detailItems = buildDetailItems(show);
-  const platformNames = show.platforms.map((platform) => platform.name).filter(Boolean);
+  const platformNames = show.platforms.map((platform) => platform.name);
 
   return (
-    <section className="rounded-md border bg-background p-3 sm:p-4" aria-labelledby="show-context-heading">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 id="show-context-heading" className="text-sm font-semibold">
-            Show context
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {show.client_name ?? 'No client'}
-            {' '}
-            -
-            {' '}
-            {formatDateTimeRange(show.start_time, show.end_time)}
-          </p>
-        </div>
+    <section className="rounded-md border bg-background p-3 sm:p-4" aria-labelledby={headingId}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 id={headingId} className="text-sm font-semibold">
+          Show context
+        </h2>
 
         <div className="flex flex-wrap items-center gap-2">
           {show.show_status_name && (
