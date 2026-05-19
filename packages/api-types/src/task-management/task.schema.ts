@@ -337,6 +337,7 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
     search: z.string().optional(),
     schedule_name: z.string().optional(),
     creator_name: z.string().optional(),
+    client_id: z.string().optional(),
     client_name: z.string().optional(),
     show_type_name: z.string().optional(),
     show_standard_name: z.string().optional(),
