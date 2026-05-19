@@ -145,11 +145,4 @@ export const creatorMappingShowColumns: ColumnDef<StudioShow>[] = [
     cell: () => null,
     meta: { className: 'hidden' },
   },
-  {
-    id: 'client_id',
-    accessorFn: (row) => row.client_id ?? '',
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
 ];
