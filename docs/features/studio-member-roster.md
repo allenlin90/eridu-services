@@ -25,7 +25,7 @@ Studio operators previously depended on system-admin-only membership tooling for
 - Self-protection rules: admins cannot demote themselves and cannot remove their own membership from the roster surface.
 - Non-negative `baseHourlyRate` management, including zero-value support.
 - Soft-delete member removal so historical records remain intact while route access is revoked.
-- Date-ranged member compensation review at `/studios/$studioId/members/$memberId/compensations`, backed by `GET /studios/:studioId/members/:memberId/compensations`, showing shift planned cost, actual cost, and pending actuals counts from existing shift cost semantics.
+- Date-ranged member compensation review at `/studios/$studioId/members/$memberId/compensations`, backed by `GET /studios/:studioId/members/:memberId/compensations`, showing shift planned cost, actual cost, and pending actuals counts from existing shift cost semantics. Each shift row links back to `/studios/$studioId/shifts` with the member and shift date filters applied for operational drill-in. The drill-in is admin/manager-only — the shared `MemberCompensationsView` exposes `enableShiftDrillIn` (default `false`) and the personal `/studios/$studioId/my-compensations` route leaves it off so members never see a link to the admin-only shifts surface.
 
 ## Key Product Decisions
 
@@ -46,6 +46,7 @@ Studio operators previously depended on system-admin-only membership tooling for
 - [x] Role guards are enforced on all `/studios/:studioId/members` routes via `@StudioProtected`.
 - [x] Historical records are preserved by soft delete and non-retroactive rate management.
 - [x] Admin and Manager can review one member's date-ranged shift compensation on `/studios/$studioId/members/$memberId/compensations`.
+- [x] Member compensation rows provide a filtered shift-operations drill-in for the selected shift date and user on the admin/manager `/studios/$studioId/members/$memberId/compensations` route, and the drill-in is hidden on the member self-view `/studios/$studioId/my-compensations` to avoid pointing at the admin-only shifts route.
 - [x] Compensation review exposes membership/user UIDs only; no database IDs are returned.
 - [x] Compensation totals reuse the locked shift planned/actual cost semantics, including pending actual-cost counts for shifts without complete actuals. Cancelled shifts are surfaced in the per-shift list (status `CANCELLED`, `actuals_status: 'cancelled'`, zeroed costs) but excluded from cost totals and resolved/pending shift counts since no compensation is earned.
 

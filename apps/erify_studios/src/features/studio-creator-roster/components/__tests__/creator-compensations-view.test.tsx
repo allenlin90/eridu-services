@@ -10,7 +10,11 @@ import { CreatorCompensationsView } from '../creator-compensations-view';
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to, params, ...props }: any) => (
     <a
-      href={typeof to === 'string' ? to.replace('$studioId', params?.studioId ?? '') : '#'}
+      href={typeof to === 'string'
+        ? to
+            .replace('$studioId', params?.studioId ?? '')
+            .replace('$showId', params?.showId ?? '')
+        : '#'}
       data-testid="mock-link"
       {...props}
     >
@@ -132,6 +136,21 @@ describe('creatorCompensationsView', () => {
     expect(screen.getByText('May Show')).toBeInTheDocument();
     expect(screen.getAllByText('125.00')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Edit terms for May Show' })).toBeInTheDocument();
+  });
+
+  it('links each show row to the creator mapping drill-in', () => {
+    render(
+      <CreatorCompensationsView
+        {...baseProps}
+        data={mockData}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: 'Open show May Show' }))
+      .toHaveAttribute('href', '/studios/std_1/creator-mapping/show_1');
   });
 
   it('fires onRefresh when the refresh button is clicked', async () => {

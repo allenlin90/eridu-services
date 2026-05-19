@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, RefreshCw } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 
 import type { StudioMemberCompensationResponse } from '@eridu/api-types/memberships';
@@ -39,6 +39,12 @@ export type MemberCompensationsViewProps = {
   backLink?: { to: string; params: Record<string, string>; label: string };
   /** Override for the refresh button's aria-label. */
   refreshAriaLabel?: string;
+  /**
+   * Show a per-row drill-in to `/studios/$studioId/shifts` filtered by user + date.
+   * Defaults to `false`; opt in only from admin/manager surfaces — the shifts route is
+   * admin-only, so showing this on the member self-view leads to access-denied.
+   */
+  enableShiftDrillIn?: boolean;
 };
 
 function formatMoney(value: string | null) {
@@ -66,6 +72,7 @@ export function MemberCompensationsView({
   description,
   backLink,
   refreshAriaLabel,
+  enableShiftDrillIn = false,
 }: MemberCompensationsViewProps) {
   const summary = data?.summary;
   const shifts = data?.shifts ?? [];
@@ -75,6 +82,7 @@ export function MemberCompensationsView({
     params: { studioId },
     label: 'Members',
   };
+  const columnCount = enableShiftDrillIn ? 7 : 6;
 
   return (
     <PageLayout
@@ -141,26 +149,29 @@ export function MemberCompensationsView({
                 <TableHead>Planned</TableHead>
                 <TableHead>Actual</TableHead>
                 <TableHead>Blocks</TableHead>
+                {enableShiftDrillIn && (
+                  <TableHead className="w-12 text-right">Open</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={columnCount} className="text-sm text-muted-foreground">
                     Loading compensations...
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && isError && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-destructive">
+                  <TableCell colSpan={columnCount} className="text-sm text-destructive">
                     Failed to load member compensations.
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && !isError && shifts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={columnCount} className="text-sm text-muted-foreground">
                     No shifts in this range.
                   </TableCell>
                 </TableRow>
@@ -177,6 +188,31 @@ export function MemberCompensationsView({
                   <TableCell>{formatMoney(shift.planned_cost)}</TableCell>
                   <TableCell>{formatMoney(shift.actual_cost)}</TableCell>
                   <TableCell>{shift.blocks.length}</TableCell>
+                  {enableShiftDrillIn && (
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Open shift ${shift.date}`}
+                        asChild
+                      >
+                        <Link
+                          to="/studios/$studioId/shifts"
+                          params={{ studioId }}
+                          search={{
+                            view: 'table',
+                            page: 1,
+                            limit: 20,
+                            user_id: data?.user_id,
+                            date_from: shift.date,
+                            date_to: shift.date,
+                          }}
+                        >
+                          <ArrowUpRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

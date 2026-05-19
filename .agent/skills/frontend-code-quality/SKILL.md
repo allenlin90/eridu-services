@@ -57,6 +57,7 @@ Pattern: route container + `useFeatureViewModel()` hook + presentation component
 - Studio sidebar groups are purpose-based: `Planning` for schedules/shows/assignment setup, `Tasks` for downstream task operations, `People` for member/creator rosters, and `Studio Settings` for configuration surfaces.
 - Keep `Creator Mapping` with `Planning`, not `People`; it assigns creators to shows rather than managing creator records.
 - Consistent wrappers: `AdminLayout` for `/system/*`, `PageLayout` for studio pages
+- **Shared views across access tiers**: when one presentation component (e.g. `MemberCompensationsView`) is rendered from routes with different `routeKey` guards (admin/manager `/members/$memberId/compensations` *and* member self-view `/my-compensations`), gate any cross-route navigation by an opt-in prop (default off). Never render a link whose destination is protected by a stricter guard than the current route — it ships members into a guaranteed access-denied page. The opting route turns it on; the lower-trust route leaves it off.
 
 ## Checklist
 
@@ -66,6 +67,7 @@ Pattern: route container + `useFeatureViewModel()` hook + presentation component
 - [ ] Large routes (>200 LOC) decomposed
 - [ ] Protected routes use `StudioRouteGuard` + shared access policy
 - [ ] Consistent wrapper per route set
+- [ ] Shared views rendered from multiple access tiers gate cross-route links by opt-in prop (default off)
 
 ## Related Skills
 
