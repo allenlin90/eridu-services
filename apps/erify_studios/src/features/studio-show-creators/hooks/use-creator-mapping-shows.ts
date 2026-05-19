@@ -37,6 +37,7 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
       has_creators?: boolean;
       creator_name?: string;
       show_status_name?: string;
+      client_id?: string;
     } = {};
 
     columnFilters.forEach((filter) => {
@@ -46,6 +47,10 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
 
       if (filter.id === 'show_status_name') {
         nextFilters.show_status_name = (filter.value as string) || undefined;
+      }
+
+      if (filter.id === 'client_id') {
+        nextFilters.client_id = (filter.value as string) || undefined;
       }
 
       if (filter.id === 'has_creators') {

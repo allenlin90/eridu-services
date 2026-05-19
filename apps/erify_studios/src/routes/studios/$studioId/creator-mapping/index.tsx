@@ -205,13 +205,19 @@ function CreatorMappingPage() {
         ],
       },
       {
+        id: 'client_id',
+        title: 'Client',
+        type: 'select' as const,
+        options: (showLookups?.clients ?? []).map((client) => ({ value: client.id, label: client.name })),
+      },
+      {
         id: 'show_status_name',
         title: 'Show Status',
         type: 'select' as const,
         options: (showLookups?.show_statuses ?? []).map((status) => ({ value: status.name, label: status.name })),
       },
     ],
-    [showLookups?.show_statuses],
+    [showLookups?.clients, showLookups?.show_statuses],
   );
 
   return (
@@ -275,7 +281,7 @@ function CreatorMappingPage() {
               table={table}
               searchColumn="name"
               searchableColumns={searchableColumns}
-              featuredFilterColumns={['has_creators', 'show_status_name', 'creator_name']}
+              featuredFilterColumns={['has_creators', 'client_id', 'show_status_name', 'creator_name']}
               searchPlaceholder="Search shows..."
             >
               <Button
