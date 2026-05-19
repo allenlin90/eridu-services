@@ -317,6 +317,7 @@ export class ShowRepository extends BaseRepository<
       schedule_name?: string;
       show_uids?: string[];
       creator_name?: string;
+      client_id?: string;
       client_name?: string;
       show_type_name?: string;
       show_standard_name?: string;
@@ -388,8 +389,17 @@ export class ShowRepository extends BaseRepository<
       };
     }
 
+    if (query.client_id) {
+      where.client = {
+        ...((where.client as Prisma.ClientWhereInput) ?? {}),
+        uid: query.client_id,
+        deletedAt: null,
+      };
+    }
+
     if (query.client_name) {
       where.client = {
+        ...((where.client as Prisma.ClientWhereInput) ?? {}),
         name: { contains: query.client_name, mode: 'insensitive' },
         deletedAt: null,
       };

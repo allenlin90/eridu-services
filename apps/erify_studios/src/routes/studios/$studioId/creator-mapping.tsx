@@ -14,6 +14,7 @@ const creatorMappingSearchSchema = z.object({
   has_creators: z.union([z.enum(['true', 'false']), z.boolean()]).optional().catch(undefined),
   creator_name: z.string().optional().catch(undefined),
   show_status_name: z.string().optional().catch(undefined),
+  client_id: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/studios/$studioId/creator-mapping')({

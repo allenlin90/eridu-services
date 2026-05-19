@@ -58,6 +58,7 @@ describe('useCreatorMappingShows', () => {
         { id: 'creator_name', value: 'alice' },
         { id: 'has_creators', value: 'true' },
         { id: 'show_status_name', value: 'LIVE' },
+        { id: 'client_id', value: 'cli_ABC123' },
       ],
     });
 
@@ -79,6 +80,7 @@ describe('useCreatorMappingShows', () => {
         has_creators: true,
         creator_name: 'alice',
         show_status_name: 'LIVE',
+        client_id: 'cli_ABC123',
       }),
     ]);
     expect(queryOptions.placeholderData).toBeDefined();
@@ -94,6 +96,7 @@ describe('useCreatorMappingShows', () => {
         has_creators: true,
         creator_name: 'alice',
         show_status_name: 'LIVE',
+        client_id: 'cli_ABC123',
       }),
       { signal: undefined },
     );

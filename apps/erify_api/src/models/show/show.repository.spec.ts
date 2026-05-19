@@ -151,6 +151,52 @@ describe('showRepository', () => {
     expect(where.Schedule?.deletedAt).toBeNull();
   });
 
+  it('maps client_id filter to studio task-summary client uid exact match', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      client_id: 'cli_ABC123',
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      client?: {
+        uid?: string;
+        name?: { contains?: string };
+        deletedAt?: null;
+      };
+    };
+    expect(where.client?.uid).toBe('cli_ABC123');
+    expect(where.client?.deletedAt).toBeNull();
+  });
+
+  it('combines client_id and client_name filters in studio task-summary queries', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      client_id: 'cli_ABC123',
+      client_name: 'acme',
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      client?: {
+        uid?: string;
+        name?: { contains?: string };
+        deletedAt?: null;
+      };
+    };
+    expect(where.client?.uid).toBe('cli_ABC123');
+    expect(where.client?.name?.contains).toBe('acme');
+    expect(where.client?.deletedAt).toBeNull();
+  });
+
   it('maps has_creators=true to studio task-summary show creator existence filter', async () => {
     txShowDelegate.count.mockResolvedValue(0);
     txShowDelegate.findMany.mockResolvedValue([]);

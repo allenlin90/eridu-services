@@ -24,6 +24,7 @@ import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form
 import { BulkCreatorAssignmentDialog } from '@/features/studio-show-creators/components/bulk-creator-assignment-dialog';
 import { creatorMappingShowColumns } from '@/features/studio-show-creators/components/creator-mapping-show-columns';
 import { SelectedCreatorMappingMobileActions } from '@/features/studio-show-creators/components/selected-creator-mapping-mobile-actions';
+import { useCreatorMappingClientFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-client-filter';
 import { useCreatorMappingShows } from '@/features/studio-show-creators/hooks/use-creator-mapping-shows';
 import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
 import {
@@ -187,6 +188,17 @@ function CreatorMappingPage() {
   const { data: showLookups } = useShowLookupsQuery(studioId);
   const scopeLabel = formatScopeLabel(search.date_from, search.date_to);
 
+  const selectedClientId = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'client_id');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+
+  const {
+    options: clientOptions,
+    isLoading: isClientFilterLoading,
+    setSearch: setClientFilterSearch,
+  } = useCreatorMappingClientFilter(studioId, selectedClientId);
+
   const searchableColumns = useMemo(
     () => [
       { id: 'name', title: 'Show Name', type: 'text' as const },
@@ -205,13 +217,22 @@ function CreatorMappingPage() {
         ],
       },
       {
+        id: 'client_id',
+        title: 'Client',
+        type: 'combobox' as const,
+        options: clientOptions,
+        onSearch: setClientFilterSearch,
+        isLoading: isClientFilterLoading,
+        placeholder: 'Filter by client',
+      },
+      {
         id: 'show_status_name',
         title: 'Show Status',
         type: 'select' as const,
         options: (showLookups?.show_statuses ?? []).map((status) => ({ value: status.name, label: status.name })),
       },
     ],
-    [showLookups?.show_statuses],
+    [clientOptions, isClientFilterLoading, setClientFilterSearch, showLookups?.show_statuses],
   );
 
   return (
@@ -275,7 +296,7 @@ function CreatorMappingPage() {
               table={table}
               searchColumn="name"
               searchableColumns={searchableColumns}
-              featuredFilterColumns={['has_creators', 'show_status_name', 'creator_name']}
+              featuredFilterColumns={['has_creators', 'client_id', 'show_status_name', 'creator_name']}
               searchPlaceholder="Search shows..."
             >
               <Button

@@ -41,6 +41,7 @@ type GetStudioShowsParams = {
   needs_attention?: boolean;
   has_schedule?: boolean;
   creator_name?: string;
+  client_id?: string;
   client_name?: string;
   show_type_name?: string;
   show_standard_name?: string;

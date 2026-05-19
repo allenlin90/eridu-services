@@ -6,6 +6,7 @@ import * as React from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
+  AsyncCombobox,
   Badge,
   Button,
   DatePickerWithRange,
@@ -137,6 +138,37 @@ function SelectFilterInput({
 }
 
 /**
+ * Async-search combobox filter input. Mirrors `SelectFilterInput` but renders
+ * `AsyncCombobox` so the caller can drive options via a debounced `onSearch`.
+ */
+function ComboboxFilterInput({
+  column,
+  config,
+}: {
+  column: Column<unknown, unknown> | undefined;
+  config: SearchableColumn;
+}) {
+  const filterValue = (column?.getFilterValue() as string) ?? '';
+
+  if (!column || !config.onSearch)
+    return null;
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-normal">{config.title}</Label>
+      <AsyncCombobox
+        value={filterValue}
+        onChange={(val) => column.setFilterValue(val || undefined)}
+        onSearch={config.onSearch}
+        options={config.options ?? []}
+        isLoading={config.isLoading}
+        placeholder={config.placeholder ?? `Select ${config.title.toLowerCase()}...`}
+      />
+    </div>
+  );
+}
+
+/**
  * Date range filter input
  */
 function DateRangeFilterInput({
@@ -206,6 +238,15 @@ function FilterInputFactory({
     );
   }
 
+  if (column.type === 'combobox') {
+    return (
+      <ComboboxFilterInput
+        column={tableColumn}
+        config={column}
+      />
+    );
+  }
+
   if (column.type === 'date-range') {
     return (
       <DateRangeFilterInput
@@ -268,10 +309,10 @@ function FilterSections({
       {selectColumns.length > 0 && (
         <FilterSection title="Select Filters">
           {selectColumns.map((col) => (
-            <SelectFilterInput
+            <FilterInputFactory
               key={col.id}
-              column={columnsById[col.id]}
-              config={col}
+              tableColumn={columnsById[col.id]}
+              column={col}
             />
           ))}
         </FilterSection>
@@ -317,7 +358,7 @@ export function FilterPopover<TData>({
       availableColumns,
       localFeaturedColumns: availableColumns.filter((col) => featuredColumns.includes(col.id)),
       textColumns: availableColumns.filter((col) => isAvailable(col) && (col.type === 'text' || !col.type)),
-      selectColumns: availableColumns.filter((col) => isAvailable(col) && col.type === 'select'),
+      selectColumns: availableColumns.filter((col) => isAvailable(col) && (col.type === 'select' || col.type === 'combobox')),
       dateColumns: availableColumns.filter((col) => isAvailable(col) && col.type === 'date-range'),
     };
   }, [searchableColumns, excludeColumns, featuredColumns]);
