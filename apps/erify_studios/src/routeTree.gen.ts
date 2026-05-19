@@ -38,6 +38,7 @@ import { Route as StudiosStudioIdShiftsRouteImport } from './routes/studios/$stu
 import { Route as StudiosStudioIdSharedFieldsRouteImport } from './routes/studios/$studioId/shared-fields'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
 import { Route as StudiosStudioIdMyShiftsRouteImport } from './routes/studios/$studioId/my-shifts'
+import { Route as StudiosStudioIdMyCompensationsRouteImport } from './routes/studios/$studioId/my-compensations'
 import { Route as StudiosStudioIdMembersRouteImport } from './routes/studios/$studioId/members'
 import { Route as StudiosStudioIdDashboardRouteImport } from './routes/studios/$studioId/dashboard'
 import { Route as StudiosStudioIdCreatorsRouteImport } from './routes/studios/$studioId/creators'
@@ -216,6 +217,12 @@ const StudiosStudioIdMyShiftsRoute = StudiosStudioIdMyShiftsRouteImport.update({
   path: '/my-shifts',
   getParentRoute: () => StudiosStudioIdRouteRoute,
 } as any)
+const StudiosStudioIdMyCompensationsRoute =
+  StudiosStudioIdMyCompensationsRouteImport.update({
+    id: '/my-compensations',
+    path: '/my-compensations',
+    getParentRoute: () => StudiosStudioIdRouteRoute,
+  } as any)
 const StudiosStudioIdMembersRoute = StudiosStudioIdMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -369,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/members': typeof StudiosStudioIdMembersRouteWithChildren
+  '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
@@ -421,6 +429,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
+  '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
@@ -471,6 +480,7 @@ export interface FileRoutesById {
   '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRouteWithChildren
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/members': typeof StudiosStudioIdMembersRouteWithChildren
+  '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
@@ -528,6 +538,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/members'
+    | '/studios/$studioId/my-compensations'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shared-fields'
@@ -580,6 +591,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/studios/$studioId'
     | '/studios/$studioId/dashboard'
+    | '/studios/$studioId/my-compensations'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shared-fields'
@@ -629,6 +641,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/members'
+    | '/studios/$studioId/my-compensations'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/shared-fields'
@@ -885,6 +898,13 @@ declare module '@tanstack/react-router' {
       path: '/my-shifts'
       fullPath: '/studios/$studioId/my-shifts'
       preLoaderRoute: typeof StudiosStudioIdMyShiftsRouteImport
+      parentRoute: typeof StudiosStudioIdRouteRoute
+    }
+    '/studios/$studioId/my-compensations': {
+      id: '/studios/$studioId/my-compensations'
+      path: '/my-compensations'
+      fullPath: '/studios/$studioId/my-compensations'
+      preLoaderRoute: typeof StudiosStudioIdMyCompensationsRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
     '/studios/$studioId/members': {
@@ -1211,6 +1231,7 @@ interface StudiosStudioIdRouteRouteChildren {
   StudiosStudioIdCreatorsRoute: typeof StudiosStudioIdCreatorsRouteWithChildren
   StudiosStudioIdDashboardRoute: typeof StudiosStudioIdDashboardRoute
   StudiosStudioIdMembersRoute: typeof StudiosStudioIdMembersRouteWithChildren
+  StudiosStudioIdMyCompensationsRoute: typeof StudiosStudioIdMyCompensationsRoute
   StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
   StudiosStudioIdSharedFieldsRoute: typeof StudiosStudioIdSharedFieldsRoute
@@ -1228,6 +1249,7 @@ const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
   StudiosStudioIdCreatorsRoute: StudiosStudioIdCreatorsRouteWithChildren,
   StudiosStudioIdDashboardRoute: StudiosStudioIdDashboardRoute,
   StudiosStudioIdMembersRoute: StudiosStudioIdMembersRouteWithChildren,
+  StudiosStudioIdMyCompensationsRoute: StudiosStudioIdMyCompensationsRoute,
   StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
   StudiosStudioIdSharedFieldsRoute: StudiosStudioIdSharedFieldsRoute,

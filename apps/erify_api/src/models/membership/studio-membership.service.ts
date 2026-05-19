@@ -340,4 +340,29 @@ export class StudioMembershipService extends BaseModelService {
       },
     }) as Promise<StudioMemberWithUser | null>;
   }
+
+  /**
+   * Resolve the caller's own membership in a studio for /me/* reads.
+   * Returns null when the caller has no active membership in the studio,
+   * which controllers should translate to a 404 to avoid leaking studio
+   * existence to unrelated authenticated users.
+   */
+  async findStudioMemberByUserAndStudio(
+    userUid: string,
+    studioUid: string,
+  ): Promise<StudioMemberWithUser | null> {
+    return this.studioMembershipRepository.findOne({
+      user: { uid: userUid, deletedAt: null },
+      studio: { uid: studioUid },
+      deletedAt: null,
+    }, {
+      user: {
+        select: {
+          uid: true,
+          name: true,
+          email: true,
+        },
+      },
+    }) as Promise<StudioMemberWithUser | null>;
+  }
 }

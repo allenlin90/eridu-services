@@ -152,6 +152,11 @@ function getStudioCommonItems(
       url: `/studios/${studioId}/my-shifts`,
       icon: CalendarDays,
     },
+    {
+      title: 'My Compensations',
+      url: `/studios/${studioId}/my-compensations`,
+      icon: Receipt,
+    },
   ];
 }
 
