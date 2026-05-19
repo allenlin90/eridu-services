@@ -52,8 +52,8 @@ export function FilterChips<TData>({
           } else {
             displayValue = 'Date range';
           }
-        } else if (type === 'select') {
-          // For select, try to find the label
+        } else if (type === 'select' || type === 'combobox') {
+          // For select / combobox, try to find the label
           const option = config?.options?.find((o) => o.value === f.value);
           displayValue = option?.label || String(f.value);
         } else {

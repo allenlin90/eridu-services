@@ -7,8 +7,14 @@ import type { DateRange } from 'react-day-picker';
 export type SearchableColumn = {
   id: string;
   title: string;
-  type?: 'text' | 'date-range' | 'select';
+  type?: 'text' | 'date-range' | 'select' | 'combobox';
   options?: Array<{ label: string; value: string }>;
+  /** combobox: debounced search handler invoked as the user types */
+  onSearch?: (query: string) => void;
+  /** combobox: loading state from the async source */
+  isLoading?: boolean;
+  /** combobox: placeholder for the trigger button when no value is selected */
+  placeholder?: string;
 };
 
 /**
