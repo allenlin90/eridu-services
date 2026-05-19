@@ -54,6 +54,10 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.TALENT_MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
+  creatorCompensations: [
+    STUDIO_ROLE.ADMIN,
+    STUDIO_ROLE.MANAGER,
+  ],
   creatorMapping: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.TALENT_MANAGER,

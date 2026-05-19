@@ -6,7 +6,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   studioCreatorAvailabilityItemSchema as studioCreatorAvailabilityItemApiSchema,
   studioCreatorCatalogItemSchema as studioCreatorCatalogItemApiSchema,
-  studioCreatorCompensationReviewSchema as studioCreatorCompensationReviewApiSchema,
+  studioCreatorCompensationResponseSchema as studioCreatorCompensationResponseApiSchema,
   studioCreatorRosterItemSchema as studioCreatorRosterItemApiSchema,
 } from '@eridu/api-types/studio-creators';
 import { userApiResponseSchema } from '@eridu/api-types/users';
@@ -22,9 +22,9 @@ import {
   StudioCreatorCatalogQueryDto,
 } from './schemas/studio-creator-catalog.schema';
 import {
-  studioCreatorCompensationReviewDto,
-  StudioCreatorCompensationReviewQueryDto,
-} from './schemas/studio-creator-compensation-review.schema';
+  studioCreatorCompensationDto,
+  StudioCreatorCompensationQueryDto,
+} from './schemas/studio-creator-compensation.schema';
 import { OnboardStudioCreatorDto } from './schemas/studio-creator-onboard.schema';
 import { StudioCreatorOnboardingUserSearchQueryDto } from './schemas/studio-creator-onboarding-user-search.schema';
 import {
@@ -50,7 +50,7 @@ const STUDIO_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.MANAGER,
   STUDIO_ROLE.TALENT_MANAGER,
 ];
-const STUDIO_CREATOR_COMPENSATION_REVIEW_ROLES = [
+const STUDIO_CREATOR_COMPENSATION_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
@@ -150,17 +150,17 @@ export class StudioCreatorController extends BaseStudioController {
     return studioCreatorRosterItemDto.parse(creator);
   }
 
-  @ApiOperation({ summary: 'Review creator compensation across shows in a date range' })
-  @StudioProtected(STUDIO_CREATOR_COMPENSATION_REVIEW_ROLES)
-  @Get(':creatorId/compensation-review')
+  @ApiOperation({ summary: 'List creator compensation across shows in a date range' })
+  @StudioProtected(STUDIO_CREATOR_COMPENSATION_ROLES)
+  @Get(':creatorId/compensations')
   @ReadBurstThrottle()
-  @ZodResponse(studioCreatorCompensationReviewApiSchema)
-  async compensationReview(
+  @ZodResponse(studioCreatorCompensationResponseApiSchema)
+  async listCreatorCompensations(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
-    @Query() query: StudioCreatorCompensationReviewQueryDto,
+    @Query() query: StudioCreatorCompensationQueryDto,
   ) {
-    const review = await this.showOrchestrationService.getCreatorCompensationReview(
+    const compensation = await this.showOrchestrationService.getCreatorCompensations(
       studioId,
       creatorId,
       {
@@ -168,7 +168,7 @@ export class StudioCreatorController extends BaseStudioController {
         dateTo: query.dateTo,
       },
     );
-    return studioCreatorCompensationReviewDto.parse(review);
+    return studioCreatorCompensationDto.parse(compensation);
   }
 
   @ApiOperation({ summary: 'List creators available for show assignment discovery' })

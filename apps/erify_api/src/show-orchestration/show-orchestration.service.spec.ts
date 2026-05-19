@@ -1462,7 +1462,7 @@ describe('showOrchestrationService', () => {
     });
   });
 
-  describe('getCreatorCompensationReview', () => {
+  describe('getCreatorCompensations', () => {
     it('aggregates creator compensation across show assignments in the date range', async () => {
       const dateFrom = new Date('2026-05-01T00:00:00.000Z');
       const dateTo = new Date('2026-05-31T23:59:59.999Z');
@@ -1518,7 +1518,7 @@ describe('showOrchestrationService', () => {
         ]),
       );
 
-      const result = await service.getCreatorCompensationReview('std_123', 'creator_1', {
+      const result = await service.getCreatorCompensations('std_123', 'creator_1', {
         dateFrom,
         dateTo,
       });
