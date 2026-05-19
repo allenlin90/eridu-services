@@ -185,6 +185,10 @@ describe('useSidebarConfig', () => {
           title: 'My Shifts',
           url: '/studios/studio-1/my-shifts',
         }),
+        expect.objectContaining({
+          title: 'My Compensations',
+          url: '/studios/studio-1/my-compensations',
+        }),
       ]),
     }));
 

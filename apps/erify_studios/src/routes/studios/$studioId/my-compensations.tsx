@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { MemberCompensationsView } from '@/features/studio-members/components/member-compensations-view';
 import { useMyShiftCompensations } from '@/features/studio-shifts/api/get-my-shift-compensations';
 import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
@@ -16,7 +17,7 @@ function defaultDateRange() {
   };
 }
 
-const myShiftCompensationsSearchSchema = z
+const myCompensationsSearchSchema = z
   .object({
     date_from: z.iso.date().optional(),
     date_to: z.iso.date().optional(),
@@ -29,13 +30,27 @@ const myShiftCompensationsSearchSchema = z
     };
   });
 
-export const Route = createFileRoute('/studios/$studioId/my-shifts/compensations')({
-  component: MyShiftCompensationsPage,
-  validateSearch: (search) => myShiftCompensationsSearchSchema.parse(search),
+export const Route = createFileRoute('/studios/$studioId/my-compensations')({
+  component: MyCompensationsPage,
+  validateSearch: (search) => myCompensationsSearchSchema.parse(search),
 });
 
-function MyShiftCompensationsPage() {
+function MyCompensationsPage() {
   const { studioId } = Route.useParams();
+
+  return (
+    <StudioRouteGuard
+      studioId={studioId}
+      routeKey="myCompensations"
+      deniedTitle="My Compensations Access Required"
+      deniedDescription="You must be a member of this studio to view personal compensation."
+    >
+      <MyCompensationsContent studioId={studioId} />
+    </StudioRouteGuard>
+  );
+}
+
+function MyCompensationsContent({ studioId }: { studioId: string }) {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
@@ -81,14 +96,14 @@ function MyShiftCompensationsPage() {
       onRefresh={() => {
         void query.refetch();
       }}
-      title="My Shift Compensations"
+      title="My Compensations"
       description={query.data?.user_name ?? 'Review your shift compensation by date range.'}
       backLink={{
-        to: '/studios/$studioId/my-shifts',
+        to: '/studios/$studioId/dashboard',
         params: { studioId },
-        label: 'My Shifts',
+        label: 'Dashboard',
       }}
-      refreshAriaLabel="Refresh my shift compensations"
+      refreshAriaLabel="Refresh my compensations"
     />
   );
 }
