@@ -6,7 +6,6 @@ import type { DateRange } from 'react-day-picker';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
-  AsyncCombobox,
   Button,
   Card,
   CardDescription,
@@ -200,16 +199,6 @@ function CreatorMappingPage() {
     setSearch: setClientFilterSearch,
   } = useCreatorMappingClientFilter(studioId, selectedClientId);
 
-  const handleClientFilterChange = useCallback((clientId: string) => {
-    onColumnFiltersChange((previous) => {
-      const next = previous.filter((cf) => cf.id !== 'client_id');
-      if (clientId) {
-        next.push({ id: 'client_id', value: clientId });
-      }
-      return next;
-    });
-  }, [onColumnFiltersChange]);
-
   const searchableColumns = useMemo(
     () => [
       { id: 'name', title: 'Show Name', type: 'text' as const },
@@ -228,13 +217,22 @@ function CreatorMappingPage() {
         ],
       },
       {
+        id: 'client_id',
+        title: 'Client',
+        type: 'combobox' as const,
+        options: clientOptions,
+        onSearch: setClientFilterSearch,
+        isLoading: isClientFilterLoading,
+        placeholder: 'Filter by client',
+      },
+      {
         id: 'show_status_name',
         title: 'Show Status',
         type: 'select' as const,
         options: (showLookups?.show_statuses ?? []).map((status) => ({ value: status.name, label: status.name })),
       },
     ],
-    [showLookups?.show_statuses],
+    [clientOptions, isClientFilterLoading, setClientFilterSearch, showLookups?.show_statuses],
   );
 
   return (
@@ -298,18 +296,9 @@ function CreatorMappingPage() {
               table={table}
               searchColumn="name"
               searchableColumns={searchableColumns}
-              featuredFilterColumns={['has_creators', 'show_status_name', 'creator_name']}
+              featuredFilterColumns={['has_creators', 'client_id', 'show_status_name', 'creator_name']}
               searchPlaceholder="Search shows..."
             >
-              <AsyncCombobox
-                value={selectedClientId ?? ''}
-                onChange={handleClientFilterChange}
-                onSearch={setClientFilterSearch}
-                options={clientOptions}
-                isLoading={isClientFilterLoading}
-                placeholder="Filter by client"
-                className="w-full sm:w-56"
-              />
               <Button
                 variant="outline"
                 size="icon"
