@@ -77,6 +77,7 @@ function StudioMemberCompensationsPage() {
       onRefresh={() => {
         void query.refetch();
       }}
+      enableShiftDrillIn
     />
   );
 }

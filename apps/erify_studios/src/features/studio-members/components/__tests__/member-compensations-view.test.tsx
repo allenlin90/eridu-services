@@ -126,7 +126,7 @@ describe('memberCompensationsView', () => {
     expect(screen.getAllByText('$100.00')).toHaveLength(2);
   });
 
-  it('links each row to the filtered shift operations table', () => {
+  it('links each row to the filtered shift operations table when enableShiftDrillIn is set', () => {
     render(
       <MemberCompensationsView
         {...baseProps}
@@ -134,6 +134,7 @@ describe('memberCompensationsView', () => {
         isLoading={false}
         isFetching={false}
         isError={false}
+        enableShiftDrillIn
       />,
     );
 
@@ -147,6 +148,21 @@ describe('memberCompensationsView', () => {
       date_from: '2026-05-12',
       date_to: '2026-05-12',
     }));
+  });
+
+  it('hides the shift drill-in by default to keep the member self-view safe', () => {
+    render(
+      <MemberCompensationsView
+        {...baseProps}
+        data={mockData}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+      />,
+    );
+
+    expect(screen.queryByRole('link', { name: /Open shift/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Open' })).not.toBeInTheDocument();
   });
 
   it('shows "Pending" when actual_cost is null', () => {
