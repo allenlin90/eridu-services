@@ -10,7 +10,7 @@ End-to-end flow for how a studio plans, runs, records, and reviews operator/memb
 | -------------- | ---------------- | ---------------------------------------------------------------- |
 | Studio Admin   | `ADMIN`          | Manages member roster, creates/edits shifts, full access.        |
 | Manager        | `MANAGER`        | Same as Admin except membership management.                      |
-| Member / Operator | studio member  | Performs the shift. Reads own actual-backed compensation on `/me/compensation/operator`. Cannot edit shifts or actuals; can flag missing actuals back to studio. |
+| Member / Operator | studio member  | Performs the shift. Reads own actual-backed compensation on `/me/shift-compensations` (Phase 4 PR 10). Cannot edit shifts or actuals; pending actuals are surfaced as a display-only badge (no write/flag endpoint in Phase 4). |
 
 ## Flow Overview
 
@@ -28,7 +28,7 @@ End-to-end flow for how a studio plans, runs, records, and reviews operator/memb
    (bonus, allowance, overtime, deduction, other)
        ↓
 6. ADMIN/MANAGER reviews shift cost in `/studios/:studioId/shifts/by-member/:membershipId`
-   and operator self-reads `/me/compensation/operator`
+   and operator self-reads `/me/shift-compensations`
        ↓
 7. Wave 2 economics service (2.3) reads block actuals + snapshots + line items
    to produce operator compensation rows; commission/HYBRID stays unresolved
@@ -71,7 +71,7 @@ POST /studios/:studioId/shifts
 
 ### 3. Shift execution
 
-The operator performs the shift. Phase 4 has no operator-facing input — actuals are entered by ADMIN/MANAGER after the fact. The operator self-view (`/me/compensation/operator`, shipped in 2.3) exposes pending events when actuals are still missing.
+The operator performs the shift. Phase 4 has no operator-facing input — actuals are entered by ADMIN/MANAGER after the fact. The operator self-view (`/me/shift-compensations`, shipped in Phase 4 PR 10) exposes pending shifts when actuals are still missing.
 
 ### 4. Actuals entry (ADMIN/MANAGER)
 
@@ -113,7 +113,7 @@ ADMIN/MANAGER reviews per-member compensation at `/studios/:studioId/shifts/by-m
 - `STUDIO_SHIFT` line items applied at the shift level,
 - `STUDIO_SHIFT_BLOCK` line items applied per block (with show-overlap allocation when blocks span multiple shows).
 
-Operators self-read at `/me/compensation/operator` (2.3) and see pending events when actuals are still missing. Each pending row exposes the "Flag missing actuals" affordance (Task 11) that POSTs to `/me/compensation/pending-events/:eventKey/flag-missing-actuals`. Flagged rows appear in the studio's missing-actuals queue (Task 9 collection view) with a "Recipient flagged" badge.
+Operators self-read at `/me/shift-compensations?studio_id=&date_from=&date_to=` (Phase 4 PR 10) and see pending shifts when actuals are still missing. The pending state is **display-only** in Phase 4 — the per-row badge and the `Pending` summary card surface the count, but there is no `flag-missing-actuals` write endpoint (deferred post-Phase-4 alongside "Notifications when manager edits actuals"; see [PHASE_5.md](../roadmap/PHASE_5.md)).
 
 ### 7. Cost visibility (Wave 2.3)
 
@@ -135,7 +135,7 @@ StudioShiftBlock { actualStartTime, actualEndTime }
         ↓                              ↙
 GET /shifts/by-member/:membershipId/compensation-summary
         ↓  [economics merge target]
-GET /me/compensation/operator  →  pending events + countable totals
+GET /me/shift-compensations    →  pending shifts + countable totals (PR 10)
 GET /studios/:studioId/economics  →  operational rollups (3.1 consumer)
 ```
 
