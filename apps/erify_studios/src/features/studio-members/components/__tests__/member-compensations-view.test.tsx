@@ -11,6 +11,7 @@ vi.mock('@tanstack/react-router', () => ({
     <a
       href={typeof to === 'string' ? to.replace('$studioId', params?.studioId ?? '') : '#'}
       data-testid="mock-link"
+      data-search={JSON.stringify(props.search ?? null)}
       {...props}
     >
       {children}
@@ -123,6 +124,29 @@ describe('memberCompensationsView', () => {
     expect(screen.getByText('$25.00')).toBeInTheDocument();
     expect(screen.getAllByText('$125.00')).toHaveLength(2);
     expect(screen.getAllByText('$100.00')).toHaveLength(2);
+  });
+
+  it('links each row to the filtered shift operations table', () => {
+    render(
+      <MemberCompensationsView
+        {...baseProps}
+        data={mockData}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: 'Open shift 2026-05-12' });
+    expect(link).toHaveAttribute('href', '/studios/std_test/shifts');
+    expect(link).toHaveAttribute('data-search', JSON.stringify({
+      view: 'table',
+      page: 1,
+      limit: 20,
+      user_id: 'user_abc123',
+      date_from: '2026-05-12',
+      date_to: '2026-05-12',
+    }));
   });
 
   it('shows "Pending" when actual_cost is null', () => {

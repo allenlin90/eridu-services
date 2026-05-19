@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { format } from 'date-fns';
-import { ArrowLeft, CalendarDays, Edit2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, CalendarDays, Edit2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -190,6 +190,20 @@ export function CreatorCompensationsView({
                         <p className="text-xs text-amber-700">{unresolvedLabel}</p>
                       )}
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Open show ${show.show_name}`}
+                      asChild
+                    >
+                      <Link
+                        to="/studios/$studioId/creator-mapping/$showId"
+                        params={{ studioId, showId: show.show_id }}
+                        aria-label={`Open show ${show.show_name}`}
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
                     <Button
                       type="button"
                       variant="ghost"

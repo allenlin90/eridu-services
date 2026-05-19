@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, RefreshCw } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 
 import type { StudioMemberCompensationResponse } from '@eridu/api-types/memberships';
@@ -141,26 +141,27 @@ export function MemberCompensationsView({
                 <TableHead>Planned</TableHead>
                 <TableHead>Actual</TableHead>
                 <TableHead>Blocks</TableHead>
+                <TableHead className="w-12 text-right">Open</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-sm text-muted-foreground">
                     Loading compensations...
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && isError && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-destructive">
+                  <TableCell colSpan={7} className="text-sm text-destructive">
                     Failed to load member compensations.
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && !isError && shifts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-sm text-muted-foreground">
                     No shifts in this range.
                   </TableCell>
                 </TableRow>
@@ -177,6 +178,29 @@ export function MemberCompensationsView({
                   <TableCell>{formatMoney(shift.planned_cost)}</TableCell>
                   <TableCell>{formatMoney(shift.actual_cost)}</TableCell>
                   <TableCell>{shift.blocks.length}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Open shift ${shift.date}`}
+                      asChild
+                    >
+                      <Link
+                        to="/studios/$studioId/shifts"
+                        params={{ studioId }}
+                        search={{
+                          view: 'table',
+                          page: 1,
+                          limit: 20,
+                          user_id: data?.user_id,
+                          date_from: shift.date,
+                          date_to: shift.date,
+                        }}
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
