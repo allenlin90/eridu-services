@@ -8,6 +8,7 @@ Design/proposal/in-progress documents for `erify_studios`.
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
 3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
 4. [Compensation Line Items + Actuals Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — ⏳ In Progress (Tasks 1-6 merged; Task 7 cleanup next)
+5. [Task Template Loop Grid View](./TASK_TEMPLATE_LOOP_GRID_VIEW_DESIGN.md) — 📐 Planned (PR 11.6, two-slice rollout)
 
 ## Note
 
