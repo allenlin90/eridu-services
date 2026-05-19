@@ -3,8 +3,8 @@ import { keepPreviousData, type QueryClient, useMutation, useQuery, useQueryClie
 import type {
   CreateStudioCreatorRosterInput,
   OnboardCreatorInput,
-  StudioCreatorCompensationReview,
-  StudioCreatorCompensationReviewQuery,
+  StudioCreatorCompensationQuery,
+  StudioCreatorCompensationResponse,
   StudioCreatorRosterItem,
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
@@ -32,8 +32,8 @@ export const studioCreatorRosterKeys = {
   listPrefix: (studioId: string) => [...studioCreatorRosterKeys.lists(), studioId] as const,
   list: (studioId: string, params?: GetStudioCreatorRosterParams) =>
     [...studioCreatorRosterKeys.listPrefix(studioId), params] as const,
-  compensationReview: (studioId: string, creatorId: string, params: StudioCreatorCompensationReviewQuery) =>
-    [...studioCreatorRosterKeys.all, 'compensation-review', studioId, creatorId, params] as const,
+  compensation: (studioId: string, creatorId: string, params: StudioCreatorCompensationQuery) =>
+    [...studioCreatorRosterKeys.all, 'compensation', studioId, creatorId, params] as const,
 };
 
 export async function getStudioCreatorRoster(
@@ -91,14 +91,14 @@ export async function onboardStudioCreator(
   return data;
 }
 
-export async function getStudioCreatorCompensationReview(
+export async function getStudioCreatorCompensations(
   studioId: string,
   creatorId: string,
-  params: StudioCreatorCompensationReviewQuery,
+  params: StudioCreatorCompensationQuery,
   options?: { signal?: AbortSignal },
-): Promise<StudioCreatorCompensationReview> {
-  const { data } = await apiClient.get<StudioCreatorCompensationReview>(
-    `/studios/${studioId}/creators/${creatorId}/compensation-review`,
+): Promise<StudioCreatorCompensationResponse> {
+  const { data } = await apiClient.get<StudioCreatorCompensationResponse>(
+    `/studios/${studioId}/creators/${creatorId}/compensations`,
     {
       params,
       signal: options?.signal,
@@ -121,15 +121,15 @@ export function useStudioCreatorRosterQuery(
   });
 }
 
-export function useStudioCreatorCompensationReview(
+export function useStudioCreatorCompensations(
   studioId: string,
   creatorId: string,
-  params: StudioCreatorCompensationReviewQuery,
+  params: StudioCreatorCompensationQuery,
   options?: { enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: studioCreatorRosterKeys.compensationReview(studioId, creatorId, params),
-    queryFn: ({ signal }) => getStudioCreatorCompensationReview(studioId, creatorId, params, { signal }),
+    queryKey: studioCreatorRosterKeys.compensation(studioId, creatorId, params),
+    queryFn: ({ signal }) => getStudioCreatorCompensations(studioId, creatorId, params, { signal }),
     enabled: Boolean(studioId && creatorId && params.date_from && params.date_to) && (options?.enabled ?? true),
     placeholderData: keepPreviousData,
   });

@@ -14,7 +14,8 @@ Technical reference for the shipped studio creator roster page, including route 
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/studios/$studioId/creators` | Creator roster CRUD surface plus per-creator compensation review | `ADMIN` roster write, `ADMIN` + `MANAGER` compensation review/edit, `TALENT_MANAGER` read |
+| `/studios/$studioId/creators` | Creator roster CRUD surface | `ADMIN` roster write, `ADMIN` + `MANAGER` + `TALENT_MANAGER` read |
+| `/studios/$studioId/creators/$creatorId/compensations` | Per-creator date-range compensation review with per-show edit dialog | `ADMIN` + `MANAGER` |
 
 Route guard requirements:
 
@@ -22,13 +23,16 @@ Route guard requirements:
 - roles: `[ADMIN, MANAGER, TALENT_MANAGER]`
 - add sidebar item under the **People** group beside **Members**
 - hide roster write actions and add button for non-admin roles, but keep compensation data visible
-- show compensation review actions for `ADMIN` and `MANAGER`; `TALENT_MANAGER` remains read-only
+- expose a "Review Compensation" action that navigates to `/studios/$studioId/creators/$creatorId/compensations` for `ADMIN` and `MANAGER`; `TALENT_MANAGER` remains read-only
+- the compensation route has its own `creatorCompensations` route-access key restricted to `ADMIN` and `MANAGER`
 
 ## File Structure
 
 Follow the shipped member-roster split instead of a single route file:
 
-- `src/routes/studios/$studioId/creators.tsx` => route container, guard, search validation, page composition
+- `src/routes/studios/$studioId/creators.tsx` => layout shell + `creatorRoster` route guard wrapping `<Outlet />`
+- `src/routes/studios/$studioId/creators/index.tsx` => roster list page, search validation, page composition
+- `src/routes/studios/$studioId/creators/$creatorId/compensations.tsx` => dedicated compensation review page with its own `creatorCompensations` guard
 - `src/features/studio-creator-roster/hooks/use-studio-creator-roster.ts` => query wiring, URL-backed table state, mutation helpers
 - `src/features/studio-creator-roster/config/studio-creator-roster-search-schema.ts` => route/search schema
 - `src/features/studio-creator-roster/config/studio-creator-roster-columns.tsx` => table columns
@@ -36,7 +40,7 @@ Follow the shipped member-roster split instead of a single route file:
 - `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx`
 - `src/features/studio-creator-roster/components/edit-studio-creator-dialog.tsx`
 - `src/features/studio-creator-roster/components/studio-creator-actions-cell.tsx`
-- `src/features/studio-creator-roster/components/creator-compensation-review-dialog.tsx`
+- `src/features/studio-creator-roster/components/creator-compensations-view.tsx` => presentational view shared by the route shell and tests
 - `src/features/studio-creator-roster/api/*` => list/create/update API declarations and query keys
 
 ## Table And Search State
@@ -60,7 +64,7 @@ Columns:
 - compensation type
 - commission rate
 - active badge
-- actions (`ADMIN` roster edit; `ADMIN` and `MANAGER` compensation review)
+- actions (`ADMIN` roster edit; `ADMIN` and `MANAGER` "Review Compensation" link to the dedicated route)
 
 ## Data And Query Model
 
@@ -72,7 +76,7 @@ Columns:
   - creator availability list family
 - use shared API types from `@eridu/api-types/studio-creators`
 - PATCH flows must send `version` and treat 409 as a refetch-and-review conflict path
-- compensation review uses `GET /studios/:studioId/creators/:creatorId/compensation-review`
+- compensation review uses `GET /studios/:studioId/creators/:creatorId/compensations`
 - assignment-term edits from review use `PATCH /studios/:studioId/shows/:showId/creators/:showCreatorId` and invalidate show creator list/summary caches
 
 ## Dialog Behavior
@@ -103,13 +107,14 @@ Columns:
   - replace stale assumptions with fresh server state or prompt reload
   - show conflict feedback instead of silent overwrite
 
-### Compensation review dialog
+### Compensation review route
 
-- opens from the row actions cell for admins and managers
-- default range is today through 30 days ahead
+- opens from the row actions cell for admins and managers via TanStack `Link`
+- dedicated route at `/studios/$studioId/creators/$creatorId/compensations` (mirror of the per-member route)
+- URL-backed `date_from` / `date_to` (YYYY-MM-DD); default range is today through 30 days ahead
 - shows per-show base, adjustment, total, and unresolved reason
-- edit action opens the show-creator compensation dialog for that `ShowCreator` row
-- assignment-term save edits only the show assignment snapshot, not `StudioCreator` defaults
+- per-row edit action still opens the `ShowCreatorCompensationDialog` for that `ShowCreator` row (inline modal, not a sub-route)
+- assignment-term save edits only the show assignment snapshot, not `StudioCreator` defaults; the route refetches on dialog close
 
 ## UX Rules
 

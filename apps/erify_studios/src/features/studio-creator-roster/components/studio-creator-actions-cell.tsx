@@ -1,10 +1,10 @@
+import { Link } from '@tanstack/react-router';
 import { ReceiptText } from 'lucide-react';
 import { useState } from 'react';
 
 import type { StudioCreatorRosterItem } from '@eridu/api-types/studio-creators';
 import { DataTableActions, DropdownMenuItem } from '@eridu/ui';
 
-import { CreatorCompensationReviewDialog } from './creator-compensation-review-dialog';
 import { EditStudioCreatorDialog } from './edit-studio-creator-dialog';
 
 type StudioCreatorActionsCellProps = {
@@ -19,7 +19,6 @@ export function StudioCreatorActionsCell({
   canEditRoster,
 }: StudioCreatorActionsCellProps) {
   const [editOpen, setEditOpen] = useState(false);
-  const [reviewOpen, setReviewOpen] = useState(false);
 
   return (
     <>
@@ -27,9 +26,14 @@ export function StudioCreatorActionsCell({
         row={creator}
         onEdit={canEditRoster ? () => setEditOpen(true) : undefined}
         renderExtraActions={() => (
-          <DropdownMenuItem onClick={() => setReviewOpen(true)}>
-            <ReceiptText className="mr-2 h-4 w-4" />
-            Review Compensation
+          <DropdownMenuItem asChild>
+            <Link
+              to="/studios/$studioId/creators/$creatorId/compensations"
+              params={{ studioId, creatorId: creator.creator_id }}
+            >
+              <ReceiptText className="mr-2 h-4 w-4" />
+              Review Compensation
+            </Link>
           </DropdownMenuItem>
         )}
       />
@@ -41,12 +45,6 @@ export function StudioCreatorActionsCell({
           onOpenChange={setEditOpen}
         />
       )}
-      <CreatorCompensationReviewDialog
-        studioId={studioId}
-        creator={creator}
-        open={reviewOpen}
-        onOpenChange={setReviewOpen}
-      />
     </>
   );
 }
