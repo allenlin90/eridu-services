@@ -81,6 +81,7 @@ Feature: [Creator Mapping](../features/creator-mapping.md)
 
 ADMIN and MANAGER review and adjust per-show creator compensation from `/studios/:studioId/creator-mapping/:showId`:
 
+- The route shows client, platform, scheduled/actual timing, studio room, status/type/standard, and show UID above the compensation table so the money review stays anchored to the source show.
 - `GET /studios/:studioId/shows/:showId/creators/compensation-summary` — backend-calculated base, adjustment total, creator total, show total, and `unresolved_reason` per assigned MC. Restricted to ADMIN/MANAGER; `TALENT_MANAGER` can see the assignment list but not the money totals.
 - `POST|PATCH|DELETE /studios/:studioId/compensation-line-items` with `target_type=SHOW_CREATOR` and `target_id=<ShowCreator assignment UID>` — supplemental signed adjustments on top of the base snapshot.
 - `HYBRID` and `COMMISSION` rows are explicitly marked `COMMISSION_REVENUE_NOT_AVAILABLE`; their row total is `null` and they do not contribute to the show total until revenue is recorded.
