@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 
 import type { StudioCreatorAvailabilityQueryDto } from './schemas/studio-creator-availability.schema';
 import type { StudioCreatorCatalogQueryDto } from './schemas/studio-creator-catalog.schema';
-import type { StudioCreatorCompensationReviewQueryDto } from './schemas/studio-creator-compensation-review.schema';
+import type { StudioCreatorCompensationQueryDto } from './schemas/studio-creator-compensation.schema';
 import type { OnboardStudioCreatorDto } from './schemas/studio-creator-onboard.schema';
 import type { StudioCreatorOnboardingUserSearchQueryDto } from './schemas/studio-creator-onboarding-user-search.schema';
 import type { ListStudioCreatorRosterQueryDto } from './schemas/studio-creator-roster-list.schema';
@@ -40,7 +40,7 @@ describe('studioCreatorController', () => {
         {
           provide: ShowOrchestrationService,
           useValue: {
-            getCreatorCompensationReview: jest.fn(),
+            getCreatorCompensations: jest.fn(),
           },
         },
       ],
@@ -278,15 +278,15 @@ describe('studioCreatorController', () => {
     }));
   });
 
-  it('should return creator compensation review scoped by studio and date range', async () => {
+  it('should return creator compensations scoped by studio and date range', async () => {
     const studioId = 'std_00000000000000000001';
     const creatorId = 'creator_00000000000000000001';
     const query = {
       dateFrom: new Date('2026-05-01T00:00:00.000Z'),
       dateTo: new Date('2026-05-31T23:59:59.999Z'),
-    } as StudioCreatorCompensationReviewQueryDto;
+    } as StudioCreatorCompensationQueryDto;
 
-    showOrchestrationService.getCreatorCompensationReview.mockResolvedValue({
+    showOrchestrationService.getCreatorCompensations.mockResolvedValue({
       creatorId,
       creatorName: 'Ann',
       creatorAliasName: 'Ann',
@@ -316,9 +316,9 @@ describe('studioCreatorController', () => {
       ],
     });
 
-    const result = await controller.compensationReview(studioId, creatorId, query);
+    const result = await controller.listCreatorCompensations(studioId, creatorId, query);
 
-    expect(showOrchestrationService.getCreatorCompensationReview).toHaveBeenCalledWith(
+    expect(showOrchestrationService.getCreatorCompensations).toHaveBeenCalledWith(
       studioId,
       creatorId,
       {

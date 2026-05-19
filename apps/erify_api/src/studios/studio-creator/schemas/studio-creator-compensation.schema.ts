@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import * as studioCreatorsApi from '@eridu/api-types/studio-creators';
 
-export class StudioCreatorCompensationReviewQueryDto extends createZodDto(
-  studioCreatorsApi.studioCreatorCompensationReviewQuerySchema.transform((data) => ({
+export class StudioCreatorCompensationQueryDto extends createZodDto(
+  studioCreatorsApi.studioCreatorCompensationQuerySchema.transform((data) => ({
     dateFrom: new Date(data.date_from),
     dateTo: new Date(data.date_to),
   })),
@@ -15,7 +15,7 @@ export class StudioCreatorCompensationReviewQueryDto extends createZodDto(
   declare dateTo: Date;
 }
 
-const studioCreatorCompensationReviewInternalSchema = z.object({
+const studioCreatorCompensationInternalSchema = z.object({
   creatorId: z.string(),
   creatorName: z.string(),
   creatorAliasName: z.string(),
@@ -43,14 +43,14 @@ const studioCreatorCompensationReviewInternalSchema = z.object({
   unresolvedCount: z.number().int().nonnegative(),
 });
 
-export const studioCreatorCompensationReviewDto = studioCreatorCompensationReviewInternalSchema
-  .transform((review) => ({
-    creator_id: review.creatorId,
-    creator_name: review.creatorName,
-    creator_alias_name: review.creatorAliasName,
-    date_from: review.dateFrom.toISOString(),
-    date_to: review.dateTo.toISOString(),
-    shows: review.shows.map((show) => ({
+export const studioCreatorCompensationDto = studioCreatorCompensationInternalSchema
+  .transform((compensation) => ({
+    creator_id: compensation.creatorId,
+    creator_name: compensation.creatorName,
+    creator_alias_name: compensation.creatorAliasName,
+    date_from: compensation.dateFrom.toISOString(),
+    date_to: compensation.dateTo.toISOString(),
+    shows: compensation.shows.map((show) => ({
       show_id: show.showId,
       show_name: show.showName,
       show_start_time: show.showStartTime.toISOString(),
@@ -68,7 +68,7 @@ export const studioCreatorCompensationReviewDto = studioCreatorCompensationRevie
       total_amount: show.totalAmount,
       unresolved_reason: show.unresolvedReason,
     })),
-    total_amount: review.totalAmount,
-    unresolved_count: review.unresolvedCount,
+    total_amount: compensation.totalAmount,
+    unresolved_count: compensation.unresolvedCount,
   }))
-  .pipe(studioCreatorsApi.studioCreatorCompensationReviewSchema);
+  .pipe(studioCreatorsApi.studioCreatorCompensationResponseSchema);

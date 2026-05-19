@@ -29,7 +29,7 @@ Technical reference for the shipped studio-scoped `StudioCreator` roster surface
 | `GET /studios/:studioId/creators` | List studio creator roster with compensation defaults |
 | `POST /studios/:studioId/creators` | Add creator from catalog to roster |
 | `PATCH /studios/:studioId/creators/:creatorId` | Update defaults or active state with optimistic concurrency |
-| `GET /studios/:studioId/creators/:creatorId/compensation-review` | Review one creator's show compensation over a date range |
+| `GET /studios/:studioId/creators/:creatorId/compensations` | List one creator's per-show compensation over a date range |
 | `PATCH /studios/:studioId/shows/:showId/creators/:showCreatorId` | Update one `ShowCreator` assignment compensation snapshot |
 
 Shared contracts come from `packages/api-types/src/studio-creators/schemas.ts`.
@@ -80,7 +80,7 @@ The list response stays based on the existing studio-creator roster item and may
 - `GET /creators` returns paginated roster results using the existing list query DTO (`search`, `is_active`, `default_rate_type`, pagination).
 - `POST /creators` accepts the shared add payload, then returns the roster item DTO for the created or reactivated row.
 - `PATCH /creators/:creatorId` accepts the shared update payload and returns the updated roster item DTO.
-- `GET /creators/:creatorId/compensation-review` accepts `date_from` / `date_to`, verifies the creator belongs to the studio roster, and returns show assignment rows with base, adjustment, total, and unresolved reason fields.
+- `GET /creators/:creatorId/compensations` accepts `date_from` / `date_to`, verifies the creator belongs to the studio roster, and returns show assignment rows with base, adjustment, total, and unresolved reason fields. Mirrors the noun sub-resource shape used by `GET /members/:memberId/compensations` (see `backend-controller-pattern-nestjs`).
 - `PATCH /shows/:showId/creators/:showCreatorId` validates studio/show scope before updating `ShowCreator.note`, `agreedRate`, `compensationType`, `commissionRate`, and metadata audit entries.
 
 ## Service

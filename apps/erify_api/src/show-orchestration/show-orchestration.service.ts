@@ -75,7 +75,7 @@ type ShowCreatorCompensationSummaryRow = {
   unresolvedReason: string | null;
 };
 
-type StudioCreatorCompensationReviewRow = ShowCreatorCompensationSummaryRow & {
+type StudioCreatorCompensationRow = ShowCreatorCompensationSummaryRow & {
   showId: string;
   showName: string;
   showStartTime: Date;
@@ -564,7 +564,7 @@ export class ShowOrchestrationService {
     };
   }
 
-  async getCreatorCompensationReview(
+  async getCreatorCompensations(
     studioUid: string,
     creatorUid: string,
     params: {
@@ -591,14 +591,16 @@ export class ShowOrchestrationService {
       showCreatorUids: rows.map((row) => row.uid),
     });
 
-    const shows: StudioCreatorCompensationReviewRow[] = [];
+    const shows: StudioCreatorCompensationRow[] = [];
     let totalAmount = new Prisma.Decimal(0);
     let unresolvedCount = 0;
 
     for (const row of rows) {
       const adjustmentTotal = adjustmentTotals.get(row.uid) ?? new Prisma.Decimal(0);
-      const reviewRow = this.buildCreatorCompensationRow(row, adjustmentTotal);
-      const showTotal = reviewRow.totalAmount === null ? null : new Prisma.Decimal(reviewRow.totalAmount);
+      const compensationRow = this.buildCreatorCompensationRow(row, adjustmentTotal);
+      const showTotal = compensationRow.totalAmount === null
+        ? null
+        : new Prisma.Decimal(compensationRow.totalAmount);
 
       if (showTotal === null) {
         unresolvedCount += 1;
@@ -607,7 +609,7 @@ export class ShowOrchestrationService {
       }
 
       shows.push({
-        ...reviewRow,
+        ...compensationRow,
         showId: row.show.uid,
         showName: row.show.name,
         showStartTime: row.show.startTime,

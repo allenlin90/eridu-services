@@ -353,7 +353,7 @@ export const showCreatorCompensationSummarySchema = z.object({
   unresolved_count: z.number().int().nonnegative(),
 });
 
-export const studioCreatorCompensationReviewQuerySchema = z.object({
+export const studioCreatorCompensationQuerySchema = z.object({
   date_from: z.iso.datetime(),
   date_to: z.iso.datetime(),
 }).superRefine((data, ctx) => {
@@ -366,7 +366,7 @@ export const studioCreatorCompensationReviewQuerySchema = z.object({
   }
 });
 
-export const studioCreatorCompensationReviewShowSchema = showCreatorCompensationSummaryItemSchema.extend({
+export const studioCreatorCompensationShowSchema = showCreatorCompensationSummaryItemSchema.extend({
   show_id: showUidSchema,
   show_name: z.string(),
   show_start_time: z.iso.datetime(),
@@ -374,13 +374,13 @@ export const studioCreatorCompensationReviewShowSchema = showCreatorCompensation
   note: z.string().nullable(),
 });
 
-export const studioCreatorCompensationReviewSchema = z.object({
+export const studioCreatorCompensationResponseSchema = z.object({
   creator_id: creatorUidSchema,
   creator_name: z.string(),
   creator_alias_name: z.string(),
   date_from: z.iso.datetime(),
   date_to: z.iso.datetime(),
-  shows: z.array(studioCreatorCompensationReviewShowSchema),
+  shows: z.array(studioCreatorCompensationShowSchema),
   total_amount: z.string(),
   unresolved_count: z.number().int().nonnegative(),
 });
@@ -406,6 +406,6 @@ export type BulkShowCreatorAssignmentError = z.infer<typeof bulkShowCreatorAssig
 export type BulkShowCreatorAssignmentResponse = z.infer<typeof bulkShowCreatorAssignmentResponseSchema>;
 export type ShowCreatorCompensationSummaryItem = z.infer<typeof showCreatorCompensationSummaryItemSchema>;
 export type ShowCreatorCompensationSummary = z.infer<typeof showCreatorCompensationSummarySchema>;
-export type StudioCreatorCompensationReviewQuery = z.infer<typeof studioCreatorCompensationReviewQuerySchema>;
-export type StudioCreatorCompensationReviewShow = z.infer<typeof studioCreatorCompensationReviewShowSchema>;
-export type StudioCreatorCompensationReview = z.infer<typeof studioCreatorCompensationReviewSchema>;
+export type StudioCreatorCompensationQuery = z.infer<typeof studioCreatorCompensationQuerySchema>;
+export type StudioCreatorCompensationShow = z.infer<typeof studioCreatorCompensationShowSchema>;
+export type StudioCreatorCompensationResponse = z.infer<typeof studioCreatorCompensationResponseSchema>;
