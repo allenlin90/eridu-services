@@ -19,6 +19,14 @@ import {
 import { type BuilderTemplateSchemaType, type FieldItem, isSharedField } from './schema';
 import { buildLoopMetadataFromTemplate, createNextLoop, createTextFieldForTemplate, createUniqueCopiedKey } from './task-template-helpers';
 
+function findLastIndexInGroup(items: FieldItem[], group: string): number {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (items[i].group === group)
+      return i;
+  }
+  return -1;
+}
+
 export type TaskTemplateLoopGridProps = {
   template: BuilderTemplateSchemaType;
   onChange: (template: BuilderTemplateSchemaType) => void;
@@ -213,7 +221,7 @@ export function TaskTemplateLoopGrid({ template, onChange, errors }: TaskTemplat
       const newField = createTextFieldForTemplate(template, loopId);
       newField.type = 'checkbox';
       // Append to the end of this loop's fields
-      const lastIndexInLoop = newItems.findLastIndex((item) => item.group === loopId);
+      const lastIndexInLoop = findLastIndexInGroup(newItems, loopId);
       const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
 
       const mergedField = { ...newField, ...updates };
@@ -247,7 +255,7 @@ export function TaskTemplateLoopGrid({ template, onChange, errors }: TaskTemplat
         const newField = createTextFieldForTemplate(template, loopId);
         newField.type = 'checkbox';
         newField.label = sourceCheckbox.label;
-        const lastIndexInLoop = newItems.findLastIndex((item) => item.group === loopId);
+        const lastIndexInLoop = findLastIndexInGroup(newItems, loopId);
         const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
         newItems.splice(insertAt, 0, newField);
       }
@@ -309,7 +317,7 @@ export function TaskTemplateLoopGrid({ template, onChange, errors }: TaskTemplat
           const newField = createTextFieldForTemplate(template, loopId);
           newField.type = 'checkbox';
           newField.label = val;
-          const lastIndexInLoop = newItems.findLastIndex((item) => item.group === loopId);
+          const lastIndexInLoop = findLastIndexInGroup(newItems, loopId);
           const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
           newItems.splice(insertAt, 0, newField);
           // Re-evaluate checkboxes for this loop for the next column in this row
@@ -362,7 +370,7 @@ export function TaskTemplateLoopGrid({ template, onChange, errors }: TaskTemplat
       };
     });
 
-    const lastIndex = template.items.findLastIndex((item) => item.group === loopToClone.id);
+    const lastIndex = findLastIndexInGroup(template.items, loopToClone.id);
     const insertAt = lastIndex === -1 ? template.items.length : lastIndex + 1;
     const newItems = [...template.items];
     newItems.splice(insertAt, 0, ...clonedItems);
@@ -380,7 +388,7 @@ export function TaskTemplateLoopGrid({ template, onChange, errors }: TaskTemplat
     loops.forEach((loop) => {
       const newField = createTextFieldForTemplate(template, loop.id);
       newField.type = 'checkbox';
-      const lastIndexInLoop = newItems.findLastIndex((item) => item.group === loop.id);
+      const lastIndexInLoop = findLastIndexInGroup(newItems, loop.id);
       const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
       newItems.splice(insertAt, 0, newField);
     });

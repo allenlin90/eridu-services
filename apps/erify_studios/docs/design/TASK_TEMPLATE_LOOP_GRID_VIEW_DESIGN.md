@@ -3,7 +3,7 @@
 > **Status**: 📐 Planned
 > **Date**: 2026-05-19
 > **Scope**: `apps/erify_studios/src/components/task-templates/builder/` and the studio task-template route at `/studios/$studioId/task-templates/$templateId`.
-> **Phase**: 4 · PR 11.6 (slots between [PR 11.5](https://github.com/allenlin90/eridu-services/pull/84) and the planned PR 12 economics surface).
+> **Phase**: 4 · PR 11.7 (slots between [PR 11.5](https://github.com/allenlin90/eridu-services/pull/84) and the planned PR 12 economics surface).
 > **Triggered by**: Authoring pain on loop-heavy moderation templates — example `ttpl_pWi1mbHEtHU0D-Zc3cHa` in studio `std_OBXMKm0gW4IGQUNQzp4E` repeats the same product / promotion-mechanic cue cards across many loops.
 
 ---
@@ -96,18 +96,18 @@ Loop 4  | Shirt A                 | BOGO buy 1 get 1         | Free ship > $50
 
 ---
 
-## Decision — ship **A** for PR 11.6; defer B and C
+## Decision — ship **A** for PR 11.7; defer B and C
 
-PR 11.6 ships **Approach A only** — the positional grid with paste-from-Sheets, fill-down, and duplicate-row. This solves the two concrete pains we observed (scrolling loop-to-loop and hand-transcribing repeated mechanics) without committing to features whose value we have not yet validated.
+PR 11.7 ships **Approach A only** — the positional grid with paste-from-Sheets, fill-down, and duplicate-row. This solves the two concrete pains we observed (scrolling loop-to-loop and hand-transcribing repeated mechanics) without committing to features whose value we have not yet validated.
 
 - **Approach B (key-aligned columns + per-cell apply-to-column)** stays documented above as the natural upgrade path. Pick it up as a follow-up row **only if** producers report label-drift cases that A's fill-down does not catch. Key-alignment is contained and additive on top of A's grid component — the schema does not change either way.
 - **Approach C (raw-JSON drawer)** stays deferred. The existing `payload.ts` already round-trips JSON outside the builder, so a power user can already reach that path today. Revisit only if a power-user audience surfaces.
 
-The grid is **checkbox-only** in PR 11.6. Cue-card checkboxes are the actual workflow; a uniform cell editor (label + optional description) is simple and predictable. Mixing number / textarea / date / select cells would multiply per-cell render, validation, and paste-coercion logic without serving the workflow. Non-checkbox fields stay visible-but-read-only beneath each loop row with an "Edit in Cards view" link. Bulk-editing other field types is explicitly out of scope and would be its own future row if and when a workflow asks for it.
+The grid is **checkbox-only** in PR 11.7. Cue-card checkboxes are the actual workflow; a uniform cell editor (label + optional description) is simple and predictable. Mixing number / textarea / date / select cells would multiply per-cell render, validation, and paste-coercion logic without serving the workflow. Non-checkbox fields stay visible-but-read-only beneath each loop row with an "Edit in Cards view" link. Bulk-editing other field types is explicitly out of scope and would be its own future row if and when a workflow asks for it.
 
 ---
 
-## Implementation outline (PR 11.6 — Approach A)
+## Implementation outline (PR 11.7 — Approach A)
 
 ### View toggle
 
@@ -171,7 +171,7 @@ Add/remove field of a non-checkbox type, change field type, edit options/validat
 
 ## Deferred — Approach B (key-aligned columns)
 
-Not in PR 11.6. Picked up only if producers report label-drift between loops that A's fill-down doesn't catch. The upgrade is contained:
+Not in PR 11.7. Picked up only if producers report label-drift between loops that A's fill-down doesn't catch. The upgrade is contained:
 
 - Replace the `Slot N` column model with a `field-key` column model. Group `template.items` by `(group, key)` and project columns as the union of distinct keys across loops, ordered by their first appearance.
 - Column headers gain an editable caption + the underlying key as a muted subscript. Renaming the caption renames the key across every loop at once (with a duplicate-key validation pass mirroring the existing `TemplateSchemaV2` `superRefine`).
@@ -182,7 +182,7 @@ Not in PR 11.6. Picked up only if producers report label-drift between loops tha
 
 ## Deferred — Approach C (raw JSON drawer)
 
-Not in PR 11.6 and not committed to a future row. Documented only so a future Phase-5 effort can pick it up without re-brainstorming.
+Not in PR 11.7 and not committed to a future row. Documented only so a future Phase-5 effort can pick it up without re-brainstorming.
 
 - Sit underneath the grid in a `Collapsible` panel.
 - Render `template.items.filter(item => item.group)` as JSON in a code editor (`@codemirror/lang-json`).
@@ -213,7 +213,7 @@ Same as the standing Phase 4 gates:
 pnpm --filter erify_studios lint && pnpm --filter erify_studios typecheck && pnpm --filter erify_studios test && pnpm --filter erify_studios build
 ```
 
-PR 11.6 acceptance:
+PR 11.7 acceptance:
 
 - Toggle appears only in moderation mode; persists across reloads.
 - Existing Cards view rendering and tests unchanged.

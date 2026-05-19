@@ -4,7 +4,7 @@ import { AlertCircle, ChevronsUpDown, Plus } from 'lucide-react';
 import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { SharedField } from '@eridu/api-types/task-management';
+import { createTaskTemplateFieldId, getSchemaEngine, type SharedField } from '@eridu/api-types/task-management';
 import {
   AlertDialog,
   AlertDialogAction,

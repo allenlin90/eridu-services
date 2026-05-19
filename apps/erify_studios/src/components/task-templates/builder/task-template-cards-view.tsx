@@ -1,7 +1,7 @@
 import { closestCenter, DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { ChevronDown, Copy, Plus, Trash2 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { createTaskTemplateFieldId, getSchemaEngine } from '@eridu/api-types/task-management';
@@ -30,6 +30,7 @@ export function TaskTemplateCardsView({
   isModerationMode,
   moderationLoops,
   pendingFocusLoopId,
+  onScrolledToLoop,
   pendingScrollFieldId,
   onScrolledToField,
 }: TaskTemplateCardsViewProps) {
