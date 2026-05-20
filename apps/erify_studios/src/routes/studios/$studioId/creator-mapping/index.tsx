@@ -25,6 +25,7 @@ import { BulkCreatorAssignmentDialog } from '@/features/studio-show-creators/com
 import { creatorMappingShowColumns } from '@/features/studio-show-creators/components/creator-mapping-show-columns';
 import { SelectedCreatorMappingMobileActions } from '@/features/studio-show-creators/components/selected-creator-mapping-mobile-actions';
 import { useCreatorMappingClientFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-client-filter';
+import { useCreatorMappingCreatorFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-creator-filter';
 import { useCreatorMappingShows } from '@/features/studio-show-creators/hooks/use-creator-mapping-shows';
 import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
 import {
@@ -198,6 +199,15 @@ function CreatorMappingPage() {
     isLoading: isClientFilterLoading,
     setSearch: setClientFilterSearch,
   } = useCreatorMappingClientFilter(studioId, selectedClientId);
+  const selectedCreatorName = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'creator_name');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+  const {
+    options: creatorOptions,
+    isLoading: isCreatorFilterLoading,
+    setSearch: setCreatorFilterSearch,
+  } = useCreatorMappingCreatorFilter(studioId, selectedCreatorName);
 
   const searchableColumns = useMemo(
     () => [
@@ -205,7 +215,11 @@ function CreatorMappingPage() {
       {
         id: 'creator_name',
         title: 'Creator',
-        type: 'text' as const,
+        type: 'combobox' as const,
+        options: creatorOptions,
+        onSearch: setCreatorFilterSearch,
+        isLoading: isCreatorFilterLoading,
+        placeholder: 'Filter by creator',
       },
       {
         id: 'has_creators',
@@ -232,7 +246,15 @@ function CreatorMappingPage() {
         options: (showLookups?.show_statuses ?? []).map((status) => ({ value: status.name, label: status.name })),
       },
     ],
-    [clientOptions, isClientFilterLoading, setClientFilterSearch, showLookups?.show_statuses],
+    [
+      clientOptions,
+      creatorOptions,
+      isClientFilterLoading,
+      isCreatorFilterLoading,
+      setClientFilterSearch,
+      setCreatorFilterSearch,
+      showLookups?.show_statuses,
+    ],
   );
 
   return (
