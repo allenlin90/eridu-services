@@ -1,14 +1,31 @@
-import { Copy, Lock, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import { Copy, MoreHorizontal, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Badge,
   Button,
+  Checkbox,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
   Textarea,
   Tooltip,
   TooltipContent,
@@ -16,16 +33,26 @@ import {
   TooltipTrigger,
 } from '@eridu/ui';
 
-import { type BuilderTemplateSchemaType, type FieldItem, isSharedField } from './schema';
-import { buildLoopMetadataFromTemplate, createNextLoop, createTextFieldForTemplate, createUniqueCopiedKey } from './task-template-helpers';
-
-function findLastIndexInGroup(items: FieldItem[], group: string): number {
-  for (let i = items.length - 1; i >= 0; i--) {
-    if (items[i].group === group)
-      return i;
-  }
-  return -1;
-}
+import { type BuilderTemplateSchemaType, isSharedField } from './schema';
+import {
+  addMechanic,
+  appendLoop,
+  assignMechanicToLoop,
+  buildLoopMetadataFromTemplate,
+  cloneLoopWithMechanics,
+  deleteLoop,
+  deleteMechanic,
+  detectMechanicDrift,
+  getMechanicAssignments,
+  getMechanics,
+  type Mechanic,
+  migrateMechanicLibrary,
+  renameLoop,
+  renameMechanic,
+  resyncMechanicFromItems,
+  setMechanicDescription,
+  unassignMechanicFromLoop,
+} from './task-template-helpers';
 
 export type TaskTemplateLoopGridProps = {
   template: BuilderTemplateSchemaType;
@@ -33,470 +60,605 @@ export type TaskTemplateLoopGridProps = {
   errors?: Record<string, string[]>;
 };
 
-const GridCell = memo(({
-  field,
-  loopId,
-  loopIndex,
-  slotIndex,
-  errorMessages,
-  onUpdateField,
-  onPaste,
-  onFillDown,
-}: {
-  field?: FieldItem;
-  loopId: string;
-  loopIndex: number;
-  slotIndex: number;
-  errorMessages?: string[];
-  onUpdateField: (loopId: string, slotIndex: number, updates: Partial<FieldItem>) => void;
-  onPaste: (e: React.ClipboardEvent, loopIndex: number, slotIndex: number) => void;
-  onFillDown: (loopIndex: number, slotIndex: number) => void;
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const isShared = field ? isSharedField(field as { standard?: boolean; shared_field_key?: string }) : false;
-  const hasError = errorMessages && errorMessages.length > 0;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, key: 'label' | 'description') => {
-    if (!field || isShared)
-      return;
-    onUpdateField(loopId, slotIndex, { [key]: e.target.value });
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    onPaste(e, loopIndex, slotIndex);
-  };
-
-  if (!field) {
-    return (
-      <div
-        className="flex h-full min-h-[60px] items-center justify-center rounded-md border border-dashed border-muted-foreground/30 bg-muted/10 p-2 hover:bg-muted/30 cursor-pointer text-muted-foreground"
-        onClick={() => onUpdateField(loopId, slotIndex, { label: 'New Checkbox' })}
-      >
-        <Plus className="mr-1 h-3 w-3" />
-        <span className="text-xs">Add</span>
-      </div>
-    );
-  }
-
-  const content = (
-    <div className={`relative flex flex-col rounded-md border bg-background p-2 transition-colors ${hasError ? 'border-destructive/50 bg-destructive/5' : 'border-border'}`}>
-      <div className="flex items-start gap-1">
-        <Input
-          value={field.label || ''}
-          onChange={(e) => handleChange(e, 'label')}
-          onPaste={handlePaste}
-          disabled={isShared}
-          placeholder="Label"
-          className="h-8 flex-1 px-2 py-1 text-sm bg-transparent border-none shadow-none focus-visible:ring-1"
-        />
-        <div className="flex shrink-0 items-center">
-          {isShared && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Lock className="h-3 w-3 text-muted-foreground mx-1" />
-                </TooltipTrigger>
-                <TooltipContent>Shared field. Edit in Shared Fields settings.</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
-                <MoreHorizontal className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setIsExpanded(!isExpanded)}>
-                {isExpanded ? 'Hide description' : 'Add description'}
-              </DropdownMenuItem>
-              {!isShared && (
-                <DropdownMenuItem onClick={() => onFillDown(loopIndex, slotIndex)}>
-                  Fill column down
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      {(isExpanded || field.description) && (
-        <div className="mt-1">
-          <Textarea
-            value={field.description || ''}
-            onChange={(e) => handleChange(e, 'description')}
-            onPaste={handlePaste}
-            disabled={isShared}
-            placeholder="Description (optional)"
-            className="min-h-[60px] resize-none text-xs bg-muted/30 border-muted-foreground/20"
-          />
-        </div>
-      )}
-    </div>
-  );
-
-  if (hasError) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {content}
-          </TooltipTrigger>
-          <TooltipContent className="bg-destructive text-destructive-foreground">
-            <ul className="list-disc pl-4 text-xs">
-              {errorMessages.map((msg, i) => <li key={i}>{msg}</li>)}
-            </ul>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  return content;
-});
-
-GridCell.displayName = 'GridCell';
+const LOOP_COL_WIDTH = 'w-[220px]';
+const MECHANIC_COL_WIDTH = 'min-w-[180px]';
 
 export function TaskTemplateLoopGrid({ template, onChange, errors }: TaskTemplateLoopGridProps) {
+  const migratedRef = useRef(false);
+
+  useEffect(() => {
+    if (migratedRef.current)
+      return;
+    const migrated = migrateMechanicLibrary(template);
+    if (migrated !== template) {
+      migratedRef.current = true;
+      onChange(migrated);
+      toast.info('Mechanic library populated from existing checkbox fields.');
+    } else {
+      migratedRef.current = true;
+    }
+    // Only run once on mount; subsequent template changes use the persisted library.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loops = useMemo(() => buildLoopMetadataFromTemplate(template), [template]);
+  const mechanics = useMemo(() => getMechanics(template), [template]);
+  const assignments = useMemo(() => getMechanicAssignments(template), [template]);
+  const driftedIds = useMemo(() => detectMechanicDrift(template), [template]);
 
-  const groupedFields = useMemo(() => {
-    const map = new Map<string, FieldItem[]>();
-    template.items.forEach((item) => {
-      const g = item.group || '';
-      if (!map.has(g))
-        map.set(g, []);
-      map.get(g)!.push(item);
-    });
+  const usageByMechanic = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of template.items) {
+      const mechanicId = assignments[item.id];
+      if (!mechanicId)
+        continue;
+      counts.set(mechanicId, (counts.get(mechanicId) ?? 0) + 1);
+    }
+    return counts;
+  }, [assignments, template.items]);
+
+  const assignedItemKey = useMemo(() => {
+    // Map: `${loopId}::${mechanicId}` -> itemId, for fast checkbox state lookup.
+    const map = new Map<string, string>();
+    for (const item of template.items) {
+      const mechanicId = assignments[item.id];
+      if (!mechanicId || !item.group)
+        continue;
+      map.set(`${item.group}::${mechanicId}`, item.id);
+    }
     return map;
-  }, [template.items]);
+  }, [assignments, template.items]);
 
-  const loopCheckboxes = useMemo(() => {
-    return loops.map((loop) => {
-      const fields = groupedFields.get(loop.id) || [];
-      return fields.filter((f) => f.type === 'checkbox');
-    });
-  }, [loops, groupedFields]);
+  const sharedFieldCount = useMemo(
+    () =>
+      template.items.filter(
+        (item) =>
+          item.type === 'checkbox'
+          && isSharedField(item as { standard?: boolean; shared_field_key?: string }),
+      ).length,
+    [template.items],
+  );
 
-  const loopNonCheckboxes = useMemo(() => {
-    return loops.map((loop) => {
-      const fields = groupedFields.get(loop.id) || [];
-      return fields.filter((f) => f.type !== 'checkbox');
-    });
-  }, [loops, groupedFields]);
+  const nonMechanicByLoop = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of template.items) {
+      if (!item.group)
+        continue;
+      const isLibraryCheckbox
+        = item.type === 'checkbox'
+        && assignments[item.id]
+        && !isSharedField(item as { standard?: boolean; shared_field_key?: string });
+      if (isLibraryCheckbox)
+        continue;
+      counts.set(item.group, (counts.get(item.group) ?? 0) + 1);
+    }
+    return counts;
+  }, [assignments, template.items]);
 
-  const maxSlots = useMemo(() => {
-    return Math.max(1, ...loopCheckboxes.map((cb) => cb.length));
-  }, [loopCheckboxes]);
-
-  const getErrorMessages = useCallback((fieldId: string) => {
+  const itemErrorIds = useMemo(() => {
     if (!errors)
-      return undefined;
-    const itemIndex = template.items.findIndex((item) => item.id === fieldId);
-    if (itemIndex === -1)
-      return undefined;
-
-    // Check for `items.${index}.something` in errors object
-    const prefix = `items.${itemIndex}`;
-    const msgs: string[] = [];
-    Object.entries(errors).forEach(([path, currentErrors]) => {
-      if (path.startsWith(prefix)) {
-        msgs.push(...currentErrors);
-      }
-    });
-    return msgs.length > 0 ? msgs : undefined;
+      return new Set<string>();
+    const ids = new Set<string>();
+    for (const [path] of Object.entries(errors)) {
+      const match = path.match(/^items\.(\d+)/);
+      if (!match)
+        continue;
+      const index = Number(match[1]);
+      const item = template.items[index];
+      if (item?.id)
+        ids.add(item.id);
+    }
+    return ids;
   }, [errors, template.items]);
 
-  const updateField = useCallback((loopId: string, slotIndex: number, updates: Partial<FieldItem>) => {
-    const loopFields = groupedFields.get(loopId) || [];
-    const checkboxes = loopFields.filter((f) => f.type === 'checkbox');
-
-    let newItems = [...template.items];
-
-    if (slotIndex < checkboxes.length) {
-      // Update existing
-      const targetId = checkboxes[slotIndex].id;
-      newItems = newItems.map((item) => item.id === targetId ? { ...item, ...updates } : item);
-    } else {
-      // Add new
-      const newField = createTextFieldForTemplate(template, loopId);
-      newField.type = 'checkbox';
-      // Append to the end of this loop's fields
-      const lastIndexInLoop = findLastIndexInGroup(newItems, loopId);
-      const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
-
-      const mergedField = { ...newField, ...updates };
-      newItems.splice(insertAt, 0, mergedField);
+  const mechanicsInError = useMemo(() => {
+    const ids = new Set<string>();
+    for (const [itemId, mechanicId] of Object.entries(assignments)) {
+      if (itemErrorIds.has(itemId))
+        ids.add(mechanicId);
     }
+    return ids;
+  }, [assignments, itemErrorIds]);
 
-    onChange({ ...template, items: newItems });
-  }, [template, groupedFields, onChange]);
+  // ---- Mutations -----------------------------------------------------------
 
-  const handleFillDown = useCallback((startLoopIndex: number, slotIndex: number) => {
-    const sourceLoop = loops[startLoopIndex];
-    if (!sourceLoop)
-      return;
-    const sourceCheckbox = loopCheckboxes[startLoopIndex]?.[slotIndex];
-    if (!sourceCheckbox)
-      return;
+  const handleAddMechanic = useCallback(() => {
+    const { template: next, mechanic } = addMechanic(template, 'New mechanic');
+    onChange(next);
+    toast.success(`Added mechanic "${mechanic.label}". Assign it to loops with the checkboxes below.`);
+  }, [onChange, template]);
 
-    let newItems = [...template.items];
+  const handleRenameMechanic = useCallback(
+    (mechanicId: string, nextLabel: string) => {
+      const trimmed = nextLabel.trim();
+      if (!trimmed)
+        return;
+      onChange(renameMechanic(template, mechanicId, trimmed));
+    },
+    [onChange, template],
+  );
 
-    for (let i = startLoopIndex + 1; i < loops.length; i++) {
-      const loopId = loops[i].id;
-      const targetCheckboxes = loopCheckboxes[i] || [];
+  const handleEditDescription = useCallback(
+    (mechanicId: string, description: string) => {
+      onChange(setMechanicDescription(template, mechanicId, description));
+    },
+    [onChange, template],
+  );
 
-      if (slotIndex < targetCheckboxes.length) {
-        const target = targetCheckboxes[slotIndex];
-        if (isSharedField(target as { standard?: boolean; shared_field_key?: string }))
-          continue;
-        newItems = newItems.map((item) => item.id === target.id ? { ...item, label: sourceCheckbox.label } : item);
+  const handleDeleteMechanic = useCallback(
+    (mechanicId: string) => {
+      const removedCount = usageByMechanic.get(mechanicId) ?? 0;
+      onChange(deleteMechanic(template, mechanicId));
+      toast.success(
+        removedCount > 0
+          ? `Deleted mechanic and removed it from ${removedCount} loop${removedCount === 1 ? '' : 's'}.`
+          : 'Deleted mechanic.',
+      );
+    },
+    [onChange, template, usageByMechanic],
+  );
+
+  const handleToggleAssignment = useCallback(
+    (mechanicId: string, loopId: string, checked: boolean) => {
+      if (checked) {
+        onChange(assignMechanicToLoop(template, mechanicId, loopId));
       } else {
-        // Must create
-        const newField = createTextFieldForTemplate(template, loopId);
-        newField.type = 'checkbox';
-        newField.label = sourceCheckbox.label;
-        const lastIndexInLoop = findLastIndexInGroup(newItems, loopId);
-        const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
-        newItems.splice(insertAt, 0, newField);
+        onChange(unassignMechanicFromLoop(template, mechanicId, loopId));
       }
-    }
-    onChange({ ...template, items: newItems });
-    toast.success(`Filled column down starting from Loop ${startLoopIndex + 1}`);
-  }, [template, loops, loopCheckboxes, onChange]);
+    },
+    [onChange, template],
+  );
 
-  const handlePaste = useCallback((e: React.ClipboardEvent, startLoopIndex: number, startSlotIndex: number) => {
-    const text = e.clipboardData.getData('text');
-    if (!text.includes('\t') && !text.includes('\n'))
-      return;
+  const handleResyncMechanic = useCallback(
+    (mechanicId: string) => {
+      onChange(resyncMechanicFromItems(template, mechanicId));
+      toast.success('Mechanic re-synced from the most recent Cards-view edit.');
+    },
+    [onChange, template],
+  );
 
-    e.preventDefault();
-    const parsedRows = text.split(/\r?\n/).map((row) => row.split('\t'));
-    if (parsedRows.length === 1 && parsedRows[0].length === 1)
-      return;
+  const handleAddLoop = useCallback(() => {
+    const { template: next } = appendLoop(template);
+    onChange(next);
+  }, [onChange, template]);
 
-    let newItems = [...template.items];
-    const newLoops = [...loops];
-    let rejectedSharedCount = 0;
-    let pastedCount = 0;
+  const handleCloneLoop = useCallback(
+    (loopId: string) => {
+      const { template: next } = cloneLoopWithMechanics(template, loopId);
+      onChange(next);
+    },
+    [onChange, template],
+  );
 
-    for (let r = 0; r < parsedRows.length; r++) {
-      const rowData = parsedRows[r];
-      if (rowData.length === 1 && !rowData[0].trim())
-        continue; // skip empty lines
+  const handleDeleteLoop = useCallback(
+    (loopId: string) => {
+      onChange(deleteLoop(template, loopId));
+    },
+    [onChange, template],
+  );
 
-      const currentLoopIndex = startLoopIndex + r;
-      let loopId: string;
+  const handleRenameLoop = useCallback(
+    (loopId: string, nextName: string) => {
+      const trimmed = nextName.trim();
+      if (!trimmed)
+        return;
+      onChange(renameLoop(template, loopId, trimmed));
+    },
+    [onChange, template],
+  );
 
-      if (currentLoopIndex < newLoops.length) {
-        loopId = newLoops[currentLoopIndex].id;
-      } else {
-        const next = createNextLoop(newLoops);
-        newLoops.push(next);
-        loopId = next.id;
-      }
-
-      // Group fields for this loop dynamically as we mutate
-      const loopFields = newItems.filter((item) => item.group === loopId);
-      const checkboxes = loopFields.filter((f) => f.type === 'checkbox');
-
-      for (let c = 0; c < rowData.length; c++) {
-        const currentSlotIndex = startSlotIndex + c;
-        const val = rowData[c].trim();
-        if (!val)
-          continue;
-
-        if (currentSlotIndex < checkboxes.length) {
-          const target = checkboxes[currentSlotIndex];
-          if (isSharedField(target as { standard?: boolean; shared_field_key?: string })) {
-            rejectedSharedCount++;
-            continue;
-          }
-          newItems = newItems.map((item) => item.id === target.id ? { ...item, label: val } : item);
-          pastedCount++;
-        } else {
-          const newField = createTextFieldForTemplate(template, loopId);
-          newField.type = 'checkbox';
-          newField.label = val;
-          const lastIndexInLoop = findLastIndexInGroup(newItems, loopId);
-          const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
-          newItems.splice(insertAt, 0, newField);
-          // Re-evaluate checkboxes for this loop for the next column in this row
-          checkboxes.push(newField);
-          pastedCount++;
-        }
-      }
-    }
-
-    const nextTemplate = { ...template, items: newItems };
-    if (newLoops.length > loops.length) {
-      nextTemplate.metadata = { ...(template.metadata || {}), loops: newLoops };
-    }
-    onChange(nextTemplate);
-
-    if (rejectedSharedCount > 0) {
-      toast.warning(`Pasted ${pastedCount} cells, skipped ${rejectedSharedCount} shared fields. Shared field labels are managed in Shared Fields settings.`);
-    } else {
-      toast.success(`Pasted ${pastedCount} cells across ${parsedRows.length} loops.`);
-    }
-  }, [template, loops, onChange]);
-
-  const updateLoopName = useCallback((loopId: string, name: string) => {
-    const newLoops = loops.map((l) => l.id === loopId ? { ...l, name } : l);
-    onChange({ ...template, metadata: { ...template.metadata, loops: newLoops } });
-  }, [loops, onChange, template]);
-
-  const removeLoop = useCallback((loopIndex: number) => {
-    const loopId = loops[loopIndex].id;
-    const newLoops = loops.filter((_, i) => i !== loopIndex);
-    const newItems = template.items.filter((item) => item.group !== loopId);
-    onChange({ ...template, items: newItems, metadata: { ...template.metadata, loops: newLoops } });
-  }, [loops, onChange, template]);
-
-  const cloneLoop = useCallback((loopIndex: number) => {
-    const loopToClone = loops[loopIndex];
-    const newLoop = createNextLoop(loops);
-    const newLoops = [...loops];
-    newLoops.splice(loopIndex + 1, 0, newLoop);
-
-    const usedKeys = new Set(template.items.map((item) => item.key));
-    const itemsToClone = template.items.filter((item) => item.group === loopToClone.id);
-    const clonedItems = itemsToClone.map((item) => {
-      const newField = createTextFieldForTemplate(template, newLoop.id);
-      return {
-        ...item,
-        id: newField.id,
-        group: newLoop.id,
-        key: createUniqueCopiedKey(item.key, usedKeys),
-      };
-    });
-
-    const lastIndex = findLastIndexInGroup(template.items, loopToClone.id);
-    const insertAt = lastIndex === -1 ? template.items.length : lastIndex + 1;
-    const newItems = [...template.items];
-    newItems.splice(insertAt, 0, ...clonedItems);
-
-    onChange({ ...template, items: newItems, metadata: { ...template.metadata, loops: newLoops } });
-  }, [loops, onChange, template]);
-
-  const addLoop = useCallback(() => {
-    const newLoop = createNextLoop(loops);
-    onChange({ ...template, metadata: { ...template.metadata, loops: [...loops, newLoop] } });
-  }, [loops, onChange, template]);
-
-  const addSlotColumn = useCallback(() => {
-    const newItems = [...template.items];
-    loops.forEach((loop) => {
-      const newField = createTextFieldForTemplate(template, loop.id);
-      newField.type = 'checkbox';
-      const lastIndexInLoop = findLastIndexInGroup(newItems, loop.id);
-      const insertAt = lastIndexInLoop === -1 ? newItems.length : lastIndexInLoop + 1;
-      newItems.splice(insertAt, 0, newField);
-    });
-    onChange({ ...template, items: newItems });
-  }, [loops, onChange, template]);
+  const hasMechanics = mechanics.length > 0;
+  const hasLoops = loops.length > 0;
 
   return (
-    <div className="rounded-lg border bg-card shadow-sm overflow-x-auto">
-      <table className="w-full text-sm text-left border-collapse min-w-max">
-        <thead className="bg-muted/50 border-b">
-          <tr>
-            <th className="font-semibold p-3 border-r w-[200px] shrink-0 sticky left-0 z-10 bg-muted/50 backdrop-blur-sm">Loop</th>
-            {Array.from({ length: maxSlots }).map((_, i) => (
-              <th key={`header_slot_${i}`} className="font-semibold p-3 border-r w-[250px]">
-                Slot
-                {' '}
-                {i + 1}
-              </th>
-            ))}
-            <th className="p-3 w-[60px]">
-              <Button variant="ghost" size="icon" onClick={addSlotColumn} className="h-6 w-6" aria-label="Add slot column">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-          {loops.map((loop, rowIndex) => {
-            const rowCheckboxes = loopCheckboxes[rowIndex] || [];
-            const rowNonCheckboxes = loopNonCheckboxes[rowIndex] || [];
+    <div className="space-y-6">
+      <MechanicLibraryPanel
+        mechanics={mechanics}
+        usage={usageByMechanic}
+        drifted={driftedIds}
+        errors={mechanicsInError}
+        onAdd={handleAddMechanic}
+        onRename={handleRenameMechanic}
+        onDescription={handleEditDescription}
+        onDelete={handleDeleteMechanic}
+        onResync={handleResyncMechanic}
+      />
 
-            return (
-              <React.Fragment key={loop.id}>
-                <tr>
-                  <td className="p-3 border-r align-top sticky left-0 z-10 bg-card">
-                    <div className="flex flex-col gap-2">
-                      <Input
-                        value={loop.name}
-                        onChange={(e) => updateLoopName(loop.id, e.target.value)}
-                        className="h-8 font-medium bg-transparent shadow-none"
-                      />
-                      <div className="flex gap-1 pl-1">
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => cloneLoop(rowIndex)} title="Clone loop">
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeLoop(rowIndex)} title="Delete loop">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </td>
-                  {Array.from({ length: maxSlots }).map((_, colIndex) => {
-                    const field = rowCheckboxes[colIndex];
-                    return (
-                      <td key={`cell_${loop.id}_${colIndex}`} className="p-2 border-r align-top min-w-[200px]">
-                        <GridCell
-                          field={field}
-                          loopId={loop.id}
-                          loopIndex={rowIndex}
-                          slotIndex={colIndex}
-                          errorMessages={field ? getErrorMessages(field.id) : undefined}
-                          onUpdateField={updateField}
-                          onPaste={handlePaste}
-                          onFillDown={handleFillDown}
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="p-2" />
-                </tr>
-                {rowNonCheckboxes.length > 0 && (
-                  <tr className="bg-muted/10">
-                    <td colSpan={maxSlots + 2} className="px-4 py-2 border-t border-dashed">
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground/70">Non-checkbox fields in this loop:</span>
-                        <div className="flex flex-wrap gap-2 flex-1">
-                          {rowNonCheckboxes.map((f) => (
-                            <span key={f.id} className="inline-flex items-center rounded-sm bg-background px-2 py-0.5 border">
-                              {f.label || 'Untitled'}
-                              {' '}
-                              (
-                              {f.type}
-                              )
-                            </span>
+      <div className="rounded-lg border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div>
+            <h4 className="text-sm font-semibold">Loop × Mechanic</h4>
+            <p className="text-xs text-muted-foreground">
+              Tick a cell to play the mechanic in that loop. Untick to remove it.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleAddLoop}>
+            <Plus className="mr-1 h-4 w-4" />
+            Add Loop
+          </Button>
+        </div>
+
+        {sharedFieldCount > 0 && (
+          <div className="border-b bg-amber-50/60 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            {sharedFieldCount}
+            {' '}
+            shared field
+            {sharedFieldCount === 1 ? ' is' : 's are'}
+            {' '}
+            hidden from the matrix — edit them in Cards view or Shared Fields settings.
+          </div>
+        )}
+
+        {!hasLoops
+          ? (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No loops yet. Click
+                {' '}
+                <span className="font-medium">Add Loop</span>
+                {' '}
+                to start.
+              </div>
+            )
+          : !hasMechanics
+              ? (
+                  <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    Add a mechanic above to populate the matrix.
+                  </div>
+                )
+              : (
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-max">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className={`sticky left-0 z-10 bg-muted/40 ${LOOP_COL_WIDTH}`}>Loop</TableHead>
+                          {mechanics.map((mechanic) => (
+                            <TableHead key={mechanic.id} className={`${MECHANIC_COL_WIDTH} text-center`}>
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className={`max-w-[200px] truncate text-sm font-medium ${mechanicsInError.has(mechanic.id) ? 'text-destructive' : ''}`} title={mechanic.label}>
+                                  {mechanic.label || 'Untitled'}
+                                </span>
+                                {driftedIds.has(mechanic.id) && (
+                                  <Badge variant="outline" className="border-amber-300 text-[10px] text-amber-700">
+                                    drift
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableHead>
                           ))}
-                        </div>
-                        <span className="text-muted-foreground/60 italic shrink-0 hidden sm:inline">
-                          Switch to Cards view to edit field structure
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {loops.map((loop) => {
+                          const extras = nonMechanicByLoop.get(loop.id) ?? 0;
+                          return (
+                            <TableRow key={loop.id}>
+                              <TableCell className={`sticky left-0 z-10 bg-card align-top ${LOOP_COL_WIDTH}`}>
+                                <LoopRowHeader
+                                  name={loop.name}
+                                  extras={extras}
+                                  onRename={(next) => handleRenameLoop(loop.id, next)}
+                                  onClone={() => handleCloneLoop(loop.id)}
+                                  onDelete={() => handleDeleteLoop(loop.id)}
+                                />
+                              </TableCell>
+                              {mechanics.map((mechanic) => {
+                                const isAssigned = assignedItemKey.has(`${loop.id}::${mechanic.id}`);
+                                return (
+                                  <TableCell key={mechanic.id} className="text-center">
+                                    <Checkbox
+                                      checked={isAssigned}
+                                      onCheckedChange={(value) =>
+                                        handleToggleAssignment(mechanic.id, loop.id, value === true)}
+                                      aria-label={`${mechanic.label || 'Untitled'} in ${loop.name}`}
+                                    />
+                                  </TableCell>
+                                );
+                              })}
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
-              </React.Fragment>
-            );
-          })}
-          <tr>
-            <td colSpan={maxSlots + 2} className="p-3">
-              <Button variant="ghost" size="sm" onClick={addLoop} className="text-muted-foreground">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Loop
-              </Button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      </div>
     </div>
   );
 }
 
 export default TaskTemplateLoopGrid;
+
+// ---------------------------------------------------------------------------
+// Subcomponents
+// ---------------------------------------------------------------------------
+
+type MechanicLibraryPanelProps = {
+  mechanics: Mechanic[];
+  usage: Map<string, number>;
+  drifted: Set<string>;
+  errors: Set<string>;
+  onAdd: () => void;
+  onRename: (mechanicId: string, nextLabel: string) => void;
+  onDescription: (mechanicId: string, description: string) => void;
+  onDelete: (mechanicId: string) => void;
+  onResync: (mechanicId: string) => void;
+};
+
+function MechanicLibraryPanel({
+  mechanics,
+  usage,
+  drifted,
+  errors,
+  onAdd,
+  onRename,
+  onDescription,
+  onDelete,
+  onResync,
+}: MechanicLibraryPanelProps) {
+  return (
+    <div className="rounded-lg border bg-card shadow-sm">
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <div>
+          <h4 className="text-sm font-semibold">Mechanics</h4>
+          <p className="text-xs text-muted-foreground">
+            Edit a mechanic once — every loop that uses it updates automatically.
+          </p>
+        </div>
+        <Button size="sm" onClick={onAdd}>
+          <Plus className="mr-1 h-4 w-4" />
+          Add mechanic
+        </Button>
+      </div>
+
+      {mechanics.length === 0
+        ? (
+            <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+              No mechanics yet. Add one to start, or open an existing template — the library
+              auto-populates from existing checkbox cue cards on first load.
+            </div>
+          )
+        : (
+            <ul className="divide-y">
+              {mechanics.map((mechanic) => (
+                <MechanicRow
+                  key={mechanic.id}
+                  mechanic={mechanic}
+                  usageCount={usage.get(mechanic.id) ?? 0}
+                  isDrifted={drifted.has(mechanic.id)}
+                  hasError={errors.has(mechanic.id)}
+                  onRename={(next) => onRename(mechanic.id, next)}
+                  onDescription={(next) => onDescription(mechanic.id, next)}
+                  onDelete={() => onDelete(mechanic.id)}
+                  onResync={() => onResync(mechanic.id)}
+                />
+              ))}
+            </ul>
+          )}
+    </div>
+  );
+}
+
+type MechanicRowProps = {
+  mechanic: Mechanic;
+  usageCount: number;
+  isDrifted: boolean;
+  hasError: boolean;
+  onRename: (nextLabel: string) => void;
+  onDescription: (description: string) => void;
+  onDelete: () => void;
+  onResync: () => void;
+};
+
+function MechanicRow({
+  mechanic,
+  usageCount,
+  isDrifted,
+  hasError,
+  onRename,
+  onDescription,
+  onDelete,
+  onResync,
+}: MechanicRowProps) {
+  const [label, setLabel] = useState(mechanic.label);
+  const [description, setDescription] = useState(mechanic.description ?? '');
+  const [showDescription, setShowDescription] = useState(Boolean(mechanic.description));
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Sync local state when the parent passes a new mechanic value (rename,
+  // resync). Use the prevProp-state pattern so we don't read a ref during
+  // render (react-hooks/refs).
+  const [prevLabel, setPrevLabel] = useState(mechanic.label);
+  const [prevDescription, setPrevDescription] = useState(mechanic.description ?? '');
+  if (mechanic.label !== prevLabel) {
+    setPrevLabel(mechanic.label);
+    setLabel(mechanic.label);
+  }
+  if ((mechanic.description ?? '') !== prevDescription) {
+    setPrevDescription(mechanic.description ?? '');
+    setDescription(mechanic.description ?? '');
+  }
+
+  const commitLabel = () => {
+    if (label.trim() && label !== mechanic.label) {
+      onRename(label);
+    } else if (!label.trim()) {
+      setLabel(mechanic.label);
+    }
+  };
+
+  const commitDescription = () => {
+    if (description !== (mechanic.description ?? '')) {
+      onDescription(description);
+    }
+  };
+
+  return (
+    <li className="flex flex-col gap-2 px-4 py-3">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 space-y-1">
+          <Input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            onBlur={commitLabel}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+              if (e.key === 'Escape') {
+                setLabel(mechanic.label);
+                e.currentTarget.blur();
+              }
+            }}
+            placeholder="Mechanic label (read aloud by the moderator)"
+            className={hasError ? 'border-destructive focus-visible:ring-destructive' : ''}
+            aria-label="Mechanic label"
+          />
+          {showDescription && (
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onBlur={commitDescription}
+              placeholder="Optional context for moderators"
+              className="min-h-[60px] text-sm"
+              aria-label="Mechanic description"
+            />
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2 pt-1">
+          <Badge variant="secondary" className="text-xs">
+            {usageCount === 0
+              ? 'Not used'
+              : `Used in ${usageCount} loop${usageCount === 1 ? '' : 's'}`}
+          </Badge>
+          {isDrifted && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={onResync}
+                    aria-label="Re-sync mechanic label from Cards-view edits"
+                  >
+                    <RefreshCw className="h-4 w-4 text-amber-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  A linked field's label differs from the library. Click to re-sync.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" aria-label="Mechanic actions">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setShowDescription((v) => !v)}>
+                {showDescription ? 'Hide description' : 'Add description'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete mechanic
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete mechanic?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the mechanic from the library and from
+              {' '}
+              {usageCount}
+              {' '}
+              loop
+              {usageCount === 1 ? '' : 's'}
+              . You can re-add it later, but existing assignments will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDelete();
+                setConfirmDelete(false);
+              }}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </li>
+  );
+}
+
+type LoopRowHeaderProps = {
+  name: string;
+  extras: number;
+  onRename: (next: string) => void;
+  onClone: () => void;
+  onDelete: () => void;
+};
+
+function LoopRowHeader({ name, extras, onRename, onClone, onDelete }: LoopRowHeaderProps) {
+  const [local, setLocal] = useState(name);
+  const [prevName, setPrevName] = useState(name);
+  if (name !== prevName) {
+    setPrevName(name);
+    setLocal(name);
+  }
+
+  const commit = () => {
+    if (local.trim() && local !== name) {
+      onRename(local);
+    } else if (!local.trim()) {
+      setLocal(name);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <Input
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
+        }}
+        className="h-8 text-sm font-medium"
+        aria-label="Loop name"
+      />
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">
+          {extras === 0
+            ? 'Mechanics only'
+            : `+${extras} non-mechanic field${extras === 1 ? '' : 's'}`}
+        </span>
+        <div className="flex">
+          <Button size="icon" variant="ghost" onClick={onClone} aria-label="Clone loop" className="h-7 w-7">
+            <Copy className="h-3 w-3" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={onDelete} aria-label="Delete loop" className="h-7 w-7 hover:text-destructive">
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

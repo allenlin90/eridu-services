@@ -1,213 +1,173 @@
-# Task Template Loop **Grid View** — Design
+# Task Template **Mechanic-Library Grid View** — Design
 
-> **Status**: 📐 Planned
-> **Date**: 2026-05-19
+> **Status**: 🚧 In progress (PR [#86](https://github.com/allenlin90/eridu-services/pull/86))
+> **Date**: 2026-05-20 (supersedes the 2026-05-19 Approach-A positional grid design)
 > **Scope**: `apps/erify_studios/src/components/task-templates/builder/` and the studio task-template route at `/studios/$studioId/task-templates/$templateId`.
-> **Phase**: 4 · PR 11.7 (slots between [PR 11.5](https://github.com/allenlin90/eridu-services/pull/84) and the planned PR 12 economics surface).
+> **Phase**: 4 · PR 11.7 (between [PR 11.5](https://github.com/allenlin90/eridu-services/pull/84) and the planned PR 12 economics surface). Followups in PR 11.8 (studio-level catalog) and PR 11.9 (usage rollup).
 > **Triggered by**: Authoring pain on loop-heavy moderation templates — example `ttpl_pWi1mbHEtHU0D-Zc3cHa` in studio `std_OBXMKm0gW4IGQUNQzp4E` repeats the same product / promotion-mechanic cue cards across many loops.
 
 ---
 
-## Problem
+## Why the original Approach-A grid was wrong
 
-In **Loop-based moderation** mode, each loop is rendered as its own card and its checkbox cue-card fields stack vertically inside the card ([`task-template-builder.tsx`](../../src/components/task-templates/builder/task-template-builder.tsx)). The checkbox label *is* the moderator's read-aloud cue (product name, promotion mechanic, etc.); the checkbox itself just confirms delivery.
+The first cut of PR 11.7 shipped a **positional grid** — rows = loops, columns = `Slot 1..N` checkbox cells, with paste-from-Sheets, fill-down, and duplicate-row. It was reviewed and rejected by producers within a day. The reasons:
 
-For loop-heavy templates this surface fights the author:
+1. **The grid did not prevent drift, it just made it easier to introduce.** Each cell stored an independent label. Editing Loop 3 / Slot 2 did not touch Loop 4 / Slot 2 even when both should match. Fill-down only fixed already-aligned columns; producers still had to remember which cells were supposed to be the same.
+2. **Paste-from-Sheets fought the schema.** Pasting a 5×3 TSV block created 5 loops × 3 anonymous columns. If the producer's Google Sheet was ordered differently than the template (e.g. product in column 2 instead of column 1), the paste silently misaligned and every subsequent edit propagated the misalignment.
+3. **Cells had no identity beyond position.** Renaming a mechanic anywhere required either (a) editing every loop manually (slow and error-prone) or (b) fill-down + remembering to fix the upstream cells (which the user immediately did wrong in practice).
+4. **The cell editor itself had bugs.** Cutting an input made the borderless field look empty/missing; the `DropdownMenu` "Add description" action re-focused the label input; "Fill column down" misreported its scope. These are all symptoms of the same problem — a positional grid asks the cell to be both a data row and an inline form, and the affordances collide.
 
-1. The same mechanic text recurs in many loops, but the author must scroll loop-to-loop and re-type it in each card.
-2. Side-by-side comparison is impossible — you cannot see Loop 3's Slot 2 next to Loop 5's Slot 2 to verify they match.
-3. Paste-from-Sheets is impossible. Producers plan loops in Google Sheets first (one row per loop, one column per mechanic slot); today they must hand-transcribe each cell.
-4. Label drift goes unnoticed until QA — `"BOGO buy 1 get 1"` vs `"BOGO: buy one get one free"` look identical in cards but differ in reporting.
+The cell-level bugs are real, but fixing them does not fix the data model. The real bug is that **the cell is the wrong unit of identity**.
 
-The schema engine handles loops correctly. The bottleneck is purely authoring UX.
+## The fix: make the mechanic the unit of identity
+
+The same product or promotion mechanic recurs across many loops. The author's mental model is "**a list of mechanics that play in different loops**", not "a 2D grid of cells". So the data model is:
+
+- **Mechanic** — a `{ id, label, description? }` record. There is one per distinct cue card. Renaming it once updates every loop that uses it.
+- **Loop** — unchanged from today.
+- **Assignment** — a Loop ↔ Mechanic link. Toggling an assignment on creates a checkbox `FieldItem` in that loop with the mechanic's label; toggling off removes the field.
+
+The UI is a single page with two panels:
+
+1. **Mechanic library** (top): the list of mechanics for this template, with inline rename, optional description, and a "Used in N loops" affordance.
+2. **Loop × Mechanic assignment matrix** (bottom): rows = loops, columns = mechanics, cells = checkboxes. Click to assign / unassign.
+
+This is the established pattern for "many things × many things, the cells are the relationship" (think Notion database relations, Airtable junction tables, Linear label assignment). It maps cleanly to the producer's spreadsheet, but the column header *is* the mechanic — editing it renames the mechanic everywhere it appears.
+
+```
+MECHANICS                                                [+ Add]
+  Shirt A               [edit]   Used in 3 loops
+  BOGO buy 1 get 1      [edit]   Used in 4 loops
+  Free ship > $50       [edit]   Used in 4 loops
+  10% off FRESH10       [edit]   Used in 1 loop
+
+LOOP × MECHANIC                                          [+ Loop]
+        | Shirt A | BOGO buy 1 | Free ship | 10% off    |
+  Loop 1|   [x]   |    [x]     |    [x]    |            |
+  Loop 2|         |    [x]     |    [x]    |            |
+  Loop 3|         |            |           |    [x]     |
+  Loop 4|   [x]   |    [x]     |    [x]    |            |
+```
+
+---
 
 ## Goals
 
-- Let an author bulk-edit checkbox-cue-card **labels and descriptions** across all loops on a single surface.
-- Support paste from Google Sheets / Excel / TSV (rows = loops, columns = slots) anchored at a focused cell.
-- Make label drift between loops visually obvious.
-- Keep the existing per-loop **Cards view** intact as the canonical surface for **structural** changes (add/remove field, change field type, reorder, validation rules, conditional logic) — the Grid view is intentionally narrow.
-- Land safely behind a per-template view toggle so existing users see no change unless they opt in.
+- Let an author rename a recurring mechanic exactly once and have every loop reflect the change.
+- Let an author add or remove a mechanic from a loop with a single click.
+- Make label drift across loops impossible by construction (within a template).
+- Keep the existing per-loop **Cards view** intact as the canonical surface for **structural** changes (add/remove non-checkbox field, change field type, reorder, validation rules, conditional logic, shared-field insertion).
+- Auto-migrate existing templates so producers see their current loops/cells correctly grouped into mechanics on first open. No manual data prep, no breaking change.
 
-## Non-Goals
+## Non-Goals (PR 11.7)
 
-- Editing field structure (type, required flag, validation, options, conditional logic) from the grid. Cards view stays the home for that.
-- Replacing Cards view. Both views coexist; either can be the default once we measure usage.
-- Editing **non-checkbox** fields (number GMV, textarea notes, date pickers) from the grid in Slice 1. We can extend later if usage demands it.
-- A "live collaborative" grid (multi-cursor / OT). Local edits + the existing template autosave loop is enough.
-- Schema changes. The grid is a pure rendering of the existing `BuilderTemplateSchemaType.items[]` array partitioned by `group`.
-
----
-
-## Three approaches
-
-We considered three approaches before settling on a sliced rollout. All three are documented here so reviewers can see what was rejected and why.
-
-### Approach A — Positional grid (simplest)
-
-- **Alignment**: columns are pure positions (Slot 1, Slot 2, …). Column count for any loop = max checkbox-field count across all loops. Loops with fewer slots show empty cells.
-- **Cell content**: label text (mechanic copy) on the first line; collapsible second line for the field's `description`.
-- **Edit semantics**: independent per cell. Editing Loop 3 / Slot 2 only touches that loop's field.
-- **Bulk primitives**:
-  - Fill-down on a column (copy the focused cell's label to all rows beneath it in the same column).
-  - Duplicate-row (clones a loop with its checkbox children, mirroring the existing Clone Loop button).
-  - Paste TSV from clipboard at the anchor cell — Excel-style overwrite. Extra rows create new loops; extra columns create new slots in those loops.
-- **Field structure changes** (add slot, remove slot, change field type, edit options) stay in Cards view. The grid header shows a "Switch to Cards to add a column / change types" hint when an action goes out of scope.
-- **Trade-off**: zero magic, predictable, fast to build. No "edit BOGO once, apply everywhere" — you fill-down or paste a column.
-
-**Sketch:**
-
-```
-        | Slot 1            | Slot 2                   | Slot 3
---------+-------------------+--------------------------+----------------------
-Loop 1  | Shirt A           | BOGO buy 1 get 1         | Free ship > $50
-Loop 2  | Shirt B           | BOGO buy 1 get 1         | Free ship > $50
-Loop 3  | Hat               | 10% off code: FRESH10    | (empty)
-Loop 4  | Shirt A           | BOGO buy 1 get 1         | Free ship > $50
-+ row   |                   |                          |
-```
-
-### Approach B — Key-aligned grid (richer)
-
-- **Alignment**: columns are field **keys** (or `shared_field_key` for V2 templates), not positions. Column `promo_1` lines up across every loop that has a field with that key. Loops missing the key show a "+ add" cell.
-- **Cell content**: label text. Column header shows the key + an editable caption (renaming the caption renames the key across all loops at once).
-- **Edit semantics**: independent edit on labels, but because columns are aligned by key, drift is visually obvious — a column whose cells should match (`BOGO …`) but don't is immediately flagged.
-- **Bulk primitives**: everything in **A**, plus:
-  - Per-cell "Apply to whole column" button (fills every loop in this column with this cell's label).
-  - "Apply only where currently equal to *X*" (safer partial propagation — only overwrite cells whose current value matches the original, so manual one-off edits are preserved).
-- **Paste**: anchors snap to the column-key grid; pasting a 5×3 TSV into Loop 3 / `promo_1` fills loops 3–7 × keys `promo_1`, `promo_2`, `promo_3` in order.
-- **Trade-off**: more useful when *the same kind of mechanic* recurs in the same slot across loops (you can see and fix drift directly), but the author must understand the key-aligned model. The "+ add" affordance and the dual key/caption header add UI weight.
-
-**Sketch:**
-
-```
-        | promo_product (Product) | promo_1 (Promo 1)        | promo_2 (Promo 2)
---------+-------------------------+--------------------------+----------------------
-Loop 1  | Shirt A                 | BOGO buy 1 get 1         | Free ship > $50
-Loop 2  | Shirt B                 | BOGO buy 1 get 1         | Free ship > $50
-Loop 3  | Hat                     | 10% off code: FRESH10    | + add promo_2
-Loop 4  | Shirt A                 | BOGO buy 1 get 1         | Free ship > $50
-```
-
-### Approach C — Grid + JSON drawer (power-user)
-
-- Everything in **A**, plus a collapsible "Raw JSON" panel underneath the grid showing the same data as a JSON array. Edits on either side stay in sync via the same `onChange` plumbing.
-- **Trade-off**: doubles the surface to build and test. Highest value for engineers auditing templates; lowest value for the producers and moderators this PR is for. The schema is already round-trippable through the existing `payload.ts`, so a power user can already reach the JSON path outside the builder.
+- **Studio-level mechanic catalog.** PR 11.7's library is template-local. Cross-template reuse is PR 11.8.
+- **Cards-view label edits syncing back to the library.** A label edit in Cards view will drift from the mechanic until PR 11.8's catalog model lands and we make the link bidirectional. PR 11.7 surfaces this as a "Cards-edited labels are not synced to the library" note when the Grid detects mismatch.
+- **Editing non-checkbox fields from the Grid.** Number / textarea / select / file fields stay in Cards view; the Grid shows them as a read-only summary per loop, exactly as the previous design did.
+- **Shared-field labels.** V1 `standard: true` and V2 `shared_field_key` checkboxes are managed by Shared Fields settings; they are excluded from the mechanic library and shown as a banner above the matrix.
+- **Schema changes to the api-types package.** All new fields ride on `TemplateMetadataSchema.catchall(z.any())`; this PR ships as a pure `erify_studios` change.
 
 ---
 
-## Decision — ship **A** for PR 11.7; defer B and C
+## Data model
 
-PR 11.7 ships **Approach A only** — the positional grid with paste-from-Sheets, fill-down, and duplicate-row. This solves the two concrete pains we observed (scrolling loop-to-loop and hand-transcribing repeated mechanics) without committing to features whose value we have not yet validated.
+Both fields live under `template.metadata`. Both V1 and V2 metadata schemas already accept arbitrary catchall fields, so no api-types change is needed.
 
-- **Approach B (key-aligned columns + per-cell apply-to-column)** stays documented above as the natural upgrade path. Pick it up as a follow-up row **only if** producers report label-drift cases that A's fill-down does not catch. Key-alignment is contained and additive on top of A's grid component — the schema does not change either way.
-- **Approach C (raw-JSON drawer)** stays deferred. The existing `payload.ts` already round-trips JSON outside the builder, so a power user can already reach that path today. Revisit only if a power-user audience surfaces.
+```ts
+type Mechanic = {
+  id: string;                // 'mech_' + nanoid-ish; client-generated
+  label: string;             // moderator's read-aloud cue
+  description?: string;      // optional context
+};
 
-The grid is **checkbox-only** in PR 11.7. Cue-card checkboxes are the actual workflow; a uniform cell editor (label + optional description) is simple and predictable. Mixing number / textarea / date / select cells would multiply per-cell render, validation, and paste-coercion logic without serving the workflow. Non-checkbox fields stay visible-but-read-only beneath each loop row with an "Edit in Cards view" link. Bulk-editing other field types is explicitly out of scope and would be its own future row if and when a workflow asks for it.
+type MechanicAssignments = Record<string /* FieldItem.id */, string /* Mechanic.id */>;
+
+// In TemplateMetadata (rides on the existing catchall):
+{
+  mechanics?: Mechanic[];
+  mechanicAssignments?: MechanicAssignments;
+}
+```
+
+### Why `mechanicAssignments` is keyed by `FieldItem.id` and not the other way around
+
+A loop has many mechanics; a mechanic appears in many loops. The natural junction is `(loopId, mechanicId) → fieldItemId`, but we already have one canonical record per assignment in `items[]` (the checkbox `FieldItem` itself, with its `group: loopId` and `label`). Keying assignments by `FieldItem.id` means:
+
+- The mechanic library is the projection: `for each mechanic, find all items where assignments[item.id] === mechanic.id`.
+- Deleting a mechanic = deleting every linked item (and every assignment entry pointing to that mechanic). One pass over `items[]`, deterministic.
+- Adding a loop or a mechanic doesn't touch the assignments map (no row-vs-column ambiguity).
+- Cards view never sees the assignments map; it sees `items[]` exactly as today.
+
+### Auto-migration
+
+On first render of the Grid view, if `metadata.mechanics` is missing or empty, run a one-shot client-side migration:
+
+1. Scan `items.filter(i => i.type === 'checkbox' && !isSharedField(i))`.
+2. Bucket items by `label.trim().toLowerCase()`.
+3. For each non-empty bucket, mint a `Mechanic` whose `label` is the first item's label (preserving original casing).
+4. Record `assignments[item.id] = mechanic.id` for every item in the bucket.
+5. Stash on the template draft and call `onChange`. The user must save to persist.
+
+This is idempotent; subsequent loads see populated `metadata.mechanics` and skip migration. It is lossless: every item retains its current id, key, label, and group. Shared fields and non-checkbox fields are not touched.
+
+If two unrelated mechanics coincidentally share the exact same label today, they will be linked into one mechanic — this is almost always what producers want (it's drift the system was hiding). The user can split them back apart by adding a new mechanic and reassigning, but in practice we expect this to be rare.
 
 ---
 
-## Implementation outline (PR 11.7 — Approach A)
+## UI affordances
+
+### Mechanic library panel (top)
+
+- Inline rename: click the label, edit, blur or Enter to commit. On commit, every linked `FieldItem.label` updates in the same `onChange`.
+- "Used in N loops" badge: derived count, click to scroll the matrix to the column.
+- Per-row menu: "Edit description", "Delete mechanic" (with confirm — cascade removes every linked item).
+- "+ Add mechanic" button creates an unlinked entry; the matrix shows a new column with empty checkboxes.
+
+### Loop × Mechanic matrix (bottom)
+
+- Rows = loops in their declared order; the row header is the loop name + duration (editable, same as today's Cards view).
+- Columns = mechanics in library order; column header repeats the label (read-only — rename via the library above).
+- Cells = `Checkbox`. Toggling on appends a checkbox `FieldItem` to the loop and records the assignment. Toggling off finds the item assigned to that `(loop, mechanic)`, deletes it from `items[]`, and clears the assignment.
+- Row actions: clone loop (also clones assignments), delete loop (cascades both items and the assignments for that loop), "+ Loop" at the bottom.
+- Non-checkbox fields and shared fields are summarised in a single banner row below the matrix per loop: "Loop 3 also has 2 non-mechanic fields — edit in Cards view".
 
 ### View toggle
 
-Add a `view: 'cards' | 'grid'` segmented control to the builder header next to the existing **Workflow View** select. Persist the user's last choice in IndexedDB via `idb-keyval` keyed by `taskTemplateBuilderView` (per-user, not per-template — consistent with other builder IDB caching). The toggle only appears when `isModerationMode` is true and on desktop (`lg:` breakpoint); for Standard checklist mode the grid view has no useful axis.
-
-Default = `cards`. Existing tests stay green because the default surface is unchanged.
-
-### Grid component
-
-A new component `task-template-loop-grid.tsx` in the same folder. Props mirror `TaskTemplateBuilder`:
-
-```ts
-type LoopGridProps = {
-  template: BuilderTemplateSchemaType;
-  onChange: (template: BuilderTemplateSchemaType) => void;
-  errors?: Record<string, string[]>;
-};
-```
-
-Internally, build the grid from the template by partitioning `template.items` by `group` and filtering to `type === 'checkbox'`. Non-checkbox fields within a loop are listed below the grid as a read-only summary with a "Edit in Cards view" link — they exist, but the grid is checkbox-only in Slice 1.
-
-### Cell editor
-
-Each cell renders an inline `Input` (label) with an optional expander to reveal `Textarea` (description). Saving = blur or `Enter`. Escape reverts. The label is the `FieldItem.label` of the underlying `items[]` entry; the description is `FieldItem.description`.
-
-### Loops as rows
-
-- Loop name and duration stay editable in the row header (reuses the existing inputs from the Cards view, scaled down).
-- Row actions: clone loop, delete loop, change position — same handlers as Cards view.
-- "+ Add Loop" appears as a final row.
-
-### Slot columns
-
-Slot count = max checkbox count across loops. Column header shows `Slot N`. Loops with fewer than `N` checkbox fields render empty cells in the tail columns; clicking an empty cell creates a new checkbox field in that loop using `createTextFieldForTemplate(currentTemplate, loop.id)` and overwriting `type: 'checkbox'`, mirroring how the existing "Add Field to Loop" button works.
-
-A "+" header creates a new slot column. This means adding a new checkbox field to every loop at once — the most common case authors ask for.
-
-### Fill-down
-
-Right-click or three-dot menu on a cell offers **Fill column down** (copies the cell's `label` to every row below in the same column, creating fields where the loop has fewer than `N` checkbox slots).
-
-### Paste from clipboard
-
-On the focused cell, capture the `paste` event. Parse the clipboard as TSV (Google Sheets / Excel default); fall back to single-cell plain text. For each row × column offset from the anchor cell:
-
-- If the target cell exists, overwrite its `label`.
-- If the target loop does not exist (paste extends past the last loop), create new loops using `createNextLoop(...)`.
-- If the target column does not exist (paste extends past `Slot N`), create new checkbox fields in each touched loop.
-
-Show a small toast: `"Pasted 12 cells across 4 loops × 3 slots"`. This is undoable through the existing template-draft state.
+- The `Cards ↔ Grid` toggle next to **Workflow View** stays exactly where PR 11.7's first cut put it.
+- Persistence in IndexedDB via `idb-keyval` keyed `taskTemplateBuilderView` — per-user, not per-template.
+- Below `md` the toggle hides and Cards is forced (same `useIsMobile()` pattern as PR 13's responsive Dialog→Drawer rule).
 
 ### Validation surfacing
 
-Reuse the `errors` prop. Cells whose underlying field has an error (e.g. duplicate key) get a red border and a tooltip with the message — the same data the Cards view already uses, just rendered per-cell.
-
-### What stays in Cards view
-
-Add/remove field of a non-checkbox type, change field type, edit options/validation/conditional logic, drag-reorder fields within a loop. The grid surfaces a small "Switch to Cards view to edit field structure" link in the empty state and beside any non-checkbox field that the grid skipped.
+Reuse the existing `errors` prop. If a linked item has a Zod error, its column header gets a destructive border + a tooltip. Cards view continues to show full per-field errors.
 
 ---
 
-## Deferred — Approach B (key-aligned columns)
+## What stays in Cards view
 
-Not in PR 11.7. Picked up only if producers report label-drift between loops that A's fill-down doesn't catch. The upgrade is contained:
+- Add / remove a **non-checkbox** field (number, text, textarea, select, file, date, etc.).
+- Change a field's type.
+- Edit options, validation rules, conditional logic, default values.
+- Drag-reorder fields within a loop.
+- Insert shared fields (canonical or loop-scoped).
 
-- Replace the `Slot N` column model with a `field-key` column model. Group `template.items` by `(group, key)` and project columns as the union of distinct keys across loops, ordered by their first appearance.
-- Column headers gain an editable caption + the underlying key as a muted subscript. Renaming the caption renames the key across every loop at once (with a duplicate-key validation pass mirroring the existing `TemplateSchemaV2` `superRefine`).
-- Per-cell **Apply to column** button + **Apply where equal to *X*** secondary action.
-- Empty cells in a loop show "+ add (`promo_2`)" rather than "+ add Slot 3".
-
----
-
-## Deferred — Approach C (raw JSON drawer)
-
-Not in PR 11.7 and not committed to a future row. Documented only so a future Phase-5 effort can pick it up without re-brainstorming.
-
-- Sit underneath the grid in a `Collapsible` panel.
-- Render `template.items.filter(item => item.group)` as JSON in a code editor (`@codemirror/lang-json`).
-- Two-way bind to the same `onChange`: parsing JSON updates the template; mutations to the template re-render the JSON.
-- Be gated to studio admins / a feature flag, since invalid JSON edits can break the template.
+The Grid links a small "Edit field structure in Cards view" affordance beside any loop whose mechanics list looks incomplete (e.g. the loop has zero checkbox fields but does have non-checkbox fields).
 
 ---
 
-## Edge cases & risks
+## Migration risks and mitigations
 
 | Concern | Mitigation |
 | --- | --- |
-| User has a loop with multiple **non-checkbox** fields and a couple of checkboxes — grid would hide the non-checkbox fields | Slice 1 lists them under the loop row as a read-only summary with a "Edit in Cards view" link. The grid header banner reminds the user. |
-| `shared_field_key` propagation | Slice 1 leaves shared fields alone — editing a shared-field cell's label does not unlink it. We render a small lock icon on those cells matching the Cards view's "Shared" badge. |
-| Paste lands on a shared field cell | Shared field cells reject paste with a toast `"Shared field labels are managed in Shared Fields settings"` and the rest of the paste still lands on non-shared cells. |
-| Very wide grids (≥ 20 loops × ≥ 8 slots) | Use a virtualized table via `@tanstack/react-virtual` (already a dependency through `@tanstack/react-table`). Slice 1 is fine without virtualization up to ~50×10; revisit if usage exceeds that. |
-| Mobile | The grid is desktop-only in Slice 1. Below `md`, the toggle hides and Cards view is forced — same pattern as the [responsive Dialog→Drawer house rule](../../../../.agent/skills/frontend-ui-components/references/ui-component-details.md). |
-| Undo / discard | The Cancel-alert and template-draft state in `TaskTemplateBuilder` already serialize the whole template; grid edits flow through the same `onChange`, so the existing discard path covers it. |
-| Schema engine drift (v1 vs v2) | Both engines store the same shape we render from (`group` + `items[]`). The grid works on both; the only engine-aware code is the existing `createTextFieldForTemplate` helper, already imported. |
+| Two coincidentally identical labels in unrelated logical mechanics get linked into one mechanic | Acceptable for v1 — the user can split them by renaming one and reassigning. We expect this to be rare; if reports surface it, PR 11.8's catalog gives us a clean place to track explicit mechanic identity. |
+| Cards-view label edit on a linked item drifts from the mechanic | The Grid detects this on render and shows an inline "Synced from Cards" pill on the affected mechanic, with a "Re-sync from library" action. Bidirectional sync is PR 11.8 once the catalog model lands. |
+| Migration runs before the user saves, then the user discards | The migration only mutates the in-memory draft via `onChange`; the existing discard path (cancel alert in `TaskTemplateBuilder`) wipes it. Idempotent, so re-opening re-runs the same projection. |
+| Shared fields would otherwise inherit the auto-rename behaviour | The migration filter (`!isSharedField(i)`) excludes them entirely. They render in the "Shared fields hidden" banner above the matrix and stay editable only from Shared Fields settings. |
+| Very large templates (≥ 30 loops × ≥ 20 mechanics) | The matrix is a `Table` with `overflow-x-auto`. Virtualisation deferred until usage exceeds ~50×30; revisit if reported. |
 
 ---
 
 ## Verification gates
-
-Same as the standing Phase 4 gates:
 
 ```
 pnpm --filter erify_studios lint && pnpm --filter erify_studios typecheck && pnpm --filter erify_studios test && pnpm --filter erify_studios build
@@ -215,21 +175,18 @@ pnpm --filter erify_studios lint && pnpm --filter erify_studios typecheck && pnp
 
 PR 11.7 acceptance:
 
-- Toggle appears only in moderation mode; persists across reloads.
-- Existing Cards view rendering and tests unchanged.
-- Paste a 5×3 TSV block from a Google Sheet — fills 5 loops × 3 slots, creates new loops/columns as needed, toast confirms cell count.
-- Fill-down copies a cell's label to every row in its column, creating fields where the loop is short.
-- Switching back to Cards view shows the same data; round-trip with Save → reload → toggle Grid → labels intact.
-- Tests at iPhone SE (375×667) confirm the grid hides and Cards view is forced.
-- Shared-field cells reject paste and inline edit with a toast pointing at Shared Fields settings.
+- Toggle appears only in moderation mode and on desktop; persists across reloads.
+- Open `ttpl_pWi1mbHEtHU0D-Zc3cHa` in Grid view — every distinct checkbox label across loops appears once in the mechanic library; the matrix renders the existing assignments.
+- Rename a mechanic; verify every linked loop's Cards view shows the new label after toggling back.
+- Toggle a matrix cell off; the corresponding checkbox `FieldItem` disappears from Cards view for that loop.
+- Toggle a matrix cell on; a new checkbox `FieldItem` appears in Cards view for that loop with the mechanic's current label.
+- Delete a mechanic; every linked loop loses the corresponding checkbox; the mechanic disappears from the library.
+- Save → reload → open Grid → no migration re-runs (idempotent); the library and matrix render identically.
+- iPhone SE (375×667) — the toggle is hidden, Cards view is forced.
 
 ---
 
-## Out of scope (future work)
+## Followups (separately tracked rows)
 
-- Approach B (key-aligned columns + per-cell apply-to-column). Documented as a contained upgrade; only triggered by reported label-drift cases.
-- Approach C (raw JSON drawer).
-- Bulk-edit of **non-checkbox** fields (number GMV, textarea notes) from the grid.
-- Multi-template "shared mechanic library" — letting an author pick from a saved list of cue cards across templates. Belongs with the Shared Fields surface.
-- Mobile grid editing.
-- A shareable URL that opens the grid view on a specific cell (the cards-vs-grid toggle is per-user, not per-URL).
+- **PR 11.8 — Studio-level mechanic catalog.** Promote the template-local library to a studio resource (`StudioMechanic` Prisma model + `/studios/:id/mechanics` endpoints + content-team admin page). Templates pick mechanics from the catalog; renames propagate across every template that links them. Makes cross-template drift impossible.
+- **PR 11.9 — Mechanic usage rollup.** "Used in N templates / M loops" + drill-in for the content team.
