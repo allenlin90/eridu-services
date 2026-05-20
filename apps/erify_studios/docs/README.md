@@ -22,7 +22,8 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 10. [Task Submission Reporting Frontend Reference](./TASK_SUBMISSION_REPORTING.md)
 11. [Studio Creator Onboarding Frontend Reference](./STUDIO_CREATOR_ONBOARDING.md)
 12. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md) — CRUD, show actuals, and current-view export
-13. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
+13. [Compensation Line Items + Actuals Frontend Reference](./COMPENSATION_LINE_ITEMS.md)
+14. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
 
 ## Design Docs
 
@@ -31,6 +32,5 @@ Active (in progress):
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Planned follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
 3. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-4. [Compensation Line Items + Actuals Frontend Design](./design/COMPENSATION_LINE_ITEMS_DESIGN.md) — ⏳ In Progress (Tasks 1-6 merged; Task 7 cleanup next)
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
