@@ -27,6 +27,7 @@ The actual domain object is the **mechanic**: a reusable client instruction, pro
 - Make mechanic identity independent from task-template field labels.
 - Scope mechanics to clients, with campaign sets limiting which mechanics are available for a given moderation workflow.
 - Version mechanic content for audit, analysis, and traceability.
+- Add a studio role for account/service users who manage client mechanics while only reading operational context.
 - Let task templates reference approved mechanic versions while still freezing resolved instructions into immutable template snapshots.
 - Provide separate management UIs for mechanics and task templates.
 - Keep task template builder focused on workflow structure, loop layout, shared fields, validation, and assignment.
@@ -135,6 +136,32 @@ This preserves historical moderation traceability while allowing content teams t
 
 ## UI Surfaces
 
+### Account Manager Role
+
+Add a studio role tentatively named `ACCOUNT_MANAGER`.
+
+Purpose: represent a client service or account-management user who maintains client-specific mechanics and campaign sets while understanding the surrounding operational plan.
+
+Access rules:
+
+- Can manage client mechanics, mechanic versions, campaign mechanic sets, and campaign-set membership.
+- Can read non-financial planning context needed to avoid bad assignments: clients, shows, show metadata, creator mapping, and task-template mechanic references.
+- Cannot create, update, or delete operational records such as shows, shifts, creator assignments, tasks, task templates, members, creators, or shared fields.
+- Cannot access cost, compensation, finance, economics, rate, or payroll views.
+- Must receive redacted read models where an otherwise-readable planning endpoint includes money fields.
+
+Route intent:
+
+| Surface | Access |
+| --- | --- |
+| Mechanics Management | View + Manage |
+| Shows / show context | Read-only, no money fields |
+| Creator Mapping | Read-only, no compensation fields |
+| Task Templates | Read-only mechanic references only; no template editing |
+| Members / shifts / compensation / economics | No access |
+
+Operational edits remain owned by `ADMIN` and `MANAGER`. `ACCOUNT_MANAGER` is deliberately not an operations role.
+
 ### Mechanics Management
 
 Purpose: content/reference management.
@@ -204,7 +231,7 @@ Document the direction change, retire the task-template grid-only plan as source
 
 ### PR 11.8 — Client Mechanic Catalog Foundation
 
-Add shared API schemas, Prisma models, repositories, services, controllers, and tests for client mechanics, mechanic versions, campaign sets, and set items.
+Add shared API schemas, Prisma models, repositories, services, controllers, `ACCOUNT_MANAGER` role support, and tests for client mechanics, mechanic versions, campaign sets, and set items.
 
 ### PR 11.9 — Mechanics Management UI
 
@@ -225,7 +252,7 @@ Add usage views and warnings for retired or superseded mechanic versions used by
 ## Open Questions
 
 - Should campaign sets be linked to existing show/campaign concepts if a normalized campaign model appears later, or remain a mechanics-domain resource for now?
-- Which studio roles can manage mechanics: admin only, manager, or a new content-team permission?
+- Should the role label remain `ACCOUNT_MANAGER`, or should product copy call it "Client Service Manager" while the API enum stays stable?
 - Should a template be allowed to reference mechanics from more than one campaign set?
 - What imported source format replaces the current CSV generator once mechanics are first-class?
 
