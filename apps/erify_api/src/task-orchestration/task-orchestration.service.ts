@@ -7,6 +7,7 @@ import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-mana
 import { TaskGenerationProcessor } from './task-generation-processor.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import {
   showDto,
@@ -21,9 +22,6 @@ import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-ali
 
 type MembershipWithUser = StudioMembership & { user: User };
 type StudioShowsQueryWithAttention = ListStudioShowsQueryTransformed & { show_uids?: string[] };
-type DecimalLike = {
-  toFixed: (decimalPlaces?: number) => string;
-};
 
 export type ShowGenerationResult = {
   show_id: string;
@@ -47,22 +45,6 @@ export class TaskOrchestrationService {
     private readonly taskTargetService: TaskTargetService,
     private readonly shiftAlignmentService: ShiftAlignmentService,
   ) {}
-
-  private decimalLikeToString(value: unknown | null | undefined): string | null {
-    if (value === null || value === undefined) {
-      return null;
-    }
-
-    if (typeof value === 'object' && 'toFixed' in value && typeof (value as DecimalLike).toFixed === 'function') {
-      return (value as DecimalLike).toFixed(2);
-    }
-
-    if (typeof value === 'number') {
-      return value.toFixed(2);
-    }
-
-    return String(value);
-  }
 
   /**
    * Generates tasks for multiple shows based on a set of templates.
@@ -342,8 +324,8 @@ export class TaskOrchestrationService {
         creator_name: showCreator.creator.name,
         creator_alias_name: showCreator.creator.aliasName,
         compensation_type: showCreator.compensationType,
-        agreed_rate: this.decimalLikeToString(showCreator.agreedRate),
-        commission_rate: this.decimalLikeToString(showCreator.commissionRate),
+        agreed_rate: decimalToString(showCreator.agreedRate),
+        commission_rate: decimalToString(showCreator.commissionRate),
       }));
       const platforms = (show.showPlatforms ?? [])
         .filter((showPlatform) => showPlatform.platform != null)
