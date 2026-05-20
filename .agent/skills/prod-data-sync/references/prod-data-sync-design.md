@@ -1,6 +1,6 @@
 # Prod → Local Data Sync: Design
 
-**Status:** Design accepted. Implementation planning next.
+**Status:** Design accepted. Implemented.
 **Author triggered by:** task-template-redesign verification need (`docs/ideation/task-template-redesign.md`); generalized so other features can reuse.
 
 ## Purpose
@@ -35,7 +35,7 @@ Three artifacts, each with one focused job.
 
 | Artifact    | Path                                    | Purpose                                                                                                                                       |
 | ----------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sync script | `scripts/sync-prod-to-local.sh`         | Mechanical work: read prod URLs from env, `pg_dump                                                                                            | psql` per DB, print `prisma migrate status` after. |
+| Sync script | `scripts/sync-prod-to-local.sh`         | Mechanical work: read prod URLs from env, `pg_dump | psql` per DB, print `prisma migrate status` after. |
 | Skill       | `.agent/skills/prod-data-sync/SKILL.md` | Agent-facing: when to use, when not to, how to invoke, how to add an excluded table, the read-only invariant, the governance-upgrade roadmap. |
 | Workflow    | `.agent/workflows/prod-data-sync.md`    | Step-by-step operational recipe: pre-flight checks, sync, migrate, run feature-specific data jobs, verify, revert.                            |
 

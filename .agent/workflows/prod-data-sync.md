@@ -7,7 +7,7 @@ description: Operational recipe for syncing prod Postgres data into local databa
 Step-by-step procedure for refreshing your local databases with prod data and validating against them.
 
 **Skill:** `.agent/skills/prod-data-sync/SKILL.md`
-**Spec:** `docs/superpowers/specs/2026-05-02-prod-data-sync-design.md`
+**Design Spec:** `../skills/prod-data-sync/references/prod-data-sync-design.md`
 
 ## Pre-flight (manual)
 

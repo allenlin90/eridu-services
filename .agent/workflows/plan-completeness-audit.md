@@ -14,7 +14,7 @@ Run this whenever a plan is being written, revised, signed off, or when an unexp
 
 A "plan" here means any document that breaks work into multiple PRs. In this repo that takes two shapes:
 
-- A standalone plan at `docs/superpowers/plans/<date>-<feature>.md`.
+- A transient implementation plan (e.g. `implementation_plan.md` or under `docs/roadmap/`).
 - The **PR Roadmap** section of `docs/roadmap/PHASE_<n>.md` (consolidated tracker).
 
 A "contract" means the truth source the plan is implementing against. In this repo:
@@ -24,7 +24,7 @@ A "contract" means the truth source the plan is implementing against. In this re
 
 ```bash
 # Find the plan (either shape)
-ls docs/superpowers/plans/ 2>/dev/null | grep -i <feature>
+ls docs/roadmap/ 2>/dev/null | grep -i <feature>
 rg -n "^## PR Roadmap|^### PR " docs/roadmap/
 
 # Find the contract

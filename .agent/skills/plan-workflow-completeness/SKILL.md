@@ -1,6 +1,6 @@
 ---
 name: plan-workflow-completeness
-description: Audit a multi-PR implementation plan for workflow-and-cycle gaps before it ships. Use when writing or revising any plan under docs/superpowers/plans/, or when a phase or workstream is being signed off.
+description: Audit a multi-PR implementation plan for workflow-and-cycle gaps before it ships. Use when writing or revising any transient implementation plan, or when a phase or workstream is being signed off.
 ---
 
 # Plan Workflow Completeness
@@ -9,7 +9,7 @@ Ensures every actor has surfaces for every read and write in their journey. Run 
 
 ## When to Invoke
 
-- Writing/revising a plan under `docs/superpowers/plans/`
+- Writing/revising an active implementation plan
 - Reviewing a plan before sign-off
 - Discovering a gap in a shipped task — audit the rest
 - Phase-close: every plan must pass
