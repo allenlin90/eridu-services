@@ -88,16 +88,57 @@ Do not infer facts from labels such as `MC attended`, `Violation_status`, `GMV`,
 
 **Design deliverable** — land [`apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md`](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md) before PR 12.1-12.4 open. The design doc owns the answers below; downstream rows inherit those decisions instead of re-litigating them. It must also update the task-template feature-doc maintenance set if the shared schema changes.
 
-**Open questions the design must resolve (guidelines, not implementation):**
+#### Starting context for the design session
 
-- **Selected-source metadata shape.** Does each scoped model field carry `selected_source` + `last_overridden_by` + `last_overridden_at`, or does that audit live entirely in task submissions plus an audit log? Pick one model so 12.1/12.2/12.3 inherit it.
-- **Multi-target binding.** When a single task records facts for more than one creator or more than one platform, does the binding contract support a per-target repeater field, or do additional targets route through the review queue? 12.2 already implies a repeater is acceptable; 12.1/12.3 need the same commitment.
-- **Reason sidecar shape.** Is `creator_attendance_reason` (or analog) a sibling fact key in the enum, or an implicit required companion attribute of the attendance binding? This determines whether the binding contract enumerates required-companion fields.
-- **Fact-key enum extensibility.** Closed-system enum, studio-extensible, or template-extensible? Same question applies to the violation-detail enum. Picking closed-system is fine for Phase 4; just commit.
-- **Builder-UI scope.** Is the binding builder/review UI inside PR 12's implementation row, or split into a separate downstream row that lands alongside 12.1? Resolve before 12.1 opens so the dependency is explicit.
-- **Read-model continuity.** Once typed model facts exist, task-report system columns (`actual_start_time`, `actual_end_time`, `actuals_status` from PR 4 — and any future analogs for ShowCreator/ShowPlatform) read from the typed model, not the originating task submission. State this as a guideline so downstream consumers do not diverge.
-- **Legacy already-closed shows.** Forward-only (no backfill), opportunistic backfill on re-submit, or one-time migration? Pick one policy in the design row; 12.1 inherits it.
-- **Manager-override conflict UX.** Where does `/show-operations` (and analogs for creator/platform) surface "source was X, manager overrode to Y at Z"? At minimum: which fields are visible on the audit/review surface defined by 12.4.
+A fresh session should orient against these before opening questions. The design inherits the constraints, it does not re-design them.
+
+- **Cost contract**: [`docs/domain/economics-cost-model.md`](../domain/economics-cost-model.md). Locked semantics; this design is on the L-side (cost) only.
+- **Finance guardrails**: [`docs/engineering/FINANCE_GUARDRAILS.md`](../engineering/FINANCE_GUARDRAILS.md). Money fields are `Big`/string end-to-end (PR 1, PR 8).
+- **PR 4 outcomes (already shipped)**:
+  - `/show-operations` has a manager-edit dialog for `Show.actual_start_time` / `actual_end_time`, a missing-actuals queue, and unified date-range export. The dialog enforces a no-inverted-range invariant.
+  - Task-report system columns `actual_start_time` / `actual_end_time` / `actuals_status` exist and currently read from `Show.actual_*`.
+  - The desktop-Dialog / mobile-Drawer house pattern via `ResponsiveDateTimePicker` is the canonical responsive shape.
+- **Existing task templates that motivate the work**:
+  - `On air_check`-style ACTIVE template collects `MC attended` (`on_time` / `late` / `missing`) with a required reason for non-`on_time`. Today this is anonymous `task.content`.
+  - `Post_production_check`-style CLOSURE template collects `Violation_status`, `GMV`, `View`, `CTR`, `CTO`. Today these are anonymous `task.content`.
+- **Models and where facts land** (see Phase 4 fact-key table above):
+  - `Show.actual_start_time` / `actual_end_time` exist (PR 4).
+  - `ShowCreator` and `ShowPlatform` actuals/performance columns do not yet exist — the design must call out which columns/migrations 12.1-12.3 need to add.
+  - `ShowPlatformViolation` does not exist yet; 12.3 creates it.
+- **Source-priority rule for Phase 4**: `manager override > operator task input > planned schedule`. Platform-API / platform-upload / creator-app sources are forward extension points (Phase 5+); the binding contract must accept them later without redesigning the scoped models.
+- **What's deferred** (do not design for): creator-app sourced facts, platform-API / seller-center sourced facts, CTR/CTO as typed columns, manager-edit notifications, advanced compensation rule engine. See the Out of scope and Phase 5 Deferrals tables at the bottom of this document.
+
+#### Open questions the design must resolve
+
+Each question is a roadmap-level guideline question, not implementation detail. Answer once in the design doc; downstream rows inherit.
+
+1. **Selected-source metadata shape.** Multiple writers can update the same scoped fact: manager override on `/show-operations` (already live), operator task submission (12.1-12.3), and future platform/creator-app sources. Does each scoped model field carry inline `selected_source` + `last_overridden_by` + `last_overridden_at` columns, or is the audit centralized in task submissions plus a generic audit log? *Stakes*: shapes migrations across `Show`, `ShowCreator`, `ShowPlatform`, and the 12.4 review surface.
+2. **Multi-target binding.** A single task may record facts about more than one creator (multi-MC show) or more than one platform (multi-stream show). Does the binding contract support a per-target repeater field (one row per creator/platform inside the task), or do additional targets route through a manager resolution/review queue? *Stakes*: 12.2's brief implies repeater is acceptable; 12.1 and 12.3 need a matching commitment. Picking "queue only" is simpler but forces operator workflows to split tasks.
+3. **Reason sidecar shape.** `creator_attendance_status` requires a reason for non-`on_time` values. Is `creator_attendance_reason` (and analogs for violations) a sibling fact key in the enum, or an implicit required-companion attribute of the parent binding? *Stakes*: determines whether the binding contract needs a generic "required companion fields" concept or just enumerates each companion as its own fact key.
+4. **Fact-key enum extensibility.** Is the `system_fact_key` enum closed-system (Phase-4 set only, future expansions ship in code), studio-extensible (each studio can register additional fact keys), or template-extensible (templates can declare ad-hoc keys)? Same question for the violation-detail enum and the `creator_attendance_status` value list. *Stakes*: closed-system is fine for Phase 4 and dramatically simpler — but commit so we don't accidentally design the harder case.
+5. **Builder-UI scope.** PR 12's brief mentions "builder/review UI for those bindings." Is that UI part of PR 12's own implementation row, or split into a downstream row that lands alongside 12.1? *Stakes*: PR 14.4 (mechanic assignment matrix) also lives in the task-template builder; coordinating release windows requires deciding which row owns each builder surface.
+6. **Read-model continuity.** Once typed model facts exist, task-report system columns (PR 4's `actual_start_time` / `actual_end_time` / `actuals_status`, plus any analogs we add for ShowCreator/ShowPlatform) must read from the typed model, not from the originating task submission. State this explicitly. *Stakes*: without this rule, 12.1 ships a write path while the existing report still reads `Show.actual_*` and quietly diverges as soon as a later source overrides the selected value.
+7. **Legacy already-closed shows.** A non-trivial number of shows are closed under the pre-binding workflow with no typed actuals (only anonymous `task.content`). Pick one policy: (a) forward-only — old shows stay as-is; (b) opportunistic — backfill when an old task is re-submitted or a manager opens the show; (c) one-time migration script. *Stakes*: 12.1 inherits this; affects whether the 12.4 review surface needs a "legacy" filter.
+8. **Manager-override conflict UX.** When manager override, operator task input, and (later) platform data disagree, what does `/show-operations` (and the per-creator and per-platform review surfaces) show? At minimum: which fields are visible on the audit/review surface defined by 12.4 (current selected value, source, last-override actor, alternate values from other sources). *Stakes*: drives the read-model shape of 12.4 and the badge/affordance vocabulary on `/show-operations`.
+
+#### Inline decisions to record in the design doc
+
+Smaller decisions that don't justify their own bullet but the design must commit to in one line each. They block 12.1-12.4 the same way as the big questions.
+
+- **Extraction trigger.** Synchronous-on-submit, async via a job queue, or hybrid (sync for validation, async for write)? Recommend synchronous-on-submit for Phase 4 — the validation error path is then attached to the submission response, which mirrors the manager-edit flow.
+- **Re-submission idempotency policy.** Re-submitting a task updates the scoped fact and either upserts or supersedes child rows (e.g. `ShowPlatformViolation`). Write the upsert/supersede rule once and have 12.1, 12.2, 12.3 inherit it.
+- **Sign-off granularity (PR 12.4).** Per scope (separate sign-off records for Show / ShowCreator / ShowPlatform / Violation) or one combined batch sign-off across all scopes in the range? *Stakes*: per-scope = four models, combined = one model; either is fine, just pick.
+- **Unresolved-mapping state.** When a task input cannot auto-attach (e.g. multi-creator show with one MC field, multi-platform task with ambiguous GMV), where does the pending record live? Options: a dedicated `ReviewQueueItem`-style table, a flag/state column on the task submission, or a status column on the scoped model. *Stakes*: 12.4 needs to enumerate them; pick the storage shape now.
+
+#### Out of design (do not address)
+
+These showed up during refinement but are explicitly outside this design's scope. Note them in the doc as deferred so they don't reopen later:
+
+- Creator-app sourced facts (Phase 5+ per the Out of scope list below).
+- Platform-API / seller-center / platform-upload sourced facts (Phase 5+, same reason).
+- Promoting CTR/CTO into typed `ShowPlatform` columns — PR 12.3 keeps these report-only by design.
+- Notifications when manager edits actuals (Phase 5 deferral).
+- Recipient acknowledgement / dispute / payment processing (Phase 5+).
 
 ### PR 12.1 · Operator-recorded show and platform actuals via CLOSURE task template
 
