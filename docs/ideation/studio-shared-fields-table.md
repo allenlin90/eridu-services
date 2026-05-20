@@ -218,6 +218,6 @@ These are tempting to bundle but kept separate to keep the redesign shippable:
 
 ## Relationship to Task-Template v2
 
-This ideation is the natural continuation of `docs/ideation/task-template-redesign.md`. The v2 redesign decoupled field identity inside templates (key vs. id vs. shared_field_key); this redesign decouples shared-field identity from the studio metadata blob. The two redesigns share the same compatibility pattern: **lossless legacy preservation + one-way cutover with a clear reversibility cliff**.
+This ideation is the natural continuation of the task-template v2 redesign (`../features/task-templates.md`). The v2 redesign decoupled field identity inside templates (key vs. id vs. shared_field_key); this redesign decouples shared-field identity from the studio metadata blob. The two redesigns share the same compatibility pattern: **lossless legacy preservation + one-way cutover with a clear reversibility cliff**.
 
-When this lands, `docs/ideation/task-template-redesign.md` Phase 7 (v1 snapshot retirement) and this ideation's Phase 5 (legacy_reference cleanup) collapse into a single deferred-cleanup operation.
+When this lands, the task-template v2 redesign's Phase 7 (v1 snapshot retirement) and this ideation's Phase 5 (legacy_reference cleanup) collapse into a single deferred-cleanup operation.

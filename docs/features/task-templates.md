@@ -235,7 +235,7 @@ Stop the rollout unless all of these are true:
 
 Task Templates is a multi-layer feature. Any change to schema, snapshot semantics, content storage, or canonical-metric link affects all five layers and several downstream consumers. **When refactoring or redesigning any layer, the artifacts below must be updated in the same PR**, not in a follow-up.
 
-Run [.agent/workflows/knowledge-sync.md](../../.agent/workflows/knowledge-sync.md) for the general mechanism. **For schema redesigns specifically** (e.g., the in-flight v2 in `docs/ideation/task-template-redesign.md`), trigger [.agent/workflows/feature-version-cutover.md](../../.agent/workflows/feature-version-cutover.md) instead — that workflow decides whether this doc updates in place or splits into a versioned folder (`task-templates/README.md` for v2, `task-templates/v1.md` archived).
+Run [.agent/workflows/knowledge-sync.md](../../.agent/workflows/knowledge-sync.md) for the general mechanism. **For schema redesigns specifically** (e.g., major version updates), trigger [.agent/workflows/feature-version-cutover.md](../../.agent/workflows/feature-version-cutover.md) instead — that workflow decides whether this doc updates in place or splits into a versioned folder (`task-templates/README.md` for v2, `task-templates/v1.md` archived).
 
 Feature-specific artifact list:
 
@@ -252,7 +252,6 @@ Feature-specific artifact list:
 | Shared schema skill          | [.agent/skills/shared-api-types/SKILL.md](../../.agent/skills/shared-api-types/SKILL.md)                                                           | `template-definition.schema.ts` or task-management exports change             |
 | Shared schema source         | [packages/api-types/src/task-management/template-definition.schema.ts](../../packages/api-types/src/task-management/template-definition.schema.ts) | Field item shape, validation, or schema engine envelope changes               |
 | Seed                         | [apps/erify_api/prisma/seed.ts](../../apps/erify_api/prisma/seed.ts)                                                                               | New canonical patterns; deprecation of old patterns (e.g., `_l2` workarounds) |
-| Active ideation              | [docs/ideation/task-template-redesign.md](../ideation/task-template-redesign.md)                                                                   | Until shipped or rejected; mark resolved decisions, prune stale options       |
 
 **Definition of done for refactor/redesign PRs in this area**: every artifact above either has its update committed in the same PR, or has an explicit "no change needed" line in the PR description. Reviewers should treat a missing update as a blocking finding.
 
