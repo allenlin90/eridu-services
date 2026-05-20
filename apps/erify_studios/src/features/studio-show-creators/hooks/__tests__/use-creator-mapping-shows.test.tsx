@@ -62,7 +62,7 @@ describe('useCreatorMappingShows', () => {
       ],
     });
 
-    renderHook(() => useCreatorMappingShows({ studioId: 'std_1' }));
+    const { result } = renderHook(() => useCreatorMappingShows({ studioId: 'std_1' }));
 
     const queryOptions = mockUseQuery.mock.calls[0][0] as {
       queryKey: unknown[];
@@ -84,6 +84,15 @@ describe('useCreatorMappingShows', () => {
       }),
     ]);
     expect(queryOptions.placeholderData).toBeDefined();
+    expect(result.current.queryParams).toEqual(expect.objectContaining({
+      page: 1,
+      limit: 10,
+      search: 'night show',
+      has_creators: true,
+      creator_name: 'alice',
+      show_status_name: 'LIVE',
+      client_id: 'cli_ABC123',
+    }));
 
     await queryOptions.queryFn({ signal: undefined } as never);
 

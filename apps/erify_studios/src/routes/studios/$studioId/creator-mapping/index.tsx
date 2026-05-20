@@ -1,7 +1,8 @@
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import { RefreshCw, UserRound } from 'lucide-react';
+import { Download, Loader2, RefreshCw, UserRound } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { toast } from 'sonner';
 
 import {
   adaptColumnFiltersChange,
@@ -20,18 +21,30 @@ import {
 import { PageLayout } from '@/components/layouts/page-layout';
 import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
-import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
+import { formatDateTime, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
 import { BulkCreatorAssignmentDialog } from '@/features/studio-show-creators/components/bulk-creator-assignment-dialog';
 import { creatorMappingShowColumns } from '@/features/studio-show-creators/components/creator-mapping-show-columns';
 import { SelectedCreatorMappingMobileActions } from '@/features/studio-show-creators/components/selected-creator-mapping-mobile-actions';
 import { useCreatorMappingClientFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-client-filter';
 import { useCreatorMappingCreatorFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-creator-filter';
 import { useCreatorMappingShows } from '@/features/studio-show-creators/hooks/use-creator-mapping-shows';
+import {
+  buildCreatorMappingExportFilename,
+  buildCreatorMappingExportRows,
+  serializeCreatorMappingExportCsv,
+} from '@/features/studio-show-creators/utils/creator-mapping-export.utils';
+import {
+  getAllStudioShowsForExport,
+  SHOW_EXPORT_MAX_RECORDS,
+  ShowExportTooLargeError,
+} from '@/features/studio-shows/api/get-studio-shows';
 import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
 import {
   normalizeScopeDate,
   parseScopeDateAsLocal,
 } from '@/features/studio-shows/utils/show-scope.utils';
+import { useAbortableAction } from '@/hooks/use-abortable-action';
+import { triggerBrowserDownload } from '@/lib/file-download';
 
 const creatorMappingRouteApi = getRouteApi('/studios/$studioId/creator-mapping');
 
@@ -91,6 +104,7 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 
 function CreatorMappingPage() {
   const [isBulkAssignDialogOpen, setIsBulkAssignDialogOpen] = useState(false);
+  const { isRunning: isExporting, run: runExport } = useAbortableAction();
 
   const { studioId } = creatorMappingRouteApi.useParams();
   const search = creatorMappingRouteApi.useSearch();
@@ -173,6 +187,7 @@ function CreatorMappingPage() {
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
+    queryParams,
   } = useCreatorMappingShows({
     studioId,
     dateFrom: search.date_from,
@@ -256,6 +271,43 @@ function CreatorMappingPage() {
       showLookups?.show_statuses,
     ],
   );
+  const handleExport = useCallback(async () => {
+    await runExport(async (signal) => {
+      try {
+        const {
+          page: _page,
+          limit: _limit,
+          ...exportParams
+        } = queryParams;
+        const exportShows = await getAllStudioShowsForExport(studioId, exportParams, { signal });
+        if (signal.aborted) {
+          return;
+        }
+
+        const exportResult = buildCreatorMappingExportRows({
+          shows: exportShows,
+          formatDateTime,
+        });
+        triggerBrowserDownload({
+          content: serializeCreatorMappingExportCsv(exportResult),
+          mimeType: 'text/csv;charset=utf-8;',
+          filename: buildCreatorMappingExportFilename({
+            dateFrom: toApiDate(search.date_from),
+            dateTo: toApiDate(search.date_to),
+          }),
+        });
+      } catch (error) {
+        if (signal.aborted) {
+          return;
+        }
+        if (error instanceof ShowExportTooLargeError) {
+          toast.error(`Selection exceeds the ${SHOW_EXPORT_MAX_RECORDS.toLocaleString()}-show export limit (${error.totalRecords.toLocaleString()} matched). Narrow the date range or filters and retry.`);
+          return;
+        }
+        toast.error(error instanceof Error ? error.message : 'Failed to export creator mapping. Please try again.');
+      }
+    });
+  }, [queryParams, runExport, search.date_from, search.date_to, studioId]);
 
   return (
     <PageLayout
@@ -321,6 +373,19 @@ function CreatorMappingPage() {
               featuredFilterColumns={['has_creators', 'client_id', 'show_status_name', 'creator_name']}
               searchPlaceholder="Search shows..."
             >
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => void handleExport()}
+                disabled={isExporting || total === 0}
+                aria-busy={isExporting}
+              >
+                {isExporting
+                  ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  : <Download className="mr-2 h-4 w-4" />}
+                {isExporting ? 'Exporting…' : 'Export CSV'}
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
