@@ -14,8 +14,8 @@ export type StudioCreatorCompensationTypeOption =
 export const STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS = [
   { value: UNSET_COMPENSATION_TYPE, label: 'Not set' },
   { value: CREATOR_COMPENSATION_TYPE.FIXED, label: 'Fixed' },
-  { value: CREATOR_COMPENSATION_TYPE.COMMISSION, label: 'Commission' },
-  { value: CREATOR_COMPENSATION_TYPE.HYBRID, label: 'Hybrid' },
+  { value: CREATOR_COMPENSATION_TYPE.COMMISSION, label: 'Commission', disabled: true },
+  { value: CREATOR_COMPENSATION_TYPE.HYBRID, label: 'Hybrid', disabled: true },
 ] as const;
 
 function parseOptionalNonNegativeNumber(

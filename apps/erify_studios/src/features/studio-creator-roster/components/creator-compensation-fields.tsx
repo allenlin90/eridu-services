@@ -64,7 +64,7 @@ export function CreatorCompensationFields({
           </SelectTrigger>
           <SelectContent>
             {STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
                 {option.label}
               </SelectItem>
             ))}

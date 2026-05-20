@@ -67,7 +67,15 @@ vi.mock('@eridu/ui', () => ({
     );
   },
   SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SelectItem: ({ children, value }: { children: ReactNode; value: string }) => <option value={value}>{children}</option>,
+  SelectItem: ({
+    children,
+    value,
+    disabled,
+  }: {
+    children: ReactNode;
+    value: string;
+    disabled?: boolean;
+  }) => <option value={value} disabled={disabled}>{children}</option>,
   SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   SelectValue: () => null,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
@@ -204,6 +212,14 @@ describe('showCreatorCompensationDialog', () => {
         },
       });
     });
+  });
+
+  it('disables hybrid and commission assignment compensation options', () => {
+    renderDialog();
+
+    expect(screen.getByRole('option', { name: 'Fixed' })).not.toBeDisabled();
+    expect(screen.getByRole('option', { name: 'Commission' })).toBeDisabled();
+    expect(screen.getByRole('option', { name: 'Hybrid' })).toBeDisabled();
   });
 
   it('forces commission_rate to null when switching HYBRID → FIXED with a leftover commission value', async () => {
