@@ -37,14 +37,22 @@ function createShow(overrides: Partial<StudioShow> = {}): StudioShow {
     updated_at: '2026-04-01T11:00:00.000Z',
     creators: [
       {
+        show_creator_id: 'show_mc_1',
         creator_id: 'creator_1',
         creator_name: 'Ari Creator',
         creator_alias_name: 'Ari',
+        compensation_type: 'FIXED',
+        agreed_rate: '100.00',
+        commission_rate: null,
       },
       {
+        show_creator_id: 'show_mc_2',
         creator_id: 'creator_2',
         creator_name: 'Bea Creator',
         creator_alias_name: null,
+        compensation_type: 'FIXED',
+        agreed_rate: '150.00',
+        commission_rate: null,
       },
     ],
     platforms: [
@@ -66,7 +74,7 @@ function fixedFormat(value: string): string {
 }
 
 describe('creatorMappingExportUtils', () => {
-  it('builds assignment-focused export rows for mapped and unmapped shows', () => {
+  it('builds one assignment-focused export row per mapped creator', () => {
     const result = buildCreatorMappingExportRows({
       shows: [
         createShow(),
@@ -96,7 +104,12 @@ describe('creatorMappingExportUtils', () => {
       'show_type',
       'show_standard',
       'mapped_state',
-      'creators',
+      'show_creator_id',
+      'creator_id',
+      'creator_name',
+      'creator_alias',
+      'compensation_type',
+      'fixed_cost',
     ]);
     expect(result.rows).toEqual([
       {
@@ -113,7 +126,33 @@ describe('creatorMappingExportUtils', () => {
         show_type: 'Live',
         show_standard: 'Premium',
         mapped_state: 'Mapped',
-        creators: 'Ari Creator (Ari); Bea Creator',
+        show_creator_id: 'show_mc_1',
+        creator_id: 'creator_1',
+        creator_name: 'Ari Creator',
+        creator_alias: 'Ari',
+        compensation_type: 'FIXED',
+        fixed_cost: '100.00',
+      },
+      {
+        show_name: 'Morning Launch',
+        show_id: 'show_1',
+        client_name: 'Acme',
+        show_status: 'Scheduled',
+        scheduled_start: 'fmt(2026-04-01T09:00:00.000Z)',
+        scheduled_end: 'fmt(2026-04-01T10:00:00.000Z)',
+        actual_start: '',
+        actual_end: '',
+        platforms: 'YouTube; TikTok',
+        room: 'Room A',
+        show_type: 'Live',
+        show_standard: 'Premium',
+        mapped_state: 'Mapped',
+        show_creator_id: 'show_mc_2',
+        creator_id: 'creator_2',
+        creator_name: 'Bea Creator',
+        creator_alias: '',
+        compensation_type: 'FIXED',
+        fixed_cost: '150.00',
       },
       {
         show_name: 'Empty Slot',
@@ -129,7 +168,12 @@ describe('creatorMappingExportUtils', () => {
         show_type: 'Live',
         show_standard: 'Premium',
         mapped_state: 'Unmapped',
-        creators: '',
+        show_creator_id: '',
+        creator_id: '',
+        creator_name: '',
+        creator_alias: '',
+        compensation_type: '',
+        fixed_cost: '',
       },
     ]);
   });

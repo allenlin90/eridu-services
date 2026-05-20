@@ -21,6 +21,9 @@ import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-ali
 
 type MembershipWithUser = StudioMembership & { user: User };
 type StudioShowsQueryWithAttention = ListStudioShowsQueryTransformed & { show_uids?: string[] };
+type DecimalLike = {
+  toFixed: (decimalPlaces?: number) => string;
+};
 
 export type ShowGenerationResult = {
   show_id: string;
@@ -44,6 +47,22 @@ export class TaskOrchestrationService {
     private readonly taskTargetService: TaskTargetService,
     private readonly shiftAlignmentService: ShiftAlignmentService,
   ) {}
+
+  private decimalLikeToString(value: unknown | null | undefined): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value === 'object' && 'toFixed' in value && typeof (value as DecimalLike).toFixed === 'function') {
+      return (value as DecimalLike).toFixed(2);
+    }
+
+    if (typeof value === 'number') {
+      return value.toFixed(2);
+    }
+
+    return String(value);
+  }
 
   /**
    * Generates tasks for multiple shows based on a set of templates.
@@ -318,9 +337,13 @@ export class TaskOrchestrationService {
       // Map base show fields using shared showDto logic
       const baseShow = showDto.parse(show);
       const creators = (show.showCreators ?? []).map((showCreator) => ({
+        show_creator_id: showCreator.uid,
         creator_id: showCreator.creator.uid,
         creator_name: showCreator.creator.name,
         creator_alias_name: showCreator.creator.aliasName,
+        compensation_type: showCreator.compensationType,
+        agreed_rate: this.decimalLikeToString(showCreator.agreedRate),
+        commission_rate: this.decimalLikeToString(showCreator.commissionRate),
       }));
       const platforms = (show.showPlatforms ?? [])
         .filter((showPlatform) => showPlatform.platform != null)

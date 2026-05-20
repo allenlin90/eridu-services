@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { clientApiResponseSchema } from '../clients/index.js';
 import { UID_PREFIXES } from '../constants.js';
+import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
 import { paginationBaseSchema, transformPagination } from '../pagination/index.js';
 import { platformApiResponseSchema } from '../platforms/index.js';
 import { scheduleApiResponseSchema } from '../schedules/index.js';
@@ -293,9 +294,13 @@ export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSche
  * Show data with task completion summary
  */
 const showSummaryCreatorSchema = z.object({
+  show_creator_id: z.string(),
   creator_id: z.string(),
   creator_name: z.string(),
   creator_alias_name: z.string(),
+  compensation_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).nullable(),
+  agreed_rate: z.string().nullable(),
+  commission_rate: z.string().nullable(),
 });
 
 export const showWithTaskSummaryDto = showApiResponseSchema

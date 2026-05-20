@@ -16,8 +16,18 @@ export type CreatorMappingExportRow = {
   show_type: string;
   show_standard: string;
   mapped_state: string;
-  creators: string;
+  show_creator_id: string;
+  creator_id: string;
+  creator_name: string;
+  creator_alias: string;
+  compensation_type: string;
+  fixed_cost: string;
 };
+
+type CreatorMappingExportBaseRow = Omit<
+  CreatorMappingExportRow,
+  'show_creator_id' | 'creator_id' | 'creator_name' | 'creator_alias' | 'compensation_type' | 'fixed_cost'
+>;
 
 export type CreatorMappingExportResult = {
   rows: CreatorMappingExportRow[];
@@ -49,19 +59,13 @@ const CREATOR_MAPPING_EXPORT_COLUMNS: CsvColumn<CreatorMappingExportRow>[] = [
   { key: 'show_type', label: 'Show Type' },
   { key: 'show_standard', label: 'Show Standard' },
   { key: 'mapped_state', label: 'Mapped State' },
-  { key: 'creators', label: 'Creators' },
+  { key: 'show_creator_id', label: 'Show Creator ID' },
+  { key: 'creator_id', label: 'Creator ID' },
+  { key: 'creator_name', label: 'Creator Name' },
+  { key: 'creator_alias', label: 'Creator Alias' },
+  { key: 'compensation_type', label: 'Compensation Type' },
+  { key: 'fixed_cost', label: 'Fixed Cost' },
 ];
-
-function formatCreators(show: StudioShow): string {
-  return show.creators
-    .map((creator) => {
-      if (creator.creator_alias_name) {
-        return `${creator.creator_name} (${creator.creator_alias_name})`;
-      }
-      return creator.creator_name;
-    })
-    .join('; ');
-}
 
 function formatPlatforms(show: StudioShow): string {
   return show.platforms
@@ -70,11 +74,11 @@ function formatPlatforms(show: StudioShow): string {
     .join('; ');
 }
 
-export function buildCreatorMappingExportRows({
-  shows,
-  formatDateTime,
-}: BuildCreatorMappingExportRowsParams): CreatorMappingExportResult {
-  const rows = shows.map((show) => ({
+function buildBaseRow(
+  show: StudioShow,
+  formatDateTime: (value: string) => string,
+): CreatorMappingExportBaseRow {
+  return {
     show_name: show.name,
     show_id: show.id,
     client_name: show.client_name ?? '',
@@ -88,8 +92,42 @@ export function buildCreatorMappingExportRows({
     show_type: show.show_type_name ?? '',
     show_standard: show.show_standard_name ?? '',
     mapped_state: show.creators.length > 0 ? 'Mapped' : 'Unmapped',
-    creators: formatCreators(show),
-  }));
+  };
+}
+
+function getFixedCost(creator: StudioShow['creators'][number]): string {
+  return creator.compensation_type === 'FIXED' ? creator.agreed_rate ?? '' : '';
+}
+
+export function buildCreatorMappingExportRows({
+  shows,
+  formatDateTime,
+}: BuildCreatorMappingExportRowsParams): CreatorMappingExportResult {
+  const rows = shows.flatMap((show) => {
+    const baseRow = buildBaseRow(show, formatDateTime);
+
+    if (show.creators.length === 0) {
+      return [{
+        ...baseRow,
+        show_creator_id: '',
+        creator_id: '',
+        creator_name: '',
+        creator_alias: '',
+        compensation_type: '',
+        fixed_cost: '',
+      }];
+    }
+
+    return show.creators.map((creator) => ({
+      ...baseRow,
+      show_creator_id: creator.show_creator_id,
+      creator_id: creator.creator_id,
+      creator_name: creator.creator_name,
+      creator_alias: creator.creator_alias_name ?? '',
+      compensation_type: creator.compensation_type ?? '',
+      fixed_cost: getFixedCost(creator),
+    }));
+  });
 
   return { rows, columns: CREATOR_MAPPING_EXPORT_COLUMNS };
 }
