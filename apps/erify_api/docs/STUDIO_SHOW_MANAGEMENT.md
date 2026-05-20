@@ -37,7 +37,7 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 4. **Platform editing is folded into the general studio show update payload**. No separate studio-only `PATCH .../platforms/replace` endpoint — the form edits the entire show document at once.
 
-5. **Show actuals ride the show update payload**. `Show.actualStartTime` / `Show.actualEndTime` are owning-resource facts, so studio operations edit them through `PATCH /studios/:studioId/shows/:showId` using `actual_start_time` / `actual_end_time`. Do not introduce a parallel `/actuals` endpoint for Phase 4 show operations.
+5. **Show-level actuals ride the show update payload**. `Show.actualStartTime` / `Show.actualEndTime` are owning-resource facts, so studio operations edit them through `PATCH /studios/:studioId/shows/:showId` using `actual_start_time` / `actual_end_time`. Creator participation actuals belong on `ShowCreator`, platform stream/performance facts belong on `ShowPlatform`, and platform violations belong in child records; those are handled by the task-input extraction workstream, not by expanding the show update DTO.
 
 6. **Create-time required fields follow DB constraints, not the original PRD wording**. Final create requirements: `name`, `start_time`, `end_time`, `client_id`, `show_type_id`, `show_standard_id`, `show_status_id`. Optional: `external_id`, `studio_room_id`, `schedule_id`, `metadata`, `platform_ids`.
 
@@ -114,4 +114,4 @@ The platform-replacement path is shared across admin and studio flows:
 - Studio show updates intentionally use last-write-wins. If manual studio editing becomes common enough to create real overwrite pain, revisit with a dedicated concurrency token strategy.
 - Nullable `scheduleId` is a deliberate backend flexibility point. FE should treat shows without schedules as exceptional and surface a repair workflow.
 - Studio room and schedule lookups now have dedicated studio-scoped search endpoints for the create/edit modal, and shared show lookups should stay lightweight for non-modal pages. Keep review pressure on lookup parity so future searchable fields do not regress into dead local-only search.
-- `actuals_state=missing` means either actual timestamp is absent; `actuals_state=complete` means both are recorded. This powers the Phase 4 missing-actuals queue without adding settlement, approval, or creator/platform-specific actual facts.
+- `actuals_state=missing` means either show-level actual timestamp is absent; `actuals_state=complete` means both show-level timestamps are recorded. This powers the Phase 4 missing-actuals queue without adding settlement or payment approval semantics. Creator/platform-specific operational facts and platform violations are separate scoped records rather than aliases of `Show.actualStartTime` / `Show.actualEndTime`.

@@ -225,27 +225,27 @@ Detailed endpoint naming should be finalized with backend implementation, but th
 
 ## PR Breakdown
 
-### PR 11.7 — Design Reset And Roadmap
+### PR #87 — Design Reset And Roadmap
 
 Document the direction change, retire the task-template grid-only plan as source of truth, and add this design. No product code.
 
-### PR 11.8 — Client Mechanic Catalog Foundation
+### PR 14.1 — Client Mechanic Catalog Foundation
 
 Add shared API schemas, Prisma models, repositories, services, controllers, `ACCOUNT_MANAGER` role support, and tests for client mechanics, mechanic versions, campaign sets, and set items.
 
-### PR 11.9 — Mechanics Management UI
+### PR 14.2 — Mechanics Management UI
 
 Add the client-scoped mechanics management route and campaign-set management UI. This can ship before task-template integration so content teams can start curating mechanics.
 
-### PR 11.10 — Task Template Mechanic References
+### PR 14.3 — Task Template Mechanic References
 
 Extend task-template schema support for mechanic references, update validation, payload transformation, and backend schema validation. Add migration/backfill only if needed for existing templates.
 
-### PR 11.11 — Template Assignment Matrix
+### PR 14.4 — Template Assignment Matrix
 
 Build the moderation assignment matrix in the task-template builder using campaign-set mechanics. Cards remains the structural editor.
 
-### PR 11.12 — Usage Rollup And Drift Warnings
+### PR 14.5 — Usage Rollup And Drift Warnings
 
 Add usage views and warnings for retired or superseded mechanic versions used by templates.
 

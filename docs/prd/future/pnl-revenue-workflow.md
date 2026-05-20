@@ -1,12 +1,12 @@
 # PRD: P&L Revenue Workflow (4.1)
 
-> **Status: Future target.** This document was drafted before [Phase 4 was simplified to a read-only cost reference viewer](./economics-cost-model.md). Treat it as future-feature context, not a Phase 4 close requirement. It must be redrafted when revenue planning restarts. Where this document conflicts with [`economics-cost-model.md`](./economics-cost-model.md), the cost model wins for Phase 4 scope.
+> **Status: Future target.** This document was drafted before [Phase 4 was simplified to a read-only cost reference viewer](./economics-cost-model.md). Treat it as future-feature context, not a Phase 4 close requirement. It must be redrafted when revenue planning restarts. Where this document conflicts with [`economics-cost-model.md`](./economics-cost-model.md) or the Phase 4 task-input actuals plan, the Phase 4 cost model and roadmap win.
 
 > **Status**: ⏭️ Future target
 > **Phase**: Future P&L workstream after simplified Phase 4
 > **Workstream**: P&L revenue ("P") side — completing the P&L model. Resolves the `COMMISSION` / `HYBRID` commission portion that remains pending in Phase 4.
 > **Depends on**: 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) · 2.1 Economics Cost Model ✅ ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲
-> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — Phase 4 leaves commission components unresolved; future revenue work must use the snapshotted `commissionRate` and the cost model's null-bubbling contract.
+> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — Phase 4 leaves commission components unresolved; future revenue work must use the snapshotted `commissionRate` and the cost model's null-bubbling contract. Phase 4 may add platform-scoped operational facts such as GMV, views, and violation records; this PRD still owns financial revenue semantics, net sales, contribution margin, and commission resolution.
 
 ## Problem
 
@@ -19,7 +19,7 @@ Key questions unanswered today:
 - *"What is the total revenue this studio generated this month across all platforms?"*
 - *"What did this creator earn in commissions on this show?"*
 
-`ShowPlatform.viewerCount` exists, but no GMV or net sales fields have been added. The economics service is already architected to accept revenue as input — it simply has no data source.
+`ShowPlatform.viewerCount` exists, and Phase 4 may add task-sourced platform GMV/views plus platform violation records. Those facts are operational performance inputs, not a complete revenue workflow. The economics service is already architected to accept revenue as input, but future revenue planning still needs to define financial revenue semantics such as net sales, revenue corrections, and commission resolution.
 
 ## Users
 
@@ -31,7 +31,7 @@ Key questions unanswered today:
 
 | Model / Endpoint                                 | Fields / Behavior                                                          | Status             |
 | ------------------------------------------------ | -------------------------------------------------------------------------- | ------------------ |
-| `ShowPlatform`                                   | `viewerCount` (no GMV/sales yet); platform-scoped stream/performance facts belong here or on a platform metrics child model | ✅ Exists (partial) |
+| `ShowPlatform`                                   | `viewerCount` exists; Phase 4 task extraction may add platform-scoped GMV/views and violation child records; net sales, CTR/CTO promotion, and revenue correction policy remain future scope | ✅ Exists (partial) |
 | `GET /studios/:studioId/shows/:showId/economics` | Built by 2.3; returns cost; commission rows remain nullable until revenue  | 🔲 Built by 2.3     |
 | `GET /studios/:studioId/economics`               | Built by 2.3; grouped read                                                 | 🔲 Built by 2.3     |
 | `ShowCreator.commissionRate`                     | Assignment snapshot commission rate; this future PRD applies it to revenue | ✅ Exists           |
@@ -41,9 +41,9 @@ Key questions unanswered today:
 
 ### In Scope
 
-1. **Add GMV and net sales fields to the show platform data model** — persist gross merchandise value (GMV) and net sales per `ShowPlatform` record. The exact data model (extension of `ShowPlatform` vs. new `ShowPlatformMetrics` table) is an open design question — see below.
+1. **Define financial revenue fields on top of platform performance facts** — if Phase 4 has already added platform-scoped GMV and views, decide whether the revenue workflow reuses GMV as an input, adds net sales and revenue-specific fields to `ShowPlatform`, or introduces a dedicated `ShowPlatformMetrics` / revenue record. The exact data model is an open design question — see below.
 
-2. **Revenue input UI** — ADMIN can enter GMV and net sales values on the show platform form in the studio app (`erify_studios`). Inputs are per-platform per show, reflecting that a show may stream on multiple platforms with different revenue figures.
+2. **Revenue input UI** — ADMIN can enter or review revenue values on a per-platform per-show surface in the studio app (`erify_studios`). Inputs are per `ShowPlatform`, reflecting that a show may stream on multiple platforms with different revenue figures. If Phase 4 task submissions already produce GMV, this UI consumes or reconciles that fact instead of creating a second anonymous input.
 
 3. **Economics service applies revenue to compute `COMMISSION` / `HYBRID`-commission creator costs** — once revenue is present for a show-platform, the engine multiplies revenue by the snapshotted `ShowCreator.commissionRate` to compute commission cost. `StudioCreator.defaultCommissionRate` is never read at this stage — only the per-show assignment snapshot.
 
@@ -55,7 +55,7 @@ Key questions unanswered today:
 
 - Tiered or volume-based commission formulas — deferred to a future compensation engine phase
 - Bonus / OT / post-show cost adjustments — tracked in ideation; additive cost items are a separate model
-- Platform API import (automated revenue ingestion from TikTok, YouTube, Shopee, etc.)
+- Platform API import (automated revenue ingestion from TikTok, YouTube, Shopee, etc.), except where Phase 4 already records manually entered seller-center facts through task submissions
 - Full revenue audit trail / correction history
 - Fixed cost lines (rent, equipment) in the P&L model
 
@@ -81,7 +81,7 @@ These must be resolved before technical design begins. Implementation is blocked
 
 Different platforms report different revenue signals: TikTok has gifting revenue, YouTube has super chats and channel memberships, Shopee has ad revenue and commission. Some of these do not map to a simple GMV + net sales model.
 
-**Recommended decision**: typed columns for `gmv` and `net_sales` (universal across platforms). Platform-specific breakdowns (gifting, super chats, ad revenue) stored in `ShowPlatform.metadata` JSON. These platform-specific signals are informational, not queryable in economics aggregation. If a specific platform metric becomes a business-critical query dimension, promote it to a typed column in a future migration.
+**Recommended decision**: keep Phase 4's typed `gmv` and view-count fields on `ShowPlatform`, then add revenue-specific fields such as `net_sales` only when the revenue workflow starts. Platform-specific breakdowns (gifting, super chats, ad revenue) can stay in metadata or a metrics child model until a specific signal becomes a business-critical query dimension. Metrics such as CTR/CTO should be promoted by a later migration, not bundled into the Phase 4 task-input work.
 
 ### 3. Revenue input workflow
 
@@ -102,8 +102,8 @@ Who enters revenue and when?
 
 ## Acceptance Criteria
 
-- [ ] GMV and net sales values are persisted per show-platform record.
-- [ ] Studio ADMIN can enter GMV and net sales via the show platform form in `erify_studios`.
+- [ ] Financial revenue fields, including net sales, are persisted or resolved per show-platform record.
+- [ ] Studio ADMIN can enter or review revenue values via a per-platform show surface in `erify_studios`, reusing Phase 4 typed performance facts where applicable.
 - [ ] Economics endpoint returns non-null commission creator cost when revenue is present for the show-platform, computed against the snapshotted `ShowCreator.commissionRate`.
 - [ ] Economics endpoint returns contribution margin (`revenue - resolved_total_cost`) when revenue is present; null otherwise.
 - [ ] `COMMISSION` and `HYBRID`-commission creator costs correctly reflect `snapshotted commissionRate × revenue`.
@@ -115,7 +115,7 @@ Who enters revenue and when?
 
 - **Revenue absence is not an error** — shows without revenue input keep nullable commission cost for COMMISSION / HYBRID-commission creators.
 - **Per-platform revenue** — revenue is tracked per `ShowPlatform` record, not as a single show-level aggregate, because different platforms may have materially different revenue figures for the same broadcast.
-- **Platform performance is not creator attendance** — platform stream timing, GMV, sales, viewer count, and similar performance facts are scoped to `ShowPlatform` or a dedicated platform metrics child model. Creator-specific actual attendance belongs to `ShowCreator` if that future feature ships.
+- **Platform performance is not creator attendance** — platform stream timing, GMV, views, and similar performance facts are scoped to `ShowPlatform` or a dedicated platform metrics child model. Platform violations are child records because one stream can have many violations. Creator-specific actual attendance belongs to `ShowCreator`.
 - **Contribution margin is derived, not stored** — computed at query time from revenue and cost components. Not persisted.
 - **Commission rate is snapshotted, not read live** — future revenue work multiplies revenue by the rate persisted on `ShowCreator.commissionRate`. `StudioCreator.defaultCommissionRate` is never read at revenue resolution time.
 

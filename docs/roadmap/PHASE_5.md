@@ -1,22 +1,22 @@
 # Phase 5: TBD
 
-> **Status**: Placeholder — scope to be decided after Phase 4 Wave 1 completes
+> **Status**: Placeholder — scope to be decided after Phase 4 closes
 > **Planning stance**: Three candidate tracks identified. Final scope and priority will be set based on business needs at the time.
 
 ## Purpose
 
-Phase 5 is reserved for the next workstream selection after Phase 4's L-side foundations are stable (rosters, export, availability hardening shipped).
+Phase 5 is reserved for the next workstream selection after Phase 4's L-side cost, actuals, task-input, and studio-autonomy foundations are stable.
 
 ## Candidate Tracks
 
 ### Track A: P&L Revenue Side (P-side completion)
 
-Complete the revenue half of the P&L model that Phase 4 defers. This track depends on the economics cost model review (Phase 4 post-Wave 1 gate) to ensure the architecture accommodates all cost components before layering on revenue.
+Complete the revenue half of the P&L model that Phase 4 defers. This track depends on Phase 4's typed operational facts and economics cost read model so revenue work can consume `ShowPlatform` GMV/views and platform violation records instead of parsing task submissions directly.
 
 Potential scope:
-- **P&L revenue workflow** — GMV/sales inputs, commission cost activation, contribution margin (currently a Phase 4 Wave 3 PRD — may carry forward if not completed in Phase 4)
+- **P&L revenue workflow** — net sales inputs, commission cost activation, contribution margin, and revenue correction policy. Phase 4 may add platform-scoped GMV/views and violation records for operational performance; Phase 5 owns financial revenue semantics, commission resolution, and margin.
 - **Advanced compensation engine** — automated rule-based computation (OT multipliers, tiered/volume commission, bonus formulas) that **writes `CompensationLineItem` records** as output. The data model and manual CRUD ship in Phase 4; the rule engine that automates line item creation is Phase 5. Double-entry ledger is out of scope unless the platform evolves into a financial product.
-- **Creator HR & operations** — fixed cost tracking (rent, equipment depreciation), creator HRMS, platform API integrations
+- **Creator HR & operations** — fixed cost tracking (rent, equipment depreciation), creator HRMS, creator-app actuals, and platform API integrations
 - **Economics FE** — dashboard pages consuming the shipped economics endpoints
 
 Related ideation topics:
@@ -40,7 +40,7 @@ Related ideation topics:
 
 ### Track C: Studio Autonomy Completion
 
-Complete the transition from system-admin-dependent operations to studio self-service. Phase 4 addresses the most critical gaps (show management, schedule management, creator onboarding); Track C covers the remaining medium/low severity gaps identified in the Phase 4 gap analysis (2026-03-28).
+Complete the transition from system-admin-dependent operations to studio self-service. Phase 4 addresses the most critical gaps; Track C covers the remaining medium/low severity autonomy gaps that still need a business owner.
 
 Potential scope:
 - **Studio reference data management** — studio-initiated creation of clients, platforms, show types, show standards, and show statuses into the global catalog. Removes system-admin bottleneck for routine metadata setup. See [PRD](../prd/studio-reference-data.md).
@@ -65,11 +65,14 @@ These are explicitly out of Phase 4 scope and candidates for Phase 5:
 | Ticketing & material management | Phase 4 out-of-scope, ideation | B |
 | PWA push notifications | Ideation | B |
 | Creator app expansion | Ideation | B |
-| Studio reference data management (clients, platforms, types, standards, statuses) | Phase 4 gap analysis (2026-03-28) | C |
-| Studio creator profile editing (name/alias at studio level) | Phase 4 gap analysis (2026-03-28) | C |
-| Studio-native schedule management | Phase 4 re-sequencing (2026-04-22); likely folded into Client Portal | C |
-| Studio snapshot/audit trail visibility | Phase 4 gap analysis (2026-03-28) | C |
-| Strict-mode creator availability with conflict metadata | Phase 4 re-sequencing (2026-05-18); availability is currently advisory — strict-mode + conflict metadata payload is the next layer once a business driver pulls it in | C |
+| Studio reference data management (clients, platforms, types, standards, statuses) | Phase 4 gap analysis | C |
+| Studio creator profile editing (name/alias at studio level) | Phase 4 gap analysis | C |
+| Studio-native schedule management | Phase 4 re-sequencing; likely folded into Client Portal | C |
+| Studio snapshot/audit trail visibility | Phase 4 gap analysis | C |
+| Strict-mode creator availability with conflict metadata | Phase 4 re-sequencing; availability is currently advisory — strict-mode + conflict metadata payload is the next layer once a business driver pulls it in | C |
+| Hardware / creator-app actuals sources beyond task submissions | Phase 4 adds task-submission and manager-entry paths; hardware and creator-app automation remain future work | A |
+| Additional platform performance metrics beyond GMV/views | Phase 4 only promotes GMV and views to typed `ShowPlatform` fields; metrics such as CTR/CTO need a later migration when semantics stabilize | A |
+| P&L revenue workflow, commission resolution, contribution margin | Phase 4 may persist platform GMV/views and violation records; Phase 5 owns financial revenue semantics and commission resolution | A |
 
 ## Promotion Rule
 

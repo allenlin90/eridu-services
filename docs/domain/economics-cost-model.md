@@ -9,14 +9,14 @@
 
 ## Purpose
 
-Lock the **minimal** data model and computation rules for studio compensation and operational cost in Phase 4. Phase 4's L-side stack is a **read-only reference viewer**, not a workflow system: it produces structured numbers for stakeholders to consult, and it provides a foundation that future workstreams (settlement, freeze, payment, acknowledgement, advanced compensation rules) can extend without schema reshape.
+Lock the **minimal** data model and computation rules for studio compensation and operational cost in Phase 4. Phase 4's L-side compensation stack is a **read-only reference viewer**, not a payment workflow: it produces structured numbers for stakeholders to consult, and it provides a foundation that future workstreams (settlement, freeze, payment, acknowledgement, advanced compensation rules) can extend without schema reshape.
 
 This document is authoritative for Phase 4 cost semantics. Required Wave 2 downstream PRDs must align to this simplified scope; Wave 3 PRDs are revised later against the implemented 2.3 read shape.
 
 ## Scope & Stance
 
 - **Records are notice and reference, not source of truth.** Phase 4 stores enough data to *show* compensation and operational cost. It does not authorize, lock, settle, or pay anything. The real source of truth for "what was paid" lives outside this system (bank records, contracts, conversations) and will be cross-referenced when a payment workstream ships.
-- **All views are read-only.** Recipients (creators, members/helpers) inspect actual-backed compensation and pending events; managers inspect operational rollups. No acknowledgement, dispute, or counter-signature exists in Phase 4.
+- **Compensation and economics views are read-only.** Recipients (creators, members/helpers) inspect actual-backed compensation and pending events; managers inspect operational rollups. Operational task submissions may write actuals and performance facts, but no acknowledgement, dispute, or counter-signature exists in Phase 4.
 - **Computation is live and pure.** Cost is derived from current persisted inputs at read time. No stored derived totals, no state machine, no transitions to manage.
 - **The foundation is extensible.** Settlement gating, freeze guards, grace tolerance, payment processing, acknowledgement / dispute, advanced compensation rules, and bank-statement reconciliation each layer onto this base as additions when their workstream activates. See §4 Future Extensions.
 
@@ -104,26 +104,33 @@ FE forms editing these fields **must** clear the irrelevant rate fields before s
 ### Actuals
 
 - `Show.actualStartTime` / `Show.actualEndTime` — nullable, entered any time.
+- `ShowCreator.actualStartTime` / `ShowCreator.actualEndTime` — nullable, creator participation window for a specific show assignment.
+- `ShowPlatform.actualStartTime` / `ShowPlatform.actualEndTime` — nullable, platform stream window for a specific platform on a show.
+- `ShowPlatform` performance facts — platform-scoped GMV and view count in Phase 4; additional metrics such as CTR/CTO require later typed-field promotion.
+- `ShowPlatformViolation` records — zero or more violation records attached to a `ShowPlatform`.
 - `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime` — nullable, entered any time.
 
 #### Actual ownership and scope
 
-Actual timestamps are recorded facts, not calculated money. Phase 4 records two scopes:
+Actual timestamps and platform performance inputs are recorded facts, not calculated money. Store each fact on the narrowest entity whose fact it describes:
 
 | Scope | Meaning | Phase 4 status |
 | ----- | ------- | -------------- |
-| `Show` | Overall operational show window. All creators and platforms on the show share this single timeline. | ✅ In scope |
+| `Show` | Overall operational show window when the task or manager input records one show-level timeline. | ✅ In scope |
 | `StudioShiftBlock` | One operator/member labor window. | ✅ In scope |
-| `ShowCreator` (participation window) | One creator's distinct start/end for a multi-creator show, late join, or early leave. | 🟡 Extension point (do not ship in Phase 4) |
-| `ShowPlatform` (stream/performance window) | One platform stream's distinct start/end and performance facts. | 🟡 Extension point (do not ship in Phase 4) |
+| `ShowCreator` | One creator's distinct attendance status and participation window for a multi-creator show, late join, early leave, or missing creator. | ✅ Planned in Phase 4 |
+| `ShowPlatform` | One platform stream's actual window plus the first typed performance facts: GMV and views. | ✅ Planned in Phase 4 |
+| `ShowPlatformViolation` | One violation event or finding for a platform stream. A `ShowPlatform` can have zero, one, or many violation records. | ✅ Planned in Phase 4 |
 
-For Phase 4, **show actual time is the only creator-attendance source**: all assigned creators on a show inherit the show's `actualStartTime` / `actualEndTime`. There is no creator-specific actual timeline. The same applies to platforms: a show's actual window covers every platform stream on that show.
+Creator attendance does not inherit the show timeline once creator-scoped inputs exist. A creator-specific late, missing, start, or end fact belongs on `ShowCreator`, while the show-level timeline remains a separate operational fact for the overall event.
 
-This is a deliberate simplification — Phase 4 operations enter one actual per show, not one per creator and one per platform. If future product needs distinct creator or platform windows (late-join, multi-stream, platform-staggered start), the calculator must consume the narrower entity actuals when they exist. Until then, narrower-scope actuals are **extension points**, not active fields: do not add columns, schemas, or input UI for them in Phase 4. The cost-model section "Actuals priority cascade" below names where the extension slots in without breaking the public row shape.
+Platform actuals and performance facts are platform-specific. Seller-center or platform-derived actuals, GMV, and views belong on `ShowPlatform`; a show with multiple platforms may have multiple platform windows and metrics. Violations are child records rather than a single platform status because one platform stream can have zero, one, or many violations. Overall show actuals can still be entered directly on `Show`, but read models should treat platform windows as narrower supporting facts rather than aliases of the show fields.
 
-The calculator should prefer the most specifically scoped actual for the component being calculated *when narrower facts exist*. In Phase 4 that is always `Show` for creator attendance and `StudioShiftBlock` for operator labor.
+For comparable actuals and performance facts, the selected model value follows source priority: platform data or platform upload > creator input > operator task input > planned schedule. The system may retain every submitted input as an audit/reference record, but the value currently written to the scoped model field or child record is the operational source of truth for reads. When a higher-priority source arrives later, such as seller-center API integration or platform data upload, it can replace the selected model value while preserving the lower-priority task submission as reference.
 
-No state machine, no settlement, no approval. Actuals may be absent, complete, or incomplete:
+The calculator should then read the selected scoped model value for the component being calculated. Creator-facing rows use selected `ShowCreator` actuals when present. Platform or performance rows use selected `ShowPlatform` facts and `ShowPlatformViolation` records. Show-level operational rows use direct `Show` actuals or a documented platform-derived aggregate when no direct show-level actual exists. Shift labor uses `StudioShiftBlock` actuals.
+
+No settlement state machine and no per-record approval gate. Actuals may be absent, complete, or incomplete:
 
 - If both actual timestamps are absent, computation falls back to scheduled times when scheduled times exist and emits an actuals-missing warning.
 - If both actual timestamps are present, computation uses the actual duration.
@@ -133,6 +140,8 @@ No state machine, no settlement, no approval. Actuals may be absent, complete, o
 Planned fallback is an admin/manager and operational review behavior. Creator/operator/helper self-views must not expose money for any event whose actuals are absent or incomplete, even if the compensation package is fixed and does not mathematically depend on duration. Those rows remain visible as pending recipient events so the recipient can see that the event exists and can follow up with a line manager, but the event cannot be counted as compensation yet. If the self-view shows a period total, that total must be a countable recipient total: complete-actuals, resolved rows only, with pending counts/events shown separately.
 
 Manager edits to past actuals are allowed; if the entity's existing audit pattern covers those fields, edits are appended there. Notifications to recipients are deferred (§4).
+
+Task-submitted actuals and performance facts write to their scoped models immediately after submission when no higher-priority source has already selected a value. The task submission remains a reference input even after extraction. Manager review is a batch sign-off workflow over the resulting selected records and abnormal/reference inputs, not a gate that delays persistence. The review surface can group by day, week, or date range, highlight abnormal records, and stamp a summary-level sign-off without requiring managers to inspect each task individually.
 
 ### Compensation line items
 
@@ -199,7 +208,7 @@ Each row exposes:
 - `line_item_subtotal` — non-nullable decimal. Sum of supplemental line items only; `0` when no line items.
 - `unresolved_reasons` — string array. Examples: `["creator:smc_x:commission_pending_revenue"]`, `["show:show_y:planned_time_missing"]`, `["creator:smc_x:agreement_snapshot_missing"]`. UI consumes these instead of seeing `0`.
 - `calculation_warnings` — string array. Examples: `["show:show_y:actuals_missing_using_planned"]`, `["shift_block:ssb_z:actuals_incomplete_using_planned"]`. UI surfaces these as provisional-value warnings, not null-cost blockers.
-- `actuals_source` — which input category drove time-based components: `OPERATOR_RECORD` / `PLANNED` (Phase 4); the enum extends to `PLATFORM` / `CREATOR_APP` / `PUNCH_CLOCK` later.
+- `actuals_source` — which selected input category drove time-based components: `PLATFORM_DATA`, `CREATOR_INPUT`, `OPERATOR_INPUT`, or `PLANNED` in Phase 4; the enum can extend to source-specific values such as `CREATOR_APP` / `PUNCH_CLOCK` later.
 - `is_in_future` — boolean derived from entity-time vs request time. UI uses this to label the row "projected" if it likes; Phase 4 does not store a state enum.
 
 Recipient self-view responses must include enough status/reason metadata for FE to show pending events, but must suppress monetary totals whenever actuals are missing or incomplete. Pending rows do not contribute to recipient-facing row amounts, subtotals, or period totals until actuals are complete. Exact DTO names belong to 2.3.
@@ -213,22 +222,22 @@ Recipient self-view responses must include enough status/reason metadata for FE 
 - Counts (`creator_count`, `show_count`) are always defined.
 - **Never silently coerce null to zero at any grain.**
 
-### Actuals priority cascade (extension point)
+### Actuals priority cascade
 
-Time-based computation carries a forward-compatible source category so Phase 4's operator-record source can be augmented later without changing consumer-facing semantics. The product contract only needs the source category; how platform data arrives is an implementation detail.
+Time-based computation carries a selected source category so rows can explain whether time came from platform data, creator input, operator input, or planned schedule. The product contract needs the selected source category; ingestion details and lower-priority reference inputs stay behind the service layer unless a review surface needs to show them.
 
 | Priority | Source                                                           | Phase 4 status       |
 | -------- | ---------------------------------------------------------------- | -------------------- |
-| 1        | Platform source                                                  | Deferred             |
-| 2        | Operator post-production record (`Show.actualStartTime/EndTime`) | ✅ complete pair only |
-| 3        | Creator app self-record                                          | Deferred             |
+| 1        | Platform data or platform upload, including seller-center/API data mapped to `ShowPlatform` or `ShowPlatformViolation` | ✅ planned where manually submitted; automated API/upload later |
+| 2        | Creator input or creator-attributed actuals mapped to `ShowCreator` | ✅ planned, complete pair only |
+| 3        | Operator task input mapped to `Show` / `ShowPlatform` / `ShowCreator` | ✅ planned, complete pair only |
 | 4        | Planned show time (`Show.startTime/endTime`)                     | ✅ fallback           |
 
-Same shape for shift blocks (1: punch-clock; 2: operator manual entry — built, complete pair only; 3: scheduled — built). New sources slot into the source resolution order without changing public row semantics. Row response carries `actuals_source` so admin/manager UI can show "calculated from Operator" or "calculated from Planned" without exposing ingestion implementation details. If an operator record is absent or incomplete and planned time exists, admin/manager rows may use planned time with a calculation warning; recipient self-view rows show pending instead.
+Same shape for shift blocks once additional sources exist: higher-confidence external/hardware source, then creator/member input where allowed, then operator/manager manual entry, then scheduled fallback. New sources slot into the source resolution order without changing public row semantics. Row response carries `actuals_source` so admin/manager UI can show "calculated from Platform", "calculated from Creator", "calculated from Operator", or "calculated from Planned" without exposing ingestion implementation details. If a selected scoped record is absent or incomplete and planned time exists, admin/manager rows may use planned time with a calculation warning; recipient self-view rows show pending instead.
 
 ## 3. Three Views (Read-Only)
 
-All three views read the same data through the same calculator. **All are read-only in Phase 4** — no write endpoints, no acknowledgement, no counter-signature.
+All three compensation views read the same data through the same calculator. **The compensation views are read-only in Phase 4** — no acknowledgement, no counter-signature, and no recipient-side write path.
 
 ### Creator compensation view
 
@@ -300,7 +309,7 @@ For linking from other docs:
 
 ## Product Decisions
 
-- **Phase 4 is a viewer, not a workflow.** Records are notice and reference; views are read-only; the calculator is pure.
+- **Phase 4 compensation is a viewer, not a payment workflow.** Records are notice and reference; compensation views are read-only; the calculator is pure.
 - **Snapshot at assignment time + metadata audit for snapshot overrides.** Stable historical references without freeze guards or a separate audit table. ADMIN and MANAGER may update intended-immutable fields; UI warns about downstream impact.
 - **Component-aware compensation.** Creator packages — `FIXED` / `COMMISSION` / `HYBRID` — resolved into components (`FIXED_BASE` + commission). No `HOURLY` for creators; that's a legal-compliance product constraint. Operator shift labor is always `hourlyRate × duration`. Single source of truth for projection arithmetic — `StudioShift.projectedCost` is removed.
 - **Base compensation is calculated, not stored as line items.** `ShowCreator` and `StudioShift` snapshots own normal base pay; `CompensationLineItem` stores event-attached supplemental add-ons and deductions only.

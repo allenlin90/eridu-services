@@ -17,7 +17,7 @@ This design covers data input only. Calculator-driven money displays land with 2
 
 Task 5 is the exception only in the sense that the per-show creator mapping view renders a backend-calculated creator compensation summary. The frontend still does not calculate money: it submits `SHOW_CREATOR` line-item mutations, then renders totals returned by `/studios/:studioId/shows/:showId/creators/compensation-summary`.
 
-Actuals surfaces follow the cost model's [actual ownership and scope](../../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope). This 2.2 UI exposes show actuals and shift-block actuals only; future creator participation actuals and platform performance actuals must be labeled, keyed, and mutated as distinct resources.
+Actuals surfaces follow the cost model's [actual ownership and scope](../../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope). This 2.2 UI exposes show actuals and shift-block actuals only; future creator participation actuals, platform performance actuals, and platform violation records must be labeled, keyed, and mutated as distinct resources.
 
 ## Workflow Model
 

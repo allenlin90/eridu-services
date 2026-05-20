@@ -67,7 +67,7 @@ Frontend workflow slices consume these backend contracts in their corresponding 
 
 ## Actuals Scope Reference
 
-This design follows [`economics-cost-model.md` actual ownership and scope](../../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope): actual timestamps are recorded facts stored on the narrowest entity whose fact they represent. This 2.2 wave only adds overall show actuals and shift-block labor actuals. Future creator-participation actuals belong on `ShowCreator`; future platform stream/performance actuals belong on `ShowPlatform` or a platform metrics child model.
+This design follows [`economics-cost-model.md` actual ownership and scope](../../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope): actual timestamps and performance inputs are recorded facts stored on the narrowest entity whose fact they represent. This 2.2 wave added overall show actuals and shift-block labor actuals. The task-input workstream adds creator participation actuals on `ShowCreator`, platform stream/performance facts on `ShowPlatform`, and platform violations as child records.
 
 ## Schema Direction
 
@@ -248,7 +248,7 @@ Show and shift actuals are folded into the existing update DTOs in their resourc
 - `packages/api-types/src/shows/schemas.ts` — `updateStudioShowInputSchema` gains optional `actual_start_time` / `actual_end_time` (nullable to support clear).
 - `packages/api-types/src/studio-shifts/schemas.ts` — the shift-block update schema gains the same two fields.
 
-Field names stay resource-specific in their containing schema. Future `ShowCreator` participation actuals or `ShowPlatform` performance actuals get their own scoped fields on those resources when introduced; they are not aliases of show actuals.
+Field names stay resource-specific in their containing schema. `ShowCreator` participation actuals and `ShowPlatform` stream/performance facts get their own scoped fields on those resources; platform violations get child records. None of these are aliases of show actuals.
 
 `amount` round-trips as a string at the API boundary.
 
