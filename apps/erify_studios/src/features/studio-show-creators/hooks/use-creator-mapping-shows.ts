@@ -70,25 +70,26 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
     () => toShowScopeDateTimeBounds({ dateFrom, dateTo }),
     [dateFrom, dateTo],
   );
+  const queryParams = useMemo(() => ({
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
+    search: searchQuery || undefined,
+    date_from: scopeDateBounds.date_from,
+    date_to: scopeDateBounds.date_to,
+    ...filters,
+  }), [
+    filters,
+    pagination.pageIndex,
+    pagination.pageSize,
+    scopeDateBounds.date_from,
+    scopeDateBounds.date_to,
+    searchQuery,
+  ]);
 
   const query = useQuery({
-    queryKey: studioShowsKeys.list(studioId, {
-      page: pagination.pageIndex + 1,
-      limit: pagination.pageSize,
-      search: searchQuery,
-      date_from: scopeDateBounds.date_from,
-      date_to: scopeDateBounds.date_to,
-      ...filters,
-    }),
+    queryKey: studioShowsKeys.list(studioId, queryParams),
     queryFn: ({ signal }) =>
-      getStudioShows(studioId, {
-        page: pagination.pageIndex + 1,
-        limit: pagination.pageSize,
-        search: searchQuery || undefined,
-        date_from: scopeDateBounds.date_from,
-        date_to: scopeDateBounds.date_to,
-        ...filters,
-      }, { signal }),
+      getStudioShows(studioId, queryParams, { signal }),
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
@@ -128,5 +129,6 @@ export function useCreatorMappingShows({ studioId, dateFrom, dateTo }: UseCreato
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
+    queryParams,
   };
 }

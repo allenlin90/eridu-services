@@ -7,6 +7,7 @@ import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-mana
 import { TaskGenerationProcessor } from './task-generation-processor.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import {
   showDto,
@@ -318,9 +319,13 @@ export class TaskOrchestrationService {
       // Map base show fields using shared showDto logic
       const baseShow = showDto.parse(show);
       const creators = (show.showCreators ?? []).map((showCreator) => ({
+        show_creator_id: showCreator.uid,
         creator_id: showCreator.creator.uid,
         creator_name: showCreator.creator.name,
         creator_alias_name: showCreator.creator.aliasName,
+        compensation_type: showCreator.compensationType,
+        agreed_rate: decimalToString(showCreator.agreedRate),
+        commission_rate: decimalToString(showCreator.commissionRate),
       }));
       const platforms = (show.showPlatforms ?? [])
         .filter((showPlatform) => showPlatform.platform != null)

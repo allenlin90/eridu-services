@@ -247,6 +247,10 @@ describe('taskOrchestrationService', () => {
             deletedAt: null,
             showCreators: [
               {
+                uid: 'show_mc_1',
+                compensationType: 'FIXED',
+                agreedRate: '125.00',
+                commissionRate: null,
                 creator: {
                   uid: 'creator_1',
                   name: 'Alice',
@@ -282,9 +286,13 @@ describe('taskOrchestrationService', () => {
       });
       expect(result.data[0].creators).toEqual([
         {
+          show_creator_id: 'show_mc_1',
           creator_id: 'creator_1',
           creator_name: 'Alice',
           creator_alias_name: 'Alice A',
+          compensation_type: 'FIXED',
+          agreed_rate: '125.00',
+          commission_rate: null,
         },
       ]);
       expect(result.data[0].platforms).toEqual([

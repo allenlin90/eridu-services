@@ -117,6 +117,7 @@ Required pattern:
 Reference implementations:
 - `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts` — concurrency-capped batched pagination (canonical)
 - `apps/erify_studios/src/features/studio-shows/utils/studio-shows-export.utils.ts`
+- `apps/erify_studios/src/features/studio-show-creators/utils/creator-mapping-export.utils.ts` — assignment-focused fan-out: one row per mapped creator, blank-creator row for unmapped shows; consumes `useCreatorMappingShows` `queryParams` and uses `getAllStudioShowsForExport` for batched pagination
 - `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts` — older fan-out (to be migrated to the batched form)
 - `apps/erify_studios/src/features/studio-shifts/utils/studio-shifts-export.utils.ts`
 
