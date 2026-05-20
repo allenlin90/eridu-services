@@ -169,4 +169,77 @@ describe('useCreatorMappingCreatorFilter', () => {
       { value: 'Selected Creator', label: 'Selected Creator (Sel)' },
     ]);
   });
+
+  it('ignores selected-resolver rows that do not exactly match the selected creator name', () => {
+    mockUseQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+      if (options.queryKey[1] === 'list') {
+        return {
+          data: { data: [] },
+          isLoading: false,
+          isFetching: false,
+        };
+      }
+      // Substring search returns a different creator whose name contains the selected name.
+      return {
+        data: {
+          data: [
+            { creator_name: 'Alice Smith', creator_alias_name: 'AS' },
+            { creator_name: 'Alice Wonderland', creator_alias_name: 'AW' },
+          ],
+        },
+        isLoading: false,
+        isFetching: false,
+      };
+    });
+
+    const { result } = renderHook(() => useCreatorMappingCreatorFilter('std_1', 'Alice'));
+
+    expect(result.current.options).toEqual([
+      { value: 'Alice', label: 'Alice' },
+    ]);
+  });
+
+  it('uses an exact-match row from the selected resolver even when it is not the first result', () => {
+    mockUseQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+      if (options.queryKey[1] === 'list') {
+        return {
+          data: { data: [] },
+          isLoading: false,
+          isFetching: false,
+        };
+      }
+      return {
+        data: {
+          data: [
+            { creator_name: 'Alice Smith', creator_alias_name: 'AS' },
+            { creator_name: 'Alice', creator_alias_name: 'A' },
+          ],
+        },
+        isLoading: false,
+        isFetching: false,
+      };
+    });
+
+    const { result } = renderHook(() => useCreatorMappingCreatorFilter('std_1', 'Alice'));
+
+    expect(result.current.options).toEqual([
+      { value: 'Alice', label: 'Alice (A)' },
+    ]);
+  });
+
+  it('requests several rows for the selected resolver so substring matches can be disambiguated', async () => {
+    renderHook(() => useCreatorMappingCreatorFilter('std_1', 'Alice'));
+
+    const selectedQuery = mockUseQuery.mock.calls
+      .find((call) => (call[0] as { queryKey: unknown[] }).queryKey[1] === 'selected')?.[0] as {
+      queryFn: (context: { signal?: AbortSignal }) => Promise<unknown>;
+    };
+
+    await selectedQuery.queryFn({ signal: undefined });
+    expect(mockGetStudioCreatorRoster).toHaveBeenLastCalledWith(
+      'std_1',
+      { search: 'Alice', limit: 5 },
+      { signal: undefined },
+    );
+  });
 });

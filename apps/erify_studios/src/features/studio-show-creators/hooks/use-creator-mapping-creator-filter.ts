@@ -6,6 +6,7 @@ import { getStudioCreatorRoster } from '@/features/studio-creator-roster/api/stu
 const STALE_TIME_MS = 60 * 60 * 1000;
 const DEFAULT_LIMIT = 10;
 const SEARCH_LIMIT = 20;
+const SELECTED_RESOLVE_LIMIT = 5;
 
 function formatCreatorLabel(creator: { creator_name: string; creator_alias_name?: string | null }) {
   return creator.creator_alias_name
@@ -52,7 +53,7 @@ export function useCreatorMappingCreatorFilter(studioId: string, selectedCreator
     queryFn: ({ signal }) =>
       getStudioCreatorRoster(
         studioId,
-        { search: selectedCreatorName, limit: 1 },
+        { search: selectedCreatorName, limit: SELECTED_RESOLVE_LIMIT },
         { signal },
       ),
     enabled: Boolean(studioId && selectedCreatorName),
@@ -61,12 +62,14 @@ export function useCreatorMappingCreatorFilter(studioId: string, selectedCreator
 
   const options = useMemo(() => {
     const fetched = toUniqueCreatorOptions(listQuery.data?.data ?? []);
-    const selected = selectedQuery.data?.data?.[0];
+    const selectedRow = selectedQuery.data?.data?.find(
+      (creator) => creator.creator_name === selectedCreatorName,
+    );
 
-    if (selected && !fetched.some((option) => option.value === selected.creator_name)) {
+    if (selectedRow && !fetched.some((option) => option.value === selectedRow.creator_name)) {
       return [{
-        value: selected.creator_name,
-        label: formatCreatorLabel(selected),
+        value: selectedRow.creator_name,
+        label: formatCreatorLabel(selectedRow),
       }, ...fetched];
     }
 
