@@ -81,7 +81,7 @@ The list response stays based on the existing studio-creator roster item and may
 - `POST /creators` accepts the shared add payload, then returns the roster item DTO for the created or reactivated row.
 - `PATCH /creators/:creatorId` accepts the shared update payload and returns the updated roster item DTO.
 - `GET /creators/:creatorId/compensations` accepts `date_from` / `date_to`, verifies the creator belongs to the studio roster, and returns show assignment rows with base, adjustment, total, and unresolved reason fields. Mirrors the noun sub-resource shape used by `GET /members/:memberId/compensations` (see `backend-controller-pattern-nestjs`).
-- `PATCH /shows/:showId/creators/:showCreatorId` validates studio/show scope before updating `ShowCreator.note`, `agreedRate`, `compensationType`, `commissionRate`, and metadata audit entries.
+- `PATCH /shows/:showId/creators/:showCreatorId` validates studio/show scope before updating `ShowCreator.note`, `agreedRate`, `compensationType`, `commissionRate`, and override audit entries.
 
 ## Service
 
@@ -158,7 +158,7 @@ This keeps the API aligned with the product rule that inactive creators cannot b
 
 - API remains creator-first on the wire (`creator_id`), even though the writable record is `StudioCreator`.
 - Defaults are studio-scoped fallbacks for economics only; they never overwrite existing `ShowCreator` overrides.
-- Per-show assignment edits update only `ShowCreator` snapshot fields and append metadata snapshot override audit entries when monetary terms change.
+- Per-show assignment edits update only `ShowCreator` snapshot fields and write standard override audit entries when monetary terms change.
 - Re-adding a previously inactive creator should restore the existing roster association instead of creating a second row.
 - No compatibility alias is retained for `/creators/roster`.
 

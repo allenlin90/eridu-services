@@ -15,10 +15,10 @@ This backend functionality covers:
 - Studio target-scoped line-item APIs where the target is inferred from the route;
 - Nullable show actuals (`Show.actualStartTime` / `Show.actualEndTime`) added to the existing `PATCH /studios/:studioId/shows/:showId` route;
 - Nullable shift-block actuals (`StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime`) added to the existing shift-block update route;
-- Snapshot-override audit append on future `ShowCreator` agreement edits and `StudioShift.hourlyRate` edits;
+- Snapshot-override audit entries on future `ShowCreator` agreement edits and `StudioShift.hourlyRate` edits;
 - Shift cost columns dropped in favor of live-computed `planned_cost` and `actual_cost` fields.
 
-This system does **not** introduce cost arithmetic, settlement state, freeze guards, grace windows, dedicated audit tables, sign enforcement, generated base-compensation rows, standing/schedule-scoped/global/recurring line items, notifications, or historical snapshot backfill.
+This system does **not** introduce cost arithmetic, settlement state, freeze guards, grace windows, sign enforcement, generated base-compensation rows, standing/schedule-scoped/global/recurring line items, notifications, or historical snapshot backfill.
 
 A per-show creator compensation summary derived from `ShowCreator` assignment snapshots plus active `SHOW_CREATOR` line items is calculated by the backend to keep `erify_studios` from doing frontend money arithmetic. It does not create persisted base-compensation line items.
 
@@ -28,7 +28,7 @@ A per-show creator compensation summary derived from `ShowCreator` assignment sn
 - No `CompensationLineItem` rows for normal base show compensation or normal base shift labor.
 - No historical `ShowCreator` normalization or backfill.
 - No actuals approval, settlement, freeze, or grace fields.
-- No dedicated actuals audit table.
+- No settlement or payment audit state.
 - No type-based sign enforcement (`DEDUCTION < 0`, etc.).
 - No standing, schedule-scoped, global, recurring, HR, or payment-system line items.
 - No payment processing, bank reconciliation, acknowledgement, dispute, or recipient adjustment.
@@ -42,10 +42,10 @@ A per-show creator compensation summary derived from `ShowCreator` assignment sn
 4. **Date inclusion derives from the attached event.** The model has no `effectiveDate`; the calculator filters line items by the attached event's time.
 5. **Base compensation is never persisted as a line item.** The system generates base rows from `ShowCreator` and `StudioShift` snapshots.
 6. **Show/block actuals are nullable, free-write facts.** No approval, freeze, settlement, or grace fields are active.
-7. **Snapshot override audits append to `metadata.audit.snapshot_overrides[]` as an array** of `{field, old_value, new_value, actor_ext_id, at, reason?}` entries, snake_case keys, in chronological order. No internal BigInt IDs are written into `metadata`.
-8. **External APIs use UIDs only.** Internal BigInt IDs never leave the service boundary, including persisted `metadata` payloads.
+7. **Snapshot overrides use the standard audit history once PR 12 lands.** New override paths write old value, new value, actor, timestamp, and optional reason through `Audit` / `AuditTarget`. Legacy metadata audit arrays are compatibility-only.
+8. **External APIs use UIDs only.** Internal BigInt IDs never leave the service boundary, including persisted audit or metadata payloads.
 9. **Reads exclude soft-deleted rows by default.** `includeDeleted` is permitted only on admin/audit support surfaces.
-10. **Mutations run inside `@Transactional()`.** Snapshot audit append, target resolution, and the underlying write are atomic.
+10. **Mutations run inside `@Transactional()`.** Snapshot audit writes, target resolution, and the underlying write are atomic.
 11. **Studio scope is required.** `CompensationLineItem.studioId` is `NOT NULL`. Targets whose own studio scope cannot be resolved are rejected.
 
 ## Actuals Scope Reference
@@ -242,18 +242,8 @@ Show and shift actuals are folded into the existing update DTOs in their resourc
 
 1. Load the row in the transaction.
 2. Diff incoming payload against the loaded snapshot fields. Use `Prisma.Decimal.equals()` for `agreedRate`, `commissionRate`, and `hourlyRate` to avoid string/precision false positives.
-3. For each changed snapshot field, append one entry to `metadata.audit.snapshot_overrides[]` (array, chronological):
-   ```jsonc
-   {
-     "field": "agreed_rate",
-     "old_value": "120.00",
-     "new_value": "150.00",
-     "actor_ext_id": "user_abc123",
-     "at": "2026-05-09T08:30:00.000Z",
-     "reason": "operator note text" // optional
-   }
-   ```
-4. Persist field changes and metadata in one update.
+3. For each changed snapshot field, write one standard audit entry with field, old value, new value, actor UID, timestamp, and optional reason.
+4. Persist field changes and audit history atomically.
 5. Service-layer guard on explicit `StudioShift.hourly_rate` edits requires `override_reason` when `hourly_rate` changes.
 6. Supplying an override reason with zero changes is tolerated as a no-op edit shape.
 

@@ -10,12 +10,12 @@ This document defines the architectural specifications, database schemas, and ex
 
 To deliver rapid reporting, highly customizable operator form layouts, deterministic priority conflict resolution, and solid referential integrity, the architecture is grounded in five core principles:
 
-1. **Event-Driven Push Model (Deterministic Actuals)**: Facts are parsed and written immediately upon trigger events (e.g., task submission completed, manager override, or system telemetry updates). Writes are gated by a strict source priority hierarchy: manager overrides outrank telemetry, telemetry outranks operator task forms, and task forms outrank planning schedules. Lower-priority updates do not overwrite newer, higher-priority data.
+1. **Event-Driven Push Model (Deterministic Actuals)**: Facts are parsed and written immediately upon trigger events (e.g., task submission completed, manager override, or system telemetry updates). Writes are gated by a strict source priority hierarchy: manager overrides outrank system/platform inputs, system/platform inputs outrank creator-attributed inputs, creator-attributed inputs outrank operator task forms, and task forms outrank planning schedules. Lower-priority updates do not overwrite newer, higher-priority data.
 2. **Context-Aware Task Generation (Dynamic Target Hydration)**: Task templates remain generic and platform/creator-agnostic. When a task is instantiated for a specific show, a `TaskTarget` links them. The task generation engine scans the template for `system_fact_key` markers (e.g., `creator_attendance_status`) and dynamically hydrates the frozen task snapshot schema with actual target-specific field inputs (e.g., `fld_attendance_creator_abc123`).
 3. **Core Indices + JSONB Bucket (Optimized & Extensible)**: Performance metrics that drive high-frequency filtering, sorting, or billing (actual times, attendance, late minutes, platform violations, GMV) are stored in dedicated, indexed columns. All other current and future metrics (CTR, CTO, likes, concurrents) live inside a flexible `performance_metrics` JSONB bucket.
    - **Promotion Workflow**: When a metric in the JSONB bucket becomes a high-priority filter or search target, developers execute a database migration cutover to promote it to a first-class indexed column, backfilling it from the JSONB history.
-4. **Prisma-Compliant Polymorphic Auditing (`Audit` & `AuditTarget`)**: Standardize manual manager overrides and automated changes under a centralized audit system. The schemas avoid raw string target pointers, instead defining explicit, optional foreign key fields (`showId`, `showCreatorId`, `showPlatformId`, `studioShiftId`) to preserve strict relational constraints.
-5. **Lean Core Models (No Status/Source Bloat)**: Core models do not carry `actualsStatus` or `actualsSource` columns. Instead, the current source provenance (e.g., `'MANAGER'`, `'TASK'`) is stored inside the model's existing `metadata` JSONB bucket (`metadata.actuals_source`). The actuals state (missing vs. complete) is dynamically inferred at query time (`actualStartTime IS NULL`).
+4. **Prisma-Compliant Polymorphic Auditing (`Audit` & `AuditTarget`)**: Standardize manual manager overrides and automated changes under a centralized audit system. The schemas avoid raw string target pointers, instead defining explicit, optional foreign key fields (`showId`, `showCreatorId`, `showPlatformId`, `studioShiftId`) to preserve strict relational constraints. New override and extraction flows use this audit history instead of metadata audit arrays.
+5. **Lean Core Models (No Status/Source Bloat)**: Core models do not carry `actualsStatus` or `actualsSource` columns. Instead, the current source provenance (e.g., `'MANAGER_OVERRIDE'`, `'TASK'`) is stored inside the model's existing `metadata` JSONB bucket (`metadata.actuals_source`). The actuals state is dynamically inferred from pair completeness: complete means both actual start and actual end are present; missing/incomplete means either edge is absent.
 
 ---
 
@@ -39,8 +39,8 @@ model ShowCreator {
   // ... existing fields ...
   actualStartTime    DateTime?                  @map("actual_start_time")
   actualEndTime      DateTime?                  @map("actual_end_time")
-  attendanceStatus   String?                    @map("attendance_status") // "ON_TIME" | "LATE" | "MISSING" (null = fallback to planned)
-  lateMinutes        Int                        @default(0) @map("late_minutes") // Indexed for easy penalty/compensation queries
+  attendanceStatus   String?                    @map("attendance_status") // "ON_TIME" | "LATE" | "MISSING" (null = not recorded)
+  lateMinutes        Int?                       @map("late_minutes") // Compared against Show.startTime; null until known
   attendanceReason   String?                    @map("attendance_reason")
   performanceMetrics Json                       @default("{}") @map("performance_metrics") // Extensible metrics (CTR, conversion specific to MC)
 
@@ -53,10 +53,12 @@ model ShowPlatform {
   // ... existing fields ...
   actualStartTime    DateTime?                  @map("actual_start_time")
   actualEndTime      DateTime?                  @map("actual_end_time")
-  gmv                Decimal                    @default(0.00) @map("gmv") @db.Decimal(12, 2) // Transport as string on wire (Finance Guardrail #2)
+  gmv                Decimal?                   @map("gmv") @db.Decimal(12, 2) // Transport as string on wire (Finance Guardrail #2)
+  viewerCount        Int                        @default(0) @map("viewer_count") // Existing field; source metadata distinguishes default zero from submitted zero
   performanceMetrics Json                       @default("{}") @map("performance_metrics") // Extensible platform data (CTO, PCU, Followers)
 
   @@index([gmv])
+  @@index([viewerCount])
   @@index([actualStartTime, actualEndTime])
 }
 
@@ -90,7 +92,7 @@ model Audit {
   actor     User?                               @relation(fields: [actorId], references: [id], onDelete: SetNull)
   ipAddress String?                             @map("ip_address")
   userAgent String?                             @map("user_agent")
-  metadata  Json                                @default("{}") // Stores snapshots of old/new values, change reasons
+  metadata  Json                                @default("{}") // Stores old/new values, change reasons, and ingestion context
   targets   AuditTarget[]
   createdAt DateTime                            @default(now()) @map("created_at")
 
@@ -142,26 +144,28 @@ Generic task templates do not reference static creators or platforms. The linkag
      - *Generated unique input keys*: `fld_attendance_creator_abc123` (Alice) and `fld_attendance_creator_xyz789` (Bob).
    - Platform-scoped fields like `platform_gmv` undergo the same dynamic expansion, creating input parameters for each of the show's active platforms (e.g., `fld_gmv_platform_tik123`).
 3. **Form Rendering**: The operator is presented with a dynamically built task form containing labeled, explicit input fields for each active creator and platform assigned to the show.
+4. **Assignment Drift Handling**: If assigned creators or platforms change after task generation, the task execution path must either rehydrate the not-yet-submitted snapshot before rendering or route any missing target binding to the review queue. Extraction must not approximate an unresolved creator or platform by writing to `Show`.
 
 ### B. Event-Driven Push Extraction Pipeline
 
-When an operator submits a completed task form or a system integration provides telemetry data:
+When an operator submits a completed task form, a manager override is saved, or a system integration provides telemetry data:
 
 1. **Extraction**: The extraction engine parses the submission's `task.content`. It pulls the entered value, target UID, and any matching companion values (such as `attendanceReason` or violation descriptions).
 2. **Priority Resolution Check**:
    - Compare the incoming source priority against the current record's `metadata.actuals_source` value.
    - If no actuals exist, the record operates at `Priority 0` (planned schedule).
    - A strict hierarchy is applied:
-     $$\text{MANAGER Override (Priority 3)} > \text{SYSTEM Telemetry (Priority 2)} > \text{TASK Submission (Priority 1)} > \text{SCHEDULE Planned (Priority 0)}$$
+     $$\text{MANAGER Override} > \text{SYSTEM / Platform Input} > \text{Creator-Attributed Input} > \text{Operator Task Input} > \text{SCHEDULE Planned}$$
 3. **Update Decision**:
    - **Higher or Equal Priority**: The incoming value is written directly to the target column (e.g., `ShowPlatform.gmv = 1500.50`), and `metadata.actuals_source` is set to the new source (e.g., `'TASK'`). Centralized polymorphic audit logs are written to the database.
    - **Lower Priority**: The active column remains unchanged. The lower-priority input is preserved within `task.content` for operational review and audit historical reference.
+4. **Manager Override Rule**: Manager override always wins, including over system/platform inputs, because external data can be wrong and compensation-impacting corrections require human approval. Every override writes an audit record with old value, new value, actor, timestamp, and reason when supplied.
 
 ---
 
 ## 4. Querying & Performance Rollups
 
-By maintaining indexed actuals columns, the database can be queried directly to support operational rollups, dashboard widgets, and financial reports:
+By maintaining indexed actuals columns, the database can be queried directly to support operational rollups, dashboard widgets, and financial reports. In Phase 4, these performance and abnormality filters live on the actuals/performance review surface, not planning surfaces.
 
 ### A. Find Shows with Platform Violations
 
@@ -183,6 +187,8 @@ JOIN shows s ON sc.show_id = s.id
 WHERE sc.attendance_status = 'LATE'
   AND s.start_time BETWEEN :start_date AND :end_date;
 ```
+
+Creator lateness compares the selected `ShowCreator.actual_start_time` or attendance fact against `Show.start_time`. A show can start while waiting for one or more creators to enter the room, so lateness is never inferred from `Show.actual_start_time`.
 
 ### C. Identify Shows with Missing Actuals (Inferred Status Queries)
 

@@ -41,7 +41,7 @@ System admins use `/system/compensation-line-items` as support tooling backed by
 
 - Operators attach line items from the target they are already reviewing.
 - Sign of `amount` is visually obvious without enforcing direction server-side.
-- Snapshot-override edits warn before commit and capture an optional reason for the audit append.
+- Snapshot-override edits warn before commit and capture an optional reason for the audit entry.
 - Actuals input is compact, inline, and resilient to one-sided entry.
 - Support tooling can inspect all records, but studio workflows remain contextual.
 
@@ -180,7 +180,7 @@ Snapshot edits live on the surface that owns the field, not in a separate confir
 
 The backend service-layer guard in `studio-shift.service.ts#updateShift` rejects PATCHes where `hourly_rate` is present in the body and differs from the stored value but `override_reason` is missing. Reassignment-driven rate changes (different `user_id` with no explicit `hourly_rate` in the body) flow through.
 
-The backend records each confirmed override as one entry in `metadata.audit.snapshot_overrides[]` (array, chronological, snake_case keys, `actor_ext_id` as a string).
+The backend records each confirmed override in the standard audit history once PR 12 lands. Legacy metadata audit arrays are compatibility-only.
 
 ## Actuals Input Flow
 

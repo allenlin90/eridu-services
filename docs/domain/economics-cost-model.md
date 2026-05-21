@@ -34,7 +34,7 @@ Everything in this list is deferred. Each has an extension sketch in §4.
 - Freeze write guards at the entity-time boundary.
 - Grace windows for late-arrival / early-leave tolerance.
 - Adjustment-vs-agreement discrimination on line items (no `createdAt > boundary` enforcement).
-- Dedicated actuals audit history; rule-engine-driven OT / tiered commission.
+- Rule-engine-driven OT / tiered commission.
 - Sign enforcement on line items by `item_type`.
 - Cost-state enum (`PROJECTED` / `RESOLVED` / `PARTIAL` / `UNRESOLVED`) with stored transitions.
 - Payment processing, bank-statement reconciliation.
@@ -53,7 +53,7 @@ Everything in this list is deferred. Each has an extension sketch in §4.
 | **Agreement**                     | The pre-show / pre-shift terms a creator or operator is paid by — rate, compensation type, commission rate, scheduled times.                                                                                                                     |
 | **Agreement snapshot**            | The persisted per-assignment copy of agreement terms, captured at assignment time from explicit input or roster defaults. Roster default edits do not rewrite snapshots.                                                                         |
 | **Agreement snapshot missing marker** | `metadata.flags.agreement_snapshot_missing = true` on a `ShowCreator` row means required agreement snapshot fields could not be resolved at write time. It is an explanatory marker, not the calculator's only detection mechanism.          |
-| **Snapshot-field override audit** | When ADMIN/MANAGER updates a snapshot field (e.g. `ShowCreator.agreedRate`), the change is recorded on the row using the codebase's existing metadata-audit pattern. No separate audit table is introduced in Phase 4.                           |
+| **Override audit**                | When ADMIN/MANAGER updates an actual, performance fact, or snapshot field (e.g. `ShowCreator.agreedRate`), the change is recorded through the standard `Audit` / `AuditTarget` history introduced by the task-input fact binding workstream. Metadata audit arrays are legacy only after that foundation lands. |
 | **Compensation component**        | One independently-computed part of a creator agreement (`FIXED_BASE` or commission). `HYBRID` = `FIXED_BASE` + commission. There is no `HOURLY_BASE` for creators — creator pay is never time-multiplied. |
 | **Actuals**                       | Recorded measurements: actual show time, actual shift block time. Plain nullable timestamps; entered freely. A complete pair is required before actual duration can drive calculation.                                                           |
 | **Line item**                     | A `CompensationLineItem` record: a flat supplemental amount attached to a concrete operational event or event participation, such as a show assignment or shift block. It is not the base show/shift compensation snapshot.                      |
@@ -71,7 +71,7 @@ When a creator is assigned to a show, `ShowCreator` persists `agreedRate`, `comp
 
 - Reads use the snapshot. Source-table edits (`StudioCreator.defaultRate`, `StudioMembership.baseHourlyRate`) never rewrite existing snapshots.
 - Snapshot fields (`ShowCreator.agreedRate`, `compensationType`, `commissionRate`; `StudioShift.hourlyRate`) are **intended-immutable**. ADMIN and MANAGER may update them through normal edit surfaces; the UI shows a warning explaining the downstream impact (historical references and cost rollups will recompute).
-- Each update appends one entry to the row's `metadata.audit.snapshot_overrides[]` array (chronological; snake_case keys `field`, `old_value`, `new_value`, `actor_ext_id`, `at`, optional `reason`). Internal database IDs are never written into `metadata`. **No dedicated audit table.** The metadata trail is the audit.
+- Each update writes a standard audit entry with old value, new value, actor, timestamp, and optional reason. Internal database IDs are not exposed in API responses or written as external identifiers. Metadata audit arrays remain legacy compatibility only; new override paths use `Audit` / `AuditTarget`.
 - New assignment writes that cannot resolve the required agreement snapshot fields may set `metadata.flags.agreement_snapshot_missing = true`. Calculators must still inspect the snapshot fields directly; a missing or false flag does not prove the row is calculable.
 
 ### Compensation components
@@ -106,7 +106,7 @@ FE forms editing these fields **must** clear the irrelevant rate fields before s
 - `Show.actualStartTime` / `Show.actualEndTime` — nullable, entered any time.
 - `ShowCreator.actualStartTime` / `ShowCreator.actualEndTime` — nullable, creator participation window for a specific show assignment.
 - `ShowPlatform.actualStartTime` / `ShowPlatform.actualEndTime` — nullable, platform stream window for a specific platform on a show.
-- `ShowPlatform` performance facts — platform-scoped GMV and view count in Phase 4; additional metrics such as CTR/CTO require later typed-field promotion.
+- `ShowPlatform` performance facts — platform-scoped GMV and view count in Phase 4; additional metrics such as CTR/CTO require later typed-field promotion. `viewerCount` already exists with a zero default, so selected-source metadata is required to distinguish default zero from a submitted zero.
 - `ShowPlatformViolation` records — zero or more violation records attached to a `ShowPlatform`.
 - `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime` — nullable, entered any time.
 
@@ -126,9 +126,9 @@ Creator attendance does not inherit the show timeline once creator-scoped inputs
 
 Platform actuals and performance facts are platform-specific. Seller-center or platform-derived actuals, GMV, and views belong on `ShowPlatform`; a show with multiple platforms may have multiple platform windows and metrics. Violations are child records rather than a single platform status because one platform stream can have zero, one, or many violations. Overall show actuals can still be entered directly on `Show`, but read models should treat platform windows as narrower supporting facts rather than aliases of the show fields.
 
-For comparable actuals and performance facts, the selected model value follows source priority: platform data or platform upload > creator input > operator task input > planned schedule. The system may retain every submitted input as an audit/reference record, but the value currently written to the scoped model field or child record is the operational source of truth for reads. When a higher-priority source arrives later, such as seller-center API integration or platform data upload, it can replace the selected model value while preserving the lower-priority task submission as reference.
+For comparable actuals and performance facts, the selected model value follows source priority: manager override > system/platform telemetry or upload > creator-attributed input > operator task input > planned schedule. Manager override is intentionally highest priority because system inputs can be wrong and can affect compensation; every override must carry an audit entry and review reason where the UI collects one. The system may retain every submitted input as an audit/reference record, but the value currently written to the scoped model field or child record is the operational source of truth for reads.
 
-The calculator should then read the selected scoped model value for the component being calculated. Creator-facing rows use selected `ShowCreator` actuals when present. Platform or performance rows use selected `ShowPlatform` facts and `ShowPlatformViolation` records. Show-level operational rows use direct `Show` actuals or a documented platform-derived aggregate when no direct show-level actual exists. Shift labor uses `StudioShiftBlock` actuals.
+The calculator should then read the selected scoped model value for the component being calculated. Creator-facing rows use selected `ShowCreator` actuals when present. Creator lateness is measured against `Show.startTime` because the recorded arrival/start fact itself is scoped to `ShowCreator`; the show may start before every assigned creator has joined. Platform or performance rows use selected `ShowPlatform` facts and `ShowPlatformViolation` records. Show-level operational rows use direct `Show` actuals or a documented platform-derived aggregate when no direct show-level actual exists. Shift labor uses `StudioShiftBlock` actuals.
 
 No settlement state machine and no per-record approval gate. Actuals may be absent, complete, or incomplete:
 
@@ -139,9 +139,9 @@ No settlement state machine and no per-record approval gate. Actuals may be abse
 
 Planned fallback is an admin/manager and operational review behavior. Creator/operator/helper self-views must not expose money for any event whose actuals are absent or incomplete, even if the compensation package is fixed and does not mathematically depend on duration. Those rows remain visible as pending recipient events so the recipient can see that the event exists and can follow up with a line manager, but the event cannot be counted as compensation yet. If the self-view shows a period total, that total must be a countable recipient total: complete-actuals, resolved rows only, with pending counts/events shown separately.
 
-Manager edits to past actuals are allowed; if the entity's existing audit pattern covers those fields, edits are appended there. Notifications to recipients are deferred (§4).
+Manager edits to past actuals are allowed and must write standard audit records. Notifications to recipients are deferred (§4).
 
-Task-submitted actuals and performance facts write to their scoped models immediately after submission when no higher-priority source has already selected a value. The task submission remains a reference input even after extraction. Manager review is a batch sign-off workflow over the resulting selected records and abnormal/reference inputs, not a gate that delays persistence. The review surface can group by day, week, or date range, highlight abnormal records, and stamp a summary-level sign-off without requiring managers to inspect each task individually.
+Task-submitted actuals and performance facts write to their scoped models immediately after submission when no higher-priority source has already selected a value. The task submission remains a reference input even after extraction. Manager review is a batch sign-off workflow over the resulting selected records and abnormal/reference inputs, not a gate that delays persistence. The review surface is the Phase 4 home for performance-metric filters and abnormality filters; these filters are not planning-phase inputs. The surface can group by day, week, or date range, highlight abnormal records, and stamp a summary-level sign-off without requiring managers to inspect each task individually.
 
 ### Compensation line items
 
@@ -154,7 +154,7 @@ Conceptual requirements:
 - Item label: `BONUS` / `ALLOWANCE` / `OVERTIME` / `DEDUCTION` / `OTHER`. Label-only; no special computation.
 - Amount: signed decimal. **No sign enforcement in Phase 4** — UI surfaces direction.
 - Reason: free text and required, since this is the human-readable explanation a stakeholder reads.
-- Audit metadata: preserve creator and creation time; `createdAt` is not used to discriminate adjustment-vs-agreement in Phase 4.
+- Audit history: preserve creator and creation time through standard audit records; `createdAt` is not used to discriminate adjustment-vs-agreement in Phase 4.
 
 No standalone, standing, schedule-scoped, global, recurring, or HR/payroll-style line items ship in Phase 4. Date inclusion comes from the attached event, not a separate `effectiveDate`. No freeze, no adjustment-vs-agreement discrimination, no `createdAt > boundary` semantics in Phase 4. The calculator sums line items into the attached event / recipient totals. Phase 5+ may introduce a different model or migration for non-event compensation.
 
@@ -173,7 +173,7 @@ All entities follow the existing soft-delete pattern (Architecture Guardrail 5).
 Things present in earlier drafts of this PRD that Phase 4 explicitly **does not introduce**:
 
 - `Show.actualsSettledAt` / `actualsSettledBy`, `StudioShift.actualsSettledAt` / `actualsSettledBy` — no settlement.
-- Dedicated actuals audit history — metadata-audit pattern handles snapshot overrides; actuals edits use the same pattern where applicable.
+- Metadata audit arrays as the active write path — the standard audit history replaces metadata-based audits for new override and extraction flows.
 - Freeze guards on agreement / line-item writes at entity-time boundary.
 - `Studio` grace-window settings (`graceLateShowMinutes`, etc.).
 - `effectiveDate`, standing/null-scope line items, schedule-scoped line items, global line items, and recurring HR/payroll costs.
@@ -208,7 +208,7 @@ Each row exposes:
 - `line_item_subtotal` — non-nullable decimal. Sum of supplemental line items only; `0` when no line items.
 - `unresolved_reasons` — string array. Examples: `["creator:smc_x:commission_pending_revenue"]`, `["show:show_y:planned_time_missing"]`, `["creator:smc_x:agreement_snapshot_missing"]`. UI consumes these instead of seeing `0`.
 - `calculation_warnings` — string array. Examples: `["show:show_y:actuals_missing_using_planned"]`, `["shift_block:ssb_z:actuals_incomplete_using_planned"]`. UI surfaces these as provisional-value warnings, not null-cost blockers.
-- `actuals_source` — which selected input category drove time-based components: `PLATFORM_DATA`, `CREATOR_INPUT`, `OPERATOR_INPUT`, or `PLANNED` in Phase 4; the enum can extend to source-specific values such as `CREATOR_APP` / `PUNCH_CLOCK` later.
+- `actuals_source` — which selected input category drove time-based components: `MANAGER_OVERRIDE`, `PLATFORM_DATA`, `CREATOR_INPUT`, `OPERATOR_INPUT`, or `PLANNED` in Phase 4; the enum can extend to source-specific values such as `CREATOR_APP` / `PUNCH_CLOCK` later.
 - `is_in_future` — boolean derived from entity-time vs request time. UI uses this to label the row "projected" if it likes; Phase 4 does not store a state enum.
 
 Recipient self-view responses must include enough status/reason metadata for FE to show pending events, but must suppress monetary totals whenever actuals are missing or incomplete. Pending rows do not contribute to recipient-facing row amounts, subtotals, or period totals until actuals are complete. Exact DTO names belong to 2.3.
@@ -228,12 +228,13 @@ Time-based computation carries a selected source category so rows can explain wh
 
 | Priority | Source                                                           | Phase 4 status       |
 | -------- | ---------------------------------------------------------------- | -------------------- |
-| 1        | Platform data or platform upload, including seller-center/API data mapped to `ShowPlatform` or `ShowPlatformViolation` | ✅ planned where manually submitted; automated API/upload later |
-| 2        | Creator input or creator-attributed actuals mapped to `ShowCreator` | ✅ planned, complete pair only |
-| 3        | Operator task input mapped to `Show` / `ShowPlatform` / `ShowCreator` | ✅ planned, complete pair only |
-| 4        | Planned show time (`Show.startTime/endTime`)                     | ✅ fallback           |
+| 1        | Manager override with audit                                      | ✅ built/extended where override surfaces exist |
+| 2        | Platform data or platform upload, including seller-center/API data mapped to `ShowPlatform` or `ShowPlatformViolation` | ✅ planned where manually submitted; automated API/upload later |
+| 3        | Creator input or creator-attributed actuals mapped to `ShowCreator` | ✅ planned, complete pair only |
+| 4        | Operator task input mapped to `Show` / `ShowPlatform` / `ShowCreator` | ✅ planned, complete pair only |
+| 5        | Planned show time (`Show.startTime/endTime`)                     | ✅ fallback           |
 
-Same shape for shift blocks once additional sources exist: higher-confidence external/hardware source, then creator/member input where allowed, then operator/manager manual entry, then scheduled fallback. New sources slot into the source resolution order without changing public row semantics. Row response carries `actuals_source` so admin/manager UI can show "calculated from Platform", "calculated from Creator", "calculated from Operator", or "calculated from Planned" without exposing ingestion implementation details. If a selected scoped record is absent or incomplete and planned time exists, admin/manager rows may use planned time with a calculation warning; recipient self-view rows show pending instead.
+Same shape for shift blocks once additional sources exist: manager override, then higher-confidence external/hardware source, then creator/member input where allowed, then operator manual entry, then scheduled fallback. New sources slot into the source resolution order without changing public row semantics. Row response carries `actuals_source` so admin/manager UI can show "calculated from Manager Override", "calculated from Platform", "calculated from Creator", "calculated from Operator", or "calculated from Planned" without exposing ingestion implementation details. If a selected scoped record is absent or incomplete and planned time exists, admin/manager rows may use planned time with a calculation warning; recipient self-view rows show pending instead.
 
 ## 3. Three Views (Read-Only)
 
@@ -280,7 +281,7 @@ The Phase 4 base supports each of the deferred concepts as a clean addition. One
 
 **Grace windows.** `Studio` configuration for late-arrival / early-leave tolerance per entity (show, shift block). The calculator gains a normalization step before duration math. Phase 4 default is no normalization; the addition is non-breaking.
 
-**Dedicated audit history.** When authoritativeness matters (typically with payment processing), the metadata-audit pattern is supplemented (not replaced) with dedicated history for actuals edits, settlement events, and reopen events. The metadata pattern remains for snapshot-field overrides.
+**Audit hardening.** The Phase 4 task-input fact binding workstream introduces standard `Audit` / `AuditTarget` history for overrides and extracted facts. Future payment, settlement, and reopen workflows can extend that history with settlement-specific events without returning to metadata audit arrays.
 
 **Recipient acknowledgement / dispute.** Add `acknowledgedAt` / `disputedAt` per recipient view. Dispute reopens settlement (once settlement exists). Read-only Phase 4 views become two-party agreement views without changing the underlying computation.
 
@@ -302,7 +303,7 @@ The Phase 4 base supports each of the deferred concepts as a clean addition. One
 
 For linking from other docs:
 
-- `#1-data-model` — snapshot fields, components, actuals, line items, metadata audit
+- `#1-data-model` — snapshot fields, components, actuals, line items, override audit
 - `#2-computation` — pure calculator, unresolved reasons, actuals priority cascade
 - `#3-three-views-read-only` — creator / operator / operational, identity-derived self-access
 - `#4-future-extensions` — extensibility hooks for settlement, freeze, grace, audit, acknowledgement, payment, etc.
@@ -310,13 +311,13 @@ For linking from other docs:
 ## Product Decisions
 
 - **Phase 4 compensation is a viewer, not a payment workflow.** Records are notice and reference; compensation views are read-only; the calculator is pure.
-- **Snapshot at assignment time + metadata audit for snapshot overrides.** Stable historical references without freeze guards or a separate audit table. ADMIN and MANAGER may update intended-immutable fields; UI warns about downstream impact.
+- **Snapshot at assignment time + standard audit for overrides.** Stable historical references without freeze guards. ADMIN and MANAGER may update intended-immutable fields; UI warns about downstream impact and the override is audited.
 - **Component-aware compensation.** Creator packages — `FIXED` / `COMMISSION` / `HYBRID` — resolved into components (`FIXED_BASE` + commission). No `HOURLY` for creators; that's a legal-compliance product constraint. Operator shift labor is always `hourlyRate × duration`. Single source of truth for projection arithmetic — `StudioShift.projectedCost` is removed.
 - **Base compensation is calculated, not stored as line items.** `ShowCreator` and `StudioShift` snapshots own normal base pay; `CompensationLineItem` stores event-attached supplemental add-ons and deductions only.
 - **Null propagates through rollups; never coerce to zero.** Unresolved reasons surface explicitly to the UI.
 - **Planned fallback is manager-visible only.** Missing or incomplete actuals may still produce a cost from planned time for admin/manager planning and operational rollups, but every affected row carries warnings. Creator/operator/helper self-views do not show money for those events; they show pending events until actuals are complete.
 - **Recipient totals are countable-only.** Self-view totals include complete-actuals, resolved rows only and show pending event counts separately.
-- **Forward-compatible actuals priority cascade.** Future sources extend the source category without changing consumer-facing row semantics.
+- **Manager-overridable actuals priority cascade.** Manager override is highest priority and audited; future sources extend the source category without changing consumer-facing row semantics.
 - **Three first-class views, identity-derived self-access.** TALENT_MANAGER may view any creator's compensation in their studio.
 - **Phase 4 stores outcomes, not rules.** Rule engine, settlement, freeze, grace, payment processing, acknowledgement — all extension hooks documented in §4 and revisited when their workstream activates.
 
