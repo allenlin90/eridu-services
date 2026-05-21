@@ -208,7 +208,7 @@ Each row exposes:
 - `line_item_subtotal` — non-nullable decimal. Sum of supplemental line items only; `0` when no line items.
 - `unresolved_reasons` — string array. Examples: `["creator:smc_x:commission_pending_revenue"]`, `["show:show_y:planned_time_missing"]`, `["creator:smc_x:agreement_snapshot_missing"]`. UI consumes these instead of seeing `0`.
 - `calculation_warnings` — string array. Examples: `["show:show_y:actuals_missing_using_planned"]`, `["shift_block:ssb_z:actuals_incomplete_using_planned"]`. UI surfaces these as provisional-value warnings, not null-cost blockers.
-- `actuals_source` — which selected input category drove time-based components: `MANAGER_OVERRIDE`, `PLATFORM_DATA`, `CREATOR_INPUT`, `OPERATOR_INPUT`, or `PLANNED` in Phase 4; the enum can extend to source-specific values such as `CREATOR_APP` / `PUNCH_CLOCK` later.
+- `actuals_source` — which selected input category drove the **time-based component** specifically (`actual_start_time`/`actual_end_time` pair). One of `MANAGER_OVERRIDE`, `PLATFORM_DATA`, `OPERATOR_INPUT`, or `PLANNED` in Phase 4. A `CREATOR_INPUT` value is reserved for forward compatibility but has no Phase 4 writer. The enum can extend to source-specific values such as `CREATOR_APP` / `PUNCH_CLOCK` later. Note this row-level field reports the dominant source for time only; the underlying storage shape on `Show` / `ShowCreator` / `ShowPlatform` is a per-field source map (see "Per-field actuals source map" below) so non-time facts (e.g., GMV, viewer count) carry their own source independently.
 - `is_in_future` — boolean derived from entity-time vs request time. UI uses this to label the row "projected" if it likes; Phase 4 does not store a state enum.
 
 Recipient self-view responses must include enough status/reason metadata for FE to show pending events, but must suppress monetary totals whenever actuals are missing or incomplete. Pending rows do not contribute to recipient-facing row amounts, subtotals, or period totals until actuals are complete. Exact DTO names belong to 2.3.
@@ -224,17 +224,38 @@ Recipient self-view responses must include enough status/reason metadata for FE 
 
 ### Actuals priority cascade
 
-Time-based computation carries a selected source category so rows can explain whether time came from platform data, creator input, operator input, or planned schedule. The product contract needs the selected source category; ingestion details and lower-priority reference inputs stay behind the service layer unless a review surface needs to show them.
+Each fact (time pair, GMV, viewer count, attendance) carries an independently selected source category. The cascade below describes the **per-fact resolver**: when a new input event arrives, the resolver compares the incoming source against the previously selected source for that specific fact and writes only if the incoming priority is higher or equal. The product contract needs the selected source category per fact; ingestion details and lower-priority reference inputs stay behind the service layer unless a review surface needs to show them.
 
 | Priority | Source                                                           | Phase 4 status       |
 | -------- | ---------------------------------------------------------------- | -------------------- |
 | 1        | Manager override with audit                                      | ✅ built/extended where override surfaces exist |
 | 2        | Platform data or platform upload, including seller-center/API data mapped to `ShowPlatform` or `ShowPlatformViolation` | ✅ planned where manually submitted; automated API/upload later |
-| 3        | Creator input or creator-attributed actuals mapped to `ShowCreator` | ✅ planned, complete pair only |
+| 3        | _Reserved: Creator input / creator-attributed actuals mapped to `ShowCreator`_ | 🟡 reserved tier — enum value reserved for forward compatibility; no Phase 4 writer |
 | 4        | Operator task input mapped to `Show` / `ShowPlatform` / `ShowCreator` | ✅ planned, complete pair only |
 | 5        | Planned show time (`Show.startTime/endTime`)                     | ✅ fallback           |
 
-Same shape for shift blocks once additional sources exist: manager override, then higher-confidence external/hardware source, then creator/member input where allowed, then operator manual entry, then scheduled fallback. New sources slot into the source resolution order without changing public row semantics. Row response carries `actuals_source` so admin/manager UI can show "calculated from Manager Override", "calculated from Platform", "calculated from Creator", "calculated from Operator", or "calculated from Planned" without exposing ingestion implementation details. If a selected scoped record is absent or incomplete and planned time exists, admin/manager rows may use planned time with a calculation warning; recipient self-view rows show pending instead.
+Same shape for shift blocks once additional sources exist: manager override, then higher-confidence external/hardware source, then creator/member input where allowed, then operator manual entry, then scheduled fallback. New sources slot into the source resolution order without changing public row semantics. Row response carries `actuals_source` (dominant source for the time pair only — see row schema above) so admin/manager UI can show "calculated from Manager Override", "calculated from Platform", "calculated from Operator", or "calculated from Planned" without exposing ingestion implementation details. If a selected scoped record is absent or incomplete and planned time exists, admin/manager rows may use planned time with a calculation warning; recipient self-view rows show pending instead.
+
+### Per-field actuals source map
+
+Storage on `Show`, `ShowCreator`, and `ShowPlatform` uses a per-field source map inside the model's existing `metadata` bucket:
+
+```json
+{
+  "actuals_source": {
+    "actual_start_time": "MANAGER_OVERRIDE",
+    "actual_end_time": "OPERATOR_INPUT",
+    "gmv": "PLATFORM_DATA",
+    "viewer_count": "PLATFORM_DATA"
+  }
+}
+```
+
+This shape lets a single row legitimately mix sources (e.g., a manager-overridden time pair alongside a platform-sourced GMV) and resolves the `ShowPlatform.viewerCount Int @default(0)` ambiguity cleanly: **absence of a key in the map means never-written**; **presence means submitted (even if zero)**. The row's `actuals_source` exposed by the calculator projects only the time-pair source for backward compatibility with PR 4 / 10 / 11 self-views; non-time facts are not currently surfaced as their own row-level fields.
+
+### Wire-label rename
+
+`OPERATOR_RECORD` (the value emitted by surfaces shipped in PR 4, PR 10, PR 11) is renamed to `OPERATOR_INPUT` in the same PR series that introduces the per-field source map (see PHASE_4.md PR 12 design decisions). The rename ships atomically with the new resolver — there is no transitional alias.
 
 ## 3. Three Views (Read-Only)
 

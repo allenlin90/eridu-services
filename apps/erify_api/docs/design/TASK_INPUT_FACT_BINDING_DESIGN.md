@@ -10,12 +10,12 @@ This document defines the architectural specifications, database schemas, and ex
 
 To deliver rapid reporting, highly customizable operator form layouts, deterministic priority conflict resolution, and solid referential integrity, the architecture is grounded in five core principles:
 
-1. **Event-Driven Push Model (Deterministic Actuals)**: Facts are parsed and written immediately upon trigger events (e.g., task submission completed, manager override, or system telemetry updates). Writes are gated by a strict source priority hierarchy: manager overrides outrank system/platform inputs, system/platform inputs outrank creator-attributed inputs, creator-attributed inputs outrank operator task forms, and task forms outrank planning schedules. Lower-priority updates do not overwrite newer, higher-priority data.
-2. **Context-Aware Task Generation (Dynamic Target Hydration)**: Task templates remain generic and platform/creator-agnostic. When a task is instantiated for a specific show, a `TaskTarget` links them. The task generation engine scans the template for `system_fact_key` markers (e.g., `creator_attendance_status`) and dynamically hydrates the frozen task snapshot schema with actual target-specific field inputs (e.g., `fld_attendance_creator_abc123`).
-3. **Core Indices + JSONB Bucket (Optimized & Extensible)**: Performance metrics that drive high-frequency filtering, sorting, or billing (actual times, attendance, late minutes, platform violations, GMV) are stored in dedicated, indexed columns. All other current and future metrics (CTR, CTO, likes, concurrents) live inside a flexible `performance_metrics` JSONB bucket.
+1. **Event-Driven Push Model (Deterministic Actuals)**: Facts are parsed and written immediately upon trigger events (e.g., task submission completed, manager override, or system telemetry updates). Writes are gated by a strict source priority hierarchy: manager overrides outrank system/platform inputs, system/platform inputs outrank operator task forms, and task forms outrank planning schedules. Lower-priority updates do not overwrite newer, higher-priority data. A reserved "creator-attributed input" tier sits between system/platform inputs and operator task inputs; it has no Phase 4 writer, so the resolver implements only the active tiers (MANAGER → PLATFORM → OPERATOR → PLANNED) and documents the reserved slot for forward-compatibility.
+2. **Context-Aware Task Generation (Additive Snapshot Hydration)**: Task templates remain generic and platform/creator-agnostic. When a task is instantiated for a specific show, a `TaskTarget` links them. The task generation engine scans the template for `system_fact_key` markers (e.g., `creator_attendance_missing`) and dynamically hydrates the task's snapshot schema with target-specific field inputs whose keys are deterministic and stable (e.g., `fld_attendance_missing_creator_<creatorUid>`). The snapshot is **append-only mutable** for hydrated bindings: when assignments change between generation and submission, the engine appends new hydrated fields for newly assigned targets but never removes hydrated fields for targets that were unassigned afterwards. Fields whose target is no longer assigned are marked `binding_stale: true`; the extractor skips them and routes their submitted values to the review queue (PR 12.4) instead of writing to an unassigned target. Non-hydrated template fields remain immutable.
+3. **Core Indices + JSONB Bucket (Optimized & Extensible)**: Performance metrics that drive high-frequency filtering, sorting, or billing (actual times, platform violations, GMV) are stored in dedicated, indexed columns. Attendance state (`ON_TIME` / `LATE` / `MISSING`) and late minutes are **derived at read time** from `ShowCreator.actualStartTime`, the sticky `ShowCreator.attendanceMissing` marker, and `Show.startTime` — they are not stored as columns. All other current and future metrics (CTR, CTO, likes, concurrents) live inside a flexible `performance_metrics` JSONB bucket on the relevant platform/show models.
    - **Promotion Workflow**: When a metric in the JSONB bucket becomes a high-priority filter or search target, developers execute a database migration cutover to promote it to a first-class indexed column, backfilling it from the JSONB history.
-4. **Prisma-Compliant Polymorphic Auditing (`Audit` & `AuditTarget`)**: Standardize manual manager overrides and automated changes under a centralized audit system. The schemas avoid raw string target pointers, instead defining explicit, optional foreign key fields (`showId`, `showCreatorId`, `showPlatformId`, `studioShiftId`) to preserve strict relational constraints. New override and extraction flows use this audit history instead of metadata audit arrays.
-5. **Lean Core Models (No Status/Source Bloat)**: Core models do not carry `actualsStatus` or `actualsSource` columns. Instead, the current source provenance (e.g., `'MANAGER_OVERRIDE'`, `'TASK'`) is stored inside the model's existing `metadata` JSONB bucket (`metadata.actuals_source`). The actuals state is dynamically inferred from pair completeness: complete means both actual start and actual end are present; missing/incomplete means either edge is absent.
+4. **Prisma-Compliant Polymorphic Auditing (`Audit` & `AuditTarget`)**: Standardize manual manager overrides and automated extraction writes under a centralized audit system. The schemas avoid raw string target pointers, instead defining explicit, optional foreign key fields (`showId`, `showCreatorId`, `showPlatformId`, `studioShiftId`) to preserve strict relational constraints. Engine-written audits use `actorId = null`, `metadata.ingestion_source = "task_submission"`, and carry `metadata.task_uid` and `metadata.task_field_id` so each extracted fact links back to its source field. Manager overrides use the HTTP request's actor/IP/UA.
+5. **Lean Core Models with Per-Field Source Provenance**: Core models do not carry `actualsStatus` or row-level `actualsSource` columns. Instead, the source that produced each individual selected fact is stored as a **per-field map** inside the model's existing `metadata` JSONB bucket: `metadata.actuals_source = { actual_start_time: 'MANAGER', actual_end_time: 'TASK', gmv: 'PLATFORM', viewer_count: 'PLATFORM' }`. The actuals state is dynamically inferred from pair completeness: complete means both `actualStartTime` and `actualEndTime` are present; missing/incomplete means either edge is absent. The per-field shape lets a row mix sources cleanly (e.g., manager-overridden time + platform-sourced GMV) and resolves the `ShowPlatform.viewerCount` default-zero ambiguity: absence of a `viewer_count` key in the map means never-written; presence means submitted (even if zero). Reads may project a "dominant source" for UI display, but the storage shape is per-field.
 
 ---
 
@@ -39,15 +39,22 @@ model ShowCreator {
   // ... existing fields ...
   actualStartTime    DateTime?                  @map("actual_start_time")
   actualEndTime      DateTime?                  @map("actual_end_time")
-  attendanceStatus   String?                    @map("attendance_status") // "ON_TIME" | "LATE" | "MISSING" (null = not recorded)
-  lateMinutes        Int?                       @map("late_minutes") // Compared against Show.startTime; null until known
-  attendanceReason   String?                    @map("attendance_reason")
-  performanceMetrics Json                       @default("{}") @map("performance_metrics") // Extensible metrics (CTR, conversion specific to MC)
+  attendanceMissing  Boolean                    @default(false) @map("attendance_missing") // Sticky no-show marker set explicitly by operator/manager; null actualStartTime alone is "not recorded".
+  attendanceReason   String?                    @map("attendance_reason") // Required when derived attendance is LATE or attendanceMissing is true.
 
-  @@index([attendanceStatus])
-  @@index([lateMinutes])
+  @@index([actualStartTime])
+  @@index([attendanceMissing])
   @@index([actualStartTime, actualEndTime])
 }
+
+// Derivation rule (read-side, single source of truth):
+//   - attendanceMissing = true                          → MISSING
+//   - attendanceMissing = false AND actualStartTime IS NULL → null (not recorded)
+//   - attendanceMissing = false AND actualStartTime > Show.startTime → LATE
+//   - attendanceMissing = false AND actualStartTime <= Show.startTime → ON_TIME
+// Phase 4 has no grace window: 1-second late is LATE. lateMinutes derives as
+//   GREATEST(0, EXTRACT(EPOCH FROM (ShowCreator.actualStartTime - Show.startTime)) / 60).
+// performanceMetrics is intentionally NOT added in this design; the column ships when a first writer exists.
 
 model ShowPlatform {
   // ... existing fields ...
@@ -71,12 +78,21 @@ model ShowPlatformViolation {
   severity       String                         @default("WARNING") @map("severity") // "WARNING" | "CRITICAL"
   reason         String                         @map("reason") // Operator-entered explanation of the violation
   observedAt     DateTime                       @map("observed_at")
+  // Scoped supersession: a re-submission of the same task supersedes only the violations
+  // it itself previously created. Manager-entered violations or violations from other
+  // tasks on the same ShowPlatform are never auto-superseded by a re-submission.
+  sourceTaskId   BigInt?                        @map("source_task_id")
+  sourceTask     Task?                          @relation(fields: [sourceTaskId], references: [id], onDelete: SetNull)
+  sourceFieldId  String?                        @map("source_field_id") // Hydrated task field id, e.g., fld_violation_platform_<platformUid>_0
+  supersededAt   DateTime?                      @map("superseded_at") // Set when a later submission supersedes this row; soft-history.
   metadata       Json                           @default("{}") @map("metadata")
   createdAt      DateTime                       @default(now()) @map("created_at")
 
   @@index([showPlatformId])
   @@index([violationType])
   @@index([observedAt])
+  @@index([sourceTaskId, sourceFieldId])
+  @@index([showPlatformId, supersededAt]) // Active-violation queries
   @@map("show_platform_violations")
 }
 ```
@@ -134,32 +150,49 @@ model AuditTarget {
 
 ## 3. Workflow Mechanics
 
-### A. Context-Aware Task Generation (Dynamic Target Hydration)
+### A. Additive Snapshot Hydration
 
-Generic task templates do not reference static creators or platforms. The linkage is resolved dynamically upon task instantiation:
+Generic task templates do not reference static creators or platforms. The linkage is resolved at task instantiation and reconciled at render time:
 
 1. **Linkage Trigger**: When a task is generated for a show (either via scheduler or manual batch generation), a `TaskTarget` entry of `targetType: "SHOW"` is created, linking the `Task` to the `Show` record.
-2. **Snapshot Hydration**: The generation engine scans the template's schema definitions for `system_fact_key` bindings:
-   - If a field is bound to `creator_attendance_status`, the engine queries the show's assigned `ShowCreator` relationships. For each assigned creator, it dynamically generates unique inputs in the task's frozen `snapshot.schema`.
-     - *Generated unique input keys*: `fld_attendance_creator_abc123` (Alice) and `fld_attendance_creator_xyz789` (Bob).
-   - Platform-scoped fields like `platform_gmv` undergo the same dynamic expansion, creating input parameters for each of the show's active platforms (e.g., `fld_gmv_platform_tik123`).
-3. **Form Rendering**: The operator is presented with a dynamically built task form containing labeled, explicit input fields for each active creator and platform assigned to the show.
-4. **Assignment Drift Handling**: If assigned creators or platforms change after task generation, the task execution path must either rehydrate the not-yet-submitted snapshot before rendering or route any missing target binding to the review queue. Extraction must not approximate an unresolved creator or platform by writing to `Show`.
+2. **Snapshot Hydration (at generation)**: The generation engine scans the template's schema definitions for `system_fact_key` bindings:
+   - If a field is bound to `creator_attendance_missing`, the engine queries the show's assigned `ShowCreator` relationships. For each assigned creator, it generates a deterministic, stable field input in the task's `snapshot.schema`.
+     - *Generated unique input keys*: `fld_attendance_missing_creator_<creatorUid>`, `fld_actual_start_creator_<creatorUid>`, etc. Field keys MUST include the target UID, not a sequential index, so the same target always lands on the same key across re-hydrations.
+   - Platform-scoped fields like `platform_gmv` undergo the same expansion, producing one input per assigned platform (e.g., `fld_gmv_platform_<platformUid>`).
+3. **Additive Re-Hydration (at render)**: Before rendering a not-yet-submitted task, the engine reconciles the snapshot's hydrated fields against the current `ShowCreator` / `ShowPlatform` set:
+   - **Newly assigned targets** get newly appended hydrated fields, defaulted to empty.
+   - **Already-hydrated fields** for targets that are still assigned: untouched (operator's in-progress values preserved).
+   - **Already-hydrated fields** for targets that are no longer assigned (unassigned, soft-deleted, or removed after generation): marked `binding_stale: true` in the snapshot. The field stays visible in the form for context, but the extractor skips it.
+   - Non-hydrated, manually-authored template fields are immutable across re-hydration.
+4. **Snapshot Mutability Contract Change**: This makes `TaskTemplateSnapshot.schema` append-only mutable for hydrated bindings only. The task-template feature doc and feature-version-cutover workflow must reflect this. Submitted tasks freeze their snapshot — no rehydration occurs after submission.
+5. **Form Rendering**: The operator sees a dynamically built task form with labeled, explicit input fields for each currently active creator and platform, plus any stale-bound fields preserved for review.
 
 ### B. Event-Driven Push Extraction Pipeline
 
 When an operator submits a completed task form, a manager override is saved, or a system integration provides telemetry data:
 
-1. **Extraction**: The extraction engine parses the submission's `task.content`. It pulls the entered value, target UID, and any matching companion values (such as `attendanceReason` or violation descriptions).
-2. **Priority Resolution Check**:
-   - Compare the incoming source priority against the current record's `metadata.actuals_source` value.
-   - If no actuals exist, the record operates at `Priority 0` (planned schedule).
-   - A strict hierarchy is applied:
-     $$\text{MANAGER Override} > \text{SYSTEM / Platform Input} > \text{Creator-Attributed Input} > \text{Operator Task Input} > \text{SCHEDULE Planned}$$
-3. **Update Decision**:
-   - **Higher or Equal Priority**: The incoming value is written directly to the target column (e.g., `ShowPlatform.gmv = 1500.50`), and `metadata.actuals_source` is set to the new source (e.g., `'TASK'`). Centralized polymorphic audit logs are written to the database.
-   - **Lower Priority**: The active column remains unchanged. The lower-priority input is preserved within `task.content` for operational review and audit historical reference.
+1. **Extraction**: The extraction engine parses the submission's `task.content` and the task's hydrated `snapshot.schema`. For each hydrated field with a `system_fact_key`, it resolves the target UID from the field key (e.g., `fld_gmv_platform_<platformUid>` → look up `ShowPlatform` by `platformUid` within the task's `Show` target). Stale-bound fields are routed to the review queue (PR 12.4) instead of extracted.
+2. **Priority Resolution Check (per fact, per field)**:
+   - Read the target row's `metadata.actuals_source` map and look up the source recorded for the specific fact key (e.g., `metadata.actuals_source.gmv`).
+   - If absent, the fact operates at `Priority 0` (planned schedule).
+   - The Phase 4 active hierarchy:
+     $$\text{MANAGER Override} > \text{PLATFORM / System Input} > \text{OPERATOR Task Input} > \text{PLANNED Schedule}$$
+   - A reserved tier sits between PLATFORM and OPERATOR (`CREATOR_INPUT`). It has no Phase 4 writer; the resolver enum reserves the value for forward compatibility, but no extractor emits it.
+3. **Update Decision (per fact)**:
+   - **Higher or Equal Priority**: Write the incoming value to the target column (e.g., `ShowPlatform.gmv = 1500.50`) and set `metadata.actuals_source.<fact_key>` to the new source (e.g., `'OPERATOR'`). Write one `Audit` row per fact with `metadata.task_uid`, `metadata.task_field_id`, old value, and new value.
+   - **Lower Priority**: The active column remains unchanged. The lower-priority input is preserved in `task.content` for operational review and historical reference; an `Audit` row with `action="SKIPPED_LOWER_PRIORITY"` records the attempt so the review surface can show "task tried to write X but was outranked by Y."
 4. **Manager Override Rule**: Manager override always wins, including over system/platform inputs, because external data can be wrong and compensation-impacting corrections require human approval. Every override writes an audit record with old value, new value, actor, timestamp, and reason when supplied.
+
+### C. Audit Write Semantics
+
+| Trigger | `actorId` | `metadata` keys | Notes |
+| --- | --- | --- | --- |
+| Manager edit via HTTP | request user id | `request_ip`, `request_ua`, `reason` (when supplied) | Override row also sets `action="OVERRIDE"`. |
+| Extraction engine write | `null` | `ingestion_source="task_submission"`, `task_uid`, `task_field_id` | `actorId=null` is intentional; the source is system-driven. |
+| Extraction skipped by priority | `null` | as above + `skipped_by_source` | `action="SKIPPED_LOWER_PRIORITY"`. Lets the review surface explain non-writes. |
+| Violation supersede | `null` (or actor if manager-triggered) | `superseded_by_audit_id`, `superseded_violation_uids` | One audit row per supersession batch. |
+
+Engine writes do not collect IP/UA. The compensation-snapshot override pattern (legacy `metadata.audit.snapshot_overrides[]`) is migrated by a sidecar reader: PR 12 ships a read-time merger that returns both legacy and new audit rows as one history; a follow-up backfill PR (tracked separately, post-Phase 4 unless required earlier) writes legacy entries into `Audit` once consumers are quiet.
 
 ---
 
@@ -177,18 +210,34 @@ JOIN show_platform_violations pv ON pv.show_platform_id = sp.id
 WHERE s.start_time BETWEEN :start_date AND :end_date;
 ```
 
-### B. Calculate Creator Penalties & Attendance Issues (Late Minutes)
+### B. Calculate Creator Penalties & Attendance Issues (Derived Late Minutes)
+
+Attendance status is derived, not stored. Filtering by `LATE` or `MISSING` reads `ShowCreator.actualStartTime` and `ShowCreator.attendanceMissing` against `Show.startTime`:
 
 ```sql
-SELECT c.name, sc.attendance_status, sc.late_minutes, sc.attendance_reason, s.uid AS show_uid
+-- LATE creators in a date range, with derived late_minutes
+SELECT c.name,
+       sc.attendance_reason,
+       s.uid AS show_uid,
+       EXTRACT(EPOCH FROM (sc.actual_start_time - s.start_time)) / 60 AS late_minutes
 FROM show_creators sc
 JOIN creators c ON sc.mc_id = c.id
-JOIN shows s ON sc.show_id = s.id
-WHERE sc.attendance_status = 'LATE'
+JOIN shows s   ON sc.show_id = s.id
+WHERE sc.attendance_missing = false
+  AND sc.actual_start_time IS NOT NULL
+  AND sc.actual_start_time > s.start_time
+  AND s.start_time BETWEEN :start_date AND :end_date;
+
+-- MISSING creators in a date range
+SELECT c.name, sc.attendance_reason, s.uid AS show_uid
+FROM show_creators sc
+JOIN creators c ON sc.mc_id = c.id
+JOIN shows s   ON sc.show_id = s.id
+WHERE sc.attendance_missing = true
   AND s.start_time BETWEEN :start_date AND :end_date;
 ```
 
-Creator lateness compares the selected `ShowCreator.actual_start_time` or attendance fact against `Show.start_time`. A show can start while waiting for one or more creators to enter the room, so lateness is never inferred from `Show.actual_start_time`.
+Creator lateness compares `ShowCreator.actualStartTime` against `Show.startTime`. A show can start while waiting for one or more creators to enter the room, so lateness is never inferred from `Show.actualStartTime`. Phase 4 has no grace window: any positive difference is `LATE`. The review surface (PR 12.4) is expected to materialize a small read-model (view or computed column) if these joined predicates become hot paths.
 
 ### C. Identify Shows with Missing Actuals (Inferred Status Queries)
 
