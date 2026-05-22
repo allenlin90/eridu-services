@@ -151,7 +151,7 @@ export function BulkTaskGenerationDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>
             Generate Tasks for
@@ -165,10 +165,10 @@ export function BulkTaskGenerationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 flex flex-col gap-4">
-          <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-slate-50 text-sm">
+        <div className="py-4 flex flex-col gap-4 w-full min-w-0 overflow-x-hidden">
+          <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-slate-50 text-sm w-full min-w-0 overflow-x-hidden">
             <p className="font-medium text-slate-500 mb-2 px-1">Selected Shows</p>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 w-full min-w-0 overflow-x-hidden">
               {shows.map((show) => (
                 <div key={show.id} className="text-sm px-1 truncate" title={show.name}>
                   •
@@ -179,8 +179,8 @@ export function BulkTaskGenerationDialog({
             </div>
           </div>
 
-          <div>
-            <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="w-full min-w-0 overflow-x-hidden">
+            <div className="mb-3 flex items-center justify-between gap-2 w-full">
               <p className="font-medium text-slate-900">Available Templates</p>
               <p className="text-xs text-muted-foreground">
                 Selected
@@ -219,7 +219,7 @@ export function BulkTaskGenerationDialog({
               </DropdownMenu>
             </div>
 
-            <div className="relative mb-2">
+            <div className="relative mb-2 w-full">
               <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
               <Input
                 value={templateSearch}
@@ -252,7 +252,7 @@ export function BulkTaskGenerationDialog({
               </span>
             </div>
 
-            <div className="max-h-56 overflow-y-auto rounded-md border">
+            <div className="max-h-56 overflow-y-auto rounded-md border w-full min-w-0">
               {isLoadingTemplates && (
                 <p className="p-3 text-sm text-muted-foreground">Loading templates...</p>
               )}
@@ -268,17 +268,21 @@ export function BulkTaskGenerationDialog({
                 return (
                   <label
                     key={template.id}
-                    className="flex cursor-pointer items-center gap-2 border-b px-3 py-2 last:border-b-0 hover:bg-muted/30"
+                    className="flex w-full min-w-0 cursor-pointer items-center gap-2 border-b px-3 py-2 last:border-b-0 hover:bg-muted/30 overflow-x-hidden"
                   >
-                    <Checkbox
-                      checked={isChecked}
-                      onCheckedChange={() => toggleTemplate(template.id)}
-                      disabled={isGenerating}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{template.name}</p>
+                    <div className="flex-shrink-0 flex items-center justify-center">
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={() => toggleTemplate(template.id)}
+                        disabled={isGenerating}
+                      />
                     </div>
-                    <Badge variant="outline" className="text-[10px]">
+                    <div className="min-w-0 flex-1 overflow-x-hidden">
+                      <p className="truncate text-sm font-medium" title={template.name}>
+                        {template.name}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] flex-shrink-0">
                       {getTaskTypeLabel(template.task_type)}
                     </Badge>
                   </label>
@@ -288,7 +292,7 @@ export function BulkTaskGenerationDialog({
           </div>
 
           {selectedOptionalDueTemplates.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 w-full min-w-0">
               <p className="font-medium text-slate-900">Optional Due Time Overrides</p>
               <p className="text-xs text-muted-foreground">
                 Only applies to ADMIN / ROUTINE / OTHER templates.
@@ -296,10 +300,12 @@ export function BulkTaskGenerationDialog({
               {selectedOptionalDueTemplates.map((template) => (
                 <div
                   key={template.id}
-                  className={`space-y-1 ${isGenerating ? 'pointer-events-none opacity-60' : ''}`}
+                  className={`space-y-1 w-full min-w-0 overflow-x-hidden ${isGenerating ? 'pointer-events-none opacity-60' : ''}`}
                   aria-disabled={isGenerating}
                 >
-                  <p className="text-sm">{template.name}</p>
+                  <p className="truncate text-sm font-medium text-slate-700" title={template.name}>
+                    {template.name}
+                  </p>
                   <DateTimePicker
                     value={dueDateOverrides[template.id] ?? ''}
                     onChange={(value) => {
