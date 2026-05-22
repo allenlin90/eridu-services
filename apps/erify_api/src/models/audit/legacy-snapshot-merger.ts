@@ -1,7 +1,8 @@
-import type {
-  AuditAction,
-  AuditIngestionSource,
-  AuditTimelineEntry,
+import {
+  type AuditAction,
+  type AuditIngestionSource,
+  auditIngestionSourceSchema,
+  type AuditTimelineEntry,
 } from '@eridu/api-types/audits';
 
 import type { AuditWithTargets } from './schemas/audit.schema';
@@ -47,7 +48,7 @@ export function legacyMetadataToTimeline(
 
   const entries: AuditTimelineEntry[] = [];
   for (const raw of overrides) {
-    const at = typeof raw.at === 'string' ? raw.at : null;
+    const at = normalizeLegacyTimestamp(raw.at);
     if (!at) {
       continue;
     }
@@ -105,10 +106,7 @@ export function auditToTimelineEntry(
       : null,
     actor_ext_id: null,
     reason,
-    ingestion_source:
-      typeof metadata.ingestion_source === 'string'
-        ? (metadata.ingestion_source as AuditIngestionSource)
-        : null,
+    ingestion_source: parseIngestionSource(metadata.ingestion_source),
     at: audit.createdAt.toISOString(),
     audit_uid: audit.uid,
   };
@@ -153,4 +151,32 @@ function normalizeValue(value: unknown): AuditTimelineEntry['old_value'] {
   // Already-stored JSON values pass through; AuditTimelineEntry's value slots
   // accept any JSON-serializable shape.
   return value as AuditTimelineEntry['old_value'];
+}
+
+/**
+ * Validates and normalizes a legacy `at` timestamp into a strict ISO string.
+ * Returns `null` for non-string or non-parseable inputs so the caller can skip
+ * the row instead of emitting an entry that would fail `auditTimelineEntrySchema`
+ * downstream or sort to `NaN` in `mergeAuditTimeline`. Normalization adds
+ * milliseconds when the source omits them; the represented instant is preserved.
+ */
+function normalizeLegacyTimestamp(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const ms = Date.parse(value);
+  if (Number.isNaN(ms)) {
+    return null;
+  }
+  return new Date(ms).toISOString();
+}
+
+/**
+ * Runtime-validates an `ingestion_source` value against the closed enum so
+ * unexpected strings (back-fills, manually written rows) don't propagate as
+ * fake enum members. Returns `null` on any mismatch.
+ */
+function parseIngestionSource(value: unknown): AuditIngestionSource | null {
+  const parsed = auditIngestionSourceSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }

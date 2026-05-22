@@ -69,6 +69,30 @@ describe('legacy-snapshot-merger', () => {
       };
       expect(legacyMetadataToTimeline(metadata)).toEqual([]);
     });
+
+    it('skips entries whose `at` is a string but not a parseable date', () => {
+      const metadata = {
+        audit: {
+          snapshot_overrides: [
+            { field: 'x', actor_ext_id: 'a', at: 'yesterday' },
+            { field: 'y', actor_ext_id: 'a', at: 'not-a-date' },
+          ],
+        },
+      };
+      expect(legacyMetadataToTimeline(metadata)).toEqual([]);
+    });
+
+    it('normalizes parseable but non-strict `at` values to ISO so downstream Zod validates', () => {
+      const metadata = {
+        audit: {
+          snapshot_overrides: [
+            { field: 'x', actor_ext_id: 'a', at: '2026-04-01T10:00Z' },
+          ],
+        },
+      };
+      const [entry] = legacyMetadataToTimeline(metadata);
+      expect(entry?.at).toBe('2026-04-01T10:00:00.000Z');
+    });
   });
 
   describe('auditToTimelineEntry', () => {
@@ -146,6 +170,20 @@ describe('legacy-snapshot-merger', () => {
       const entry = auditToTimelineEntry(audit);
       expect(entry.field).toBe('fld_attendance_creator_creator_x');
       expect(entry.actor_uid).toBeNull();
+    });
+
+    it('returns null ingestion_source when metadata carries an unknown value (no bare cast)', () => {
+      const audit = buildAudit({
+        metadata: { ingestion_source: 'mystery_source' } as any,
+      });
+      expect(auditToTimelineEntry(audit).ingestion_source).toBeNull();
+    });
+
+    it('accepts every value from the closed ingestion_source enum', () => {
+      for (const src of ['task_submission', 'platform_telemetry', 'manager_override'] as const) {
+        const audit = buildAudit({ metadata: { ingestion_source: src } as any });
+        expect(auditToTimelineEntry(audit).ingestion_source).toBe(src);
+      }
     });
   });
 
