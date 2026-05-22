@@ -5,6 +5,7 @@
 **Quick links**
 
 - **Cost contract** (read first): [`economics-cost-model.md`](../domain/economics-cost-model.md) — locked semantics
+- **PR 12 PRD**: [`task-fact-binding.md`](../prd/task-fact-binding.md) — high-level requirements and sub-PR breakdown
 - **PR 12 design**: [`TASK_INPUT_FACT_BINDING_DESIGN.md`](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md) — all 12.x sub-PRs inherit these decisions
 - **Finance guardrails**: [`FINANCE_GUARDRAILS.md`](../engineering/FINANCE_GUARDRAILS.md)
 - **Journey traces**: [creator-operations](../workflows/creator-operations.md) · [shift-operations](../workflows/shift-operations.md)
@@ -32,17 +33,17 @@ Each row is one user-facing change. Rows are ordered top-to-bottom as execution 
 | #      | PR (brief)                                                                                                                                                                                                                                                                | Depends on           | Status                       | Link                                                                      |
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------------- | ------------------------------------------------------------------------- |
 | 12     | [Critical task-input semantics for actuals and performance](#pr-12--meta-row) — meta-row. Design locked in [#90](https://github.com/allenlin90/eridu-services/pull/90); ships as 12.0.1-12.4. Flips ✅ when all sub-PRs merge.                                              | PR 4                 | 🔲 Design locked, split below | [#90](https://github.com/allenlin90/eridu-services/pull/90) (design only) |
-| 12.0.1 | [`Audit` / `AuditTarget` foundation](#pr-1201--audit--audittarget-foundation) — new Prisma models, migration, repo/service/Zod, legacy `metadata.audit.snapshot_overrides[]` sidecar reader. No consumers yet.                                                              | —                    | 🔲 Planned                    | —                                                                         |
-| 12.0.2 | [Phase 4 actuals schema additions](#pr-1202--phase-4-actuals-schema-additions) — single Prisma migration materializing design doc §2.A: nullable actuals columns + indexes on `Show` / `ShowCreator` / `ShowPlatform`; empty `ShowPlatformViolation` table; `Show.performanceMetrics`. No consumers wired. | —                    | 🔲 Planned                    | —                                                                         |
-| 12.0.3 | [Fact-key binding picker on task-template fields](#pr-1203--fact-key-binding-picker-on-task-template-fields) — **Producer-facing**: builder adds a `system_fact_key` dropdown per field; validator enforces field-type ↔ fact-key compatibility against real backing columns from 12.0.2. No runtime effect until 12.0.4. | PR 12.0.2            | 🔲 Planned                    | —                                                                         |
-| 12.0.4 | [Per-target field hydration in operator task forms](#pr-1204--per-target-field-hydration-in-operator-task-forms) — **Operator-facing**: bound fields expand to one input per assigned `ShowCreator` / `ShowPlatform`. Stale targets render dimmed.                          | PR 12.0.3            | 🔲 Planned                    | —                                                                         |
-| 12.0.5 | [Extraction pipeline foundation + wire-label rename](#pr-1205--extraction-pipeline-foundation--wire-label-rename) — **Operator + reviewer-facing**: smoke-test extractor for `show_actual_start_time` → `Show.actualStartTime`; atomic `OPERATOR_RECORD` → `OPERATOR_INPUT` rename across PR 4/10/11 self-views. | PR 12.0.1, PR 12.0.4 | 🔲 Planned                    | —                                                                         |
-| 12.1.1 | [Show actuals extractor](#pr-1211--show-actuals-extractor) — wire extractor for `show_actual_*_time` against PR 4's `Show` columns.                                                                                                                                        | PR 12.0.5            | 🔲 Planned                    | —                                                                         |
-| 12.1.2 | [ShowPlatform actuals extractor](#pr-1212--showplatform-actuals-extractor) — extractor for `show_platform_actual_*_time` against `ShowPlatform` columns from 12.0.2.                                                                                                       | PR 12.1.1            | 🔲 Planned                    | —                                                                         |
-| 12.2   | [Creator actuals + attendance extractor](#pr-122--creator-actuals--attendance-extractor) — extractor for the four creator fact keys against `ShowCreator` columns from 12.0.2.                                                                                             | PR 12.0.4, PR 12.0.5 | 🔲 Planned                    | —                                                                         |
-| 12.3.1 | [Platform GMV/views extractor](#pr-1231--platform-gmvviews-extractor) — extractor for `platform_gmv` / `platform_view_count` against `ShowPlatform.gmv` / `viewerCount` (columns from 12.0.2).                                                                              | PR 12.0.4, PR 12.0.5 | 🔲 Planned                    | —                                                                         |
-| 12.3.2 | [`ShowPlatformViolation` extractor](#pr-1232--showplatformviolation-extractor) — replace-all scoped to `(sourceTaskId, sourceFieldId)`. Table already exists from 12.0.2.                                                                                                   | PR 12.3.1            | 🔲 Planned                    | —                                                                         |
-| 12.4   | [Actuals & performance review sign-off](#pr-124--actuals--performance-review-sign-off) — date-range summary, abnormality highlights, bulk sign-off, `binding_stale` queue. First cut after 12.1.1; panels light up as later extractors land.                                | PR 12.1.1            | 🔲 Planned (incremental)      | —                                                                         |
+| 12.0.1 | [`Audit` / `AuditTarget` foundation](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — new Prisma models, migration, repo/service/Zod, legacy `metadata.audit.snapshot_overrides[]` sidecar reader. No consumers yet.                                                              | —                    | 🔲 Planned                    | —                                                                         |
+| 12.0.2 | [Phase 4 actuals schema additions](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — single Prisma migration materializing design doc §2.A: nullable actuals columns + indexes on `Show` / `ShowCreator` / `ShowPlatform`; empty `ShowPlatformViolation` table; `Show.performanceMetrics`. No consumers wired. | —                    | 🔲 Planned                    | —                                                                         |
+| 12.0.3 | [Fact-key binding picker on task-template fields](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — **Producer-facing**: builder adds a `system_fact_key` dropdown per field; validator enforces field-type ↔ fact-key compatibility against real backing columns from 12.0.2. No runtime effect until 12.0.4. | PR 12.0.2            | 🔲 Planned                    | —                                                                         |
+| 12.0.4 | [Per-target field hydration in operator task forms](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — **Operator-facing**: bound fields expand to one input per assigned `ShowCreator` / `ShowPlatform`. Stale targets render dimmed.                          | PR 12.0.3            | 🔲 Planned                    | —                                                                         |
+| 12.0.5 | [Extraction pipeline foundation + wire-label rename](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — **Operator + reviewer-facing**: smoke-test extractor for `show_actual_start_time` → `Show.actualStartTime`; atomic `OPERATOR_RECORD` → `OPERATOR_INPUT` rename across PR 4/10/11 self-views. | PR 12.0.1, PR 12.0.4 | 🔲 Planned                    | —                                                                         |
+| 12.1.1 | [Show actuals extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — wire extractor for `show_actual_*_time` against PR 4's `Show` columns.                                                                                                         | PR 12.0.5            | 🔲 Planned                    | —                                                                         |
+| 12.1.2 | [ShowPlatform actuals extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — extractor for `show_platform_actual_*_time` against `ShowPlatform` columns from 12.0.2.                                                                                                       | PR 12.1.1            | 🔲 Planned                    | —                                                                         |
+| 12.2   | [Creator actuals + attendance extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — extractor for the four creator fact keys against `ShowCreator` columns from 12.0.2.                                                                                             | PR 12.0.4, PR 12.0.5 | 🔲 Planned                    | —                                                                         |
+| 12.3.1 | [Platform GMV/views extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — extractor for `platform_gmv` / `platform_view_count` against `ShowPlatform.gmv` / `viewerCount` (columns from 12.0.2).                                                                              | PR 12.0.4, PR 12.0.5 | 🔲 Planned                    | —                                                                         |
+| 12.3.2 | [`ShowPlatformViolation` extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — replace-all scoped to `(sourceTaskId, sourceFieldId)`. Table already exists from 12.0.2.                                                                                                   | PR 12.3.1            | 🔲 Planned                    | —                                                                         |
+| 12.4   | [Actuals & performance review sign-off](../prd/task-fact-binding.md#section-c-review-surface-pr-124) — date-range summary, abnormality highlights, bulk sign-off, `binding_stale` queue. First cut after 12.1.1; panels light up as later extractors land.                                | PR 12.1.1            | 🔲 Planned (incremental)      | —                                                                         |
 | 13     | [Economics review surface](#pr-13--economics-review-surface) (`/studios/:id/finance/economics`) — cost-reference read model. GMV/views (12.3.1) aren't cost inputs in Phase 4; doesn't block. Revenue / contribution margin / commission deferred to Phase 5.              | PR 12.1.2, PR 12.2   | 🔲 Planned                    | —                                                                         |
 | 14.1   | [Client mechanic catalog foundation](#pr-141--client-mechanic-catalog-foundation) — API + DB + `ACCOUNT_MANAGER` role.                                                                                                                                                     | [#87](https://github.com/allenlin90/eridu-services/pull/87) | 🔲 Planned                    | —                                                                         |
 | 14.2   | [Mechanics management UI](#pr-142--mechanics-management-ui) — client-scoped mechanics + campaign-set management routes.                                                                                                                                                    | PR 14.1              | 🔲 Planned                    | —                                                                         |
@@ -64,92 +65,15 @@ Each row is one user-facing change. Rows are ordered top-to-bottom as execution 
 
 ### PR 12 · meta-row
 
-Task templates can already collect operational facts via snapshot schema and `task.content` keys, but those values can't be safely promoted to typed show actuals, creator attendance, platform actuals, or violations without a template-level binding contract. PR 12 introduces `system_fact_key` markers on template fields, target-aware additive hydration, polymorphic auditing (`Audit` / `AuditTarget`), and a per-field source-priority extractor.
+All sub-PRs under PR 12 (12.0.1 through 12.4) have been moved to a dedicated, high-level Product Requirements Document (PRD) to ensure the roadmap remains lightweight and clean.
 
-The full design — fact-key enum, schema diffs, hydration rules, source priority, audit shape, currency notes, legacy backfill — lives in [`TASK_INPUT_FACT_BINDING_DESIGN.md`](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md). **Sub-PRs inherit those decisions verbatim**; this row tracks scope and status only.
+For the comprehensive functional briefs, dependencies, section-by-section deliverables, and verification plans for the fact binding pipeline, see:
+👉 **[PR 12 PRD: task-fact-binding.md](../prd/task-fact-binding.md)**
 
-Implementation ships as 11 reviewable PRs:
+All technical implementation details, schema changes, and architectural designs are locked in:
+👉 **[PR 12 Design: TASK_INPUT_FACT_BINDING_DESIGN.md](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md)**
 
-- **Foundation** (12.0.1-12.0.5): audit models, bundled actuals schema migration, fact-key binding picker, hydration engine, extraction framework + wire-label rename.
-- **Extractors** (12.1.1, 12.1.2, 12.2, 12.3.1, 12.3.2): one PR per fact group. Pure extractor logic + tests — all schema additions land upfront in 12.0.2.
-- **Review surface** (12.4): first cut after 12.1.1; subsequent panels light up as later extractors merge.
-
-12.0.2 bundles every actuals schema change from design doc §2.A into one Prisma migration so downstream PRs are pure logic — single rollback unit, producer dropdown in 12.0.3 references real columns, no schema drift between operator forms and the database. 12.2 stays one PR (one extractor pass — splitting forces ordering for no review benefit). The legacy `metadata.audit.snapshot_overrides[]` sidecar reader bundles into 12.0.1.
-
-### PR 12.0.1 · `Audit` / `AuditTarget` foundation
-
-**Brief** — Add the polymorphic-with-typed-FKs audit pair as defined in the design doc §2.B: `Audit` (action, actorId, ip/UA, metadata, createdAt) and `AuditTarget` (typed optional FKs to `showId`, `showCreatorId`, `showPlatformId`, `studioShiftId`). Ships Prisma models, migration, repository/service, Zod schemas, and the read-time **legacy sidecar reader** that merges existing `metadata.audit.snapshot_overrides[]` entries with new `Audit` rows into one history view. No consumers wired yet — this PR validates the pattern. Smallest of the foundation PRs.
-
-### PR 12.0.2 · Phase 4 actuals schema additions
-
-**Brief** — Single Prisma migration that materializes design doc §2.A in one atomic step, before any consumers exist. Adds:
-
-- `Show.performanceMetrics Json @default("{}")` (closes the §2.A gap; no writer yet).
-- `ShowCreator.actualStartTime` / `actualEndTime` / `attendanceMissing Boolean @default(false)` / `attendanceReason String?` + indexes.
-- `ShowPlatform.actualStartTime` / `actualEndTime` / `gmv Decimal(12, 2)?` / `performanceMetrics Json @default("{}")` + indexes. (`viewerCount` already exists from earlier work.)
-- New `ShowPlatformViolation` table per §2.A — empty, with the full index set.
-
-No service/controller wiring, no Zod consumers, no extractor logic — pure DDL plus Prisma model definitions. Every downstream PR (12.0.3 onwards) assumes these columns exist, so the binding picker can validate against real columns and operator forms never hydrate fields whose targets are missing. One rollback unit.
-
-**Out of scope** — No `metadata.actuals_source` per-field map logic (lands in 12.0.5). No fact-key enum (lands in 12.0.3). No extractor for any column (lands in 12.1.1+).
-
-### PR 12.0.3 · Fact-key binding picker on task-template fields
-
-**Brief** — Add an optional `system_fact_key` attribute to `FieldItemV2Schema` in `packages/api-types/src/task-templates/...` carrying the closed Phase 4 enum (see design doc §3 "Locked fact keys"). A validator at save time enforces field-type ↔ fact-key compatibility (`creator_attendance_missing` requires `checkbox`, `show_actual_start_time` requires `datetime`, `platform_gmv` requires `number`, etc.) and asserts every enum value maps to a backing column shipped in 12.0.2 — no "phantom" fact keys.
-
-**Producer-facing UI** — Task-template builder in `apps/erify_studios/src/features/task-templates/...` adds a "System fact" dropdown to the field-config dialog (next to `type`). Producers pick a fact key or leave "None". Review/read-only view shows the bound fact as a badge under the field label.
-
-**Out of scope** — No engine, no extractor, no rehydration. Marking a field has no runtime effect until 12.0.4 reads the markers.
-
-### PR 12.0.4 · Per-target field hydration in operator task forms
-
-**Brief** — The task-generation engine reads each template field's `system_fact_key` and expands it into one deterministic input per assigned target. Today an `On_air_check` ACTIVE task has one "MC on time?" checkbox regardless of how many creators are assigned. After this PR, the same task shows one checkbox per assigned `ShowCreator`, each labelled with the creator's name and keyed by `ShowCreator.uid`. Platform-scoped fields (`platform_gmv`, `show_platform_actual_*`) expand the same way per `ShowPlatform`. Field keys are deterministic and stable across re-hydrations (`fld_attendance_missing_creator_<creatorUid>`, `fld_gmv_platform_<platformUid>`).
-
-**Operator-facing UI** — On the task-execution form (`erify_studios` and/or `erify_creators`), a bound field becomes a labelled group with one row per current target. Newly-assigned targets appear as additional rows on next render; previously-assigned-then-removed targets keep their row but render dimmed with a "binding stale" hint. The extractor (12.0.5) will skip stale-bound fields and route them to PR 12.4's review queue.
-
-**Mutability contract** — `TaskTemplateSnapshot.schema` becomes append-only mutable for hydrated bindings only: re-rendering a not-yet-submitted task appends fields for newly-assigned targets, preserves in-progress operator values for still-assigned targets, and flags removed-target fields `binding_stale: true`. Non-hydrated, manually-authored template fields stay immutable. Submitted tasks freeze. Update `docs/features/task-templates.md` snapshot-mutability section in this PR.
-
-**Out of scope** — No extraction yet; submitted values still only live in `task.content`.
-
-### PR 12.0.5 · Extraction pipeline foundation + wire-label rename
-
-**Brief** — Wire the end-to-end push pipeline turning a submitted, hydrated, fact-bound task field into a typed model column write. Ships the per-field source map (`metadata.actuals_source = { <fact_key>: 'MANAGER' | 'PLATFORM' | 'OPERATOR' | 'PLANNED' }` in each target row's `metadata` bucket), the source-priority resolver, and extraction-engine audit semantics. Skipped lower-priority writes emit `action = "SKIPPED_LOWER_PRIORITY"` audit rows so PR 12.4 can explain non-writes. Stale-bound fields from 12.0.4 are routed to the review queue.
-
-**Operator-facing effect (smoke test)** — Ships one end-to-end extractor for `show_actual_start_time` (column already exists on `Show` from PR 4). Submitting a CLOSURE task with that fact bound writes straight to `Show.actualStartTime`, subject to priority resolution against any manager override. Operator submissions no longer require manager back-entry for this one fact. Remaining fact keys ship in 12.1.1-12.3.2.
-
-**Reviewer-facing UI — atomic wire-label rename** — `OPERATOR_RECORD` → `OPERATOR_INPUT` everywhere it surfaces: BE calculator output, FE source badges on every self-view compensation card from PR 4 / 10 / 11 (creator + member self-views, `/me/shift-compensations`, `/me/show-compensations`, `/studios/$studioId/my-compensations`). Public contract change — must land atomically inside this PR, not as a follow-up.
-
-### PR 12.1.1 · Show actuals extractor
-
-**Brief** — Wire the extractor for `show_actual_start_time` / `show_actual_end_time` against PR 4's existing `Show` columns. Apply the same no-inverted-range invariant `/show-operations` already enforces. Manager `/show-operations` stays the override surface; operator submissions are retained in `task.content` even after extraction. Source priority and audit behavior follow the design doc.
-
-### PR 12.1.2 · ShowPlatform actuals extractor
-
-**Brief** — Wire the extractor for `show_platform_actual_*_time` against `ShowPlatform.actualStartTime` / `actualEndTime` (columns shipped in 12.0.2). Same priority and audit rules as 12.1.1.
-
-### PR 12.2 · Creator actuals + attendance extractor
-
-**Brief** — Wire the extractor for the four creator fact keys against `ShowCreator.actualStartTime` / `actualEndTime` / `attendanceMissing` / `attendanceReason` (columns shipped in 12.0.2).
-
-`ON_TIME` / `LATE` / `MISSING` are **derived at read time**, never stored (design doc §1). Lateness compares `ShowCreator.actualStartTime` against `Show.startTime` — a show can start while waiting for creators, so creator lateness is never inferred from `Show.actualStartTime`. Phase 4 has no grace window (1 second over = `LATE`). A reason is required when `attendanceMissing = true` or derived status is `LATE`; the extractor enforces this against the sidecar reason field.
-
-Legacy task content with a single show-level MC field on a multi-creator show routes to PR 12.4's review queue rather than auto-attaching.
-
-### PR 12.3.1 · Platform GMV/views extractor
-
-**Brief** — Wire the extractor for `platform_gmv` and `platform_view_count` against `ShowPlatform.gmv` (column shipped in 12.0.2; `performanceMetrics` JSONB also lands in 12.0.2 for future CTR/CTO without another migration) and `ShowPlatform.viewerCount` (existing). Default-zero vs submitted-zero is distinguished by the presence of the fact key in `metadata.actuals_source`. Operator submissions that can't resolve to a single `ShowPlatform` route to PR 12.4's review queue rather than writing to `Show` as an approximation.
-
-### PR 12.3.2 · `ShowPlatformViolation` extractor
-
-**Brief** — Wire the extractor that writes into the `ShowPlatformViolation` table (table and indexes already shipped in 12.0.2). A `ShowPlatform` can have zero, one, or many violation records. **Replace-all policy** is scoped to `(sourceTaskId, sourceFieldId)`: a CLOSURE re-submission supersedes only the violations *it* previously wrote — manager-entered violations or violations from other tasks on the same `ShowPlatform` are never auto-superseded. One `Audit` row per supersession batch.
-
-### PR 12.4 · Actuals & performance review sign-off
-
-**Brief** — Date-range table where managers review actuals and performance facts with abnormality highlights: missing/incomplete actual pairs, `LATE` / `MISSING` creators, active or new platform violations, zero or extreme GMV/views, unresolved bindings (`binding_stale` fields from 12.0.4), and manager-vs-platform conflicts. This surface is the Phase 4 home for filtering by performance or abnormality — these filters are not part of planning.
-
-Bulk sign-off across the selected range; the record captures range, actor, timestamp, filters, and unresolved-abnormal count for the audit trail. Sign-off does not gate writes — facts are written by the extractor on submit and edited by manager overrides; sign-off just records review.
-
-Can ship a first cut as soon as 12.1.1 lands (single-fact view) and incrementally light up additional panels as 12.1.2 / 12.2 / 12.3.1 / 12.3.2 merge.
+*Note: In alignment with PRD §2.C and database join table conventions, polymorphic targets on `AuditTarget` use `onDelete: Cascade` to cleanly purge useless junction rows when target records are deleted, while the parent `Audit` timeline envelope remains permanently preserved.*
 
 ### PR 13 · Economics review surface
 
