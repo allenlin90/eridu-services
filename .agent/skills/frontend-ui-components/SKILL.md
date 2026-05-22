@@ -46,16 +46,16 @@ Applies to: every dialog reachable on a mobile route (actuals editing, shift com
 
 ## Three-Perspective UI Pattern for Entity Features
 
-When developing or updating any feature scoped to an **identity-bearing entity** — `Creator`, studio `Member` (manager / operator / account-manager), or `Show` — that surface MUST be designed and shipped across **three distinct perspectives**, all consuming the same shared unit components. Applies to actuals, attendance, compensation, performance metrics, audits, line items, and violations.
+When designing a feature scoped to an **identity-bearing entity** — `Creator`, studio `Member` (manager / operator / account-manager), or `Show` — consider how it lands across **three perspectives**. The pattern is a design checklist, not a global mandate: each PRD decides which of the three a given sub-PR delivers, defers, or skips.
 
-1. **Studio Overview (Perspective 1)**: Aggregate dashboards, filtered grids, and operations tables (e.g. `/finance/actuals` review panel, `/show-operations`, creator/member roster tables). Used by managers for studio-wide visibility.
-2. **Studio Individual Overview (Perspective 2)**: Manager-facing detail page for a single entity drilled into from a roster. Both creator and member surfaces qualify:
+1. **Studio Overview (Perspective 1)**: Aggregate dashboards, filtered grids, and operations tables (e.g. `/finance/actuals`, `/show-operations`, creator/member roster tables). Manager-facing, studio-wide visibility.
+2. **Studio Individual Overview (Perspective 2)**: Manager-facing detail page for a single entity drilled into from a roster. Creator, member, and show variants:
    - `/studios/:studioId/creators/:creatorId` — single creator's attendance, rates, overrides, performance.
-   - `/studios/:studioId/members/:memberId` — single studio member's assignments, audit trail, role context.
+   - `/studios/:studioId/members/:memberId` — single member's assignments, audit trail, role context.
    - `/studios/:studioId/shows/:showId` — single show's actuals, platform metrics, violations.
-3. **Individual Overview (Perspective 3)**: First-person `/me/*` self-view for the logged-in entity. The current creator app (`erify_creators`) ships the creator's self-view; a parallel `/me/*` member self-view will land alongside future member-facing features. A feature is not "done" until the self-view surface is at least scoped (delivered now or queued in roadmap).
+3. **Individual Overview (Perspective 3)**: First-person `/me/*` self-view for the logged-in entity. `erify_creators` ships the creator self-view today; a member `/me/*` surface in `erify_studios` is forward-looking.
 
-> **Symmetry rule**: if a feature shows a creator their own X via `/me/*`, a manager must be able to see the same X for any creator via Perspective 2 and rolled-up across creators via Perspective 1 — and vice versa. The same rule applies to member-scoped features. Missing any one perspective is a design gap, not a phasing decision, unless explicitly justified in the PRD.
+> When a PRD does add a feature in more than one perspective, the perspectives must consume the **same shared widgets** with only filter / role-scope variation — no duplicated visualization or query code. Whether all three perspectives are in scope is a PRD decision; widget reuse across whichever perspectives ship is not.
 
 ### Reusable Unit Component Standard
 To prevent code duplication and logic drift across these three views, **extract and share core unit components**. Component wrappers should simply configure the appropriate API filters and role context before passing them to the shared visual unit:
@@ -102,7 +102,7 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 - [ ] 2+ async lookups → isolated `memo()` field components
 - [ ] `onSearch` wired to real search state
 - [ ] Cross-field invariants enforced via `buildXxxPayload` helper + disabled inputs (not by trusting form state on submit)
-- [ ] Entity features structured in three perspectives (Studio Overview, Studio Individual Overview for creators/members/shows, and Individual `/me/*` self-view) with shared unit components — symmetry across all three confirmed or gap explicitly justified
+- [ ] Entity features designed against the three perspectives (Studio Overview, Studio Individual Overview for creators/members/shows, Individual `/me/*` self-view) — perspectives in scope share one set of widgets; perspectives out of scope are an explicit PRD decision, not an oversight
 
 ## Related Skills
 

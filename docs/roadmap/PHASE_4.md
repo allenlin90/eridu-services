@@ -74,12 +74,15 @@ All technical implementation details, schema changes, and architectural designs 
 👉 **[PR 12 Design: TASK_INPUT_FACT_BINDING_DESIGN.md](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md)**
 
 #### 🏛️ Three-Perspective UI & Component Reuse Guide
-To maintain visual consistency and avoid logic drift across managers, creators, and studio members, every PR 12 surface scoped to an identity-bearing entity (`Creator`, `Member`, `Show`) must be implemented across **three unified perspectives** using shared unit components, as canonized in the updated [frontend-ui-components skill](../../.agent/skills/frontend-ui-components/SKILL.md):
+Use as a design checklist for entity-scoped (`Creator`, `Member`, `Show`) features across PR 12 (and beyond). Which perspectives ship per sub-PR is a PRD decision; what matters is that perspectives in scope reuse one set of widgets. Canonized in the [frontend-ui-components skill](../../.agent/skills/frontend-ui-components/SKILL.md):
 1. **Studio Overview** (e.g. `/finance/actuals`, `/show-operations`, creator + member roster tables)
 2. **Studio Individual Overview** (e.g. `/studios/:id/creators/:creatorId`, `/studios/:id/members/:memberId`, `/studios/:id/shows/:showId` roster detail tabs)
-3. **Individual Overview** (e.g. `/me/*` self-views — creator self-view in `erify_creators`, member self-view queued in `erify_studios`)
+3. **Individual Overview** (e.g. `/me/*` self-views — creator self-view in `erify_creators`, member self-view forward-looking in `erify_studios`)
 
-A sub-PR introducing a read in one perspective must reach all three in the same change, or explicitly defer one perspective in the PRD with a tracked follow-up (see [PRD §F](../prd/task-fact-binding.md#f-three-perspective-ui--reusable-component-pattern) and [design §6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#6-three-perspective-ui-consumption-map)).
+PR 12.4 first lights up Perspective 1. P2 detail pages and P3 `/me/*` self-views are introduced as their host routes land — not as a same-PR delivery mandate. See [PRD §F](../prd/task-fact-binding.md#f-three-perspective-ui--reusable-component-pattern) and [design §6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#6-three-perspective-ui-consumption-map).
+
+#### 📈 Performance Review (PR 12.4) is Upstream of Economics Review (PR 13)
+PR 12 builds the **performance / quality** review surface. Late arrivals, no-shows, incomplete actuals, and platform violations are tracked here primarily because they are *damage-causing performance facts*. [PR 13's economics review surface](#pr-13--economics-review-surface) at `/studios/:id/finance/economics` is the downstream cost-reference layer that reads the same indexed columns. PR 12 never writes derived finance totals; the storage stays monetary-agnostic so the performance view remains valuable on its own. See [PRD §G](../prd/task-fact-binding.md#g-performance-review-as-upstream-of-economics-review).
 
 **Mandated Reusable Widgets**:
 - `ActualsTimelineViewer`: Shared timeline visualizing planned vs actual times.
