@@ -120,6 +120,8 @@ model ShowPlatformViolation {
 
 ### B. Centralized Polymorphic Auditing Models
 
+> **Status**: ✅ Shipped in [#91](https://github.com/allenlin90/eridu-services/pull/91) (PR 12.0.1). The Prisma models, migration, repo/service layer, and legacy `metadata.audit.snapshot_overrides[]` sidecar merger are now in the codebase. No consumers wired yet — first writer ships in 12.0.5.
+
 ```mermaid
 erDiagram
     Audit ||--o{ AuditTarget : "envelope (preserved)"

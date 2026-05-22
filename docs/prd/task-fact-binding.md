@@ -156,7 +156,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 ### SECTION A: Foundation (PRs 12.0.1 – 12.0.5)
 *This section delivers the database schema additions, core audit models, template config picker, form rendering hydration, and the central ingestion priority resolver engine.*
 
-#### 🟩 PR 12.0.1 · `Audit` / `AuditTarget` Foundation
+#### 🟩 PR 12.0.1 · `Audit` / `AuditTarget` Foundation — ✅ Shipped in [#91](https://github.com/allenlin90/eridu-services/pull/91)
 * **Purpose**: Establish polymorphic audit schemas with target retention and a first-class `reason` column to trace all automated writes and overrides.
 * **Functional Deliverable**: 
   * Schema definition for `Audit` and `AuditTarget` using `onDelete: Cascade` on target foreign keys to clean up join records.
