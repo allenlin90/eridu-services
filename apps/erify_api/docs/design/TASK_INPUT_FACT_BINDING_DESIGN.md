@@ -133,6 +133,7 @@ erDiagram
       string uid
       string action "CREATE / UPDATE / OVERRIDE / SKIPPED_LOWER_PRIORITY"
       bigint actorId FK "null for engine writes"
+      string reason "nullable; OVERRIDE-class justifications"
       json metadata "old/new, task_uid, task_field_id, ingestion_source"
       datetime createdAt
     }
@@ -155,12 +156,19 @@ Deletion semantics: deleting a `Show`/`ShowCreator`/`ShowPlatform`/`StudioShift`
 model Audit {
   id        BigInt                              @id @default(autoincrement())
   uid       String                              @unique
-  action    String                              @map("action") // "CREATE" | "UPDATE" | "DELETE" | "OVERRIDE"
+  action    String                              @map("action") // "CREATE" | "UPDATE" | "DELETE" | "OVERRIDE" | "SKIPPED_LOWER_PRIORITY"
   actorId   BigInt?                             @map("actor_id")
   actor     User?                               @relation(fields: [actorId], references: [id], onDelete: SetNull)
   ipAddress String?                             @map("ip_address")
   userAgent String?                             @map("user_agent")
-  metadata  Json                                @default("{}") // Stores old/new values, change reasons, and ingestion context
+  // Free-text justification supplied by the actor on OVERRIDE-class writes.
+  // First-class column (not buried in metadata) because reasons are already
+  // collected by FE override flows today (`shift-compensation-dialog`,
+  // `show-creator-compensation-dialog`) and required per-writer in services
+  // like `studio-shift.service`. Nullable because engine writes carry no
+  // reason. Required-ness is enforced per writer, not at the schema level.
+  reason    String?                             @map("reason")
+  metadata  Json                                @default("{}") // Stores old/new values, ingestion_source, task_uid, task_field_id, etc.
   targets   AuditTarget[]
   createdAt DateTime                            @default(now()) @map("created_at")
 
@@ -291,14 +299,16 @@ When an operator submits a completed task form, a manager override is saved, or 
 
 ### C. Audit Write Semantics
 
-| Trigger | `actorId` | `metadata` keys | Notes |
-| --- | --- | --- | --- |
-| Manager edit via HTTP | request user id | `request_ip`, `request_ua`, `reason` (when supplied) | Override row also sets `action="OVERRIDE"`. |
-| Extraction engine write | `null` | `ingestion_source="task_submission"`, `task_uid`, `task_field_id` | `actorId=null` is intentional; the source is system-driven. |
-| Extraction skipped by priority | `null` | as above + `skipped_by_source` | `action="SKIPPED_LOWER_PRIORITY"`. Lets the review surface explain non-writes. |
-| Violation supersede | `null` (or actor if manager-triggered) | `superseded_by_audit_id`, `superseded_violation_uids` | One audit row per supersession batch. |
+| Trigger | `actorId` | `reason` column | `metadata` keys | Notes |
+| --- | --- | --- | --- | --- |
+| Manager edit via HTTP | request user id | populated when the writer collects one (FE today collects via `shift-compensation-dialog`, `show-creator-compensation-dialog`; some writers like `studio-shift hourly_rate` require it) | `ip_address`, `user_agent` are populated on the column, not metadata | Override row also sets `action="OVERRIDE"`. |
+| Extraction engine write | `null` | `null` | `ingestion_source="task_submission"`, `task_uid`, `task_field_id` | `actorId=null` is intentional; the source is system-driven. |
+| Extraction skipped by priority | `null` | `null` | as above + `skipped_by_source` | `action="SKIPPED_LOWER_PRIORITY"`. Lets the review surface explain non-writes. |
+| Violation supersede | `null` (or actor if manager-triggered) | populated if the actor supplied one | `superseded_by_audit_id`, `superseded_violation_uids` | One audit row per supersession batch. |
 
-Engine writes do not collect IP/UA. The compensation-snapshot override pattern (legacy `metadata.audit.snapshot_overrides[]`) is migrated by a sidecar reader: PR 12 ships a read-time merger that returns both legacy and new audit rows as one history; a follow-up backfill PR (tracked separately, post-Phase 4 unless required earlier) writes legacy entries into `Audit` once consumers are quiet.
+Engine writes do not collect IP/UA. **Reason is a first-class column on `Audit`** (not a `metadata` key) because the codebase already treats it as a structured, validated, sometimes-required value across at least 3 BE writers (`studio-shift.service`, `show-orchestration.service`) and 3 FE dialogs (`shift-compensation-dialog`, `show-creator-compensation-dialog`, plus the legacy `compensation-line-item-form-dialog`). Promoting it to a column makes it indexable for review surface queries (e.g., "unjustified hourly_rate overrides this week") and gives the sidecar back-fill a 1:1 target. Required-ness is enforced per writer, not at the schema level. The legacy-merger code tolerates `metadata.reason` as a fallback for any pre-column rows.
+
+The compensation-snapshot override pattern (legacy `metadata.audit.snapshot_overrides[]`) is migrated by a sidecar reader: PR 12 ships a read-time merger that returns both legacy and new audit rows as one history; a follow-up backfill PR (tracked separately, post-Phase 4 unless required earlier) writes legacy entries into `Audit` once consumers are quiet.
 
 ---
 
