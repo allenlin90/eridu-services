@@ -80,7 +80,14 @@ export class TaskService extends BaseModelService {
 
   /** @internal */
   async reserveMaterialAssetUploadVersion(...args: Parameters<TaskRepository['reserveMaterialAssetUploadVersion']>): ReturnType<TaskRepository['reserveMaterialAssetUploadVersion']> {
-    return this.taskRepository.reserveMaterialAssetUploadVersion(...args);
+    try {
+      return await this.taskRepository.reserveMaterialAssetUploadVersion(...args);
+    } catch (error) {
+      if (error instanceof VersionConflictError) {
+        throw HttpError.conflict('Record is out of date. Please refresh and try again.');
+      }
+      throw error;
+    }
   }
 
   /** @internal */

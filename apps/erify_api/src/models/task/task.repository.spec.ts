@@ -196,4 +196,87 @@ describe('taskRepository', () => {
       ).rejects.toThrow(prismaError);
     });
   });
+
+  describe('reserveMaterialAssetUploadVersion', () => {
+    it('successfully increments upload version and bumps task version', async () => {
+      txTaskDelegate.findFirst.mockResolvedValueOnce({
+        id: BigInt(1000),
+        version: 5,
+        metadata: {
+          material_asset_upload_versions: {
+            proof_photo: 2,
+          },
+        },
+      });
+
+      txTaskDelegate.update.mockResolvedValueOnce({
+        id: BigInt(1000),
+        version: 6,
+        metadata: {
+          material_asset_upload_versions: {
+            proof_photo: 3,
+          },
+        },
+      });
+
+      const nextVersion = await repository.reserveMaterialAssetUploadVersion('task_abc', 'proof_photo');
+
+      expect(txTaskDelegate.findFirst).toHaveBeenCalledWith({
+        where: { uid: 'task_abc', deletedAt: null },
+        select: { id: true, metadata: true, version: true },
+      });
+
+      expect(txTaskDelegate.update).toHaveBeenCalledWith({
+        where: { id: BigInt(1000), version: 5, deletedAt: null },
+        data: {
+          version: 6,
+          metadata: {
+            material_asset_upload_versions: {
+              proof_photo: 3,
+            },
+          },
+        },
+      });
+
+      expect(nextVersion).toBe(3);
+    });
+
+    it('throws "Task not found" if task does not exist', async () => {
+      txTaskDelegate.findFirst.mockResolvedValueOnce(null);
+
+      await expect(
+        repository.reserveMaterialAssetUploadVersion('task_abc', 'proof_photo'),
+      ).rejects.toThrow('Task not found');
+    });
+
+    it('throws VersionConflictError if concurrent update changed the version', async () => {
+      txTaskDelegate.findFirst
+        // Pre-read
+        .mockResolvedValueOnce({
+          id: BigInt(1000),
+          version: 5,
+          metadata: {},
+        })
+        // Post-error read to check active task version
+        .mockResolvedValueOnce({
+          id: BigInt(1000),
+          version: 6,
+        });
+
+      const prismaError = new Prisma.PrismaClientKnownRequestError(
+        'Record not found',
+        {
+          code: PRISMA_ERROR.RecordNotFound,
+          clientVersion: '5.0.0',
+        },
+      );
+      txTaskDelegate.update.mockRejectedValueOnce(prismaError);
+
+      await expect(
+        repository.reserveMaterialAssetUploadVersion('task_abc', 'proof_photo'),
+      ).rejects.toThrow(VersionConflictError);
+
+      expect(txTaskDelegate.findFirst).toHaveBeenCalledTimes(2);
+    });
+  });
 });

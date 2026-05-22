@@ -281,6 +281,7 @@ export class TaskRepository extends BaseRepository<
       select: {
         id: true,
         metadata: true,
+        version: true,
       },
     });
 
@@ -301,18 +302,41 @@ export class TaskRepository extends BaseRepository<
       : 0;
     const nextVersion = currentVersion + 1;
 
-    await this.delegate.update({
-      where: { id: task.id },
-      data: {
-        metadata: {
-          ...metadataObj,
-          material_asset_upload_versions: {
-            ...versionsByField,
-            [fieldKey]: nextVersion,
-          },
-        } as Prisma.InputJsonValue,
-      },
-    });
+    try {
+      await this.delegate.update({
+        where: { id: task.id, version: task.version, deletedAt: null },
+        data: {
+          version: task.version + 1,
+          metadata: {
+            ...metadataObj,
+            material_asset_upload_versions: {
+              ...versionsByField,
+              [fieldKey]: nextVersion,
+            },
+          } as Prisma.InputJsonValue,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === PRISMA_ERROR.RecordNotFound) {
+          const activeTask = await this.delegate.findFirst({
+            where: { id: task.id, deletedAt: null },
+            select: { version: true },
+          });
+
+          if (!activeTask) {
+            throw error; // Actually not found
+          }
+
+          throw new VersionConflictError(
+            'Task version is outdated',
+            task.version,
+            activeTask.version,
+          );
+        }
+      }
+      throw error;
+    }
 
     return nextVersion;
   }
