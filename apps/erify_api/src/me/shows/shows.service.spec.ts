@@ -61,7 +61,6 @@ describe('showsService', () => {
     endTime: new Date('2024-01-01T12:00:00Z'),
     actualStartTime: null,
     actualEndTime: null,
-    performanceMetrics: {},
     metadata: {},
     createdAt: new Date(),
     updatedAt: new Date(),

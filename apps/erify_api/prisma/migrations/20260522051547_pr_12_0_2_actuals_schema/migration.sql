@@ -10,9 +10,6 @@ ADD COLUMN     "actual_start_time" TIMESTAMP(3),
 ADD COLUMN     "gmv" DECIMAL(12,2),
 ADD COLUMN     "performance_metrics" JSONB NOT NULL DEFAULT '{}';
 
--- AlterTable
-ALTER TABLE "shows" ADD COLUMN     "performance_metrics" JSONB NOT NULL DEFAULT '{}';
-
 -- CreateTable
 CREATE TABLE "show_platform_violations" (
     "id" BIGSERIAL NOT NULL,

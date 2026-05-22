@@ -119,7 +119,6 @@ model Show {
   endTime                     DateTime                     @map("end_time")
   actualStartTime             DateTime?                    @map("actual_start_time")
   actualEndTime               DateTime?                    @map("actual_end_time")
-  performanceMetrics          Json                         @default("{}") @map("performance_metrics")
   metadata                    Json                         @default("{}")
   clientId                    BigInt                       @map("client_id")
   client                      Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
