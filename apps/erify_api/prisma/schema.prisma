@@ -220,9 +220,7 @@ model ShowPlatform {
   platformShowId     String?                 @map("platform_show_id") // external id of the platform e.g., tiktok
   actualStartTime    DateTime?               @map("actual_start_time")
   actualEndTime      DateTime?               @map("actual_end_time")
-  gmv                Decimal?                @map("gmv") @db.Decimal(12, 2) // Transport as string on wire (Finance Guardrail #2)
-  viewerCount        Int                     @default(0) @map("viewer_count") // Source metadata distinguishes default zero from submitted zero (metadata.actuals_source.viewer_count).
-  performanceMetrics Json                    @default("{}") @map("performance_metrics")
+  viewerCount        Int                     @default(0) @map("viewer_count")
   metadata           Json                    @default("{}")
   showId             BigInt                  @map("show_id")
   show               Show                    @relation(fields: [showId], references: [id], onDelete: Cascade)
@@ -239,8 +237,6 @@ model ShowPlatform {
   @@index([showId])
   @@index([platformId])
   @@index([platformShowId])
-  @@index([gmv])
-  @@index([viewerCount])
   @@index([actualStartTime, actualEndTime])
   @@index([deletedAt])
   @@index([showId, deletedAt])

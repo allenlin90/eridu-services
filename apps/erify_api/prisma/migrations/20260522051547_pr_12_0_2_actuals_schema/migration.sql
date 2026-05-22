@@ -6,9 +6,7 @@ ADD COLUMN     "attendance_reason" TEXT;
 
 -- AlterTable
 ALTER TABLE "show_platforms" ADD COLUMN     "actual_end_time" TIMESTAMP(3),
-ADD COLUMN     "actual_start_time" TIMESTAMP(3),
-ADD COLUMN     "gmv" DECIMAL(12,2),
-ADD COLUMN     "performance_metrics" JSONB NOT NULL DEFAULT '{}';
+ADD COLUMN     "actual_start_time" TIMESTAMP(3);
 
 -- CreateTable
 CREATE TABLE "show_platform_violations" (
@@ -54,12 +52,6 @@ CREATE INDEX "show_creators_attendance_missing_idx" ON "show_creators"("attendan
 
 -- CreateIndex
 CREATE INDEX "show_creators_actual_start_time_actual_end_time_idx" ON "show_creators"("actual_start_time", "actual_end_time");
-
--- CreateIndex
-CREATE INDEX "show_platforms_gmv_idx" ON "show_platforms"("gmv");
-
--- CreateIndex
-CREATE INDEX "show_platforms_viewer_count_idx" ON "show_platforms"("viewer_count");
 
 -- CreateIndex
 CREATE INDEX "show_platforms_actual_start_time_actual_end_time_idx" ON "show_platforms"("actual_start_time", "actual_end_time");

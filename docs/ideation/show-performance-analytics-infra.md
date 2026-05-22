@@ -15,9 +15,15 @@ Phase 4's active PR 12 pipeline remains OLTP-oriented. It records operational fa
 - late or incomplete show, creator, and platform actual time pairs
 - missing creator attendance and attendance reasons
 - active platform violations
-- typed platform GMV and view count facts
 
-`Show` remains the overall event/timing entity. Platform performance facts belong on `ShowPlatform`, and violation events belong in `ShowPlatformViolation`. Show-level performance summaries are derived analytical views over those narrower facts, not source facts persisted on `Show`.
+Explicitly out of Phase 4 OLTP scope and folded into this investigation:
+
+- typed platform **GMV** facts
+- platform **viewer count** as a queryable metric (the pre-existing `Int @default(0)` column on `ShowPlatform` stays, but its read path becomes analytical)
+- the `ShowPlatform.performanceMetrics` JSONB bucket originally floated for CTR / CTO / likes / concurrents
+- any cross-show or trend aggregate
+
+`Show` remains the overall event/timing entity. Operational platform facts (actual time pair, violations) belong on `ShowPlatform` and `ShowPlatformViolation`. Show-level performance summaries and the analytical metrics above are derived views over those narrower facts; their storage shape (typed column, materialized view, or OLAP) is decided here, not persisted on `Show` or `ShowPlatform` by Phase 4 PRs.
 
 ## Why It Was Deferred
 
@@ -31,7 +37,7 @@ Phase 4's active PR 12 pipeline remains OLTP-oriented. It records operational fa
 1. **Postgres read models**: create dedicated summary tables or materialized views maintained by jobs after show close. This keeps the stack simple while separating analytical reads from OLTP tables.
 2. **Application-managed projections**: write explicit projection services that consume operational facts and persist query-shaped summaries for dashboards.
 3. **Dedicated OLAP path**: introduce warehouse-style infrastructure when cross-studio trend analysis, high-cardinality metrics, or historical exploration outgrow Postgres operational read models.
-4. **Metric promotion workflow**: keep low-priority platform metrics in `ShowPlatform.performanceMetrics`, then promote individual keys to typed columns or analytical projections when they become product-critical.
+4. **Metric promotion workflow**: introduce `ShowPlatform.performanceMetrics` (or a sibling table) only inside this investigation, then promote individual keys to typed columns or analytical projections when they become product-critical. PR 12.0.2 deliberately did **not** add the JSONB bucket so the analytical bucket / read model / OLAP decision is taken cleanly here.
 
 ## Decision Gates for Promotion
 

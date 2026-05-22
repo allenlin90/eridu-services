@@ -13,7 +13,7 @@
 ### The Problem
 Generic task templates in Erify are highly customizable and modular, but the data captured in task sheets lives as generic, untyped JSON blobs in `task.content`. 
 Because the system cannot natively associate these inputs with canonical operational metrics:
-1. Managers must manually re-enter actual start/end times, platform statistics (GMV, views), and host attendance on spreadsheets or override views.
+1. Managers must manually re-enter actual start/end times, platform statistics (e.g. GMV, views — analytical, deferred to 12.5), and host attendance on spreadsheets or override views.
 2. The database has no structured, indexed columns for these metrics, preventing efficient aggregation, real-time lateness calculation, or platform violation tracking.
 3. Multiple conflicting inputs (e.g. automated scraper metrics, operator task sheets, and manager manual overrides) have no structured resolution hierarchy, leading to inconsistent actuals reporting.
 
@@ -72,7 +72,7 @@ All automated ingestion writes and manual manager overrides write to a unified `
 
 ### D. Safe Monetary Casting (Finance Guardrail #2)
 To prevent IEEE-754 precision issues (IEEE float inaccuracies):
-* Platform GMV values entered as numbers on task forms are transported as numeric values but cast immediately to strict `Prisma.Decimal` (mapped to `Decimal(12, 2)` in PostgreSQL) in the ingestion pipe before any write.
+* Platform GMV is deferred to 12.5 (analytical). When it returns, values entered on task forms will be transported numerically but cast immediately to strict `Prisma.Decimal` in the ingestion pipe before any write; the precision (`Decimal(12, 2)` or other) is decided by the analytics infrastructure step.
 * No raw JS floats are used in calculations or updates.
 
 ### E. Derived Status (Read-Side Metrics)
@@ -123,7 +123,7 @@ flowchart TB
 **Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated across perspectives that *do* ship together. Unit components (`ActualsTimelineViewer`, `PerformanceMetricsWidget`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) live in reusable packages or shared app folders and are consumed identically by each perspective, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
 
 ### G. Performance Review as Upstream of Economics Review
-PR 12 stands up the **operational performance review surface** (PR 12.4 — actuals & abnormality dashboard). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: operational facts (actual times, attendance, GMV/views, violations) are captured and reviewed here first; only after they're trustworthy does the economics surface read them as cost inputs. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or show-level analytical aggregates; it only emits typed operational facts. Show-level performance analytics, trend dashboards, and OLAP/read-model infrastructure are deferred to a post-12.4 investigation.
+PR 12 stands up the **operational performance review surface** (PR 12.4 — actuals & abnormality dashboard). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: operational facts (actual times, attendance, violations) are captured and reviewed here first; only after they're trustworthy does the economics surface read them as cost inputs. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to the 12.5 post-investigation.
 
 ---
 
@@ -140,7 +140,8 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
    ┌─────────────────────────────────────────────────────────────┐
    │                    SECTION B: EXTRACTORS                    │
    │  - PR 12.1.1: Show Times      - PR 12.2: Creator Attendance │
-   │  - PR 12.1.2: Platform Times  - PR 12.3.1/2: GMV/Violations │
+   │  - PR 12.1.2: Platform Times  - PR 12.3.2: Violations       │
+   │  - PR 12.3.1 (GMV/Views) → deferred to 12.5                 │
    └──────────────────────────────┬──────────────────────────────┘
                                   ▼
    ┌─────────────────────────────────────────────────────────────┐
@@ -169,7 +170,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Functional Deliverable**:
   * `Show`: Uses the existing `actualStartTime` / `actualEndTime` operational columns and adds the actual-time index. No show-level performance JSONB bucket.
   * `ShowCreator`: Adds `actualStartTime`, `actualEndTime`, `attendanceMissing`, and `attendanceReason`.
-  * `ShowPlatform`: Adds `actualStartTime`, `actualEndTime`, `gmv` (Decimal), and `performanceMetrics` JSONB.
+  * `ShowPlatform`: Adds `actualStartTime`, `actualEndTime`, and the actual-time index. **No** `gmv`, `performanceMetrics`, or new index on `viewerCount` — all platform-scoped performance metrics are classified as analytical and deferred to 12.5 (see [`show-performance-analytics-infra.md`](../ideation/show-performance-analytics-infra.md)). `viewerCount` retains its pre-existing `Int @default(0)` column from the init migration but is treated as an analytical fact.
   * `ShowPlatformViolation`: Creates the violation table and indices.
   * **No logic, no routes**: This is a pure DDL migration. Downstream PRs assume these columns compile.
 
@@ -177,7 +178,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Purpose**: Allow studio producers to bind template fields to system fact keys.
 * **Functional Deliverable**:
   * Binds `FieldItemV2Schema` in `@eridu/api-types` to a closed `system_fact_key` enum.
-  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `platform_gmv` restricts type to `number`, `creator_attendance_missing` restricts type to `checkbox`).
+  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`). Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once 12.5 lands.
   * **Template Builder UI**: Exposes a "System fact" dropdown configuration for template designers.
 
 #### 🟩 PR 12.0.4 · Dynamic Target-Scoped Form Hydration
@@ -220,12 +221,8 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
   * **Read-Side Derivation**: Implements live lateness, presence (`ON_TIME` / `LATE` / `MISSING`), and `lateMinutes` math (e.g. `ShowCreator.actualStartTime` compared against `Show.startTime`).
   * Enforces `attendanceReason` on `LATE`/`MISSING` statuses. Safe fallback logic writes a system flag if the builder failed to collect the operator reason, preventing form blockages.
 
-#### 🟦 PR 12.3.1 · Platform GMV/Views Extractor
-* **Purpose**: Extract performance metrics with high-precision financial casting.
-* **Functional Deliverable**:
-  * Extracts GMV and view count → `ShowPlatform` columns.
-  * Casts form-submitted JS numbers to precise string-based `Prisma.Decimal` values.
-  * Uses the presence of the key in `metadata.actuals_source` to distinguish default zeros from submitted zeros.
+#### ⬜ PR 12.3.1 · Platform GMV/Views Extractor — **Deferred to 12.5**
+* **Status**: Removed from Phase 4 critical path. GMV and viewer count are analytical metrics; their storage shape (typed column, read model, or OLAP path) is decided by the 12.5 analytics infrastructure investigation. The original purpose, casting rules, and default-zero disambiguation logic carry forward; see [`show-performance-analytics-infra.md`](../ideation/show-performance-analytics-infra.md).
 
 #### 🟦 PR 12.3.2 · Platform Violations Extractor
 * **Purpose**: Extract stream-level warnings and violations.
@@ -242,7 +239,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Purpose**: Consolidate actuals and platform metrics into a control panel with sign-off audits.
 * **Functional Deliverable**:
   * **Review Screen**: Date-range filtering dashboard displaying actual timelines, platform metrics, and violation counts.
-  * **Abnormality Highlighter**: Visual flags for incomplete time pairs, missing/late hosts, active platform violations, extreme GMV/views, and manager-vs-platform source conflicts.
+  * **Abnormality Highlighter**: Visual flags for incomplete time pairs, missing/late hosts, active platform violations, and manager-vs-platform source conflicts. (GMV / views abnormality highlights re-enter once 12.5 decides the analytical storage path.)
   * **Stale Queue**: Panel to resolve values submitted for unassigned/stale targets.
   * **Bulk Sign-Off**: Action logging the selected range, signing manager, timestamp, and active unresolved anomalies for the compliance audit trail.
   * **Incremental Rollout**: Wires up first widgets as soon as 12.1.1 merges; additional widgets automatically activate as 12.1.2–12.3.2 land in the database.
