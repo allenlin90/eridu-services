@@ -25,6 +25,7 @@ export function useStudioShowTasksPageController({
 }: UseStudioShowTasksPageControllerProps) {
   const [memberSearch, setMemberSearch] = useState('');
   const membersRef = useRef<Membership[]>([]);
+  const isSearchingMembersRef = useRef(false);
 
   const {
     rowSelection,
@@ -71,6 +72,8 @@ export function useStudioShowTasksPageController({
   });
   // eslint-disable-next-line react-hooks/refs
   membersRef.current = members;
+  // eslint-disable-next-line react-hooks/refs
+  isSearchingMembersRef.current = isSearchingMembers;
 
   const {
     handleAssign,
@@ -121,9 +124,9 @@ export function useStudioShowTasksPageController({
       handleRunAction,
       isUpdatingStatus ? processingTaskId : null,
       openDueDateEditor,
-      isSearchingMembers,
+      () => isSearchingMembersRef.current,
     ),
-    [handleAssign, isAssigning, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor, isSearchingMembers],
+    [handleAssign, isAssigning, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
   );
   /* eslint-enable react-hooks/refs */
 

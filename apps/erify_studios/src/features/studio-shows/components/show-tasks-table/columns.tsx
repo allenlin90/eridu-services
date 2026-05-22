@@ -38,14 +38,14 @@ function AssigneeCell({
   onSearch,
   onAssign,
   isAssigning,
-  isLoadingMembers,
+  getIsSearchingMembers,
 }: {
   task: TaskWithRelationsDto;
   getMembers: () => Membership[];
   onSearch: (value: string) => void;
   onAssign: (task: TaskWithRelationsDto, assigneeUid: string | null) => void;
   isAssigning: boolean;
-  isLoadingMembers?: boolean;
+  getIsSearchingMembers?: () => boolean;
 }) {
   const memberOptions = getMemberOptions(getMembers());
   const currentValue = task.assignee?.id || 'unassigned';
@@ -61,7 +61,7 @@ function AssigneeCell({
       onSearch={onSearch}
       options={[{ value: 'unassigned', label: 'Unassigned' }, ...memberOptions]}
       disabled={isAssigning}
-      isLoading={isLoadingMembers}
+      isLoading={getIsSearchingMembers?.()}
       placeholder="Unassigned"
       className="w-[200px] h-8 text-xs"
     />
@@ -238,7 +238,7 @@ export function getColumns(
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void,
   processingTaskId: string | null,
   onEditDueDate: (task: TaskWithRelationsDto) => void,
-  isSearchingMembers?: boolean,
+  getIsSearchingMembers?: () => boolean,
 ): ColumnDef<TaskWithRelationsDto>[] {
   return [
     {
@@ -338,7 +338,7 @@ export function getColumns(
           onSearch={onMemberSearch}
           onAssign={onAssign}
           isAssigning={isAssigning}
-          isLoadingMembers={isSearchingMembers}
+          getIsSearchingMembers={getIsSearchingMembers}
         />
       ),
       size: 220,

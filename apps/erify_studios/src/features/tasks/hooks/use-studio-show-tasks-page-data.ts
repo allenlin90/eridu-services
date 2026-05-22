@@ -102,7 +102,7 @@ export function useStudioShowTasksPageData({
     isLoadingShow,
     isTableLoading,
     isRefreshing,
-    isSearchingMembers: isFetchingMembers,
+    isSearchingMembers: isFetchingMembers && !!memberSearch,
     refreshAll,
     refetchShowTasks,
   };
