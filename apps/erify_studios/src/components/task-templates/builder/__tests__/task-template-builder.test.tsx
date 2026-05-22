@@ -133,7 +133,7 @@ describe('taskTemplateBuilder v2 field ids', () => {
 
     render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
 
-    fireEvent.keyDown(screen.getByLabelText('System fact'), { key: 'ArrowDown' });
+    fireEvent.keyDown(screen.getByLabelText('Save answer as'), { key: 'ArrowDown' });
     await user.click(await screen.findByRole('option', { name: /Show actual start time/ }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
@@ -142,6 +142,42 @@ describe('taskTemplateBuilder v2 field ids', () => {
           id: 'fld_showactual1',
           type: 'datetime',
           system_fact_key: 'show_actual_start_time',
+        }),
+      ],
+    }));
+  });
+
+  it('uses checkbox explanation rules for creator attendance missing bindings', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const templateWithField: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      items: [
+        {
+          id: 'fld_creatormiss1',
+          key: 'creator_missing',
+          type: 'text',
+          label: 'Creator missing',
+          required: true,
+          group: 'l1',
+        },
+      ],
+    };
+
+    render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
+
+    fireEvent.keyDown(screen.getByLabelText('Save answer as'), { key: 'ArrowDown' });
+    await user.click(await screen.findByRole('option', { name: 'Creator attendance missing' }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          id: 'fld_creatormiss1',
+          type: 'checkbox',
+          system_fact_key: 'creator_attendance_missing',
+          validation: expect.objectContaining({
+            require_reason: 'on-true',
+          }),
         }),
       ],
     }));

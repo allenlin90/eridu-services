@@ -26,7 +26,6 @@ export const SystemFactKeyEnum = z.enum([
   'creator_actual_start_time',
   'creator_actual_end_time',
   'creator_attendance_missing',
-  'creator_attendance_reason',
   'show_platform_actual_start_time',
   'show_platform_actual_end_time',
 ]);
@@ -68,13 +67,6 @@ export const SYSTEM_FACT_KEY_DEFINITIONS = {
     target: 'show_creator',
     backing_column: 'ShowCreator.attendanceMissing',
     field_type: 'checkbox',
-  },
-  creator_attendance_reason: {
-    label: 'Creator attendance reason',
-    description: 'Late or missing attendance reason recorded per assigned creator.',
-    target: 'show_creator',
-    backing_column: 'ShowCreator.attendanceReason',
-    field_type: 'textarea',
   },
   show_platform_actual_start_time: {
     label: 'Platform actual start time',

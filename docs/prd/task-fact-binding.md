@@ -179,7 +179,8 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Functional Deliverable**:
   * Binds `FieldItemV2Schema` in `@eridu/api-types` to a closed `system_fact_key` enum.
   * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`). Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once 12.5 lands.
-  * **Template Builder UI**: Exposes a "System fact" dropdown configuration for template designers.
+  * **Template Builder UI**: Exposes a "Save answer as" binding picker for template designers.
+  * `creator_attendance_missing` uses the existing `require_reason: "on-true"` sidecar flow for the operator's explanation; there is no separate `creator_attendance_reason` binding input.
 
 #### 🟩 PR 12.0.4 · Dynamic Target-Scoped Form Hydration
 * **Purpose**: Dynamically expand a template's bound fields into individual inputs for each assigned creator or platform.
@@ -219,7 +220,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Functional Deliverable**:
   * Extracts `ShowCreator` times and `attendanceMissing`.
   * **Read-Side Derivation**: Implements live lateness, presence (`ON_TIME` / `LATE` / `MISSING`), and `lateMinutes` math (e.g. `ShowCreator.actualStartTime` compared against `Show.startTime`).
-  * Enforces `attendanceReason` on `LATE`/`MISSING` statuses. Safe fallback logic writes a system flag if the builder failed to collect the operator reason, preventing form blockages.
+  * Enforces `attendanceReason` on `LATE`/`MISSING` statuses from the task field reason sidecar. Safe fallback logic writes a system flag if the builder failed to collect the operator reason, preventing form blockages.
 
 #### ⬜ PR 12.3.1 · Platform GMV/Views Extractor — **Deferred to 12.5**
 * **Status**: Removed from Phase 4 critical path. GMV and viewer count are analytical metrics; their storage shape (typed column, read model, or OLAP path) is decided by the 12.5 analytics infrastructure investigation. The original purpose, casting rules, and default-zero disambiguation logic carry forward; see [`show-performance-analytics-infra.md`](../ideation/show-performance-analytics-infra.md).

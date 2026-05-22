@@ -35,6 +35,10 @@ const SYSTEM_FACT_OPTIONS = Object.entries(SYSTEM_FACT_KEY_DEFINITIONS).map(([va
   ...definition,
 }));
 
+const EXPLANATION_REQUIRED_FACT_KEYS: ReadonlySet<SystemFactKey> = new Set([
+  'creator_attendance_missing',
+]);
+
 function getSystemFactKey(item: FieldItem): SystemFactKey | undefined {
   return 'system_fact_key' in item ? item.system_fact_key : undefined;
 }
@@ -733,12 +737,22 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
 
     const systemFactKey = value as SystemFactKey;
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey];
+    const validation = { ...item.validation };
+    delete validation.min;
+    delete validation.max;
+    if (EXPLANATION_REQUIRED_FACT_KEYS.has(systemFactKey)) {
+      validation.require_reason = 'on-true';
+    } else {
+      delete validation.require_reason;
+    }
+
     onUpdate({
       system_fact_key: systemFactKey,
       type: definition.field_type,
       default_value: '',
+      validation,
     });
-  }, [onUpdate]);
+  }, [item.validation, onUpdate]);
 
   const handleDefaultValueChange = useCallback((val: any) => {
     handleChange('default_value', val);
@@ -789,7 +803,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`system-fact-${item.id}`}>System fact</Label>
+          <Label htmlFor={`system-fact-${item.id}`}>Save answer as</Label>
           <Select
             value={getSystemFactKey(item) ?? SYSTEM_FACT_NONE_VALUE}
             onValueChange={handleSystemFactChange}
@@ -802,17 +816,13 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
               {SYSTEM_FACT_OPTIONS.map((fact) => (
                 <SelectItem key={fact.value} value={fact.value}>
                   {fact.label}
-                  {' '}
-                  (
-                  {fact.field_type}
-                  )
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           {getSystemFactKey(item) && (
             <p className="text-xs text-muted-foreground">
-              Bound fields hydrate per show, creator, or platform in operator forms.
+              This answer will update the matching show, creator, or platform value later.
             </p>
           )}
         </div>

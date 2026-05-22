@@ -43,7 +43,7 @@ PR 12 system fact bindings are defined in `packages/api-types/src/task-managemen
 | `SYSTEM_FACT_KEY_DEFINITIONS` | Label, backing column, target scope, and compatible field type catalog |
 | `getSystemFactKeyDefinition()` | Read one catalog entry by key |
 
-Do not duplicate the fact-key list in frontend or backend code. Analytical platform metrics such as GMV and viewer count stay out of this catalog until the 12.5 analytics storage decision lands.
+Do not duplicate the fact-key list in frontend or backend code. Use the existing `require_reason` sidecar flow for creator attendance explanations instead of adding a separate reason fact key. Analytical platform metrics such as GMV and viewer count stay out of this catalog until the 12.5 analytics storage decision lands.
 
 ## Key Rules
 

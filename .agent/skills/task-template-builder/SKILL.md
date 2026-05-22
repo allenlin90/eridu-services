@@ -41,7 +41,9 @@ Keep `fld_...` IDs, nest as `{ schema: { items: [...] } }`, filter empty options
 
 ### 7. System Fact Bindings (PR 12)
 - `system_fact_key` is a v2-only field attribute for operational fact extraction.
+- The builder exposes this with the user-facing label "Save answer as"; avoid showing "system fact" copy in the producer UI.
 - Selecting a system fact in the builder should set the field type to the catalog's compatible `field_type`.
+- `creator_attendance_missing` should use `validation.require_reason = 'on-true'` for the explanation instead of a separate reason binding field.
 - Save-time validation must reject mismatched field type ↔ fact key pairs through the shared Zod schema.
 - Analytical platform metrics such as GMV and viewer count are not valid system fact keys until the 12.5 analytics storage decision lands.
 
