@@ -9,6 +9,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./audits": {
+      "types": "./dist/audits/index.d.ts",
+      "default": "./dist/audits/index.js"
+    },
     "./clients": {
       "types": "./dist/clients/index.d.ts",
       "default": "./dist/clients/index.js"

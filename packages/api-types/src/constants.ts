@@ -24,4 +24,5 @@ export const UID_PREFIXES = {
   SHOW_CREATOR: 'show_mc',
   STUDIO_SHIFT: 'ssh',
   STUDIO_SHIFT_BLOCK: 'ssb',
+  AUDIT: 'aud',
 } as const;
