@@ -393,7 +393,7 @@ export class TaskRepository extends BaseRepository<
     },
   ): Promise<Task> {
     const existing = await this.delegate.findFirst({
-      where: { id },
+      where: { id, deletedAt: null },
       select: { metadata: true, version: true },
     });
 
@@ -416,7 +416,7 @@ export class TaskRepository extends BaseRepository<
 
     try {
       return await this.delegate.update({
-        where: { id, version: currentVersion },
+        where: { id, version: currentVersion, deletedAt: null },
         data: {
           snapshotId: data.snapshotId,
           description: data.description,
@@ -429,10 +429,19 @@ export class TaskRepository extends BaseRepository<
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === PRISMA_ERROR.RecordNotFound) {
+          const activeTask = await this.delegate.findFirst({
+            where: { id, deletedAt: null },
+            select: { version: true },
+          });
+
+          if (!activeTask) {
+            throw error; // Actually not found
+          }
+
           throw new VersionConflictError(
             'Task version is outdated',
             currentVersion,
-            existing.version,
+            activeTask.version,
           );
         }
       }
