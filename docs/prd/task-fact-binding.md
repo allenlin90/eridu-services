@@ -165,7 +165,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
   * Backend repositories, services, and Zod verification schemas.
   * A read-time **legacy sidecar merger** that seamlessly projects old metadata audits (`metadata.audit.snapshot_overrides[]`) and new `Audit` records in one unified timeline. The merger reads the new `reason` column with a fallback to `metadata.reason` for any pre-column rows back-filled later.
 
-#### 🟩 PR 12.0.2 · Phase 4 Actuals Schema Additions
+#### 🟩 PR 12.0.2 · Phase 4 Actuals Schema Additions — ✅ Shipped in [#92](https://github.com/allenlin90/eridu-services/pull/92)
 * **Purpose**: Run a single, clean SQL database migration that adds all operational columns and indices upfront.
 * **Functional Deliverable**:
   * `Show`: Uses the existing `actualStartTime` / `actualEndTime` operational columns and adds the actual-time index. No show-level performance JSONB bucket.
