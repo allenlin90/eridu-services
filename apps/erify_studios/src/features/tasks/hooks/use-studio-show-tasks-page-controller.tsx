@@ -75,6 +75,16 @@ export function useStudioShowTasksPageController({
   // eslint-disable-next-line react-hooks/refs
   isSearchingMembersRef.current = isSearchingMembers;
 
+  const showWindow = useMemo(() => {
+    return showDetails
+      ? {
+          name: showDetails.name,
+          start_time: showDetails.start_time,
+          end_time: showDetails.end_time,
+        }
+      : null;
+  }, [showDetails]);
+
   const {
     handleAssign,
     handleRunAction,
@@ -89,13 +99,7 @@ export function useStudioShowTasksPageController({
   } = useStudioShowTasksPageMutations({
     studioId,
     showId,
-    showWindow: showDetails
-      ? {
-          name: showDetails.name,
-          start_time: showDetails.start_time,
-          end_time: showDetails.end_time,
-        }
-      : null,
+    showWindow,
     onDeleteSuccess: handleDeleteMutationSuccess,
     onOpenTaskActionDraft: openTaskActionDraft,
     onClearTaskActionDraft: clearTaskActionDraft,
