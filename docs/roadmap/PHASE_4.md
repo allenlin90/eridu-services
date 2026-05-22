@@ -77,7 +77,7 @@ All technical implementation details, schema changes, and architectural designs 
 Use as a design checklist for entity-scoped (`Creator`, `Member`, `Show`) features across PR 12 (and beyond). Which perspectives ship per sub-PR is a PRD decision; what matters is that perspectives in scope reuse one set of widgets. Canonized in the [frontend-ui-components skill](../../.agent/skills/frontend-ui-components/SKILL.md):
 1. **Studio Overview** (e.g. `/finance/actuals`, `/show-operations`, creator + member roster tables)
 2. **Studio Individual Overview** (e.g. `/studios/:id/creators/:creatorId`, `/studios/:id/members/:memberId`, `/studios/:id/shows/:showId` roster detail tabs)
-3. **Individual Overview** (e.g. `/me/*` self-views — creator self-view in `erify_creators`, member self-view forward-looking in `erify_studios`)
+3. **Individual Overview** — self-view, cross-app: creator self-view is the entire `erify_creators` app (top-level `/shows`, no `/me/*` prefix); member self-view is forward-looking inside `erify_studios` under `/me/*` (prefix needed vs `/studios/:id/*`). Widgets reused across P1/P2 (`erify_studios`) and creator P3 (`erify_creators`) must live in a shared package, not in either app's `src/features/`.
 
 PR 12.4 first lights up Perspective 1. P2 detail pages and P3 `/me/*` self-views are introduced as their host routes land — not as a same-PR delivery mandate. See [PRD §F](../prd/task-fact-binding.md#f-three-perspective-ui--reusable-component-pattern) and [design §6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#6-three-perspective-ui-consumption-map).
 

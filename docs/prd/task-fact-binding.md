@@ -96,9 +96,9 @@ flowchart TB
         P2C["/studios/:id/shows/:showId"]
     end
 
-    subgraph P3[Perspective 3 · Individual /me/* Self-View]
-        P3A["creator /me/* (erify_creators)"]
-        P3B["member /me/* (future, erify_studios)"]
+    subgraph P3[Perspective 3 · Self-View · cross-app]
+        P3A["creator self-view<br/>erify_creators · /shows · /shows/:showId<br/>(no /me/* prefix — app IS the creator view)"]
+        P3B["member self-view (future)<br/>erify_studios · /me/*<br/>(prefix needed vs /studios/:id/* manager routes)"]
     end
 
     DATA --> P1
@@ -112,7 +112,10 @@ flowchart TB
 
 1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/finance/actuals` review dashboard, `/show-operations`, creator/member roster tables).
 2. **Studio Individual Overview**: Single-entity detail pages accessed by managers from studio rosters — applies to **creators**, **members**, and **shows** (e.g. `/studios/:id/creators/:creatorId`, `/studios/:id/members/:memberId`, `/studios/:id/shows/:showId`).
-3. **Individual Overview**: First-person `/me/*` self-view for the logged-in entity. Creator self-view ships in `erify_creators`; the parallel member self-view in `erify_studios` is queued as that surface lands.
+3. **Individual Overview**: first-person self-view for the logged-in entity, with a cross-app boundary:
+   - **Creator self-view** = the entire `erify_creators` app. Routes are top-level (`/shows`, `/shows/:showId`); no `/me/*` prefix, because the JWT scope already identifies the viewer as the creator.
+   - **Member self-view** = a future `/me/*` surface inside `erify_studios`. The `/me/*` prefix is required there to disambiguate from `/studios/:id/*` manager routes that share the same app.
+   - Because P3 for creators lives in a *different app* from P1/P2, any widget reused across these perspectives must live in a shared package (`@eridu/ui` or a domain-shared package), not in either app's `src/features/`.
 
 **Scope per sub-PR**: which of the three perspectives ship is decided by each sub-PR. PR 12.4 lights up Perspective 1 (`/finance/actuals` review); Perspective 2 detail pages and `/me/*` self-views are introduced incrementally as their host routes land. Use the three-perspective layout as a design checklist for new features, not as a same-PR delivery mandate.
 

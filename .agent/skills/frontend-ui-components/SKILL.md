@@ -53,8 +53,12 @@ When designing a feature scoped to an **identity-bearing entity** — `Creator`,
    - `/studios/:studioId/creators/:creatorId` — single creator's attendance, rates, overrides, performance.
    - `/studios/:studioId/members/:memberId` — single member's assignments, audit trail, role context.
    - `/studios/:studioId/shows/:showId` — single show's actuals, platform metrics, violations.
-3. **Individual Overview (Perspective 3)**: First-person `/me/*` self-view for the logged-in entity. `erify_creators` ships the creator self-view today; a member `/me/*` surface in `erify_studios` is forward-looking.
+3. **Individual Overview (Perspective 3)**: First-person self-view for the logged-in entity. **The host app differs by entity type:**
+   - **Creators**: the entire `erify_creators` app is the creator's self-view. Routes are top-level (`/shows`, `/shows/:showId`) — no `/me/*` prefix, because the JWT scope already identifies the viewer as the creator.
+   - **Members**: studio members log into `erify_studios`, which also hosts P1/P2 manager surfaces. A member self-view here needs an explicit `/me/*` prefix to disambiguate from `/studios/:studioId/...` manager routes. Forward-looking — no member `/me/*` ships today.
 
+> **Cross-app widget sharing**: because Perspective 3 for creators lives in a different app (`erify_creators`) from P1/P2 (`erify_studios`), any widget reused across these perspectives MUST live in a shared package (`packages/ui` or a domain-shared package), not in either app's `src/features/`. App-local widgets do not satisfy the reuse rule.
+>
 > When a PRD does add a feature in more than one perspective, the perspectives must consume the **same shared widgets** with only filter / role-scope variation — no duplicated visualization or query code. Whether all three perspectives are in scope is a PRD decision; widget reuse across whichever perspectives ship is not.
 
 ### Reusable Unit Component Standard

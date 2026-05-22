@@ -395,9 +395,9 @@ flowchart TB
         SI3["/studios/:id/shows/:showId"]
     end
 
-    subgraph P3[Perspective 3 · Individual /me/* Self-View]
-        ME1["creator self-view<br/>(erify_creators /me/shows)"]
-        ME2["member self-view<br/>(future /me/* in erify_studios)"]
+    subgraph P3[Perspective 3 · Self-View · cross-app]
+        ME1["creator self-view<br/>erify_creators app<br/>(/shows, /shows/:showId — no /me/* prefix;<br/>app IS the creator's view)"]
+        ME2["member self-view<br/>future /me/* in erify_studios<br/>(needs prefix to disambiguate<br/>from /studios/:id/* manager routes)"]
     end
 
     IDX --> P1
@@ -423,6 +423,8 @@ Coverage matrix — what each shared widget renders in each perspective:
 | `AttendanceStatusBadge` | grid cells in roster + ops tables | header status on creator / show detail | own attendance per show |
 | `AuditLogTimeline` | not used (too noisy) | full override + ingestion history | own override / ingestion history (read-only) |
 
-**Scope per sub-PR**: which perspectives ship is a PRD decision per sub-PR, not a same-PR delivery rule. PR 12.4 lights up P1 (`/finance/actuals` review surface) first; P2 detail pages and P3 `/me/*` self-views are added as their host routes land. The matrix above is the *eventual* coverage shape — use it as a design checklist when introducing a new read, not as a merge gate.
+**Scope per sub-PR**: which perspectives ship is a PRD decision per sub-PR, not a same-PR delivery rule. PR 12.4 lights up P1 (`/finance/actuals` review surface) first; P2 detail pages and P3 self-views are added as their host routes land. The matrix above is the *eventual* coverage shape — use it as a design checklist when introducing a new read, not as a merge gate.
+
+**Cross-app boundary for P3**: creator self-view lives in `erify_creators` (top-level `/shows`, `/shows/:showId` — no `/me/*` prefix because the entire app is scoped to the logged-in creator). Member self-view, when it ships, lives in `erify_studios` under `/me/*` to disambiguate from manager-facing `/studios/:id/*` routes in the same app. Any widget reused across P1/P2 (in `erify_studios`) and creator P3 (in `erify_creators`) must therefore live in a **shared package** (`@eridu/ui` or a new domain package), not in either app's `src/features/`.
 
 **Performance review, not economics review**: this is the upstream performance/quality layer. Late and missing creator events, platform violations, and incomplete actuals are tracked here primarily because they are *damage-causing performance facts*. Downstream, [PR 13's economics review surface](../../../../docs/roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics` consumes the same indexed columns as cost inputs. PR 12 never writes derived finance totals; the storage and review layer stays monetary-agnostic so it remains useful as an operational quality view even without economics consuming it.
