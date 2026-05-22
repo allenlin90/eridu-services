@@ -27,6 +27,7 @@ model User {
   assignedTasks                Task[]
   createdTaskReportDefinitions TaskReportDefinition[] @relation("TaskReportDefinitionCreatedBy")
   createdCompensationLineItems CompensationLineItem[] @relation("CompensationLineItemCreatedBy")
+  audits                       Audit[]
   createdAt                    DateTime               @default(now()) @map("created_at")
   updatedAt                    DateTime               @updatedAt @map("updated_at")
   deletedAt                    DateTime?              @map("deleted_at")
@@ -137,6 +138,7 @@ model Show {
   showPlatforms               ShowPlatform[]
   taskTargets                 TaskTarget[]
   compensationLineItemTargets CompensationLineItemTarget[]
+  auditTargets                AuditTarget[]
   createdAt                   DateTime                     @default(now()) @map("created_at")
   updatedAt                   DateTime                     @updatedAt @map("updated_at")
   deletedAt                   DateTime?                    @map("deleted_at")
@@ -187,6 +189,7 @@ model ShowCreator {
   creatorId                   BigInt                       @map("mc_id")
   creator                     Creator                      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   compensationLineItemTargets CompensationLineItemTarget[]
+  auditTargets                AuditTarget[]
   createdAt                   DateTime                     @default(now()) @map("created_at")
   updatedAt                   DateTime                     @updatedAt @map("updated_at")
   deletedAt                   DateTime?                    @map("deleted_at")
@@ -203,19 +206,20 @@ model ShowCreator {
 }
 
 model ShowPlatform {
-  id             BigInt    @id @default(autoincrement())
-  uid            String    @unique
-  liveStreamLink String?   @map("live_stream_link") // external link of the live stream e.g., tiktok
-  platformShowId String?   @map("platform_show_id") // external id of the platform e.g., tiktok
-  viewerCount    Int       @default(0) @map("viewer_count")
-  metadata       Json      @default("{}")
-  showId         BigInt    @map("show_id")
-  show           Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
-  platformId     BigInt    @map("platform_id")
-  platform       Platform  @relation(fields: [platformId], references: [id], onDelete: Cascade)
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
+  id             BigInt        @id @default(autoincrement())
+  uid            String        @unique
+  liveStreamLink String?       @map("live_stream_link") // external link of the live stream e.g., tiktok
+  platformShowId String?       @map("platform_show_id") // external id of the platform e.g., tiktok
+  viewerCount    Int           @default(0) @map("viewer_count")
+  metadata       Json          @default("{}")
+  showId         BigInt        @map("show_id")
+  show           Show          @relation(fields: [showId], references: [id], onDelete: Cascade)
+  platformId     BigInt        @map("platform_id")
+  platform       Platform      @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  auditTargets   AuditTarget[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
 
   @@unique([showId, platformId])
   @@index([uid])
@@ -408,6 +412,7 @@ model StudioShift {
   metadata                    Json                         @default("{}")
   blocks                      StudioShiftBlock[]
   compensationLineItemTargets CompensationLineItemTarget[]
+  auditTargets                AuditTarget[]
   studio                      Studio                       @relation(fields: [studioId], references: [id], onDelete: Cascade)
   user                        User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt                   DateTime                     @default(now()) @map("created_at")
@@ -732,4 +737,60 @@ model TaskTarget {
   @@index([targetType, targetId])
   @@index([deletedAt])
   @@map("task_targets")
+}
+
+// ============================================
+// AUDIT (POLYMORPHIC HISTORY)
+// ============================================
+// Append-only history of automated extraction writes and manual manager overrides.
+// Audit envelopes carry no FK to target entities, so deletes on target rows cascade
+// only into the AuditTarget junction; the timeline itself is preserved. See
+// apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md §2.B.
+
+model Audit {
+  id        BigInt        @id @default(autoincrement())
+  uid       String        @unique
+  // "CREATE" | "UPDATE" | "DELETE" | "OVERRIDE" | "SKIPPED_LOWER_PRIORITY"
+  action    String        @map("action")
+  // Null for engine writes (extraction pipeline); populated for manager-initiated overrides.
+  actorId   BigInt?       @map("actor_id")
+  actor     User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  ipAddress String?       @map("ip_address")
+  userAgent String?       @map("user_agent")
+  // Stores old/new values, change reason, ingestion_source, task_uid, task_field_id, etc.
+  metadata  Json          @default("{}")
+  targets   AuditTarget[]
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([action])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audits")
+}
+
+model AuditTarget {
+  id             BigInt        @id @default(autoincrement())
+  auditId        BigInt        @map("audit_id")
+  audit          Audit         @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  // Polymorphic discriminator: "SHOW" | "SHOW_CREATOR" | "SHOW_PLATFORM" | "STUDIO_SHIFT"
+  targetType     String        @map("target_type")
+  targetId       BigInt        @map("target_id")
+  // Typed nullable FKs. Cascade on target delete cleans up the junction without
+  // touching the parent Audit envelope.
+  showId         BigInt?       @map("show_id")
+  show           Show?         @relation(fields: [showId], references: [id], onDelete: Cascade)
+  showCreatorId  BigInt?       @map("show_creator_id")
+  showCreator    ShowCreator?  @relation(fields: [showCreatorId], references: [id], onDelete: Cascade)
+  showPlatformId BigInt?       @map("show_platform_id")
+  showPlatform   ShowPlatform? @relation(fields: [showPlatformId], references: [id], onDelete: Cascade)
+  studioShiftId  BigInt?       @map("studio_shift_id")
+  studioShift    StudioShift?  @relation(fields: [studioShiftId], references: [id], onDelete: Cascade)
+
+  @@unique([auditId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@index([showId])
+  @@index([showCreatorId])
+  @@index([showPlatformId])
+  @@index([studioShiftId])
+  @@map("audit_targets")
 }
