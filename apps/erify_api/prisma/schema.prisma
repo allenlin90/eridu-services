@@ -757,7 +757,13 @@ model Audit {
   actor     User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
   ipAddress String?       @map("ip_address")
   userAgent String?       @map("user_agent")
-  // Stores old/new values, change reason, ingestion_source, task_uid, task_field_id, etc.
+  // Free-text justification supplied by the actor on OVERRIDE-class writes.
+  // Nullable because engine writes never carry a reason. Required-ness is
+  // enforced per writer (see studio-shift hourly_rate, show-creator
+  // compensation, etc.) — not at the schema level. Mirrors the legacy
+  // `snapshot_overrides[].reason` shape so the sidecar merger maps 1:1.
+  reason    String?       @map("reason")
+  // Stores old/new values, ingestion_source, task_uid, task_field_id, etc.
   metadata  Json          @default("{}")
   targets   AuditTarget[]
   createdAt DateTime      @default(now()) @map("created_at")

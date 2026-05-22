@@ -6,6 +6,7 @@ CREATE TABLE "audits" (
     "actor_id" BIGINT,
     "ip_address" TEXT,
     "user_agent" TEXT,
+    "reason" TEXT,
     "metadata" JSONB NOT NULL DEFAULT '{}',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
