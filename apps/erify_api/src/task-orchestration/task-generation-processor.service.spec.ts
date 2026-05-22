@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import type { Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
-import { TaskType } from '@prisma/client';
+import { TaskStatus, TaskType } from '@prisma/client';
 import { ClsModule } from 'nestjs-cls';
 
 import { TaskGenerationProcessor } from './task-generation-processor.service';
@@ -183,6 +183,7 @@ describe('taskGenerationProcessor', () => {
 
       expect(taskService.updateActiveTaskSnapshot).toHaveBeenCalledWith(
         BigInt(1000),
+        5,
         expect.objectContaining({
           snapshotId: BigInt(101),
           description: 'Pre-production Update',
@@ -202,6 +203,41 @@ describe('taskGenerationProcessor', () => {
       expect(result.status).toBe('success');
       expect(result.tasks_created).toBe(1);
       expect(result.tasks_skipped).toBe(0);
+    });
+
+    it('should skip update and increment skipped count if existing active task is in a terminal status', async () => {
+      const show = {
+        id: BigInt(10),
+        uid: 'show_1',
+        startTime: new Date('2026-02-23T10:00:00.000Z'),
+        endTime: new Date('2026-02-23T12:00:00.000Z'),
+      } as unknown as Show;
+      const templates = [
+        {
+          id: BigInt(1),
+          uid: 'tpl_1',
+          name: 'Pre-production Update',
+          currentSchema: { metadata: { task_type: TaskType.SETUP } },
+          snapshots: [{ id: BigInt(101) }],
+        },
+      ] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+
+      // Task is COMPLETED (terminal status)
+      taskService.findByShowAndTemplate.mockResolvedValue({
+        id: BigInt(1000),
+        snapshotId: BigInt(100),
+        deletedAt: null,
+        status: TaskStatus.COMPLETED,
+        version: 5,
+      } as any);
+
+      const result = await processor.processShow(show, templates);
+
+      expect(taskService.updateActiveTaskSnapshot).not.toHaveBeenCalled();
+      expect(taskService.create).not.toHaveBeenCalled();
+      expect(result.status).toBe('skipped');
+      expect(result.tasks_created).toBe(0);
+      expect(result.tasks_skipped).toBe(1);
     });
 
     it('should resume soft-deleted task with latest type and snapshot', async () => {

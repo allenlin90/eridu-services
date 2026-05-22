@@ -382,6 +382,7 @@ export class TaskRepository extends BaseRepository<
 
   async updateActiveTaskSnapshot(
     id: bigint,
+    currentVersion: number,
     data: {
       snapshotId: bigint;
       description: string;
@@ -393,10 +394,14 @@ export class TaskRepository extends BaseRepository<
   ): Promise<Task> {
     const existing = await this.delegate.findFirst({
       where: { id },
-      select: { metadata: true },
+      select: { metadata: true, version: true },
     });
 
-    const existingMetadata = (existing?.metadata && typeof existing.metadata === 'object')
+    if (!existing) {
+      throw new Error('Task not found');
+    }
+
+    const existingMetadata = (existing.metadata && typeof existing.metadata === 'object')
       ? existing.metadata as Record<string, unknown>
       : {};
 
@@ -409,17 +414,30 @@ export class TaskRepository extends BaseRepository<
       ...incomingMetadata,
     } as Prisma.InputJsonObject;
 
-    return this.delegate.update({
-      where: { id },
-      data: {
-        snapshotId: data.snapshotId,
-        description: data.description,
-        type: data.type,
-        dueDate: data.dueDate,
-        version: data.version,
-        metadata: newMetadata,
-      },
-    });
+    try {
+      return await this.delegate.update({
+        where: { id, version: currentVersion },
+        data: {
+          snapshotId: data.snapshotId,
+          description: data.description,
+          type: data.type,
+          dueDate: data.dueDate,
+          version: data.version,
+          metadata: newMetadata,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === PRISMA_ERROR.RecordNotFound) {
+          throw new VersionConflictError(
+            'Task version is outdated',
+            currentVersion,
+            existing.version,
+          );
+        }
+      }
+      throw error;
+    }
   }
 
   async reassignTaskToShow(
