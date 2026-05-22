@@ -37,7 +37,7 @@ Each row is one user-facing change. Rows are ordered top-to-bottom as execution 
 | 12.0.2 | [Phase 4 actuals schema additions](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — single Prisma migration materializing design doc §2.A: nullable actuals columns + indexes on `Show` / `ShowCreator` / `ShowPlatform`; empty `ShowPlatformViolation` table; `Show.performanceMetrics`. No consumers wired. | —                    | 🔲 Planned                    | —                                                                         |
 | 12.0.3 | [Fact-key binding picker on task-template fields](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — **Producer-facing**: builder adds a `system_fact_key` dropdown per field; validator enforces field-type ↔ fact-key compatibility against real backing columns from 12.0.2. No runtime effect until 12.0.4. | PR 12.0.2            | 🔲 Planned                    | —                                                                         |
 | 12.0.4 | [Per-target field hydration in operator task forms](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — **Operator-facing**: bound fields expand to one input per assigned `ShowCreator` / `ShowPlatform`. Stale targets render dimmed.                          | PR 12.0.3            | 🔲 Planned                    | —                                                                         |
-| 12.0.5 | [Extraction pipeline foundation + wire-label rename](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — **Operator + reviewer-facing**: smoke-test extractor for `show_actual_start_time` → `Show.actualStartTime`; atomic `OPERATOR_RECORD` → `OPERATOR_INPUT` rename across PR 4/10/11 self-views. | PR 12.0.1, PR 12.0.4 | 🔲 Planned                    | —                                                                         |
+| 12.0.5 | [Extraction pipeline foundation + wire-label rename](../prd/task-fact-binding.md#section-a-foundation-prs-1201--1205) — **Operator + reviewer-facing**: smoke-test extractor for `show_actual_start_time` → `Show.actualStartTime`; atomic `OPERATOR_RECORD` → `OPERATOR_INPUT` rename across PR 4/10/11 self-views; BE task-assignment check query + FE amber badge warning on show without task assignment. | PR 12.0.1, PR 12.0.4 | 🔲 Planned                    | —                                                                         |
 | 12.1.1 | [Show actuals extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — wire extractor for `show_actual_*_time` against PR 4's `Show` columns.                                                                                                         | PR 12.0.5            | 🔲 Planned                    | —                                                                         |
 | 12.1.2 | [ShowPlatform actuals extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — extractor for `show_platform_actual_*_time` against `ShowPlatform` columns from 12.0.2.                                                                                                       | PR 12.1.1            | 🔲 Planned                    | —                                                                         |
 | 12.2   | [Creator actuals + attendance extractor](../prd/task-fact-binding.md#section-b-extractors-prs-1211--1232) — extractor for the four creator fact keys against `ShowCreator` columns from 12.0.2.                                                                                             | PR 12.0.4, PR 12.0.5 | 🔲 Planned                    | —                                                                         |
@@ -72,6 +72,24 @@ For the comprehensive functional briefs, dependencies, section-by-section delive
 
 All technical implementation details, schema changes, and architectural designs are locked in:
 👉 **[PR 12 Design: TASK_INPUT_FACT_BINDING_DESIGN.md](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md)**
+
+#### 🏛️ Three-Perspective UI & Component Reuse Guide
+To maintain visual consistency and avoid logic drift across managers and creators, all actuals, performance, and compensation features must be implemented across **three unified perspectives** using shared unit components, as canonized in the updated [frontend-ui-components skill](../../.agent/skills/frontend-ui-components/SKILL.md):
+1. **Studio Overview** (e.g. `/finance/actuals` and `/show-operations` tables)
+2. **Studio Individual Overview** (e.g. `/studios/:id/creators/:creatorId` roster detail tabs)
+3. **Individual Overview** (e.g. `/me/*` self-views)
+
+**Mandated Reusable Widgets**:
+- `ActualsTimelineViewer`: Shared timeline visualizing planned vs actual times.
+- `PerformanceMetricsWidget`: Graphical/tabular widget for platform statistics (GMV, views).
+- `CompensationBreakdownCard`: Computes base compensation, commissions, and line items.
+- `AttendanceStatusBadge`: Translates timestamps into colored status highlights.
+- `AuditLogTimeline`: Polymorphic audit log history renderer.
+
+#### ⚠️ Show-Operations Task Assignment Alignment (PR 12.0.5)
+Stream operations dashboards (`/show-operations`) must proactively flag and highlight shows lacking task assignments.
+- **Backend (BE)**: Checks active task assignments to return `has_proper_task_assignment: boolean`.
+- **Frontend (FE)**: Displays an amber/orange warning badge: ⚠️ `No Task Assigned` for any show without a valid active assignment, with a direct link to initiate task instantiation.
 
 *Note: In alignment with PRD §2.C and database join table conventions, polymorphic targets on `AuditTarget` use `onDelete: Cascade` to cleanly purge useless junction rows when target records are deleted, while the parent `Audit` timeline envelope remains permanently preserved.*
 
