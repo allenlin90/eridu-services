@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, Plus, Trash2, X } from 'lucide-react';
+import { Check, ChevronsUpDown, Info, Plus, Trash2, X } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import {
@@ -23,6 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
@@ -884,7 +887,25 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`system-fact-${item.id}`}>Save answer as</Label>
+          <div className="flex items-center gap-1">
+            <Label htmlFor={`system-fact-${item.id}`}>Auto-fill record field</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground"
+                  aria-label="What does auto-fill record field mean?"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                When the operator submits this task, their answer also updates the matching field on the show, creator, or platform record. Each record field can be auto-filled by one task field per template.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <SystemFactCombobox
             id={`system-fact-${item.id}`}
             value={getSystemFactKey(item)}

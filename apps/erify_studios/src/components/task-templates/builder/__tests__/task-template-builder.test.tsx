@@ -133,7 +133,7 @@ describe('taskTemplateBuilder v2 field ids', () => {
 
     render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
 
-    await user.click(screen.getByRole('combobox', { name: 'Save answer as' }));
+    await user.click(screen.getByRole('combobox', { name: 'Auto-fill record field' }));
     await user.click(await screen.findByRole('option', { name: /Show actual start time/ }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
@@ -166,7 +166,7 @@ describe('taskTemplateBuilder v2 field ids', () => {
 
     render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
 
-    await user.click(screen.getByRole('combobox', { name: 'Save answer as' }));
+    await user.click(screen.getByRole('combobox', { name: 'Auto-fill record field' }));
     await user.click(await screen.findByRole('option', { name: 'Creator attendance missing' }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
