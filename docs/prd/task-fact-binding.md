@@ -66,7 +66,8 @@ $$\text{MANAGER\_OVERRIDE} > \text{PLATFORM\_DATA} > \text{CREATOR\_INPUT} \text
 
 ### C. Polymorphic Auditing with Join-Table Cascading (`onDelete: Cascade`)
 All automated ingestion writes and manual manager overrides write to a unified `Audit` and `AuditTarget` schema.
-* **The Audit Structure**: A single `Audit` row records the actor, IP, metadata (old/new values), and timestamp. A child table `AuditTarget` maps the audit to optional foreign keys: `showId`, `showCreatorId`, `showPlatformId`, and `studioShiftId`.
+* **The Audit Structure**: A single `Audit` row records the actor, IP, free-text `reason`, metadata (old/new values, ingestion context), and timestamp. A child table `AuditTarget` maps the audit to optional foreign keys: `showId`, `showCreatorId`, `showPlatformId`, and `studioShiftId`.
+* **First-class `reason` column**: Override-class writes carry a free-text justification supplied by the actor. The codebase already collects this in the FE today (`shift-compensation-dialog`, `show-creator-compensation-dialog`) and validates it per-writer on the BE (`studio-shift hourly_rate` rejects without `override_reason`). `Audit.reason` is a top-level nullable column — not a `metadata` key — so it is indexable for review queries (e.g., "unjustified overrides this week") and gives the legacy sidecar back-fill a 1:1 target. Engine writes leave it `null`; required-ness is enforced per writer, not at the schema level.
 * **History Retention via Cascading**: When a show, platform, or creator record is deleted, its matching `AuditTarget` join records are automatically deleted via `onDelete: Cascade`. Since `Audit` itself has no foreign key dependencies on the target entities, the primary historical `Audit` log is fully preserved in the database. Deleting the target automatically cleans up useless join records, preventing database bloat while keeping the core audit trail 100% intact.
 
 ### D. Safe Monetary Casting (Finance Guardrail #2)
@@ -155,12 +156,13 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 ### SECTION A: Foundation (PRs 12.0.1 – 12.0.5)
 *This section delivers the database schema additions, core audit models, template config picker, form rendering hydration, and the central ingestion priority resolver engine.*
 
-#### 🟩 PR 12.0.1 · `Audit` / `AuditTarget` Foundation
-* **Purpose**: Establish polymorphic audit schemas with target retention to trace all automated writes and overrides.
+#### 🟩 PR 12.0.1 · `Audit` / `AuditTarget` Foundation — ✅ Shipped in [#91](https://github.com/allenlin90/eridu-services/pull/91)
+* **Purpose**: Establish polymorphic audit schemas with target retention and a first-class `reason` column to trace all automated writes and overrides.
 * **Functional Deliverable**: 
   * Schema definition for `Audit` and `AuditTarget` using `onDelete: Cascade` on target foreign keys to clean up join records.
+  * Top-level `Audit.reason` column (nullable) so the existing FE override flows that already collect `override_reason` (shift-compensation, show-creator-compensation, etc.) land in a first-class, indexable field instead of a `metadata` key.
   * Backend repositories, services, and Zod verification schemas.
-  * A read-time **legacy sidecar merger** that seamlessly projects old metadata audits (`metadata.audit.snapshot_overrides[]`) and new `Audit` records in one unified timeline.
+  * A read-time **legacy sidecar merger** that seamlessly projects old metadata audits (`metadata.audit.snapshot_overrides[]`) and new `Audit` records in one unified timeline. The merger reads the new `reason` column with a fallback to `metadata.reason` for any pre-column rows back-filled later.
 
 #### 🟩 PR 12.0.2 · Phase 4 Actuals Schema Additions
 * **Purpose**: Run a single, clean SQL database migration that adds all operational columns and indices upfront.
