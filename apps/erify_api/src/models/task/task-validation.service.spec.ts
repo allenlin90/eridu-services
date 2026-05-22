@@ -140,8 +140,8 @@ describe('taskValidationService', () => {
     };
 
     expect(() => service.validateContent({
-      fld_attendmiss1__creator__show_mc_alpha: false,
-      fld_attendmiss1__creator__show_mc_beta: false,
+      'fld_attendmiss1:creator:show_mc_alpha': false,
+      'fld_attendmiss1:creator:show_mc_beta': false,
     }, schema as any, hydrationContext)).not.toThrow();
   });
 
@@ -168,12 +168,12 @@ describe('taskValidationService', () => {
     };
 
     expect(() => service.validateContent({
-      fld_attendmiss1__creator__show_mc_alpha: true,
+      'fld_attendmiss1:creator:show_mc_alpha': true,
     }, schema as any, hydrationContext)).toThrow(TaskValidationError);
 
     expect(() => service.validateContent({
-      fld_attendmiss1__creator__show_mc_alpha: true,
-      [getTaskContentReasonKey('fld_attendmiss1__creator__show_mc_alpha')]: 'Missed call sheet.',
+      'fld_attendmiss1:creator:show_mc_alpha': true,
+      [getTaskContentReasonKey('fld_attendmiss1:creator:show_mc_alpha')]: 'Missed call sheet.',
     }, schema as any, hydrationContext)).not.toThrow();
   });
 
@@ -202,9 +202,10 @@ describe('taskValidationService', () => {
     };
 
     expect(() => service.validateContent({
-      fld_attendmiss1__creator__show_mc_alpha: true,
-      [getTaskContentReasonKey('fld_attendmiss1__creator__show_mc_alpha')]: 'Late callout.',
-      fld_attendmiss1__creator__show_mc_beta_legacy: true,
+      'fld_attendmiss1:creator:show_mc_alpha': true,
+      [getTaskContentReasonKey('fld_attendmiss1:creator:show_mc_alpha')]: 'Late callout.',
+      // Real nanoid UID format: mixed-case letters, digits, underscores, hyphens.
+      'fld_attendmiss1:creator:show_mc_OUvOf4_aKnD-8Q_HULeH': true,
     }, schema as any, hydrationContext)).not.toThrow();
   });
 

@@ -185,7 +185,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 #### 🟩 PR 12.0.4 · Dynamic Target-Scoped Form Hydration — ✅ Shipped in [#95](https://github.com/allenlin90/eridu-services/pull/95)
 * **Purpose**: Dynamically expand a template's bound fields into individual inputs for each assigned creator or platform.
 * **Functional Deliverable**:
-  * Pure `hydrateTaskFormSchema` in `@eridu/api-types/task-management` plus `buildHydratedContentKey` / `parseHydratedContentKey` for the deterministic `<fieldId>__<scope>__<uid>` key format.
+  * Pure `hydrateTaskFormSchema` in `@eridu/api-types/task-management` plus `buildHydratedContentKey` / `parseHydratedContentKey` for the deterministic `<fieldId>:<scope>:<uid>` key format. Single-colon separator chosen because it is outside the nanoid alphabet (`A-Za-z0-9_-`) used to mint `ShowCreator` / `ShowPlatform` UIDs and so is unambiguously split-parseable regardless of what underscores nanoid happens to emit inside a UID.
   * Task read responses expose `show_creators` / `show_platforms` UIDs and a `hydration_context` block on `taskWithRelationsDto`.
   * BE: `TaskValidationService.validateContent` accepts a `hydrationContext` and re-runs hydration server-side so `require_reason` and other per-field rules apply per-target; stale items have `require_reason` stripped to keep submission unblocked.
   * FE: `resolveHydratedTaskSchema` consumed by `task-execution-sheet`, `studio-task-action-sheet`, and `my-task-card`; `JsonForm` recognizes `binding_stale: true` and renders the row dimmed, read-only, with an amber "Target no longer assigned" explainer.

@@ -1,3 +1,7 @@
+import {
+  TASK_CONTENT_EXTRA_SUFFIX,
+  TASK_CONTENT_REASON_SUFFIX,
+} from './task-content-extras.js';
 import { TASK_TEMPLATE_FIELD_ID_PATTERN } from './task-schema-engine.js';
 import {
   type FieldItemV2,
@@ -6,9 +10,14 @@ import {
   type UiSchemaV2,
 } from './template-definition.schema.js';
 
-export const HYDRATED_KEY_SEPARATOR = '__';
+// Use a single colon as the key separator: it is not in the nanoid alphabet
+// (`A-Za-z0-9_-`) used to mint ShowCreator / ShowPlatform UIDs, so it cannot
+// appear inside any of the three parts (fieldId / scope / targetUid). That
+// makes the key shape unambiguously split-on-`:` parseable, regardless of how
+// many underscores nanoid happens to emit inside a UID.
+export const HYDRATED_KEY_SEPARATOR = ':';
 const FIELD_ID_PART = /^fld_[a-z0-9]{10,}$/;
-const UID_PART = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
+const UID_PART = /^[A-Za-z0-9_-]+$/;
 
 export type HydrationScope = 'creator' | 'platform';
 
@@ -121,7 +130,7 @@ function makeHydratedItem(
  * operator can see them dimmed without losing in-progress data. Stale items
  * are skipped at extraction (PR 12.0.5).
  *
- * Keys are deterministic: `<fieldId>__<scope>__<targetUid>` so the same target
+ * Keys are deterministic: `<fieldId>:<scope>:<targetUid>` so the same target
  * always lands on the same content key across re-hydrations.
  */
 export function hydrateTaskFormSchema(
@@ -155,6 +164,15 @@ export function hydrateTaskFormSchema(
 
     const seenStaleUids = new Set<string>();
     for (const contentKey of Object.keys(content)) {
+      // Skip reason/extra sidecars — they'll be picked up automatically by
+      // buildTaskContentSchema for each item we emit below. Without this
+      // guard the sidecar key would parse as a hydrated key with a UID of
+      // `<realUid>__reason`, inject a bogus stale binding, and the real
+      // reason key would then be shadowed by a checkbox validator.
+      if (contentKey.endsWith(TASK_CONTENT_REASON_SUFFIX)
+        || contentKey.endsWith(TASK_CONTENT_EXTRA_SUFFIX)) {
+        continue;
+      }
       const parsed = parseHydratedContentKey(contentKey);
       if (!parsed)
         continue;

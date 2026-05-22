@@ -111,7 +111,21 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
   const draftSaveState: DraftSaveState = currentDraft?.saveState ?? 'idle';
   const hasDraft = currentDraft !== null;
 
-  const uiSchema = useMemo(() => resolveHydratedTaskSchema(task), [task]);
+  // Stale-binding detection has to see every key the form might carry —
+  // including keys that only live in the IndexedDB draft for this task —
+  // otherwise the strict validator rejects them as unknown. Memo on the
+  // sorted keyset so the schema only rebuilds when keys are added/removed,
+  // not on every keystroke.
+  const draftContentKeys = useMemo(() => {
+    if (!currentDraft)
+      return null;
+    return Object.keys(currentDraft.content).sort().join('|');
+  }, [currentDraft]);
+  const uiSchema = useMemo(
+    () => resolveHydratedTaskSchema(task, currentDraft?.content),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: rebuild on keyset only
+    [task, draftContentKeys],
+  );
   const draftKey = useMemo(() => getTaskExecutionDraftKey(task.id), [task.id]);
   const showStartTimeMs = task.show?.start_time ? new Date(task.show.start_time).getTime() : null;
   const showStartTime = showStartTimeMs ? new Date(showStartTimeMs) : null;

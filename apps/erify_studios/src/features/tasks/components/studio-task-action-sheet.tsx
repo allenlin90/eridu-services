@@ -130,9 +130,17 @@ function StudioTaskActionSheetBody({
     refetchOnWindowFocus: false,
   });
   const resolvedTask = taskDetail ?? task;
+  // Mirror task-execution-sheet: include current draft keys so stale-binding
+  // detection covers values the form is actually carrying. Memo on keyset.
+  const contentDraftKeys = useMemo(() => {
+    if (!contentDraft)
+      return null;
+    return Object.keys(contentDraft).sort().join('|');
+  }, [contentDraft]);
   const schema = useMemo(
-    () => (resolvedTask ? resolveHydratedTaskSchema(resolvedTask) : null),
-    [resolvedTask],
+    () => (resolvedTask ? resolveHydratedTaskSchema(resolvedTask, contentDraft ?? undefined) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: rebuild on keyset only
+    [resolvedTask, contentDraftKeys],
   );
   const loopTabs = useMemo<LoopTab[]>(() => {
     if (!schema) {

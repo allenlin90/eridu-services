@@ -191,12 +191,12 @@ describe('jsonForm', () => {
       schema,
       { creators: [{ uid: 'show_mc_alpha', label: 'Alice' }], platforms: [] },
       // Bob was previously assigned and the operator recorded a value, but Bob
-      // is no longer on the show.
-      { fld_attendmiss1__creator__show_mc_beta: true },
+      // is no longer on the show. UID shape matches real nanoid output.
+      { 'fld_attendmiss1:creator:show_mc_OUvOf4_aKnD-8Q': true },
     );
 
     const { container } = render(
-      <JsonForm schema={hydrated as unknown as UiSchemaV2} values={{ fld_attendmiss1__creator__show_mc_beta: true }} onChange={vi.fn()} />,
+      <JsonForm schema={hydrated as unknown as UiSchemaV2} values={{ 'fld_attendmiss1:creator:show_mc_OUvOf4_aKnD-8Q': true }} onChange={vi.fn()} />,
     );
 
     const staleNode = container.querySelector('[data-binding-stale="true"]');
