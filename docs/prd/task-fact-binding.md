@@ -78,12 +78,45 @@ To prevent IEEE-754 precision issues (IEEE float inaccuracies):
 To minimize database writes and prevent state divergence, creator attendance status (`ON_TIME`, `LATE`, `MISSING`) and `lateMinutes` are **derived live at read time** from `ShowCreator.actualStartTime`, the `attendanceMissing` flag, and `Show.startTime`. They are never persisted as static columns.
 
 ### F. Three-Perspective UI & Reusable Component Pattern
-To maintain visual consistency and ease development, all entity-related actuals and compensation features are structured and rendered across **three unified perspectives**:
-1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/finance/actuals` review dashboard and `/show-operations`).
-2. **Studio Individual Overview**: Single-creator or single-member detail pages accessed by managers from studio rosters (e.g. `/studios/:id/creators/:creatorId` or `/studios/:id/members/:memberId`).
-3. **Individual Overview**: Personal dashboards accessed directly by logged-in hosts/creators themselves (e.g. `/me/*` self-views).
+To maintain visual consistency and ease development, every PR 12 feature scoped to an identity-bearing entity (`Creator`, studio `Member`, `Show`) ships across **three unified perspectives**:
 
-**Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated. Unit components (such as `ActualsTimelineViewer`, `PerformanceMetricsWidget`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, and `AuditLogTimeline`) must be extracted into reusable packages or shared app folders and consumed identically by all three perspectives, varying only by the query parameters/role-scopes passed to them.
+```mermaid
+flowchart TB
+    DATA[(PR 12 indexed columns<br/>+ Audit / AuditTarget history)]
+
+    subgraph P1[Perspective 1 · Studio Overview]
+        P1A["/finance/actuals review"]
+        P1B["/show-operations"]
+        P1C["creator + member rosters"]
+    end
+
+    subgraph P2[Perspective 2 · Studio Individual Overview]
+        P2A["/studios/:id/creators/:creatorId"]
+        P2B["/studios/:id/members/:memberId"]
+        P2C["/studios/:id/shows/:showId"]
+    end
+
+    subgraph P3[Perspective 3 · Individual /me/* Self-View]
+        P3A["creator /me/* (erify_creators)"]
+        P3B["member /me/* (future, erify_studios)"]
+    end
+
+    DATA --> P1
+    DATA --> P2
+    DATA --> P3
+
+    P1 -. shared widgets .-> W[ActualsTimelineViewer · PerformanceMetricsWidget ·<br/>CompensationBreakdownCard · AttendanceStatusBadge · AuditLogTimeline]
+    P2 -. shared widgets .-> W
+    P3 -. shared widgets .-> W
+```
+
+1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/finance/actuals` review dashboard, `/show-operations`, creator/member roster tables).
+2. **Studio Individual Overview**: Single-entity detail pages accessed by managers from studio rosters — applies to **creators**, **members**, and **shows** (e.g. `/studios/:id/creators/:creatorId`, `/studios/:id/members/:memberId`, `/studios/:id/shows/:showId`).
+3. **Individual Overview**: First-person `/me/*` self-view for the logged-in entity. Creator self-view ships in `erify_creators`; the parallel member self-view in `erify_studios` is queued as that surface lands.
+
+**Symmetry obligation**: a creator-scoped read added to `/me/*` must also be reachable via Perspective 2 (`/studios/:id/creators/:creatorId`) and roll up into Perspective 1 in the same sub-PR, unless this PRD or the consuming sub-PR explicitly defers one perspective with a tracked follow-up. The same rule applies to member-scoped surfaces.
+
+**Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated. Unit components (`ActualsTimelineViewer`, `PerformanceMetricsWidget`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) must be extracted into reusable packages or shared app folders and consumed identically by all three perspectives, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
 
 ---
 

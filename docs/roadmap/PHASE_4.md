@@ -74,10 +74,12 @@ All technical implementation details, schema changes, and architectural designs 
 👉 **[PR 12 Design: TASK_INPUT_FACT_BINDING_DESIGN.md](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md)**
 
 #### 🏛️ Three-Perspective UI & Component Reuse Guide
-To maintain visual consistency and avoid logic drift across managers and creators, all actuals, performance, and compensation features must be implemented across **three unified perspectives** using shared unit components, as canonized in the updated [frontend-ui-components skill](../../.agent/skills/frontend-ui-components/SKILL.md):
-1. **Studio Overview** (e.g. `/finance/actuals` and `/show-operations` tables)
-2. **Studio Individual Overview** (e.g. `/studios/:id/creators/:creatorId` roster detail tabs)
-3. **Individual Overview** (e.g. `/me/*` self-views)
+To maintain visual consistency and avoid logic drift across managers, creators, and studio members, every PR 12 surface scoped to an identity-bearing entity (`Creator`, `Member`, `Show`) must be implemented across **three unified perspectives** using shared unit components, as canonized in the updated [frontend-ui-components skill](../../.agent/skills/frontend-ui-components/SKILL.md):
+1. **Studio Overview** (e.g. `/finance/actuals`, `/show-operations`, creator + member roster tables)
+2. **Studio Individual Overview** (e.g. `/studios/:id/creators/:creatorId`, `/studios/:id/members/:memberId`, `/studios/:id/shows/:showId` roster detail tabs)
+3. **Individual Overview** (e.g. `/me/*` self-views — creator self-view in `erify_creators`, member self-view queued in `erify_studios`)
+
+A sub-PR introducing a read in one perspective must reach all three in the same change, or explicitly defer one perspective in the PRD with a tracked follow-up (see [PRD §F](../prd/task-fact-binding.md#f-three-perspective-ui--reusable-component-pattern) and [design §6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#6-three-perspective-ui-consumption-map)).
 
 **Mandated Reusable Widgets**:
 - `ActualsTimelineViewer`: Shared timeline visualizing planned vs actual times.

@@ -8,6 +8,25 @@ This document defines the architectural specifications, database schemas, and ex
 
 ---
 
+## 0. End-to-End Flow at a Glance
+
+```mermaid
+flowchart LR
+    A[Generic Task Template<br/>system_fact_key markers] -->|generation +<br/>TaskTarget = SHOW| B[Hydrated Task Form<br/>fld_*_creator_&lt;uid&gt;<br/>fld_*_platform_&lt;uid&gt;]
+    B -->|operator submit<br/>manager edit<br/>platform telemetry| C{Ingestion Pipeline<br/>per-field resolver}
+    C -->|higher/equal priority| D[Indexed Columns<br/>Show / ShowCreator<br/>ShowPlatform / ShowPlatformViolation]
+    C -->|lower priority| E[SKIPPED_LOWER_PRIORITY<br/>preserved in task.content]
+    D --> F[Audit + AuditTarget<br/>polymorphic history]
+    E --> F
+    D --> G[Read-side rollups<br/>derived attendance<br/>derived lateMinutes]
+    G --> H[Three-Perspective UI]
+    F --> H
+```
+
+See §6 for how the three perspectives consume the same indexed reads and audit history through shared widgets.
+
+---
+
 ## 1. Architectural Core Principles
 
 To deliver rapid reporting, highly customizable operator form layouts, deterministic priority conflict resolution, and solid referential integrity, the architecture is grounded in five core principles:
@@ -101,6 +120,37 @@ model ShowPlatformViolation {
 
 ### B. Centralized Polymorphic Auditing Models
 
+```mermaid
+erDiagram
+    Audit ||--o{ AuditTarget : "envelope (preserved)"
+    AuditTarget }o--|| Show : "onDelete: Cascade"
+    AuditTarget }o--|| ShowCreator : "onDelete: Cascade"
+    AuditTarget }o--|| ShowPlatform : "onDelete: Cascade"
+    AuditTarget }o--|| StudioShift : "onDelete: Cascade"
+
+    Audit {
+      bigint id PK
+      string uid
+      string action "CREATE / UPDATE / OVERRIDE / SKIPPED_LOWER_PRIORITY"
+      bigint actorId FK "null for engine writes"
+      json metadata "old/new, task_uid, task_field_id, ingestion_source"
+      datetime createdAt
+    }
+    AuditTarget {
+      bigint id PK
+      bigint auditId FK
+      string targetType "SHOW | SHOW_CREATOR | SHOW_PLATFORM | STUDIO_SHIFT"
+      bigint targetId
+      bigint showId FK "nullable, indexed"
+      bigint showCreatorId FK "nullable, indexed"
+      bigint showPlatformId FK "nullable, indexed"
+      bigint studioShiftId FK "nullable, indexed"
+    }
+```
+
+Deletion semantics: deleting a `Show`/`ShowCreator`/`ShowPlatform`/`StudioShift` cascades only into the `AuditTarget` junction rows; the parent `Audit` envelope is never deleted, preserving the historical timeline (see PRD §2.C).
+
+
 ```prisma
 model Audit {
   id        BigInt                              @id @default(autoincrement())
@@ -154,6 +204,32 @@ model AuditTarget {
 
 ### A. Additive Snapshot Hydration
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant TPL as Task Template<br/>(generic, immutable fields)
+    participant GEN as Generation Engine
+    participant SNAP as Task Snapshot<br/>(append-only mutable for<br/>hydrated bindings)
+    participant ASSIGN as ShowCreator /<br/>ShowPlatform set
+    participant OP as Operator
+    participant EXT as Extraction Engine
+
+    TPL->>GEN: scan for system_fact_key markers
+    ASSIGN->>GEN: current assignments at generation
+    GEN->>SNAP: emit fld_*_creator_&lt;uid&gt; /<br/>fld_*_platform_&lt;uid&gt; (deterministic keys)
+
+    Note over SNAP,ASSIGN: assignments mutate before submission
+
+    ASSIGN->>GEN: render-time reconcile
+    GEN->>SNAP: APPEND new targets' fields (defaulted empty)
+    GEN->>SNAP: KEEP still-assigned fields (preserve in-progress values)
+    GEN->>SNAP: MARK unassigned targets binding_stale: true
+
+    OP->>SNAP: fill values + submit
+    SNAP->>EXT: hand off; submission freezes snapshot
+    EXT-->>EXT: stale-bound fields → review queue (PR 12.4), not target rows
+```
+
 Generic task templates do not reference static creators or platforms. The linkage is resolved at task instantiation and reconciled at render time:
 
 1. **Linkage Trigger**: When a task is generated for a show (either via scheduler or manual batch generation), a `TaskTarget` entry of `targetType: "SHOW"` is created, linking the `Task` to the `Show` record.
@@ -170,6 +246,34 @@ Generic task templates do not reference static creators or platforms. The linkag
 5. **Form Rendering**: The operator sees a dynamically built task form with labeled, explicit input fields for each currently active creator and platform, plus any stale-bound fields preserved for review.
 
 ### B. Event-Driven Push Extraction Pipeline
+
+```mermaid
+flowchart TD
+    SRC{Incoming write}
+    SRC -->|MANAGER override| RES
+    SRC -->|PLATFORM / system feed| RES
+    SRC -->|OPERATOR task submission| RES
+    SRC -->|PLANNED schedule import| RES
+
+    RES[Read target.metadata.actuals_source<br/>for this fact_key]
+    RES --> CMP{Incoming priority<br/>≥ recorded priority?}
+
+    CMP -->|yes| WRITE[Update indexed column<br/>+ set metadata.actuals_source.&lt;fact_key&gt;]
+    CMP -->|no| SKIP[Leave column unchanged<br/>keep value in task.content]
+
+    WRITE --> AUD[Audit row<br/>action = CREATE / UPDATE / OVERRIDE]
+    SKIP --> AUS[Audit row<br/>action = SKIPPED_LOWER_PRIORITY<br/>metadata.skipped_by_source]
+
+    AUD --> AT[AuditTarget<br/>showId / showCreatorId /<br/>showPlatformId / studioShiftId]
+    AUS --> AT
+
+    classDef reserved fill:#f9f9f9,stroke:#999,stroke-dasharray: 5 3;
+    R[CREATOR_INPUT tier<br/>reserved · no Phase 4 writer]:::reserved
+```
+
+Priority order enforced by the resolver (`CREATOR_INPUT` slot is reserved-only in Phase 4):
+
+$$\text{MANAGER} > \text{PLATFORM} > \underbrace{\text{CREATOR\_INPUT}}_{\text{reserved}} > \text{OPERATOR} > \text{PLANNED}$$
 
 When an operator submits a completed task form, a manager override is saved, or a system integration provides telemetry data:
 
@@ -249,3 +353,74 @@ FROM shows
 WHERE (actual_start_time IS NULL OR actual_end_time IS NULL)
   AND start_time BETWEEN :start_date AND :end_date;
 ```
+
+---
+
+## 5. Frontend Surfaces & Endpoint Map
+
+The same indexed columns and audit history feed every consumer. PR 12 does not stand up new BE endpoints per UI surface; it stabilizes column-shape so existing handlers (`/show-operations`, `/finance/actuals`, studio rosters, `/me/*`) project the same fields. Each FE surface in §6 hits one of the following read shapes:
+
+| Read shape | Returns | Indexed columns it leans on | Primary consumers |
+| --- | --- | --- | --- |
+| Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/show-operations`, `/studios/:id/shows/:showId`, `/finance/actuals` |
+| Creator attendance | derived `ON_TIME` / `LATE` / `MISSING`, `late_minutes`, `attendance_reason` | `ShowCreator(actual_start_time)`, `(attendance_missing)` joined to `Show.start_time` | `/finance/actuals`, `/studios/:id/creators/:creatorId`, `/me/shows` |
+| Platform performance | `gmv`, `viewer_count`, `performance_metrics` JSONB, `metadata.actuals_source` | `ShowPlatform(gmv)`, `(viewer_count)` | `/show-operations`, `/studios/:id/shows/:showId`, `/finance/actuals` |
+| Platform violations (active) | `violation_type`, `severity`, `reason`, `observed_at` (excluding superseded) | `ShowPlatformViolation(show_platform_id, superseded_at)` | `/finance/actuals`, show / platform detail surfaces |
+| Audit history | unified `Audit` + `AuditTarget` rows (engine + manager + legacy sidecar merger) | `AuditTarget(targetType, targetId)` and per-target FK indexes | every detail surface that hosts `AuditLogTimeline` |
+
+> **Reviewer note**: any FE surface added during PR 12.x must declare which read shape(s) it consumes. New read shapes require a paragraph here before the consuming sub-PR lands.
+
+---
+
+## 6. Three-Perspective UI Consumption Map
+
+Every entity-scoped feature in PR 12 ships across the three perspectives canonized in [`.agent/skills/frontend-ui-components/SKILL.md`](../../../../.agent/skills/frontend-ui-components/SKILL.md). Shared widgets pass an entity scope + filter into the same renderer; data and audit history come from the read shapes in §5.
+
+```mermaid
+flowchart TB
+    subgraph BE[Backend · PR 12 indexed columns + Audit history]
+        IDX[(Show / ShowCreator /<br/>ShowPlatform /<br/>ShowPlatformViolation)]
+        AUDIT[(Audit + AuditTarget)]
+    end
+
+    subgraph P1[Perspective 1 · Studio Overview]
+        SO1["/finance/actuals review"]
+        SO2["/show-operations"]
+        SO3["studio creator / member rosters"]
+    end
+
+    subgraph P2[Perspective 2 · Studio Individual Overview]
+        SI1["/studios/:id/creators/:creatorId"]
+        SI2["/studios/:id/members/:memberId"]
+        SI3["/studios/:id/shows/:showId"]
+    end
+
+    subgraph P3[Perspective 3 · Individual /me/* Self-View]
+        ME1["creator self-view<br/>(erify_creators /me/shows)"]
+        ME2["member self-view<br/>(future /me/* in erify_studios)"]
+    end
+
+    IDX --> P1
+    IDX --> P2
+    IDX --> P3
+    AUDIT --> P2
+    AUDIT --> P3
+
+    P1 -. shared widgets .-> W
+    P2 -. shared widgets .-> W
+    P3 -. shared widgets .-> W
+
+    W["Shared unit components<br/>ActualsTimelineViewer<br/>PerformanceMetricsWidget<br/>CompensationBreakdownCard<br/>AttendanceStatusBadge<br/>AuditLogTimeline"]
+```
+
+Coverage matrix — what each shared widget renders in each perspective:
+
+| Widget | P1 · Studio Overview | P2 · Studio Individual | P3 · `/me/*` Self-View |
+| --- | --- | --- | --- |
+| `ActualsTimelineViewer` | aggregated per-show row strip in `/show-operations` | full timeline on show / creator / member detail | own upcoming + completed shows |
+| `PerformanceMetricsWidget` | GMV / views totals + violation counts | per-platform breakdown on show detail | per-show contribution (creator self-view) |
+| `CompensationBreakdownCard` | not used (roll-up only) | per-creator / per-show breakdown | own breakdown for the logged-in entity |
+| `AttendanceStatusBadge` | grid cells in roster + ops tables | header status on creator / show detail | own attendance per show |
+| `AuditLogTimeline` | not used (too noisy) | full override + ingestion history | own override / ingestion history (read-only) |
+
+**Symmetry obligation**: if a sub-PR introduces a creator-scoped read in P3, it must be reachable via P2 (`/studios/:id/creators/:creatorId`) and roll up in P1 in the same PR — or the PRD must explicitly defer one perspective with a tracked follow-up. The same rule applies to member-scoped surfaces.
