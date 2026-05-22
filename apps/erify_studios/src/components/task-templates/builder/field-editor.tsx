@@ -65,10 +65,12 @@ const SystemFactCombobox = memo(({
   id,
   value,
   onChange,
+  disabled,
 }: {
   id: string;
   value: SystemFactKey | undefined;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const selectedFact = value ? SYSTEM_FACT_KEY_DEFINITIONS[value] : undefined;
@@ -87,6 +89,7 @@ const SystemFactCombobox = memo(({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className="w-full justify-between gap-2"
         >
           <span className="min-w-0 flex-1 truncate text-left">{buttonText}</span>
@@ -814,6 +817,10 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
   }, [fieldIsShared, item, onUpdate]);
 
   const handleSystemFactChange = useCallback((value: string) => {
+    if (fieldIsShared) {
+      return;
+    }
+
     if (value === SYSTEM_FACT_NONE_VALUE) {
       onUpdate({ system_fact_key: undefined });
       return;
@@ -836,7 +843,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       default_value: '',
       validation,
     });
-  }, [item.validation, onUpdate]);
+  }, [fieldIsShared, item.validation, onUpdate]);
 
   const handleDefaultValueChange = useCallback((val: any) => {
     handleChange('default_value', val);
@@ -910,8 +917,14 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
             id={`system-fact-${item.id}`}
             value={getSystemFactKey(item)}
             onChange={handleSystemFactChange}
+            disabled={fieldIsShared}
           />
-          {getSystemFactKey(item) && (
+          {fieldIsShared && (
+            <p className="text-xs text-muted-foreground">
+              Shared fields cannot be bound to a record field; the type is locked by studio settings.
+            </p>
+          )}
+          {!fieldIsShared && getSystemFactKey(item) && (
             <p className="text-xs text-muted-foreground">
               This answer will update the matching show, creator, or platform value later.
             </p>

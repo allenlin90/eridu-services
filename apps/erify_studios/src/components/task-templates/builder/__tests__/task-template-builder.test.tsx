@@ -182,4 +182,27 @@ describe('taskTemplateBuilder v2 field ids', () => {
       ],
     }));
   });
+
+  it('disables the auto-fill record field picker on shared fields', () => {
+    const onChange = vi.fn();
+    const templateWithSharedField: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      items: [
+        {
+          id: 'fld_sharedgmv01',
+          key: 'gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          group: 'l1',
+          shared_field_key: 'gmv',
+        },
+      ],
+    };
+
+    render(<TaskTemplateBuilder template={templateWithSharedField} onChange={onChange} />);
+
+    const combobox = screen.getByRole('combobox', { name: 'Auto-fill record field' });
+    expect(combobox).toBeDisabled();
+  });
 });
