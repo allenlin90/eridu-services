@@ -281,6 +281,7 @@ export class TaskRepository extends BaseRepository<
       select: {
         id: true,
         metadata: true,
+        version: true,
       },
     });
 
@@ -301,18 +302,41 @@ export class TaskRepository extends BaseRepository<
       : 0;
     const nextVersion = currentVersion + 1;
 
-    await this.delegate.update({
-      where: { id: task.id },
-      data: {
-        metadata: {
-          ...metadataObj,
-          material_asset_upload_versions: {
-            ...versionsByField,
-            [fieldKey]: nextVersion,
-          },
-        } as Prisma.InputJsonValue,
-      },
-    });
+    try {
+      await this.delegate.update({
+        where: { id: task.id, version: task.version, deletedAt: null },
+        data: {
+          version: task.version + 1,
+          metadata: {
+            ...metadataObj,
+            material_asset_upload_versions: {
+              ...versionsByField,
+              [fieldKey]: nextVersion,
+            },
+          } as Prisma.InputJsonValue,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === PRISMA_ERROR.RecordNotFound) {
+          const activeTask = await this.delegate.findFirst({
+            where: { id: task.id, deletedAt: null },
+            select: { version: true },
+          });
+
+          if (!activeTask) {
+            throw error; // Actually not found
+          }
+
+          throw new VersionConflictError(
+            'Task version is outdated',
+            task.version,
+            activeTask.version,
+          );
+        }
+      }
+      throw error;
+    }
 
     return nextVersion;
   }
@@ -378,6 +402,79 @@ export class TaskRepository extends BaseRepository<
         completedAt: null,
       },
     });
+  }
+
+  // Engineering decision: This method is necessary because it performs an optimistic concurrency snapshot transition
+  // on a Task. It pre-reads existing metadata to merge JSONB objects in-memory, executes a version-gated update
+  // statement to avoid concurrent modifications, and catches RecordNotFound to distinguish between a soft-deletion
+  // and a version conflict. These concerns cannot be handled via simple findMany inlining at the service layer.
+  async updateActiveTaskSnapshot(
+    id: bigint,
+    currentVersion: number,
+    data: {
+      snapshotId: bigint;
+      description: string;
+      type: TaskType;
+      dueDate: Date;
+      version: number;
+      metadata?: Prisma.InputJsonValue;
+    },
+  ): Promise<Task> {
+    const existing = await this.delegate.findFirst({
+      where: { id, deletedAt: null },
+      select: { metadata: true, version: true },
+    });
+
+    if (!existing) {
+      throw new Error('Task not found');
+    }
+
+    const existingMetadata = (existing.metadata && typeof existing.metadata === 'object')
+      ? existing.metadata as Record<string, unknown>
+      : {};
+
+    const incomingMetadata = (data.metadata && typeof data.metadata === 'object')
+      ? data.metadata as Record<string, unknown>
+      : {};
+
+    const newMetadata: Prisma.InputJsonObject = {
+      ...existingMetadata,
+      ...incomingMetadata,
+    } as Prisma.InputJsonObject;
+
+    try {
+      return await this.delegate.update({
+        where: { id, version: currentVersion, deletedAt: null },
+        data: {
+          snapshotId: data.snapshotId,
+          description: data.description,
+          type: data.type,
+          dueDate: data.dueDate,
+          version: data.version,
+          metadata: newMetadata,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === PRISMA_ERROR.RecordNotFound) {
+          const activeTask = await this.delegate.findFirst({
+            where: { id, deletedAt: null },
+            select: { version: true },
+          });
+
+          if (!activeTask) {
+            throw error; // Actually not found
+          }
+
+          throw new VersionConflictError(
+            'Task version is outdated',
+            currentVersion,
+            activeTask.version,
+          );
+        }
+      }
+      throw error;
+    }
   }
 
   async reassignTaskToShow(

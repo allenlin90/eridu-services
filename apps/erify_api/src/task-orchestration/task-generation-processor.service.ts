@@ -56,8 +56,24 @@ export class TaskGenerationProcessor {
 
       if (existingTask) {
         if (existingTask.deletedAt === null) {
-          // Already exists and active, skip
-          tasksSkippedForShow++;
+          const isTerminalStatus
+            = existingTask.status === TaskStatus.COMPLETED
+            || existingTask.status === TaskStatus.CLOSED;
+
+          if (existingTask.snapshotId !== latestSnapshot.id && !isTerminalStatus) {
+            await this.taskService.updateActiveTaskSnapshot(existingTask.id, existingTask.version, {
+              snapshotId: latestSnapshot.id,
+              description: template.name,
+              type,
+              dueDate,
+              version: existingTask.version + 1,
+              metadata: this.buildShowGeneratedTaskMetadata(type),
+            });
+            tasksCreatedForShow++;
+          } else {
+            // Already exists and active on the latest snapshot, or is in terminal status, skip
+            tasksSkippedForShow++;
+          }
           continue;
         }
 
