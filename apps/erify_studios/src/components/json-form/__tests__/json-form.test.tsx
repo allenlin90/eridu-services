@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getTaskContentExtraKey,
   getTaskContentReasonKey,
+  hydrateTaskFormSchema,
   type UiSchema,
   type UiSchemaV2,
 } from '@eridu/api-types/task-management';
@@ -134,6 +135,74 @@ describe('jsonForm', () => {
 
     rerender(<JsonForm schema={schema} values={{ show_date: triggering }} onChange={vi.fn()} />);
     expect(screen.getByLabelText('Explanation for Show date')).toBeInTheDocument();
+  });
+
+  it('renders one hydrated input per assigned creator for system_fact_key bindings', () => {
+    const schema: UiSchemaV2 = {
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_attendmiss1',
+          key: 'attendance_missing',
+          type: 'checkbox',
+          label: 'Creator attendance missing',
+          required: false,
+          system_fact_key: 'creator_attendance_missing',
+        },
+      ],
+    };
+
+    const hydrated = hydrateTaskFormSchema(
+      schema,
+      {
+        creators: [
+          { uid: 'show_mc_alpha', label: 'Alice' },
+          { uid: 'show_mc_beta', label: 'Bob' },
+        ],
+        platforms: [],
+      },
+      {},
+    );
+
+    render(<JsonForm schema={hydrated as unknown as UiSchemaV2} values={{}} onChange={vi.fn()} />);
+
+    expect(screen.getByText(/Creator attendance missing — Alice/)).toBeInTheDocument();
+    expect(screen.getByText(/Creator attendance missing — Bob/)).toBeInTheDocument();
+  });
+
+  it('marks stale hydrated items with a read-only dimmed indicator', () => {
+    const schema: UiSchemaV2 = {
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_attendmiss1',
+          key: 'attendance_missing',
+          type: 'checkbox',
+          label: 'Creator attendance missing',
+          required: false,
+          system_fact_key: 'creator_attendance_missing',
+        },
+      ],
+    };
+
+    const hydrated = hydrateTaskFormSchema(
+      schema,
+      { creators: [{ uid: 'show_mc_alpha', label: 'Alice' }], platforms: [] },
+      // Bob was previously assigned and the operator recorded a value, but Bob
+      // is no longer on the show.
+      { fld_attendmiss1__creator__show_mc_beta: true },
+    );
+
+    const { container } = render(
+      <JsonForm schema={hydrated as unknown as UiSchemaV2} values={{ fld_attendmiss1__creator__show_mc_beta: true }} onChange={vi.fn()} />,
+    );
+
+    const staleNode = container.querySelector('[data-binding-stale="true"]');
+    expect(staleNode).not.toBeNull();
+    expect(staleNode!.className).toContain('opacity-50');
+    expect(staleNode!.textContent).toContain('Target no longer assigned');
   });
 
   it('shows stored extra input metadata alongside the selected answer', () => {

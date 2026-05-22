@@ -210,11 +210,23 @@ export class TaskService extends BaseModelService {
 
     const uiSchema = task.snapshot?.schema as any;
     const targetShow = task.targets?.[0]?.show;
+    const hydrationContext = targetShow
+      ? {
+          creators: (targetShow.showCreators ?? []).map((entry) => ({
+            uid: entry.uid,
+            label: entry.creator.aliasName || entry.creator.name,
+          })),
+          platforms: (targetShow.showPlatforms ?? []).map((entry) => ({
+            uid: entry.uid,
+            label: entry.platform.name,
+          })),
+        }
+      : undefined;
 
     try {
       if (payload.content !== undefined) {
         if (uiSchema) {
-          this.taskValidationService.validateContent(payload.content, uiSchema);
+          this.taskValidationService.validateContent(payload.content, uiSchema, hydrationContext);
         }
         newContent = payload.content;
       }
@@ -291,7 +303,7 @@ export class TaskService extends BaseModelService {
         if (newStatus === TASK_STATUS.COMPLETED) {
           if (uiSchema) {
             // Validate the final content thoroughly if marking completed
-            this.taskValidationService.validateContent(newContent || {}, uiSchema);
+            this.taskValidationService.validateContent(newContent || {}, uiSchema, hydrationContext);
           }
           completedAt = new Date();
         } else {

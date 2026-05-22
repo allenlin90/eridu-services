@@ -19,8 +19,8 @@ import {
 } from '@eridu/ui';
 
 import { useUpdateMyTask } from '../hooks/use-update-my-task';
+import { resolveHydratedTaskSchema } from '../lib/hydrate-task-schema';
 import { calculateTaskProgress, isFieldComplete } from '../lib/progress';
-import { resolveUiSchema } from '../lib/resolve-ui-schema';
 
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
@@ -111,9 +111,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
   const draftSaveState: DraftSaveState = currentDraft?.saveState ?? 'idle';
   const hasDraft = currentDraft !== null;
 
-  const uiSchema = task.snapshot?.schema
-    ? resolveUiSchema(task.snapshot.schema)
-    : null;
+  const uiSchema = useMemo(() => resolveHydratedTaskSchema(task), [task]);
   const draftKey = useMemo(() => getTaskExecutionDraftKey(task.id), [task.id]);
   const showStartTimeMs = task.show?.start_time ? new Date(task.show.start_time).getTime() : null;
   const showStartTime = showStartTimeMs ? new Date(showStartTimeMs) : null;

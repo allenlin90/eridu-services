@@ -114,6 +114,100 @@ describe('taskValidationService', () => {
     }, v2ReasonSchema as any)).not.toThrow();
   });
 
+  it('accepts hydrated per-target keys when a system_fact_key is bound', () => {
+    const schema = TemplateSchemaV2Validator.parse({
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_attendmiss1',
+          key: 'attendance_missing',
+          type: 'checkbox',
+          label: 'Creator attendance missing',
+          required: false,
+          system_fact_key: 'creator_attendance_missing',
+          validation: { require_reason: 'on-true' },
+        },
+      ],
+    });
+
+    const hydrationContext = {
+      creators: [
+        { uid: 'show_mc_alpha', label: 'Alice' },
+        { uid: 'show_mc_beta', label: 'Bob' },
+      ],
+      platforms: [],
+    };
+
+    expect(() => service.validateContent({
+      fld_attendmiss1__creator__show_mc_alpha: false,
+      fld_attendmiss1__creator__show_mc_beta: false,
+    }, schema as any, hydrationContext)).not.toThrow();
+  });
+
+  it('requires reason on hydrated checkbox when require_reason is on-true and value is true', () => {
+    const schema = TemplateSchemaV2Validator.parse({
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_attendmiss1',
+          key: 'attendance_missing',
+          type: 'checkbox',
+          label: 'Creator attendance missing',
+          required: false,
+          system_fact_key: 'creator_attendance_missing',
+          validation: { require_reason: 'on-true' },
+        },
+      ],
+    });
+
+    const hydrationContext = {
+      creators: [{ uid: 'show_mc_alpha', label: 'Alice' }],
+      platforms: [],
+    };
+
+    expect(() => service.validateContent({
+      fld_attendmiss1__creator__show_mc_alpha: true,
+    }, schema as any, hydrationContext)).toThrow(TaskValidationError);
+
+    expect(() => service.validateContent({
+      fld_attendmiss1__creator__show_mc_alpha: true,
+      [getTaskContentReasonKey('fld_attendmiss1__creator__show_mc_alpha')]: 'Missed call sheet.',
+    }, schema as any, hydrationContext)).not.toThrow();
+  });
+
+  it('tolerates stale hydrated keys (target no longer assigned) without requiring reason', () => {
+    const schema = TemplateSchemaV2Validator.parse({
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_attendmiss1',
+          key: 'attendance_missing',
+          type: 'checkbox',
+          label: 'Creator attendance missing',
+          required: false,
+          system_fact_key: 'creator_attendance_missing',
+          validation: { require_reason: 'on-true' },
+        },
+      ],
+    });
+
+    // Alpha was assigned at submission time and answered true; bob was later removed
+    // and his previously-recorded value should pass through without a reason.
+    const hydrationContext = {
+      creators: [{ uid: 'show_mc_alpha', label: 'Alice' }],
+      platforms: [],
+    };
+
+    expect(() => service.validateContent({
+      fld_attendmiss1__creator__show_mc_alpha: true,
+      [getTaskContentReasonKey('fld_attendmiss1__creator__show_mc_alpha')]: 'Late callout.',
+      fld_attendmiss1__creator__show_mc_beta_legacy: true,
+    }, schema as any, hydrationContext)).not.toThrow();
+  });
+
   it('does not enforce require_reason for v1 schemas', () => {
     const schema = TemplateSchemaValidator.parse({
       items: [

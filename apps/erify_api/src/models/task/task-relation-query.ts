@@ -1,5 +1,15 @@
 import type { Prisma, Task, TaskTemplateSnapshot } from '@prisma/client';
 
+export type TaskShowCreatorTarget = {
+  uid: string;
+  creator: { name: string; aliasName: string };
+};
+
+export type TaskShowPlatformTarget = {
+  uid: string;
+  platform: { name: string };
+};
+
 export type TaskWithSnapshotTargets = Task & {
   snapshot: TaskTemplateSnapshot | null;
   targets: {
@@ -11,7 +21,8 @@ export type TaskWithSnapshotTargets = Task & {
       startTime: Date;
       endTime: Date;
       client: { name: string } | null;
-      showCreators: { creator: { name: string; aliasName: string } }[];
+      showCreators: TaskShowCreatorTarget[];
+      showPlatforms: TaskShowPlatformTarget[];
     } | null;
   }[];
 };
@@ -28,10 +39,37 @@ export type TaskWithRelations = Task & {
       endTime: Date;
       client: { name: string } | null;
       studioRoom: { name: string } | null;
-      showCreators: { creator: { name: string; aliasName: string } }[];
+      showCreators: TaskShowCreatorTarget[];
+      showPlatforms: TaskShowPlatformTarget[];
     } | null;
   }[];
 };
+
+const showHydrationTargetSelect = {
+  showCreators: {
+    where: { deletedAt: null },
+    select: {
+      uid: true,
+      creator: {
+        select: {
+          name: true,
+          aliasName: true,
+        },
+      },
+    },
+  },
+  showPlatforms: {
+    where: { deletedAt: null },
+    select: {
+      uid: true,
+      platform: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  },
+} as const;
 
 export const taskSnapshotTargetInclude = {
   snapshot: true,
@@ -51,17 +89,7 @@ export const taskSnapshotTargetInclude = {
               name: true,
             },
           },
-          showCreators: {
-            where: { deletedAt: null },
-            include: {
-              creator: {
-                select: {
-                  name: true,
-                  aliasName: true,
-                },
-              },
-            },
-          },
+          ...showHydrationTargetSelect,
         },
       },
     },
@@ -92,17 +120,7 @@ export const taskRelationInclude = {
               name: true,
             },
           },
-          showCreators: {
-            where: { deletedAt: null },
-            include: {
-              creator: {
-                select: {
-                  name: true,
-                  aliasName: true,
-                },
-              },
-            },
-          },
+          ...showHydrationTargetSelect,
         },
       },
     },

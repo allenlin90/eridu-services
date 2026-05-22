@@ -130,9 +130,16 @@ export const taskWithRelationsSchema = taskSchema.extend({
         name: z.string(),
       }).nullable().optional(),
       showCreators: z.array(z.object({
+        uid: z.string(),
         creator: z.object({
           name: z.string(),
           aliasName: z.string(),
+        }),
+      })).optional(),
+      showPlatforms: z.array(z.object({
+        uid: z.string(),
+        platform: z.object({
+          name: z.string(),
         }),
       })).optional(),
     }).nullable(),
@@ -144,12 +151,21 @@ export const taskWithRelationsSchema = taskSchema.extend({
  */
 export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
   let show = null;
+  let hydrationContext: {
+    creators: { uid: string; label: string }[];
+    platforms: { uid: string; label: string }[];
+  } = { creators: [], platforms: [] };
   if (obj.targets && obj.targets.length > 0) {
     const s = obj.targets[0]?.show;
     if (s) {
-      const creatorNames = (s.showCreators ?? []).map(
-        (item) => item.creator.aliasName || item.creator.name,
-      );
+      const creatorEntries = (s.showCreators ?? []).map((item) => ({
+        uid: item.uid,
+        label: item.creator.aliasName || item.creator.name,
+      }));
+      const platformEntries = (s.showPlatforms ?? []).map((item) => ({
+        uid: item.uid,
+        label: item.platform.name,
+      }));
       show = {
         id: s.uid,
         external_id: s.externalId ?? s.uid,
@@ -158,7 +174,11 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
         end_time: s.endTime.toISOString(),
         client_name: s.client?.name ?? null,
         studio_room_name: s.studioRoom?.name ?? null,
-        creator_names: creatorNames,
+        creator_names: creatorEntries.map((c) => c.label),
+      };
+      hydrationContext = {
+        creators: creatorEntries,
+        platforms: platformEntries,
       };
     }
   }
@@ -184,6 +204,7 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
     assignee: obj.assignee ? { id: obj.assignee.uid, name: obj.assignee.name } : null,
     template: obj.template ? { id: obj.template.uid, name: obj.template.name } : null,
     show,
+    hydration_context: hydrationContext,
   };
 });
 

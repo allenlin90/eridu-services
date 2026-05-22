@@ -24,7 +24,7 @@ import {
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
 import { getStudioTask, studioTaskKeys } from '@/features/tasks/api/get-studio-task';
-import { resolveUiSchema } from '@/features/tasks/lib/resolve-ui-schema';
+import { resolveHydratedTaskSchema } from '@/features/tasks/lib/hydrate-task-schema';
 
 type StudioTaskActionSheetProps = {
   studioId: string;
@@ -130,9 +130,10 @@ function StudioTaskActionSheetBody({
     refetchOnWindowFocus: false,
   });
   const resolvedTask = taskDetail ?? task;
-  const schema = resolvedTask?.snapshot?.schema
-    ? resolveUiSchema(resolvedTask.snapshot.schema)
-    : null;
+  const schema = useMemo(
+    () => (resolvedTask ? resolveHydratedTaskSchema(resolvedTask) : null),
+    [resolvedTask],
+  );
   const loopTabs = useMemo<LoopTab[]>(() => {
     if (!schema) {
       return [];
