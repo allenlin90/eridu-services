@@ -106,7 +106,7 @@ FE forms editing these fields **must** clear the irrelevant rate fields before s
 - `Show.actualStartTime` / `Show.actualEndTime` — nullable, entered any time.
 - `ShowCreator.actualStartTime` / `ShowCreator.actualEndTime` — nullable, creator participation window for a specific show assignment.
 - `ShowPlatform.actualStartTime` / `ShowPlatform.actualEndTime` — nullable, platform stream window for a specific platform on a show.
-- `ShowPlatform` performance facts — platform-scoped GMV and view count in Phase 4; additional metrics such as CTR/CTO require later typed-field promotion. `viewerCount` already exists with a zero default, so selected-source metadata is required to distinguish default zero from a submitted zero.
+- `ShowPlatform` performance facts — **deferred to the post-12.4 analytics infrastructure investigation** (see [`show-performance-analytics-infra.md`](../ideation/show-performance-analytics-infra.md)). Phase 4 does not promote GMV, view count, CTR/CTO, or any other platform performance metric to a typed `ShowPlatform` column. `viewerCount` keeps its pre-existing `Int @default(0)` shape from the init migration but its read path is analytical.
 - `ShowPlatformViolation` records — zero or more violation records attached to a `ShowPlatform`.
 - `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime` — nullable, entered any time.
 
@@ -119,12 +119,14 @@ Actual timestamps and platform performance inputs are recorded facts, not calcul
 | `Show` | Overall operational show window when the task or manager input records one show-level timeline. | ✅ In scope |
 | `StudioShiftBlock` | One operator/member labor window. | ✅ In scope |
 | `ShowCreator` | One creator's distinct attendance status and participation window for a multi-creator show, late join, early leave, or missing creator. | ✅ Planned in Phase 4 |
-| `ShowPlatform` | One platform stream's actual window plus the first typed performance facts: GMV and views. | ✅ Planned in Phase 4 |
+| `ShowPlatform` | One platform stream's actual window (actual start / end time). Typed performance facts (GMV, views, etc.) are deferred to the 12.5 analytics infrastructure investigation. | ✅ Actual times planned in Phase 4 (performance facts deferred to 12.5) |
 | `ShowPlatformViolation` | One violation event or finding for a platform stream. A `ShowPlatform` can have zero, one, or many violation records. | ✅ Planned in Phase 4 |
 
 Creator attendance does not inherit the show timeline once creator-scoped inputs exist. A creator-specific late, missing, start, or end fact belongs on `ShowCreator`, while the show-level timeline remains a separate operational fact for the overall event.
 
-Platform actuals and performance facts are platform-specific. Seller-center or platform-derived actuals, GMV, and views belong on `ShowPlatform`; a show with multiple platforms may have multiple platform windows and metrics. Violations are child records rather than a single platform status because one platform stream can have zero, one, or many violations. Overall show actuals can still be entered directly on `Show`, but read models should treat platform windows as narrower supporting facts rather than aliases of the show fields.
+Platform actuals are platform-specific. Seller-center or platform-derived actual times belong on `ShowPlatform`; a show with multiple platforms may have multiple platform windows. Violations are child records rather than a single platform status because one platform stream can have zero, one, or many violations. Overall show actuals can still be entered directly on `Show`, but read models should treat platform windows as narrower supporting facts rather than aliases of the show fields. Platform-scoped performance metrics (GMV, viewer count, CTR, CTO, etc.) are analytical, not operational, and ride the 12.5 analytics infrastructure track.
+
+Show-level performance analytics are downstream read-model concerns. Aggregate dashboards, trend analysis, and cross-show performance exploration should derive from platform-scoped facts through a future analytical layer instead of storing generic performance buckets on `Show`.
 
 For comparable actuals and performance facts, the selected model value follows source priority: manager override > system/platform telemetry or upload > creator-attributed input > operator task input > planned schedule. Manager override is intentionally highest priority because system inputs can be wrong and can affect compensation; every override must carry an audit entry and review reason where the UI collects one. The system may retain every submitted input as an audit/reference record, but the value currently written to the scoped model field or child record is the operational source of truth for reads.
 
@@ -208,7 +210,7 @@ Each row exposes:
 - `line_item_subtotal` — non-nullable decimal. Sum of supplemental line items only; `0` when no line items.
 - `unresolved_reasons` — string array. Examples: `["creator:smc_x:commission_pending_revenue"]`, `["show:show_y:planned_time_missing"]`, `["creator:smc_x:agreement_snapshot_missing"]`. UI consumes these instead of seeing `0`.
 - `calculation_warnings` — string array. Examples: `["show:show_y:actuals_missing_using_planned"]`, `["shift_block:ssb_z:actuals_incomplete_using_planned"]`. UI surfaces these as provisional-value warnings, not null-cost blockers.
-- `actuals_source` — which selected input category drove the **time-based component** specifically (`actual_start_time`/`actual_end_time` pair). One of `MANAGER_OVERRIDE`, `PLATFORM_DATA`, `OPERATOR_INPUT`, or `PLANNED` in Phase 4. A `CREATOR_INPUT` value is reserved for forward compatibility but has no Phase 4 writer. The enum can extend to source-specific values such as `CREATOR_APP` / `PUNCH_CLOCK` later. Note this row-level field reports the dominant source for time only; the underlying storage shape on `Show` / `ShowCreator` / `ShowPlatform` is a per-field source map (see "Per-field actuals source map" below) so non-time facts (e.g., GMV, viewer count) carry their own source independently.
+- `actuals_source` — which selected input category drove the **time-based component** specifically (`actual_start_time`/`actual_end_time` pair). One of `MANAGER_OVERRIDE`, `PLATFORM_DATA`, `OPERATOR_INPUT`, or `PLANNED` in Phase 4. A `CREATOR_INPUT` value is reserved for forward compatibility but has no Phase 4 writer. The enum can extend to source-specific values such as `CREATOR_APP` / `PUNCH_CLOCK` later. Note this row-level field reports the dominant source for time only; the underlying storage shape on `Show` / `ShowCreator` / `ShowPlatform` is a per-field source map (see "Per-field actuals source map" below) so non-time facts (e.g., GMV, viewer count — once those re-enter via 12.5) can carry their own source independently.
 - `is_in_future` — boolean derived from entity-time vs request time. UI uses this to label the row "projected" if it likes; Phase 4 does not store a state enum.
 
 Recipient self-view responses must include enough status/reason metadata for FE to show pending events, but must suppress monetary totals whenever actuals are missing or incomplete. Pending rows do not contribute to recipient-facing row amounts, subtotals, or period totals until actuals are complete. Exact DTO names belong to 2.3.
@@ -224,7 +226,7 @@ Recipient self-view responses must include enough status/reason metadata for FE 
 
 ### Actuals priority cascade
 
-Each fact (time pair, GMV, viewer count, attendance) carries an independently selected source category. The cascade below describes the **per-fact resolver**: when a new input event arrives, the resolver compares the incoming source against the previously selected source for that specific fact and writes only if the incoming priority is higher or equal. The product contract needs the selected source category per fact; ingestion details and lower-priority reference inputs stay behind the service layer unless a review surface needs to show them.
+Each fact (time pair, attendance — plus GMV / viewer count once they re-enter via 12.5) carries an independently selected source category. The cascade below describes the **per-fact resolver**: when a new input event arrives, the resolver compares the incoming source against the previously selected source for that specific fact and writes only if the incoming priority is higher or equal. The product contract needs the selected source category per fact; ingestion details and lower-priority reference inputs stay behind the service layer unless a review surface needs to show them.
 
 | Priority | Source                                                           | Phase 4 status       |
 | -------- | ---------------------------------------------------------------- | -------------------- |
@@ -244,14 +246,12 @@ Storage on `Show`, `ShowCreator`, and `ShowPlatform` uses a per-field source map
 {
   "actuals_source": {
     "actual_start_time": "MANAGER_OVERRIDE",
-    "actual_end_time": "OPERATOR_INPUT",
-    "gmv": "PLATFORM_DATA",
-    "viewer_count": "PLATFORM_DATA"
+    "actual_end_time": "OPERATOR_INPUT"
   }
 }
 ```
 
-This shape lets a single row legitimately mix sources (e.g., a manager-overridden time pair alongside a platform-sourced GMV) and resolves the `ShowPlatform.viewerCount Int @default(0)` ambiguity cleanly: **absence of a key in the map means never-written**; **presence means submitted (even if zero)**. The row's `actuals_source` exposed by the calculator projects only the time-pair source for backward compatibility with PR 4 / 10 / 11 self-views; non-time facts are not currently surfaced as their own row-level fields.
+Phase 4 only writes time-pair keys into the map. The shape generalizes: when analytical facts (e.g. GMV, viewer count) re-enter the OLTP path via 12.5, they will use their own keys (e.g. `gmv`, `viewer_count`) so a single row can legitimately mix sources (manager-overridden time pair alongside a platform-sourced GMV). This is also how the `ShowPlatform.viewerCount Int @default(0)` ambiguity will be resolved cleanly: **absence of a key in the map means never-written**; **presence means submitted (even if zero)**. The row's `actuals_source` exposed by the calculator projects only the time-pair source for backward compatibility with PR 4 / 10 / 11 self-views; non-time facts are not currently surfaced as their own row-level fields.
 
 ### Wire-label rename
 

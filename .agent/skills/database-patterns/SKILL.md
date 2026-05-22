@@ -70,9 +70,13 @@ Use Prisma nested writes for atomic parent + child creation. Use `@Transactional
 
 Use `pg_advisory_xact_lock` to serialize concurrent operations within a transaction. Transaction-scoped, auto-releases. Use entity primary key as lock key.
 
-## 10. Recorded Facts
+## 10. Operational Facts vs Analytical Metrics
 
-Persist facts on the narrowest scoped table. Avoid storing calculated totals on operational rows. Use purpose-built models for frozen amounts.
+Persist OLTP facts on the narrowest scoped table when they support operational writes, exception review, filtering, sign-off, overrides, or constraints. Examples: actual time pairs, missing attendance markers, stale binding review state, and platform violation records.
+
+Do not add operational columns just because a metric is useful for post-show analysis. GMV, conversion, trend, ranking, and cross-show aggregate needs should first be classified as analytical unless a concrete operational workflow depends on them. Analytical features may use the same Postgres database through read models/materialized views or a separate OLAP path; decide that in a design/ideation step before schema promotion.
+
+Avoid storing calculated totals on operational rows. Use purpose-built models for frozen amounts.
 
 ## 11. Audit History
 

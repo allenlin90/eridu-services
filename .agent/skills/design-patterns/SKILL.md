@@ -21,9 +21,13 @@ HTTP API (Controllers) → Business Logic (Services) → Data Access (Repositori
 - Repositories hide DB/ORM — services never write raw queries
 - Shared API types at external edges; domain/DB types internally
 
-## Recorded Facts vs Derived Read Models
+## OLTP Facts vs Analytical Read Models
 
-Store facts on the narrowest entity: `Show` (event timing), `ShowCreator` (participation), `ShowPlatform` (stream/revenue), `StudioShiftBlock` (labor). Never persist calculated finance totals on operational tables.
+Keep OLTP tables focused on operational writes, exception review, and lifecycle decisions. Store facts on the narrowest entity: `Show` (event timing), `ShowCreator` (participation), `ShowPlatform` (platform stream facts), `ShowPlatformViolation` (platform exception events), `StudioShiftBlock` (labor).
+
+Only promote a metric to an operational column when it drives a current operational query, filter, sign-off, override, or constraint. Late, missing, incomplete, stale, and violation states belong in the OLTP path. Cross-show trends, post-show performance analysis, revenue exploration, and derived aggregates belong in an explicit analytical read model or OLAP design.
+
+OLAP may share Postgres through projections/materialized views or use separate infrastructure. Do not assume the infrastructure before the product query shape, freshness, ownership, and backfill requirements are clear. Never persist calculated finance totals on operational tables.
 
 ## Audit History
 
