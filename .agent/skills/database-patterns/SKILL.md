@@ -74,13 +74,17 @@ Use `pg_advisory_xact_lock` to serialize concurrent operations within a transact
 
 Persist facts on the narrowest scoped table. Avoid storing calculated totals on operational rows. Use purpose-built models for frozen amounts.
 
-## 11. Migration Policy
+## 11. Audit History
+
+Use standard audit tables for new override and extraction history. Do not add new `metadata.audit.*` arrays; keep existing metadata audit payloads as legacy read compatibility only.
+
+## 12. Migration Policy
 
 New migrations from official tooling only (`prisma migrate dev`, `drizzle generate`). Custom SQL in generated files with `-- CUSTOM SQL START/END` comments. Never rewrite deployed migrations.
 
 > 📖 For data-only backfills: choose migration SQL OR operational script, not both.
 
-## 12. Seed Compatibility Gate
+## 13. Seed Compatibility Gate
 
 Schema/service changes must include seed/fixture compatibility review: reference data parity, seed completeness, fixture parity, deterministic verification.
 

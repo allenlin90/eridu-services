@@ -7,8 +7,8 @@ Design/proposal/in-progress documents for `erify_studios`.
 1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned follow-up for studio resolve UX
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
 3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-4. [Compensation Line Items + Actuals Frontend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — ⏳ In Progress (Tasks 1-6 merged; Task 7 cleanup next)
-5. [Client Mechanics Management](./CLIENT_MECHANICS_MANAGEMENT_DESIGN.md) — 📐 Planned design reset for client-owned, campaign-scoped moderation mechanics
+4. [Client Mechanics Management](./CLIENT_MECHANICS_MANAGEMENT_DESIGN.md) — 📐 Planned design reset for client-owned, campaign-scoped moderation mechanics
+5. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — ⏸️ Deferred Phase 5 reference (revisit for Client Portal)
 
 ## Note
 
@@ -19,3 +19,4 @@ Design/proposal/in-progress documents for `erify_studios`.
   - [../STUDIO_CREATOR_ONBOARDING.md](../STUDIO_CREATOR_ONBOARDING.md)
   - [../STUDIO_SHOW_MANAGEMENT.md](../STUDIO_SHOW_MANAGEMENT.md)
   - [../TASK_SUBMISSION_REPORTING.md](../TASK_SUBMISSION_REPORTING.md)
+  - [../COMPENSATION_LINE_ITEMS.md](../COMPENSATION_LINE_ITEMS.md)

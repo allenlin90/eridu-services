@@ -118,7 +118,7 @@ GET /shows/:id/economics  →  { cost, base_subtotal, line_item_subtotal, unreso
 - Creators are not studio-scoped — the same creator can be assigned to shows across different studios.
 - `ShowCreator.agreedRate` overrides `StudioCreator.defaultRate`; `ShowCreator.compensationType` overrides `StudioCreator.defaultRateType`.
 - `metadata` on `ShowCreator` is for audit context only (`source`, `operator_note`, `tags`) — not executable compensation logic.
-- Creator-scoped actual attendance for a show belongs on `ShowCreator` if that future input is introduced; platform stream/performance facts belong on `ShowPlatform`.
+- Creator-scoped actual attendance for a show belongs on `ShowCreator` if that future input is introduced; platform stream/performance facts belong on `ShowPlatform`, while platform violations are child records of the platform stream.
 - Creator pay is **not** time-multiplied. `CREATOR_COMPENSATION_TYPE` is `FIXED`, `COMMISSION`, or `HYBRID` — there is no `HOURLY` creator type. `FIXED` base is the per-show `agreedRate` snapshot, applied as a flat amount regardless of `Show.startTime`/`endTime` or `actualStartTime`/`actualEndTime`. `COMMISSION` and the commission portion of `HYBRID` require future revenue input and surface as `COMMISSION_REVENUE_NOT_AVAILABLE` in the compensation summary.
 - Time-multiplied pay applies to **operator shift labor**, not creators: `StudioShift.hourlyRate × shift-block duration`, with `actualStartTime`/`actualEndTime` falling back to planned `startTime`/`endTime` when actuals are null. That path is separate from the creator mapping workflow.
 

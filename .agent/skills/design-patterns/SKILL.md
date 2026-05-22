@@ -25,6 +25,10 @@ HTTP API (Controllers) → Business Logic (Services) → Data Access (Repositori
 
 Store facts on the narrowest entity: `Show` (event timing), `ShowCreator` (participation), `ShowPlatform` (stream/revenue), `StudioShiftBlock` (labor). Never persist calculated finance totals on operational tables.
 
+## Audit History
+
+Use the standard `Audit` / `AuditTarget` history for new override and extraction flows. Do not add new metadata audit arrays; existing metadata audit entries are legacy compatibility only.
+
 ## REST Route Shape
 
 - One canonical collection per mutable resource under its authorization boundary

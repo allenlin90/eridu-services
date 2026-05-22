@@ -86,7 +86,7 @@ PATCH /studios/:studioId/shifts/:shiftId/blocks/:blockId
 ```
 
 - One-sided actuals are accepted but surface as `ACTUALS_INCOMPLETE` in the 2.3 calculator. Inverted ranges are rejected on the client and the server.
-- Same role contract as show actuals: `ADMIN`/`MANAGER` only. The `actuals_source: OPERATOR_RECORD` wire label means *typed-into-the-system-by-authorized-user* — not the literal operator.
+- Same role contract as show actuals: `ADMIN`/`MANAGER` only. The `actuals_source: OPERATOR_INPUT` wire label means *typed-into-the-system-by-authorized-user* — not necessarily the literal operator.
 
 ### 5. Compensation adjustments
 
@@ -146,7 +146,7 @@ GET /studios/:studioId/economics  →  operational rollups (3.1 consumer)
 - ADMIN/MANAGER may edit `StudioShift.hourlyRate` post-creation through `PATCH /studios/:id/shifts/:id`. The edit lives in the **shift compensation dialog** (inline tile editor); the edit-shift dialog itself no longer carries an `hourly_rate` field. The service-layer guard rejects PATCHes where `hourly_rate` is present and differs from stored but `override_reason` is missing (shipped in PR 3.5; consolidates the prior snapshot-warning modal from PR #65 into a single surface).
 - Block actuals follow the actuals-vs-planned cascade: both present → use actuals; absent → planned fallback with warning; one-sided → unresolved `ACTUALS_INCOMPLETE` for the recipient self-view, planned fallback with warning for manager surfaces.
 - Operator pay never uses commission components. The `compensationType` enum applies to creators only; shift labor is always `hourlyRate × duration` plus line-item adjustments.
-- Actuals are typed by ADMIN/MANAGER only in Phase 4. The wire label `OPERATOR_RECORD` is the *source category* in the priority cascade and does not imply the operator typed it.
+- Actuals are typed by ADMIN/MANAGER only in Phase 4. The wire label `OPERATOR_INPUT` is the *source category* in the priority cascade and does not imply the operator typed it.
 
 ## Related Docs
 

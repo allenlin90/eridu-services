@@ -42,7 +42,7 @@ Access rules:
   - `studioShowKeys`
 - the CRUD page gets its own route/view-model hook: `useStudioShowManagement()`
 - the operations page keeps its existing route/view-model hook: `useStudioShows()`
-- show actuals are edited through the existing studio show update mutation (`PATCH /studios/:studioId/shows/:showId`); there is no separate frontend actuals API family
+- show-level actuals are edited through the existing studio show update mutation (`PATCH /studios/:studioId/shows/:showId`); task-submission extraction may later write creator participation actuals to `ShowCreator`, platform stream/performance facts to `ShowPlatform`, and platform violations to child records
 - the operations page supports `actuals_state=missing|complete` as URL-backed server filtering for the missing-actuals queue
 - current-view export calls `getAllStudioShowsForExport()`, which pages through every result matching the current server-side filters, caps exports at 5000 rows, batches concurrent page fetches at 4 at a time (no `Promise.all` fan-out so a single click cannot burst dozens of requests), forwards `AbortSignal` and bails between batches when aborted, and serializes CSV/JSON through the shared `csv` and `file-download` primitives. The trigger button renders a `Loader2` spinner with "Exporting…" while pagination runs.
 - shared `show-lookups` stays lightweight for list/filter surfaces; searchable schedule and room inputs use dedicated studio endpoints instead
@@ -66,4 +66,4 @@ Access rules:
 - do not mix admin-only `/system/shows` assumptions into the studio CRUD page
 - keep route guard and sidebar visibility aligned through the shared access-policy source
 - keep schedule search remote and documented; no dead local-only search affordances
-- keep show actuals scoped to `Show.actual_start_time` / `Show.actual_end_time`; Phase 4 does not add creator-specific or platform-specific actuals inputs
+- keep show-level actuals scoped to `Show.actual_start_time` / `Show.actual_end_time`; creator participation actuals, platform stream/performance facts, and platform violation records are separate task-input workstream concerns and must not be folded into the show update payload

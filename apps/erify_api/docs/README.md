@@ -27,6 +27,7 @@
 | [Task Submission Reporting & Export](./TASK_SUBMISSION_REPORTING.md)                                 | ✅ Phase 4    | Studio-scoped submitted-task report definitions and batched query API                                |
 | [Studio Creator Onboarding](./STUDIO_CREATOR_ONBOARDING.md)                                          | ✅ Phase 4    | Studio-scoped creator creation and roster-first assignment enforcement                               |
 | [Studio Show Management](./STUDIO_SHOW_MANAGEMENT.md)                                                | ✅ Phase 4    | Studio-scoped show CRUD, operations actuals, actuals-state filtering, and lookup bundling             |
+| [Compensation Line Items + Actuals](./COMPENSATION_LINE_ITEMS.md)                                    | ✅ Phase 4    | Polymorphic cost adjustments, show/shift actuals, and override audit trail                           |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                                                | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries                              |
 | [Studios Internal Read Traffic Hardening](../../erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md) | ✅ Ops        | Internal-read burst handling, query cancellation, and readBurst throttle coverage                    |
 | [DB Migration Policy](../../../docs/engineering/DB_MIGRATION_POLICY.md)                              | ✅ Ops        | Canonical migration governance, tool-first generation, and branch-local scoping rule                 |
@@ -41,7 +42,6 @@
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for the operations-expansion track                  |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
-| [Compensation Line Items + Actuals](./design/COMPENSATION_LINE_ITEMS_DESIGN.md)                    | ⏳      | Phase 4 Wave 2 cost foundation — Tasks 1-6 merged; Task 7 shift cost cleanup next |
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
 

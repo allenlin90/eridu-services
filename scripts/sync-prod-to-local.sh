@@ -3,7 +3,7 @@
 #
 # Sync prod Postgres databases into the local ones via `pg_dump | psql`.
 #
-# Hard invariants (see docs/superpowers/specs/2026-05-02-prod-data-sync-design.md):
+# Hard invariants (see .agent/skills/prod-data-sync/references/prod-data-sync-design.md):
 #   1. Read-only on prod: `psql` is NEVER pointed at a PROD_* URL.
 #   2. Local-only writes: aborts unless local URLs target localhost / 127.0.0.1 / ::1.
 #   3. Distinct hosts: aborts if any PROD_* URL host equals a local URL host.

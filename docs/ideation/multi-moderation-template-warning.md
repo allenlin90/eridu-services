@@ -1,6 +1,6 @@
 # Multi-Moderation-Template Assignment Warning
 
-**Status:** Deferred. Captured during the task-template v2 design review (`docs/ideation/task-template-redesign.md`) when row-grain refactor was explicitly kept out of v2 scope.
+**Status:** Deferred. Captured during the task-template v2 design review (historically `docs/ideation/task-template-redesign.md`, now shipped; see [Task Templates](../features/task-templates.md)) when row-grain refactor was explicitly kept out of v2 scope.
 **Scope:** A user-facing warning at task assignment time when a show is about to be assigned multiple ACTIVE templates whose `shared_field_key` sets overlap. Plus a small correctness fix to the existing `DUPLICATE_SOURCE` report warning.
 
 ---

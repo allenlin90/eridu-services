@@ -21,6 +21,8 @@ Separate task template views by purpose: regular operations templates and modera
 3. Role-aware template filtering requires backend support (template purpose/category field) not currently in the schema.
 4. UX changes to the template list would require careful design to avoid breaking existing manager workflows.
 
+Phase 4 critical-input bindings for actuals and performance are separate from this workstream. A field-level `critical_input_key` / `system_fact_key` can make task submissions system-readable without classifying the whole template as regular, moderation, or another purpose.
+
 ## Decision Gates for Promotion
 
 Promote to a PRD when **any** of these are true:

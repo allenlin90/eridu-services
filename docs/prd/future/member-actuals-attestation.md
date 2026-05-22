@@ -2,7 +2,7 @@
 
 > **Status**: ⏭️ Future target (Phase 5+ — deferred from Phase 4)
 > **Phase**: Revisit when at least one hardware actuals source (fingerprint reader, dynamic-QR punch, geofence) is operationally available.
-> **Workstream**: Studio shift actuals — broaden the writer set beyond manager data-entry without weakening the cost-model's strict-null semantic.
+> **Workstream**: Studio shift actuals — broaden the writer set beyond manager data-entry without weakening the cost-model's strict-null semantic. This PRD is about member/shift attestation sources, not Phase 4 task-submission extraction for show, creator, or platform facts.
 > **Depends on**: At least one of — fingerprint/biometric access-control log feed · dynamic-QR punch in/out client · geofence cross-event source. Cost-model semantic ([economics-cost-model.md](../../domain/economics-cost-model.md)) §2 strict-null on per-shift `actual_cost`.
 > **Blocks**: Phase 4 PR 10 "flag missing actuals" affordance is the temporary path until this lands.
 
@@ -71,6 +71,8 @@ This PRD must not invalidate any Phase 4 contract:
 
 The deepest blocker is **no hardware feed currently exists in production**. Without at least one authoritative source, the whole reconciliation pipeline reduces to "member self-report vs. manager edit" — and that's just renaming today's manager-edit path. Phase 4 PR 10 ships a "flag missing actuals" affordance as the temporary unblocker for members; this PRD becomes actionable when the first hardware feed is online.
 
+Phase 4 may still add task-submission extraction for `Show`, `ShowCreator`, and `ShowPlatform` facts. That work does not replace this PRD because it reads operator-entered task submissions and manager review, while this PRD covers external evidence sources such as punch, geofence, biometric, or creator-app flows for shift/member actuals.
+
 ## Open questions to answer before scheduling
 
 - Which hardware source(s) land first, and on what timeline?
@@ -91,4 +93,4 @@ Until this PRD ships, the operational path is:
 
 - [`economics-cost-model.md`](../../domain/economics-cost-model.md) §2 — strict-null cost semantic this PRD must preserve.
 - [`PHASE_4.md`](../../roadmap/PHASE_4.md) PR 10 — interim "flag missing actuals" affordance.
-- [`PHASE_4.md`](../../roadmap/PHASE_4.md) Phase 5 deferrals — "Platform / creator-app / punch-clock actuals sources" and "Notifications when manager edits actuals" rows.
+- [`PHASE_4.md`](../../roadmap/PHASE_4.md) Phase 5 deferrals — "Hardware / creator-app actuals sources beyond task submissions" and "Notifications when manager edits actuals" rows.

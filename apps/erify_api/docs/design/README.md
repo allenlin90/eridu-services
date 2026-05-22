@@ -10,7 +10,7 @@ Active design documents for planned and in-progress features. Once a feature shi
 4. [Material Management](./MATERIAL_MANAGEMENT_DESIGN.md) — Phase 5 candidate
 5. [Ad-hoc Task Ticketing](./AD_HOC_TASK_TICKETING.md) — Planned template-less task creation for pre-production tickets
 6. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
-7. [Compensation Line Items + Actuals Backend Design](./COMPENSATION_LINE_ITEMS_DESIGN.md) — In progress (Tasks 1-6 merged; Task 7 cleanup next)
+7. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — Deferred Phase 5 (revisit for Client Portal)
 
 ## Note
 
