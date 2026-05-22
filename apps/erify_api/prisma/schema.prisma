@@ -187,7 +187,7 @@ model ShowCreator {
   actualStartTime             DateTime?                    @map("actual_start_time")
   actualEndTime               DateTime?                    @map("actual_end_time")
   attendanceMissing           Boolean                      @default(false) @map("attendance_missing")
-  attendanceReason            String?                      @map("attendance_reason")
+  attendanceReason            String?                      @map("attendance_reason") // Required when derived attendance is LATE or attendanceMissing is true.
   metadata                    Json                         @default("{}")
   showId                      BigInt                       @map("show_id")
   show                        Show                         @relation(fields: [showId], references: [id], onDelete: Cascade)
@@ -220,8 +220,8 @@ model ShowPlatform {
   platformShowId     String?                 @map("platform_show_id") // external id of the platform e.g., tiktok
   actualStartTime    DateTime?               @map("actual_start_time")
   actualEndTime      DateTime?               @map("actual_end_time")
-  gmv                Decimal?                @map("gmv") @db.Decimal(12, 2)
-  viewerCount        Int                     @default(0) @map("viewer_count")
+  gmv                Decimal?                @map("gmv") @db.Decimal(12, 2) // Transport as string on wire (Finance Guardrail #2)
+  viewerCount        Int                     @default(0) @map("viewer_count") // Source metadata distinguishes default zero from submitted zero (metadata.actuals_source.viewer_count).
   performanceMetrics Json                    @default("{}") @map("performance_metrics")
   metadata           Json                    @default("{}")
   showId             BigInt                  @map("show_id")
@@ -756,6 +756,10 @@ model TaskTarget {
   @@map("task_targets")
 }
 
+// Append-only platform-violation log. Soft-history via `supersededAt`: a later
+// extraction for the same `(sourceTaskId, sourceFieldId)` marks earlier rows
+// superseded rather than deleting them. No `updatedAt` / `deletedAt` by design.
+// See apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md §2.A.
 model ShowPlatformViolation {
   id             BigInt       @id @default(autoincrement())
   uid            String       @unique
