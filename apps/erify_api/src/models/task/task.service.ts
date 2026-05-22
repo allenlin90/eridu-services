@@ -96,6 +96,10 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.resumeTask(...args);
   }
 
+  async updateActiveTaskSnapshot(...args: Parameters<TaskRepository['updateActiveTaskSnapshot']>): ReturnType<TaskRepository['updateActiveTaskSnapshot']> {
+    return this.taskRepository.updateActiveTaskSnapshot(...args);
+  }
+
   /** @internal */
   async findTasksByShowIds(showIds: bigint[]): Promise<Task[]>;
   async findTasksByShowIds<T extends Prisma.TaskInclude>(

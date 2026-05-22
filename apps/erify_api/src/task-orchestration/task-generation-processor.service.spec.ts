@@ -61,6 +61,7 @@ describe('taskGenerationProcessor', () => {
             generateTaskUid: jest.fn(),
             create: jest.fn(),
             resumeTask: jest.fn(),
+            updateActiveTaskSnapshot: jest.fn(),
           },
         },
         {
@@ -128,22 +129,79 @@ describe('taskGenerationProcessor', () => {
       expect(result.tasks_created).toBe(1);
     });
 
-    it('should skip template if task already exists', async () => {
+    it('should skip template if task already exists on latest snapshot', async () => {
       const show = {
         id: BigInt(10),
         uid: 'show_1',
         startTime: new Date('2026-02-23T10:00:00.000Z'),
         endTime: new Date('2026-02-23T12:00:00.000Z'),
       } as unknown as Show;
-      const templates = [{ id: BigInt(1), uid: 'tpl_1', currentSchema: { metadata: { task_type: TaskType.SETUP } } }] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+      const templates = [
+        {
+          id: BigInt(1),
+          uid: 'tpl_1',
+          currentSchema: { metadata: { task_type: TaskType.SETUP } },
+          snapshots: [{ id: BigInt(100) }],
+        },
+      ] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
 
-      taskService.findByShowAndTemplate.mockResolvedValue({ id: BigInt(1000) } as any);
+      taskService.findByShowAndTemplate.mockResolvedValue({ id: BigInt(1000), snapshotId: BigInt(100), deletedAt: null } as any);
 
       const result = await processor.processShow(show, templates);
 
       expect(taskService.create).not.toHaveBeenCalled();
+      expect(taskService.updateActiveTaskSnapshot).not.toHaveBeenCalled();
       expect(result.status).toBe('skipped');
       expect(result.tasks_skipped).toBe(1);
+    });
+
+    it('should update active task snapshot if snapshot version is outdated', async () => {
+      const show = {
+        id: BigInt(10),
+        uid: 'show_1',
+        startTime: new Date('2026-02-23T10:00:00.000Z'),
+        endTime: new Date('2026-02-23T12:00:00.000Z'),
+      } as unknown as Show;
+      const templates = [
+        {
+          id: BigInt(1),
+          uid: 'tpl_1',
+          name: 'Pre-production Update',
+          currentSchema: { metadata: { task_type: TaskType.SETUP } },
+          snapshots: [{ id: BigInt(101) }],
+        },
+      ] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+
+      taskService.findByShowAndTemplate.mockResolvedValue({
+        id: BigInt(1000),
+        snapshotId: BigInt(100),
+        deletedAt: null,
+        version: 5,
+      } as any);
+
+      const result = await processor.processShow(show, templates);
+
+      expect(taskService.updateActiveTaskSnapshot).toHaveBeenCalledWith(
+        BigInt(1000),
+        expect.objectContaining({
+          snapshotId: BigInt(101),
+          description: 'Pre-production Update',
+          type: TaskType.SETUP,
+          version: 6,
+          dueDate: new Date(show.startTime.getTime() - 60 * 60 * 1000),
+          metadata: {
+            upload_routing: {
+              source: 'show_task_generation',
+              scope: 'show',
+              material_asset_directory: 'pre-production',
+            },
+          },
+        }),
+      );
+      expect(taskService.create).not.toHaveBeenCalled();
+      expect(result.status).toBe('success');
+      expect(result.tasks_created).toBe(1);
+      expect(result.tasks_skipped).toBe(0);
     });
 
     it('should resume soft-deleted task with latest type and snapshot', async () => {

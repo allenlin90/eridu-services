@@ -380,6 +380,48 @@ export class TaskRepository extends BaseRepository<
     });
   }
 
+  async updateActiveTaskSnapshot(
+    id: bigint,
+    data: {
+      snapshotId: bigint;
+      description: string;
+      type: TaskType;
+      dueDate: Date;
+      version: number;
+      metadata?: Prisma.InputJsonValue;
+    },
+  ): Promise<Task> {
+    const existing = await this.delegate.findFirst({
+      where: { id },
+      select: { metadata: true },
+    });
+
+    const existingMetadata = (existing?.metadata && typeof existing.metadata === 'object')
+      ? existing.metadata as Record<string, unknown>
+      : {};
+
+    const incomingMetadata = (data.metadata && typeof data.metadata === 'object')
+      ? data.metadata as Record<string, unknown>
+      : {};
+
+    const newMetadata: Prisma.InputJsonObject = {
+      ...existingMetadata,
+      ...incomingMetadata,
+    } as Prisma.InputJsonObject;
+
+    return this.delegate.update({
+      where: { id },
+      data: {
+        snapshotId: data.snapshotId,
+        description: data.description,
+        type: data.type,
+        dueDate: data.dueDate,
+        version: data.version,
+        metadata: newMetadata,
+      },
+    });
+  }
+
   async reassignTaskToShow(
     taskUid: string,
     showId: bigint,
