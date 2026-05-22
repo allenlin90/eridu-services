@@ -44,6 +44,24 @@ Applies to: every dialog reachable on a mobile route (actuals editing, shift com
 
 > Migration guide + code recipe: [references/ui-component-details.md#responsive-dialog-pattern](references/ui-component-details.md#responsive-dialog-pattern).
 
+## Three-Perspective UI Pattern for Entity Features
+
+When developing or updating entity-specific features (such as actuals, compensation, timeline tracking, or violations for `Show`, `Creator`, or `Platform`), they must be structured and presented in **three distinct perspectives**, leveraging shared component reuse:
+
+1. **Studio Overview (Perspective 1)**: Aggregate dashboards, filtered grids, and operations tables (e.g. `/finance/actuals` review panel and `/show-operations`). Used by managers for studio-wide visibility.
+2. **Studio Individual Overview (Perspective 2)**: Detail pages for a specific entity accessed by managers from within rosters (e.g. `/studios/:studioId/creators/:creatorId` showing that host's attendance history, rates, overrides, and performance).
+3. **Individual Overview (Perspective 3)**: Personal dashboards for logged-in users themselves, accessed via `/me/*` (e.g. `/me/shows` showing their own compensation breakdowns, presence indicators, and shift actuals).
+
+### Reusable Unit Component Standard
+To prevent code duplication and logic drift across these three views, **extract and share core unit components**. Component wrappers should simply configure the appropriate API filters and role context before passing them to the shared visual unit:
+- `ActualsTimelineViewer`: Shared timeline block visualizing planned vs actual times.
+- `PerformanceMetricsWidget`: Graphical/tabular widget detailing platform statistics (GMV, views).
+- `CompensationBreakdownCard`: Shared card computing base compensation, commissions, and line items.
+- `AttendanceStatusBadge`: Shared visual badge translating `actualStartTime` and `Show.startTime` into colored status highlights.
+- `AuditLogTimeline`: Polymorphic audit log history renderer.
+
+Ensure that any new feature touching operational entities adheres to this three-perspective layout from day one.
+
 ## Form Contract Coverage
 
 - Compare intended UX against shared API schema before implementation
@@ -79,6 +97,7 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 - [ ] 2+ async lookups → isolated `memo()` field components
 - [ ] `onSearch` wired to real search state
 - [ ] Cross-field invariants enforced via `buildXxxPayload` helper + disabled inputs (not by trusting form state on submit)
+- [ ] Entity features structured in three perspectives (Studio Overview, Studio Individual Overview, and Individual self-view) with shared unit components
 
 ## Related Skills
 

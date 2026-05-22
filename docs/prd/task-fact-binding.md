@@ -77,6 +77,14 @@ To prevent IEEE-754 precision issues (IEEE float inaccuracies):
 ### E. Derived Status (Read-Side Metrics)
 To minimize database writes and prevent state divergence, creator attendance status (`ON_TIME`, `LATE`, `MISSING`) and `lateMinutes` are **derived live at read time** from `ShowCreator.actualStartTime`, the `attendanceMissing` flag, and `Show.startTime`. They are never persisted as static columns.
 
+### F. Three-Perspective UI & Reusable Component Pattern
+To maintain visual consistency and ease development, all entity-related actuals and compensation features are structured and rendered across **three unified perspectives**:
+1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/finance/actuals` review dashboard and `/show-operations`).
+2. **Studio Individual Overview**: Single-creator or single-member detail pages accessed by managers from studio rosters (e.g. `/studios/:id/creators/:creatorId` or `/studios/:id/members/:memberId`).
+3. **Individual Overview**: Personal dashboards accessed directly by logged-in hosts/creators themselves (e.g. `/me/*` self-views).
+
+**Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated. Unit components (such as `ActualsTimelineViewer`, `PerformanceMetricsWidget`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, and `AuditLogTimeline`) must be extracted into reusable packages or shared app folders and consumed identically by all three perspectives, varying only by the query parameters/role-scopes passed to them.
+
 ---
 
 ## 3. Section-by-Section Deliverables Breakdown
@@ -138,12 +146,15 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
   * Additive re-hydration: appends fields on new assignments, preserves active work, and marks unassigned targets as `binding_stale: true`.
   * Snapshot mutability upgrade: `TaskTemplateSnapshot.schema` becomes append-only mutable.
 
-#### 🟩 PR 12.0.5 · Ingestion Pipeline Foundation & Wire-Label Rename
-* **Purpose**: Ship the core priority resolver pipeline, write a smoke-test extractor, and implement the atomic label rename.
+#### 🟩 PR 12.0.5 · Ingestion Pipeline Foundation, Wire-Label Rename & Show Task Assignment Check
+* **Purpose**: Ship the core priority resolver pipeline, write a smoke-test extractor, implement the atomic label rename, and align the show operations views with task assignments.
 * **Functional Deliverable**:
   * Ingestion pipeline: reads `task.content`, validates targets against active DB records, compares source priorities, and writes audited facts or skips them (`SKIPPED_LOWER_PRIORITY`).
   * Smoke test: wires the pipeline end-to-end for `show_actual_start_time` → `Show.actualStartTime`.
   * **Wire-Label Rename**: Atomic find-and-replace of `OPERATOR_RECORD` to `OPERATOR_INPUT` across all backend schemas, frontend calculators, and compensation badge components in `/me/` and `/studios/` views.
+  * **`/show-operations` Task-Assignment Alignment**:
+    * **Backend (BE)**: Update the `/show-operations` query endpoint to check for active task assignments and return `has_proper_task_assignment: boolean`.
+    * **Frontend (FE)**: Update `/show-operations` in `erify_studios` to display an amber/orange warning badge: ⚠️ `No Task Assigned` for any show without a valid active task template or sheet assignment, linking directly to the task instantiation modal.
 
 ---
 
