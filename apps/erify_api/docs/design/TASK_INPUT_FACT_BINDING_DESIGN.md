@@ -213,7 +213,7 @@ model AuditTarget {
 
 ### A. Additive Snapshot Hydration
 
-> **Status**: 🚧 Partially shipped. The producer-facing binding picker shipped in PR 12.0.3 ([#94](https://github.com/allenlin90/eridu-services/pull/94)): `SystemFactKeyEnum` and `SYSTEM_FACT_KEY_DEFINITIONS` in `@eridu/api-types/task-management`, save-time Zod compatibility + one-binding-per-fact-key validation, and the "Save answer as" combobox in the task-template builder. The hydration engine described below (target-scoped field expansion, append-only re-hydration, `binding_stale: true`) ships in PR 12.0.4; the extraction pipeline ships in PR 12.0.5. Until 12.0.4, bound fields submit a single non-target-scoped value into `task.content` and nothing reads it.
+> **Status**: 🚧 Partially shipped. The producer-facing binding picker shipped in PR 12.0.3 ([#94](https://github.com/allenlin90/eridu-services/pull/94)): `SystemFactKeyEnum` and `SYSTEM_FACT_KEY_DEFINITIONS` in `@eridu/api-types/task-management`, save-time Zod compatibility + one-binding-per-fact-key validation, and the "Auto-fill record field" combobox in the task-template builder. The hydration engine (target-scoped field expansion, deterministic per-target keys, `binding_stale: true` for unassigned targets) shipped in PR 12.0.4 ([#95](https://github.com/allenlin90/eridu-services/pull/95)) — see the "Snapshot Mutability Contract" note below for the corrected storage shape. The extraction pipeline ships in PR 12.0.5.
 
 ```mermaid
 sequenceDiagram
@@ -253,7 +253,7 @@ Generic task templates do not reference static creators or platforms. The linkag
    - **Already-hydrated fields** for targets that are still assigned: untouched (operator's in-progress values preserved).
    - **Already-hydrated fields** for targets that are no longer assigned (unassigned, soft-deleted, or removed after generation): marked `binding_stale: true` in the snapshot. The field stays visible in the form for context, but the extractor skips it.
    - Non-hydrated, manually-authored template fields are immutable across re-hydration.
-4. **Snapshot Mutability Contract Change**: This makes `TaskTemplateSnapshot.schema` append-only mutable for hydrated bindings only. The task-template feature doc and feature-version-cutover workflow must reflect this. Submitted tasks freeze their snapshot — no rehydration occurs after submission.
+4. **Snapshot Mutability Contract** (revised as implemented in 12.0.4): `TaskTemplateSnapshot.schema` stays **immutable** — there is no per-task snapshot clone and no append-only mutation of the shared template snapshot. Hydration is computed at read time from the template snapshot + the show's currently-assigned `ShowCreator` / `ShowPlatform` set + the task's existing `task.content`. Submitted operator values live in `task.content` at deterministic keys (`<fieldId>__<scope>__<uid>`), and stale targets are detected by parsing keys whose UID is no longer in the active assignment set. The submission validator re-runs the same hydration server-side so per-target validation rules (`require_reason`, etc.) line up with whatever the operator saw. "Submitted tasks freeze their snapshot" still holds: once a task is `COMPLETED` / `CLOSED`, the recorded keys in `task.content` are the final record; later re-renders do not rehydrate against newer assignments.
 5. **Form Rendering**: The operator sees a dynamically built task form with labeled, explicit input fields for each currently active creator and platform, plus any stale-bound fields preserved for review.
 
 ### B. Event-Driven Push Extraction Pipeline
