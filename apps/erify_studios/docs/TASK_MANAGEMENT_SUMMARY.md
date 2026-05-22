@@ -58,7 +58,10 @@ Task Review → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ 
 ### 6. Moderation Loop Execution (Moderator)
 My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress block** → navigate loops via Previous/Next → auto-save per field → Submit for Review when done. See [MODERATION_WORKFLOW.md](./MODERATION_WORKFLOW.md) for full data contract and business rules.
 
-### 7. Shows Issues Triage (Admin)
+### 7. System Fact Binding (Admin)
+Task Templates → Create/Edit Template → open a field → choose `System fact` → builder sets the compatible field type from the shared `@eridu/api-types/task-management` catalog. The binding is producer-facing only until PR 12 hydration and extraction PRs consume it.
+
+### 8. Shows Issues Triage (Admin)
 Show Operations → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
 - show has no tasks
 - show has unassigned tasks

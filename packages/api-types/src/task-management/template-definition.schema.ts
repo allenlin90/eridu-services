@@ -20,6 +20,113 @@ export const FieldTypeEnum = z.enum([
   'textarea',
 ]);
 
+export const SystemFactKeyEnum = z.enum([
+  'show_actual_start_time',
+  'show_actual_end_time',
+  'creator_actual_start_time',
+  'creator_actual_end_time',
+  'creator_attendance_missing',
+  'creator_attendance_reason',
+  'show_platform_actual_start_time',
+  'show_platform_actual_end_time',
+]);
+
+export type SystemFactKey = z.infer<typeof SystemFactKeyEnum>;
+
+export const SYSTEM_FACT_KEY_DEFINITIONS = {
+  show_actual_start_time: {
+    label: 'Show actual start time',
+    description: 'Overall show start recorded after the show begins.',
+    target: 'show',
+    backing_column: 'Show.actualStartTime',
+    field_type: 'datetime',
+  },
+  show_actual_end_time: {
+    label: 'Show actual end time',
+    description: 'Overall show end recorded after the show completes.',
+    target: 'show',
+    backing_column: 'Show.actualEndTime',
+    field_type: 'datetime',
+  },
+  creator_actual_start_time: {
+    label: 'Creator actual start time',
+    description: 'Creator attendance start recorded per assigned creator.',
+    target: 'show_creator',
+    backing_column: 'ShowCreator.actualStartTime',
+    field_type: 'datetime',
+  },
+  creator_actual_end_time: {
+    label: 'Creator actual end time',
+    description: 'Creator attendance end recorded per assigned creator.',
+    target: 'show_creator',
+    backing_column: 'ShowCreator.actualEndTime',
+    field_type: 'datetime',
+  },
+  creator_attendance_missing: {
+    label: 'Creator attendance missing',
+    description: 'No-show marker recorded per assigned creator.',
+    target: 'show_creator',
+    backing_column: 'ShowCreator.attendanceMissing',
+    field_type: 'checkbox',
+  },
+  creator_attendance_reason: {
+    label: 'Creator attendance reason',
+    description: 'Late or missing attendance reason recorded per assigned creator.',
+    target: 'show_creator',
+    backing_column: 'ShowCreator.attendanceReason',
+    field_type: 'textarea',
+  },
+  show_platform_actual_start_time: {
+    label: 'Platform actual start time',
+    description: 'Platform stream start recorded per assigned show platform.',
+    target: 'show_platform',
+    backing_column: 'ShowPlatform.actualStartTime',
+    field_type: 'datetime',
+  },
+  show_platform_actual_end_time: {
+    label: 'Platform actual end time',
+    description: 'Platform stream end recorded per assigned show platform.',
+    target: 'show_platform',
+    backing_column: 'ShowPlatform.actualEndTime',
+    field_type: 'datetime',
+  },
+} as const satisfies Record<SystemFactKey, {
+  label: string;
+  description: string;
+  target: 'show' | 'show_creator' | 'show_platform';
+  backing_column: string;
+  field_type: z.infer<typeof FieldTypeEnum>;
+}>;
+
+export function getSystemFactKeyDefinition(systemFactKey: SystemFactKey) {
+  return SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey];
+}
+
+type SystemFactKeyCompatibleField = {
+  system_fact_key?: SystemFactKey;
+  type?: z.infer<typeof FieldTypeEnum>;
+};
+
+export function validateSystemFactKeyCompatibility(data: SystemFactKeyCompatibleField, ctx: z.RefinementCtx) {
+  if (!data.system_fact_key) {
+    return;
+  }
+
+  const definition = SYSTEM_FACT_KEY_DEFINITIONS[data.system_fact_key as SystemFactKey];
+  if (!definition) {
+    return;
+  }
+
+  if (data.type !== definition.field_type) {
+    ctx.issues.push({
+      code: 'custom',
+      message: `System fact key "${data.system_fact_key}" requires field type "${definition.field_type}"`,
+      path: ['type'],
+      input: data,
+    });
+  }
+}
+
 export const FieldItemBaseSchema = z
   .object({
     id: z.string().describe('Stable unique ID for each field item'),
@@ -128,9 +235,13 @@ export const TemplateSchemaValidator = z
 export const FieldItemV2BaseSchema = FieldItemBaseSchema.omit({ standard: true }).extend({
   id: z.string().regex(TASK_TEMPLATE_FIELD_ID_PATTERN, 'Invalid field ID format (must be fld_ + 10+ alphanumeric)'),
   shared_field_key: z.string().optional().describe('Canonical key for shared field mapping'),
+  system_fact_key: SystemFactKeyEnum.optional().describe('Closed catalog key for target-scoped operational fact extraction'),
 });
 
-export const FieldItemV2Schema = FieldItemV2BaseSchema.superRefine(validateFieldOptions);
+export const FieldItemV2Schema = FieldItemV2BaseSchema.superRefine((data, ctx) => {
+  validateFieldOptions(data, ctx);
+  validateSystemFactKeyCompatibility(data, ctx);
+});
 export type FieldItemV2 = z.infer<typeof FieldItemV2Schema>;
 
 export const TemplateSchemaV2Validator = z

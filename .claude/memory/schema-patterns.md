@@ -109,6 +109,15 @@ model StudioMembership {
 }
 ```
 
+## Task Template V2 System Facts
+
+`FieldItemV2.system_fact_key` is a closed operational fact binding owned by `packages/api-types/src/task-management/template-definition.schema.ts`.
+
+- Use `SystemFactKeyEnum` and `SYSTEM_FACT_KEY_DEFINITIONS` from `@eridu/api-types/task-management`.
+- Do not duplicate fact-key string lists in apps or backend services.
+- The shared schema enforces field-type compatibility, so builder UI and backend save paths should both parse through the shared Zod contract.
+- Analytical platform metrics such as GMV and viewer count are intentionally excluded until the PR 12.5 analytics storage decision.
+
 ## Transformation Flow
 
 ### Input (Client → Server)

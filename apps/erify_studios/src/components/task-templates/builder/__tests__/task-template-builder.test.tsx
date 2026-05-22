@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -112,5 +112,38 @@ describe('taskTemplateBuilder v2 field ids', () => {
     // new loop id correctly instead of producing the broken double-suffix.
     expect(clonedItem.key).toBe('ads_cost');
     expect(clonedItem.shared_field_key).toBe('ads_cost');
+  });
+
+  it('binds a field to a compatible system fact key from the field editor', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const templateWithField: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      items: [
+        {
+          id: 'fld_showactual1',
+          key: 'actual_start',
+          type: 'text',
+          label: 'Actual start',
+          required: true,
+          group: 'l1',
+        },
+      ],
+    };
+
+    render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
+
+    fireEvent.keyDown(screen.getByLabelText('System fact'), { key: 'ArrowDown' });
+    await user.click(await screen.findByRole('option', { name: /Show actual start time/ }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          id: 'fld_showactual1',
+          type: 'datetime',
+          system_fact_key: 'show_actual_start_time',
+        }),
+      ],
+    }));
   });
 });

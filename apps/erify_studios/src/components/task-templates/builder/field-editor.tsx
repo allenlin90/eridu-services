@@ -18,8 +18,8 @@ import {
 
 import { MultiSelect } from '../shared/multi-select';
 
-import type { FieldItem, FieldType } from './schema';
-import { FieldTypeEnum, isSharedField } from './schema';
+import type { FieldItem, FieldType, SystemFactKey } from './schema';
+import { FieldTypeEnum, isSharedField, SYSTEM_FACT_KEY_DEFINITIONS } from './schema';
 
 const FILE_TYPE_OPTIONS = [
   { label: 'Image', value: 'image/*' },
@@ -28,6 +28,16 @@ const FILE_TYPE_OPTIONS = [
   { label: 'CSV', value: '.csv' },
   { label: 'Text', value: 'text/plain' },
 ];
+
+const SYSTEM_FACT_NONE_VALUE = 'none';
+const SYSTEM_FACT_OPTIONS = Object.entries(SYSTEM_FACT_KEY_DEFINITIONS).map(([value, definition]) => ({
+  value: value as SystemFactKey,
+  ...definition,
+}));
+
+function getSystemFactKey(item: FieldItem): SystemFactKey | undefined {
+  return 'system_fact_key' in item ? item.system_fact_key : undefined;
+}
 
 type FieldEditorProps = {
   item: FieldItem;
@@ -685,6 +695,8 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       return;
     }
 
+    const systemFactKey = getSystemFactKey(item);
+    const systemFactDefinition = systemFactKey ? SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey] : undefined;
     const updates: Partial<FieldItem> = {
       type: newType as FieldType,
       default_value: '', // Reset default value to avoid type mismatches
@@ -707,8 +719,26 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
     }
 
     updates.validation = newValidation;
+    if (systemFactDefinition && systemFactDefinition.field_type !== newType) {
+      updates.system_fact_key = undefined;
+    }
     onUpdate(updates);
-  }, [fieldIsShared, item.validation, onUpdate]);
+  }, [fieldIsShared, item, onUpdate]);
+
+  const handleSystemFactChange = useCallback((value: string) => {
+    if (value === SYSTEM_FACT_NONE_VALUE) {
+      onUpdate({ system_fact_key: undefined });
+      return;
+    }
+
+    const systemFactKey = value as SystemFactKey;
+    const definition = SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey];
+    onUpdate({
+      system_fact_key: systemFactKey,
+      type: definition.field_type,
+      default_value: '',
+    });
+  }, [onUpdate]);
 
   const handleDefaultValueChange = useCallback((val: any) => {
     handleChange('default_value', val);
@@ -755,6 +785,34 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
           {fieldIsShared && (
             <p className="text-xs text-muted-foreground">
               Shared-field type is locked by studio settings.
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`system-fact-${item.id}`}>System fact</Label>
+          <Select
+            value={getSystemFactKey(item) ?? SYSTEM_FACT_NONE_VALUE}
+            onValueChange={handleSystemFactChange}
+          >
+            <SelectTrigger id={`system-fact-${item.id}`}>
+              <SelectValue placeholder="None" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SYSTEM_FACT_NONE_VALUE}>None</SelectItem>
+              {SYSTEM_FACT_OPTIONS.map((fact) => (
+                <SelectItem key={fact.value} value={fact.value}>
+                  {fact.label}
+                  {' '}
+                  (
+                  {fact.field_type}
+                  )
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {getSystemFactKey(item) && (
+            <p className="text-xs text-muted-foreground">
+              Bound fields hydrate per show, creator, or platform in operator forms.
             </p>
           )}
         </div>
