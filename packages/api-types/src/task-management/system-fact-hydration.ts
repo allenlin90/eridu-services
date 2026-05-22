@@ -17,7 +17,7 @@ import {
 // many underscores nanoid happens to emit inside a UID.
 export const HYDRATED_KEY_SEPARATOR = ':';
 const FIELD_ID_PART = /^fld_[a-z0-9]{10,}$/;
-const UID_PART = /^[A-Za-z0-9_-]+$/;
+const UID_PART = /^[\w-]+$/;
 
 export type HydrationScope = 'creator' | 'platform';
 
