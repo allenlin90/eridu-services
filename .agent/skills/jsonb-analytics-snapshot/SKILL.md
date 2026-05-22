@@ -1,11 +1,18 @@
 ---
 name: jsonb-analytics-snapshot
-description: Defines the JSONB Analytics Snapshot Pattern. This skill should be used when implementing analytics, dashboards, or any feature requiring aggregation of historical/immutable data where high read performance is required.
+description: Defines one lightweight Postgres-hosted analytics snapshot pattern. Use when implementing analytics, dashboards, or historical aggregation where high read performance is required and the team has chosen a snapshot/read-model approach instead of querying OLTP tables directly.
 ---
 
 # JSONB Analytics Snapshot Pattern
 
-This skill provides the architectural pattern for using JSONB to store pre-aggregated analytics data, rather than relying on on-the-fly RDBMS calculations or complex star-schema table architectures.
+This skill provides one architectural pattern for using JSONB to store pre-aggregated analytics data, rather than relying on on-the-fly OLTP-table calculations or complex star-schema table architectures.
+
+It is not the default answer for every metric. First classify the need:
+
+- **OLTP operational path**: current-state writes, exception review, sign-off, overrides, constraints, and filters that must stay close to source records.
+- **OLAP/read-model path**: post-show analysis, trends, cross-entity comparisons, dashboards, exports, and derived aggregates.
+
+When the need is analytical, decide whether this JSONB snapshot pattern, normalized Postgres projections/materialized views, application-managed projection tables, or separate OLAP infrastructure best matches the query shape and freshness requirements.
 
 ## The Core Concept
 
@@ -22,7 +29,7 @@ Why not create normalized RDBMS tables for the aggregated results (e.g., `analyt
 2. **Read Performance**: A dashboard typically needs *all* these aggregations at once. Fetching from 5 different RDBMS aggregate tables requires 5 queries or complex joins. Fetching a single JSONB row provides the entire localized payload in one fast read.
 3. **Data Shape Match**: The JSONB structure can exactly match the API response DTO mapped to the frontend charts, avoiding mapping boilerplate.
 
-*When NOT to use*: Do not use JSONB if you need to perform cross-snapshot RDBMS aggregations (e.g., summing up the 'completed' count across 100 snapshots using SQL). In our system, snapshots are usually requested individually per-period.
+*When NOT to use*: Do not use JSONB if you need to perform cross-snapshot RDBMS aggregations (e.g., summing up the 'completed' count across 100 snapshots using SQL), if metric keys need database-level filtering/sorting, or if analysts need ad hoc exploration across dimensions. In those cases, prefer typed projections/materialized views or a dedicated OLAP path.
 
 ## Prisma Schema Implementation
 
