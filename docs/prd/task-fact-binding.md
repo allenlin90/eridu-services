@@ -123,7 +123,7 @@ flowchart TB
 **Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated across perspectives that *do* ship together. Unit components (`ActualsTimelineViewer`, `PerformanceMetricsWidget`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) live in reusable packages or shared app folders and are consumed identically by each perspective, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
 
 ### G. Performance Review as Upstream of Economics Review
-PR 12 stands up the **performance review surface** (PR 12.4 — actuals & abnormality dashboard). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: performance facts (actual times, attendance, GMV/views, violations) are captured and reviewed here first; only after they're trustworthy does the economics surface read them as cost inputs. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing performance events** that downstream economics will translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals; it only emits the typed facts. This keeps the performance review valuable on its own (operational quality of a stream) even before economics consumes it.
+PR 12 stands up the **operational performance review surface** (PR 12.4 — actuals & abnormality dashboard). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: operational facts (actual times, attendance, GMV/views, violations) are captured and reviewed here first; only after they're trustworthy does the economics surface read them as cost inputs. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or show-level analytical aggregates; it only emits typed operational facts. Show-level performance analytics, trend dashboards, and OLAP/read-model infrastructure are deferred to a post-12.4 investigation.
 
 ---
 
@@ -167,7 +167,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 #### 🟩 PR 12.0.2 · Phase 4 Actuals Schema Additions
 * **Purpose**: Run a single, clean SQL database migration that adds all operational columns and indices upfront.
 * **Functional Deliverable**:
-  * `Show`: Adds `actualStartTime`, `actualEndTime`, and `performanceMetrics` JSONB.
+  * `Show`: Uses the existing `actualStartTime` / `actualEndTime` operational columns and adds the actual-time index. No show-level performance JSONB bucket.
   * `ShowCreator`: Adds `actualStartTime`, `actualEndTime`, `attendanceMissing`, and `attendanceReason`.
   * `ShowPlatform`: Adds `actualStartTime`, `actualEndTime`, `gmv` (Decimal), and `performanceMetrics` JSONB.
   * `ShowPlatformViolation`: Creates the violation table and indices.
@@ -271,3 +271,4 @@ The following items are explicitly **out of scope** and deferred to subsequent p
 3. **Grace Windows**: Studio-level configurations tolerating lateness up to X minutes.
 4. **OT / Tiered Commissions**: Complex rule-engine calculations based on duration or tiered actuals.
 5. **Real-time Notifications**: Triggering mobile/email alerts to hosts when managers override actuals.
+6. **Show-Level Analytics Infrastructure**: OLAP/read-model design for post-show analytical features such as aggregate platform performance trends, client/studio dashboards, and historical metric exploration.
