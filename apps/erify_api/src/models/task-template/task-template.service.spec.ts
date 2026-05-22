@@ -459,6 +459,30 @@ describe('taskTemplateService', () => {
           expect(JSON.stringify(response.details)).toMatch(/datetime/);
         }
       });
+
+      it('should throw when a v2 system fact key is bound more than once in a template', () => {
+        const schema = createV2Schema({
+          system_fact_key: 'show_actual_start_time',
+        });
+        (schema.items as Array<Record<string, unknown>>).push({
+          id: 'fld_actualstart2',
+          key: 'show_actual_start_duplicate',
+          type: 'datetime',
+          label: 'Show actual start duplicate',
+          required: true,
+          system_fact_key: 'show_actual_start_time',
+        });
+
+        try {
+          service.validateSchema(schema);
+          expect(true).toBe(false);
+        } catch (error: any) {
+          expect(error.message).toBe('Invalid template schema');
+          const response = error.getResponse();
+          expect(JSON.stringify(response.details)).toMatch(/Duplicate system fact binding/);
+          expect(JSON.stringify(response.details)).toMatch(/show_actual_start_time/);
+        }
+      });
     });
   });
 });

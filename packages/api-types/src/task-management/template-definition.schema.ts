@@ -249,6 +249,7 @@ export const TemplateSchemaV2Validator = z
   .superRefine((data, ctx) => {
     // v2 key uniqueness: checks per-loop (key, group) uniqueness instead of global uniqueness
     const seen = new Set<string>();
+    const seenSystemFacts = new Set<SystemFactKey>();
     data.items.forEach((item, index) => {
       const groupSegment = item.group ?? 'none';
       const compositeKey = `${groupSegment}:${item.key}`;
@@ -261,6 +262,19 @@ export const TemplateSchemaV2Validator = z
         });
       }
       seen.add(compositeKey);
+
+      if (!item.system_fact_key) {
+        return;
+      }
+      if (seenSystemFacts.has(item.system_fact_key)) {
+        ctx.issues.push({
+          code: 'custom',
+          message: `Duplicate system fact binding "${item.system_fact_key}" detected`,
+          path: ['items', index, 'system_fact_key'],
+          input: data,
+        });
+      }
+      seenSystemFacts.add(item.system_fact_key);
     });
   });
 

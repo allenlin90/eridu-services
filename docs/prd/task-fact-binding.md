@@ -178,8 +178,8 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Purpose**: Allow studio producers to bind template fields to system fact keys.
 * **Functional Deliverable**:
   * Binds `FieldItemV2Schema` in `@eridu/api-types` to a closed `system_fact_key` enum.
-  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`). Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once 12.5 lands.
-  * **Template Builder UI**: Exposes a "Save answer as" binding picker for template designers.
+  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`) and rejects duplicate fact-key bindings in the same template. Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once 12.5 lands.
+  * **Template Builder UI**: Exposes a searchable "Save answer as" binding picker for template designers.
   * `creator_attendance_missing` uses the existing `require_reason: "on-true"` sidecar flow for the operator's explanation; there is no separate `creator_attendance_reason` binding input.
 
 #### 🟩 PR 12.0.4 · Dynamic Target-Scoped Form Hydration
@@ -194,6 +194,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Functional Deliverable**:
   * Ingestion pipeline: reads `task.content`, validates targets against active DB records, compares source priorities, and writes audited facts or skips them (`SKIPPED_LOWER_PRIORITY`).
   * Smoke test: wires the pipeline end-to-end for `show_actual_start_time` → `Show.actualStartTime`.
+  * Cross-task collision guard: before ingestion, detect active tasks assigned to the same show that bind the same fact key and route the lower-priority or ambiguous write to the review path instead of overwriting silently.
   * **Wire-Label Rename**: Atomic find-and-replace of `OPERATOR_RECORD` to `OPERATOR_INPUT` across all backend schemas, frontend calculators, and compensation badge components in `/me/` and `/studios/` views.
   * **`/show-operations` Task-Assignment Alignment**:
     * **Backend (BE)**: Update the `/show-operations` query endpoint to check for active task assignments and return `has_proper_task_assignment: boolean`.

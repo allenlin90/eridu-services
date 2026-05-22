@@ -1,13 +1,22 @@
-import { Plus, Trash2, X } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
+import { Check, ChevronsUpDown, Plus, Trash2, X } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import {
   Button,
   Checkbox,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
   DatePicker,
   DateTimePicker,
   Input,
   Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -15,6 +24,7 @@ import {
   SelectValue,
   Textarea,
 } from '@eridu/ui';
+import { cn } from '@eridu/ui/lib/utils';
 
 import { MultiSelect } from '../shared/multi-select';
 
@@ -47,6 +57,77 @@ type FieldEditorProps = {
   item: FieldItem;
   onUpdate: (updates: Partial<FieldItem>) => void;
 };
+
+const SystemFactCombobox = memo(({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: SystemFactKey | undefined;
+  onChange: (value: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selectedFact = value ? SYSTEM_FACT_KEY_DEFINITIONS[value] : undefined;
+  const buttonText = selectedFact?.label ?? 'None';
+
+  const handleSelect = useCallback((nextValue: string) => {
+    onChange(nextValue);
+    setOpen(false);
+  }, [onChange]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between gap-2"
+        >
+          <span className="min-w-0 flex-1 truncate text-left">{buttonText}</span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search saved value..." />
+          <CommandList>
+            <CommandEmpty>No saved value found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem value="None" onSelect={() => handleSelect(SYSTEM_FACT_NONE_VALUE)}>
+                <Check
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    value ? 'opacity-0' : 'opacity-100',
+                  )}
+                />
+                None
+              </CommandItem>
+              {SYSTEM_FACT_OPTIONS.map((fact) => (
+                <CommandItem
+                  key={fact.value}
+                  value={`${fact.label} ${fact.value} ${fact.description}`}
+                  onSelect={() => handleSelect(fact.value)}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === fact.value ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                  <span className="min-w-0 truncate">{fact.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+});
+SystemFactCombobox.displayName = 'SystemFactCombobox';
 
 const DefaultValueInput = memo(({
   item,
@@ -804,22 +885,11 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
         </div>
         <div className="space-y-2">
           <Label htmlFor={`system-fact-${item.id}`}>Save answer as</Label>
-          <Select
-            value={getSystemFactKey(item) ?? SYSTEM_FACT_NONE_VALUE}
-            onValueChange={handleSystemFactChange}
-          >
-            <SelectTrigger id={`system-fact-${item.id}`}>
-              <SelectValue placeholder="None" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SYSTEM_FACT_NONE_VALUE}>None</SelectItem>
-              {SYSTEM_FACT_OPTIONS.map((fact) => (
-                <SelectItem key={fact.value} value={fact.value}>
-                  {fact.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SystemFactCombobox
+            id={`system-fact-${item.id}`}
+            value={getSystemFactKey(item)}
+            onChange={handleSystemFactChange}
+          />
           {getSystemFactKey(item) && (
             <p className="text-xs text-muted-foreground">
               This answer will update the matching show, creator, or platform value later.

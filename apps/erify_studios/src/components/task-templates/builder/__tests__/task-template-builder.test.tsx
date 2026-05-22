@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -133,7 +133,7 @@ describe('taskTemplateBuilder v2 field ids', () => {
 
     render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
 
-    fireEvent.keyDown(screen.getByLabelText('Save answer as'), { key: 'ArrowDown' });
+    await user.click(screen.getByRole('combobox', { name: 'Save answer as' }));
     await user.click(await screen.findByRole('option', { name: /Show actual start time/ }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
@@ -166,7 +166,7 @@ describe('taskTemplateBuilder v2 field ids', () => {
 
     render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
 
-    fireEvent.keyDown(screen.getByLabelText('Save answer as'), { key: 'ArrowDown' });
+    await user.click(screen.getByRole('combobox', { name: 'Save answer as' }));
     await user.click(await screen.findByRole('option', { name: 'Creator attendance missing' }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({

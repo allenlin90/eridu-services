@@ -41,10 +41,10 @@ Keep `fld_...` IDs, nest as `{ schema: { items: [...] } }`, filter empty options
 
 ### 7. System Fact Bindings (PR 12)
 - `system_fact_key` is a v2-only field attribute for operational fact extraction.
-- The builder exposes this with the user-facing label "Save answer as"; avoid showing "system fact" copy in the producer UI.
+- The builder exposes this with the user-facing label "Save answer as"; render it as a searchable combobox and avoid showing "system fact" copy in the producer UI.
 - Selecting a system fact in the builder should set the field type to the catalog's compatible `field_type`.
 - `creator_attendance_missing` should use `validation.require_reason = 'on-true'` for the explanation instead of a separate reason binding field.
-- Save-time validation must reject mismatched field type ↔ fact key pairs through the shared Zod schema.
+- Save-time validation must reject mismatched field type ↔ fact key pairs and duplicate fact-key bindings in the same template through the shared Zod schema.
 - Analytical platform metrics such as GMV and viewer count are not valid system fact keys until the 12.5 analytics storage decision lands.
 
 ## Checklist
@@ -54,7 +54,7 @@ Keep `fld_...` IDs, nest as `{ schema: { items: [...] } }`, filter empty options
 - [ ] Payload transformed before API submission (empty options filtered)
 - [ ] `require_reason` operators match field type
 - [ ] Shared-field insertions use `shared_field_key` with locked type
-- [ ] System-fact insertions use `system_fact_key` with the shared catalog's compatible field type
+- [ ] System-fact insertions use `system_fact_key` with the shared catalog's compatible field type and do not duplicate a fact key in the same template
 - [ ] Shared-field queries revalidated on mount, invalidated after mutations
 - [ ] Shared-field load failures surfaced in UI
 - [ ] No duplicate validation logic between frontend and backend

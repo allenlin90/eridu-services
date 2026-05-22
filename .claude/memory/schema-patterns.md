@@ -115,7 +115,7 @@ model StudioMembership {
 
 - Use `SystemFactKeyEnum` and `SYSTEM_FACT_KEY_DEFINITIONS` from `@eridu/api-types/task-management`.
 - Do not duplicate fact-key string lists in apps or backend services.
-- The shared schema enforces field-type compatibility, so builder UI and backend save paths should both parse through the shared Zod contract.
+- The shared schema enforces field-type compatibility and one binding per fact key within a template, so builder UI and backend save paths should both parse through the shared Zod contract.
 - Creator attendance explanations use `validation.require_reason = 'on-true'` on the missing checkbox rather than a separate reason fact key.
 - Analytical platform metrics such as GMV and viewer count are intentionally excluded until the PR 12.5 analytics storage decision.
 
