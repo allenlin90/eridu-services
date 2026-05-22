@@ -84,7 +84,7 @@ export function useStudioShowTasksPageData({
   const rawMembers = membersResponse?.data;
   const members = useMemo(() => rawMembers ?? [], [rawMembers]);
   const taskList = useMemo(() => tasks ?? [], [tasks]);
-  const isMembersInitialLoading = isLoadingMembers && members.length === 0;
+  const isMembersInitialLoading = isLoadingMembers && members.length === 0 && !memberSearch;
   const isTableLoading = isLoadingTasks || isMembersInitialLoading;
   const isRefreshing = isFetchingTasks || isFetchingShow || isFetchingMembers;
 
@@ -102,6 +102,7 @@ export function useStudioShowTasksPageData({
     isLoadingShow,
     isTableLoading,
     isRefreshing,
+    isSearchingMembers: isFetchingMembers && !!memberSearch,
     refreshAll,
     refetchShowTasks,
   };
