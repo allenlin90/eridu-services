@@ -60,6 +60,7 @@ export function useStudioShowTasksPageController({
     isLoadingShow,
     isTableLoading,
     isRefreshing,
+    isSearchingMembers,
     refreshAll,
     refetchShowTasks,
   } = useStudioShowTasksPageData({
@@ -120,8 +121,9 @@ export function useStudioShowTasksPageController({
       handleRunAction,
       isUpdatingStatus ? processingTaskId : null,
       openDueDateEditor,
+      isSearchingMembers,
     ),
-    [handleAssign, isAssigning, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
+    [handleAssign, isAssigning, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor, isSearchingMembers],
   );
   /* eslint-enable react-hooks/refs */
 
