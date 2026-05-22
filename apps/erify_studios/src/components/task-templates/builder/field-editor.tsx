@@ -1,25 +1,38 @@
-import { Plus, Trash2, X } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
+import { Check, ChevronsUpDown, Info, Plus, Trash2, X } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import {
   Button,
   Checkbox,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
   DatePicker,
   DateTimePicker,
   Input,
   Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
   Textarea,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@eridu/ui';
+import { cn } from '@eridu/ui/lib/utils';
 
 import { MultiSelect } from '../shared/multi-select';
 
-import type { FieldItem, FieldType } from './schema';
-import { FieldTypeEnum, isSharedField } from './schema';
+import type { FieldItem, FieldType, SystemFactKey } from './schema';
+import { FieldTypeEnum, isSharedField, SYSTEM_FACT_KEY_DEFINITIONS } from './schema';
 
 const FILE_TYPE_OPTIONS = [
   { label: 'Image', value: 'image/*' },
@@ -29,10 +42,98 @@ const FILE_TYPE_OPTIONS = [
   { label: 'Text', value: 'text/plain' },
 ];
 
+const SYSTEM_FACT_NONE_VALUE = 'none';
+const SYSTEM_FACT_OPTIONS = Object.entries(SYSTEM_FACT_KEY_DEFINITIONS).map(([value, definition]) => ({
+  value: value as SystemFactKey,
+  ...definition,
+}));
+
+const EXPLANATION_REQUIRED_FACT_KEYS: ReadonlySet<SystemFactKey> = new Set([
+  'creator_attendance_missing',
+]);
+
+function getSystemFactKey(item: FieldItem): SystemFactKey | undefined {
+  return 'system_fact_key' in item ? item.system_fact_key : undefined;
+}
+
 type FieldEditorProps = {
   item: FieldItem;
   onUpdate: (updates: Partial<FieldItem>) => void;
 };
+
+const SystemFactCombobox = memo(({
+  id,
+  value,
+  onChange,
+  disabled,
+}: {
+  id: string;
+  value: SystemFactKey | undefined;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selectedFact = value ? SYSTEM_FACT_KEY_DEFINITIONS[value] : undefined;
+  const buttonText = selectedFact?.label ?? 'None';
+
+  const handleSelect = useCallback((nextValue: string) => {
+    onChange(nextValue);
+    setOpen(false);
+  }, [onChange]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className="w-full justify-between gap-2"
+        >
+          <span className="min-w-0 flex-1 truncate text-left">{buttonText}</span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search saved value..." />
+          <CommandList>
+            <CommandEmpty>No saved value found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem value="None" onSelect={() => handleSelect(SYSTEM_FACT_NONE_VALUE)}>
+                <Check
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    value ? 'opacity-0' : 'opacity-100',
+                  )}
+                />
+                None
+              </CommandItem>
+              {SYSTEM_FACT_OPTIONS.map((fact) => (
+                <CommandItem
+                  key={fact.value}
+                  value={`${fact.label} ${fact.value} ${fact.description}`}
+                  onSelect={() => handleSelect(fact.value)}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === fact.value ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                  <span className="min-w-0 truncate">{fact.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+});
+SystemFactCombobox.displayName = 'SystemFactCombobox';
 
 const DefaultValueInput = memo(({
   item,
@@ -685,6 +786,8 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       return;
     }
 
+    const systemFactKey = getSystemFactKey(item);
+    const systemFactDefinition = systemFactKey ? SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey] : undefined;
     const updates: Partial<FieldItem> = {
       type: newType as FieldType,
       default_value: '', // Reset default value to avoid type mismatches
@@ -707,7 +810,39 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
     }
 
     updates.validation = newValidation;
+    if (systemFactDefinition && systemFactDefinition.field_type !== newType) {
+      updates.system_fact_key = undefined;
+    }
     onUpdate(updates);
+  }, [fieldIsShared, item, onUpdate]);
+
+  const handleSystemFactChange = useCallback((value: string) => {
+    if (fieldIsShared) {
+      return;
+    }
+
+    if (value === SYSTEM_FACT_NONE_VALUE) {
+      onUpdate({ system_fact_key: undefined });
+      return;
+    }
+
+    const systemFactKey = value as SystemFactKey;
+    const definition = SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey];
+    const validation = { ...item.validation };
+    delete validation.min;
+    delete validation.max;
+    if (EXPLANATION_REQUIRED_FACT_KEYS.has(systemFactKey)) {
+      validation.require_reason = 'on-true';
+    } else {
+      delete validation.require_reason;
+    }
+
+    onUpdate({
+      system_fact_key: systemFactKey,
+      type: definition.field_type,
+      default_value: '',
+      validation,
+    });
   }, [fieldIsShared, item.validation, onUpdate]);
 
   const handleDefaultValueChange = useCallback((val: any) => {
@@ -755,6 +890,43 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
           {fieldIsShared && (
             <p className="text-xs text-muted-foreground">
               Shared-field type is locked by studio settings.
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-1">
+            <Label htmlFor={`system-fact-${item.id}`}>Auto-fill record field</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground"
+                  aria-label="What does auto-fill record field mean?"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                When the operator submits this task, their answer also updates the matching field on the show, creator, or platform record. Each record field can be auto-filled by one task field per template.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <SystemFactCombobox
+            id={`system-fact-${item.id}`}
+            value={getSystemFactKey(item)}
+            onChange={handleSystemFactChange}
+            disabled={fieldIsShared}
+          />
+          {fieldIsShared && (
+            <p className="text-xs text-muted-foreground">
+              Shared fields cannot be bound to a record field; the type is locked by studio settings.
+            </p>
+          )}
+          {!fieldIsShared && getSystemFactKey(item) && (
+            <p className="text-xs text-muted-foreground">
+              This answer will update the matching show, creator, or platform value later.
             </p>
           )}
         </div>

@@ -46,6 +46,8 @@ The database schema is updated to add nullable actuals columns to operational ta
 
 ### A. Core Operational Models
 
+> **Status**: ✅ Shipped in [#92](https://github.com/allenlin90/eridu-services/pull/92) (PR 12.0.2). The `Show` actual-time composite index, `ShowCreator.actualStartTime` / `actualEndTime` / `attendanceMissing` / `attendanceReason` columns and indexes, `ShowPlatform.actualStartTime` / `actualEndTime` columns and indexes, and the empty `ShowPlatformViolation` table are live. `Show.actualStartTime` / `actualEndTime` themselves predate 12.0.2 (introduced in PR #63); 12.0.2 only added the composite index. No consumers wired yet — first writer ships in 12.0.5.
+
 ```prisma
 model Show {
   // ... existing fields ...
@@ -210,6 +212,8 @@ model AuditTarget {
 ## 3. Workflow Mechanics
 
 ### A. Additive Snapshot Hydration
+
+> **Status**: 🚧 Partially shipped. The producer-facing binding picker shipped in PR 12.0.3 ([#94](https://github.com/allenlin90/eridu-services/pull/94)): `SystemFactKeyEnum` and `SYSTEM_FACT_KEY_DEFINITIONS` in `@eridu/api-types/task-management`, save-time Zod compatibility + one-binding-per-fact-key validation, and the "Save answer as" combobox in the task-template builder. The hydration engine described below (target-scoped field expansion, append-only re-hydration, `binding_stale: true`) ships in PR 12.0.4; the extraction pipeline ships in PR 12.0.5. Until 12.0.4, bound fields submit a single non-target-scoped value into `task.content` and nothing reads it.
 
 ```mermaid
 sequenceDiagram

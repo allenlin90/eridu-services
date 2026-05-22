@@ -165,7 +165,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
   * Backend repositories, services, and Zod verification schemas.
   * A read-time **legacy sidecar merger** that seamlessly projects old metadata audits (`metadata.audit.snapshot_overrides[]`) and new `Audit` records in one unified timeline. The merger reads the new `reason` column with a fallback to `metadata.reason` for any pre-column rows back-filled later.
 
-#### 🟩 PR 12.0.2 · Phase 4 Actuals Schema Additions
+#### 🟩 PR 12.0.2 · Phase 4 Actuals Schema Additions — ✅ Shipped in [#92](https://github.com/allenlin90/eridu-services/pull/92)
 * **Purpose**: Run a single, clean SQL database migration that adds all operational columns and indices upfront.
 * **Functional Deliverable**:
   * `Show`: Uses the existing `actualStartTime` / `actualEndTime` operational columns and adds the actual-time index. No show-level performance JSONB bucket.
@@ -178,8 +178,9 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Purpose**: Allow studio producers to bind template fields to system fact keys.
 * **Functional Deliverable**:
   * Binds `FieldItemV2Schema` in `@eridu/api-types` to a closed `system_fact_key` enum.
-  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`). Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once 12.5 lands.
-  * **Template Builder UI**: Exposes a "System fact" dropdown configuration for template designers.
+  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`) and rejects duplicate fact-key bindings in the same template. Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once 12.5 lands.
+  * **Template Builder UI**: Exposes a searchable "Auto-fill record field" binding picker (with an info-icon tooltip explaining downstream behavior) for template designers.
+  * `creator_attendance_missing` uses the existing `require_reason: "on-true"` sidecar flow for the operator's explanation; there is no separate `creator_attendance_reason` binding input.
 
 #### 🟩 PR 12.0.4 · Dynamic Target-Scoped Form Hydration
 * **Purpose**: Dynamically expand a template's bound fields into individual inputs for each assigned creator or platform.
@@ -193,6 +194,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Functional Deliverable**:
   * Ingestion pipeline: reads `task.content`, validates targets against active DB records, compares source priorities, and writes audited facts or skips them (`SKIPPED_LOWER_PRIORITY`).
   * Smoke test: wires the pipeline end-to-end for `show_actual_start_time` → `Show.actualStartTime`.
+  * Cross-task collision guard: before ingestion, detect active tasks assigned to the same show that bind the same fact key and route the lower-priority or ambiguous write to the review path instead of overwriting silently.
   * **Wire-Label Rename**: Atomic find-and-replace of `OPERATOR_RECORD` to `OPERATOR_INPUT` across all backend schemas, frontend calculators, and compensation badge components in `/me/` and `/studios/` views.
   * **`/show-operations` Task-Assignment Alignment**:
     * **Backend (BE)**: Update the `/show-operations` query endpoint to check for active task assignments and return `has_proper_task_assignment: boolean`.
@@ -219,7 +221,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
 * **Functional Deliverable**:
   * Extracts `ShowCreator` times and `attendanceMissing`.
   * **Read-Side Derivation**: Implements live lateness, presence (`ON_TIME` / `LATE` / `MISSING`), and `lateMinutes` math (e.g. `ShowCreator.actualStartTime` compared against `Show.startTime`).
-  * Enforces `attendanceReason` on `LATE`/`MISSING` statuses. Safe fallback logic writes a system flag if the builder failed to collect the operator reason, preventing form blockages.
+  * Enforces `attendanceReason` on `LATE`/`MISSING` statuses from the task field reason sidecar. Safe fallback logic writes a system flag if the builder failed to collect the operator reason, preventing form blockages.
 
 #### ⬜ PR 12.3.1 · Platform GMV/Views Extractor — **Deferred to 12.5**
 * **Status**: Removed from Phase 4 critical path. GMV and viewer count are analytical metrics; their storage shape (typed column, read model, or OLAP path) is decided by the 12.5 analytics infrastructure investigation. The original purpose, casting rules, and default-zero disambiguation logic carry forward; see [`show-performance-analytics-infra.md`](../ideation/show-performance-analytics-infra.md).

@@ -7,20 +7,25 @@ import {
   FieldItemV2Schema as SharedFieldItemV2Schema,
   FieldTypeEnum as SharedFieldTypeEnum,
   LoopMetadataSchema as SharedLoopMetadataSchema,
+  SystemFactKeyEnum as SharedSystemFactKeyEnum,
   TemplateMetadataSchema as SharedTemplateMetadataSchema,
   TemplateMetadataV2Schema as SharedTemplateMetadataV2Schema,
+  SYSTEM_FACT_KEY_DEFINITIONS,
   TASK_TYPE,
   validateFieldOptions,
 } from '@eridu/api-types/task-management';
 
 export const FieldTypeEnum = SharedFieldTypeEnum;
 export type FieldType = z.infer<typeof FieldTypeEnum>;
+export const SystemFactKeyEnum = SharedSystemFactKeyEnum;
+export type SystemFactKey = z.infer<typeof SystemFactKeyEnum>;
+export { SYSTEM_FACT_KEY_DEFINITIONS };
 
 // ID is now required in the shared schema
 
 export const FieldItemSchema = SharedFieldItemBaseSchema.superRefine(validateFieldOptions);
 
-export type FieldItem = z.infer<typeof FieldItemSchema>;
+export type FieldItem = z.infer<typeof FieldItemSchema> | z.infer<typeof SharedFieldItemV2Schema>;
 
 export const LoopMetadataSchema = SharedLoopMetadataSchema;
 export type LoopMetadata = z.infer<typeof LoopMetadataSchema>;

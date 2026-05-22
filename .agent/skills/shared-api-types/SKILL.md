@@ -33,6 +33,18 @@ Never infer storage/report keys directly from a field object. Use shared helpers
 | `getFieldSharedKey(schema, field)` | Resolve canonical shared-field identity |
 | `getFieldReportDescriptor(schema, templateUid, field)` | Build reportable column keys |
 
+## Task Template System Facts
+
+PR 12 system fact bindings are defined in `packages/api-types/src/task-management/template-definition.schema.ts` and exported from `@eridu/api-types/task-management`:
+
+| Export | Use |
+|---|---|
+| `SystemFactKeyEnum` | Closed wire enum for `FieldItemV2.system_fact_key` |
+| `SYSTEM_FACT_KEY_DEFINITIONS` | Label, backing column, target scope, and compatible field type catalog |
+| `getSystemFactKeyDefinition()` | Read one catalog entry by key |
+
+Do not duplicate the fact-key list in frontend or backend code. A v2 template may bind each `system_fact_key` at most once; cross-task collisions for tasks assigned to the same show are handled by the runtime assignment/ingestion guard, not by duplicating template schema rules. Use the existing `require_reason` sidecar flow for creator attendance explanations instead of adding a separate reason fact key. Analytical platform metrics such as GMV and viewer count stay out of this catalog until the 12.5 analytics storage decision lands.
+
 ## Key Rules
 
 1. **Schemas define wire format** — `snake_case` for API JSON
@@ -52,3 +64,4 @@ Never infer storage/report keys directly from a field object. Use shared helpers
 - [ ] Types inferred via `z.infer`
 - [ ] Consumers import from subpath, never barrel root
 - [ ] Only non-deprecated APIs used
+- [ ] Task-template `system_fact_key` consumers use the shared fact catalog, not local string arrays

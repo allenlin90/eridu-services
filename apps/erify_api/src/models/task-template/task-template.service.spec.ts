@@ -413,5 +413,76 @@ describe('taskTemplateService', () => {
         expect(() => service.validateSchema(schema, sharedFieldsByKey)).toThrow(/must use type "number"/);
       });
     });
+
+    describe('system fact key validation', () => {
+      const createV2Schema = (item: Record<string, unknown>) => ({
+        schema_version: 2 as const,
+        schema_engine: 'task_template_v2' as const,
+        content_key_strategy: 'field_id' as const,
+        report_projection_strategy: 'descriptor' as const,
+        metadata: {
+          task_type: 'ACTIVE',
+        },
+        items: [
+          {
+            id: 'fld_actualstart1',
+            key: 'show_actual_start',
+            type: 'datetime' as const,
+            label: 'Show actual start',
+            required: true,
+            ...item,
+          },
+        ],
+      });
+
+      it('should pass when a v2 system fact key matches the field type', () => {
+        const schema = createV2Schema({
+          system_fact_key: 'show_actual_start_time',
+        });
+
+        expect(() => service.validateSchema(schema)).not.toThrow();
+      });
+
+      it('should throw when a v2 system fact key is bound to an incompatible field type', () => {
+        const schema = createV2Schema({
+          type: 'text',
+          system_fact_key: 'show_actual_start_time',
+        });
+
+        try {
+          service.validateSchema(schema);
+          expect(true).toBe(false);
+        } catch (error: any) {
+          expect(error.message).toBe('Invalid template schema');
+          const response = error.getResponse();
+          expect(JSON.stringify(response.details)).toMatch(/requires field type/);
+          expect(JSON.stringify(response.details)).toMatch(/datetime/);
+        }
+      });
+
+      it('should throw when a v2 system fact key is bound more than once in a template', () => {
+        const schema = createV2Schema({
+          system_fact_key: 'show_actual_start_time',
+        });
+        (schema.items as Array<Record<string, unknown>>).push({
+          id: 'fld_actualstart2',
+          key: 'show_actual_start_duplicate',
+          type: 'datetime',
+          label: 'Show actual start duplicate',
+          required: true,
+          system_fact_key: 'show_actual_start_time',
+        });
+
+        try {
+          service.validateSchema(schema);
+          expect(true).toBe(false);
+        } catch (error: any) {
+          expect(error.message).toBe('Invalid template schema');
+          const response = error.getResponse();
+          expect(JSON.stringify(response.details)).toMatch(/Duplicate system fact binding/);
+          expect(JSON.stringify(response.details)).toMatch(/show_actual_start_time/);
+        }
+      });
+    });
   });
 });

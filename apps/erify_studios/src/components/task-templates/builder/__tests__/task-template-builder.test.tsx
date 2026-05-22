@@ -113,4 +113,96 @@ describe('taskTemplateBuilder v2 field ids', () => {
     expect(clonedItem.key).toBe('ads_cost');
     expect(clonedItem.shared_field_key).toBe('ads_cost');
   });
+
+  it('binds a field to a compatible system fact key from the field editor', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const templateWithField: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      items: [
+        {
+          id: 'fld_showactual1',
+          key: 'actual_start',
+          type: 'text',
+          label: 'Actual start',
+          required: true,
+          group: 'l1',
+        },
+      ],
+    };
+
+    render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
+
+    await user.click(screen.getByRole('combobox', { name: 'Auto-fill record field' }));
+    await user.click(await screen.findByRole('option', { name: /Show actual start time/ }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          id: 'fld_showactual1',
+          type: 'datetime',
+          system_fact_key: 'show_actual_start_time',
+        }),
+      ],
+    }));
+  });
+
+  it('uses checkbox explanation rules for creator attendance missing bindings', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const templateWithField: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      items: [
+        {
+          id: 'fld_creatormiss1',
+          key: 'creator_missing',
+          type: 'text',
+          label: 'Creator missing',
+          required: true,
+          group: 'l1',
+        },
+      ],
+    };
+
+    render(<TaskTemplateBuilder template={templateWithField} onChange={onChange} />);
+
+    await user.click(screen.getByRole('combobox', { name: 'Auto-fill record field' }));
+    await user.click(await screen.findByRole('option', { name: 'Creator attendance missing' }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      items: [
+        expect.objectContaining({
+          id: 'fld_creatormiss1',
+          type: 'checkbox',
+          system_fact_key: 'creator_attendance_missing',
+          validation: expect.objectContaining({
+            require_reason: 'on-true',
+          }),
+        }),
+      ],
+    }));
+  });
+
+  it('disables the auto-fill record field picker on shared fields', () => {
+    const onChange = vi.fn();
+    const templateWithSharedField: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      items: [
+        {
+          id: 'fld_sharedgmv01',
+          key: 'gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          group: 'l1',
+          shared_field_key: 'gmv',
+        },
+      ],
+    };
+
+    render(<TaskTemplateBuilder template={templateWithSharedField} onChange={onChange} />);
+
+    const combobox = screen.getByRole('combobox', { name: 'Auto-fill record field' });
+    expect(combobox).toBeDisabled();
+  });
 });

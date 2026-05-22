@@ -24,9 +24,10 @@ A show with 3 task types → 3 DB records instead of 60.
 
 1. **Snapshot Table** for schema versioning — tasks reference immutable snapshots, not templates
 2. **Schema Engine Routing** — v1 snapshots use `field.key` content keys; v2 templates use stable `fld_...` field ids and descriptor-based reporting
-3. **Polymorphic `TaskTarget`** — generic `targetType` + `targetId` with optional FKs for referential integrity
-4. **Advisory Locks** — `pg_advisory_xact_lock(showId)` in `@Transactional()` prevents duplicate task generation
-5. **Optimistic Locking** — version-based compare-and-swap on task updates (409 on conflict)
+3. **System Fact Bindings** — v2 fields can set `system_fact_key` from the closed `@eridu/api-types/task-management` catalog; shared Zod validation enforces field-type compatibility and one binding per fact key before save. Creator attendance explanations use the existing `require_reason` sidecar instead of a separate reason binding
+4. **Polymorphic `TaskTarget`** — generic `targetType` + `targetId` with optional FKs for referential integrity
+5. **Advisory Locks** — `pg_advisory_xact_lock(showId)` in `@Transactional()` prevents duplicate task generation
+6. **Optimistic Locking** — version-based compare-and-swap on task updates (409 on conflict)
 
 ---
 
@@ -121,6 +122,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 ## Current Implementation Status
 
 ✅ Template CRUD, bulk generation, assignment, reassignment, operator tasks  
+✅ v2 `system_fact_key` schema validation for PR 12 operational fact bindings
 ✅ Optimistic locking, advisory locks, soft-delete with resumption  
 ✅ Action-based workflow endpoints, operator state machine enforcement, studio review queue UI in `erify_studios`  
 ⚠️ Admin/manager transition whitelist is still not enforced on `/studios/:studioId/tasks/:id/action`  

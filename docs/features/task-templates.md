@@ -71,6 +71,7 @@ Stored on `Studio.metadata.shared_fields[]`. The studio's controlled vocabulary 
   "items": [
     { "id": "fld_gmvl100001", "key": "gmv",    "type": "number",   "group": "l1", "shared_field_key": "gmv", "required": true },
     { "id": "fld_gmvl200001", "key": "gmv",    "type": "number",   "group": "l2", "shared_field_key": "gmv", "required": true },
+    { "id": "fld_actualst01", "key": "actual_start", "type": "datetime", "group": "l1", "system_fact_key": "show_actual_start_time", "required": true },
     { "id": "fld_pin1000001", "key": "l1_pin", "type": "checkbox", "group": "l1", "label": "Pin welcome comment" }
   ]
 }
@@ -141,6 +142,7 @@ The v2 schema decouples editor handle, content storage key, and canonical report
 | `key`              | canonical metric id | editor handle, unique per loop group in v2 | frozen with snapshot | v1 storage key only      | v2 template-local descriptor segment      |
 | `id`               | —                   | stable `fld_...` field identity       | frozen               | **v2 storage key**       | unused                                    |
 | `shared_field_key` | —                   | link to Layer 0                       | frozen               | —                        | v2 shared descriptor base                 |
+| `system_fact_key`  | —                   | closed operational fact binding       | frozen on authored fields; hydrated fields are append-only mutable while unsubmitted | drives target-scoped hydration in PR 12 | read by PR 12 extractors, not report projection |
 | `standard`         | —                   | legacy v1 canonical flag              | frozen               | —                        | v1 shared descriptor branch               |
 | `group`            | —                   | binds field to a loop id              | frozen               | —                        | v2 shared/template-local loop descriptor segment |
 | `type`             | locked at creation  | must match Layer 0 if shared          | frozen               | drives content validator | drives column type                        |
@@ -161,6 +163,7 @@ The template schema isn't only a storage contract — it also drives what the us
 | `require_reason`               | Conditional rule editor (operator/value pairs by type)                 | Reveals an explanation textarea and stores it under `<fieldKey>__reason` when the trigger condition fires | Shows the captured reason inline             |
 | `group` + `metadata.loops[]`   | Loop card grouping; loop reorder by position; loop name/duration edit  | Loop tabs + Previous/Next nav; live-loop indicator from `show.start_time`  | All loops visible at once (no tab filtering) |
 | `shared_field_key` (canonical link) | Shared-field picker; locks shared key/type once linked                  | No direct UX effect beyond engine-routed storage                           | No direct UX effect                          |
+| `system_fact_key`              | Searchable "Auto-fill record field" picker (with info-icon tooltip); selecting a binding sets the compatible field type from `@eridu/api-types/task-management`; each fact key can appear once per template | No runtime effect until PR 12 hydration; later expands into target-scoped inputs | Later PR 12 review/extraction surfaces read the bound fact |
 | `standard`                     | Legacy v1 canonical link only                                          | Legacy v1 snapshots remain readable                                        | Legacy v1 snapshots remain readable          |
 | `id`                           | dnd-kit drag handle stability and v2 content key                       | React-hook-form field name; IndexedDB draft key component                  | Same as execution                            |
 | `task_type` (envelope-level)   | Mode selector affecting which template-type-specific rules apply       | Determines submission-window enforcement (SETUP before show, ACTIVE after) | Visible as a chip                            |
