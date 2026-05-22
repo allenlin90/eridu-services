@@ -61,10 +61,13 @@ const jsonValueSchema: z.ZodType<unknown> = z.lazy(() =>
 
 /**
  * Loosely-shaped metadata bag. Engine writes populate `ingestion_source`,
- * `task_uid`, `task_field_id`, `old_value`, and `new_value`. Manager overrides
- * also populate `reason`. Skipped writes populate `skipped_by_source`. Extra
- * keys are permitted so downstream extractors can attach context without a
- * contract change.
+ * `task_uid`, `task_field_id`, `old_value`, and `new_value`. Skipped writes
+ * populate `skipped_by_source`. Extra keys are permitted so downstream
+ * extractors can attach context without a contract change.
+ *
+ * Note: `reason` is a first-class column on the `audits` row, not a metadata
+ * key. The merger in PR 12 still tolerates a legacy `reason` key here when
+ * back-filling pre-column rows, but new writers always use the column.
  */
 export const auditMetadataSchema = z
   .object({
@@ -74,7 +77,6 @@ export const auditMetadataSchema = z
     fact_key: z.string().optional(),
     old_value: jsonValueSchema.optional(),
     new_value: jsonValueSchema.optional(),
-    reason: z.string().optional(),
     skipped_by_source: actualsSourceSchema.optional(),
   })
   .catchall(jsonValueSchema);
@@ -90,6 +92,11 @@ export const auditApiResponseSchema = z.object({
   actor_uid: z.string().startsWith(UID_PREFIXES.USER).nullable(),
   ip_address: z.string().nullable(),
   user_agent: z.string().nullable(),
+  /**
+   * Free-text justification supplied by the actor on OVERRIDE-class writes.
+   * Null for engine writes. First-class column, not nested in `metadata`.
+   */
+  reason: z.string().nullable(),
   metadata: auditMetadataSchema,
   targets: z.array(auditTargetApiResponseSchema),
   created_at: z.iso.datetime(),

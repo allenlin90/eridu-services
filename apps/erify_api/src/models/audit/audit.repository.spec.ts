@@ -88,6 +88,29 @@ describe('auditRepository', () => {
       expect(args.data.userAgent).toBe('jest');
     });
 
+    it('passes the reason through as a first-class column and defaults to null', async () => {
+      txAuditDelegate.create.mockResolvedValue({});
+
+      await repository.create({
+        uid: 'aud_with_reason',
+        action: 'OVERRIDE',
+        actorId: BigInt(1),
+        reason: 'rate correction approved by ops',
+        targets: [{ targetType: 'STUDIO_SHIFT', targetId: BigInt(1) }],
+      });
+
+      await repository.create({
+        uid: 'aud_no_reason',
+        action: 'CREATE',
+        targets: [{ targetType: 'SHOW', targetId: BigInt(1) }],
+      });
+
+      expect(txAuditDelegate.create.mock.calls[0]?.[0].data.reason).toBe(
+        'rate correction approved by ops',
+      );
+      expect(txAuditDelegate.create.mock.calls[1]?.[0].data.reason).toBeNull();
+    });
+
     it('defaults metadata to {} when omitted', async () => {
       txAuditDelegate.create.mockResolvedValue({});
 

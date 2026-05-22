@@ -80,6 +80,7 @@ describe('legacy-snapshot-merger', () => {
         actorId: null,
         ipAddress: null,
         userAgent: null,
+        reason: null,
         metadata: {} as any,
         createdAt: new Date('2026-05-01T00:00:00.000Z'),
         targets: [],
@@ -91,12 +92,12 @@ describe('legacy-snapshot-merger', () => {
       const audit = buildAudit({
         action: 'OVERRIDE',
         actorId: BigInt(42),
+        reason: 'late camera start',
         metadata: {
           ingestion_source: 'manager_override',
           fact_key: 'show_actual_start_time',
           old_value: '2026-04-01T10:00:00.000Z',
           new_value: '2026-04-01T10:05:00.000Z',
-          reason: 'late camera start',
         } as any,
       });
 
@@ -118,6 +119,22 @@ describe('legacy-snapshot-merger', () => {
         at: '2026-05-01T00:00:00.000Z',
         audit_uid: 'aud_one',
       });
+    });
+
+    it('prefers the reason column over a legacy metadata.reason value', () => {
+      const audit = buildAudit({
+        reason: 'authoritative',
+        metadata: { reason: 'legacy-fallback' } as any,
+      });
+      expect(auditToTimelineEntry(audit).reason).toBe('authoritative');
+    });
+
+    it('falls back to metadata.reason when the column is null (legacy back-fill path)', () => {
+      const audit = buildAudit({
+        reason: null,
+        metadata: { reason: 'legacy-fallback' } as any,
+      });
+      expect(auditToTimelineEntry(audit).reason).toBe('legacy-fallback');
     });
 
     it('falls back to task_field_id when fact_key is absent and tolerates a missing actor map', () => {
@@ -149,6 +166,7 @@ describe('legacy-snapshot-merger', () => {
         actorId: null,
         ipAddress: null,
         userAgent: null,
+        reason: null,
         metadata: {} as any,
         createdAt: new Date('2026-04-02T10:00:00.000Z'),
         targets: [],

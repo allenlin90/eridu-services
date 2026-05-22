@@ -43,6 +43,7 @@ export class AuditRepository {
       action: payload.action,
       ipAddress: payload.ipAddress ?? null,
       userAgent: payload.userAgent ?? null,
+      reason: payload.reason ?? null,
       metadata: (payload.metadata ?? {}) as Prisma.InputJsonValue,
       ...(payload.actorId != null && {
         actor: { connect: { id: payload.actorId } },

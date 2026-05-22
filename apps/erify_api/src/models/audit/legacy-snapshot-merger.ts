@@ -85,6 +85,11 @@ export function auditToTimelineEntry(
   actorUidMap?: ReadonlyMap<bigint, string>,
 ): AuditTimelineEntry {
   const metadata = (audit.metadata ?? {}) as Record<string, unknown>;
+  // Reason precedence: first-class column wins; metadata.reason is a legacy
+  // fallback for any pre-column rows that may have been written before this
+  // PR landed. New writers always populate the column.
+  const reason = audit.reason
+    ?? (typeof metadata.reason === 'string' ? metadata.reason : null);
   return {
     source: 'audit',
     action: audit.action as AuditAction,
@@ -99,7 +104,7 @@ export function auditToTimelineEntry(
       ? (actorUidMap?.get(audit.actorId) ?? null)
       : null,
     actor_ext_id: null,
-    reason: typeof metadata.reason === 'string' ? metadata.reason : null,
+    reason,
     ingestion_source:
       typeof metadata.ingestion_source === 'string'
         ? (metadata.ingestion_source as AuditIngestionSource)

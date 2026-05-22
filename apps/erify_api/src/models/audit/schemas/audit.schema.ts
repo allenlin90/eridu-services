@@ -20,6 +20,13 @@ export type CreateAuditPayload = {
   actorId?: bigint | null;
   ipAddress?: string | null;
   userAgent?: string | null;
+  /**
+   * Free-text justification supplied by the actor on OVERRIDE-class writes.
+   * Nullable because engine writes never carry a reason. Required-ness is
+   * enforced per writer (e.g. `studio-shift.service` rejects an hourly_rate
+   * edit without `override_reason`), not by `AuditService`.
+   */
+  reason?: string | null;
   metadata?: AuditMetadata;
   targets: CreateAuditTargetPayload[];
 };
