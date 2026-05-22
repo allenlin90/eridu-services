@@ -404,6 +404,10 @@ export class TaskRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: This method is necessary because it performs an optimistic concurrency snapshot transition
+  // on a Task. It pre-reads existing metadata to merge JSONB objects in-memory, executes a version-gated update
+  // statement to avoid concurrent modifications, and catches RecordNotFound to distinguish between a soft-deletion
+  // and a version conflict. These concerns cannot be handled via simple findMany inlining at the service layer.
   async updateActiveTaskSnapshot(
     id: bigint,
     currentVersion: number,
