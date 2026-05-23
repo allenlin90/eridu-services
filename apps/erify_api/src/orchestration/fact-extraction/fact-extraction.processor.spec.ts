@@ -364,5 +364,42 @@ describe('factExtractionProcessor', () => {
       expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
       expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
     });
+
+    it('stays idempotent on resubmission even when the stored pair is already inverted', async () => {
+      // Codex P2 review on PR #101: `ensureValidActualTimeRange` was gated
+      // on `startCanWrite || endCanWrite`, so a pure resubmission of the
+      // recorded values against an inverted stored pair (the `updateShow`
+      // path itself does not enforce actual-time ordering, so legacy /
+      // out-of-band writes can leave one) would throw and surface as
+      // `extractor_error` despite no column update being attempted.
+      installEnsureValidImpl();
+      showService.getShowById.mockResolvedValue({
+        id: 10n,
+        uid: 'sho_10',
+        metadata: {
+          actuals_source: {
+            show_actual_start_time: 'OPERATOR',
+            show_actual_end_time: 'OPERATOR',
+          },
+        },
+        // Stored pair: end (12:30) is BEFORE start (13:00). Inverted.
+        // Incoming pair matches stored exactly — both sides resolve to
+        // value_unchanged. No effective write, so validation must be
+        // skipped and the operation must stay idempotent.
+        actualStartTime: new Date('2026-05-23T13:00:00.000Z'),
+        actualEndTime: new Date('2026-05-23T12:30:00.000Z'),
+      } as never);
+
+      const result = await processor.applyPairedShowActuals(buildPairedInput({
+        startIncoming: new Date('2026-05-23T13:00:00.000Z'),
+        endIncoming: new Date('2026-05-23T12:30:00.000Z'),
+      }));
+
+      expect(showService.ensureValidActualTimeRange).not.toHaveBeenCalled();
+      expect(showService.updateShow).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    });
   });
 });

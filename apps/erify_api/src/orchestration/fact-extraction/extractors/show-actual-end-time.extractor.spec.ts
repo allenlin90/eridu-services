@@ -144,4 +144,27 @@ describe('showActualEndTimeExtractor', () => {
     );
     expect(showService.updateShow).not.toHaveBeenCalled();
   });
+
+  it('stays a noop on resubmission even when the stored pair is already inverted', async () => {
+    // Codex P2 review on PR #101: `ensureValidActualTimeRange` ran before
+    // the `value_unchanged` check, so a harmless retry of the same
+    // timestamp against a show whose stored pair is already inverted
+    // (the `updateShow` path itself does not enforce actual-time
+    // ordering) would throw and be surfaced as `extractor_error`.
+    const showService = buildShowService({
+      // Stored start is AFTER the stored end — an inverted pre-existing
+      // pair the operator did not create.
+      actualStartTime: new Date('2026-05-23T20:00:00.000Z'),
+      // Stored end matches the resubmission, recorded by the same source.
+      actualEndTime: new Date('2026-05-23T19:30:00.000Z'),
+      metadata: { actuals_source: { show_actual_end_time: 'OPERATOR' } },
+    });
+    const extractor = new ShowActualEndTimeExtractor(showService);
+
+    const decision = await extractor.apply(fact, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    expect(showService.updateShow).not.toHaveBeenCalled();
+    expect(showService.ensureValidActualTimeRange).not.toHaveBeenCalled();
+  });
 });

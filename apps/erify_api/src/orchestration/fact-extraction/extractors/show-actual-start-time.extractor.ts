@@ -59,6 +59,16 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
       };
     }
 
+    // Idempotency: short-circuit a resubmission of the already-recorded
+    // value BEFORE validating the time range. Otherwise a harmless retry
+    // against a show whose stored pair is already inverted (the
+    // `updateShow` path itself does not enforce actual-time ordering, so
+    // legacy / out-of-band writes can leave one) surfaces as
+    // `extractor_error` even though no column would have moved.
+    if (currentValue && currentValue.getTime() === incoming.getTime() && recordedSource === ctx.source) {
+      return { kind: 'noop', reason: 'value_unchanged' };
+    }
+
     // One-sided update path: validates the incoming start against the
     // stored end. Submissions that carry BOTH `show_actual_start_time` and
     // `show_actual_end_time` never reach this extractor — they are routed
@@ -70,10 +80,6 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
       show.actualEndTime,
       { actualStartTime: incoming },
     );
-
-    if (currentValue && currentValue.getTime() === incoming.getTime() && recordedSource === ctx.source) {
-      return { kind: 'noop', reason: 'value_unchanged' };
-    }
 
     const nextActualsSource = {
       ...(metadata.actuals_source ?? {}),

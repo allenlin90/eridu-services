@@ -144,22 +144,6 @@ export class FactExtractionProcessor {
     const startCanWrite = canResolverOverwrite(input.ctx.source, startRecorded);
     const endCanWrite = canResolverOverwrite(input.ctx.source, endRecorded);
 
-    // Validate the MERGED-FINAL state (incoming for sides that will write,
-    // stored for sides that won't). This is the only validation that
-    // matters — by the time the transaction commits, exactly the
-    // canWrite-sides will have changed in storage. If neither side writes
-    // (both priority-skipped), no validation is needed; nothing changes.
-    if (startCanWrite || endCanWrite) {
-      this.showService.ensureValidActualTimeRange(
-        show.actualStartTime,
-        show.actualEndTime,
-        {
-          ...(startCanWrite ? { actualStartTime: input.startIncoming } : {}),
-          ...(endCanWrite ? { actualEndTime: input.endIncoming } : {}),
-        },
-      );
-    }
-
     const startCurrent = show.actualStartTime;
     const endCurrent = show.actualEndTime;
     const startUnchanged = startCanWrite
@@ -173,6 +157,24 @@ export class FactExtractionProcessor {
 
     const startEffectiveWrite = startCanWrite && !startUnchanged;
     const endEffectiveWrite = endCanWrite && !endUnchanged;
+
+    // Validate the MERGED-FINAL state only when at least one side will
+    // actually move. Gating on effective-write (not `canWrite`) keeps
+    // no-op submissions idempotent against shows whose stored pair is
+    // already inverted — the `updateShow` path itself does not enforce
+    // actual-time ordering, so legacy / out-of-band writes can leave one.
+    // A pure-resubmission of the recorded values must not surface as
+    // `extractor_error` when nothing would have changed.
+    if (startEffectiveWrite || endEffectiveWrite) {
+      this.showService.ensureValidActualTimeRange(
+        startCurrent,
+        endCurrent,
+        {
+          ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+          ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+        },
+      );
+    }
 
     // Build the combined updateShow payload — one DB write covers both
     // columns and the metadata.actuals_source map. Skip the update entirely
