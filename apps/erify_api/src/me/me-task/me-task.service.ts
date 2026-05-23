@@ -12,6 +12,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import type { TaskActionPayload, UpdateTaskPayload } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
+import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
 @Injectable()
 export class MeTaskService {
@@ -19,6 +20,7 @@ export class MeTaskService {
     private readonly taskService: TaskService,
     private readonly userService: UserService,
     private readonly studioService: StudioService,
+    private readonly taskOrchestrationService: TaskOrchestrationService,
   ) {}
 
   /**
@@ -97,8 +99,12 @@ export class MeTaskService {
       this.ensureMemberTransitionAllowed(task.status, payload.status);
     }
 
-    // 3. Delegate to TaskService core functionality
-    return this.taskService.updateTaskContentAndStatus(taskUid, version, payload);
+    // 3. Route through the orchestrator so a transition into COMPLETED fires
+    // fact extraction. Assignee mode keeps the submit-window guards in
+    // TaskService.updateTaskContentAndStatus.
+    return this.taskOrchestrationService.submitTaskContent(taskUid, version, payload, {
+      mode: 'assignee',
+    });
   }
 
   async runMyTaskAction(
@@ -133,7 +139,9 @@ export class MeTaskService {
       payload.content,
       payload.note,
     );
-    return this.taskService.updateTaskContentAndStatus(taskUid, version, updatePayload);
+    return this.taskOrchestrationService.submitTaskContent(taskUid, version, updatePayload, {
+      mode: 'assignee',
+    });
   }
 
   private resolveMemberAction(

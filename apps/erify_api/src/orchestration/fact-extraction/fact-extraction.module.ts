@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { ExtractorRegistry } from './extractors/extractor-registry';
 import { ShowActualStartTimeExtractor } from './extractors/show-actual-start-time.extractor';
@@ -15,12 +15,13 @@ import { TaskModule } from '@/models/task/task.module';
  * registered explicitly in `ExtractorRegistry`; sub-PRs 12.1.x / 12.2 /
  * 12.3.2 add more without touching the orchestrator.
  *
- * The `TaskModule` import is wrapped in `forwardRef` because TaskService
- * triggers extraction after a COMPLETED transition — see TaskModule for the
- * other half of the cycle.
+ * Dependency direction is intentionally one-way: this module depends on
+ * `TaskModule` (read-only access to task snapshot + sibling task scan).
+ * Cross-cutting workflows that need to fire extraction *after* a task
+ * update belong in `TaskOrchestrationModule`, not here.
  */
 @Module({
-  imports: [forwardRef(() => TaskModule), AuditModule, ShowModule],
+  imports: [TaskModule, AuditModule, ShowModule],
   providers: [
     FactExtractionService,
     ExtractorRegistry,

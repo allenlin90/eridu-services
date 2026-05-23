@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { Prisma, Task } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
@@ -16,7 +16,6 @@ import { TaskValidationError } from '@/lib/errors/task-validation.error';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { ShowService } from '@/models/show/show.service';
-import { FactExtractionService } from '@/orchestration/fact-extraction/fact-extraction.service';
 import { UtilityService } from '@/utility/utility.service';
 
 type TaskUpdateAuditContext = {
@@ -30,15 +29,12 @@ type TaskUpdateAuditContext = {
 export class TaskService extends BaseModelService {
   static readonly UID_PREFIX = 'task';
   protected readonly uidPrefix = TaskService.UID_PREFIX;
-  private readonly logger = new Logger(TaskService.name);
 
   constructor(
     private readonly taskRepository: TaskRepository,
     private readonly taskValidationService: TaskValidationService,
     private readonly showService: ShowService,
     protected readonly utilityService: UtilityService,
-    @Inject(forwardRef(() => FactExtractionService))
-    private readonly factExtractionService: FactExtractionService,
   ) {
     super(utilityService);
   }
@@ -322,7 +318,7 @@ export class TaskService extends BaseModelService {
         }
       }
 
-      const updated = await this.taskRepository.updateWithVersionCheck(
+      return await this.taskRepository.updateWithVersionCheck(
         { uid, version },
         {
           content: newContent ?? undefined,
@@ -333,33 +329,6 @@ export class TaskService extends BaseModelService {
           version: version + 1,
         },
       );
-
-      if (
-        updated
-        && task.status !== TASK_STATUS.COMPLETED
-        && newStatus === TASK_STATUS.COMPLETED
-        && targetShow
-      ) {
-        try {
-          await this.factExtractionService.extractFromTask({
-            taskId: task.id,
-            taskUid: task.uid,
-            studioId: task.studioId,
-            showId: targetShow.id,
-            showUid: targetShow.uid,
-            source: 'OPERATOR',
-          });
-        } catch (extractionError) {
-          // Extraction failures must not block the task submission — the
-          // submitter has already saved final content. Surface for ops.
-          this.logger.error(
-            `Fact extraction failed for completed task ${task.uid}: ${(extractionError as Error).message}`,
-            (extractionError as Error).stack,
-          );
-        }
-      }
-
-      return updated;
     } catch (error) {
       if (error instanceof TaskValidationError) {
         throw HttpError.badRequestWithDetails(error.message, {

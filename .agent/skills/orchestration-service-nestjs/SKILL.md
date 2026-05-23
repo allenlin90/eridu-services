@@ -23,8 +23,24 @@ Use an Orchestration Service when:
 - **Cross-domain validation** (e.g., verify studio membership before assigning)
 - **Idempotent processing** (skip already-created pairs)
 - Needs **scoped advisory locking** or multi-model transactions
+- A **model mutation must trigger a side effect into another domain** (e.g., task transition → fact extraction → audit fan-out)
 
 Do NOT use for: simple single-model CRUD or thin delegation.
+
+## Side-Effects on Model Mutations — Don't Reach for `forwardRef`
+
+When a model service mutation needs to fan out into another domain (e.g. `TaskService.update*` completing a task should fire `FactExtractionService.extractFromTask`), the wrong fix is to inject the downstream service back into the model service with `@Inject(forwardRef(...))`. That:
+
+- Bleeds the downstream domain into the model service's concerns
+- Forces every test of the model service to mock the downstream chain
+- Creates a circular module dependency that `forwardRef` papers over at runtime cost
+- Hides the dependency direction in `imports: [forwardRef(...)]`, breaking module reasoning
+
+**Pattern:** put the workflow in the orchestration service that already composes both. Model services stay atomic. The orchestrator method takes the same args the caller would have given the model service, dispatches to the model, then triggers the side effect on success.
+
+Reference: `TaskOrchestrationService.submitTaskContent` ([task-orchestration.service.ts](../../../apps/erify_api/src/task-orchestration/task-orchestration.service.ts)) wraps `TaskService.updateTaskContentAndStatus{,AsAdmin}` and fires `FactExtractionService.extractFromTask` on a fresh transition into `COMPLETED`. All three call sites (`MeTaskService`, `StudioTaskController`, future paths) route through it — calling `TaskService.update*` directly silently bypasses extraction, which the orchestrator's doc-comment calls out.
+
+**Rule of thumb:** if you find yourself reaching for `forwardRef`, an orchestrator method is what you actually want. The only legitimate `forwardRef` cases are true two-way operational dependencies (rare), not "service A's update should fire service B."
 
 ## Architecture
 
@@ -87,6 +103,7 @@ Extract repeated lookups into private helpers (e.g., `resolveStudioMember()`). V
 - [ ] Per-item errors caught (partial success)
 - [ ] Cross-domain validation before mutation loop
 - [ ] Logger for per-item errors
+- [ ] No `forwardRef` between this module and the model modules it composes — if you reached for one, you're missing an orchestrator method (see "Side-Effects" section above)
 
 ## Related Skills
 

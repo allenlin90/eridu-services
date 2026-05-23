@@ -3,6 +3,7 @@ import type { TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
+import { TASK_STATUS } from '@eridu/api-types/task-management';
 
 import { TaskGenerationProcessor } from './task-generation-processor.service';
 
@@ -15,9 +16,11 @@ import {
 } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
+import type { UpdateTaskPayload } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
+import { FactExtractionService } from '@/orchestration/fact-extraction/fact-extraction.service';
 import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
 
 type MembershipWithUser = StudioMembership & { user: User };
@@ -29,6 +32,15 @@ export type ShowGenerationResult = {
   tasks_created: number;
   tasks_skipped: number;
   error?: string;
+};
+
+export type SubmitTaskContentMode = 'assignee' | 'admin';
+
+export type SubmitTaskAuditContext = {
+  actorExtId?: string;
+  actorEmail?: string;
+  actorRole?: string;
+  source?: 'studio' | 'me' | 'admin';
 };
 
 @Injectable()
@@ -44,7 +56,75 @@ export class TaskOrchestrationService {
     private readonly studioService: StudioService,
     private readonly taskTargetService: TaskTargetService,
     private readonly shiftAlignmentService: ShiftAlignmentService,
+    private readonly factExtractionService: FactExtractionService,
   ) {}
+
+  /**
+   * Canonical entry point for any caller that mutates a task's content or
+   * status. Wraps the underlying `TaskService` update and, on a fresh
+   * transition into `COMPLETED` for a show-targeted task, fires fact
+   * extraction. Extraction errors are logged but never rethrown: the
+   * submission has already been persisted by `TaskService`, and a downstream
+   * extractor bug must not strand the operator.
+   *
+   * The two modes correspond to the two `TaskService` entry points:
+   *   - `'assignee'`: enforces the submit window guards (assignee can't
+   *     submit ACTIVE/CLOSURE tasks before show start time). Used by
+   *     `me-task.service`.
+   *   - `'admin'`: skips the submit window guards. Used by manager and
+   *     system-admin paths (`studio-task.controller`, `admin-task.controller`).
+   *
+   * NOTE: any new path that completes a task MUST route through this
+   * method, not through `TaskService.updateTaskContentAndStatus*` directly.
+   * Calling `TaskService` directly silently bypasses extraction.
+   */
+  async submitTaskContent(
+    taskUid: string,
+    version: number,
+    payload: UpdateTaskPayload,
+    options: {
+      mode: SubmitTaskContentMode;
+      auditContext?: SubmitTaskAuditContext;
+    },
+  ) {
+    // Snapshot before the update so we can detect a *transition* into
+    // COMPLETED (vs. a re-save of an already-completed task) and capture
+    // the show target without an extra round-trip after the write.
+    const before = await this.taskService.findByUidWithSnapshot(taskUid);
+
+    const updated = options.mode === 'assignee'
+      ? await this.taskService.updateTaskContentAndStatus(taskUid, version, payload, options.auditContext)
+      : await this.taskService.updateTaskContentAndStatusAsAdmin(taskUid, version, payload, options.auditContext);
+
+    if (!updated || !before) {
+      return updated;
+    }
+
+    const wasNotCompleted = before.status !== TASK_STATUS.COMPLETED;
+    const isNowCompleted = updated.status === TASK_STATUS.COMPLETED;
+    const targetShow = before.targets?.[0]?.show;
+    if (!wasNotCompleted || !isNowCompleted || !targetShow) {
+      return updated;
+    }
+
+    try {
+      await this.factExtractionService.extractFromTask({
+        taskId: before.id,
+        taskUid: before.uid,
+        studioId: before.studioId,
+        showId: targetShow.id,
+        showUid: targetShow.uid,
+        source: 'OPERATOR',
+      });
+    } catch (err) {
+      this.logger.error(
+        `Fact extraction failed for completed task ${before.uid}: ${(err as Error).message}`,
+        (err as Error).stack,
+      );
+    }
+
+    return updated;
+  }
 
   /**
    * Generates tasks for multiple shows based on a set of templates.

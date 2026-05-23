@@ -9,22 +9,27 @@ import { MeTaskService } from './me-task.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
+import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
 describe('meTaskService', () => {
   let service: MeTaskService;
   let taskService: jest.Mocked<TaskService>;
   let userService: jest.Mocked<UserService>;
+  let taskOrchestrationService: jest.Mocked<TaskOrchestrationService>;
 
   beforeEach(async () => {
     const mockTaskService = {
       findByUid: jest.fn(),
       findByUidWithRelations: jest.fn(),
       findTasksByAssignee: jest.fn(),
-      updateTaskContentAndStatus: jest.fn(),
     };
 
     const mockUserService = {
       getUserByExtId: jest.fn(),
+    };
+
+    const mockTaskOrchestrationService = {
+      submitTaskContent: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -33,12 +38,14 @@ describe('meTaskService', () => {
         { provide: TaskService, useValue: mockTaskService },
         { provide: UserService, useValue: mockUserService },
         { provide: StudioService, useValue: { findByUid: jest.fn() } },
+        { provide: TaskOrchestrationService, useValue: mockTaskOrchestrationService },
       ],
     }).compile();
 
     service = module.get<MeTaskService>(MeTaskService);
     taskService = module.get(TaskService);
     userService = module.get(UserService);
+    taskOrchestrationService = module.get(TaskOrchestrationService);
   });
 
   describe('listMyTasks', () => {
@@ -115,19 +122,20 @@ describe('meTaskService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should call updateTaskContentAndStatus if assigned', async () => {
+    it('routes the submission through the orchestrator in assignee mode', async () => {
       userService.getUserByExtId.mockResolvedValue({ id: BigInt(1) } as any);
       taskService.findByUid.mockResolvedValue({ assigneeId: BigInt(1), status: 'PENDING' } as any);
-      taskService.updateTaskContentAndStatus.mockResolvedValue({ uid: 'task_1' } as any);
+      taskOrchestrationService.submitTaskContent.mockResolvedValue({ uid: 'task_1' } as any);
 
       const result = await service.updateMyTask('ext_1', 'task_1', 1, {
         status: 'IN_PROGRESS' as TaskStatus,
       });
 
-      expect(taskService.updateTaskContentAndStatus).toHaveBeenCalledWith(
+      expect(taskOrchestrationService.submitTaskContent).toHaveBeenCalledWith(
         'task_1',
         1,
         { status: 'IN_PROGRESS' },
+        { mode: 'assignee' },
       );
       expect(result).toEqual({ uid: 'task_1' });
     });

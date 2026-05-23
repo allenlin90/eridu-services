@@ -23,13 +23,13 @@ describe('studioTaskController', () => {
             generateTasksForShows: jest.fn(),
             assignShowsToUser: jest.fn(),
             reassignTask: jest.fn(),
+            submitTaskContent: jest.fn(),
           },
         },
         {
           provide: TaskService,
           useValue: {
             findOne: jest.fn(),
-            updateTaskContentAndStatusAsAdmin: jest.fn(),
           },
         },
       ],
@@ -96,7 +96,7 @@ describe('studioTaskController', () => {
   });
 
   describe('updateTask', () => {
-    it('should call updateTaskContentAndStatusAsAdmin on TaskService', async () => {
+    it('routes the manager update through the orchestrator in admin mode with audit context', async () => {
       const studioId = 'std_123';
       const taskId = 'task_123';
       const dto = {
@@ -109,7 +109,7 @@ describe('studioTaskController', () => {
       const mockUpdatedTask = { uid: taskId, version: 2, status: TaskStatus.IN_PROGRESS };
 
       taskService.findOne.mockResolvedValue(mockTask as any);
-      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue(mockUpdatedTask as any);
+      service.submitTaskContent.mockResolvedValue(mockUpdatedTask as any);
 
       await controller.updateTask(studioId, taskId, dto, {
         studioMembership: { role: 'MANAGER' },
@@ -120,15 +120,18 @@ describe('studioTaskController', () => {
         studio: { uid: studioId },
         deletedAt: null,
       });
-      expect(taskService.updateTaskContentAndStatusAsAdmin).toHaveBeenCalledWith(
+      expect(service.submitTaskContent).toHaveBeenCalledWith(
         taskId,
         dto.version,
-        { content: dto.content, status: dto.status },
+        { content: dto.content, status: dto.status, dueDate: undefined },
         {
-          actorExtId: undefined,
-          actorEmail: undefined,
-          actorRole: 'MANAGER',
-          source: 'studio',
+          mode: 'admin',
+          auditContext: {
+            actorExtId: undefined,
+            actorEmail: undefined,
+            actorRole: 'MANAGER',
+            source: 'studio',
+          },
         },
       );
     });
