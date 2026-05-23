@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import type { SystemFactKey } from '@eridu/api-types/task-management';
 
 import type { IngestionExtractor } from './extractor.types';
+import { ShowActualEndTimeExtractor } from './show-actual-end-time.extractor';
 import { ShowActualStartTimeExtractor } from './show-actual-start-time.extractor';
 
 /**
@@ -19,9 +20,13 @@ import { ShowActualStartTimeExtractor } from './show-actual-start-time.extractor
 export class ExtractorRegistry {
   private readonly byFactKey: Map<SystemFactKey, IngestionExtractor>;
 
-  constructor(showActualStartTimeExtractor: ShowActualStartTimeExtractor) {
+  constructor(
+    showActualStartTimeExtractor: ShowActualStartTimeExtractor,
+    showActualEndTimeExtractor: ShowActualEndTimeExtractor,
+  ) {
     this.byFactKey = new Map<SystemFactKey, IngestionExtractor>([
       [showActualStartTimeExtractor.factKey, showActualStartTimeExtractor],
+      [showActualEndTimeExtractor.factKey, showActualEndTimeExtractor],
     ]);
   }
 

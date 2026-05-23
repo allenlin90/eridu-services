@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 
-import type { AuditMetadata, AuditTargetType } from '@eridu/api-types/audits';
+import type { ActualsSource, AuditMetadata, AuditTargetType } from '@eridu/api-types/audits';
+import type { SystemFactKey } from '@eridu/api-types/task-management';
 
 import type {
   ExtractedFact,
@@ -9,12 +10,31 @@ import type {
   ExtractionDecision,
   IngestionExtractor,
 } from './extractors/extractor.types';
+import { canResolverOverwrite } from './source-priority';
 
 import { AuditService } from '@/models/audit/audit.service';
+import { ShowService } from '@/models/show/show.service';
 
 export type ProcessedFact = {
   decision: ExtractionDecision;
   auditUid?: string;
+};
+
+type ShowActualsSourceMap = Partial<Record<SystemFactKey, ActualsSource>>;
+type ShowMetadataShape = { actuals_source?: ShowActualsSourceMap } & Record<string, unknown>;
+
+export type PairedShowActualsInput = {
+  startFact: ExtractedFact;
+  endFact: ExtractedFact;
+  startIncoming: Date;
+  endIncoming: Date;
+  ctx: ExtractionContext;
+  targetIds: { targetType: AuditTargetType; targetId: bigint }[];
+};
+
+export type PairedShowActualsResult = {
+  start: ProcessedFact;
+  end: ProcessedFact;
 };
 
 /**
@@ -31,7 +51,10 @@ export type ProcessedFact = {
  */
 @Injectable()
 export class FactExtractionProcessor {
-  constructor(private readonly auditService: AuditService) {}
+  constructor(
+    private readonly auditService: AuditService,
+    private readonly showService: ShowService,
+  ) {}
 
   /**
    * Runs the extractor and persists its audit envelope in a single CLS
@@ -87,6 +110,178 @@ export class FactExtractionProcessor {
         attempted_value: decision.attemptedValue as AuditMetadata['old_value'],
       },
       targets: targetIds,
+    });
+    return { decision, auditUid: audit.uid };
+  }
+
+  /**
+   * Atomic paired write for `show_actual_start_time` + `show_actual_end_time`.
+   *
+   * Codex P1 review on PR #101: validating each side against a pre-parsed
+   * counterpart computed before the per-fact loop is racy — the counterpart
+   * write can become unwritable (concurrent higher-priority write lands, or
+   * the paired extractor throws and rolls back) before the second extractor
+   * runs, leaving the surviving write against an unpersistable incoming
+   * value. The only race-free fix is a single transactional read +
+   * priority-check + merged-pair validation + combined `updateShow` + per-
+   * side audit write. Either both sides succeed (with the correct subset
+   * actually persisting after priority filter) or both are rolled back.
+   *
+   * Caller (`FactExtractionService.extractFromTask`) is responsible for
+   * filtering: collisions are routed to the collision-skip audit path
+   * before this method runs, and unparseable / absent values prevent the
+   * paired path entirely. Both facts handed in MUST be non-absent and
+   * parseable.
+   */
+  @Transactional()
+  async applyPairedShowActuals(input: PairedShowActualsInput): Promise<PairedShowActualsResult> {
+    const show = await this.showService.getShowById(input.ctx.showUid);
+    const metadata = (show.metadata as ShowMetadataShape | null) ?? {};
+    const recordedSourceMap: ShowActualsSourceMap = metadata.actuals_source ?? {};
+
+    const startRecorded = recordedSourceMap.show_actual_start_time;
+    const endRecorded = recordedSourceMap.show_actual_end_time;
+    const startCanWrite = canResolverOverwrite(input.ctx.source, startRecorded);
+    const endCanWrite = canResolverOverwrite(input.ctx.source, endRecorded);
+
+    const startCurrent = show.actualStartTime;
+    const endCurrent = show.actualEndTime;
+    const startUnchanged = startCanWrite
+      && startCurrent !== null
+      && startCurrent.getTime() === input.startIncoming.getTime()
+      && startRecorded === input.ctx.source;
+    const endUnchanged = endCanWrite
+      && endCurrent !== null
+      && endCurrent.getTime() === input.endIncoming.getTime()
+      && endRecorded === input.ctx.source;
+
+    const startEffectiveWrite = startCanWrite && !startUnchanged;
+    const endEffectiveWrite = endCanWrite && !endUnchanged;
+
+    // Validate the MERGED-FINAL state only when at least one side will
+    // actually move. Gating on effective-write (not `canWrite`) keeps
+    // no-op submissions idempotent against shows whose stored pair is
+    // already inverted — the `updateShow` path itself does not enforce
+    // actual-time ordering, so legacy / out-of-band writes can leave one.
+    // A pure-resubmission of the recorded values must not surface as
+    // `extractor_error` when nothing would have changed.
+    if (startEffectiveWrite || endEffectiveWrite) {
+      this.showService.ensureValidActualTimeRange(
+        startCurrent,
+        endCurrent,
+        {
+          ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+          ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+        },
+      );
+    }
+
+    // Build the combined updateShow payload — one DB write covers both
+    // columns and the metadata.actuals_source map. Skip the update entirely
+    // when neither side actually changes; the audit table still reflects
+    // the per-side skip/noop outcomes below.
+    if (startEffectiveWrite || endEffectiveWrite) {
+      const nextActualsSource: ShowActualsSourceMap = {
+        ...recordedSourceMap,
+        ...(startEffectiveWrite ? { show_actual_start_time: input.ctx.source } : {}),
+        ...(endEffectiveWrite ? { show_actual_end_time: input.ctx.source } : {}),
+      };
+      const nextMetadata: ShowMetadataShape = { ...metadata, actuals_source: nextActualsSource };
+      await this.showService.updateShow(input.ctx.showUid, {
+        ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+        ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+        metadata: nextMetadata as unknown as Parameters<ShowService['updateShow']>[1]['metadata'],
+      });
+    }
+
+    const start = await this.recordPairedSideDecision({
+      fact: input.startFact,
+      ctx: input.ctx,
+      targetIds: input.targetIds,
+      canWrite: startCanWrite,
+      unchanged: startUnchanged,
+      currentValue: startCurrent,
+      incoming: input.startIncoming,
+      recordedSource: startRecorded,
+    });
+    const end = await this.recordPairedSideDecision({
+      fact: input.endFact,
+      ctx: input.ctx,
+      targetIds: input.targetIds,
+      canWrite: endCanWrite,
+      unchanged: endUnchanged,
+      currentValue: endCurrent,
+      incoming: input.endIncoming,
+      recordedSource: endRecorded,
+    });
+    return { start, end };
+  }
+
+  private async recordPairedSideDecision(input: {
+    fact: ExtractedFact;
+    ctx: ExtractionContext;
+    targetIds: { targetType: AuditTargetType; targetId: bigint }[];
+    canWrite: boolean;
+    unchanged: boolean;
+    currentValue: Date | null;
+    incoming: Date;
+    recordedSource: ActualsSource | undefined;
+  }): Promise<ProcessedFact> {
+    const baseMetadata: AuditMetadata = {
+      ingestion_source: 'task_submission',
+      task_uid: input.ctx.taskUid,
+      task_field_id: input.fact.sourceFieldId,
+      fact_key: input.fact.factKey,
+    };
+
+    if (!input.canWrite) {
+      const decision: ExtractionDecision = {
+        kind: 'skip',
+        action: 'SKIPPED_LOWER_PRIORITY',
+        skippedBy: input.recordedSource!,
+        attemptedValue: input.incoming.toISOString(),
+      };
+      if (input.targetIds.length === 0) {
+        return { decision };
+      }
+      const audit = await this.auditService.create({
+        action: decision.action,
+        actorId: null,
+        metadata: {
+          ...baseMetadata,
+          skipped_by_source: decision.skippedBy,
+          attempted_value: decision.attemptedValue as AuditMetadata['old_value'],
+        },
+        targets: input.targetIds,
+      });
+      return { decision, auditUid: audit.uid };
+    }
+
+    if (input.unchanged) {
+      return { decision: { kind: 'noop', reason: 'value_unchanged' } };
+    }
+
+    const action: Extract<ExtractionDecision, { kind: 'write' }>['action'] = input.currentValue
+      ? 'UPDATE'
+      : 'CREATE';
+    const decision: ExtractionDecision = {
+      kind: 'write',
+      action,
+      oldValue: input.currentValue ? input.currentValue.toISOString() : null,
+      newValue: input.incoming.toISOString(),
+    };
+    if (input.targetIds.length === 0) {
+      return { decision };
+    }
+    const audit = await this.auditService.create({
+      action: decision.action,
+      actorId: null,
+      metadata: {
+        ...baseMetadata,
+        old_value: decision.oldValue as AuditMetadata['old_value'],
+        new_value: decision.newValue as AuditMetadata['new_value'],
+      },
+      targets: input.targetIds,
     });
     return { decision, auditUid: audit.uid };
   }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { ExtractorRegistry } from './extractors/extractor-registry';
+import { ShowActualEndTimeExtractor } from './extractors/show-actual-end-time.extractor';
 import { ShowActualStartTimeExtractor } from './extractors/show-actual-start-time.extractor';
 import { FactExtractionProcessor } from './fact-extraction.processor';
 import { FactExtractionService } from './fact-extraction.service';
@@ -33,6 +34,7 @@ import { TaskModule } from '@/models/task/task.module';
     FactExtractionProcessor,
     ExtractorRegistry,
     ShowActualStartTimeExtractor,
+    ShowActualEndTimeExtractor,
   ],
   exports: [FactExtractionService],
 })

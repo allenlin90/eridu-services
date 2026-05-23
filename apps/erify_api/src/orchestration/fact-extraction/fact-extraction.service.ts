@@ -10,13 +10,17 @@ import {
   type UiSchemaV2,
 } from '@eridu/api-types/task-management';
 
+import { parseDateTimeValue } from './extractors/datetime-value';
 import type {
   ExtractedFact,
   ExtractionContext,
   ExtractionDecision,
 } from './extractors/extractor.types';
 import { ExtractorRegistry } from './extractors/extractor-registry';
-import { FactExtractionProcessor } from './fact-extraction.processor';
+import {
+  FactExtractionProcessor,
+  type PairedShowActualsResult,
+} from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { TaskService } from '@/models/task/task.service';
@@ -107,15 +111,6 @@ export class FactExtractionService {
 
     const content = (task.content as Record<string, unknown> | null) ?? {};
 
-    const ctx: ExtractionContext = {
-      taskId: input.taskId,
-      taskUid: input.taskUid,
-      studioId: input.studioId,
-      showId: input.showId,
-      showUid: input.showUid,
-      source: input.source,
-    };
-
     const facts = collectBoundFacts(schema, content, input.showUid);
     if (facts.length === 0) {
       return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
@@ -137,9 +132,38 @@ export class FactExtractionService {
       factKeys: writingFacts.map((fact) => fact.factKey),
     });
 
+    const ctx: ExtractionContext = {
+      taskId: input.taskId,
+      taskUid: input.taskUid,
+      studioId: input.studioId,
+      showId: input.showId,
+      showUid: input.showUid,
+      source: input.source,
+    };
+
     const entries: ExtractionResultEntry[] = [];
 
+    // Codex P1 review on PR #101: when both `show_actual_start_time` and
+    // `show_actual_end_time` are present and eligible on the same
+    // submission, the per-fact loop cannot validate them safely — each
+    // extractor's individual write/audit transaction commits independently,
+    // so a paired update of a valid range can be rejected on stored-only
+    // counterpart validation, and an extractor error or concurrent
+    // higher-priority write can leave one side persisted against an
+    // unpersistable counterpart. The atomic paired processor reads the
+    // show, runs priority + merged-pair validation, and writes both
+    // columns + both audits inside a single CLS transaction.
+    const handledPairedKeys = await this.tryAtomicPairedShowActuals({
+      facts,
+      collidingFactKeys,
+      ctx,
+      entries,
+    });
+
     for (const fact of facts) {
+      if (handledPairedKeys.has(fact.factKey)) {
+        continue;
+      }
       // Empty submissions never write, never audit. Per Codex P2 review:
       // emitting a `skipped_collision` audit for a blank field misrepresents
       // a non-attempted write as a contested one and pollutes the review queue.
@@ -288,6 +312,106 @@ export class FactExtractionService {
       },
       targets: targetIds,
     });
+  }
+
+  /**
+   * Routes a paired show-actual submission (both `show_actual_start_time`
+   * and `show_actual_end_time` present, non-absent, parseable, registered,
+   * and non-colliding) through the atomic processor and records the per-
+   * side outcome entries. Mutates `entries` and returns the set of fact
+   * keys it consumed so the main per-fact loop can skip them.
+   *
+   * Falls through (consumes nothing) when only one side is in the
+   * submission, when either side is unparseable or absent, or when either
+   * side is collision-blocked — in those cases the existing per-extractor
+   * flow already produces the correct outcome (a one-sided update
+   * validates against the stored counterpart, and a collision is handled
+   * by `writeCollisionSkipAudit` in the main loop).
+   */
+  private async tryAtomicPairedShowActuals(input: {
+    facts: ExtractedFact[];
+    collidingFactKeys: Set<SystemFactKey>;
+    ctx: ExtractionContext;
+    entries: ExtractionResultEntry[];
+  }): Promise<Set<SystemFactKey>> {
+    const startFact = input.facts.find((fact) => fact.factKey === 'show_actual_start_time');
+    const endFact = input.facts.find((fact) => fact.factKey === 'show_actual_end_time');
+    if (!startFact || !endFact) {
+      return new Set();
+    }
+    if (isFactValueAbsent(startFact.rawValue) || isFactValueAbsent(endFact.rawValue)) {
+      return new Set();
+    }
+    if (
+      input.collidingFactKeys.has('show_actual_start_time')
+      || input.collidingFactKeys.has('show_actual_end_time')
+    ) {
+      return new Set();
+    }
+    if (
+      !this.extractorRegistry.has('show_actual_start_time')
+      || !this.extractorRegistry.has('show_actual_end_time')
+    ) {
+      return new Set();
+    }
+    const startIncoming = parseDateTimeValue(startFact.rawValue);
+    const endIncoming = parseDateTimeValue(endFact.rawValue);
+    if (!startIncoming || !endIncoming) {
+      return new Set();
+    }
+
+    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx);
+    let result: PairedShowActualsResult;
+    try {
+      result = await this.factExtractionProcessor.applyPairedShowActuals({
+        startFact,
+        endFact,
+        startIncoming,
+        endIncoming,
+        ctx: input.ctx,
+        targetIds,
+      });
+    } catch (err) {
+      // The `@Transactional` boundary rolled back both writes and both
+      // audits together, so neither column moved. Surface the same
+      // `extractor_error` outcome the per-fact flow would have emitted, on
+      // both sides, since the atomic boundary couldn't distinguish which
+      // half triggered the failure.
+      this.logger.error(
+        `Paired show-actuals processor threw on task ${input.ctx.taskUid}: ${(err as Error).message}`,
+      );
+      for (const fact of [startFact, endFact]) {
+        input.entries.push({
+          factKey: fact.factKey,
+          sourceFieldId: fact.sourceFieldId,
+          contentKey: fact.contentKey,
+          targetUid: fact.targetUid,
+          outcome: 'noop',
+          reason: 'extractor_error',
+        });
+      }
+      return new Set(['show_actual_start_time', 'show_actual_end_time']);
+    }
+
+    input.entries.push({
+      factKey: startFact.factKey,
+      sourceFieldId: startFact.sourceFieldId,
+      contentKey: startFact.contentKey,
+      targetUid: startFact.targetUid,
+      outcome: outcomeFromDecision(result.start.decision),
+      auditUid: result.start.auditUid,
+      reason: result.start.decision.kind === 'noop' ? result.start.decision.reason : undefined,
+    });
+    input.entries.push({
+      factKey: endFact.factKey,
+      sourceFieldId: endFact.sourceFieldId,
+      contentKey: endFact.contentKey,
+      targetUid: endFact.targetUid,
+      outcome: outcomeFromDecision(result.end.decision),
+      auditUid: result.end.auditUid,
+      reason: result.end.decision.kind === 'noop' ? result.end.decision.reason : undefined,
+    });
+    return new Set(['show_actual_start_time', 'show_actual_end_time']);
   }
 
   /**
