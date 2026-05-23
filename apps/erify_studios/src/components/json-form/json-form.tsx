@@ -465,9 +465,20 @@ export const JsonForm = function JsonForm({
             const extraItems = formatExtraItems(form.watch(extraKey));
             const showReason = shouldShowReasonField(item, fieldValue)
               || (typeof reasonValue === 'string' && reasonValue.length > 0);
+            const isStaleBinding = (item as { binding_stale?: boolean }).binding_stale === true;
+            const effectiveReadOnly = readOnly || isStaleBinding;
 
             return (
-              <div key={contentKey} className="space-y-3">
+              <div
+                key={contentKey}
+                className={isStaleBinding ? 'space-y-3 opacity-50' : 'space-y-3'}
+                data-binding-stale={isStaleBinding ? 'true' : undefined}
+              >
+                {isStaleBinding && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    Target no longer assigned — value preserved for review, not extracted.
+                  </div>
+                )}
                 <FormField
                   control={form.control}
                   name={contentKey}
@@ -480,7 +491,7 @@ export const JsonForm = function JsonForm({
                                 <Checkbox
                                   checked={field.value as boolean}
                                   onCheckedChange={field.onChange}
-                                  disabled={readOnly}
+                                  disabled={effectiveReadOnly}
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
@@ -506,7 +517,7 @@ export const JsonForm = function JsonForm({
                                 <FieldRenderer
                                   item={item}
                                   field={field}
-                                  readOnly={readOnly}
+                                  readOnly={effectiveReadOnly}
                                   isUploading={uploadingByKey[contentKey] ?? false}
                                   pendingUpload={pendingFilesByKey[contentKey]}
                                   onClearPendingUpload={() => {
@@ -656,7 +667,7 @@ export const JsonForm = function JsonForm({
                           <Textarea
                             {...field}
                             value={(field.value as string) ?? ''}
-                            disabled={readOnly}
+                            disabled={effectiveReadOnly}
                             className="min-h-20 bg-white"
                           />
                         </FormControl>

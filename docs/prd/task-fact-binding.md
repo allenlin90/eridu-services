@@ -182,12 +182,14 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
   * **Template Builder UI**: Exposes a searchable "Auto-fill record field" binding picker (with an info-icon tooltip explaining downstream behavior) for template designers.
   * `creator_attendance_missing` uses the existing `require_reason: "on-true"` sidecar flow for the operator's explanation; there is no separate `creator_attendance_reason` binding input.
 
-#### 🟩 PR 12.0.4 · Dynamic Target-Scoped Form Hydration
+#### 🟩 PR 12.0.4 · Dynamic Target-Scoped Form Hydration — ✅ Shipped in [#95](https://github.com/allenlin90/eridu-services/pull/95)
 * **Purpose**: Dynamically expand a template's bound fields into individual inputs for each assigned creator or platform.
 * **Functional Deliverable**:
-  * In task generation: automatically creates inputs with stable, deterministic keys (`fld_attendance_missing_creator_<creatorUid>`, etc.).
-  * Additive re-hydration: appends fields on new assignments, preserves active work, and marks unassigned targets as `binding_stale: true`.
-  * Snapshot mutability upgrade: `TaskTemplateSnapshot.schema` becomes append-only mutable.
+  * Pure `hydrateTaskFormSchema` in `@eridu/api-types/task-management` plus `buildHydratedContentKey` / `parseHydratedContentKey` for the deterministic `<fieldId>:<scope>:<uid>` key format. Single-colon separator chosen because it is outside the nanoid alphabet (`A-Za-z0-9_-`) used to mint `ShowCreator` / `ShowPlatform` UIDs and so is unambiguously split-parseable regardless of what underscores nanoid happens to emit inside a UID.
+  * Task read responses expose `show_creators` / `show_platforms` UIDs and a `hydration_context` block on `taskWithRelationsDto`.
+  * BE: `TaskValidationService.validateContent` accepts a `hydrationContext` and re-runs hydration server-side so `require_reason` and other per-field rules apply per-target; stale items have `require_reason` stripped to keep submission unblocked.
+  * FE: `resolveHydratedTaskSchema` consumed by `task-execution-sheet`, `studio-task-action-sheet`, and `my-task-card`; `JsonForm` recognizes `binding_stale: true` and renders the row dimmed, read-only, with an amber "Target no longer assigned" explainer.
+  * **Storage contract** (revised from the original design wording): the template snapshot stays immutable. There is no per-task snapshot clone and no append-only mutation; per-task hydration is computed at render and submission time from `task.content` + the show's current assignments. Submitted tasks (`COMPLETED` / `CLOSED`) freeze their content; later re-renders do not rehydrate.
 
 #### 🟩 PR 12.0.5 · Ingestion Pipeline Foundation, Wire-Label Rename & Show Task Assignment Check
 * **Purpose**: Ship the core priority resolver pipeline, write a smoke-test extractor, implement the atomic label rename, and align the show operations views with task assignments.

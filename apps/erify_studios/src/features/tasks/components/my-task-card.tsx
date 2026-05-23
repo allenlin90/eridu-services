@@ -8,8 +8,8 @@ import { Badge, Card } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
 import { STATUS_VARIANT_MAP, TYPE_VARIANT_MAP } from '../lib/badge-maps';
+import { resolveHydratedTaskSchema } from '../lib/hydrate-task-schema';
 import { calculateTaskProgress } from '../lib/progress';
-import { resolveUiSchema } from '../lib/resolve-ui-schema';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
@@ -20,9 +20,7 @@ type MyTaskCardProps = {
 };
 
 export function MyTaskCard({ task, onClick, className }: MyTaskCardProps) {
-  const uiSchema = task.snapshot?.schema
-    ? resolveUiSchema(task.snapshot.schema)
-    : null;
+  const uiSchema = resolveHydratedTaskSchema(task);
 
   const progress = uiSchema
     ? calculateTaskProgress(task as Parameters<typeof calculateTaskProgress>[0], uiSchema)
