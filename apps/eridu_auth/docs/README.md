@@ -13,6 +13,6 @@
 
 | Resource | Description |
 |----------|-------------|
-| [Auth SDK](../../packages/auth-sdk/README.md) | JWT/JWKS validation SDK used by consuming services |
-| [erify_api Auth](../erify_api/docs/ARCHITECTURE_OVERVIEW.md) | How erify_api integrates with eridu_auth |
-| [API Types](../../packages/api-types/README.md) | Shared schemas including user types |
+| [Auth SDK](../../../packages/auth-sdk/README.md) | JWT/JWKS validation SDK used by consuming services |
+| [erify_api Auth](../../../apps/erify_api/docs/README.md) | How erify_api integrates with eridu_auth |
+| [API Types](../../../packages/api-types/README.md) | Shared schemas including user types |

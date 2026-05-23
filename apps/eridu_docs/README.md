@@ -10,7 +10,7 @@ pnpm dev:docs
 
 ## Auth Design
 
-See [AUTH_DESIGN.md](./AUTH_DESIGN.md) for the JWKS-based authentication flow used by this app.
+See [AUTH_DESIGN.md](./docs/AUTH_DESIGN.md) for the JWKS-based authentication flow used by this app.
 
 ## Information Architecture
 
