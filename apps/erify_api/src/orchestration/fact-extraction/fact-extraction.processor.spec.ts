@@ -7,6 +7,8 @@ import { ClsModule } from 'nestjs-cls';
 import type { IngestionExtractor } from './extractors/extractor.types';
 import { FactExtractionProcessor } from './fact-extraction.processor';
 
+import { NotFoundException } from '@nestjs/common';
+
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
@@ -595,6 +597,40 @@ describe('factExtractionProcessor', () => {
       expect(auditService.create).not.toHaveBeenCalled();
       expect(result.start.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
       expect(result.end.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+    });
+
+    it('maps a transactional NotFoundException to target_stale on both sides', async () => {
+      // Codex P2 review on PR #103: the service-level prefetch can race
+      // with a soft-delete that lands between BEGIN and the transactional
+      // read; collapse `NotFoundException` to a `target_stale` decision
+      // so the orchestrator doesn't misclassify a normal stale-target
+      // race as `extractor_error`.
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockRejectedValue(
+        new NotFoundException('ShowPlatform not found'),
+      );
+
+      const result = await processor.applyPairedShowPlatformActuals(buildPlatformInput());
+
+      expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+    });
+
+    it('propagates non-NotFoundException errors so the @Transactional boundary rolls back', async () => {
+      // Codex P2 review on PR #103: only NotFoundException should
+      // collapse — transient DB errors must propagate so the caller can
+      // report `extractor_error` and the transaction rolls back.
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockRejectedValue(new Error('connection refused'));
+
+      await expect(
+        processor.applyPairedShowPlatformActuals(buildPlatformInput()),
+      ).rejects.toThrow('connection refused');
+
+      expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
     });
   });
 });

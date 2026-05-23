@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 
 import type { ActualsSource, AuditMetadata, AuditTargetType } from '@eridu/api-types/audits';
@@ -252,11 +252,27 @@ export class FactExtractionProcessor {
   async applyPairedShowPlatformActuals(
     input: PairedShowPlatformActualsInput,
   ): Promise<PairedShowPlatformActualsResult> {
-    const showPlatform = await this.showPlatformService.getShowPlatformById(input.showPlatformUid);
     // The service-level stale-target guard has already verified that this
-    // platform exists and belongs to the current show, but we re-check here
-    // because the read happens inside the transaction. Same defence-in-depth
-    // posture as the per-extractor path.
+    // platform exists and belongs to the current show, but the transactional
+    // read can race with a soft-delete or a reassignment that landed
+    // between the bulk prefetch and the BEGIN of this transaction. A
+    // `NotFoundException` here is a normal stale-target race, not an
+    // extractor failure — collapse it to `target_stale` on both sides so
+    // the orchestrator records it correctly instead of misclassifying the
+    // whole submission as `extractor_error`. Every other error (Prisma
+    // outage, connection failure, etc.) propagates so the failure stays
+    // visible.
+    let showPlatform: Awaited<ReturnType<ShowPlatformService['getShowPlatformById']>>;
+    try {
+      showPlatform = await this.showPlatformService.getShowPlatformById(input.showPlatformUid);
+    }
+    catch (err) {
+      if (err instanceof NotFoundException) {
+        const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
+        return { start: { decision }, end: { decision } };
+      }
+      throw err;
+    }
     if (!showPlatform || showPlatform.showId !== input.ctx.showId) {
       const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
       return { start: { decision }, end: { decision } };

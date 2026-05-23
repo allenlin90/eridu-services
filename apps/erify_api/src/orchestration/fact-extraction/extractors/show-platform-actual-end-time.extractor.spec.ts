@@ -1,3 +1,5 @@
+import { NotFoundException } from '@nestjs/common';
+
 import { ShowPlatformActualEndTimeExtractor } from './show-platform-actual-end-time.extractor';
 
 import type { ShowPlatformService } from '@/models/show-platform/show-platform.service';
@@ -27,7 +29,9 @@ function buildShowPlatformService(overrides: {
   };
 
   if (overrides.notFound) {
-    service.getShowPlatformById.mockRejectedValue(new Error('not found'));
+    service.getShowPlatformById.mockRejectedValue(
+      new NotFoundException('ShowPlatform not found'),
+    );
   }
 
   service.ensureValidActualTimeRange.mockImplementation(
@@ -122,6 +126,17 @@ describe('showPlatformActualEndTimeExtractor', () => {
     const decision = await extractor.apply(fact, ctx);
 
     expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+    expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
+  });
+
+  it('propagates non-NotFoundException errors so the outer catch records extractor_error', async () => {
+    // Codex P1 review on PR #103: only NotFoundException collapses to
+    // `target_stale`; transient DB failures must propagate.
+    const showPlatformService = buildShowPlatformService({});
+    showPlatformService.getShowPlatformById.mockRejectedValue(new Error('connection refused'));
+    const extractor = new ShowPlatformActualEndTimeExtractor(showPlatformService);
+
+    await expect(extractor.apply(fact, ctx)).rejects.toThrow('connection refused');
     expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
   });
 

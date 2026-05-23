@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import type { ActualsSource } from '@eridu/api-types/audits';
 
@@ -42,11 +42,21 @@ export class ShowPlatformActualStartTimeExtractor implements IngestionExtractor 
     // written. Defence-in-depth: the service also pre-filters via
     // `resolveAuditTargetIds`, but extractors stay independently safe in
     // case a future caller invokes them directly.
+    //
+    // Only `NotFoundException` collapses to a stale-target noop — every
+    // other error (Prisma outage, transient connection failure, etc.)
+    // propagates so the outer service catch reports it as `extractor_error`
+    // and the failure stays visible. Silently swallowing all errors here
+    // would misclassify production incidents as routine stale assignments.
     let showPlatform: Awaited<ReturnType<ShowPlatformService['getShowPlatformById']>>;
     try {
       showPlatform = await this.showPlatformService.getShowPlatformById(fact.targetUid);
-    } catch {
-      return { kind: 'noop', reason: 'target_stale' };
+    }
+    catch (err) {
+      if (err instanceof NotFoundException) {
+        return { kind: 'noop', reason: 'target_stale' };
+      }
+      throw err;
     }
     if (!showPlatform || showPlatform.showId !== ctx.showId) {
       return { kind: 'noop', reason: 'target_stale' };

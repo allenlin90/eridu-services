@@ -96,18 +96,26 @@ export class ShowPlatformService extends BaseModelService {
   }
 
   /**
-   * Bulk lookup of active (non-soft-deleted) show platforms by UID. Used by
-   * the extraction pipeline to resolve a batch of hydrated platform target
-   * UIDs in a single round-trip, so per-target stale-target checks don't
-   * fan out into per-row queries. Returns a Map keyed by the requested UID;
-   * UIDs that don't resolve are simply absent from the map.
+   * Bulk lookup of active (non-soft-deleted) show platforms by UID,
+   * scoped to a single `showId`. Used by the extraction pipeline so a
+   * platform that was reassigned to a different show between submission
+   * and extraction is correctly treated as stale for the current run —
+   * filtering only by UID + `deletedAt` would let the cross-show row
+   * leak into the audit-target / collision path and misclassify what
+   * should be a `skipped_stale_target` outcome.
+   *
+   * Returns a Map keyed by the requested UID; UIDs that don't resolve
+   * under the active + same-show filter are simply absent from the map.
    */
-  async findActiveByUids(uids: string[]): Promise<Map<string, { id: bigint; showId: bigint }>> {
+  async findActiveByUids(
+    uids: string[],
+    showId: bigint,
+  ): Promise<Map<string, { id: bigint; showId: bigint }>> {
     if (uids.length === 0) {
       return new Map();
     }
     const rows = await this.showPlatformRepository.findMany({
-      where: { uid: { in: uids }, deletedAt: null },
+      where: { uid: { in: uids }, showId, deletedAt: null },
     });
     return new Map(rows.map((row) => [row.uid, { id: row.id, showId: row.showId }]));
   }

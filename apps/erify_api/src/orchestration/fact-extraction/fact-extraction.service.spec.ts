@@ -692,6 +692,40 @@ describe('factExtractionService', () => {
       expect(result.entries).toHaveLength(4);
     });
 
+    it('scopes the bulk active-target lookup to ctx.showId', async () => {
+      // Codex P1 review on PR #103: `findActiveByUids` must filter by
+      // `showId` so a platform reassigned to a different show after
+      // submission stays out of the cache (and out of the
+      // collision / audit-target paths).
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(new Map());
+
+      await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(showPlatformService.findActiveByUids).toHaveBeenCalledWith(
+        ['show_plt_200'],
+        10n,
+      );
+    });
+
     it('emits skipped_stale_target without writing an audit when the platform target is missing from the active map', async () => {
       const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
       const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });

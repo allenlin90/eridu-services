@@ -1,3 +1,5 @@
+import { NotFoundException } from '@nestjs/common';
+
 import { ShowPlatformActualStartTimeExtractor } from './show-platform-actual-start-time.extractor';
 
 import type { ShowPlatformService } from '@/models/show-platform/show-platform.service';
@@ -27,7 +29,9 @@ function buildShowPlatformService(overrides: {
   };
 
   if (overrides.notFound) {
-    service.getShowPlatformById.mockRejectedValue(new Error('not found'));
+    service.getShowPlatformById.mockRejectedValue(
+      new NotFoundException('ShowPlatform not found'),
+    );
   }
 
   service.ensureValidActualTimeRange.mockImplementation(
@@ -152,6 +156,20 @@ describe('showPlatformActualStartTimeExtractor', () => {
     const decision = await extractor.apply(fact, ctx);
 
     expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+    expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
+  });
+
+  it('propagates non-NotFoundException errors from getShowPlatformById so the outer catch records extractor_error', async () => {
+    // Codex P1 review on PR #103: collapsing every error to `target_stale`
+    // silently drops production incidents (Prisma outage, connection
+    // failure) as routine stale assignments. Only `NotFoundException`
+    // should collapse — any other error must propagate so the outer
+    // service catch surfaces it as `extractor_error`.
+    const showPlatformService = buildShowPlatformService({});
+    showPlatformService.getShowPlatformById.mockRejectedValue(new Error('connection refused'));
+    const extractor = new ShowPlatformActualStartTimeExtractor(showPlatformService);
+
+    await expect(extractor.apply(fact, ctx)).rejects.toThrow('connection refused');
     expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
   });
 

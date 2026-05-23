@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import type { ActualsSource } from '@eridu/api-types/audits';
 
@@ -35,11 +35,19 @@ export class ShowPlatformActualEndTimeExtractor implements IngestionExtractor {
       return { kind: 'noop', reason: 'value_absent' };
     }
 
+    // See `show-platform-actual-start-time.extractor.ts` for the rationale:
+    // only `NotFoundException` collapses to a stale-target noop; every
+    // other error propagates so the outer service catch reports it as
+    // `extractor_error` and the failure stays visible.
     let showPlatform: Awaited<ReturnType<ShowPlatformService['getShowPlatformById']>>;
     try {
       showPlatform = await this.showPlatformService.getShowPlatformById(fact.targetUid);
-    } catch {
-      return { kind: 'noop', reason: 'target_stale' };
+    }
+    catch (err) {
+      if (err instanceof NotFoundException) {
+        return { kind: 'noop', reason: 'target_stale' };
+      }
+      throw err;
     }
     if (!showPlatform || showPlatform.showId !== ctx.showId) {
       return { kind: 'noop', reason: 'target_stale' };

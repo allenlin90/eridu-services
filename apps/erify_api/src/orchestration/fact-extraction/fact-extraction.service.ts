@@ -137,12 +137,16 @@ export class FactExtractionService {
 
     // Bulk-resolve active platform target UIDs in one DB round-trip so per-
     // fact stale-target checks and audit-id resolution share the same cache.
-    // Targets missing from the map (soft-deleted or wrong show) emit a
-    // `skipped_stale_target` outcome — no write, no audit row (a stale
-    // target is unwritable, not contested, so a SKIPPED audit would be
-    // misleading on the review surface).
+    // Scoped to `input.showId` so a platform reassigned to a different show
+    // between submission and extraction stays out of the cache and is
+    // emitted as `skipped_stale_target` rather than leaking into the
+    // collision / audit-target paths. Targets missing from the map
+    // (soft-deleted or wrong show) emit a `skipped_stale_target` outcome —
+    // no write, no audit row (a stale target is unwritable, not contested,
+    // so a SKIPPED audit would be misleading on the review surface).
     const platformTargetById = await this.showPlatformService.findActiveByUids(
       uniqueTargetUids(facts, 'platform'),
+      input.showId,
     );
 
     const ctx: ExtractionContext = {
