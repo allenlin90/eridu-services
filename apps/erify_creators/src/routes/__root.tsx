@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { Spinner } from '@eridu/ui';
 
-import { NoStudioAssociationView, UnlinkedCreatorView } from '@/components/onboarding-guards';
+import { NoStudioAssociationView, ProfileErrorView, UnlinkedCreatorView } from '@/components/onboarding-guards';
 import { SidebarLayout } from '@/layouts/sidebar-layout';
 import { authClient, type Session } from '@/lib/auth';
 import { useUserProfile } from '@/lib/hooks';
@@ -12,13 +12,24 @@ import { SessionProvider, useSession } from '@/lib/session-provider';
 import { NotFoundPage } from '@/pages/not-found-page';
 
 function ProfileGuardLayout({ session }: { session: Session }) {
-  const { data: profile, isLoading: isProfileLoading, refetch } = useUserProfile();
+  const { data: profile, isLoading: isProfileLoading, isError, refetch } = useUserProfile();
 
   if (isProfileLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-950">
         <Spinner />
       </div>
+    );
+  }
+
+  // Handle profile fetch errors before unlinked fallback
+  if (isError) {
+    return (
+      <ProfileErrorView
+        onRecheck={async () => {
+          await refetch();
+        }}
+      />
     );
   }
 

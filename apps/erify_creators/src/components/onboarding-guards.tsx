@@ -221,3 +221,90 @@ export function NoStudioAssociationView({ userName, userEmail, avatarUrl, onRech
     </div>
   );
 }
+
+export function ProfileErrorView({ onRecheck }: { onRecheck: () => Promise<void> }) {
+  const [isRechecking, setIsRechecking] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleRecheck = async () => {
+    setIsRechecking(true);
+    try {
+      await onRecheck();
+    } finally {
+      setIsRechecking(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const { clearAllCaches } = await import('@/lib/api');
+      await clearAllCaches();
+      await authClient.client.signOut();
+      authClient.redirectToLogin();
+    } catch (error) {
+      console.error('Logout failed:', error);
+      setIsLoggingOut(false);
+    }
+  };
+
+  return (
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 p-6 overflow-hidden">
+      {/* Background Radial Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-500/5 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Main Glass Card */}
+      <div className="relative w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-red-950/85 rounded-2xl p-8 text-center shadow-2xl transition-all duration-300 hover:border-red-900/50">
+        
+        {/* Animated Icon Container */}
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-800/60 border border-slate-700/50 text-red-400 mb-6 shadow-inner relative group">
+          <div className="absolute inset-0 rounded-full bg-red-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <ShieldAlert className="h-8 w-8 relative z-10" />
+        </div>
+
+        <h1 className="text-2xl font-bold tracking-tight text-slate-100 mb-2">
+          Failed to Load Profile
+        </h1>
+        <p className="text-sm text-slate-400 mb-8 px-2 leading-relaxed">
+          An error occurred while loading your creator profile information. This may be due to a transient connection failure. Please try again.
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={handleRecheck}
+            disabled={isRechecking || isLoggingOut}
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50 text-slate-100 font-medium text-sm rounded-xl transition-all duration-200 shadow-lg shadow-red-600/10 cursor-pointer"
+          >
+            {isRechecking
+              ? (
+                  <Spinner className="h-4 w-4 border-slate-100 border-t-transparent" />
+                )
+              : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+            Try Again
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isRechecking || isLoggingOut}
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-850 active:bg-slate-950 text-slate-300 font-medium text-sm rounded-xl border border-slate-800 transition-all duration-200 cursor-pointer disabled:opacity-50"
+          >
+            {isLoggingOut
+              ? (
+                  <Spinner className="h-4 w-4 border-slate-300 border-t-transparent" />
+                )
+              : (
+                  <LogOut className="h-4 w-4" />
+                )}
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

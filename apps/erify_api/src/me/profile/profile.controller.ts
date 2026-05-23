@@ -61,7 +61,7 @@ export class ProfileController {
         },
         role: membership.role,
       })),
-      creator: fullUser.creator
+      creator: (fullUser.creator && !fullUser.creator.deletedAt)
         ? {
             uid: fullUser.creator.uid,
             name: fullUser.creator.name,

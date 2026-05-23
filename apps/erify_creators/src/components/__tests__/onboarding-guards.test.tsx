@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { NoStudioAssociationView, UnlinkedCreatorView } from '../onboarding-guards';
+import { NoStudioAssociationView, ProfileErrorView, UnlinkedCreatorView } from '../onboarding-guards';
 
 import { authClient } from '@/lib/auth';
 
@@ -103,6 +103,31 @@ describe('onboarding Fallback Guards', () => {
       ).toBeInTheDocument();
       expect(screen.getByText('Creator Name')).toBeInTheDocument();
       expect(screen.getByText('creator@example.com')).toBeInTheDocument();
+    });
+  });
+
+  describe('profileErrorView', () => {
+    it('renders connection failure status and instruction text', () => {
+      render(<ProfileErrorView onRecheck={async () => {}} />);
+
+      expect(screen.getByText('Failed to Load Profile')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /An error occurred while loading your creator profile information/i,
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('triggers recheck callback on Try Again button click', async () => {
+      const user = userEvent.setup();
+      const onRecheck = vi.fn().mockResolvedValue(undefined);
+
+      render(<ProfileErrorView onRecheck={onRecheck} />);
+
+      const retryButton = screen.getByRole('button', { name: /try again/i });
+      await user.click(retryButton);
+
+      expect(onRecheck).toHaveBeenCalledOnce();
     });
   });
 });
