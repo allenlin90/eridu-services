@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+
 import type { ProfileResponse } from '@eridu/api-types/users';
 
 import { apiClient } from '@/lib/api/client';

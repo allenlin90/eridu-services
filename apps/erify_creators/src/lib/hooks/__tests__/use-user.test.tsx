@@ -1,6 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { useQuery } from '@tanstack/react-query';
 
 import { useUserProfile } from '../use-user';
 

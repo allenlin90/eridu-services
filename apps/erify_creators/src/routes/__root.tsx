@@ -109,4 +109,3 @@ export const Route = createRootRouteWithContext<{ auth: Session }>()({
   component: RootLayout,
   notFoundComponent: NotFoundPage,
 });
-

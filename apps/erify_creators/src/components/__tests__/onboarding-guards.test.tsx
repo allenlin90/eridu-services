@@ -2,8 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { authClient } from '@/lib/auth';
 import { NoStudioAssociationView, UnlinkedCreatorView } from '../onboarding-guards';
+
+import { authClient } from '@/lib/auth';
 
 // Mock authClient
 vi.mock('@/lib/auth', () => ({
@@ -20,8 +21,8 @@ vi.mock('@/lib/api', () => ({
   clearAllCaches: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe('Onboarding Fallback Guards', () => {
-  describe('UnlinkedCreatorView', () => {
+describe('onboarding Fallback Guards', () => {
+  describe('unlinkedCreatorView', () => {
     it('renders unlinked status and profile information', () => {
       render(
         <UnlinkedCreatorView
@@ -84,7 +85,7 @@ describe('Onboarding Fallback Guards', () => {
     });
   });
 
-  describe('NoStudioAssociationView', () => {
+  describe('noStudioAssociationView', () => {
     it('renders verification pending status and profile details', () => {
       render(
         <NoStudioAssociationView
