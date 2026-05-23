@@ -6,6 +6,7 @@ import type { FactExtractionProcessor, ProcessedFact } from './fact-extraction.p
 import { FactExtractionService } from './fact-extraction.service';
 
 import type { AuditService } from '@/models/audit/audit.service';
+import type { ShowService } from '@/models/show/show.service';
 import type { TaskService } from '@/models/task/task.service';
 
 function buildTaskWithSnapshot(overrides?: Partial<{
@@ -48,6 +49,7 @@ describe('factExtractionService', () => {
   let service: FactExtractionService;
   let taskService: jest.Mocked<TaskService>;
   let auditService: jest.Mocked<AuditService>;
+  let showService: jest.Mocked<ShowService>;
   let extractor: jest.Mocked<IngestionExtractor>;
   let registry: ExtractorRegistry;
   let processor: jest.Mocked<FactExtractionProcessor>;
@@ -62,6 +64,12 @@ describe('factExtractionService', () => {
     auditService = {
       create: jest.fn(async (payload) => ({ uid: `aud_${payload.action}` }) as never),
     } as never;
+    showService = {
+      // Default: blank stored state — both paired sides pass priority.
+      // Individual tests override this to simulate manager-pinned or
+      // operator-pinned recorded sources.
+      getShowById: jest.fn().mockResolvedValue({ metadata: {} } as never),
+    } as never;
     processor = {
       // Default: delegate to the configured extractor mock so callers can drive
       // decisions via `extractor.apply.mockResolvedValue(...)` exactly as
@@ -75,7 +83,13 @@ describe('factExtractionService', () => {
         return { decision, auditUid: `aud_${decision.action}` };
       }),
     } as never;
-    service = new FactExtractionService(taskService, auditService, registry, processor);
+    service = new FactExtractionService(
+      taskService,
+      auditService,
+      registry,
+      processor,
+      showService,
+    );
   });
 
   it('returns an empty result when the task has no snapshot', async () => {
@@ -151,6 +165,7 @@ describe('factExtractionService', () => {
       auditService,
       pairedRegistry,
       processor,
+      showService,
     );
     startExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
     endExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
@@ -187,6 +202,139 @@ describe('factExtractionService', () => {
     expect(endExtractor.apply).toHaveBeenCalledWith(
       expect.objectContaining({ factKey: 'show_actual_end_time' }),
       expect.objectContaining({ incomingShowActuals: expectedIncoming }),
+    );
+  });
+
+  it('omits incomingShowActuals.actualEndTime when the paired end fact collides with an active sibling task', async () => {
+    // Codex P1 review on PR #101: if the paired end-time write is skipped
+    // for collision, the start extractor must NOT be allowed to validate
+    // its incoming start against the unpersistable incoming end — that
+    // could leave `actualStartTime` written into an inverted range against
+    // the stored end. The pre-check excludes the colliding side so the
+    // start extractor falls back to the stored end via the validator's
+    // `undefined` semantics.
+    const startExtractor = buildExtractor({ factKey: 'show_actual_start_time' });
+    const endExtractor = buildExtractor({ factKey: 'show_actual_end_time' });
+    const pairedRegistry = {
+      resolve: jest.fn((factKey: string) => {
+        if (factKey === 'show_actual_start_time')
+          return startExtractor;
+        if (factKey === 'show_actual_end_time')
+          return endExtractor;
+        return undefined;
+      }),
+      has: jest.fn(() => true),
+      registeredFactKeys: jest.fn(() => ['show_actual_start_time', 'show_actual_end_time']),
+    } as unknown as ExtractorRegistry;
+    const pairedService = new FactExtractionService(
+      taskService,
+      auditService,
+      pairedRegistry,
+      processor,
+      showService,
+    );
+    startExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
+    endExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
+    taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+      schema: {
+        items: [
+          { id: 'fld_show_start', system_fact_key: 'show_actual_start_time' },
+          { id: 'fld_show_end', system_fact_key: 'show_actual_end_time' },
+        ],
+      },
+      content: {
+        fld_show_start: '2026-05-23T12:00:00.000Z',
+        fld_show_end: '2026-05-23T13:00:00.000Z',
+      },
+    }));
+    // Sibling active task also binds end-time → collision excludes that side.
+    taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+      {
+        uid: 'task_sibling',
+        snapshot: {
+          schema: {
+            items: [{ id: 'fld_sibling', system_fact_key: 'show_actual_end_time' }],
+          },
+        },
+      },
+    ] as never);
+
+    await pairedService.extractFromTask({
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR',
+    });
+
+    expect(startExtractor.apply).toHaveBeenCalledWith(
+      expect.objectContaining({ factKey: 'show_actual_start_time' }),
+      expect.objectContaining({
+        incomingShowActuals: { actualStartTime: new Date('2026-05-23T12:00:00.000Z') },
+      }),
+    );
+  });
+
+  it('omits incomingShowActuals.actualStartTime when the recorded source outranks the incoming source', async () => {
+    // Codex P1 review on PR #101: if a higher-priority MANAGER source
+    // already owns `actualStartTime`, the start write will be skipped
+    // and the end extractor must NOT validate its incoming end against
+    // the unpersistable incoming start.
+    const startExtractor = buildExtractor({ factKey: 'show_actual_start_time' });
+    const endExtractor = buildExtractor({ factKey: 'show_actual_end_time' });
+    const pairedRegistry = {
+      resolve: jest.fn((factKey: string) => {
+        if (factKey === 'show_actual_start_time')
+          return startExtractor;
+        if (factKey === 'show_actual_end_time')
+          return endExtractor;
+        return undefined;
+      }),
+      has: jest.fn(() => true),
+      registeredFactKeys: jest.fn(() => ['show_actual_start_time', 'show_actual_end_time']),
+    } as unknown as ExtractorRegistry;
+    showService.getShowById.mockResolvedValue({
+      metadata: {
+        actuals_source: { show_actual_start_time: 'MANAGER' },
+      },
+    } as never);
+    const pairedService = new FactExtractionService(
+      taskService,
+      auditService,
+      pairedRegistry,
+      processor,
+      showService,
+    );
+    startExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
+    endExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
+    taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+      schema: {
+        items: [
+          { id: 'fld_show_start', system_fact_key: 'show_actual_start_time' },
+          { id: 'fld_show_end', system_fact_key: 'show_actual_end_time' },
+        ],
+      },
+      content: {
+        fld_show_start: '2026-05-23T12:00:00.000Z',
+        fld_show_end: '2026-05-23T13:00:00.000Z',
+      },
+    }));
+
+    await pairedService.extractFromTask({
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR',
+    });
+
+    expect(endExtractor.apply).toHaveBeenCalledWith(
+      expect.objectContaining({ factKey: 'show_actual_end_time' }),
+      expect.objectContaining({
+        incomingShowActuals: { actualEndTime: new Date('2026-05-23T13:00:00.000Z') },
+      }),
     );
   });
 
