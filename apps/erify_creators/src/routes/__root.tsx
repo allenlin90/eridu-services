@@ -22,8 +22,8 @@ function ProfileGuardLayout({ session }: { session: Session }) {
     );
   }
 
-  // Handle profile fetch errors before unlinked fallback
-  if (isError) {
+  // Handle profile fetch errors before unlinked fallback only when no cached profile data is available
+  if (isError && !profile) {
     return (
       <ProfileErrorView
         onRecheck={async () => {
