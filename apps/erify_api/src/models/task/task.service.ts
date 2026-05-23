@@ -95,6 +95,13 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findByShowAndTemplate(...args);
   }
 
+  /** @internal */
+  async findActiveTasksForShowExcluding(
+    ...args: Parameters<TaskRepository['findActiveTasksForShowExcluding']>
+  ): ReturnType<TaskRepository['findActiveTasksForShowExcluding']> {
+    return this.taskRepository.findActiveTasksForShowExcluding(...args);
+  }
+
   async bulkSoftDelete(studioId: bigint, taskUids: string[]) {
     return this.taskRepository.bulkSoftDelete(studioId, taskUids);
   }

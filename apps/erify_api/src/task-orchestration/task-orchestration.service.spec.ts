@@ -13,6 +13,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
+import { FactExtractionService } from '@/orchestration/fact-extraction/fact-extraction.service';
 import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
 
 describe('taskOrchestrationService', () => {
@@ -25,6 +26,7 @@ describe('taskOrchestrationService', () => {
   let studioService: jest.Mocked<StudioService>;
   let taskTargetService: jest.Mocked<TaskTargetService>;
   let shiftAlignmentService: jest.Mocked<ShiftAlignmentService>;
+  let factExtractionService: jest.Mocked<FactExtractionService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -36,8 +38,11 @@ describe('taskOrchestrationService', () => {
             findTasksByShowIds: jest.fn(),
             updateAssigneeByTaskIds: jest.fn(),
             findByUid: jest.fn(),
+            findByUidWithSnapshot: jest.fn(),
             update: jest.fn(),
             setAssignee: jest.fn(),
+            updateTaskContentAndStatus: jest.fn(),
+            updateTaskContentAndStatusAsAdmin: jest.fn(),
           },
         },
         {
@@ -84,6 +89,12 @@ describe('taskOrchestrationService', () => {
             getAlignment: jest.fn(),
           },
         },
+        {
+          provide: FactExtractionService,
+          useValue: {
+            extractFromTask: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -96,6 +107,7 @@ describe('taskOrchestrationService', () => {
     studioService = module.get(StudioService);
     taskTargetService = module.get(TaskTargetService);
     shiftAlignmentService = module.get(ShiftAlignmentService);
+    factExtractionService = module.get(FactExtractionService);
   });
 
   describe('generateTasksForShows', () => {
@@ -284,6 +296,7 @@ describe('taskOrchestrationService', () => {
         unassigned: 1,
         completed: 1,
       });
+      expect(result.data[0].has_proper_task_assignment).toBe(true);
       expect(result.data[0].creators).toEqual([
         {
           show_creator_id: 'show_mc_1',
@@ -301,6 +314,50 @@ describe('taskOrchestrationService', () => {
           name: 'YouTube',
         },
       ]);
+    });
+
+    it('should flag has_proper_task_assignment=false when every task is unassigned or closed', async () => {
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+      const now = new Date();
+      showService.findPaginatedWithTaskSummary.mockResolvedValue({
+        data: [
+          {
+            id: BigInt(2),
+            uid: 'show_2',
+            clientId: BigInt(1),
+            studioId: BigInt(1),
+            studioRoomId: null,
+            showTypeId: BigInt(1),
+            showStatusId: BigInt(1),
+            showStandardId: BigInt(1),
+            name: 'Unassigned Show',
+            startTime: now,
+            endTime: now,
+            metadata: {},
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            showCreators: [],
+            showPlatforms: [],
+            taskTargets: [
+              { task: { status: TaskStatus.PENDING, assigneeId: null } },
+              // CLOSED task with assignee doesn't count — operator is no longer on the hook.
+              { task: { status: TaskStatus.CLOSED, assigneeId: BigInt(5) } },
+            ],
+          },
+        ],
+        total: 1,
+      } as any);
+
+      const result = await service.getStudioShowsWithTaskSummary('std_1', { page: 1, limit: 10, sort: 'desc', take: 10, skip: 0 });
+
+      expect(result.data[0].has_proper_task_assignment).toBe(false);
+      expect(result.data[0].task_summary).toEqual({
+        total: 2,
+        assigned: 1,
+        unassigned: 1,
+        completed: 0,
+      });
     });
 
     it('should filter by attention show ids when needs_attention is enabled', async () => {
@@ -360,6 +417,122 @@ describe('taskOrchestrationService', () => {
       })).rejects.toThrow('planning_date_from must be a valid ISO date (YYYY-MM-DD)');
 
       expect(shiftAlignmentService.getAlignment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('submitTaskContent', () => {
+    function buildShowTargetedTask(overrides?: { status?: TaskStatus }) {
+      return {
+        id: BigInt(99),
+        uid: 'task_alpha',
+        status: overrides?.status ?? TaskStatus.PENDING,
+        studioId: BigInt(1),
+        targets: [
+          { show: { id: BigInt(10), uid: 'sho_10' } },
+        ],
+      } as never;
+    }
+
+    it('dispatches assignee-mode through TaskService.updateTaskContentAndStatus', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask());
+      taskService.updateTaskContentAndStatus.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.IN_PROGRESS,
+      } as never);
+
+      const result = await service.submitTaskContent('task_alpha', 1, { status: 'IN_PROGRESS' as never }, {
+        mode: 'assignee',
+      });
+
+      expect(taskService.updateTaskContentAndStatus).toHaveBeenCalledWith(
+        'task_alpha',
+        1,
+        { status: 'IN_PROGRESS' },
+        undefined,
+      );
+      expect(taskService.updateTaskContentAndStatusAsAdmin).not.toHaveBeenCalled();
+      expect(result).toEqual({ uid: 'task_alpha', status: TaskStatus.IN_PROGRESS });
+    });
+
+    it('dispatches admin-mode through TaskService.updateTaskContentAndStatusAsAdmin and forwards the audit context', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask());
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.IN_PROGRESS,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { status: 'IN_PROGRESS' as never }, {
+        mode: 'admin',
+        auditContext: { actorExtId: 'user_ext_1', source: 'studio' },
+      });
+
+      expect(taskService.updateTaskContentAndStatusAsAdmin).toHaveBeenCalledWith(
+        'task_alpha',
+        1,
+        { status: 'IN_PROGRESS' },
+        { actorExtId: 'user_ext_1', source: 'studio' },
+      );
+      expect(taskService.updateTaskContentAndStatus).not.toHaveBeenCalled();
+    });
+
+    it('fires fact extraction once when the task transitions into COMPLETED with a show target', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask());
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { status: 'COMPLETED' as never }, {
+        mode: 'admin',
+      });
+
+      expect(factExtractionService.extractFromTask).toHaveBeenCalledWith({
+        taskId: BigInt(99),
+        taskUid: 'task_alpha',
+        studioId: BigInt(1),
+        showId: BigInt(10),
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+    });
+
+    it('does not fire extraction when the task was already COMPLETED before this call', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.COMPLETED }));
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { content: {} as never }, { mode: 'admin' });
+
+      expect(factExtractionService.extractFromTask).not.toHaveBeenCalled();
+    });
+
+    it('does not fire extraction for status transitions that do not land at COMPLETED', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask());
+      taskService.updateTaskContentAndStatus.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.IN_PROGRESS,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { status: 'IN_PROGRESS' as never }, { mode: 'assignee' });
+
+      expect(factExtractionService.extractFromTask).not.toHaveBeenCalled();
+    });
+
+    it('swallows extraction errors so the submission still resolves with the updated task', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask());
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+      factExtractionService.extractFromTask.mockRejectedValue(new Error('extractor blew up'));
+
+      const result = await service.submitTaskContent('task_alpha', 1, { status: 'COMPLETED' as never }, {
+        mode: 'admin',
+      });
+
+      expect(result).toEqual({ uid: 'task_alpha', status: TaskStatus.COMPLETED });
     });
   });
 });

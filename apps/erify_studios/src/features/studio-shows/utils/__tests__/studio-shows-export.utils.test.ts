@@ -53,6 +53,7 @@ function createShow(overrides: Partial<StudioShow> = {}): StudioShow {
       unassigned: 1,
       completed: 1,
     },
+    has_proper_task_assignment: true,
     ...overrides,
   };
 }

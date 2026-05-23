@@ -157,16 +157,24 @@ export class StudioTaskController extends BaseStudioController {
         ? null
         : new Date(dto.due_date);
 
-    const updatedTask = await this.taskService.updateTaskContentAndStatusAsAdmin(id, dto.version, {
-      content: dto.content,
-      status: dto.status,
-      dueDate,
-    }, {
-      actorExtId: request.user?.ext_id,
-      actorEmail: request.user?.email,
-      actorRole: request.studioMembership?.role,
-      source: 'studio',
-    });
+    const updatedTask = await this.taskOrchestrationService.submitTaskContent(
+      id,
+      dto.version,
+      {
+        content: dto.content,
+        status: dto.status,
+        dueDate,
+      },
+      {
+        mode: 'admin',
+        auditContext: {
+          actorExtId: request.user?.ext_id,
+          actorEmail: request.user?.email,
+          actorRole: request.studioMembership?.role,
+          source: 'studio',
+        },
+      },
+    );
 
     this.ensureResourceExists(updatedTask, 'Task', id);
     return updatedTask;
@@ -191,16 +199,24 @@ export class StudioTaskController extends BaseStudioController {
 
     const status = this.resolveStudioActionStatus(dto.action);
     const noteMetadata = this.buildNoteMetadata(dto.action, dto.note);
-    const updatedTask = await this.taskService.updateTaskContentAndStatusAsAdmin(id, dto.version, {
-      content: dto.content,
-      status,
-      ...(noteMetadata ? { metadata: noteMetadata } : {}),
-    }, {
-      actorExtId: request.user?.ext_id,
-      actorEmail: request.user?.email,
-      actorRole: request.studioMembership?.role,
-      source: 'studio',
-    });
+    const updatedTask = await this.taskOrchestrationService.submitTaskContent(
+      id,
+      dto.version,
+      {
+        content: dto.content,
+        status,
+        ...(noteMetadata ? { metadata: noteMetadata } : {}),
+      },
+      {
+        mode: 'admin',
+        auditContext: {
+          actorExtId: request.user?.ext_id,
+          actorEmail: request.user?.email,
+          actorRole: request.studioMembership?.role,
+          source: 'studio',
+        },
+      },
+    );
 
     this.ensureResourceExists(updatedTask, 'Task', id);
     return updatedTask;

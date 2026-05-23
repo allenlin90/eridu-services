@@ -132,6 +132,38 @@ export class TaskRepository extends BaseRepository<
     });
   }
 
+  /**
+   * Sibling tasks bound to the same show, in one of the supplied active
+   * statuses, excluding the task being submitted. Used by the PR 12.0.5
+   * cross-task collision guard to detect when two operator surfaces would
+   * race to write the same fact key against the same show. The snapshot
+   * is included so the caller can inspect bound `system_fact_key`s without
+   * a second round-trip.
+   */
+  async findActiveTasksForShowExcluding(
+    showId: bigint,
+    excludeTaskId: bigint,
+    statuses: TaskStatus[],
+  ): Promise<Array<Task & { snapshot: { schema: unknown } | null }>> {
+    return this.delegate.findMany({
+      where: {
+        deletedAt: null,
+        id: { not: excludeTaskId },
+        status: { in: statuses },
+        targets: {
+          some: {
+            showId,
+            targetType: 'SHOW',
+            deletedAt: null,
+          },
+        },
+      },
+      include: {
+        snapshot: { select: { schema: true } },
+      },
+    }) as unknown as Promise<Array<Task & { snapshot: { schema: unknown } | null }>>;
+  }
+
   async updateAssigneeByTaskIds(
     taskIds: bigint[],
     assigneeId: bigint,
