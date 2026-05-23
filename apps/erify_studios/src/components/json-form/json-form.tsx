@@ -667,7 +667,7 @@ export const JsonForm = function JsonForm({
                           <Textarea
                             {...field}
                             value={(field.value as string) ?? ''}
-                            disabled={readOnly}
+                            disabled={effectiveReadOnly}
                             className="min-h-20 bg-white"
                           />
                         </FormControl>

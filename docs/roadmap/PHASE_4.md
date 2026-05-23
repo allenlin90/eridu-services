@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Last updated**: 2026-05-22 · **Status**: 🚧 Active · **Remaining**: 19 PRs · **Next**: 12.0.5 Extraction pipeline foundation + wire-label rename
+> **Last updated**: 2026-05-23 · **Status**: 🚧 Active · **Remaining**: 19 PRs · **Next**: 12.0.5 Extraction pipeline foundation + wire-label rename
 
 **Quick links**
 
@@ -29,7 +29,7 @@ Build the L-side (cost) of P&L on existing studio entities and finish studio ope
 - ✅ **PR 12.0.1 — `Audit` / `AuditTarget` foundation** ([#91](https://github.com/allenlin90/eridu-services/pull/91)): polymorphic audit history with first-class `reason` column, legacy `metadata.audit.snapshot_overrides[]` sidecar merger, `@eridu/api-types/audits` contracts. No consumers wired yet; first consumer ships in 12.0.5.
 - ✅ **PR 12.0.2 — Phase 4 actuals schema additions** ([#92](https://github.com/allenlin90/eridu-services/pull/92)): actuals columns and indexes on `Show` / `ShowCreator` / `ShowPlatform`, `attendanceMissing` / `attendanceReason`, and the empty `ShowPlatformViolation` table. No consumers wired.
 - ✅ **PR 12.0.3 — Fact-key binding picker on task-template fields** ([#94](https://github.com/allenlin90/eridu-services/pull/94)): closed `SystemFactKeyEnum` + `SYSTEM_FACT_KEY_DEFINITIONS` catalog in `@eridu/api-types/task-management`, save-time Zod field-type compatibility + one-binding-per-fact-key validation, and the "Auto-fill record field" combobox (with info-icon tooltip) in the studio task-template builder. `creator_attendance_missing` reuses `validation.require_reason = 'on-true'`; analytical metrics deferred to 12.5. Producer-facing only — no runtime effect until 12.0.4.
-- ✅ **PR 12.0.4 — Per-target field hydration in operator task forms** ([#95](https://github.com/allenlin90/eridu-services/pull/95)): pure `hydrateTaskFormSchema` in `@eridu/api-types/task-management`; task read responses carry `show_creators` / `show_platforms` UIDs and a `hydration_context` block; bound fields expand to one input per assigned `ShowCreator` / `ShowPlatform` keyed by `<fieldId>:<scope>:<targetUid>`; stale hydrated keys render dimmed and read-only with `require_reason` stripped so a removed target can't block submission. No DB migration: the template snapshot stays immutable; hydration runs at render and validation time. Extractor wiring lands in 12.0.5.
+- ✅ **PR 12.0.4 — Per-target field hydration in operator task forms** ([#95](https://github.com/allenlin90/eridu-services/pull/95)): pure `hydrateTaskFormSchema` in `@eridu/api-types/task-management`; task read responses carry `show_creators` / `show_platforms` UIDs and a `hydration_context` block; bound fields expand to one input per assigned `ShowCreator` / `ShowPlatform` keyed by `<fieldId>:<scope>:<targetUid>` (single-colon separator chosen because it falls outside the nanoid UID alphabet). Stale hydrated rows render dimmed and read-only with both the main control and the reason textarea disabled, and `require_reason` stripped so a removed target can't block submission. IndexedDB drafts are pruned on load and discarded when `task.version` advances, so a regenerated / resumed task can't trap the operator with obsolete keys. No DB migration: the template snapshot stays immutable; hydration runs at render and validation time. Extractor wiring lands in 12.0.5.
 
 ## Remaining PRs
 

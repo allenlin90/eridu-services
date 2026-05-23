@@ -205,6 +205,46 @@ describe('jsonForm', () => {
     expect(staleNode!.textContent).toContain('Target no longer assigned');
   });
 
+  it('disables the reason textarea on a stale row even when the form is otherwise editable', () => {
+    const schema: UiSchemaV2 = {
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_attendmiss1',
+          key: 'attendance_missing',
+          type: 'checkbox',
+          label: 'Creator attendance missing',
+          required: false,
+          system_fact_key: 'creator_attendance_missing',
+          validation: { require_reason: 'on-true' },
+        },
+      ],
+    };
+
+    const staleKey = 'fld_attendmiss1:creator:show_mc_OUvOf4_aKnD-8Q';
+    const staleReasonKey = `${staleKey}__reason`;
+
+    const hydrated = hydrateTaskFormSchema(
+      schema,
+      { creators: [{ uid: 'show_mc_alpha', label: 'Alice' }], platforms: [] },
+      // Operator previously recorded an attendance-missing value AND an explanation for Bob,
+      // but Bob is now unassigned.
+      { [staleKey]: true, [staleReasonKey]: 'Late on previous shift.' },
+    );
+
+    render(
+      <JsonForm
+        schema={hydrated as unknown as UiSchemaV2}
+        values={{ [staleKey]: true, [staleReasonKey]: 'Late on previous shift.' }}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const reasonTextarea = screen.getByLabelText('Explanation for Creator attendance missing — show_mc_OUvOf4_aKnD-8Q');
+    expect(reasonTextarea).toBeDisabled();
+  });
+
   it('shows stored extra input metadata alongside the selected answer', () => {
     const schema: UiSchema = {
       items: [
