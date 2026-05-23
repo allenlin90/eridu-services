@@ -62,8 +62,15 @@ export type ExtractionDecision =
   }
   | {
     kind: 'noop';
-    /** Set when the operator left the field blank — no write, no audit. */
-    reason: 'value_absent' | 'value_unchanged';
+    /**
+     * `value_absent`     — operator left the field blank.
+     * `value_unchanged`  — resubmission of the recorded value by the same source.
+     * `target_stale`     — hydrated target is no longer assigned / has been
+     *                      soft-deleted between submission and extraction.
+     *                      No write, no audit; the value stays in
+     *                      `task.content` for the PR 12.4 review queue.
+     */
+    reason: 'value_absent' | 'value_unchanged' | 'target_stale';
   };
 
 /**

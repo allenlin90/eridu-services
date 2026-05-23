@@ -9,6 +9,7 @@ import { FactExtractionProcessor } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowService } from '@/models/show/show.service';
+import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
 // Mock Prisma client wired into the CLS transactional adapter — `@Transactional()`
@@ -104,6 +105,21 @@ describe('factExtractionProcessor', () => {
               actualEndTime: null,
             } as never),
             updateShow: jest.fn().mockResolvedValue({} as never),
+            ensureValidActualTimeRange: jest.fn(),
+          },
+        },
+        {
+          provide: ShowPlatformService,
+          useValue: {
+            getShowPlatformById: jest.fn().mockResolvedValue({
+              id: 200n,
+              uid: 'show_plt_200',
+              showId: 10n,
+              metadata: {},
+              actualStartTime: null,
+              actualEndTime: null,
+            } as never),
+            updateActuals: jest.fn().mockResolvedValue({} as never),
             ensureValidActualTimeRange: jest.fn(),
           },
         },
@@ -400,6 +416,185 @@ describe('factExtractionProcessor', () => {
       expect(auditService.create).not.toHaveBeenCalled();
       expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
       expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    });
+  });
+
+  describe('applyPairedShowPlatformActuals', () => {
+    let showPlatformService: jest.Mocked<ShowPlatformService>;
+
+    const platformTargets = [{ targetType: 'SHOW_PLATFORM' as const, targetId: 200n }];
+
+    const startFact = {
+      contentKey: 'fld_plat_start:platform:show_plt_200',
+      sourceFieldId: 'fld_plat_start',
+      factKey: 'show_platform_actual_start_time' as const,
+      scope: 'platform' as const,
+      targetUid: 'show_plt_200',
+      rawValue: '2026-05-23T12:00:00.000Z',
+    };
+    const endFact = {
+      contentKey: 'fld_plat_end:platform:show_plt_200',
+      sourceFieldId: 'fld_plat_end',
+      factKey: 'show_platform_actual_end_time' as const,
+      scope: 'platform' as const,
+      targetUid: 'show_plt_200',
+      rawValue: '2026-05-23T13:00:00.000Z',
+    };
+
+    function buildPlatformInput(overrides: Partial<{
+      startIncoming: Date;
+      endIncoming: Date;
+    }> = {}) {
+      return {
+        showPlatformUid: 'show_plt_200',
+        startFact,
+        endFact,
+        startIncoming: overrides.startIncoming ?? new Date('2026-05-23T12:00:00.000Z'),
+        endIncoming: overrides.endIncoming ?? new Date('2026-05-23T13:00:00.000Z'),
+        ctx,
+        targetIds: platformTargets,
+      };
+    }
+
+    function installPlatformEnsureValidImpl() {
+      showPlatformService.ensureValidActualTimeRange.mockImplementation((
+        currentStart: Date | null,
+        currentEnd: Date | null,
+        dto: { actualStartTime?: Date | null; actualEndTime?: Date | null },
+      ) => {
+        const next = {
+          start: dto.actualStartTime !== undefined ? dto.actualStartTime : currentStart ?? null,
+          end: dto.actualEndTime !== undefined ? dto.actualEndTime : currentEnd ?? null,
+        };
+        if (next.start && next.end && next.end <= next.start) {
+          throw new Error('Actual end time must be after actual start time');
+        }
+      });
+    }
+
+    beforeEach(() => {
+      showPlatformService = (processor as unknown as { showPlatformService: jest.Mocked<ShowPlatformService> }).showPlatformService;
+    });
+
+    it('writes both columns and both audits in a single updateActuals call when both sides pass priority', async () => {
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockResolvedValue({
+        id: 200n,
+        uid: 'show_plt_200',
+        showId: 10n,
+        metadata: {},
+        actualStartTime: new Date('2026-05-23T10:00:00.000Z'),
+        actualEndTime: new Date('2026-05-23T11:00:00.000Z'),
+      } as never);
+
+      const result = await processor.applyPairedShowPlatformActuals(buildPlatformInput());
+
+      expect(showPlatformService.updateActuals).toHaveBeenCalledTimes(1);
+      expect(showPlatformService.updateActuals).toHaveBeenCalledWith(
+        'show_plt_200',
+        expect.objectContaining({
+          actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
+          actualEndTime: new Date('2026-05-23T13:00:00.000Z'),
+          metadata: expect.objectContaining({
+            actuals_source: expect.objectContaining({
+              show_platform_actual_start_time: 'OPERATOR',
+              show_platform_actual_end_time: 'OPERATOR',
+            }),
+          }),
+        }),
+      );
+      expect(auditService.create).toHaveBeenCalledTimes(2);
+      expect(result.start.decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+      expect(result.end.decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    });
+
+    it('writes only the non-priority-blocked side when MANAGER pins one column', async () => {
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockResolvedValue({
+        id: 200n,
+        uid: 'show_plt_200',
+        showId: 10n,
+        metadata: { actuals_source: { show_platform_actual_end_time: 'MANAGER' } },
+        actualStartTime: new Date('2026-05-23T10:00:00.000Z'),
+        actualEndTime: new Date('2026-05-23T15:00:00.000Z'),
+      } as never);
+
+      const result = await processor.applyPairedShowPlatformActuals(buildPlatformInput());
+
+      expect(showPlatformService.updateActuals).toHaveBeenCalledTimes(1);
+      const updateArg = showPlatformService.updateActuals.mock.calls[0]![1];
+      expect(updateArg).toHaveProperty('actualStartTime', new Date('2026-05-23T12:00:00.000Z'));
+      expect(updateArg).not.toHaveProperty('actualEndTime');
+      expect(result.start.decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+      expect(result.end.decision).toMatchObject({ kind: 'skip', action: 'SKIPPED_LOWER_PRIORITY', skippedBy: 'MANAGER' });
+    });
+
+    it('rolls both sides back on validation failure of the merged pair', async () => {
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockResolvedValue({
+        id: 200n,
+        uid: 'show_plt_200',
+        showId: 10n,
+        metadata: {},
+        actualStartTime: null,
+        actualEndTime: null,
+      } as never);
+
+      await expect(
+        processor.applyPairedShowPlatformActuals(buildPlatformInput({
+          startIncoming: new Date('2026-05-23T15:00:00.000Z'),
+          endIncoming: new Date('2026-05-23T13:00:00.000Z'),
+        })),
+      ).rejects.toThrow('Actual end time must be after actual start time');
+
+      expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+    });
+
+    it('skips the updateActuals call entirely when both sides are noop (value_unchanged)', async () => {
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockResolvedValue({
+        id: 200n,
+        uid: 'show_plt_200',
+        showId: 10n,
+        metadata: {
+          actuals_source: {
+            show_platform_actual_start_time: 'OPERATOR',
+            show_platform_actual_end_time: 'OPERATOR',
+          },
+        },
+        actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
+        actualEndTime: new Date('2026-05-23T13:00:00.000Z'),
+      } as never);
+
+      const result = await processor.applyPairedShowPlatformActuals(buildPlatformInput());
+
+      expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    });
+
+    it('returns target_stale on both sides when the platform belongs to a different show', async () => {
+      // Defence in depth: the service-level pre-filter should catch this,
+      // but if the row's `showId` changed between bulk lookup and the
+      // transactional read, the processor refuses to write across shows.
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockResolvedValue({
+        id: 200n,
+        uid: 'show_plt_200',
+        showId: 999n,
+        metadata: {},
+        actualStartTime: null,
+        actualEndTime: null,
+      } as never);
+
+      const result = await processor.applyPairedShowPlatformActuals(buildPlatformInput());
+
+      expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
     });
   });
 });

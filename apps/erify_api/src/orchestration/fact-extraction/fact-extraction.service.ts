@@ -20,9 +20,11 @@ import { ExtractorRegistry } from './extractors/extractor-registry';
 import {
   FactExtractionProcessor,
   type PairedShowActualsResult,
+  type PairedShowPlatformActualsResult,
 } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
+import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { TaskService } from '@/models/task/task.service';
 
 /**
@@ -90,6 +92,7 @@ export class FactExtractionService {
     private readonly auditService: AuditService,
     private readonly extractorRegistry: ExtractorRegistry,
     private readonly factExtractionProcessor: FactExtractionProcessor,
+    private readonly showPlatformService: ShowPlatformService,
   ) {}
 
   /**
@@ -132,6 +135,16 @@ export class FactExtractionService {
       factKeys: writingFacts.map((fact) => fact.factKey),
     });
 
+    // Bulk-resolve active platform target UIDs in one DB round-trip so per-
+    // fact stale-target checks and audit-id resolution share the same cache.
+    // Targets missing from the map (soft-deleted or wrong show) emit a
+    // `skipped_stale_target` outcome — no write, no audit row (a stale
+    // target is unwritable, not contested, so a SKIPPED audit would be
+    // misleading on the review surface).
+    const platformTargetById = await this.showPlatformService.findActiveByUids(
+      uniqueTargetUids(facts, 'platform'),
+    );
+
     const ctx: ExtractionContext = {
       taskId: input.taskId,
       taskUid: input.taskUid,
@@ -160,8 +173,26 @@ export class FactExtractionService {
       entries,
     });
 
+    // Same atomicity guarantee, applied per-platform: if a single submission
+    // carries paired start+end for the same `ShowPlatform`, route the pair
+    // through the per-target atomic processor so the priority check +
+    // merged-pair validation + paired column write all commit (or roll back)
+    // together. Each platform target gets its own transaction so a
+    // validation failure on platform A doesn't roll back platform B's
+    // already-written pair.
+    const handledPairedPlatformContentKeys = await this.tryAtomicPairedShowPlatformActuals({
+      facts,
+      collidingFactKeys,
+      platformTargetById,
+      ctx,
+      entries,
+    });
+
     for (const fact of facts) {
       if (handledPairedKeys.has(fact.factKey)) {
+        continue;
+      }
+      if (handledPairedPlatformContentKeys.has(fact.contentKey)) {
         continue;
       }
       // Empty submissions never write, never audit. Per Codex P2 review:
@@ -198,7 +229,7 @@ export class FactExtractionService {
       }
 
       if (collidingFactKeys.has(fact.factKey)) {
-        const audit = await this.writeCollisionSkipAudit(fact, ctx);
+        const audit = await this.writeCollisionSkipAudit(fact, ctx, platformTargetById);
         entries.push({
           factKey: fact.factKey,
           sourceFieldId: fact.sourceFieldId,
@@ -211,7 +242,24 @@ export class FactExtractionService {
         continue;
       }
 
-      const targetIds = this.resolveAuditTargetIds(fact, ctx);
+      // Stale-target pre-filter for platform-scope facts: if the bulk
+      // lookup didn't surface the target, the platform has been
+      // unassigned / soft-deleted between submission and extraction.
+      // Skip the extractor entirely (no write, no audit) so the value
+      // stays in `task.content` for the PR 12.4 review queue.
+      if (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid)) {
+        entries.push({
+          factKey: fact.factKey,
+          sourceFieldId: fact.sourceFieldId,
+          contentKey: fact.contentKey,
+          targetUid: fact.targetUid,
+          outcome: 'skipped_stale_target',
+          reason: 'target_unassigned_or_deleted',
+        });
+        continue;
+      }
+
+      const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
 
       let processed: { decision: ExtractionDecision; auditUid?: string };
       try {
@@ -295,8 +343,9 @@ export class FactExtractionService {
   private async writeCollisionSkipAudit(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): Promise<{ uid: string } | undefined> {
-    const targetIds = this.resolveAuditTargetIds(fact, ctx);
+    const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
     if (targetIds.length === 0) {
       return undefined;
     }
@@ -360,7 +409,9 @@ export class FactExtractionService {
       return new Set();
     }
 
-    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx);
+    // Show scope: bulk-resolved platform cache isn't relevant here, but the
+    // resolver signature is shared so we pass an empty map.
+    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx, new Map());
     let result: PairedShowActualsResult;
     try {
       result = await this.factExtractionProcessor.applyPairedShowActuals({
@@ -415,22 +466,154 @@ export class FactExtractionService {
   }
 
   /**
-   * Resolves the polymorphic audit target row(s) for a fact. Only `show`
-   * scope is wired in PR 12.0.5; the other branches are placeholders for
-   * 12.1/12.2/12.3 so the orchestrator doesn't need to grow when those
-   * extractors land. Synchronous because show-scope id is already in the
-   * extraction context — no extra round-trip needed.
+   * Resolves the polymorphic audit target row(s) for a fact. `show` scope
+   * uses the id already in `ctx`; `platform` scope reads from the bulk-
+   * resolved cache built once per `extractFromTask` call. Creator scope is
+   * still a placeholder until PR 12.2 lands.
+   *
+   * Returns an empty array when the platform target is missing from the
+   * cache — callers should pre-filter stale targets and emit
+   * `skipped_stale_target` outcomes rather than relying on empty target
+   * ids to silently drop the audit.
    */
   private resolveAuditTargetIds(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): { targetType: AuditTargetType; targetId: bigint }[] {
     if (fact.scope === 'show') {
       return [{ targetType: 'SHOW', targetId: ctx.showId }];
     }
-    // 12.1.x and 12.2 register extractors for show_creator / show_platform
-    // scopes; until they do, we have no resolved DB id to anchor the audit.
+    if (fact.scope === 'platform') {
+      const resolved = platformTargetById.get(fact.targetUid);
+      if (!resolved) {
+        return [];
+      }
+      return [{ targetType: 'SHOW_PLATFORM', targetId: resolved.id }];
+    }
+    // PR 12.2 wires the creator scope.
     return [];
+  }
+
+  /**
+   * Per-target paired ShowPlatform actuals routing. Iterates unique
+   * `targetUid`s among the platform facts, and for each target that carries
+   * both `show_platform_actual_start_time` and `show_platform_actual_end_time`
+   * (non-absent, parseable, registered, non-colliding, non-stale), routes the
+   * pair through `applyPairedShowPlatformActuals` in its own transaction.
+   * Returns the set of content keys it consumed so the per-fact loop can
+   * skip them.
+   */
+  private async tryAtomicPairedShowPlatformActuals(input: {
+    facts: ExtractedFact[];
+    collidingFactKeys: Set<SystemFactKey>;
+    platformTargetById: Map<string, { id: bigint; showId: bigint }>;
+    ctx: ExtractionContext;
+    entries: ExtractionResultEntry[];
+  }): Promise<Set<string>> {
+    const consumed = new Set<string>();
+    if (
+      input.collidingFactKeys.has('show_platform_actual_start_time')
+      || input.collidingFactKeys.has('show_platform_actual_end_time')
+    ) {
+      return consumed;
+    }
+    if (
+      !this.extractorRegistry.has('show_platform_actual_start_time')
+      || !this.extractorRegistry.has('show_platform_actual_end_time')
+    ) {
+      return consumed;
+    }
+
+    // Group platform facts by target so each ShowPlatform pair commits or
+    // rolls back independently. A pair on platform A failing validation must
+    // not roll back platform B's already-written pair.
+    const startByTarget = new Map<string, ExtractedFact>();
+    const endByTarget = new Map<string, ExtractedFact>();
+    for (const fact of input.facts) {
+      if (fact.scope !== 'platform') {
+        continue;
+      }
+      if (fact.factKey === 'show_platform_actual_start_time') {
+        startByTarget.set(fact.targetUid, fact);
+      } else if (fact.factKey === 'show_platform_actual_end_time') {
+        endByTarget.set(fact.targetUid, fact);
+      }
+    }
+
+    for (const [targetUid, startFact] of startByTarget) {
+      const endFact = endByTarget.get(targetUid);
+      if (!endFact) {
+        continue;
+      }
+      if (isFactValueAbsent(startFact.rawValue) || isFactValueAbsent(endFact.rawValue)) {
+        continue;
+      }
+      const resolved = input.platformTargetById.get(targetUid);
+      if (!resolved) {
+        // Stale targets fall through to the per-fact loop's stale-target
+        // pre-filter, which emits `skipped_stale_target` on each side.
+        continue;
+      }
+      const startIncoming = parseDateTimeValue(startFact.rawValue);
+      const endIncoming = parseDateTimeValue(endFact.rawValue);
+      if (!startIncoming || !endIncoming) {
+        continue;
+      }
+
+      const targetIds = [{ targetType: 'SHOW_PLATFORM' as AuditTargetType, targetId: resolved.id }];
+
+      let result: PairedShowPlatformActualsResult;
+      try {
+        result = await this.factExtractionProcessor.applyPairedShowPlatformActuals({
+          showPlatformUid: targetUid,
+          startFact,
+          endFact,
+          startIncoming,
+          endIncoming,
+          ctx: input.ctx,
+          targetIds,
+        });
+      } catch (err) {
+        this.logger.error(
+          `Paired show-platform-actuals processor threw on task ${input.ctx.taskUid} target ${targetUid}: ${(err as Error).message}`,
+        );
+        for (const fact of [startFact, endFact]) {
+          input.entries.push({
+            factKey: fact.factKey,
+            sourceFieldId: fact.sourceFieldId,
+            contentKey: fact.contentKey,
+            targetUid: fact.targetUid,
+            outcome: 'noop',
+            reason: 'extractor_error',
+          });
+          consumed.add(fact.contentKey);
+        }
+        continue;
+      }
+
+      input.entries.push({
+        factKey: startFact.factKey,
+        sourceFieldId: startFact.sourceFieldId,
+        contentKey: startFact.contentKey,
+        targetUid: startFact.targetUid,
+        outcome: outcomeFromDecision(result.start.decision),
+        auditUid: result.start.auditUid,
+        reason: result.start.decision.kind === 'noop' ? result.start.decision.reason : undefined,
+      });
+      input.entries.push({
+        factKey: endFact.factKey,
+        sourceFieldId: endFact.sourceFieldId,
+        contentKey: endFact.contentKey,
+        targetUid: endFact.targetUid,
+        outcome: outcomeFromDecision(result.end.decision),
+        auditUid: result.end.auditUid,
+        reason: result.end.decision.kind === 'noop' ? result.end.decision.reason : undefined,
+      });
+      consumed.add(startFact.contentKey);
+      consumed.add(endFact.contentKey);
+    }
+    return consumed;
   }
 }
 
@@ -513,6 +696,29 @@ function outcomeFromDecision(decision: ExtractionDecision): ExtractionResultEntr
     case 'skip':
       return 'skipped_lower_priority';
     case 'noop':
-      return 'noop';
+      // Extractor-level stale-target guard is defence-in-depth; the service
+      // pre-filter usually catches these first, but if an extractor is
+      // invoked directly the outcome should still surface as
+      // `skipped_stale_target` (not generic `noop`) so the review queue can
+      // segment it correctly.
+      return decision.reason === 'target_stale' ? 'skipped_stale_target' : 'noop';
   }
+}
+
+/**
+ * Deduplicates target UIDs for a given scope across all extracted facts.
+ * Used by the bulk platform-target lookup so we read each ShowPlatform at
+ * most once per `extractFromTask` call.
+ */
+function uniqueTargetUids(
+  facts: ExtractedFact[],
+  scope: 'platform' | 'creator',
+): string[] {
+  const seen = new Set<string>();
+  for (const fact of facts) {
+    if (fact.scope === scope) {
+      seen.add(fact.targetUid);
+    }
+  }
+  return Array.from(seen);
 }

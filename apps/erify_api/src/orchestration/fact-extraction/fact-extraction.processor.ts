@@ -14,6 +14,7 @@ import { canResolverOverwrite } from './source-priority';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowService } from '@/models/show/show.service';
+import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 
 export type ProcessedFact = {
   decision: ExtractionDecision;
@@ -37,6 +38,19 @@ export type PairedShowActualsResult = {
   end: ProcessedFact;
 };
 
+export type PairedShowPlatformActualsInput = {
+  /** UID of the ShowPlatform target — both sides paired against the same row. */
+  showPlatformUid: string;
+  startFact: ExtractedFact;
+  endFact: ExtractedFact;
+  startIncoming: Date;
+  endIncoming: Date;
+  ctx: ExtractionContext;
+  targetIds: { targetType: AuditTargetType; targetId: bigint }[];
+};
+
+export type PairedShowPlatformActualsResult = PairedShowActualsResult;
+
 /**
  * Per-fact transactional boundary for the extraction pipeline. The indexed
  * column write performed by the extractor and the audit envelope written by
@@ -54,6 +68,7 @@ export class FactExtractionProcessor {
   constructor(
     private readonly auditService: AuditService,
     private readonly showService: ShowService,
+    private readonly showPlatformService: ShowPlatformService,
   ) {}
 
   /**
@@ -191,6 +206,106 @@ export class FactExtractionProcessor {
         ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
         ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
         metadata: nextMetadata as unknown as Parameters<ShowService['updateShow']>[1]['metadata'],
+      });
+    }
+
+    const start = await this.recordPairedSideDecision({
+      fact: input.startFact,
+      ctx: input.ctx,
+      targetIds: input.targetIds,
+      canWrite: startCanWrite,
+      unchanged: startUnchanged,
+      currentValue: startCurrent,
+      incoming: input.startIncoming,
+      recordedSource: startRecorded,
+    });
+    const end = await this.recordPairedSideDecision({
+      fact: input.endFact,
+      ctx: input.ctx,
+      targetIds: input.targetIds,
+      canWrite: endCanWrite,
+      unchanged: endUnchanged,
+      currentValue: endCurrent,
+      incoming: input.endIncoming,
+      recordedSource: endRecorded,
+    });
+    return { start, end };
+  }
+
+  /**
+   * Per-target atomic paired write for
+   * `show_platform_actual_start_time` + `show_platform_actual_end_time`.
+   *
+   * Mirrors `applyPairedShowActuals` but is scoped to one `ShowPlatform`
+   * row. Multiple platform targets on the same task fire this method once
+   * per `(targetUid)` so each platform's pair commits or rolls back
+   * independently — a validation failure on platform A must not roll back
+   * platform B's already-written pair.
+   *
+   * Caller (`FactExtractionService.extractFromTask`) is responsible for
+   * filtering: collisions, stale targets, unparseable / absent values, and
+   * unregistered fact keys are all routed elsewhere before this method runs.
+   * Both facts handed in MUST belong to the same `targetUid` and be
+   * non-absent + parseable.
+   */
+  @Transactional()
+  async applyPairedShowPlatformActuals(
+    input: PairedShowPlatformActualsInput,
+  ): Promise<PairedShowPlatformActualsResult> {
+    const showPlatform = await this.showPlatformService.getShowPlatformById(input.showPlatformUid);
+    // The service-level stale-target guard has already verified that this
+    // platform exists and belongs to the current show, but we re-check here
+    // because the read happens inside the transaction. Same defence-in-depth
+    // posture as the per-extractor path.
+    if (!showPlatform || showPlatform.showId !== input.ctx.showId) {
+      const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
+      return { start: { decision }, end: { decision } };
+    }
+
+    const metadata = (showPlatform.metadata as ShowMetadataShape | null) ?? {};
+    const recordedSourceMap: ShowActualsSourceMap = metadata.actuals_source ?? {};
+
+    const startRecorded = recordedSourceMap.show_platform_actual_start_time;
+    const endRecorded = recordedSourceMap.show_platform_actual_end_time;
+    const startCanWrite = canResolverOverwrite(input.ctx.source, startRecorded);
+    const endCanWrite = canResolverOverwrite(input.ctx.source, endRecorded);
+
+    const startCurrent = showPlatform.actualStartTime;
+    const endCurrent = showPlatform.actualEndTime;
+    const startUnchanged = startCanWrite
+      && startCurrent !== null
+      && startCurrent.getTime() === input.startIncoming.getTime()
+      && startRecorded === input.ctx.source;
+    const endUnchanged = endCanWrite
+      && endCurrent !== null
+      && endCurrent.getTime() === input.endIncoming.getTime()
+      && endRecorded === input.ctx.source;
+
+    const startEffectiveWrite = startCanWrite && !startUnchanged;
+    const endEffectiveWrite = endCanWrite && !endUnchanged;
+
+    if (startEffectiveWrite || endEffectiveWrite) {
+      this.showPlatformService.ensureValidActualTimeRange(
+        startCurrent,
+        endCurrent,
+        {
+          ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+          ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+        },
+      );
+    }
+
+    if (startEffectiveWrite || endEffectiveWrite) {
+      const nextActualsSource: ShowActualsSourceMap = {
+        ...recordedSourceMap,
+        ...(startEffectiveWrite ? { show_platform_actual_start_time: input.ctx.source } : {}),
+        ...(endEffectiveWrite ? { show_platform_actual_end_time: input.ctx.source } : {}),
+      };
+      const nextMetadata: ShowMetadataShape = { ...metadata, actuals_source: nextActualsSource };
+      await this.showPlatformService.updateActuals(input.showPlatformUid, {
+        ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+        ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+        metadata: nextMetadata,
       });
     }
 
