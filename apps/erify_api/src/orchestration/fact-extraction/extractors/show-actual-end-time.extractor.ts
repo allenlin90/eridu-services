@@ -19,8 +19,8 @@ type ShowMetadata = {
 };
 
 @Injectable()
-export class ShowActualStartTimeExtractor implements IngestionExtractor {
-  readonly factKey = 'show_actual_start_time' as const;
+export class ShowActualEndTimeExtractor implements IngestionExtractor {
+  readonly factKey = 'show_actual_end_time' as const;
 
   constructor(private readonly showService: ShowService) {}
 
@@ -47,7 +47,7 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
     const show = await this.showService.getShowById(ctx.showUid);
     const metadata = (show.metadata as ShowMetadata | null) ?? {};
     const recordedSource = metadata.actuals_source?.[fact.factKey] as ActualsSource | undefined;
-    const currentValue = show.actualStartTime;
+    const currentValue = show.actualEndTime;
 
     if (!canResolverOverwrite(ctx.source, recordedSource)) {
       return {
@@ -58,11 +58,11 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
       };
     }
 
-    // Validate time range: start time must be before end time
+    // Validate time range: end time must be after start time
     this.showService.ensureValidActualTimeRange(
       show.actualStartTime,
       show.actualEndTime,
-      { actualStartTime: incoming },
+      { actualEndTime: incoming },
     );
 
     if (currentValue && currentValue.getTime() === incoming.getTime() && recordedSource === ctx.source) {
@@ -79,7 +79,7 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
     };
 
     await this.showService.updateShow(ctx.showUid, {
-      actualStartTime: incoming,
+      actualEndTime: incoming,
       metadata: nextMetadata as unknown as Parameters<ShowService['updateShow']>[1]['metadata'],
     });
 

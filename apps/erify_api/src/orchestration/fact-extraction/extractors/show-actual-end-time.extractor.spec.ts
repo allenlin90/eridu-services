@@ -1,4 +1,4 @@
-import { ShowActualStartTimeExtractor } from './show-actual-start-time.extractor';
+import { ShowActualEndTimeExtractor } from './show-actual-end-time.extractor';
 
 import type { ShowService } from '@/models/show/show.service';
 
@@ -19,6 +19,8 @@ function buildShowService(overrides: {
     ensureValidActualTimeRange: jest.fn(),
   };
 
+  // Implement minimal logic for mock or just allow jest.fn() to pass unless it throws.
+  // In the tests, we want to mock the behavior where if ensureValidActualTimeRange throws, it propagates.
   service.ensureValidActualTimeRange.mockImplementation(
     (currentStart: Date | null, currentEnd: Date | null, dto: any) => {
       const start = dto.actualStartTime !== undefined ? dto.actualStartTime : currentStart ?? null;
@@ -42,18 +44,18 @@ const ctx = {
 };
 
 const fact = {
-  contentKey: 'fld_show_start',
-  sourceFieldId: 'fld_show_start',
-  factKey: 'show_actual_start_time' as const,
+  contentKey: 'fld_show_end',
+  sourceFieldId: 'fld_show_end',
+  factKey: 'show_actual_end_time' as const,
   scope: 'show' as const,
   targetUid: 'sho_10',
-  rawValue: '2026-05-23T18:30:00.000Z',
+  rawValue: '2026-05-23T19:30:00.000Z',
 };
 
-describe('showActualStartTimeExtractor', () => {
+describe('showActualEndTimeExtractor', () => {
   it('writes a CREATE decision when the column is blank', async () => {
     const showService = buildShowService({});
-    const extractor = new ShowActualStartTimeExtractor(showService);
+    const extractor = new ShowActualEndTimeExtractor(showService);
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -61,14 +63,14 @@ describe('showActualStartTimeExtractor', () => {
       kind: 'write',
       action: 'CREATE',
       oldValue: null,
-      newValue: '2026-05-23T18:30:00.000Z',
+      newValue: '2026-05-23T19:30:00.000Z',
     });
     expect(showService.updateShow).toHaveBeenCalledWith(
       'sho_10',
       expect.objectContaining({
-        actualStartTime: new Date('2026-05-23T18:30:00.000Z'),
+        actualEndTime: new Date('2026-05-23T19:30:00.000Z'),
         metadata: expect.objectContaining({
-          actuals_source: { show_actual_start_time: 'OPERATOR' },
+          actuals_source: { show_actual_end_time: 'OPERATOR' },
         }),
       }),
     );
@@ -76,10 +78,10 @@ describe('showActualStartTimeExtractor', () => {
 
   it('writes an UPDATE decision when the column already has a value', async () => {
     const showService = buildShowService({
-      actualStartTime: new Date('2026-05-23T17:00:00.000Z'),
-      metadata: { actuals_source: { show_actual_start_time: 'OPERATOR' } },
+      actualEndTime: new Date('2026-05-23T17:00:00.000Z'),
+      metadata: { actuals_source: { show_actual_end_time: 'OPERATOR' } },
     });
-    const extractor = new ShowActualStartTimeExtractor(showService);
+    const extractor = new ShowActualEndTimeExtractor(showService);
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -87,16 +89,16 @@ describe('showActualStartTimeExtractor', () => {
       kind: 'write',
       action: 'UPDATE',
       oldValue: '2026-05-23T17:00:00.000Z',
-      newValue: '2026-05-23T18:30:00.000Z',
+      newValue: '2026-05-23T19:30:00.000Z',
     });
   });
 
   it('skips when an existing MANAGER override outranks the OPERATOR input', async () => {
     const showService = buildShowService({
-      actualStartTime: new Date('2026-05-23T17:00:00.000Z'),
-      metadata: { actuals_source: { show_actual_start_time: 'MANAGER' } },
+      actualEndTime: new Date('2026-05-23T17:00:00.000Z'),
+      metadata: { actuals_source: { show_actual_end_time: 'MANAGER' } },
     });
-    const extractor = new ShowActualStartTimeExtractor(showService);
+    const extractor = new ShowActualEndTimeExtractor(showService);
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -110,7 +112,7 @@ describe('showActualStartTimeExtractor', () => {
 
   it('returns a noop when the operator left the field blank', async () => {
     const showService = buildShowService({});
-    const extractor = new ShowActualStartTimeExtractor(showService);
+    const extractor = new ShowActualEndTimeExtractor(showService);
 
     const decision = await extractor.apply({ ...fact, rawValue: '' }, ctx);
 
@@ -120,10 +122,10 @@ describe('showActualStartTimeExtractor', () => {
 
   it('returns a noop when the value matches the current column and source', async () => {
     const showService = buildShowService({
-      actualStartTime: new Date('2026-05-23T18:30:00.000Z'),
-      metadata: { actuals_source: { show_actual_start_time: 'OPERATOR' } },
+      actualEndTime: new Date('2026-05-23T19:30:00.000Z'),
+      metadata: { actuals_source: { show_actual_end_time: 'OPERATOR' } },
     });
-    const extractor = new ShowActualStartTimeExtractor(showService);
+    const extractor = new ShowActualEndTimeExtractor(showService);
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -131,11 +133,11 @@ describe('showActualStartTimeExtractor', () => {
     expect(showService.updateShow).not.toHaveBeenCalled();
   });
 
-  it('throws an error when the start time is after the end time', async () => {
+  it('throws an error when the end time is before the start time', async () => {
     const showService = buildShowService({
-      actualEndTime: new Date('2026-05-23T17:00:00.000Z'),
+      actualStartTime: new Date('2026-05-23T20:00:00.000Z'),
     });
-    const extractor = new ShowActualStartTimeExtractor(showService);
+    const extractor = new ShowActualEndTimeExtractor(showService);
 
     await expect(extractor.apply(fact, ctx)).rejects.toThrow(
       'Actual end time must be after actual start time',
