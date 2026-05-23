@@ -8,6 +8,8 @@ Engineering-focused persistent references — architecture, patterns, and govern
 | --- | --- |
 | [System Architecture Overview](./ARCHITECTURE_OVERVIEW.md) | Module layers, controller scopes, auth chain, UID strategy |
 | [DB Migration Policy](./DB_MIGRATION_POLICY.md) | Migration governance, framework-first rule, branch-local scoping |
+| [Finance Guardrails](./FINANCE_GUARDRAILS.md) | Platform rules for monetary computation, financial storage, and audit |
+| [DataTable Package Extraction](./DATA_TABLE_EXTRACTION.md) | Rationale, design decisions, and consequences of extracting DataTable |
 
 ## Usage
 

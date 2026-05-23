@@ -14,7 +14,6 @@ Monorepo-level source of truth for roadmap, product context, and cross-app plann
 | [engineering/](./engineering/README.md) | Architecture overview and engineering policies | Persistent — updated as conventions change |
 | [ideation/](./ideation/README.md) | Deferred ideas with preserved reasoning | Lifecycle-managed — promoted to PRD or dropped |
 | [tech-debt/](./tech-debt/README.md) | Known implementation gaps and cleanup issues | Lifecycle-managed — resolved or retired |
-| [adr/](./adr/) | Architecture decision records | Persistent — immutable after acceptance |
 
 App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design** for implemented features.
 

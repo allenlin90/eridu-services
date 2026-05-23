@@ -26,8 +26,6 @@ Use for monorepo-owned content.
   - system architecture framing
   - engineering policies and governance
   - cross-app technical conventions
-- `docs/adr/`
-  - architecture decisions
 
 ## App Docs
 
