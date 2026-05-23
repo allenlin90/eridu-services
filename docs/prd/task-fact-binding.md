@@ -59,7 +59,9 @@ Task templates remain target-agnostic. At task generation (or form rendering), t
 ### B. Event-Driven Push Model & Source Priority Resolver
 Actuals are written to core models immediately upon event triggers (task submissions, telemetry sync, or manager edits). Writes are governed by a strict source-priority hierarchy:
 
-$$\text{MANAGER\_OVERRIDE} > \text{PLATFORM\_DATA} > \text{CREATOR\_INPUT} \text{ (Reserved)} > \text{OPERATOR\_INPUT} > \text{PLANNED\_SCHEDULE}$$
+$$\text{MANAGER} > \text{PLATFORM} > \text{CREATOR\_INPUT} \text{ (Reserved)} > \text{OPERATOR} > \text{PLANNED}$$
+
+> Source labels use the short forms defined by `actualsSourceSchema` in `@eridu/api-types/audits`. See [`economics-cost-model.md` §Source label alignment](../domain/economics-cost-model.md#source-label-alignment) for why earlier drafts referenced long-form names.
 
 * If an incoming fact is of **higher or equal priority** compared to the currently recorded source (stored in the row's `metadata.actuals_source` map), the column is updated and the audit log is written.
 * If the incoming fact is of **lower priority**, the database write is skipped, but the input is preserved in `task.content` for reference and creates a `SKIPPED_LOWER_PRIORITY` audit log.
@@ -197,7 +199,7 @@ Implementation is structured into **three logical sections** totaling 11 reviewa
   * Ingestion pipeline: reads `task.content`, validates targets against active DB records, compares source priorities, and writes audited facts or skips them (`SKIPPED_LOWER_PRIORITY`).
   * Smoke test: wires the pipeline end-to-end for `show_actual_start_time` → `Show.actualStartTime`.
   * Cross-task collision guard: before ingestion, detect active tasks assigned to the same show that bind the same fact key and route the lower-priority or ambiguous write to the review path instead of overwriting silently.
-  * **Wire-Label Rename**: Atomic find-and-replace of `OPERATOR_RECORD` to `OPERATOR_INPUT` across all backend schemas, frontend calculators, and compensation badge components in `/me/` and `/studios/` views.
+  * **Wire-Label Alignment**: PR 4 / 10 / 11 never shipped a `OPERATOR_RECORD` wire value; the canonical labels are the short forms (`MANAGER` / `PLATFORM` / `OPERATOR` / `PLANNED`) already defined by `actualsSourceSchema` in `@eridu/api-types/audits`. This PR locks docs and downstream calculators on the short forms — no code-level rename is required because no production surface ever emitted the long form.
   * **`/show-operations` Task-Assignment Alignment**:
     * **Backend (BE)**: Update the `/show-operations` query endpoint to check for active task assignments and return `has_proper_task_assignment: boolean`.
     * **Frontend (FE)**: Update `/show-operations` in `erify_studios` to display an amber/orange warning badge: ⚠️ `No Task Assigned` for any show without a valid active task template or sheet assignment, linking directly to the task instantiation modal.

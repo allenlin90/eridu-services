@@ -245,17 +245,17 @@ Storage on `Show`, `ShowCreator`, and `ShowPlatform` uses a per-field source map
 ```json
 {
   "actuals_source": {
-    "actual_start_time": "MANAGER_OVERRIDE",
-    "actual_end_time": "OPERATOR_INPUT"
+    "actual_start_time": "MANAGER",
+    "actual_end_time": "OPERATOR"
   }
 }
 ```
 
-Phase 4 only writes time-pair keys into the map. The shape generalizes: when analytical facts (e.g. GMV, viewer count) re-enter the OLTP path via 12.5, they will use their own keys (e.g. `gmv`, `viewer_count`) so a single row can legitimately mix sources (manager-overridden time pair alongside a platform-sourced GMV). This is also how the `ShowPlatform.viewerCount Int @default(0)` ambiguity will be resolved cleanly: **absence of a key in the map means never-written**; **presence means submitted (even if zero)**. The row's `actuals_source` exposed by the calculator projects only the time-pair source for backward compatibility with PR 4 / 10 / 11 self-views; non-time facts are not currently surfaced as their own row-level fields.
+Source values use the short forms defined by `actualsSourceSchema` in [`packages/api-types/src/audits/schemas.ts`](../../packages/api-types/src/audits/schemas.ts): `MANAGER`, `PLATFORM`, `CREATOR_INPUT` (reserved), `OPERATOR`, `PLANNED`. Phase 4 only writes time-pair keys into the map. The shape generalizes: when analytical facts (e.g. GMV, viewer count) re-enter the OLTP path via 12.5, they will use their own keys (e.g. `gmv`, `viewer_count`) so a single row can legitimately mix sources (a manager-overridden time pair alongside a platform-sourced GMV). This is also how the `ShowPlatform.viewerCount Int @default(0)` ambiguity will be resolved cleanly: **absence of a key in the map means never-written**; **presence means submitted (even if zero)**. The row's `actuals_source` exposed by the calculator projects only the time-pair source for backward compatibility with PR 4 / 10 / 11 self-views; non-time facts are not currently surfaced as their own row-level fields.
 
-### Wire-label rename
+### Source label alignment
 
-`OPERATOR_RECORD` (the value emitted by surfaces shipped in PR 4, PR 10, PR 11) is renamed to `OPERATOR_INPUT` in the same PR series that introduces the per-field source map (see PHASE_4.md PR 12 design decisions). The rename ships atomically with the new resolver — there is no transitional alias.
+The PR 12.0.5 extraction pipeline writes the short-form values listed above. The earlier draft of this doc referenced long-form labels (`OPERATOR_RECORD`, `MANAGER_OVERRIDE`, `OPERATOR_INPUT`, `PLANNED_SCHEDULE`); no shipped surface ever emitted those strings, so the canonical wire labels are the short forms from `actualsSourceSchema`. PR 4 / 10 / 11 self-views surface the calculator's `actuals_source` projection directly — there is no transitional alias to maintain.
 
 ## 3. Three Views (Read-Only)
 
