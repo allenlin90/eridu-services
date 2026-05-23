@@ -265,8 +265,7 @@ export class FactExtractionProcessor {
     let showPlatform: Awaited<ReturnType<ShowPlatformService['getShowPlatformById']>>;
     try {
       showPlatform = await this.showPlatformService.getShowPlatformById(input.showPlatformUid);
-    }
-    catch (err) {
+    } catch (err) {
       if (err instanceof NotFoundException) {
         const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
         return { start: { decision }, end: { decision } };

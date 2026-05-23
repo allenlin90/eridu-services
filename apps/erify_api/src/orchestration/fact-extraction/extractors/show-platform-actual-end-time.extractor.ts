@@ -42,8 +42,7 @@ export class ShowPlatformActualEndTimeExtractor implements IngestionExtractor {
     let showPlatform: Awaited<ReturnType<ShowPlatformService['getShowPlatformById']>>;
     try {
       showPlatform = await this.showPlatformService.getShowPlatformById(fact.targetUid);
-    }
-    catch (err) {
+    } catch (err) {
       if (err instanceof NotFoundException) {
         return { kind: 'noop', reason: 'target_stale' };
       }

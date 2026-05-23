@@ -232,6 +232,27 @@ export class FactExtractionService {
         continue;
       }
 
+      // Stale-target pre-filter for platform-scope facts BEFORE collision
+      // routing. Per Codex P2 review on PR #103: a stale platform target
+      // is unwritable by definition, so it cannot meaningfully "collide"
+      // with a sibling task — emitting `skipped_collision` (which writes
+      // a SKIPPED_LOWER_PRIORITY audit) would mislabel an unwritable row
+      // as a contested write. The bulk lookup is already scoped to
+      // `ctx.showId`, so missing entries mean the platform is either
+      // soft-deleted or has been reassigned to another show; either way,
+      // the value stays in `task.content` for the PR 12.4 review queue.
+      if (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid)) {
+        entries.push({
+          factKey: fact.factKey,
+          sourceFieldId: fact.sourceFieldId,
+          contentKey: fact.contentKey,
+          targetUid: fact.targetUid,
+          outcome: 'skipped_stale_target',
+          reason: 'target_unassigned_or_deleted',
+        });
+        continue;
+      }
+
       if (collidingFactKeys.has(fact.factKey)) {
         const audit = await this.writeCollisionSkipAudit(fact, ctx, platformTargetById);
         entries.push({
@@ -246,22 +267,6 @@ export class FactExtractionService {
         continue;
       }
 
-      // Stale-target pre-filter for platform-scope facts: if the bulk
-      // lookup didn't surface the target, the platform has been
-      // unassigned / soft-deleted between submission and extraction.
-      // Skip the extractor entirely (no write, no audit) so the value
-      // stays in `task.content` for the PR 12.4 review queue.
-      if (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid)) {
-        entries.push({
-          factKey: fact.factKey,
-          sourceFieldId: fact.sourceFieldId,
-          contentKey: fact.contentKey,
-          targetUid: fact.targetUid,
-          outcome: 'skipped_stale_target',
-          reason: 'target_unassigned_or_deleted',
-        });
-        continue;
-      }
 
       const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
 

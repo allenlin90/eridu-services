@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
@@ -6,8 +6,6 @@ import { ClsModule } from 'nestjs-cls';
 
 import type { IngestionExtractor } from './extractors/extractor.types';
 import { FactExtractionProcessor } from './fact-extraction.processor';
-
-import { NotFoundException } from '@nestjs/common';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowService } from '@/models/show/show.service';

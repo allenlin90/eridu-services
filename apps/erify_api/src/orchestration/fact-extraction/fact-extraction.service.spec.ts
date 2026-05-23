@@ -867,6 +867,65 @@ describe('factExtractionService', () => {
       ]));
     });
 
+    it('prefers skipped_stale_target over skipped_collision when a stale platform target collides with a sibling task', async () => {
+      // Codex P2 review on PR #103: a stale platform target is unwritable
+      // by definition, so a colliding sibling fact key must not promote it
+      // to `skipped_collision` (which writes a SKIPPED_LOWER_PRIORITY
+      // audit). The stale-target pre-filter must run before the collision
+      // check so the result stays `skipped_stale_target` with no audit row.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_platstart1', system_fact_key: 'show_platform_actual_start_time' },
+          ],
+        },
+        content: {
+          'fld_platstart1:platform:show_plt_404': '2026-05-23T12:00:00.000Z',
+        },
+      }));
+      // Target is NOT in the active map — stale.
+      showPlatformService.findActiveByUids.mockResolvedValue(new Map());
+      // But a sibling active task binds the same fact key — collision in
+      // the pure fact-key sense. The stale-target pre-filter must still win.
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [{ id: 'fld_sibling', system_fact_key: 'show_platform_actual_start_time' }],
+            },
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(result.entries[0]).toMatchObject({
+        factKey: 'show_platform_actual_start_time',
+        outcome: 'skipped_stale_target',
+        reason: 'target_unassigned_or_deleted',
+      });
+      // No SKIPPED_LOWER_PRIORITY audit must be written for an unwritable row.
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+    });
+
     it('routes cross-task collisions on a platform fact key through the SKIPPED_LOWER_PRIORITY audit', async () => {
       // Active sibling task binds the same platform fact key — both
       // submissions could race against the same ShowPlatform column. Route
