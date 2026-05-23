@@ -19,7 +19,7 @@ import {
 } from '@eridu/ui';
 
 import { useUpdateMyTask } from '../hooks/use-update-my-task';
-import { resolveHydratedTaskSchema } from '../lib/hydrate-task-schema';
+import { pruneContentAgainstSchema, resolveHydratedTaskSchema } from '../lib/hydrate-task-schema';
 import { calculateTaskProgress, isFieldComplete } from '../lib/progress';
 
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
@@ -259,9 +259,42 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
           return;
         }
 
+        // Drop drafts that were written against an older task version.
+        // `task.version` bumps on resumeTask (delete + regenerate) and
+        // updateActiveTaskSnapshot (template snapshot transition), so a
+        // stale baseVersion means the task was mutated server-side after
+        // this draft was saved — anything the operator had locally is
+        // no longer applicable.
+        if (typeof saved.baseVersion === 'number' && saved.baseVersion !== task.version) {
+          console.warn(
+            `[task-execution] Discarding stale draft for task ${task.id}: draft baseVersion ${saved.baseVersion} vs task.version ${task.version}.`,
+          );
+          void del(draftKey).catch(() => undefined);
+          return;
+        }
+
+        // Prune draft keys that no longer match the schema. A draft
+        // written by an older / broken hydration version can otherwise
+        // permanently jam submission (strict validator rejects unknown
+        // keys; draft only clears on successful submit).
+        const baseSchema = resolveHydratedTaskSchema(task);
+        const { pruned, dropped } = pruneContentAgainstSchema(saved.content, baseSchema);
+        if (dropped.length > 0) {
+          console.warn(
+            `[task-execution] Dropped ${dropped.length} unrecognized draft key(s) for task ${task.id}:`,
+            dropped,
+          );
+        }
+
+        if (Object.keys(pruned).length === 0) {
+          // Whole draft was orphaned — drop the cache outright.
+          void del(draftKey).catch(() => undefined);
+          return;
+        }
+
         setDraftState({
           taskId: task.id,
-          content: saved.content,
+          content: pruned,
           saveState: 'dirty',
         });
       })
@@ -270,7 +303,7 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
     return () => {
       isCancelled = true;
     };
-  }, [draftKey, task.id]);
+  }, [draftKey, task]);
 
   useEffect(() => {
     if (!currentDraft || currentDraft.taskId !== task.id || isReadOnly) {

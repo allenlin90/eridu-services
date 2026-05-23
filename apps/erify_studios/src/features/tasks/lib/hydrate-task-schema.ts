@@ -5,7 +5,10 @@ import type {
   UiSchemaV2,
 } from '@eridu/api-types/task-management';
 import {
+  getFieldContentKey,
   getSchemaEngine,
+  getTaskContentExtraKey,
+  getTaskContentReasonKey,
   hydrateTaskFormSchema,
 } from '@eridu/api-types/task-management';
 
@@ -52,4 +55,44 @@ export function resolveHydratedTaskSchema(
     task.hydration_context ?? { creators: [], platforms: [] },
     content,
   );
+}
+
+/**
+ * Drop any content keys that aren't recognized by the given schema.
+ *
+ * Used when loading IndexedDB drafts: a draft written by a different
+ * version of the hydration code (or by a broken intermediate state) may
+ * carry keys that no longer match either an active target, a stale
+ * target, or a reason/extra sidecar. Strict-mode validation rejects them,
+ * leaving the form unsubmittable AND unable to clear the draft (which
+ * only happens on successful submit). This prunes those orphans so the
+ * user can keep going.
+ *
+ * Returns `{ pruned, dropped }` where `pruned` is the filtered map and
+ * `dropped` is the list of keys that were removed.
+ */
+export function pruneContentAgainstSchema(
+  content: Record<string, unknown>,
+  schema: UiSchema | UiSchemaV2 | null,
+): { pruned: Record<string, unknown>; dropped: string[] } {
+  if (!schema) {
+    return { pruned: content, dropped: [] };
+  }
+  const valid = new Set<string>();
+  for (const item of schema.items) {
+    const key = getFieldContentKey(schema, item);
+    valid.add(key);
+    valid.add(getTaskContentReasonKey(key));
+    valid.add(getTaskContentExtraKey(key));
+  }
+  const pruned: Record<string, unknown> = {};
+  const dropped: string[] = [];
+  for (const [key, value] of Object.entries(content)) {
+    if (valid.has(key)) {
+      pruned[key] = value;
+    } else {
+      dropped.push(key);
+    }
+  }
+  return { pruned, dropped };
 }

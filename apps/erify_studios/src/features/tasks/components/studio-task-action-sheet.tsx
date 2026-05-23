@@ -24,7 +24,7 @@ import {
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
 import { getStudioTask, studioTaskKeys } from '@/features/tasks/api/get-studio-task';
-import { resolveHydratedTaskSchema } from '@/features/tasks/lib/hydrate-task-schema';
+import { pruneContentAgainstSchema, resolveHydratedTaskSchema } from '@/features/tasks/lib/hydrate-task-schema';
 
 type StudioTaskActionSheetProps = {
   studioId: string;
@@ -252,7 +252,38 @@ function StudioTaskActionSheetBody({
           return;
         }
 
-        setContentDraft(saved.content);
+        // Drop stale drafts: the task was resumed / snapshot-transitioned
+        // server-side after this draft was saved, so the local edits
+        // belong to a removed version of the task.
+        if (typeof saved.baseVersion === 'number' && saved.baseVersion !== resolvedTask.version) {
+          console.warn(
+            `[studio-task-action] Discarding stale draft for task ${resolvedTask.id}: draft baseVersion ${saved.baseVersion} vs task.version ${resolvedTask.version}.`,
+          );
+          void del(draftKey).catch(() => undefined);
+          setDraftBaseVersion(resolvedTask.version);
+          setDraftBaseContent(resolvedTaskContent);
+          return;
+        }
+
+        // Defensive: drop unknown keys (e.g. left behind by an older
+        // hydration code path) so strict-mode validation doesn't jam
+        // submission with no way out.
+        const baseSchema = resolveHydratedTaskSchema(resolvedTask);
+        const { pruned, dropped } = pruneContentAgainstSchema(saved.content, baseSchema);
+        if (dropped.length > 0) {
+          console.warn(
+            `[studio-task-action] Dropped ${dropped.length} unrecognized draft key(s) for task ${resolvedTask.id}:`,
+            dropped,
+          );
+        }
+        if (Object.keys(pruned).length === 0) {
+          void del(draftKey).catch(() => undefined);
+          setDraftBaseVersion(resolvedTask.version);
+          setDraftBaseContent(resolvedTaskContent);
+          return;
+        }
+
+        setContentDraft(pruned);
         setIsDirty(true);
         setDraftBaseVersion(saved.baseVersion);
         setDraftBaseContent(saved.baseContent);
