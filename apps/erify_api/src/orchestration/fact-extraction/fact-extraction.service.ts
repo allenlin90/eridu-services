@@ -129,10 +129,20 @@ export class FactExtractionService {
     const writingFacts = facts.filter(
       (fact) => !isFactValueAbsent(fact.rawValue) && this.extractorRegistry.has(fact.factKey),
     );
-    const collidingFactKeys = await this.findCollidingFactKeys({
+    const showScopeFactKeys = new Set<SystemFactKey>();
+    const perTargetCollisionKeys = new Set<string>();
+    for (const fact of writingFacts) {
+      if (fact.scope === 'show') {
+        showScopeFactKeys.add(fact.factKey);
+      } else {
+        perTargetCollisionKeys.add(perTargetCollisionKey(fact.factKey, fact.targetUid));
+      }
+    }
+    const collidingFacts = await this.findCollidingFacts({
       currentTaskId: input.taskId,
       showId: input.showId,
-      factKeys: writingFacts.map((fact) => fact.factKey),
+      showScopeFactKeys,
+      perTargetCollisionKeys,
     });
 
     // Bulk-resolve active platform target UIDs in one DB round-trip so per-
@@ -172,7 +182,7 @@ export class FactExtractionService {
     // columns + both audits inside a single CLS transaction.
     const handledPairedKeys = await this.tryAtomicPairedShowActuals({
       facts,
-      collidingFactKeys,
+      collidingFacts,
       ctx,
       entries,
     });
@@ -186,7 +196,7 @@ export class FactExtractionService {
     // already-written pair.
     const handledPairedPlatformContentKeys = await this.tryAtomicPairedShowPlatformActuals({
       facts,
-      collidingFactKeys,
+      collidingFacts,
       platformTargetById,
       ctx,
       entries,
@@ -253,7 +263,7 @@ export class FactExtractionService {
         continue;
       }
 
-      if (collidingFactKeys.has(fact.factKey)) {
+      if (isFactColliding(fact, collidingFacts)) {
         const audit = await this.writeCollisionSkipAudit(fact, ctx, platformTargetById);
         entries.push({
           factKey: fact.factKey,
@@ -266,7 +276,6 @@ export class FactExtractionService {
         });
         continue;
       }
-
 
       const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
 
@@ -311,38 +320,87 @@ export class FactExtractionService {
   }
 
   /**
-   * Returns the set of fact keys that already have *another active* task
-   * targeting the same show. Active = any non-terminal status (PENDING,
-   * IN_PROGRESS, REVIEW, BLOCKED), not soft-deleted. Routing colliding
-   * writes to a SKIPPED audit avoids silently picking a winner when two
-   * operator surfaces are in flight on the same fact key.
+   * Computes cross-task collisions at two granularities:
    *
-   * Per Codex P1 review: `IN_PROGRESS` and `BLOCKED` are common assignee
-   * working states; omitting them let competing tasks race past the guard.
+   * - **Show scope** (`colliding.showScope`): per-fact-key. A show fact has
+   *   one canonical target (the show), so any active sibling with the same
+   *   fact key in its schema is a race we must route to the review path.
+   * - **Per-target scope** (`colliding.perTarget`, keyed `<factKey>|<targetUid>`):
+   *   per-(fact-key, target-uid). Two tasks binding the same platform/creator
+   *   fact key on *different* targets do NOT collide — they write to
+   *   different rows. We only mark a collision when a sibling task has
+   *   already entered CONTENT for the same (fact-key, target-uid) pair.
+   *   No-content-yet siblings are not preemptively blocked; if they later
+   *   race past this guard, the priority resolver handles same-source
+   *   last-write-wins semantics.
+   *
+   * Active = any non-terminal status (PENDING, IN_PROGRESS, REVIEW,
+   * BLOCKED), not soft-deleted — `COMPLETED` / `CLOSED` content is frozen
+   * so a finished sibling can no longer race.
+   *
+   * Per Codex P1 review on PR #103: a show-wide per-fact-key flag blocked
+   * unrelated platform paired writes whenever any sibling task bound the
+   * same fact key (even for a different platform), leaving valid actuals
+   * stale. Per-target detection scopes the collision to the actual write
+   * conflict.
    */
-  private async findCollidingFactKeys(input: {
+  private async findCollidingFacts(input: {
     currentTaskId: bigint;
     showId: bigint;
-    factKeys: SystemFactKey[];
-  }): Promise<Set<SystemFactKey>> {
-    if (input.factKeys.length === 0) {
-      return new Set();
+    showScopeFactKeys: Set<SystemFactKey>;
+    perTargetCollisionKeys: Set<string>;
+  }): Promise<CollisionTracker> {
+    const colliding: CollisionTracker = {
+      showScope: new Set(),
+      perTarget: new Set(),
+    };
+    if (input.showScopeFactKeys.size === 0 && input.perTargetCollisionKeys.size === 0) {
+      return colliding;
     }
     const siblings = await this.taskService.findActiveTasksForShowExcluding(
       input.showId,
       input.currentTaskId,
       [...COLLISION_ACTIVE_TASK_STATUSES],
     );
-    const colliding = new Set<SystemFactKey>();
     for (const sibling of siblings) {
       const schema = sibling.snapshot?.schema as unknown as UiSchemaV2 | null;
       if (!schema || !Array.isArray(schema.items)) {
         continue;
       }
+
+      const factKeyByFieldId = new Map<string, SystemFactKey>();
       for (const item of schema.items) {
         const itemFactKey = (item as FieldItemV2).system_fact_key;
-        if (itemFactKey && input.factKeys.includes(itemFactKey)) {
-          colliding.add(itemFactKey);
+        if (!itemFactKey) {
+          continue;
+        }
+        factKeyByFieldId.set(item.id, itemFactKey);
+        // Show-scope collision: schema-only match is sufficient because the
+        // sibling will produce one write per the (one) show target on submit.
+        const definition = SYSTEM_FACT_KEY_DEFINITIONS[itemFactKey];
+        if (definition.target === 'show' && input.showScopeFactKeys.has(itemFactKey)) {
+          colliding.showScope.add(itemFactKey);
+        }
+      }
+
+      // Per-target collision: look at the sibling's *content* (not just
+      // schema). A sibling that has the per-target fact key in its schema
+      // but no value yet for a specific target is not preemptively
+      // blocking — only entries the sibling has actually started filling
+      // are considered races.
+      const siblingContent = (sibling.content as Record<string, unknown> | null) ?? {};
+      for (const contentKey of Object.keys(siblingContent)) {
+        const parsed = parseHydratedContentKey(contentKey);
+        if (!parsed) {
+          continue;
+        }
+        const siblingFactKey = factKeyByFieldId.get(parsed.fieldId);
+        if (!siblingFactKey) {
+          continue;
+        }
+        const collisionKey = perTargetCollisionKey(siblingFactKey, parsed.targetUid);
+        if (input.perTargetCollisionKeys.has(collisionKey)) {
+          colliding.perTarget.add(collisionKey);
         }
       }
     }
@@ -388,7 +446,7 @@ export class FactExtractionService {
    */
   private async tryAtomicPairedShowActuals(input: {
     facts: ExtractedFact[];
-    collidingFactKeys: Set<SystemFactKey>;
+    collidingFacts: CollisionTracker;
     ctx: ExtractionContext;
     entries: ExtractionResultEntry[];
   }): Promise<Set<SystemFactKey>> {
@@ -401,8 +459,8 @@ export class FactExtractionService {
       return new Set();
     }
     if (
-      input.collidingFactKeys.has('show_actual_start_time')
-      || input.collidingFactKeys.has('show_actual_end_time')
+      input.collidingFacts.showScope.has('show_actual_start_time')
+      || input.collidingFacts.showScope.has('show_actual_end_time')
     ) {
       return new Set();
     }
@@ -515,18 +573,12 @@ export class FactExtractionService {
    */
   private async tryAtomicPairedShowPlatformActuals(input: {
     facts: ExtractedFact[];
-    collidingFactKeys: Set<SystemFactKey>;
+    collidingFacts: CollisionTracker;
     platformTargetById: Map<string, { id: bigint; showId: bigint }>;
     ctx: ExtractionContext;
     entries: ExtractionResultEntry[];
   }): Promise<Set<string>> {
     const consumed = new Set<string>();
-    if (
-      input.collidingFactKeys.has('show_platform_actual_start_time')
-      || input.collidingFactKeys.has('show_platform_actual_end_time')
-    ) {
-      return consumed;
-    }
     if (
       !this.extractorRegistry.has('show_platform_actual_start_time')
       || !this.extractorRegistry.has('show_platform_actual_end_time')
@@ -562,6 +614,20 @@ export class FactExtractionService {
       if (!resolved) {
         // Stale targets fall through to the per-fact loop's stale-target
         // pre-filter, which emits `skipped_stale_target` on each side.
+        continue;
+      }
+      // Per-target collision: only block the paired write when a sibling
+      // task has actual content for the same `(factKey, targetUid)` pair.
+      // Falls through to the per-fact loop so each side emits its own
+      // `skipped_collision` audit anchored on the SHOW_PLATFORM target.
+      if (
+        input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('show_platform_actual_start_time', targetUid),
+        )
+        || input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('show_platform_actual_end_time', targetUid),
+        )
+      ) {
         continue;
       }
       const startIncoming = parseDateTimeValue(startFact.rawValue);
@@ -636,6 +702,28 @@ export class FactExtractionService {
  */
 function isFactValueAbsent(rawValue: unknown): boolean {
   return rawValue == null || rawValue === '';
+}
+
+/**
+ * Two-tier cross-task collision view computed once per `extractFromTask`.
+ * See `findCollidingFacts` for the construction rules and the rationale for
+ * per-target collision tracking on hydrated scopes.
+ */
+type CollisionTracker = {
+  showScope: Set<SystemFactKey>;
+  /** Keys shaped `<factKey>|<targetUid>` — built via `perTargetCollisionKey`. */
+  perTarget: Set<string>;
+};
+
+function perTargetCollisionKey(factKey: SystemFactKey, targetUid: string): string {
+  return `${factKey}|${targetUid}`;
+}
+
+function isFactColliding(fact: ExtractedFact, colliding: CollisionTracker): boolean {
+  if (fact.scope === 'show') {
+    return colliding.showScope.has(fact.factKey);
+  }
+  return colliding.perTarget.has(perTargetCollisionKey(fact.factKey, fact.targetUid));
 }
 
 /**

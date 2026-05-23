@@ -926,10 +926,11 @@ describe('factExtractionService', () => {
       expect(processor.applyAndAudit).not.toHaveBeenCalled();
     });
 
-    it('routes cross-task collisions on a platform fact key through the SKIPPED_LOWER_PRIORITY audit', async () => {
-      // Active sibling task binds the same platform fact key — both
-      // submissions could race against the same ShowPlatform column. Route
-      // to the collision-skip audit so the review surface can resolve it.
+    it('routes cross-task collisions on the SAME platform target through the SKIPPED_LOWER_PRIORITY audit', async () => {
+      // Per-target collision: a sibling task has already entered content
+      // for the SAME (fact-key, target-uid) pair. The current task's
+      // write would silently race, so we emit a SKIPPED audit anchored on
+      // the SHOW_PLATFORM target.
       const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
       const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
       const pairedService = new FactExtractionService(
@@ -957,8 +958,15 @@ describe('factExtractionService', () => {
           uid: 'task_sibling',
           snapshot: {
             schema: {
-              items: [{ id: 'fld_sibling', system_fact_key: 'show_platform_actual_start_time' }],
+              items: [{ id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' }],
             },
+          },
+          // Sibling task has ACTUAL CONTENT for the same target, not just
+          // the fact key in schema. The new per-target collision contract
+          // requires concrete content evidence — schema alone doesn't
+          // preemptively block writes to other platforms.
+          content: {
+            'fld_sibling1234:platform:show_plt_200': '2026-05-23T12:30:00.000Z',
           },
         },
       ] as never);
@@ -989,6 +997,121 @@ describe('factExtractionService', () => {
           }),
         }),
       );
+    });
+
+    it('does NOT collide when a sibling task binds the same platform fact key for a DIFFERENT target', async () => {
+      // Codex P1 review on PR #103: per-fact-key collision was overly
+      // broad — any sibling with the same fact key in schema blocked all
+      // platform paired writes for the show, even for unrelated targets.
+      // Per-target detection only blocks when the sibling has CONTENT for
+      // the exact (fact-key, target-uid) pair.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      // Sibling has the same fact key, but its content targets a
+      // DIFFERENT platform — no per-target collision with show_plt_200.
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                { id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' },
+                { id: 'fld_sibling5678', system_fact_key: 'show_platform_actual_end_time' },
+              ],
+            },
+          },
+          content: {
+            'fld_sibling1234:platform:show_plt_999': '2026-05-23T12:00:00.000Z',
+            'fld_sibling5678:platform:show_plt_999': '2026-05-23T13:00:00.000Z',
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      // Paired path runs for the non-colliding target — no SKIPPED audit.
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledWith(
+        expect.objectContaining({ showPlatformUid: 'show_plt_200' }),
+      );
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          factKey: 'show_platform_actual_start_time',
+          outcome: 'written',
+        }),
+      ]));
+    });
+
+    it('does NOT collide when a sibling task has the same fact key in schema but no content yet', async () => {
+      // Sibling is PENDING with empty content — we can't know which target
+      // it will eventually bind. Per the design, the priority resolver
+      // handles any same-source race that materializes later; we only
+      // preemptively block on concrete content evidence.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                { id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' },
+                { id: 'fld_sibling5678', system_fact_key: 'show_platform_actual_end_time' },
+              ],
+            },
+          },
+          content: {},
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ outcome: 'written' }),
+      ]));
     });
   });
 });
