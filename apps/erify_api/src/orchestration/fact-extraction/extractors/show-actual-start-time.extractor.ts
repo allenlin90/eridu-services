@@ -36,13 +36,14 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
       return { kind: 'noop', reason: 'value_absent' };
     }
 
-    // Re-validate the target at extraction time — the show could have been
-    // soft-deleted between submission and processing. The fact's targetUid
-    // for show-scoped facts matches the task's bound show.
-    if (fact.targetUid !== ctx.showUid) {
-      return { kind: 'noop', reason: 'value_absent' };
-    }
-
+    // No explicit stale-target check for show scope: `fact.targetUid` is set
+    // to `ctx.showUid` by construction in `collectBoundFacts`, so they cannot
+    // disagree here. The 12.1.x / 12.2 creator + platform extractors will
+    // need a real assignment lookup (the target uid points at a ShowCreator
+    // / ShowPlatform that may have been unassigned between submission and
+    // extraction). `getShowById` below also throws if the show has been
+    // soft-deleted, which gives us the practical target-still-exists guard
+    // for this scope.
     const show = await this.showService.getShowById(ctx.showUid);
     const metadata = (show.metadata as ShowMetadata | null) ?? {};
     const recordedSource = metadata.actuals_source?.[fact.factKey] as ActualsSource | undefined;

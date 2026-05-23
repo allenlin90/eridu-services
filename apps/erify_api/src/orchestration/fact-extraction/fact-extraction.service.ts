@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
 
-import type { ActualsSource, AuditMetadata, AuditTargetType } from '@eridu/api-types/audits';
+import type { ActualsSource, AuditTargetType } from '@eridu/api-types/audits';
 import {
   type FieldItemV2,
   parseHydratedContentKey,
@@ -16,16 +16,17 @@ import type {
   ExtractionDecision,
 } from './extractors/extractor.types';
 import { ExtractorRegistry } from './extractors/extractor-registry';
+import { FactExtractionProcessor } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { TaskService } from '@/models/task/task.service';
 
 /**
- * Outcome the orchestrator returns to the caller (typically `TaskService` on
- * a `COMPLETED` transition). Each entry summarizes one bound field, regardless
- * of whether it produced an indexed write, was skipped on priority, was
- * blocked by a cross-task collision, or was a no-op (blank value, no
- * registered extractor, etc.).
+ * Outcome the orchestrator returns to the caller (typically
+ * `TaskOrchestrationService` on a COMPLETED transition). Each entry
+ * summarizes one bound field, regardless of whether it produced an indexed
+ * write, was skipped on priority, was blocked by a cross-task collision, or
+ * was a no-op (blank value, no registered extractor, etc.).
  */
 export type ExtractionResultEntry = {
   factKey: SystemFactKey;
@@ -60,6 +61,22 @@ type ExtractFromTaskInput = {
   source: ActualsSource;
 };
 
+/**
+ * Task statuses that count as "still in flight" for the cross-task collision
+ * guard. A sibling task in any of these states could still emit a write for
+ * the same fact key against the same show, so we route the current write to
+ * the review path instead of letting a winner be picked silently.
+ *
+ * `COMPLETED` and `CLOSED` are deliberately excluded: their content is
+ * frozen, so they can no longer race with the incoming submission.
+ */
+const COLLISION_ACTIVE_TASK_STATUSES = [
+  TaskStatus.PENDING,
+  TaskStatus.IN_PROGRESS,
+  TaskStatus.REVIEW,
+  TaskStatus.BLOCKED,
+] as const;
+
 @Injectable()
 export class FactExtractionService {
   private readonly logger = new Logger(FactExtractionService.name);
@@ -68,6 +85,7 @@ export class FactExtractionService {
     private readonly taskService: TaskService,
     private readonly auditService: AuditService,
     private readonly extractorRegistry: ExtractorRegistry,
+    private readonly factExtractionProcessor: FactExtractionProcessor,
   ) {}
 
   /**
@@ -103,15 +121,34 @@ export class FactExtractionService {
       return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
     }
 
+    // Only scan for collisions on facts that would actually attempt a write —
+    // blank/absent fields aren't competing for the column even if a sibling
+    // task binds the same fact key.
+    const writingFacts = facts.filter((fact) => !isFactValueAbsent(fact.rawValue));
     const collidingFactKeys = await this.findCollidingFactKeys({
       currentTaskId: input.taskId,
       showId: input.showId,
-      factKeys: facts.map((fact) => fact.factKey),
+      factKeys: writingFacts.map((fact) => fact.factKey),
     });
 
     const entries: ExtractionResultEntry[] = [];
 
     for (const fact of facts) {
+      // Empty submissions never write, never audit. Per Codex P2 review:
+      // emitting a `skipped_collision` audit for a blank field misrepresents
+      // a non-attempted write as a contested one and pollutes the review queue.
+      if (isFactValueAbsent(fact.rawValue)) {
+        entries.push({
+          factKey: fact.factKey,
+          sourceFieldId: fact.sourceFieldId,
+          contentKey: fact.contentKey,
+          targetUid: fact.targetUid,
+          outcome: 'noop',
+          reason: 'value_absent',
+        });
+        continue;
+      }
+
       if (collidingFactKeys.has(fact.factKey)) {
         const audit = await this.writeCollisionSkipAudit(fact, ctx);
         entries.push({
@@ -139,10 +176,20 @@ export class FactExtractionService {
         continue;
       }
 
-      let decision: ExtractionDecision;
+      const targetIds = this.resolveAuditTargetIds(fact, ctx);
+
+      let processed: { decision: ExtractionDecision; auditUid?: string };
       try {
-        decision = await extractor.apply(fact, ctx);
+        processed = await this.factExtractionProcessor.applyAndAudit(
+          extractor,
+          fact,
+          ctx,
+          targetIds,
+        );
       } catch (err) {
+        // Transactional boundary — both the column write and the audit rolled
+        // back together. Per Codex P1 review: the indexed write and audit
+        // envelope can never disagree.
         this.logger.error(
           `Extractor for ${fact.factKey} threw on task ${input.taskUid}: ${(err as Error).message}`,
         );
@@ -157,15 +204,14 @@ export class FactExtractionService {
         continue;
       }
 
-      const auditUid = await this.persistDecisionAudit(fact, ctx, decision);
       entries.push({
         factKey: fact.factKey,
         sourceFieldId: fact.sourceFieldId,
         contentKey: fact.contentKey,
         targetUid: fact.targetUid,
-        outcome: outcomeFromDecision(decision),
-        auditUid,
-        reason: decision.kind === 'noop' ? decision.reason : undefined,
+        outcome: outcomeFromDecision(processed.decision),
+        auditUid: processed.auditUid,
+        reason: processed.decision.kind === 'noop' ? processed.decision.reason : undefined,
       });
     }
 
@@ -174,10 +220,13 @@ export class FactExtractionService {
 
   /**
    * Returns the set of fact keys that already have *another active* task
-   * targeting the same show. Active = `PENDING` or `REVIEW`, not soft-
-   * deleted. Routing colliding writes to a SKIPPED audit avoids silently
-   * picking a winner when two operator surfaces are in flight on the same
-   * fact key.
+   * targeting the same show. Active = any non-terminal status (PENDING,
+   * IN_PROGRESS, REVIEW, BLOCKED), not soft-deleted. Routing colliding
+   * writes to a SKIPPED audit avoids silently picking a winner when two
+   * operator surfaces are in flight on the same fact key.
+   *
+   * Per Codex P1 review: `IN_PROGRESS` and `BLOCKED` are common assignee
+   * working states; omitting them let competing tasks race past the guard.
    */
   private async findCollidingFactKeys(input: {
     currentTaskId: bigint;
@@ -190,7 +239,7 @@ export class FactExtractionService {
     const siblings = await this.taskService.findActiveTasksForShowExcluding(
       input.showId,
       input.currentTaskId,
-      [TaskStatus.PENDING, TaskStatus.REVIEW],
+      [...COLLISION_ACTIVE_TASK_STATUSES],
     );
     const colliding = new Set<SystemFactKey>();
     for (const sibling of siblings) {
@@ -208,59 +257,11 @@ export class FactExtractionService {
     return colliding;
   }
 
-  private async persistDecisionAudit(
-    fact: ExtractedFact,
-    ctx: ExtractionContext,
-    decision: ExtractionDecision,
-  ): Promise<string | undefined> {
-    if (decision.kind === 'noop') {
-      return undefined;
-    }
-
-    const targetIds = await this.resolveAuditTargetIds(fact, ctx);
-    if (targetIds.length === 0) {
-      return undefined;
-    }
-
-    const baseMetadata: AuditMetadata = {
-      ingestion_source: 'task_submission',
-      task_uid: ctx.taskUid,
-      task_field_id: fact.sourceFieldId,
-      fact_key: fact.factKey,
-    };
-
-    if (decision.kind === 'write') {
-      const audit = await this.auditService.create({
-        action: decision.action,
-        actorId: null,
-        metadata: {
-          ...baseMetadata,
-          old_value: decision.oldValue as AuditMetadata['old_value'],
-          new_value: decision.newValue as AuditMetadata['new_value'],
-        },
-        targets: targetIds,
-      });
-      return audit.uid;
-    }
-
-    const audit = await this.auditService.create({
-      action: decision.action,
-      actorId: null,
-      metadata: {
-        ...baseMetadata,
-        skipped_by_source: decision.skippedBy,
-        attempted_value: decision.attemptedValue as AuditMetadata['old_value'],
-      },
-      targets: targetIds,
-    });
-    return audit.uid;
-  }
-
   private async writeCollisionSkipAudit(
     fact: ExtractedFact,
     ctx: ExtractionContext,
   ): Promise<{ uid: string } | undefined> {
-    const targetIds = await this.resolveAuditTargetIds(fact, ctx);
+    const targetIds = this.resolveAuditTargetIds(fact, ctx);
     if (targetIds.length === 0) {
       return undefined;
     }
@@ -282,12 +283,13 @@ export class FactExtractionService {
    * Resolves the polymorphic audit target row(s) for a fact. Only `show`
    * scope is wired in PR 12.0.5; the other branches are placeholders for
    * 12.1/12.2/12.3 so the orchestrator doesn't need to grow when those
-   * extractors land.
+   * extractors land. Synchronous because show-scope id is already in the
+   * extraction context — no extra round-trip needed.
    */
-  private async resolveAuditTargetIds(
+  private resolveAuditTargetIds(
     fact: ExtractedFact,
     ctx: ExtractionContext,
-  ): Promise<{ targetType: AuditTargetType; targetId: bigint }[]> {
+  ): { targetType: AuditTargetType; targetId: bigint }[] {
     if (fact.scope === 'show') {
       return [{ targetType: 'SHOW', targetId: ctx.showId }];
     }
@@ -295,6 +297,18 @@ export class FactExtractionService {
     // scopes; until they do, we have no resolved DB id to anchor the audit.
     return [];
   }
+}
+
+/**
+ * `null`, `undefined`, and empty string are the universal "operator left the
+ * field blank" signals. Extractors with type-specific semantics (e.g.,
+ * `creator_attendance_missing` treating `false` as a meaningful answer) can
+ * still classify their own edge cases via the `noop` decision; this filter
+ * only catches the obvious cases so the orchestrator never emits a misleading
+ * collision/lower-priority audit for a non-attempted write.
+ */
+function isFactValueAbsent(rawValue: unknown): boolean {
+  return rawValue == null || rawValue === '';
 }
 
 /**

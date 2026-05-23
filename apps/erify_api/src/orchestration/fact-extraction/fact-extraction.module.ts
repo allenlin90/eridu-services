@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { ExtractorRegistry } from './extractors/extractor-registry';
 import { ShowActualStartTimeExtractor } from './extractors/show-actual-start-time.extractor';
+import { FactExtractionProcessor } from './fact-extraction.processor';
 import { FactExtractionService } from './fact-extraction.service';
 
 import { AuditModule } from '@/models/audit/audit.module';
@@ -19,11 +20,17 @@ import { TaskModule } from '@/models/task/task.module';
  * `TaskModule` (read-only access to task snapshot + sibling task scan).
  * Cross-cutting workflows that need to fire extraction *after* a task
  * update belong in `TaskOrchestrationModule`, not here.
+ *
+ * `FactExtractionProcessor` is an internal `@Transactional()` boundary that
+ * pairs each indexed-column write with its audit envelope. It is NOT
+ * exported because it's an implementation detail of the orchestrator; only
+ * `FactExtractionService` is part of the public surface.
  */
 @Module({
   imports: [TaskModule, AuditModule, ShowModule],
   providers: [
     FactExtractionService,
+    FactExtractionProcessor,
     ExtractorRegistry,
     ShowActualStartTimeExtractor,
   ],

@@ -2,6 +2,7 @@ import { TaskStatus } from '@prisma/client';
 
 import type { IngestionExtractor } from './extractors/extractor.types';
 import type { ExtractorRegistry } from './extractors/extractor-registry';
+import type { FactExtractionProcessor, ProcessedFact } from './fact-extraction.processor';
 import { FactExtractionService } from './fact-extraction.service';
 
 import type { AuditService } from '@/models/audit/audit.service';
@@ -49,6 +50,7 @@ describe('factExtractionService', () => {
   let auditService: jest.Mocked<AuditService>;
   let extractor: jest.Mocked<IngestionExtractor>;
   let registry: ExtractorRegistry;
+  let processor: jest.Mocked<FactExtractionProcessor>;
 
   beforeEach(() => {
     extractor = buildExtractor();
@@ -60,7 +62,20 @@ describe('factExtractionService', () => {
     auditService = {
       create: jest.fn(async (payload) => ({ uid: `aud_${payload.action}` }) as never),
     } as never;
-    service = new FactExtractionService(taskService, auditService, registry);
+    processor = {
+      // Default: delegate to the configured extractor mock so callers can drive
+      // decisions via `extractor.apply.mockResolvedValue(...)` exactly as
+      // before. Audit uid is synthesized from the decision so the tests can
+      // assert it deterministically.
+      applyAndAudit: jest.fn(async (ext, fact, ctx, targetIds): Promise<ProcessedFact> => {
+        const decision = await ext.apply(fact, ctx);
+        if (decision.kind === 'noop' || targetIds.length === 0) {
+          return { decision };
+        }
+        return { decision, auditUid: `aud_${decision.action}` };
+      }),
+    } as never;
+    service = new FactExtractionService(taskService, auditService, registry, processor);
   });
 
   it('returns an empty result when the task has no snapshot', async () => {
@@ -95,7 +110,13 @@ describe('factExtractionService', () => {
       source: 'OPERATOR',
     });
 
-    expect(extractor.apply).toHaveBeenCalledTimes(1);
+    expect(processor.applyAndAudit).toHaveBeenCalledTimes(1);
+    expect(processor.applyAndAudit).toHaveBeenCalledWith(
+      extractor,
+      expect.objectContaining({ factKey: 'show_actual_start_time' }),
+      expect.objectContaining({ showUid: 'sho_10', source: 'OPERATOR' }),
+      [{ targetType: 'SHOW', targetId: 10n }],
+    );
     expect(result.entries).toEqual([
       expect.objectContaining({
         factKey: 'show_actual_start_time',
@@ -104,21 +125,9 @@ describe('factExtractionService', () => {
         targetUid: 'sho_10',
       }),
     ]);
-    expect(auditService.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'CREATE',
-        actorId: null,
-        targets: [{ targetType: 'SHOW', targetId: 10n }],
-        metadata: expect.objectContaining({
-          ingestion_source: 'task_submission',
-          task_uid: 'task_alpha',
-          fact_key: 'show_actual_start_time',
-        }),
-      }),
-    );
   });
 
-  it('writes a SKIPPED audit when the extractor reports a lower-priority skip', async () => {
+  it('reports a lower-priority skip when the extractor returns one', async () => {
     taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot());
     extractor.apply.mockResolvedValue({
       kind: 'skip',
@@ -140,12 +149,6 @@ describe('factExtractionService', () => {
       outcome: 'skipped_lower_priority',
       auditUid: 'aud_SKIPPED_LOWER_PRIORITY',
     });
-    expect(auditService.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'SKIPPED_LOWER_PRIORITY',
-        metadata: expect.objectContaining({ skipped_by_source: 'MANAGER' }),
-      }),
-    );
   });
 
   it('routes to the review path when another active task binds the same fact key', async () => {
@@ -170,7 +173,7 @@ describe('factExtractionService', () => {
       source: 'OPERATOR',
     });
 
-    expect(extractor.apply).not.toHaveBeenCalled();
+    expect(processor.applyAndAudit).not.toHaveBeenCalled();
     expect(result.entries[0]).toMatchObject({
       outcome: 'skipped_collision',
       auditUid: 'aud_SKIPPED_LOWER_PRIORITY',
@@ -182,6 +185,72 @@ describe('factExtractionService', () => {
         metadata: expect.objectContaining({ collision_reason: 'cross_task_same_fact_key' }),
       }),
     );
+  });
+
+  it('treats all non-terminal task statuses as collisions (PENDING/IN_PROGRESS/REVIEW/BLOCKED)', async () => {
+    taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot());
+
+    await service.extractFromTask({
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR',
+    });
+
+    expect(taskService.findActiveTasksForShowExcluding).toHaveBeenCalledWith(
+      10n,
+      99n,
+      expect.arrayContaining([
+        TaskStatus.PENDING,
+        TaskStatus.IN_PROGRESS,
+        TaskStatus.REVIEW,
+        TaskStatus.BLOCKED,
+      ]),
+    );
+    // Sanity: terminal states must not be in the collision set, otherwise a
+    // frozen sibling could spuriously block a new submission.
+    const statuses = taskService.findActiveTasksForShowExcluding.mock.calls[0]![2]!;
+    expect(statuses).not.toContain(TaskStatus.COMPLETED);
+    expect(statuses).not.toContain(TaskStatus.CLOSED);
+  });
+
+  it('reports blank fields as noop without writing a collision audit even when a sibling collides', async () => {
+    // Blank operator submission for the bound field.
+    taskService.findByUidWithSnapshot.mockResolvedValue(
+      buildTaskWithSnapshot({
+        content: { fld_show_start: '' },
+      }),
+    );
+    // A sibling task does bind the same fact key — but the current submission
+    // has nothing to write, so the collision guard must not fire.
+    taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+      {
+        uid: 'task_sibling',
+        snapshot: {
+          schema: {
+            items: [{ id: 'fld_sibling', system_fact_key: 'show_actual_start_time' }],
+          },
+        },
+      },
+    ] as never);
+
+    const result = await service.extractFromTask({
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR',
+    });
+
+    expect(result.entries[0]).toMatchObject({
+      outcome: 'noop',
+      reason: 'value_absent',
+    });
+    expect(auditService.create).not.toHaveBeenCalled();
+    expect(processor.applyAndAudit).not.toHaveBeenCalled();
   });
 
   it('marks unregistered fact keys as skipped_no_extractor without writing an audit', async () => {
@@ -205,5 +274,25 @@ describe('factExtractionService', () => {
       outcome: 'skipped_no_extractor',
     });
     expect(auditService.create).not.toHaveBeenCalled();
+    expect(processor.applyAndAudit).not.toHaveBeenCalled();
+  });
+
+  it('treats a processor throw as noop with extractor_error reason so the rollback is observable', async () => {
+    taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot());
+    processor.applyAndAudit.mockRejectedValue(new Error('audit insert failed'));
+
+    const result = await service.extractFromTask({
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR',
+    });
+
+    expect(result.entries[0]).toMatchObject({
+      outcome: 'noop',
+      reason: 'extractor_error',
+    });
   });
 });
