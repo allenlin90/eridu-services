@@ -255,7 +255,7 @@ export function ProfileErrorView({ onRecheck }: { onRecheck: () => Promise<void>
 
       {/* Main Glass Card */}
       <div className="relative w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-red-950/85 rounded-2xl p-8 text-center shadow-2xl transition-all duration-300 hover:border-red-900/50">
-        
+
         {/* Animated Icon Container */}
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-800/60 border border-slate-700/50 text-red-400 mb-6 shadow-inner relative group">
           <div className="absolute inset-0 rounded-full bg-red-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -286,7 +286,7 @@ export function ProfileErrorView({ onRecheck }: { onRecheck: () => Promise<void>
                 )}
             Try Again
           </button>
-          
+
           <button
             type="button"
             onClick={handleLogout}
@@ -307,4 +307,3 @@ export function ProfileErrorView({ onRecheck }: { onRecheck: () => Promise<void>
     </div>
   );
 }
-
