@@ -171,6 +171,18 @@ export class UserService extends BaseModelService {
           studio: true,
         },
       },
+      creator: {
+        include: {
+          studioCreators: {
+            where: {
+              deletedAt: null,
+            },
+            include: {
+              studio: true,
+            },
+          },
+        },
+      },
     });
   }
 

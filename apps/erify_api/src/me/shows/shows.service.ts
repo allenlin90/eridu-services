@@ -113,7 +113,13 @@ export class ShowsService {
     creatorId: bigint,
     query: Pick<
       ListShowsQueryDto,
-      'name' | 'start_date_from' | 'start_date_to' | 'end_date_from' | 'end_date_to' | 'include_deleted'
+      | 'name'
+      | 'studio_id'
+      | 'start_date_from'
+      | 'start_date_to'
+      | 'end_date_from'
+      | 'end_date_to'
+      | 'include_deleted'
     >,
   ) {
     const where: Parameters<ShowService['getShows']>[0]['where'] = {
@@ -128,6 +134,14 @@ export class ShowsService {
     // Filter out soft deleted records by default
     if (!query.include_deleted) {
       where!.deletedAt = null;
+    }
+
+    // Studio filtering
+    if (query.studio_id) {
+      where!.studio = {
+        uid: query.studio_id,
+        deletedAt: null,
+      };
     }
 
     // Name filtering (case-insensitive partial match)

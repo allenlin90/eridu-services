@@ -32,6 +32,24 @@ export const profileResponseSchema = z.object({
     )
     .optional()
     .describe('List of studios the user is a member of'),
+  creator: z
+    .object({
+      uid: z.string(),
+      name: z.string(),
+      alias_name: z.string(),
+      studio_creators: z.array(
+        z.object({
+          studio: z.object({
+            uid: z.string(),
+            name: z.string(),
+          }),
+          is_active: z.boolean(),
+        }),
+      ),
+    })
+    .nullable()
+    .optional()
+    .describe('Linked Creator profile if the user is a content creator'),
 });
 
 export type ProfileResponse = z.infer<typeof profileResponseSchema>;

@@ -61,6 +61,20 @@ export class ProfileController {
         },
         role: membership.role,
       })),
+      creator: fullUser.creator
+        ? {
+            uid: fullUser.creator.uid,
+            name: fullUser.creator.name,
+            alias_name: fullUser.creator.aliasName,
+            studio_creators: fullUser.creator.studioCreators.map((sc) => ({
+              studio: {
+                uid: sc.studio.uid,
+                name: sc.studio.name,
+              },
+              is_active: sc.isActive,
+            })),
+          }
+        : null,
     };
   }
 }
