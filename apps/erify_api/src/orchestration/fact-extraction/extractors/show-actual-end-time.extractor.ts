@@ -59,22 +59,16 @@ export class ShowActualEndTimeExtractor implements IngestionExtractor {
       };
     }
 
-    // Validate time range against the merged same-submission pair, not just
-    // the stored start. If this submission also carries an `actualStartTime`
-    // fact, both halves are evaluated together so a valid paired edit
-    // (e.g., 10:00–11:00 → 12:00–13:00) is not rejected based on the order
-    // in which the orchestrator happens to process the two facts. With no
-    // paired start on the submission, `ensureValidActualTimeRange` falls
-    // back to the stored start via its `undefined` semantics.
+    // One-sided update path: validates the incoming end against the stored
+    // start. Submissions that carry BOTH `show_actual_start_time` and
+    // `show_actual_end_time` never reach this extractor — they are routed
+    // to `FactExtractionProcessor.applyPairedShowActuals` so the priority
+    // check + merged-pair validation + paired column write all commit
+    // (or roll back) inside a single transaction.
     this.showService.ensureValidActualTimeRange(
       show.actualStartTime,
       show.actualEndTime,
-      {
-        actualEndTime: incoming,
-        ...(ctx.incomingShowActuals?.actualStartTime !== undefined
-          ? { actualStartTime: ctx.incomingShowActuals.actualStartTime }
-          : {}),
-      },
+      { actualEndTime: incoming },
     );
 
     if (currentValue && currentValue.getTime() === incoming.getTime() && recordedSource === ctx.source) {

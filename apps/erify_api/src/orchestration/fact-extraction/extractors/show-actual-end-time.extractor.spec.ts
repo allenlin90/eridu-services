@@ -144,41 +144,4 @@ describe('showActualEndTimeExtractor', () => {
     );
     expect(showService.updateShow).not.toHaveBeenCalled();
   });
-
-  it('accepts a paired same-submission edit that would be invalid against the stored start', async () => {
-    // Stored: 20:00-21:00. Incoming pair: 18:00-19:00. If validation paired
-    // the new end against the stored start (20:00), it would reject the
-    // write even though the merged submission is a valid range.
-    const showService = buildShowService({
-      actualStartTime: new Date('2026-05-23T20:00:00.000Z'),
-      actualEndTime: new Date('2026-05-23T21:00:00.000Z'),
-    });
-    const extractor = new ShowActualEndTimeExtractor(showService);
-    const pairedCtx = {
-      ...ctx,
-      incomingShowActuals: {
-        actualStartTime: new Date('2026-05-23T18:00:00.000Z'),
-        actualEndTime: new Date('2026-05-23T19:00:00.000Z'),
-      },
-    };
-
-    const decision = await extractor.apply(
-      { ...fact, rawValue: '2026-05-23T19:00:00.000Z' },
-      pairedCtx,
-    );
-
-    expect(decision).toMatchObject({
-      kind: 'write',
-      action: 'UPDATE',
-      newValue: '2026-05-23T19:00:00.000Z',
-    });
-    expect(showService.ensureValidActualTimeRange).toHaveBeenCalledWith(
-      new Date('2026-05-23T20:00:00.000Z'),
-      new Date('2026-05-23T21:00:00.000Z'),
-      expect.objectContaining({
-        actualStartTime: new Date('2026-05-23T18:00:00.000Z'),
-        actualEndTime: new Date('2026-05-23T19:00:00.000Z'),
-      }),
-    );
-  });
 });
