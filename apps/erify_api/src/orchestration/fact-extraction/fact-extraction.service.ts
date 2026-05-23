@@ -121,10 +121,16 @@ export class FactExtractionService {
       return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
     }
 
-    // Only scan for collisions on facts that would actually attempt a write —
-    // blank/absent fields aren't competing for the column even if a sibling
-    // task binds the same fact key.
-    const writingFacts = facts.filter((fact) => !isFactValueAbsent(fact.rawValue));
+    // Only scan for collisions on facts the pipeline can actually act on:
+    //   - non-absent value (a blank submission isn't competing for the column)
+    //   - registered extractor (unregistered keys are silent no-ops by the
+    //     registry contract; per Codex P2 review, an unregistered key with a
+    //     colliding sibling must NOT emit a SKIPPED_LOWER_PRIORITY audit
+    //     because nothing in this pipeline can write it, so the "collision"
+    //     is fictional from the review surface's perspective).
+    const writingFacts = facts.filter(
+      (fact) => !isFactValueAbsent(fact.rawValue) && this.extractorRegistry.has(fact.factKey),
+    );
     const collidingFactKeys = await this.findCollidingFactKeys({
       currentTaskId: input.taskId,
       showId: input.showId,
@@ -149,6 +155,24 @@ export class FactExtractionService {
         continue;
       }
 
+      // Registry check BEFORE collision check: an unregistered fact key is
+      // invisible to the pipeline (registry contract = silent no-op), so it
+      // must not produce a collision audit either. Reversing this order
+      // would write SKIPPED_LOWER_PRIORITY rows for future creator/platform
+      // keys that 12.0.5 cannot yet act on.
+      const extractor = this.extractorRegistry.resolve(fact.factKey);
+      if (!extractor) {
+        entries.push({
+          factKey: fact.factKey,
+          sourceFieldId: fact.sourceFieldId,
+          contentKey: fact.contentKey,
+          targetUid: fact.targetUid,
+          outcome: 'skipped_no_extractor',
+          reason: 'extractor_not_registered',
+        });
+        continue;
+      }
+
       if (collidingFactKeys.has(fact.factKey)) {
         const audit = await this.writeCollisionSkipAudit(fact, ctx);
         entries.push({
@@ -159,19 +183,6 @@ export class FactExtractionService {
           outcome: 'skipped_collision',
           auditUid: audit?.uid,
           reason: 'cross_task_same_fact_key',
-        });
-        continue;
-      }
-
-      const extractor = this.extractorRegistry.resolve(fact.factKey);
-      if (!extractor) {
-        entries.push({
-          factKey: fact.factKey,
-          sourceFieldId: fact.sourceFieldId,
-          contentKey: fact.contentKey,
-          targetUid: fact.targetUid,
-          outcome: 'skipped_no_extractor',
-          reason: 'extractor_not_registered',
         });
         continue;
       }

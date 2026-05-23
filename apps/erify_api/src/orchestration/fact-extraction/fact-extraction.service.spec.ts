@@ -253,6 +253,46 @@ describe('factExtractionService', () => {
     expect(processor.applyAndAudit).not.toHaveBeenCalled();
   });
 
+  it('does not emit a collision audit when an unregistered fact key has a colliding sibling', async () => {
+    // The current submission carries `show_actual_end_time` (no extractor registered
+    // in 12.0.5) — and a sibling active task happens to bind the same key. The
+    // registry-silent contract says nothing should land in the audit table for
+    // this key because the pipeline can't act on it; an audit row would be a
+    // fictional "collision" from the review surface's perspective.
+    taskService.findByUidWithSnapshot.mockResolvedValue(
+      buildTaskWithSnapshot({
+        schema: { items: [{ id: 'fld_end', system_fact_key: 'show_actual_end_time' }] },
+        content: { fld_end: '2026-05-23T20:00:00.000Z' },
+      }),
+    );
+    taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+      {
+        uid: 'task_sibling',
+        snapshot: {
+          schema: {
+            items: [{ id: 'fld_sibling', system_fact_key: 'show_actual_end_time' }],
+          },
+        },
+      },
+    ] as never);
+
+    const result = await service.extractFromTask({
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR',
+    });
+
+    expect(result.entries[0]).toMatchObject({
+      outcome: 'skipped_no_extractor',
+      reason: 'extractor_not_registered',
+    });
+    expect(auditService.create).not.toHaveBeenCalled();
+    expect(processor.applyAndAudit).not.toHaveBeenCalled();
+  });
+
   it('marks unregistered fact keys as skipped_no_extractor without writing an audit', async () => {
     taskService.findByUidWithSnapshot.mockResolvedValue(
       buildTaskWithSnapshot({
