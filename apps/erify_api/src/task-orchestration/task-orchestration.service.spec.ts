@@ -284,6 +284,7 @@ describe('taskOrchestrationService', () => {
         unassigned: 1,
         completed: 1,
       });
+      expect(result.data[0].has_proper_task_assignment).toBe(true);
       expect(result.data[0].creators).toEqual([
         {
           show_creator_id: 'show_mc_1',
@@ -301,6 +302,50 @@ describe('taskOrchestrationService', () => {
           name: 'YouTube',
         },
       ]);
+    });
+
+    it('should flag has_proper_task_assignment=false when every task is unassigned or closed', async () => {
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+      const now = new Date();
+      showService.findPaginatedWithTaskSummary.mockResolvedValue({
+        data: [
+          {
+            id: BigInt(2),
+            uid: 'show_2',
+            clientId: BigInt(1),
+            studioId: BigInt(1),
+            studioRoomId: null,
+            showTypeId: BigInt(1),
+            showStatusId: BigInt(1),
+            showStandardId: BigInt(1),
+            name: 'Unassigned Show',
+            startTime: now,
+            endTime: now,
+            metadata: {},
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            showCreators: [],
+            showPlatforms: [],
+            taskTargets: [
+              { task: { status: TaskStatus.PENDING, assigneeId: null } },
+              // CLOSED task with assignee doesn't count — operator is no longer on the hook.
+              { task: { status: TaskStatus.CLOSED, assigneeId: BigInt(5) } },
+            ],
+          },
+        ],
+        total: 1,
+      } as any);
+
+      const result = await service.getStudioShowsWithTaskSummary('std_1', { page: 1, limit: 10, sort: 'desc', take: 10, skip: 0 });
+
+      expect(result.data[0].has_proper_task_assignment).toBe(false);
+      expect(result.data[0].task_summary).toEqual({
+        total: 2,
+        assigned: 1,
+        unassigned: 1,
+        completed: 0,
+      });
     });
 
     it('should filter by attention show ids when needs_attention is enabled', async () => {

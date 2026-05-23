@@ -336,6 +336,14 @@ export class TaskOrchestrationService {
 
       // prisma include type complexity
       const taskSummaries = show.taskTargets.map((tt) => tt.task);
+      // A show counts as "properly assigned" when at least one task that is
+      // still actionable (not CLOSED) has an assignee. Soft-deleted task
+      // targets are already filtered out by `showDtoListInclude`. CLOSED
+      // tasks are excluded so a show whose only assignee is on a closed
+      // task still surfaces the amber warning.
+      const hasProperTaskAssignment = taskSummaries.some(
+        (t) => t.assigneeId !== null && t.status !== TaskStatus.CLOSED,
+      );
       return {
         ...baseShow,
         creators,
@@ -346,6 +354,7 @@ export class TaskOrchestrationService {
           unassigned: taskSummaries.filter((t) => t.assigneeId === null).length,
           completed: taskSummaries.filter((t) => t.status === TaskStatus.COMPLETED).length,
         },
+        has_proper_task_assignment: hasProperTaskAssignment,
       };
     });
 

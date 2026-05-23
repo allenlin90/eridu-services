@@ -2,7 +2,7 @@
 import { Link, useParams } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { CheckCircle2, ChevronRight, Clock3 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronRight, Clock3 } from 'lucide-react';
 
 import { Badge, Checkbox, DataTableActions, DropdownMenuItem } from '@eridu/ui';
 
@@ -60,6 +60,31 @@ function ShowNameCell({ show }: { show: StudioShow }) {
             <span className="text-xs text-muted-foreground italic">No Client</span>
           )}
     </div>
+  );
+}
+
+function NoTaskAssignedBadge({ show }: { show: StudioShow }) {
+  // Reuses the column's route-context studioId fallback so the badge renders
+  // a working deep link even when the table is hosted outside the
+  // /studios/:studioId scope (e.g. embedded dashboards).
+  const { studioId: routeStudioId } = useParams({ strict: false }) as { studioId?: string };
+  const actualStudioId = routeStudioId || (show.studio_id as string) || 'fallback';
+
+  return (
+    <Link
+      to="/studios/$studioId/show-operations/$showId/tasks"
+      params={{ studioId: actualStudioId, showId: show.id }}
+      aria-label="No task assigned — click to assign tasks"
+      title="No task is on the hook for actuals on this show. Click to assign tasks."
+    >
+      <Badge
+        variant="outline"
+        className="border-amber-300 bg-amber-50 text-amber-800 font-normal shadow-sm hover:bg-amber-100"
+      >
+        <AlertTriangle className="h-3 w-3 mr-1" />
+        No Task Assigned
+      </Badge>
+    </Link>
   );
 }
 
@@ -158,10 +183,15 @@ export function getStudioShowOperationsColumns({
       id: 'task_status',
       header: 'Task Status',
       cell: ({ row }) => {
-        const summary = row.original.task_summary;
+        const show = row.original;
+        const summary = show.task_summary;
 
-        if (summary.total === 0) {
-          return <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-normal">No tasks</Badge>;
+        // PR 12.0.5 — the BE flag is the canonical source for whether the
+        // show has an operator on the hook for actuals. Covers "no tasks at
+        // all" and "every assigned task is closed", which the old summary-
+        // only logic mis-classified as a benign "No tasks" badge.
+        if (!show.has_proper_task_assignment) {
+          return <NoTaskAssignedBadge show={show} />;
         }
 
         if (summary.total === summary.completed) {

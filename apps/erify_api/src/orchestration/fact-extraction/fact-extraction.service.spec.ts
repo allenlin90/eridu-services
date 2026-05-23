@@ -1,7 +1,7 @@
 import { TaskStatus } from '@prisma/client';
 
-import { ExtractorRegistry } from './extractors/extractor-registry';
 import type { IngestionExtractor } from './extractors/extractor.types';
+import type { ExtractorRegistry } from './extractors/extractor-registry';
 import { FactExtractionService } from './fact-extraction.service';
 
 import type { AuditService } from '@/models/audit/audit.service';

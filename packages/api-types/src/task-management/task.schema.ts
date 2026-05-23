@@ -334,6 +334,15 @@ export const showWithTaskSummaryDto = showApiResponseSchema
       unassigned: z.number().int(),
       completed: z.number().int(),
     }),
+    /**
+     * True when the show has at least one active task (not soft-deleted, not
+     * CLOSED) that is assigned to a user. Drives the PR 12.0.5 amber
+     * "No Task Assigned" warning badge on `/show-operations`: missing here
+     * means no operator is on the hook for actuals on this show, even if a
+     * template task exists. See PRD §⚠️ Show-Operations Task Assignment
+     * Alignment.
+     */
+    has_proper_task_assignment: z.boolean(),
   });
 
 export type ShowWithTaskSummaryDto = z.infer<typeof showWithTaskSummaryDto>;

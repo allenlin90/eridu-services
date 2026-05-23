@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import type { ActualsSource } from '@eridu/api-types/audits';
 
+import { canResolverOverwrite } from '../source-priority';
+
 import type {
   ExtractedFact,
   ExtractionContext,
@@ -10,8 +12,6 @@ import type {
 } from './extractor.types';
 
 import { ShowService } from '@/models/show/show.service';
-
-import { canResolverOverwrite } from '../source-priority';
 
 type ShowMetadata = {
   actuals_source?: Partial<Record<string, ActualsSource>>;

@@ -46,25 +46,25 @@ export type ExtractionContext = {
  */
 export type ExtractionDecision =
   | {
-      kind: 'write';
-      action: Extract<AuditAction, 'CREATE' | 'UPDATE' | 'OVERRIDE'>;
-      /** Old indexed value, projected to JSON for the audit row. */
-      oldValue: unknown;
-      /** New indexed value, projected to JSON for the audit row. */
-      newValue: unknown;
-    }
+    kind: 'write';
+    action: Extract<AuditAction, 'CREATE' | 'UPDATE' | 'OVERRIDE'>;
+    /** Old indexed value, projected to JSON for the audit row. */
+    oldValue: unknown;
+    /** New indexed value, projected to JSON for the audit row. */
+    newValue: unknown;
+  }
   | {
-      kind: 'skip';
-      action: Extract<AuditAction, 'SKIPPED_LOWER_PRIORITY'>;
-      /** Source that currently owns the field — copied into `metadata.skipped_by_source`. */
-      skippedBy: ActualsSource;
-      attemptedValue: unknown;
-    }
+    kind: 'skip';
+    action: Extract<AuditAction, 'SKIPPED_LOWER_PRIORITY'>;
+    /** Source that currently owns the field — copied into `metadata.skipped_by_source`. */
+    skippedBy: ActualsSource;
+    attemptedValue: unknown;
+  }
   | {
-      kind: 'noop';
-      /** Set when the operator left the field blank — no write, no audit. */
-      reason: 'value_absent' | 'value_unchanged';
-    };
+    kind: 'noop';
+    /** Set when the operator left the field blank — no write, no audit. */
+    reason: 'value_absent' | 'value_unchanged';
+  };
 
 /**
  * Strategy interface implemented per `SystemFactKey`. Each extractor owns its

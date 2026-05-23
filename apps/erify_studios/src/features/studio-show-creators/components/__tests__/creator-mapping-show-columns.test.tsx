@@ -33,6 +33,7 @@ const baseShow = {
     unassigned: 0,
     completed: 0,
   },
+  has_proper_task_assignment: false,
 } satisfies StudioShow;
 
 describe('creatorMappingShowColumns', () => {
