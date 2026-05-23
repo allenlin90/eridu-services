@@ -4,10 +4,65 @@ import { useEffect, useState } from 'react';
 
 import { Spinner } from '@eridu/ui';
 
+import { NoStudioAssociationView, UnlinkedCreatorView } from '@/components/onboarding-guards';
 import { SidebarLayout } from '@/layouts/sidebar-layout';
 import { authClient, type Session } from '@/lib/auth';
+import { useUserProfile } from '@/lib/hooks';
 import { SessionProvider, useSession } from '@/lib/session-provider';
 import { NotFoundPage } from '@/pages/not-found-page';
+
+function ProfileGuardLayout({ session }: { session: Session }) {
+  const { data: profile, isLoading: isProfileLoading, refetch } = useUserProfile();
+
+  if (isProfileLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-950">
+        <Spinner />
+      </div>
+    );
+  }
+
+  // 1. Guard: Account must be linked to a Creator record
+  if (!profile || !profile.creator) {
+    return (
+      <UnlinkedCreatorView
+        userName={session.user?.name}
+        userEmail={session.user?.email}
+        avatarUrl={session.user?.image || undefined}
+        onRecheck={async () => {
+          await refetch();
+        }}
+      />
+    );
+  }
+
+  // 2. Guard: Must be active on at least one studio creator roster
+  const hasActiveStudio = profile.creator.studio_creators?.some(
+    (sc) => sc.is_active,
+  );
+
+  if (!hasActiveStudio) {
+    return (
+      <NoStudioAssociationView
+        userName={session.user?.name}
+        userEmail={session.user?.email}
+        avatarUrl={session.user?.image || undefined}
+        onRecheck={async () => {
+          await refetch();
+        }}
+      />
+    );
+  }
+
+  return (
+    <>
+      <SidebarLayout>
+        <Outlet />
+      </SidebarLayout>
+      {import.meta.env.DEV && <TanStackRouterDevtools />}
+    </>
+  );
+}
 
 function AuthenticatedLayout() {
   const { session, isLoading, checkSession } = useSession();
@@ -39,14 +94,7 @@ function AuthenticatedLayout() {
     return null;
   }
 
-  return (
-    <>
-      <SidebarLayout>
-        <Outlet />
-      </SidebarLayout>
-      {import.meta.env.DEV && <TanStackRouterDevtools />}
-    </>
-  );
+  return <ProfileGuardLayout session={session} />;
 }
 
 function RootLayout() {
@@ -61,3 +109,4 @@ export const Route = createRootRouteWithContext<{ auth: Session }>()({
   component: RootLayout,
   notFoundComponent: NotFoundPage,
 });
+
