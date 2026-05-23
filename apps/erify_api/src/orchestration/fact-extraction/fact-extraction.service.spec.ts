@@ -1063,6 +1063,66 @@ describe('factExtractionService', () => {
       ]));
     });
 
+    it('does NOT collide when a sibling task has a hydrated key for the same target but the value is blank', async () => {
+      // Codex P1 review on PR #103: per-target collision detection was
+      // keyed by the mere presence of a hydrated content key, so a
+      // sibling that had cleared its value (`''` / `null`) still pushed
+      // the current task into `skipped_collision` even though there was
+      // no competing write. Absent sibling values must be filtered the
+      // same way the current task filters its own blank fields.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                { id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' },
+                { id: 'fld_sibling5678', system_fact_key: 'show_platform_actual_end_time' },
+              ],
+            },
+          },
+          // Hydrated keys for the same target exist on the sibling, but
+          // both values are blank — the operator started filling and
+          // cleared the field, or the schema was regenerated with no
+          // entered value. Either way, no competing write.
+          content: {
+            'fld_sibling1234:platform:show_plt_200': '',
+            'fld_sibling5678:platform:show_plt_200': null,
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ outcome: 'written' }),
+      ]));
+    });
+
     it('does NOT collide when a sibling task has the same fact key in schema but no content yet', async () => {
       // Sibling is PENDING with empty content — we can't know which target
       // it will eventually bind. Per the design, the priority resolver

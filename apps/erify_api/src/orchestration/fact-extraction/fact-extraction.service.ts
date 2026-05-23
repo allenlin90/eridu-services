@@ -388,8 +388,17 @@ export class FactExtractionService {
       // but no value yet for a specific target is not preemptively
       // blocking — only entries the sibling has actually started filling
       // are considered races.
+      //
+      // Per Codex P1 review on PR #103: a sibling can carry an
+      // explicitly-cleared hydrated key (`null` / `undefined` / `''`); the
+      // mere presence of the key is not a competing write. Skip absent
+      // values so a stale empty key on the sibling doesn't push the
+      // current task into a fictional `skipped_collision`.
       const siblingContent = (sibling.content as Record<string, unknown> | null) ?? {};
-      for (const contentKey of Object.keys(siblingContent)) {
+      for (const [contentKey, siblingValue] of Object.entries(siblingContent)) {
+        if (isFactValueAbsent(siblingValue)) {
+          continue;
+        }
         const parsed = parseHydratedContentKey(contentKey);
         if (!parsed) {
           continue;
