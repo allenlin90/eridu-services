@@ -235,5 +235,53 @@ describe('profileController', () => {
       expect(result.id).toBe(result.ext_id);
       expect(result.id).toBe('HHHFNPNWDbKmElNBF2Y1yCfo0kqtbB7B');
     });
+
+    it('should return null for creator when user has no creator record', async () => {
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue({
+        ...mockDbUser,
+        creator: null,
+      });
+
+      const result = await controller.getProfile(mockAuthenticatedUser);
+
+      expect(result.creator).toBeNull();
+    });
+
+    it('should return mapped creator and studioCreators when user has creator record', async () => {
+      (userService.getUserWithAllStudioMemberships as jest.Mock).mockResolvedValue({
+        ...mockDbUser,
+        creator: {
+          uid: 'creator_1',
+          name: 'Ann',
+          aliasName: 'Ann Alias',
+          studioCreators: [
+            {
+              isActive: true,
+              studio: {
+                uid: 'std_1',
+                name: 'Studio 1',
+              },
+            },
+          ],
+        },
+      });
+
+      const result = await controller.getProfile(mockAuthenticatedUser);
+
+      expect(result.creator).toEqual({
+        uid: 'creator_1',
+        name: 'Ann',
+        alias_name: 'Ann Alias',
+        studio_creators: [
+          {
+            studio: {
+              uid: 'std_1',
+              name: 'Studio 1',
+            },
+            is_active: true,
+          },
+        ],
+      });
+    });
   });
 });

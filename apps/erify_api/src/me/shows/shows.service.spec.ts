@@ -214,6 +214,63 @@ describe('showsService', () => {
       });
     });
 
+    it('should filter shows by studio_id when provided', async () => {
+      const userIdentifier = 'user_test123';
+      const params: ListShowsQueryDto = {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        take: 10,
+        order_by: 'start_time',
+        order_direction: 'asc',
+        include_deleted: false,
+        sort: 'asc',
+        uid: undefined,
+        studio_id: 'std_123',
+      };
+
+      mockCreatorService.getCreatorByUserIdentifier.mockResolvedValue(mockMc);
+      mockShowService.getShows.mockResolvedValue([mockShowWithRelations]);
+      mockShowService.countShows.mockResolvedValue(1);
+
+      await service.getShowsForCreatorUser(userIdentifier, params);
+
+      expect(mockShowService.getShows).toHaveBeenCalledWith(
+        {
+          where: {
+            deletedAt: null,
+            studio: {
+              uid: 'std_123',
+              deletedAt: null,
+            },
+            showCreators: {
+              some: {
+                creatorId: mockMc.id,
+                deletedAt: null,
+              },
+            },
+          },
+          skip: params.skip,
+          take: params.take,
+          orderBy: { startTime: 'asc' },
+        },
+        creatorShowDtoInclude,
+      );
+      expect(mockShowService.countShows).toHaveBeenCalledWith({
+        deletedAt: null,
+        studio: {
+          uid: 'std_123',
+          deletedAt: null,
+        },
+        showCreators: {
+          some: {
+            creatorId: mockMc.id,
+            deletedAt: null,
+          },
+        },
+      });
+    });
+
     it('should return shows assigned to Creator user by extId', async () => {
       const userIdentifier = 'ext_test123';
       const params: ListShowsQueryDto = {
