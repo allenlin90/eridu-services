@@ -10,6 +10,7 @@ import {
   type UiSchemaV2,
 } from '@eridu/api-types/task-management';
 
+import { parseDateTimeValue } from './extractors/datetime-value';
 import type {
   ExtractedFact,
   ExtractionContext,
@@ -107,6 +108,11 @@ export class FactExtractionService {
 
     const content = (task.content as Record<string, unknown> | null) ?? {};
 
+    const facts = collectBoundFacts(schema, content, input.showUid);
+    if (facts.length === 0) {
+      return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
+    }
+
     const ctx: ExtractionContext = {
       taskId: input.taskId,
       taskUid: input.taskUid,
@@ -114,12 +120,8 @@ export class FactExtractionService {
       showId: input.showId,
       showUid: input.showUid,
       source: input.source,
+      incomingShowActuals: buildIncomingShowActuals(facts),
     };
-
-    const facts = collectBoundFacts(schema, content, input.showUid);
-    if (facts.length === 0) {
-      return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
-    }
 
     // Only scan for collisions on facts the pipeline can actually act on:
     //   - non-absent value (a blank submission isn't competing for the column)
@@ -380,6 +382,38 @@ function collectBoundFacts(
   }
 
   return facts;
+}
+
+/**
+ * Pre-parses the show-actual time facts on this submission so the start and
+ * end extractors can validate the merged pair. Without this, the extractor
+ * that runs first sees only its own incoming value paired against the stale
+ * stored counterpart — which rejects valid paired edits (e.g., 10:00–11:00
+ * → 12:00–13:00) depending on processing order.
+ */
+function buildIncomingShowActuals(
+  facts: ExtractedFact[],
+): { actualStartTime?: Date; actualEndTime?: Date } | undefined {
+  let actualStartTime: Date | undefined;
+  let actualEndTime: Date | undefined;
+  for (const fact of facts) {
+    if (fact.factKey === 'show_actual_start_time') {
+      const parsed = parseDateTimeValue(fact.rawValue);
+      if (parsed)
+        actualStartTime = parsed;
+    } else if (fact.factKey === 'show_actual_end_time') {
+      const parsed = parseDateTimeValue(fact.rawValue);
+      if (parsed)
+        actualEndTime = parsed;
+    }
+  }
+  if (actualStartTime === undefined && actualEndTime === undefined) {
+    return undefined;
+  }
+  return {
+    ...(actualStartTime !== undefined ? { actualStartTime } : {}),
+    ...(actualEndTime !== undefined ? { actualEndTime } : {}),
+  };
 }
 
 function outcomeFromDecision(decision: ExtractionDecision): ExtractionResultEntry['outcome'] {

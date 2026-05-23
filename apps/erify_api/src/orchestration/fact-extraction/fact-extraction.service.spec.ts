@@ -127,6 +127,69 @@ describe('factExtractionService', () => {
     ]);
   });
 
+  it('forwards a pre-parsed paired actual-time pair on ctx.incomingShowActuals', async () => {
+    // When a submission carries both the start and end facts, the service
+    // must hand the extractor the merged pair so per-fact validation does
+    // not pair the new value against the stale stored counterpart.
+    const startExtractor = buildExtractor({ factKey: 'show_actual_start_time' });
+    const endExtractor = buildExtractor({ factKey: 'show_actual_end_time' });
+    const pairedRegistry = {
+      resolve: jest.fn((factKey: string) => {
+        if (factKey === 'show_actual_start_time')
+          return startExtractor;
+        if (factKey === 'show_actual_end_time')
+          return endExtractor;
+        return undefined;
+      }),
+      has: jest.fn((factKey: string) =>
+        factKey === 'show_actual_start_time' || factKey === 'show_actual_end_time',
+      ),
+      registeredFactKeys: jest.fn(() => ['show_actual_start_time', 'show_actual_end_time']),
+    } as unknown as ExtractorRegistry;
+    const pairedService = new FactExtractionService(
+      taskService,
+      auditService,
+      pairedRegistry,
+      processor,
+    );
+    startExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
+    endExtractor.apply.mockResolvedValue({ kind: 'noop', reason: 'value_unchanged' });
+    taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+      schema: {
+        items: [
+          { id: 'fld_show_start', system_fact_key: 'show_actual_start_time' },
+          { id: 'fld_show_end', system_fact_key: 'show_actual_end_time' },
+        ],
+      },
+      content: {
+        fld_show_start: '2026-05-23T12:00:00.000Z',
+        fld_show_end: '2026-05-23T13:00:00.000Z',
+      },
+    }));
+
+    await pairedService.extractFromTask({
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR',
+    });
+
+    const expectedIncoming = {
+      actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
+      actualEndTime: new Date('2026-05-23T13:00:00.000Z'),
+    };
+    expect(startExtractor.apply).toHaveBeenCalledWith(
+      expect.objectContaining({ factKey: 'show_actual_start_time' }),
+      expect.objectContaining({ incomingShowActuals: expectedIncoming }),
+    );
+    expect(endExtractor.apply).toHaveBeenCalledWith(
+      expect.objectContaining({ factKey: 'show_actual_end_time' }),
+      expect.objectContaining({ incomingShowActuals: expectedIncoming }),
+    );
+  });
+
   it('reports a lower-priority skip when the extractor returns one', async () => {
     taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot());
     extractor.apply.mockResolvedValue({

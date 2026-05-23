@@ -4,6 +4,7 @@ import type { ActualsSource } from '@eridu/api-types/audits';
 
 import { canResolverOverwrite } from '../source-priority';
 
+import { parseDateTimeValue } from './datetime-value';
 import type {
   ExtractedFact,
   ExtractionContext,
@@ -58,11 +59,22 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
       };
     }
 
-    // Validate time range: start time must be before end time
+    // Validate time range against the merged same-submission pair, not just
+    // the stored end. If this submission also carries an `actualEndTime`
+    // fact, both halves are evaluated together so a valid paired edit
+    // (e.g., 10:00–11:00 → 12:00–13:00) is not rejected based on the order
+    // in which the orchestrator happens to process the two facts. With no
+    // paired end on the submission, `ensureValidActualTimeRange` falls back
+    // to the stored end via its `undefined` semantics.
     this.showService.ensureValidActualTimeRange(
       show.actualStartTime,
       show.actualEndTime,
-      { actualStartTime: incoming },
+      {
+        actualStartTime: incoming,
+        ...(ctx.incomingShowActuals?.actualEndTime !== undefined
+          ? { actualEndTime: ctx.incomingShowActuals.actualEndTime }
+          : {}),
+      },
     );
 
     if (currentValue && currentValue.getTime() === incoming.getTime() && recordedSource === ctx.source) {
@@ -90,15 +102,4 @@ export class ShowActualStartTimeExtractor implements IngestionExtractor {
       newValue: incoming.toISOString(),
     };
   }
-}
-
-function parseDateTimeValue(raw: unknown): Date | null {
-  if (raw instanceof Date) {
-    return Number.isNaN(raw.getTime()) ? null : raw;
-  }
-  if (typeof raw !== 'string' || raw.length === 0) {
-    return null;
-  }
-  const parsed = new Date(raw);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }

@@ -37,6 +37,20 @@ export type ExtractionContext = {
    * write as `OPERATOR`; manager and platform writers use their own paths.
    */
   source: ActualsSource;
+  /**
+   * Pre-parsed snapshot of paired show-actual time facts from the same task
+   * submission. Lets the start/end extractors validate the merged incoming
+   * range instead of pairing each new value against the stale stored
+   * counterpart — without this, a valid paired edit (e.g., 10:00–11:00 →
+   * 12:00–13:00) would be rejected depending on which side the orchestrator
+   * processes first. Only includes entries whose `rawValue` parses to a valid
+   * `Date`; absent / unparseable submissions stay `undefined` so validation
+   * falls back to the stored value.
+   */
+  incomingShowActuals?: {
+    actualStartTime?: Date;
+    actualEndTime?: Date;
+  };
 };
 
 /**
