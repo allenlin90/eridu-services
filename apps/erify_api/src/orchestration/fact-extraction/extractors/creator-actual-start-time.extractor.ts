@@ -67,13 +67,23 @@ export class CreatorActualStartTimeExtractor implements IngestionExtractor {
 
     const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
     const isLate = showCreator.show?.startTime ? incoming > showCreator.show.startTime : false;
-    const desiredLateReason = isLate ? trimmedReason || LATE_REASON_FALLBACK : null;
-    // Late-reason drift: an earlier write may have stored the system
-    // fallback because the sidecar was missing; a resubmission with the
-    // same timestamp but a real reason must still flush the column or
-    // the operator's actual context stays masked by the fallback text.
-    const lateReasonDrifted = desiredLateReason !== null
-      && desiredLateReason !== showCreator.attendanceReason;
+    // Resolve what the late reason should be after this write:
+    //   - operator-supplied sidecar wins (real text)
+    //   - else preserve whatever is already in the column (real operator
+    //     text from a prior submission OR our own fallback) — this avoids
+    //     downgrading a real reason back to the fallback when a retry /
+    //     edit omits the sidecar
+    //   - else seed the system fallback (first write, no sidecar)
+    const resolvedLateReason: string | null = isLate
+      ? trimmedReason || showCreator.attendanceReason || LATE_REASON_FALLBACK
+      : null;
+    // Drift detection: a write is only necessary when the resolved value
+    // actually differs from what's stored. A first write with no sidecar
+    // followed by a resubmission carrying a real reason must still flush
+    // the column, while a same-time retry without a sidecar must NOT
+    // rewrite the existing reason.
+    const lateReasonDrifted = resolvedLateReason !== null
+      && resolvedLateReason !== showCreator.attendanceReason;
     const timeUnchanged = currentValue !== null
       && currentValue.getTime() === incoming.getTime()
       && recordedSource === ctx.source;
@@ -106,7 +116,7 @@ export class CreatorActualStartTimeExtractor implements IngestionExtractor {
     try {
       await this.showCreatorService.updateActuals(fact.targetUid, ctx.showId, {
         actualStartTime: incoming,
-        ...(isLate ? { attendanceReason: trimmedReason || LATE_REASON_FALLBACK } : {}),
+        ...(lateReasonDrifted ? { attendanceReason: resolvedLateReason } : {}),
         metadata: nextMetadata,
       });
     } catch (err) {

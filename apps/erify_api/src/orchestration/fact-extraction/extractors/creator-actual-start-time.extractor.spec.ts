@@ -195,4 +195,23 @@ describe('creatorActualStartTimeExtractor', () => {
     expect(decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
     expect(showCreatorService.updateActuals).not.toHaveBeenCalled();
   });
+
+  it('preserves an existing real reason when a same-time resubmission omits the sidecar', async () => {
+    // Regression for Codex P2: a retry that omits the reason sidecar
+    // must NOT downgrade an existing operator-supplied reason to the
+    // system fallback. The column should stay untouched.
+    const showCreatorService = buildShowCreatorService({
+      actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+      attendanceReason: 'Real operator reason.',
+      metadata: { actuals_source: { creator_actual_start_time: 'OPERATOR' } },
+    });
+    const extractor = new CreatorActualStartTimeExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
+
+    const decision = await extractor.apply({ ...fact, reason: undefined }, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    expect(showCreatorService.updateActuals).not.toHaveBeenCalled();
+  });
 });

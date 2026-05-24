@@ -251,4 +251,23 @@ describe('creatorAttendanceMissingExtractor', () => {
       }),
     );
   });
+
+  it('preserves an existing real reason when a same-flag resubmission omits the sidecar', async () => {
+    // Regression for Codex P2: a retry that omits the reason sidecar
+    // must NOT downgrade an existing real reason to the system
+    // fallback. The reason column must stay untouched.
+    const showCreatorService = buildShowCreatorService({
+      attendanceMissing: true,
+      attendanceReason: 'Sick leave.',
+      metadata: { actuals_source: { creator_attendance_missing: 'OPERATOR' } },
+    });
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
+
+    const decision = await extractor.apply({ ...fact, reason: undefined }, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    expect(showCreatorService.updateActuals).not.toHaveBeenCalled();
+  });
 });

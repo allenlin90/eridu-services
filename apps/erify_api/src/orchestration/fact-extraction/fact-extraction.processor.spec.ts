@@ -583,6 +583,38 @@ describe('factExtractionProcessor', () => {
       );
       expect(result.start.decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
     });
+
+    it('preserves an existing real late reason when the start sidecar is omitted on resubmission', async () => {
+      // Regression for Codex P2: a same-timestamp retry without a
+      // sidecar must NOT downgrade an existing real operator reason to
+      // the system fallback. With nothing else changing, the paired
+      // write must report value_unchanged on both sides.
+      installCreatorEnsureValidImpl();
+      showCreatorService.getShowCreatorById.mockResolvedValue({
+        id: 101n,
+        uid: 'show_mc_alpha',
+        showId: 10n,
+        metadata: { actuals_source: {
+          creator_actual_start_time: 'OPERATOR',
+          creator_actual_end_time: 'OPERATOR',
+        } },
+        actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+        actualEndTime: new Date('2026-05-23T13:30:00.000Z'),
+        attendanceMissing: false,
+        attendanceReason: 'Real operator reason.',
+        show: { startTime: new Date('2026-05-23T12:00:00.000Z') },
+      } as never);
+
+      const input = {
+        ...buildCreatorInput(),
+        startFact: { ...startFact, reason: undefined },
+      };
+      const result = await processor.applyPairedShowCreatorActuals(input);
+
+      expect(showCreatorService.updateActuals).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    });
   });
 
   describe('applyPairedShowPlatformActuals', () => {

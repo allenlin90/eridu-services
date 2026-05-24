@@ -70,13 +70,19 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
     // `metadata.actuals_source` — historical writes from a long-past
     // task shouldn't trap a stale absence reason on a creator who is no
     // longer marked missing.
-    //   - flag=true:                                  write real / fallback missing reason.
+    //   - flag=true:                                  resolve real / preserve / fallback.
     //   - flag=true→false AND start NOT co-submitted: clear (our prior no-show note).
     //   - flag=true→false AND start IS  co-submitted: leave alone (late-start owns it).
     //   - flag=false→false:                           never touch the column.
+    //
+    // When flag=true and no sidecar is provided, we PRESERVE the
+    // currently-stored reason instead of downgrading to the fallback —
+    // otherwise a retry / edit that omits the sidecar would silently
+    // overwrite a real operator reason. The fallback only seeds the
+    // first write into an empty column.
     let desiredReason: string | null | undefined;
     if (incoming) {
-      desiredReason = trimmedReason || MISSING_REASON_FALLBACK;
+      desiredReason = trimmedReason || showCreator.attendanceReason || MISSING_REASON_FALLBACK;
     } else if (currentValue === true && !startCoSubmitted) {
       desiredReason = null;
     } else {
@@ -106,7 +112,9 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
     try {
       await this.showCreatorService.updateActuals(fact.targetUid, ctx.showId, {
         attendanceMissing: incoming,
-        ...(desiredReason !== undefined ? { attendanceReason: desiredReason } : {}),
+        // Only write the reason column when it actually changes; sending
+        // the same value back would be idempotent on disk but adds noise.
+        ...(reasonDrifted ? { attendanceReason: desiredReason as string | null } : {}),
         metadata: nextMetadata,
       });
     } catch (err) {
