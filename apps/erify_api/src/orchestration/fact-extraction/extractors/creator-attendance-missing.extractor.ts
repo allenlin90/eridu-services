@@ -61,7 +61,16 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
       };
     }
 
-    if (currentValue === incoming && recordedSource === ctx.source) {
+    const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
+    const desiredReason = incoming ? trimmedReason || MISSING_REASON_FALLBACK : null;
+    // Reason drift: a first write with no sidecar stores the system
+    // fallback; a later resubmission with the same flag value but a
+    // real reason must still flush the column, otherwise the operator's
+    // actual reason stays masked. Symmetric with the start-time
+    // extractor's late-reason drift check.
+    const reasonDrifted = desiredReason !== showCreator.attendanceReason;
+
+    if (currentValue === incoming && recordedSource === ctx.source && !reasonDrifted) {
       return { kind: 'noop', reason: 'value_unchanged' };
     }
 
@@ -73,12 +82,11 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
       ...metadata,
       actuals_source: nextActualsSource,
     };
-    const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
 
     try {
       await this.showCreatorService.updateActuals(fact.targetUid, ctx.showId, {
         attendanceMissing: incoming,
-        attendanceReason: incoming ? trimmedReason || MISSING_REASON_FALLBACK : null,
+        attendanceReason: desiredReason,
         metadata: nextMetadata,
       });
     } catch (err) {

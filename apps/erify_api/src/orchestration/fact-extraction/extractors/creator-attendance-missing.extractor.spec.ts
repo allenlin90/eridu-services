@@ -154,4 +154,34 @@ describe('creatorAttendanceMissingExtractor', () => {
 
     expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
   });
+
+  it('flushes the corrected missing reason on a same-flag resubmission', async () => {
+    // Regression for Codex P1: a first submission with no reason stores
+    // the system fallback. A resubmission carrying the same `true` flag
+    // and a real reason must still update `attendanceReason`; the
+    // equality short-circuit cannot mask reason corrections.
+    const showCreatorService = buildShowCreatorService({
+      attendanceMissing: true,
+      attendanceReason: 'Missing attendance reason was not provided by the task field.',
+      metadata: { actuals_source: { creator_attendance_missing: 'OPERATOR' } },
+    });
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
+
+    const decision = await extractor.apply(
+      { ...fact, reason: 'Sick leave.' },
+      ctx,
+    );
+
+    expect(decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
+      'show_mc_alpha',
+      10n,
+      expect.objectContaining({
+        attendanceMissing: true,
+        attendanceReason: 'Sick leave.',
+      }),
+    );
+  });
 });
