@@ -14,6 +14,7 @@ import { canResolverOverwrite } from './source-priority';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowService } from '@/models/show/show.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 
 export type ProcessedFact = {
@@ -23,6 +24,7 @@ export type ProcessedFact = {
 
 type ShowActualsSourceMap = Partial<Record<SystemFactKey, ActualsSource>>;
 type ShowMetadataShape = { actuals_source?: ShowActualsSourceMap } & Record<string, unknown>;
+const LATE_REASON_FALLBACK = 'Late attendance reason was not provided by the task field.';
 
 export type PairedShowActualsInput = {
   startFact: ExtractedFact;
@@ -51,6 +53,18 @@ export type PairedShowPlatformActualsInput = {
 
 export type PairedShowPlatformActualsResult = PairedShowActualsResult;
 
+export type PairedShowCreatorActualsInput = {
+  showCreatorUid: string;
+  startFact: ExtractedFact;
+  endFact: ExtractedFact;
+  startIncoming: Date;
+  endIncoming: Date;
+  ctx: ExtractionContext;
+  targetIds: { targetType: AuditTargetType; targetId: bigint }[];
+};
+
+export type PairedShowCreatorActualsResult = PairedShowActualsResult;
+
 /**
  * Per-fact transactional boundary for the extraction pipeline. The indexed
  * column write performed by the extractor and the audit envelope written by
@@ -68,6 +82,7 @@ export class FactExtractionProcessor {
   constructor(
     private readonly auditService: AuditService,
     private readonly showService: ShowService,
+    private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
   ) {}
 
@@ -207,6 +222,112 @@ export class FactExtractionProcessor {
         ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
         metadata: nextMetadata as unknown as Parameters<ShowService['updateShow']>[1]['metadata'],
       });
+    }
+
+    const start = await this.recordPairedSideDecision({
+      fact: input.startFact,
+      ctx: input.ctx,
+      targetIds: input.targetIds,
+      canWrite: startCanWrite,
+      unchanged: startUnchanged,
+      currentValue: startCurrent,
+      incoming: input.startIncoming,
+      recordedSource: startRecorded,
+    });
+    const end = await this.recordPairedSideDecision({
+      fact: input.endFact,
+      ctx: input.ctx,
+      targetIds: input.targetIds,
+      canWrite: endCanWrite,
+      unchanged: endUnchanged,
+      currentValue: endCurrent,
+      incoming: input.endIncoming,
+      recordedSource: endRecorded,
+    });
+    return { start, end };
+  }
+
+  @Transactional()
+  async applyPairedShowCreatorActuals(
+    input: PairedShowCreatorActualsInput,
+  ): Promise<PairedShowCreatorActualsResult> {
+    let showCreator: Awaited<ReturnType<ShowCreatorService['getShowCreatorById']>>;
+    try {
+      showCreator = await this.showCreatorService.getShowCreatorById(input.showCreatorUid);
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
+        return { start: { decision }, end: { decision } };
+      }
+      throw err;
+    }
+    if (!showCreator || showCreator.showId !== input.ctx.showId) {
+      const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
+      return { start: { decision }, end: { decision } };
+    }
+
+    const metadata = (showCreator.metadata as ShowMetadataShape | null) ?? {};
+    const recordedSourceMap: ShowActualsSourceMap = metadata.actuals_source ?? {};
+
+    const startRecorded = recordedSourceMap.creator_actual_start_time;
+    const endRecorded = recordedSourceMap.creator_actual_end_time;
+    const startCanWrite = canResolverOverwrite(input.ctx.source, startRecorded);
+    const endCanWrite = canResolverOverwrite(input.ctx.source, endRecorded);
+
+    const startCurrent = showCreator.actualStartTime;
+    const endCurrent = showCreator.actualEndTime;
+    const startUnchanged = startCanWrite
+      && startCurrent !== null
+      && startCurrent.getTime() === input.startIncoming.getTime()
+      && startRecorded === input.ctx.source;
+    const endUnchanged = endCanWrite
+      && endCurrent !== null
+      && endCurrent.getTime() === input.endIncoming.getTime()
+      && endRecorded === input.ctx.source;
+
+    const startEffectiveWrite = startCanWrite && !startUnchanged;
+    const endEffectiveWrite = endCanWrite && !endUnchanged;
+
+    if (startEffectiveWrite || endEffectiveWrite) {
+      this.showCreatorService.ensureValidActualTimeRange(
+        startCurrent,
+        endCurrent,
+        {
+          ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+          ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+        },
+      );
+    }
+
+    if (startEffectiveWrite || endEffectiveWrite) {
+      const nextActualsSource: ShowActualsSourceMap = {
+        ...recordedSourceMap,
+        ...(startEffectiveWrite ? { creator_actual_start_time: input.ctx.source } : {}),
+        ...(endEffectiveWrite ? { creator_actual_end_time: input.ctx.source } : {}),
+      };
+      const nextMetadata: ShowMetadataShape = { ...metadata, actuals_source: nextActualsSource };
+      const trimmedReason = typeof input.startFact.reason === 'string'
+        ? input.startFact.reason.trim()
+        : '';
+      const isLate = Boolean(
+        startEffectiveWrite
+        && showCreator.show?.startTime
+        && input.startIncoming > showCreator.show.startTime,
+      );
+      try {
+        await this.showCreatorService.updateActuals(input.showCreatorUid, input.ctx.showId, {
+          ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+          ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+          ...(isLate ? { attendanceReason: trimmedReason || LATE_REASON_FALLBACK } : {}),
+          metadata: nextMetadata,
+        });
+      } catch (err) {
+        if (err instanceof NotFoundException) {
+          const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
+          return { start: { decision }, end: { decision } };
+        }
+        throw err;
+      }
     }
 
     const start = await this.recordPairedSideDecision({

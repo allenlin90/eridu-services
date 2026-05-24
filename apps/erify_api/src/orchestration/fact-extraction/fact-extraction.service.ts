@@ -4,6 +4,7 @@ import { TaskStatus } from '@prisma/client';
 import type { ActualsSource, AuditTargetType } from '@eridu/api-types/audits';
 import {
   type FieldItemV2,
+  getTaskContentReasonKey,
   parseHydratedContentKey,
   SYSTEM_FACT_KEY_DEFINITIONS,
   type SystemFactKey,
@@ -20,10 +21,12 @@ import { ExtractorRegistry } from './extractors/extractor-registry';
 import {
   FactExtractionProcessor,
   type PairedShowActualsResult,
+  type PairedShowCreatorActualsResult,
   type PairedShowPlatformActualsResult,
 } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { TaskService } from '@/models/task/task.service';
 
@@ -92,6 +95,7 @@ export class FactExtractionService {
     private readonly auditService: AuditService,
     private readonly extractorRegistry: ExtractorRegistry,
     private readonly factExtractionProcessor: FactExtractionProcessor,
+    private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
   ) {}
 
@@ -154,6 +158,10 @@ export class FactExtractionService {
     // (soft-deleted or wrong show) emit a `skipped_stale_target` outcome —
     // no write, no audit row (a stale target is unwritable, not contested,
     // so a SKIPPED audit would be misleading on the review surface).
+    const creatorTargetById = await this.showCreatorService.findActiveByUids(
+      uniqueTargetUids(facts, 'creator'),
+      input.showId,
+    );
     const platformTargetById = await this.showPlatformService.findActiveByUids(
       uniqueTargetUids(facts, 'platform'),
       input.showId,
@@ -187,6 +195,14 @@ export class FactExtractionService {
       entries,
     });
 
+    const handledPairedCreatorContentKeys = await this.tryAtomicPairedCreatorActuals({
+      facts,
+      collidingFacts,
+      creatorTargetById,
+      ctx,
+      entries,
+    });
+
     // Same atomicity guarantee, applied per-platform: if a single submission
     // carries paired start+end for the same `ShowPlatform`, route the pair
     // through the per-target atomic processor so the priority check +
@@ -207,6 +223,9 @@ export class FactExtractionService {
         continue;
       }
       if (handledPairedPlatformContentKeys.has(fact.contentKey)) {
+        continue;
+      }
+      if (handledPairedCreatorContentKeys.has(fact.contentKey)) {
         continue;
       }
       // Empty submissions never write, never audit. Per Codex P2 review:
@@ -251,7 +270,10 @@ export class FactExtractionService {
       // `ctx.showId`, so missing entries mean the platform is either
       // soft-deleted or has been reassigned to another show; either way,
       // the value stays in `task.content` for the PR 12.4 review queue.
-      if (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid)) {
+      if (
+        (fact.scope === 'creator' && !creatorTargetById.has(fact.targetUid))
+        || (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid))
+      ) {
         entries.push({
           factKey: fact.factKey,
           sourceFieldId: fact.sourceFieldId,
@@ -264,7 +286,7 @@ export class FactExtractionService {
       }
 
       if (isFactColliding(fact, collidingFacts)) {
-        const audit = await this.writeCollisionSkipAudit(fact, ctx, platformTargetById);
+        const audit = await this.writeCollisionSkipAudit(fact, ctx, creatorTargetById, platformTargetById);
         entries.push({
           factKey: fact.factKey,
           sourceFieldId: fact.sourceFieldId,
@@ -277,7 +299,7 @@ export class FactExtractionService {
         continue;
       }
 
-      const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
+      const targetIds = this.resolveAuditTargetIds(fact, ctx, creatorTargetById, platformTargetById);
 
       let processed: { decision: ExtractionDecision; auditUid?: string };
       try {
@@ -429,9 +451,10 @@ export class FactExtractionService {
   private async writeCollisionSkipAudit(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    creatorTargetById: Map<string, { id: bigint; showId: bigint }>,
     platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): Promise<{ uid: string } | undefined> {
-    const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
+    const targetIds = this.resolveAuditTargetIds(fact, ctx, creatorTargetById, platformTargetById);
     if (targetIds.length === 0) {
       return undefined;
     }
@@ -497,7 +520,7 @@ export class FactExtractionService {
 
     // Show scope: bulk-resolved platform cache isn't relevant here, but the
     // resolver signature is shared so we pass an empty map.
-    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx, new Map());
+    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx, new Map(), new Map());
     let result: PairedShowActualsResult;
     try {
       result = await this.factExtractionProcessor.applyPairedShowActuals({
@@ -565,6 +588,7 @@ export class FactExtractionService {
   private resolveAuditTargetIds(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    creatorTargetById: Map<string, { id: bigint; showId: bigint }>,
     platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): { targetType: AuditTargetType; targetId: bigint }[] {
     if (fact.scope === 'show') {
@@ -577,8 +601,125 @@ export class FactExtractionService {
       }
       return [{ targetType: 'SHOW_PLATFORM', targetId: resolved.id }];
     }
-    // PR 12.2 wires the creator scope.
+    if (fact.scope === 'creator') {
+      const resolved = creatorTargetById.get(fact.targetUid);
+      if (!resolved) {
+        return [];
+      }
+      return [{ targetType: 'SHOW_CREATOR', targetId: resolved.id }];
+    }
     return [];
+  }
+
+  private async tryAtomicPairedCreatorActuals(input: {
+    facts: ExtractedFact[];
+    collidingFacts: CollisionTracker;
+    creatorTargetById: Map<string, { id: bigint; showId: bigint }>;
+    ctx: ExtractionContext;
+    entries: ExtractionResultEntry[];
+  }): Promise<Set<string>> {
+    const consumed = new Set<string>();
+    if (
+      !this.extractorRegistry.has('creator_actual_start_time')
+      || !this.extractorRegistry.has('creator_actual_end_time')
+    ) {
+      return consumed;
+    }
+
+    const startByTarget = new Map<string, ExtractedFact>();
+    const endByTarget = new Map<string, ExtractedFact>();
+    for (const fact of input.facts) {
+      if (fact.scope !== 'creator') {
+        continue;
+      }
+      if (fact.factKey === 'creator_actual_start_time') {
+        startByTarget.set(fact.targetUid, fact);
+      } else if (fact.factKey === 'creator_actual_end_time') {
+        endByTarget.set(fact.targetUid, fact);
+      }
+    }
+
+    for (const [targetUid, startFact] of startByTarget) {
+      const endFact = endByTarget.get(targetUid);
+      if (!endFact) {
+        continue;
+      }
+      if (isFactValueAbsent(startFact.rawValue) || isFactValueAbsent(endFact.rawValue)) {
+        continue;
+      }
+      const resolved = input.creatorTargetById.get(targetUid);
+      if (!resolved) {
+        continue;
+      }
+      if (
+        input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('creator_actual_start_time', targetUid),
+        )
+        || input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('creator_actual_end_time', targetUid),
+        )
+      ) {
+        continue;
+      }
+      const startIncoming = parseDateTimeValue(startFact.rawValue);
+      const endIncoming = parseDateTimeValue(endFact.rawValue);
+      if (!startIncoming || !endIncoming) {
+        continue;
+      }
+
+      const targetIds = [{ targetType: 'SHOW_CREATOR' as AuditTargetType, targetId: resolved.id }];
+
+      let result: PairedShowCreatorActualsResult;
+      try {
+        result = await this.factExtractionProcessor.applyPairedShowCreatorActuals({
+          showCreatorUid: targetUid,
+          startFact,
+          endFact,
+          startIncoming,
+          endIncoming,
+          ctx: input.ctx,
+          targetIds,
+        });
+      } catch (err) {
+        this.logger.error(
+          `Paired creator-actuals processor threw on task ${input.ctx.taskUid} target ${targetUid}: ${(err as Error).message}`,
+        );
+        for (const fact of [startFact, endFact]) {
+          input.entries.push({
+            factKey: fact.factKey,
+            sourceFieldId: fact.sourceFieldId,
+            contentKey: fact.contentKey,
+            targetUid: fact.targetUid,
+            outcome: 'noop',
+            reason: 'extractor_error',
+          });
+          consumed.add(fact.contentKey);
+        }
+        continue;
+      }
+
+      input.entries.push({
+        factKey: startFact.factKey,
+        sourceFieldId: startFact.sourceFieldId,
+        contentKey: startFact.contentKey,
+        targetUid: startFact.targetUid,
+        outcome: outcomeFromDecision(result.start.decision),
+        auditUid: result.start.auditUid,
+        reason: result.start.decision.kind === 'noop' ? result.start.decision.reason : undefined,
+      });
+      input.entries.push({
+        factKey: endFact.factKey,
+        sourceFieldId: endFact.sourceFieldId,
+        contentKey: endFact.contentKey,
+        targetUid: endFact.targetUid,
+        outcome: outcomeFromDecision(result.end.decision),
+        auditUid: result.end.auditUid,
+        reason: result.end.decision.kind === 'noop' ? result.end.decision.reason : undefined,
+      });
+      consumed.add(startFact.contentKey);
+      consumed.add(endFact.contentKey);
+    }
+    return consumed;
   }
 
   /**
@@ -778,6 +919,7 @@ function collectBoundFacts(
       scope: 'show',
       targetUid: showUid,
       rawValue: content[item.id],
+      reason: readReasonSidecar(content, item.id),
     });
   }
 
@@ -805,10 +947,19 @@ function collectBoundFacts(
       scope: parsed.scope,
       targetUid: parsed.targetUid,
       rawValue,
+      reason: readReasonSidecar(content, contentKey),
     });
   }
 
   return facts;
+}
+
+function readReasonSidecar(
+  content: Record<string, unknown>,
+  contentKey: string,
+): string | undefined {
+  const reason = content[getTaskContentReasonKey(contentKey)];
+  return typeof reason === 'string' ? reason.trim() || undefined : undefined;
 }
 
 function outcomeFromDecision(decision: ExtractionDecision): ExtractionResultEntry['outcome'] {

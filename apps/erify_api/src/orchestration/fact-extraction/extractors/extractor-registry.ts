@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import type { SystemFactKey } from '@eridu/api-types/task-management';
 
+import { CreatorActualEndTimeExtractor } from './creator-actual-end-time.extractor';
+import { CreatorActualStartTimeExtractor } from './creator-actual-start-time.extractor';
+import { CreatorAttendanceMissingExtractor } from './creator-attendance-missing.extractor';
 import type { IngestionExtractor } from './extractor.types';
 import { ShowActualEndTimeExtractor } from './show-actual-end-time.extractor';
 import { ShowActualStartTimeExtractor } from './show-actual-start-time.extractor';
@@ -15,8 +18,8 @@ import { ShowPlatformActualStartTimeExtractor } from './show-platform-actual-sta
  * the field rather than refusing the whole submission.
  *
  * PR 12.0.5 shipped the first writers (`show_actual_start_time`); 12.1.1
- * added `show_actual_end_time`; 12.1.2 wires the platform-scoped pair.
- * Subsequent sub-PRs (12.2, 12.3.2) register more without changing this
+ * added `show_actual_end_time`; 12.1.2 wires the platform-scoped pair;
+ * 12.2 wires creator times + attendance. Subsequent sub-PRs (12.3.2) register more without changing this
  * file's public surface.
  */
 @Injectable()
@@ -26,12 +29,18 @@ export class ExtractorRegistry {
   constructor(
     showActualStartTimeExtractor: ShowActualStartTimeExtractor,
     showActualEndTimeExtractor: ShowActualEndTimeExtractor,
+    creatorActualStartTimeExtractor: CreatorActualStartTimeExtractor,
+    creatorActualEndTimeExtractor: CreatorActualEndTimeExtractor,
+    creatorAttendanceMissingExtractor: CreatorAttendanceMissingExtractor,
     showPlatformActualStartTimeExtractor: ShowPlatformActualStartTimeExtractor,
     showPlatformActualEndTimeExtractor: ShowPlatformActualEndTimeExtractor,
   ) {
     this.byFactKey = new Map<SystemFactKey, IngestionExtractor>([
       [showActualStartTimeExtractor.factKey, showActualStartTimeExtractor],
       [showActualEndTimeExtractor.factKey, showActualEndTimeExtractor],
+      [creatorActualStartTimeExtractor.factKey, creatorActualStartTimeExtractor],
+      [creatorActualEndTimeExtractor.factKey, creatorActualEndTimeExtractor],
+      [creatorAttendanceMissingExtractor.factKey, creatorAttendanceMissingExtractor],
       [showPlatformActualStartTimeExtractor.factKey, showPlatformActualStartTimeExtractor],
       [showPlatformActualEndTimeExtractor.factKey, showPlatformActualEndTimeExtractor],
     ]);

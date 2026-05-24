@@ -21,6 +21,8 @@ export type ExtractedFact = {
   targetUid: string;
   /** Raw value from `task.content[contentKey]` — null / undefined are treated as "not recorded". */
   rawValue: unknown;
+  /** Optional reason sidecar from `task.content[`${contentKey}__reason`]`. */
+  reason?: string;
 };
 
 /**

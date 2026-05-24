@@ -6,6 +6,7 @@ import type { FactExtractionProcessor, ProcessedFact } from './fact-extraction.p
 import { FactExtractionService } from './fact-extraction.service';
 
 import type { AuditService } from '@/models/audit/audit.service';
+import type { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import type { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import type { TaskService } from '@/models/task/task.service';
 
@@ -52,6 +53,7 @@ describe('factExtractionService', () => {
   let extractor: jest.Mocked<IngestionExtractor>;
   let registry: ExtractorRegistry;
   let processor: jest.Mocked<FactExtractionProcessor>;
+  let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
 
   beforeEach(() => {
@@ -101,13 +103,33 @@ describe('factExtractionService', () => {
           auditUid: 'aud_paired_platform_end',
         },
       } as never)),
+      applyPairedShowCreatorActuals: jest.fn(async () => ({
+        start: {
+          decision: { kind: 'write', action: 'CREATE', oldValue: null, newValue: 'start' },
+          auditUid: 'aud_paired_creator_start',
+        },
+        end: {
+          decision: { kind: 'write', action: 'CREATE', oldValue: null, newValue: 'end' },
+          auditUid: 'aud_paired_creator_end',
+        },
+      } as never)),
+    } as never;
+    showCreatorService = {
+      findActiveByUids: jest.fn().mockResolvedValue(new Map()),
     } as never;
     showPlatformService = {
       // Default: no platform targets resolve. Platform-scope tests override
       // this with the targets they expect to be active.
       findActiveByUids: jest.fn().mockResolvedValue(new Map()),
     } as never;
-    service = new FactExtractionService(taskService, auditService, registry, processor, showPlatformService);
+    service = new FactExtractionService(
+      taskService,
+      auditService,
+      registry,
+      processor,
+      showCreatorService,
+      showPlatformService,
+    );
   });
 
   it('returns an empty result when the task has no snapshot', async () => {
@@ -185,6 +207,7 @@ describe('factExtractionService', () => {
       auditService,
       pairedRegistry,
       processor,
+      showCreatorService,
       showPlatformService,
     );
     taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
@@ -286,6 +309,7 @@ describe('factExtractionService', () => {
       auditService,
       pairedRegistry,
       processor,
+      showCreatorService,
       showPlatformService,
     );
     startExtractor.apply.mockResolvedValue({
@@ -359,6 +383,7 @@ describe('factExtractionService', () => {
       auditService,
       pairedRegistry,
       processor,
+      showCreatorService,
       showPlatformService,
     );
     taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
@@ -606,6 +631,127 @@ describe('factExtractionService', () => {
     });
   });
 
+  describe('show creator actuals routing', () => {
+    function buildPairedCreatorRegistry(extractors: {
+      start: IngestionExtractor;
+      end: IngestionExtractor;
+    }): ExtractorRegistry {
+      return {
+        resolve: jest.fn((factKey: string) => {
+          if (factKey === 'creator_actual_start_time')
+            return extractors.start;
+          if (factKey === 'creator_actual_end_time')
+            return extractors.end;
+          return undefined;
+        }),
+        has: jest.fn((factKey: string) =>
+          factKey === 'creator_actual_start_time'
+          || factKey === 'creator_actual_end_time',
+        ),
+        registeredFactKeys: jest.fn(() => [
+          'creator_actual_start_time',
+          'creator_actual_end_time',
+        ]),
+      } as unknown as ExtractorRegistry;
+    }
+
+    function buildCreatorTaskSnapshot(targetUids: string[]): ReturnType<typeof buildTaskWithSnapshot> {
+      const items = [
+        { id: 'fld_creatorstart1', system_fact_key: 'creator_actual_start_time' },
+        { id: 'fld_creatorend12', system_fact_key: 'creator_actual_end_time' },
+      ];
+      const content: Record<string, string> = {};
+      for (const uid of targetUids) {
+        content[`fld_creatorstart1:creator:${uid}`] = '2026-05-23T12:00:00.000Z';
+        content[`fld_creatorend12:creator:${uid}`] = '2026-05-23T13:00:00.000Z';
+      }
+      return buildTaskWithSnapshot({ schema: { items }, content });
+    }
+
+    it('routes a paired creator submission through applyPairedShowCreatorActuals once per target', async () => {
+      const startExtractor = buildExtractor({ factKey: 'creator_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'creator_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedCreatorRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildCreatorTaskSnapshot(['show_mc_alpha', 'show_mc_beta']),
+      );
+      showCreatorService.findActiveByUids.mockResolvedValue(
+        new Map([
+          ['show_mc_alpha', { id: 101n, showId: 10n }],
+          ['show_mc_beta', { id: 102n, showId: 10n }],
+        ]),
+      );
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(showCreatorService.findActiveByUids).toHaveBeenCalledWith(
+        ['show_mc_alpha', 'show_mc_beta'],
+        10n,
+      );
+      expect(processor.applyPairedShowCreatorActuals).toHaveBeenCalledTimes(2);
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+      expect(result.entries).toHaveLength(4);
+      const targetIdsSeen = processor.applyPairedShowCreatorActuals.mock.calls
+        .map((args) => (args[0] as { targetIds: { targetId: bigint }[] }).targetIds[0]!.targetId)
+        .sort();
+      expect(targetIdsSeen).toEqual([101n, 102n]);
+    });
+
+    it('emits skipped_stale_target without writing an audit when the creator target is missing from the active map', async () => {
+      const startExtractor = buildExtractor({ factKey: 'creator_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'creator_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedCreatorRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildCreatorTaskSnapshot(['show_mc_stale']),
+      );
+      showCreatorService.findActiveByUids.mockResolvedValue(new Map());
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowCreatorActuals).not.toHaveBeenCalled();
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          factKey: 'creator_actual_start_time',
+          outcome: 'skipped_stale_target',
+        }),
+        expect.objectContaining({
+          factKey: 'creator_actual_end_time',
+          outcome: 'skipped_stale_target',
+        }),
+      ]));
+    });
+  });
+
   describe('show platform actuals routing', () => {
     function buildPairedPlatformRegistry(extractors: {
       start: IngestionExtractor;
@@ -651,6 +797,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
@@ -704,6 +851,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
@@ -734,6 +882,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
@@ -784,6 +933,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
@@ -835,6 +985,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
@@ -880,6 +1031,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
@@ -938,6 +1090,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
@@ -1012,6 +1165,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
@@ -1077,6 +1231,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
@@ -1131,6 +1286,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
@@ -1189,6 +1345,7 @@ describe('factExtractionService', () => {
         auditService,
         buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
         processor,
+        showCreatorService,
         showPlatformService,
       );
       taskService.findByUidWithSnapshot.mockResolvedValue(
