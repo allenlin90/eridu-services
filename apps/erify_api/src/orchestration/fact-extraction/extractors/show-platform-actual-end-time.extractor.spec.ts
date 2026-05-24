@@ -162,6 +162,28 @@ describe('showPlatformActualEndTimeExtractor', () => {
     expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
   });
 
+  it('converts a NotFoundException from updateActuals to target_stale (soft-delete race after read)', async () => {
+    // See `show-platform-actual-start-time.extractor.spec.ts` for the
+    // soft-delete race rationale.
+    const showPlatformService = buildShowPlatformService({});
+    showPlatformService.updateActuals.mockRejectedValue(
+      new NotFoundException('ShowPlatform not found'),
+    );
+    const extractor = new ShowPlatformActualEndTimeExtractor(showPlatformService);
+
+    const decision = await extractor.apply(fact, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+  });
+
+  it('propagates non-NotFoundException errors from updateActuals so the outer catch records extractor_error', async () => {
+    const showPlatformService = buildShowPlatformService({});
+    showPlatformService.updateActuals.mockRejectedValue(new Error('connection refused'));
+    const extractor = new ShowPlatformActualEndTimeExtractor(showPlatformService);
+
+    await expect(extractor.apply(fact, ctx)).rejects.toThrow('connection refused');
+  });
+
   it('stays a noop on resubmission even when the stored pair is already inverted', async () => {
     const showPlatformService = buildShowPlatformService({
       actualStartTime: new Date('2026-05-23T20:00:00.000Z'),

@@ -84,10 +84,20 @@ export class ShowPlatformActualEndTimeExtractor implements IngestionExtractor {
       actuals_source: nextActualsSource,
     };
 
-    await this.showPlatformService.updateActuals(fact.targetUid, {
-      actualEndTime: incoming,
-      metadata: nextMetadata,
-    });
+    try {
+      await this.showPlatformService.updateActuals(fact.targetUid, {
+        actualEndTime: incoming,
+        metadata: nextMetadata,
+      });
+    }
+    catch (err) {
+      // See `show-platform-actual-start-time.extractor.ts` for the
+      // soft-delete race rationale.
+      if (err instanceof NotFoundException) {
+        return { kind: 'noop', reason: 'target_stale' };
+      }
+      throw err;
+    }
 
     return {
       kind: 'write',

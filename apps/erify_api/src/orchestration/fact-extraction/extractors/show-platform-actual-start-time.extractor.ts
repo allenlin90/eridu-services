@@ -103,10 +103,23 @@ export class ShowPlatformActualStartTimeExtractor implements IngestionExtractor 
       actuals_source: nextActualsSource,
     };
 
-    await this.showPlatformService.updateActuals(fact.targetUid, {
-      actualStartTime: incoming,
-      metadata: nextMetadata,
-    });
+    try {
+      await this.showPlatformService.updateActuals(fact.targetUid, {
+        actualStartTime: incoming,
+        metadata: nextMetadata,
+      });
+    }
+    catch (err) {
+      // Concurrent soft-delete race: the read above saw an active row but
+      // `updateActuals` filters by `deletedAt: null`, so the write
+      // throws `NotFoundException` when the platform was deleted between
+      // read and write. Collapse to `target_stale` (same as the prefetch
+      // race) so no audit / column write claims a soft-deleted target.
+      if (err instanceof NotFoundException) {
+        return { kind: 'noop', reason: 'target_stale' };
+      }
+      throw err;
+    }
 
     return {
       kind: 'write',

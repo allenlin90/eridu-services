@@ -630,5 +630,31 @@ describe('factExtractionProcessor', () => {
       expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
       expect(auditService.create).not.toHaveBeenCalled();
     });
+
+    it('converts a NotFoundException from updateActuals to target_stale on both sides (concurrent soft-delete race)', async () => {
+      // Codex P2 review on PR #103: `updateActuals` now filters by
+      // `{ uid, deletedAt: null }`. If the platform was active at the
+      // transactional read but soft-deleted by the time we write, the
+      // update throws `NotFoundException`. Collapse to `target_stale` on
+      // both sides so no audit row claims a soft-deleted target.
+      installPlatformEnsureValidImpl();
+      showPlatformService.getShowPlatformById.mockResolvedValue({
+        id: 200n,
+        uid: 'show_plt_200',
+        showId: 10n,
+        metadata: {},
+        actualStartTime: null,
+        actualEndTime: null,
+      } as never);
+      showPlatformService.updateActuals.mockRejectedValue(
+        new NotFoundException('ShowPlatform not found'),
+      );
+
+      const result = await processor.applyPairedShowPlatformActuals(buildPlatformInput());
+
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+    });
   });
 });

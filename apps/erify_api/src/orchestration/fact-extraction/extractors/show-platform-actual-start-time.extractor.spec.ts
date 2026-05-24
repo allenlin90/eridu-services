@@ -198,6 +198,32 @@ describe('showPlatformActualStartTimeExtractor', () => {
     expect(showPlatformService.updateActuals).not.toHaveBeenCalled();
   });
 
+  it('converts a NotFoundException from updateActuals to target_stale (soft-delete race after read)', async () => {
+    // Codex P2 review on PR #103: `updateActuals` now filters by
+    // `{ uid, deletedAt: null }`, so a `ShowPlatform` soft-deleted
+    // between the stale-target read and the write throws
+    // `NotFoundException`. Collapse to `target_stale` — same outcome as
+    // the prefetch race — so no audit / column write claims a
+    // soft-deleted target.
+    const showPlatformService = buildShowPlatformService({});
+    showPlatformService.updateActuals.mockRejectedValue(
+      new NotFoundException('ShowPlatform not found'),
+    );
+    const extractor = new ShowPlatformActualStartTimeExtractor(showPlatformService);
+
+    const decision = await extractor.apply(fact, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+  });
+
+  it('propagates non-NotFoundException errors from updateActuals so the outer catch records extractor_error', async () => {
+    const showPlatformService = buildShowPlatformService({});
+    showPlatformService.updateActuals.mockRejectedValue(new Error('connection refused'));
+    const extractor = new ShowPlatformActualStartTimeExtractor(showPlatformService);
+
+    await expect(extractor.apply(fact, ctx)).rejects.toThrow('connection refused');
+  });
+
   it('stays a noop on resubmission even when the stored pair is already inverted', async () => {
     // Mirrors the Codex P2 review fix from PR #101 for the show scope:
     // `ensureValidActualTimeRange` must not run for unchanged values, so a

@@ -160,15 +160,29 @@ export class ShowPlatformService extends BaseModelService {
    * actuals columns and metadata (the only fields the extractor needs to
    * mutate) and forwards directly to the repository so we don't relax the
    * public `UpdateShowPlatformPayload` shape used by admin/studio controllers.
+   *
+   * Per Codex P2 review on PR #103: the write is scoped to
+   * `{ uid, deletedAt: null }` via `updateMany`, so a `ShowPlatform` that
+   * was soft-deleted between the stale-target prefetch and this write
+   * doesn't get mutated and audited as if it were still active. When the
+   * race fires (`count === 0`), throw `NotFoundException` so the
+   * extractor / paired processor can convert it to the same
+   * `target_stale` outcome that the prefetch path uses.
    */
   async updateActuals(
     uid: string,
     payload: { actualStartTime?: Date; actualEndTime?: Date; metadata?: Record<string, unknown> },
-  ): ReturnType<ShowPlatformRepository['update']> {
-    return this.showPlatformRepository.update({ uid }, {
-      ...(payload.actualStartTime !== undefined ? { actualStartTime: payload.actualStartTime } : {}),
-      ...(payload.actualEndTime !== undefined ? { actualEndTime: payload.actualEndTime } : {}),
-      ...(payload.metadata !== undefined ? { metadata: payload.metadata as never } : {}),
-    });
+  ): Promise<void> {
+    const result = await this.showPlatformRepository.updateMany(
+      { uid, deletedAt: null },
+      {
+        ...(payload.actualStartTime !== undefined ? { actualStartTime: payload.actualStartTime } : {}),
+        ...(payload.actualEndTime !== undefined ? { actualEndTime: payload.actualEndTime } : {}),
+        ...(payload.metadata !== undefined ? { metadata: payload.metadata as never } : {}),
+      },
+    );
+    if (result.count === 0) {
+      throw HttpError.notFound('ShowPlatform', uid);
+    }
   }
 }

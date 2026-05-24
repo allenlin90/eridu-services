@@ -317,11 +317,27 @@ export class FactExtractionProcessor {
         ...(endEffectiveWrite ? { show_platform_actual_end_time: input.ctx.source } : {}),
       };
       const nextMetadata: ShowMetadataShape = { ...metadata, actuals_source: nextActualsSource };
-      await this.showPlatformService.updateActuals(input.showPlatformUid, {
-        ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
-        ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
-        metadata: nextMetadata,
-      });
+      try {
+        await this.showPlatformService.updateActuals(input.showPlatformUid, {
+          ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
+          ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
+          metadata: nextMetadata,
+        });
+      }
+      catch (err) {
+        // Same concurrent soft-delete race as the per-extractor path:
+        // the row was active when we read it but `updateActuals` filters
+        // by `deletedAt: null`, so the write throws `NotFoundException`
+        // when the platform was soft-deleted between read and write.
+        // Collapse to `target_stale` on both sides so no audit / column
+        // write claims a soft-deleted target. Non-not-found errors still
+        // propagate so the `@Transactional` boundary rolls back.
+        if (err instanceof NotFoundException) {
+          const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
+          return { start: { decision }, end: { decision } };
+        }
+        throw err;
+      }
     }
 
     const start = await this.recordPairedSideDecision({
