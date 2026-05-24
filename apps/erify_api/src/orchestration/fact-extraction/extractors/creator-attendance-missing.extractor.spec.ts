@@ -155,15 +155,48 @@ describe('creatorAttendanceMissingExtractor', () => {
     expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
   });
 
-  it('preserves attendanceReason on a false write when the start extractor has written a late reason', async () => {
+  it('preserves attendanceReason on a false write when the start extractor is co-submitted', async () => {
     // Regression for Codex P1: `attendanceReason` is shared with
-    // `creator_actual_start_time`. When the start extractor ran first
-    // in the same submission and wrote a late reason, this extractor's
-    // false-write must NOT clear that reason — doing so would erase
-    // late-start context owned by a different fact key.
+    // `creator_actual_start_time`. When the start extractor is also
+    // submitted in this run, this extractor's false-write must NOT
+    // clear the column — the start extractor's (possibly late) reason
+    // owns it.
     const showCreatorService = buildShowCreatorService({
       attendanceMissing: true,
       attendanceReason: 'Late start reason from operator.',
+      metadata: { actuals_source: {
+        creator_attendance_missing: 'OPERATOR',
+        creator_actual_start_time: 'OPERATOR',
+      } },
+    });
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
+
+    const decision = await extractor.apply(
+      {
+        ...fact,
+        rawValue: false,
+        reason: undefined,
+        coSubmittedFactKeysForTarget: new Set(['creator_actual_start_time']),
+      },
+      ctx,
+    );
+
+    expect(decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    const [, , payload] = showCreatorService.updateActuals.mock.calls[0]!;
+    expect(payload).toEqual(expect.objectContaining({ attendanceMissing: false }));
+    expect(payload).not.toHaveProperty('attendanceReason');
+  });
+
+  it('clears attendanceReason on a false write when only persisted metadata mentions the start extractor (no co-submission)', async () => {
+    // Regression for Codex P2: ownership must be scoped to the current
+    // extraction run. A historical `creator_actual_start_time` write in
+    // persisted metadata must NOT keep a stale absence reason pinned
+    // when the current submission only toggles attendance_missing off.
+    const showCreatorService = buildShowCreatorService({
+      attendanceMissing: true,
+      attendanceReason: 'Sick leave.',
       metadata: { actuals_source: {
         creator_attendance_missing: 'OPERATOR',
         creator_actual_start_time: 'OPERATOR',
@@ -179,9 +212,14 @@ describe('creatorAttendanceMissingExtractor', () => {
     );
 
     expect(decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
-    const [, , payload] = showCreatorService.updateActuals.mock.calls[0]!;
-    expect(payload).toEqual(expect.objectContaining({ attendanceMissing: false }));
-    expect(payload).not.toHaveProperty('attendanceReason');
+    expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
+      'show_mc_alpha',
+      10n,
+      expect.objectContaining({
+        attendanceMissing: false,
+        attendanceReason: null,
+      }),
+    );
   });
 
   it('flushes the corrected missing reason on a same-flag resubmission', async () => {

@@ -899,7 +899,8 @@ function collectBoundFacts(
   content: Record<string, unknown>,
   showUid: string,
 ): ExtractedFact[] {
-  const facts: ExtractedFact[] = [];
+  type PartialFact = Omit<ExtractedFact, 'coSubmittedFactKeysForTarget'>;
+  const partials: PartialFact[] = [];
   const itemByFieldId = new Map<string, FieldItemV2>(schema.items.map((item) => [item.id, item]));
 
   // Show-scoped bindings — no per-target hydration; one fact per template field.
@@ -914,7 +915,7 @@ function collectBoundFacts(
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[factKey];
     if (!definition || definition.target !== 'show')
       continue;
-    facts.push({
+    partials.push({
       contentKey: item.id,
       sourceFieldId: item.id,
       factKey,
@@ -952,7 +953,7 @@ function collectBoundFacts(
     const expectedScope = definition.target === 'show_creator' ? 'creator' : definition.target === 'show_platform' ? 'platform' : null;
     if (!expectedScope || expectedScope !== parsed.scope)
       continue;
-    facts.push({
+    partials.push({
       contentKey,
       sourceFieldId: parsed.fieldId,
       factKey: templateItem.system_fact_key,
@@ -963,7 +964,30 @@ function collectBoundFacts(
     });
   }
 
-  return facts;
+  // Second pass: index fact keys present per target so each fact can see
+  // its siblings in the same submission. The attendance-missing extractor
+  // uses this to detect when the start-time extractor is also writing in
+  // this run for the same creator — the two facts share `attendanceReason`
+  // and the missing extractor must not clear a late-start reason that the
+  // start extractor is about to (or just did) write.
+  const factKeysByTarget = new Map<string, Set<SystemFactKey>>();
+  for (const partial of partials) {
+    const key = `${partial.scope}|${partial.targetUid}`;
+    let set = factKeysByTarget.get(key);
+    if (!set) {
+      set = new Set();
+      factKeysByTarget.set(key, set);
+    }
+    set.add(partial.factKey);
+  }
+
+  return partials.map((partial) => {
+    const key = `${partial.scope}|${partial.targetUid}`;
+    const allForTarget = factKeysByTarget.get(key) ?? new Set<SystemFactKey>();
+    const siblings = new Set(allForTarget);
+    siblings.delete(partial.factKey);
+    return { ...partial, coSubmittedFactKeysForTarget: siblings };
+  });
 }
 
 function readReasonSidecar(

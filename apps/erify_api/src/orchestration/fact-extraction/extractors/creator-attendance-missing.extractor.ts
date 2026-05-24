@@ -62,20 +62,22 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
     }
 
     const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
-    const startHasWritten = Boolean(metadata.actuals_source?.creator_actual_start_time);
-    // `attendanceReason` is shared with `creator_actual_start_time`, which
-    // may have written a late-arrival reason earlier in this extraction
-    // run. Resolve who owns the column before we touch it:
-    //   - flag=true:  write the real or fallback missing reason.
-    //   - flag=true→false AND start extractor has NOT written: clear, the
-    //     reason was almost certainly our prior fallback / no-show note.
-    //   - flag=true→false AND start extractor HAS written: leave the
-    //     column alone — the late-start reason owns it now.
-    //   - flag=false→false: no transition; never touch the column.
+    const startCoSubmitted = fact.coSubmittedFactKeysForTarget?.has('creator_actual_start_time') ?? false;
+    // `attendanceReason` is shared with `creator_actual_start_time`. The
+    // start extractor may run earlier in this same submission and write a
+    // late-arrival reason; we must not erase it. We deliberately read
+    // co-submission from the current run rather than persisted
+    // `metadata.actuals_source` — historical writes from a long-past
+    // task shouldn't trap a stale absence reason on a creator who is no
+    // longer marked missing.
+    //   - flag=true:                                  write real / fallback missing reason.
+    //   - flag=true→false AND start NOT co-submitted: clear (our prior no-show note).
+    //   - flag=true→false AND start IS  co-submitted: leave alone (late-start owns it).
+    //   - flag=false→false:                           never touch the column.
     let desiredReason: string | null | undefined;
     if (incoming) {
       desiredReason = trimmedReason || MISSING_REASON_FALLBACK;
-    } else if (currentValue === true && !startHasWritten) {
+    } else if (currentValue === true && !startCoSubmitted) {
       desiredReason = null;
     } else {
       desiredReason = undefined;

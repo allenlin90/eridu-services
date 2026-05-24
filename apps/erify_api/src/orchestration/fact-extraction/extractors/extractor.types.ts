@@ -23,6 +23,19 @@ export type ExtractedFact = {
   rawValue: unknown;
   /** Optional reason sidecar from `task.content[`${contentKey}__reason`]`. */
   reason?: string;
+  /**
+   * Fact keys co-submitted for the SAME target in the current task
+   * submission (excludes this fact's own key). Lets an extractor reason
+   * about sibling writes that share a column with this fact — e.g. the
+   * attendance-missing extractor needs to know whether the start-time
+   * extractor is ALSO writing in this run before it decides to clear
+   * the shared `attendanceReason`. The service populates this during
+   * fact collection; left optional so call sites that build minimal
+   * fact fixtures (tests, direct processor invocations) don't need to
+   * stitch the set themselves. Consumers should treat `undefined` as
+   * "no siblings known."
+   */
+  coSubmittedFactKeysForTarget?: ReadonlySet<SystemFactKey>;
 };
 
 /**
