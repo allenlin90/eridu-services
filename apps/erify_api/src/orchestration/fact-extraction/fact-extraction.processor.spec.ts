@@ -9,6 +9,7 @@ import { FactExtractionProcessor } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowService } from '@/models/show/show.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -62,6 +63,7 @@ describe('factExtractionProcessor', () => {
   let processor: FactExtractionProcessor;
   let auditService: jest.Mocked<AuditService>;
   let showService: jest.Mocked<ShowService>;
+  let showCreatorService: jest.Mocked<ShowCreatorService>;
 
   beforeEach(async () => {
     mockPrismaForCls.$transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => {
@@ -109,6 +111,24 @@ describe('factExtractionProcessor', () => {
           },
         },
         {
+          provide: ShowCreatorService,
+          useValue: {
+            getShowCreatorById: jest.fn().mockResolvedValue({
+              id: 101n,
+              uid: 'show_mc_alpha',
+              showId: 10n,
+              metadata: {},
+              actualStartTime: null,
+              actualEndTime: null,
+              attendanceMissing: false,
+              attendanceReason: null,
+              show: { startTime: new Date('2026-05-23T12:00:00.000Z') },
+            } as never),
+            updateActuals: jest.fn().mockResolvedValue({} as never),
+            ensureValidActualTimeRange: jest.fn(),
+          },
+        },
+        {
           provide: ShowPlatformService,
           useValue: {
             getShowPlatformById: jest.fn().mockResolvedValue({
@@ -129,6 +149,7 @@ describe('factExtractionProcessor', () => {
     processor = module.get<FactExtractionProcessor>(FactExtractionProcessor);
     auditService = module.get(AuditService);
     showService = module.get(ShowService);
+    showCreatorService = module.get(ShowCreatorService);
   });
 
   it('writes a CREATE/UPDATE audit alongside a successful extractor decision', async () => {
@@ -414,6 +435,183 @@ describe('factExtractionProcessor', () => {
       expect(showService.ensureValidActualTimeRange).not.toHaveBeenCalled();
       expect(showService.updateShow).not.toHaveBeenCalled();
       expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    });
+  });
+
+  describe('applyPairedShowCreatorActuals', () => {
+    const creatorTargets = [{ targetType: 'SHOW_CREATOR' as const, targetId: 101n }];
+
+    const startFact = {
+      contentKey: 'fld_creatorstart1:creator:show_mc_alpha',
+      sourceFieldId: 'fld_creatorstart1',
+      factKey: 'creator_actual_start_time' as const,
+      scope: 'creator' as const,
+      targetUid: 'show_mc_alpha',
+      rawValue: '2026-05-23T12:30:00.000Z',
+      reason: 'Transport delay.',
+    };
+    const endFact = {
+      contentKey: 'fld_creatorend12:creator:show_mc_alpha',
+      sourceFieldId: 'fld_creatorend12',
+      factKey: 'creator_actual_end_time' as const,
+      scope: 'creator' as const,
+      targetUid: 'show_mc_alpha',
+      rawValue: '2026-05-23T13:30:00.000Z',
+    };
+
+    function buildCreatorInput(overrides: Partial<{
+      startIncoming: Date;
+      endIncoming: Date;
+    }> = {}) {
+      return {
+        showCreatorUid: 'show_mc_alpha',
+        startFact,
+        endFact,
+        startIncoming: overrides.startIncoming ?? new Date('2026-05-23T12:30:00.000Z'),
+        endIncoming: overrides.endIncoming ?? new Date('2026-05-23T13:30:00.000Z'),
+        ctx,
+        targetIds: creatorTargets,
+      };
+    }
+
+    function installCreatorEnsureValidImpl() {
+      showCreatorService.ensureValidActualTimeRange.mockImplementation((
+        currentStart: Date | null,
+        currentEnd: Date | null,
+        dto: { actualStartTime?: Date | null; actualEndTime?: Date | null },
+      ) => {
+        const next = {
+          start: dto.actualStartTime !== undefined ? dto.actualStartTime : currentStart ?? null,
+          end: dto.actualEndTime !== undefined ? dto.actualEndTime : currentEnd ?? null,
+        };
+        if (next.start && next.end && next.end <= next.start) {
+          throw new Error('Actual end time must be after actual start time');
+        }
+      });
+    }
+
+    it('writes both creator actual columns and stores the late reason when both sides pass priority', async () => {
+      installCreatorEnsureValidImpl();
+      showCreatorService.getShowCreatorById.mockResolvedValue({
+        id: 101n,
+        uid: 'show_mc_alpha',
+        showId: 10n,
+        metadata: {},
+        actualStartTime: null,
+        actualEndTime: null,
+        attendanceMissing: false,
+        attendanceReason: null,
+        show: { startTime: new Date('2026-05-23T12:00:00.000Z') },
+      } as never);
+
+      const result = await processor.applyPairedShowCreatorActuals(buildCreatorInput());
+
+      expect(showCreatorService.updateActuals).toHaveBeenCalledTimes(1);
+      expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
+        'show_mc_alpha',
+        10n,
+        expect.objectContaining({
+          actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+          actualEndTime: new Date('2026-05-23T13:30:00.000Z'),
+          attendanceReason: 'Transport delay.',
+          metadata: expect.objectContaining({
+            actuals_source: expect.objectContaining({
+              creator_actual_start_time: 'OPERATOR',
+              creator_actual_end_time: 'OPERATOR',
+            }),
+          }),
+        }),
+      );
+      expect(auditService.create).toHaveBeenCalledTimes(2);
+      expect(result.start.decision).toMatchObject({ kind: 'write', action: 'CREATE' });
+      expect(result.end.decision).toMatchObject({ kind: 'write', action: 'CREATE' });
+    });
+
+    it('returns target_stale on both sides when the creator assignment belongs to a different show', async () => {
+      showCreatorService.getShowCreatorById.mockResolvedValue({
+        id: 101n,
+        uid: 'show_mc_alpha',
+        showId: 999n,
+        metadata: {},
+        actualStartTime: null,
+        actualEndTime: null,
+        attendanceMissing: false,
+        attendanceReason: null,
+        show: { startTime: new Date('2026-05-23T12:00:00.000Z') },
+      } as never);
+
+      const result = await processor.applyPairedShowCreatorActuals(buildCreatorInput());
+
+      expect(showCreatorService.updateActuals).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+      expect(result.end.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+    });
+
+    it('flushes the corrected late reason on a same-timestamp resubmission', async () => {
+      // Regression for Codex P2: even when both start and end timestamps
+      // match the stored values, a resubmission that provides a real
+      // late reason must still flush `attendanceReason` so the fallback
+      // text stored on the first write does not stick.
+      installCreatorEnsureValidImpl();
+      showCreatorService.getShowCreatorById.mockResolvedValue({
+        id: 101n,
+        uid: 'show_mc_alpha',
+        showId: 10n,
+        metadata: { actuals_source: {
+          creator_actual_start_time: 'OPERATOR',
+          creator_actual_end_time: 'OPERATOR',
+        } },
+        actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+        actualEndTime: new Date('2026-05-23T13:30:00.000Z'),
+        attendanceMissing: false,
+        attendanceReason: 'Late attendance reason was not provided by the task field.',
+        show: { startTime: new Date('2026-05-23T12:00:00.000Z') },
+      } as never);
+
+      const result = await processor.applyPairedShowCreatorActuals(buildCreatorInput());
+
+      expect(showCreatorService.updateActuals).toHaveBeenCalledTimes(1);
+      expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
+        'show_mc_alpha',
+        10n,
+        expect.objectContaining({
+          attendanceReason: 'Transport delay.',
+        }),
+      );
+      expect(result.start.decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    });
+
+    it('preserves an existing real late reason when the start sidecar is omitted on resubmission', async () => {
+      // Regression for Codex P2: a same-timestamp retry without a
+      // sidecar must NOT downgrade an existing real operator reason to
+      // the system fallback. With nothing else changing, the paired
+      // write must report value_unchanged on both sides.
+      installCreatorEnsureValidImpl();
+      showCreatorService.getShowCreatorById.mockResolvedValue({
+        id: 101n,
+        uid: 'show_mc_alpha',
+        showId: 10n,
+        metadata: { actuals_source: {
+          creator_actual_start_time: 'OPERATOR',
+          creator_actual_end_time: 'OPERATOR',
+        } },
+        actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+        actualEndTime: new Date('2026-05-23T13:30:00.000Z'),
+        attendanceMissing: false,
+        attendanceReason: 'Real operator reason.',
+        show: { startTime: new Date('2026-05-23T12:00:00.000Z') },
+      } as never);
+
+      const input = {
+        ...buildCreatorInput(),
+        startFact: { ...startFact, reason: undefined },
+      };
+      const result = await processor.applyPairedShowCreatorActuals(input);
+
+      expect(showCreatorService.updateActuals).not.toHaveBeenCalled();
       expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
       expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
     });

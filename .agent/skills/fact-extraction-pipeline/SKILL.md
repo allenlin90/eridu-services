@@ -1,6 +1,6 @@
 ---
 name: fact-extraction-pipeline
-description: Patterns for adding extractors and write surfaces to the PR 12 fact-extraction pipeline (`apps/erify_api/src/orchestration/fact-extraction/`). Use BEFORE implementing any new `IngestionExtractor`, paired-atomic write, `SystemFactKey`, or hydrated-scope target type. Required reading before PR 12.2 (creator), 12.3.2 (violations), 12.4 (review surface), or any follow-on extractor work — every Codex finding on PR 12.1.2 (#103) is encoded here.
+description: Patterns for adding extractors and write surfaces to the PR 12 fact-extraction pipeline (`apps/erify_api/src/orchestration/fact-extraction/`). Use BEFORE implementing any new `IngestionExtractor`, paired-atomic write, `SystemFactKey`, or hydrated-scope target type. Required reading before PR 12.3.2 (violations), 12.4 (review surface), or any follow-on extractor work — every Codex finding on PR 12.1.2 (#103) and PR 12.2 (#104) is encoded here. The "State-transition handoff between co-submitted facts" section is mandatory before adding ANY fact whose write semantics depend on another fact's value in the same submission.
 ---
 
 # Fact Extraction Pipeline
@@ -135,6 +135,7 @@ For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box ma
 - [ ] Add fact key + definition to `SYSTEM_FACT_KEY_DEFINITIONS` (`packages/api-types/.../template-definition.schema.ts`)
 - [ ] Schema migration + model field exists from PR 12.0.2 — verify before extractor work
 - [ ] Add target type to `AuditTargetType` enum if it's a new scope
+- [ ] **Co-submission audit**: does this fact and another fact key write to the same column under a mutually-exclusive state derivation? (E.g., `creator_attendance_missing` and `creator_actual_start_time` both write `attendanceReason` but only one is "active" at a time per the read-side derivation rule.) If yes, read "State-transition handoff between co-submitted facts" below BEFORE writing extractor code — the cross-fact transition handoff is where every Codex finding on PR 12.2 came from
 
 **Model service**:
 - [ ] `getByUid(uid)` that throws `HttpError.notFound`
@@ -157,6 +158,7 @@ For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box ma
 - [ ] Add bulk resolution call in `extractFromTask` (mirror `findActiveByUids` for the new scope)
 - [ ] Insert stale-target pre-filter BEFORE collision routing in the per-fact loop
 - [ ] If paired: add `applyPaired{Entity}Actuals` per-target processor + `tryAtomicPaired{Entity}Actuals` in the service
+- [ ] If the new field-type isn't already handled by `isFactValueParseable`, extend it with the matching parser — the pre-flight filter must reject unparseable values OR `coSubmittedFactKeysForTarget` will lie to sibling extractors
 
 **Collision detection** (`findCollidingFacts`):
 - [ ] If new scope is hydrated: walk sibling content (NOT just schema), filter blanks, key by `${factKey}|${targetUid}`
@@ -193,6 +195,46 @@ For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box ma
 | `noop / value_unchanged` | ❌ no audit | Idempotent resubmission |
 | `noop / target_stale` | ❌ no audit | Stale-target race after a DB read |
 | `noop / extractor_error` | ❌ no audit | Logged + swallowed by outer service catch |
+
+## State-transition handoff between co-submitted facts
+
+PR 12.2 (creator actuals + attendance) shipped after **eight Codex iterations**. Reading them now, the column itself is fine: `ShowCreator.attendanceReason` holds either the **LATE** reason (`creator_actual_start_time > Show.startTime`) or the **MISSING** reason (`attendanceMissing = true`), and those states are **mutually exclusive** under the read-side derivation rule in `TASK_INPUT_FACT_BINDING_DESIGN.md`. In any steady state, only one writer's reason is semantically meaningful.
+
+The real bug pattern was **the cross-fact handoff during state transitions in the same submission**. A submission can simultaneously toggle `attendance_missing = false` AND set `actual_start_time > show.startTime` — that's a legitimate `MISSING → LATE` transition, and the late extractor's reason needs to take the column while the missing extractor's `false`-write must NOT clear it. Each extractor runs in its own transaction with no shared context, so the coordination had to be threaded through `ExtractedFact.coSubmittedFactKeysForTarget` — and every iteration uncovered a new way that signal could be wrong.
+
+### Mandatory rules when two facts derive from mutually-exclusive states
+
+These are the invariants the inference scheme depends on. Break any one of them and a state-transition submission silently loses the operator's context.
+
+1. **Resolve column values as `operator-provided > preserve-existing > fallback`.** Never `trimmedReason || FALLBACK` — a retry that omits the sidecar would downgrade a real operator reason to placeholder text. The fallback only seeds the FIRST write into an empty column.
+
+2. **Detect drift before writing.** A same-time / same-flag resubmission with a different reason MUST flush the column; the equality short-circuit cannot mask reason corrections. Conversely, a write whose resolved value matches storage MUST short-circuit to `value_unchanged` to avoid audit noise + idempotent rewrites that hide bugs.
+
+3. **Co-submission ownership must be derived from the CURRENT RUN's writing-eligible facts** — never from persisted `metadata.actuals_source`. Historical metadata records "ever happened," not "happening in this submission"; relying on it traps stale reasons on creators whose state has long since transitioned.
+
+4. **A fact's pre-flight writing-eligibility filter (`writingFacts`) MUST include every condition the extractor uses to noop.** Currently:
+   - `!isFactValueAbsent(rawValue)` (null/undefined/empty)
+   - `extractorRegistry.has(factKey)` (registered)
+   - `isFactValueParseable(fact)` — parser-aware check keyed on `SYSTEM_FACT_KEY_DEFINITIONS[factKey].field_type` (datetime → `parseDateTimeValue`, checkbox → `parseBooleanValue`)
+   - Priority skips are an accepted residual gap (cannot be predicted without reading current state)
+
+   If you add a new field-type or a new noop reason inside an extractor, ALSO extend the pre-flight filter or `coSubmittedFactKeysForTarget` will lie to siblings.
+
+5. **Clearing a shared column requires explicit co-submission check.** When fact A toggles off and would normally clear the column, check whether fact B is co-submitted IN THIS RUN. If yes, leave the column alone — fact B will write its own reason as part of the transition. The `coSubmittedFactKeysForTarget` set on `ExtractedFact` exists for this; populate it from `writingFacts` only.
+
+### Hydrated content-key sidecar parsing
+
+`parseHydratedContentKey`'s `UID_PART = /^[\w-]+$/` regex accepts underscores, so sidecar keys like `fld_x:creator:<uid>__reason` parse as valid hydrated facts with a target UID suffixed by `__reason`. **Always filter known suffixes (`TASK_CONTENT_REASON_SUFFIX`, `TASK_CONTENT_EXTRA_SUFFIX`) before calling `parseHydratedContentKey`** in `collectBoundFacts`. The hydration layer's own validator already guards these suffixes — the extraction layer must too.
+
+### When this pattern applies (and when it doesn't)
+
+Apply these rules whenever **two or more fact keys write to the same column AND the read-side derivation treats them as mutually exclusive**. The shared column is correct design — the work is to keep the cross-fact handoff coherent during transitions.
+
+If you're considering adding a THIRD fact key to such a column, stop. Two-writer coordination is already at the limit of what runtime inference can express coherently (eight iterations on PR 12.2 is the evidence). Three writers means six pairwise transitions to model, with no symmetry to lean on — at that point split the column or introduce explicit per-write source attribution.
+
+### Why this section exists
+
+The full iteration log is in PR #104's commit history: `f9014f84` → `8d2e84d8` → `2fae3daa` → `7d117b61` → `5cae322c` → `6f1daf02` → `7098371e` → `25f6719c`. Each fix exposed the next layer of the same root cause: an implicit invariant in the cross-fact handoff that hadn't been encoded yet. Reading the commits in order is the fastest way to internalize why the rules above are absolute.
 
 ## Related skills
 

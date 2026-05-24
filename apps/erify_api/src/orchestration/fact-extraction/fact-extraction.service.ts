@@ -4,12 +4,16 @@ import { TaskStatus } from '@prisma/client';
 import type { ActualsSource, AuditTargetType } from '@eridu/api-types/audits';
 import {
   type FieldItemV2,
+  getTaskContentReasonKey,
   parseHydratedContentKey,
   SYSTEM_FACT_KEY_DEFINITIONS,
   type SystemFactKey,
+  TASK_CONTENT_EXTRA_SUFFIX,
+  TASK_CONTENT_REASON_SUFFIX,
   type UiSchemaV2,
 } from '@eridu/api-types/task-management';
 
+import { parseBooleanValue } from './extractors/boolean-value';
 import { parseDateTimeValue } from './extractors/datetime-value';
 import type {
   ExtractedFact,
@@ -20,10 +24,12 @@ import { ExtractorRegistry } from './extractors/extractor-registry';
 import {
   FactExtractionProcessor,
   type PairedShowActualsResult,
+  type PairedShowCreatorActualsResult,
   type PairedShowPlatformActualsResult,
 } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
+import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { TaskService } from '@/models/task/task.service';
 
@@ -92,6 +98,7 @@ export class FactExtractionService {
     private readonly auditService: AuditService,
     private readonly extractorRegistry: ExtractorRegistry,
     private readonly factExtractionProcessor: FactExtractionProcessor,
+    private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
   ) {}
 
@@ -114,8 +121,8 @@ export class FactExtractionService {
 
     const content = (task.content as Record<string, unknown> | null) ?? {};
 
-    const facts = collectBoundFacts(schema, content, input.showUid);
-    if (facts.length === 0) {
+    const rawFacts = collectBoundFacts(schema, content, input.showUid);
+    if (rawFacts.length === 0) {
       return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
     }
 
@@ -126,9 +133,29 @@ export class FactExtractionService {
     //     colliding sibling must NOT emit a SKIPPED_LOWER_PRIORITY audit
     //     because nothing in this pipeline can write it, so the "collision"
     //     is fictional from the review surface's perspective).
-    const writingFacts = facts.filter(
-      (fact) => !isFactValueAbsent(fact.rawValue) && this.extractorRegistry.has(fact.factKey),
+    //   - parseable value for the fact's declared `field_type` — per Codex
+    //     P2 review on PR #104: an unparseable datetime / boolean still
+    //     looks "non-absent" but the extractor will noop with
+    //     `value_absent`, so including it in `writingFacts` would falsely
+    //     mark the fact as co-submitted for shared-column ownership
+    //     decisions (e.g. the attendance-missing extractor's reason-clear
+    //     check) even though no write will happen.
+    const writingFacts = rawFacts.filter(
+      (fact) => !isFactValueAbsent(fact.rawValue)
+        && this.extractorRegistry.has(fact.factKey)
+        && isFactValueParseable(fact),
     );
+
+    // Hydrate each fact with its writing-eligible siblings for the same
+    // target. Derived from `writingFacts` so blank / unparseable / unregistered
+    // start facts don't claim ownership of shared columns (e.g. the
+    // attendance-missing extractor uses this to decide whether to clear
+    // `attendanceReason`).
+    const coSubmittedByTarget = buildCoSubmittedFactKeysByTarget(writingFacts);
+    const facts = rawFacts.map((fact) => ({
+      ...fact,
+      coSubmittedFactKeysForTarget: siblingsForFact(fact, coSubmittedByTarget),
+    }));
     const showScopeFactKeys = new Set<SystemFactKey>();
     const perTargetCollisionKeys = new Set<string>();
     for (const fact of writingFacts) {
@@ -154,6 +181,10 @@ export class FactExtractionService {
     // (soft-deleted or wrong show) emit a `skipped_stale_target` outcome —
     // no write, no audit row (a stale target is unwritable, not contested,
     // so a SKIPPED audit would be misleading on the review surface).
+    const creatorTargetById = await this.showCreatorService.findActiveByUids(
+      uniqueTargetUids(facts, 'creator'),
+      input.showId,
+    );
     const platformTargetById = await this.showPlatformService.findActiveByUids(
       uniqueTargetUids(facts, 'platform'),
       input.showId,
@@ -187,6 +218,14 @@ export class FactExtractionService {
       entries,
     });
 
+    const handledPairedCreatorContentKeys = await this.tryAtomicPairedCreatorActuals({
+      facts,
+      collidingFacts,
+      creatorTargetById,
+      ctx,
+      entries,
+    });
+
     // Same atomicity guarantee, applied per-platform: if a single submission
     // carries paired start+end for the same `ShowPlatform`, route the pair
     // through the per-target atomic processor so the priority check +
@@ -207,6 +246,9 @@ export class FactExtractionService {
         continue;
       }
       if (handledPairedPlatformContentKeys.has(fact.contentKey)) {
+        continue;
+      }
+      if (handledPairedCreatorContentKeys.has(fact.contentKey)) {
         continue;
       }
       // Empty submissions never write, never audit. Per Codex P2 review:
@@ -251,7 +293,10 @@ export class FactExtractionService {
       // `ctx.showId`, so missing entries mean the platform is either
       // soft-deleted or has been reassigned to another show; either way,
       // the value stays in `task.content` for the PR 12.4 review queue.
-      if (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid)) {
+      if (
+        (fact.scope === 'creator' && !creatorTargetById.has(fact.targetUid))
+        || (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid))
+      ) {
         entries.push({
           factKey: fact.factKey,
           sourceFieldId: fact.sourceFieldId,
@@ -264,7 +309,7 @@ export class FactExtractionService {
       }
 
       if (isFactColliding(fact, collidingFacts)) {
-        const audit = await this.writeCollisionSkipAudit(fact, ctx, platformTargetById);
+        const audit = await this.writeCollisionSkipAudit(fact, ctx, creatorTargetById, platformTargetById);
         entries.push({
           factKey: fact.factKey,
           sourceFieldId: fact.sourceFieldId,
@@ -277,7 +322,7 @@ export class FactExtractionService {
         continue;
       }
 
-      const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
+      const targetIds = this.resolveAuditTargetIds(fact, ctx, creatorTargetById, platformTargetById);
 
       let processed: { decision: ExtractionDecision; auditUid?: string };
       try {
@@ -429,9 +474,10 @@ export class FactExtractionService {
   private async writeCollisionSkipAudit(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    creatorTargetById: Map<string, { id: bigint; showId: bigint }>,
     platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): Promise<{ uid: string } | undefined> {
-    const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
+    const targetIds = this.resolveAuditTargetIds(fact, ctx, creatorTargetById, platformTargetById);
     if (targetIds.length === 0) {
       return undefined;
     }
@@ -497,7 +543,7 @@ export class FactExtractionService {
 
     // Show scope: bulk-resolved platform cache isn't relevant here, but the
     // resolver signature is shared so we pass an empty map.
-    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx, new Map());
+    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx, new Map(), new Map());
     let result: PairedShowActualsResult;
     try {
       result = await this.factExtractionProcessor.applyPairedShowActuals({
@@ -565,6 +611,7 @@ export class FactExtractionService {
   private resolveAuditTargetIds(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    creatorTargetById: Map<string, { id: bigint; showId: bigint }>,
     platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): { targetType: AuditTargetType; targetId: bigint }[] {
     if (fact.scope === 'show') {
@@ -577,8 +624,125 @@ export class FactExtractionService {
       }
       return [{ targetType: 'SHOW_PLATFORM', targetId: resolved.id }];
     }
-    // PR 12.2 wires the creator scope.
+    if (fact.scope === 'creator') {
+      const resolved = creatorTargetById.get(fact.targetUid);
+      if (!resolved) {
+        return [];
+      }
+      return [{ targetType: 'SHOW_CREATOR', targetId: resolved.id }];
+    }
     return [];
+  }
+
+  private async tryAtomicPairedCreatorActuals(input: {
+    facts: ExtractedFact[];
+    collidingFacts: CollisionTracker;
+    creatorTargetById: Map<string, { id: bigint; showId: bigint }>;
+    ctx: ExtractionContext;
+    entries: ExtractionResultEntry[];
+  }): Promise<Set<string>> {
+    const consumed = new Set<string>();
+    if (
+      !this.extractorRegistry.has('creator_actual_start_time')
+      || !this.extractorRegistry.has('creator_actual_end_time')
+    ) {
+      return consumed;
+    }
+
+    const startByTarget = new Map<string, ExtractedFact>();
+    const endByTarget = new Map<string, ExtractedFact>();
+    for (const fact of input.facts) {
+      if (fact.scope !== 'creator') {
+        continue;
+      }
+      if (fact.factKey === 'creator_actual_start_time') {
+        startByTarget.set(fact.targetUid, fact);
+      } else if (fact.factKey === 'creator_actual_end_time') {
+        endByTarget.set(fact.targetUid, fact);
+      }
+    }
+
+    for (const [targetUid, startFact] of startByTarget) {
+      const endFact = endByTarget.get(targetUid);
+      if (!endFact) {
+        continue;
+      }
+      if (isFactValueAbsent(startFact.rawValue) || isFactValueAbsent(endFact.rawValue)) {
+        continue;
+      }
+      const resolved = input.creatorTargetById.get(targetUid);
+      if (!resolved) {
+        continue;
+      }
+      if (
+        input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('creator_actual_start_time', targetUid),
+        )
+        || input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('creator_actual_end_time', targetUid),
+        )
+      ) {
+        continue;
+      }
+      const startIncoming = parseDateTimeValue(startFact.rawValue);
+      const endIncoming = parseDateTimeValue(endFact.rawValue);
+      if (!startIncoming || !endIncoming) {
+        continue;
+      }
+
+      const targetIds = [{ targetType: 'SHOW_CREATOR' as AuditTargetType, targetId: resolved.id }];
+
+      let result: PairedShowCreatorActualsResult;
+      try {
+        result = await this.factExtractionProcessor.applyPairedShowCreatorActuals({
+          showCreatorUid: targetUid,
+          startFact,
+          endFact,
+          startIncoming,
+          endIncoming,
+          ctx: input.ctx,
+          targetIds,
+        });
+      } catch (err) {
+        this.logger.error(
+          `Paired creator-actuals processor threw on task ${input.ctx.taskUid} target ${targetUid}: ${(err as Error).message}`,
+        );
+        for (const fact of [startFact, endFact]) {
+          input.entries.push({
+            factKey: fact.factKey,
+            sourceFieldId: fact.sourceFieldId,
+            contentKey: fact.contentKey,
+            targetUid: fact.targetUid,
+            outcome: 'noop',
+            reason: 'extractor_error',
+          });
+          consumed.add(fact.contentKey);
+        }
+        continue;
+      }
+
+      input.entries.push({
+        factKey: startFact.factKey,
+        sourceFieldId: startFact.sourceFieldId,
+        contentKey: startFact.contentKey,
+        targetUid: startFact.targetUid,
+        outcome: outcomeFromDecision(result.start.decision),
+        auditUid: result.start.auditUid,
+        reason: result.start.decision.kind === 'noop' ? result.start.decision.reason : undefined,
+      });
+      input.entries.push({
+        factKey: endFact.factKey,
+        sourceFieldId: endFact.sourceFieldId,
+        contentKey: endFact.contentKey,
+        targetUid: endFact.targetUid,
+        outcome: outcomeFromDecision(result.end.decision),
+        auditUid: result.end.auditUid,
+        reason: result.end.decision.kind === 'noop' ? result.end.decision.reason : undefined,
+      });
+      consumed.add(startFact.contentKey);
+      consumed.add(endFact.contentKey);
+    }
+    return consumed;
   }
 
   /**
@@ -724,6 +888,34 @@ function isFactValueAbsent(rawValue: unknown): boolean {
 }
 
 /**
+ * Pre-flight value parseability check for the writingFacts filter, keyed
+ * off the fact's declared `field_type`. An unparseable datetime
+ * (`"not-a-date"`) or boolean still has a non-empty `rawValue`, so the
+ * absent-check would let it through — but the extractor itself will
+ * noop with `value_absent`. Including such a fact in `writingFacts`
+ * would falsely advertise it as co-submitted for shared-column
+ * ownership decisions (the attendance-missing extractor uses
+ * `coSubmittedFactKeysForTarget` to gate `attendanceReason` clearing).
+ *
+ * Returns `true` when the field-type has no specific parser (defensive
+ * default — the extractor will still get the chance to noop on its own).
+ */
+function isFactValueParseable(fact: ExtractedFact): boolean {
+  const definition = SYSTEM_FACT_KEY_DEFINITIONS[fact.factKey];
+  if (!definition) {
+    return true;
+  }
+  switch (definition.field_type) {
+    case 'datetime':
+      return parseDateTimeValue(fact.rawValue) !== null;
+    case 'checkbox':
+      return parseBooleanValue(fact.rawValue) !== null;
+    default:
+      return true;
+  }
+}
+
+/**
  * Two-tier cross-task collision view computed once per `extractFromTask`.
  * See `findCollidingFacts` for the construction rules and the rationale for
  * per-target collision tracking on hydrated scopes.
@@ -778,14 +970,25 @@ function collectBoundFacts(
       scope: 'show',
       targetUid: showUid,
       rawValue: content[item.id],
+      reason: readReasonSidecar(content, item.id),
     });
   }
 
   // Per-target hydrated keys for creator / platform scopes — parsed at extraction
   // time so the engine can route each entry to the correct extractor without
-  // re-running hydration. Sibling sidecar keys (`*__reason`, `*__extra`) are
-  // ignored because they don't parse as hydrated keys.
+  // re-running hydration. Sibling sidecar keys (`*__reason`, `*__extra`)
+  // must be filtered explicitly: `parseHydratedContentKey` accepts the
+  // suffix into `targetUid` (its `UID_PART` regex allows underscores), so
+  // a key like `fld_x:creator:show_mc_alpha__reason` would otherwise
+  // parse as a phantom hydrated fact with an unresolvable target UID and
+  // surface as a spurious `skipped_stale_target` entry.
   for (const [contentKey, rawValue] of Object.entries(content)) {
+    if (
+      contentKey.endsWith(TASK_CONTENT_REASON_SUFFIX)
+      || contentKey.endsWith(TASK_CONTENT_EXTRA_SUFFIX)
+    ) {
+      continue;
+    }
     const parsed = parseHydratedContentKey(contentKey);
     if (!parsed)
       continue;
@@ -805,10 +1008,65 @@ function collectBoundFacts(
       scope: parsed.scope,
       targetUid: parsed.targetUid,
       rawValue,
+      reason: readReasonSidecar(content, contentKey),
     });
   }
 
   return facts;
+}
+
+/**
+ * Index fact keys present per target across the WRITING-eligible facts so
+ * each fact can see its siblings in the same submission. The
+ * attendance-missing extractor uses this to detect when the start-time
+ * extractor is also writing for the same creator in this run — they share
+ * `attendanceReason` and the missing extractor must not clear a late
+ * reason that the start extractor is about to (or just did) write.
+ *
+ * Per Codex P2 review on PR #104: derive from `writingFacts`, NOT the
+ * raw collected facts. A blank-value / unparseable / unregistered start
+ * fact never writes, so it must not be treated as owning the shared
+ * column. Priority skips are an accepted residual edge case — they
+ * cannot be predicted at this layer without reading current state.
+ */
+const EMPTY_FACT_KEY_SET: ReadonlySet<SystemFactKey> = new Set();
+
+function buildCoSubmittedFactKeysByTarget(
+  writingFacts: ExtractedFact[],
+): Map<string, ReadonlySet<SystemFactKey>> {
+  const factKeysByTarget = new Map<string, Set<SystemFactKey>>();
+  for (const fact of writingFacts) {
+    const key = `${fact.scope}|${fact.targetUid}`;
+    let set = factKeysByTarget.get(key);
+    if (!set) {
+      set = new Set();
+      factKeysByTarget.set(key, set);
+    }
+    set.add(fact.factKey);
+  }
+  return factKeysByTarget;
+}
+
+function siblingsForFact(
+  fact: ExtractedFact,
+  factKeysByTarget: Map<string, ReadonlySet<SystemFactKey>>,
+): ReadonlySet<SystemFactKey> {
+  const key = `${fact.scope}|${fact.targetUid}`;
+  const allForTarget = factKeysByTarget.get(key);
+  if (!allForTarget) {
+    return EMPTY_FACT_KEY_SET;
+  }
+  const siblings = new Set(allForTarget);
+  siblings.delete(fact.factKey);
+  return siblings;
+}
+
+function readReasonSidecar(
+  content: Record<string, unknown>,
+  contentKey: string,
+): string | undefined {
+  const reason = content[getTaskContentReasonKey(contentKey)];
+  return typeof reason === 'string' ? reason.trim() || undefined : undefined;
 }
 
 function outcomeFromDecision(decision: ExtractionDecision): ExtractionResultEntry['outcome'] {

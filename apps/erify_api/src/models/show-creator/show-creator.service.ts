@@ -7,6 +7,7 @@ import type {
 } from './schemas/show-creator.schema';
 import { ShowCreatorRepository } from './show-creator.repository';
 
+import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -101,5 +102,82 @@ export class ShowCreatorService extends BaseModelService {
 
   async softDelete(uid: string): ReturnType<ShowCreatorRepository['softDelete']> {
     return this.showCreatorRepository.softDelete({ uid });
+  }
+
+  async findActiveByUids(
+    uids: string[],
+    showId: bigint,
+  ): Promise<Map<string, { id: bigint; showId: bigint }>> {
+    if (uids.length === 0) {
+      return new Map();
+    }
+    const rows = await this.showCreatorRepository.findMany({
+      where: { uid: { in: uids }, showId, deletedAt: null },
+    });
+    return new Map(rows.map((row) => [row.uid, { id: row.id, showId: row.showId }]));
+  }
+
+  /**
+   * Fetch-or-throw helper for the extraction pipeline. Mirrors
+   * `ShowPlatformService.getShowPlatformById`. The optional `includeShow`
+   * include joins `show.startTime`, used by callers that need to decide
+   * "late" attendance (currently the creator actual-start extractor and
+   * the paired processor); the other creator extractors skip the join.
+   */
+  async getShowCreatorById(
+    uid: string,
+    opts: { includeShow?: boolean } = {},
+  ): Promise<ShowCreator & { show?: { startTime: Date } }> {
+    const showCreator = await this.showCreatorRepository.findByUid(
+      uid,
+      opts.includeShow ? { show: { select: { startTime: true } } } : undefined,
+    );
+    if (!showCreator) {
+      throw HttpError.notFound('ShowCreator', uid);
+    }
+    return showCreator as ShowCreator & { show?: { startTime: Date } };
+  }
+
+  ensureValidActualTimeRange(
+    currentActualStartTime: Date | null | undefined,
+    currentActualEndTime: Date | null | undefined,
+    dto: { actualStartTime?: Date | null; actualEndTime?: Date | null },
+  ): void {
+    const nextActualStart = dto.actualStartTime !== undefined
+      ? dto.actualStartTime
+      : currentActualStartTime ?? null;
+    const nextActualEnd = dto.actualEndTime !== undefined
+      ? dto.actualEndTime
+      : currentActualEndTime ?? null;
+
+    if (nextActualStart && nextActualEnd && nextActualEnd <= nextActualStart) {
+      throw HttpError.badRequest('Actual end time must be after actual start time');
+    }
+  }
+
+  async updateActuals(
+    uid: string,
+    showId: bigint,
+    payload: {
+      actualStartTime?: Date;
+      actualEndTime?: Date;
+      attendanceMissing?: boolean;
+      attendanceReason?: string | null;
+      metadata?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    const result = await this.showCreatorRepository.updateMany(
+      { uid, showId, deletedAt: null },
+      {
+        ...(payload.actualStartTime !== undefined ? { actualStartTime: payload.actualStartTime } : {}),
+        ...(payload.actualEndTime !== undefined ? { actualEndTime: payload.actualEndTime } : {}),
+        ...(payload.attendanceMissing !== undefined ? { attendanceMissing: payload.attendanceMissing } : {}),
+        ...(payload.attendanceReason !== undefined ? { attendanceReason: payload.attendanceReason } : {}),
+        ...(payload.metadata !== undefined ? { metadata: payload.metadata as never } : {}),
+      },
+    );
+    if (result.count === 0) {
+      throw HttpError.notFound('ShowCreator', uid);
+    }
   }
 }

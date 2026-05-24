@@ -19,7 +19,9 @@ describe('showCreatorService', () => {
   const showCreatorRepositoryMock: Partial<jest.Mocked<ShowCreatorRepository>> = {
     create: jest.fn(),
     findByUid: jest.fn(),
+    findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     softDelete: jest.fn(),
     findPaginated: jest.fn(),
     findOne: jest.fn(),
@@ -323,6 +325,76 @@ describe('showCreatorService', () => {
         uid: 'show_mc_123',
       });
       expect(result).toEqual(deletedShowMc);
+    });
+  });
+
+  describe('fact extraction helpers', () => {
+    it('bulk resolves active show creators scoped to one show', async () => {
+      (showCreatorRepositoryMock.findMany as jest.Mock).mockResolvedValue([
+        { uid: 'show_mc_alpha', id: 101n, showId: 10n },
+        { uid: 'show_mc_beta', id: 102n, showId: 10n },
+      ]);
+
+      const result = await service.findActiveByUids(
+        ['show_mc_alpha', 'show_mc_beta'],
+        10n,
+      );
+
+      expect(showCreatorRepositoryMock.findMany).toHaveBeenCalledWith({
+        where: {
+          uid: { in: ['show_mc_alpha', 'show_mc_beta'] },
+          showId: 10n,
+          deletedAt: null,
+        },
+      });
+      expect(result).toEqual(new Map([
+        ['show_mc_alpha', { id: 101n, showId: 10n }],
+        ['show_mc_beta', { id: 102n, showId: 10n }],
+      ]));
+    });
+
+    it('updates actual columns with a stale-target-safe predicate', async () => {
+      (showCreatorRepositoryMock.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+      await service.updateActuals('show_mc_alpha', 10n, {
+        actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
+        attendanceMissing: true,
+        attendanceReason: 'Called out sick.',
+        metadata: { actuals_source: { creator_actual_start_time: 'OPERATOR' } },
+      });
+
+      expect(showCreatorRepositoryMock.updateMany).toHaveBeenCalledWith(
+        { uid: 'show_mc_alpha', showId: 10n, deletedAt: null },
+        expect.objectContaining({
+          actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
+          attendanceMissing: true,
+          attendanceReason: 'Called out sick.',
+          metadata: { actuals_source: { creator_actual_start_time: 'OPERATOR' } },
+        }),
+      );
+    });
+
+    it('throws not found when the extraction update races with soft delete or reassignment', async () => {
+      (showCreatorRepositoryMock.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.updateActuals('show_mc_alpha', 10n, {
+          actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
+        }),
+      ).rejects.toThrow('ShowCreator not found');
+    });
+
+    it('validates merged actual time ranges', () => {
+      expect(() =>
+        service.ensureValidActualTimeRange(
+          null,
+          null,
+          {
+            actualStartTime: new Date('2026-05-23T13:00:00.000Z'),
+            actualEndTime: new Date('2026-05-23T12:00:00.000Z'),
+          },
+        ),
+      ).toThrow('Actual end time must be after actual start time');
     });
   });
 });
