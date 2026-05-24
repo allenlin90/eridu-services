@@ -120,8 +120,8 @@ export class FactExtractionService {
 
     const content = (task.content as Record<string, unknown> | null) ?? {};
 
-    const facts = collectBoundFacts(schema, content, input.showUid);
-    if (facts.length === 0) {
+    const rawFacts = collectBoundFacts(schema, content, input.showUid);
+    if (rawFacts.length === 0) {
       return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
     }
 
@@ -132,9 +132,20 @@ export class FactExtractionService {
     //     colliding sibling must NOT emit a SKIPPED_LOWER_PRIORITY audit
     //     because nothing in this pipeline can write it, so the "collision"
     //     is fictional from the review surface's perspective).
-    const writingFacts = facts.filter(
+    const writingFacts = rawFacts.filter(
       (fact) => !isFactValueAbsent(fact.rawValue) && this.extractorRegistry.has(fact.factKey),
     );
+
+    // Hydrate each fact with its writing-eligible siblings for the same
+    // target. Derived from `writingFacts` so blank / unparseable / unregistered
+    // start facts don't claim ownership of shared columns (e.g. the
+    // attendance-missing extractor uses this to decide whether to clear
+    // `attendanceReason`).
+    const coSubmittedByTarget = buildCoSubmittedFactKeysByTarget(writingFacts);
+    const facts = rawFacts.map((fact) => ({
+      ...fact,
+      coSubmittedFactKeysForTarget: siblingsForFact(fact, coSubmittedByTarget),
+    }));
     const showScopeFactKeys = new Set<SystemFactKey>();
     const perTargetCollisionKeys = new Set<string>();
     for (const fact of writingFacts) {
@@ -899,8 +910,7 @@ function collectBoundFacts(
   content: Record<string, unknown>,
   showUid: string,
 ): ExtractedFact[] {
-  type PartialFact = Omit<ExtractedFact, 'coSubmittedFactKeysForTarget'>;
-  const partials: PartialFact[] = [];
+  const facts: ExtractedFact[] = [];
   const itemByFieldId = new Map<string, FieldItemV2>(schema.items.map((item) => [item.id, item]));
 
   // Show-scoped bindings — no per-target hydration; one fact per template field.
@@ -915,7 +925,7 @@ function collectBoundFacts(
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[factKey];
     if (!definition || definition.target !== 'show')
       continue;
-    partials.push({
+    facts.push({
       contentKey: item.id,
       sourceFieldId: item.id,
       factKey,
@@ -953,7 +963,7 @@ function collectBoundFacts(
     const expectedScope = definition.target === 'show_creator' ? 'creator' : definition.target === 'show_platform' ? 'platform' : null;
     if (!expectedScope || expectedScope !== parsed.scope)
       continue;
-    partials.push({
+    facts.push({
       contentKey,
       sourceFieldId: parsed.fieldId,
       factKey: templateItem.system_fact_key,
@@ -964,30 +974,53 @@ function collectBoundFacts(
     });
   }
 
-  // Second pass: index fact keys present per target so each fact can see
-  // its siblings in the same submission. The attendance-missing extractor
-  // uses this to detect when the start-time extractor is also writing in
-  // this run for the same creator — the two facts share `attendanceReason`
-  // and the missing extractor must not clear a late-start reason that the
-  // start extractor is about to (or just did) write.
+  return facts;
+}
+
+/**
+ * Index fact keys present per target across the WRITING-eligible facts so
+ * each fact can see its siblings in the same submission. The
+ * attendance-missing extractor uses this to detect when the start-time
+ * extractor is also writing for the same creator in this run — they share
+ * `attendanceReason` and the missing extractor must not clear a late
+ * reason that the start extractor is about to (or just did) write.
+ *
+ * Per Codex P2 review on PR #104: derive from `writingFacts`, NOT the
+ * raw collected facts. A blank-value / unparseable / unregistered start
+ * fact never writes, so it must not be treated as owning the shared
+ * column. Priority skips are an accepted residual edge case — they
+ * cannot be predicted at this layer without reading current state.
+ */
+const EMPTY_FACT_KEY_SET: ReadonlySet<SystemFactKey> = new Set();
+
+function buildCoSubmittedFactKeysByTarget(
+  writingFacts: ExtractedFact[],
+): Map<string, ReadonlySet<SystemFactKey>> {
   const factKeysByTarget = new Map<string, Set<SystemFactKey>>();
-  for (const partial of partials) {
-    const key = `${partial.scope}|${partial.targetUid}`;
+  for (const fact of writingFacts) {
+    const key = `${fact.scope}|${fact.targetUid}`;
     let set = factKeysByTarget.get(key);
     if (!set) {
       set = new Set();
       factKeysByTarget.set(key, set);
     }
-    set.add(partial.factKey);
+    set.add(fact.factKey);
   }
+  return factKeysByTarget;
+}
 
-  return partials.map((partial) => {
-    const key = `${partial.scope}|${partial.targetUid}`;
-    const allForTarget = factKeysByTarget.get(key) ?? new Set<SystemFactKey>();
-    const siblings = new Set(allForTarget);
-    siblings.delete(partial.factKey);
-    return { ...partial, coSubmittedFactKeysForTarget: siblings };
-  });
+function siblingsForFact(
+  fact: ExtractedFact,
+  factKeysByTarget: Map<string, ReadonlySet<SystemFactKey>>,
+): ReadonlySet<SystemFactKey> {
+  const key = `${fact.scope}|${fact.targetUid}`;
+  const allForTarget = factKeysByTarget.get(key);
+  if (!allForTarget) {
+    return EMPTY_FACT_KEY_SET;
+  }
+  const siblings = new Set(allForTarget);
+  siblings.delete(fact.factKey);
+  return siblings;
 }
 
 function readReasonSidecar(

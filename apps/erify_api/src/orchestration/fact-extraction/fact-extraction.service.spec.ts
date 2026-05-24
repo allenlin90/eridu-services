@@ -876,6 +876,66 @@ describe('factExtractionService', () => {
       expect(result.entries.some((e) => e.outcome === 'skipped_stale_target')).toBe(false);
       expect(result.entries.some((e) => e.targetUid.includes('__'))).toBe(false);
     });
+
+    it('excludes blank / non-writing start facts from coSubmittedFactKeysForTarget', async () => {
+      // Regression for Codex P2: `coSubmittedFactKeysForTarget` is now
+      // built from `writingFacts` (non-absent value + registered
+      // extractor), so a `creator_actual_start_time` field with a blank
+      // value never claims ownership of `attendanceReason`. The
+      // attendance-missing extractor must see an EMPTY sibling set for
+      // this target.
+      const attendanceExtractor = buildExtractor({ factKey: 'creator_attendance_missing' });
+      attendanceExtractor.apply.mockResolvedValue({
+        kind: 'write',
+        action: 'UPDATE',
+        oldValue: true,
+        newValue: false,
+      });
+      const customRegistry = {
+        resolve: jest.fn((factKey: string) =>
+          factKey === 'creator_attendance_missing' ? attendanceExtractor : undefined,
+        ),
+        has: jest.fn((factKey: string) => factKey === 'creator_attendance_missing'),
+        registeredFactKeys: jest.fn(() => ['creator_attendance_missing']),
+      } as unknown as ExtractorRegistry;
+      const customService = new FactExtractionService(
+        taskService,
+        auditService,
+        customRegistry,
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_creatorstart1', system_fact_key: 'creator_actual_start_time' },
+            { id: 'fld_attendmiss1', system_fact_key: 'creator_attendance_missing' },
+          ],
+        },
+        content: {
+          // Blank start value — must NOT count as a writing sibling.
+          'fld_creatorstart1:creator:show_mc_alpha': '',
+          'fld_attendmiss1:creator:show_mc_alpha': false,
+        },
+      }));
+      showCreatorService.findActiveByUids.mockResolvedValue(
+        new Map([['show_mc_alpha', { id: 101n, showId: 10n }]]),
+      );
+
+      await customService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(attendanceExtractor.apply).toHaveBeenCalledTimes(1);
+      const [factArg] = attendanceExtractor.apply.mock.calls[0]!;
+      expect(factArg.coSubmittedFactKeysForTarget?.has('creator_actual_start_time')).toBe(false);
+    });
   });
 
   describe('show platform actuals routing', () => {
