@@ -155,6 +155,35 @@ describe('creatorAttendanceMissingExtractor', () => {
     expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
   });
 
+  it('preserves attendanceReason on a false write when the start extractor has written a late reason', async () => {
+    // Regression for Codex P1: `attendanceReason` is shared with
+    // `creator_actual_start_time`. When the start extractor ran first
+    // in the same submission and wrote a late reason, this extractor's
+    // false-write must NOT clear that reason — doing so would erase
+    // late-start context owned by a different fact key.
+    const showCreatorService = buildShowCreatorService({
+      attendanceMissing: true,
+      attendanceReason: 'Late start reason from operator.',
+      metadata: { actuals_source: {
+        creator_attendance_missing: 'OPERATOR',
+        creator_actual_start_time: 'OPERATOR',
+      } },
+    });
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
+
+    const decision = await extractor.apply(
+      { ...fact, rawValue: false, reason: undefined },
+      ctx,
+    );
+
+    expect(decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    const [, , payload] = showCreatorService.updateActuals.mock.calls[0]!;
+    expect(payload).toEqual(expect.objectContaining({ attendanceMissing: false }));
+    expect(payload).not.toHaveProperty('attendanceReason');
+  });
+
   it('flushes the corrected missing reason on a same-flag resubmission', async () => {
     // Regression for Codex P1: a first submission with no reason stores
     // the system fallback. A resubmission carrying the same `true` flag

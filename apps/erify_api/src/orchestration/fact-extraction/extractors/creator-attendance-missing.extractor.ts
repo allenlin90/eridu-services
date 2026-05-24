@@ -62,13 +62,31 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
     }
 
     const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
-    const desiredReason = incoming ? trimmedReason || MISSING_REASON_FALLBACK : null;
+    const startHasWritten = Boolean(metadata.actuals_source?.creator_actual_start_time);
+    // `attendanceReason` is shared with `creator_actual_start_time`, which
+    // may have written a late-arrival reason earlier in this extraction
+    // run. Resolve who owns the column before we touch it:
+    //   - flag=true:  write the real or fallback missing reason.
+    //   - flag=true→false AND start extractor has NOT written: clear, the
+    //     reason was almost certainly our prior fallback / no-show note.
+    //   - flag=true→false AND start extractor HAS written: leave the
+    //     column alone — the late-start reason owns it now.
+    //   - flag=false→false: no transition; never touch the column.
+    let desiredReason: string | null | undefined;
+    if (incoming) {
+      desiredReason = trimmedReason || MISSING_REASON_FALLBACK;
+    } else if (currentValue === true && !startHasWritten) {
+      desiredReason = null;
+    } else {
+      desiredReason = undefined;
+    }
     // Reason drift: a first write with no sidecar stores the system
     // fallback; a later resubmission with the same flag value but a
     // real reason must still flush the column, otherwise the operator's
     // actual reason stays masked. Symmetric with the start-time
     // extractor's late-reason drift check.
-    const reasonDrifted = desiredReason !== showCreator.attendanceReason;
+    const reasonDrifted = desiredReason !== undefined
+      && desiredReason !== showCreator.attendanceReason;
 
     if (currentValue === incoming && recordedSource === ctx.source && !reasonDrifted) {
       return { kind: 'noop', reason: 'value_unchanged' };
@@ -86,7 +104,7 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
     try {
       await this.showCreatorService.updateActuals(fact.targetUid, ctx.showId, {
         attendanceMissing: incoming,
-        attendanceReason: desiredReason,
+        ...(desiredReason !== undefined ? { attendanceReason: desiredReason } : {}),
         metadata: nextMetadata,
       });
     } catch (err) {
