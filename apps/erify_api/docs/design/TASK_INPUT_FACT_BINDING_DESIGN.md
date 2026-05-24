@@ -62,7 +62,7 @@ model ShowCreator {
   actualStartTime    DateTime?                  @map("actual_start_time")
   actualEndTime      DateTime?                  @map("actual_end_time")
   attendanceMissing  Boolean                    @default(false) @map("attendance_missing") // Sticky no-show marker set explicitly by operator/manager; null actualStartTime alone is "not recorded".
-  attendanceReason   String?                    @map("attendance_reason") // Required when derived attendance is LATE or attendanceMissing is true. ⚠️ SHARED COLUMN — written by BOTH `creator_actual_start_time` (late-arrival reason) AND `creator_attendance_missing` (no-show reason). See "Shared-column ownership" caveat below before adding any third writer or refactoring the resolution rules.
+  attendanceReason   String?                    @map("attendance_reason") // Required when derived attendance is LATE or attendanceMissing is true. The LATE / MISSING states are mutually exclusive per the derivation rule below, so a single column is correct design — but the cross-fact transition handoff between `creator_actual_start_time` (late reason) and `creator_attendance_missing` (no-show reason) requires care. See "Cross-fact transition handoff" caveat below before changing the resolution rules.
 
   @@index([actualStartTime])
   @@index([attendanceMissing])
@@ -78,19 +78,30 @@ model ShowCreator {
 //   GREATEST(0, EXTRACT(EPOCH FROM (ShowCreator.actualStartTime - Show.startTime)) / 60).
 // ShowCreator.performanceMetrics is intentionally NOT added; creator attendance facts stay typed.
 
-// ⚠️ Shared-column ownership (PR 12.2 — see #104):
-//   `attendanceReason` is written by TWO fact keys with no per-write source
-//   attribution. PR 12.2 shipped a runtime ownership-inference scheme that
-//   took eight Codex iterations to harden; the rules are documented in the
-//   `fact-extraction-pipeline` skill under "Anti-patterns from PR 12.2".
+// Cross-fact transition handoff (PR 12.2 — see #104):
+//   LATE and MISSING are mutually exclusive in the derivation rule above,
+//   so a single `attendanceReason` column is correct. The complexity is
+//   in the cross-fact handoff during state transitions in a single
+//   submission — e.g., MISSING → LATE flips `attendanceMissing` from
+//   true to false WHILE `actualStartTime` is set past `Show.startTime`,
+//   and the late-reason write must take the column without the
+//   false-write clearing it. PR 12.2 threaded that handoff through
+//   `ExtractedFact.coSubmittedFactKeysForTarget` after eight Codex
+//   iterations; the full rule set is in the `fact-extraction-pipeline`
+//   skill under "State-transition handoff between co-submitted facts".
 //   Future writes:
-//     - DO NOT add a third writer to this column without splitting it first
-//       (e.g., `lateAttendanceReason` + `missingAttendanceReason`).
 //     - DO NOT clear the column from one fact-key path without checking
-//       co-submission for the other in the same run.
+//       co-submission for the other in the same run (otherwise a
+//       legitimate state transition silently loses the new reason).
 //     - DO resolve the desired value as: operator-supplied > preserve
-//       existing > system fallback. The fallback only seeds first writes.
-//   A future PR should split this column to retire the inference scheme.
+//       existing > system fallback. The fallback only seeds first writes
+//       into an empty column; a retry that omits the sidecar must NOT
+//       overwrite a real reason with placeholder text.
+//     - DO NOT add a THIRD writer to this column. Two-writer
+//       coordination is at the limit of what runtime inference can
+//       express coherently; three writers means six pairwise transitions
+//       to model. At that point split the column or add explicit
+//       per-write source attribution.
 
 model ShowPlatform {
   // ... existing fields ...
