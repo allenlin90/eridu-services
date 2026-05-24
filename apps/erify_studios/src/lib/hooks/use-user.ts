@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { queryKeys } from '@/lib/api/query-keys';
 import { getUserProfile } from '@/lib/api/user';
 import { useSession } from '@/lib/session-provider';
 
-export const USER_PROFILE_KEY = ['me'] as const;
+export const USER_PROFILE_KEY = queryKeys.me.profile();
 const USER_PROFILE_REVALIDATE_MS = 15 * 60 * 1000;
 
 export function useUserProfile() {
   const { session } = useSession();
 
   return useQuery({
-    queryKey: USER_PROFILE_KEY,
+    queryKey: queryKeys.me.profile(session?.user?.id),
     queryFn: getUserProfile,
     enabled: !!session,
     retry: 1,
