@@ -6,6 +6,7 @@ import type { FactExtractionProcessor, ProcessedFact } from './fact-extraction.p
 import { FactExtractionService } from './fact-extraction.service';
 
 import type { AuditService } from '@/models/audit/audit.service';
+import type { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import type { TaskService } from '@/models/task/task.service';
 
 function buildTaskWithSnapshot(overrides?: Partial<{
@@ -51,6 +52,7 @@ describe('factExtractionService', () => {
   let extractor: jest.Mocked<IngestionExtractor>;
   let registry: ExtractorRegistry;
   let processor: jest.Mocked<FactExtractionProcessor>;
+  let showPlatformService: jest.Mocked<ShowPlatformService>;
 
   beforeEach(() => {
     extractor = buildExtractor();
@@ -87,8 +89,25 @@ describe('factExtractionService', () => {
           auditUid: 'aud_paired_end',
         },
       } as never)),
+      // Default per-target paired ShowPlatform behavior — mirrors the show
+      // counterpart. Tests that exercise platform-paired override directly.
+      applyPairedShowPlatformActuals: jest.fn(async () => ({
+        start: {
+          decision: { kind: 'write', action: 'CREATE', oldValue: null, newValue: 'start' },
+          auditUid: 'aud_paired_platform_start',
+        },
+        end: {
+          decision: { kind: 'write', action: 'CREATE', oldValue: null, newValue: 'end' },
+          auditUid: 'aud_paired_platform_end',
+        },
+      } as never)),
     } as never;
-    service = new FactExtractionService(taskService, auditService, registry, processor);
+    showPlatformService = {
+      // Default: no platform targets resolve. Platform-scope tests override
+      // this with the targets they expect to be active.
+      findActiveByUids: jest.fn().mockResolvedValue(new Map()),
+    } as never;
+    service = new FactExtractionService(taskService, auditService, registry, processor, showPlatformService);
   });
 
   it('returns an empty result when the task has no snapshot', async () => {
@@ -166,6 +185,7 @@ describe('factExtractionService', () => {
       auditService,
       pairedRegistry,
       processor,
+      showPlatformService,
     );
     taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
       schema: {
@@ -266,6 +286,7 @@ describe('factExtractionService', () => {
       auditService,
       pairedRegistry,
       processor,
+      showPlatformService,
     );
     startExtractor.apply.mockResolvedValue({
       kind: 'write',
@@ -338,6 +359,7 @@ describe('factExtractionService', () => {
       auditService,
       pairedRegistry,
       processor,
+      showPlatformService,
     );
     taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
       schema: {
@@ -581,6 +603,629 @@ describe('factExtractionService', () => {
     expect(result.entries[0]).toMatchObject({
       outcome: 'noop',
       reason: 'extractor_error',
+    });
+  });
+
+  describe('show platform actuals routing', () => {
+    function buildPairedPlatformRegistry(extractors: {
+      start: IngestionExtractor;
+      end: IngestionExtractor;
+    }): ExtractorRegistry {
+      return {
+        resolve: jest.fn((factKey: string) => {
+          if (factKey === 'show_platform_actual_start_time')
+            return extractors.start;
+          if (factKey === 'show_platform_actual_end_time')
+            return extractors.end;
+          return undefined;
+        }),
+        has: jest.fn((factKey: string) =>
+          factKey === 'show_platform_actual_start_time'
+          || factKey === 'show_platform_actual_end_time',
+        ),
+        registeredFactKeys: jest.fn(() => [
+          'show_platform_actual_start_time',
+          'show_platform_actual_end_time',
+        ]),
+      } as unknown as ExtractorRegistry;
+    }
+
+    function buildPlatformTaskSnapshot(targetUids: string[]): ReturnType<typeof buildTaskWithSnapshot> {
+      const items = [
+        { id: 'fld_platstart1', system_fact_key: 'show_platform_actual_start_time' },
+        { id: 'fld_platend123', system_fact_key: 'show_platform_actual_end_time' },
+      ];
+      const content: Record<string, string> = {};
+      for (const uid of targetUids) {
+        content[`fld_platstart1:platform:${uid}`] = '2026-05-23T12:00:00.000Z';
+        content[`fld_platend123:platform:${uid}`] = '2026-05-23T13:00:00.000Z';
+      }
+      return buildTaskWithSnapshot({ schema: { items }, content });
+    }
+
+    it('routes a paired platform submission through applyPairedShowPlatformActuals once per target', async () => {
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200', 'show_plt_201']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([
+          ['show_plt_200', { id: 200n, showId: 10n }],
+          ['show_plt_201', { id: 201n, showId: 10n }],
+        ]),
+      );
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      // One call per platform target, each carrying its own showPlatformUid
+      // and the resolved targetIds for the SHOW_PLATFORM audit row.
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(2);
+      const calls = processor.applyPairedShowPlatformActuals.mock.calls;
+      const uidsSeen = calls.map((args) => (args[0] as { showPlatformUid: string }).showPlatformUid).sort();
+      expect(uidsSeen).toEqual(['show_plt_200', 'show_plt_201']);
+      const targetIdsSeen = calls
+        .map((args) => (args[0] as { targetIds: { targetId: bigint }[] }).targetIds[0]!.targetId)
+        .sort();
+      expect(targetIdsSeen).toEqual([200n, 201n]);
+
+      // The per-extractor processor.applyAndAudit must not be invoked for
+      // any side — the atomic per-target processor owns the writes.
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+      expect(startExtractor.apply).not.toHaveBeenCalled();
+      expect(endExtractor.apply).not.toHaveBeenCalled();
+      // Each target emits two entries (start + end), so 4 total.
+      expect(result.entries).toHaveLength(4);
+    });
+
+    it('scopes the bulk active-target lookup to ctx.showId', async () => {
+      // Codex P1 review on PR #103: `findActiveByUids` must filter by
+      // `showId` so a platform reassigned to a different show after
+      // submission stays out of the cache (and out of the
+      // collision / audit-target paths).
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(new Map());
+
+      await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(showPlatformService.findActiveByUids).toHaveBeenCalledWith(
+        ['show_plt_200'],
+        10n,
+      );
+    });
+
+    it('emits skipped_stale_target without writing an audit when the platform target is missing from the active map', async () => {
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_404']),
+      );
+      // Bulk lookup returns nothing — the target was unassigned between
+      // submission and extraction.
+      showPlatformService.findActiveByUids.mockResolvedValue(new Map());
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowPlatformActuals).not.toHaveBeenCalled();
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+      // Both sides for the stale target — no audit, no write.
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          factKey: 'show_platform_actual_start_time',
+          outcome: 'skipped_stale_target',
+        }),
+        expect.objectContaining({
+          factKey: 'show_platform_actual_end_time',
+          outcome: 'skipped_stale_target',
+        }),
+      ]));
+    });
+
+    it('falls back to the per-fact loop when only one paired platform side is present', async () => {
+      // One-sided platform updates skip the atomic processor — the per-
+      // extractor flow already validates against the stored counterpart.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      startExtractor.apply.mockResolvedValue({
+        kind: 'write',
+        action: 'CREATE',
+        oldValue: null,
+        newValue: '2026-05-23T12:00:00.000Z',
+      });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_platstart1', system_fact_key: 'show_platform_actual_start_time' },
+          ],
+        },
+        content: {
+          'fld_platstart1:platform:show_plt_200': '2026-05-23T12:00:00.000Z',
+        },
+      }));
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowPlatformActuals).not.toHaveBeenCalled();
+      expect(processor.applyAndAudit).toHaveBeenCalledTimes(1);
+      expect(processor.applyAndAudit).toHaveBeenCalledWith(
+        startExtractor,
+        expect.objectContaining({ factKey: 'show_platform_actual_start_time' }),
+        expect.any(Object),
+        [{ targetType: 'SHOW_PLATFORM', targetId: 200n }],
+      );
+      expect(result.entries[0]).toMatchObject({
+        factKey: 'show_platform_actual_start_time',
+        outcome: 'written',
+      });
+    });
+
+    it('records both paired platform sides as extractor_error when the atomic processor throws', async () => {
+      // The `@Transactional` boundary rolls back both column writes and both
+      // audits together, so the service must report `extractor_error` on
+      // both sides — neither column changed.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      processor.applyPairedShowPlatformActuals.mockRejectedValue(new Error('paired platform write failed'));
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          factKey: 'show_platform_actual_start_time',
+          outcome: 'noop',
+          reason: 'extractor_error',
+        }),
+        expect.objectContaining({
+          factKey: 'show_platform_actual_end_time',
+          outcome: 'noop',
+          reason: 'extractor_error',
+        }),
+      ]));
+    });
+
+    it('prefers skipped_stale_target over skipped_collision when a stale platform target collides with a sibling task', async () => {
+      // Codex P2 review on PR #103: a stale platform target is unwritable
+      // by definition, so a colliding sibling fact key must not promote it
+      // to `skipped_collision` (which writes a SKIPPED_LOWER_PRIORITY
+      // audit). The stale-target pre-filter must run before the collision
+      // check so the result stays `skipped_stale_target` with no audit row.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_platstart1', system_fact_key: 'show_platform_actual_start_time' },
+          ],
+        },
+        content: {
+          'fld_platstart1:platform:show_plt_404': '2026-05-23T12:00:00.000Z',
+        },
+      }));
+      // Target is NOT in the active map — stale.
+      showPlatformService.findActiveByUids.mockResolvedValue(new Map());
+      // But a sibling active task binds the same fact key — collision in
+      // the pure fact-key sense. The stale-target pre-filter must still win.
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [{ id: 'fld_sibling', system_fact_key: 'show_platform_actual_start_time' }],
+            },
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(result.entries[0]).toMatchObject({
+        factKey: 'show_platform_actual_start_time',
+        outcome: 'skipped_stale_target',
+        reason: 'target_unassigned_or_deleted',
+      });
+      // No SKIPPED_LOWER_PRIORITY audit must be written for an unwritable row.
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+    });
+
+    it('routes cross-task collisions on the SAME platform target through the SKIPPED_LOWER_PRIORITY audit', async () => {
+      // Per-target collision: a sibling task has already entered content
+      // for the SAME (fact-key, target-uid) pair. The current task's
+      // write would silently race, so we emit a SKIPPED audit anchored on
+      // the SHOW_PLATFORM target.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_platstart1', system_fact_key: 'show_platform_actual_start_time' },
+          ],
+        },
+        content: {
+          'fld_platstart1:platform:show_plt_200': '2026-05-23T12:00:00.000Z',
+        },
+      }));
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [{ id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' }],
+            },
+          },
+          // Sibling task has ACTUAL CONTENT for the same target, not just
+          // the fact key in schema. The new per-target collision contract
+          // requires concrete content evidence — schema alone doesn't
+          // preemptively block writes to other platforms.
+          content: {
+            'fld_sibling1234:platform:show_plt_200': '2026-05-23T12:30:00.000Z',
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowPlatformActuals).not.toHaveBeenCalled();
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+      expect(result.entries[0]).toMatchObject({
+        factKey: 'show_platform_actual_start_time',
+        outcome: 'skipped_collision',
+        reason: 'cross_task_same_fact_key',
+      });
+      expect(auditService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'SKIPPED_LOWER_PRIORITY',
+          targets: [{ targetType: 'SHOW_PLATFORM', targetId: 200n }],
+          metadata: expect.objectContaining({
+            collision_reason: 'cross_task_same_fact_key',
+            fact_key: 'show_platform_actual_start_time',
+          }),
+        }),
+      );
+    });
+
+    it('does NOT collide when a sibling task binds the same platform fact key for a DIFFERENT target', async () => {
+      // Codex P1 review on PR #103: per-fact-key collision was overly
+      // broad — any sibling with the same fact key in schema blocked all
+      // platform paired writes for the show, even for unrelated targets.
+      // Per-target detection only blocks when the sibling has CONTENT for
+      // the exact (fact-key, target-uid) pair.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      // Sibling has the same fact key, but its content targets a
+      // DIFFERENT platform — no per-target collision with show_plt_200.
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                { id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' },
+                { id: 'fld_sibling5678', system_fact_key: 'show_platform_actual_end_time' },
+              ],
+            },
+          },
+          content: {
+            'fld_sibling1234:platform:show_plt_999': '2026-05-23T12:00:00.000Z',
+            'fld_sibling5678:platform:show_plt_999': '2026-05-23T13:00:00.000Z',
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      // Paired path runs for the non-colliding target — no SKIPPED audit.
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledWith(
+        expect.objectContaining({ showPlatformUid: 'show_plt_200' }),
+      );
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          factKey: 'show_platform_actual_start_time',
+          outcome: 'written',
+        }),
+      ]));
+    });
+
+    it('survives a sibling task carrying an unknown system_fact_key without throwing', async () => {
+      // Codex P1 review on PR #103: sibling snapshots are persisted JSON
+      // cast to `UiSchemaV2`, so a mixed-version / legacy sibling can
+      // carry a `system_fact_key` this binary doesn't know. The
+      // collision walker must not throw `TypeError` and abort the entire
+      // extraction run when `SYSTEM_FACT_KEY_DEFINITIONS[k]` is
+      // undefined — it should skip the unknown entry silently.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                // Unknown fact key from a future / forked binary.
+                { id: 'fld_unknownkey', system_fact_key: 'future_unknown_fact_key' },
+              ],
+            },
+          },
+          content: { 'fld_unknownkey:platform:show_plt_200': 'some-value' },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      // The paired path still runs for the known platform target —
+      // unknown sibling key doesn't collide with anything we can write.
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ outcome: 'written' }),
+      ]));
+    });
+
+    it('does NOT collide when a sibling task has a hydrated key for the same target but the value is blank', async () => {
+      // Codex P1 review on PR #103: per-target collision detection was
+      // keyed by the mere presence of a hydrated content key, so a
+      // sibling that had cleared its value (`''` / `null`) still pushed
+      // the current task into `skipped_collision` even though there was
+      // no competing write. Absent sibling values must be filtered the
+      // same way the current task filters its own blank fields.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                { id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' },
+                { id: 'fld_sibling5678', system_fact_key: 'show_platform_actual_end_time' },
+              ],
+            },
+          },
+          // Hydrated keys for the same target exist on the sibling, but
+          // both values are blank — the operator started filling and
+          // cleared the field, or the schema was regenerated with no
+          // entered value. Either way, no competing write.
+          content: {
+            'fld_sibling1234:platform:show_plt_200': '',
+            'fld_sibling5678:platform:show_plt_200': null,
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ outcome: 'written' }),
+      ]));
+    });
+
+    it('does NOT collide when a sibling task has the same fact key in schema but no content yet', async () => {
+      // Sibling is PENDING with empty content — we can't know which target
+      // it will eventually bind. Per the design, the priority resolver
+      // handles any same-source race that materializes later; we only
+      // preemptively block on concrete content evidence.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                { id: 'fld_sibling1234', system_fact_key: 'show_platform_actual_start_time' },
+                { id: 'fld_sibling5678', system_fact_key: 'show_platform_actual_end_time' },
+              ],
+            },
+          },
+          content: {},
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ outcome: 'written' }),
+      ]));
     });
   });
 });

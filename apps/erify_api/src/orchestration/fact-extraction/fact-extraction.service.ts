@@ -20,9 +20,11 @@ import { ExtractorRegistry } from './extractors/extractor-registry';
 import {
   FactExtractionProcessor,
   type PairedShowActualsResult,
+  type PairedShowPlatformActualsResult,
 } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
+import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { TaskService } from '@/models/task/task.service';
 
 /**
@@ -90,6 +92,7 @@ export class FactExtractionService {
     private readonly auditService: AuditService,
     private readonly extractorRegistry: ExtractorRegistry,
     private readonly factExtractionProcessor: FactExtractionProcessor,
+    private readonly showPlatformService: ShowPlatformService,
   ) {}
 
   /**
@@ -126,11 +129,35 @@ export class FactExtractionService {
     const writingFacts = facts.filter(
       (fact) => !isFactValueAbsent(fact.rawValue) && this.extractorRegistry.has(fact.factKey),
     );
-    const collidingFactKeys = await this.findCollidingFactKeys({
+    const showScopeFactKeys = new Set<SystemFactKey>();
+    const perTargetCollisionKeys = new Set<string>();
+    for (const fact of writingFacts) {
+      if (fact.scope === 'show') {
+        showScopeFactKeys.add(fact.factKey);
+      } else {
+        perTargetCollisionKeys.add(perTargetCollisionKey(fact.factKey, fact.targetUid));
+      }
+    }
+    const collidingFacts = await this.findCollidingFacts({
       currentTaskId: input.taskId,
       showId: input.showId,
-      factKeys: writingFacts.map((fact) => fact.factKey),
+      showScopeFactKeys,
+      perTargetCollisionKeys,
     });
+
+    // Bulk-resolve active platform target UIDs in one DB round-trip so per-
+    // fact stale-target checks and audit-id resolution share the same cache.
+    // Scoped to `input.showId` so a platform reassigned to a different show
+    // between submission and extraction stays out of the cache and is
+    // emitted as `skipped_stale_target` rather than leaking into the
+    // collision / audit-target paths. Targets missing from the map
+    // (soft-deleted or wrong show) emit a `skipped_stale_target` outcome —
+    // no write, no audit row (a stale target is unwritable, not contested,
+    // so a SKIPPED audit would be misleading on the review surface).
+    const platformTargetById = await this.showPlatformService.findActiveByUids(
+      uniqueTargetUids(facts, 'platform'),
+      input.showId,
+    );
 
     const ctx: ExtractionContext = {
       taskId: input.taskId,
@@ -155,13 +182,31 @@ export class FactExtractionService {
     // columns + both audits inside a single CLS transaction.
     const handledPairedKeys = await this.tryAtomicPairedShowActuals({
       facts,
-      collidingFactKeys,
+      collidingFacts,
+      ctx,
+      entries,
+    });
+
+    // Same atomicity guarantee, applied per-platform: if a single submission
+    // carries paired start+end for the same `ShowPlatform`, route the pair
+    // through the per-target atomic processor so the priority check +
+    // merged-pair validation + paired column write all commit (or roll back)
+    // together. Each platform target gets its own transaction so a
+    // validation failure on platform A doesn't roll back platform B's
+    // already-written pair.
+    const handledPairedPlatformContentKeys = await this.tryAtomicPairedShowPlatformActuals({
+      facts,
+      collidingFacts,
+      platformTargetById,
       ctx,
       entries,
     });
 
     for (const fact of facts) {
       if (handledPairedKeys.has(fact.factKey)) {
+        continue;
+      }
+      if (handledPairedPlatformContentKeys.has(fact.contentKey)) {
         continue;
       }
       // Empty submissions never write, never audit. Per Codex P2 review:
@@ -197,8 +242,29 @@ export class FactExtractionService {
         continue;
       }
 
-      if (collidingFactKeys.has(fact.factKey)) {
-        const audit = await this.writeCollisionSkipAudit(fact, ctx);
+      // Stale-target pre-filter for platform-scope facts BEFORE collision
+      // routing. Per Codex P2 review on PR #103: a stale platform target
+      // is unwritable by definition, so it cannot meaningfully "collide"
+      // with a sibling task — emitting `skipped_collision` (which writes
+      // a SKIPPED_LOWER_PRIORITY audit) would mislabel an unwritable row
+      // as a contested write. The bulk lookup is already scoped to
+      // `ctx.showId`, so missing entries mean the platform is either
+      // soft-deleted or has been reassigned to another show; either way,
+      // the value stays in `task.content` for the PR 12.4 review queue.
+      if (fact.scope === 'platform' && !platformTargetById.has(fact.targetUid)) {
+        entries.push({
+          factKey: fact.factKey,
+          sourceFieldId: fact.sourceFieldId,
+          contentKey: fact.contentKey,
+          targetUid: fact.targetUid,
+          outcome: 'skipped_stale_target',
+          reason: 'target_unassigned_or_deleted',
+        });
+        continue;
+      }
+
+      if (isFactColliding(fact, collidingFacts)) {
+        const audit = await this.writeCollisionSkipAudit(fact, ctx, platformTargetById);
         entries.push({
           factKey: fact.factKey,
           sourceFieldId: fact.sourceFieldId,
@@ -211,7 +277,7 @@ export class FactExtractionService {
         continue;
       }
 
-      const targetIds = this.resolveAuditTargetIds(fact, ctx);
+      const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
 
       let processed: { decision: ExtractionDecision; auditUid?: string };
       try {
@@ -254,38 +320,106 @@ export class FactExtractionService {
   }
 
   /**
-   * Returns the set of fact keys that already have *another active* task
-   * targeting the same show. Active = any non-terminal status (PENDING,
-   * IN_PROGRESS, REVIEW, BLOCKED), not soft-deleted. Routing colliding
-   * writes to a SKIPPED audit avoids silently picking a winner when two
-   * operator surfaces are in flight on the same fact key.
+   * Computes cross-task collisions at two granularities:
    *
-   * Per Codex P1 review: `IN_PROGRESS` and `BLOCKED` are common assignee
-   * working states; omitting them let competing tasks race past the guard.
+   * - **Show scope** (`colliding.showScope`): per-fact-key. A show fact has
+   *   one canonical target (the show), so any active sibling with the same
+   *   fact key in its schema is a race we must route to the review path.
+   * - **Per-target scope** (`colliding.perTarget`, keyed `<factKey>|<targetUid>`):
+   *   per-(fact-key, target-uid). Two tasks binding the same platform/creator
+   *   fact key on *different* targets do NOT collide — they write to
+   *   different rows. We only mark a collision when a sibling task has
+   *   already entered CONTENT for the same (fact-key, target-uid) pair.
+   *   No-content-yet siblings are not preemptively blocked; if they later
+   *   race past this guard, the priority resolver handles same-source
+   *   last-write-wins semantics.
+   *
+   * Active = any non-terminal status (PENDING, IN_PROGRESS, REVIEW,
+   * BLOCKED), not soft-deleted — `COMPLETED` / `CLOSED` content is frozen
+   * so a finished sibling can no longer race.
+   *
+   * Per Codex P1 review on PR #103: a show-wide per-fact-key flag blocked
+   * unrelated platform paired writes whenever any sibling task bound the
+   * same fact key (even for a different platform), leaving valid actuals
+   * stale. Per-target detection scopes the collision to the actual write
+   * conflict.
    */
-  private async findCollidingFactKeys(input: {
+  private async findCollidingFacts(input: {
     currentTaskId: bigint;
     showId: bigint;
-    factKeys: SystemFactKey[];
-  }): Promise<Set<SystemFactKey>> {
-    if (input.factKeys.length === 0) {
-      return new Set();
+    showScopeFactKeys: Set<SystemFactKey>;
+    perTargetCollisionKeys: Set<string>;
+  }): Promise<CollisionTracker> {
+    const colliding: CollisionTracker = {
+      showScope: new Set(),
+      perTarget: new Set(),
+    };
+    if (input.showScopeFactKeys.size === 0 && input.perTargetCollisionKeys.size === 0) {
+      return colliding;
     }
     const siblings = await this.taskService.findActiveTasksForShowExcluding(
       input.showId,
       input.currentTaskId,
       [...COLLISION_ACTIVE_TASK_STATUSES],
     );
-    const colliding = new Set<SystemFactKey>();
     for (const sibling of siblings) {
       const schema = sibling.snapshot?.schema as unknown as UiSchemaV2 | null;
       if (!schema || !Array.isArray(schema.items)) {
         continue;
       }
+
+      const factKeyByFieldId = new Map<string, SystemFactKey>();
       for (const item of schema.items) {
         const itemFactKey = (item as FieldItemV2).system_fact_key;
-        if (itemFactKey && input.factKeys.includes(itemFactKey)) {
-          colliding.add(itemFactKey);
+        if (!itemFactKey) {
+          continue;
+        }
+        // Per Codex P1 review on PR #103: sibling snapshots are persisted
+        // JSON cast to `UiSchemaV2`, so a mixed-version / legacy sibling
+        // can carry a `system_fact_key` this binary doesn't know. Guard
+        // the definition lookup — an unknown key from a different binary
+        // can't collide with anything the current binary writes, so it's
+        // safe to skip silently rather than throw and abort the whole
+        // `extractFromTask` run with a `TypeError`.
+        const definition = SYSTEM_FACT_KEY_DEFINITIONS[itemFactKey];
+        if (!definition) {
+          continue;
+        }
+        factKeyByFieldId.set(item.id, itemFactKey);
+        // Show-scope collision: schema-only match is sufficient because the
+        // sibling will produce one write per the (one) show target on submit.
+        if (definition.target === 'show' && input.showScopeFactKeys.has(itemFactKey)) {
+          colliding.showScope.add(itemFactKey);
+        }
+      }
+
+      // Per-target collision: look at the sibling's *content* (not just
+      // schema). A sibling that has the per-target fact key in its schema
+      // but no value yet for a specific target is not preemptively
+      // blocking — only entries the sibling has actually started filling
+      // are considered races.
+      //
+      // Per Codex P1 review on PR #103: a sibling can carry an
+      // explicitly-cleared hydrated key (`null` / `undefined` / `''`); the
+      // mere presence of the key is not a competing write. Skip absent
+      // values so a stale empty key on the sibling doesn't push the
+      // current task into a fictional `skipped_collision`.
+      const siblingContent = (sibling.content as Record<string, unknown> | null) ?? {};
+      for (const [contentKey, siblingValue] of Object.entries(siblingContent)) {
+        if (isFactValueAbsent(siblingValue)) {
+          continue;
+        }
+        const parsed = parseHydratedContentKey(contentKey);
+        if (!parsed) {
+          continue;
+        }
+        const siblingFactKey = factKeyByFieldId.get(parsed.fieldId);
+        if (!siblingFactKey) {
+          continue;
+        }
+        const collisionKey = perTargetCollisionKey(siblingFactKey, parsed.targetUid);
+        if (input.perTargetCollisionKeys.has(collisionKey)) {
+          colliding.perTarget.add(collisionKey);
         }
       }
     }
@@ -295,8 +429,9 @@ export class FactExtractionService {
   private async writeCollisionSkipAudit(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): Promise<{ uid: string } | undefined> {
-    const targetIds = this.resolveAuditTargetIds(fact, ctx);
+    const targetIds = this.resolveAuditTargetIds(fact, ctx, platformTargetById);
     if (targetIds.length === 0) {
       return undefined;
     }
@@ -330,7 +465,7 @@ export class FactExtractionService {
    */
   private async tryAtomicPairedShowActuals(input: {
     facts: ExtractedFact[];
-    collidingFactKeys: Set<SystemFactKey>;
+    collidingFacts: CollisionTracker;
     ctx: ExtractionContext;
     entries: ExtractionResultEntry[];
   }): Promise<Set<SystemFactKey>> {
@@ -343,8 +478,8 @@ export class FactExtractionService {
       return new Set();
     }
     if (
-      input.collidingFactKeys.has('show_actual_start_time')
-      || input.collidingFactKeys.has('show_actual_end_time')
+      input.collidingFacts.showScope.has('show_actual_start_time')
+      || input.collidingFacts.showScope.has('show_actual_end_time')
     ) {
       return new Set();
     }
@@ -360,7 +495,9 @@ export class FactExtractionService {
       return new Set();
     }
 
-    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx);
+    // Show scope: bulk-resolved platform cache isn't relevant here, but the
+    // resolver signature is shared so we pass an empty map.
+    const targetIds = this.resolveAuditTargetIds(startFact, input.ctx, new Map());
     let result: PairedShowActualsResult;
     try {
       result = await this.factExtractionProcessor.applyPairedShowActuals({
@@ -415,22 +552,162 @@ export class FactExtractionService {
   }
 
   /**
-   * Resolves the polymorphic audit target row(s) for a fact. Only `show`
-   * scope is wired in PR 12.0.5; the other branches are placeholders for
-   * 12.1/12.2/12.3 so the orchestrator doesn't need to grow when those
-   * extractors land. Synchronous because show-scope id is already in the
-   * extraction context — no extra round-trip needed.
+   * Resolves the polymorphic audit target row(s) for a fact. `show` scope
+   * uses the id already in `ctx`; `platform` scope reads from the bulk-
+   * resolved cache built once per `extractFromTask` call. Creator scope is
+   * still a placeholder until PR 12.2 lands.
+   *
+   * Returns an empty array when the platform target is missing from the
+   * cache — callers should pre-filter stale targets and emit
+   * `skipped_stale_target` outcomes rather than relying on empty target
+   * ids to silently drop the audit.
    */
   private resolveAuditTargetIds(
     fact: ExtractedFact,
     ctx: ExtractionContext,
+    platformTargetById: Map<string, { id: bigint; showId: bigint }>,
   ): { targetType: AuditTargetType; targetId: bigint }[] {
     if (fact.scope === 'show') {
       return [{ targetType: 'SHOW', targetId: ctx.showId }];
     }
-    // 12.1.x and 12.2 register extractors for show_creator / show_platform
-    // scopes; until they do, we have no resolved DB id to anchor the audit.
+    if (fact.scope === 'platform') {
+      const resolved = platformTargetById.get(fact.targetUid);
+      if (!resolved) {
+        return [];
+      }
+      return [{ targetType: 'SHOW_PLATFORM', targetId: resolved.id }];
+    }
+    // PR 12.2 wires the creator scope.
     return [];
+  }
+
+  /**
+   * Per-target paired ShowPlatform actuals routing. Iterates unique
+   * `targetUid`s among the platform facts, and for each target that carries
+   * both `show_platform_actual_start_time` and `show_platform_actual_end_time`
+   * (non-absent, parseable, registered, non-colliding, non-stale), routes the
+   * pair through `applyPairedShowPlatformActuals` in its own transaction.
+   * Returns the set of content keys it consumed so the per-fact loop can
+   * skip them.
+   */
+  private async tryAtomicPairedShowPlatformActuals(input: {
+    facts: ExtractedFact[];
+    collidingFacts: CollisionTracker;
+    platformTargetById: Map<string, { id: bigint; showId: bigint }>;
+    ctx: ExtractionContext;
+    entries: ExtractionResultEntry[];
+  }): Promise<Set<string>> {
+    const consumed = new Set<string>();
+    if (
+      !this.extractorRegistry.has('show_platform_actual_start_time')
+      || !this.extractorRegistry.has('show_platform_actual_end_time')
+    ) {
+      return consumed;
+    }
+
+    // Group platform facts by target so each ShowPlatform pair commits or
+    // rolls back independently. A pair on platform A failing validation must
+    // not roll back platform B's already-written pair.
+    const startByTarget = new Map<string, ExtractedFact>();
+    const endByTarget = new Map<string, ExtractedFact>();
+    for (const fact of input.facts) {
+      if (fact.scope !== 'platform') {
+        continue;
+      }
+      if (fact.factKey === 'show_platform_actual_start_time') {
+        startByTarget.set(fact.targetUid, fact);
+      } else if (fact.factKey === 'show_platform_actual_end_time') {
+        endByTarget.set(fact.targetUid, fact);
+      }
+    }
+
+    for (const [targetUid, startFact] of startByTarget) {
+      const endFact = endByTarget.get(targetUid);
+      if (!endFact) {
+        continue;
+      }
+      if (isFactValueAbsent(startFact.rawValue) || isFactValueAbsent(endFact.rawValue)) {
+        continue;
+      }
+      const resolved = input.platformTargetById.get(targetUid);
+      if (!resolved) {
+        // Stale targets fall through to the per-fact loop's stale-target
+        // pre-filter, which emits `skipped_stale_target` on each side.
+        continue;
+      }
+      // Per-target collision: only block the paired write when a sibling
+      // task has actual content for the same `(factKey, targetUid)` pair.
+      // Falls through to the per-fact loop so each side emits its own
+      // `skipped_collision` audit anchored on the SHOW_PLATFORM target.
+      if (
+        input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('show_platform_actual_start_time', targetUid),
+        )
+        || input.collidingFacts.perTarget.has(
+          perTargetCollisionKey('show_platform_actual_end_time', targetUid),
+        )
+      ) {
+        continue;
+      }
+      const startIncoming = parseDateTimeValue(startFact.rawValue);
+      const endIncoming = parseDateTimeValue(endFact.rawValue);
+      if (!startIncoming || !endIncoming) {
+        continue;
+      }
+
+      const targetIds = [{ targetType: 'SHOW_PLATFORM' as AuditTargetType, targetId: resolved.id }];
+
+      let result: PairedShowPlatformActualsResult;
+      try {
+        result = await this.factExtractionProcessor.applyPairedShowPlatformActuals({
+          showPlatformUid: targetUid,
+          startFact,
+          endFact,
+          startIncoming,
+          endIncoming,
+          ctx: input.ctx,
+          targetIds,
+        });
+      } catch (err) {
+        this.logger.error(
+          `Paired show-platform-actuals processor threw on task ${input.ctx.taskUid} target ${targetUid}: ${(err as Error).message}`,
+        );
+        for (const fact of [startFact, endFact]) {
+          input.entries.push({
+            factKey: fact.factKey,
+            sourceFieldId: fact.sourceFieldId,
+            contentKey: fact.contentKey,
+            targetUid: fact.targetUid,
+            outcome: 'noop',
+            reason: 'extractor_error',
+          });
+          consumed.add(fact.contentKey);
+        }
+        continue;
+      }
+
+      input.entries.push({
+        factKey: startFact.factKey,
+        sourceFieldId: startFact.sourceFieldId,
+        contentKey: startFact.contentKey,
+        targetUid: startFact.targetUid,
+        outcome: outcomeFromDecision(result.start.decision),
+        auditUid: result.start.auditUid,
+        reason: result.start.decision.kind === 'noop' ? result.start.decision.reason : undefined,
+      });
+      input.entries.push({
+        factKey: endFact.factKey,
+        sourceFieldId: endFact.sourceFieldId,
+        contentKey: endFact.contentKey,
+        targetUid: endFact.targetUid,
+        outcome: outcomeFromDecision(result.end.decision),
+        auditUid: result.end.auditUid,
+        reason: result.end.decision.kind === 'noop' ? result.end.decision.reason : undefined,
+      });
+      consumed.add(startFact.contentKey);
+      consumed.add(endFact.contentKey);
+    }
+    return consumed;
   }
 }
 
@@ -444,6 +721,28 @@ export class FactExtractionService {
  */
 function isFactValueAbsent(rawValue: unknown): boolean {
   return rawValue == null || rawValue === '';
+}
+
+/**
+ * Two-tier cross-task collision view computed once per `extractFromTask`.
+ * See `findCollidingFacts` for the construction rules and the rationale for
+ * per-target collision tracking on hydrated scopes.
+ */
+type CollisionTracker = {
+  showScope: Set<SystemFactKey>;
+  /** Keys shaped `<factKey>|<targetUid>` — built via `perTargetCollisionKey`. */
+  perTarget: Set<string>;
+};
+
+function perTargetCollisionKey(factKey: SystemFactKey, targetUid: string): string {
+  return `${factKey}|${targetUid}`;
+}
+
+function isFactColliding(fact: ExtractedFact, colliding: CollisionTracker): boolean {
+  if (fact.scope === 'show') {
+    return colliding.showScope.has(fact.factKey);
+  }
+  return colliding.perTarget.has(perTargetCollisionKey(fact.factKey, fact.targetUid));
 }
 
 /**
@@ -465,8 +764,12 @@ function collectBoundFacts(
     const factKey = item.system_fact_key;
     if (!factKey)
       continue;
+    // Snapshots are persisted JSON cast to `UiSchemaV2`; a snapshot
+    // produced by a different binary version can carry a `system_fact_key`
+    // unknown to this binary. Skip silently — unknown keys can't be
+    // extracted by any registered extractor anyway.
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[factKey];
-    if (definition.target !== 'show')
+    if (!definition || definition.target !== 'show')
       continue;
     facts.push({
       contentKey: item.id,
@@ -490,6 +793,8 @@ function collectBoundFacts(
     if (!templateItem || !templateItem.system_fact_key)
       continue;
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[templateItem.system_fact_key];
+    if (!definition)
+      continue;
     const expectedScope = definition.target === 'show_creator' ? 'creator' : definition.target === 'show_platform' ? 'platform' : null;
     if (!expectedScope || expectedScope !== parsed.scope)
       continue;
@@ -513,6 +818,29 @@ function outcomeFromDecision(decision: ExtractionDecision): ExtractionResultEntr
     case 'skip':
       return 'skipped_lower_priority';
     case 'noop':
-      return 'noop';
+      // Extractor-level stale-target guard is defence-in-depth; the service
+      // pre-filter usually catches these first, but if an extractor is
+      // invoked directly the outcome should still surface as
+      // `skipped_stale_target` (not generic `noop`) so the review queue can
+      // segment it correctly.
+      return decision.reason === 'target_stale' ? 'skipped_stale_target' : 'noop';
   }
+}
+
+/**
+ * Deduplicates target UIDs for a given scope across all extracted facts.
+ * Used by the bulk platform-target lookup so we read each ShowPlatform at
+ * most once per `extractFromTask` call.
+ */
+function uniqueTargetUids(
+  facts: ExtractedFact[],
+  scope: 'platform' | 'creator',
+): string[] {
+  const seen = new Set<string>();
+  for (const fact of facts) {
+    if (fact.scope === scope) {
+      seen.add(fact.targetUid);
+    }
+  }
+  return Array.from(seen);
 }

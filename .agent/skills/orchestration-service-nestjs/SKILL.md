@@ -70,6 +70,40 @@ Catch per-item errors and continue the loop. Return `{ status: 'error' }` for fa
 
 Extract repeated lookups into private helpers (e.g., `resolveStudioMember()`). Validate before the mutation loop.
 
+### Race-Safe Writes on Persisted-Scope Entities
+
+When an orchestrator writes to a row that lives under a scope parent (e.g. `ShowPlatform` under `Show`, `ShowCreator` under `Show`, `StudioShift` under `Studio`), reads and writes can race with concurrent soft-deletes and cross-scope reassignments. Three rules — every Codex finding on PR 12.1.2 (#103) traced back to violating one of them.
+
+**1. Write predicates always include `{ uid, scopeParentId, deletedAt: null }`.** Use `updateMany` (not `update`), check `count === 0`, throw `HttpError.notFound(...)`. Reference: [`ShowPlatformService.updateActuals`](../../../apps/erify_api/src/models/show-platform/show-platform.service.ts).
+
+**2. Bulk prefetch (`findActiveByUids` / similar) takes the scope parent too.** Otherwise a row reassigned to a different scope parent leaks into the cache used by the orchestrator for audit-target resolution and collision detection.
+
+**3. Catch `NotFoundException` at both ends of the race — the initial read AND the eventual write — and collapse to a domain-specific stale outcome.** Don't catch the broader `Error` class; transient failures (Prisma outage, connection refused) must propagate so the outer service catch records them as `extractor_error` / equivalent. Pattern:
+
+```ts
+try {
+  row = await this.svc.getByUid(uid);
+} catch (err) {
+  if (err instanceof NotFoundException) return { kind: 'noop', reason: 'target_stale' };
+  throw err;
+}
+```
+
+**Why this generalizes**: any orchestrator that hands a row uid through a multi-step workflow (read → validate → write) is exposed to the same races. Catching `NotFoundException` at exactly the boundaries that can race keeps domain semantics clean (`target_stale` ≠ `extractor_error`) and prevents writes against logically-deleted or reassigned rows.
+
+### Persisted-JSON Registry Lookups
+
+Snapshots, metadata, and task content are persisted JSON cast to a TS type at read time. **The TS type is NOT load-bearing** — mixed-version / legacy / future-binary data can carry keys this binary doesn't know.
+
+Any enum / registry / discriminator lookup off persisted data MUST guard for `undefined`:
+
+```ts
+const definition = SYSTEM_FACT_KEY_DEFINITIONS[key];
+if (!definition) continue;  // unknown key — skip silently
+```
+
+Codex P1 on PR #103 caught a single unguarded `.target` deref that aborted an entire orchestration run with `TypeError` on a mixed-version sibling task.
+
 ## Module Rules
 
 - Export the Orchestration Service — controllers import it
@@ -104,9 +138,14 @@ Extract repeated lookups into private helpers (e.g., `resolveStudioMember()`). V
 - [ ] Cross-domain validation before mutation loop
 - [ ] Logger for per-item errors
 - [ ] No `forwardRef` between this module and the model modules it composes — if you reached for one, you're missing an orchestrator method (see "Side-Effects" section above)
+- [ ] Writes to scoped-parent rows use `{ uid, scopeParentId, deletedAt: null }` predicate + `updateMany` + `NotFoundException` on `count === 0` (see "Race-Safe Writes" section)
+- [ ] Bulk prefetch helpers include the scope parent in their filter
+- [ ] `try/catch (err) { if (err instanceof NotFoundException) ... ; throw err; }` around both initial read AND eventual write — never `catch {}` or `catch (err) { return fallback }`
+- [ ] Every `enumLookup[k]` / discriminator on persisted JSON guarded for `undefined`
 
 ## Related Skills
 
+- [Fact Extraction Pipeline](../fact-extraction-pipeline/SKILL.md) — extractor / paired-write / per-target collision patterns; required reading before any new `IngestionExtractor`
 - [Service Pattern](../service-pattern-nestjs/SKILL.md) — Model Service patterns
 - [Database Patterns](../database-patterns/SKILL.md) — `@Transactional()`, advisory locks
 - [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Controller patterns

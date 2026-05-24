@@ -3,11 +3,14 @@ import { Module } from '@nestjs/common';
 import { ExtractorRegistry } from './extractors/extractor-registry';
 import { ShowActualEndTimeExtractor } from './extractors/show-actual-end-time.extractor';
 import { ShowActualStartTimeExtractor } from './extractors/show-actual-start-time.extractor';
+import { ShowPlatformActualEndTimeExtractor } from './extractors/show-platform-actual-end-time.extractor';
+import { ShowPlatformActualStartTimeExtractor } from './extractors/show-platform-actual-start-time.extractor';
 import { FactExtractionProcessor } from './fact-extraction.processor';
 import { FactExtractionService } from './fact-extraction.service';
 
 import { AuditModule } from '@/models/audit/audit.module';
 import { ShowModule } from '@/models/show/show.module';
+import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
 import { TaskModule } from '@/models/task/task.module';
 
 /**
@@ -28,13 +31,15 @@ import { TaskModule } from '@/models/task/task.module';
  * `FactExtractionService` is part of the public surface.
  */
 @Module({
-  imports: [TaskModule, AuditModule, ShowModule],
+  imports: [TaskModule, AuditModule, ShowModule, ShowPlatformModule],
   providers: [
     FactExtractionService,
     FactExtractionProcessor,
     ExtractorRegistry,
     ShowActualStartTimeExtractor,
     ShowActualEndTimeExtractor,
+    ShowPlatformActualStartTimeExtractor,
+    ShowPlatformActualEndTimeExtractor,
   ],
   exports: [FactExtractionService],
 })
