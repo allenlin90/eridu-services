@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShowsIndexRouteImport } from './routes/shows/index'
+import { Route as CompensationsIndexRouteImport } from './routes/compensations/index'
 import { Route as ShowsShowIdRouteImport } from './routes/shows/$showId'
 
 const SplatRoute = SplatRouteImport.update({
@@ -29,6 +30,11 @@ const ShowsIndexRoute = ShowsIndexRouteImport.update({
   path: '/shows/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompensationsIndexRoute = CompensationsIndexRouteImport.update({
+  id: '/compensations/',
+  path: '/compensations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShowsShowIdRoute = ShowsShowIdRouteImport.update({
   id: '/shows/$showId',
   path: '/shows/$showId',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/shows/$showId': typeof ShowsShowIdRoute
+  '/compensations': typeof CompensationsIndexRoute
   '/shows': typeof ShowsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/shows/$showId': typeof ShowsShowIdRoute
+  '/compensations': typeof CompensationsIndexRoute
   '/shows': typeof ShowsIndexRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/shows/$showId': typeof ShowsShowIdRoute
+  '/compensations/': typeof CompensationsIndexRoute
   '/shows/': typeof ShowsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$' | '/shows/$showId' | '/shows'
+  fullPaths: '/' | '/$' | '/shows/$showId' | '/compensations' | '/shows'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$' | '/shows/$showId' | '/shows'
-  id: '__root__' | '/' | '/$' | '/shows/$showId' | '/shows/'
+  to: '/' | '/$' | '/shows/$showId' | '/compensations' | '/shows'
+  id: '__root__' | '/' | '/$' | '/shows/$showId' | '/compensations/' | '/shows/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   ShowsShowIdRoute: typeof ShowsShowIdRoute
+  CompensationsIndexRoute: typeof CompensationsIndexRoute
   ShowsIndexRoute: typeof ShowsIndexRoute
 }
 
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShowsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compensations/': {
+      id: '/compensations/'
+      path: '/compensations'
+      fullPath: '/compensations'
+      preLoaderRoute: typeof CompensationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shows/$showId': {
       id: '/shows/$showId'
       path: '/shows/$showId'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   ShowsShowIdRoute: ShowsShowIdRoute,
+  CompensationsIndexRoute: CompensationsIndexRoute,
   ShowsIndexRoute: ShowsIndexRoute,
 }
 export const routeTree = rootRouteImport

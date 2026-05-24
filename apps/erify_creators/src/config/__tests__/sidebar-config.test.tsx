@@ -30,6 +30,7 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('@/paraglide/messages.js', () => ({
   'sidebar.activities': vi.fn(() => 'Activities'),
   'sidebar.shows': vi.fn(() => 'Shows'),
+  'sidebar.compensations': vi.fn(() => 'Compensations'),
 }));
 
 describe('useSidebarConfig', () => {
@@ -150,7 +151,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(session));
 
-    expect(result.current.navMain).toHaveLength(1);
+    expect(result.current.navMain).toHaveLength(2);
     expect(result.current.navMain[0]).toMatchObject({
       title: 'Shows',
       url: '/shows',
@@ -158,6 +159,14 @@ describe('useSidebarConfig', () => {
       items: [],
     });
     expect(result.current.navMain[0]?.icon).toBeDefined();
+
+    expect(result.current.navMain[1]).toMatchObject({
+      title: 'Compensations',
+      url: '/compensations',
+      isActive: false,
+      items: [],
+    });
+    expect(result.current.navMain[1]?.icon).toBeDefined();
   });
 
   it('has correct navMainLabel', () => {

@@ -55,7 +55,28 @@
   },
   "sidebar": {
     "activities": "Activities",
-    "shows": "Shows"
+    "shows": "Shows",
+    "compensations": "Compensations"
+  },
+  "compensations": {
+    "title": "My Compensations",
+    "totalEarnings": "Total Earnings",
+    "showsCompleted": "Shows Completed",
+    "pendingItems": "Pending Items",
+    "unresolved": "Unresolved",
+    "resolved": "Resolved",
+    "showName": "Show Name",
+    "dateTime": "Date & Time",
+    "type": "Type",
+    "rate": "Agreed Rate",
+    "commission": "Commission",
+    "baseAmount": "Base Amount",
+    "adjustments": "Adjustments",
+    "total": "Total Amount",
+    "notes": "Notes",
+    "noData": "No compensations found for the selected period.",
+    "errorLoading": "Failed to load compensations data. Please try again.",
+    "tryAgain": "Try Again"
   },
   "common": {
     "welcome": "Welcome",

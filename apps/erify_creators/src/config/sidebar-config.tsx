@@ -1,5 +1,5 @@
 import { useLocation } from '@tanstack/react-router';
-import { Video } from 'lucide-react';
+import { DollarSign, Video } from 'lucide-react';
 import type * as React from 'react';
 import { useMemo } from 'react';
 
@@ -45,6 +45,13 @@ export function useSidebarConfig(
       url: '/shows',
       icon: Video,
       isActive: isPathActive(location.pathname, '/shows'),
+      items: [],
+    },
+    {
+      title: m['sidebar.compensations'](),
+      url: '/compensations',
+      icon: DollarSign,
+      isActive: isPathActive(location.pathname, '/compensations'),
       items: [],
     },
   ], [location.pathname]);
