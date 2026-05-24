@@ -492,6 +492,7 @@ describe('factExtractionProcessor', () => {
       expect(showPlatformService.updateActuals).toHaveBeenCalledTimes(1);
       expect(showPlatformService.updateActuals).toHaveBeenCalledWith(
         'show_plt_200',
+        10n,
         expect.objectContaining({
           actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
           actualEndTime: new Date('2026-05-23T13:00:00.000Z'),
@@ -522,7 +523,11 @@ describe('factExtractionProcessor', () => {
       const result = await processor.applyPairedShowPlatformActuals(buildPlatformInput());
 
       expect(showPlatformService.updateActuals).toHaveBeenCalledTimes(1);
-      const updateArg = showPlatformService.updateActuals.mock.calls[0]![1];
+      // Args: (uid, showId, payload) — payload is index 2 now.
+      const updateCall = showPlatformService.updateActuals.mock.calls[0]!;
+      expect(updateCall[0]).toBe('show_plt_200');
+      expect(updateCall[1]).toBe(10n);
+      const updateArg = updateCall[2];
       expect(updateArg).toHaveProperty('actualStartTime', new Date('2026-05-23T12:00:00.000Z'));
       expect(updateArg).not.toHaveProperty('actualEndTime');
       expect(result.start.decision).toMatchObject({ kind: 'write', action: 'UPDATE' });

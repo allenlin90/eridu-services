@@ -80,6 +80,7 @@ describe('showPlatformActualStartTimeExtractor', () => {
     });
     expect(showPlatformService.updateActuals).toHaveBeenCalledWith(
       'show_plt_200',
+      10n,
       expect.objectContaining({
         actualStartTime: new Date('2026-05-23T18:30:00.000Z'),
         metadata: expect.objectContaining({

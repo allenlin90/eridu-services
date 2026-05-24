@@ -104,12 +104,11 @@ export class ShowPlatformActualStartTimeExtractor implements IngestionExtractor 
     };
 
     try {
-      await this.showPlatformService.updateActuals(fact.targetUid, {
+      await this.showPlatformService.updateActuals(fact.targetUid, ctx.showId, {
         actualStartTime: incoming,
         metadata: nextMetadata,
       });
-    }
-    catch (err) {
+    } catch (err) {
       // Concurrent soft-delete race: the read above saw an active row but
       // `updateActuals` filters by `deletedAt: null`, so the write
       // throws `NotFoundException` when the platform was deleted between

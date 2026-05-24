@@ -318,13 +318,12 @@ export class FactExtractionProcessor {
       };
       const nextMetadata: ShowMetadataShape = { ...metadata, actuals_source: nextActualsSource };
       try {
-        await this.showPlatformService.updateActuals(input.showPlatformUid, {
+        await this.showPlatformService.updateActuals(input.showPlatformUid, input.ctx.showId, {
           ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
           ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
           metadata: nextMetadata,
         });
-      }
-      catch (err) {
+      } catch (err) {
         // Same concurrent soft-delete race as the per-extractor path:
         // the row was active when we read it but `updateActuals` filters
         // by `deletedAt: null`, so the write throws `NotFoundException`

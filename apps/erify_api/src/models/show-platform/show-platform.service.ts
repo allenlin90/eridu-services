@@ -168,13 +168,20 @@ export class ShowPlatformService extends BaseModelService {
    * race fires (`count === 0`), throw `NotFoundException` so the
    * extractor / paired processor can convert it to the same
    * `target_stale` outcome that the prefetch path uses.
+   *
+   * Per follow-up Codex P1 review: `showId` is part of the write
+   * predicate too. A `ShowPlatform` reassigned to another show between
+   * the read and the write would otherwise be mutated under the original
+   * task's audit context — the new stale-target contract must cover
+   * cross-show reassignments, not just soft-deletes.
    */
   async updateActuals(
     uid: string,
+    showId: bigint,
     payload: { actualStartTime?: Date; actualEndTime?: Date; metadata?: Record<string, unknown> },
   ): Promise<void> {
     const result = await this.showPlatformRepository.updateMany(
-      { uid, deletedAt: null },
+      { uid, showId, deletedAt: null },
       {
         ...(payload.actualStartTime !== undefined ? { actualStartTime: payload.actualStartTime } : {}),
         ...(payload.actualEndTime !== undefined ? { actualEndTime: payload.actualEndTime } : {}),
