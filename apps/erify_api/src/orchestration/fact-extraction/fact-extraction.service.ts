@@ -13,6 +13,7 @@ import {
   type UiSchemaV2,
 } from '@eridu/api-types/task-management';
 
+import { parseBooleanValue } from './extractors/boolean-value';
 import { parseDateTimeValue } from './extractors/datetime-value';
 import type {
   ExtractedFact,
@@ -132,8 +133,17 @@ export class FactExtractionService {
     //     colliding sibling must NOT emit a SKIPPED_LOWER_PRIORITY audit
     //     because nothing in this pipeline can write it, so the "collision"
     //     is fictional from the review surface's perspective).
+    //   - parseable value for the fact's declared `field_type` — per Codex
+    //     P2 review on PR #104: an unparseable datetime / boolean still
+    //     looks "non-absent" but the extractor will noop with
+    //     `value_absent`, so including it in `writingFacts` would falsely
+    //     mark the fact as co-submitted for shared-column ownership
+    //     decisions (e.g. the attendance-missing extractor's reason-clear
+    //     check) even though no write will happen.
     const writingFacts = rawFacts.filter(
-      (fact) => !isFactValueAbsent(fact.rawValue) && this.extractorRegistry.has(fact.factKey),
+      (fact) => !isFactValueAbsent(fact.rawValue)
+        && this.extractorRegistry.has(fact.factKey)
+        && isFactValueParseable(fact),
     );
 
     // Hydrate each fact with its writing-eligible siblings for the same
@@ -875,6 +885,34 @@ export class FactExtractionService {
  */
 function isFactValueAbsent(rawValue: unknown): boolean {
   return rawValue == null || rawValue === '';
+}
+
+/**
+ * Pre-flight value parseability check for the writingFacts filter, keyed
+ * off the fact's declared `field_type`. An unparseable datetime
+ * (`"not-a-date"`) or boolean still has a non-empty `rawValue`, so the
+ * absent-check would let it through — but the extractor itself will
+ * noop with `value_absent`. Including such a fact in `writingFacts`
+ * would falsely advertise it as co-submitted for shared-column
+ * ownership decisions (the attendance-missing extractor uses
+ * `coSubmittedFactKeysForTarget` to gate `attendanceReason` clearing).
+ *
+ * Returns `true` when the field-type has no specific parser (defensive
+ * default — the extractor will still get the chance to noop on its own).
+ */
+function isFactValueParseable(fact: ExtractedFact): boolean {
+  const definition = SYSTEM_FACT_KEY_DEFINITIONS[fact.factKey];
+  if (!definition) {
+    return true;
+  }
+  switch (definition.field_type) {
+    case 'datetime':
+      return parseDateTimeValue(fact.rawValue) !== null;
+    case 'checkbox':
+      return parseBooleanValue(fact.rawValue) !== null;
+    default:
+      return true;
+  }
 }
 
 /**

@@ -4,6 +4,7 @@ import type { ActualsSource } from '@eridu/api-types/audits';
 
 import { canResolverOverwrite } from '../source-priority';
 
+import { parseBooleanValue } from './boolean-value';
 import { MISSING_REASON_FALLBACK } from './creator-attendance-reasons';
 import type {
   ExtractedFact,
@@ -131,17 +132,4 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
       newValue: incoming,
     };
   }
-}
-
-function parseBooleanValue(value: unknown): boolean | null {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-  if (value === 'true') {
-    return true;
-  }
-  if (value === 'false') {
-    return false;
-  }
-  return null;
 }

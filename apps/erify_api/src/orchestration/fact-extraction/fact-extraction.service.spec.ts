@@ -936,6 +936,71 @@ describe('factExtractionService', () => {
       const [factArg] = attendanceExtractor.apply.mock.calls[0]!;
       expect(factArg.coSubmittedFactKeysForTarget?.has('creator_actual_start_time')).toBe(false);
     });
+
+    it('excludes unparseable datetime start facts from coSubmittedFactKeysForTarget', async () => {
+      // Regression for Codex P2: `writingFacts` now also excludes facts
+      // whose `rawValue` fails to parse under the fact's declared
+      // `field_type`. An unparseable creator_actual_start_time would
+      // otherwise pollute the sibling set and trap a stale absence
+      // reason when attendance_missing is toggled off.
+      const attendanceExtractor = buildExtractor({ factKey: 'creator_attendance_missing' });
+      attendanceExtractor.apply.mockResolvedValue({
+        kind: 'write',
+        action: 'UPDATE',
+        oldValue: true,
+        newValue: false,
+      });
+      const customRegistry = {
+        resolve: jest.fn((factKey: string) =>
+          factKey === 'creator_attendance_missing' ? attendanceExtractor : undefined,
+        ),
+        has: jest.fn((factKey: string) =>
+          factKey === 'creator_attendance_missing'
+          || factKey === 'creator_actual_start_time',
+        ),
+        registeredFactKeys: jest.fn(() => [
+          'creator_attendance_missing',
+          'creator_actual_start_time',
+        ]),
+      } as unknown as ExtractorRegistry;
+      const customService = new FactExtractionService(
+        taskService,
+        auditService,
+        customRegistry,
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_creatorstart1', system_fact_key: 'creator_actual_start_time' },
+            { id: 'fld_attendmiss1', system_fact_key: 'creator_attendance_missing' },
+          ],
+        },
+        content: {
+          // Non-empty but unparseable — extractor would noop with value_absent.
+          'fld_creatorstart1:creator:show_mc_alpha': 'not-a-date',
+          'fld_attendmiss1:creator:show_mc_alpha': false,
+        },
+      }));
+      showCreatorService.findActiveByUids.mockResolvedValue(
+        new Map([['show_mc_alpha', { id: 101n, showId: 10n }]]),
+      );
+
+      await customService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(attendanceExtractor.apply).toHaveBeenCalledTimes(1);
+      const [factArg] = attendanceExtractor.apply.mock.calls[0]!;
+      expect(factArg.coSubmittedFactKeysForTarget?.has('creator_actual_start_time')).toBe(false);
+    });
   });
 
   describe('show platform actuals routing', () => {
