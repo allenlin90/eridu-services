@@ -62,7 +62,7 @@ model ShowCreator {
   actualStartTime    DateTime?                  @map("actual_start_time")
   actualEndTime      DateTime?                  @map("actual_end_time")
   attendanceMissing  Boolean                    @default(false) @map("attendance_missing") // Sticky no-show marker set explicitly by operator/manager; null actualStartTime alone is "not recorded".
-  attendanceReason   String?                    @map("attendance_reason") // Required when derived attendance is LATE or attendanceMissing is true.
+  attendanceReason   String?                    @map("attendance_reason") // Required when derived attendance is LATE or attendanceMissing is true. ⚠️ SHARED COLUMN — written by BOTH `creator_actual_start_time` (late-arrival reason) AND `creator_attendance_missing` (no-show reason). See "Shared-column ownership" caveat below before adding any third writer or refactoring the resolution rules.
 
   @@index([actualStartTime])
   @@index([attendanceMissing])
@@ -77,6 +77,20 @@ model ShowCreator {
 // Phase 4 has no grace window: 1-second late is LATE. lateMinutes derives as
 //   GREATEST(0, EXTRACT(EPOCH FROM (ShowCreator.actualStartTime - Show.startTime)) / 60).
 // ShowCreator.performanceMetrics is intentionally NOT added; creator attendance facts stay typed.
+
+// ⚠️ Shared-column ownership (PR 12.2 — see #104):
+//   `attendanceReason` is written by TWO fact keys with no per-write source
+//   attribution. PR 12.2 shipped a runtime ownership-inference scheme that
+//   took eight Codex iterations to harden; the rules are documented in the
+//   `fact-extraction-pipeline` skill under "Anti-patterns from PR 12.2".
+//   Future writes:
+//     - DO NOT add a third writer to this column without splitting it first
+//       (e.g., `lateAttendanceReason` + `missingAttendanceReason`).
+//     - DO NOT clear the column from one fact-key path without checking
+//       co-submission for the other in the same run.
+//     - DO resolve the desired value as: operator-supplied > preserve
+//       existing > system fallback. The fallback only seeds first writes.
+//   A future PR should split this column to retire the inference scheme.
 
 model ShowPlatform {
   // ... existing fields ...
