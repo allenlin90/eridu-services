@@ -18,7 +18,7 @@ export function useUserProfile() {
   const { session } = useSession();
 
   return useQuery({
-    queryKey: USER_PROFILE_KEY,
+    queryKey: queryKeys.me.profile(session?.user?.id),
     queryFn: getUserProfile,
     enabled: !!session,
     retry: 1,

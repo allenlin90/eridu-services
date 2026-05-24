@@ -20,7 +20,7 @@ export const queryKeys = {
   // Current user profile
   me: {
     all: ['me'] as const,
-    profile: () => [...queryKeys.me.all, 'profile'] as const,
+    profile: (userId?: string) => [...queryKeys.me.all, 'profile', userId ?? 'anonymous'] as const,
   },
 
   // Shows assigned to current user
