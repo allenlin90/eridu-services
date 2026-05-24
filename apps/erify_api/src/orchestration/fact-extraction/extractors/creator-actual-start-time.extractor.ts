@@ -65,7 +65,20 @@ export class CreatorActualStartTimeExtractor implements IngestionExtractor {
       };
     }
 
-    if (currentValue && currentValue.getTime() === incoming.getTime() && recordedSource === ctx.source) {
+    const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
+    const isLate = showCreator.show?.startTime ? incoming > showCreator.show.startTime : false;
+    const desiredLateReason = isLate ? trimmedReason || LATE_REASON_FALLBACK : null;
+    // Late-reason drift: an earlier write may have stored the system
+    // fallback because the sidecar was missing; a resubmission with the
+    // same timestamp but a real reason must still flush the column or
+    // the operator's actual context stays masked by the fallback text.
+    const lateReasonDrifted = desiredLateReason !== null
+      && desiredLateReason !== showCreator.attendanceReason;
+    const timeUnchanged = currentValue !== null
+      && currentValue.getTime() === incoming.getTime()
+      && recordedSource === ctx.source;
+
+    if (timeUnchanged && !lateReasonDrifted) {
       return { kind: 'noop', reason: 'value_unchanged' };
     }
 
@@ -83,8 +96,6 @@ export class CreatorActualStartTimeExtractor implements IngestionExtractor {
       ...metadata,
       actuals_source: nextActualsSource,
     };
-    const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
-    const isLate = showCreator.show?.startTime ? incoming > showCreator.show.startTime : false;
 
     // `attendanceReason` is a single column shared with the
     // `creator_attendance_missing` extractor. On a corrected on-time start

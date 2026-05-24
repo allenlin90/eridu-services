@@ -279,10 +279,27 @@ export class FactExtractionProcessor {
 
     const startCurrent = showCreator.actualStartTime;
     const endCurrent = showCreator.actualEndTime;
+    const startTrimmedReason = typeof input.startFact.reason === 'string'
+      ? input.startFact.reason.trim()
+      : '';
+    const startIsLate = Boolean(
+      showCreator.show?.startTime
+      && input.startIncoming > showCreator.show.startTime,
+    );
+    const startDesiredLateReason = startIsLate
+      ? startTrimmedReason || LATE_REASON_FALLBACK
+      : null;
+    // Late-reason drift: a resubmission with the same timestamp must
+    // still flush `attendanceReason` when the operator has now supplied
+    // a real reason that differs from the previously-stored fallback.
+    // Symmetric with the single-fact start extractor.
+    const startLateReasonDrifted = startDesiredLateReason !== null
+      && startDesiredLateReason !== showCreator.attendanceReason;
     const startUnchanged = startCanWrite
       && startCurrent !== null
       && startCurrent.getTime() === input.startIncoming.getTime()
-      && startRecorded === input.ctx.source;
+      && startRecorded === input.ctx.source
+      && !startLateReasonDrifted;
     const endUnchanged = endCanWrite
       && endCurrent !== null
       && endCurrent.getTime() === input.endIncoming.getTime()
@@ -309,14 +326,10 @@ export class FactExtractionProcessor {
         ...(endEffectiveWrite ? { creator_actual_end_time: input.ctx.source } : {}),
       };
       const nextMetadata: ShowMetadataShape = { ...metadata, actuals_source: nextActualsSource };
-      const trimmedReason = typeof input.startFact.reason === 'string'
-        ? input.startFact.reason.trim()
-        : '';
-      const isLate = Boolean(
-        startEffectiveWrite
-        && showCreator.show?.startTime
-        && input.startIncoming > showCreator.show.startTime,
-      );
+      // Reuse the late-reason computed above: when only `attendanceReason`
+      // drifted, `startEffectiveWrite` is true but the timestamp itself
+      // didn't move — we still need to flush the corrected reason.
+      const shouldWriteLateReason = startEffectiveWrite && startDesiredLateReason !== null;
       // Symmetric with the single-fact start extractor: on a corrected
       // on-time start we deliberately do NOT clear `attendanceReason`.
       // The column is shared with `creator_attendance_missing`, and
@@ -325,7 +338,7 @@ export class FactExtractionProcessor {
         await this.showCreatorService.updateActuals(input.showCreatorUid, input.ctx.showId, {
           ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),
           ...(endEffectiveWrite ? { actualEndTime: input.endIncoming } : {}),
-          ...(isLate ? { attendanceReason: trimmedReason || LATE_REASON_FALLBACK } : {}),
+          ...(shouldWriteLateReason ? { attendanceReason: startDesiredLateReason } : {}),
           metadata: nextMetadata,
         });
       } catch (err) {

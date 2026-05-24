@@ -549,6 +549,40 @@ describe('factExtractionProcessor', () => {
       expect(result.start.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
       expect(result.end.decision).toEqual({ kind: 'noop', reason: 'target_stale' });
     });
+
+    it('flushes the corrected late reason on a same-timestamp resubmission', async () => {
+      // Regression for Codex P2: even when both start and end timestamps
+      // match the stored values, a resubmission that provides a real
+      // late reason must still flush `attendanceReason` so the fallback
+      // text stored on the first write does not stick.
+      installCreatorEnsureValidImpl();
+      showCreatorService.getShowCreatorById.mockResolvedValue({
+        id: 101n,
+        uid: 'show_mc_alpha',
+        showId: 10n,
+        metadata: { actuals_source: {
+          creator_actual_start_time: 'OPERATOR',
+          creator_actual_end_time: 'OPERATOR',
+        } },
+        actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+        actualEndTime: new Date('2026-05-23T13:30:00.000Z'),
+        attendanceMissing: false,
+        attendanceReason: 'Late attendance reason was not provided by the task field.',
+        show: { startTime: new Date('2026-05-23T12:00:00.000Z') },
+      } as never);
+
+      const result = await processor.applyPairedShowCreatorActuals(buildCreatorInput());
+
+      expect(showCreatorService.updateActuals).toHaveBeenCalledTimes(1);
+      expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
+        'show_mc_alpha',
+        10n,
+        expect.objectContaining({
+          attendanceReason: 'Transport delay.',
+        }),
+      );
+      expect(result.start.decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    });
   });
 
   describe('applyPairedShowPlatformActuals', () => {

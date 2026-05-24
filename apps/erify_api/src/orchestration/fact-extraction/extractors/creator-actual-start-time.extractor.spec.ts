@@ -148,4 +148,51 @@ describe('creatorActualStartTimeExtractor', () => {
 
     await expect(extractor.apply(fact, ctx)).rejects.toThrow('connection refused');
   });
+
+  it('flushes the corrected late reason when the same timestamp is resubmitted with a real reason', async () => {
+    // Regression for Codex P2: an earlier write may have stored the
+    // system fallback because the sidecar was missing. Resubmitting the
+    // SAME timestamp with a real reason must still update
+    // `attendanceReason` — the time-equality short-circuit cannot mask
+    // a reason correction.
+    const showCreatorService = buildShowCreatorService({
+      actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+      attendanceReason: 'Late attendance reason was not provided by the task field.',
+      metadata: { actuals_source: { creator_actual_start_time: 'OPERATOR' } },
+    });
+    const extractor = new CreatorActualStartTimeExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
+
+    const decision = await extractor.apply(
+      { ...fact, reason: 'Stuck in traffic.' },
+      ctx,
+    );
+
+    expect(decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
+      'show_mc_alpha',
+      10n,
+      expect.objectContaining({
+        actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+        attendanceReason: 'Stuck in traffic.',
+      }),
+    );
+  });
+
+  it('keeps value_unchanged when both timestamp and late reason already match', async () => {
+    const showCreatorService = buildShowCreatorService({
+      actualStartTime: new Date('2026-05-23T12:30:00.000Z'),
+      attendanceReason: 'Transport delay.',
+      metadata: { actuals_source: { creator_actual_start_time: 'OPERATOR' } },
+    });
+    const extractor = new CreatorActualStartTimeExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
+
+    const decision = await extractor.apply(fact, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+    expect(showCreatorService.updateActuals).not.toHaveBeenCalled();
+  });
 });
