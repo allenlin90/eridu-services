@@ -60,3 +60,39 @@ vi.mock('@tanstack/react-query', async () => {
     useQueryClient: vi.fn(() => ({})),
   };
 });
+
+// Mock hooks globally to prevent SessionProvider dependency regressions in tests
+vi.mock('@/lib/hooks', () => ({
+  useUserProfile: vi.fn(() => ({
+    data: {
+      id: 'usr_1',
+      name: 'John Creator',
+      email: 'john@example.com',
+      creator: {
+        uid: 'crt_1',
+        name: 'John Creator',
+        alias_name: 'JC',
+        studio_creators: [
+          {
+            studio: { uid: 'std_1', name: 'Studio One' },
+            is_active: true,
+          },
+        ],
+      },
+    },
+    isLoading: false,
+  })),
+  useActiveStudio: vi.fn(() => ({
+    activeStudioId: 'std_1',
+    activeStudio: { studio: { uid: 'std_1', name: 'Studio One' } },
+    studios: [{ studio: { uid: 'std_1', name: 'Studio One' }, is_active: true }],
+    switchStudio: vi.fn(),
+  })),
+  useCreatorStudios: vi.fn(() => ({
+    activeStudioId: 'std_1',
+    activeStudio: { studio: { uid: 'std_1', name: 'Studio One' } },
+    teams: [{ name: 'Studio One', plan: 'Active Roster' }],
+    activeTeam: { name: 'Studio One', plan: 'Active Roster' },
+    handleTeamChange: vi.fn(),
+  })),
+}));

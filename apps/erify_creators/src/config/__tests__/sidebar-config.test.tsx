@@ -1,8 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { SidebarHeaderContent } from '@eridu/ui';
-
 import { useSidebarConfig } from '../sidebar-config';
 
 import { authClient } from '@/lib/auth';
@@ -137,12 +135,8 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(session));
 
-    expect(result.current.header).toMatchObject({
-      title: 'Erify',
-      subtitle: 'Creators',
-      url: '/',
-    });
-    expect((result.current.header as SidebarHeaderContent).icon).toBeDefined();
+    expect(result.current.header).toBeDefined();
+    expect((result.current.header as any).type.name).toBe('TeamSwitcher');
   });
 
   it('has correct navMain configuration', () => {

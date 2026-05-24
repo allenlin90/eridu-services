@@ -1,11 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 
+import type { ProfileResponse } from '@eridu/api-types/users';
+
+import { apiClient } from '@/lib/api/client';
 import { queryKeys } from '@/lib/api/query-keys';
-import { getUserProfile } from '@/lib/api/user';
 import { useSession } from '@/lib/session-provider';
 
 export const USER_PROFILE_KEY = queryKeys.me.profile();
 const USER_PROFILE_REVALIDATE_MS = 15 * 60 * 1000;
+
+export async function getUserProfile(): Promise<ProfileResponse> {
+  const { data } = await apiClient.get<ProfileResponse>('/me');
+  return data;
+}
 
 export function useUserProfile() {
   const { session } = useSession();
@@ -16,11 +23,11 @@ export function useUserProfile() {
     enabled: !!session,
     retry: 1,
     staleTime: USER_PROFILE_REVALIDATE_MS,
-    gcTime: 30 * 60 * 1000, // Keep cached profile available for fast route guards
+    gcTime: 30 * 60 * 1000,
     refetchInterval: USER_PROFILE_REVALIDATE_MS,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true, // Refetch when user comes back to the tab
-    refetchOnMount: true, // With staleTime this only revalidates once stale
-    refetchOnReconnect: true, // Refetch when network reconnects
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 }

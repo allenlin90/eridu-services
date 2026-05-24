@@ -408,6 +408,7 @@ export const listShowsFilterSchema = z.object({
       z.array(z.string().startsWith(ClientService.UID_PREFIX)),
     ])
     .optional(),
+  studio_id: z.string().startsWith(StudioService.UID_PREFIX).optional(),
   start_date_from: z.iso.datetime().optional(),
   start_date_to: z.iso.datetime().optional(),
   end_date_from: z.iso.datetime().optional(),
@@ -440,6 +441,7 @@ export class ListShowsQueryDto extends createZodDto(listShowsQuerySchema) {
   declare client_name?: string;
   declare creator_name?: string;
   declare client_id?: string | string[];
+  declare studio_id?: string;
   declare start_date_from?: string;
   declare start_date_to?: string;
   declare end_date_from?: string;

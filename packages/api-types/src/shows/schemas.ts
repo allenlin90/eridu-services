@@ -65,6 +65,7 @@ export const listShowsQuerySchema = z.object({
       z.array(z.string().startsWith(UID_PREFIXES.CLIENT)),
     ])
     .optional(),
+  studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).optional(),
   start_date_from: z.iso.datetime().optional(),
   start_date_to: z.iso.datetime().optional(),
   end_date_from: z.iso.datetime().optional(),

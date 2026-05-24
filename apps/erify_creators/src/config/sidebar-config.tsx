@@ -1,24 +1,18 @@
 import { useLocation } from '@tanstack/react-router';
-import { Command, Video } from 'lucide-react';
+import { Video } from 'lucide-react';
 import type * as React from 'react';
 import { useMemo } from 'react';
 
-import type {
-  AppSidebarProps,
-  SidebarHeaderContent,
-  SidebarNavItem,
-  SidebarUser,
+import {
+  type AppSidebarProps,
+  type SidebarNavItem,
+  type SidebarUser,
+  TeamSwitcher,
 } from '@eridu/ui';
 
 import { authClient, type Session } from '@/lib/auth';
+import { useCreatorStudios } from '@/lib/hooks';
 import * as m from '@/paraglide/messages.js';
-
-const sidebarHeader: SidebarHeaderContent = {
-  icon: Command,
-  title: 'Erify',
-  subtitle: 'Creators',
-  url: '/',
-};
 
 function normalizePath(url: string): string {
   const [path] = url.split('?');
@@ -43,6 +37,7 @@ export function useSidebarConfig(
   session: Session | null,
 ): Omit<AppSidebarProps, keyof React.ComponentProps<'div'>> {
   const location = useLocation();
+  const { teams, activeTeam, handleTeamChange } = useCreatorStudios();
 
   const sidebarNavItems = useMemo<SidebarNavItem[]>(() => [
     {
@@ -76,7 +71,13 @@ export function useSidebarConfig(
     : undefined;
 
   return {
-    header: sidebarHeader,
+    header: (
+      <TeamSwitcher
+        teams={teams}
+        activeTeam={activeTeam}
+        onTeamChange={handleTeamChange}
+      />
+    ),
     navMain: sidebarNavItems,
     navMainLabel: m['sidebar.activities'](),
     user,

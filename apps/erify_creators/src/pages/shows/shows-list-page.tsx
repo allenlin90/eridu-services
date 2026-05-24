@@ -10,6 +10,7 @@ import { useMyShows } from '@/features/shows/api/shows.api';
 import { columns } from '@/features/shows/components/columns';
 import { ShowsTable } from '@/features/shows/components/shows-table';
 import { useShowsTableState } from '@/features/shows/hooks/use-shows-table-state';
+import { useActiveStudio } from '@/lib/hooks';
 import * as m from '@/paraglide/messages.js';
 
 /**
@@ -31,6 +32,8 @@ export function ShowsListPage() {
     onColumnFiltersChange,
     setPageCount,
   } = useShowsTableState();
+
+  const { activeStudioId } = useActiveStudio();
 
   // Extract filters for API
   const dateRange = columnFilters.find((filter: { id: string; value: unknown }) => filter.id === 'start_time')
@@ -57,6 +60,7 @@ export function ShowsListPage() {
       : 'start_time',
     order_direction: sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : 'desc',
     include_deleted: false,
+    studio_id: activeStudioId || undefined,
   });
 
   // Sync page count for auto-correction

@@ -145,4 +145,46 @@ describe('userService', () => {
     });
     expect(result).toEqual(users);
   });
+
+  describe('getUserWithAllStudioMemberships', () => {
+    it('delegates to repository with active memberships and creator roster filter settings', async () => {
+      const user = { uid: 'user_1', extId: 'ext_123' };
+      userRepositoryMock.findByExtId = jest.fn().mockResolvedValue(user as any);
+
+      const result = await service.getUserWithAllStudioMemberships('ext_123');
+
+      expect(userRepositoryMock.findByExtId).toHaveBeenCalledWith('ext_123', {
+        studioMemberships: {
+          where: {
+            deletedAt: null,
+            studio: {
+              deletedAt: null,
+            },
+          },
+          include: {
+            studio: true,
+          },
+        },
+        creator: {
+          where: {
+            deletedAt: null,
+          },
+          include: {
+            studioCreators: {
+              where: {
+                deletedAt: null,
+                studio: {
+                  deletedAt: null,
+                },
+              },
+              include: {
+                studio: true,
+              },
+            },
+          },
+        },
+      });
+      expect(result).toEqual(user);
+    });
+  });
 });

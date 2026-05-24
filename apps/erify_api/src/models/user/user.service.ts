@@ -167,8 +167,32 @@ export class UserService extends BaseModelService {
   async getUserWithAllStudioMemberships(extId: string) {
     return this.userRepository.findByExtId(extId, {
       studioMemberships: {
+        where: {
+          deletedAt: null,
+          studio: {
+            deletedAt: null,
+          },
+        },
         include: {
           studio: true,
+        },
+      },
+      creator: {
+        where: {
+          deletedAt: null,
+        },
+        include: {
+          studioCreators: {
+            where: {
+              deletedAt: null,
+              studio: {
+                deletedAt: null,
+              },
+            },
+            include: {
+              studio: true,
+            },
+          },
         },
       },
     });
