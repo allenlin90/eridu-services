@@ -4,6 +4,7 @@ import type { ActualsSource } from '@eridu/api-types/audits';
 
 import { canResolverOverwrite } from '../source-priority';
 
+import { MISSING_REASON_FALLBACK } from './creator-attendance-reasons';
 import type {
   ExtractedFact,
   ExtractionContext,
@@ -12,8 +13,6 @@ import type {
 } from './extractor.types';
 
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
-
-const MISSING_REASON_FALLBACK = 'Missing attendance reason was not provided by the task field.';
 
 type CreatorMetadata = {
   actuals_source?: Partial<Record<string, ActualsSource>>;

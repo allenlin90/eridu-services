@@ -4,6 +4,11 @@ import { CreatorActualStartTimeExtractor } from './creator-actual-start-time.ext
 
 import type { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 
+type ShowCreatorServiceMock = Pick<
+  jest.Mocked<ShowCreatorService>,
+  'getShowCreatorById' | 'updateActuals' | 'ensureValidActualTimeRange'
+>;
+
 function buildShowCreatorService(overrides: {
   metadata?: Record<string, unknown>;
   actualStartTime?: Date | null;
@@ -13,46 +18,42 @@ function buildShowCreatorService(overrides: {
   showId?: bigint;
   showStartTime?: Date;
   notFound?: boolean;
-}): jest.Mocked<ShowCreatorService> {
-  const service: any = {
-    getShowCreatorById: jest.fn().mockResolvedValue(
-      overrides.notFound
-        ? null
-        : {
-            id: 101n,
-            uid: 'show_mc_alpha',
-            showId: overrides.showId ?? 10n,
-            metadata: overrides.metadata ?? {},
-            actualStartTime: overrides.actualStartTime ?? null,
-            actualEndTime: overrides.actualEndTime ?? null,
-            attendanceMissing: overrides.attendanceMissing ?? false,
-            attendanceReason: overrides.attendanceReason ?? null,
-            show: {
-              startTime: overrides.showStartTime ?? new Date('2026-05-23T12:00:00.000Z'),
-            },
-          },
-    ),
-    updateActuals: jest.fn().mockResolvedValue({} as never),
-    ensureValidActualTimeRange: jest.fn(),
-  };
-
+}): ShowCreatorServiceMock {
+  const getShowCreatorById = jest.fn();
   if (overrides.notFound) {
-    service.getShowCreatorById.mockRejectedValue(
-      new NotFoundException('ShowCreator not found'),
-    );
+    getShowCreatorById.mockRejectedValue(new NotFoundException('ShowCreator not found'));
+  } else {
+    getShowCreatorById.mockResolvedValue({
+      id: 101n,
+      uid: 'show_mc_alpha',
+      showId: overrides.showId ?? 10n,
+      metadata: overrides.metadata ?? {},
+      actualStartTime: overrides.actualStartTime ?? null,
+      actualEndTime: overrides.actualEndTime ?? null,
+      attendanceMissing: overrides.attendanceMissing ?? false,
+      attendanceReason: overrides.attendanceReason ?? null,
+      show: {
+        startTime: overrides.showStartTime ?? new Date('2026-05-23T12:00:00.000Z'),
+      },
+    } as never);
   }
 
-  service.ensureValidActualTimeRange.mockImplementation(
-    (currentStart: Date | null, currentEnd: Date | null, dto: any) => {
-      const start = dto.actualStartTime !== undefined ? dto.actualStartTime : currentStart ?? null;
-      const end = dto.actualEndTime !== undefined ? dto.actualEndTime : currentEnd ?? null;
-      if (start && end && end <= start) {
-        throw new Error('Actual end time must be after actual start time');
-      }
-    },
-  );
+  const ensureValidActualTimeRange = jest.fn<
+    void,
+    Parameters<ShowCreatorService['ensureValidActualTimeRange']>
+  >((currentStart, currentEnd, dto) => {
+    const start = dto.actualStartTime !== undefined ? dto.actualStartTime : currentStart ?? null;
+    const end = dto.actualEndTime !== undefined ? dto.actualEndTime : currentEnd ?? null;
+    if (start && end && end <= start) {
+      throw new Error('Actual end time must be after actual start time');
+    }
+  });
 
-  return service as jest.Mocked<ShowCreatorService>;
+  return {
+    getShowCreatorById,
+    updateActuals: jest.fn().mockResolvedValue(undefined as never),
+    ensureValidActualTimeRange,
+  } as ShowCreatorServiceMock;
 }
 
 const ctx = {
@@ -77,7 +78,7 @@ const fact = {
 describe('creatorActualStartTimeExtractor', () => {
   it('writes creator actual start time and late reason when start is after show start', async () => {
     const showCreatorService = buildShowCreatorService({});
-    const extractor = new CreatorActualStartTimeExtractor(showCreatorService);
+    const extractor = new CreatorActualStartTimeExtractor(showCreatorService as unknown as ShowCreatorService);
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -102,7 +103,7 @@ describe('creatorActualStartTimeExtractor', () => {
 
   it('uses a system fallback reason for late starts when the sidecar is missing', async () => {
     const showCreatorService = buildShowCreatorService({});
-    const extractor = new CreatorActualStartTimeExtractor(showCreatorService);
+    const extractor = new CreatorActualStartTimeExtractor(showCreatorService as unknown as ShowCreatorService);
 
     await extractor.apply({ ...fact, reason: undefined }, ctx);
 
@@ -119,7 +120,7 @@ describe('creatorActualStartTimeExtractor', () => {
     const showCreatorService = buildShowCreatorService({
       showStartTime: new Date('2026-05-23T12:30:00.000Z'),
     });
-    const extractor = new CreatorActualStartTimeExtractor(showCreatorService);
+    const extractor = new CreatorActualStartTimeExtractor(showCreatorService as unknown as ShowCreatorService);
 
     await extractor.apply({ ...fact, reason: undefined }, ctx);
 
@@ -132,7 +133,7 @@ describe('creatorActualStartTimeExtractor', () => {
 
   it('returns target_stale when the assignment no longer belongs to the show', async () => {
     const showCreatorService = buildShowCreatorService({ showId: 999n });
-    const extractor = new CreatorActualStartTimeExtractor(showCreatorService);
+    const extractor = new CreatorActualStartTimeExtractor(showCreatorService as unknown as ShowCreatorService);
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -143,7 +144,7 @@ describe('creatorActualStartTimeExtractor', () => {
   it('propagates non-NotFound errors from reads', async () => {
     const showCreatorService = buildShowCreatorService({});
     showCreatorService.getShowCreatorById.mockRejectedValue(new Error('connection refused'));
-    const extractor = new CreatorActualStartTimeExtractor(showCreatorService);
+    const extractor = new CreatorActualStartTimeExtractor(showCreatorService as unknown as ShowCreatorService);
 
     await expect(extractor.apply(fact, ctx)).rejects.toThrow('connection refused');
   });

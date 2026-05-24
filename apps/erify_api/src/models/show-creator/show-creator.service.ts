@@ -117,12 +117,21 @@ export class ShowCreatorService extends BaseModelService {
     return new Map(rows.map((row) => [row.uid, { id: row.id, showId: row.showId }]));
   }
 
-  async getShowCreatorById(uid: string): Promise<
-    ShowCreator & { show?: { startTime: Date } }
-  > {
-    const showCreator = await this.showCreatorRepository.findByUid(uid, {
-      show: { select: { startTime: true } },
-    });
+  /**
+   * Fetch-or-throw helper for the extraction pipeline. Mirrors
+   * `ShowPlatformService.getShowPlatformById`. The optional `includeShow`
+   * include joins `show.startTime`, used by callers that need to decide
+   * "late" attendance (currently the creator actual-start extractor and
+   * the paired processor); the other creator extractors skip the join.
+   */
+  async getShowCreatorById(
+    uid: string,
+    opts: { includeShow?: boolean } = {},
+  ): Promise<ShowCreator & { show?: { startTime: Date } }> {
+    const showCreator = await this.showCreatorRepository.findByUid(
+      uid,
+      opts.includeShow ? { show: { select: { startTime: true } } } : undefined,
+    );
     if (!showCreator) {
       throw HttpError.notFound('ShowCreator', uid);
     }

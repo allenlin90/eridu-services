@@ -4,6 +4,7 @@ import type { ActualsSource } from '@eridu/api-types/audits';
 
 import { canResolverOverwrite } from '../source-priority';
 
+import { LATE_REASON_FALLBACK } from './creator-attendance-reasons';
 import { parseDateTimeValue } from './datetime-value';
 import type {
   ExtractedFact,
@@ -13,8 +14,6 @@ import type {
 } from './extractor.types';
 
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
-
-const LATE_REASON_FALLBACK = 'Late attendance reason was not provided by the task field.';
 
 type CreatorMetadata = {
   actuals_source?: Partial<Record<string, ActualsSource>>;
@@ -39,7 +38,10 @@ export class CreatorActualStartTimeExtractor implements IngestionExtractor {
 
     let showCreator: Awaited<ReturnType<ShowCreatorService['getShowCreatorById']>>;
     try {
-      showCreator = await this.showCreatorService.getShowCreatorById(fact.targetUid);
+      showCreator = await this.showCreatorService.getShowCreatorById(
+        fact.targetUid,
+        { includeShow: true },
+      );
     } catch (err) {
       if (err instanceof NotFoundException) {
         return { kind: 'noop', reason: 'target_stale' };
@@ -84,6 +86,12 @@ export class CreatorActualStartTimeExtractor implements IngestionExtractor {
     const trimmedReason = typeof fact.reason === 'string' ? fact.reason.trim() : '';
     const isLate = showCreator.show?.startTime ? incoming > showCreator.show.startTime : false;
 
+    // `attendanceReason` is a single column shared with the
+    // `creator_attendance_missing` extractor. On a corrected on-time start
+    // we deliberately do NOT clear it — the stored reason may belong to a
+    // prior `attendance_missing = true` write and clearing it here would
+    // erase context owned by a different fact. PR 12.2 keeps the two
+    // channels write-only; a future PR may split the column.
     try {
       await this.showCreatorService.updateActuals(fact.targetUid, ctx.showId, {
         actualStartTime: incoming,

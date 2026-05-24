@@ -4,6 +4,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 import type { ActualsSource, AuditMetadata, AuditTargetType } from '@eridu/api-types/audits';
 import type { SystemFactKey } from '@eridu/api-types/task-management';
 
+import { LATE_REASON_FALLBACK } from './extractors/creator-attendance-reasons';
 import type {
   ExtractedFact,
   ExtractionContext,
@@ -24,7 +25,6 @@ export type ProcessedFact = {
 
 type ShowActualsSourceMap = Partial<Record<SystemFactKey, ActualsSource>>;
 type ShowMetadataShape = { actuals_source?: ShowActualsSourceMap } & Record<string, unknown>;
-const LATE_REASON_FALLBACK = 'Late attendance reason was not provided by the task field.';
 
 export type PairedShowActualsInput = {
   startFact: ExtractedFact;
@@ -253,7 +253,10 @@ export class FactExtractionProcessor {
   ): Promise<PairedShowCreatorActualsResult> {
     let showCreator: Awaited<ReturnType<ShowCreatorService['getShowCreatorById']>>;
     try {
-      showCreator = await this.showCreatorService.getShowCreatorById(input.showCreatorUid);
+      showCreator = await this.showCreatorService.getShowCreatorById(
+        input.showCreatorUid,
+        { includeShow: true },
+      );
     } catch (err) {
       if (err instanceof NotFoundException) {
         const decision: ExtractionDecision = { kind: 'noop', reason: 'target_stale' };
@@ -314,6 +317,10 @@ export class FactExtractionProcessor {
         && showCreator.show?.startTime
         && input.startIncoming > showCreator.show.startTime,
       );
+      // Symmetric with the single-fact start extractor: on a corrected
+      // on-time start we deliberately do NOT clear `attendanceReason`.
+      // The column is shared with `creator_attendance_missing`, and
+      // clearing here would erase context owned by a different fact key.
       try {
         await this.showCreatorService.updateActuals(input.showCreatorUid, input.ctx.showId, {
           ...(startEffectiveWrite ? { actualStartTime: input.startIncoming } : {}),

@@ -750,6 +750,79 @@ describe('factExtractionService', () => {
         }),
       ]));
     });
+
+    it('routes cross-task collisions on the SAME creator target through the SKIPPED_LOWER_PRIORITY audit', async () => {
+      // Per-target collision mirrors the platform contract from PR 12.1.2:
+      // when a sibling active task has CONTENT bound to the same
+      // (fact-key, creator-uid) pair, the current submission must skip
+      // the write and emit a SKIPPED audit anchored on the SHOW_CREATOR
+      // target rather than racing with the sibling. Single-side fixture
+      // (start only, no end) to isolate the collision-audit assertion
+      // from the unrelated end-fact extractor path.
+      const startExtractor = buildExtractor({ factKey: 'creator_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'creator_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedCreatorRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_creatorstart1', system_fact_key: 'creator_actual_start_time' },
+          ],
+        },
+        content: {
+          'fld_creatorstart1:creator:show_mc_alpha': '2026-05-23T12:00:00.000Z',
+        },
+      }));
+      showCreatorService.findActiveByUids.mockResolvedValue(
+        new Map([['show_mc_alpha', { id: 101n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [{ id: 'fld_sibling1234', system_fact_key: 'creator_actual_start_time' }],
+            },
+          },
+          content: {
+            'fld_sibling1234:creator:show_mc_alpha': '2026-05-23T12:30:00.000Z',
+          },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyPairedShowCreatorActuals).not.toHaveBeenCalled();
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+      expect(result.entries[0]).toMatchObject({
+        factKey: 'creator_actual_start_time',
+        outcome: 'skipped_collision',
+        reason: 'cross_task_same_fact_key',
+      });
+      expect(auditService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'SKIPPED_LOWER_PRIORITY',
+          targets: [{ targetType: 'SHOW_CREATOR', targetId: 101n }],
+          metadata: expect.objectContaining({
+            collision_reason: 'cross_task_same_fact_key',
+            fact_key: 'creator_actual_start_time',
+          }),
+        }),
+      );
+    });
   });
 
   describe('show platform actuals routing', () => {

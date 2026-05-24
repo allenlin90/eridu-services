@@ -4,36 +4,36 @@ import { CreatorAttendanceMissingExtractor } from './creator-attendance-missing.
 
 import type { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 
+type ShowCreatorServiceMock = Pick<
+  jest.Mocked<ShowCreatorService>,
+  'getShowCreatorById' | 'updateActuals'
+>;
+
 function buildShowCreatorService(overrides: {
   metadata?: Record<string, unknown>;
   attendanceMissing?: boolean;
   attendanceReason?: string | null;
   showId?: bigint;
   notFound?: boolean;
-}): jest.Mocked<ShowCreatorService> {
-  const service: any = {
-    getShowCreatorById: jest.fn().mockResolvedValue(
-      overrides.notFound
-        ? null
-        : {
-            id: 101n,
-            uid: 'show_mc_alpha',
-            showId: overrides.showId ?? 10n,
-            metadata: overrides.metadata ?? {},
-            attendanceMissing: overrides.attendanceMissing ?? false,
-            attendanceReason: overrides.attendanceReason ?? null,
-          },
-    ),
-    updateActuals: jest.fn().mockResolvedValue({} as never),
-  };
-
+}): ShowCreatorServiceMock {
+  const getShowCreatorById = jest.fn();
   if (overrides.notFound) {
-    service.getShowCreatorById.mockRejectedValue(
-      new NotFoundException('ShowCreator not found'),
-    );
+    getShowCreatorById.mockRejectedValue(new NotFoundException('ShowCreator not found'));
+  } else {
+    getShowCreatorById.mockResolvedValue({
+      id: 101n,
+      uid: 'show_mc_alpha',
+      showId: overrides.showId ?? 10n,
+      metadata: overrides.metadata ?? {},
+      attendanceMissing: overrides.attendanceMissing ?? false,
+      attendanceReason: overrides.attendanceReason ?? null,
+    } as never);
   }
 
-  return service as jest.Mocked<ShowCreatorService>;
+  return {
+    getShowCreatorById,
+    updateActuals: jest.fn().mockResolvedValue(undefined as never),
+  } as ShowCreatorServiceMock;
 }
 
 const ctx = {
@@ -58,7 +58,9 @@ const fact = {
 describe('creatorAttendanceMissingExtractor', () => {
   it('sets attendanceMissing with the operator reason when checked', async () => {
     const showCreatorService = buildShowCreatorService({});
-    const extractor = new CreatorAttendanceMissingExtractor(showCreatorService);
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -83,7 +85,9 @@ describe('creatorAttendanceMissingExtractor', () => {
 
   it('uses a system fallback reason when checked without a sidecar reason', async () => {
     const showCreatorService = buildShowCreatorService({});
-    const extractor = new CreatorAttendanceMissingExtractor(showCreatorService);
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
 
     await extractor.apply({ ...fact, reason: undefined }, ctx);
 
@@ -102,7 +106,9 @@ describe('creatorAttendanceMissingExtractor', () => {
       attendanceReason: 'Old no-show reason',
       metadata: { actuals_source: { creator_attendance_missing: 'OPERATOR' } },
     });
-    const extractor = new CreatorAttendanceMissingExtractor(showCreatorService);
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
 
     const decision = await extractor.apply({ ...fact, rawValue: false, reason: undefined }, ctx);
 
@@ -128,7 +134,9 @@ describe('creatorAttendanceMissingExtractor', () => {
       attendanceReason: 'Sick leave.',
       metadata: { actuals_source: { creator_attendance_missing: 'OPERATOR' } },
     });
-    const extractor = new CreatorAttendanceMissingExtractor(showCreatorService);
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
 
     const decision = await extractor.apply(fact, ctx);
 
@@ -138,7 +146,9 @@ describe('creatorAttendanceMissingExtractor', () => {
 
   it('returns target_stale when the assignment is missing', async () => {
     const showCreatorService = buildShowCreatorService({ notFound: true });
-    const extractor = new CreatorAttendanceMissingExtractor(showCreatorService);
+    const extractor = new CreatorAttendanceMissingExtractor(
+      showCreatorService as unknown as ShowCreatorService,
+    );
 
     const decision = await extractor.apply(fact, ctx);
 
