@@ -8,6 +8,8 @@ import {
   parseHydratedContentKey,
   SYSTEM_FACT_KEY_DEFINITIONS,
   type SystemFactKey,
+  TASK_CONTENT_EXTRA_SUFFIX,
+  TASK_CONTENT_REASON_SUFFIX,
   type UiSchemaV2,
 } from '@eridu/api-types/task-management';
 
@@ -925,9 +927,19 @@ function collectBoundFacts(
 
   // Per-target hydrated keys for creator / platform scopes — parsed at extraction
   // time so the engine can route each entry to the correct extractor without
-  // re-running hydration. Sibling sidecar keys (`*__reason`, `*__extra`) are
-  // ignored because they don't parse as hydrated keys.
+  // re-running hydration. Sibling sidecar keys (`*__reason`, `*__extra`)
+  // must be filtered explicitly: `parseHydratedContentKey` accepts the
+  // suffix into `targetUid` (its `UID_PART` regex allows underscores), so
+  // a key like `fld_x:creator:show_mc_alpha__reason` would otherwise
+  // parse as a phantom hydrated fact with an unresolvable target UID and
+  // surface as a spurious `skipped_stale_target` entry.
   for (const [contentKey, rawValue] of Object.entries(content)) {
+    if (
+      contentKey.endsWith(TASK_CONTENT_REASON_SUFFIX)
+      || contentKey.endsWith(TASK_CONTENT_EXTRA_SUFFIX)
+    ) {
+      continue;
+    }
     const parsed = parseHydratedContentKey(contentKey);
     if (!parsed)
       continue;

@@ -823,6 +823,59 @@ describe('factExtractionService', () => {
         }),
       );
     });
+
+    it('does not produce phantom facts for reason sidecar keys', async () => {
+      // Regression: `parseHydratedContentKey`'s `UID_PART` regex accepts
+      // underscores, so a sidecar like `fld_x:creator:<uid>__reason`
+      // would otherwise parse as a hydrated fact with target UID
+      // `<uid>__reason` and surface as a spurious `skipped_stale_target`.
+      // The collector must filter `__reason` / `__extra` suffixes before
+      // parsing.
+      const startExtractor = buildExtractor({ factKey: 'creator_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'creator_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedCreatorRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_creatorstart1', system_fact_key: 'creator_actual_start_time' },
+            { id: 'fld_creatorend12', system_fact_key: 'creator_actual_end_time' },
+          ],
+        },
+        content: {
+          'fld_creatorstart1:creator:show_mc_alpha': '2026-05-23T12:30:00.000Z',
+          'fld_creatorstart1:creator:show_mc_alpha__reason': 'Transport delay.',
+          'fld_creatorend12:creator:show_mc_alpha': '2026-05-23T13:30:00.000Z',
+          'fld_creatorend12:creator:show_mc_alpha__extra': 'misc',
+        },
+      }));
+      showCreatorService.findActiveByUids.mockResolvedValue(
+        new Map([['show_mc_alpha', { id: 101n, showId: 10n }]]),
+      );
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(showCreatorService.findActiveByUids).toHaveBeenCalledWith(
+        ['show_mc_alpha'],
+        10n,
+      );
+      expect(result.entries).toHaveLength(2);
+      expect(result.entries.some((e) => e.outcome === 'skipped_stale_target')).toBe(false);
+      expect(result.entries.some((e) => e.targetUid.includes('__'))).toBe(false);
+    });
   });
 
   describe('show platform actuals routing', () => {
