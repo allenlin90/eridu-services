@@ -374,10 +374,20 @@ export class FactExtractionService {
         if (!itemFactKey) {
           continue;
         }
+        // Per Codex P1 review on PR #103: sibling snapshots are persisted
+        // JSON cast to `UiSchemaV2`, so a mixed-version / legacy sibling
+        // can carry a `system_fact_key` this binary doesn't know. Guard
+        // the definition lookup — an unknown key from a different binary
+        // can't collide with anything the current binary writes, so it's
+        // safe to skip silently rather than throw and abort the whole
+        // `extractFromTask` run with a `TypeError`.
+        const definition = SYSTEM_FACT_KEY_DEFINITIONS[itemFactKey];
+        if (!definition) {
+          continue;
+        }
         factKeyByFieldId.set(item.id, itemFactKey);
         // Show-scope collision: schema-only match is sufficient because the
         // sibling will produce one write per the (one) show target on submit.
-        const definition = SYSTEM_FACT_KEY_DEFINITIONS[itemFactKey];
         if (definition.target === 'show' && input.showScopeFactKeys.has(itemFactKey)) {
           colliding.showScope.add(itemFactKey);
         }
@@ -754,8 +764,12 @@ function collectBoundFacts(
     const factKey = item.system_fact_key;
     if (!factKey)
       continue;
+    // Snapshots are persisted JSON cast to `UiSchemaV2`; a snapshot
+    // produced by a different binary version can carry a `system_fact_key`
+    // unknown to this binary. Skip silently — unknown keys can't be
+    // extracted by any registered extractor anyway.
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[factKey];
-    if (definition.target !== 'show')
+    if (!definition || definition.target !== 'show')
       continue;
     facts.push({
       contentKey: item.id,
@@ -779,6 +793,8 @@ function collectBoundFacts(
     if (!templateItem || !templateItem.system_fact_key)
       continue;
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[templateItem.system_fact_key];
+    if (!definition)
+      continue;
     const expectedScope = definition.target === 'show_creator' ? 'creator' : definition.target === 'show_platform' ? 'platform' : null;
     if (!expectedScope || expectedScope !== parsed.scope)
       continue;

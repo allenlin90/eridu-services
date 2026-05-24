@@ -1063,6 +1063,60 @@ describe('factExtractionService', () => {
       ]));
     });
 
+    it('survives a sibling task carrying an unknown system_fact_key without throwing', async () => {
+      // Codex P1 review on PR #103: sibling snapshots are persisted JSON
+      // cast to `UiSchemaV2`, so a mixed-version / legacy sibling can
+      // carry a `system_fact_key` this binary doesn't know. The
+      // collision walker must not throw `TypeError` and abort the entire
+      // extraction run when `SYSTEM_FACT_KEY_DEFINITIONS[k]` is
+      // undefined — it should skip the unknown entry silently.
+      const startExtractor = buildExtractor({ factKey: 'show_platform_actual_start_time' });
+      const endExtractor = buildExtractor({ factKey: 'show_platform_actual_end_time' });
+      const pairedService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildPairedPlatformRegistry({ start: startExtractor, end: endExtractor }),
+        processor,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(
+        buildPlatformTaskSnapshot(['show_plt_200']),
+      );
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+      taskService.findActiveTasksForShowExcluding.mockResolvedValue([
+        {
+          uid: 'task_sibling',
+          snapshot: {
+            schema: {
+              items: [
+                // Unknown fact key from a future / forked binary.
+                { id: 'fld_unknownkey', system_fact_key: 'future_unknown_fact_key' },
+              ],
+            },
+          },
+          content: { 'fld_unknownkey:platform:show_plt_200': 'some-value' },
+        },
+      ] as never);
+
+      const result = await pairedService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      // The paired path still runs for the known platform target —
+      // unknown sibling key doesn't collide with anything we can write.
+      expect(processor.applyPairedShowPlatformActuals).toHaveBeenCalledTimes(1);
+      expect(result.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ outcome: 'written' }),
+      ]));
+    });
+
     it('does NOT collide when a sibling task has a hydrated key for the same target but the value is blank', async () => {
       // Codex P1 review on PR #103: per-target collision detection was
       // keyed by the mere presence of a hydrated content key, so a
