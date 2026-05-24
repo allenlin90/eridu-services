@@ -167,6 +167,12 @@ export class UserService extends BaseModelService {
   async getUserWithAllStudioMemberships(extId: string) {
     return this.userRepository.findByExtId(extId, {
       studioMemberships: {
+        where: {
+          deletedAt: null,
+          studio: {
+            deletedAt: null,
+          },
+        },
         include: {
           studio: true,
         },
@@ -179,6 +185,9 @@ export class UserService extends BaseModelService {
           studioCreators: {
             where: {
               deletedAt: null,
+              studio: {
+                deletedAt: null,
+              },
             },
             include: {
               studio: true,
