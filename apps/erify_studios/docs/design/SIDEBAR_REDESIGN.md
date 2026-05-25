@@ -51,7 +51,7 @@ Source file: `apps/erify_studios/src/config/sidebar-config.tsx`
 - Label: `"Tasks"`
 - Icon: `ClipboardCheck`
 - Items:
-  - Show Operations — `Clapperboard`
+  - Task Setup — `Clapperboard`
   - Task Review — `ClipboardCheck`
   - Task Reports — `ClipboardCheck`
 - Access: MODERATION_MANAGER, MANAGER, ADMIN (varies by item)
@@ -116,7 +116,7 @@ Already shipped on `master`. The current slug remains `/studios/$studioId/shared
 | `/studios/$studioId/creators` | Creator roster — shipped | `docs/features/studio-creator-roster.md` |
 | `/studios/$studioId/schedules` | Studio schedule planning/grouping | [`docs/prd/future/studio-schedule-management.md`](../../../../docs/prd/future/studio-schedule-management.md) |
 | `/studios/$studioId/compensation` | Compensation management | [`docs/roadmap/PHASE_4.md` §PR 3-10](../../../../docs/roadmap/PHASE_4.md) |
-| `/studios/$studioId/show-operations` | Show ops with unified date range + export | [`docs/roadmap/PHASE_4.md` §PR 2](../../../../docs/roadmap/PHASE_4.md#remaining-prs) |
+| `/studios/$studioId/task-setup` | Show ops with unified date range + export | [`docs/roadmap/PHASE_4.md` §PR 2](../../../../docs/roadmap/PHASE_4.md#remaining-prs) |
 | `/studios/$studioId/finance/economics` | Studio economics review | [`docs/roadmap/PHASE_4.md` §PR 8](../../../../docs/roadmap/PHASE_4.md#remaining-prs) |
 
 ---
@@ -171,7 +171,7 @@ Role-based access remains enforced via `hasStudioRouteAccess`; it just does not 
 
 ### Planning vs Tasks
 
-Planning contains objects and assignments that exist before task execution: schedules, shows, shift planning, and creator mapping. Tasks contains downstream task readiness, task generation/assignment, review queues, and task reports. `Show Operations` stays named for the page behavior but lives under `Tasks` because its primary work is task operations derived from shows.
+Planning contains objects and assignments that exist before task execution: schedules, shows, shift planning, and creator mapping. Tasks contains downstream task readiness, task generation/assignment, review queues, and task reports. `Task Setup` stays named for the page behavior but lives under `Tasks` because its primary work is task operations derived from shows.
 
 ### People
 

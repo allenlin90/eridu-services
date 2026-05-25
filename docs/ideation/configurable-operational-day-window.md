@@ -20,7 +20,7 @@ Potential configuration layers:
 
 - `/studios/:studioId/task-review`
 - `/studios/:studioId/show-run-review`
-- `/studios/:studioId/show-operations`
+- `/studios/:studioId/task-setup`
 - Studio dashboard operational-day cards
 - Task reports and exports that group by operational day
 - Future analytics dashboards from PR 12.6

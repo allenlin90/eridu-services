@@ -4,7 +4,7 @@
 > **Phase scope**: Phase 4 Wave 1+
 > **Owner app**: `apps/erify_studios`
 > **Product source**: [`docs/features/studio-show-management.md`](../../../docs/features/studio-show-management.md)
-> **Depends on**: backend studio show management endpoints, existing show-operations flows
+> **Depends on**: backend studio show management endpoints, existing task-setup flows
 
 ## Purpose
 
@@ -15,7 +15,7 @@ Technical reference for the shipped studio show-management UI, including the ded
 | Route | Purpose | Access |
 | --- | --- | --- |
 | `/studios/$studioId/shows` | Show lifecycle CRUD page | `ADMIN`, `MANAGER` |
-| `/studios/$studioId/show-operations` | Readiness, bulk generation, assignment, show actuals, and current-view export operations | `ADMIN`, `MANAGER` |
+| `/studios/$studioId/task-setup` | Readiness, bulk generation, assignment, show actuals, and current-view export operations | `ADMIN`, `MANAGER` |
 
 Access rules:
 
@@ -62,7 +62,7 @@ Access rules:
 
 ## UX Rules
 
-- keep `show-operations` focused on readiness, task generation, assignment, show actuals, and operational export
+- keep `task-setup` focused on readiness, task generation, assignment, show actuals, and operational export
 - do not mix admin-only `/system/shows` assumptions into the studio CRUD page
 - keep route guard and sidebar visibility aligned through the shared access-policy source
 - keep schedule search remote and documented; no dead local-only search affordances

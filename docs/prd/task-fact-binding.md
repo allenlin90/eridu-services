@@ -89,7 +89,7 @@ flowchart TB
 
     subgraph P1[Perspective 1 · Studio Overview]
         P1A["/task-review<br/>/show-run-review"]
-        P1B["/show-operations"]
+        P1B["/task-setup"]
         P1C["creator + member rosters"]
     end
 
@@ -113,7 +113,7 @@ flowchart TB
     P3 -. shared widgets .-> W
 ```
 
-1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/task-review`, `/show-run-review`, `/show-operations`, creator/member roster tables).
+1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/task-review`, `/show-run-review`, `/task-setup`, creator/member roster tables).
 2. **Studio Individual Overview**: Single-entity detail pages accessed by managers from studio rosters — applies to **creators**, **members**, and **shows** (e.g. `/studios/:id/creators/:creatorId`, `/studios/:id/members/:memberId`, `/studios/:id/shows/:showId`).
 3. **Individual Overview**: first-person self-view for the logged-in entity, with a cross-app boundary:
    - **Creator self-view** = the entire `erify_creators` app. Routes are top-level (`/shows`, `/shows/:showId`); no `/me/*` prefix, because the JWT scope already identifies the viewer as the creator.
@@ -194,15 +194,15 @@ Implementation is structured into **three logical sections**. Each section serve
   * **Storage contract** (revised from the original design wording): the template snapshot stays immutable. There is no per-task snapshot clone and no append-only mutation; per-task hydration is computed at render and submission time from `task.content` + the show's current assignments. Submitted tasks (`COMPLETED` / `CLOSED`) freeze their content; later re-renders do not rehydrate.
 
 #### 🟩 PR 12.0.5 · Ingestion Pipeline Foundation, Wire-Label Rename & Show Task Assignment Check
-* **Purpose**: Ship the core priority resolver pipeline, write a smoke-test extractor, implement the atomic label rename, and align the show operations views with task assignments.
+* **Purpose**: Ship the core priority resolver pipeline, write a smoke-test extractor, implement the atomic label rename, and align the task setup views with task assignments.
 * **Functional Deliverable**:
   * Ingestion pipeline: reads `task.content`, validates targets against active DB records, compares source priorities, and writes audited facts or skips them (`SKIPPED_LOWER_PRIORITY`).
   * Smoke test: wires the pipeline end-to-end for `show_actual_start_time` → `Show.actualStartTime`.
   * Cross-task collision guard: before ingestion, detect active tasks assigned to the same show that bind the same fact key and route the lower-priority or ambiguous write to the review path instead of overwriting silently.
   * **Wire-Label Alignment**: PR 4 / 10 / 11 never shipped a `OPERATOR_RECORD` wire value; the canonical labels are the short forms (`MANAGER` / `PLATFORM` / `OPERATOR` / `PLANNED`) already defined by `actualsSourceSchema` in `@eridu/api-types/audits`. This PR locks docs and downstream calculators on the short forms — no code-level rename is required because no production surface ever emitted the long form.
-  * **`/show-operations` Task-Assignment Alignment**:
-    * **Backend (BE)**: Update the `/show-operations` query endpoint to check for active task assignments and return `has_proper_task_assignment: boolean`.
-    * **Frontend (FE)**: Update `/show-operations` in `erify_studios` to display an amber/orange warning badge: ⚠️ `No Task Assigned` for any show without a valid active task template or sheet assignment, linking directly to the task instantiation modal.
+  * **`/task-setup` Task-Assignment Alignment**:
+    * **Backend (BE)**: Update the `/task-setup` query endpoint to check for active task assignments and return `has_proper_task_assignment: boolean`.
+    * **Frontend (FE)**: Update `/task-setup` in `erify_studios` to display an amber/orange warning badge: ⚠️ `No Task Assigned` for any show without a valid active task template or sheet assignment, linking directly to the task instantiation modal.
 
 ---
 
@@ -246,7 +246,7 @@ Implementation is structured into **three logical sections**. Each section serve
 * **Functional Deliverable**:
   * **Route shell**: Add `/studios/:studioId/show-run-review` for submitted and signed-off operational metrics.
   * **Review consolidation**: Keep submitted-task review under `/studios/:studioId/task-review`; future bulk review extends that page instead of adding a separate submitted-task review route.
-  * **Sidebar refinement**: Rename `/show-operations` to **Task Setup** and group Task Setup, Task Review, Show Run Review, and Task Reports under **Operations**.
+  * **Sidebar refinement**: Use `/task-setup` for **Task Setup** and group Task Setup, Task Review, Show Run Review, and Task Reports under **Operations**.
   * **Operational day scope**: Default to the active 06:00–05:59 operational day, with `date_from` / `date_to` URL state reflected directly in the date range picker. The current operational day may refresh every 5 minutes; historical ranges refresh manually.
   * **Two-layer framing**: Task Review is the pre-confirmation layer; Show Run Review counts only submitted and signed-off extracted facts using manager-friendly show execution language.
 

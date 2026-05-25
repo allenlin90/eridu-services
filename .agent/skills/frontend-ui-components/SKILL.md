@@ -48,7 +48,7 @@ Applies to: every dialog reachable on a mobile route (actuals editing, shift com
 
 When designing a feature scoped to an **identity-bearing entity** — `Creator`, studio `Member` (manager / operator / account-manager), or `Show` — consider how it lands across **three perspectives**. The pattern is a design checklist, not a global mandate: each PRD decides which of the three a given sub-PR delivers, defers, or skips.
 
-1. **Studio Overview (Perspective 1)**: Aggregate dashboards, filtered grids, and operations tables (e.g. `/task-review`, `/show-run-review`, `/show-operations`, creator/member roster tables). Manager-facing, studio-wide visibility.
+1. **Studio Overview (Perspective 1)**: Aggregate dashboards, filtered grids, and operations tables (e.g. `/task-review`, `/show-run-review`, `/task-setup`, creator/member roster tables). Manager-facing, studio-wide visibility.
 2. **Studio Individual Overview (Perspective 2)**: Manager-facing detail page for a single entity drilled into from a roster. Creator, member, and show variants:
    - `/studios/:studioId/creators/:creatorId` — single creator's attendance, rates, overrides, performance.
    - `/studios/:studioId/members/:memberId` — single member's assignments, audit trail, role context.

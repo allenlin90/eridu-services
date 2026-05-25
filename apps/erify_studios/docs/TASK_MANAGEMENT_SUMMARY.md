@@ -21,10 +21,10 @@
 | ----- | ---------------------- | ----------------------------------------- | ------------ | ------- |
 | 3.1   | Template Library       | `/studios/$studioId/task-templates`       | Admin        | ✅       |
 | 3.2   | Create/Edit Template   | Dialog/sheet                              | Admin        | ✅       |
-| 3.3   | Task Setup             | `/studios/$studioId/show-operations`      | Admin        | ✅       |
+| 3.3   | Task Setup             | `/studios/$studioId/task-setup`      | Admin        | ✅       |
 | 3.3.1 | Bulk Generation Dialog | Dialog                                    | Admin        | ✅       |
 | 3.3.2 | Assignment Dialog      | Dialog                                    | Admin        | ✅       |
-| 3.3.3 | Show Detail / Tasks    | `/studios/$studioId/show-operations/$showUid/tasks` | Admin        | ✅       |
+| 3.3.3 | Show Detail / Tasks    | `/studios/$studioId/task-setup/$showUid/tasks` | Admin        | ✅       |
 | 3.4   | My Tasks               | `/studios/$studioId/my-tasks`             | All          | ✅       |
 | 3.5   | Task Execution Sheet   | Sheet overlay                             | Operator     | ✅       |
 | 3.6   | Task Review            | `/studios/$studioId/task-review`          | Admin/Manager| ✅       |
@@ -63,7 +63,7 @@ My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress b
 Task Templates → Create/Edit Template → open a field → search/select `Auto-fill record field` → builder sets the compatible field type from the shared `@eridu/api-types/task-management` catalog. Hover the info icon next to the label for the producer-facing explanation. Creator attendance missing also enables `Require Explanation: When Checked (True)` so the existing reason sidecar captures the explanation. Each record-field binding can appear once per template. Operator task forms hydrate each binding into one input per assigned creator/platform (PR 12.0.4); a target that has been unassigned keeps its previously-recorded value as `binding_stale: true` — rendered dimmed and read-only. Confirmed submitted tasks route those hydrated content keys to indexed target columns. Manager corrections and overrides must also be submitted and confirmed through tasks before re-populating target facts.
 
 ### 8. Shows Issues Triage (Admin)
-Task Setup (`/show-operations`) → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
+Task Setup (`/task-setup`) → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
 - show has no tasks
 - show has unassigned tasks
 - show is missing required baseline task types (`SETUP`, `CLOSURE`)
@@ -162,7 +162,7 @@ The default operational day is 06:00-05:59 local time for PR 12.4. Today can ref
 ## Implementation Status
 
 ✅ Template library (cards, search, infinite scroll), create/edit dialog
-✅ Task Setup / Show Operations (data table, filters, bulk actions bar), generation & assignment dialogs
+✅ Task Setup (data table, filters, bulk actions bar), generation & assignment dialogs
 ✅ Show detail with task cards and inline reassignment
 ✅ My Tasks (filter bar, task cards, progress bars, urgency borders, show-start-date filter)
 ✅ Task Execution Sheet (JsonForm, auto-save, rejection banner, status actions, IndexedDB draft persistence)

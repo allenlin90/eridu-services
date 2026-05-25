@@ -401,9 +401,9 @@ The same indexed columns and audit history feed every consumer. PR 12 stabilizes
 | Read shape | Returns | Indexed columns it leans on | Primary consumers |
 | --- | --- | --- | --- |
 | Submitted-task review | `REVIEW` tasks, validation state, phase tags, approval eligibility | `Task(status, type, due_date)`, `TaskTarget(show_id)`, hydrated snapshot/content | `/task-review` |
-| Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/show-run-review`, `/show-operations`, `/studios/:id/shows/:showId` |
+| Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/show-run-review`, `/task-setup`, `/studios/:id/shows/:showId` |
 | Creator attendance | derived `ON_TIME` / `LATE` / `MISSING`, `late_minutes`, `attendance_reason` | `ShowCreator(actual_start_time)`, `(attendance_missing)` joined to `Show.start_time` | `/show-run-review`, `/studios/:id/creators/:creatorId`, `/me/shows` |
-| Platform actual window | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` | `ShowPlatform(actual_start_time, actual_end_time)` | `/show-run-review`, `/show-operations`, `/studios/:id/shows/:showId` |
+| Platform actual window | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` | `ShowPlatform(actual_start_time, actual_end_time)` | `/show-run-review`, `/task-setup`, `/studios/:id/shows/:showId` |
 | Platform performance (GMV, viewer count, etc.) | deferred to 12.6 — see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md) | analytical layer (TBD: read model vs OLAP) | PR 12.6 |
 | Platform violations (active) | `violation_type`, `severity`, `reason`, `observed_at` (excluding superseded) | `ShowPlatformViolation(show_platform_id, superseded_at)` | `/show-run-review`, show / platform detail surfaces |
 | Audit history | unified `Audit` + `AuditTarget` rows (engine + manager + legacy sidecar merger) | `AuditTarget(targetType, targetId)` and per-target FK indexes | every detail surface that hosts `AuditLogTimeline` |
@@ -425,7 +425,7 @@ flowchart TB
 
     subgraph P1[Perspective 1 · Studio Overview]
         SO1["/task-review<br/>/show-run-review"]
-        SO2["/show-operations"]
+        SO2["/task-setup"]
         SO3["studio creator / member rosters"]
     end
 
@@ -457,7 +457,7 @@ Coverage matrix — what each shared widget renders in each perspective:
 
 | Widget | P1 · Studio Overview | P2 · Studio Individual | P3 · `/me/*` Self-View |
 | --- | --- | --- | --- |
-| `ActualsTimelineViewer` | aggregated per-show row strip in `/show-operations` | full timeline on show / creator / member detail | own upcoming + completed shows |
+| `ActualsTimelineViewer` | aggregated per-show row strip in `/task-setup` | full timeline on show / creator / member detail | own upcoming + completed shows |
 | `ShowRunSummary` | `/show-run-review` summary for submitted and signed-off show runs only | detail-page summaries as host routes land | own signed-off show runs as self-view routes land |
 | `PerformanceMetricsWidget` | deferred to 12.6 (analytics infra investigation) | deferred to 12.6 | deferred to 12.6 |
 | `CompensationBreakdownCard` | not used (roll-up only) | per-creator / per-show breakdown | own breakdown for the logged-in entity |
