@@ -8,6 +8,7 @@ vi.mock('lucide-react', () => ({
   BadgeCheck: vi.fn(),
   Clapperboard: vi.fn(),
   ClipboardCheck: vi.fn(),
+  ClipboardList: vi.fn(),
   Command: vi.fn(),
   LayoutDashboard: vi.fn(),
   Building2: vi.fn(),
@@ -136,7 +137,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(7); // Dashboard + System + My Workspace + Planning + Tasks + People + Studio Settings
+    expect(result.current.navMain).toHaveLength(7); // Dashboard + System + My Workspace + Planning + Operations + People + Studio Settings
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -214,14 +215,18 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[4]).toEqual(expect.objectContaining({
-      title: 'Tasks',
+      title: 'Operations',
       url: '/studios/studio-1/show-operations',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
-          title: 'Show Operations',
+          title: 'Production Planning',
           url: '/studios/studio-1/show-operations',
+        }),
+        expect.objectContaining({
+          title: 'Operations Review',
+          url: '/studios/studio-1/operations-review',
         }),
         expect.objectContaining({
           title: 'Task Review',

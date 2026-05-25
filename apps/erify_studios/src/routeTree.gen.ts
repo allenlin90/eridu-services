@@ -36,6 +36,7 @@ import { Route as StudiosStudioIdShowsRouteImport } from './routes/studios/$stud
 import { Route as StudiosStudioIdShowOperationsRouteImport } from './routes/studios/$studioId/show-operations'
 import { Route as StudiosStudioIdShiftsRouteImport } from './routes/studios/$studioId/shifts'
 import { Route as StudiosStudioIdSharedFieldsRouteImport } from './routes/studios/$studioId/shared-fields'
+import { Route as StudiosStudioIdOperationsReviewRouteImport } from './routes/studios/$studioId/operations-review'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
 import { Route as StudiosStudioIdMyShiftsRouteImport } from './routes/studios/$studioId/my-shifts'
 import { Route as StudiosStudioIdMyCompensationsRouteImport } from './routes/studios/$studioId/my-compensations'
@@ -205,6 +206,12 @@ const StudiosStudioIdSharedFieldsRoute =
   StudiosStudioIdSharedFieldsRouteImport.update({
     id: '/shared-fields',
     path: '/shared-fields',
+    getParentRoute: () => StudiosStudioIdRouteRoute,
+  } as any)
+const StudiosStudioIdOperationsReviewRoute =
+  StudiosStudioIdOperationsReviewRouteImport.update({
+    id: '/operations-review',
+    path: '/operations-review',
     getParentRoute: () => StudiosStudioIdRouteRoute,
   } as any)
 const StudiosStudioIdMyTasksRoute = StudiosStudioIdMyTasksRouteImport.update({
@@ -379,6 +386,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
+  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
   '/studios/$studioId/show-operations': typeof StudiosStudioIdShowOperationsRouteWithChildren
@@ -432,6 +440,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
+  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/system/clients': typeof SystemClientsIndexRoute
   '/system/compensation-line-items': typeof SystemCompensationLineItemsIndexRoute
@@ -483,6 +492,7 @@ export interface FileRoutesById {
   '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
+  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
   '/studios/$studioId/show-operations': typeof StudiosStudioIdShowOperationsRouteWithChildren
@@ -541,6 +551,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-compensations'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
+    | '/studios/$studioId/operations-review'
     | '/studios/$studioId/shared-fields'
     | '/studios/$studioId/shifts'
     | '/studios/$studioId/show-operations'
@@ -594,6 +605,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-compensations'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
+    | '/studios/$studioId/operations-review'
     | '/studios/$studioId/shared-fields'
     | '/system/clients'
     | '/system/compensation-line-items'
@@ -644,6 +656,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-compensations'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
+    | '/studios/$studioId/operations-review'
     | '/studios/$studioId/shared-fields'
     | '/studios/$studioId/shifts'
     | '/studios/$studioId/show-operations'
@@ -884,6 +897,13 @@ declare module '@tanstack/react-router' {
       path: '/shared-fields'
       fullPath: '/studios/$studioId/shared-fields'
       preLoaderRoute: typeof StudiosStudioIdSharedFieldsRouteImport
+      parentRoute: typeof StudiosStudioIdRouteRoute
+    }
+    '/studios/$studioId/operations-review': {
+      id: '/studios/$studioId/operations-review'
+      path: '/operations-review'
+      fullPath: '/studios/$studioId/operations-review'
+      preLoaderRoute: typeof StudiosStudioIdOperationsReviewRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
     '/studios/$studioId/my-tasks': {
@@ -1234,6 +1254,7 @@ interface StudiosStudioIdRouteRouteChildren {
   StudiosStudioIdMyCompensationsRoute: typeof StudiosStudioIdMyCompensationsRoute
   StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
+  StudiosStudioIdOperationsReviewRoute: typeof StudiosStudioIdOperationsReviewRoute
   StudiosStudioIdSharedFieldsRoute: typeof StudiosStudioIdSharedFieldsRoute
   StudiosStudioIdShiftsRoute: typeof StudiosStudioIdShiftsRouteWithChildren
   StudiosStudioIdShowOperationsRoute: typeof StudiosStudioIdShowOperationsRouteWithChildren
@@ -1252,6 +1273,7 @@ const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
   StudiosStudioIdMyCompensationsRoute: StudiosStudioIdMyCompensationsRoute,
   StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
+  StudiosStudioIdOperationsReviewRoute: StudiosStudioIdOperationsReviewRoute,
   StudiosStudioIdSharedFieldsRoute: StudiosStudioIdSharedFieldsRoute,
   StudiosStudioIdShiftsRoute: StudiosStudioIdShiftsRouteWithChildren,
   StudiosStudioIdShowOperationsRoute:
