@@ -105,9 +105,17 @@ function parseViolationValue(rawValue: unknown): ParsedViolation[] | null {
     return null;
   }
 
+  // An empty input array is the operator clearing all violations and must
+  // proceed to the supersede path (return []). A non-empty input where
+  // every entry failed validation is a malformed payload; treat it as
+  // value_absent (return null) so we never destructively supersede
+  // existing rows on garbage input.
   const violations = rawValue
     .map(parseViolationEntry)
     .filter((entry): entry is ParsedViolation => entry !== null);
+  if (rawValue.length > 0 && violations.length === 0) {
+    return null;
+  }
   return violations;
 }
 
@@ -129,9 +137,11 @@ function parseViolationEntry(entry: unknown): ParsedViolation | null {
 function toAuditValue(entry: {
   violationType: string;
   severity: string;
-}): { violation_type: string; severity: string } {
+  reason: string;
+}): { violation_type: string; severity: string; reason: string } {
   return {
     violation_type: entry.violationType,
     severity: entry.severity,
+    reason: entry.reason,
   };
 }

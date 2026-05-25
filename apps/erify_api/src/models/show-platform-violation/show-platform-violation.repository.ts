@@ -34,17 +34,24 @@ export class ShowPlatformViolationRepository {
   /**
    * Scope check used by `replaceForTaskField` to close the read-then-write
    * race: a ShowPlatform that was active when the extractor prefetched it
-   * may have been soft-deleted before the supersede + create runs. The FK
-   * still points to a row, so writes would otherwise silently land on a
-   * deleted target. Returns `true` only when the platform is active under
-   * the expected show.
+   * may be soft-deleted or reassigned before the supersede + create runs.
+   * The FK still points to a row, so writes would otherwise silently land
+   * on a deleted target. A plain `SELECT` does not prevent the race under
+   * `READ COMMITTED`, so this issues `SELECT ... FOR UPDATE` to take a
+   * row lock that blocks concurrent soft-delete / reassignment until this
+   * transaction commits. Returns `true` only when the platform is active
+   * under the expected show at lock time.
    */
-  async existsActiveInShow(showPlatformId: bigint, showId: bigint): Promise<boolean> {
-    const row = await this.txHost.tx.showPlatform.findFirst({
-      where: { id: showPlatformId, showId, deletedAt: null },
-      select: { id: true },
-    });
-    return row !== null;
+  async lockActiveInShow(showPlatformId: bigint, showId: bigint): Promise<boolean> {
+    const rows = await this.txHost.tx.$queryRaw<Array<{ id: bigint }>>`
+      SELECT id
+      FROM show_platforms
+      WHERE id = ${showPlatformId}
+        AND show_id = ${showId}
+        AND deleted_at IS NULL
+      FOR UPDATE
+    `;
+    return rows.length > 0;
   }
 
   async findActiveByTaskField(

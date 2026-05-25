@@ -18,6 +18,7 @@ export type ShowPlatformViolationSummary = {
   uid: string;
   violationType: string;
   severity: string;
+  reason: string;
 };
 
 @Injectable()
@@ -49,11 +50,12 @@ export class ShowPlatformViolationService extends BaseModelService {
 
     // Close the read-then-write race: the extractor's prefetch saw an active
     // platform under `showId`, but a concurrent soft-delete or reassignment
-    // could have moved it before this transaction. The FK constraint doesn't
-    // block writes against a soft-deleted target, so re-verify scope here
-    // and surface NotFoundException for the extractor to collapse to
-    // `target_stale`.
-    const platformActive = await this.showPlatformViolationRepository.existsActiveInShow(
+    // could move it before this transaction. A plain `SELECT` would not
+    // prevent the race under `READ COMMITTED`, so the repository issues
+    // `SELECT ... FOR UPDATE` to lock the row until commit. If the row is
+    // already gone, surface NotFoundException so the extractor collapses
+    // to `target_stale`.
+    const platformActive = await this.showPlatformViolationRepository.lockActiveInShow(
       input.showPlatformId,
       input.showId,
     );
@@ -63,16 +65,21 @@ export class ShowPlatformViolationService extends BaseModelService {
       );
     }
 
+    // Deduplicate incoming entries by (violationType, severity). The
+    // multiselect field type does not enforce uniqueness on raw payloads,
+    // so `['COPYRIGHT', 'COPYRIGHT']` would otherwise create duplicate
+    // active rows for the same violation. Reason / metadata / observedAt
+    // for collisions are kept from the FIRST occurrence so the audit
+    // matches the operator's listed-first entry.
+    const dedupedEntries = dedupeEntries(input.entries);
+
     const existing = await this.showPlatformViolationRepository.findActiveByTaskField(scope);
 
-    // Idempotency: a same-content resubmission would otherwise supersede and
-    // recreate identical rows, emitting a spurious UPDATE audit on every
-    // retry. Short-circuit when stored (type, severity, reason) tuples match
-    // the incoming set so the extractor sees zero created + zero superseded
-    // and returns `value_unchanged`. `reason` MUST participate so an
-    // operator correcting only the explanation text still rewrites the
-    // stored reason.
-    if (isViolationSetUnchanged(existing, input.entries)) {
+    // Idempotency: a same-content resubmission would otherwise supersede
+    // and recreate identical rows, emitting a spurious UPDATE audit on
+    // every retry. Short-circuit when the stored set matches the incoming
+    // (deduped) set on (violationType, severity, reason).
+    if (isViolationSetUnchanged(existing, dedupedEntries)) {
       return { created: [], superseded: [] };
     }
 
@@ -80,7 +87,7 @@ export class ShowPlatformViolationService extends BaseModelService {
       await this.showPlatformViolationRepository.supersedeActiveByTaskField(scope, new Date());
     }
 
-    const records: CreateShowPlatformViolationRecord[] = input.entries.map((entry) => ({
+    const records: CreateShowPlatformViolationRecord[] = dedupedEntries.map((entry) => ({
       uid: this.generateUid(),
       showPlatformId: input.showPlatformId,
       sourceTaskId: input.sourceTaskId,
@@ -101,28 +108,52 @@ export class ShowPlatformViolationService extends BaseModelService {
         uid: record.uid,
         violationType: record.violationType,
         severity: record.severity,
+        reason: record.reason,
       })),
       superseded: existing.map((row) => ({
         uid: row.uid,
         violationType: row.violationType,
         severity: row.severity,
+        reason: row.reason,
       })),
     };
   }
 }
 
-const KEY_DELIMITER = '|';
+function dedupeEntries(
+  entries: ReadonlyArray<ShowPlatformViolationEntry>,
+): ShowPlatformViolationEntry[] {
+  const seen = new Map<string, ShowPlatformViolationEntry>();
+  for (const entry of entries) {
+    const key = pairKey(entry);
+    if (!seen.has(key)) {
+      seen.set(key, entry);
+    }
+  }
+  return [...seen.values()];
+}
+
+function pairKey(entry: { violationType: string; severity: string }): string {
+  // JSON.stringify on a tuple escapes embedded quotes / control chars,
+  // so two distinct (violationType, severity) pairs never collide.
+  return JSON.stringify([entry.violationType, entry.severity]);
+}
+
+function tripleKey(entry: { violationType: string; severity: string; reason?: string | null }): string {
+  // JSON.stringify on the tuple escapes embedded `|`, quotes, backslashes,
+  // and control characters, so two distinct (type, severity, reason)
+  // tuples never collide on the joined key.
+  return JSON.stringify([entry.violationType, entry.severity, entry.reason ?? '']);
+}
 
 function isViolationSetUnchanged(
-  existing: ReadonlyArray<{ violationType: string; severity: string; reason?: string }>,
-  incoming: ReadonlyArray<{ violationType: string; severity: string; reason?: string }>,
+  existing: ReadonlyArray<{ violationType: string; severity: string; reason?: string | null }>,
+  incoming: ReadonlyArray<{ violationType: string; severity: string; reason?: string | null }>,
 ): boolean {
   if (existing.length !== incoming.length) {
     return false;
   }
-  const keyOf = (entry: { violationType: string; severity: string; reason?: string }) =>
-    [entry.violationType, entry.severity, entry.reason ?? ''].join(KEY_DELIMITER);
-  const existingKeys = existing.map(keyOf).sort();
-  const incomingKeys = incoming.map(keyOf).sort();
+  const existingKeys = existing.map(tripleKey).sort();
+  const incomingKeys = incoming.map(tripleKey).sort();
   return existingKeys.every((key, index) => key === incomingKeys[index]);
 }

@@ -10,7 +10,7 @@ function buildRepository(overrides: {
   existsActiveInShow?: boolean;
 } = {}): jest.Mocked<ShowPlatformViolationRepository> {
   return {
-    existsActiveInShow: jest.fn().mockResolvedValue(overrides.existsActiveInShow ?? true),
+    lockActiveInShow: jest.fn().mockResolvedValue(overrides.existsActiveInShow ?? true),
     findActiveByTaskField: jest.fn().mockResolvedValue(
       overrides.existing
       ?? [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'prior reason' }],
@@ -87,6 +87,7 @@ describe('showPlatformViolationService', () => {
           uid: 'spv_new',
           violationType: 'DEFAMATION',
           severity: 'WARNING',
+          reason: 'Defamation warning from platform',
         },
       ],
       superseded: [
@@ -94,6 +95,7 @@ describe('showPlatformViolationService', () => {
           uid: 'spv_old',
           violationType: 'COPYRIGHT',
           severity: 'WARNING',
+          reason: 'prior reason',
         },
       ],
     });
@@ -119,6 +121,7 @@ describe('showPlatformViolationService', () => {
         uid: 'spv_old',
         violationType: 'COPYRIGHT',
         severity: 'WARNING',
+        reason: 'prior reason',
       },
     ]);
   });
@@ -188,8 +191,42 @@ describe('showPlatformViolationService', () => {
     expect(repository.createMany).toHaveBeenCalledTimes(1);
     expect(result.created).toHaveLength(1);
     expect(result.superseded).toEqual([
-      { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING' },
+      { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'original reason' },
     ]);
+  });
+
+  it('deduplicates incoming entries by (violationType, severity) before writing', async () => {
+    const repository = buildRepository({ existing: [] });
+    const service = new ShowPlatformViolationService(repository, buildUtility());
+
+    const result = await service.replaceForTaskField({
+      showId: 10n,
+      showPlatformId: 200n,
+      sourceTaskId: 99n,
+      sourceFieldId: 'fld_violate123:platform:show_plt_200',
+      entries: [
+        {
+          violationType: 'COPYRIGHT',
+          severity: 'WARNING',
+          reason: 'first',
+          observedAt: new Date('2026-05-23T18:30:00.000Z'),
+          metadata: {},
+        },
+        {
+          violationType: 'COPYRIGHT',
+          severity: 'WARNING',
+          reason: 'duplicate',
+          observedAt: new Date('2026-05-23T18:30:00.000Z'),
+          metadata: {},
+        },
+      ],
+    });
+
+    expect(repository.createMany).toHaveBeenCalledTimes(1);
+    const createdRecords = (repository.createMany as jest.Mock).mock.calls[0][0];
+    expect(createdRecords).toHaveLength(1);
+    expect(createdRecords[0].reason).toBe('first');
+    expect(result.created).toHaveLength(1);
   });
 
   it('throws NotFoundException when the platform is no longer active under the show', async () => {

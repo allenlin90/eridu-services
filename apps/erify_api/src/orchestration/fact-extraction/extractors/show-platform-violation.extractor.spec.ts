@@ -33,7 +33,7 @@ function buildViolationService(overrides: {
   return {
     replaceForTaskField: jest.fn().mockResolvedValue({
       created: overrides.created ?? [
-        { uid: 'spv_new', violationType: 'COPYRIGHT', severity: 'WARNING' },
+        { uid: 'spv_new', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'r' },
       ],
       superseded: overrides.superseded ?? [],
     }),
@@ -101,7 +101,7 @@ describe('showPlatformViolationExtractor', () => {
       kind: 'write',
       action: 'CREATE',
       oldValue: [],
-      newValue: [{ violation_type: 'COPYRIGHT', severity: 'WARNING' }],
+      newValue: [{ violation_type: 'COPYRIGHT', severity: 'WARNING', reason: 'r' }],
     });
   });
 
@@ -109,7 +109,7 @@ describe('showPlatformViolationExtractor', () => {
     const showPlatformService = buildShowPlatformService();
     const violationService = buildViolationService({
       created: [],
-      superseded: [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING' }],
+      superseded: [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'old' }],
     });
     const extractor = new ShowPlatformViolationExtractor(
       showPlatformService,
@@ -124,9 +124,24 @@ describe('showPlatformViolationExtractor', () => {
     expect(decision).toMatchObject({
       kind: 'write',
       action: 'UPDATE',
-      oldValue: [{ violation_type: 'COPYRIGHT', severity: 'WARNING' }],
+      oldValue: [{ violation_type: 'COPYRIGHT', severity: 'WARNING', reason: 'old' }],
       newValue: [],
     });
+  });
+
+  it('treats a non-empty array whose entries are all invalid as value_absent (no destructive clear)', async () => {
+    const showPlatformService = buildShowPlatformService();
+    const violationService = buildViolationService();
+    const extractor = new ShowPlatformViolationExtractor(
+      showPlatformService,
+      violationService,
+    );
+
+    const decision = await extractor.apply({ ...fact, rawValue: ['', '   ', 123] }, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'value_absent' });
+    expect(violationService.replaceForTaskField).not.toHaveBeenCalled();
+    expect(showPlatformService.getShowPlatformById).not.toHaveBeenCalled();
   });
 
   it('returns value_unchanged when an empty submission had nothing to supersede', async () => {
