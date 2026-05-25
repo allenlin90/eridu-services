@@ -45,6 +45,8 @@ Use `connect: { uid }` to link entities. Avoids extra reads.
 
 Use `version` integer field. Repository throws `VersionConflictError`. Service converts to `HttpError.conflict()`.
 
+**Bump `version` only on semantic user-visible mutations.** Do NOT bump for pre-submission bookkeeping (upload reservations, presign caches), async denormalized state, or self-referential metadata — bumping causes spurious 409s on the user's next legitimate write.
+
 > 📖 [references/05-optimistic-locking.md](references/05-optimistic-locking.md)
 
 ## 7. Explicit FKs over Polymorphism
@@ -81,6 +83,13 @@ Avoid storing calculated totals on operational rows. Use purpose-built models fo
 ## 11. Audit History
 
 Use standard audit tables for new override and extraction history. Do not add new `metadata.audit.*` arrays; keep existing metadata audit payloads as legacy read compatibility only.
+
+**Metadata vs Audit decision:** before storing any new key in a JSONB `metadata` column, ask: *"If a concurrent writer silently overwrites this, does a business workflow break?"*
+
+- **Yes** → Audit model (or a dedicated table). It needs durable, queryable history.
+- **No** → `metadata` is fine. Accept the race; do NOT add raw SQL merges, advisory locks, or serializable transactions to protect non-critical bookkeeping. Document the intent in code so a later reader does not "fix" it.
+
+When in doubt, default to Audit. Migrating a critical signal *out* of `metadata` later is costlier than putting it in the right place up front.
 
 ## 12. Migration Policy
 

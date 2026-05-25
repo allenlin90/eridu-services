@@ -73,3 +73,25 @@ async updateTemplate(uid: string, version: number, data: UpdatePayload) {
 | **Layer Separation** | Repository stays unaware of HTTP |
 | **Testability** | Version conflicts testable without HTTP context |
 | **Reusability** | Same error works across REST, GraphQL, queues |
+
+## When NOT to Bump `version`
+
+Bump `version` only on **semantic mutations the user-visible state machine cares about** (status change, content edit, assignment, snapshot transition). A bump tells every other client "your cached copy is stale — refresh before writing." So bumping inappropriately means the next legitimate write gets a 409 from a stale comparison the client had no way to know about.
+
+Do NOT bump `version` for:
+
+- **Pre-submission bookkeeping** — e.g. reserving an upload version number, caching a presigned URL, tracking compression progress. The user has not committed anything yet; their next write should not 409.
+- **Async denormalized state** — e.g. write-side counters, cached aggregates, last-seen-at timestamps. The producer is the system, not the user.
+- **Metadata the writer is the sole reader of** — self-referential bookkeeping (numbering, sequencing, dedup keys).
+
+> Concrete example: `reserveMaterialAssetUploadVersion` writes `material_asset_upload_versions` to `task.metadata` but does NOT bump `task.version`. Reason: the file upload is pre-submission. Bumping would cause the operator's *first actual submit* to return 409 — exactly the friction reported in PR #107.
+
+## Race Tolerance: Decide Before Designing the Lock
+
+When a non-version-bumping writer (above) shares a JSONB column with a version-bumping writer that pre-reads metadata, the bumping writer can silently overwrite the bookkeeping writer's changes. Before building a workaround (raw SQL `jsonb ||` merge, `pg_advisory_xact_lock`, serializable transactions), answer:
+
+| Question | If YES → | If NO → |
+|---|---|---|
+| Does any business workflow break if this metadata is lost? | Move it out of `metadata` into the Audit model or a dedicated table — don't bend optimistic-locking around non-critical state | Accept the race. Document the intent inline. No workaround. |
+
+If the data turns out to be critical later, the right move is **migrate it to the Audit model**, not retrofit a lock around a metadata blob.

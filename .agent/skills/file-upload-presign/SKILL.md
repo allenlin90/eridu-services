@@ -29,6 +29,18 @@ description: Covers the presigned upload system for Cloudflare R2. Use this skil
 
 **Critical**: The direct R2 PUT uses bare `fetch()`, not `apiClient`. Adding the API `Authorization` header causes R2 to return 403.
 
+## Upload Bookkeeping vs Submission History
+
+A `MATERIAL_ASSET` presign is **pre-submission**: the operator has not committed anything yet. The R2 key uses `task.metadata.material_asset_upload_versions[fieldKey]` as a per-field counter to keep keys unique across re-uploads.
+
+Rules for this and any future upload-bookkeeping data:
+
+- **Do NOT bump `task.version` on presign / reserve calls.** The submission has not happened yet; bumping causes the operator's first actual submit to return 409. See `database-patterns` §6.
+- **Treat this counter as non-critical bookkeeping.** It is read only by `reserveMaterialAssetUploadVersion` itself. If a concurrent snapshot transition overwrites it, the worst case is the next R2 key starts back at 1 — no business workflow breaks.
+- **If upload history ever becomes business-critical** (e.g. compliance, dispute resolution, "who uploaded what when"), record it in the **Audit model**, not in `task.metadata`. Do not retrofit raw SQL JSONB merges or advisory locks around `task.metadata` to make non-critical bookkeeping race-safe.
+
+> Decision framework: `.agent/skills/database-patterns/references/05-optimistic-locking.md` — "Race Tolerance: Decide Before Designing the Lock"
+
 ## Use Cases & Limits
 
 | Use Case            | Max Size | Allowed MIME Types                                         |
