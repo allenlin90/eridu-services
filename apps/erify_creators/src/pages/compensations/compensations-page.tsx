@@ -35,11 +35,9 @@ import { PageLayout } from '@/components/layouts/page-layout';
 import { useMyShowCompensations } from '@/features/compensations/api/compensations.api';
 import { getInitialDateRange } from '@/features/compensations/config/compensations-search-schema';
 import { useActiveStudio } from '@/lib/hooks';
-import * as m from '@/paraglide/messages.js';
-
-const UNRESOLVED_REASON_LABELS: Record<string, () => string> = {
-  AGREEMENT_SNAPSHOT_MISSING: () => m['compensations.reasonAgreementPending'](),
-  COMMISSION_REVENUE_NOT_AVAILABLE: () => m['compensations.reasonRevenueVerificationPending'](),
+const UNRESOLVED_REASON_LABELS: Record<string, string> = {
+  AGREEMENT_SNAPSHOT_MISSING: 'Agreement pending',
+  COMMISSION_REVENUE_NOT_AVAILABLE: 'Revenue pending verification',
 };
 
 function formatAmount(value: string | null) {
@@ -49,7 +47,7 @@ function formatAmount(value: string | null) {
 function formatUnresolvedReason(value: string | null) {
   if (!value)
     return null;
-  return UNRESOLVED_REASON_LABELS[value]?.() ?? value;
+  return UNRESOLVED_REASON_LABELS[value] ?? value;
 }
 
 export function CompensationsPage() {
@@ -59,15 +57,18 @@ export function CompensationsPage() {
 
   // Initialize and fallback date params
   const { dateFrom: defaultFrom, dateTo: defaultTo } = getInitialDateRange();
-  const dateFrom = search.dateFrom ?? defaultFrom;
-  const dateTo = search.dateTo ?? defaultTo;
+  const hasNoDateParams = !search.dateFrom && !search.dateTo;
+  const dateFrom = hasNoDateParams ? defaultFrom : search.dateFrom;
+  const dateTo = hasNoDateParams ? defaultTo : search.dateTo;
 
   // Active query parameters for react-query
   const queryParams = {
     studio_id: activeStudioId ?? '',
-    date_from: dateFrom,
-    date_to: dateTo,
+    date_from: dateFrom ?? '',
+    date_to: dateTo ?? '',
   };
+
+  const isQueryEnabled = !!queryParams.studio_id && !!queryParams.date_from && !!queryParams.date_to;
 
   const { data, isLoading, isFetching, isError, refetch } = useMyShowCompensations(queryParams);
 
@@ -96,11 +97,11 @@ export function CompensationsPage() {
   return (
     <PageContainer>
       <PageLayout
-        title={m['compensations.title']()}
+        title="My Compensations"
         description={
           activeStudio
-            ? m['compensations.descriptionActive']({ studioName: activeStudio.studio.name })
-            : m['compensations.descriptionFallback']()
+             ? `Viewing show earnings with ${activeStudio.studio.name}`
+             : 'Review your agreed rates and earnings across assigned shows'
         }
       >
         <div className="space-y-6">
@@ -114,8 +115,8 @@ export function CompensationsPage() {
               variant="outline"
               size="icon"
               className="h-9 w-9 border-slate-800 bg-slate-900/60 hover:bg-slate-800"
-              onClick={() => refetch()}
-              disabled={isFetching}
+              onClick={() => isQueryEnabled && refetch()}
+              disabled={isFetching || !isQueryEnabled}
               aria-label="Refresh compensations"
             >
               <RefreshCw className={`h-4 w-4 text-slate-300 ${isFetching ? 'animate-spin' : ''}`} />
@@ -129,7 +130,7 @@ export function CompensationsPage() {
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors duration-300 pointer-events-none" />
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <CardTitle className="text-sm font-medium text-slate-400">
-                  {m['compensations.totalEarnings']()}
+                  Total Earnings
                 </CardTitle>
                 <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
                   <DollarSign className="h-4 w-4" />
@@ -141,7 +142,7 @@ export function CompensationsPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3 text-emerald-400" />
-                  {m['compensations.cumulativeShowPayments']()}
+                  Cumulative show payments
                 </p>
               </CardContent>
             </Card>
@@ -151,7 +152,7 @@ export function CompensationsPage() {
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors duration-300 pointer-events-none" />
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <CardTitle className="text-sm font-medium text-slate-400">
-                  {m['compensations.showsCompleted']()}
+                  Shows Completed
                 </CardTitle>
                 <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                   <Award className="h-4 w-4" />
@@ -163,7 +164,7 @@ export function CompensationsPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                  {m['compensations.assignedShowsInRange']()}
+                  Assigned shows in range
                 </p>
               </CardContent>
             </Card>
@@ -173,7 +174,7 @@ export function CompensationsPage() {
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors duration-300 pointer-events-none" />
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <CardTitle className="text-sm font-medium text-slate-400">
-                  {m['compensations.pendingItems']()}
+                  Pending Items
                 </CardTitle>
                 <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
                   <AlertCircle className="h-4 w-4" />
@@ -185,7 +186,7 @@ export function CompensationsPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <Info className="h-3 w-3 text-amber-400" />
-                  {m['compensations.awaitingVerification']()}
+                  Awaiting verification
                 </p>
               </CardContent>
             </Card>
@@ -194,70 +195,88 @@ export function CompensationsPage() {
           {/* Detailed Payments Grid Table */}
           <Card className="bg-slate-900/20 border-slate-800 shadow-xl overflow-hidden">
             <CardHeader className="pb-3 border-b border-slate-800/80 bg-slate-900/35">
-              <CardTitle className="text-base text-slate-200">{m['compensations.tableTitle']()}</CardTitle>
+              <CardTitle className="text-base text-slate-200">Show Compensation Breakdown</CardTitle>
               <CardDescription className="text-xs text-slate-400">
-                {m['compensations.tableDescription']()}
+                Detailed listing of agreed contract rates, commissions, adjustments, and final payments.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              {isLoading && (
+              {isLoading && isQueryEnabled && (
                 <div className="flex flex-col items-center justify-center p-12 text-sm text-slate-400 gap-3">
                   <RefreshCw className="h-6 w-6 text-indigo-400 animate-spin" />
-                  <span>{m['compensations.loadingData']()}</span>
+                  <span>Loading compensations data...</span>
                 </div>
               )}
 
-              {!isLoading && isError && (
+              {!isLoading && isError && isQueryEnabled && (
                 <div className="flex flex-col items-center justify-center p-12 text-sm text-red-400 gap-4">
                   <AlertTriangle className="h-8 w-8" />
-                  <p>{m['compensations.errorLoading']()}</p>
-                  <Button variant="outline" size="sm" onClick={() => refetch()}>
-                    {m['compensations.tryAgain']()}
+                  <p>Failed to load compensations data. Please try again.</p>
+                  <Button variant="outline" size="sm" onClick={() => isQueryEnabled && refetch()}>
+                    Try Again
                   </Button>
                 </div>
               )}
 
-              {!isLoading && !isError && shows.length === 0 && (
+              {!isQueryEnabled && (
                 <div className="flex flex-col items-center justify-center p-16 text-sm text-slate-400 gap-2">
-                  <Info className="h-8 w-8 text-slate-500" />
-                  <p>{m['compensations.noData']()}</p>
+                  {dateFrom && !dateTo
+                    ? (
+                        <>
+                          <Calendar className="h-8 w-8 text-indigo-400/80 animate-pulse" />
+                          <p>Please select an end date to view compensations.</p>
+                        </>
+                      )
+                    : (
+                        <>
+                          <Info className="h-8 w-8 text-slate-500" />
+                          <p>No compensations found for the selected period.</p>
+                        </>
+                      )}
                 </div>
               )}
 
-              {!isLoading && !isError && shows.length > 0 && (
+              {isQueryEnabled && !isLoading && !isError && shows.length === 0 && (
+                <div className="flex flex-col items-center justify-center p-16 text-sm text-slate-400 gap-2">
+                  <Info className="h-8 w-8 text-slate-500" />
+                  <p>No compensations found for the selected period.</p>
+                </div>
+              )}
+
+              {isQueryEnabled && !isLoading && !isError && shows.length > 0 && (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader className="bg-slate-900/50 hover:bg-slate-900/50 border-b border-slate-800">
                       <TableRow className="border-b border-slate-800">
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs">
-                          {m['compensations.showName']()}
+                          Show Name
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs">
-                          {m['compensations.dateTime']()}
+                          Date &amp; Time
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs">
-                          {m['compensations.type']()}
+                          Type
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">
-                          {m['compensations.rate']()}
+                          Agreed Rate
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">
-                          {m['compensations.commission']()}
+                          Commission
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">
-                          {m['compensations.baseAmount']()}
+                          Base Amount
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">
-                          {m['compensations.adjustments']()}
+                          Adjustments
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">
-                          {m['compensations.total']()}
+                          Total Amount
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs">
-                          {m['compensations.status']()}
+                          Status
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs">
-                          {m['compensations.notes']()}
+                          Notes
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -338,7 +357,7 @@ export function CompensationsPage() {
                             <TableCell className="text-right text-slate-100 font-semibold text-xs py-3.5 whitespace-nowrap">
                               {isUnresolved
                                 ? (
-                                    <span className="text-slate-400">{m['compensations.unresolved']()}</span>
+                                    <span className="text-slate-400">Unresolved</span>
                                   )
                                 : (
                                     formatAmount(show.total_amount)
@@ -349,7 +368,7 @@ export function CompensationsPage() {
                                 ? (
                                     <div className="flex flex-col gap-0.5">
                                       <Badge className="w-fit bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/10 text-[9px] font-medium">
-                                        {m['compensations.unresolved']()}
+                                        Unresolved
                                       </Badge>
                                       {unresolvedReason && (
                                         <span className="text-[10px] text-amber-500/90 leading-tight block max-w-[150px] truncate">
@@ -360,7 +379,7 @@ export function CompensationsPage() {
                                   )
                                 : (
                                     <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 text-[9px] font-medium">
-                                      {m['compensations.resolved']()}
+                                      Resolved
                                     </Badge>
                                   )}
                             </TableCell>

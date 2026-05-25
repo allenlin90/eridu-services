@@ -24,6 +24,7 @@ vi.mock('@/lib/api', () => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useLocation: () => mockUseLocation(),
+  useNavigate: () => vi.fn(),
 }));
 
 // Mock the messages

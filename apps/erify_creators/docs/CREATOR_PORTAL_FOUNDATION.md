@@ -164,6 +164,12 @@ Mounted at `/compensations`, utilizing a design aligned with `apps/erify_studios
   - Final Show Payout
   - Notes & Status badges
 
+### 📱 PWA App-Shell & Settings Page
+Aligned with `erify_studios`, `erify_creators` leverages Progressive Web App capabilities for offline robustness and seamless client updates:
+- **Service Worker Lifecycle**: Configured via `vite-plugin-pwa` in `prompt` mode, registering periodic background update checks every 5 minutes. Auto-refresh is managed safely to avoidStandalone reload loops on iOS devices.
+- **Settings Router Route (`/settings`)**: Provides a user interface for manual app shell update checks and immediate updates.
+- **Reset App Shell Recovery**: A recovery mechanism that unregisters active service workers, purges Cache Storage caches, clears the IndexedDB TanStack Query cache, and reloads the application.
+
 ---
 
 ## Verification & Execution commands

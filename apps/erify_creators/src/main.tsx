@@ -7,7 +7,11 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 
 import { createIDBPersister, queryClient } from '@/lib/api';
+import { initializePwaShell } from '@/lib/pwa';
 import { router } from '@/router';
+
+// Initialize PWA Service Worker shell
+initializePwaShell();
 
 // Create IndexedDB persister for offline support
 const persister = createIDBPersister();

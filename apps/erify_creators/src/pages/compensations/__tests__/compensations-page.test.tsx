@@ -18,38 +18,7 @@ vi.mock('@/lib/hooks', () => ({
   useActiveStudio: vi.fn(),
 }));
 
-// Mock localized paraglide messages
-vi.mock('@/paraglide/messages.js', () => ({
-  'compensations.title': () => 'My Compensations',
-  'compensations.totalEarnings': () => 'Total Earnings',
-  'compensations.showsCompleted': () => 'Shows Completed',
-  'compensations.pendingItems': () => 'Pending Items',
-  'compensations.errorLoading': () => 'Failed to load compensations data. Please try again.',
-  'compensations.tryAgain': () => 'Try Again',
-  'compensations.noData': () => 'No compensations found for the selected period.',
-  'compensations.showName': () => 'Show Name',
-  'compensations.dateTime': () => 'Date & Time',
-  'compensations.type': () => 'Type',
-  'compensations.rate': () => 'Agreed Rate',
-  'compensations.commission': () => 'Commission',
-  'compensations.baseAmount': () => 'Base Amount',
-  'compensations.adjustments': () => 'Adjustments',
-  'compensations.total': () => 'Total Amount',
-  'compensations.unresolved': () => 'Unresolved',
-  'compensations.resolved': () => 'Resolved',
-  'compensations.notes': () => 'Notes',
-  'compensations.descriptionActive': ({ studioName }: any) => `Viewing show earnings with ${studioName}`,
-  'compensations.descriptionFallback': () => 'Review your agreed rates and earnings across assigned shows',
-  'compensations.cumulativeShowPayments': () => 'Cumulative show payments',
-  'compensations.assignedShowsInRange': () => 'Assigned shows in range',
-  'compensations.awaitingVerification': () => 'Awaiting verification',
-  'compensations.tableTitle': () => 'Show Compensation Breakdown',
-  'compensations.tableDescription': () => 'Detailed listing of agreed contract rates, commissions, adjustments, and final payments.',
-  'compensations.loadingData': () => 'Loading compensations data...',
-  'compensations.status': () => 'Status',
-  'compensations.reasonAgreementPending': () => 'Agreement pending',
-  'compensations.reasonRevenueVerificationPending': () => 'Revenue pending verification',
-}));
+
 
 describe('compensationsPage', () => {
   const mockNavigate = vi.fn();
@@ -114,6 +83,25 @@ describe('compensationsPage', () => {
     renderWithQueryClient(<CompensationsPage />);
 
     expect(screen.getByText('No compensations found for the selected period.')).toBeInTheDocument();
+  });
+
+  it('renders select end date prompt during partial range selections', () => {
+    vi.mocked(useSearch).mockReturnValue({
+      dateFrom: '2026-05-01T00:00:00.000Z',
+      dateTo: undefined,
+    });
+
+    vi.mocked(useMyShowCompensations).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    renderWithQueryClient(<CompensationsPage />);
+
+    expect(screen.getByText('Please select an end date to view compensations.')).toBeInTheDocument();
   });
 
   it('renders populated data with summary metrics and table breakdown', () => {

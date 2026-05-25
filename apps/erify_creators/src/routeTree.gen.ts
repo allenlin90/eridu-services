@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShowsIndexRouteImport } from './routes/shows/index'
 import { Route as CompensationsIndexRouteImport } from './routes/compensations/index'
 import { Route as ShowsShowIdRouteImport } from './routes/shows/$showId'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
@@ -44,6 +50,7 @@ const ShowsShowIdRoute = ShowsShowIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/settings': typeof SettingsRoute
   '/shows/$showId': typeof ShowsShowIdRoute
   '/compensations': typeof CompensationsIndexRoute
   '/shows': typeof ShowsIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/settings': typeof SettingsRoute
   '/shows/$showId': typeof ShowsShowIdRoute
   '/compensations': typeof CompensationsIndexRoute
   '/shows': typeof ShowsIndexRoute
@@ -59,21 +67,36 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/settings': typeof SettingsRoute
   '/shows/$showId': typeof ShowsShowIdRoute
   '/compensations/': typeof CompensationsIndexRoute
   '/shows/': typeof ShowsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$' | '/shows/$showId' | '/compensations' | '/shows'
+  fullPaths:
+    | '/'
+    | '/$'
+    | '/settings'
+    | '/shows/$showId'
+    | '/compensations'
+    | '/shows'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$' | '/shows/$showId' | '/compensations' | '/shows'
-  id: '__root__' | '/' | '/$' | '/shows/$showId' | '/compensations/' | '/shows/'
+  to: '/' | '/$' | '/settings' | '/shows/$showId' | '/compensations' | '/shows'
+  id:
+    | '__root__'
+    | '/'
+    | '/$'
+    | '/settings'
+    | '/shows/$showId'
+    | '/compensations/'
+    | '/shows/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  SettingsRoute: typeof SettingsRoute
   ShowsShowIdRoute: typeof ShowsShowIdRoute
   CompensationsIndexRoute: typeof CompensationsIndexRoute
   ShowsIndexRoute: typeof ShowsIndexRoute
@@ -81,6 +104,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$': {
       id: '/$'
       path: '/$'
@@ -122,6 +152,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  SettingsRoute: SettingsRoute,
   ShowsShowIdRoute: ShowsShowIdRoute,
   CompensationsIndexRoute: CompensationsIndexRoute,
   ShowsIndexRoute: ShowsIndexRoute,
