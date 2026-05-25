@@ -143,7 +143,7 @@ describe('compensationsPage', () => {
             agreed_rate: null,
             commission_rate: '10',
             base_amount: '0.00',
-            adjustment_total: '50.00',
+            adjustment_total: '-50.00',
             total_amount: '750.00',
             unresolved_reason: 'COMMISSION_REVENUE_NOT_AVAILABLE',
             note: null,
@@ -182,7 +182,7 @@ describe('compensationsPage', () => {
     // Check second show name, unresolved reason, commission layout, and adjustments
     expect(screen.getByText('Show Silver Sprint')).toBeInTheDocument();
     expect(screen.getByText('10%')).toBeInTheDocument();
-    expect(screen.getByText('+$50.00')).toBeInTheDocument();
+    expect(screen.getByText('-$50.00')).toBeInTheDocument();
     expect(screen.getAllByText('Unresolved')[0]).toBeInTheDocument();
     expect(screen.getByText('Revenue pending verification')).toBeInTheDocument();
   });

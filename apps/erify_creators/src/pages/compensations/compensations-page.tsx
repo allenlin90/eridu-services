@@ -329,7 +329,11 @@ export function CompensationsPage() {
                                     : 'text-emerald-400'
                               }`}
                             >
-                              {isAdjZero ? '$0.00' : `${isAdjNegative ? '' : '+'}$${show.adjustment_total}`}
+                              {isAdjZero
+                                ? '$0.00'
+                                : isAdjNegative
+                                  ? `-$${Math.abs(Number.parseFloat(show.adjustment_total)).toFixed(2)}`
+                                  : `+$${show.adjustment_total}`}
                             </TableCell>
                             <TableCell className="text-right text-slate-100 font-semibold text-xs py-3.5 whitespace-nowrap">
                               {isUnresolved
