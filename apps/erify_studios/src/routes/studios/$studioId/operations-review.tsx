@@ -12,7 +12,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
+  DatePicker,
   Label,
 } from '@eridu/ui';
 
@@ -170,22 +170,18 @@ function StudioOperationsReviewPage() {
                       <Label htmlFor="operations-review-date-from" className="text-xs">
                         From
                       </Label>
-                      <Input
-                        id="operations-review-date-from"
-                        type="date"
+                      <DatePicker
                         value={range.dateFrom}
-                        onChange={(event) => navigateDateFrom(event.target.value)}
+                        onChange={navigateDateFrom}
                       />
                     </div>
                     <div className="grid gap-1">
                       <Label htmlFor="operations-review-date-to" className="text-xs">
                         To
                       </Label>
-                      <Input
-                        id="operations-review-date-to"
-                        type="date"
+                      <DatePicker
                         value={range.dateTo}
-                        onChange={(event) => navigateDateTo(event.target.value)}
+                        onChange={navigateDateTo}
                       />
                     </div>
                   </div>
