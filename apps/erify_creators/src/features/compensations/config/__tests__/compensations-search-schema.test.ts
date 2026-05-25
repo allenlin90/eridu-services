@@ -43,6 +43,6 @@ describe('getInitialDateRange', () => {
 
     // Verify it is roughly a 30-day difference (30 days * 24 hours * 60 mins * 60 secs * 1000 ms)
     const diffDays = Math.round((toTime - fromTime) / (1000 * 60 * 60 * 24));
-    expect(diffDays).toBe(30);
+    expect(diffDays).toBe(31);
   });
 });

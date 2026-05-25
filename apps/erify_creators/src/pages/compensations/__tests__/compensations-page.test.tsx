@@ -37,6 +37,7 @@ vi.mock('@/paraglide/messages.js', () => ({
   'compensations.total': () => 'Total Amount',
   'compensations.unresolved': () => 'Unresolved',
   'compensations.resolved': () => 'Resolved',
+  'compensations.notes': () => 'Notes',
   'compensations.descriptionActive': ({ studioName }: any) => `Viewing show earnings with ${studioName}`,
   'compensations.descriptionFallback': () => 'Review your agreed rates and earnings across assigned shows',
   'compensations.cumulativeShowPayments': () => 'Cumulative show payments',
@@ -132,6 +133,7 @@ describe('compensationsPage', () => {
             adjustment_total: '0.00',
             total_amount: '500.00',
             unresolved_reason: null,
+            note: 'Standard fixed payout',
           },
           {
             show_creator_id: 'sc_2',
@@ -144,6 +146,7 @@ describe('compensationsPage', () => {
             adjustment_total: '50.00',
             total_amount: '750.00',
             unresolved_reason: 'COMMISSION_REVENUE_NOT_AVAILABLE',
+            note: null,
           },
         ],
       },
@@ -168,11 +171,13 @@ describe('compensationsPage', () => {
     expect(screen.getByText('Show Name')).toBeInTheDocument();
     expect(screen.getByText('Date & Time')).toBeInTheDocument();
     expect(screen.getByText('Type')).toBeInTheDocument();
+    expect(screen.getByText('Notes')).toBeInTheDocument();
 
     // Check first show name and items
     expect(screen.getByText('Show Gold Run')).toBeInTheDocument();
     expect(screen.getAllByText('$500.00')[0]).toBeInTheDocument(); // Fixed show amount
     expect(screen.getAllByText('Resolved')[0]).toBeInTheDocument();
+    expect(screen.getByText('Standard fixed payout')).toBeInTheDocument();
 
     // Check second show name, unresolved reason, commission layout, and adjustments
     expect(screen.getByText('Show Silver Sprint')).toBeInTheDocument();

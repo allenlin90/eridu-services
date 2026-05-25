@@ -256,6 +256,9 @@ export function CompensationsPage() {
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs">
                           {m['compensations.status']()}
                         </TableHead>
+                        <TableHead className="text-slate-300 font-semibold h-11 text-xs">
+                          {m['compensations.notes']()}
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -356,6 +359,9 @@ export function CompensationsPage() {
                                       {m['compensations.resolved']()}
                                     </Badge>
                                   )}
+                            </TableCell>
+                            <TableCell className="text-xs py-3.5 max-w-[150px] truncate text-slate-300" title={show.note ?? ''}>
+                              {show.note || <span className="text-slate-500">—</span>}
                             </TableCell>
                           </TableRow>
                         );
