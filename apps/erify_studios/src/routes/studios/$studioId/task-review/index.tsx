@@ -47,7 +47,7 @@ function StudioTaskReviewPage() {
             <div className="space-y-1">
               <CardTitle className="text-base">Review Date</CardTitle>
               <CardDescription>
-                Submitted tasks due in this range are shown below.
+                Submitted tasks due in the selected operational day (06:00–05:59) are shown below.
               </CardDescription>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

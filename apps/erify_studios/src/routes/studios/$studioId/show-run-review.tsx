@@ -46,7 +46,9 @@ function ShowRunReviewPage() {
         description="Review submitted and signed-off show results for the selected range."
       >
         <div className="space-y-4">
-          <ShowRunReviewScopeCard search={search} onSearchChange={updateSearch} />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <ShowRunReviewScopeCard search={search} onSearchChange={updateSearch} />
+          </div>
           <ShowRunReviewPreview
             title="Run Checklist"
             description="Use this after task submissions are signed off and operational facts are populated to show records."

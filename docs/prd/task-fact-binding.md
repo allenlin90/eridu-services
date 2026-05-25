@@ -247,7 +247,7 @@ Implementation is structured into **three logical sections**. Each section serve
   * **Route shell**: Add `/studios/:studioId/show-run-review` for submitted and signed-off operational metrics.
   * **Review consolidation**: Keep submitted-task review under `/studios/:studioId/task-review`; future bulk review extends that page instead of adding a separate submitted-task review route.
   * **Sidebar refinement**: Use `/task-setup` for **Task Setup** and group Task Setup, Task Review, Show Run Review, and Task Reports under **Operations**.
-  * **Operational day scope**: Default to the active 06:00–05:59 operational day, with `date_from` / `date_to` URL state reflected directly in the date range picker. The current operational day may refresh every 5 minutes; historical ranges refresh manually.
+  * **Operational day scope**: Default to the active 06:00–05:59 operational day, with `date_from` / `date_to` URL state reflected directly in the date range picker. `/task-review` queries use the same window for `due_date_from` / `due_date_to` and silently refetches every 5 minutes while the current operational day is selected; historical ranges stay manual refresh. `/show-run-review` keeps the picker-only scope control (no separate window label or refresh affordance) until summary queries land in 12.4.4.
   * **Two-layer framing**: Task Review is the pre-confirmation layer; Show Run Review counts only submitted and signed-off extracted facts using manager-friendly show execution language.
 
 #### 🟨 PR 12.4.2 · Task Review Summary and Exception Queues

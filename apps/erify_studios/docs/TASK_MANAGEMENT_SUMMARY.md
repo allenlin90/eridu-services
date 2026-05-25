@@ -78,7 +78,7 @@ Task Review → choose operational day range → review submitted tasks waiting 
 ### 10. Show Run Review (Admin/Manager)
 Show Run Review → choose operational day range → review submitted and signed-off show records after task approval. The page focuses on manager-friendly checks: shows happened, creators showed up, streams stayed clean, and the range is ready for sign-off.
 
-The default operational day is 06:00-05:59 local time for PR 12.4. Today can refresh every 5 minutes, while historical ranges use manual refresh to avoid over-fetching.
+The default operational day is 06:00-05:59 local time for PR 12.4. Task Review applies that window to `due_date_from` / `due_date_to` and silently refetches every 5 minutes for the current operational day; historical ranges use the table refresh action. Show Run Review exposes only the range picker until summary queries ship in 12.4.4.
 
 ---
 

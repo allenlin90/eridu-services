@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildShowRunReviewDateRange,
-  isCurrentShowRunReviewDay,
-} from '../show-run-review-date-range';
+  buildOperationalDayRange,
+  isCurrentOperationalDay,
+  operationalWindowToDayRange,
+} from '../operational-day-range';
 
-describe('showRunReviewDateRange', () => {
+describe('operationalDayRange', () => {
   it('defaults to the previous operational day before the 06:00 boundary', () => {
-    const range = buildShowRunReviewDateRange(
+    const range = buildOperationalDayRange(
       {},
       new Date('2026-05-25T04:30:00'),
     );
@@ -27,7 +28,7 @@ describe('showRunReviewDateRange', () => {
   });
 
   it('defaults to the current operational day at and after the 06:00 boundary', () => {
-    const range = buildShowRunReviewDateRange(
+    const range = buildOperationalDayRange(
       {},
       new Date('2026-05-25T06:00:00'),
     );
@@ -47,7 +48,7 @@ describe('showRunReviewDateRange', () => {
   });
 
   it('uses explicit URL dates without requiring preset state', () => {
-    const range = buildShowRunReviewDateRange(
+    const range = buildOperationalDayRange(
       {
         date_from: '2026-05-20',
         date_to: '2026-05-25',
@@ -60,7 +61,7 @@ describe('showRunReviewDateRange', () => {
   });
 
   it('normalizes ranges that end before they start', () => {
-    const range = buildShowRunReviewDateRange(
+    const range = buildOperationalDayRange(
       {
         date_from: '2026-05-25',
         date_to: '2026-05-24',
@@ -73,14 +74,14 @@ describe('showRunReviewDateRange', () => {
   });
 
   it('detects the current operational day from resolved URL dates', () => {
-    const currentRange = buildShowRunReviewDateRange(
+    const currentRange = buildOperationalDayRange(
       {
         date_from: '2026-05-25',
         date_to: '2026-05-25',
       },
       new Date('2026-05-25T12:00:00'),
     );
-    const olderRange = buildShowRunReviewDateRange(
+    const olderRange = buildOperationalDayRange(
       {
         date_from: '2026-05-24',
         date_to: '2026-05-24',
@@ -88,7 +89,22 @@ describe('showRunReviewDateRange', () => {
       new Date('2026-05-25T12:00:00'),
     );
 
-    expect(isCurrentShowRunReviewDay(currentRange, new Date('2026-05-25T12:00:00'))).toBe(true);
-    expect(isCurrentShowRunReviewDay(olderRange, new Date('2026-05-25T12:00:00'))).toBe(false);
+    expect(isCurrentOperationalDay(currentRange, new Date('2026-05-25T12:00:00'))).toBe(true);
+    expect(isCurrentOperationalDay(olderRange, new Date('2026-05-25T12:00:00'))).toBe(false);
+  });
+
+  it('derives operational dates from persisted window bounds', () => {
+    const persisted = buildOperationalDayRange(
+      { date_from: '2026-05-20', date_to: '2026-05-25' },
+      new Date('2026-05-25T12:00:00'),
+    );
+
+    const resolved = operationalWindowToDayRange(
+      { from: persisted.windowStart, to: persisted.windowEnd },
+      new Date('2026-05-25T12:00:00'),
+    );
+
+    expect(resolved.dateFrom).toBe('2026-05-20');
+    expect(resolved.dateTo).toBe('2026-05-25');
   });
 });
