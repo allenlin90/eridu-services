@@ -338,7 +338,6 @@ export class TaskRepository extends BaseRepository<
       await this.delegate.update({
         where: { id: task.id, version: task.version, deletedAt: null },
         data: {
-          version: task.version + 1,
           metadata: {
             ...metadataObj,
             material_asset_upload_versions: {
