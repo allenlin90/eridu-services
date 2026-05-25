@@ -79,6 +79,7 @@ describe('showPlatformViolationExtractor', () => {
     const decision = await extractor.apply(fact, ctx);
 
     expect(violationService.replaceForTaskField).toHaveBeenCalledWith({
+      showId: 10n,
       showPlatformId: 200n,
       sourceTaskId: 99n,
       sourceFieldId: 'fld_violate123:platform:show_plt_200',
@@ -179,5 +180,33 @@ describe('showPlatformViolationExtractor', () => {
     );
 
     await expect(extractor.apply(fact, ctx)).rejects.toThrow('connection refused');
+  });
+
+  it('collapses NotFoundException from the write path to target_stale', async () => {
+    const showPlatformService = buildShowPlatformService();
+    const violationService = buildViolationService();
+    violationService.replaceForTaskField.mockRejectedValue(
+      new NotFoundException('ShowPlatform 200 is not active under show 10'),
+    );
+    const extractor = new ShowPlatformViolationExtractor(
+      showPlatformService,
+      violationService,
+    );
+
+    const decision = await extractor.apply(fact, ctx);
+
+    expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
+  });
+
+  it('propagates non-NotFound write errors as extractor errors', async () => {
+    const showPlatformService = buildShowPlatformService();
+    const violationService = buildViolationService();
+    violationService.replaceForTaskField.mockRejectedValue(new Error('db down'));
+    const extractor = new ShowPlatformViolationExtractor(
+      showPlatformService,
+      violationService,
+    );
+
+    await expect(extractor.apply(fact, ctx)).rejects.toThrow('db down');
   });
 });

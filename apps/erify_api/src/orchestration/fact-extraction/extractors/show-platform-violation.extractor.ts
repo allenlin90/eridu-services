@@ -53,25 +53,39 @@ export class ShowPlatformViolationExtractor implements IngestionExtractor {
 
     const observedAt = new Date();
     const reason = fact.reason?.trim() || DEFAULT_VIOLATION_REASON;
-    const result = await this.showPlatformViolationService.replaceForTaskField({
-      showPlatformId: showPlatform.id,
-      sourceTaskId: ctx.taskId,
-      // Use the hydrated content key, not the template field id, so one
-      // platform target cannot supersede another platform's rows when the
-      // same template field hydrates across multiple platforms.
-      sourceFieldId: fact.contentKey,
-      entries: parsedViolations.map((violation) => ({
-        violationType: violation.violationType,
-        severity: violation.severity,
-        reason,
-        observedAt,
-        metadata: {
-          ingestion_source: 'task_submission',
-          task_uid: ctx.taskUid,
-          task_field_id: fact.sourceFieldId,
-        },
-      })),
-    });
+    let result: Awaited<ReturnType<ShowPlatformViolationService['replaceForTaskField']>>;
+    try {
+      result = await this.showPlatformViolationService.replaceForTaskField({
+        showId: ctx.showId,
+        showPlatformId: showPlatform.id,
+        sourceTaskId: ctx.taskId,
+        // Use the hydrated content key, not the template field id, so one
+        // platform target cannot supersede another platform's rows when the
+        // same template field hydrates across multiple platforms.
+        sourceFieldId: fact.contentKey,
+        entries: parsedViolations.map((violation) => ({
+          violationType: violation.violationType,
+          severity: violation.severity,
+          reason,
+          observedAt,
+          metadata: {
+            ingestion_source: 'task_submission',
+            task_uid: ctx.taskUid,
+            task_field_id: fact.sourceFieldId,
+          },
+        })),
+      });
+    } catch (err) {
+      // Concurrent soft-delete race: the prefetch above saw an active
+      // platform, but `replaceForTaskField` re-checks scope inside the
+      // transaction and throws `NotFoundException` if it has been moved or
+      // deleted in between. Collapse to `target_stale` so no audit claims a
+      // stale target. Other errors propagate as `extractor_error`.
+      if (err instanceof NotFoundException) {
+        return { kind: 'noop', reason: 'target_stale' };
+      }
+      throw err;
+    }
 
     if (result.created.length === 0 && result.superseded.length === 0) {
       return { kind: 'noop', reason: 'value_unchanged' };

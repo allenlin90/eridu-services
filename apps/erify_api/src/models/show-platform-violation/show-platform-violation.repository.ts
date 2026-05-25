@@ -3,8 +3,6 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, ShowPlatformViolation } from '@prisma/client';
 
-import { PrismaService } from '@/prisma/prisma.service';
-
 export type ShowPlatformViolationTaskFieldScope = {
   showPlatformId: bigint;
   sourceTaskId: bigint;
@@ -26,12 +24,27 @@ export type CreateShowPlatformViolationRecord = {
 @Injectable()
 export class ShowPlatformViolationRepository {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {}
 
   private get delegate() {
     return this.txHost.tx.showPlatformViolation;
+  }
+
+  /**
+   * Scope check used by `replaceForTaskField` to close the read-then-write
+   * race: a ShowPlatform that was active when the extractor prefetched it
+   * may have been soft-deleted before the supersede + create runs. The FK
+   * still points to a row, so writes would otherwise silently land on a
+   * deleted target. Returns `true` only when the platform is active under
+   * the expected show.
+   */
+  async existsActiveInShow(showPlatformId: bigint, showId: bigint): Promise<boolean> {
+    const row = await this.txHost.tx.showPlatform.findFirst({
+      where: { id: showPlatformId, showId, deletedAt: null },
+      select: { id: true },
+    });
+    return row !== null;
   }
 
   async findActiveByTaskField(

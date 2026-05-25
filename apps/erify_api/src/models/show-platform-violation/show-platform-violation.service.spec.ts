@@ -1,13 +1,19 @@
+import { NotFoundException } from '@nestjs/common';
+
 import type { ShowPlatformViolationRepository } from './show-platform-violation.repository';
 import { ShowPlatformViolationService } from './show-platform-violation.service';
 
 import type { UtilityService } from '@/utility/utility.service';
 
-function buildRepository(): jest.Mocked<ShowPlatformViolationRepository> {
+function buildRepository(overrides: {
+  existing?: Array<{ uid: string; violationType: string; severity: string }>;
+  existsActiveInShow?: boolean;
+} = {}): jest.Mocked<ShowPlatformViolationRepository> {
   return {
-    findActiveByTaskField: jest.fn().mockResolvedValue([
-      { uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING' },
-    ]),
+    existsActiveInShow: jest.fn().mockResolvedValue(overrides.existsActiveInShow ?? true),
+    findActiveByTaskField: jest.fn().mockResolvedValue(
+      overrides.existing ?? [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING' }],
+    ),
     supersedeActiveByTaskField: jest.fn().mockResolvedValue({ count: 1 }),
     createMany: jest.fn().mockResolvedValue({ count: 1 }),
   } as unknown as jest.Mocked<ShowPlatformViolationRepository>;
@@ -36,14 +42,15 @@ describe('showPlatformViolationService', () => {
     const service = new ShowPlatformViolationService(repository, buildUtility());
 
     const result = await service.replaceForTaskField({
+      showId: 10n,
       showPlatformId: 200n,
       sourceTaskId: 99n,
       sourceFieldId: 'fld_violate123:platform:show_plt_200',
       entries: [
         {
-          violationType: 'COPYRIGHT',
+          violationType: 'DEFAMATION',
           severity: 'WARNING',
-          reason: 'Copyright warning from platform',
+          reason: 'Defamation warning from platform',
           observedAt: new Date('2026-05-23T18:30:00.000Z'),
           metadata: { task_uid: 'task_alpha' },
         },
@@ -64,9 +71,9 @@ describe('showPlatformViolationService', () => {
       {
         uid: 'spv_new',
         showPlatformId: 200n,
-        violationType: 'COPYRIGHT',
+        violationType: 'DEFAMATION',
         severity: 'WARNING',
-        reason: 'Copyright warning from platform',
+        reason: 'Defamation warning from platform',
         observedAt: new Date('2026-05-23T18:30:00.000Z'),
         sourceTaskId: 99n,
         sourceFieldId: 'fld_violate123:platform:show_plt_200',
@@ -77,7 +84,7 @@ describe('showPlatformViolationService', () => {
       created: [
         {
           uid: 'spv_new',
-          violationType: 'COPYRIGHT',
+          violationType: 'DEFAMATION',
           severity: 'WARNING',
         },
       ],
@@ -96,6 +103,7 @@ describe('showPlatformViolationService', () => {
     const service = new ShowPlatformViolationService(repository, buildUtility());
 
     const result = await service.replaceForTaskField({
+      showId: 10n,
       showPlatformId: 200n,
       sourceTaskId: 99n,
       sourceFieldId: 'fld_violate123:platform:show_plt_200',
@@ -112,5 +120,69 @@ describe('showPlatformViolationService', () => {
         severity: 'WARNING',
       },
     ]);
+  });
+
+  it('short-circuits without writing when the incoming set matches the stored set', async () => {
+    const repository = buildRepository({
+      existing: [
+        { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING' },
+        { uid: 'spv_b', violationType: 'DEFAMATION', severity: 'WARNING' },
+      ],
+    });
+    const service = new ShowPlatformViolationService(repository, buildUtility());
+
+    const result = await service.replaceForTaskField({
+      showId: 10n,
+      showPlatformId: 200n,
+      sourceTaskId: 99n,
+      sourceFieldId: 'fld_violate123:platform:show_plt_200',
+      entries: [
+        {
+          violationType: 'DEFAMATION',
+          severity: 'WARNING',
+          reason: 'resubmitted with same content',
+          observedAt: new Date('2026-05-23T18:30:00.000Z'),
+          metadata: {},
+        },
+        {
+          violationType: 'COPYRIGHT',
+          severity: 'WARNING',
+          reason: 'resubmitted with same content',
+          observedAt: new Date('2026-05-23T18:30:00.000Z'),
+          metadata: {},
+        },
+      ],
+    });
+
+    expect(repository.supersedeActiveByTaskField).not.toHaveBeenCalled();
+    expect(repository.createMany).not.toHaveBeenCalled();
+    expect(result).toEqual({ created: [], superseded: [] });
+  });
+
+  it('throws NotFoundException when the platform is no longer active under the show', async () => {
+    const repository = buildRepository({ existsActiveInShow: false });
+    const service = new ShowPlatformViolationService(repository, buildUtility());
+
+    await expect(
+      service.replaceForTaskField({
+        showId: 10n,
+        showPlatformId: 200n,
+        sourceTaskId: 99n,
+        sourceFieldId: 'fld_violate123:platform:show_plt_200',
+        entries: [
+          {
+            violationType: 'COPYRIGHT',
+            severity: 'WARNING',
+            reason: 'r',
+            observedAt: new Date(),
+            metadata: {},
+          },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(repository.findActiveByTaskField).not.toHaveBeenCalled();
+    expect(repository.supersedeActiveByTaskField).not.toHaveBeenCalled();
+    expect(repository.createMany).not.toHaveBeenCalled();
   });
 });
