@@ -198,7 +198,7 @@ describe('taskRepository', () => {
   });
 
   describe('reserveMaterialAssetUploadVersion', () => {
-    it('successfully increments upload version and bumps task version', async () => {
+    it('successfully increments upload version without bumping task version', async () => {
       txTaskDelegate.findFirst.mockResolvedValueOnce({
         id: BigInt(1000),
         version: 5,
@@ -211,7 +211,7 @@ describe('taskRepository', () => {
 
       txTaskDelegate.update.mockResolvedValueOnce({
         id: BigInt(1000),
-        version: 6,
+        version: 5,
         metadata: {
           material_asset_upload_versions: {
             proof_photo: 3,
@@ -229,7 +229,6 @@ describe('taskRepository', () => {
       expect(txTaskDelegate.update).toHaveBeenCalledWith({
         where: { id: BigInt(1000), version: 5, deletedAt: null },
         data: {
-          version: 6,
           metadata: {
             material_asset_upload_versions: {
               proof_photo: 3,
