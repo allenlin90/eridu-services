@@ -9,8 +9,8 @@ Architectural guidelines for building and maintaining PWAs in the React ecosyste
 
 ## Monorepo Rollout
 
-- App-by-app rollout, `erify_studios` first
-- Reference: `docs/features/frontend-pwa-app-shell.md`, `apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md`
+- App-by-app rollout: `erify_studios` (first) and `erify_creators` (second)
+- Reference: `docs/features/frontend-pwa-app-shell.md`, `apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md`, and `apps/erify_creators/docs/PWA_SHELL_RUNBOOK.md`
 - Reuse same conventions across FE apps
 
 ## Rollout Phases

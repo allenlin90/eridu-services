@@ -32,4 +32,11 @@ export const queryKeys = {
     details: () => [...queryKeys.shows.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.shows.details(), id] as const,
   },
+
+  // Compensations for current user
+  compensations: {
+    all: ['me', 'show-compensations'] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.compensations.all, filters ?? {}] as const,
+  },
 } as const;

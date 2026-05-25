@@ -1,6 +1,6 @@
 # Creator Portal Foundation & Compensations Reference
 
-> **Status**: ⏸️ Planning (Awaiting Approval)
+> **Status**: 🚀 Implemented (PR #105)
 > **Phase scope**: Phase 2 Wave 1
 > **Owner app**: `apps/erify_creators`
 > **Depends on**: SSO JWT Authentication ✅, Shared Economics Contract Alignment ✅
@@ -22,6 +22,15 @@ Routes (Thin Routing) ➔ Pages (Orchestration) ➔ Features (Presentation & API
 - **Shared Component Library**: Instead of duplicating styled structures, both apps pull standard elements (dense grids, tables, badge variants, and date pickers) from the shared monorepo package `@eridu/ui`.
 - **Query Invalidation**: State updates automatically invalidate dependent scopes using centralized query keys from `src/lib/api/query-keys.ts`.
 - **Offline Reliability**: Axios endpoints leverage IndexedDB for caching cache reads and offline support.
+
+### Copy & i18n (English-only until bulk migration)
+
+Match `erify_studios` compensations and roster views:
+
+- **New UI** (compensations dashboard, settings, PWA shell): inline English strings in components — no new Paraglide keys.
+- **Legacy shows module**: may still use `@/paraglide/messages` until a single project-wide Paraglide pass.
+- **Runtime**: `initI18n()` forces `en`; `LanguageSwitcher` is hidden; `project.inlang` declares `languageTags: ["en"]` only.
+- **Later**: one scoped migration to extract strings into Paraglide and restore `th` / `zh-TW` catalogs.
 
 ---
 
@@ -163,6 +172,12 @@ Mounted at `/compensations`, utilizing a design aligned with `apps/erify_studios
   - Base Amount & Adjustment Total
   - Final Show Payout
   - Notes & Status badges
+
+### 📱 PWA App-Shell & Settings Page
+Aligned with `erify_studios`, `erify_creators` leverages Progressive Web App capabilities for offline robustness and seamless client updates:
+- **Service Worker Lifecycle**: Configured via `vite-plugin-pwa` in `prompt` mode, registering periodic background update checks every 5 minutes. Auto-refresh is managed safely to avoidStandalone reload loops on iOS devices.
+- **Settings Router Route (`/settings`)**: Provides a user interface for manual app shell update checks and immediate updates.
+- **Reset App Shell Recovery**: A recovery mechanism that unregisters active service workers, purges Cache Storage caches, clears the IndexedDB TanStack Query cache, and reloads the application.
 
 ---
 

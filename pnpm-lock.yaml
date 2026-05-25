@@ -531,9 +531,15 @@ importers:
       vite:
         specifier: ^7.2.4
         version: 7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite-plugin-pwa:
+        specifier: ^1.2.0
+        version: 1.2.0(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))(workbox-build@7.4.0(@types/babel__core@7.20.5))(workbox-window@7.4.0)
       vitest:
         specifier: ^4.0.13
         version: 4.0.13(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/ui@4.0.13)(happy-dom@20.0.11)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
+      workbox-window:
+        specifier: ^7.4.0
+        version: 7.4.0
 
   apps/erify_studios:
     dependencies:

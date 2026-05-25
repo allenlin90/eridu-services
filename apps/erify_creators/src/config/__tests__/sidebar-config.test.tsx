@@ -24,6 +24,7 @@ vi.mock('@/lib/api', () => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useLocation: () => mockUseLocation(),
+  useNavigate: () => vi.fn(),
 }));
 
 // Mock the messages
@@ -150,7 +151,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(session));
 
-    expect(result.current.navMain).toHaveLength(1);
+    expect(result.current.navMain).toHaveLength(2);
     expect(result.current.navMain[0]).toMatchObject({
       title: 'Shows',
       url: '/shows',
@@ -158,6 +159,14 @@ describe('useSidebarConfig', () => {
       items: [],
     });
     expect(result.current.navMain[0]?.icon).toBeDefined();
+
+    expect(result.current.navMain[1]).toMatchObject({
+      title: 'Compensations',
+      url: '/compensations',
+      isActive: false,
+      items: [],
+    });
+    expect(result.current.navMain[1]?.icon).toBeDefined();
   });
 
   it('has correct navMainLabel', () => {

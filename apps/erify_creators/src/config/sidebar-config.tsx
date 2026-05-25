@@ -1,7 +1,7 @@
-import { useLocation } from '@tanstack/react-router';
-import { Video } from 'lucide-react';
+import { useLocation, useNavigate } from '@tanstack/react-router';
+import { DollarSign, Video } from 'lucide-react';
 import type * as React from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   type AppSidebarProps,
@@ -37,6 +37,7 @@ export function useSidebarConfig(
   session: Session | null,
 ): Omit<AppSidebarProps, keyof React.ComponentProps<'div'>> {
   const location = useLocation();
+  const navigate = useNavigate();
   const { teams, activeTeam, handleTeamChange } = useCreatorStudios();
 
   const sidebarNavItems = useMemo<SidebarNavItem[]>(() => [
@@ -47,9 +48,20 @@ export function useSidebarConfig(
       isActive: isPathActive(location.pathname, '/shows'),
       items: [],
     },
+    {
+      title: 'Compensations',
+      url: '/compensations',
+      icon: DollarSign,
+      isActive: isPathActive(location.pathname, '/compensations'),
+      items: [],
+    },
   ], [location.pathname]);
 
-  const handleLogout = async () => {
+  const handleSettingsClick = useCallback(() => {
+    void navigate({ to: '/settings' });
+  }, [navigate]);
+
+  const handleLogout = useCallback(async () => {
     // Import clearAllCaches dynamically to avoid circular dependencies
     const { clearAllCaches } = await import('@/lib/api');
 
@@ -59,7 +71,7 @@ export function useSidebarConfig(
     // Sign out and redirect to login
     await authClient.client.signOut();
     authClient.redirectToLogin();
-  };
+  }, []);
 
   // Map session user data to SidebarUser type
   const user: SidebarUser | undefined = session?.user
@@ -82,5 +94,6 @@ export function useSidebarConfig(
     navMainLabel: m['sidebar.activities'](),
     user,
     onLogout: handleLogout,
+    onSettingsClick: handleSettingsClick,
   };
 }
