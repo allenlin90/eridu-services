@@ -1,5 +1,6 @@
 import { Clock3, RefreshCw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 
 import {
   Badge,
@@ -9,8 +10,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  DatePicker,
-  Label,
+  DatePickerWithRange,
 } from '@eridu/ui';
 
 import {
@@ -57,11 +57,27 @@ function formatRefreshLabel(value: Date): string {
   return DATETIME_FORMATTER.format(value);
 }
 
+function toDateRange(dateFrom: string, dateTo: string): DateRange {
+  return {
+    from: new Date(`${dateFrom}T00:00:00`),
+    to: new Date(`${dateTo}T00:00:00`),
+  };
+}
+
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function OperationsReviewScopeCard({
   search,
   onSearchChange,
 }: OperationsReviewScopeCardProps) {
   const [lastRefreshedAt, setLastRefreshedAt] = useState(() => new Date());
+  const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
+  const [draftCustomRange, setDraftCustomRange] = useState<DateRange | undefined>();
   const range = useMemo(
     () => buildOperationsReviewRange({
       range: search.range,
@@ -71,6 +87,11 @@ export function OperationsReviewScopeCard({
     [search.date_from, search.date_to, search.range],
   );
   const refetchInterval = getOperationsReviewRefetchInterval(search.range);
+  const selectedCustomRange = useMemo(
+    () => toDateRange(range.dateFrom, range.dateTo),
+    [range.dateFrom, range.dateTo],
+  );
+  const pickerCustomRange = isCustomRangeOpen ? draftCustomRange : selectedCustomRange;
 
   const handleRangeChange = useCallback((nextRange: OperationsReviewRangeKey) => {
     onSearchChange({
@@ -80,21 +101,23 @@ export function OperationsReviewScopeCard({
     });
   }, [onSearchChange, range.dateFrom, range.dateTo]);
 
-  const handleDateFromChange = useCallback((dateFrom: string) => {
-    onSearchChange({
-      ...search,
-      range: 'custom',
-      date_from: dateFrom || undefined,
-    });
-  }, [onSearchChange, search]);
+  const handleCustomRangeOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      setDraftCustomRange(selectedCustomRange);
+      setIsCustomRangeOpen(true);
+      return;
+    }
 
-  const handleDateToChange = useCallback((dateTo: string) => {
+    setIsCustomRangeOpen(false);
+    const fromDate = draftCustomRange?.from ?? draftCustomRange?.to;
+    const toDate = draftCustomRange?.to ?? draftCustomRange?.from;
     onSearchChange({
       ...search,
       range: 'custom',
-      date_to: dateTo || undefined,
+      date_from: fromDate ? toDateInputValue(fromDate) : range.dateFrom,
+      date_to: toDate ? toDateInputValue(toDate) : range.dateTo,
     });
-  }, [onSearchChange, search]);
+  }, [draftCustomRange, onSearchChange, range.dateFrom, range.dateTo, search, selectedCustomRange]);
 
   return (
     <Card>
@@ -121,22 +144,13 @@ export function OperationsReviewScopeCard({
               ))}
             </div>
             {search.range === 'custom' && (
-              <div className="grid grid-cols-2 gap-2 sm:w-72">
-                <div className="grid gap-1">
-                  <Label className="text-xs">From</Label>
-                  <DatePicker
-                    value={range.dateFrom}
-                    onChange={handleDateFromChange}
-                  />
-                </div>
-                <div className="grid gap-1">
-                  <Label className="text-xs">To</Label>
-                  <DatePicker
-                    value={range.dateTo}
-                    onChange={handleDateToChange}
-                  />
-                </div>
-              </div>
+              <DatePickerWithRange
+                className="sm:w-72"
+                date={pickerCustomRange}
+                setDate={setDraftCustomRange}
+                open={isCustomRangeOpen}
+                onOpenChange={handleCustomRangeOpenChange}
+              />
             )}
             <Button
               type="button"
