@@ -10,6 +10,7 @@ import { ShowActualEndTimeExtractor } from './show-actual-end-time.extractor';
 import { ShowActualStartTimeExtractor } from './show-actual-start-time.extractor';
 import { ShowPlatformActualEndTimeExtractor } from './show-platform-actual-end-time.extractor';
 import { ShowPlatformActualStartTimeExtractor } from './show-platform-actual-start-time.extractor';
+import { ShowPlatformViolationExtractor } from './show-platform-violation.extractor';
 
 /**
  * Routes a `SystemFactKey` to the extractor responsible for resolving it
@@ -34,6 +35,7 @@ export class ExtractorRegistry {
     creatorAttendanceMissingExtractor: CreatorAttendanceMissingExtractor,
     showPlatformActualStartTimeExtractor: ShowPlatformActualStartTimeExtractor,
     showPlatformActualEndTimeExtractor: ShowPlatformActualEndTimeExtractor,
+    showPlatformViolationExtractor: ShowPlatformViolationExtractor,
   ) {
     this.byFactKey = new Map<SystemFactKey, IngestionExtractor>([
       [showActualStartTimeExtractor.factKey, showActualStartTimeExtractor],
@@ -43,6 +45,7 @@ export class ExtractorRegistry {
       [creatorAttendanceMissingExtractor.factKey, creatorAttendanceMissingExtractor],
       [showPlatformActualStartTimeExtractor.factKey, showPlatformActualStartTimeExtractor],
       [showPlatformActualEndTimeExtractor.factKey, showPlatformActualEndTimeExtractor],
+      [showPlatformViolationExtractor.factKey, showPlatformViolationExtractor],
     ]);
   }
 

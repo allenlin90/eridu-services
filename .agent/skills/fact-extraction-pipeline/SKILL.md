@@ -135,6 +135,7 @@ For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box ma
 - [ ] Add fact key + definition to `SYSTEM_FACT_KEY_DEFINITIONS` (`packages/api-types/.../template-definition.schema.ts`)
 - [ ] Schema migration + model field exists from PR 12.0.2 — verify before extractor work
 - [ ] Add target type to `AuditTargetType` enum if it's a new scope
+- [ ] For hydrated child-record replacements, scope source rows by the hydrated `contentKey`, not the template `sourceFieldId`; otherwise one platform/creator target can supersede sibling target rows from the same template field. PR 12.3.2's `ShowPlatformViolation` extractor uses `sourceFieldId = fact.contentKey` for this reason.
 - [ ] **Co-submission audit**: does this fact and another fact key write to the same column under a mutually-exclusive state derivation? (E.g., `creator_attendance_missing` and `creator_actual_start_time` both write `attendanceReason` but only one is "active" at a time per the read-side derivation rule.) If yes, read "State-transition handoff between co-submitted facts" below BEFORE writing extractor code — the cross-fact transition handoff is where every Codex finding on PR 12.2 came from
 
 **Model service**:
