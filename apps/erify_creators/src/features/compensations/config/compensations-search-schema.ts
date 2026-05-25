@@ -15,7 +15,7 @@ export function getInitialDateRange() {
   dateTo.setHours(23, 59, 59, 999);
 
   const dateFrom = new Date();
-  dateFrom.setDate(dateFrom.getDate() - 30);
+  dateFrom.setDate(dateFrom.getDate() - 29);
   dateFrom.setHours(0, 0, 0, 0);
 
   return {
