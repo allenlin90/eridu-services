@@ -65,8 +65,8 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     [dueDateWindow],
   );
   const dueDateRange = useMemo(
-    () => operationalDayRangeToPickerDates(effectiveOperationalDayRange),
-    [effectiveOperationalDayRange],
+    () => dueDateWindow || operationalDayRangeToPickerDates(effectiveOperationalDayRange),
+    [dueDateWindow, effectiveOperationalDayRange],
   );
   const isViewingCurrentOperationalDay = isCurrentOperationalDay(effectiveOperationalDayRange);
   const statusValue = columnFilters.find((filter) => filter.id === 'status')
@@ -129,19 +129,16 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     queryClient.invalidateQueries({ queryKey: studioTasksKeys.all(studioId) });
   };
   const handleDueDateRangeChange = useCallback((nextRange: DateRange | undefined) => {
-    const resolvedRange = buildOperationalDayRangeFromPickerDates(
-      nextRange?.from ?? nextRange?.to,
-      nextRange?.to ?? nextRange?.from,
-    );
-
     onColumnFiltersChange((previousFilters) => [
       ...previousFilters.filter((filter) => filter.id !== 'due_date'),
       {
         id: 'due_date',
-        value: {
-          from: resolvedRange.windowStart,
-          to: resolvedRange.windowEnd,
-        },
+        value: nextRange
+          ? {
+              from: nextRange.from,
+              to: nextRange.to,
+            }
+          : undefined,
       },
     ]);
   }, [onColumnFiltersChange]);

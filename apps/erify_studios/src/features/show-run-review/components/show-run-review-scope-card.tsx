@@ -15,10 +15,15 @@ type ShowRunReviewScopeCardProps = {
   onSearchChange: (nextSearch: ShowRunReviewSearch) => void;
 };
 
-function toPickerDateRange(dateFrom: string, dateTo: string): DateRange {
+function toPickerDateRange(
+  dateFrom: string | undefined,
+  dateTo: string | undefined,
+  fallbackFrom: string,
+  fallbackTo: string,
+): DateRange {
   return {
-    from: fromLocalDateInput(dateFrom),
-    to: fromLocalDateInput(dateTo),
+    from: fromLocalDateInput(dateFrom ?? fallbackFrom),
+    to: dateTo ? fromLocalDateInput(dateTo) : (dateFrom ? undefined : fromLocalDateInput(fallbackTo)),
   };
 }
 
@@ -31,17 +36,14 @@ export function ShowRunReviewScopeCard({
     [search],
   );
   const selectedDateRange = useMemo(
-    () => toPickerDateRange(resolvedRange.dateFrom, resolvedRange.dateTo),
-    [resolvedRange.dateFrom, resolvedRange.dateTo],
+    () => toPickerDateRange(search.date_from, search.date_to, resolvedRange.dateFrom, resolvedRange.dateTo),
+    [search.date_from, search.date_to, resolvedRange.dateFrom, resolvedRange.dateTo],
   );
 
   const handleDateRangeChange = useCallback((nextRange: DateRange | undefined) => {
-    const fromDate = nextRange?.from ?? nextRange?.to;
-    const toDate = nextRange?.to ?? nextRange?.from;
-
     onSearchChange({
-      date_from: fromDate ? toDateInputValue(fromDate) : undefined,
-      date_to: toDate ? toDateInputValue(toDate) : undefined,
+      date_from: nextRange?.from ? toDateInputValue(nextRange.from) : undefined,
+      date_to: nextRange?.to ? toDateInputValue(nextRange.to) : undefined,
     });
   }, [onSearchChange]);
 
