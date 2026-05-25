@@ -6,13 +6,14 @@ import { ShowPlatformViolationService } from './show-platform-violation.service'
 import type { UtilityService } from '@/utility/utility.service';
 
 function buildRepository(overrides: {
-  existing?: Array<{ uid: string; violationType: string; severity: string }>;
+  existing?: Array<{ uid: string; violationType: string; severity: string; reason?: string }>;
   existsActiveInShow?: boolean;
 } = {}): jest.Mocked<ShowPlatformViolationRepository> {
   return {
     existsActiveInShow: jest.fn().mockResolvedValue(overrides.existsActiveInShow ?? true),
     findActiveByTaskField: jest.fn().mockResolvedValue(
-      overrides.existing ?? [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING' }],
+      overrides.existing
+      ?? [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'prior reason' }],
     ),
     supersedeActiveByTaskField: jest.fn().mockResolvedValue({ count: 1 }),
     createMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -122,11 +123,11 @@ describe('showPlatformViolationService', () => {
     ]);
   });
 
-  it('short-circuits without writing when the incoming set matches the stored set', async () => {
+  it('short-circuits without writing when the incoming set matches the stored set including reason', async () => {
     const repository = buildRepository({
       existing: [
-        { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING' },
-        { uid: 'spv_b', violationType: 'DEFAMATION', severity: 'WARNING' },
+        { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'same reason text' },
+        { uid: 'spv_b', violationType: 'DEFAMATION', severity: 'WARNING', reason: 'same reason text' },
       ],
     });
     const service = new ShowPlatformViolationService(repository, buildUtility());
@@ -140,14 +141,14 @@ describe('showPlatformViolationService', () => {
         {
           violationType: 'DEFAMATION',
           severity: 'WARNING',
-          reason: 'resubmitted with same content',
+          reason: 'same reason text',
           observedAt: new Date('2026-05-23T18:30:00.000Z'),
           metadata: {},
         },
         {
           violationType: 'COPYRIGHT',
           severity: 'WARNING',
-          reason: 'resubmitted with same content',
+          reason: 'same reason text',
           observedAt: new Date('2026-05-23T18:30:00.000Z'),
           metadata: {},
         },
@@ -157,6 +158,38 @@ describe('showPlatformViolationService', () => {
     expect(repository.supersedeActiveByTaskField).not.toHaveBeenCalled();
     expect(repository.createMany).not.toHaveBeenCalled();
     expect(result).toEqual({ created: [], superseded: [] });
+  });
+
+  it('rewrites rows when only the reason text changes', async () => {
+    const repository = buildRepository({
+      existing: [
+        { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'original reason' },
+      ],
+    });
+    const service = new ShowPlatformViolationService(repository, buildUtility());
+
+    const result = await service.replaceForTaskField({
+      showId: 10n,
+      showPlatformId: 200n,
+      sourceTaskId: 99n,
+      sourceFieldId: 'fld_violate123:platform:show_plt_200',
+      entries: [
+        {
+          violationType: 'COPYRIGHT',
+          severity: 'WARNING',
+          reason: 'corrected reason',
+          observedAt: new Date('2026-05-23T18:30:00.000Z'),
+          metadata: {},
+        },
+      ],
+    });
+
+    expect(repository.supersedeActiveByTaskField).toHaveBeenCalledTimes(1);
+    expect(repository.createMany).toHaveBeenCalledTimes(1);
+    expect(result.created).toHaveLength(1);
+    expect(result.superseded).toEqual([
+      { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING' },
+    ]);
   });
 
   it('throws NotFoundException when the platform is no longer active under the show', async () => {

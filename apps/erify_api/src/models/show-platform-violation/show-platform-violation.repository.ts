@@ -49,7 +49,7 @@ export class ShowPlatformViolationRepository {
 
   async findActiveByTaskField(
     scope: ShowPlatformViolationTaskFieldScope,
-  ): Promise<Array<Pick<ShowPlatformViolation, 'uid' | 'violationType' | 'severity'>>> {
+  ): Promise<Array<Pick<ShowPlatformViolation, 'uid' | 'violationType' | 'severity' | 'reason'>>> {
     return this.delegate.findMany({
       where: {
         showPlatformId: scope.showPlatformId,
@@ -61,6 +61,7 @@ export class ShowPlatformViolationRepository {
         uid: true,
         violationType: true,
         severity: true,
+        reason: true,
       },
     });
   }
