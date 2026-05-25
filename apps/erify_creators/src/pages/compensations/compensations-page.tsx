@@ -77,11 +77,16 @@ export function CompensationsPage() {
   };
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
+    const toDate = range?.to ? new Date(range.to) : undefined;
+    if (toDate) {
+      toDate.setHours(23, 59, 59, 999);
+    }
+
     navigate({
       search: (prev) => ({
         ...prev,
         dateFrom: range?.from?.toISOString(),
-        dateTo: range?.to?.toISOString(),
+        dateTo: toDate?.toISOString(),
       }),
     });
   };
