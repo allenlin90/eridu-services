@@ -1,61 +1,38 @@
 /**
  * Utility functions for i18n integration
  *
- * This file provides utilities to work with both shared and app-specific translations
+ * Creators portal uses English-only inline copy for new UI until a project-wide
+ * Paraglide migration. Legacy shows modules may still read Paraglide messages.
  */
 
-import { isValidLocale, type Locale, setLocale as setSharedLocale } from '@eridu/i18n';
+import { type Locale, setLocale as setSharedLocale } from '@eridu/i18n';
 
 import { getLocale as getAppLocale, setLocale as setAppLocale } from '../paraglide/runtime.js';
 
-// Re-export Locale type for convenience (it's the same as the shared one)
 export type { Locale };
+
+const ENGLISH_ONLY_LOCALE: Locale = 'en';
 
 /**
  * Set the language tag for both shared and app-specific translations
- *
- * This synchronizes the locale across both the app-specific and shared translation systems.
  */
-export function setLanguageTag(locale: Locale): void {
-  // Set app-specific locale
-  setAppLocale(locale, { reload: false });
-
-  // Set shared locale (syncs both systems)
-  setSharedLocale(locale, { reload: false });
-
-  // Store in localStorage for persistence
-  localStorage.setItem('language', locale);
+export function setLanguageTag(_locale: Locale = ENGLISH_ONLY_LOCALE): void {
+  setAppLocale(ENGLISH_ONLY_LOCALE, { reload: false });
+  setSharedLocale(ENGLISH_ONLY_LOCALE, { reload: false });
+  localStorage.setItem('language', ENGLISH_ONLY_LOCALE);
 }
 
-/**
- * Get the current language tag (from app-specific translations)
- */
 export function getLanguageTag(): Locale {
   return getAppLocale();
 }
 
 /**
- * Initialize i18n with a default language
- * Call this in your app's entry point
+ * Initialize i18n — always English until bulk Paraglide rollout.
  */
-export function initI18n(defaultLanguage: Locale = 'en'): void {
-  // Try to get language from localStorage or browser settings
-  const storedLanguage = localStorage.getItem('language') as Locale | null;
-
-  // Detect browser language
-  const browserLang = navigator.language.toLowerCase();
-  let browserLanguage: Locale | null = null;
-  if (browserLang.startsWith('zh')) {
-    browserLanguage = 'zh-TW';
-  } else if (browserLang.startsWith('th')) {
-    browserLanguage = 'th';
-  } else if (browserLang.startsWith('en')) {
-    browserLanguage = 'en';
+export function initI18n(): void {
+  const stored = localStorage.getItem('language');
+  if (stored && stored !== 'en') {
+    localStorage.setItem('language', 'en');
   }
-
-  // Use isValidLocale for extensible validation
-  const language = (storedLanguage && isValidLocale(storedLanguage) ? storedLanguage : null)
-    || (browserLanguage && isValidLocale(browserLanguage) ? browserLanguage : null)
-    || defaultLanguage;
-  setLanguageTag(language);
+  setLanguageTag(ENGLISH_ONLY_LOCALE);
 }

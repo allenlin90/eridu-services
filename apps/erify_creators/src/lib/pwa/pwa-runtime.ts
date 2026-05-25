@@ -185,7 +185,8 @@ export async function checkForPwaUpdates(): Promise<boolean> {
   if (pendingUpdateActivator) {
     const applyPendingUpdate = pendingUpdateActivator;
     pendingUpdateActivator = null;
-    await applyPendingUpdate(true);
+    // iOS standalone PWAs can reload-loop when apply + controllerchange fire together.
+    await applyPendingUpdate(!isIosWebKitEnvironment());
     return true;
   }
 

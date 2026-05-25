@@ -6,11 +6,12 @@ import { createRoot } from 'react-dom/client';
 
 import './index.css';
 
+import { initI18n } from '@/i18n';
 import { createIDBPersister, queryClient } from '@/lib/api';
 import { initializePwaShell } from '@/lib/pwa';
 import { router } from '@/router';
 
-// Initialize PWA Service Worker shell
+initI18n();
 initializePwaShell();
 
 // Create IndexedDB persister for offline support

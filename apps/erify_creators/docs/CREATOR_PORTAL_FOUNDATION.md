@@ -23,6 +23,15 @@ Routes (Thin Routing) ➔ Pages (Orchestration) ➔ Features (Presentation & API
 - **Query Invalidation**: State updates automatically invalidate dependent scopes using centralized query keys from `src/lib/api/query-keys.ts`.
 - **Offline Reliability**: Axios endpoints leverage IndexedDB for caching cache reads and offline support.
 
+### Copy & i18n (English-only until bulk migration)
+
+Match `erify_studios` compensations and roster views:
+
+- **New UI** (compensations dashboard, settings, PWA shell): inline English strings in components — no new Paraglide keys.
+- **Legacy shows module**: may still use `@/paraglide/messages` until a single project-wide Paraglide pass.
+- **Runtime**: `initI18n()` forces `en`; `LanguageSwitcher` is hidden; `project.inlang` declares `languageTags: ["en"]` only.
+- **Later**: one scoped migration to extract strings into Paraglide and restore `th` / `zh-TW` catalogs.
+
 ---
 
 ## Phased Roadmap

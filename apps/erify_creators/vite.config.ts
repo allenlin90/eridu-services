@@ -91,6 +91,11 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        // Some production hosts canonicalize `/index.html` to `/`, which causes
+        // Chrome to reject the navigation response when Workbox binds SPA
+        // fallback handling to `index.html`. Keep `/` in the precache manifest
+        // because Workbox's navigation fallback handler must bind to a
+        // precached URL.
         navigateFallback: '/',
         navigateFallbackDenylist: [/^\/api/],
         templatedURLs: {
