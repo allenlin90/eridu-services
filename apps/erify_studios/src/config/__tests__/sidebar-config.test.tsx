@@ -215,13 +215,13 @@ describe('useSidebarConfig', () => {
 
     expect(result.current.navMain[4]).toEqual(expect.objectContaining({
       title: 'Operations',
-      url: '/studios/studio-1/show-operations',
+      url: '/studios/studio-1/task-setup',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
           title: 'Task Setup',
-          url: '/studios/studio-1/show-operations',
+          url: '/studios/studio-1/task-setup',
         }),
         expect.objectContaining({
           title: 'Show Run Review',

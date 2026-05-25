@@ -61,7 +61,7 @@ describe('useAbortableAction', () => {
   });
 
   it('keeps isRunning=true when an aborted earlier call resolves while a newer call is still in flight', async () => {
-    // This is the regression Codex flagged on /show-operations: an earlier
+    // This is the regression Codex flagged on /task-setup: an earlier
     // export's `finally` must NOT clear the loading state if a newer export
     // is already running.
     const { result } = renderHook(() => useAbortableAction());

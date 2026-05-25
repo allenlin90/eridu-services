@@ -208,7 +208,7 @@ function getStudioOperationsItems(
   if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
     operationsItems.push({
       title: 'Task Setup',
-      url: `/studios/${studioId}/show-operations`,
+      url: `/studios/${studioId}/task-setup`,
       icon: Clapperboard,
     });
   }

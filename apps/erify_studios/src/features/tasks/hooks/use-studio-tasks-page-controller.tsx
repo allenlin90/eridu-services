@@ -29,6 +29,9 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
+    dueDateRange,
+    onDueDateRangeChange,
+    onDueDateRangeReset,
     handleRefresh,
   } = useStudioTasks({ studioId });
 
@@ -141,9 +144,14 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
       onColumnFiltersChange,
       searchColumn: 'description',
       searchPlaceholder: 'Search by task, show, assignee...',
-      featuredFilterColumns: ['client_name', 'status', 'task_type', 'due_date'] as const,
+      featuredFilterColumns: ['client_name', 'status', 'task_type'] as const,
       pagination: tablePagination,
       onPaginationChange,
+    },
+    reviewScopeProps: {
+      dateRange: dueDateRange,
+      onDateRangeChange: onDueDateRangeChange,
+      onResetDateRange: onDueDateRangeReset,
     },
     toolbarProps: {
       onRefresh: handleRefresh,

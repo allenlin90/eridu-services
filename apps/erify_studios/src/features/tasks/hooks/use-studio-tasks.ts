@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { endOfDay, startOfDay } from 'date-fns';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
@@ -19,6 +19,14 @@ const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
 type UseStudioTasksProps = {
   studioId: string;
 };
+
+function createTodayDateRange(): DateRange {
+  const today = new Date();
+  return {
+    from: startOfDay(today),
+    to: endOfDay(today),
+  };
+}
 
 export function useStudioTasks({ studioId }: UseStudioTasksProps) {
   const queryClient = useQueryClient();
@@ -54,6 +62,8 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     ?.value as string | undefined;
   const dueDateRange = columnFilters.find((filter) => filter.id === 'due_date')
     ?.value as DateRange | undefined;
+  const defaultDueDateRange = useMemo(() => createTodayDateRange(), []);
+  const effectiveDueDateRange = dueDateRange ?? defaultDueDateRange;
   const statusValue = columnFilters.find((filter) => filter.id === 'status')
     ?.value as string | undefined;
   const taskTypeValue = columnFilters.find((filter) => filter.id === 'task_type')
@@ -85,8 +95,8 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     show_name: showName,
     has_assignee: hasAssignee,
     has_due_date: hasDueDate,
-    due_date_from: dueDateRange?.from ? startOfDay(dueDateRange.from).toISOString() : undefined,
-    due_date_to: dueDateRange?.to ? endOfDay(dueDateRange.to).toISOString() : undefined,
+    due_date_from: effectiveDueDateRange.from ? startOfDay(effectiveDueDateRange.from).toISOString() : undefined,
+    due_date_to: effectiveDueDateRange.to ? endOfDay(effectiveDueDateRange.to).toISOString() : undefined,
     status,
     task_type: taskType,
     sort: 'due_date:asc',
@@ -109,6 +119,25 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: studioTasksKeys.all(studioId) });
   };
+  const handleDueDateRangeChange = useCallback((nextRange: DateRange | undefined) => {
+    const fallbackRange = createTodayDateRange();
+    const fromDate = nextRange?.from ?? nextRange?.to ?? fallbackRange.from;
+    const toDate = nextRange?.to ?? nextRange?.from ?? fallbackRange.to;
+
+    onColumnFiltersChange((previousFilters) => [
+      ...previousFilters.filter((filter) => filter.id !== 'due_date'),
+      {
+        id: 'due_date',
+        value: {
+          from: fromDate,
+          to: toDate,
+        },
+      },
+    ]);
+  }, [onColumnFiltersChange]);
+  const handleResetDueDateRange = useCallback(() => {
+    handleDueDateRangeChange(createTodayDateRange());
+  }, [handleDueDateRangeChange]);
 
   return {
     data,
@@ -118,6 +147,9 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
+    dueDateRange: effectiveDueDateRange,
+    onDueDateRangeChange: handleDueDateRangeChange,
+    onDueDateRangeReset: handleResetDueDateRange,
     handleRefresh,
   };
 }

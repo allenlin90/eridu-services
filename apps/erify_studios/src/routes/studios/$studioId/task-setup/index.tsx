@@ -61,10 +61,10 @@ import {
 import { useAbortableAction } from '@/hooks/use-abortable-action';
 import { triggerBrowserDownload } from '@/lib/file-download';
 
-export const Route = createFileRoute('/studios/$studioId/show-operations/')({
-  component: StudioShowOperationsPage,
+export const Route = createFileRoute('/studios/$studioId/task-setup/')({
+  component: StudioTaskSetupPage,
 });
-const showOperationsRouteApi = getRouteApi('/studios/$studioId/show-operations');
+const taskSetupRouteApi = getRouteApi('/studios/$studioId/task-setup');
 
 type ScopeRange = {
   date_from?: string;
@@ -123,10 +123,10 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 const QUICK_FILTER_COLUMNS: string[] = [];
 const FEATURED_FILTER_COLUMNS = ['actuals_state', 'has_tasks', 'client_name', 'show_status_name'];
 
-function StudioShowOperationsPage() {
-  const { studioId } = showOperationsRouteApi.useParams();
-  const search = showOperationsRouteApi.useSearch();
-  const navigate = showOperationsRouteApi.useNavigate();
+function StudioTaskSetupPage() {
+  const { studioId } = taskSetupRouteApi.useParams();
+  const search = taskSetupRouteApi.useSearch();
+  const navigate = taskSetupRouteApi.useNavigate();
   const isNeedsAttentionActive = search.needs_attention === true || search.needs_attention === 'true';
   const [isReadinessSnapshotVisible, setIsReadinessSnapshotVisible] = useState(true);
   const [snapshotRefreshSignal, setSnapshotRefreshSignal] = useState(0);
@@ -139,7 +139,7 @@ function StudioShowOperationsPage() {
     options?: { replace?: boolean },
   ) => {
     void navigate({
-      to: '/studios/$studioId/show-operations',
+      to: '/studios/$studioId/task-setup',
       params: { studioId },
       search: updater,
       replace: options?.replace ?? true,
@@ -204,7 +204,7 @@ function StudioShowOperationsPage() {
 
   return (
     <PageLayout
-      title="Show Operations"
+      title="Task Setup"
       description="Generate tasks, review readiness, and assign work across studio shows."
     >
       <div className="space-y-4">

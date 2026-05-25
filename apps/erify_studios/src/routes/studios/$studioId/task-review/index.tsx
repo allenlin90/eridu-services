@@ -1,7 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { RefreshCw } from 'lucide-react';
 
-import { adaptColumnFiltersChange, adaptPaginationChange, Button, DataTable, DataTablePagination, DataTableToolbar } from '@eridu/ui';
+import {
+  adaptColumnFiltersChange,
+  adaptPaginationChange,
+  Button,
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DataTable,
+  DataTablePagination,
+  DataTableToolbar,
+  DatePickerWithRange,
+} from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
@@ -13,9 +25,11 @@ export const Route = createFileRoute('/studios/$studioId/task-review/')({
   component: StudioTaskReviewPage,
 });
 
+const taskReviewSearchableColumns = studioTaskSearchableColumns.filter((column) => column.id !== 'due_date');
+
 function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
-  const { tableProps, toolbarProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
+  const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
     studioId,
   });
   const pagination = tableProps.pagination;
@@ -28,6 +42,32 @@ function StudioTaskReviewPage() {
       description="Review submitted tasks and manage studio task actions."
     >
       <div className="space-y-4">
+        <Card>
+          <CardHeader className="gap-3">
+            <div className="space-y-1">
+              <CardTitle className="text-base">Review Date</CardTitle>
+              <CardDescription>
+                Submitted tasks due in this range are shown below.
+              </CardDescription>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <DatePickerWithRange
+                className="sm:w-72"
+                date={reviewScopeProps.dateRange}
+                setDate={reviewScopeProps.onDateRangeChange}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={reviewScopeProps.onResetDateRange}
+              >
+                Today
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
+
         <DataTable
           data={tableProps.data}
           columns={tableProps.columns}
@@ -47,7 +87,7 @@ function StudioTaskReviewPage() {
           renderToolbar={(table) => (
             <DataTableToolbar
               table={table}
-              searchableColumns={studioTaskSearchableColumns}
+              searchableColumns={taskReviewSearchableColumns}
               searchColumn={tableProps.searchColumn}
               searchPlaceholder={tableProps.searchPlaceholder}
               featuredFilterColumns={[...tableProps.featuredFilterColumns]}

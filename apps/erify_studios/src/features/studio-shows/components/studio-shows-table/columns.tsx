@@ -20,7 +20,7 @@ function ShowNameCell({ show }: { show: StudioShow }) {
   return (
     <div className="flex flex-col gap-1 pr-4">
       <Link
-        to="/studios/$studioId/show-operations/$showId/tasks"
+        to="/studios/$studioId/task-setup/$showId/tasks"
         params={{ studioId: actualStudioId, showId: show.id }}
         state={{
           show: {
@@ -72,7 +72,7 @@ function NoTaskAssignedBadge({ show }: { show: StudioShow }) {
 
   return (
     <Link
-      to="/studios/$studioId/show-operations/$showId/tasks"
+      to="/studios/$studioId/task-setup/$showId/tasks"
       params={{ studioId: actualStudioId, showId: show.id }}
       aria-label="No task assigned — click to assign tasks"
       title="No task is on the hook for actuals on this show. Click to assign tasks."
