@@ -24,7 +24,7 @@ A show with 3 task types → 3 DB records instead of 60.
 
 1. **Snapshot Table** for schema versioning — tasks reference immutable snapshots, not templates
 2. **Schema Engine Routing** — v1 snapshots use `field.key` content keys; v2 templates use stable `fld_...` field ids and descriptor-based reporting
-3. **System Fact Bindings** — v2 fields can set `system_fact_key` from the closed `@eridu/api-types/task-management` catalog; shared Zod validation enforces field-type compatibility and one binding per fact key before save. Creator attendance explanations use the existing `require_reason` sidecar instead of a separate reason binding. Platform violation bindings use `show_platform_violation` on a `multiselect` field and replace only `ShowPlatformViolation` rows from the same hydrated task field on resubmission
+3. **System Fact Bindings** — v2 fields can set `system_fact_key` from the closed `@eridu/api-types/task-management` catalog; shared Zod validation enforces field-type compatibility and one binding per fact key before save. Creator attendance explanations use the existing `require_reason` sidecar instead of a separate reason binding. Platform violation bindings use `show_platform_violation` on a `multiselect` field and replace only `ShowPlatformViolation` rows from the same hydrated task field when a submitted task is confirmed
 4. **Polymorphic `TaskTarget`** — generic `targetType` + `targetId` with optional FKs for referential integrity
 5. **Advisory Locks** — `pg_advisory_xact_lock(showId)` in `@Transactional()` prevents duplicate task generation
 6. **Optimistic Locking** — version-based compare-and-swap on task updates (409 on conflict)
@@ -40,7 +40,7 @@ Task:           id, uid, status, type, dueDate, snapshotId, templateId, studioId
 TaskTarget:     id, taskId, targetType, targetId, showId?, studioId?
 ```
 
-**Enums**: `TaskStatus` (PENDING → IN_PROGRESS → REVIEW → COMPLETED / BLOCKED / CLOSED), `TaskType` (SETUP, ACTIVE, CLOSURE, ADMIN, ROUTINE, OTHER)
+**Enums**: `TaskStatus` (PENDING → IN_PROGRESS → REVIEW → COMPLETED / BLOCKED / CLOSED), `TaskType` (SETUP, ACTIVE, CLOSURE, ADMIN, ROUTINE, OTHER). Submitted operator tasks stop in `REVIEW`; manager confirmation into `COMPLETED` is the extraction gate for operational facts.
 
 ---
 
@@ -76,6 +76,8 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 | `/tasks/:taskUid/action` | PATCH  | Status transition (admin/manager)                                         |
 | `/tasks/:taskUid`        | GET    | Lazy detail with schema                                                   |
 | `/members`               | GET    | Studio members for assignment                                             |
+
+PR 12.4 adds `/operations-review` as the manager-facing review surface in `erify_studios`. It summarizes two layers over an operational-day range: submitted tasks waiting for confirmation, and confirmed operational facts already populated to target tables.
 
 ### Operator (`/me/...`)
 
@@ -123,6 +125,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 
 ✅ Template CRUD, bulk generation, assignment, reassignment, operator tasks  
 ✅ v2 `system_fact_key` schema validation for PR 12 operational fact bindings
+✅ Confirmed-task extraction model: task submissions in `REVIEW` remain review inputs; approval to `COMPLETED` populates target fact columns
 ✅ Optimistic locking, advisory locks, soft-delete with resumption  
 ✅ Action-based workflow endpoints, operator state machine enforcement, studio review queue UI in `erify_studios`  
 ⚠️ Admin/manager transition whitelist is still not enforced on `/studios/:studioId/tasks/:id/action`  
@@ -130,7 +133,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 ✅ Audit metadata (`task.metadata.audit.last_transition`)
 ✅ Studio shows `needs_attention` filtering via shift-alignment readiness warnings (no tasks / unassigned tasks / missing required task types)
 
-**Deferred**: Ad-hoc ticket creation, formal reopen workflow with approval context, review summary contract, smart due dates, progress in API response, WebSocket live sync, offline/PWA, bulk review approve
+**Deferred**: Ad-hoc ticket creation, formal reopen workflow with approval context, operations review summary contract, smart due dates, progress in API response, WebSocket live sync, offline/PWA, bulk review approve
 
 ---
 

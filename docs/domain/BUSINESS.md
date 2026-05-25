@@ -13,7 +13,7 @@ The system is being developed in structured phases:
 - **Phase 1** ✅: Core Functions — Essential CRUD, show management, schedule planning, JWT auth, StudioMembership-based authorization
 - **Phase 2** ✅: Task Management — Generic "Task as Form" system with templates, snapshots, bulk generation, and operator workflows
 - **Phase 3** ✅ Closed: Operations foundations — shift schedules and Cloudflare R2 uploads shipped; unfinished ticketing/material scope moved forward
-- **Phase 4** (Active): P&L Visibility & Creator Operations — RBAC roles, creator mapping/assignment, creator compensation, show performance metrics, cost aggregation, P&L views
+- **Phase 4** (Active): P&L Visibility & Creator Operations — RBAC roles, creator mapping/assignment, creator compensation, operational actuals, operations review, cost aggregation, P&L views. Show performance analytics such as GMV/views are deferred to the Phase 4 PR 12.6 investigation.
 - **Phase 5** (Deferred): Ticketing, Materials, Collaboration & Scale — ad-hoc ticketing, material management, review hardening, notifications, data warehouse
 
 For planning and implementation references, see:
