@@ -60,10 +60,6 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     ?.value as string | undefined;
   const dueDateWindow = columnFilters.find((filter) => filter.id === 'due_date')
     ?.value as DateRange | undefined;
-  const defaultOperationalDayRange = useMemo(
-    () => buildOperationalDayRangeFromPickerDates(undefined, undefined),
-    [],
-  );
   const effectiveOperationalDayRange = useMemo(
     () => operationalWindowToDayRange(dueDateWindow),
     [dueDateWindow],
@@ -150,17 +146,18 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     ]);
   }, [onColumnFiltersChange]);
   const handleResetDueDateRange = useCallback(() => {
+    const freshRange = buildOperationalDayRangeFromPickerDates(undefined, undefined);
     onColumnFiltersChange((previousFilters) => [
       ...previousFilters.filter((filter) => filter.id !== 'due_date'),
       {
         id: 'due_date',
         value: {
-          from: defaultOperationalDayRange.windowStart,
-          to: defaultOperationalDayRange.windowEnd,
+          from: freshRange.windowStart,
+          to: freshRange.windowEnd,
         },
       },
     ]);
-  }, [defaultOperationalDayRange.windowEnd, defaultOperationalDayRange.windowStart, onColumnFiltersChange]);
+  }, [onColumnFiltersChange]);
 
   return {
     data,
