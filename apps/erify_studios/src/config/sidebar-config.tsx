@@ -213,19 +213,19 @@ function getStudioOperationsItems(
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'showRunReview')) {
-    operationsItems.push({
-      title: 'Show Run Review',
-      url: `/studios/${studioId}/show-run-review`,
-      icon: ShieldCheck,
-    });
-  }
-
   if (hasStudioRouteAccess(role as StudioRole, 'reviewQueue')) {
     operationsItems.push({
       title: 'Task Review',
       url: `/studios/${studioId}/task-review`,
       icon: ClipboardCheck,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'showRunReview')) {
+    operationsItems.push({
+      title: 'Show Run Review',
+      url: `/studios/${studioId}/show-run-review`,
+      icon: ShieldCheck,
     });
   }
 
