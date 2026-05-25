@@ -49,7 +49,7 @@ export function useSidebarConfig(
       items: [],
     },
     {
-      title: m['sidebar.compensations'](),
+      title: 'Compensations',
       url: '/compensations',
       icon: DollarSign,
       isActive: isPathActive(location.pathname, '/compensations'),

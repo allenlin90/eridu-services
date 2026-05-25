@@ -31,7 +31,6 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('@/paraglide/messages.js', () => ({
   'sidebar.activities': vi.fn(() => 'Activities'),
   'sidebar.shows': vi.fn(() => 'Shows'),
-  'sidebar.compensations': vi.fn(() => 'Compensations'),
 }));
 
 describe('useSidebarConfig', () => {
