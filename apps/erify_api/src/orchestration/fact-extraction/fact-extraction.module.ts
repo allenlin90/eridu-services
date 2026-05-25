@@ -8,6 +8,7 @@ import { ShowActualEndTimeExtractor } from './extractors/show-actual-end-time.ex
 import { ShowActualStartTimeExtractor } from './extractors/show-actual-start-time.extractor';
 import { ShowPlatformActualEndTimeExtractor } from './extractors/show-platform-actual-end-time.extractor';
 import { ShowPlatformActualStartTimeExtractor } from './extractors/show-platform-actual-start-time.extractor';
+import { ShowPlatformViolationExtractor } from './extractors/show-platform-violation.extractor';
 import { FactExtractionProcessor } from './fact-extraction.processor';
 import { FactExtractionService } from './fact-extraction.service';
 
@@ -15,6 +16,7 @@ import { AuditModule } from '@/models/audit/audit.module';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowCreatorModule } from '@/models/show-creator/show-creator.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
+import { ShowPlatformViolationModule } from '@/models/show-platform-violation/show-platform-violation.module';
 import { TaskModule } from '@/models/task/task.module';
 
 /**
@@ -35,7 +37,14 @@ import { TaskModule } from '@/models/task/task.module';
  * `FactExtractionService` is part of the public surface.
  */
 @Module({
-  imports: [TaskModule, AuditModule, ShowModule, ShowCreatorModule, ShowPlatformModule],
+  imports: [
+    TaskModule,
+    AuditModule,
+    ShowModule,
+    ShowCreatorModule,
+    ShowPlatformModule,
+    ShowPlatformViolationModule,
+  ],
   providers: [
     FactExtractionService,
     FactExtractionProcessor,
@@ -47,6 +56,7 @@ import { TaskModule } from '@/models/task/task.module';
     CreatorAttendanceMissingExtractor,
     ShowPlatformActualStartTimeExtractor,
     ShowPlatformActualEndTimeExtractor,
+    ShowPlatformViolationExtractor,
   ],
   exports: [FactExtractionService],
 })

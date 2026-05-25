@@ -24,7 +24,7 @@ A show with 3 task types → 3 DB records instead of 60.
 
 1. **Snapshot Table** for schema versioning — tasks reference immutable snapshots, not templates
 2. **Schema Engine Routing** — v1 snapshots use `field.key` content keys; v2 templates use stable `fld_...` field ids and descriptor-based reporting
-3. **System Fact Bindings** — v2 fields can set `system_fact_key` from the closed `@eridu/api-types/task-management` catalog; shared Zod validation enforces field-type compatibility and one binding per fact key before save. Creator attendance explanations use the existing `require_reason` sidecar instead of a separate reason binding
+3. **System Fact Bindings** — v2 fields can set `system_fact_key` from the closed `@eridu/api-types/task-management` catalog; shared Zod validation enforces field-type compatibility and one binding per fact key before save. Creator attendance explanations use the existing `require_reason` sidecar instead of a separate reason binding. Platform violation bindings use `show_platform_violation` on a `multiselect` field and replace only `ShowPlatformViolation` rows from the same hydrated task field on resubmission
 4. **Polymorphic `TaskTarget`** — generic `targetType` + `targetId` with optional FKs for referential integrity
 5. **Advisory Locks** — `pg_advisory_xact_lock(showId)` in `@Transactional()` prevents duplicate task generation
 6. **Optimistic Locking** — version-based compare-and-swap on task updates (409 on conflict)

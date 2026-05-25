@@ -910,6 +910,9 @@ function isFactValueParseable(fact: ExtractedFact): boolean {
       return parseDateTimeValue(fact.rawValue) !== null;
     case 'checkbox':
       return parseBooleanValue(fact.rawValue) !== null;
+    case 'multiselect':
+      return Array.isArray(fact.rawValue)
+        && fact.rawValue.every((value) => typeof value === 'string');
     default:
       return true;
   }

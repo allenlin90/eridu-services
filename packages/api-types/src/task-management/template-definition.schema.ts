@@ -28,6 +28,7 @@ export const SystemFactKeyEnum = z.enum([
   'creator_attendance_missing',
   'show_platform_actual_start_time',
   'show_platform_actual_end_time',
+  'show_platform_violation',
 ]);
 
 export type SystemFactKey = z.infer<typeof SystemFactKeyEnum>;
@@ -81,6 +82,13 @@ export const SYSTEM_FACT_KEY_DEFINITIONS = {
     target: 'show_platform',
     backing_column: 'ShowPlatform.actualEndTime',
     field_type: 'datetime',
+  },
+  show_platform_violation: {
+    label: 'Platform violation',
+    description: 'Platform stream warning or violation recorded per assigned show platform.',
+    target: 'show_platform',
+    backing_column: 'ShowPlatformViolation',
+    field_type: 'multiselect',
   },
 } as const satisfies Record<SystemFactKey, {
   label: string;

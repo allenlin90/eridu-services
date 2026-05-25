@@ -1636,4 +1636,81 @@ describe('factExtractionService', () => {
       ]));
     });
   });
+
+  describe('show platform violation routing', () => {
+    function buildViolationRegistry(extractor: IngestionExtractor): ExtractorRegistry {
+      return {
+        resolve: jest.fn((factKey: string) =>
+          factKey === 'show_platform_violation' ? extractor : undefined,
+        ),
+        has: jest.fn((factKey: string) => factKey === 'show_platform_violation'),
+        registeredFactKeys: jest.fn(() => ['show_platform_violation']),
+      } as unknown as ExtractorRegistry;
+    }
+
+    it('routes multiselect platform violations through the normal per-target processor', async () => {
+      const violationExtractor = buildExtractor({ factKey: 'show_platform_violation' });
+      violationExtractor.apply.mockResolvedValue({
+        kind: 'write',
+        action: 'CREATE',
+        oldValue: [],
+        newValue: [{ violation_type: 'COPYRIGHT', severity: 'WARNING' }],
+      });
+      const violationService = new FactExtractionService(
+        taskService,
+        auditService,
+        buildViolationRegistry(violationExtractor),
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildTaskWithSnapshot({
+        schema: {
+          items: [
+            { id: 'fld_violate123', system_fact_key: 'show_platform_violation' },
+          ],
+        },
+        content: {
+          'fld_violate123:platform:show_plt_200': ['COPYRIGHT'],
+          'fld_violate123:platform:show_plt_200__reason': 'Copyright warning from platform',
+        },
+      }));
+      showPlatformService.findActiveByUids.mockResolvedValue(
+        new Map([['show_plt_200', { id: 200n, showId: 10n }]]),
+      );
+
+      const result = await violationService.extractFromTask({
+        taskId: 99n,
+        taskUid: 'task_alpha',
+        studioId: 1n,
+        showId: 10n,
+        showUid: 'sho_10',
+        source: 'OPERATOR',
+      });
+
+      expect(processor.applyAndAudit).toHaveBeenCalledTimes(1);
+      expect(processor.applyAndAudit).toHaveBeenCalledWith(
+        violationExtractor,
+        expect.objectContaining({
+          contentKey: 'fld_violate123:platform:show_plt_200',
+          sourceFieldId: 'fld_violate123',
+          factKey: 'show_platform_violation',
+          scope: 'platform',
+          targetUid: 'show_plt_200',
+          rawValue: ['COPYRIGHT'],
+          reason: 'Copyright warning from platform',
+        }),
+        expect.objectContaining({ taskId: 99n, showId: 10n }),
+        [{ targetType: 'SHOW_PLATFORM', targetId: 200n }],
+      );
+      expect(result.entries).toEqual([
+        expect.objectContaining({
+          factKey: 'show_platform_violation',
+          outcome: 'written',
+          auditUid: 'aud_CREATE',
+          targetUid: 'show_plt_200',
+        }),
+      ]);
+    });
+  });
 });
