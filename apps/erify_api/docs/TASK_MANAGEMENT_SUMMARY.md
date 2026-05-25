@@ -77,7 +77,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 | `/tasks/:taskUid`        | GET    | Lazy detail with schema                                                   |
 | `/members`               | GET    | Studio members for assignment                                             |
 
-PR 12.4 adds two manager-facing review surfaces in `erify_studios`: Submission Review at `/operations-review/submissions` for submitted tasks waiting for confirmation, and Show Run Review at `/operations-review/show-runs` for confirmed show records already populated to target tables.
+PR 12.4 keeps submitted-task confirmation in Task Review at `/task-review` and adds Show Run Review at `/show-run-review` for submitted and signed-off show records already populated to target tables.
 
 ### Operator (`/me/...`)
 

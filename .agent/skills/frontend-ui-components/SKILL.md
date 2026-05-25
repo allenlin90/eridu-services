@@ -48,7 +48,7 @@ Applies to: every dialog reachable on a mobile route (actuals editing, shift com
 
 When designing a feature scoped to an **identity-bearing entity** — `Creator`, studio `Member` (manager / operator / account-manager), or `Show` — consider how it lands across **three perspectives**. The pattern is a design checklist, not a global mandate: each PRD decides which of the three a given sub-PR delivers, defers, or skips.
 
-1. **Studio Overview (Perspective 1)**: Aggregate dashboards, filtered grids, and operations tables (e.g. `/operations-review/submissions`, `/operations-review/show-runs`, `/show-operations`, creator/member roster tables). Manager-facing, studio-wide visibility.
+1. **Studio Overview (Perspective 1)**: Aggregate dashboards, filtered grids, and operations tables (e.g. `/task-review`, `/show-run-review`, `/show-operations`, creator/member roster tables). Manager-facing, studio-wide visibility.
 2. **Studio Individual Overview (Perspective 2)**: Manager-facing detail page for a single entity drilled into from a roster. Creator, member, and show variants:
    - `/studios/:studioId/creators/:creatorId` — single creator's attendance, rates, overrides, performance.
    - `/studios/:studioId/members/:memberId` — single member's assignments, audit trail, role context.
@@ -64,7 +64,7 @@ When designing a feature scoped to an **identity-bearing entity** — `Creator`,
 ### Reusable Unit Component Standard
 To prevent code duplication and logic drift across these three views, **extract and share core unit components**. Component wrappers should simply configure the appropriate API filters and role context before passing them to the shared visual unit:
 - `ActualsTimelineViewer`: Shared timeline block visualizing planned vs actual times.
-- `ShowRunSummary`: Shared range summary for confirmed show runs, creator attendance, phase checks, and active platform issues.
+- `ShowRunSummary`: Shared range summary for submitted and signed-off show runs, creator attendance, phase checks, and active platform issues.
 - `PerformanceMetricsWidget`: Graphical/tabular widget detailing analytical platform statistics (GMV, views) once the analytics infrastructure track lands.
 - `CompensationBreakdownCard`: Shared card computing base compensation, commissions, and line items.
 - `AttendanceStatusBadge`: Shared visual badge translating `actualStartTime` and `Show.startTime` into colored status highlights.

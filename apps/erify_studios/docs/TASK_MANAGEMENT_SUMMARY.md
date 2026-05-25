@@ -1,6 +1,6 @@
 # Task Management — UI/UX Summary
 
-> **TLDR**: Frontend UI for task management across 10+ screens. Admin workflows: template library, production planning, assignment dialogs, task review, submission review, and show run review. Operator workflows: "My Tasks" with filter bar, task execution sheet (JsonForm with auto-save), status actions. Studio context persisted via `TeamSwitcher`.
+> **TLDR**: Frontend UI for task management across 10+ screens. Admin workflows: template library, task setup, assignment dialogs, task review, and show run review. Operator workflows: "My Tasks" with filter bar, task execution sheet (JsonForm with auto-save), status actions. Studio context persisted via `TeamSwitcher`.
 
 > **Quick-reference** for the Task Management frontend UI/UX system.
 
@@ -21,7 +21,7 @@
 | ----- | ---------------------- | ----------------------------------------- | ------------ | ------- |
 | 3.1   | Template Library       | `/studios/$studioId/task-templates`       | Admin        | ✅       |
 | 3.2   | Create/Edit Template   | Dialog/sheet                              | Admin        | ✅       |
-| 3.3   | Production Planning    | `/studios/$studioId/show-operations`      | Admin        | ✅       |
+| 3.3   | Task Setup             | `/studios/$studioId/show-operations`      | Admin        | ✅       |
 | 3.3.1 | Bulk Generation Dialog | Dialog                                    | Admin        | ✅       |
 | 3.3.2 | Assignment Dialog      | Dialog                                    | Admin        | ✅       |
 | 3.3.3 | Show Detail / Tasks    | `/studios/$studioId/show-operations/$showUid/tasks` | Admin        | ✅       |
@@ -35,8 +35,7 @@
 | 3.11  | Task Reports           | `/studios/$studioId/task-reports`         | Admin/Manager/ModerationManager | ✅ |
 | 3.12  | Task Report Builder    | `/studios/$studioId/task-reports/builder` | Admin/Manager/ModerationManager | ✅ |
 | 3.13  | Task Report Results    | `/studios/$studioId/task-reports/results` | Admin/Manager/ModerationManager | ✅ |
-| 3.14  | Submission Review      | `/studios/$studioId/operations-review/submissions` | Admin/Manager | Planned |
-| 3.15  | Show Run Review        | `/studios/$studioId/operations-review/show-runs` | Admin/Manager | Planned |
+| 3.14  | Show Run Review        | `/studios/$studioId/show-run-review`      | Admin/Manager | Planned |
 
 ---
 
@@ -54,7 +53,7 @@ Show detail → inline assignee dropdown on task card → PATCH `/tasks/:taskUid
 ### 4. Task Execution (Operator)
 My Tasks → tap card → Task Execution Sheet (JsonForm) → auto-save on field change (300ms debounce) → status actions (`Start Task` / `Submit for Review` / `Report Blocker`)
 
-### 5. Submission Review (Admin/Manager)
+### 5. Task Review (Admin/Manager)
 Task Review → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, Block. Approving a submitted task is the extraction gate for system fact bindings; `REVIEW` submissions are not yet trusted operational facts.
 
 ### 6. Moderation Loop Execution (Moderator)
@@ -64,7 +63,7 @@ My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress b
 Task Templates → Create/Edit Template → open a field → search/select `Auto-fill record field` → builder sets the compatible field type from the shared `@eridu/api-types/task-management` catalog. Hover the info icon next to the label for the producer-facing explanation. Creator attendance missing also enables `Require Explanation: When Checked (True)` so the existing reason sidecar captures the explanation. Each record-field binding can appear once per template. Operator task forms hydrate each binding into one input per assigned creator/platform (PR 12.0.4); a target that has been unassigned keeps its previously-recorded value as `binding_stale: true` — rendered dimmed and read-only. Confirmed submitted tasks route those hydrated content keys to indexed target columns. Manager corrections and overrides must also be submitted and confirmed through tasks before re-populating target facts.
 
 ### 8. Shows Issues Triage (Admin)
-Production Planning (`/show-operations`) → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
+Task Setup (`/show-operations`) → set scope date range → toggle `Issues` (alert icon chip) in toolbar → list narrows to shows that need task-readiness attention:
 - show has no tasks
 - show has unassigned tasks
 - show is missing required baseline task types (`SETUP`, `CLOSURE`)
@@ -73,11 +72,11 @@ Production Planning (`/show-operations`) → set scope date range → toggle `Is
 The `Issues` filter uses the same datetime window and same in-scope show set as the shows table query (`date_from/date_to` with backend `match_show_scope=true`), including operational-day cutoff behavior (for example D+1 `05:59` local when applied by scope utilities).
 Readiness scope totals should be refreshed by query-key changes (for example `refreshSignal`) and not duplicated with extra effect-level `refetch()` for the same query key.
 
-### 9. Submission Review (Admin/Manager)
-Submission Review → choose operational day range (Today, Yesterday, Last 7 Days, Custom) → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Clean rows can later support bulk approval into `COMPLETED`.
+### 9. Task Review (Admin/Manager)
+Task Review → choose operational day range → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Clean rows can later support bulk approval into `COMPLETED`.
 
 ### 10. Show Run Review (Admin/Manager)
-Show Run Review → choose operational day range → review confirmed show records after submission approval. The page focuses on manager-friendly checks: shows happened, creators showed up, streams stayed clean, and the range is ready for sign-off.
+Show Run Review → choose operational day range → review submitted and signed-off show records after task approval. The page focuses on manager-friendly checks: shows happened, creators showed up, streams stayed clean, and the range is ready for sign-off.
 
 The default operational day is 06:00-05:59 local time for PR 12.4. Today can refresh every 5 minutes, while historical ranges use manual refresh to avoid over-fetching.
 
@@ -86,7 +85,7 @@ The default operational day is 06:00-05:59 local time for PR 12.4. Today can ref
 ## Navigation & Studio Context
 
 - **Studio Switcher**: `TeamSwitcher` from `@eridu/ui` — maps `studio_memberships` from `/me/profile`
-- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Production Planning, Submission Review, Show Run Review, Task Review, and Task Reports; Studio Settings contains Task Templates.
+- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Task Setup, Task Review, Show Run Review, and Task Reports; Studio Settings contains Task Templates.
 - **Active Studio**: persisted in `localStorage`, auto-initializes, invalidates queries on switch
 - **Role-Based Access**: admin/manager task operators see the Tasks and Task Templates entries; non-admin task executors see My Workspace only.
 
@@ -163,7 +162,7 @@ The default operational day is 06:00-05:59 local time for PR 12.4. Today can ref
 ## Implementation Status
 
 ✅ Template library (cards, search, infinite scroll), create/edit dialog
-✅ Production Planning / Show Operations (data table, filters, bulk actions bar), generation & assignment dialogs
+✅ Task Setup / Show Operations (data table, filters, bulk actions bar), generation & assignment dialogs
 ✅ Show detail with task cards and inline reassignment
 ✅ My Tasks (filter bar, task cards, progress bars, urgency borders, show-start-date filter)
 ✅ Task Execution Sheet (JsonForm, auto-save, rejection banner, status actions, IndexedDB draft persistence)

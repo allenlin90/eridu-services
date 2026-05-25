@@ -4,11 +4,11 @@
 
 ## Context
 
-Operations Review uses a fixed operational day window of 06:00-05:59 in the studio's local runtime. That default keeps overnight shows in a single operational day and avoids calendar-midnight splits during PR 12.4.
+Task Review and Show Run Review use a fixed operational day window of 06:00-05:59 in the studio's local runtime. That default keeps overnight shows in a single operational day and avoids calendar-midnight splits during PR 12.4.
 
 ## Future Direction
 
-Allow operational day boundaries to be configurable after the PR 12.4 Operations Review workflow is stable.
+Allow operational day boundaries to be configurable after the PR 12.4 review workflow is stable.
 
 Potential configuration layers:
 
@@ -18,8 +18,8 @@ Potential configuration layers:
 
 ## Impacted Surfaces
 
-- `/studios/:studioId/operations-review/submissions`
-- `/studios/:studioId/operations-review/show-runs`
+- `/studios/:studioId/task-review`
+- `/studios/:studioId/show-run-review`
 - `/studios/:studioId/show-operations`
 - Studio dashboard operational-day cards
 - Task reports and exports that group by operational day
