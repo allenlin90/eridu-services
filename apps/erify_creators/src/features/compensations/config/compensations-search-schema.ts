@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const compensationsSearchSchema = z.object({
-  dateFrom: z.string().optional().catch(undefined),
-  dateTo: z.string().optional().catch(undefined),
+  dateFrom: z.string().datetime().optional().catch(undefined),
+  dateTo: z.string().datetime().optional().catch(undefined),
 });
 
 export type CompensationsSearch = z.infer<typeof compensationsSearchSchema>;

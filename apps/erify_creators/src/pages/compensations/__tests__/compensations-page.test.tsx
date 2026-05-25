@@ -37,6 +37,17 @@ vi.mock('@/paraglide/messages.js', () => ({
   'compensations.total': () => 'Total Amount',
   'compensations.unresolved': () => 'Unresolved',
   'compensations.resolved': () => 'Resolved',
+  'compensations.descriptionActive': ({ studioName }: any) => `Viewing show earnings with ${studioName}`,
+  'compensations.descriptionFallback': () => 'Review your agreed rates and earnings across assigned shows',
+  'compensations.cumulativeShowPayments': () => 'Cumulative show payments',
+  'compensations.assignedShowsInRange': () => 'Assigned shows in range',
+  'compensations.awaitingVerification': () => 'Awaiting verification',
+  'compensations.tableTitle': () => 'Show Compensation Breakdown',
+  'compensations.tableDescription': () => 'Detailed listing of agreed contract rates, commissions, adjustments, and final payments.',
+  'compensations.loadingData': () => 'Loading compensations data...',
+  'compensations.status': () => 'Status',
+  'compensations.reasonAgreementPending': () => 'Agreement pending',
+  'compensations.reasonRevenueVerificationPending': () => 'Revenue pending verification',
 }));
 
 describe('compensationsPage', () => {

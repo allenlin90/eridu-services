@@ -76,7 +76,18 @@
     "notes": "Notes",
     "noData": "No compensations found for the selected period.",
     "errorLoading": "Failed to load compensations data. Please try again.",
-    "tryAgain": "Try Again"
+    "tryAgain": "Try Again",
+    "descriptionActive": "Viewing show earnings with {studioName}",
+    "descriptionFallback": "Review your agreed rates and earnings across assigned shows",
+    "cumulativeShowPayments": "Cumulative show payments",
+    "assignedShowsInRange": "Assigned shows in range",
+    "awaitingVerification": "Awaiting verification",
+    "tableTitle": "Show Compensation Breakdown",
+    "tableDescription": "Detailed listing of agreed contract rates, commissions, adjustments, and final payments.",
+    "loadingData": "Loading compensations data...",
+    "status": "Status",
+    "reasonAgreementPending": "Agreement pending",
+    "reasonRevenueVerificationPending": "Revenue pending verification"
   },
   "common": {
     "welcome": "Welcome",

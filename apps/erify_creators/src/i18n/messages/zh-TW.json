@@ -107,6 +107,17 @@
     "notes": "備註",
     "noData": "所選期間內無報酬記錄。",
     "errorLoading": "載入報酬資料失敗。請再試一次。",
-    "tryAgain": "重試"
+    "tryAgain": "重試",
+    "descriptionActive": "正在查看與 {studioName} 的節目收益",
+    "descriptionFallback": "查看您在已指派節目中的約定費率與收益",
+    "cumulativeShowPayments": "累計節目付款",
+    "assignedShowsInRange": "所選期間內已指派的節目",
+    "awaitingVerification": "等待驗證中",
+    "tableTitle": "節目報酬明細",
+    "tableDescription": "約定合約費率、佣金、調整金額以及最終付款的詳細列表。",
+    "loadingData": "正在載入報酬資料...",
+    "status": "狀態",
+    "reasonAgreementPending": "等待合約簽署",
+    "reasonRevenueVerificationPending": "等待營收驗證"
   }
 }

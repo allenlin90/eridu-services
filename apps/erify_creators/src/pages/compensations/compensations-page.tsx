@@ -37,9 +37,9 @@ import { getInitialDateRange } from '@/features/compensations/config/compensatio
 import { useActiveStudio } from '@/lib/hooks';
 import * as m from '@/paraglide/messages.js';
 
-const UNRESOLVED_REASON_LABELS: Record<string, string> = {
-  AGREEMENT_SNAPSHOT_MISSING: 'Agreement pending',
-  COMMISSION_REVENUE_NOT_AVAILABLE: 'Revenue pending verification',
+const UNRESOLVED_REASON_LABELS: Record<string, () => string> = {
+  AGREEMENT_SNAPSHOT_MISSING: () => m['compensations.reasonAgreementPending'](),
+  COMMISSION_REVENUE_NOT_AVAILABLE: () => m['compensations.reasonRevenueVerificationPending'](),
 };
 
 function formatAmount(value: string | null) {
@@ -49,7 +49,7 @@ function formatAmount(value: string | null) {
 function formatUnresolvedReason(value: string | null) {
   if (!value)
     return null;
-  return UNRESOLVED_REASON_LABELS[value] ?? value;
+  return UNRESOLVED_REASON_LABELS[value]?.() ?? value;
 }
 
 export function CompensationsPage() {
@@ -94,8 +94,8 @@ export function CompensationsPage() {
         title={m['compensations.title']()}
         description={
           activeStudio
-            ? `Viewing show earnings with ${activeStudio.studio.name}`
-            : 'Review your agreed rates and earnings across assigned shows'
+            ? m['compensations.descriptionActive']({ studioName: activeStudio.studio.name })
+            : m['compensations.descriptionFallback']()
         }
       >
         <div className="space-y-6">
@@ -136,7 +136,7 @@ export function CompensationsPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3 text-emerald-400" />
-                  Cumulative show payments
+                  {m['compensations.cumulativeShowPayments']()}
                 </p>
               </CardContent>
             </Card>
@@ -158,7 +158,7 @@ export function CompensationsPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                  Assigned shows in range
+                  {m['compensations.assignedShowsInRange']()}
                 </p>
               </CardContent>
             </Card>
@@ -180,7 +180,7 @@ export function CompensationsPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <Info className="h-3 w-3 text-amber-400" />
-                  Awaiting verification
+                  {m['compensations.awaitingVerification']()}
                 </p>
               </CardContent>
             </Card>
@@ -189,16 +189,16 @@ export function CompensationsPage() {
           {/* Detailed Payments Grid Table */}
           <Card className="bg-slate-900/20 border-slate-800 shadow-xl overflow-hidden">
             <CardHeader className="pb-3 border-b border-slate-800/80 bg-slate-900/35">
-              <CardTitle className="text-base text-slate-200">Show Compensation Breakdown</CardTitle>
+              <CardTitle className="text-base text-slate-200">{m['compensations.tableTitle']()}</CardTitle>
               <CardDescription className="text-xs text-slate-400">
-                Detailed listing of agreed contract rates, commissions, adjustments, and final payments.
+                {m['compensations.tableDescription']()}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {isLoading && (
                 <div className="flex flex-col items-center justify-center p-12 text-sm text-slate-400 gap-3">
                   <RefreshCw className="h-6 w-6 text-indigo-400 animate-spin" />
-                  <span>Loading compensations data...</span>
+                  <span>{m['compensations.loadingData']()}</span>
                 </div>
               )}
 
@@ -249,7 +249,7 @@ export function CompensationsPage() {
                           {m['compensations.total']()}
                         </TableHead>
                         <TableHead className="text-slate-300 font-semibold h-11 text-xs">
-                          Status
+                          {m['compensations.status']()}
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -326,7 +326,7 @@ export function CompensationsPage() {
                             <TableCell className="text-right text-slate-100 font-semibold text-xs py-3.5 whitespace-nowrap">
                               {isUnresolved
                                 ? (
-                                    <span className="text-slate-400">Unresolved</span>
+                                    <span className="text-slate-400">{m['compensations.unresolved']()}</span>
                                   )
                                 : (
                                     formatAmount(show.total_amount)
