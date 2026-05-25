@@ -8,7 +8,6 @@ vi.mock('lucide-react', () => ({
   BadgeCheck: vi.fn(),
   Clapperboard: vi.fn(),
   ClipboardCheck: vi.fn(),
-  ClipboardList: vi.fn(),
   Command: vi.fn(),
   LayoutDashboard: vi.fn(),
   Building2: vi.fn(),
@@ -221,16 +220,12 @@ describe('useSidebarConfig', () => {
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
-          title: 'Production Planning',
+          title: 'Task Setup',
           url: '/studios/studio-1/show-operations',
         }),
         expect.objectContaining({
-          title: 'Submission Review',
-          url: '/studios/studio-1/operations-review/submissions',
-        }),
-        expect.objectContaining({
           title: 'Show Run Review',
-          url: '/studios/studio-1/operations-review/show-runs',
+          url: '/studios/studio-1/show-run-review',
         }),
         expect.objectContaining({
           title: 'Task Review',

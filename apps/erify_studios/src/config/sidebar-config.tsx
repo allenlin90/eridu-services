@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Clapperboard,
   ClipboardCheck,
-  ClipboardList,
   Film,
   Layers,
   LayoutDashboard,
@@ -208,22 +207,16 @@ function getStudioOperationsItems(
 
   if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
     operationsItems.push({
-      title: 'Production Planning',
+      title: 'Task Setup',
       url: `/studios/${studioId}/show-operations`,
       icon: Clapperboard,
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'operationsReview')) {
-    operationsItems.push({
-      title: 'Submission Review',
-      url: `/studios/${studioId}/operations-review/submissions`,
-      icon: ClipboardList,
-    });
-
+  if (hasStudioRouteAccess(role as StudioRole, 'showRunReview')) {
     operationsItems.push({
       title: 'Show Run Review',
-      url: `/studios/${studioId}/operations-review/show-runs`,
+      url: `/studios/${studioId}/show-run-review`,
       icon: ShieldCheck,
     });
   }

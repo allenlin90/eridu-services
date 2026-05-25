@@ -37,7 +37,7 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
-  operationsReview: [
+  showRunReview: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
   ],

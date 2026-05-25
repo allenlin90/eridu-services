@@ -22,7 +22,7 @@ type ReviewStep = {
   icon: ReactNode;
 };
 
-type OperationsReviewPreviewProps = {
+type ShowRunReviewPreviewProps = {
   title: string;
   description: string;
   metrics: ReviewMetric[];
@@ -39,12 +39,12 @@ function getMetricClassName(tone: ReviewMetric['tone'] = 'default'): string {
   return 'border-border bg-muted/30';
 }
 
-export function OperationsReviewPreview({
+export function ShowRunReviewPreview({
   title,
   description,
   metrics,
   steps,
-}: OperationsReviewPreviewProps) {
+}: ShowRunReviewPreviewProps) {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
