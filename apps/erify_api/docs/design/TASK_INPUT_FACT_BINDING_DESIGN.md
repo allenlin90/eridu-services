@@ -342,7 +342,7 @@ The compensation-snapshot override pattern (legacy `metadata.audit.snapshot_over
 
 ## 4. Querying & Performance Rollups
 
-By maintaining indexed actuals columns, the database can be queried directly to support operational rollups, dashboard widgets, and financial reports. In Phase 4, these operations review and abnormality filters live on `/operations-review`, not planning surfaces.
+By maintaining indexed actuals columns, the database can be queried directly to support operational rollups, dashboard widgets, and financial reports. In Phase 4, submitted-task filters live on `/operations-review/submissions` and confirmed show-run filters live on `/operations-review/show-runs`, not planning surfaces.
 
 ### A. Find Shows with Platform Violations
 
@@ -396,16 +396,16 @@ WHERE (actual_start_time IS NULL OR actual_end_time IS NULL)
 
 ## 5. Frontend Surfaces & Endpoint Map
 
-The same indexed columns and audit history feed every consumer. PR 12 stabilizes column shape and adds `/operations-review` as the manager control plane for submitted-task confirmation, exception queues, confirmed operational fact summaries, and range sign-off. Each FE surface in §6 hits one of the following read shapes:
+The same indexed columns and audit history feed every consumer. PR 12 stabilizes column shape and adds Operations Review as the manager control plane for submitted-task confirmation, exception queues, confirmed show run summaries, and range sign-off. Each FE surface in §6 hits one of the following read shapes:
 
 | Read shape | Returns | Indexed columns it leans on | Primary consumers |
 | --- | --- | --- | --- |
-| Submitted-task review | `REVIEW` tasks, validation state, phase tags, approval eligibility | `Task(status, type, due_date)`, `TaskTarget(show_id)`, hydrated snapshot/content | `/operations-review` |
-| Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/operations-review`, `/show-operations`, `/studios/:id/shows/:showId` |
-| Creator attendance | derived `ON_TIME` / `LATE` / `MISSING`, `late_minutes`, `attendance_reason` | `ShowCreator(actual_start_time)`, `(attendance_missing)` joined to `Show.start_time` | `/operations-review`, `/studios/:id/creators/:creatorId`, `/me/shows` |
-| Platform actual window | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` | `ShowPlatform(actual_start_time, actual_end_time)` | `/operations-review`, `/show-operations`, `/studios/:id/shows/:showId` |
+| Submitted-task review | `REVIEW` tasks, validation state, phase tags, approval eligibility | `Task(status, type, due_date)`, `TaskTarget(show_id)`, hydrated snapshot/content | `/operations-review/submissions` |
+| Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/operations-review/show-runs`, `/show-operations`, `/studios/:id/shows/:showId` |
+| Creator attendance | derived `ON_TIME` / `LATE` / `MISSING`, `late_minutes`, `attendance_reason` | `ShowCreator(actual_start_time)`, `(attendance_missing)` joined to `Show.start_time` | `/operations-review/show-runs`, `/studios/:id/creators/:creatorId`, `/me/shows` |
+| Platform actual window | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` | `ShowPlatform(actual_start_time, actual_end_time)` | `/operations-review/show-runs`, `/show-operations`, `/studios/:id/shows/:showId` |
 | Platform performance (GMV, viewer count, etc.) | deferred to 12.6 — see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md) | analytical layer (TBD: read model vs OLAP) | PR 12.6 |
-| Platform violations (active) | `violation_type`, `severity`, `reason`, `observed_at` (excluding superseded) | `ShowPlatformViolation(show_platform_id, superseded_at)` | `/operations-review`, show / platform detail surfaces |
+| Platform violations (active) | `violation_type`, `severity`, `reason`, `observed_at` (excluding superseded) | `ShowPlatformViolation(show_platform_id, superseded_at)` | `/operations-review/show-runs`, show / platform detail surfaces |
 | Audit history | unified `Audit` + `AuditTarget` rows (engine + manager + legacy sidecar merger) | `AuditTarget(targetType, targetId)` and per-target FK indexes | every detail surface that hosts `AuditLogTimeline` |
 
 > **Reviewer note**: any FE surface added during PR 12.x must declare which read shape(s) it consumes. New read shapes require a paragraph here before the consuming sub-PR lands.
@@ -424,7 +424,7 @@ flowchart TB
     end
 
     subgraph P1[Perspective 1 · Studio Overview]
-        SO1["/operations-review"]
+        SO1["/operations-review/submissions<br/>/operations-review/show-runs"]
         SO2["/show-operations"]
         SO3["studio creator / member rosters"]
     end
@@ -450,7 +450,7 @@ flowchart TB
     P2 -. shared widgets .-> W
     P3 -. shared widgets .-> W
 
-    W["Shared unit components<br/>ActualsTimelineViewer<br/>OperationalFactsSummary<br/>CompensationBreakdownCard<br/>AttendanceStatusBadge<br/>AuditLogTimeline"]
+    W["Shared unit components<br/>ActualsTimelineViewer<br/>ShowRunSummary<br/>CompensationBreakdownCard<br/>AttendanceStatusBadge<br/>AuditLogTimeline"]
 ```
 
 Coverage matrix — what each shared widget renders in each perspective:
@@ -458,13 +458,13 @@ Coverage matrix — what each shared widget renders in each perspective:
 | Widget | P1 · Studio Overview | P2 · Studio Individual | P3 · `/me/*` Self-View |
 | --- | --- | --- | --- |
 | `ActualsTimelineViewer` | aggregated per-show row strip in `/show-operations` | full timeline on show / creator / member detail | own upcoming + completed shows |
-| `OperationalFactsSummary` | `/operations-review` summary for confirmed facts only | detail-page summaries as host routes land | own confirmed facts as self-view routes land |
+| `ShowRunSummary` | `/operations-review/show-runs` summary for confirmed show runs only | detail-page summaries as host routes land | own confirmed show runs as self-view routes land |
 | `PerformanceMetricsWidget` | deferred to 12.6 (analytics infra investigation) | deferred to 12.6 | deferred to 12.6 |
 | `CompensationBreakdownCard` | not used (roll-up only) | per-creator / per-show breakdown | own breakdown for the logged-in entity |
 | `AttendanceStatusBadge` | grid cells in roster + ops tables | header status on creator / show detail | own attendance per show |
 | `AuditLogTimeline` | not used (too noisy) | full override + ingestion history | own override / ingestion history (read-only) |
 
-**Scope per sub-PR**: which perspectives ship is a PRD decision per sub-PR, not a same-PR delivery rule. PR 12.4.x lights up P1 (`/operations-review`) first; P2 detail pages and P3 self-views are added as their host routes land. The matrix above is the *eventual* coverage shape — use it as a design checklist when introducing a new read, not as a merge gate.
+**Scope per sub-PR**: which perspectives ship is a PRD decision per sub-PR, not a same-PR delivery rule. PR 12.4.x lights up P1 (`/operations-review/submissions` and `/operations-review/show-runs`) first; P2 detail pages and P3 self-views are added as their host routes land. The matrix above is the *eventual* coverage shape — use it as a design checklist when introducing a new read, not as a merge gate.
 
 **Cross-app boundary for P3**: creator self-view lives in `erify_creators` (top-level `/shows`, `/shows/:showId` — no `/me/*` prefix because the entire app is scoped to the logged-in creator). Member self-view, when it ships, lives in `erify_studios` under `/me/*` to disambiguate from manager-facing `/studios/:id/*` routes in the same app. Any widget reused across P1/P2 (in `erify_studios`) and creator P3 (in `erify_creators`) must therefore live in a **shared package** (`@eridu/ui` or a new domain package), not in either app's `src/features/`.
 

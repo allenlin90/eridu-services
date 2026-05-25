@@ -88,7 +88,7 @@ flowchart TB
     DATA[(PR 12 indexed columns<br/>+ Audit / AuditTarget history)]
 
     subgraph P1[Perspective 1 · Studio Overview]
-        P1A["/operations-review"]
+        P1A["/operations-review/submissions<br/>/operations-review/show-runs"]
         P1B["/show-operations"]
         P1C["creator + member rosters"]
     end
@@ -108,24 +108,24 @@ flowchart TB
     DATA --> P2
     DATA --> P3
 
-    P1 -. shared widgets .-> W[ActualsTimelineViewer · OperationalFactsSummary ·<br/>CompensationBreakdownCard · AttendanceStatusBadge · AuditLogTimeline]
+    P1 -. shared widgets .-> W[ActualsTimelineViewer · ShowRunSummary ·<br/>CompensationBreakdownCard · AttendanceStatusBadge · AuditLogTimeline]
     P2 -. shared widgets .-> W
     P3 -. shared widgets .-> W
 ```
 
-1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/operations-review`, `/show-operations`, creator/member roster tables).
+1. **Studio Overview**: Studio-wide aggregate dashboards, grids, and operations reviews (e.g. `/operations-review/submissions`, `/operations-review/show-runs`, `/show-operations`, creator/member roster tables).
 2. **Studio Individual Overview**: Single-entity detail pages accessed by managers from studio rosters — applies to **creators**, **members**, and **shows** (e.g. `/studios/:id/creators/:creatorId`, `/studios/:id/members/:memberId`, `/studios/:id/shows/:showId`).
 3. **Individual Overview**: first-person self-view for the logged-in entity, with a cross-app boundary:
    - **Creator self-view** = the entire `erify_creators` app. Routes are top-level (`/shows`, `/shows/:showId`); no `/me/*` prefix, because the JWT scope already identifies the viewer as the creator.
    - **Member self-view** = a future `/me/*` surface inside `erify_studios`. The `/me/*` prefix is required there to disambiguate from `/studios/:id/*` manager routes that share the same app.
    - Because P3 for creators lives in a *different app* from P1/P2, any widget reused across these perspectives must live in a shared package (`@eridu/ui` or a domain-shared package), not in either app's `src/features/`.
 
-**Scope per sub-PR**: which of the three perspectives ship is decided by each sub-PR. PR 12.4.x lights up Perspective 1 (`/operations-review`); Perspective 2 detail pages and `/me/*` self-views are introduced incrementally as their host routes land. Use the three-perspective layout as a design checklist for new features, not as a same-PR delivery mandate.
+**Scope per sub-PR**: which of the three perspectives ship is decided by each sub-PR. PR 12.4.x lights up Perspective 1 (`/operations-review/submissions` and `/operations-review/show-runs`); Perspective 2 detail pages and `/me/*` self-views are introduced incrementally as their host routes land. Use the three-perspective layout as a design checklist for new features, not as a same-PR delivery mandate.
 
-**Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated across perspectives that *do* ship together. Unit components (`ActualsTimelineViewer`, `OperationalFactsSummary`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) live in reusable packages or shared app folders and are consumed identically by each perspective, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
+**Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated across perspectives that *do* ship together. Unit components (`ActualsTimelineViewer`, `ShowRunSummary`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) live in reusable packages or shared app folders and are consumed identically by each perspective, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
 
 ### G. Operations Review as Upstream of Economics Review
-PR 12 stands up the **operations review surface** (PR 12.4.x). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first, confirmed tasks populate operational facts, and only confirmed operational facts are summarized for show execution, creator attendance, and platform violations. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 12.6.
+PR 12 stands up the **operations review workflow** (PR 12.4.x). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first in Submission Review, confirmed tasks populate operational facts, and Show Run Review summarizes the confirmed show execution, creator attendance, and platform issues. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 12.6.
 
 ---
 
@@ -136,7 +136,7 @@ Implementation is structured into **three logical sections**. Each section serve
 ```
    ┌─────────────────────────────────────────────────────────────┐
    │                    SECTION C: REVIEW SURFACE                │
-   │  - PR 12.4.x: Submission Review, Operations Review, Sign-Off│
+   │  - PR 12.4.x: Submission Review, Show Run Review, Sign-Off │
    └──────────────────────────────┬──────────────────────────────┘
                                   ▼
    ┌─────────────────────────────────────────────────────────────┐
@@ -242,12 +242,12 @@ Implementation is structured into **three logical sections**. Each section serve
 *This section builds the management portal where studio managers confirm submitted tasks, populate operational facts, manage anomalies, and log operational sign-offs.*
 
 #### 🟨 PR 12.4.1 · Operations Review Foundation
-* **Purpose**: Establish `/operations-review` and the navigation model for the two-layer review workflow.
+* **Purpose**: Establish the Operations Review navigation model for the two-layer review workflow.
 * **Functional Deliverable**:
-  * **Route shell**: Add `/studios/:studioId/operations-review` for managers/admins.
-  * **Sidebar refinement**: Rename `/show-operations` to **Production Planning** and group it with Operations Review under **Operations**.
+  * **Route shells**: Add `/studios/:studioId/operations-review/submissions` for Submission Review and `/studios/:studioId/operations-review/show-runs` for Show Run Review.
+  * **Sidebar refinement**: Rename `/show-operations` to **Production Planning** and group Production Planning, Submission Review, Show Run Review, Task Review, and Task Reports under **Operations**.
   * **Operational day scope**: Default to the active 06:00–05:59 operational day, with Today / Yesterday / Last 7 Days / Custom range semantics. Today may refresh every 5 minutes; historical ranges refresh manually.
-  * **Two-layer framing**: Submission Review is the pre-confirmation layer; Operational Facts Review counts only confirmed extracted facts.
+  * **Two-layer framing**: Submission Review is the pre-confirmation layer; Show Run Review counts only confirmed extracted facts using manager-friendly show execution language.
 
 #### 🟨 PR 12.4.2 · Submission Review Summary and Exception Queues
 * **Purpose**: Replace one-by-one review as the only manager workflow.

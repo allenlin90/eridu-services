@@ -1,6 +1,6 @@
 # Task Management — UI/UX Summary
 
-> **TLDR**: Frontend UI for task management across 10+ screens. Admin workflows: template library, production planning, assignment dialogs, task review, and operations review. Operator workflows: "My Tasks" with filter bar, task execution sheet (JsonForm with auto-save), status actions. Studio context persisted via `TeamSwitcher`.
+> **TLDR**: Frontend UI for task management across 10+ screens. Admin workflows: template library, production planning, assignment dialogs, task review, submission review, and show run review. Operator workflows: "My Tasks" with filter bar, task execution sheet (JsonForm with auto-save), status actions. Studio context persisted via `TeamSwitcher`.
 
 > **Quick-reference** for the Task Management frontend UI/UX system.
 
@@ -35,7 +35,8 @@
 | 3.11  | Task Reports           | `/studios/$studioId/task-reports`         | Admin/Manager/ModerationManager | ✅ |
 | 3.12  | Task Report Builder    | `/studios/$studioId/task-reports/builder` | Admin/Manager/ModerationManager | ✅ |
 | 3.13  | Task Report Results    | `/studios/$studioId/task-reports/results` | Admin/Manager/ModerationManager | ✅ |
-| 3.14  | Operations Review      | `/studios/$studioId/operations-review`    | Admin/Manager | Planned |
+| 3.14  | Submission Review      | `/studios/$studioId/operations-review/submissions` | Admin/Manager | Planned |
+| 3.15  | Show Run Review        | `/studios/$studioId/operations-review/show-runs` | Admin/Manager | Planned |
 
 ---
 
@@ -72,10 +73,11 @@ Production Planning (`/show-operations`) → set scope date range → toggle `Is
 The `Issues` filter uses the same datetime window and same in-scope show set as the shows table query (`date_from/date_to` with backend `match_show_scope=true`), including operational-day cutoff behavior (for example D+1 `05:59` local when applied by scope utilities).
 Readiness scope totals should be refreshed by query-key changes (for example `refreshSignal`) and not duplicated with extra effect-level `refetch()` for the same query key.
 
-### 9. Operations Review (Admin/Manager)
-Operations Review → choose operational day range (Today, Yesterday, Last 7 Days, Custom) → review two layers:
-- **Submission Review**: submitted tasks still waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs.
-- **Operational Facts Review**: confirmed facts already populated to `Show`, `ShowCreator`, `ShowPlatform`, and `ShowPlatformViolation`, ready for filtering, summary, and sign-off.
+### 9. Submission Review (Admin/Manager)
+Submission Review → choose operational day range (Today, Yesterday, Last 7 Days, Custom) → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Clean rows can later support bulk approval into `COMPLETED`.
+
+### 10. Show Run Review (Admin/Manager)
+Show Run Review → choose operational day range → review confirmed show records after submission approval. The page focuses on manager-friendly checks: shows happened, creators showed up, streams stayed clean, and the range is ready for sign-off.
 
 The default operational day is 06:00-05:59 local time for PR 12.4. Today can refresh every 5 minutes, while historical ranges use manual refresh to avoid over-fetching.
 
@@ -84,7 +86,7 @@ The default operational day is 06:00-05:59 local time for PR 12.4. Today can ref
 ## Navigation & Studio Context
 
 - **Studio Switcher**: `TeamSwitcher` from `@eridu/ui` — maps `studio_memberships` from `/me/profile`
-- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Production Planning, Operations Review, Task Review, and Task Reports; Studio Settings contains Task Templates.
+- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Production Planning, Submission Review, Show Run Review, Task Review, and Task Reports; Studio Settings contains Task Templates.
 - **Active Studio**: persisted in `localStorage`, auto-initializes, invalidates queries on switch
 - **Role-Based Access**: admin/manager task operators see the Tasks and Task Templates entries; non-admin task executors see My Workspace only.
 

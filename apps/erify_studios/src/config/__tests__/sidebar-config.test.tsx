@@ -225,8 +225,12 @@ describe('useSidebarConfig', () => {
           url: '/studios/studio-1/show-operations',
         }),
         expect.objectContaining({
-          title: 'Operations Review',
-          url: '/studios/studio-1/operations-review',
+          title: 'Submission Review',
+          url: '/studios/studio-1/operations-review/submissions',
+        }),
+        expect.objectContaining({
+          title: 'Show Run Review',
+          url: '/studios/studio-1/operations-review/show-runs',
         }),
         expect.objectContaining({
           title: 'Task Review',

@@ -54,7 +54,7 @@ Pattern: route container + `useFeatureViewModel()` hook + presentation component
 - Central access map in `src/lib/constants/studio-route-access.ts`
 - Shared `StudioRouteGuard` + `useStudioAccess` — no duplicated role checks
 - Sidebar visibility from same policy map
-- Studio sidebar groups are purpose-based: `Planning` for schedules/shows/assignment setup, `Operations` for production planning, operations review, task review, and task reports, `People` for member/creator rosters, and `Studio Settings` for configuration surfaces.
+- Studio sidebar groups are purpose-based: `Planning` for schedules/shows/assignment setup, `Operations` for production planning, submission review, show run review, task review, and task reports, `People` for member/creator rosters, and `Studio Settings` for configuration surfaces.
 - Keep `Creator Mapping` with `Planning`, not `People`; it assigns creators to shows rather than managing creator records.
 - Consistent wrappers: `AdminLayout` for `/system/*`, `PageLayout` for studio pages
 - **Shared views across access tiers**: when one presentation component (e.g. `MemberCompensationsView`) is rendered from routes with different `routeKey` guards (admin/manager `/members/$memberId/compensations` *and* member self-view `/my-compensations`), gate any cross-route navigation by an opt-in prop (default off). Never render a link whose destination is protected by a stricter guard than the current route — it ships members into a guaranteed access-denied page. The opting route turns it on; the lower-trust route leaves it off.

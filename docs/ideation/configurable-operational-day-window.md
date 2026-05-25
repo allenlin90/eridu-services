@@ -18,7 +18,8 @@ Potential configuration layers:
 
 ## Impacted Surfaces
 
-- `/studios/:studioId/operations-review`
+- `/studios/:studioId/operations-review/submissions`
+- `/studios/:studioId/operations-review/show-runs`
 - `/studios/:studioId/show-operations`
 - Studio dashboard operational-day cards
 - Task reports and exports that group by operational day

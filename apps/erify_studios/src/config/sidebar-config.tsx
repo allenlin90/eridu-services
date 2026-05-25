@@ -216,9 +216,15 @@ function getStudioOperationsItems(
 
   if (hasStudioRouteAccess(role as StudioRole, 'operationsReview')) {
     operationsItems.push({
-      title: 'Operations Review',
-      url: `/studios/${studioId}/operations-review`,
+      title: 'Submission Review',
+      url: `/studios/${studioId}/operations-review/submissions`,
       icon: ClipboardList,
+    });
+
+    operationsItems.push({
+      title: 'Show Run Review',
+      url: `/studios/${studioId}/operations-review/show-runs`,
+      icon: ShieldCheck,
     });
   }
 

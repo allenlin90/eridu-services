@@ -50,6 +50,7 @@ import { Route as StudiosStudioIdTaskReportsIndexRouteImport } from './routes/st
 import { Route as StudiosStudioIdShowsIndexRouteImport } from './routes/studios/$studioId/shows/index'
 import { Route as StudiosStudioIdShowOperationsIndexRouteImport } from './routes/studios/$studioId/show-operations/index'
 import { Route as StudiosStudioIdShiftsIndexRouteImport } from './routes/studios/$studioId/shifts/index'
+import { Route as StudiosStudioIdOperationsReviewIndexRouteImport } from './routes/studios/$studioId/operations-review/index'
 import { Route as StudiosStudioIdMembersIndexRouteImport } from './routes/studios/$studioId/members/index'
 import { Route as StudiosStudioIdCreatorsIndexRouteImport } from './routes/studios/$studioId/creators/index'
 import { Route as StudiosStudioIdCreatorMappingIndexRouteImport } from './routes/studios/$studioId/creator-mapping/index'
@@ -58,6 +59,8 @@ import { Route as StudiosStudioIdTaskTemplatesNewRouteImport } from './routes/st
 import { Route as StudiosStudioIdTaskTemplatesTemplateIdRouteImport } from './routes/studios/$studioId/task-templates/$templateId'
 import { Route as StudiosStudioIdTaskReportsResultsRouteImport } from './routes/studios/$studioId/task-reports/results'
 import { Route as StudiosStudioIdTaskReportsBuilderRouteImport } from './routes/studios/$studioId/task-reports/builder'
+import { Route as StudiosStudioIdOperationsReviewSubmissionsRouteImport } from './routes/studios/$studioId/operations-review/submissions'
+import { Route as StudiosStudioIdOperationsReviewShowRunsRouteImport } from './routes/studios/$studioId/operations-review/show-runs'
 import { Route as StudiosStudioIdCreatorMappingShowIdRouteImport } from './routes/studios/$studioId/creator-mapping/$showId'
 import { Route as SystemStudiosStudioIdStudioRoomsIndexRouteImport } from './routes/system/studios/$studioId/studio-rooms/index'
 import { Route as SystemSchedulesScheduleIdSnapshotsIndexRouteImport } from './routes/system/schedules/$scheduleId/snapshots/index'
@@ -288,6 +291,12 @@ const StudiosStudioIdShiftsIndexRoute =
     path: '/',
     getParentRoute: () => StudiosStudioIdShiftsRoute,
   } as any)
+const StudiosStudioIdOperationsReviewIndexRoute =
+  StudiosStudioIdOperationsReviewIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => StudiosStudioIdOperationsReviewRoute,
+  } as any)
 const StudiosStudioIdMembersIndexRoute =
   StudiosStudioIdMembersIndexRouteImport.update({
     id: '/',
@@ -334,6 +343,18 @@ const StudiosStudioIdTaskReportsBuilderRoute =
     id: '/builder',
     path: '/builder',
     getParentRoute: () => StudiosStudioIdTaskReportsRoute,
+  } as any)
+const StudiosStudioIdOperationsReviewSubmissionsRoute =
+  StudiosStudioIdOperationsReviewSubmissionsRouteImport.update({
+    id: '/submissions',
+    path: '/submissions',
+    getParentRoute: () => StudiosStudioIdOperationsReviewRoute,
+  } as any)
+const StudiosStudioIdOperationsReviewShowRunsRoute =
+  StudiosStudioIdOperationsReviewShowRunsRouteImport.update({
+    id: '/show-runs',
+    path: '/show-runs',
+    getParentRoute: () => StudiosStudioIdOperationsReviewRoute,
   } as any)
 const StudiosStudioIdCreatorMappingShowIdRoute =
   StudiosStudioIdCreatorMappingShowIdRouteImport.update({
@@ -386,7 +407,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
-  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRoute
+  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRouteWithChildren
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
   '/studios/$studioId/show-operations': typeof StudiosStudioIdShowOperationsRouteWithChildren
@@ -409,6 +430,8 @@ export interface FileRoutesByFullPath {
   '/system/tasks': typeof SystemTasksIndexRoute
   '/system/users': typeof SystemUsersIndexRoute
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
+  '/studios/$studioId/operations-review/show-runs': typeof StudiosStudioIdOperationsReviewShowRunsRoute
+  '/studios/$studioId/operations-review/submissions': typeof StudiosStudioIdOperationsReviewSubmissionsRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
   '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
@@ -417,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/creator-mapping/': typeof StudiosStudioIdCreatorMappingIndexRoute
   '/studios/$studioId/creators/': typeof StudiosStudioIdCreatorsIndexRoute
   '/studios/$studioId/members/': typeof StudiosStudioIdMembersIndexRoute
+  '/studios/$studioId/operations-review/': typeof StudiosStudioIdOperationsReviewIndexRoute
   '/studios/$studioId/shifts/': typeof StudiosStudioIdShiftsIndexRoute
   '/studios/$studioId/show-operations/': typeof StudiosStudioIdShowOperationsIndexRoute
   '/studios/$studioId/shows/': typeof StudiosStudioIdShowsIndexRoute
@@ -440,7 +464,6 @@ export interface FileRoutesByTo {
   '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
-  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/system/clients': typeof SystemClientsIndexRoute
   '/system/compensation-line-items': typeof SystemCompensationLineItemsIndexRoute
@@ -457,6 +480,8 @@ export interface FileRoutesByTo {
   '/system/tasks': typeof SystemTasksIndexRoute
   '/system/users': typeof SystemUsersIndexRoute
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
+  '/studios/$studioId/operations-review/show-runs': typeof StudiosStudioIdOperationsReviewShowRunsRoute
+  '/studios/$studioId/operations-review/submissions': typeof StudiosStudioIdOperationsReviewSubmissionsRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
   '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
@@ -465,6 +490,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingIndexRoute
   '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsIndexRoute
   '/studios/$studioId/members': typeof StudiosStudioIdMembersIndexRoute
+  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewIndexRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsIndexRoute
   '/studios/$studioId/show-operations': typeof StudiosStudioIdShowOperationsIndexRoute
   '/studios/$studioId/shows': typeof StudiosStudioIdShowsIndexRoute
@@ -492,7 +518,7 @@ export interface FileRoutesById {
   '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
-  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRoute
+  '/studios/$studioId/operations-review': typeof StudiosStudioIdOperationsReviewRouteWithChildren
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
   '/studios/$studioId/show-operations': typeof StudiosStudioIdShowOperationsRouteWithChildren
@@ -515,6 +541,8 @@ export interface FileRoutesById {
   '/system/tasks/': typeof SystemTasksIndexRoute
   '/system/users/': typeof SystemUsersIndexRoute
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
+  '/studios/$studioId/operations-review/show-runs': typeof StudiosStudioIdOperationsReviewShowRunsRoute
+  '/studios/$studioId/operations-review/submissions': typeof StudiosStudioIdOperationsReviewSubmissionsRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
   '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
   '/studios/$studioId/task-templates/$templateId': typeof StudiosStudioIdTaskTemplatesTemplateIdRoute
@@ -523,6 +551,7 @@ export interface FileRoutesById {
   '/studios/$studioId/creator-mapping/': typeof StudiosStudioIdCreatorMappingIndexRoute
   '/studios/$studioId/creators/': typeof StudiosStudioIdCreatorsIndexRoute
   '/studios/$studioId/members/': typeof StudiosStudioIdMembersIndexRoute
+  '/studios/$studioId/operations-review/': typeof StudiosStudioIdOperationsReviewIndexRoute
   '/studios/$studioId/shifts/': typeof StudiosStudioIdShiftsIndexRoute
   '/studios/$studioId/show-operations/': typeof StudiosStudioIdShowOperationsIndexRoute
   '/studios/$studioId/shows/': typeof StudiosStudioIdShowsIndexRoute
@@ -574,6 +603,8 @@ export interface FileRouteTypes {
     | '/system/tasks'
     | '/system/users'
     | '/studios/$studioId/creator-mapping/$showId'
+    | '/studios/$studioId/operations-review/show-runs'
+    | '/studios/$studioId/operations-review/submissions'
     | '/studios/$studioId/task-reports/builder'
     | '/studios/$studioId/task-reports/results'
     | '/studios/$studioId/task-templates/$templateId'
@@ -582,6 +613,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creator-mapping/'
     | '/studios/$studioId/creators/'
     | '/studios/$studioId/members/'
+    | '/studios/$studioId/operations-review/'
     | '/studios/$studioId/shifts/'
     | '/studios/$studioId/show-operations/'
     | '/studios/$studioId/shows/'
@@ -605,7 +637,6 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-compensations'
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
-    | '/studios/$studioId/operations-review'
     | '/studios/$studioId/shared-fields'
     | '/system/clients'
     | '/system/compensation-line-items'
@@ -622,6 +653,8 @@ export interface FileRouteTypes {
     | '/system/tasks'
     | '/system/users'
     | '/studios/$studioId/creator-mapping/$showId'
+    | '/studios/$studioId/operations-review/show-runs'
+    | '/studios/$studioId/operations-review/submissions'
     | '/studios/$studioId/task-reports/builder'
     | '/studios/$studioId/task-reports/results'
     | '/studios/$studioId/task-templates/$templateId'
@@ -630,6 +663,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creator-mapping'
     | '/studios/$studioId/creators'
     | '/studios/$studioId/members'
+    | '/studios/$studioId/operations-review'
     | '/studios/$studioId/shifts'
     | '/studios/$studioId/show-operations'
     | '/studios/$studioId/shows'
@@ -679,6 +713,8 @@ export interface FileRouteTypes {
     | '/system/tasks/'
     | '/system/users/'
     | '/studios/$studioId/creator-mapping/$showId'
+    | '/studios/$studioId/operations-review/show-runs'
+    | '/studios/$studioId/operations-review/submissions'
     | '/studios/$studioId/task-reports/builder'
     | '/studios/$studioId/task-reports/results'
     | '/studios/$studioId/task-templates/$templateId'
@@ -687,6 +723,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creator-mapping/'
     | '/studios/$studioId/creators/'
     | '/studios/$studioId/members/'
+    | '/studios/$studioId/operations-review/'
     | '/studios/$studioId/shifts/'
     | '/studios/$studioId/show-operations/'
     | '/studios/$studioId/shows/'
@@ -997,6 +1034,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdShiftsIndexRouteImport
       parentRoute: typeof StudiosStudioIdShiftsRoute
     }
+    '/studios/$studioId/operations-review/': {
+      id: '/studios/$studioId/operations-review/'
+      path: '/'
+      fullPath: '/studios/$studioId/operations-review/'
+      preLoaderRoute: typeof StudiosStudioIdOperationsReviewIndexRouteImport
+      parentRoute: typeof StudiosStudioIdOperationsReviewRoute
+    }
     '/studios/$studioId/members/': {
       id: '/studios/$studioId/members/'
       path: '/'
@@ -1052,6 +1096,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/studios/$studioId/task-reports/builder'
       preLoaderRoute: typeof StudiosStudioIdTaskReportsBuilderRouteImport
       parentRoute: typeof StudiosStudioIdTaskReportsRoute
+    }
+    '/studios/$studioId/operations-review/submissions': {
+      id: '/studios/$studioId/operations-review/submissions'
+      path: '/submissions'
+      fullPath: '/studios/$studioId/operations-review/submissions'
+      preLoaderRoute: typeof StudiosStudioIdOperationsReviewSubmissionsRouteImport
+      parentRoute: typeof StudiosStudioIdOperationsReviewRoute
+    }
+    '/studios/$studioId/operations-review/show-runs': {
+      id: '/studios/$studioId/operations-review/show-runs'
+      path: '/show-runs'
+      fullPath: '/studios/$studioId/operations-review/show-runs'
+      preLoaderRoute: typeof StudiosStudioIdOperationsReviewShowRunsRouteImport
+      parentRoute: typeof StudiosStudioIdOperationsReviewRoute
     }
     '/studios/$studioId/creator-mapping/$showId': {
       id: '/studios/$studioId/creator-mapping/$showId'
@@ -1148,6 +1206,27 @@ const StudiosStudioIdMembersRouteChildren: StudiosStudioIdMembersRouteChildren =
 const StudiosStudioIdMembersRouteWithChildren =
   StudiosStudioIdMembersRoute._addFileChildren(
     StudiosStudioIdMembersRouteChildren,
+  )
+
+interface StudiosStudioIdOperationsReviewRouteChildren {
+  StudiosStudioIdOperationsReviewShowRunsRoute: typeof StudiosStudioIdOperationsReviewShowRunsRoute
+  StudiosStudioIdOperationsReviewSubmissionsRoute: typeof StudiosStudioIdOperationsReviewSubmissionsRoute
+  StudiosStudioIdOperationsReviewIndexRoute: typeof StudiosStudioIdOperationsReviewIndexRoute
+}
+
+const StudiosStudioIdOperationsReviewRouteChildren: StudiosStudioIdOperationsReviewRouteChildren =
+  {
+    StudiosStudioIdOperationsReviewShowRunsRoute:
+      StudiosStudioIdOperationsReviewShowRunsRoute,
+    StudiosStudioIdOperationsReviewSubmissionsRoute:
+      StudiosStudioIdOperationsReviewSubmissionsRoute,
+    StudiosStudioIdOperationsReviewIndexRoute:
+      StudiosStudioIdOperationsReviewIndexRoute,
+  }
+
+const StudiosStudioIdOperationsReviewRouteWithChildren =
+  StudiosStudioIdOperationsReviewRoute._addFileChildren(
+    StudiosStudioIdOperationsReviewRouteChildren,
   )
 
 interface StudiosStudioIdShiftsRouteChildren {
@@ -1254,7 +1333,7 @@ interface StudiosStudioIdRouteRouteChildren {
   StudiosStudioIdMyCompensationsRoute: typeof StudiosStudioIdMyCompensationsRoute
   StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
-  StudiosStudioIdOperationsReviewRoute: typeof StudiosStudioIdOperationsReviewRoute
+  StudiosStudioIdOperationsReviewRoute: typeof StudiosStudioIdOperationsReviewRouteWithChildren
   StudiosStudioIdSharedFieldsRoute: typeof StudiosStudioIdSharedFieldsRoute
   StudiosStudioIdShiftsRoute: typeof StudiosStudioIdShiftsRouteWithChildren
   StudiosStudioIdShowOperationsRoute: typeof StudiosStudioIdShowOperationsRouteWithChildren
@@ -1273,7 +1352,8 @@ const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
   StudiosStudioIdMyCompensationsRoute: StudiosStudioIdMyCompensationsRoute,
   StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
-  StudiosStudioIdOperationsReviewRoute: StudiosStudioIdOperationsReviewRoute,
+  StudiosStudioIdOperationsReviewRoute:
+    StudiosStudioIdOperationsReviewRouteWithChildren,
   StudiosStudioIdSharedFieldsRoute: StudiosStudioIdSharedFieldsRoute,
   StudiosStudioIdShiftsRoute: StudiosStudioIdShiftsRouteWithChildren,
   StudiosStudioIdShowOperationsRoute:
