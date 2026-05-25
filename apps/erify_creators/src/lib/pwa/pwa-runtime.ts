@@ -1,4 +1,5 @@
 import { registerSW } from 'virtual:pwa-register';
+
 import { clearPersistedCache } from '@/lib/api';
 
 const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;

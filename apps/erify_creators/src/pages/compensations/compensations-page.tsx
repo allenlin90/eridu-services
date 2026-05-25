@@ -35,6 +35,7 @@ import { PageLayout } from '@/components/layouts/page-layout';
 import { useMyShowCompensations } from '@/features/compensations/api/compensations.api';
 import { getInitialDateRange } from '@/features/compensations/config/compensations-search-schema';
 import { useActiveStudio } from '@/lib/hooks';
+
 const UNRESOLVED_REASON_LABELS: Record<string, string> = {
   AGREEMENT_SNAPSHOT_MISSING: 'Agreement pending',
   COMMISSION_REVENUE_NOT_AVAILABLE: 'Revenue pending verification',
@@ -100,8 +101,8 @@ export function CompensationsPage() {
         title="My Compensations"
         description={
           activeStudio
-             ? `Viewing show earnings with ${activeStudio.studio.name}`
-             : 'Review your agreed rates and earnings across assigned shows'
+            ? `Viewing show earnings with ${activeStudio.studio.name}`
+            : 'Review your agreed rates and earnings across assigned shows'
         }
       >
         <div className="space-y-6">

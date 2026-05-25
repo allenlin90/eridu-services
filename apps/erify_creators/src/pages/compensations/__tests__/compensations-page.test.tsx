@@ -18,8 +18,6 @@ vi.mock('@/lib/hooks', () => ({
   useActiveStudio: vi.fn(),
 }));
 
-
-
 describe('compensationsPage', () => {
   const mockNavigate = vi.fn();
 
