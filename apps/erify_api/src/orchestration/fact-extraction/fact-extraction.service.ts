@@ -21,6 +21,7 @@ import type {
   ExtractionDecision,
 } from './extractors/extractor.types';
 import { ExtractorRegistry } from './extractors/extractor-registry';
+import { parseViolationValue } from './extractors/violation-value';
 import {
   FactExtractionProcessor,
   type PairedShowActualsResult,
@@ -911,8 +912,13 @@ function isFactValueParseable(fact: ExtractedFact): boolean {
     case 'checkbox':
       return parseBooleanValue(fact.rawValue) !== null;
     case 'multiselect':
-      return Array.isArray(fact.rawValue)
-        && fact.rawValue.every((value) => typeof value === 'string');
+      // Defer to the shared violation parser so collision routing matches
+      // the extractor's write decision. A `string[]`-only check would
+      // mis-classify `['   ']` as a writer (extractor noops) and
+      // `['COPYRIGHT', 123]` as a non-writer (extractor still writes
+      // 'COPYRIGHT'), causing false `skipped_collision` outcomes or
+      // missed collision guards for real writes.
+      return parseViolationValue(fact.rawValue) !== null;
     default:
       return true;
   }

@@ -6,17 +6,12 @@ import type {
   ExtractionDecision,
   IngestionExtractor,
 } from './extractor.types';
+import { parseViolationValue } from './violation-value';
 
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { ShowPlatformViolationService } from '@/models/show-platform-violation/show-platform-violation.service';
 
 const DEFAULT_VIOLATION_REASON = 'Operator did not provide a violation reason.';
-const DEFAULT_VIOLATION_SEVERITY = 'WARNING';
-
-type ParsedViolation = {
-  violationType: string;
-  severity: string;
-};
 
 @Injectable()
 export class ShowPlatformViolationExtractor implements IngestionExtractor {
@@ -98,40 +93,6 @@ export class ShowPlatformViolationExtractor implements IngestionExtractor {
       newValue: result.created.map(toAuditValue),
     };
   }
-}
-
-function parseViolationValue(rawValue: unknown): ParsedViolation[] | null {
-  if (!Array.isArray(rawValue)) {
-    return null;
-  }
-
-  // An empty input array is the operator clearing all violations and must
-  // proceed to the supersede path (return []). A non-empty input where
-  // every entry failed validation is a malformed payload; treat it as
-  // value_absent (return null) so we never destructively supersede
-  // existing rows on garbage input.
-  const violations = rawValue
-    .map(parseViolationEntry)
-    .filter((entry): entry is ParsedViolation => entry !== null);
-  if (rawValue.length > 0 && violations.length === 0) {
-    return null;
-  }
-  return violations;
-}
-
-function parseViolationEntry(entry: unknown): ParsedViolation | null {
-  if (typeof entry !== 'string') {
-    return null;
-  }
-
-  const [rawType, rawSeverity] = entry.split(':', 2);
-  const violationType = rawType?.trim().toUpperCase();
-  if (!violationType) {
-    return null;
-  }
-
-  const severity = rawSeverity?.trim().toUpperCase() || DEFAULT_VIOLATION_SEVERITY;
-  return { violationType, severity };
 }
 
 function toAuditValue(entry: {
