@@ -34,36 +34,72 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
   const { data: summaryData, isFetching } = useQuery({
     queryKey: studioTasksKeys.list(studioId, summaryParams),
     queryFn: async ({ signal }) => {
-      // 1. Fetch the first page to get metadata and first batch
-      const firstPage = await getStudioTasks(studioId, { ...summaryParams, page: 1 }, { signal });
-      const totalPages = firstPage.meta?.totalPages || 1;
+      // 1. Fetch dated tasks in parallel batches
+      const fetchDated = async () => {
+        const firstPage = await getStudioTasks(studioId, { ...summaryParams, page: 1 }, { signal });
+        const totalPages = firstPage.meta?.totalPages || 1;
 
-      if (totalPages <= 1) {
-        return firstPage;
-      }
+        if (totalPages <= 1) {
+          return firstPage.data;
+        }
 
-      // 2. Fetch all remaining pages concurrently
-      const pagePromises = [];
-      for (let p = 2; p <= totalPages; p++) {
-        pagePromises.push(
-          getStudioTasks(studioId, { ...summaryParams, page: p }, { signal }),
-        );
-      }
+        const pagePromises = [];
+        for (let p = 2; p <= totalPages; p++) {
+          pagePromises.push(
+            getStudioTasks(studioId, { ...summaryParams, page: p }, { signal }),
+          );
+        }
 
-      const otherPages = await Promise.all(pagePromises);
+        const otherPages = await Promise.all(pagePromises);
+        return [
+          ...firstPage.data,
+          ...otherPages.flatMap((page) => page.data),
+        ];
+      };
 
-      // 3. Merge all data
-      const allData = [
-        ...firstPage.data,
-        ...otherPages.flatMap((page) => page.data),
-      ];
+      // 2. Fetch undated tasks in parallel batches to capture tasks with due_date = null
+      const fetchUndated = async () => {
+        const undatedParams = {
+          status: 'REVIEW' as const,
+          has_due_date: false,
+          limit: 100,
+        };
+        const firstPage = await getStudioTasks(studioId, { ...undatedParams, page: 1 }, { signal });
+        const totalPages = firstPage.meta?.totalPages || 1;
+
+        if (totalPages <= 1) {
+          return firstPage.data;
+        }
+
+        const pagePromises = [];
+        for (let p = 2; p <= totalPages; p++) {
+          pagePromises.push(
+            getStudioTasks(studioId, { ...undatedParams, page: p }, { signal }),
+          );
+        }
+
+        const otherPages = await Promise.all(pagePromises);
+        return [
+          ...firstPage.data,
+          ...otherPages.flatMap((page) => page.data),
+        ];
+      };
+
+      // Concurrently query both subsets and merge results
+      const [datedData, undatedData] = await Promise.all([
+        fetchDated(),
+        fetchUndated(),
+      ]);
+
+      const allData = [...datedData, ...undatedData];
 
       return {
         data: allData,
         meta: {
-          ...firstPage.meta,
+          total: allData.length,
           limit: allData.length,
           totalPages: 1,
+          page: 1,
         },
       };
     },
