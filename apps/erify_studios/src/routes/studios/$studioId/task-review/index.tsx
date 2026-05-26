@@ -1,14 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import {
-  Activity,
-  Archive,
-  Clock,
-  Inbox,
-  RefreshCw,
-} from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -22,15 +16,14 @@ import {
   DataTableToolbar,
   DatePickerWithRange,
 } from '@eridu/ui';
-import { cn } from '@eridu/ui/lib/utils';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { getStudioTasks, studioTasksKeys } from '@/features/tasks/api/get-studio-tasks';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
+import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { getTaskIssues, getTaskPhase, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
-import { isCurrentOperationalDay, OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS, operationalWindowToDayRange } from '@/lib/operational-day-range';
+import { useTaskReviewSummary } from '@/features/tasks/hooks/use-task-review-summary';
 
 export const Route = createFileRoute('/studios/$studioId/task-review/')({
   component: StudioTaskReviewPage,
@@ -48,116 +41,13 @@ function StudioTaskReviewPage() {
   const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
 
   // State for client-side filter
-  const [activeFilter, setActiveFilter] = useState<'all' | 'ready' | 'attention'>('all');
+  const [activeFilter, setActiveFilter] = useState<TaskReviewActiveFilter>('all');
 
-  // Compute effective date range for fetching ALL Review-status tasks in parallel
-  const effectiveRange = useMemo(
-    () => operationalWindowToDayRange(reviewScopeProps.dateRange),
-    [reviewScopeProps.dateRange],
-  );
-
-  // Parallel query parameters (fetch base params)
-  const summaryParams = useMemo(() => ({
-    due_date_from: effectiveRange.windowStart.toISOString(),
-    due_date_to: effectiveRange.windowEnd.toISOString(),
-    status: 'REVIEW' as const,
-    limit: 100,
-  }), [effectiveRange]);
-
-  const isViewingCurrentOperationalDay = useMemo(
-    () => isCurrentOperationalDay(effectiveRange),
-    [effectiveRange],
-  );
-
-  const { data: summaryData } = useQuery({
-    queryKey: studioTasksKeys.list(studioId, summaryParams),
-    queryFn: async ({ signal }) => {
-      // 1. Fetch the first page to get metadata and first batch
-      const firstPage = await getStudioTasks(studioId, { ...summaryParams, page: 1 }, { signal });
-      const totalPages = firstPage.meta?.totalPages || 1;
-
-      if (totalPages <= 1) {
-        return firstPage;
-      }
-
-      // 2. Fetch all remaining pages concurrently
-      const pagePromises = [];
-      for (let p = 2; p <= totalPages; p++) {
-        pagePromises.push(
-          getStudioTasks(studioId, { ...summaryParams, page: p }, { signal }),
-        );
-      }
-
-      const otherPages = await Promise.all(pagePromises);
-
-      // 3. Merge all data
-      const allData = [
-        ...firstPage.data,
-        ...otherPages.flatMap((page) => page.data),
-      ];
-
-      return {
-        data: allData,
-        meta: {
-          ...firstPage.meta,
-          limit: allData.length,
-          totalPages: 1,
-        },
-      };
-    },
-    enabled: !!studioId,
-    refetchInterval: isViewingCurrentOperationalDay
-      ? OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS
-      : false,
-    refetchIntervalInBackground: false,
+  // Load summary and statistics using extracted hook
+  const { summaryData, stats } = useTaskReviewSummary({
+    studioId,
+    dateRange: reviewScopeProps.dateRange,
   });
-
-  // Group and compute statistics dynamically
-  const stats = useMemo(() => {
-    const allReviewTasks = summaryData?.data || [];
-    let ready = 0;
-    let attention = 0;
-    const preProdAttention: string[] = [];
-    const preProdReady: string[] = [];
-    const onAirAttention: string[] = [];
-    const onAirReady: string[] = [];
-    const postProdAttention: string[] = [];
-    const postProdReady: string[] = [];
-
-    allReviewTasks.forEach((task) => {
-      const issues = getTaskIssues(task);
-      const hasIssues = issues.length > 0;
-      const phase = getTaskPhase(task.type);
-
-      if (hasIssues) {
-        attention++;
-        if (phase === 'pre-production')
-          preProdAttention.push(task.id);
-        else if (phase === 'post-production')
-          postProdAttention.push(task.id);
-        else onAirAttention.push(task.id);
-      } else {
-        ready++;
-        if (phase === 'pre-production')
-          preProdReady.push(task.id);
-        else if (phase === 'post-production')
-          postProdReady.push(task.id);
-        else onAirReady.push(task.id);
-      }
-    });
-
-    return {
-      total: allReviewTasks.length,
-      ready,
-      attention,
-      preProdAttentionCount: preProdAttention.length,
-      preProdReadyCount: preProdReady.length,
-      onAirAttentionCount: onAirAttention.length,
-      onAirReadyCount: onAirReady.length,
-      postProdAttentionCount: postProdAttention.length,
-      postProdReadyCount: postProdReady.length,
-    };
-  }, [summaryData]);
 
   // Get pagination parameters from tableProps
   const { pageIndex, pageSize } = tableProps.pagination;
@@ -236,6 +126,33 @@ function StudioTaskReviewPage() {
           && matchesColumnFilters(task, tableProps.columnFilters),
       );
     }
+    if (activeFilter === 'pre-prod-attention') {
+      return allReviewTasks.filter(
+        (task) =>
+          task.status === 'REVIEW'
+          && getTaskPhase(task.type) === 'pre-production'
+          && getTaskIssues(task).length > 0
+          && matchesColumnFilters(task, tableProps.columnFilters),
+      );
+    }
+    if (activeFilter === 'on-air-attention') {
+      return allReviewTasks.filter(
+        (task) =>
+          task.status === 'REVIEW'
+          && getTaskPhase(task.type) === 'on-air'
+          && getTaskIssues(task).length > 0
+          && matchesColumnFilters(task, tableProps.columnFilters),
+      );
+    }
+    if (activeFilter === 'post-prod-attention') {
+      return allReviewTasks.filter(
+        (task) =>
+          task.status === 'REVIEW'
+          && getTaskPhase(task.type) === 'post-production'
+          && getTaskIssues(task).length > 0
+          && matchesColumnFilters(task, tableProps.columnFilters),
+      );
+    }
     return null; // For 'all' filter, we use the server-paginated data
   }, [summaryData?.data, activeFilter, tableProps.columnFilters, matchesColumnFilters]);
 
@@ -260,9 +177,15 @@ function StudioTaskReviewPage() {
     [tableProps.columnFilters],
   );
 
+  // Store onPaginationChange callback in a mutable ref to decouple it from pagination state changes
+  const onPaginationChangeRef = useRef(onPaginationChange);
+  useEffect(() => {
+    onPaginationChangeRef.current = onPaginationChange;
+  }, [onPaginationChange]);
+
   // Reset pagination pageIndex to 0 when activeFilter or column filters change
   useEffect(() => {
-    onPaginationChange((prev) => {
+    onPaginationChangeRef.current((prev) => {
       if (prev.pageIndex === 0)
         return prev;
       return {
@@ -270,7 +193,7 @@ function StudioTaskReviewPage() {
         pageIndex: 0,
       };
     });
-  }, [activeFilter, serializedColumnFilters, onPaginationChange]);
+  }, [activeFilter, serializedColumnFilters]);
 
   const effectivePagination = useMemo(() => {
     if (filteredAllData === null) {
@@ -318,147 +241,11 @@ function StudioTaskReviewPage() {
         </Card>
 
         {/* Visual Dashboard cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Review Overview */}
-          <div
-            onClick={() => setActiveFilter('all')}
-            className={cn(
-              'rounded-xl border p-5 shadow-sm bg-gradient-to-br from-indigo-500/5 to-purple-500/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer flex flex-col gap-3',
-              activeFilter === 'all' ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-500/10 dark:bg-indigo-950/20' : 'border-muted/60 dark:border-muted/30',
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Review Overview</span>
-              <Inbox className="h-5 w-5 text-indigo-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold tracking-tight">{stats.total}</span>
-              <span className="text-xs text-muted-foreground">Tasks in Review</span>
-            </div>
-            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs mt-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveFilter('ready');
-                }}
-                className={cn(
-                  'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
-                  activeFilter === 'ready' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-500',
-                )}
-              >
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping flex-shrink-0" style={{ animationDuration: '3s' }} />
-                <span>
-                  {stats.ready}
-                  {' '}
-                  Ready
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveFilter('attention');
-                }}
-                className={cn(
-                  'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
-                  activeFilter === 'attention' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-500',
-                )}
-              >
-                <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping flex-shrink-0" style={{ animationDuration: '2s' }} />
-                <span>
-                  {stats.attention}
-                  {' '}
-                  Attention
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Card 2: Pre-Production Exceptions */}
-          <div
-            onClick={() => setActiveFilter('attention')}
-            className={cn(
-              'rounded-xl border p-5 shadow-sm bg-gradient-to-br from-blue-500/5 to-cyan-500/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer flex flex-col gap-3',
-              activeFilter === 'attention' ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-500/10 dark:bg-blue-950/20' : 'border-muted/60 dark:border-muted/30',
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Pre-Production (SETUP)</span>
-              <Clock className="h-5 w-5 text-blue-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className={cn('text-3xl font-bold tracking-tight transition-all duration-200', stats.preProdAttentionCount > 0 ? 'text-rose-600 dark:text-rose-400 font-extrabold' : '')}>
-                {stats.preProdAttentionCount}
-              </span>
-              <span className="text-xs text-muted-foreground">Needs Attention</span>
-            </div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-              <span>
-                {stats.preProdReadyCount}
-                {' '}
-                Ready for Approval
-              </span>
-            </div>
-          </div>
-
-          {/* Card 3: On-Air Exceptions */}
-          <div
-            onClick={() => setActiveFilter('attention')}
-            className={cn(
-              'rounded-xl border p-5 shadow-sm bg-gradient-to-br from-amber-500/5 to-orange-500/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer flex flex-col gap-3',
-              activeFilter === 'attention' ? 'border-amber-500 ring-1 ring-amber-500 bg-amber-500/10 dark:bg-amber-950/20' : 'border-muted/60 dark:border-muted/30',
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">On-Air (ACTIVE/ROUTINE)</span>
-              <Activity className="h-5 w-5 text-amber-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className={cn('text-3xl font-bold tracking-tight transition-all duration-200', stats.onAirAttentionCount > 0 ? 'text-rose-600 dark:text-rose-400 font-extrabold' : '')}>
-                {stats.onAirAttentionCount}
-              </span>
-              <span className="text-xs text-muted-foreground">Needs Attention</span>
-            </div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-              <span>
-                {stats.onAirReadyCount}
-                {' '}
-                Ready for Approval
-              </span>
-            </div>
-          </div>
-
-          {/* Card 4: Post-Production Exceptions */}
-          <div
-            onClick={() => setActiveFilter('attention')}
-            className={cn(
-              'rounded-xl border p-5 shadow-sm bg-gradient-to-br from-rose-500/5 to-pink-500/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer flex flex-col gap-3',
-              activeFilter === 'attention' ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-500/10 dark:bg-rose-950/20' : 'border-muted/60 dark:border-muted/30',
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Post-Production (CLOSURE)</span>
-              <Archive className="h-5 w-5 text-rose-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className={cn('text-3xl font-bold tracking-tight transition-all duration-200', stats.postProdAttentionCount > 0 ? 'text-rose-600 dark:text-rose-400 font-extrabold' : '')}>
-                {stats.postProdAttentionCount}
-              </span>
-              <span className="text-xs text-muted-foreground">Needs Attention</span>
-            </div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-              <span>
-                {stats.postProdReadyCount}
-                {' '}
-                Ready for Approval
-              </span>
-            </div>
-          </div>
-        </div>
+        <StudioTaskReviewSummaryPanel
+          stats={stats}
+          activeFilter={activeFilter}
+          setActiveFilter={setActiveFilter}
+        />
 
         {/* Toggle tabs for main table filter */}
         <div className="flex border-b border-muted py-2 gap-2 overflow-x-auto scrollbar-none flex-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
@@ -485,7 +272,11 @@ function StudioTaskReviewPage() {
           </Button>
           <Button
             type="button"
-            variant={activeFilter === 'attention' ? 'default' : 'ghost'}
+            variant={
+              ['attention', 'pre-prod-attention', 'on-air-attention', 'post-prod-attention'].includes(activeFilter)
+                ? 'default'
+                : 'ghost'
+            }
             size="sm"
             onClick={() => setActiveFilter('attention')}
             className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
