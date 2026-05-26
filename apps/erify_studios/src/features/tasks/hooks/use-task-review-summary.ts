@@ -62,6 +62,8 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
         const undatedParams = {
           status: 'REVIEW' as const,
           has_due_date: false,
+          show_start_from: effectiveRange.windowStart.toISOString(),
+          show_start_to: effectiveRange.windowEnd.toISOString(),
           limit: 100,
         };
         const firstPage = await getStudioTasks(studioId, { ...undatedParams, page: 1 }, { signal });
