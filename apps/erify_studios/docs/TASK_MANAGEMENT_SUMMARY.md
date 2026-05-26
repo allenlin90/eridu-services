@@ -166,7 +166,7 @@ The default operational day is 06:00-05:59 local time for PR 12.4. Task Review a
 ✅ Show detail with task cards and inline reassignment
 ✅ My Tasks (filter bar, task cards, progress bars, urgency borders, show-start-date filter)
 ✅ Task Execution Sheet (JsonForm, auto-save, rejection banner, status actions, IndexedDB draft persistence)
-✅ Task Review (per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
+✅ Task Review (gradient summary dashboard, Pre/On-Air/Post phase classification, ready/attention exception queues, per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
 ✅ System Tasks (cross-studio list, detail dialog, reassignment)
 ✅ Moderation loop workflow (loop-based template builder, loop progress block, live loop detection, per-loop field filtering)
 ✅ Task Submission Reporting (definition CRUD, scope filters, contextual source catalog, column picker, preflight, run, result table, view filters, CSV export)
