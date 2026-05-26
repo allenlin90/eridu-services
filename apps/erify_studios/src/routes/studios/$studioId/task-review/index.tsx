@@ -7,7 +7,7 @@ import {
   Inbox,
   RefreshCw,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   adaptColumnFiltersChange,
@@ -30,7 +30,7 @@ import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-a
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { getTaskIssues, getTaskPhase, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
-import { operationalWindowToDayRange } from '@/lib/operational-day-range';
+import { isCurrentOperationalDay, OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS, operationalWindowToDayRange } from '@/lib/operational-day-range';
 
 export const Route = createFileRoute('/studios/$studioId/task-review/')({
   component: StudioTaskReviewPage,
@@ -63,6 +63,11 @@ function StudioTaskReviewPage() {
     status: 'REVIEW' as const,
     limit: 100,
   }), [effectiveRange]);
+
+  const isViewingCurrentOperationalDay = useMemo(
+    () => isCurrentOperationalDay(effectiveRange),
+    [effectiveRange],
+  );
 
   const { data: summaryData } = useQuery({
     queryKey: studioTasksKeys.list(studioId, summaryParams),
@@ -101,6 +106,10 @@ function StudioTaskReviewPage() {
       };
     },
     enabled: !!studioId,
+    refetchInterval: isViewingCurrentOperationalDay
+      ? OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS
+      : false,
+    refetchIntervalInBackground: false,
   });
 
   // Group and compute statistics dynamically
@@ -153,17 +162,66 @@ function StudioTaskReviewPage() {
   // Get pagination parameters from tableProps
   const { pageIndex, pageSize } = tableProps.pagination;
 
+  // Helper to check if a task matches all active column filters client-side
+  const matchesColumnFilters = useCallback((task: TaskWithRelationsDto, filters: { id: string; value: unknown }[]) => {
+    return filters.every((filter) => {
+      const { id, value } = filter;
+      if (!value)
+        return true;
+
+      if (id === 'description') {
+        const query = String(value).toLowerCase();
+        const desc = (task.description || '').toLowerCase();
+        const show = (task.show?.name || '').toLowerCase();
+        const assignee = (task.assignee?.name || '').toLowerCase();
+        return desc.includes(query) || show.includes(query) || assignee.includes(query);
+      }
+      if (id === 'client_name') {
+        const query = String(value).toLowerCase();
+        const client = (task.show?.client?.name || '').toLowerCase();
+        return client.includes(query);
+      }
+      if (id === 'assignee_name') {
+        const query = String(value).toLowerCase();
+        const assignee = (task.assignee?.name || '').toLowerCase();
+        return assignee.includes(query);
+      }
+      if (id === 'show_name') {
+        const query = String(value).toLowerCase();
+        const show = (task.show?.name || '').toLowerCase();
+        return show.includes(query);
+      }
+      if (id === 'status') {
+        return task.status === value;
+      }
+      if (id === 'task_type') {
+        return task.type === value;
+      }
+      return true;
+    });
+  }, []);
+
   // Client-side table data filtering on the fully fetched summaryData dataset
   const filteredAllData = useMemo(() => {
     const allReviewTasks = summaryData?.data || [];
     if (activeFilter === 'ready') {
-      return allReviewTasks.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0);
+      return allReviewTasks.filter(
+        (task) =>
+          task.status === 'REVIEW'
+          && getTaskIssues(task).length === 0
+          && matchesColumnFilters(task, tableProps.columnFilters),
+      );
     }
     if (activeFilter === 'attention') {
-      return allReviewTasks.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length > 0);
+      return allReviewTasks.filter(
+        (task) =>
+          task.status === 'REVIEW'
+          && getTaskIssues(task).length > 0
+          && matchesColumnFilters(task, tableProps.columnFilters),
+      );
     }
     return null; // For 'all' filter, we use the server-paginated data
-  }, [summaryData?.data, activeFilter]);
+  }, [summaryData?.data, activeFilter, tableProps.columnFilters, matchesColumnFilters]);
 
   // Determine displayed data and pageCount
   const displayedData = useMemo(() => {
