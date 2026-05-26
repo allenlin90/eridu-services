@@ -7,7 +7,7 @@ import {
   Inbox,
   RefreshCw,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   adaptColumnFiltersChange,
@@ -43,7 +43,7 @@ function StudioTaskReviewPage() {
   const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
     studioId,
   });
-  const pagination = tableProps.pagination;
+  const { onPaginationChange } = tableProps;
   const { key: actionSheetKey, ...actionSheetRestProps } = actionSheetProps;
   const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
 
@@ -56,17 +56,50 @@ function StudioTaskReviewPage() {
     [reviewScopeProps.dateRange],
   );
 
-  // Parallel query to retrieve ALL tasks in REVIEW status for this operational day/range
+  // Parallel query parameters (fetch base params)
   const summaryParams = useMemo(() => ({
     due_date_from: effectiveRange.windowStart.toISOString(),
     due_date_to: effectiveRange.windowEnd.toISOString(),
     status: 'REVIEW' as const,
-    limit: 1000,
+    limit: 100,
   }), [effectiveRange]);
 
   const { data: summaryData } = useQuery({
     queryKey: studioTasksKeys.list(studioId, summaryParams),
-    queryFn: ({ signal }) => getStudioTasks(studioId, summaryParams, { signal }),
+    queryFn: async ({ signal }) => {
+      // 1. Fetch the first page to get metadata and first batch
+      const firstPage = await getStudioTasks(studioId, { ...summaryParams, page: 1 }, { signal });
+      const totalPages = firstPage.meta?.totalPages || 1;
+
+      if (totalPages <= 1) {
+        return firstPage;
+      }
+
+      // 2. Fetch all remaining pages concurrently
+      const pagePromises = [];
+      for (let p = 2; p <= totalPages; p++) {
+        pagePromises.push(
+          getStudioTasks(studioId, { ...summaryParams, page: p }, { signal }),
+        );
+      }
+
+      const otherPages = await Promise.all(pagePromises);
+
+      // 3. Merge all data
+      const allData = [
+        ...firstPage.data,
+        ...otherPages.flatMap((page) => page.data),
+      ];
+
+      return {
+        data: allData,
+        meta: {
+          ...firstPage.meta,
+          limit: allData.length,
+          totalPages: 1,
+        },
+      };
+    },
     enabled: !!studioId,
   });
 
@@ -117,19 +150,60 @@ function StudioTaskReviewPage() {
     };
   }, [summaryData]);
 
-  // Client-side table data filtering based on the active tab
-  const filteredTableData = useMemo(() => {
+  // Get pagination parameters from tableProps
+  const { pageIndex, pageSize } = tableProps.pagination;
+
+  // Client-side table data filtering on the fully fetched summaryData dataset
+  const filteredAllData = useMemo(() => {
+    const allReviewTasks = summaryData?.data || [];
     if (activeFilter === 'ready') {
-      return tableProps.data.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0);
+      return allReviewTasks.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0);
     }
     if (activeFilter === 'attention') {
-      return tableProps.data.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length > 0);
+      return allReviewTasks.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length > 0);
     }
-    return tableProps.data;
-  }, [tableProps.data, activeFilter]);
+    return null; // For 'all' filter, we use the server-paginated data
+  }, [summaryData?.data, activeFilter]);
 
-  const displayedData = filteredTableData;
-  const pageCount = activeFilter === 'all' ? pagination.pageCount : 1;
+  // Determine displayed data and pageCount
+  const displayedData = useMemo(() => {
+    if (filteredAllData === null) {
+      return tableProps.data; // Server-paginated current page
+    }
+    // Client-paginate the filtered list
+    return filteredAllData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  }, [filteredAllData, tableProps.data, pageIndex, pageSize]);
+
+  const pageCount = useMemo(() => {
+    if (filteredAllData === null) {
+      return tableProps.pagination.pageCount; // Server total page count
+    }
+    return Math.ceil(filteredAllData.length / pageSize); // Client total page count
+  }, [filteredAllData, tableProps.pagination.pageCount, pageSize]);
+
+  // Reset pagination pageIndex to 0 when activeFilter changes
+  useEffect(() => {
+    onPaginationChange((prev) => {
+      if (prev.pageIndex === 0)
+        return prev;
+      return {
+        ...prev,
+        pageIndex: 0,
+      };
+    });
+  }, [activeFilter, onPaginationChange]);
+
+  const effectivePagination = useMemo(() => {
+    if (filteredAllData === null) {
+      return tableProps.pagination;
+    }
+    return {
+      pageIndex,
+      pageSize,
+      total: filteredAllData.length,
+      pageCount: Math.ceil(filteredAllData.length / pageSize),
+    };
+  }, [filteredAllData, tableProps.pagination, pageIndex, pageSize]);
 
   return (
     <PageLayout
@@ -353,10 +427,10 @@ function StudioTaskReviewPage() {
           manualFiltering
           pageCount={pageCount}
           paginationState={{
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
+            pageIndex: effectivePagination.pageIndex,
+            pageSize: effectivePagination.pageSize,
           }}
-          onPaginationChange={adaptPaginationChange(pagination, tableProps.onPaginationChange)}
+          onPaginationChange={adaptPaginationChange(effectivePagination, tableProps.onPaginationChange)}
           columnFilters={tableProps.columnFilters}
           onColumnFiltersChange={adaptColumnFiltersChange(tableProps.columnFilters, tableProps.onColumnFiltersChange)}
           renderToolbar={(table) => (
@@ -381,7 +455,7 @@ function StudioTaskReviewPage() {
           )}
           renderFooter={() => (
             <DataTablePagination
-              pagination={pagination}
+              pagination={effectivePagination}
               onPaginationChange={tableProps.onPaginationChange}
             />
           )}
