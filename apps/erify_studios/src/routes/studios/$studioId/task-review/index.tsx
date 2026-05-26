@@ -33,7 +33,7 @@ const taskReviewSearchableColumns = studioTaskSearchableColumns.filter((column) 
 
 function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
-  const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
+  const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps, setPageCount } = useStudioTasksPageController({
     studioId,
   });
   const { onPaginationChange } = tableProps;
@@ -181,6 +181,16 @@ function StudioTaskReviewPage() {
     total: filteredAllData.length,
     pageCount,
   }), [filteredAllData.length, pageIndex, pageSize, pageCount]);
+
+  // Once summaryData has resolved, override the URL-state page count with the
+  // merged (dated + undated) page count so useTableUrlState's auto-correction
+  // does not clamp pageIndex to the smaller server-only range, which would
+  // make later pages of the merged queue unreachable.
+  useEffect(() => {
+    if (summaryData !== undefined) {
+      setPageCount(pageCount);
+    }
+  }, [pageCount, summaryData, setPageCount]);
 
   return (
     <PageLayout
