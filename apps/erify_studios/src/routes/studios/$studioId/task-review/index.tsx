@@ -197,6 +197,22 @@ function StudioTaskReviewPage() {
       if (id === 'task_type') {
         return task.type === value;
       }
+      if (id === 'has_assignee') {
+        const isAssigned = !!task.assignee;
+        if (value === 'true')
+          return isAssigned;
+        if (value === 'false')
+          return !isAssigned;
+        return true;
+      }
+      if (id === 'has_due_date') {
+        const hasDate = !!task.due_date;
+        if (value === 'true')
+          return hasDate;
+        if (value === 'false')
+          return !hasDate;
+        return true;
+      }
       return true;
     });
   }, []);
