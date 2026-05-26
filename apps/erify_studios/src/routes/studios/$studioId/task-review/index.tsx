@@ -255,7 +255,12 @@ function StudioTaskReviewPage() {
     return Math.ceil(filteredAllData.length / pageSize); // Client total page count
   }, [filteredAllData, tableProps.pagination.pageCount, pageSize]);
 
-  // Reset pagination pageIndex to 0 when activeFilter changes
+  const serializedColumnFilters = useMemo(
+    () => JSON.stringify(tableProps.columnFilters),
+    [tableProps.columnFilters],
+  );
+
+  // Reset pagination pageIndex to 0 when activeFilter or column filters change
   useEffect(() => {
     onPaginationChange((prev) => {
       if (prev.pageIndex === 0)
@@ -265,7 +270,7 @@ function StudioTaskReviewPage() {
         pageIndex: 0,
       };
     });
-  }, [activeFilter, onPaginationChange]);
+  }, [activeFilter, serializedColumnFilters, onPaginationChange]);
 
   const effectivePagination = useMemo(() => {
     if (filteredAllData === null) {
