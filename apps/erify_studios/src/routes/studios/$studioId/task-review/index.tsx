@@ -465,7 +465,7 @@ function StudioTaskReviewPage() {
             className="text-xs font-semibold rounded-md flex-shrink-0"
           >
             All Tasks (
-            {tableProps.data.length}
+            {tableProps.pagination.total}
             )
           </Button>
           <Button
