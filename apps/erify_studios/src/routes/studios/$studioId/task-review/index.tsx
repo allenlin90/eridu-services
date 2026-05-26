@@ -178,7 +178,7 @@ function StudioTaskReviewPage() {
       }
       if (id === 'client_name') {
         const query = String(value).toLowerCase();
-        const client = (task.show?.client?.name || '').toLowerCase();
+        const client = (task.show?.client_name || '').toLowerCase();
         return client.includes(query);
       }
       if (id === 'assignee_name') {
