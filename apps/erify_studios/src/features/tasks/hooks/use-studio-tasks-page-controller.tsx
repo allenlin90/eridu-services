@@ -112,11 +112,12 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
 
   const columns = useMemo(
     () => getStudioTaskColumns(
+      studioId,
       handleRunAction,
       isUpdatingStatus ? processingTaskId : null,
       openDueDateEditor,
     ),
-    [handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
+    [studioId, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
   );
 
   const tablePagination = data?.meta

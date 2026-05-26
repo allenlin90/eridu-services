@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
+import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Pencil } from 'lucide-react';
+import { AlertTriangle, Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -20,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@eridu/ui';
+import { cn } from '@eridu/ui/lib/utils';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
@@ -96,7 +98,34 @@ function ActionCell({
   );
 }
 
+export function getTaskIssues(task: TaskWithRelationsDto): string[] {
+  const issues: string[] = [];
+  if (!task.assignee) {
+    issues.push('Unassigned');
+  }
+  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'COMPLETED';
+  if (isOverdue) {
+    issues.push('Overdue');
+  }
+  const hasNoContent = !task.content || Object.keys(task.content).length === 0;
+  if (hasNoContent) {
+    issues.push('No Content');
+  }
+  return issues;
+}
+
+export function getTaskPhase(type: string): 'pre-production' | 'on-air' | 'post-production' {
+  if (type === 'SETUP') {
+    return 'pre-production';
+  }
+  if (type === 'CLOSURE') {
+    return 'post-production';
+  }
+  return 'on-air';
+}
+
 export function getStudioTaskColumns(
+  studioId: string,
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void,
   processingTaskId: string | null,
   onEditDueDate: (task: TaskWithRelationsDto) => void,
@@ -105,20 +134,46 @@ export function getStudioTaskColumns(
     {
       accessorKey: 'description',
       header: 'Task',
-      cell: ({ row }) => (
-        <div className="flex flex-col gap-1 max-w-[320px]">
-          <span className="font-medium truncate" title={row.original.description}>
-            {row.original.description}
-          </span>
-          {row.original.template && (
-            <span className="text-xs text-muted-foreground truncate" title={row.original.template.name}>
-              Template:
-              {' '}
-              {row.original.template.name}
+      cell: ({ row }) => {
+        const task = row.original;
+        const phase = getTaskPhase(task.type);
+        const issues = getTaskIssues(task);
+
+        return (
+          <div className="flex flex-col gap-1 max-w-[320px]">
+            <span className="font-medium truncate" title={task.description}>
+              {task.description}
             </span>
-          )}
-        </div>
-      ),
+            {task.template && (
+              <span className="text-xs text-muted-foreground truncate" title={task.template.name}>
+                Template:
+                {' '}
+                {task.template.name}
+              </span>
+            )}
+            <div className="flex flex-wrap gap-1 mt-1">
+              <Badge
+                variant="secondary"
+                className={cn(
+                  'text-[9px] px-1.5 py-0.2 uppercase font-semibold border',
+                  phase === 'pre-production' && 'bg-blue-500/5 text-blue-600 border-blue-200 dark:border-blue-900/30 dark:text-blue-400',
+                  phase === 'on-air' && 'bg-amber-500/5 text-amber-600 border-amber-200 dark:border-amber-900/30 dark:text-amber-400',
+                  phase === 'post-production' && 'bg-purple-500/5 text-purple-600 border-purple-200 dark:border-purple-900/30 dark:text-purple-400',
+                )}
+              >
+                {phase === 'pre-production' ? 'Pre-Prod' : phase === 'on-air' ? 'On-Air' : 'Post-Prod'}
+              </Badge>
+
+              {issues.map((issue) => (
+                <Badge key={issue} variant="outline" className="text-[9px] px-1.5 py-0.2 text-red-600 border-red-200 bg-red-500/5 dark:text-red-400 dark:border-red-900/30 font-semibold uppercase flex items-center gap-0.5">
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  {issue}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'type',
@@ -141,7 +196,20 @@ export function getStudioTaskColumns(
     {
       accessorKey: 'show',
       header: 'Show',
-      cell: ({ row }) => row.original.show?.name ?? '-',
+      cell: ({ row }) => {
+        const show = row.original.show;
+        if (!show)
+          return '-';
+        return (
+          <Link
+            to="/studios/$studioId/task-setup/$showId/tasks"
+            params={{ studioId, showId: show.id }}
+            className="text-primary hover:underline font-medium"
+          >
+            {show.name}
+          </Link>
+        );
+      },
     },
     {
       accessorKey: 'assignee',
