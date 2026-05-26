@@ -44,7 +44,7 @@ function StudioTaskReviewPage() {
   const [activeFilter, setActiveFilter] = useState<TaskReviewActiveFilter>('all');
 
   // Load summary and statistics using extracted hook
-  const { summaryData, stats } = useTaskReviewSummary({
+  const { summaryData, stats, isFetching: isSummaryFetching } = useTaskReviewSummary({
     studioId,
     dateRange: reviewScopeProps.dateRange,
   });
@@ -107,70 +107,50 @@ function StudioTaskReviewPage() {
     });
   }, []);
 
-  // Client-side table data filtering on the fully fetched summaryData dataset
+  // Client-side table data filtering on the fully fetched summaryData dataset.
+  // All tabs (including 'all') source from summaryData so dated + undated review
+  // tasks form a single consistent partition across the tabs.
   const filteredAllData = useMemo(() => {
-    const allReviewTasks = summaryData?.data || [];
+    const allReviewTasks = (summaryData?.data || []).filter(
+      (task) => task.status === 'REVIEW' && matchesColumnFilters(task, tableProps.columnFilters),
+    );
+    if (activeFilter === 'all') {
+      return allReviewTasks;
+    }
     if (activeFilter === 'ready') {
-      return allReviewTasks.filter(
-        (task) =>
-          task.status === 'REVIEW'
-          && getTaskIssues(task).length === 0
-          && matchesColumnFilters(task, tableProps.columnFilters),
-      );
+      return allReviewTasks.filter((task) => getTaskIssues(task).length === 0);
     }
     if (activeFilter === 'attention') {
-      return allReviewTasks.filter(
-        (task) =>
-          task.status === 'REVIEW'
-          && getTaskIssues(task).length > 0
-          && matchesColumnFilters(task, tableProps.columnFilters),
-      );
+      return allReviewTasks.filter((task) => getTaskIssues(task).length > 0);
     }
     if (activeFilter === 'pre-prod-attention') {
       return allReviewTasks.filter(
-        (task) =>
-          task.status === 'REVIEW'
-          && getTaskPhase(task.type) === 'pre-production'
-          && getTaskIssues(task).length > 0
-          && matchesColumnFilters(task, tableProps.columnFilters),
+        (task) => getTaskPhase(task.type) === 'pre-production' && getTaskIssues(task).length > 0,
       );
     }
     if (activeFilter === 'on-air-attention') {
       return allReviewTasks.filter(
-        (task) =>
-          task.status === 'REVIEW'
-          && getTaskPhase(task.type) === 'on-air'
-          && getTaskIssues(task).length > 0
-          && matchesColumnFilters(task, tableProps.columnFilters),
+        (task) => getTaskPhase(task.type) === 'on-air' && getTaskIssues(task).length > 0,
       );
     }
     if (activeFilter === 'post-prod-attention') {
       return allReviewTasks.filter(
-        (task) =>
-          task.status === 'REVIEW'
-          && getTaskPhase(task.type) === 'post-production'
-          && getTaskIssues(task).length > 0
-          && matchesColumnFilters(task, tableProps.columnFilters),
+        (task) => getTaskPhase(task.type) === 'post-production' && getTaskIssues(task).length > 0,
       );
     }
-    return null; // For 'all' filter, we use the server-paginated data
+    return allReviewTasks;
   }, [summaryData?.data, activeFilter, tableProps.columnFilters, matchesColumnFilters]);
 
-  // Determine displayed data and pageCount
-  const displayedData = useMemo(() => {
-    if (filteredAllData === null) {
-      return tableProps.data; // Server-paginated current page
-    }
-    // Client-paginate the filtered list
-    return filteredAllData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
-  }, [filteredAllData, tableProps.data, pageIndex, pageSize]);
+  // Client-paginate the filtered list
+  const displayedData = useMemo(
+    () => filteredAllData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize),
+    [filteredAllData, pageIndex, pageSize],
+  );
 
-  const pageCount = useMemo(() => {
-    if (filteredAllData === null) {
-      return tableProps.pagination.pageCount; // Server total page count
-    }
-    return Math.ceil(filteredAllData.length / pageSize); // Client total page count
-  }, [filteredAllData, tableProps.pagination.pageCount, pageSize]);
+  const pageCount = useMemo(
+    () => Math.max(1, Math.ceil(filteredAllData.length / pageSize)),
+    [filteredAllData.length, pageSize],
+  );
 
   const serializedColumnFilters = useMemo(
     () => JSON.stringify(tableProps.columnFilters),
@@ -195,17 +175,12 @@ function StudioTaskReviewPage() {
     });
   }, [activeFilter, serializedColumnFilters]);
 
-  const effectivePagination = useMemo(() => {
-    if (filteredAllData === null) {
-      return tableProps.pagination;
-    }
-    return {
-      pageIndex,
-      pageSize,
-      total: filteredAllData.length,
-      pageCount: Math.ceil(filteredAllData.length / pageSize),
-    };
-  }, [filteredAllData, tableProps.pagination, pageIndex, pageSize]);
+  const effectivePagination = useMemo(() => ({
+    pageIndex,
+    pageSize,
+    total: filteredAllData.length,
+    pageCount,
+  }), [filteredAllData.length, pageIndex, pageSize, pageCount]);
 
   return (
     <PageLayout
@@ -257,7 +232,7 @@ function StudioTaskReviewPage() {
             className="text-xs font-semibold rounded-md flex-shrink-0"
           >
             All Tasks (
-            {tableProps.pagination.total}
+            {stats.total}
             )
           </Button>
           <Button
@@ -290,8 +265,8 @@ function StudioTaskReviewPage() {
         <DataTable
           data={displayedData}
           columns={tableProps.columns}
-          isLoading={tableProps.isLoading}
-          isFetching={tableProps.isFetching}
+          isLoading={tableProps.isLoading || (isSummaryFetching && !summaryData)}
+          isFetching={tableProps.isFetching || isSummaryFetching}
           emptyMessage={tableProps.emptyMessage}
           manualPagination
           manualFiltering

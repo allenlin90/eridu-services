@@ -11,6 +11,29 @@ type UseTaskReviewSummaryProps = {
   dateRange: DateRange | undefined;
 };
 
+// Cap concurrent page fetches so studios with many review tasks don't fan out
+// hundreds of simultaneous requests across the dated + undated queries.
+const PAGE_FETCH_CONCURRENCY = 5;
+
+async function fetchPagesWithConcurrency<T>(
+  pageNumbers: number[],
+  fetchPage: (page: number) => Promise<T>,
+  concurrency: number,
+): Promise<T[]> {
+  const results: T[] = Array.from({ length: pageNumbers.length });
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, pageNumbers.length) }, async () => {
+    while (true) {
+      const index = cursor++;
+      if (index >= pageNumbers.length)
+        return;
+      results[index] = await fetchPage(pageNumbers[index]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSummaryProps) {
   // Compute effective date range for fetching ALL Review-status tasks in parallel
   const effectiveRange = useMemo(
@@ -43,14 +66,12 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
           return firstPage.data;
         }
 
-        const pagePromises = [];
-        for (let p = 2; p <= totalPages; p++) {
-          pagePromises.push(
-            getStudioTasks(studioId, { ...summaryParams, page: p }, { signal }),
-          );
-        }
-
-        const otherPages = await Promise.all(pagePromises);
+        const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+        const otherPages = await fetchPagesWithConcurrency(
+          remainingPages,
+          (page) => getStudioTasks(studioId, { ...summaryParams, page }, { signal }),
+          PAGE_FETCH_CONCURRENCY,
+        );
         return [
           ...firstPage.data,
           ...otherPages.flatMap((page) => page.data),
@@ -73,14 +94,12 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
           return firstPage.data;
         }
 
-        const pagePromises = [];
-        for (let p = 2; p <= totalPages; p++) {
-          pagePromises.push(
-            getStudioTasks(studioId, { ...undatedParams, page: p }, { signal }),
-          );
-        }
-
-        const otherPages = await Promise.all(pagePromises);
+        const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+        const otherPages = await fetchPagesWithConcurrency(
+          remainingPages,
+          (page) => getStudioTasks(studioId, { ...undatedParams, page }, { signal }),
+          PAGE_FETCH_CONCURRENCY,
+        );
         return [
           ...firstPage.data,
           ...otherPages.flatMap((page) => page.data),
