@@ -65,8 +65,8 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     [dueDateWindow],
   );
   const dueDateRange = useMemo(
-    () => dueDateWindow || operationalDayRangeToPickerDates(effectiveOperationalDayRange),
-    [dueDateWindow, effectiveOperationalDayRange],
+    () => operationalDayRangeToPickerDates(effectiveOperationalDayRange),
+    [effectiveOperationalDayRange],
   );
   const isViewingCurrentOperationalDay = isCurrentOperationalDay(effectiveOperationalDayRange);
   const statusValue = columnFilters.find((filter) => filter.id === 'status')
