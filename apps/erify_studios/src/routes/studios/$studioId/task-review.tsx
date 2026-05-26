@@ -36,12 +36,13 @@ export const Route = createFileRoute('/studios/$studioId/task-review')({
     const fromDate = parseSearchParamDate(parsed.due_date_from, false);
     const toDate = parseSearchParamDate(parsed.due_date_to, true);
 
-    // Normalize boundaries individually if only one is provided (partial selection support)
+    // Normalize each boundary against its own window-edge semantics so already-
+    // normalized ISO timestamps (e.g. windowEnd at 05:59:59) don't drift forward.
     const normalizedFrom = fromDate
-      ? operationalWindowToDayRange({ from: fromDate, to: fromDate }).windowStart.toISOString()
+      ? operationalWindowToDayRange({ from: fromDate }).windowStart.toISOString()
       : undefined;
     const normalizedTo = toDate
-      ? operationalWindowToDayRange({ from: toDate, to: toDate }).windowEnd.toISOString()
+      ? operationalWindowToDayRange({ to: toDate }).windowEnd.toISOString()
       : undefined;
 
     return {
