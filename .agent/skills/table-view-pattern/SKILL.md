@@ -48,6 +48,34 @@ Standard patterns for large tabular views in `erify_studios`, `erify_creators`, 
 - Missing `keepPreviousData` → ask why
 - Custom pagination buttons → ask why not `DataTablePagination`
 - Fallback clamps during loading → correctness bug
+- **Merged-dataset page count mismatch** — if the route derives `displayedData` from a larger merged dataset than the hook's server query, the hook's `setPageCount` will clamp `pageIndex` to the smaller server range; override it with the merged count (see § Merged-Dataset Pagination below)
+
+## Merged-Dataset Pagination
+
+Use when a route renders a **client-side union** of two server queries (e.g. due-dated tasks + undated tasks) and paginates the combined result locally.
+
+**Problem**: The feature hook calls `setPageCount(data.meta.totalPages)` from its server query. `useTableUrlState` auto-corrects `pageIndex` against that count. When the merged dataset has more rows — and thus more pages — than the server query alone, those extra pages are silently unreachable.
+
+**Fix**: Expose `setPageCount` from the feature hook return, thread it through the controller, then call it from the route once the secondary dataset has resolved:
+
+```typescript
+// After computing pageCount from the merged filteredAllData:
+useEffect(() => {
+  // Guard: only override after the secondary dataset resolves.
+  // While loading, leave useTableUrlState on the server count to avoid
+  // premature clamping to pageCount=1 (empty dataset).
+  if (summaryData !== undefined) {
+    setPageCount(pageCount); // pageCount = Math.ceil(mergedData.length / pageSize)
+  }
+}, [pageCount, summaryData, setPageCount]);
+```
+
+**Key rules**:
+- The guard (`summaryData !== undefined`) prevents the loading state (merged data = []) from clamping `pageIndex` to 1.
+- After the secondary dataset resolves, this effect always wins: it runs after the hook's internal `setPageCount(serverTotalPages)` within the same render cycle.
+- `effectivePagination` passed to `DataTable` and `DataTablePagination` must be derived from the merged count, not `tableProps.pagination`.
+
+**Reference implementation**: `apps/erify_studios/src/routes/studios/$studioId/task-review/index.tsx`
 
 ## State Rules
 

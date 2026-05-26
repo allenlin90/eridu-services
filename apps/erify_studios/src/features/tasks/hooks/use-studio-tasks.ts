@@ -162,6 +162,7 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     isFetching,
     pagination,
     onPaginationChange,
+    setPageCount,
     columnFilters,
     onColumnFiltersChange,
     dueDateRange,

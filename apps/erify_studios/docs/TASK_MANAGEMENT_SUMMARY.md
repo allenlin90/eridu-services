@@ -75,6 +75,12 @@ Readiness scope totals should be refreshed by query-key changes (for example `re
 ### 9. Task Review (Admin/Manager)
 Task Review → choose operational day range → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Clean rows can later support bulk approval into `COMPLETED`.
 
+**Parallel query architecture**: `useTaskReviewSummary` runs one `useQuery` that internally fans out across all pages of two complementary queries — dated (`due_date_from/to`) and undated (`has_due_date=false` scoped by `show_start_from/to`) — using a worker-pool helper capped at `PAGE_FETCH_CONCURRENCY = 5`. The results are merged into a single flat dataset used for client-side filtering.
+
+**Client-side partition tabs**: `All Tasks`, `Ready for Approval`, and `Needs Attention` are pure client-side filters over `summaryData`. Phase-specific exception cards (`Pre-Production`, `On-Air`, `Post-Production`) each set a distinct `activeFilter` value (`pre-prod-attention`, `on-air-attention`, `post-prod-attention`) so managers can drill into a specific phase.
+
+**Pagination override**: Because `summaryData` can contain more rows than the server-paginated `useStudioTasks` query (due to undated tasks), the route exposes `setPageCount` from `useStudioTasks` and, once `summaryData` resolves, overrides the URL-state page count with the merged `pageCount`. This prevents `useTableUrlState` from silently clamping `pageIndex` to the smaller server range. See `table-view-pattern` skill § Merged-Dataset Pagination.
+
 ### 10. Show Run Review (Admin/Manager)
 Show Run Review → choose operational day range → review submitted and signed-off show records after task approval. The page focuses on manager-friendly checks: shows happened, creators showed up, streams stayed clean, and the range is ready for sign-off.
 
@@ -166,7 +172,7 @@ The default operational day is 06:00-05:59 local time for PR 12.4. Task Review a
 ✅ Show detail with task cards and inline reassignment
 ✅ My Tasks (filter bar, task cards, progress bars, urgency borders, show-start-date filter)
 ✅ Task Execution Sheet (JsonForm, auto-save, rejection banner, status actions, IndexedDB draft persistence)
-✅ Task Review (per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
+✅ Task Review (gradient summary dashboard, Pre/On-Air/Post phase classification, ready/attention exception queues, per-task actions, rejection/block note dialogs, IndexedDB draft persistence)
 ✅ System Tasks (cross-studio list, detail dialog, reassignment)
 ✅ Moderation loop workflow (loop-based template builder, loop progress block, live loop detection, per-loop field filtering)
 ✅ Task Submission Reporting (definition CRUD, scope filters, contextual source catalog, column picker, preflight, run, result table, view filters, CSV export)

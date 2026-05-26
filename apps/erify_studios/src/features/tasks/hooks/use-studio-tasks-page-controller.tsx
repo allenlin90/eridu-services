@@ -27,6 +27,7 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
     isFetching,
     pagination,
     onPaginationChange,
+    setPageCount,
     columnFilters,
     onColumnFiltersChange,
     dueDateRange,
@@ -112,11 +113,12 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
 
   const columns = useMemo(
     () => getStudioTaskColumns(
+      studioId,
       handleRunAction,
       isUpdatingStatus ? processingTaskId : null,
       openDueDateEditor,
     ),
-    [handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
+    [studioId, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
   );
 
   const tablePagination = data?.meta
@@ -156,6 +158,7 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
     toolbarProps: {
       onRefresh: handleRefresh,
     },
+    setPageCount,
     actionSheetProps: {
       key: actionDraft ? `${actionDraft.task.id}:${actionDraft.task.version}:${actionDraft.action}` : 'studio-review-task-action',
       studioId,
