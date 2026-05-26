@@ -85,7 +85,14 @@ function operationalDateFromWindowStart(windowStart: Date): string {
 
 function operationalDateFromWindowEnd(windowEnd: Date): string {
   const date = new Date(windowEnd);
-  if (date.getHours() < OPERATIONAL_DAY_START_HOUR) {
+  // Only step back when the timestamp matches a windowEnd boundary produced by
+  // buildWindowEnd (e.g. 05:59:59.999). Picker-emitted dates land at local
+  // midnight (00:00:00) and represent the calendar day directly.
+  const isWindowEndBoundary
+    = date.getHours() === OPERATIONAL_DAY_START_HOUR - 1
+    && date.getMinutes() === 59
+    && date.getSeconds() === 59;
+  if (isWindowEndBoundary) {
     date.setDate(date.getDate() - 1);
   }
   return toOperationalDateInputValue(date);

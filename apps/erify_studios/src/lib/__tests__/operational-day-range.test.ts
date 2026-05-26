@@ -107,4 +107,17 @@ describe('operationalDayRange', () => {
     expect(resolved.dateFrom).toBe('2026-05-20');
     expect(resolved.dateTo).toBe('2026-05-25');
   });
+
+  it('treats picker-emitted midnight dates as the selected calendar day', () => {
+    const resolved = operationalWindowToDayRange(
+      {
+        from: new Date('2026-05-20T00:00:00'),
+        to: new Date('2026-05-25T00:00:00'),
+      },
+      new Date('2026-05-25T12:00:00'),
+    );
+
+    expect(resolved.dateFrom).toBe('2026-05-20');
+    expect(resolved.dateTo).toBe('2026-05-25');
+  });
 });
