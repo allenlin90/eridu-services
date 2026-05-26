@@ -23,7 +23,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 2. **ADMIN and MANAGER are operationally equivalent**: both can manage shifts, shows, tasks, templates. ADMIN owns studio membership writes; MANAGER can read the roster and review member compensations.
 3. **TALENT_MANAGER has a focused scope**: creator catalog/roster reads and show creator assignment. No task ops, shift ops, or template access.
 4. **DESIGNER and MODERATION_MANAGER are member-level**: access is limited to their own tasks and shifts.
-5. **Single-purpose routes**: show-operations route = task ops only; creator-mapping route = creator assignment only.
+5. **Single-purpose routes**: task-setup route = task ops only; creator-mapping route = creator assignment only.
 
 ## Route Access Matrix
 
@@ -34,8 +34,8 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/my-shifts` | View | View | View | View | View | View |
 | `/studios/:studioId/task-review` | View/Review | View/Review | No access | No access | No access | No access |
 | `/studios/:studioId/shifts` | View + Manage | View + Manage | No access | No access | No access | No access |
-| `/studios/:studioId/show-operations` | View + Manage | View + Manage | No access | No access | No access | No access |
-| `/studios/:studioId/show-operations/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
+| `/studios/:studioId/task-setup` | View + Manage | View + Manage | No access | No access | No access | No access |
+| `/studios/:studioId/task-setup/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-templates` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/shared-fields` | View + Manage | No access | No access | No access | No access | No access |
 | `/studios/:studioId/members` | View + Manage | View | No access | No access | No access | No access |
@@ -50,7 +50,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 |---------|----------|
 | My Workspace (Dashboard, My Tasks, My Shifts) | All roles |
 | Planning (Shift Schedule, Shows, Creator Mapping; future Schedules) | ADMIN, MANAGER, TALENT_MANAGER |
-| Tasks (Show Operations, Task Review, Task Reports) | ADMIN, MANAGER, MODERATION_MANAGER |
+| Tasks (Task Setup, Task Review, Task Reports) | ADMIN, MANAGER, MODERATION_MANAGER |
 | People (Members, Creators) | Members: ADMIN, MANAGER. Creators: ADMIN, MANAGER, TALENT_MANAGER |
 | Studio Settings (Shared Fields, Task Templates) | ADMIN, MANAGER |
 
@@ -106,7 +106,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | Add/edit/remove members | Yes | No | No |
 | Review member shift compensations | Yes | Yes | No |
 
-## Show Operations View (`/show-operations`, ADMIN + MANAGER — task ops only)
+## Task Setup View (`/task-setup`, ADMIN + MANAGER — task ops only)
 
 ### Use Cases
 
@@ -120,7 +120,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 
 | Function | ADMIN | MANAGER | TALENT_MANAGER |
 | -------- | ----- | ------- | -------------- |
-| Access show-operations route | Yes | Yes | No |
+| Access task-setup route | Yes | Yes | No |
 | Generate/assign tasks | Yes | Yes | No |
 | Navigate to creator mapping from tasks view | Yes | Yes | No |
 

@@ -197,39 +197,47 @@ function getStudioPlanningItems(
 }
 
 /**
- * Generates downstream task navigation items.
+ * Generates downstream operations navigation items.
  */
-function getStudioTaskItems(
+function getStudioOperationsItems(
   studioId: string,
   role: string,
 ): SidebarNavItem['items'] {
-  const taskItems: SidebarNavItem['items'] = [];
+  const operationsItems: SidebarNavItem['items'] = [];
 
   if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
-    taskItems.push({
-      title: 'Show Operations',
-      url: `/studios/${studioId}/show-operations`,
+    operationsItems.push({
+      title: 'Task Setup',
+      url: `/studios/${studioId}/task-setup`,
       icon: Clapperboard,
     });
   }
 
   if (hasStudioRouteAccess(role as StudioRole, 'reviewQueue')) {
-    taskItems.push({
+    operationsItems.push({
       title: 'Task Review',
       url: `/studios/${studioId}/task-review`,
       icon: ClipboardCheck,
     });
   }
 
+  if (hasStudioRouteAccess(role as StudioRole, 'showRunReview')) {
+    operationsItems.push({
+      title: 'Show Run Review',
+      url: `/studios/${studioId}/show-run-review`,
+      icon: ShieldCheck,
+    });
+  }
+
   if (hasStudioRouteAccess(role as StudioRole, 'taskReports')) {
-    taskItems.push({
+    operationsItems.push({
       title: 'Task Reports',
       url: `/studios/${studioId}/task-reports`,
       icon: ClipboardCheck,
     });
   }
 
-  return taskItems;
+  return operationsItems;
 }
 
 /**
@@ -335,7 +343,7 @@ export function useSidebarConfig(
     if (activeStudio) {
       const studioCommonItems = buildActiveItems(getStudioCommonItems(activeStudio.studio.uid));
       const studioPlanningItems = buildActiveItems(getStudioPlanningItems(activeStudio.studio.uid, activeStudio.role));
-      const studioTaskItems = buildActiveItems(getStudioTaskItems(activeStudio.studio.uid, activeStudio.role));
+      const studioOperationsItems = buildActiveItems(getStudioOperationsItems(activeStudio.studio.uid, activeStudio.role));
       const studioPeopleItems = buildActiveItems(getStudioPeopleItems(activeStudio.studio.uid, activeStudio.role));
       const studioSettingsItems = buildActiveItems(getStudioSettingsItems(activeStudio.studio.uid, activeStudio.role));
 
@@ -357,13 +365,13 @@ export function useSidebarConfig(
         });
       }
 
-      if (studioTaskItems.length > 0) {
+      if (studioOperationsItems.length > 0) {
         navItems.push({
-          title: 'Tasks',
-          url: studioTaskItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
+          title: 'Operations',
+          url: studioOperationsItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/dashboard`,
           icon: ClipboardCheck,
-          isActive: studioTaskItems.some((item) => item.isActive),
-          items: studioTaskItems,
+          isActive: studioOperationsItems.some((item) => item.isActive),
+          items: studioOperationsItems,
         });
       }
 

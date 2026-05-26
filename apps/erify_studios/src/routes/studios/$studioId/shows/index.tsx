@@ -201,7 +201,7 @@ function StudioShowsPage() {
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Show</DialogTitle>
-            <DialogDescription>Update the core show record without entering show operations.</DialogDescription>
+            <DialogDescription>Update the core show record without entering task setup.</DialogDescription>
           </DialogHeader>
           <StudioShowManagementForm
             studioId={studioId}

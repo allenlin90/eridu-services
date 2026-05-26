@@ -136,7 +136,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(7); // Dashboard + System + My Workspace + Planning + Tasks + People + Studio Settings
+    expect(result.current.navMain).toHaveLength(7); // Dashboard + System + My Workspace + Planning + Operations + People + Studio Settings
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -214,14 +214,18 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[4]).toEqual(expect.objectContaining({
-      title: 'Tasks',
-      url: '/studios/studio-1/show-operations',
+      title: 'Operations',
+      url: '/studios/studio-1/task-setup',
       icon: expect.any(Function),
       isActive: false,
       items: expect.arrayContaining([
         expect.objectContaining({
-          title: 'Show Operations',
-          url: '/studios/studio-1/show-operations',
+          title: 'Task Setup',
+          url: '/studios/studio-1/task-setup',
+        }),
+        expect.objectContaining({
+          title: 'Show Run Review',
+          url: '/studios/studio-1/show-run-review',
         }),
         expect.objectContaining({
           title: 'Task Review',

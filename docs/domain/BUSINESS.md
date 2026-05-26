@@ -13,7 +13,7 @@ The system is being developed in structured phases:
 - **Phase 1** ✅: Core Functions — Essential CRUD, show management, schedule planning, JWT auth, StudioMembership-based authorization
 - **Phase 2** ✅: Task Management — Generic "Task as Form" system with templates, snapshots, bulk generation, and operator workflows
 - **Phase 3** ✅ Closed: Operations foundations — shift schedules and Cloudflare R2 uploads shipped; unfinished ticketing/material scope moved forward
-- **Phase 4** (Active): P&L Visibility & Creator Operations — RBAC roles, creator mapping/assignment, creator compensation, show performance metrics, cost aggregation, P&L views
+- **Phase 4** (Active): P&L Visibility & Creator Operations — RBAC roles, creator mapping/assignment, creator compensation, operational actuals, operations review, cost aggregation, P&L views. Show performance analytics such as GMV/views are deferred to the Phase 4 PR 12.6 investigation.
 - **Phase 5** (Deferred): Ticketing, Materials, Collaboration & Scale — ad-hoc ticketing, material management, review hardening, notifications, data warehouse
 
 For planning and implementation references, see:
@@ -223,7 +223,7 @@ Business Rules:
 
 ## Studio shift planning and control
 
-Purpose: Studio-admin planning for upcoming show operations and risk control.
+Purpose: Studio-admin planning for upcoming task setup and risk control.
 
 **Phase 3 Feature** — Studio shift planning focuses on future readiness, not historical analytics. Past shows are skipped in planning warnings.
 
@@ -244,8 +244,8 @@ Core Rules:
   - Standard shows must have at least `SETUP` and `CLOSURE` tasks.
   - Premium shows use the same baseline (`SETUP` + `CLOSURE`) and additionally require at least one moderation task.
   - Every task should have an assignee.
-- **Show Operations page scope contract**:
-  - `/studios/:studioId/show-operations` table filtering uses datetime `date_from/date_to`.
+- **Task Setup page scope contract**:
+  - `/studios/:studioId/task-setup` table filtering uses datetime `date_from/date_to`.
   - Readiness metrics and `needs_attention` filtering must use the same datetime window as the table query.
   - Operational-day UX may pass a `date_to` that extends to D+1 `05:59` (local business-day cutoff).
 - **Planning security and sensitivity**: cost and planning risk summaries are studio-admin scope, while member-facing views remain operational and read-only.

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 
-const showOperationsSearchSchema = z.object({
+const taskSetupSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   limit: z.coerce.number().int().min(1).catch(10),
   sortBy: z.string().optional().catch(undefined),
@@ -21,20 +21,20 @@ const showOperationsSearchSchema = z.object({
   actuals_state: z.enum(['missing', 'complete']).optional().catch(undefined),
 });
 
-export const Route = createFileRoute('/studios/$studioId/show-operations')({
-  validateSearch: (search) => showOperationsSearchSchema.parse(search),
-  component: ShowOperationsRoute,
+export const Route = createFileRoute('/studios/$studioId/task-setup')({
+  validateSearch: (search) => taskSetupSearchSchema.parse(search),
+  component: TaskSetupRoute,
 });
 
-function ShowOperationsRoute() {
+function TaskSetupRoute() {
   const { studioId } = Route.useParams();
 
   return (
     <StudioRouteGuard
       studioId={studioId}
       routeKey="shows"
-      deniedTitle="Show Operations Access Required"
-      deniedDescription="Only studio admins and managers can access show operations."
+      deniedTitle="Task Setup Access Required"
+      deniedDescription="Only studio admins and managers can access task setup."
     >
       <Outlet />
     </StudioRouteGuard>

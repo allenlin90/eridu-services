@@ -4,7 +4,7 @@
 
 This document defines the architectural specifications, database schemas, and extraction pipeline rules for **PR 12 (Critical task-input semantics for actuals and performance)**. It bridges the gap between generic, operator-completed task submissions and first-class indexed operational metrics across shows, platforms, creators, and platform violations.
 
-> **Roadmap pointer**: PR 12's operational pipeline ships as 11 sub-PRs (12.0.1-12.0.5 foundation, 12.1.1-12.3.2 extractors, 12.4 review surface). The Phase 4 roadmap ([`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md)) owns the sub-PR sequencing and dependencies, including the post-12.4 analytics infrastructure investigation. Every schema addition in §2 below lands as one atomic migration in **PR 12.0.2** before any consumer wiring, so the binding picker (12.0.3), hydration engine (12.0.4), extraction pipeline (12.0.5), and each downstream extractor (12.1.1-12.3.2) all assume the columns and tables already exist.
+> **Roadmap pointer**: PR 12's operational pipeline ships as foundation PRs (12.0.1-12.0.5), extractor PRs (12.1.1-12.3.2), and the expanded Operations Review workstream (12.4.1-12.4.6). The Phase 4 roadmap ([`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md)) owns the sub-PR sequencing and dependencies, including the PR 12.6 analytics infrastructure investigation. Every schema addition in §2 below lands as one atomic migration in **PR 12.0.2** before any consumer wiring, so the binding picker (12.0.3), hydration engine (12.0.4), extraction pipeline (12.0.5), and each downstream extractor (12.1.1-12.3.2) all assume the columns and tables already exist.
 
 ---
 
@@ -31,12 +31,12 @@ See §6 for how the three perspectives consume the same indexed reads and audit 
 
 To deliver rapid reporting, highly customizable operator form layouts, deterministic priority conflict resolution, and solid referential integrity, the architecture is grounded in five core principles:
 
-1. **Event-Driven Push Model (Deterministic Actuals)**: Facts are parsed and written immediately upon trigger events (e.g., task submission completed, manager override, or system telemetry updates). Writes are gated by a strict source priority hierarchy: manager overrides outrank system/platform inputs, system/platform inputs outrank operator task forms, and task forms outrank planning schedules. Lower-priority updates do not overwrite newer, higher-priority data. A reserved "creator-attributed input" tier sits between system/platform inputs and operator task inputs; it has no Phase 4 writer, so the resolver implements only the active tiers (MANAGER → PLATFORM → OPERATOR → PLANNED) and documents the reserved slot for forward-compatibility.
+1. **Confirmed-Submission Push Model (Deterministic Actuals)**: Facts from task forms are parsed and written when the task transitions into `COMPLETED` through manager confirmation. Operator submissions first land in `REVIEW`; manager confirmation is the gate that triggers extraction. Manager overrides and corrections also flow through submitted tasks rather than direct target-table edits. Writes are gated by a strict source priority hierarchy: manager override tasks outrank system/platform inputs, system/platform inputs outrank operator task forms, and task forms outrank planning schedules. Lower-priority updates do not overwrite newer, higher-priority data. A reserved "creator-attributed input" tier sits between system/platform inputs and operator task inputs; it has no Phase 4 writer, so the resolver implements only the active tiers (MANAGER → PLATFORM → OPERATOR → PLANNED) and documents the reserved slot for forward-compatibility.
 2. **Context-Aware Task Generation (Additive Snapshot Hydration)**: Task templates remain generic and platform/creator-agnostic. When a task is instantiated for a specific show, a `TaskTarget` links them. The task generation engine scans the template for `system_fact_key` markers (e.g., `creator_attendance_missing`) and dynamically hydrates the task's snapshot schema with target-specific field inputs whose keys are deterministic and stable (e.g., `fld_attendance_missing_creator_<creatorUid>`). The snapshot is **append-only mutable** for hydrated bindings: when assignments change between generation and submission, the engine appends new hydrated fields for newly assigned targets but never removes hydrated fields for targets that were unassigned afterwards. Fields whose target is no longer assigned are marked `binding_stale: true`; the extractor skips them and routes their submitted values to the review queue (PR 12.4) instead of writing to an unassigned target. Non-hydrated template fields remain immutable.
-3. **Operational Facts vs Analytical Metrics**: Operational facts that drive sign-off, exception review, filtering, or workflow gating (actual times, attendance missing, platform violations) are stored in dedicated, indexed columns on the narrowest scoped table. Attendance state (`ON_TIME` / `LATE` / `MISSING`) and late minutes are **derived at read time** from `ShowCreator.actualStartTime`, the sticky `ShowCreator.attendanceMissing` marker, and `Show.startTime` — they are not stored as columns. Platform-scoped performance metrics — **GMV, viewer count, CTR, CTO, likes, concurrents, and any cross-show aggregate** — are classified as analytical and deferred to the post-12.4 analytics infrastructure investigation (see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md)). PR 12.0.2 does not promote any analytical metric to a typed `ShowPlatform` column; `ShowPlatform.viewerCount` retains its pre-existing `Int @default(0)` shape from the initial migration but is read as an analytical fact rather than an operational gate. Show-level analytical rollups likewise belong in a separate read-model or OLAP design, not in `Show`.
+3. **Operational Facts vs Analytical Metrics**: Operational facts that drive sign-off, exception review, filtering, or workflow gating (actual times, attendance missing, platform violations) are stored in dedicated, indexed columns on the narrowest scoped table. Attendance state (`ON_TIME` / `LATE` / `MISSING`) and late minutes are **derived at read time** from `ShowCreator.actualStartTime`, the sticky `ShowCreator.attendanceMissing` marker, and `Show.startTime` — they are not stored as columns. Platform-scoped performance metrics — **GMV, viewer count, CTR, CTO, likes, concurrents, and any cross-show aggregate** — are classified as analytical and deferred to PR 12.6 (see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md)). PR 12.0.2 does not promote any analytical metric to a typed `ShowPlatform` column; `ShowPlatform.viewerCount` retains its pre-existing `Int @default(0)` shape from the initial migration but is read as an analytical fact rather than an operational gate. Show-level analytical rollups likewise belong in a separate read-model or OLAP design, not in `Show`.
    - **Promotion Workflow**: When an analytical metric proves it has a *concrete operational workflow depending on it* (e.g., sign-off rule, exception flag, mandatory review gate), a follow-up design/ideation step decides whether to promote it to a typed indexed `ShowPlatform` column with a backfill migration, or expose it through a read-model.
-4. **Prisma-Compliant Polymorphic Auditing (`Audit` & `AuditTarget`)**: Standardize manual manager overrides and automated extraction writes under a centralized audit system. The schemas avoid raw string target pointers, instead defining explicit, optional foreign key fields (`showId`, `showCreatorId`, `showPlatformId`, `studioShiftId`) to preserve strict relational constraints. Engine-written audits use `actorId = null`, `metadata.ingestion_source = "task_submission"`, and carry `metadata.task_uid` and `metadata.task_field_id` so each extracted fact links back to its source field. Manager overrides use the HTTP request's actor/IP/UA.
-5. **Lean Core Models with Per-Field Source Provenance**: Core models do not carry `actualsStatus` or row-level `actualsSource` columns. Instead, the source that produced each individual selected fact is stored as a **per-field map** inside the model's existing `metadata` JSONB bucket: `metadata.actuals_source = { actual_start_time: 'MANAGER', actual_end_time: 'TASK' }`. The actuals state is dynamically inferred from pair completeness: complete means both `actualStartTime` and `actualEndTime` are present; missing/incomplete means either edge is absent. The per-field shape generalizes cleanly to later analytical facts once the analytics infrastructure decision lands (12.5+). Reads may project a "dominant source" for UI display, but the storage shape is per-field.
+4. **Prisma-Compliant Polymorphic Auditing (`Audit` & `AuditTarget`)**: Standardize confirmed task extraction writes under a centralized audit system. The schemas avoid raw string target pointers, instead defining explicit, optional foreign key fields (`showId`, `showCreatorId`, `showPlatformId`, `studioShiftId`) to preserve strict relational constraints. Engine-written audits use `actorId = null`, `metadata.ingestion_source = "task_submission"`, and carry `metadata.task_uid` and `metadata.task_field_id` so each extracted fact links back to its source field. Manager override/correction tasks carry manager-source provenance through the submitted task, then extract through the same audit pipeline on confirmation.
+5. **Lean Core Models with Per-Field Source Provenance**: Core models do not carry `actualsStatus` or row-level `actualsSource` columns. Instead, the source that produced each individual selected fact is stored as a **per-field map** inside the model's existing `metadata` JSONB bucket: `metadata.actuals_source = { actual_start_time: 'MANAGER', actual_end_time: 'TASK' }`. The actuals state is dynamically inferred from pair completeness: complete means both `actualStartTime` and `actualEndTime` are present; missing/incomplete means either edge is absent. The per-field shape generalizes cleanly to later analytical facts once the analytics infrastructure decision lands (12.6+). Reads may project a "dominant source" for UI display, but the storage shape is per-field.
 
 ---
 
@@ -108,7 +108,7 @@ model ShowPlatform {
   actualStartTime    DateTime?                  @map("actual_start_time")
   actualEndTime      DateTime?                  @map("actual_end_time")
   // viewerCount, gmv, and any other platform performance metric are analytical;
-  // their schema home (typed column vs read-model vs OLAP) is decided in 12.5
+// their schema home (typed column vs read-model vs OLAP) is decided in 12.6
   // (see docs/ideation/show-performance-analytics-infra.md).
 
   @@index([actualStartTime, actualEndTime])
@@ -272,7 +272,7 @@ Generic task templates do not reference static creators or platforms. The linkag
 2. **Snapshot Hydration (at generation)**: The generation engine scans the template's schema definitions for `system_fact_key` bindings:
    - If a field is bound to `creator_attendance_missing`, the engine queries the show's assigned `ShowCreator` relationships. For each assigned creator, it generates a deterministic, stable field input in the task's `snapshot.schema`.
      - *Generated unique input keys*: `fld_attendance_missing_creator_<creatorUid>`, `fld_actual_start_creator_<creatorUid>`, etc. Field keys MUST include the target UID, not a sequential index, so the same target always lands on the same key across re-hydrations.
-   - Platform-scoped fields like `platform_actual_start_time` undergo the same expansion, producing one input per assigned platform (e.g., `fld_actual_start_platform_<platformUid>`). Analytical platform metrics (GMV, viewer count, etc.) are not in the Phase 4 fact-key catalog; they re-enter once 12.5 decides their storage shape.
+   - Platform-scoped fields like `platform_actual_start_time` undergo the same expansion, producing one input per assigned platform (e.g., `fld_actual_start_platform_<platformUid>`). Analytical platform metrics (GMV, viewer count, etc.) are not in the Phase 4 fact-key catalog; they re-enter once 12.6 decides their storage shape.
 3. **Additive Re-Hydration (at render)**: Before rendering a not-yet-submitted task, the engine reconciles the snapshot's hydrated fields against the current `ShowCreator` / `ShowPlatform` set:
    - **Newly assigned targets** get newly appended hydrated fields, defaulted to empty.
    - **Already-hydrated fields** for targets that are still assigned: untouched (operator's in-progress values preserved).
@@ -311,9 +311,9 @@ Priority order enforced by the resolver (`CREATOR_INPUT` slot is reserved-only i
 
 $$\text{MANAGER} > \text{PLATFORM} > \underbrace{\text{CREATOR\_INPUT}}_{\text{reserved}} > \text{OPERATOR} > \text{PLANNED}$$
 
-When an operator submits a completed task form, a manager override is saved, or a system integration provides telemetry data:
+When a manager confirms a submitted task, a manager override/correction task is confirmed, or a system integration provides telemetry data:
 
-1. **Extraction**: The extraction engine parses the submission's `task.content` and the task's hydrated `snapshot.schema`. For each hydrated field with a `system_fact_key`, it resolves the target UID from the field key (e.g., `fld_actual_start_platform_<platformUid>` → look up `ShowPlatform` by `platformUid` within the task's `Show` target). Stale-bound fields are routed to the review queue (PR 12.4) instead of extracted.
+1. **Extraction**: The extraction engine parses the confirmed task's `task.content` and the task's hydrated `snapshot.schema`. For each hydrated field with a `system_fact_key`, it resolves the target UID from the field key (e.g., `fld_actual_start_platform_<platformUid>` → look up `ShowPlatform` by `platformUid` within the task's `Show` target). Stale-bound fields are routed to the Operations Review stale queue (PR 12.4.6) instead of extracted.
 2. **Priority Resolution Check (per fact, per field)**:
    - Read the target row's `metadata.actuals_source` map and look up the source recorded for the specific fact key (e.g., `metadata.actuals_source.actual_start_time`).
    - If absent, the fact operates at `Priority 0` (planned schedule).
@@ -342,7 +342,7 @@ The compensation-snapshot override pattern (legacy `metadata.audit.snapshot_over
 
 ## 4. Querying & Performance Rollups
 
-By maintaining indexed actuals columns, the database can be queried directly to support operational rollups, dashboard widgets, and financial reports. In Phase 4, these performance and abnormality filters live on the actuals/performance review surface, not planning surfaces.
+By maintaining indexed actuals columns, the database can be queried directly to support operational rollups, dashboard widgets, and financial reports. In Phase 4, submitted-task filters live on `/task-review` and signed-off show-run filters live on `/show-run-review`, not planning surfaces.
 
 ### A. Find Shows with Platform Violations
 
@@ -396,15 +396,16 @@ WHERE (actual_start_time IS NULL OR actual_end_time IS NULL)
 
 ## 5. Frontend Surfaces & Endpoint Map
 
-The same indexed columns and audit history feed every consumer. PR 12 does not stand up new BE endpoints per UI surface; it stabilizes column-shape so existing handlers (`/show-operations`, `/finance/actuals`, studio rosters, `/me/*`) project the same fields. Each FE surface in §6 hits one of the following read shapes:
+The same indexed columns and audit history feed every consumer. PR 12 stabilizes column shape and adds Operations Review as the manager control plane for submitted-task confirmation, exception queues, signed-off show run summaries, and range sign-off. Each FE surface in §6 hits one of the following read shapes:
 
 | Read shape | Returns | Indexed columns it leans on | Primary consumers |
 | --- | --- | --- | --- |
-| Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/show-operations`, `/studios/:id/shows/:showId`, `/finance/actuals` |
-| Creator attendance | derived `ON_TIME` / `LATE` / `MISSING`, `late_minutes`, `attendance_reason` | `ShowCreator(actual_start_time)`, `(attendance_missing)` joined to `Show.start_time` | `/finance/actuals`, `/studios/:id/creators/:creatorId`, `/me/shows` |
-| Platform actual window | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` | `ShowPlatform(actual_start_time, actual_end_time)` | `/show-operations`, `/studios/:id/shows/:showId`, `/finance/actuals` |
-| Platform performance (GMV, viewer count, etc.) | deferred to 12.5 — see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md) | analytical layer (TBD: read model vs OLAP) | post-12.4 |
-| Platform violations (active) | `violation_type`, `severity`, `reason`, `observed_at` (excluding superseded) | `ShowPlatformViolation(show_platform_id, superseded_at)` | `/finance/actuals`, show / platform detail surfaces |
+| Submitted-task review | `REVIEW` tasks, validation state, phase tags, approval eligibility | `Task(status, type, due_date)`, `TaskTarget(show_id)`, hydrated snapshot/content | `/task-review` |
+| Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/show-run-review`, `/task-setup`, `/studios/:id/shows/:showId` |
+| Creator attendance | derived `ON_TIME` / `LATE` / `MISSING`, `late_minutes`, `attendance_reason` | `ShowCreator(actual_start_time)`, `(attendance_missing)` joined to `Show.start_time` | `/show-run-review`, `/studios/:id/creators/:creatorId`, `/me/shows` |
+| Platform actual window | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` | `ShowPlatform(actual_start_time, actual_end_time)` | `/show-run-review`, `/task-setup`, `/studios/:id/shows/:showId` |
+| Platform performance (GMV, viewer count, etc.) | deferred to 12.6 — see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md) | analytical layer (TBD: read model vs OLAP) | PR 12.6 |
+| Platform violations (active) | `violation_type`, `severity`, `reason`, `observed_at` (excluding superseded) | `ShowPlatformViolation(show_platform_id, superseded_at)` | `/show-run-review`, show / platform detail surfaces |
 | Audit history | unified `Audit` + `AuditTarget` rows (engine + manager + legacy sidecar merger) | `AuditTarget(targetType, targetId)` and per-target FK indexes | every detail surface that hosts `AuditLogTimeline` |
 
 > **Reviewer note**: any FE surface added during PR 12.x must declare which read shape(s) it consumes. New read shapes require a paragraph here before the consuming sub-PR lands.
@@ -423,8 +424,8 @@ flowchart TB
     end
 
     subgraph P1[Perspective 1 · Studio Overview]
-        SO1["/finance/actuals review"]
-        SO2["/show-operations"]
+        SO1["/task-review<br/>/show-run-review"]
+        SO2["/task-setup"]
         SO3["studio creator / member rosters"]
     end
 
@@ -449,20 +450,21 @@ flowchart TB
     P2 -. shared widgets .-> W
     P3 -. shared widgets .-> W
 
-    W["Shared unit components<br/>ActualsTimelineViewer<br/>PerformanceMetricsWidget<br/>CompensationBreakdownCard<br/>AttendanceStatusBadge<br/>AuditLogTimeline"]
+    W["Shared unit components<br/>ActualsTimelineViewer<br/>ShowRunSummary<br/>CompensationBreakdownCard<br/>AttendanceStatusBadge<br/>AuditLogTimeline"]
 ```
 
 Coverage matrix — what each shared widget renders in each perspective:
 
 | Widget | P1 · Studio Overview | P2 · Studio Individual | P3 · `/me/*` Self-View |
 | --- | --- | --- | --- |
-| `ActualsTimelineViewer` | aggregated per-show row strip in `/show-operations` | full timeline on show / creator / member detail | own upcoming + completed shows |
-| `PerformanceMetricsWidget` | deferred to 12.5 (analytics infra investigation) — Phase 4 renders violation counts only via a lightweight surface in `/show-operations` | deferred to 12.5 | deferred to 12.5 |
+| `ActualsTimelineViewer` | aggregated per-show row strip in `/task-setup` | full timeline on show / creator / member detail | own upcoming + completed shows |
+| `ShowRunSummary` | `/show-run-review` summary for submitted and signed-off show runs only | detail-page summaries as host routes land | own signed-off show runs as self-view routes land |
+| `PerformanceMetricsWidget` | deferred to 12.6 (analytics infra investigation) | deferred to 12.6 | deferred to 12.6 |
 | `CompensationBreakdownCard` | not used (roll-up only) | per-creator / per-show breakdown | own breakdown for the logged-in entity |
 | `AttendanceStatusBadge` | grid cells in roster + ops tables | header status on creator / show detail | own attendance per show |
 | `AuditLogTimeline` | not used (too noisy) | full override + ingestion history | own override / ingestion history (read-only) |
 
-**Scope per sub-PR**: which perspectives ship is a PRD decision per sub-PR, not a same-PR delivery rule. PR 12.4 lights up P1 (`/finance/actuals` review surface) first; P2 detail pages and P3 self-views are added as their host routes land. The matrix above is the *eventual* coverage shape — use it as a design checklist when introducing a new read, not as a merge gate.
+**Scope per sub-PR**: which perspectives ship is a PRD decision per sub-PR, not a same-PR delivery rule. PR 12.4.x lights up P1 (`/task-review` and `/show-run-review`) first; P2 detail pages and P3 self-views are added as their host routes land. The matrix above is the *eventual* coverage shape — use it as a design checklist when introducing a new read, not as a merge gate.
 
 **Cross-app boundary for P3**: creator self-view lives in `erify_creators` (top-level `/shows`, `/shows/:showId` — no `/me/*` prefix because the entire app is scoped to the logged-in creator). Member self-view, when it ships, lives in `erify_studios` under `/me/*` to disambiguate from manager-facing `/studios/:id/*` routes in the same app. Any widget reused across P1/P2 (in `erify_studios`) and creator P3 (in `erify_creators`) must therefore live in a **shared package** (`@eridu/ui` or a new domain package), not in either app's `src/features/`.
 

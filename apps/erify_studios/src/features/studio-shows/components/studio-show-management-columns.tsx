@@ -111,7 +111,7 @@ export function getStudioShowManagementColumns(
           renderExtraActions={(show) => (
             <DropdownMenuItem asChild>
               <Link
-                to="/studios/$studioId/show-operations/$showId/tasks"
+                to="/studios/$studioId/task-setup/$showId/tasks"
                 params={{ studioId, showId: show.id }}
               >
                 <ArrowUpRight className="mr-2 h-4 w-4" />

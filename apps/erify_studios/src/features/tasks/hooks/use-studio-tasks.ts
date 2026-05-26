@@ -1,6 +1,5 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { endOfDay, startOfDay } from 'date-fns';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import {
@@ -12,6 +11,13 @@ import {
 import { useTableUrlState } from '@eridu/ui';
 
 import { getStudioTasks, studioTasksKeys } from '@/features/tasks/api/get-studio-tasks';
+import {
+  buildOperationalDayRangeFromPickerDates,
+  isCurrentOperationalDay,
+  OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS,
+  operationalDayRangeToPickerDates,
+  operationalWindowToDayRange,
+} from '@/lib/operational-day-range';
 
 const VALID_STATUS = new Set(Object.values(TASK_STATUS));
 const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
@@ -52,8 +58,17 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     ?.value as string | undefined;
   const hasDueDateValue = columnFilters.find((filter) => filter.id === 'has_due_date')
     ?.value as string | undefined;
-  const dueDateRange = columnFilters.find((filter) => filter.id === 'due_date')
+  const dueDateWindow = columnFilters.find((filter) => filter.id === 'due_date')
     ?.value as DateRange | undefined;
+  const effectiveOperationalDayRange = useMemo(
+    () => operationalWindowToDayRange(dueDateWindow),
+    [dueDateWindow],
+  );
+  const dueDateRange = useMemo(
+    () => operationalDayRangeToPickerDates(effectiveOperationalDayRange),
+    [effectiveOperationalDayRange],
+  );
+  const isViewingCurrentOperationalDay = isCurrentOperationalDay(effectiveOperationalDayRange);
   const statusValue = columnFilters.find((filter) => filter.id === 'status')
     ?.value as string | undefined;
   const taskTypeValue = columnFilters.find((filter) => filter.id === 'task_type')
@@ -85,8 +100,8 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     show_name: showName,
     has_assignee: hasAssignee,
     has_due_date: hasDueDate,
-    due_date_from: dueDateRange?.from ? startOfDay(dueDateRange.from).toISOString() : undefined,
-    due_date_to: dueDateRange?.to ? endOfDay(dueDateRange.to).toISOString() : undefined,
+    due_date_from: effectiveOperationalDayRange.windowStart.toISOString(),
+    due_date_to: effectiveOperationalDayRange.windowEnd.toISOString(),
     status,
     task_type: taskType,
     sort: 'due_date:asc',
@@ -98,6 +113,10 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     enabled: !!studioId,
     gcTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
+    refetchInterval: isViewingCurrentOperationalDay
+      ? OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS
+      : false,
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
@@ -109,6 +128,33 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: studioTasksKeys.all(studioId) });
   };
+  const handleDueDateRangeChange = useCallback((nextRange: DateRange | undefined) => {
+    onColumnFiltersChange((previousFilters) => [
+      ...previousFilters.filter((filter) => filter.id !== 'due_date'),
+      {
+        id: 'due_date',
+        value: nextRange
+          ? {
+              from: nextRange.from,
+              to: nextRange.to,
+            }
+          : undefined,
+      },
+    ]);
+  }, [onColumnFiltersChange]);
+  const handleResetDueDateRange = useCallback(() => {
+    const freshRange = buildOperationalDayRangeFromPickerDates(undefined, undefined);
+    onColumnFiltersChange((previousFilters) => [
+      ...previousFilters.filter((filter) => filter.id !== 'due_date'),
+      {
+        id: 'due_date',
+        value: {
+          from: freshRange.windowStart,
+          to: freshRange.windowEnd,
+        },
+      },
+    ]);
+  }, [onColumnFiltersChange]);
 
   return {
     data,
@@ -118,6 +164,9 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,
+    dueDateRange,
+    onDueDateRangeChange: handleDueDateRangeChange,
+    onDueDateRangeReset: handleResetDueDateRange,
     handleRefresh,
   };
 }

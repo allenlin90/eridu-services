@@ -14,7 +14,7 @@ type UseStudioShowsProps = {
 };
 
 const TABLE_OPTIONS = {
-  from: '/studios/$studioId/show-operations/',
+  from: '/studios/$studioId/task-setup/',
   searchColumnId: 'name',
   dateColumnId: '__scope_date__',
   paramNames: {

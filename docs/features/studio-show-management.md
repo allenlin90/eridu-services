@@ -27,7 +27,7 @@ Studios could assign creators to shows and read show details, but could not cont
 - `DELETE /studios/:studioId/shows/:showId` — soft-delete a pre-start show (ADMIN only)
 - `GET /studios/:studioId/shows/:showId` — enriched show detail including platform assignments and schedule summary for the edit form
 - `GET /studios/:studioId/shows` — shared list with schedule-name filtering plus orphan discovery via the `orphans` keyword shortcut
-- `/studios/:studioId/show-operations` missing-actuals queue via `actuals_state=missing|complete`, show-actuals input backed by `PATCH /studios/:studioId/shows/:showId`, and current-view CSV/JSON export
+- `/studios/:studioId/task-setup` missing-actuals queue via `actuals_state=missing|complete`, show-actuals input backed by `PATCH /studios/:studioId/shows/:showId`, and current-view CSV/JSON export
 - `GET /studios/:studioId/show-lookups` — bundled studio-safe reference data for shared show-management filters
 - `GET /studios/:studioId/schedules` and `GET /studios/:studioId/studio-rooms` — dedicated searchable lookup endpoints for the modal comboboxes
 - Restore-on-create: if create includes an `external_id` matching a soft-deleted show, that record is restored and updated from the latest payload without reviving old workflow state
@@ -45,9 +45,9 @@ Studios could assign creators to shows and read show details, but could not cont
 - **Schedule publish can reclaim restored rows** — schedule publish matches active rows by external identity, adopts valid restored/manual rows, and replaces creator/platform assignments from schedule data when available.
 - **Platform assignment at studio level** — platforms are operational metadata that studios manage day-to-day; no reason to keep this admin-only.
 - **Pre-start delete only, pre-start workflow state is disposable** — the show row is soft-deleted and pre-start task workflow records are removed so restore does not revive stale tasks.
-- **Separate FE purpose-built views** — show CRUD lives on a dedicated show-management list page; task generation/readiness/assignment stay on the existing show-operations page. Both reuse the same backend endpoints and cache families.
+- **Separate FE purpose-built views** — show CRUD lives on a dedicated show-management list page; task generation/readiness/assignment stay on the existing task-setup page. Both reuse the same backend endpoints and cache families.
 - **Show actuals stay on the show resource** — operations managers record the Phase 4 show actual window on `Show.actualStartTime` / `Show.actualEndTime` through the normal studio show update route. The UI does not introduce creator-specific or platform-specific actual inputs in Phase 4.
-- **Current-view export mirrors server filters** — show-operations export downloads every row matching the active date range, table filters, issues filter, and actuals queue filter, not only the visible page.
+- **Current-view export mirrors server filters** — task-setup export downloads every row matching the active date range, table filters, issues filter, and actuals queue filter, not only the visible page.
 - **No show transfer** — shows belong to one studio; cross-studio movement is a governance action for system admins only.
 
 ## Acceptance Record
@@ -59,8 +59,8 @@ Studios could assign creators to shows and read show details, but could not cont
 - [x] Studio ADMIN and MANAGER can update show details (name, times, client, type, standard, status, room, metadata).
 - [x] Studio ADMIN can soft-delete shows before start time.
 - [x] Studio ADMIN and MANAGER can manage platform assignments on shows.
-- [x] Studio ADMIN and MANAGER can record, clear, and filter by show actuals from `/show-operations`.
-- [x] `/show-operations` CSV/JSON export uses the active date range and server-side filters for all matching rows, paginates with a small concurrency cap (no fan-out), and shows in-progress feedback on the trigger.
+- [x] Studio ADMIN and MANAGER can record, clear, and filter by show actuals from `/task-setup`.
+- [x] `/task-setup` CSV/JSON export uses the active date range and server-side filters for all matching rows, paginates with a small concurrency cap (no fan-out), and shows in-progress feedback on the trigger.
 - [x] Task report builder exposes `actual_start_time`, `actual_end_time`, and `actuals_status` as system columns alongside the planned `start_time` / `end_time`.
 - [x] Studio ADMIN and MANAGER can assign a show to a same-studio, same-client schedule, move it between schedules, or clear its schedule linkage.
 - [x] The studio shows page can identify orphan shows with no schedule so operators can repair schedule linkage.
@@ -77,4 +77,4 @@ Studios could assign creators to shows and read show details, but could not cont
 
 - Backend canonical doc: [STUDIO_SHOW_MANAGEMENT.md](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md)
 - Related feature: [Studio Schedule Management](../prd/future/studio-schedule-management.md) (⏸️ deferred 2026-04-22 — Google Sheets flow remains the schedule creation path)
-- Related feature: [Page-local exports (PR 1-2)](../roadmap/PHASE_4.md) — studio-owned shows feed into `/show-operations` export
+- Related feature: [Page-local exports (PR 1-2)](../roadmap/PHASE_4.md) — studio-owned shows feed into `/task-setup` export

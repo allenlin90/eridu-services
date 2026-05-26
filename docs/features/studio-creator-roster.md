@@ -27,7 +27,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 - Active/inactive roster management with inactive creators excluded from creator-availability discovery and rejected by bulk assignment writes.
 - Compatibility-preserving creator catalog contract with both `is_rostered` and `roster_state`.
 - Per-show creator assignment compensation editability for `ShowCreator` snapshot terms: note, `agreed_rate`, `compensation_type`, `commission_rate`, and override audit reason.
-- Per-creator date-range compensation review for admins/managers at the dedicated `/studios/$studioId/creators/$creatorId/compensations` route (mirrors the per-member route), with show drill-in and the same assignment compensation dialog used by show operations.
+- Per-creator date-range compensation review for admins/managers at the dedicated `/studios/$studioId/creators/$creatorId/compensations` route (mirrors the per-member route), with show drill-in and the same assignment compensation dialog used by task setup.
 
 ## Key Product Decisions
 

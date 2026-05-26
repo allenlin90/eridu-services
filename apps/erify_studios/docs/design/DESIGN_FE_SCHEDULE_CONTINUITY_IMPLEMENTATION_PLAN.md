@@ -116,7 +116,7 @@ Changes:
 
 Targets:
 
-1. `apps/erify_studios/src/routes/studios/$studioId/show-operations/$showId/tasks.tsx`
+1. `apps/erify_studios/src/routes/studios/$studioId/task-setup/$showId/tasks.tsx`
 2. `apps/erify_studios/src/features/studio-shows/api/get-studio-show.ts` (if typed fields needed)
 
 Changes:
