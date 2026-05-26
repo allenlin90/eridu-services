@@ -165,7 +165,7 @@ function StudioTaskReviewPage() {
         </Card>
 
         {/* Visual Dashboard cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Review Overview */}
           <div
             onClick={() => setActiveFilter('all')}
@@ -182,7 +182,7 @@ function StudioTaskReviewPage() {
               <span className="text-3xl font-bold tracking-tight">{stats.total}</span>
               <span className="text-xs text-muted-foreground">Tasks in Review</span>
             </div>
-            <div className="flex gap-3 text-xs mt-1">
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs mt-1">
               <button
                 type="button"
                 onClick={(e) => {
@@ -194,10 +194,12 @@ function StudioTaskReviewPage() {
                   activeFilter === 'ready' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-500',
                 )}
               >
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" style={{ animationDuration: '3s' }} />
-                {stats.ready}
-                {' '}
-                Ready
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping flex-shrink-0" style={{ animationDuration: '3s' }} />
+                <span>
+                  {stats.ready}
+                  {' '}
+                  Ready
+                </span>
               </button>
               <button
                 type="button"
@@ -210,10 +212,12 @@ function StudioTaskReviewPage() {
                   activeFilter === 'attention' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-500',
                 )}
               >
-                <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping" style={{ animationDuration: '2s' }} />
-                {stats.attention}
-                {' '}
-                Attention
+                <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping flex-shrink-0" style={{ animationDuration: '2s' }} />
+                <span>
+                  {stats.attention}
+                  {' '}
+                  Attention
+                </span>
               </button>
             </div>
           </div>
@@ -237,10 +241,12 @@ function StudioTaskReviewPage() {
               <span className="text-xs text-muted-foreground">Needs Attention</span>
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {stats.preProdReadyCount}
-              {' '}
-              Ready for Approval
+              <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span>
+                {stats.preProdReadyCount}
+                {' '}
+                Ready for Approval
+              </span>
             </div>
           </div>
 
@@ -263,10 +269,12 @@ function StudioTaskReviewPage() {
               <span className="text-xs text-muted-foreground">Needs Attention</span>
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {stats.onAirReadyCount}
-              {' '}
-              Ready for Approval
+              <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span>
+                {stats.onAirReadyCount}
+                {' '}
+                Ready for Approval
+              </span>
             </div>
           </div>
 
@@ -289,22 +297,24 @@ function StudioTaskReviewPage() {
               <span className="text-xs text-muted-foreground">Needs Attention</span>
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {stats.postProdReadyCount}
-              {' '}
-              Ready for Approval
+              <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span>
+                {stats.postProdReadyCount}
+                {' '}
+                Ready for Approval
+              </span>
             </div>
           </div>
         </div>
 
         {/* Toggle tabs for main table filter */}
-        <div className="flex border-b border-muted py-2 gap-2">
+        <div className="flex border-b border-muted py-2 gap-2 overflow-x-auto scrollbar-none flex-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
           <Button
             type="button"
             variant={activeFilter === 'all' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveFilter('all')}
-            className="text-xs font-semibold rounded-md"
+            className="text-xs font-semibold rounded-md flex-shrink-0"
           >
             All Tasks (
             {tableProps.data.length}
@@ -315,20 +325,20 @@ function StudioTaskReviewPage() {
             variant={activeFilter === 'ready' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveFilter('ready')}
-            className="text-xs font-semibold rounded-md flex items-center gap-1.5"
+            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Ready for Approval
+            <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+            <span>Ready for Approval</span>
           </Button>
           <Button
             type="button"
             variant={activeFilter === 'attention' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveFilter('attention')}
-            className="text-xs font-semibold rounded-md flex items-center gap-1.5"
+            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
-            <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-            Needs Attention
+            <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
+            <span>Needs Attention</span>
           </Button>
         </div>
 
