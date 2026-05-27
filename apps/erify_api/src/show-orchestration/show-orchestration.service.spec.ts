@@ -21,6 +21,8 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { HttpError } from '@/lib/errors/http-error.util';
+import { StudioService } from '@/models/studio/studio.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import type {
   CreateShowWithAssignmentsDto,
@@ -61,6 +63,7 @@ describe('showOrchestrationService', () => {
   let studioCreatorRepository: jest.Mocked<StudioCreatorRepository>;
   let taskService: jest.Mocked<TaskService>;
   let taskTargetService: jest.Mocked<TaskTargetService>;
+  let studioService: jest.Mocked<StudioService>;
 
   const mockShow: Show = {
     id: BigInt(1),
@@ -208,6 +211,12 @@ describe('showOrchestrationService', () => {
             hardDeleteByShowId: jest.fn(),
           },
         },
+        {
+          provide: StudioService,
+          useValue: {
+            getStudioById: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -224,6 +233,7 @@ describe('showOrchestrationService', () => {
     studioCreatorRepository = module.get<StudioCreatorRepository>(StudioCreatorRepository) as jest.Mocked<StudioCreatorRepository>;
     taskService = module.get<TaskService>(TaskService) as jest.Mocked<TaskService>;
     taskTargetService = module.get<TaskTargetService>(TaskTargetService) as jest.Mocked<TaskTargetService>;
+    studioService = module.get<StudioService>(StudioService) as jest.Mocked<StudioService>;
   });
 
   beforeEach(() => {
@@ -1572,7 +1582,7 @@ describe('showOrchestrationService', () => {
     const mockStudio = { id: BigInt(1), uid: studioUid, deletedAt: null };
 
     it('should throw NotFoundException if studio does not exist', async () => {
-      mockPrismaForCls.studio.findFirst.mockResolvedValue(null);
+      studioService.getStudioById.mockRejectedValue(HttpError.notFound('Studio', studioUid));
 
       await expect(
         service.getShowRunReviewSummary(studioUid, {
@@ -1583,7 +1593,7 @@ describe('showOrchestrationService', () => {
     });
 
     it('should compile and return correct summary metrics', async () => {
-      mockPrismaForCls.studio.findFirst.mockResolvedValue(mockStudio);
+      studioService.getStudioById.mockResolvedValue(mockStudio as any);
 
       const mockShows = [
         {
@@ -1670,11 +1680,7 @@ describe('showOrchestrationService', () => {
         date_to: '2026-05-13T05:59:59.999Z',
       });
 
-      expect(mockPrismaForCls.studio.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { uid: studioUid, deletedAt: null },
-        })
-      );
+      expect(studioService.getStudioById).toHaveBeenCalledWith(studioUid);
       expect(showService.getShowsForReview).toHaveBeenCalledWith(
         mockStudio.id,
         new Date('2026-05-12T06:00:00.000Z'),

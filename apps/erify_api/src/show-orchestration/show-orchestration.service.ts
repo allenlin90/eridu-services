@@ -26,6 +26,7 @@ import { ShowCreatorRepository } from '@/models/show-creator/show-creator.reposi
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
@@ -113,6 +114,7 @@ export class ShowOrchestrationService {
     private readonly studioCreatorRepository: StudioCreatorRepository,
     private readonly taskService: TaskService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly studioService: StudioService,
   ) {}
 
   async createShowWithAssignments(
@@ -1131,12 +1133,7 @@ export class ShowOrchestrationService {
     studioUid: string,
     query: { date_from: string; date_to: string },
   ) {
-    const studio = await this.prisma.studio.findFirst({
-      where: { uid: studioUid, deletedAt: null },
-    });
-    if (!studio) {
-      throw HttpError.notFound('Studio', studioUid);
-    }
+    const studio = await this.studioService.getStudioById(studioUid);
     const studioId = studio.id;
 
     const start = new Date(query.date_from);

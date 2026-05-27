@@ -508,6 +508,10 @@ export class ShowRepository extends BaseRepository<
     return parsed;
   }
 
+  // Engineering decision: compound studio-scoped and range-scoped retrieval with deeply nested includes
+  // (creators, platforms with active violations, and task targets with checklists) cannot be expressed
+  // cleanly or performantly as a generic findMany without leaking database relational structure to outer
+  // layers and repeating soft-delete clauses. Used in show run review surface to ensure transactional safety.
   async findShowsForReview(
     studioId: bigint,
     startDate: Date,
