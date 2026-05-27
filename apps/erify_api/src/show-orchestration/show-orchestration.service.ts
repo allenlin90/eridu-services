@@ -1139,10 +1139,22 @@ export class ShowOrchestrationService {
     }
     const studioId = studio.id;
 
-    const start = query.date_from ? new Date(query.date_from) : new Date();
-    const end = query.date_to ? new Date(query.date_to) : new Date();
+    let start: Date;
+    let end: Date;
+
+    if (query.date_from && /^\d{4}-\d{2}-\d{2}$/.test(query.date_from)) {
+      start = new Date(query.date_from);
+      start.setUTCHours(6, 0, 0, 0);
+    } else {
+      start = query.date_from ? new Date(query.date_from) : new Date();
+    }
+
     if (query.date_to && /^\d{4}-\d{2}-\d{2}$/.test(query.date_to)) {
-      end.setHours(23, 59, 59, 999);
+      end = new Date(query.date_to);
+      end.setUTCDate(end.getUTCDate() + 1);
+      end.setUTCHours(5, 59, 59, 999);
+    } else {
+      end = query.date_to ? new Date(query.date_to) : new Date();
     }
 
     const shows = await this.prisma.show.findMany({

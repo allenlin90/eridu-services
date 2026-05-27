@@ -1645,6 +1645,18 @@ describe('showOrchestrationService', () => {
           showPlatforms: [],
           taskTargets: [],
         },
+        {
+          id: BigInt(30),
+          uid: 'show_30',
+          name: 'Late-night Show',
+          startTime: new Date('2026-05-13T02:00:00.000Z'), // Operational day May 12!
+          endTime: new Date('2026-05-13T04:00:00.000Z'),
+          actualStartTime: new Date('2026-05-13T02:00:00.000Z'), // Complete
+          actualEndTime: new Date('2026-05-13T04:00:00.000Z'),
+          showCreators: [],
+          showPlatforms: [],
+          taskTargets: [],
+        },
       ];
 
       mockPrismaForCls.show.findMany.mockResolvedValue(mockShows);
@@ -1664,13 +1676,17 @@ describe('showOrchestrationService', () => {
           where: expect.objectContaining({
             studioId: mockStudio.id,
             deletedAt: null,
+            startTime: {
+              gte: new Date('2026-05-12T06:00:00.000Z'),
+              lte: new Date('2026-05-13T05:59:59.999Z'),
+            },
           }),
         })
       );
 
       expect(result.shows).toEqual({
-        total_count: 2,
-        complete_count: 1,
+        total_count: 3,
+        complete_count: 2,
         incomplete_count: 1,
       });
 
