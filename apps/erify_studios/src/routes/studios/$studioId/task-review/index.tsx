@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { RefreshCw } from 'lucide-react';
@@ -19,6 +20,9 @@ import {
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
+import { getClients } from '@/features/clients/api/get-clients';
+import { getMemberships } from '@/features/memberships/api/get-memberships';
+import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
 import { BulkApproveResultsDialog } from '@/features/tasks/components/bulk-approve-results-dialog';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
 import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
@@ -28,11 +32,154 @@ import { useBulkApproveTasks } from '@/features/tasks/hooks/use-bulk-approve-tas
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
 import { useTaskReviewSummary } from '@/features/tasks/hooks/use-task-review-summary';
 
+function useTaskReviewClientFilter(studioId: string, selectedClientName?: string) {
+  const [search, setSearch] = useState('');
+
+  const listQuery = useQuery({
+    queryKey: ['task-review-client-filter', 'list', studioId, { search }],
+    queryFn: ({ signal }) =>
+      getClients(
+        { name: search || undefined, limit: search ? 20 : 10 },
+        studioId,
+        { signal },
+      ),
+    enabled: Boolean(studioId),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const selectedQuery = useQuery({
+    queryKey: ['task-review-client-filter', 'by-name', studioId, selectedClientName],
+    queryFn: ({ signal }) =>
+      getClients(
+        { name: selectedClientName, limit: 1 },
+        studioId,
+        { signal },
+      ),
+    enabled: Boolean(studioId && selectedClientName),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const options = useMemo(() => {
+    const fetched = (listQuery.data?.data ?? []).map((client) => ({
+      value: client.name,
+      label: client.name,
+    }));
+    const selected = selectedQuery.data?.data?.[0];
+
+    if (selected && !fetched.some((option) => option.value === selected.name)) {
+      return [{ value: selected.name, label: selected.name }, ...fetched];
+    }
+
+    return fetched;
+  }, [listQuery.data, selectedQuery.data]);
+
+  return {
+    options,
+    isLoading: listQuery.isLoading || listQuery.isFetching,
+    setSearch,
+  };
+}
+
+function useTaskReviewUserFilter(studioId: string, selectedUserName?: string) {
+  const [search, setSearch] = useState('');
+
+  const listQuery = useQuery({
+    queryKey: ['task-review-user-filter', 'list', studioId, { search }],
+    queryFn: () =>
+      getMemberships({
+        name: search || undefined,
+        limit: search ? 20 : 10,
+        studio_id: studioId,
+      }),
+    enabled: Boolean(studioId),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const selectedQuery = useQuery({
+    queryKey: ['task-review-user-filter', 'by-name', studioId, selectedUserName],
+    queryFn: () =>
+      getMemberships({
+        name: selectedUserName,
+        limit: 1,
+        studio_id: studioId,
+      }),
+    enabled: Boolean(studioId && selectedUserName),
+    staleTime: 60 * 60 * 1000,
+  });
+
+
+  const options = useMemo(() => {
+    const fetched = (listQuery.data?.data ?? []).map((membership) => ({
+      value: membership.user.name,
+      label: membership.user.name,
+    }));
+    const selected = selectedQuery.data?.data?.[0];
+
+    if (selected && !fetched.some((option) => option.value === selected.user.name)) {
+      return [{ value: selected.user.name, label: selected.user.name }, ...fetched];
+    }
+
+    return fetched;
+  }, [listQuery.data, selectedQuery.data]);
+
+  return {
+    options,
+    isLoading: listQuery.isLoading || listQuery.isFetching,
+    setSearch,
+  };
+}
+
+function useTaskReviewShowFilter(studioId: string, selectedShowName?: string) {
+  const [search, setSearch] = useState('');
+
+  const listQuery = useQuery({
+    queryKey: ['task-review-show-filter', 'list', studioId, { search }],
+    queryFn: ({ signal }) =>
+      getStudioShows(
+        studioId,
+        { search: search || undefined, limit: search ? 20 : 10 },
+        { signal },
+      ),
+    enabled: Boolean(studioId),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const selectedQuery = useQuery({
+    queryKey: ['task-review-show-filter', 'by-name', studioId, selectedShowName],
+    queryFn: ({ signal }) =>
+      getStudioShows(
+        studioId,
+        { search: selectedShowName, limit: 1 },
+        { signal },
+      ),
+    enabled: Boolean(studioId && selectedShowName),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const options = useMemo(() => {
+    const fetched = (listQuery.data?.data ?? []).map((show) => ({
+      value: show.name,
+      label: show.name,
+    }));
+    const selected = selectedQuery.data?.data?.[0];
+
+    if (selected && !fetched.some((option) => option.value === selected.name)) {
+      return [{ value: selected.name, label: selected.name }, ...fetched];
+    }
+
+    return fetched;
+  }, [listQuery.data, selectedQuery.data]);
+
+  return {
+    options,
+    isLoading: listQuery.isLoading || listQuery.isFetching,
+    setSearch,
+  };
+}
+
 export const Route = createFileRoute('/studios/$studioId/task-review/')({
   component: StudioTaskReviewPage,
 });
-
-const taskReviewSearchableColumns = studioTaskSearchableColumns.filter((column) => column.id !== 'due_date');
 
 function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
@@ -43,6 +190,90 @@ function StudioTaskReviewPage() {
   const { onDateRangeChange, onResetDateRange } = reviewScopeProps;
   const { key: actionSheetKey, ...actionSheetRestProps } = actionSheetProps;
   const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
+
+  // Extract selected names from column filters to persist labels in the combobox triggers
+  const selectedClientName = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'client_name');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+
+  const selectedAssigneeName = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'assignee_name');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+
+  const selectedShowName = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'show_name');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+
+  // Query options asynchronously for client, user, and show filters
+  const {
+    options: clientOptions,
+    isLoading: isClientLoading,
+    setSearch: setClientSearch,
+  } = useTaskReviewClientFilter(studioId, selectedClientName);
+
+  const {
+    options: assigneeOptions,
+    isLoading: isAssigneeLoading,
+    setSearch: setAssigneeSearch,
+  } = useTaskReviewUserFilter(studioId, selectedAssigneeName);
+
+  const {
+    options: showOptions,
+    isLoading: isShowLoading,
+    setSearch: setShowSearch,
+  } = useTaskReviewShowFilter(studioId, selectedShowName);
+
+  // Dynamically declare searchable columns to inject async combobox filters
+  const searchableColumns = useMemo(() => {
+    return studioTaskSearchableColumns
+      .filter((column) => column.id !== 'due_date')
+      .map((column) => {
+        if (column.id === 'client_name') {
+          return {
+            ...column,
+            type: 'combobox' as const,
+            options: clientOptions,
+            onSearch: setClientSearch,
+            isLoading: isClientLoading,
+            placeholder: 'Filter by client',
+          };
+        }
+        if (column.id === 'assignee_name') {
+          return {
+            ...column,
+            type: 'combobox' as const,
+            options: assigneeOptions,
+            onSearch: setAssigneeSearch,
+            isLoading: isAssigneeLoading,
+            placeholder: 'Filter by user',
+          };
+        }
+        if (column.id === 'show_name') {
+          return {
+            ...column,
+            type: 'combobox' as const,
+            options: showOptions,
+            onSearch: setShowSearch,
+            isLoading: isShowLoading,
+            placeholder: 'Filter by show',
+          };
+        }
+        return column;
+      });
+  }, [
+    clientOptions,
+    isClientLoading,
+    setClientSearch,
+    assigneeOptions,
+    isAssigneeLoading,
+    setAssigneeSearch,
+    showOptions,
+    isShowLoading,
+    setShowSearch,
+  ]);
 
   // State for client-side filter
   const [activeFilter, setActiveFilter] = useState<TaskReviewActiveFilter>('all');
@@ -183,14 +414,44 @@ function StudioTaskReviewPage() {
         (task) => getTaskPhase(task.type) === 'pre-production' && getTaskIssues(task).length > 0,
       );
     }
+    if (activeFilter === 'pre-prod-ready') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'pre-production' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
+      );
+    }
+    if (activeFilter === 'pre-prod-done') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'pre-production' && ['COMPLETED', 'CLOSED'].includes(task.status),
+      );
+    }
     if (activeFilter === 'on-air-attention') {
       return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'on-air' && getTaskIssues(task).length > 0,
       );
     }
+    if (activeFilter === 'on-air-ready') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'on-air' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
+      );
+    }
+    if (activeFilter === 'on-air-done') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'on-air' && ['COMPLETED', 'CLOSED'].includes(task.status),
+      );
+    }
     if (activeFilter === 'post-prod-attention') {
       return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'post-production' && getTaskIssues(task).length > 0,
+      );
+    }
+    if (activeFilter === 'post-prod-ready') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'post-production' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
+      );
+    }
+    if (activeFilter === 'post-prod-done') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'post-production' && ['COMPLETED', 'CLOSED'].includes(task.status),
       );
     }
     return allTasks;
@@ -374,10 +635,10 @@ function StudioTaskReviewPage() {
           renderToolbar={(table) => (
             <DataTableToolbar
               table={table}
-              searchableColumns={taskReviewSearchableColumns}
+              searchableColumns={searchableColumns}
               searchColumn={tableProps.searchColumn}
               searchPlaceholder={tableProps.searchPlaceholder}
-              featuredFilterColumns={[...tableProps.featuredFilterColumns]}
+              featuredFilterColumns={['client_name', 'assignee_name', 'show_name', 'status', 'task_type']}
             >
               <Button
                 variant="outline"

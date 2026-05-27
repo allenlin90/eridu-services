@@ -52,9 +52,15 @@ When shows are scheduled, tasks are instantiated from these templates:
 
 ### 3. Pre-Confirmation Review (`/task-review`)
 Studio managers review submitted operator task checklists for the operational day (06:00–05:59 local window) at `/studios/:studioId/task-review`:
-* **Ready for Approval Tab**: Contains all tasks in `REVIEW` status that have an assignee and no outstanding alignment issues.
+* **Visual Summary Panel & State Filtering**: The summary panel splits Setup, Active/Routine, and Closure phases with quick-action metrics. In addition to primary **Needs Attention** highlights, managers can tap interactive **Ready** and **Done** visual filters underneath each card:
+  - **Pre-Prod (SETUP)**: Ready and Done task filters.
+  - **On-Air (ACTIVE/ROUTINE)**: Ready and Done task filters.
+  - **Post-Prod (CLOSURE)**: Ready and Done task filters.
+* **Unified Workspace Queues**: All tabs draw from a single merged pool of dated and undated tasks, with local URL-state paginators automatically updated to reflect the active subset.
+* **Triage & Search Filters**: To navigate dense queues efficiently, the Client, User (Assignee), and Show filters are fully asynchronous comboboxes. They query the API as the manager types, with robust label preservation even if an active search query falls outside the initial results page.
 * **Needs Attention Tab**: Isolates task anomalies, strictly defined as tasks that are **Unassigned** or **Unsubmitted and Overdue** (`PENDING`, `IN_PROGRESS`, or `BLOCKED` status past their due date).
 * *Note: A task in `REVIEW` status is never flagged as "Overdue" or placed in "Needs Attention" just because the due date has passed. The operator completed their role on time; it is simply waiting for the manager.*
+
 
 ### 4. Multi-Selection and Bulk Approval
 Managers use individual row checkboxes (or the table header toggle to select all clean rows) to select tasks they wish to confirm:

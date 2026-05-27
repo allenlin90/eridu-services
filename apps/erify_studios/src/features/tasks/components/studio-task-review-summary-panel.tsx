@@ -7,8 +7,14 @@ export type TaskReviewActiveFilter =
   | 'ready'
   | 'attention'
   | 'pre-prod-attention'
+  | 'pre-prod-ready'
+  | 'pre-prod-done'
   | 'on-air-attention'
+  | 'on-air-ready'
+  | 'on-air-done'
   | 'post-prod-attention'
+  | 'post-prod-ready'
+  | 'post-prod-done'
   | 'done';
 
 type StudioTaskReviewSummaryPanelProps = {
@@ -19,10 +25,13 @@ type StudioTaskReviewSummaryPanelProps = {
     done: number;
     preProdAttentionCount: number;
     preProdReadyCount: number;
+    preProdDoneCount: number;
     onAirAttentionCount: number;
     onAirReadyCount: number;
+    onAirDoneCount: number;
     postProdAttentionCount: number;
     postProdReadyCount: number;
+    postProdDoneCount: number;
   };
   activeFilter: TaskReviewActiveFilter;
   setActiveFilter: (filter: TaskReviewActiveFilter) => void;
@@ -148,13 +157,43 @@ export function StudioTaskReviewSummaryPanel({
           </span>
           <span className="text-xs text-muted-foreground">Needs Attention</span>
         </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-          <span>
-            {stats.preProdReadyCount}
-            {' '}
-            Ready for Approval
-          </span>
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs mt-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveFilter('pre-prod-ready');
+            }}
+            className={cn(
+              'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
+              activeFilter === 'pre-prod-ready' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-500',
+            )}
+          >
+            <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+            <span>
+              {stats.preProdReadyCount}
+              {' '}
+              Ready
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveFilter('pre-prod-done');
+            }}
+            className={cn(
+              'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
+              activeFilter === 'pre-prod-done' ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500',
+            )}
+          >
+            <span className="h-2 w-2 rounded-full bg-slate-500 flex-shrink-0" />
+            <span>
+              {stats.preProdDoneCount}
+              {' '}
+              Done
+            </span>
+          </button>
         </div>
       </div>
 
@@ -185,13 +224,43 @@ export function StudioTaskReviewSummaryPanel({
           </span>
           <span className="text-xs text-muted-foreground">Needs Attention</span>
         </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-          <span>
-            {stats.onAirReadyCount}
-            {' '}
-            Ready for Approval
-          </span>
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs mt-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveFilter('on-air-ready');
+            }}
+            className={cn(
+              'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
+              activeFilter === 'on-air-ready' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-500',
+            )}
+          >
+            <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+            <span>
+              {stats.onAirReadyCount}
+              {' '}
+              Ready
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveFilter('on-air-done');
+            }}
+            className={cn(
+              'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
+              activeFilter === 'on-air-done' ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500',
+            )}
+          >
+            <span className="h-2 w-2 rounded-full bg-slate-500 flex-shrink-0" />
+            <span>
+              {stats.onAirDoneCount}
+              {' '}
+              Done
+            </span>
+          </button>
         </div>
       </div>
 
@@ -222,13 +291,43 @@ export function StudioTaskReviewSummaryPanel({
           </span>
           <span className="text-xs text-muted-foreground">Needs Attention</span>
         </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-          <span>
-            {stats.postProdReadyCount}
-            {' '}
-            Ready for Approval
-          </span>
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs mt-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveFilter('post-prod-ready');
+            }}
+            className={cn(
+              'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
+              activeFilter === 'post-prod-ready' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-500',
+            )}
+          >
+            <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+            <span>
+              {stats.postProdReadyCount}
+              {' '}
+              Ready
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveFilter('post-prod-done');
+            }}
+            className={cn(
+              'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
+              activeFilter === 'post-prod-done' ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500',
+            )}
+          >
+            <span className="h-2 w-2 rounded-full bg-slate-500 flex-shrink-0" />
+            <span>
+              {stats.postProdDoneCount}
+              {' '}
+              Done
+            </span>
+          </button>
         </div>
       </div>
     </div>

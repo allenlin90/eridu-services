@@ -137,10 +137,13 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
     let done = 0;
     const preProdAttention: string[] = [];
     const preProdReady: string[] = [];
+    const preProdDone: string[] = [];
     const onAirAttention: string[] = [];
     const onAirReady: string[] = [];
+    const onAirDone: string[] = [];
     const postProdAttention: string[] = [];
     const postProdReady: string[] = [];
+    const postProdDone: string[] = [];
 
     allReviewTasks.forEach((task) => {
       const issues = getTaskIssues(task);
@@ -149,6 +152,11 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
 
       if (['COMPLETED', 'CLOSED'].includes(task.status)) {
         done++;
+        if (phase === 'pre-production')
+          preProdDone.push(task.id);
+        else if (phase === 'post-production')
+          postProdDone.push(task.id);
+        else onAirDone.push(task.id);
       } else if (task.status === 'REVIEW' && !hasIssues) {
         ready++;
         if (phase === 'pre-production')
@@ -173,10 +181,13 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
       done,
       preProdAttentionCount: preProdAttention.length,
       preProdReadyCount: preProdReady.length,
+      preProdDoneCount: preProdDone.length,
       onAirAttentionCount: onAirAttention.length,
       onAirReadyCount: onAirReady.length,
+      onAirDoneCount: onAirDone.length,
       postProdAttentionCount: postProdAttention.length,
       postProdReadyCount: postProdReady.length,
+      postProdDoneCount: postProdDone.length,
     };
   }, [summaryData]);
 
