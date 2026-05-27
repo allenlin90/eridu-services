@@ -259,7 +259,7 @@ export const showRunReviewSummarySchema = z.object({
         status: z.enum(['LATE', 'MISSING']),
         late_minutes: z.number(),
         reason: z.string().nullable(),
-      })
+      }),
     ),
   }),
   platforms: z.object({
@@ -274,7 +274,7 @@ export const showRunReviewSummarySchema = z.object({
         severity: z.string(),
         reason: z.string(),
         observed_at: z.string(),
-      })
+      }),
     ),
   }),
   tasks: z.object({
@@ -286,8 +286,7 @@ export const showRunReviewSummarySchema = z.object({
         status: z.string(),
         type: z.string(),
         show_name: z.string(),
-      })
+      }),
     ),
   }),
 });
-
