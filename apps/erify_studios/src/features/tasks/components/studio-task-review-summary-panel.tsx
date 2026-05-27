@@ -8,13 +8,15 @@ export type TaskReviewActiveFilter =
   | 'attention'
   | 'pre-prod-attention'
   | 'on-air-attention'
-  | 'post-prod-attention';
+  | 'post-prod-attention'
+  | 'done';
 
 type StudioTaskReviewSummaryPanelProps = {
   stats: {
     total: number;
     ready: number;
     attention: number;
+    done: number;
     preProdAttentionCount: number;
     preProdReadyCount: number;
     onAirAttentionCount: number;
@@ -94,6 +96,26 @@ export function StudioTaskReviewSummaryPanel({
               {stats.attention}
               {' '}
               Attention
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveFilter('done');
+            }}
+            className={cn(
+              'hover:underline flex items-center gap-1 font-semibold transition-colors duration-150',
+              activeFilter === 'done' ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500',
+            )}
+          >
+            <span
+              className="h-2 w-2 rounded-full bg-slate-500 flex-shrink-0"
+            />
+            <span>
+              {stats.done}
+              {' '}
+              Done
             </span>
           </button>
         </div>

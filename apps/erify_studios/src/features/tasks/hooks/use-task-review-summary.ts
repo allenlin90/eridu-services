@@ -134,6 +134,7 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
     const allReviewTasks = summaryData?.data || [];
     let ready = 0;
     let attention = 0;
+    let done = 0;
     const preProdAttention: string[] = [];
     const preProdReady: string[] = [];
     const onAirAttention: string[] = [];
@@ -146,7 +147,9 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
       const hasIssues = issues.length > 0;
       const phase = getTaskPhase(task.type);
 
-      if (task.status === 'REVIEW' && !hasIssues) {
+      if (['COMPLETED', 'CLOSED'].includes(task.status)) {
+        done++;
+      } else if (task.status === 'REVIEW' && !hasIssues) {
         ready++;
         if (phase === 'pre-production')
           preProdReady.push(task.id);
@@ -167,6 +170,7 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
       total: allReviewTasks.length,
       ready,
       attention,
+      done,
       preProdAttentionCount: preProdAttention.length,
       preProdReadyCount: preProdReady.length,
       onAirAttentionCount: onAirAttention.length,

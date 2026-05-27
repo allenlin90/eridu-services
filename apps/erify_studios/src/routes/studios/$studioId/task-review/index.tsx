@@ -175,6 +175,9 @@ function StudioTaskReviewPage() {
     if (activeFilter === 'attention') {
       return allTasks.filter((task) => getTaskIssues(task).length > 0);
     }
+    if (activeFilter === 'done') {
+      return allTasks.filter((task) => ['COMPLETED', 'CLOSED'].includes(task.status));
+    }
     if (activeFilter === 'pre-prod-attention') {
       return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'pre-production' && getTaskIssues(task).length > 0,
@@ -307,7 +310,11 @@ function StudioTaskReviewPage() {
             className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
             <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span>Ready for Approval</span>
+            <span>
+              Ready for Approval (
+              {stats.ready}
+              )
+            </span>
           </Button>
           <Button
             type="button"
@@ -321,7 +328,25 @@ function StudioTaskReviewPage() {
             className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
             <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
-            <span>Needs Attention</span>
+            <span>
+              Needs Attention (
+              {stats.attention}
+              )
+            </span>
+          </Button>
+          <Button
+            type="button"
+            variant={activeFilter === 'done' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleActiveFilterChange('done')}
+            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
+          >
+            <span className="h-2 w-2 rounded-full bg-slate-500 dark:bg-slate-400 flex-shrink-0" />
+            <span>
+              Done (
+              {stats.done}
+              )
+            </span>
           </Button>
         </div>
 
