@@ -494,7 +494,10 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
                               Shows scheduled within selected range:
                             </td>
                             <td className="p-3 text-center">
-                              <Badge variant={showStats.incomplete_count === 0 ? 'success' : 'destructive'}>
+                              <Badge
+                                variant={showStats.incomplete_count === 0 ? 'outline' : 'destructive'}
+                                className={showStats.incomplete_count === 0 ? 'border-green-200 bg-green-50 text-green-700 font-normal' : ''}
+                              >
                                 {showStats.incomplete_count === 0 ? 'ALL COMPLETE' : `${showStats.incomplete_count} MISSING ACTUALS`}
                               </Badge>
                             </td>
