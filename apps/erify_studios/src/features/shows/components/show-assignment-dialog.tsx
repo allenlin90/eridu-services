@@ -12,7 +12,8 @@ import {
   DialogTitle,
 } from '@eridu/ui';
 
-import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
+import type { Membership } from '@/features/memberships/api/get-memberships';
+import { useStudioMembers } from '@/features/studio-members/api/members';
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useAssignShows } from '@/features/studio-shows/hooks/use-assign-shows';
 
@@ -45,11 +46,11 @@ export function ShowAssignmentDialog({
   };
 
   // Fetch studio members by search term (server-side) while dialog is open.
-  const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembershipsQuery(
+  const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembers(
     studioId,
     {
       limit: 50,
-      name: memberSearch || undefined,
+      search: memberSearch || undefined,
     },
     {
       enabled: open,
@@ -57,7 +58,15 @@ export function ShowAssignmentDialog({
   );
 
   const rawMembers = membersResponse?.data;
-  const members = useMemo(() => rawMembers ?? [], [rawMembers]);
+  const members = useMemo(() => {
+    return (rawMembers ?? []).map((member) => ({
+      user: {
+        id: member.user_id,
+        name: member.user_name,
+        email: member.user_email,
+      },
+    } as unknown as Membership));
+  }, [rawMembers]);
 
   const { mutate: assignShows, isPending: isAssigning } = useAssignShows({
     studioId,
