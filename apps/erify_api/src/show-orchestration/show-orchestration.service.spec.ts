@@ -120,6 +120,7 @@ describe('showOrchestrationService', () => {
             generateShowUid: jest.fn(),
             buildUpdatePayload: jest.fn(),
             ensureValidActualTimeRange: jest.fn(),
+            getShowsForReview: jest.fn(),
           },
         },
         {
@@ -1659,7 +1660,7 @@ describe('showOrchestrationService', () => {
         },
       ];
 
-      mockPrismaForCls.show.findMany.mockResolvedValue(mockShows);
+      showService.getShowsForReview.mockResolvedValue(mockShows as any);
 
       const result = await service.getShowRunReviewSummary(studioUid, {
         date_from: '2026-05-12',
@@ -1671,17 +1672,10 @@ describe('showOrchestrationService', () => {
           where: { uid: studioUid, deletedAt: null },
         })
       );
-      expect(mockPrismaForCls.show.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            studioId: mockStudio.id,
-            deletedAt: null,
-            startTime: {
-              gte: new Date('2026-05-12T06:00:00.000Z'),
-              lte: new Date('2026-05-13T05:59:59.999Z'),
-            },
-          }),
-        })
+      expect(showService.getShowsForReview).toHaveBeenCalledWith(
+        mockStudio.id,
+        new Date('2026-05-12T06:00:00.000Z'),
+        new Date('2026-05-13T05:59:59.999Z'),
       );
 
       expect(result.shows).toEqual({

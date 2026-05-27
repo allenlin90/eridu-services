@@ -26,6 +26,7 @@ describe('studioShowController', () => {
     getCreatorCompensationSummaryForShow: jest.fn(),
     bulkAssignCreatorsToShow: jest.fn(),
     removeCreatorsFromShow: jest.fn(),
+    getShowRunReviewSummary: jest.fn(),
   };
 
   const studioShowManagementServiceMock = {
@@ -285,6 +286,21 @@ describe('studioShowController', () => {
 
       expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
       expect(showOrchestrationServiceMock.removeCreatorsFromShow).toHaveBeenCalledWith(showId, [creatorId]);
+    });
+  });
+
+  describe('runReview', () => {
+    it('should retrieve the operational summary for show run review', async () => {
+      const studioId = 'std_123';
+      const query = { date_from: '2026-05-12', date_to: '2026-05-12' };
+      const expectedSummary = { shows: { total_count: 1 } };
+
+      showOrchestrationServiceMock.getShowRunReviewSummary.mockResolvedValue(expectedSummary);
+
+      const result = await controller.runReview(studioId, query);
+
+      expect(showOrchestrationServiceMock.getShowRunReviewSummary).toHaveBeenCalledWith(studioId, query);
+      expect(result).toEqual(expectedSummary);
     });
   });
 });

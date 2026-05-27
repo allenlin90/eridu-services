@@ -1157,49 +1157,7 @@ export class ShowOrchestrationService {
       end = query.date_to ? new Date(query.date_to) : new Date();
     }
 
-    const shows = await this.prisma.show.findMany({
-      where: {
-        studioId,
-        deletedAt: null,
-        startTime: {
-          gte: start,
-          lte: end,
-        },
-      },
-      include: {
-        showCreators: {
-          where: { deletedAt: null },
-          include: {
-            creator: {
-              select: {
-                uid: true,
-                name: true,
-                aliasName: true,
-              },
-            },
-          },
-        },
-        showPlatforms: {
-          where: { deletedAt: null },
-          include: {
-            platform: {
-              select: {
-                name: true,
-              },
-            },
-            violations: {
-              where: { supersededAt: null },
-            },
-          },
-        },
-        taskTargets: {
-          where: { deletedAt: null },
-          include: {
-            task: true,
-          },
-        },
-      },
-    });
+    const shows = await this.showService.getShowsForReview(studioId, start, end);
 
     let completeCount = 0;
     let totalCreatorsCount = 0;

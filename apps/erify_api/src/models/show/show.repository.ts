@@ -507,4 +507,54 @@ export class ShowRepository extends BaseRepository<
     }
     return parsed;
   }
+
+  async findShowsForReview(
+    studioId: bigint,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    return this.delegate.findMany({
+      where: {
+        studioId,
+        deletedAt: null,
+        startTime: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        showCreators: {
+          where: { deletedAt: null },
+          include: {
+            creator: {
+              select: {
+                uid: true,
+                name: true,
+                aliasName: true,
+              },
+            },
+          },
+        },
+        showPlatforms: {
+          where: { deletedAt: null },
+          include: {
+            platform: {
+              select: {
+                name: true,
+              },
+            },
+            violations: {
+              where: { supersededAt: null },
+            },
+          },
+        },
+        taskTargets: {
+          where: { deletedAt: null },
+          include: {
+            task: true,
+          },
+        },
+      },
+    });
+  }
 }

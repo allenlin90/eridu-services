@@ -72,10 +72,34 @@ const STUDIO_SHOW_DELETE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
 ];
 
-const showRunReviewQuerySchema = z.object({
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
-});
+const dateStringSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Must be in YYYY-MM-DD format' })
+  .refine(
+    (val) => {
+      const d = new Date(val);
+      return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(val);
+    },
+    { message: 'Must be a valid calendar date' },
+  );
+
+const showRunReviewQuerySchema = z
+  .object({
+    date_from: dateStringSchema.optional(),
+    date_to: dateStringSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.date_from && data.date_to) {
+        return data.date_to >= data.date_from;
+      }
+      return true;
+    },
+    {
+      message: 'date_to must be after or equal to date_from',
+      path: ['date_to'],
+    },
+  );
 
 export class ShowRunReviewQueryDto extends createZodDto(showRunReviewQuerySchema) {}
 
