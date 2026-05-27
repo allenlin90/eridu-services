@@ -33,6 +33,12 @@ import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 // Mock PrismaService module for ClsPluginTransactional (must be exported from a @Module to satisfy useExisting)
 const mockPrismaForCls = {
   $transaction: jest.fn(async (callback: any) => await callback({})),
+  studio: {
+    findFirst: jest.fn(),
+  },
+  show: {
+    findMany: jest.fn(),
+  },
 };
 
 @Module({
@@ -96,6 +102,10 @@ describe('showOrchestrationService', () => {
       ],
       providers: [
         ShowOrchestrationService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaForCls,
+        },
         {
           provide: ShowService,
           useValue: {
@@ -1555,4 +1565,160 @@ describe('showOrchestrationService', () => {
       }));
     });
   });
+
+  describe('getShowRunReviewSummary', () => {
+    const studioUid = 'std_test123';
+    const mockStudio = { id: BigInt(1), uid: studioUid, deletedAt: null };
+
+    it('should throw NotFoundException if studio does not exist', async () => {
+      mockPrismaForCls.studio.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.getShowRunReviewSummary(studioUid, { date_from: '2026-05-12', date_to: '2026-05-12' })
+      ).rejects.toThrow('Studio not found with id std_test123');
+    });
+
+    it('should compile and return correct summary metrics', async () => {
+      mockPrismaForCls.studio.findFirst.mockResolvedValue(mockStudio);
+
+      const mockShows = [
+        {
+          id: BigInt(10),
+          uid: 'show_10',
+          name: 'Show 1',
+          startTime: new Date('2026-05-12T10:00:00.000Z'),
+          endTime: new Date('2026-05-12T12:00:00.000Z'),
+          actualStartTime: new Date('2026-05-12T10:05:00.000Z'), // Complete
+          actualEndTime: new Date('2026-05-12T12:05:00.000Z'),
+          showCreators: [
+            {
+              uid: 'sc_1',
+              attendanceMissing: false,
+              actualStartTime: new Date('2026-05-12T10:15:00.000Z'), // Late by 15 mins
+              attendanceReason: 'Traffic',
+              creator: { uid: 'creator_alice', name: 'Alice', aliasName: 'Ali' },
+            },
+          ],
+          showPlatforms: [
+            {
+              platform: { name: 'YouTube' },
+              violations: [
+                {
+                  uid: 'v_1',
+                  violationType: 'AUDIO_LAG',
+                  severity: 'HIGH',
+                  reason: 'Laggy audio',
+                  observedAt: new Date('2026-05-12T10:30:00.000Z'),
+                },
+              ],
+            },
+          ],
+          taskTargets: [
+            {
+              task: {
+                uid: 'task_1',
+                description: 'Pre-production sound check',
+                status: 'IN_PROGRESS',
+                type: 'PRE_PRODUCTION',
+                deletedAt: null,
+              },
+            },
+          ],
+        },
+        {
+          id: BigInt(20),
+          uid: 'show_20',
+          name: 'Show 2',
+          startTime: new Date('2026-05-12T13:00:00.000Z'),
+          endTime: new Date('2026-05-12T15:00:00.000Z'),
+          actualStartTime: null, // Incomplete
+          actualEndTime: null,
+          showCreators: [
+            {
+              uid: 'sc_2',
+              attendanceMissing: true, // Missing
+              actualStartTime: null,
+              attendanceReason: 'SICK',
+              creator: { uid: 'creator_bob', name: 'Bob', aliasName: null },
+            },
+          ],
+          showPlatforms: [],
+          taskTargets: [],
+        },
+      ];
+
+      mockPrismaForCls.show.findMany.mockResolvedValue(mockShows);
+
+      const result = await service.getShowRunReviewSummary(studioUid, {
+        date_from: '2026-05-12',
+        date_to: '2026-05-12',
+      });
+
+      expect(mockPrismaForCls.studio.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { uid: studioUid, deletedAt: null },
+        })
+      );
+      expect(mockPrismaForCls.show.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            studioId: mockStudio.id,
+            deletedAt: null,
+          }),
+        })
+      );
+
+      expect(result.shows).toEqual({
+        total_count: 2,
+        complete_count: 1,
+        incomplete_count: 1,
+      });
+
+      expect(result.creators.total_count).toBe(2);
+      expect(result.creators.late_count).toBe(1);
+      expect(result.creators.missing_count).toBe(1);
+      expect(result.creators.exceptions).toHaveLength(2);
+      expect(result.creators.exceptions).toContainEqual(
+        expect.objectContaining({
+          show_creator_uid: 'sc_1',
+          creator_name: 'Ali',
+          status: 'LATE',
+          late_minutes: 15,
+          reason: 'Traffic',
+        })
+      );
+      expect(result.creators.exceptions).toContainEqual(
+        expect.objectContaining({
+          show_creator_uid: 'sc_2',
+          creator_name: 'Bob',
+          status: 'MISSING',
+          late_minutes: 0,
+          reason: 'SICK',
+        })
+      );
+
+      expect(result.platforms.active_violations_count).toBe(1);
+      expect(result.platforms.violations[0]).toEqual(
+        expect.objectContaining({
+          violation_uid: 'v_1',
+          platform_name: 'YouTube',
+          violation_type: 'AUDIO_LAG',
+          severity: 'HIGH',
+          reason: 'Laggy audio',
+        })
+      );
+
+      expect(result.tasks.incomplete_phase_checks_count).toBe(1);
+      expect(result.tasks.incomplete_tasks[0]).toEqual(
+        expect.objectContaining({
+          task_uid: 'task_1',
+          description: 'Pre-production sound check',
+          status: 'IN_PROGRESS',
+          type: 'PRE_PRODUCTION',
+          show_name: 'Show 1',
+        })
+      );
+    });
+  });
 });
+

@@ -29,6 +29,7 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 type CreatorAssignmentPayload = {
   creatorId: string;
@@ -99,6 +100,7 @@ type ResolvedCreatorSnapshot = {
 @Injectable()
 export class ShowOrchestrationService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly showService: ShowService,
     private readonly compensationLineItemService: CompensationLineItemService,
     private readonly showCreatorService: ShowCreatorService,
@@ -1120,5 +1122,178 @@ export class ShowOrchestrationService {
     for (const assignment of toDelete) {
       await this.showPlatformRepository.softDelete({ id: assignment.id });
     }
+  }
+
+  /**
+   * Retrieves compiled daily operational facts and summaries (PR 12.4.4)
+   */
+  async getShowRunReviewSummary(
+    studioUid: string,
+    query: { date_from?: string; date_to?: string },
+  ) {
+    const studio = await this.prisma.studio.findFirst({
+      where: { uid: studioUid, deletedAt: null },
+    });
+    if (!studio) {
+      throw HttpError.notFound('Studio', studioUid);
+    }
+    const studioId = studio.id;
+
+    const start = query.date_from ? new Date(query.date_from) : new Date();
+    const end = query.date_to ? new Date(query.date_to) : new Date();
+    if (query.date_to && /^\d{4}-\d{2}-\d{2}$/.test(query.date_to)) {
+      end.setHours(23, 59, 59, 999);
+    }
+
+    const shows = await this.prisma.show.findMany({
+      where: {
+        studioId,
+        deletedAt: null,
+        startTime: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        showCreators: {
+          where: { deletedAt: null },
+          include: {
+            creator: {
+              select: {
+                uid: true,
+                name: true,
+                aliasName: true,
+              },
+            },
+          },
+        },
+        showPlatforms: {
+          where: { deletedAt: null },
+          include: {
+            platform: {
+              select: {
+                name: true,
+              },
+            },
+            violations: {
+              where: { supersededAt: null },
+            },
+          },
+        },
+        taskTargets: {
+          where: { deletedAt: null },
+          include: {
+            task: true,
+          },
+        },
+      },
+    });
+
+    let completeCount = 0;
+    let totalCreatorsCount = 0;
+    let lateCreatorsCount = 0;
+    let missingCreatorsCount = 0;
+    const creatorExceptions: any[] = [];
+    const activeViolations: any[] = [];
+    const seenTaskUids = new Set<string>();
+    const incompleteTasksList: any[] = [];
+
+    for (const show of shows) {
+      // 1. Shows actual completeness
+      if (show.actualStartTime !== null && show.actualEndTime !== null) {
+        completeCount++;
+      }
+
+      // 2. Creator lateness / presence exceptions
+      for (const sc of show.showCreators) {
+        totalCreatorsCount++;
+        if (sc.attendanceMissing) {
+          missingCreatorsCount++;
+          creatorExceptions.push({
+            show_creator_uid: sc.uid,
+            creator_name: sc.creator.aliasName || sc.creator.name,
+            show_name: show.name,
+            show_start_time: show.startTime.toISOString(),
+            status: 'MISSING' as const,
+            late_minutes: 0,
+            reason: sc.attendanceReason,
+          });
+        } else if (sc.actualStartTime) {
+          const actualStart = new Date(sc.actualStartTime);
+          const plannedStart = new Date(show.startTime);
+          if (actualStart > plannedStart) {
+            lateCreatorsCount++;
+            const diffMs = actualStart.getTime() - plannedStart.getTime();
+            const lateMinutes = Math.max(0, Math.floor(diffMs / 60000));
+            creatorExceptions.push({
+              show_creator_uid: sc.uid,
+              creator_name: sc.creator.aliasName || sc.creator.name,
+              show_name: show.name,
+              show_start_time: show.startTime.toISOString(),
+              status: 'LATE' as const,
+              late_minutes: lateMinutes,
+              reason: sc.attendanceReason,
+            });
+          }
+        }
+      }
+
+      // 3. Platform violations
+      for (const sp of show.showPlatforms) {
+        for (const violation of sp.violations) {
+          activeViolations.push({
+            violation_uid: violation.uid,
+            platform_name: sp.platform.name,
+            show_name: show.name,
+            show_start_time: show.startTime.toISOString(),
+            violation_type: violation.violationType,
+            severity: violation.severity,
+            reason: violation.reason,
+            observed_at: violation.observedAt.toISOString(),
+          });
+        }
+      }
+
+      // 4. Incomplete tasks
+      for (const target of show.taskTargets) {
+        const task = target.task;
+        if (task && task.deletedAt === null && task.status !== 'COMPLETED' && task.status !== 'CLOSED') {
+          if (!seenTaskUids.has(task.uid)) {
+            seenTaskUids.add(task.uid);
+            incompleteTasksList.push({
+              task_uid: task.uid,
+              description: task.description,
+              status: task.status,
+              type: task.type,
+              show_name: show.name,
+            });
+          }
+        }
+      }
+    }
+
+    return {
+      date_from: query.date_from || start.toISOString(),
+      date_to: query.date_to || end.toISOString(),
+      shows: {
+        total_count: shows.length,
+        complete_count: completeCount,
+        incomplete_count: shows.length - completeCount,
+      },
+      creators: {
+        total_count: totalCreatorsCount,
+        late_count: lateCreatorsCount,
+        missing_count: missingCreatorsCount,
+        exceptions: creatorExceptions,
+      },
+      platforms: {
+        active_violations_count: activeViolations.length,
+        violations: activeViolations,
+      },
+      tasks: {
+        incomplete_phase_checks_count: incompleteTasksList.length,
+        incomplete_tasks: incompleteTasksList,
+      },
+    };
   }
 }

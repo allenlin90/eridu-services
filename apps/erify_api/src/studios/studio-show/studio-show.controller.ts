@@ -9,9 +9,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { showRunReviewSummarySchema } from '@eridu/api-types/shows';
 import {
   showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
   studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
@@ -70,6 +72,13 @@ const STUDIO_SHOW_DELETE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
 ];
 
+const showRunReviewQuerySchema = z.object({
+  date_from: z.string().optional(),
+  date_to: z.string().optional(),
+});
+
+export class ShowRunReviewQueryDto extends createZodDto(showRunReviewQuerySchema) {}
+
 @StudioProtected() // All studio members can view
 @Controller('studios/:studioId/shows')
 export class StudioShowController extends BaseStudioController {
@@ -90,6 +99,16 @@ export class StudioShowController extends BaseStudioController {
   ) {
     const { data, total } = await this.taskOrchestrationService.getStudioShowsWithTaskSummary(studioId, query);
     return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
+  }
+
+  @Get('run-review')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ZodResponse(showRunReviewSummarySchema)
+  async runReview(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ShowRunReviewQueryDto,
+  ) {
+    return this.showOrchestrationService.getShowRunReviewSummary(studioId, query);
   }
 
   @Get(':id')
