@@ -1,13 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { BadgeCheck, CalendarCheck2, MonitorCheck, UserCheck2 } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
-import { ShowRunReviewPreview } from '@/features/show-run-review/components/show-run-review-preview';
 import { ShowRunReviewScopeCard } from '@/features/show-run-review/components/show-run-review-scope-card';
-import type { ShowRunReviewSearch } from '@/features/show-run-review/lib/show-run-review-date-range';
+import { ShowRunSummary } from '@/features/show-run-review/components/show-run-summary';
+import {
+  buildShowRunReviewDateRange,
+  type ShowRunReviewSearch,
+} from '@/features/show-run-review/lib/show-run-review-date-range';
+import { useShowRunReviewSummaryQuery } from '@/features/shows/api/get-show-run-review-summary';
 
 const showRunReviewSearchSchema = z.object({
   date_from: z.string().optional().catch(undefined),
@@ -34,6 +37,16 @@ function ShowRunReviewPage() {
     });
   }, [navigate]);
 
+  const dateRange = useMemo(
+    () => buildShowRunReviewDateRange(search),
+    [search],
+  );
+
+  const { data, isLoading, isFetching } = useShowRunReviewSummaryQuery(studioId, {
+    date_from: dateRange.dateFrom,
+    date_to: dateRange.dateTo,
+  });
+
   return (
     <StudioRouteGuard
       studioId={studioId}
@@ -49,57 +62,27 @@ function ShowRunReviewPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <ShowRunReviewScopeCard search={search} onSearchChange={updateSearch} />
           </div>
-          <ShowRunReviewPreview
-            title="Run Checklist"
-            description="Use this after task submissions are signed off and operational facts are populated to show records."
-            metrics={[
-              {
-                label: 'Shows',
-                value: '-',
-                detail: 'Submitted and signed-off runs with actual start and end times',
-              },
-              {
-                label: 'Creators',
-                value: '-',
-                detail: 'Late or missing attendance reasons to review',
-                tone: 'warning',
-              },
-              {
-                label: 'Platforms',
-                value: '-',
-                detail: 'Active issues reported for platform streams',
-                tone: 'warning',
-              },
-              {
-                label: 'Ready',
-                value: '-',
-                detail: 'Operational days ready for manager sign-off',
-                tone: 'success',
-              },
-            ]}
-            steps={[
-              {
-                title: 'Shows happened',
-                description: 'Confirm each signed-off show has the actual start and end times needed for review.',
-                icon: <CalendarCheck2 className="h-4 w-4 text-blue-600" />,
-              },
-              {
-                title: 'Creators showed up',
-                description: 'Review late arrivals, missing creators, and manager-approved reason notes.',
-                icon: <UserCheck2 className="h-4 w-4 text-emerald-600" />,
-              },
-              {
-                title: 'Streams stayed clean',
-                description: 'Check active platform issues before the range is signed off.',
-                icon: <MonitorCheck className="h-4 w-4 text-slate-700" />,
-              },
-              {
-                title: 'Range is ready',
-                description: 'Surface unresolved items before a manager signs off the selected range.',
-                icon: <BadgeCheck className="h-4 w-4 text-emerald-600" />,
-              },
-            ]}
-          />
+
+          {isLoading
+            ? (
+                <div className="space-y-6 animate-pulse">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="h-28 rounded-xl border bg-muted/20" />
+                    ))}
+                  </div>
+                  <div className="h-64 rounded-xl border bg-muted/10" />
+                </div>
+              )
+            : data
+              ? (
+                  <ShowRunSummary data={data} isFetching={isFetching} />
+                )
+              : (
+                  <div className="rounded-lg border bg-background p-6 text-center text-muted-foreground text-sm">
+                    Failed to load show run review summary.
+                  </div>
+                )}
         </div>
       </PageLayout>
     </StudioRouteGuard>
