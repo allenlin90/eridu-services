@@ -15,6 +15,7 @@ import {
 import {
   Badge,
   Button,
+  Checkbox,
   Select,
   SelectContent,
   SelectItem,
@@ -103,13 +104,10 @@ export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   if (!task.assignee) {
     issues.push('Unassigned');
   }
-  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'COMPLETED';
-  if (isOverdue) {
+  const isNotSubmitted = !['REVIEW', 'COMPLETED', 'CLOSED'].includes(task.status);
+  const isOverdue = task.due_date && new Date(task.due_date) < new Date();
+  if (isNotSubmitted && isOverdue) {
     issues.push('Overdue');
-  }
-  const hasNoContent = !task.content || Object.keys(task.content).length === 0;
-  if (hasNoContent) {
-    issues.push('No Content');
   }
   return issues;
 }
@@ -131,6 +129,30 @@ export function getStudioTaskColumns(
   onEditDueDate: (task: TaskWithRelationsDto) => void,
 ): ColumnDef<TaskWithRelationsDto>[] {
   return [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+            || (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 40,
+    },
     {
       accessorKey: 'description',
       header: 'Task',

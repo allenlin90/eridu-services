@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import type { RowSelectionState } from '@tanstack/react-table';
 import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -55,20 +56,30 @@ function StudioTaskReviewPage() {
   const [resultsData, setResultsData] = useState<BulkApproveTasksResponse | null>(null);
   const [isResultsDialogOpen, setIsResultsDialogOpen] = useState(false);
 
+  // State for row selection in the table
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
   const { mutate: bulkApprove, isPending: isApproving } = useBulkApproveTasks({
     studioId,
     onSuccess: (response) => {
       setResultsData(response);
       setIsResultsDialogOpen(true);
+      setRowSelection({}); // Clear selection on successful approval
     },
   });
 
-  // Compute ready tasks client-side
-  const readyTaskUids = useMemo(() => {
-    return (summaryData?.data || [])
-      .filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0)
-      .map((task) => task.id);
-  }, [summaryData?.data]);
+  // Handler to clear selection when changing active filter tabs
+  const handleActiveFilterChange = useCallback((filter: TaskReviewActiveFilter) => {
+    setActiveFilter(filter);
+    setRowSelection({});
+  }, []);
+
+  // Compute selected task UIDs from selection state keys
+  const selectedTaskUids = useMemo(() => {
+    return Object.entries(rowSelection)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([taskId]) => taskId);
+  }, [rowSelection]);
 
   // Get pagination parameters from tableProps
   const { pageIndex, pageSize } = tableProps.pagination;
@@ -243,18 +254,6 @@ function StudioTaskReviewPage() {
                 >
                   Today
                 </Button>
-                {stats.ready > 0 && (
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5 ml-auto sm:ml-2 shadow-sm transition-all duration-150 active:scale-95"
-                    onClick={() => bulkApprove(readyTaskUids)}
-                    disabled={isApproving}
-                  >
-                    {isApproving ? 'Approving...' : `Approve All Ready (${stats.ready})`}
-                  </Button>
-                )}
               </div>
             </div>
           </CardHeader>
@@ -264,7 +263,7 @@ function StudioTaskReviewPage() {
         <StudioTaskReviewSummaryPanel
           stats={stats}
           activeFilter={activeFilter}
-          setActiveFilter={setActiveFilter}
+          setActiveFilter={handleActiveFilterChange}
         />
 
         {/* Toggle tabs for main table filter */}
@@ -273,7 +272,7 @@ function StudioTaskReviewPage() {
             type="button"
             variant={activeFilter === 'all' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setActiveFilter('all')}
+            onClick={() => handleActiveFilterChange('all')}
             className="text-xs font-semibold rounded-md flex-shrink-0"
           >
             All Tasks (
@@ -284,7 +283,7 @@ function StudioTaskReviewPage() {
             type="button"
             variant={activeFilter === 'ready' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setActiveFilter('ready')}
+            onClick={() => handleActiveFilterChange('ready')}
             className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
             <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
@@ -298,7 +297,7 @@ function StudioTaskReviewPage() {
                 : 'ghost'
             }
             size="sm"
-            onClick={() => setActiveFilter('attention')}
+            onClick={() => handleActiveFilterChange('attention')}
             className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
             <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
@@ -323,6 +322,10 @@ function StudioTaskReviewPage() {
           onPaginationChange={adaptPaginationChange(effectivePagination, tableProps.onPaginationChange)}
           columnFilters={tableProps.columnFilters}
           onColumnFiltersChange={adaptColumnFiltersChange(tableProps.columnFilters, tableProps.onColumnFiltersChange)}
+          enableRowSelection={(row) => row.original.status === 'REVIEW' && getTaskIssues(row.original).length === 0}
+          rowSelection={rowSelection}
+          onRowSelectionChange={setRowSelection}
+          getRowId={(task) => task.id}
           renderToolbar={(table) => (
             <DataTableToolbar
               table={table}
@@ -350,6 +353,42 @@ function StudioTaskReviewPage() {
             />
           )}
         />
+
+        {/* Floating actions bar for selected tasks */}
+        {selectedTaskUids.length > 0 && (
+          <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center justify-between gap-4 rounded-full border border-muted bg-slate-900 dark:bg-slate-950 px-6 py-3 text-slate-50 shadow-xl animate-in slide-in-from-bottom-5">
+            <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-800">
+              <span className="text-sm font-medium">
+                {selectedTaskUids.length}
+                {' '}
+                task
+                {selectedTaskUids.length > 1 ? 's' : ''}
+                {' '}
+                selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                type="button"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full px-4 animate-in fade-in duration-200"
+                onClick={() => bulkApprove(selectedTaskUids)}
+                disabled={isApproving}
+              >
+                {isApproving ? 'Approving...' : 'Approve Selected'}
+              </Button>
+              <Button
+                size="sm"
+                type="button"
+                variant="ghost"
+                className="rounded-full text-slate-400 hover:text-white hover:bg-slate-800"
+                onClick={() => setRowSelection({})}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
 
         <BulkApproveResultsDialog
           results={resultsData}
