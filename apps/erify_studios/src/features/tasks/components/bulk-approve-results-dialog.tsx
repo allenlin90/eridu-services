@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useState } from 'react';
 
 import type { BulkApproveTasksResponse } from '@eridu/api-types/task-management';
@@ -133,16 +133,24 @@ export function BulkApproveResultsDialog({
                       </p>
                       {isSuccess
                         ? (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Approved successfully •
-                              {' '}
-                              {entriesCount}
-                              {' '}
-                              extraction
-                              {' '}
-                              {entriesCount === 1 ? 'entry' : 'entries'}
-                              {' '}
-                              generated
+                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+                              <span>Approved successfully</span>
+                              <span>•</span>
+                              {result.extraction?.status === 'error'
+                                ? (
+                                    <span className="text-amber-600 dark:text-amber-400 font-semibold">Fact extraction failed</span>
+                                  )
+                                : (
+                                    <span>
+                                      {entriesCount}
+                                      {' '}
+                                      extraction
+                                      {' '}
+                                      {entriesCount === 1 ? 'entry' : 'entries'}
+                                      {' '}
+                                      generated
+                                    </span>
+                                  )}
                             </p>
                           )
                         : (
@@ -172,6 +180,18 @@ export function BulkApproveResultsDialog({
                   <div className="mt-3 text-xs bg-rose-500/10 border border-rose-200/50 text-rose-600 dark:text-rose-400 dark:border-rose-900/40 p-2.5 rounded-md flex gap-2">
                     <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
                     <span>{result.error}</span>
+                  </div>
+                )}
+
+                {/* Extraction Error Callout */}
+                {isSuccess && result.extraction?.status === 'error' && result.extraction?.error && (
+                  <div className="mt-3 text-xs bg-amber-500/10 border border-amber-200/50 text-amber-600 dark:text-amber-400 dark:border-amber-900/30 p-2.5 rounded-md flex gap-2">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-amber-500" />
+                    <div className="flex-1">
+                      <span className="font-bold">Fact Extraction Failed:</span>
+                      {' '}
+                      <span>{result.extraction.error}</span>
+                    </div>
                   </div>
                 )}
 

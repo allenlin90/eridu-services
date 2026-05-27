@@ -39,7 +39,8 @@ function StudioTaskReviewPage() {
   const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps, setPageCount } = useStudioTasksPageController({
     studioId,
   });
-  const { onPaginationChange } = tableProps;
+  const { onPaginationChange, onColumnFiltersChange, columnFilters } = tableProps;
+  const { onDateRangeChange, onResetDateRange } = reviewScopeProps;
   const { key: actionSheetKey, ...actionSheetRestProps } = actionSheetProps;
   const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
 
@@ -73,6 +74,25 @@ function StudioTaskReviewPage() {
     setActiveFilter(filter);
     setRowSelection({});
   }, []);
+
+  // Handlers to clear selection when review scope, date range, or column filters change
+  const handleDateRangeChange = useCallback((dateRange: any) => {
+    onDateRangeChange(dateRange);
+    setRowSelection({});
+  }, [onDateRangeChange]);
+
+  const handleResetDateRange = useCallback(() => {
+    onResetDateRange();
+    setRowSelection({});
+  }, [onResetDateRange]);
+
+  const handleColumnFiltersChange = useCallback((updaterOrValue: any) => {
+    const adapter = adaptColumnFiltersChange(columnFilters, (nextFilters) => {
+      onColumnFiltersChange(nextFilters);
+      setRowSelection({});
+    });
+    adapter(updaterOrValue);
+  }, [columnFilters, onColumnFiltersChange]);
 
   // Compute selected task UIDs from selection state keys
   const selectedTaskUids = useMemo(() => {
@@ -243,14 +263,14 @@ function StudioTaskReviewPage() {
               <DatePickerWithRange
                 className="sm:w-72"
                 date={reviewScopeProps.dateRange}
-                setDate={reviewScopeProps.onDateRangeChange}
+                setDate={handleDateRangeChange}
               />
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={reviewScopeProps.onResetDateRange}
+                  onClick={handleResetDateRange}
                 >
                   Today
                 </Button>
@@ -321,7 +341,7 @@ function StudioTaskReviewPage() {
           }}
           onPaginationChange={adaptPaginationChange(effectivePagination, tableProps.onPaginationChange)}
           columnFilters={tableProps.columnFilters}
-          onColumnFiltersChange={adaptColumnFiltersChange(tableProps.columnFilters, tableProps.onColumnFiltersChange)}
+          onColumnFiltersChange={handleColumnFiltersChange}
           enableRowSelection={(row) => row.original.status === 'REVIEW' && getTaskIssues(row.original).length === 0}
           rowSelection={rowSelection}
           onRowSelectionChange={setRowSelection}
