@@ -107,7 +107,6 @@ function useTaskReviewUserFilter(studioId: string, selectedUserName?: string) {
     staleTime: 60 * 60 * 1000,
   });
 
-
   const options = useMemo(() => {
     const fetched = (listQuery.data?.data ?? []).map((membership) => ({
       value: membership.user.name,
