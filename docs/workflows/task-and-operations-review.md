@@ -84,48 +84,47 @@ Once daily outcomes are verified, the manager signs off the operational range (P
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor O as Operator
-    actor M as Manager
-    participant FE as "Frontend (erify_studios)"
-    participant BE as "Backend (erify_api)"
-    participant EX as "Extractor Registry"
-    participant DB as "PostgreSQL DB"
+    participant Operator
+    participant Manager
+    participant StudiosPortal
+    participant ApiServer
+    participant ExtractorRegistry
+    participant PostgreSQL
 
-    Note over O, FE: Task Execution Phase
-    O->>FE: Fill out JsonForm (checklist)
-    FE->>BE: PATCH /me/tasks/:id/content (Debounced Auto-save)
-    BE->>DB: Save task.content (JSONB)
-    O->>FE: Click "Submit for Review"
-    FE->>BE: PATCH /me/tasks/:id/action (SUBMIT_FOR_REVIEW)
-    BE->>DB: Update task.status to REVIEW
+    Note over Operator, StudiosPortal: Task Execution Phase
+    Operator->>StudiosPortal: Fill out JsonForm (checklist)
+    StudiosPortal->>ApiServer: PATCH /me/tasks/:id/content (Debounced Auto-save)
+    ApiServer->>PostgreSQL: Save task.content (JSONB)
+    Operator->>StudiosPortal: Click "Submit for Review"
+    StudiosPortal->>ApiServer: PATCH /me/tasks/:id/action (SUBMIT_FOR_REVIEW)
+    ApiServer->>PostgreSQL: Update task.status to REVIEW
 
-    Note over M, BE: Pre-Confirmation Review Phase
-    M->>FE: Open /task-review
-    FE->>BE: GET /studios/:id/tasks/review-summary
-    BE-->>FE: Return REVIEW tasks
-    M->>FE: Check boxes next to ready tasks
-    M->>FE: Click "Approve Selected" on floating bar
-    FE->>BE: POST /studios/:id/tasks/bulk-approve [Uids]
+    Note over Manager, ApiServer: Pre-Confirmation Review Phase
+    Manager->>StudiosPortal: Open /task-review
+    StudiosPortal->>ApiServer: GET /studios/:id/tasks/review-summary
+    ApiServer-->>StudiosPortal: Return REVIEW tasks
+    Manager->>StudiosPortal: Check boxes next to ready tasks
+    Manager->>StudiosPortal: Click "Approve Selected" on floating bar
+    StudiosPortal->>ApiServer: POST /studios/:id/tasks/bulk-approve [Uids]
 
-    Note over BE, DB: For each selected task (Atomic Transaction)
-    BE->>DB: Update task.status to COMPLETED
-    BE->>EX: Trigger Fact Extraction Pipeline
-    EX->>DB: Persist actual times, attendance & platform violations
-    EX->>DB: Log transaction outcomes to Audit / AuditTarget
+    Note over ApiServer, PostgreSQL: For each selected task (Atomic Transaction)
+    ApiServer->>PostgreSQL: Update task.status to COMPLETED
+    ApiServer->>ExtractorRegistry: Trigger Fact Extraction Pipeline
+    ExtractorRegistry->>PostgreSQL: Persist actual times, attendance & platform violations
+    ExtractorRegistry->>PostgreSQL: Log transaction outcomes to Audit / AuditTarget
 
-    BE-->>FE: Return BulkApproveTasksResponse (stats & details)
-    FE->>M: Open results dialog (visual summaries & outcome badges)
-    FE->>FE: Invalidate Query Cache (refresh review queue & stats)
+    ApiServer-->>StudiosPortal: Return BulkApproveTasksResponse (stats & details)
+    StudiosPortal->>Manager: Open results dialog (visual summaries & outcome badges)
+    StudiosPortal->>StudiosPortal: Invalidate Query Cache (refresh review queue & stats)
 
-    Note over M, DB: Post-Confirmation & Sign-off Phase
-    M->>FE: Navigate to /show-run-review
-    FE->>BE: GET /studios/:id/shows/run-review
-    BE->>DB: Query extracted facts (Shows, Creators, Platforms)
-    BE-->>FE: Return compiled daily metrics
-    M->>FE: Click "Operational Range Sign-off"
-    FE->>BE: POST /studios/:id/sign-off
-    BE->>DB: Log range SignOffAudit record
+    Note over Manager, PostgreSQL: Post-Confirmation & Sign-off Phase
+    Manager->>StudiosPortal: Navigate to /show-run-review
+    StudiosPortal->>ApiServer: GET /studios/:id/shows/run-review
+    ApiServer->>PostgreSQL: Query extracted facts (Shows, Creators, Platforms)
+    ApiServer-->>StudiosPortal: Return compiled daily metrics
+    Manager->>StudiosPortal: Click "Operational Range Sign-off"
+    StudiosPortal->>ApiServer: POST /studios/:id/sign-off
+    ApiServer->>PostgreSQL: Log range SignOffAudit record
 ```
 
 ---
