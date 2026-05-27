@@ -386,6 +386,11 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
                               </td>
                               <td className="p-3 font-medium text-xs text-rose-700">{violation.violation_type}</td>
                               <td className="p-3">
+                                {violation.severity === 'CRITICAL' && (
+                                  <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-800 border border-rose-200">
+                                    CRITICAL
+                                  </span>
+                                )}
                                 {violation.severity === 'HIGH' && (
                                   <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">
                                     HIGH
@@ -399,6 +404,16 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
                                 {violation.severity === 'LOW' && (
                                   <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800">
                                     LOW
+                                  </span>
+                                )}
+                                {violation.severity === 'WARNING' && (
+                                  <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs font-bold text-yellow-800 border border-yellow-200">
+                                    WARNING
+                                  </span>
+                                )}
+                                {!['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'WARNING'].includes(violation.severity) && (
+                                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-800 border border-slate-200">
+                                    {violation.severity}
                                   </span>
                                 )}
                               </td>
