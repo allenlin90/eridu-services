@@ -4,7 +4,7 @@
 
 ## Context
 
-Task Review and Show Run Review use a fixed operational day window of 06:00-05:59 in the studio's local runtime. That default keeps overnight shows in a single operational day and avoids calendar-midnight splits during PR 12.4.
+To keep the backend robust, timezone-agnostic, and decoupled from display offset logic, the frontend is responsible for computing the exact query window boundaries (e.g. 6:00 AM to 5:59 AM) using shared `operational-day-range` utilities and serializing them into absolute ISO-8601 strings. The backend accepts these explicit date range boundaries directly in the controller and queries the database using them, without doing ambient calendar offset manipulations on the server.
 
 ## Future Direction
 

@@ -1129,7 +1129,7 @@ export class ShowOrchestrationService {
    */
   async getShowRunReviewSummary(
     studioUid: string,
-    query: { date_from?: string; date_to?: string },
+    query: { date_from: string; date_to: string },
   ) {
     const studio = await this.prisma.studio.findFirst({
       where: { uid: studioUid, deletedAt: null },
@@ -1139,23 +1139,8 @@ export class ShowOrchestrationService {
     }
     const studioId = studio.id;
 
-    let start: Date;
-    let end: Date;
-
-    if (query.date_from && /^\d{4}-\d{2}-\d{2}$/.test(query.date_from)) {
-      start = new Date(query.date_from);
-      start.setUTCHours(6, 0, 0, 0);
-    } else {
-      start = query.date_from ? new Date(query.date_from) : new Date();
-    }
-
-    if (query.date_to && /^\d{4}-\d{2}-\d{2}$/.test(query.date_to)) {
-      end = new Date(query.date_to);
-      end.setUTCDate(end.getUTCDate() + 1);
-      end.setUTCHours(5, 59, 59, 999);
-    } else {
-      end = query.date_to ? new Date(query.date_to) : new Date();
-    }
+    const start = new Date(query.date_from);
+    const end = new Date(query.date_to);
 
     const shows = await this.showService.getShowsForReview(studioId, start, end);
 

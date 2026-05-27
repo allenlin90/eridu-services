@@ -3,14 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 
 import {
-  isCurrentShowRunReviewDay,
   SHOW_RUN_REVIEW_CURRENT_DAY_REFETCH_INTERVAL_MS,
 } from '@/features/show-run-review/lib/show-run-review-date-range';
 import { apiClient } from '@/lib/api/client';
 
 export type GetShowRunReviewSummaryParams = {
-  date_from?: string;
-  date_to?: string;
+  date_from: string;
+  date_to: string;
 };
 
 export const showRunReviewSummaryKeys = {
@@ -35,12 +34,8 @@ export async function getShowRunReviewSummary(
 export function useShowRunReviewSummaryQuery(
   studioId: string,
   params: GetShowRunReviewSummaryParams,
+  isCurrentDay = false,
 ) {
-  const isCurrentDay = isCurrentShowRunReviewDay({
-    dateFrom: params.date_from,
-    dateTo: params.date_to,
-  });
-
   return useQuery({
     queryKey: showRunReviewSummaryKeys.detail(studioId, params),
     queryFn: () => getShowRunReviewSummary(studioId, params),

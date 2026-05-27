@@ -292,7 +292,10 @@ describe('studioShowController', () => {
   describe('runReview', () => {
     it('should retrieve the operational summary for show run review', async () => {
       const studioId = 'std_123';
-      const query = { date_from: '2026-05-12', date_to: '2026-05-12' };
+      const query = {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+      };
       const expectedSummary = { shows: { total_count: 1 } };
 
       showOrchestrationServiceMock.getShowRunReviewSummary.mockResolvedValue(expectedSummary);

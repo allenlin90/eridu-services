@@ -8,6 +8,7 @@ import { ShowRunReviewScopeCard } from '@/features/show-run-review/components/sh
 import { ShowRunSummary } from '@/features/show-run-review/components/show-run-summary';
 import {
   buildShowRunReviewDateRange,
+  isCurrentShowRunReviewDay,
   type ShowRunReviewSearch,
 } from '@/features/show-run-review/lib/show-run-review-date-range';
 import { useShowRunReviewSummaryQuery } from '@/features/shows/api/get-show-run-review-summary';
@@ -42,10 +43,14 @@ function ShowRunReviewPage() {
     [search],
   );
 
-  const { data, isLoading, isFetching } = useShowRunReviewSummaryQuery(studioId, {
-    date_from: dateRange.dateFrom,
-    date_to: dateRange.dateTo,
-  });
+  const { data, isLoading, isFetching } = useShowRunReviewSummaryQuery(
+    studioId,
+    {
+      date_from: dateRange.windowStart.toISOString(),
+      date_to: dateRange.windowEnd.toISOString(),
+    },
+    isCurrentShowRunReviewDay(dateRange),
+  );
 
   return (
     <StudioRouteGuard

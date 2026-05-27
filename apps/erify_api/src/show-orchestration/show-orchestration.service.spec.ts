@@ -1575,7 +1575,10 @@ describe('showOrchestrationService', () => {
       mockPrismaForCls.studio.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.getShowRunReviewSummary(studioUid, { date_from: '2026-05-12', date_to: '2026-05-12' })
+        service.getShowRunReviewSummary(studioUid, {
+          date_from: '2026-05-12T06:00:00.000Z',
+          date_to: '2026-05-13T05:59:59.999Z',
+        })
       ).rejects.toThrow('Studio not found with id std_test123');
     });
 
@@ -1663,8 +1666,8 @@ describe('showOrchestrationService', () => {
       showService.getShowsForReview.mockResolvedValue(mockShows as any);
 
       const result = await service.getShowRunReviewSummary(studioUid, {
-        date_from: '2026-05-12',
-        date_to: '2026-05-12',
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
       });
 
       expect(mockPrismaForCls.studio.findFirst).toHaveBeenCalledWith(
