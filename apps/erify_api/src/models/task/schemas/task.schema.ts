@@ -9,6 +9,8 @@ import type {
 import {
   assignShowsRequestSchema,
   assignShowsResponseSchema,
+  bulkApproveTasksRequestSchema,
+  bulkApproveTasksResponseSchema,
   bulkDeleteTasksRequestSchema,
   bulkDeleteTasksResponseSchema,
   generateTasksRequestSchema,
@@ -30,6 +32,8 @@ import {
 export {
   assignShowsRequestSchema,
   assignShowsResponseSchema,
+  bulkApproveTasksRequestSchema,
+  bulkApproveTasksResponseSchema,
   bulkDeleteTasksRequestSchema,
   bulkDeleteTasksResponseSchema,
   generateTasksRequestSchema,
@@ -58,6 +62,8 @@ export class ListStudioShowsQueryDto extends createZodDto(listStudioShowsQuerySc
 export class ListMyTasksQueryDto extends createZodDto(listMyTasksQuerySchema) {}
 export class BulkDeleteTasksDto extends createZodDto(bulkDeleteTasksRequestSchema) {}
 export class BulkDeleteTasksResponseDto extends createZodDto(bulkDeleteTasksResponseSchema) {}
+export class BulkApproveTasksDto extends createZodDto(bulkApproveTasksRequestSchema) {}
+export class BulkApproveTasksResponseDto extends createZodDto(bulkApproveTasksResponseSchema) {}
 export class TaskDto extends createZodDto(taskDto) {}
 export class TaskWithRelationsDto extends createZodDto(taskWithRelationsDto) {}
 export class ShowWithTaskSummaryDto extends createZodDto(showWithTaskSummaryDto) {}

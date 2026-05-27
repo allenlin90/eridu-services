@@ -39,6 +39,7 @@ describe('taskOrchestrationService', () => {
             updateAssigneeByTaskIds: jest.fn(),
             findByUid: jest.fn(),
             findByUidWithSnapshot: jest.fn(),
+            findOne: jest.fn(),
             update: jest.fn(),
             setAssignee: jest.fn(),
             updateTaskContentAndStatus: jest.fn(),
@@ -532,7 +533,123 @@ describe('taskOrchestrationService', () => {
         mode: 'admin',
       });
 
-      expect(result).toEqual({ uid: 'task_alpha', status: TaskStatus.COMPLETED });
+      expect(result).toEqual({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+        extractionError: 'extractor blew up',
+        extractionResult: undefined,
+      });
+    });
+  });
+
+  describe('bulkApproveTasks', () => {
+    it('successfully bulk approves multiple tasks in REVIEW status', async () => {
+      const studioUid = 'std_1';
+      const taskUids = ['task_1', 'task_2'];
+
+      // Mock task findOne
+      taskService.findOne
+        .mockResolvedValueOnce({ uid: 'task_1', version: 1, status: TaskStatus.REVIEW } as any)
+        .mockResolvedValueOnce({ uid: 'task_2', version: 2, status: TaskStatus.REVIEW } as any);
+
+      // Mock submitTaskContent to behave successfully
+      jest.spyOn(service, 'submitTaskContent').mockImplementation(async (uid) => {
+        if (uid === 'task_1') {
+          return {
+            uid: 'task_1',
+            status: TaskStatus.COMPLETED,
+            extractionResult: {
+              entries: [
+                { factKey: 'show_actual_start_time', sourceFieldId: 'f1', targetUid: 't1', outcome: 'written', auditUid: 'a1' },
+              ],
+            },
+          } as any;
+        } else {
+          return {
+            uid: 'task_2',
+            status: TaskStatus.COMPLETED,
+            extractionResult: {
+              entries: [
+                { factKey: 'show_actual_end_time', sourceFieldId: 'f2', targetUid: 't2', outcome: 'noop', reason: 'value_absent' },
+              ],
+            },
+          } as any;
+        }
+      });
+
+      const result = await service.bulkApproveTasks(studioUid, taskUids, { actorExtId: 'actor_1' });
+
+      expect(result.summary).toEqual({
+        total_processed: 2,
+        total_success: 2,
+        total_failed: 0,
+      });
+
+      expect(result.results[0]).toEqual({
+        task_uid: 'task_1',
+        status: 'success',
+        extraction: {
+          status: 'success',
+          error: undefined,
+          entries: [
+            { fact_key: 'show_actual_start_time', source_field_id: 'f1', target_uid: 't1', outcome: 'written', audit_uid: 'a1', reason: undefined },
+          ],
+        },
+      });
+    });
+
+    it('reports failure for individual tasks when they are not in REVIEW or not found, without blocking others', async () => {
+      const studioUid = 'std_1';
+      const taskUids = ['task_not_found', 'task_not_review', 'task_ok'];
+
+      // Mock findOne
+      taskService.findOne
+        .mockResolvedValueOnce(null) // task_not_found
+        .mockResolvedValueOnce({ uid: 'task_not_review', version: 1, status: TaskStatus.IN_PROGRESS } as any)
+        .mockResolvedValueOnce({ uid: 'task_ok', version: 2, status: TaskStatus.REVIEW } as any);
+
+      // Mock submitTaskContent
+      jest.spyOn(service, 'submitTaskContent').mockResolvedValue({
+        uid: 'task_ok',
+        status: TaskStatus.COMPLETED,
+      } as any);
+
+      const result = await service.bulkApproveTasks(studioUid, taskUids);
+
+      expect(result.summary).toEqual({
+        total_processed: 3,
+        total_success: 1,
+        total_failed: 2,
+      });
+
+      expect(result.results.find((r) => r.task_uid === 'task_not_found')?.status).toBe('error');
+      expect(result.results.find((r) => r.task_uid === 'task_not_review')?.status).toBe('error');
+      expect(result.results.find((r) => r.task_uid === 'task_ok')?.status).toBe('success');
+    });
+
+    it('reports failure if the extraction throws or returns an extractor error', async () => {
+      const studioUid = 'std_1';
+      const taskUids = ['task_err'];
+
+      taskService.findOne.mockResolvedValue({ uid: 'task_err', version: 1, status: TaskStatus.REVIEW } as any);
+
+      jest.spyOn(service, 'submitTaskContent').mockResolvedValue({
+        uid: 'task_err',
+        status: TaskStatus.COMPLETED,
+        extractionError: 'Database extraction connection timeout',
+      } as any);
+
+      const result = await service.bulkApproveTasks(studioUid, taskUids);
+
+      expect(result.results[0]).toEqual({
+        task_uid: 'task_err',
+        status: 'success',
+        extraction: {
+          status: 'error',
+          error: 'Database extraction connection timeout',
+          entries: [],
+        },
+      });
     });
   });
 });

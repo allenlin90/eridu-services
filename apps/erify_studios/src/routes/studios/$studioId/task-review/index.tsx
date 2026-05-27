@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
+import type { BulkApproveTasksResponse, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -18,10 +18,12 @@ import {
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
+import { BulkApproveResultsDialog } from '@/features/tasks/components/bulk-approve-results-dialog';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
 import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { getTaskIssues, getTaskPhase, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
+import { useBulkApproveTasks } from '@/features/tasks/hooks/use-bulk-approve-tasks';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
 import { useTaskReviewSummary } from '@/features/tasks/hooks/use-task-review-summary';
 
@@ -48,6 +50,25 @@ function StudioTaskReviewPage() {
     studioId,
     dateRange: reviewScopeProps.dateRange,
   });
+
+  // State for bulk approval results
+  const [resultsData, setResultsData] = useState<BulkApproveTasksResponse | null>(null);
+  const [isResultsDialogOpen, setIsResultsDialogOpen] = useState(false);
+
+  const { mutate: bulkApprove, isPending: isApproving } = useBulkApproveTasks({
+    studioId,
+    onSuccess: (response) => {
+      setResultsData(response);
+      setIsResultsDialogOpen(true);
+    },
+  });
+
+  // Compute ready tasks client-side
+  const readyTaskUids = useMemo(() => {
+    return (summaryData?.data || [])
+      .filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0)
+      .map((task) => task.id);
+  }, [summaryData?.data]);
 
   // Get pagination parameters from tableProps
   const { pageIndex, pageSize } = tableProps.pagination;
@@ -207,20 +228,34 @@ function StudioTaskReviewPage() {
                 Submitted tasks due in the selected operational day (06:00–05:59) are shown below.
               </CardDescription>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full">
               <DatePickerWithRange
                 className="sm:w-72"
                 date={reviewScopeProps.dateRange}
                 setDate={reviewScopeProps.onDateRangeChange}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={reviewScopeProps.onResetDateRange}
-              >
-                Today
-              </Button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={reviewScopeProps.onResetDateRange}
+                >
+                  Today
+                </Button>
+                {stats.ready > 0 && (
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5 ml-auto sm:ml-2 shadow-sm transition-all duration-150 active:scale-95"
+                    onClick={() => bulkApprove(readyTaskUids)}
+                    disabled={isApproving}
+                  >
+                    {isApproving ? 'Approving...' : `Approve All Ready (${stats.ready})`}
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -314,6 +349,12 @@ function StudioTaskReviewPage() {
               onPaginationChange={tableProps.onPaginationChange}
             />
           )}
+        />
+
+        <BulkApproveResultsDialog
+          results={resultsData}
+          open={isResultsDialogOpen}
+          onOpenChange={setIsResultsDialogOpen}
         />
 
         <StudioTaskActionSheet key={actionSheetKey} {...actionSheetRestProps} />
