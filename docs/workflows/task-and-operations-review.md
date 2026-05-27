@@ -89,8 +89,8 @@ sequenceDiagram
     actor M as Manager
     participant FE as "Frontend (erify_studios)"
     participant BE as "Backend (erify_api)"
-    participant EX as Extractor Registry
-    database DB as "PostgreSQL DB"
+    participant EX as "Extractor Registry"
+    participant DB as "PostgreSQL DB"
 
     Note over O, FE: Task Execution Phase
     O->>FE: Fill out JsonForm (checklist)
@@ -108,13 +108,11 @@ sequenceDiagram
     M->>FE: Click "Approve Selected" on floating bar
     FE->>BE: POST /studios/:id/tasks/bulk-approve [Uids]
 
-    rect rgb(240, 250, 240)
-        Note over BE, DB: Loop per selected task (Transactional)
-        BE->>DB: Update task.status to COMPLETED
-        BE->>EX: Trigger Fact Extraction Pipeline
-        EX->>DB: Persist actual times, attendance & platform violations
-        EX->>DB: Log transaction outcomes to Audit / AuditTarget
-    end
+    Note over BE, DB: For each selected task (Atomic Transaction)
+    BE->>DB: Update task.status to COMPLETED
+    BE->>EX: Trigger Fact Extraction Pipeline
+    EX->>DB: Persist actual times, attendance & platform violations
+    EX->>DB: Log transaction outcomes to Audit / AuditTarget
 
     BE-->>FE: Return BulkApproveTasksResponse (stats & details)
     FE->>M: Open results dialog (visual summaries & outcome badges)
