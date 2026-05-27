@@ -457,9 +457,9 @@ export function FilterPopover<TData>({
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="w-80 max-h-[70vh] overflow-y-auto p-0"
+          className="w-80 p-0 flex flex-col max-h-[min(calc(100vh-8rem),35rem)]"
         >
-          <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
             <span className="font-medium text-sm">Filters</span>
             {activeFilterCount > 0 && (
               <Button
@@ -474,13 +474,15 @@ export function FilterPopover<TData>({
             )}
           </div>
           {isPopoverOpen && (
-            <FilterSections
-              localFeaturedColumns={localFeaturedColumns}
-              textColumns={textColumns}
-              selectColumns={selectColumns}
-              dateColumns={dateColumns}
-              columnsById={columnsById}
-            />
+            <div className="overflow-y-auto flex-grow overscroll-contain">
+              <FilterSections
+                localFeaturedColumns={localFeaturedColumns}
+                textColumns={textColumns}
+                selectColumns={selectColumns}
+                dateColumns={dateColumns}
+                columnsById={columnsById}
+              />
+            </div>
           )}
         </PopoverContent>
       </Popover>

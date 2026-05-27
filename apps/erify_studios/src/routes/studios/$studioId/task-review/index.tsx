@@ -163,34 +163,34 @@ function StudioTaskReviewPage() {
   // All tabs (including 'all') source from summaryData so dated + undated review
   // tasks form a single consistent partition across the tabs.
   const filteredAllData = useMemo(() => {
-    const allReviewTasks = (summaryData?.data || []).filter(
-      (task) => task.status === 'REVIEW' && matchesColumnFilters(task, tableProps.columnFilters),
+    const allTasks = (summaryData?.data || []).filter(
+      (task) => matchesColumnFilters(task, tableProps.columnFilters),
     );
     if (activeFilter === 'all') {
-      return allReviewTasks;
+      return allTasks;
     }
     if (activeFilter === 'ready') {
-      return allReviewTasks.filter((task) => getTaskIssues(task).length === 0);
+      return allTasks.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0);
     }
     if (activeFilter === 'attention') {
-      return allReviewTasks.filter((task) => getTaskIssues(task).length > 0);
+      return allTasks.filter((task) => getTaskIssues(task).length > 0);
     }
     if (activeFilter === 'pre-prod-attention') {
-      return allReviewTasks.filter(
+      return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'pre-production' && getTaskIssues(task).length > 0,
       );
     }
     if (activeFilter === 'on-air-attention') {
-      return allReviewTasks.filter(
+      return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'on-air' && getTaskIssues(task).length > 0,
       );
     }
     if (activeFilter === 'post-prod-attention') {
-      return allReviewTasks.filter(
+      return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'post-production' && getTaskIssues(task).length > 0,
       );
     }
-    return allReviewTasks;
+    return allTasks;
   }, [summaryData?.data, activeFilter, tableProps.columnFilters, matchesColumnFilters]);
 
   // Client-paginate the filtered list
