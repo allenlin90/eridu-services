@@ -111,8 +111,6 @@ export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date();
   if (isNotSubmitted && isOverdue) {
     issues.push('Overdue');
-  }
-  if (isNotSubmitted) {
     issues.push('Pending Submission');
   }
   return issues;
