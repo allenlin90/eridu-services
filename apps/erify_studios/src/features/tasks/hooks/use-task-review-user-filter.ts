@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
-import { getStudioMemberships } from '@/features/memberships/api/get-studio-memberships';
+import { getStudioMembers } from '@/features/studio-members/api/members';
 
 const STALE_TIME_MS = 60 * 60 * 1000;
 const DEFAULT_LIMIT = 10;
@@ -13,9 +13,9 @@ export function useTaskReviewUserFilter(studioId: string, selectedUserName?: str
   const listQuery = useQuery({
     queryKey: ['task-review-user-filter', 'list', studioId, { search }],
     queryFn: ({ signal }) =>
-      getStudioMemberships(
+      getStudioMembers(
         studioId,
-        { name: search || undefined, limit: search ? SEARCH_LIMIT : DEFAULT_LIMIT },
+        { search: search || undefined, limit: search ? SEARCH_LIMIT : DEFAULT_LIMIT },
         { signal },
       ),
     enabled: Boolean(studioId),
@@ -25,9 +25,9 @@ export function useTaskReviewUserFilter(studioId: string, selectedUserName?: str
   const selectedQuery = useQuery({
     queryKey: ['task-review-user-filter', 'by-name', studioId, selectedUserName],
     queryFn: ({ signal }) =>
-      getStudioMemberships(
+      getStudioMembers(
         studioId,
-        { name: selectedUserName, limit: 1 },
+        { search: selectedUserName, limit: 1 },
         { signal },
       ),
     enabled: Boolean(studioId && selectedUserName),
@@ -35,14 +35,14 @@ export function useTaskReviewUserFilter(studioId: string, selectedUserName?: str
   });
 
   const options = useMemo(() => {
-    const fetched = (listQuery.data?.data ?? []).map((membership) => ({
-      value: membership.user.name,
-      label: membership.user.name,
+    const fetched = (listQuery.data?.data ?? []).map((member) => ({
+      value: member.user_name,
+      label: member.user_name,
     }));
     const selected = selectedQuery.data?.data?.[0];
 
-    if (selected && !fetched.some((option) => option.value === selected.user.name)) {
-      return [{ value: selected.user.name, label: selected.user.name }, ...fetched];
+    if (selected && !fetched.some((option) => option.value === selected.user_name)) {
+      return [{ value: selected.user_name, label: selected.user_name }, ...fetched];
     }
 
     return fetched;
@@ -54,4 +54,3 @@ export function useTaskReviewUserFilter(studioId: string, selectedUserName?: str
     setSearch,
   };
 }
-
