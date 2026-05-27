@@ -82,38 +82,52 @@ Once daily outcomes are verified, the manager signs off the operational range (P
 
 ## Data Flow
 
-```
-   [ Operator Task Form ]  →  Debounced PATCH content  →  task.content (JSONB)
-                                                                 │
-                                                   (Submit)      ▼
-                                                            task.status = REVIEW
-                                                                 │
-                                                   (Select)      ▼
-                                                            POST /tasks/bulk-approve
-                                                                 │
-                                            ┌────────────────────┴────────────────────┐
-                                    (Commit succeeds)                         (Commit fails)
-                                            ▼                                         ▼
-                                   task.status = COMPLETED                     Capture error per task
-                                            │                                  (Revert & show card)
-                                            ▼
-                                [ Extractor Registry ]
-                                            │
-                                ┌───────────┴───────────┐
-                                ▼                       ▼
-                        [ DB Target Columns ]      [ Audit Logs ]
-                        - Show.actualStartTime     - Audit.targetUid
-                        - ShowCreator.attendance   - AuditTarget.targetType
-                        - PlatformViolations       - Audit.reason
-                                │
-                                ▼
-                   [ Show Run Review (/show-run-review) ]
-                                │
-                                ▼
-                     [ Range Sign-Off Audit ]
-                                │
-                                ▼
-                  [ Downstream Economics (/finance) ]
+```mermaid
+sequenceDiagram
+    autonumber
+    actor O as Operator
+    actor M as Manager
+    participant FE as "Frontend (erify_studios)"
+    participant BE as "Backend (erify_api)"
+    participant EX as Extractor Registry
+    database DB as "PostgreSQL DB"
+
+    Note over O, FE: Task Execution Phase
+    O->>FE: Fill out JsonForm (checklist)
+    FE->>BE: PATCH /me/tasks/:id/content (Debounced Auto-save)
+    BE->>DB: Save task.content (JSONB)
+    O->>FE: Click "Submit for Review"
+    FE->>BE: PATCH /me/tasks/:id/action (SUBMIT_FOR_REVIEW)
+    BE->>DB: Update task.status to REVIEW
+
+    Note over M, BE: Pre-Confirmation Review Phase
+    M->>FE: Open /task-review
+    FE->>BE: GET /studios/:id/tasks/review-summary
+    BE-->>FE: Return REVIEW tasks
+    M->>FE: Check boxes next to ready tasks
+    M->>FE: Click "Approve Selected" on floating bar
+    FE->>BE: POST /studios/:id/tasks/bulk-approve [Uids]
+
+    rect rgb(240, 250, 240)
+        Note over BE, DB: Loop per selected task (Transactional)
+        BE->>DB: Update task.status to COMPLETED
+        BE->>EX: Trigger Fact Extraction Pipeline
+        EX->>DB: Persist actual times, attendance & platform violations
+        EX->>DB: Log transaction outcomes to Audit / AuditTarget
+    end
+
+    BE-->>FE: Return BulkApproveTasksResponse (stats & details)
+    FE->>M: Open results dialog (visual summaries & outcome badges)
+    FE->>FE: Invalidate Query Cache (refresh review queue & stats)
+
+    Note over M, DB: Post-Confirmation & Sign-off Phase
+    M->>FE: Navigate to /show-run-review
+    FE->>BE: GET /studios/:id/shows/run-review
+    BE->>DB: Query extracted facts (Shows, Creators, Platforms)
+    BE-->>FE: Return compiled daily metrics
+    M->>FE: Click "Operational Range Sign-off"
+    FE->>BE: POST /studios/:id/sign-off
+    BE->>DB: Log range SignOffAudit record
 ```
 
 ---
