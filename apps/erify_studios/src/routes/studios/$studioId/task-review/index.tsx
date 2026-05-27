@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { RefreshCw } from 'lucide-react';
@@ -20,165 +19,23 @@ import {
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { getClients } from '@/features/clients/api/get-clients';
-import { getMemberships } from '@/features/memberships/api/get-memberships';
-import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
 import { BulkApproveResultsDialog } from '@/features/tasks/components/bulk-approve-results-dialog';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
+import { StudioTaskReviewFilterTabs } from '@/features/tasks/components/studio-task-review-filter-tabs';
 import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { getTaskIssues, getTaskPhase, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
 import { useBulkApproveTasks } from '@/features/tasks/hooks/use-bulk-approve-tasks';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
+import { useTaskReviewClientFilter } from '@/features/tasks/hooks/use-task-review-client-filter';
+import { useTaskReviewShowFilter } from '@/features/tasks/hooks/use-task-review-show-filter';
 import { useTaskReviewSummary } from '@/features/tasks/hooks/use-task-review-summary';
-
-function useTaskReviewClientFilter(studioId: string, selectedClientName?: string) {
-  const [search, setSearch] = useState('');
-
-  const listQuery = useQuery({
-    queryKey: ['task-review-client-filter', 'list', studioId, { search }],
-    queryFn: ({ signal }) =>
-      getClients(
-        { name: search || undefined, limit: search ? 20 : 10 },
-        studioId,
-        { signal },
-      ),
-    enabled: Boolean(studioId),
-    staleTime: 60 * 60 * 1000,
-  });
-
-  const selectedQuery = useQuery({
-    queryKey: ['task-review-client-filter', 'by-name', studioId, selectedClientName],
-    queryFn: ({ signal }) =>
-      getClients(
-        { name: selectedClientName, limit: 1 },
-        studioId,
-        { signal },
-      ),
-    enabled: Boolean(studioId && selectedClientName),
-    staleTime: 60 * 60 * 1000,
-  });
-
-  const options = useMemo(() => {
-    const fetched = (listQuery.data?.data ?? []).map((client) => ({
-      value: client.name,
-      label: client.name,
-    }));
-    const selected = selectedQuery.data?.data?.[0];
-
-    if (selected && !fetched.some((option) => option.value === selected.name)) {
-      return [{ value: selected.name, label: selected.name }, ...fetched];
-    }
-
-    return fetched;
-  }, [listQuery.data, selectedQuery.data]);
-
-  return {
-    options,
-    isLoading: listQuery.isLoading || listQuery.isFetching,
-    setSearch,
-  };
-}
-
-function useTaskReviewUserFilter(studioId: string, selectedUserName?: string) {
-  const [search, setSearch] = useState('');
-
-  const listQuery = useQuery({
-    queryKey: ['task-review-user-filter', 'list', studioId, { search }],
-    queryFn: () =>
-      getMemberships({
-        name: search || undefined,
-        limit: search ? 20 : 10,
-        studio_id: studioId,
-      }),
-    enabled: Boolean(studioId),
-    staleTime: 60 * 60 * 1000,
-  });
-
-  const selectedQuery = useQuery({
-    queryKey: ['task-review-user-filter', 'by-name', studioId, selectedUserName],
-    queryFn: () =>
-      getMemberships({
-        name: selectedUserName,
-        limit: 1,
-        studio_id: studioId,
-      }),
-    enabled: Boolean(studioId && selectedUserName),
-    staleTime: 60 * 60 * 1000,
-  });
-
-  const options = useMemo(() => {
-    const fetched = (listQuery.data?.data ?? []).map((membership) => ({
-      value: membership.user.name,
-      label: membership.user.name,
-    }));
-    const selected = selectedQuery.data?.data?.[0];
-
-    if (selected && !fetched.some((option) => option.value === selected.user.name)) {
-      return [{ value: selected.user.name, label: selected.user.name }, ...fetched];
-    }
-
-    return fetched;
-  }, [listQuery.data, selectedQuery.data]);
-
-  return {
-    options,
-    isLoading: listQuery.isLoading || listQuery.isFetching,
-    setSearch,
-  };
-}
-
-function useTaskReviewShowFilter(studioId: string, selectedShowName?: string) {
-  const [search, setSearch] = useState('');
-
-  const listQuery = useQuery({
-    queryKey: ['task-review-show-filter', 'list', studioId, { search }],
-    queryFn: ({ signal }) =>
-      getStudioShows(
-        studioId,
-        { search: search || undefined, limit: search ? 20 : 10 },
-        { signal },
-      ),
-    enabled: Boolean(studioId),
-    staleTime: 60 * 60 * 1000,
-  });
-
-  const selectedQuery = useQuery({
-    queryKey: ['task-review-show-filter', 'by-name', studioId, selectedShowName],
-    queryFn: ({ signal }) =>
-      getStudioShows(
-        studioId,
-        { search: selectedShowName, limit: 1 },
-        { signal },
-      ),
-    enabled: Boolean(studioId && selectedShowName),
-    staleTime: 60 * 60 * 1000,
-  });
-
-  const options = useMemo(() => {
-    const fetched = (listQuery.data?.data ?? []).map((show) => ({
-      value: show.name,
-      label: show.name,
-    }));
-    const selected = selectedQuery.data?.data?.[0];
-
-    if (selected && !fetched.some((option) => option.value === selected.name)) {
-      return [{ value: selected.name, label: selected.name }, ...fetched];
-    }
-
-    return fetched;
-  }, [listQuery.data, selectedQuery.data]);
-
-  return {
-    options,
-    isLoading: listQuery.isLoading || listQuery.isFetching,
-    setSearch,
-  };
-}
+import { useTaskReviewUserFilter } from '@/features/tasks/hooks/use-task-review-user-filter';
 
 export const Route = createFileRoute('/studios/$studioId/task-review/')({
   component: StudioTaskReviewPage,
 });
+
 
 function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
@@ -550,65 +407,12 @@ function StudioTaskReviewPage() {
         />
 
         {/* Toggle tabs for main table filter */}
-        <div className="flex border-b border-muted py-2 gap-2 overflow-x-auto scrollbar-none flex-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
-          <Button
-            type="button"
-            variant={activeFilter === 'all' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleActiveFilterChange('all')}
-            className="text-xs font-semibold rounded-md flex-shrink-0"
-          >
-            All Tasks (
-            {stats.total}
-            )
-          </Button>
-          <Button
-            type="button"
-            variant={activeFilter === 'ready' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleActiveFilterChange('ready')}
-            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span>
-              Ready for Approval (
-              {stats.ready}
-              )
-            </span>
-          </Button>
-          <Button
-            type="button"
-            variant={
-              ['attention', 'pre-prod-attention', 'on-air-attention', 'post-prod-attention'].includes(activeFilter)
-                ? 'default'
-                : 'ghost'
-            }
-            size="sm"
-            onClick={() => handleActiveFilterChange('attention')}
-            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
-          >
-            <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
-            <span>
-              Needs Attention (
-              {stats.attention}
-              )
-            </span>
-          </Button>
-          <Button
-            type="button"
-            variant={activeFilter === 'done' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleActiveFilterChange('done')}
-            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
-          >
-            <span className="h-2 w-2 rounded-full bg-slate-500 dark:bg-slate-400 flex-shrink-0" />
-            <span>
-              Done (
-              {stats.done}
-              )
-            </span>
-          </Button>
-        </div>
+        <StudioTaskReviewFilterTabs
+          stats={stats}
+          activeFilter={activeFilter}
+          onFilterChange={handleActiveFilterChange}
+        />
+
 
         {/* Data Table */}
         <DataTable
