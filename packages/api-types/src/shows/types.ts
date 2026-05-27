@@ -10,6 +10,7 @@ import type {
   studioShowPlatformSummarySchema,
   updateShowInputSchema,
   updateStudioShowInputSchema,
+  showRunReviewSummarySchema,
 } from './schemas.js';
 
 /**
@@ -28,6 +29,8 @@ export type ShowApiResponse = z.infer<typeof showApiResponseSchema>;
 export type ShowListResponse = z.infer<typeof showListResponseSchema>;
 export type StudioShowPlatformSummary = z.infer<typeof studioShowPlatformSummarySchema>;
 export type StudioShowDetail = z.infer<typeof studioShowDetailSchema>;
+export type ShowRunReviewSummary = z.infer<typeof showRunReviewSummarySchema>;
+
 
 /**
  * List Shows Query Parameters Type
