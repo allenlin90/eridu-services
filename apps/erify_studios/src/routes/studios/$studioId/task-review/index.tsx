@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
+import type { RowSelectionState } from '@tanstack/react-table';
 import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
+import type { BulkApproveTasksResponse, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -18,10 +19,12 @@ import {
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
+import { BulkApproveResultsDialog } from '@/features/tasks/components/bulk-approve-results-dialog';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
 import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { getTaskIssues, getTaskPhase, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
+import { useBulkApproveTasks } from '@/features/tasks/hooks/use-bulk-approve-tasks';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
 import { useTaskReviewSummary } from '@/features/tasks/hooks/use-task-review-summary';
 
@@ -36,7 +39,8 @@ function StudioTaskReviewPage() {
   const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps, setPageCount } = useStudioTasksPageController({
     studioId,
   });
-  const { onPaginationChange } = tableProps;
+  const { onPaginationChange, onColumnFiltersChange, columnFilters } = tableProps;
+  const { onDateRangeChange, onResetDateRange } = reviewScopeProps;
   const { key: actionSheetKey, ...actionSheetRestProps } = actionSheetProps;
   const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
 
@@ -48,6 +52,54 @@ function StudioTaskReviewPage() {
     studioId,
     dateRange: reviewScopeProps.dateRange,
   });
+
+  // State for bulk approval results
+  const [resultsData, setResultsData] = useState<BulkApproveTasksResponse | null>(null);
+  const [isResultsDialogOpen, setIsResultsDialogOpen] = useState(false);
+
+  // State for row selection in the table
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  const { mutate: bulkApprove, isPending: isApproving } = useBulkApproveTasks({
+    studioId,
+    onSuccess: (response) => {
+      setResultsData(response);
+      setIsResultsDialogOpen(true);
+      setRowSelection({}); // Clear selection on successful approval
+    },
+  });
+
+  // Handler to clear selection when changing active filter tabs
+  const handleActiveFilterChange = useCallback((filter: TaskReviewActiveFilter) => {
+    setActiveFilter(filter);
+    setRowSelection({});
+  }, []);
+
+  // Handlers to clear selection when review scope, date range, or column filters change
+  const handleDateRangeChange = useCallback((dateRange: any) => {
+    onDateRangeChange(dateRange);
+    setRowSelection({});
+  }, [onDateRangeChange]);
+
+  const handleResetDateRange = useCallback(() => {
+    onResetDateRange();
+    setRowSelection({});
+  }, [onResetDateRange]);
+
+  const handleColumnFiltersChange = useCallback((updaterOrValue: any) => {
+    const adapter = adaptColumnFiltersChange(columnFilters, (nextFilters) => {
+      onColumnFiltersChange(nextFilters);
+      setRowSelection({});
+    });
+    adapter(updaterOrValue);
+  }, [columnFilters, onColumnFiltersChange]);
+
+  // Compute selected task UIDs from selection state keys
+  const selectedTaskUids = useMemo(() => {
+    return Object.entries(rowSelection)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([taskId]) => taskId);
+  }, [rowSelection]);
 
   // Get pagination parameters from tableProps
   const { pageIndex, pageSize } = tableProps.pagination;
@@ -207,20 +259,22 @@ function StudioTaskReviewPage() {
                 Submitted tasks due in the selected operational day (06:00–05:59) are shown below.
               </CardDescription>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full">
               <DatePickerWithRange
                 className="sm:w-72"
                 date={reviewScopeProps.dateRange}
-                setDate={reviewScopeProps.onDateRangeChange}
+                setDate={handleDateRangeChange}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={reviewScopeProps.onResetDateRange}
-              >
-                Today
-              </Button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetDateRange}
+                >
+                  Today
+                </Button>
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -229,7 +283,7 @@ function StudioTaskReviewPage() {
         <StudioTaskReviewSummaryPanel
           stats={stats}
           activeFilter={activeFilter}
-          setActiveFilter={setActiveFilter}
+          setActiveFilter={handleActiveFilterChange}
         />
 
         {/* Toggle tabs for main table filter */}
@@ -238,7 +292,7 @@ function StudioTaskReviewPage() {
             type="button"
             variant={activeFilter === 'all' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setActiveFilter('all')}
+            onClick={() => handleActiveFilterChange('all')}
             className="text-xs font-semibold rounded-md flex-shrink-0"
           >
             All Tasks (
@@ -249,7 +303,7 @@ function StudioTaskReviewPage() {
             type="button"
             variant={activeFilter === 'ready' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setActiveFilter('ready')}
+            onClick={() => handleActiveFilterChange('ready')}
             className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
             <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
@@ -263,7 +317,7 @@ function StudioTaskReviewPage() {
                 : 'ghost'
             }
             size="sm"
-            onClick={() => setActiveFilter('attention')}
+            onClick={() => handleActiveFilterChange('attention')}
             className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
           >
             <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
@@ -287,7 +341,11 @@ function StudioTaskReviewPage() {
           }}
           onPaginationChange={adaptPaginationChange(effectivePagination, tableProps.onPaginationChange)}
           columnFilters={tableProps.columnFilters}
-          onColumnFiltersChange={adaptColumnFiltersChange(tableProps.columnFilters, tableProps.onColumnFiltersChange)}
+          onColumnFiltersChange={handleColumnFiltersChange}
+          enableRowSelection={(row) => row.original.status === 'REVIEW' && getTaskIssues(row.original).length === 0}
+          rowSelection={rowSelection}
+          onRowSelectionChange={setRowSelection}
+          getRowId={(task) => task.id}
           renderToolbar={(table) => (
             <DataTableToolbar
               table={table}
@@ -314,6 +372,48 @@ function StudioTaskReviewPage() {
               onPaginationChange={tableProps.onPaginationChange}
             />
           )}
+        />
+
+        {/* Floating actions bar for selected tasks */}
+        {selectedTaskUids.length > 0 && (
+          <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center justify-between gap-4 rounded-full border border-muted bg-slate-900 dark:bg-slate-950 px-6 py-3 text-slate-50 shadow-xl animate-in slide-in-from-bottom-5">
+            <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-800">
+              <span className="text-sm font-medium">
+                {selectedTaskUids.length}
+                {' '}
+                task
+                {selectedTaskUids.length > 1 ? 's' : ''}
+                {' '}
+                selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                type="button"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full px-4 animate-in fade-in duration-200"
+                onClick={() => bulkApprove(selectedTaskUids)}
+                disabled={isApproving}
+              >
+                {isApproving ? 'Approving...' : 'Approve Selected'}
+              </Button>
+              <Button
+                size="sm"
+                type="button"
+                variant="ghost"
+                className="rounded-full text-slate-400 hover:text-white hover:bg-slate-800"
+                onClick={() => setRowSelection({})}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <BulkApproveResultsDialog
+          results={resultsData}
+          open={isResultsDialogOpen}
+          onOpenChange={setIsResultsDialogOpen}
         />
 
         <StudioTaskActionSheet key={actionSheetKey} {...actionSheetRestProps} />

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import type { TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
@@ -107,8 +107,10 @@ export class TaskOrchestrationService {
       return updated;
     }
 
+    let extractionResult: any;
+    let extractionError: string | undefined;
     try {
-      await this.factExtractionService.extractFromTask({
+      extractionResult = await this.factExtractionService.extractFromTask({
         taskId: before.id,
         taskUid: before.uid,
         studioId: before.studioId,
@@ -121,9 +123,114 @@ export class TaskOrchestrationService {
         `Fact extraction failed for completed task ${before.uid}: ${(err as Error).message}`,
         (err as Error).stack,
       );
+      extractionError = (err as Error).message;
+    }
+
+    if (extractionResult || extractionError) {
+      return {
+        ...updated,
+        extractionResult,
+        extractionError,
+      };
     }
 
     return updated;
+  }
+
+  /**
+   * Bulk approves multiple tasks in REVIEW status. Transitions each to COMPLETED
+   * and runs the fact extraction pipeline, returning structured results per task.
+   */
+  async bulkApproveTasks(
+    studioUid: string,
+    taskUids: string[],
+    auditContext?: SubmitTaskAuditContext,
+  ): Promise<any> {
+    const results: any[] = [];
+    let totalSuccess = 0;
+    let totalFailed = 0;
+
+    for (const taskUid of taskUids) {
+      try {
+        // 1. Resolve task and verify studio scope + REVIEW status
+        const task = await this.taskService.findOne({
+          uid: taskUid,
+          studio: { uid: studioUid },
+          deletedAt: null,
+        });
+
+        if (!task) {
+          throw HttpError.notFound('Task', taskUid);
+        }
+
+        if (task.status !== TASK_STATUS.REVIEW) {
+          throw HttpError.badRequest(`Task ${taskUid} is not in REVIEW status (current status: ${task.status})`);
+        }
+
+        // 2. Call submitTaskContent in admin mode to transition to COMPLETED
+        const updated = await this.submitTaskContent(
+          taskUid,
+          task.version,
+          { status: TASK_STATUS.COMPLETED as any },
+          {
+            mode: 'admin',
+            auditContext,
+          },
+        );
+
+        totalSuccess++;
+
+        // 3. Map extraction outcomes
+        const extractionEntries = (updated as any).extractionResult?.entries.map((entry: any) => ({
+          fact_key: entry.factKey,
+          source_field_id: entry.sourceFieldId,
+          target_uid: entry.targetUid,
+          outcome: entry.outcome,
+          audit_uid: entry.auditUid,
+          reason: entry.reason,
+        })) || [];
+
+        const hasExtractorError = (updated as any).extractionResult?.entries.some(
+          (entry: any) => entry.outcome === 'noop' && entry.reason === 'extractor_error',
+        );
+
+        const extractionStatus = (updated as any).extractionError
+          ? 'error'
+          : (updated as any).extractionResult
+              ? (hasExtractorError ? 'error' : 'success')
+              : 'skipped';
+
+        results.push({
+          task_uid: taskUid,
+          status: 'success' as const,
+          extraction: {
+            status: extractionStatus as any,
+            error: (updated as any).extractionError,
+            entries: extractionEntries,
+          },
+        });
+      } catch (error: any) {
+        totalFailed++;
+        const errorMessage = error instanceof HttpException
+          ? (typeof error.getResponse() === 'object' && error.getResponse() !== null ? (error.getResponse() as any).message || error.message : error.message)
+          : error.message || 'Unknown error';
+
+        results.push({
+          task_uid: taskUid,
+          status: 'error' as const,
+          error: errorMessage,
+        });
+      }
+    }
+
+    return {
+      results,
+      summary: {
+        total_processed: taskUids.length,
+        total_success: totalSuccess,
+        total_failed: totalFailed,
+      },
+    };
   }
 
   /**

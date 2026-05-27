@@ -473,3 +473,63 @@ export const listMyTasksQuerySchema = paginationBaseSchema
 
 export type ListMyTasksQuery = z.input<typeof listMyTasksQuerySchema>;
 export type ListMyTasksQueryTransformed = z.infer<typeof listMyTasksQuerySchema>;
+
+/**
+ * Schema for bulk task approval request
+ */
+export const bulkApproveTasksRequestSchema = z.object({
+  task_uids: z.array(z.string().startsWith(UID_PREFIXES.TASK)).min(1),
+});
+
+export type BulkApproveTasksRequest = z.infer<typeof bulkApproveTasksRequestSchema>;
+
+/**
+ * Schema for single task extraction result entry
+ */
+export const bulkApproveExtractionEntrySchema = z.object({
+  fact_key: z.string(),
+  source_field_id: z.string(),
+  target_uid: z.string(),
+  outcome: z.string(),
+  audit_uid: z.string().optional(),
+  reason: z.string().optional(),
+});
+
+export type BulkApproveExtractionEntry = z.infer<typeof bulkApproveExtractionEntrySchema>;
+
+/**
+ * Schema for single task extraction result
+ */
+export const bulkApproveExtractionResultSchema = z.object({
+  status: z.enum(['success', 'error', 'skipped']),
+  error: z.string().optional(),
+  entries: z.array(bulkApproveExtractionEntrySchema),
+});
+
+export type BulkApproveExtractionResult = z.infer<typeof bulkApproveExtractionResultSchema>;
+
+/**
+ * Schema for individual task bulk approval result
+ */
+export const bulkApproveTaskResultSchema = z.object({
+  task_uid: z.string(),
+  status: z.enum(['success', 'error']),
+  error: z.string().optional(),
+  extraction: bulkApproveExtractionResultSchema.optional(),
+});
+
+export type BulkApproveTaskResult = z.infer<typeof bulkApproveTaskResultSchema>;
+
+/**
+ * Response schema for bulk task approval
+ */
+export const bulkApproveTasksResponseSchema = z.object({
+  results: z.array(bulkApproveTaskResultSchema),
+  summary: z.object({
+    total_processed: z.number().int(),
+    total_success: z.number().int(),
+    total_failed: z.number().int(),
+  }),
+});
+
+export type BulkApproveTasksResponse = z.infer<typeof bulkApproveTasksResponseSchema>;

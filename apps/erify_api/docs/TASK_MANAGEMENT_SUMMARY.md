@@ -72,6 +72,7 @@ PENDING → IN_PROGRESS → REVIEW → COMPLETED (terminal)
 | `/tasks/generate`        | POST   | Bulk task generation                                                      |
 | `/tasks/assign-shows`    | POST   | Bulk show assignment                                                      |
 | `/tasks/bulk`            | DELETE | Bulk soft-delete tasks                                                    |
+| `/tasks/bulk-approve`    | POST   | Bulk approve eligible tasks and extract facts                             |
 | `/tasks/:taskUid/assign` | PATCH  | Individual reassignment                                                   |
 | `/tasks/:taskUid/action` | PATCH  | Status transition (admin/manager)                                         |
 | `/tasks/:taskUid`        | GET    | Lazy detail with schema                                                   |
@@ -132,8 +133,9 @@ PR 12.4 keeps submitted-task confirmation in Task Review at `/task-review` and a
 ✅ Submission window validation (SETUP before show start, ACTIVE/CLOSURE after show start)  
 ✅ Audit metadata (`task.metadata.audit.last_transition`)
 ✅ Studio shows `needs_attention` filtering via shift-alignment readiness warnings (no tasks / unassigned tasks / missing required task types)
+✅ Bulk review approve: manager bulk approval of eligible `REVIEW` tasks with atomic transaction processing and extraction summaries
 
-**Deferred**: Ad-hoc ticket creation, formal reopen workflow with approval context, operations review summary contract, smart due dates, progress in API response, WebSocket live sync, offline/PWA, bulk review approve
+**Deferred**: Ad-hoc ticket creation, formal reopen workflow with approval context, operations review summary contract, smart due dates, progress in API response, WebSocket live sync, offline/PWA
 
 ---
 

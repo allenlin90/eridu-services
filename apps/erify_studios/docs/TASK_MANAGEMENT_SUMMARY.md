@@ -86,6 +86,14 @@ Show Run Review → choose operational day range → review submitted and signed
 
 The default operational day is 06:00-05:59 local time for PR 12.4. Task Review applies that window to `due_date_from` / `due_date_to` and silently refetches every 5 minutes for the current operational day; historical ranges use the table refresh action. Show Run Review exposes only the range picker until summary queries ship in 12.4.4.
 
+### 11. Bulk Submitted-Task Approval (Admin/Manager)
+Task Review → select "Ready for Approval" tab → click `Approve All Ready ({count})` button → triggers API bulk approve request.
+- The button is only enabled when there are clean, eligible `REVIEW` tasks.
+- A premium result summary dialog opens showing real-time processing statistics and detailed extraction results.
+- Successful approvals render color-coded cards highlighting specific operational facts (`WRITTEN`, `SKIPPED`, `NOOP`) written or resolved in database tables.
+- Handled error responses (such as version mismatches or validation errors) are displayed clearly per task without halting the rest of the batch.
+- TanStack Query cache is automatically invalidated on completion to refresh the review queue and metrics immediately.
+
 ---
 
 ## Navigation & Studio Context
@@ -176,5 +184,6 @@ The default operational day is 06:00-05:59 local time for PR 12.4. Task Review a
 ✅ System Tasks (cross-studio list, detail dialog, reassignment)
 ✅ Moderation loop workflow (loop-based template builder, loop progress block, live loop detection, per-loop field filtering)
 ✅ Task Submission Reporting (definition CRUD, scope filters, contextual source catalog, column picker, preflight, run, result table, view filters, CSV export)
+✅ Bulk review approve: premium result modal with gradient badges, collapsible cards, status aggregation, and TanStack Query cache updates
 
-**Deferred**: Animations/confetti, swipe gestures, PWA/offline, WebSocket sync, analytics dashboard, bulk review approve, per-loop countdown timer, "Mark Loop Complete" button
+**Deferred**: Animations/confetti, swipe gestures, PWA/offline, WebSocket sync, analytics dashboard, per-loop countdown timer, "Mark Loop Complete" button

@@ -32,6 +32,8 @@ import { StudioService } from '@/models/studio/studio.service';
 import {
   AssignShowsDto,
   assignShowsResponseSchema,
+  BulkApproveTasksDto,
+  bulkApproveTasksResponseSchema,
   BulkDeleteTasksDto,
   bulkDeleteTasksResponseSchema,
   GenerateTasksDto,
@@ -220,6 +222,28 @@ export class StudioTaskController extends BaseStudioController {
 
     this.ensureResourceExists(updatedTask, 'Task', id);
     return updatedTask;
+  }
+
+  @ApiOperation({ summary: 'Bulk approve multiple tasks in REVIEW status' })
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @Post('bulk-approve')
+  @HttpCode(HttpStatus.OK)
+  @ZodResponse(bulkApproveTasksResponseSchema)
+  async bulkApprove(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Body() dto: BulkApproveTasksDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.taskOrchestrationService.bulkApproveTasks(
+      studioId,
+      dto.task_uids,
+      {
+        actorExtId: request.user?.ext_id,
+        actorEmail: request.user?.email,
+        actorRole: request.studioMembership?.role,
+        source: 'studio',
+      },
+    );
   }
 
   @ApiOperation({ summary: 'Soft-delete multiple tasks by UID' })

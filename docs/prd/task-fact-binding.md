@@ -258,7 +258,7 @@ Implementation is structured into **three logical sections**. Each section serve
   * Tag issues by pre-production, on-air, and post-production phase.
   * Deep-link rows back to show tasks and task submission detail.
 
-#### 🟨 PR 12.4.3 · Bulk Submitted-Task Approval and Extraction Result Summary
+#### 🟨 PR 12.4.3 · Bulk Submitted-Task Approval and Extraction Result Summary — ✅ Shipped in [#110](https://github.com/allenlin90/eridu-services/pull/110)
 * **Purpose**: Make manager confirmation the bulk gate that populates operational facts.
 * **Functional Deliverable**:
   * Bulk approve eligible `REVIEW` tasks by transitioning each through `TaskOrchestrationService.submitTaskContent`.
