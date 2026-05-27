@@ -36,7 +36,6 @@ export const Route = createFileRoute('/studios/$studioId/task-review/')({
   component: StudioTaskReviewPage,
 });
 
-
 function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
   const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps, setPageCount } = useStudioTasksPageController({
@@ -412,7 +411,6 @@ function StudioTaskReviewPage() {
           activeFilter={activeFilter}
           onFilterChange={handleActiveFilterChange}
         />
-
 
         {/* Data Table */}
         <DataTable

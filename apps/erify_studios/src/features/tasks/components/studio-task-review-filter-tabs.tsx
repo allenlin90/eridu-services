@@ -1,6 +1,6 @@
 import { Button } from '@eridu/ui';
 
-import { type TaskReviewActiveFilter } from './studio-task-review-summary-panel';
+import type { TaskReviewActiveFilter } from './studio-task-review-summary-panel';
 
 type StudioTaskReviewFilterTabsProps = {
   stats: {
@@ -27,7 +27,9 @@ export function StudioTaskReviewFilterTabs({
         onClick={() => onFilterChange('all')}
         className="text-xs font-semibold rounded-md flex-shrink-0"
       >
-        All Tasks ({stats.total})
+        All Tasks (
+        {stats.total}
+        )
       </Button>
       <Button
         type="button"
@@ -38,7 +40,9 @@ export function StudioTaskReviewFilterTabs({
       >
         <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
         <span>
-          Ready for Approval ({stats.ready})
+          Ready for Approval (
+          {stats.ready}
+          )
         </span>
       </Button>
       <Button
@@ -54,7 +58,9 @@ export function StudioTaskReviewFilterTabs({
       >
         <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
         <span>
-          Needs Attention ({stats.attention})
+          Needs Attention (
+          {stats.attention}
+          )
         </span>
       </Button>
       <Button
@@ -66,7 +72,9 @@ export function StudioTaskReviewFilterTabs({
       >
         <span className="h-2 w-2 rounded-full bg-slate-500 dark:bg-slate-400 flex-shrink-0" />
         <span>
-          Done ({stats.done})
+          Done (
+          {stats.done}
+          )
         </span>
       </Button>
     </div>

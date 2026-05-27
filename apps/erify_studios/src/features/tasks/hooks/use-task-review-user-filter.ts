@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
-import { getMemberships } from '@/features/memberships/api/get-memberships';
+import { getStudioMemberships } from '@/features/memberships/api/get-studio-memberships';
 
 const STALE_TIME_MS = 60 * 60 * 1000;
 const DEFAULT_LIMIT = 10;
@@ -12,24 +12,24 @@ export function useTaskReviewUserFilter(studioId: string, selectedUserName?: str
 
   const listQuery = useQuery({
     queryKey: ['task-review-user-filter', 'list', studioId, { search }],
-    queryFn: () =>
-      getMemberships({
-        name: search || undefined,
-        limit: search ? SEARCH_LIMIT : DEFAULT_LIMIT,
-        studio_id: studioId,
-      }),
+    queryFn: ({ signal }) =>
+      getStudioMemberships(
+        studioId,
+        { name: search || undefined, limit: search ? SEARCH_LIMIT : DEFAULT_LIMIT },
+        { signal },
+      ),
     enabled: Boolean(studioId),
     staleTime: STALE_TIME_MS,
   });
 
   const selectedQuery = useQuery({
     queryKey: ['task-review-user-filter', 'by-name', studioId, selectedUserName],
-    queryFn: () =>
-      getMemberships({
-        name: selectedUserName,
-        limit: 1,
-        studio_id: studioId,
-      }),
+    queryFn: ({ signal }) =>
+      getStudioMemberships(
+        studioId,
+        { name: selectedUserName, limit: 1 },
+        { signal },
+      ),
     enabled: Boolean(studioId && selectedUserName),
     staleTime: STALE_TIME_MS,
   });
@@ -54,3 +54,4 @@ export function useTaskReviewUserFilter(studioId: string, selectedUserName?: str
     setSearch,
   };
 }
+
