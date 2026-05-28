@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { Info, Pencil } from 'lucide-react';
 import { useState } from 'react';
 
+import type { StudioMemberResponse } from '@eridu/api-types/memberships';
 import {
   TASK_ACTION,
   TASK_STATUS,
@@ -26,7 +27,6 @@ import {
   SelectValue,
 } from '@eridu/ui';
 
-import type { Membership } from '@/features/memberships/api/get-memberships';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 type MemberOption = { value: string; label: string };
@@ -41,7 +41,7 @@ function AssigneeCell({
   getIsSearchingMembers,
 }: {
   task: TaskWithRelationsDto;
-  getMembers: () => Membership[];
+  getMembers: () => StudioMemberResponse[];
   onSearch: (value: string) => void;
   onAssign: (task: TaskWithRelationsDto, assigneeUid: string | null) => void;
   isAssigning: boolean;
@@ -126,10 +126,10 @@ function getTaskActionOptions(status: TaskStatus): Array<{ value: TaskAction; la
   }));
 }
 
-function getMemberOptions(members: Membership[]): MemberOption[] {
+function getMemberOptions(members: StudioMemberResponse[]): MemberOption[] {
   return members.map((m) => ({
-    value: m.user.id,
-    label: `${m.user.name} (${m.user.email})`,
+    value: m.user_id,
+    label: `${m.user_name} (${m.user_email})`,
   }));
 }
 
@@ -231,7 +231,7 @@ function ProcessStatusCell({
 }
 
 export function getColumns(
-  getMembers: () => Membership[],
+  getMembers: () => StudioMemberResponse[],
   onMemberSearch: (value: string) => void,
   onAssign: (task: TaskWithRelationsDto, assigneeUid: string | null) => void,
   isAssigning: boolean,

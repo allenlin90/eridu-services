@@ -93,7 +93,6 @@ For filters that query large backend collections (e.g., Clients, Memberships/Use
 
 ## Current-View Export
 
-
 When a table supports CSV/JSON export, export the current server-filtered view, not just the visible page:
 
 - Derive export params from the same hook-owned API params as the table query; omit only `page`/`limit`.

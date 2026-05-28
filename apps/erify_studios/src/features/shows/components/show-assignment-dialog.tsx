@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from '@eridu/ui';
 
-import type { Membership } from '@/features/memberships/api/get-memberships';
 import { useStudioMembers } from '@/features/studio-members/api/members';
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useAssignShows } from '@/features/studio-shows/hooks/use-assign-shows';
@@ -57,16 +56,7 @@ export function ShowAssignmentDialog({
     },
   );
 
-  const rawMembers = membersResponse?.data;
-  const members = useMemo(() => {
-    return (rawMembers ?? []).map((member) => ({
-      user: {
-        id: member.user_id,
-        name: member.user_name,
-        email: member.user_email,
-      },
-    } as unknown as Membership));
-  }, [rawMembers]);
+  const members = useMemo(() => membersResponse?.data ?? [], [membersResponse?.data]);
 
   const { mutate: assignShows, isPending: isAssigning } = useAssignShows({
     studioId,
@@ -78,8 +68,8 @@ export function ShowAssignmentDialog({
 
   const memberOptions = useMemo(() => {
     return members.map((m) => ({
-      value: m.user.id,
-      label: `${m.user.name} (${m.user.email})`,
+      value: m.user_id,
+      label: `${m.user_name} (${m.user_email})`,
     }));
   }, [members]);
 

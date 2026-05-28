@@ -1,7 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
-import type { Membership } from '@/features/memberships/api/get-memberships';
 import { useStudioMembers } from '@/features/studio-members/api/members';
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
@@ -83,15 +82,7 @@ export function useStudioShowTasksPageData({
   });
 
   const rawMembers = membersResponse?.data;
-  const members = useMemo(() => {
-    return (rawMembers ?? []).map((member) => ({
-      user: {
-        id: member.user_id,
-        name: member.user_name,
-        email: member.user_email,
-      },
-    } as unknown as Membership));
-  }, [rawMembers]);
+  const members = useMemo(() => rawMembers ?? [], [rawMembers]);
   const taskList = useMemo(() => tasks ?? [], [tasks]);
   const isMembersInitialLoading = isLoadingMembers && members.length === 0 && !memberSearch;
   const isTableLoading = isLoadingTasks || isMembersInitialLoading;
