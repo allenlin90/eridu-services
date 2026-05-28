@@ -1,5 +1,5 @@
+import type { ColumnDef } from '@tanstack/react-table';
 import {
-  BadgeCheck,
   CalendarDays,
   Clock,
   ListTodo,
@@ -8,20 +8,289 @@ import {
   Users2,
   XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo } from 'react';
 
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui';
+import {
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DataTable,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@eridu/ui';
 
 type ShowRunSummaryProps = {
   data: ShowRunReviewSummary;
   isFetching?: boolean;
+  search: any;
+  onSearchChange: (nextSearch: any) => void;
 };
 
-type ActiveTab = 'creators' | 'violations' | 'tasks' | 'shows';
+type CreatorException = ShowRunReviewSummary['creators']['exceptions'][number];
+type PlatformViolation = ShowRunReviewSummary['platforms']['violations'][number];
+type IncompleteTask = ShowRunReviewSummary['tasks']['incomplete_tasks'][number];
 
-export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('creators');
+type ShowsSummaryRow = {
+  id: string;
+  shows_range: string;
+  actuals_completeness: string;
+  status: string;
+};
+
+// Creator exception logs columns definition
+const creatorColumns: ColumnDef<CreatorException>[] = [
+  {
+    accessorKey: 'creator_name',
+    header: 'Creator Name',
+    cell: ({ row }) => <span className="font-semibold text-sm">{row.original.creator_name}</span>,
+  },
+  {
+    accessorKey: 'show_name',
+    header: 'Show Name',
+    cell: ({ row }) => (
+      <div className="space-y-0.5">
+        <div className="font-medium text-xs">{row.original.show_name}</div>
+        <div className="text-[10px] text-muted-foreground">
+          Start:
+          {' '}
+          {new Date(row.original.show_start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => {
+      const status = row.original.status;
+      return status === 'MISSING'
+        ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 border border-rose-200">
+              <XCircle className="h-3 w-3" />
+              {' '}
+              Missing
+            </span>
+          )
+        : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 border border-amber-200">
+              <Clock className="h-3 w-3" />
+              {' '}
+              Late Arrival
+            </span>
+          );
+    },
+  },
+  {
+    accessorKey: 'late_minutes',
+    header: 'Exception Details',
+    cell: ({ row }) => {
+      const status = row.original.status;
+      const lateMinutes = row.original.late_minutes;
+      return status === 'LATE'
+        ? (
+            <span className="text-xs font-semibold text-amber-800">
+              {lateMinutes}
+              {' '}
+              minutes late
+            </span>
+          )
+        : (
+            <span className="text-xs text-muted-foreground">—</span>
+          );
+    },
+  },
+  {
+    accessorKey: 'reason',
+    header: 'Operator\'s Note / Reason',
+    cell: ({ row }) => {
+      const reason = row.original.reason;
+      return reason
+        ? (
+            <span className="not-italic text-xs text-foreground bg-muted/40 rounded px-2 py-1 border block max-w-xs truncate" title={reason}>
+              {reason}
+            </span>
+          )
+        : (
+            <span className="text-xs italic text-muted-foreground">No reason specified</span>
+          );
+    },
+  },
+];
+
+// Platform violation columns definition
+const violationColumns: ColumnDef<PlatformViolation>[] = [
+  {
+    accessorKey: 'platform_name',
+    header: 'Platform',
+    cell: ({ row }) => <span className="font-semibold text-sm">{row.original.platform_name}</span>,
+  },
+  {
+    accessorKey: 'show_name',
+    header: 'Show Name',
+    cell: ({ row }) => (
+      <div className="space-y-0.5">
+        <div className="font-medium text-xs">{row.original.show_name}</div>
+        <div className="text-[10px] text-muted-foreground">
+          Start:
+          {' '}
+          {new Date(row.original.show_start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'violation_type',
+    header: 'Violation Type',
+    cell: ({ row }) => <span className="font-medium text-xs text-rose-700">{row.original.violation_type}</span>,
+  },
+  {
+    accessorKey: 'severity',
+    header: 'Severity',
+    cell: ({ row }) => {
+      const severity = row.original.severity;
+      if (severity === 'CRITICAL') {
+        return (
+          <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-800 border border-rose-200">
+            CRITICAL
+          </span>
+        );
+      }
+      if (severity === 'HIGH') {
+        return (
+          <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">
+            HIGH
+          </span>
+        );
+      }
+      if (severity === 'MEDIUM') {
+        return (
+          <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+            MEDIUM
+          </span>
+        );
+      }
+      if (severity === 'LOW') {
+        return (
+          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800">
+            LOW
+          </span>
+        );
+      }
+      if (severity === 'WARNING') {
+        return (
+          <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs font-bold text-yellow-800 border border-yellow-200">
+            WARNING
+          </span>
+        );
+      }
+      return (
+        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-800 border border-slate-200">
+          {severity}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: 'reason',
+    header: 'Reason / Details',
+    cell: ({ row }) => <span className="text-xs max-w-sm block truncate" title={row.original.reason}>{row.original.reason}</span>,
+  },
+  {
+    accessorKey: 'observed_at',
+    header: 'Observed At',
+    cell: ({ row }) => (
+      <span className="text-xs text-muted-foreground">
+        {new Date(row.original.observed_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      </span>
+    ),
+  },
+];
+
+// Incomplete tasks columns definition
+const taskColumns: ColumnDef<IncompleteTask>[] = [
+  {
+    accessorKey: 'description',
+    header: 'Task Description',
+    cell: ({ row }) => <span className="font-medium text-sm">{row.original.description}</span>,
+  },
+  {
+    accessorKey: 'type',
+    header: 'Phase / Type',
+    cell: ({ row }) => (
+      <Badge variant="outline" className="text-[10px] font-medium border-purple-200 bg-purple-50 text-purple-700 uppercase">
+        {row.original.type.replace('_', ' ')}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => (
+      <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border">
+        {row.original.status}
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'show_name',
+    header: 'Associated Show',
+    cell: ({ row }) => <span className="text-xs font-semibold text-indigo-700">{row.original.show_name}</span>,
+  },
+];
+
+// Shows range summary columns definition
+const showColumns: ColumnDef<ShowsSummaryRow>[] = [
+  {
+    accessorKey: 'shows_range',
+    header: 'Shows Range Summary',
+    cell: ({ row }) => <span className="font-semibold text-sm">{row.original.shows_range}</span>,
+  },
+  {
+    accessorKey: 'actuals_completeness',
+    header: 'Actuals Completeness',
+    cell: ({ row }) => <span className="text-xs">{row.original.actuals_completeness}</span>,
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status Check',
+    cell: ({ row }) => {
+      const status = row.original.status;
+      return (
+        <Badge
+          variant={status === 'ALL COMPLETE' ? 'outline' : 'destructive'}
+          className={status === 'ALL COMPLETE' ? 'border-green-200 bg-green-50 text-green-700 font-normal' : ''}
+        >
+          {status}
+        </Badge>
+      );
+    },
+  },
+];
+
+export function ShowRunSummary({ data, isFetching = false, search, onSearchChange }: ShowRunSummaryProps) {
+  const activeTab = search.tab ?? 'creators';
+  const setActiveTab = (tab: string) => {
+    onSearchChange({
+      tab,
+      // Clear filters of other tabs to keep URL clean on tab changes
+      creators_search: undefined,
+      creators_status: undefined,
+      violations_search: undefined,
+      violations_severity: undefined,
+      tasks_search: undefined,
+      tasks_status: undefined,
+      shows_search: undefined,
+      shows_completeness: undefined,
+    });
+  };
 
   const showStats = data.shows;
   const creatorStats = data.creators;
@@ -32,8 +301,94 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
     ? Math.round((showStats.complete_count / showStats.total_count) * 100)
     : 0;
 
+  // Local filtered datasets mapped to URL search query parameters
+  const filteredCreators = useMemo(() => {
+    let list = creatorStats.exceptions;
+    const query = search.creators_search?.toLowerCase();
+    if (query) {
+      list = list.filter(
+        (ex) =>
+          ex.creator_name.toLowerCase().includes(query)
+          || ex.show_name.toLowerCase().includes(query)
+          || ex.reason?.toLowerCase().includes(query),
+      );
+    }
+    const status = search.creators_status;
+    if (status) {
+      list = list.filter((ex) => ex.status === status);
+    }
+    return list;
+  }, [creatorStats.exceptions, search.creators_search, search.creators_status]);
+
+  const filteredViolations = useMemo(() => {
+    let list = platformStats.violations;
+    const query = search.violations_search?.toLowerCase();
+    if (query) {
+      list = list.filter(
+        (violation) =>
+          violation.platform_name.toLowerCase().includes(query)
+          || violation.show_name.toLowerCase().includes(query)
+          || violation.reason.toLowerCase().includes(query)
+          || violation.violation_type.toLowerCase().includes(query),
+      );
+    }
+    const severity = search.violations_severity;
+    if (severity) {
+      list = list.filter((v) => v.severity === severity);
+    }
+    return list;
+  }, [platformStats.violations, search.violations_search, search.violations_severity]);
+
+  const filteredTasks = useMemo(() => {
+    let list = taskStats.incomplete_tasks;
+    const query = search.tasks_search?.toLowerCase();
+    if (query) {
+      list = list.filter(
+        (task) =>
+          task.description.toLowerCase().includes(query)
+          || task.show_name.toLowerCase().includes(query)
+          || task.type.toLowerCase().includes(query),
+      );
+    }
+    const status = search.tasks_status;
+    if (status) {
+      list = list.filter((t) => t.status === status);
+    }
+    return list;
+  }, [taskStats.incomplete_tasks, search.tasks_search, search.tasks_status]);
+
+  const showsData = useMemo(() => {
+    if (showStats.total_count === 0)
+      return [];
+    return [
+      {
+        id: 'shows-range-summary',
+        shows_range: `Shows scheduled within range: ${showStats.total_count} scheduled`,
+        actuals_completeness: `${showStats.complete_count} complete, ${showStats.incomplete_count} incomplete`,
+        status: showStats.incomplete_count === 0 ? 'ALL COMPLETE' : 'INCOMPLETE',
+      },
+    ];
+  }, [showStats]);
+
+  const filteredShows = useMemo(() => {
+    let list = showsData;
+    const query = search.shows_search?.toLowerCase();
+    if (query) {
+      list = list.filter(
+        (row) =>
+          row.shows_range.toLowerCase().includes(query)
+          || row.actuals_completeness.toLowerCase().includes(query),
+      );
+    }
+    const completeness = search.shows_completeness;
+    if (completeness) {
+      list = list.filter((r) => r.status === completeness);
+    }
+    return list;
+  }, [showsData, search.shows_search, search.shows_completeness]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full overflow-hidden">
       {/* Background Refetch Banner */}
       {isFetching && (
         <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2 text-xs text-blue-700 animate-pulse">
@@ -131,11 +486,11 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
               {platformStats.active_violations_count}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-1">
             <p className="text-xs text-muted-foreground">
               Active platform stream alerts requiring confirmation before sign-off.
             </p>
-            <div className="mt-2.5">
+            <div className="pt-1">
               <Badge variant={platformStats.active_violations_count > 0 ? 'destructive' : 'secondary'} className="text-[10px] py-0 px-2 font-normal">
                 {platformStats.active_violations_count > 0 ? 'Action Required' : 'Streams Clear'}
               </Badge>
@@ -156,11 +511,11 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
               {taskStats.incomplete_phase_checks_count}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-1">
             <p className="text-xs text-muted-foreground">
               Unfinished pre-production, on-air, or post-production checkpoints.
             </p>
-            <div className="mt-2.5">
+            <div className="pt-1">
               <Badge variant="outline" className="text-[10px] py-0 px-2 font-normal border-purple-200 bg-purple-50 text-purple-700">
                 Checklist Gates
               </Badge>
@@ -170,7 +525,7 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
       </div>
 
       {/* Tab Panel Navigation */}
-      <Card className="border border-border/80 shadow-sm">
+      <Card className="border border-border/80 shadow-sm min-w-0 w-full overflow-hidden">
         <CardHeader className="pb-0 border-b">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
             <div className="space-y-1">
@@ -254,273 +609,152 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 min-w-0 w-full overflow-hidden">
           {/* Creators Tab */}
           {activeTab === 'creators' && (
-            <div className="space-y-4">
-              {creatorStats.exceptions.length === 0
-                ? (
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <div className="rounded-full bg-emerald-50 p-3 text-emerald-600 mb-3 border border-emerald-100">
-                        <BadgeCheck className="h-6 w-6" />
-                      </div>
-                      <h4 className="text-sm font-semibold">All Creators Present & On Time</h4>
-                      <p className="text-xs text-muted-foreground max-w-xs mt-1">
-                        No creator lateness exceptions or missing attendance flags recorded for this day range.
-                      </p>
-                    </div>
-                  )
-                : (
-                    <div className="overflow-x-auto rounded-lg border bg-background">
-                      <table className="w-full text-left text-sm border-collapse">
-                        <thead>
-                          <tr className="border-b bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
-                            <th className="p-3">Creator Name</th>
-                            <th className="p-3">Show Name</th>
-                            <th className="p-3">Status</th>
-                            <th className="p-3">Exception Details</th>
-                            <th className="p-3">Operator's Note / Reason</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {creatorStats.exceptions.map((ex) => (
-                            <tr key={ex.show_creator_uid} className="hover:bg-muted/10 transition-colors">
-                              <td className="p-3 font-medium text-foreground">{ex.creator_name}</td>
-                              <td className="p-3">
-                                <div className="font-medium text-xs">{ex.show_name}</div>
-                                <div className="text-[10px] text-muted-foreground mt-0.5">
-                                  Start:
-                                  {' '}
-                                  {new Date(ex.show_start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                              </td>
-                              <td className="p-3">
-                                {ex.status === 'MISSING'
-                                  ? (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 border border-rose-200">
-                                        <XCircle className="h-3 w-3" />
-                                        {' '}
-                                        Missing
-                                      </span>
-                                    )
-                                  : (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 border border-amber-200">
-                                        <Clock className="h-3 w-3" />
-                                        {' '}
-                                        Late Arrival
-                                      </span>
-                                    )}
-                              </td>
-                              <td className="p-3">
-                                {ex.status === 'LATE'
-                                  ? (
-                                      <span className="text-xs font-semibold text-amber-800">
-                                        {ex.late_minutes}
-                                        {' '}
-                                        minutes late
-                                      </span>
-                                    )
-                                  : (
-                                      <span className="text-xs text-muted-foreground">—</span>
-                                    )}
-                              </td>
-                              <td className="p-3 text-xs italic text-muted-foreground">
-                                {ex.reason
-                                  ? (
-                                      <span className="not-italic text-foreground bg-muted/40 rounded px-2 py-1 border block max-w-xs truncate">
-                                        {ex.reason}
-                                      </span>
-                                    )
-                                  : (
-                                      'No reason specified'
-                                    )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+            <div className="space-y-4 min-w-0 w-full overflow-hidden">
+              <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="flex flex-1 flex-col sm:flex-row gap-2 w-full">
+                  <Input
+                    placeholder="Search creators, shows, or reasons..."
+                    value={search.creators_search ?? ''}
+                    onChange={(e) => onSearchChange({ creators_search: e.target.value || undefined })}
+                    className="max-w-md w-full"
+                  />
+                  <Select
+                    value={search.creators_status ?? 'ALL'}
+                    onValueChange={(val) =>
+                      onSearchChange({ creators_status: val === 'ALL' ? undefined : val })}
+                  >
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="All Exceptions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Exceptions</SelectItem>
+                      <SelectItem value="LATE">Late Arrival</SelectItem>
+                      <SelectItem value="MISSING">Missing Attendance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DataTable
+                data={filteredCreators}
+                columns={creatorColumns}
+                emptyMessage="No creator lateness exceptions or missing attendance flags recorded for this day range."
+              />
             </div>
           )}
 
           {/* Stream Alerts Tab */}
           {activeTab === 'violations' && (
-            <div className="space-y-4">
-              {platformStats.active_violations_count === 0
-                ? (
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <div className="rounded-full bg-emerald-50 p-3 text-emerald-600 mb-3 border border-emerald-100">
-                        <BadgeCheck className="h-6 w-6" />
-                      </div>
-                      <h4 className="text-sm font-semibold">Platform Streams Stayed Clean</h4>
-                      <p className="text-xs text-muted-foreground max-w-xs mt-1">
-                        No active platform stream lag, offline, or configuration violations reported.
-                      </p>
-                    </div>
-                  )
-                : (
-                    <div className="overflow-x-auto rounded-lg border bg-background">
-                      <table className="w-full text-left text-sm border-collapse">
-                        <thead>
-                          <tr className="border-b bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
-                            <th className="p-3">Platform</th>
-                            <th className="p-3">Show Name</th>
-                            <th className="p-3">Violation Type</th>
-                            <th className="p-3">Severity</th>
-                            <th className="p-3">Reason / Details</th>
-                            <th className="p-3">Observed At</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {platformStats.violations.map((violation) => (
-                            <tr key={violation.violation_uid} className="hover:bg-muted/10 transition-colors">
-                              <td className="p-3 font-semibold text-foreground">{violation.platform_name}</td>
-                              <td className="p-3">
-                                <div className="font-medium text-xs">{violation.show_name}</div>
-                                <div className="text-[10px] text-muted-foreground mt-0.5">
-                                  Start:
-                                  {' '}
-                                  {new Date(violation.show_start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                              </td>
-                              <td className="p-3 font-medium text-xs text-rose-700">{violation.violation_type}</td>
-                              <td className="p-3">
-                                {violation.severity === 'CRITICAL' && (
-                                  <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-800 border border-rose-200">
-                                    CRITICAL
-                                  </span>
-                                )}
-                                {violation.severity === 'HIGH' && (
-                                  <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">
-                                    HIGH
-                                  </span>
-                                )}
-                                {violation.severity === 'MEDIUM' && (
-                                  <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
-                                    MEDIUM
-                                  </span>
-                                )}
-                                {violation.severity === 'LOW' && (
-                                  <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800">
-                                    LOW
-                                  </span>
-                                )}
-                                {violation.severity === 'WARNING' && (
-                                  <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs font-bold text-yellow-800 border border-yellow-200">
-                                    WARNING
-                                  </span>
-                                )}
-                                {!['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'WARNING'].includes(violation.severity) && (
-                                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-800 border border-slate-200">
-                                    {violation.severity}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="p-3 text-xs">{violation.reason}</td>
-                              <td className="p-3 text-xs text-muted-foreground">
-                                {new Date(violation.observed_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+            <div className="space-y-4 min-w-0 w-full overflow-hidden">
+              <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="flex flex-1 flex-col sm:flex-row gap-2 w-full">
+                  <Input
+                    placeholder="Search platforms, shows, or details..."
+                    value={search.violations_search ?? ''}
+                    onChange={(e) => onSearchChange({ violations_search: e.target.value || undefined })}
+                    className="max-w-md w-full"
+                  />
+                  <Select
+                    value={search.violations_severity ?? 'ALL'}
+                    onValueChange={(val) =>
+                      onSearchChange({ violations_severity: val === 'ALL' ? undefined : val })}
+                  >
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="All Severities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Severities</SelectItem>
+                      <SelectItem value="CRITICAL">CRITICAL</SelectItem>
+                      <SelectItem value="HIGH">HIGH</SelectItem>
+                      <SelectItem value="MEDIUM">MEDIUM</SelectItem>
+                      <SelectItem value="LOW">LOW</SelectItem>
+                      <SelectItem value="WARNING">WARNING</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DataTable
+                data={filteredViolations}
+                columns={violationColumns}
+                emptyMessage="No active platform stream lag, offline, or configuration violations reported."
+              />
             </div>
           )}
 
           {/* Incomplete Tasks Tab */}
           {activeTab === 'tasks' && (
-            <div className="space-y-4">
-              {taskStats.incomplete_phase_checks_count === 0
-                ? (
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <div className="rounded-full bg-emerald-50 p-3 text-emerald-600 mb-3 border border-emerald-100">
-                        <BadgeCheck className="h-6 w-6" />
-                      </div>
-                      <h4 className="text-sm font-semibold">All Phase Checklist Gates Passed</h4>
-                      <p className="text-xs text-muted-foreground max-w-xs mt-1">
-                        Every task, pre-production check, on-air, and post-production template task has been completed!
-                      </p>
-                    </div>
-                  )
-                : (
-                    <div className="overflow-x-auto rounded-lg border bg-background">
-                      <table className="w-full text-left text-sm border-collapse">
-                        <thead>
-                          <tr className="border-b bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
-                            <th className="p-3">Task Description</th>
-                            <th className="p-3">Phase / Type</th>
-                            <th className="p-3">Status</th>
-                            <th className="p-3">Associated Show</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {taskStats.incomplete_tasks.map((task) => (
-                            <tr key={task.task_uid} className="hover:bg-muted/10 transition-colors">
-                              <td className="p-3 font-medium text-foreground">{task.description}</td>
-                              <td className="p-3">
-                                <Badge variant="outline" className="text-[10px] font-medium border-purple-200 bg-purple-50 text-purple-700 uppercase">
-                                  {task.type.replace('_', ' ')}
-                                </Badge>
-                              </td>
-                              <td className="p-3">
-                                <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border">
-                                  {task.status}
-                                </span>
-                              </td>
-                              <td className="p-3 text-xs font-semibold text-indigo-700">{task.show_name}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+            <div className="space-y-4 min-w-0 w-full overflow-hidden">
+              <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="flex flex-1 flex-col sm:flex-row gap-2 w-full">
+                  <Input
+                    placeholder="Search tasks or associated shows..."
+                    value={search.tasks_search ?? ''}
+                    onChange={(e) => onSearchChange({ tasks_search: e.target.value || undefined })}
+                    className="max-w-md w-full"
+                  />
+                  <Select
+                    value={search.tasks_status ?? 'ALL'}
+                    onValueChange={(val) =>
+                      onSearchChange({ tasks_status: val === 'ALL' ? undefined : val })}
+                  >
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Statuses</SelectItem>
+                      <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
+                      <SelectItem value="TODO">TODO</SelectItem>
+                      <SelectItem value="FAILED">FAILED</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DataTable
+                data={filteredTasks}
+                columns={taskColumns}
+                emptyMessage="Every task, pre-production check, on-air, and post-production template task has been completed!"
+              />
             </div>
           )}
 
           {/* Shows Range Tab */}
           {activeTab === 'shows' && (
-            <div className="space-y-4">
-              <div className="overflow-x-auto rounded-lg border bg-background">
-                <table className="w-full text-left text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
-                      <th className="p-3">Show Name</th>
-                      <th className="p-3">Time Window</th>
-                      <th className="p-3">Actual Run Times</th>
-                      <th className="p-3 text-center">Completeness</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {data.shows.total_count === 0
-                      ? (
-                          <tr>
-                            <td colSpan={4} className="p-10 text-center text-muted-foreground text-sm">
-                              No shows scheduled in the selected date range.
-                            </td>
-                          </tr>
-                        )
-                      : (
-                          /* Since the API returns aggregated numbers, we can display this friendly operational check review */
-                          <tr className="hover:bg-muted/10 transition-colors">
-                            <td className="p-3 font-semibold" colSpan={3}>
-                              Shows scheduled within selected range:
-                            </td>
-                            <td className="p-3 text-center">
-                              <Badge
-                                variant={showStats.incomplete_count === 0 ? 'outline' : 'destructive'}
-                                className={showStats.incomplete_count === 0 ? 'border-green-200 bg-green-50 text-green-700 font-normal' : ''}
-                              >
-                                {showStats.incomplete_count === 0 ? 'ALL COMPLETE' : `${showStats.incomplete_count} MISSING ACTUALS`}
-                              </Badge>
-                            </td>
-                          </tr>
-                        )}
-                  </tbody>
-                </table>
+            <div className="space-y-4 min-w-0 w-full overflow-hidden">
+              <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="flex flex-1 flex-col sm:flex-row gap-2 w-full">
+                  <Input
+                    placeholder="Search shows or completeness..."
+                    value={search.shows_search ?? ''}
+                    onChange={(e) => onSearchChange({ shows_search: e.target.value || undefined })}
+                    className="max-w-md w-full"
+                  />
+                  <Select
+                    value={search.shows_completeness ?? 'ALL'}
+                    onValueChange={(val) =>
+                      onSearchChange({ shows_completeness: val === 'ALL' ? undefined : val })}
+                  >
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="All States" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All States</SelectItem>
+                      <SelectItem value="ALL COMPLETE">ALL COMPLETE</SelectItem>
+                      <SelectItem value="INCOMPLETE">INCOMPLETE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              <DataTable
+                data={filteredShows}
+                columns={showColumns}
+                emptyMessage="No shows scheduled in the selected date range."
+              />
             </div>
           )}
         </CardContent>

@@ -11,13 +11,21 @@ import { ShowRunSummary } from '@/features/show-run-review/components/show-run-s
 import {
   buildShowRunReviewDateRange,
   isCurrentShowRunReviewDay,
-  type ShowRunReviewSearch,
 } from '@/features/show-run-review/lib/show-run-review-date-range';
 import { useShowRunReviewSummaryQuery } from '@/features/shows/api/get-show-run-review-summary';
 
 const showRunReviewSearchSchema = z.object({
   date_from: z.string().optional().catch(undefined),
   date_to: z.string().optional().catch(undefined),
+  tab: z.enum(['creators', 'violations', 'tasks', 'shows']).catch('creators'),
+  creators_search: z.string().optional().catch(undefined),
+  creators_status: z.enum(['LATE', 'MISSING']).optional().catch(undefined),
+  violations_search: z.string().optional().catch(undefined),
+  violations_severity: z.string().optional().catch(undefined),
+  tasks_search: z.string().optional().catch(undefined),
+  tasks_status: z.string().optional().catch(undefined),
+  shows_search: z.string().optional().catch(undefined),
+  shows_completeness: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/studios/$studioId/show-run-review')({
@@ -30,7 +38,7 @@ function ShowRunReviewPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const updateSearch = useCallback((nextSearch: ShowRunReviewSearch) => {
+  const updateSearch = useCallback((nextSearch: Partial<z.infer<typeof showRunReviewSearchSchema>>) => {
     void navigate({
       search: (previous) => ({
         ...previous,
@@ -69,7 +77,7 @@ function ShowRunReviewPage() {
         title="Show Run Review"
         description="Review submitted and signed-off show results for the selected range."
       >
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0 w-full overflow-hidden">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full">
             <ShowRunReviewScopeCard search={search} onSearchChange={updateSearch} />
             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -97,7 +105,12 @@ function ShowRunReviewPage() {
               )
             : data
               ? (
-                  <ShowRunSummary data={data} isFetching={isFetching} />
+                  <ShowRunSummary
+                    data={data}
+                    isFetching={isFetching}
+                    search={search}
+                    onSearchChange={updateSearch}
+                  />
                 )
               : (
                   <div className="rounded-lg border bg-background p-6 text-center text-muted-foreground text-sm">
