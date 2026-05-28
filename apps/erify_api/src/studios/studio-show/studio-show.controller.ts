@@ -9,9 +9,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { showRunReviewSummarySchema } from '@eridu/api-types/shows';
 import {
   showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
   studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
@@ -70,6 +72,46 @@ const STUDIO_SHOW_DELETE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
 ];
 
+const isoDateTimeSchema = z.string().refine(
+  (val) => {
+    const d = new Date(val);
+    return !Number.isNaN(d.getTime());
+  },
+  { message: 'Must be a valid ISO date-time string' },
+);
+
+// Bounds the operational-day query window so a single request cannot pull an
+// unbounded show graph into memory for in-process aggregation.
+const SHOW_RUN_REVIEW_MAX_RANGE_DAYS = 31;
+const SHOW_RUN_REVIEW_MAX_RANGE_MS = SHOW_RUN_REVIEW_MAX_RANGE_DAYS * 24 * 60 * 60 * 1000;
+
+const showRunReviewQuerySchema = z
+  .object({
+    date_from: isoDateTimeSchema,
+    date_to: isoDateTimeSchema,
+  })
+  .refine(
+    (data) => {
+      return new Date(data.date_to) >= new Date(data.date_from);
+    },
+    {
+      message: 'date_to must be after or equal to date_from',
+      path: ['date_to'],
+    },
+  )
+  .refine(
+    (data) => {
+      const rangeMs = new Date(data.date_to).getTime() - new Date(data.date_from).getTime();
+      return rangeMs <= SHOW_RUN_REVIEW_MAX_RANGE_MS;
+    },
+    {
+      message: `Date range must not exceed ${SHOW_RUN_REVIEW_MAX_RANGE_DAYS} days`,
+      path: ['date_to'],
+    },
+  );
+
+export class ShowRunReviewQueryDto extends createZodDto(showRunReviewQuerySchema) {}
+
 @StudioProtected() // All studio members can view
 @Controller('studios/:studioId/shows')
 export class StudioShowController extends BaseStudioController {
@@ -90,6 +132,16 @@ export class StudioShowController extends BaseStudioController {
   ) {
     const { data, total } = await this.taskOrchestrationService.getStudioShowsWithTaskSummary(studioId, query);
     return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
+  }
+
+  @Get('run-review')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ZodResponse(showRunReviewSummarySchema)
+  async runReview(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ShowRunReviewQueryDto,
+  ) {
+    return this.showOrchestrationService.getShowRunReviewSummary(studioId, query);
   }
 
   @Get(':id')

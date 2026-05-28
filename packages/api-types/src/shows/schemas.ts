@@ -234,3 +234,62 @@ export const updateStudioShowInputSchema = z
       path: ['end_time'],
     },
   );
+
+/**
+ * Show Run Review Summary Response Schema (PR 12.4.4)
+ */
+export const showRunReviewSummarySchema = z.object({
+  date_from: z.string(),
+  date_to: z.string(),
+  shows: z.object({
+    total_count: z.number().int(),
+    started_count: z.number().int(),
+    not_started_count: z.number().int(),
+    late_start_count: z.number().int(),
+    missing_duration_minutes: z.number().int(),
+    end_recorded_count: z.number().int(),
+  }),
+  creators: z.object({
+    total_count: z.number().int(),
+    late_count: z.number().int(),
+    missing_count: z.number().int(),
+    exceptions: z.array(
+      z.object({
+        show_creator_uid: z.string(),
+        creator_name: z.string(),
+        show_name: z.string(),
+        show_start_time: z.string(),
+        status: z.enum(['LATE', 'MISSING']),
+        late_minutes: z.number(),
+        reason: z.string().nullable(),
+      }),
+    ),
+  }),
+  platforms: z.object({
+    active_violations_count: z.number().int(),
+    violations: z.array(
+      z.object({
+        violation_uid: z.string(),
+        platform_name: z.string(),
+        show_name: z.string(),
+        show_start_time: z.string(),
+        violation_type: z.string(),
+        severity: z.string(),
+        reason: z.string(),
+        observed_at: z.string(),
+      }),
+    ),
+  }),
+  tasks: z.object({
+    incomplete_phase_checks_count: z.number().int(),
+    incomplete_tasks: z.array(
+      z.object({
+        task_uid: z.string(),
+        description: z.string(),
+        status: z.string(),
+        type: z.string(),
+        show_name: z.string(),
+      }),
+    ),
+  }),
+});

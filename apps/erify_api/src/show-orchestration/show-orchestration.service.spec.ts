@@ -21,6 +21,8 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { HttpError } from '@/lib/errors/http-error.util';
+import { StudioService } from '@/models/studio/studio.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import type {
   CreateShowWithAssignmentsDto,
@@ -55,6 +57,7 @@ describe('showOrchestrationService', () => {
   let studioCreatorRepository: jest.Mocked<StudioCreatorRepository>;
   let taskService: jest.Mocked<TaskService>;
   let taskTargetService: jest.Mocked<TaskTargetService>;
+  let studioService: jest.Mocked<StudioService>;
 
   const mockShow: Show = {
     id: BigInt(1),
@@ -110,6 +113,7 @@ describe('showOrchestrationService', () => {
             generateShowUid: jest.fn(),
             buildUpdatePayload: jest.fn(),
             ensureValidActualTimeRange: jest.fn(),
+            getShowsForReview: jest.fn(),
           },
         },
         {
@@ -197,6 +201,12 @@ describe('showOrchestrationService', () => {
             hardDeleteByShowId: jest.fn(),
           },
         },
+        {
+          provide: StudioService,
+          useValue: {
+            getStudioById: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -213,6 +223,7 @@ describe('showOrchestrationService', () => {
     studioCreatorRepository = module.get<StudioCreatorRepository>(StudioCreatorRepository) as jest.Mocked<StudioCreatorRepository>;
     taskService = module.get<TaskService>(TaskService) as jest.Mocked<TaskService>;
     taskTargetService = module.get<TaskTargetService>(TaskTargetService) as jest.Mocked<TaskTargetService>;
+    studioService = module.get<StudioService>(StudioService) as jest.Mocked<StudioService>;
   });
 
   beforeEach(() => {
@@ -1555,4 +1566,171 @@ describe('showOrchestrationService', () => {
       }));
     });
   });
+
+  describe('getShowRunReviewSummary', () => {
+    const studioUid = 'std_test123';
+    const mockStudio = { id: BigInt(1), uid: studioUid, deletedAt: null };
+
+    it('should throw NotFoundException if studio does not exist', async () => {
+      studioService.getStudioById.mockRejectedValue(HttpError.notFound('Studio', studioUid));
+
+      await expect(
+        service.getShowRunReviewSummary(studioUid, {
+          date_from: '2026-05-12T06:00:00.000Z',
+          date_to: '2026-05-13T05:59:59.999Z',
+        })
+      ).rejects.toThrow('Studio not found with id std_test123');
+    });
+
+    it('should compile and return correct summary metrics', async () => {
+      studioService.getStudioById.mockResolvedValue(mockStudio as any);
+
+      const mockShows = [
+        {
+          id: BigInt(10),
+          uid: 'show_10',
+          name: 'Show 1',
+          startTime: new Date('2026-05-12T10:00:00.000Z'),
+          endTime: new Date('2026-05-12T12:00:00.000Z'),
+          actualStartTime: new Date('2026-05-12T10:05:00.000Z'), // Complete
+          actualEndTime: new Date('2026-05-12T12:05:00.000Z'),
+          showCreators: [
+            {
+              uid: 'sc_1',
+              attendanceMissing: false,
+              actualStartTime: new Date('2026-05-12T10:15:00.000Z'), // Late by 15 mins
+              attendanceReason: 'Traffic',
+              creator: { uid: 'creator_alice', name: 'Alice', aliasName: 'Ali' },
+            },
+          ],
+          showPlatforms: [
+            {
+              platform: { name: 'YouTube' },
+              violations: [
+                {
+                  uid: 'v_1',
+                  violationType: 'AUDIO_LAG',
+                  severity: 'HIGH',
+                  reason: 'Laggy audio',
+                  observedAt: new Date('2026-05-12T10:30:00.000Z'),
+                },
+              ],
+            },
+          ],
+          taskTargets: [
+            {
+              task: {
+                uid: 'task_1',
+                description: 'Pre-production sound check',
+                status: 'IN_PROGRESS',
+                type: 'PRE_PRODUCTION',
+                deletedAt: null,
+              },
+            },
+          ],
+        },
+        {
+          id: BigInt(20),
+          uid: 'show_20',
+          name: 'Show 2',
+          startTime: new Date('2026-05-12T13:00:00.000Z'),
+          endTime: new Date('2026-05-12T15:00:00.000Z'),
+          actualStartTime: null, // Incomplete
+          actualEndTime: null,
+          showCreators: [
+            {
+              uid: 'sc_2',
+              attendanceMissing: true, // Missing
+              actualStartTime: null,
+              attendanceReason: 'SICK',
+              creator: { uid: 'creator_bob', name: 'Bob', aliasName: null },
+            },
+          ],
+          showPlatforms: [],
+          taskTargets: [],
+        },
+        {
+          id: BigInt(30),
+          uid: 'show_30',
+          name: 'Late-night Show',
+          startTime: new Date('2026-05-13T02:00:00.000Z'), // Operational day May 12!
+          endTime: new Date('2026-05-13T04:00:00.000Z'),
+          actualStartTime: new Date('2026-05-13T02:00:00.000Z'), // Complete
+          actualEndTime: new Date('2026-05-13T04:00:00.000Z'),
+          showCreators: [],
+          showPlatforms: [],
+          taskTargets: [],
+        },
+      ];
+
+      showService.getShowsForReview.mockResolvedValue(mockShows as any);
+
+      const result = await service.getShowRunReviewSummary(studioUid, {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+      });
+
+      expect(studioService.getStudioById).toHaveBeenCalledWith(studioUid);
+      expect(showService.getShowsForReview).toHaveBeenCalledWith(
+        mockStudio.id,
+        new Date('2026-05-12T06:00:00.000Z'),
+        new Date('2026-05-13T05:59:59.999Z'),
+      );
+
+      expect(result.shows).toEqual({
+        total_count: 3,
+        started_count: 2,
+        not_started_count: 1,
+        late_start_count: 1,
+        missing_duration_minutes: 5,
+        end_recorded_count: 2,
+      });
+
+      expect(result.creators.total_count).toBe(2);
+      expect(result.creators.late_count).toBe(1);
+      expect(result.creators.missing_count).toBe(1);
+      expect(result.creators.exceptions).toHaveLength(2);
+      expect(result.creators.exceptions).toContainEqual(
+        expect.objectContaining({
+          show_creator_uid: 'sc_1',
+          creator_name: 'Ali',
+          status: 'LATE',
+          late_minutes: 15,
+          reason: 'Traffic',
+        })
+      );
+      expect(result.creators.exceptions).toContainEqual(
+        expect.objectContaining({
+          show_creator_uid: 'sc_2',
+          creator_name: 'Bob',
+          status: 'MISSING',
+          late_minutes: 0,
+          reason: 'SICK',
+        })
+      );
+
+      expect(result.platforms.active_violations_count).toBe(1);
+      expect(result.platforms.violations[0]).toEqual(
+        expect.objectContaining({
+          violation_uid: 'v_1',
+          platform_name: 'YouTube',
+          violation_type: 'AUDIO_LAG',
+          severity: 'HIGH',
+          reason: 'Laggy audio',
+        })
+      );
+
+      expect(result.tasks.incomplete_phase_checks_count).toBe(1);
+      expect(result.tasks.incomplete_tasks[0]).toEqual(
+        expect.objectContaining({
+          task_uid: 'task_1',
+          description: 'Pre-production sound check',
+          status: 'IN_PROGRESS',
+          type: 'PRE_PRODUCTION',
+          show_name: 'Show 1',
+        })
+      );
+    });
+  });
 });
+

@@ -12,9 +12,9 @@ Studio Shift Schedule: shift planning, duty-manager coverage, and show-task read
 ## Business Rules
 
 ### Operational Day Boundary
-- **Backend** (`shift-alignment`): 06:00 UTC for consistent risk bucketing
-- **Frontend** (`dashboard`, `my-shifts`): local runtime time for date inputs, serialized to ISO
-- FE must use shared operational-day utilities, not duplicated route-local implementations
+- **Backend** (`shift-alignment`, `run-review`): timezone-agnostic and query-agnostic; queries strictly by client-supplied ISO-8601 time range boundaries to avoid date manipulation duplication on the server.
+- **Frontend** (`dashboard`, `my-shifts`, `show-run-review`): local runtime time for date inputs, serialized to absolute ISO-8601 bounds using shared operational-day range utilities.
+- FE must use shared operational-day utilities, not duplicated route-local implementations.
 
 ### Duty-Manager Coverage (`ShiftAlignmentService.getAlignment()`)
 1. **Per-show**: each upcoming show overlaps ≥1 duty-manager shift block

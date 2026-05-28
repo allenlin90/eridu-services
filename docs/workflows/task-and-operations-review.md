@@ -77,7 +77,7 @@ For each successfully approved task (`REVIEW` → `COMPLETED`):
 
 ### 6. Post-Confirmation Show Run Review (`/show-run-review`)
 Once tasks are bulk-approved and facts are populated in the database, the manager opens `/studios/:studioId/show-run-review` to inspect the consolidated operational day metrics:
-* Shows actual start/end timeline status.
+* Show start status (started vs. not started), late-start count, and missing duration (lost time from late starts); actual end-time recording is shown as secondary detail.
 * Creator attendance reports with submitted reasons.
 * Active platform violation lists.
 

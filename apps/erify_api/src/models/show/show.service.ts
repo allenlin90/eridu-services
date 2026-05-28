@@ -193,6 +193,14 @@ export class ShowService extends BaseModelService {
     return this.showRepository.softDelete({ uid });
   }
 
+  async getShowsForReview(
+    studioId: bigint,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    return this.showRepository.findShowsForReview(studioId, startDate, endDate);
+  }
+
   private async findShowOrThrow<T extends ShowInclude>(
     uid: string,
     include?: T,
