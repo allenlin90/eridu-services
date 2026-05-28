@@ -101,13 +101,17 @@ function ActionCell({
 
 export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   const issues: string[] = [];
+  if (['COMPLETED', 'CLOSED'].includes(task.status)) {
+    return issues;
+  }
   if (!task.assignee) {
     issues.push('Unassigned');
   }
-  const isNotSubmitted = !['REVIEW', 'COMPLETED', 'CLOSED'].includes(task.status);
+  const isNotSubmitted = !['REVIEW'].includes(task.status);
   const isOverdue = task.due_date && new Date(task.due_date) < new Date();
   if (isNotSubmitted && isOverdue) {
     issues.push('Overdue');
+    issues.push('Pending Submission');
   }
   return issues;
 }

@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@eridu/ui';
 
-import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
+import { useStudioMembers } from '@/features/studio-members/api/members';
 import type { ShowSelection } from '@/features/studio-shows/api/get-studio-shows';
 import { useAssignShows } from '@/features/studio-shows/hooks/use-assign-shows';
 
@@ -45,19 +45,18 @@ export function ShowAssignmentDialog({
   };
 
   // Fetch studio members by search term (server-side) while dialog is open.
-  const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembershipsQuery(
+  const { data: membersResponse, isLoading: isLoadingMembers } = useStudioMembers(
     studioId,
     {
       limit: 50,
-      name: memberSearch || undefined,
+      search: memberSearch || undefined,
     },
     {
       enabled: open,
     },
   );
 
-  const rawMembers = membersResponse?.data;
-  const members = useMemo(() => rawMembers ?? [], [rawMembers]);
+  const members = useMemo(() => membersResponse?.data ?? [], [membersResponse?.data]);
 
   const { mutate: assignShows, isPending: isAssigning } = useAssignShows({
     studioId,
@@ -69,8 +68,8 @@ export function ShowAssignmentDialog({
 
   const memberOptions = useMemo(() => {
     return members.map((m) => ({
-      value: m.user.id,
-      label: `${m.user.name} (${m.user.email})`,
+      value: m.user_id,
+      label: `${m.user_name} (${m.user_email})`,
     }));
   }, [members]);
 

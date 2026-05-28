@@ -84,6 +84,14 @@ useEffect(() => {
 - **Local state**: Selected row id (not full objects), dialog/drawer open state, draft inline edits
 - Row selection surviving page changes: use `useSelectedRowSnapshots` feature hook
 
+## Async Combobox Filters
+
+For filters that query large backend collections (e.g., Clients, Memberships/Users, Shows) in dense tables:
+- **Combobox Configuration**: Use `type: 'combobox'` inside the `searchableColumns` config. Provide `options`, `isLoading`, `onSearch` listeners, and a `placeholder`.
+- **Trigger Label Persistence**: Always implement a secondary query (e.g., a `by-id` or `by-name` query with `limit: 1`) to fetch the full object details of the active filter value. This ensures the correct label remains visible on the trigger button even when the item falls outside the initial page of search results.
+- **Client-Side/Server-Side Harmony**: Ensure the option value maps correctly to the column filters state, and that client-side filtering (if applicable) or server-side filtering handles the resolved values cleanly.
+- **Reuse the shared hook**: Don't hand-roll the list + selected-label query pair. Use `useAsyncComboboxFilter` (`apps/erify_studios/src/features/tasks/hooks/use-async-combobox-filter.ts`), passing `fetchList`, `fetchSelected` (must return `null`, never `undefined`), and a stable `toOption`. See the task-review filter hooks (`use-task-review-client-filter.ts`, `-user-filter.ts`, `-show-filter.ts`) as reference implementations.
+
 ## Current-View Export
 
 When a table supports CSV/JSON export, export the current server-filtered view, not just the visible page:

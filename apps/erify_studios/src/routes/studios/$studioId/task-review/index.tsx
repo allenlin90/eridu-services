@@ -21,18 +21,20 @@ import {
 import { PageLayout } from '@/components/layouts/page-layout';
 import { BulkApproveResultsDialog } from '@/features/tasks/components/bulk-approve-results-dialog';
 import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-action-sheet';
+import { StudioTaskReviewFilterTabs } from '@/features/tasks/components/studio-task-review-filter-tabs';
 import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
 import { getTaskIssues, getTaskPhase, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
 import { useBulkApproveTasks } from '@/features/tasks/hooks/use-bulk-approve-tasks';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
+import { useTaskReviewClientFilter } from '@/features/tasks/hooks/use-task-review-client-filter';
+import { useTaskReviewShowFilter } from '@/features/tasks/hooks/use-task-review-show-filter';
 import { useTaskReviewSummary } from '@/features/tasks/hooks/use-task-review-summary';
+import { useTaskReviewUserFilter } from '@/features/tasks/hooks/use-task-review-user-filter';
 
 export const Route = createFileRoute('/studios/$studioId/task-review/')({
   component: StudioTaskReviewPage,
 });
-
-const taskReviewSearchableColumns = studioTaskSearchableColumns.filter((column) => column.id !== 'due_date');
 
 function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
@@ -43,6 +45,90 @@ function StudioTaskReviewPage() {
   const { onDateRangeChange, onResetDateRange } = reviewScopeProps;
   const { key: actionSheetKey, ...actionSheetRestProps } = actionSheetProps;
   const { key: dueDateDialogKey, ...dueDateDialogRestProps } = dueDateDialogProps;
+
+  // Extract selected names from column filters to persist labels in the combobox triggers
+  const selectedClientName = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'client_name');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+
+  const selectedAssigneeName = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'assignee_name');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+
+  const selectedShowName = useMemo(() => {
+    const filter = columnFilters.find((cf) => cf.id === 'show_name');
+    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
+  }, [columnFilters]);
+
+  // Query options asynchronously for client, user, and show filters
+  const {
+    options: clientOptions,
+    isLoading: isClientLoading,
+    setSearch: setClientSearch,
+  } = useTaskReviewClientFilter(studioId, selectedClientName);
+
+  const {
+    options: assigneeOptions,
+    isLoading: isAssigneeLoading,
+    setSearch: setAssigneeSearch,
+  } = useTaskReviewUserFilter(studioId, selectedAssigneeName);
+
+  const {
+    options: showOptions,
+    isLoading: isShowLoading,
+    setSearch: setShowSearch,
+  } = useTaskReviewShowFilter(studioId, selectedShowName);
+
+  // Dynamically declare searchable columns to inject async combobox filters
+  const searchableColumns = useMemo(() => {
+    return studioTaskSearchableColumns
+      .filter((column) => column.id !== 'due_date')
+      .map((column) => {
+        if (column.id === 'client_name') {
+          return {
+            ...column,
+            type: 'combobox' as const,
+            options: clientOptions,
+            onSearch: setClientSearch,
+            isLoading: isClientLoading,
+            placeholder: 'Filter by client',
+          };
+        }
+        if (column.id === 'assignee_name') {
+          return {
+            ...column,
+            type: 'combobox' as const,
+            options: assigneeOptions,
+            onSearch: setAssigneeSearch,
+            isLoading: isAssigneeLoading,
+            placeholder: 'Filter by user',
+          };
+        }
+        if (column.id === 'show_name') {
+          return {
+            ...column,
+            type: 'combobox' as const,
+            options: showOptions,
+            onSearch: setShowSearch,
+            isLoading: isShowLoading,
+            placeholder: 'Filter by show',
+          };
+        }
+        return column;
+      });
+  }, [
+    clientOptions,
+    isClientLoading,
+    setClientSearch,
+    assigneeOptions,
+    isAssigneeLoading,
+    setAssigneeSearch,
+    showOptions,
+    isShowLoading,
+    setShowSearch,
+  ]);
 
   // State for client-side filter
   const [activeFilter, setActiveFilter] = useState<TaskReviewActiveFilter>('all');
@@ -163,34 +249,67 @@ function StudioTaskReviewPage() {
   // All tabs (including 'all') source from summaryData so dated + undated review
   // tasks form a single consistent partition across the tabs.
   const filteredAllData = useMemo(() => {
-    const allReviewTasks = (summaryData?.data || []).filter(
-      (task) => task.status === 'REVIEW' && matchesColumnFilters(task, tableProps.columnFilters),
+    const allTasks = (summaryData?.data || []).filter(
+      (task) => matchesColumnFilters(task, tableProps.columnFilters),
     );
     if (activeFilter === 'all') {
-      return allReviewTasks;
+      return allTasks;
     }
     if (activeFilter === 'ready') {
-      return allReviewTasks.filter((task) => getTaskIssues(task).length === 0);
+      return allTasks.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0);
     }
     if (activeFilter === 'attention') {
-      return allReviewTasks.filter((task) => getTaskIssues(task).length > 0);
+      return allTasks.filter((task) => getTaskIssues(task).length > 0);
+    }
+    if (activeFilter === 'done') {
+      return allTasks.filter((task) => ['COMPLETED', 'CLOSED'].includes(task.status));
     }
     if (activeFilter === 'pre-prod-attention') {
-      return allReviewTasks.filter(
+      return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'pre-production' && getTaskIssues(task).length > 0,
       );
     }
+    if (activeFilter === 'pre-prod-ready') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'pre-production' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
+      );
+    }
+    if (activeFilter === 'pre-prod-done') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'pre-production' && ['COMPLETED', 'CLOSED'].includes(task.status),
+      );
+    }
     if (activeFilter === 'on-air-attention') {
-      return allReviewTasks.filter(
+      return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'on-air' && getTaskIssues(task).length > 0,
       );
     }
+    if (activeFilter === 'on-air-ready') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'on-air' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
+      );
+    }
+    if (activeFilter === 'on-air-done') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'on-air' && ['COMPLETED', 'CLOSED'].includes(task.status),
+      );
+    }
     if (activeFilter === 'post-prod-attention') {
-      return allReviewTasks.filter(
+      return allTasks.filter(
         (task) => getTaskPhase(task.type) === 'post-production' && getTaskIssues(task).length > 0,
       );
     }
-    return allReviewTasks;
+    if (activeFilter === 'post-prod-ready') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'post-production' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
+      );
+    }
+    if (activeFilter === 'post-prod-done') {
+      return allTasks.filter(
+        (task) => getTaskPhase(task.type) === 'post-production' && ['COMPLETED', 'CLOSED'].includes(task.status),
+      );
+    }
+    return allTasks;
   }, [summaryData?.data, activeFilter, tableProps.columnFilters, matchesColumnFilters]);
 
   // Client-paginate the filtered list
@@ -287,43 +406,11 @@ function StudioTaskReviewPage() {
         />
 
         {/* Toggle tabs for main table filter */}
-        <div className="flex border-b border-muted py-2 gap-2 overflow-x-auto scrollbar-none flex-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
-          <Button
-            type="button"
-            variant={activeFilter === 'all' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleActiveFilterChange('all')}
-            className="text-xs font-semibold rounded-md flex-shrink-0"
-          >
-            All Tasks (
-            {stats.total}
-            )
-          </Button>
-          <Button
-            type="button"
-            variant={activeFilter === 'ready' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleActiveFilterChange('ready')}
-            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span>Ready for Approval</span>
-          </Button>
-          <Button
-            type="button"
-            variant={
-              ['attention', 'pre-prod-attention', 'on-air-attention', 'post-prod-attention'].includes(activeFilter)
-                ? 'default'
-                : 'ghost'
-            }
-            size="sm"
-            onClick={() => handleActiveFilterChange('attention')}
-            className="text-xs font-semibold rounded-md flex items-center gap-1.5 flex-shrink-0"
-          >
-            <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
-            <span>Needs Attention</span>
-          </Button>
-        </div>
+        <StudioTaskReviewFilterTabs
+          stats={stats}
+          activeFilter={activeFilter}
+          onFilterChange={handleActiveFilterChange}
+        />
 
         {/* Data Table */}
         <DataTable
@@ -349,10 +436,10 @@ function StudioTaskReviewPage() {
           renderToolbar={(table) => (
             <DataTableToolbar
               table={table}
-              searchableColumns={taskReviewSearchableColumns}
+              searchableColumns={searchableColumns}
               searchColumn={tableProps.searchColumn}
               searchPlaceholder={tableProps.searchPlaceholder}
-              featuredFilterColumns={[...tableProps.featuredFilterColumns]}
+              featuredFilterColumns={['client_name', 'assignee_name', 'show_name', 'status', 'task_type']}
             >
               <Button
                 variant="outline"

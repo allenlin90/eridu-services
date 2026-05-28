@@ -45,7 +45,6 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
   const summaryParams = useMemo(() => ({
     due_date_from: effectiveRange.windowStart.toISOString(),
     due_date_to: effectiveRange.windowEnd.toISOString(),
-    status: 'REVIEW' as const,
     limit: 100,
   }), [effectiveRange]);
 
@@ -81,7 +80,6 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
       // 2. Fetch undated tasks in parallel batches to capture tasks with due_date = null
       const fetchUndated = async () => {
         const undatedParams = {
-          status: 'REVIEW' as const,
           has_due_date: false,
           show_start_from: effectiveRange.windowStart.toISOString(),
           show_start_to: effectiveRange.windowEnd.toISOString(),
@@ -136,32 +134,43 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
     const allReviewTasks = summaryData?.data || [];
     let ready = 0;
     let attention = 0;
+    let done = 0;
     const preProdAttention: string[] = [];
     const preProdReady: string[] = [];
+    const preProdDone: string[] = [];
     const onAirAttention: string[] = [];
     const onAirReady: string[] = [];
+    const onAirDone: string[] = [];
     const postProdAttention: string[] = [];
     const postProdReady: string[] = [];
+    const postProdDone: string[] = [];
 
     allReviewTasks.forEach((task) => {
       const issues = getTaskIssues(task);
       const hasIssues = issues.length > 0;
       const phase = getTaskPhase(task.type);
 
-      if (hasIssues) {
-        attention++;
+      if (['COMPLETED', 'CLOSED'].includes(task.status)) {
+        done++;
         if (phase === 'pre-production')
-          preProdAttention.push(task.id);
+          preProdDone.push(task.id);
         else if (phase === 'post-production')
-          postProdAttention.push(task.id);
-        else onAirAttention.push(task.id);
-      } else {
+          postProdDone.push(task.id);
+        else onAirDone.push(task.id);
+      } else if (task.status === 'REVIEW' && !hasIssues) {
         ready++;
         if (phase === 'pre-production')
           preProdReady.push(task.id);
         else if (phase === 'post-production')
           postProdReady.push(task.id);
         else onAirReady.push(task.id);
+      } else if (hasIssues) {
+        attention++;
+        if (phase === 'pre-production')
+          preProdAttention.push(task.id);
+        else if (phase === 'post-production')
+          postProdAttention.push(task.id);
+        else onAirAttention.push(task.id);
       }
     });
 
@@ -169,12 +178,16 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
       total: allReviewTasks.length,
       ready,
       attention,
+      done,
       preProdAttentionCount: preProdAttention.length,
       preProdReadyCount: preProdReady.length,
+      preProdDoneCount: preProdDone.length,
       onAirAttentionCount: onAirAttention.length,
       onAirReadyCount: onAirReady.length,
+      onAirDoneCount: onAirDone.length,
       postProdAttentionCount: postProdAttention.length,
       postProdReadyCount: postProdReady.length,
+      postProdDoneCount: postProdDone.length,
     };
   }, [summaryData]);
 

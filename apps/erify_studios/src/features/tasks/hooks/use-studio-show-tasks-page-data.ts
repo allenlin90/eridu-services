@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
-import { useStudioMembershipsQuery } from '@/features/memberships/api/get-studio-memberships';
+import { useStudioMembers } from '@/features/studio-members/api/members';
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { studioShowsKeys } from '@/features/studio-shows/api/get-studio-shows';
@@ -76,9 +76,9 @@ export function useStudioShowTasksPageData({
     isLoading: isLoadingMembers,
     isFetching: isFetchingMembers,
     refetch: refetchMembers,
-  } = useStudioMembershipsQuery(studioId, {
+  } = useStudioMembers(studioId, {
     limit: 50, // default first page for better combobox UX
-    name: memberSearch || undefined,
+    search: memberSearch || undefined,
   });
 
   const rawMembers = membersResponse?.data;

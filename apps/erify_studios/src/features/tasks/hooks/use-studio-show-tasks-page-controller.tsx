@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import type { Membership } from '@/features/memberships/api/get-memberships';
+import type { StudioMemberResponse } from '@eridu/api-types/memberships';
+
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
 import { getColumns } from '@/features/studio-shows/components/show-tasks-table/columns';
 import { useStudioShowTasksPageData } from '@/features/tasks/hooks/use-studio-show-tasks-page-data';
@@ -24,7 +25,7 @@ export function useStudioShowTasksPageController({
   showFromNavigation,
 }: UseStudioShowTasksPageControllerProps) {
   const [memberSearch, setMemberSearch] = useState('');
-  const membersRef = useRef<Membership[]>([]);
+  const membersRef = useRef<StudioMemberResponse[]>([]);
   const isSearchingMembersRef = useRef(false);
 
   const {

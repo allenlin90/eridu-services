@@ -1,0 +1,85 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
+
+import { getTaskIssues, getTaskPhase } from '@/features/tasks/config/studio-task-columns';
+
+const NOW = new Date('2026-05-28T12:00:00Z');
+const PAST = '2026-05-20T00:00:00Z';
+const FUTURE = '2026-06-10T00:00:00Z';
+
+function createTask(overrides: Partial<TaskWithRelationsDto> = {}): TaskWithRelationsDto {
+  return {
+    id: 'task-1',
+    status: 'PENDING',
+    assignee: { id: 'user-1' },
+    due_date: null,
+    type: 'SETUP',
+    ...overrides,
+  } as unknown as TaskWithRelationsDto;
+}
+
+describe('getTaskIssues', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('returns no issues for COMPLETED tasks even when unassigned and overdue', () => {
+    const task = createTask({ status: 'COMPLETED', assignee: null, due_date: PAST });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
+
+  it('returns no issues for CLOSED tasks even when unassigned and overdue', () => {
+    const task = createTask({ status: 'CLOSED', assignee: null, due_date: PAST });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
+
+  it('never flags an overdue REVIEW task as Overdue (operator submitted on time)', () => {
+    const task = createTask({ status: 'REVIEW', due_date: PAST });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
+
+  it('flags an unassigned REVIEW task as Unassigned only', () => {
+    const task = createTask({ status: 'REVIEW', assignee: null, due_date: PAST });
+    expect(getTaskIssues(task)).toEqual(['Unassigned']);
+  });
+
+  it('flags an unsubmitted overdue task as Overdue + Pending Submission', () => {
+    const task = createTask({ status: 'PENDING', due_date: PAST });
+    expect(getTaskIssues(task)).toEqual(['Overdue', 'Pending Submission']);
+  });
+
+  it('combines Unassigned with overdue submission issues', () => {
+    const task = createTask({ status: 'IN_PROGRESS', assignee: null, due_date: PAST });
+    expect(getTaskIssues(task)).toEqual(['Unassigned', 'Overdue', 'Pending Submission']);
+  });
+
+  it('does not flag an unsubmitted task that is not yet overdue', () => {
+    const task = createTask({ status: 'BLOCKED', due_date: FUTURE });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
+
+  it('does not flag an unsubmitted task with no due date', () => {
+    const task = createTask({ status: 'IN_PROGRESS', due_date: null });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
+});
+
+describe('getTaskPhase', () => {
+  it('maps SETUP to pre-production', () => {
+    expect(getTaskPhase('SETUP')).toBe('pre-production');
+  });
+
+  it('maps CLOSURE to post-production', () => {
+    expect(getTaskPhase('CLOSURE')).toBe('post-production');
+  });
+
+  it('maps everything else to on-air', () => {
+    expect(getTaskPhase('ROUTINE')).toBe('on-air');
+  });
+});

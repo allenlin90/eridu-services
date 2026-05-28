@@ -1,6 +1,6 @@
 import { createFileRoute, useLocation } from '@tanstack/react-router';
 
-import { getStudioMemberships } from '@/features/memberships/api/get-studio-memberships';
+import { getStudioMembers, studioMemberKeys } from '@/features/studio-members/api/members';
 import { getShowTasks, showTasksKeys } from '@/features/studio-shows/api/get-show-tasks';
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
 import { getStudioShow, studioShowKeys } from '@/features/studio-shows/api/get-studio-show';
@@ -21,11 +21,11 @@ export const Route = createFileRoute('/studios/$studioId/task-setup/$showId/task
       queryKey: studioShowKeys.detail(studioId, showId),
       queryFn: ({ signal }) => getStudioShow(studioId, showId, { signal }),
     });
-    // Key must stay structurally identical to the params object in useStudioMembershipsQuery
-    // when memberSearch is empty ('') — i.e. { limit: 50 } (name omitted ≡ name: undefined after TQ normalization).
+    // Key must stay structurally identical to the params object in useStudioMembers
+    // when memberSearch is empty ('') — i.e. { limit: 50 } (search omitted ≡ search: undefined).
     void queryClient.prefetchQuery({
-      queryKey: ['studio-memberships', 'list', studioId, { limit: 50 }],
-      queryFn: ({ signal }) => getStudioMemberships(studioId, { limit: 50 }, { signal }),
+      queryKey: studioMemberKeys.list(studioId, { limit: 50 }),
+      queryFn: ({ signal }) => getStudioMembers(studioId, { limit: 50 }, { signal }),
     });
   },
 });
