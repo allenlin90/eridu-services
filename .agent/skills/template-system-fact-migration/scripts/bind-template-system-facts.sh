@@ -1,32 +1,24 @@
 #!/usr/bin/env bash
-# scripts/bind-template-system-facts.sh
+# bind-template-system-facts.sh
 #
-# One-off data migration: add system_fact_key bindings to the 3 task templates
-# that have structurally compatible fields but no fact-key bindings. Without
-# these bindings the fact-extraction pipeline has nothing to extract on bulk
-# approval, leaving show-run-review / range sign-off with blank actuals.
-#
-# Affected templates (identified by UID — robust to id drift between envs):
-#   QC Review             (ttpl_7DyQX8KM5_jNHRpPuYsn)
-#   On air_check          (ttpl_OtVn1kdHi_V_8TZftv52)
-#   Post_production_check (ttpl_n6f7qAZQmPA4He6MOR-y)
-#
-# The SQL is in bind-template-system-facts.sql (same directory).
+# Runner for the generic task-template fact-binding migration. The bindings
+# themselves live in bind-template-system-facts.sql (same directory) as a list
+# of bind_template_fact(...) calls — edit that file to add or change bindings.
 #
 # Safety:
-#   - Idempotent: the SQL skips templates where the binding already exists.
+#   - Idempotent: the SQL skips fields that are already bound.
 #   - Dry-run: pass --dry-run to print SQL without executing.
 #   - Never writes to a non-local DB unless ALLOW_PROD=1 is set.
 #
 # Usage (local DB):
-#   bash scripts/bind-template-system-facts.sh
+#   bash .agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
 #
 # Usage (remote prod DB — run AFTER verifying locally):
 #   ALLOW_PROD=1 TARGET_DATABASE_URL="$PROD_DATABASE_URL" \
-#     bash scripts/bind-template-system-facts.sh
+#     bash .agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
 #
 # Dry run:
-#   bash scripts/bind-template-system-facts.sh --dry-run
+#   bash .agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh --dry-run
 
 set -euo pipefail
 
@@ -61,8 +53,10 @@ done
 # ---------- Env ----------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SQL_FILE="$SCRIPT_DIR/bind-template-system-facts.sql"
+# Resolve repo root regardless of where this script lives in the tree.
+REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null \
+  || (cd "$SCRIPT_DIR/../../../.." && pwd))"
 cd "$REPO_ROOT"
 
 if [[ -f ".env" ]];               then set -a; source ".env";               set +a; fi
@@ -97,7 +91,7 @@ fi
 
 info "Target DB host : $DB_HOST"
 info "SQL file       : $SQL_FILE"
-info "Applying system_fact_key bindings to 3 task templates…"
+info "Applying system_fact_key bindings…"
 echo ""
 
 "$PSQL" "$DB_URL" -v ON_ERROR_STOP=1 -f "$SQL_FILE"
@@ -107,7 +101,7 @@ ok "Migration complete."
 
 # ---------- Auto-verify ----------
 
-info "Verifying bound fields…"
+info "Bound fields across all templates:"
 "$PSQL" "$DB_URL" -v ON_ERROR_STOP=1 -c "
 SELECT
   tt.uid,
@@ -119,11 +113,7 @@ SELECT
   item->>'system_fact_key' AS system_fact_key
 FROM task_templates tt,
   LATERAL jsonb_array_elements(tt.\"current_schema\"->'items') item
-WHERE tt.uid IN (
-    'ttpl_7DyQX8KM5_jNHRpPuYsn',
-    'ttpl_OtVn1kdHi_V_8TZftv52',
-    'ttpl_n6f7qAZQmPA4He6MOR-y'
-  )
+WHERE tt.deleted_at IS NULL
   AND item->>'system_fact_key' IS NOT NULL
 ORDER BY tt.uid, item->>'id';
 "

@@ -25,9 +25,9 @@ can populate `Show`, `ShowCreator`, and `ShowPlatform` actuals on bulk approval.
 
 - **Fact key catalog**: [`packages/api-types/src/task-management/template-definition.schema.ts`](../../../packages/api-types/src/task-management/template-definition.schema.ts)
   — `SystemFactKeyEnum`, `SYSTEM_FACT_KEY_DEFINITIONS`, `FieldItemV2Schema`.
-- **Migration scripts**: [`scripts/bind-template-system-facts.sh`](../../../scripts/bind-template-system-facts.sh)
-  and [`scripts/bind-template-system-facts.sql`](../../../scripts/bind-template-system-facts.sql)
-  — reference implementation for the SQL block pattern.
+- **Migration scripts**: [`scripts/bind-template-system-facts.sh`](./scripts/bind-template-system-facts.sh)
+  and [`scripts/bind-template-system-facts.sql`](./scripts/bind-template-system-facts.sql)
+  — the reusable `bind_template_fact` helper plus a worked-example call list.
 
 ## Step 1 — Audit the Local DB
 
@@ -76,9 +76,9 @@ For each candidate field, check compatibility against `SYSTEM_FACT_KEY_DEFINITIO
 | `show_platform_actual_end_time` | `datetime` | `show_platform` (hydrated) |
 | `show_platform_violation` | `multiselect` | `show_platform` (hydrated) |
 
-**Type mismatches must be resolved in the same migration block** — never bind a field
-whose type doesn't match the catalog. The v2 schema Zod validator rejects mismatches at
-save time and the extractor will `value_absent` at runtime.
+**Type mismatches must be resolved in the same binding call** (via `p_patch`) — never bind
+a field whose type doesn't match the catalog. The v2 schema Zod validator rejects mismatches
+at save time and the extractor will `value_absent` at runtime.
 
 ### Common conversion decisions
 
@@ -96,65 +96,44 @@ time, using `parseHydratedContentKey`. These bindings are appropriate when a tas
 assigned per-creator or per-platform. Do not add them to templates that span all
 creators/platforms at once.
 
-## Step 3 — Write the Migration Block
+## Step 3 — Add a Binding Call
 
-Each block follows this shape (see reference implementation for full detail):
+The reusable `bind_template_fact(p_uid, p_field_id, p_key, p_patch)` helper in
+[`scripts/bind-template-system-facts.sql`](./scripts/bind-template-system-facts.sql)
+owns all the boilerplate — resolve-by-UID, idempotency skip, type guard, field patch,
+version bump, and snapshot insert. Adding a binding is one `SELECT` call.
+
+**Pure binding** (field already has the required type, e.g. a `datetime` field):
 
 ```sql
-DO $$
-DECLARE
-  v_id     BIGINT;
-  v_ver    INTEGER;
-  v_schema JSONB;
-  v_fld    TEXT := 'fld_<fieldId>';
-  v_key    TEXT := '<system_fact_key>';
-BEGIN
-  -- 1. Resolve by UID — never hard-code internal id
-  SELECT id INTO v_id FROM task_templates
-  WHERE uid = '<ttpl_...>' AND deleted_at IS NULL;
-  IF v_id IS NULL THEN RAISE NOTICE 'SKIP — template not found'; RETURN; END IF;
-
-  -- 2. Idempotency guard
-  IF EXISTS (
-    SELECT 1 FROM task_templates t,
-      LATERAL jsonb_array_elements(t."current_schema"->'items') item
-    WHERE t.id = v_id AND item->>'id' = v_fld AND item->>'system_fact_key' = v_key
-  ) THEN RAISE NOTICE 'SKIP — already bound'; RETURN; END IF;
-
-  -- 3. Rebuild items array, patching only the target field
-  SELECT jsonb_set(
-    "current_schema", '{items}',
-    (SELECT jsonb_agg(
-       CASE WHEN item->>'id' = v_fld
-            THEN item || jsonb_build_object('system_fact_key', v_key)
-            -- OR for type change:
-            -- THEN (item - 'type' - 'options' ...) || jsonb_build_object('type','checkbox', ...)
-            ELSE item END
-       ORDER BY ordinality)
-     FROM jsonb_array_elements("current_schema"->'items')
-          WITH ORDINALITY AS t(item, ordinality))
-  ) INTO v_schema FROM task_templates WHERE id = v_id;
-
-  -- 4. Bump version + persist
-  v_ver := (SELECT version + 1 FROM task_templates WHERE id = v_id);
-  UPDATE task_templates
-    SET "current_schema" = v_schema, version = v_ver, updated_at = NOW()
-    WHERE id = v_id;
-
-  -- 5. Create new snapshot (tasks generated after this pick up the binding)
-  INSERT INTO task_template_snapshots (template_id, version, schema, metadata, created_at)
-    VALUES (v_id, v_ver, v_schema, '{}'::jsonb, NOW());
-
-  RAISE NOTICE 'OK — <template>: % → % (version → %)', v_fld, v_key, v_ver;
-END $$;
+SELECT bind_template_fact(
+  'ttpl_7DyQX8KM5_jNHRpPuYsn', 'fld_rty9ddwwpoo', 'show_actual_start_time');
 ```
 
-**Always wrap all blocks in a single `BEGIN; … COMMIT;`** — all succeed or none commit.
+**Binding with a type change** — pass a `p_patch` JSONB merged into the field before
+the binding is added. Convention: a key with a value **sets** that property; a key with
+JSON `null` **removes** it (e.g. dropping `options` when converting to `checkbox`):
+
+```sql
+-- select → checkbox
+SELECT bind_template_fact(
+  'ttpl_OtVn1kdHi_V_8TZftv52', 'fld_x58ec4zecif', 'creator_attendance_missing',
+  '{"type":"checkbox","default_value":false,
+    "validation":{"require_reason":"on-true"},"options":null}'::jsonb);
+```
+
+The helper's embedded `key → required_type` map (kept in sync with the catalog) aborts
+the migration with a clear error if the resulting field type doesn't match the key — so
+a wrong-type binding fails at migration time, not silently at extraction time.
+
+**All calls run inside a single `BEGIN; … COMMIT;`** (the helper is created and dropped
+within that transaction) — all succeed or none commit.
 
 ## Step 4 — Wire into the Shell Runner
 
-Add blocks to `scripts/bind-template-system-facts.sql`.
-The shell script (`scripts/bind-template-system-facts.sh`) handles:
+Add `bind_template_fact(...)` calls to the worked-example list in
+[`scripts/bind-template-system-facts.sql`](./scripts/bind-template-system-facts.sql).
+The shell script ([`scripts/bind-template-system-facts.sh`](./scripts/bind-template-system-facts.sh)) handles:
 - env loading from `apps/erify_api/.env`
 - localhost safety guard (refuses remote targets unless `ALLOW_PROD=1`)
 - dry-run (`--dry-run` flag)
@@ -163,12 +142,13 @@ The shell script (`scripts/bind-template-system-facts.sh`) handles:
 Run locally first, then prod:
 
 ```bash
+SCRIPT=.agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
+
 # Local
-bash scripts/bind-template-system-facts.sh
+bash "$SCRIPT"
 
 # Prod (after local verification)
-ALLOW_PROD=1 TARGET_DATABASE_URL="$PROD_DATABASE_URL" \
-  bash scripts/bind-template-system-facts.sh
+ALLOW_PROD=1 TARGET_DATABASE_URL="$PROD_DATABASE_URL" bash "$SCRIPT"
 ```
 
 ## Step 5 — Verify
