@@ -15,7 +15,7 @@ export function useTaskReviewShowFilter(studioId: string, selectedShowName?: str
     },
     fetchSelected: async ({ value, signal }) => {
       const response = await getStudioShows(studioId, { search: value, limit: 1 }, { signal });
-      return response.data?.[0];
+      return response.data?.[0] ?? null;
     },
     toOption,
   });

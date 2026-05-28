@@ -15,8 +15,12 @@ type UseAsyncComboboxFilterParams<TItem> = {
   selectedValue?: string;
   /** Fetches the paged list of items for the current search term. */
   fetchList: (args: { search: string; limit: number; signal?: AbortSignal }) => Promise<TItem[]>;
-  /** Resolves the single item backing the active selection (for label persistence). */
-  fetchSelected: (args: { value: string; signal?: AbortSignal }) => Promise<TItem | undefined>;
+  /**
+   * Resolves the single item backing the active selection (for label persistence).
+   * Must return `null` (never `undefined`) when nothing matches — React Query
+   * rejects `undefined` query data.
+   */
+  fetchSelected: (args: { value: string; signal?: AbortSignal }) => Promise<TItem | null>;
   /** Maps an item to its combobox option. Must be a stable reference. */
   toOption: (item: TItem) => ComboboxOption;
 };

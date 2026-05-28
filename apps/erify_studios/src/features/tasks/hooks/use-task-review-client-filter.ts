@@ -15,7 +15,7 @@ export function useTaskReviewClientFilter(studioId: string, selectedClientName?:
     },
     fetchSelected: async ({ value, signal }) => {
       const response = await getClients({ name: value, limit: 1 }, studioId, { signal });
-      return response.data?.[0];
+      return response.data?.[0] ?? null;
     },
     toOption,
   });
