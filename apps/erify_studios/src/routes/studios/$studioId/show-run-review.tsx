@@ -11,6 +11,7 @@ import {
   type ShowRunReviewSearch,
   showRunReviewSearchSchema,
 } from '@/features/show-run-review/config/show-run-review-search-schema';
+import { getShowRunReviewErrorMessage } from '@/features/show-run-review/lib/get-show-run-review-error-message';
 import {
   buildShowRunReviewDateRange,
   isCurrentShowRunReviewDay,
@@ -46,7 +47,7 @@ function ShowRunReviewPage() {
     [search],
   );
 
-  const { data, isLoading, isFetching } = useShowRunReviewSummaryQuery(
+  const { data, isLoading, isFetching, isError, error } = useShowRunReviewSummaryQuery(
     studioId,
     {
       date_from: dateRange.windowStart.toISOString(),
@@ -101,11 +102,17 @@ function ShowRunReviewPage() {
                     onSearchChange={updateSearch}
                   />
                 )
-              : (
-                  <div className="rounded-lg border bg-background p-6 text-center text-muted-foreground text-sm">
-                    Failed to load show run review summary.
-                  </div>
-                )}
+              : isError
+                ? (
+                    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-destructive text-sm">
+                      {getShowRunReviewErrorMessage(error)}
+                    </div>
+                  )
+                : (
+                    <div className="rounded-lg border bg-background p-6 text-center text-muted-foreground text-sm">
+                      No show run review data for the selected range.
+                    </div>
+                  )}
         </div>
       </PageLayout>
     </StudioRouteGuard>
