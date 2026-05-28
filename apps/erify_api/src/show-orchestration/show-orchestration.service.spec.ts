@@ -35,12 +35,6 @@ import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 // Mock PrismaService module for ClsPluginTransactional (must be exported from a @Module to satisfy useExisting)
 const mockPrismaForCls = {
   $transaction: jest.fn(async (callback: any) => await callback({})),
-  studio: {
-    findFirst: jest.fn(),
-  },
-  show: {
-    findMany: jest.fn(),
-  },
 };
 
 @Module({
@@ -105,10 +99,6 @@ describe('showOrchestrationService', () => {
       ],
       providers: [
         ShowOrchestrationService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaForCls,
-        },
         {
           provide: ShowService,
           useValue: {

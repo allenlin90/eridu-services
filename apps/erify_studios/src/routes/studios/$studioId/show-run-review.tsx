@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
-import { z } from 'zod';
 
 import { Button } from '@eridu/ui';
 
@@ -9,24 +8,14 @@ import { PageLayout } from '@/components/layouts/page-layout';
 import { ShowRunReviewScopeCard } from '@/features/show-run-review/components/show-run-review-scope-card';
 import { ShowRunSummary } from '@/features/show-run-review/components/show-run-summary';
 import {
+  type ShowRunReviewSearch,
+  showRunReviewSearchSchema,
+} from '@/features/show-run-review/config/show-run-review-search-schema';
+import {
   buildShowRunReviewDateRange,
   isCurrentShowRunReviewDay,
 } from '@/features/show-run-review/lib/show-run-review-date-range';
 import { useShowRunReviewSummaryQuery } from '@/features/shows/api/get-show-run-review-summary';
-
-const showRunReviewSearchSchema = z.object({
-  date_from: z.string().optional().catch(undefined),
-  date_to: z.string().optional().catch(undefined),
-  tab: z.enum(['creators', 'violations', 'tasks', 'shows']).catch('creators'),
-  creators_search: z.string().optional().catch(undefined),
-  creators_status: z.enum(['LATE', 'MISSING']).optional().catch(undefined),
-  violations_search: z.string().optional().catch(undefined),
-  violations_severity: z.string().optional().catch(undefined),
-  tasks_search: z.string().optional().catch(undefined),
-  tasks_status: z.string().optional().catch(undefined),
-  shows_search: z.string().optional().catch(undefined),
-  shows_completeness: z.string().optional().catch(undefined),
-});
 
 export const Route = createFileRoute('/studios/$studioId/show-run-review')({
   component: ShowRunReviewPage,
@@ -38,7 +27,7 @@ function ShowRunReviewPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const updateSearch = useCallback((nextSearch: Partial<z.infer<typeof showRunReviewSearchSchema>>) => {
+  const updateSearch = useCallback((nextSearch: Partial<ShowRunReviewSearch>) => {
     void navigate({
       search: (previous) => ({
         ...previous,

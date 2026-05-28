@@ -3,16 +3,16 @@ import type { DateRange } from 'react-day-picker';
 
 import { DatePickerWithRange } from '@eridu/ui';
 
+import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
 import {
   buildShowRunReviewDateRange,
-  type ShowRunReviewSearch,
   toDateInputValue,
 } from '@/features/show-run-review/lib/show-run-review-date-range';
 import { fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
 
 type ShowRunReviewScopeCardProps = {
   search: ShowRunReviewSearch;
-  onSearchChange: (nextSearch: ShowRunReviewSearch) => void;
+  onSearchChange: (nextSearch: Partial<ShowRunReviewSearch>) => void;
 };
 
 function toPickerDateRange(

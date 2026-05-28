@@ -4,6 +4,7 @@ import type { Show } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
+import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import {
@@ -30,7 +31,6 @@ import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
-import { PrismaService } from '@/prisma/prisma.service';
 
 type CreatorAssignmentPayload = {
   creatorId: string;
@@ -101,7 +101,6 @@ type ResolvedCreatorSnapshot = {
 @Injectable()
 export class ShowOrchestrationService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly showService: ShowService,
     private readonly compensationLineItemService: CompensationLineItemService,
     private readonly showCreatorService: ShowCreatorService,
@@ -1132,7 +1131,7 @@ export class ShowOrchestrationService {
   async getShowRunReviewSummary(
     studioUid: string,
     query: { date_from: string; date_to: string },
-  ) {
+  ): Promise<ShowRunReviewSummary> {
     const studio = await this.studioService.getStudioById(studioUid);
     const studioId = studio.id;
 
@@ -1145,10 +1144,10 @@ export class ShowOrchestrationService {
     let totalCreatorsCount = 0;
     let lateCreatorsCount = 0;
     let missingCreatorsCount = 0;
-    const creatorExceptions: any[] = [];
-    const activeViolations: any[] = [];
+    const creatorExceptions: ShowRunReviewSummary['creators']['exceptions'] = [];
+    const activeViolations: ShowRunReviewSummary['platforms']['violations'] = [];
     const seenTaskUids = new Set<string>();
-    const incompleteTasksList: any[] = [];
+    const incompleteTasksList: ShowRunReviewSummary['tasks']['incomplete_tasks'] = [];
 
     for (const show of shows) {
       // 1. Shows actual completeness
@@ -1225,8 +1224,8 @@ export class ShowOrchestrationService {
     }
 
     return {
-      date_from: query.date_from || start.toISOString(),
-      date_to: query.date_to || end.toISOString(),
+      date_from: query.date_from,
+      date_to: query.date_to,
       shows: {
         total_count: shows.length,
         complete_count: completeCount,

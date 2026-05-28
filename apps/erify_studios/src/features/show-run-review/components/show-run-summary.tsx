@@ -27,11 +27,13 @@ import {
   SelectValue,
 } from '@eridu/ui';
 
+import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
+
 type ShowRunSummaryProps = {
   data: ShowRunReviewSummary;
   isFetching?: boolean;
-  search: any;
-  onSearchChange: (nextSearch: any) => void;
+  search: ShowRunReviewSearch;
+  onSearchChange: (nextSearch: Partial<ShowRunReviewSearch>) => void;
 };
 
 type CreatorException = ShowRunReviewSummary['creators']['exceptions'][number];
