@@ -55,8 +55,9 @@ const creatorColumns: ColumnDef<CreatorException>[] = [
   {
     accessorKey: 'show_name',
     header: 'Show Name',
+    meta: { className: 'whitespace-normal break-words min-w-[150px]' },
     cell: ({ row }) => (
-      <div className="space-y-0.5">
+      <div className="space-y-0.5 whitespace-normal break-words">
         <div className="font-medium text-xs">{row.original.show_name}</div>
         <div className="text-[10px] text-muted-foreground">
           Start:
@@ -110,11 +111,12 @@ const creatorColumns: ColumnDef<CreatorException>[] = [
   {
     accessorKey: 'reason',
     header: 'Operator\'s Note / Reason',
+    meta: { className: 'whitespace-normal break-words min-w-[180px] max-w-[280px]' },
     cell: ({ row }) => {
       const reason = row.original.reason;
       return reason
         ? (
-            <span className="not-italic text-xs text-foreground bg-muted/40 rounded px-2 py-1 border block max-w-xs truncate" title={reason}>
+            <span className="not-italic text-xs text-foreground bg-muted/40 rounded px-2 py-1 border block whitespace-normal break-words">
               {reason}
             </span>
           )
@@ -135,8 +137,9 @@ const violationColumns: ColumnDef<PlatformViolation>[] = [
   {
     accessorKey: 'show_name',
     header: 'Show Name',
+    meta: { className: 'whitespace-normal break-words min-w-[150px]' },
     cell: ({ row }) => (
-      <div className="space-y-0.5">
+      <div className="space-y-0.5 whitespace-normal break-words">
         <div className="font-medium text-xs">{row.original.show_name}</div>
         <div className="text-[10px] text-muted-foreground">
           Start:
@@ -201,7 +204,8 @@ const violationColumns: ColumnDef<PlatformViolation>[] = [
   {
     accessorKey: 'reason',
     header: 'Reason / Details',
-    cell: ({ row }) => <span className="text-xs max-w-sm block truncate" title={row.original.reason}>{row.original.reason}</span>,
+    meta: { className: 'whitespace-normal break-words min-w-[180px] max-w-[280px]' },
+    cell: ({ row }) => <span className="text-xs block whitespace-normal break-words">{row.original.reason}</span>,
   },
   {
     accessorKey: 'observed_at',
@@ -219,7 +223,8 @@ const taskColumns: ColumnDef<IncompleteTask>[] = [
   {
     accessorKey: 'description',
     header: 'Task Description',
-    cell: ({ row }) => <span className="font-medium text-sm">{row.original.description}</span>,
+    meta: { className: 'whitespace-normal break-words min-w-[200px]' },
+    cell: ({ row }) => <span className="font-medium text-sm whitespace-normal break-words">{row.original.description}</span>,
   },
   {
     accessorKey: 'type',
@@ -242,7 +247,8 @@ const taskColumns: ColumnDef<IncompleteTask>[] = [
   {
     accessorKey: 'show_name',
     header: 'Associated Show',
-    cell: ({ row }) => <span className="text-xs font-semibold text-indigo-700">{row.original.show_name}</span>,
+    meta: { className: 'whitespace-normal break-words min-w-[150px]' },
+    cell: ({ row }) => <span className="text-xs font-semibold text-indigo-700 whitespace-normal break-words">{row.original.show_name}</span>,
   },
 ];
 
@@ -251,12 +257,14 @@ const showColumns: ColumnDef<ShowsSummaryRow>[] = [
   {
     accessorKey: 'shows_range',
     header: 'Shows Range Summary',
-    cell: ({ row }) => <span className="font-semibold text-sm">{row.original.shows_range}</span>,
+    meta: { className: 'whitespace-normal break-words min-w-[150px]' },
+    cell: ({ row }) => <span className="font-semibold text-sm whitespace-normal break-words">{row.original.shows_range}</span>,
   },
   {
     accessorKey: 'actuals_completeness',
     header: 'Actuals Completeness',
-    cell: ({ row }) => <span className="text-xs">{row.original.actuals_completeness}</span>,
+    meta: { className: 'whitespace-normal break-words min-w-[150px]' },
+    cell: ({ row }) => <span className="text-xs whitespace-normal break-words">{row.original.actuals_completeness}</span>,
   },
   {
     accessorKey: 'status',
@@ -526,90 +534,89 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
 
       {/* Tab Panel Navigation */}
       <Card className="border border-border/80 shadow-sm min-w-0 w-full overflow-hidden">
-        <CardHeader className="pb-0 border-b">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
-            <div className="space-y-1">
-              <CardTitle className="text-lg font-semibold">Run Exception Logs</CardTitle>
-              <CardDescription>
-                Detailed overview of operational alerts and discrepancies.
-              </CardDescription>
-            </div>
-
-            {/* Custom styled modern tabs */}
-            <div className="flex w-full sm:w-auto overflow-x-auto scrollbar-none flex-nowrap items-center gap-1 rounded-lg bg-muted p-1 text-xs scroll-smooth">
-              <button
-                type="button"
-                onClick={() => setActiveTab('creators')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
-                  activeTab === 'creators'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <span>Creators</span>
-                <span className={`rounded-full px-1.5 py-0.2 text-[10px] ${
-                  activeTab === 'creators' ? 'bg-amber-100 text-amber-800' : 'bg-muted-foreground/20'
-                }`}
-                >
-                  {creatorStats.exceptions.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('violations')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
-                  activeTab === 'violations'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <span>Stream Alerts</span>
-                <span className={`rounded-full px-1.5 py-0.2 text-[10px] ${
-                  activeTab === 'violations' ? 'bg-rose-100 text-rose-800' : 'bg-muted-foreground/20'
-                }`}
-                >
-                  {platformStats.active_violations_count}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('tasks')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
-                  activeTab === 'tasks'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <span>Incomplete Tasks</span>
-                <span className={`rounded-full px-1.5 py-0.2 text-[10px] ${
-                  activeTab === 'tasks' ? 'bg-purple-100 text-purple-800' : 'bg-muted-foreground/20'
-                }`}
-                >
-                  {taskStats.incomplete_phase_checks_count}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('shows')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
-                  activeTab === 'shows'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <span>Shows Range</span>
-                <span className="rounded-full px-1.5 py-0.2 text-[10px] bg-muted-foreground/20">
-                  {showStats.total_count}
-                </span>
-              </button>
-            </div>
+        <CardHeader className="pb-4 border-b">
+          <div className="space-y-1">
+            <CardTitle className="text-lg font-semibold">Run Exception Logs</CardTitle>
+            <CardDescription className="whitespace-normal break-words">
+              Detailed overview of operational alerts and discrepancies.
+            </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6 min-w-0 w-full overflow-hidden">
+        <CardContent className="pt-6 min-w-0 w-full overflow-hidden space-y-6">
+          {/* Custom styled modern tabs inside CardContent */}
+          <div className="flex w-full sm:w-auto min-w-0 overflow-x-auto scrollbar-none flex-nowrap items-center gap-1 rounded-lg bg-muted p-1 text-xs scroll-smooth">
+            <button
+              type="button"
+              onClick={() => setActiveTab('creators')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
+                activeTab === 'creators'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>Creators</span>
+              <span className={`rounded-full px-1.5 py-0.2 text-[10px] ${
+                activeTab === 'creators' ? 'bg-amber-100 text-amber-800' : 'bg-muted-foreground/20'
+              }`}
+              >
+                {creatorStats.exceptions.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('violations')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
+                activeTab === 'violations'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>Stream Alerts</span>
+              <span className={`rounded-full px-1.5 py-0.2 text-[10px] ${
+                activeTab === 'violations' ? 'bg-rose-100 text-rose-800' : 'bg-muted-foreground/20'
+              }`}
+              >
+                {platformStats.active_violations_count}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('tasks')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
+                activeTab === 'tasks'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>Incomplete Tasks</span>
+              <span className={`rounded-full px-1.5 py-0.2 text-[10px] ${
+                activeTab === 'tasks' ? 'bg-purple-100 text-purple-800' : 'bg-muted-foreground/20'
+              }`}
+              >
+                {taskStats.incomplete_phase_checks_count}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('shows')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
+                activeTab === 'shows'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>Shows Range</span>
+              <span className="rounded-full px-1.5 py-0.2 text-[10px] bg-muted-foreground/20">
+                {showStats.total_count}
+              </span>
+            </button>
+            <div className="w-4 flex-shrink-0" />
+          </div>
+
           {/* Creators Tab */}
           {activeTab === 'creators' && (
             <div className="space-y-4 min-w-0 w-full overflow-hidden">
