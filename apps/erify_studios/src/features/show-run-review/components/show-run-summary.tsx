@@ -47,6 +47,21 @@ type ShowsSummaryRow = {
   status: string;
 };
 
+function formatDurationMinutes(totalMinutes: number): string {
+  if (totalMinutes <= 0) {
+    return '0m';
+  }
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) {
+    return `${minutes}m`;
+  }
+  if (minutes === 0) {
+    return `${hours}h`;
+  }
+  return `${hours}h ${minutes}m`;
+}
+
 // Creator exception logs columns definition
 const creatorColumns: ColumnDef<CreatorException>[] = [
   {
@@ -275,8 +290,8 @@ const showColumns: ColumnDef<ShowsSummaryRow>[] = [
       const status = row.original.status;
       return (
         <Badge
-          variant={status === 'ALL COMPLETE' ? 'outline' : 'destructive'}
-          className={status === 'ALL COMPLETE' ? 'border-green-200 bg-green-50 text-green-700 font-normal' : ''}
+          variant={status === 'ALL STARTED' ? 'outline' : 'destructive'}
+          className={status === 'ALL STARTED' ? 'border-green-200 bg-green-50 text-green-700 font-normal' : ''}
         >
           {status}
         </Badge>
@@ -307,8 +322,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
   const platformStats = data.platforms;
   const taskStats = data.tasks;
 
-  const completenessPercentage = showStats.total_count > 0
-    ? Math.round((showStats.complete_count / showStats.total_count) * 100)
+  const startedPercentage = showStats.total_count > 0
+    ? Math.round((showStats.started_count / showStats.total_count) * 100)
     : 0;
 
   // Local filtered datasets mapped to URL search query parameters
@@ -374,8 +389,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
       {
         id: 'shows-range-summary',
         shows_range: `Shows scheduled within range: ${showStats.total_count} scheduled`,
-        actuals_completeness: `${showStats.complete_count} complete, ${showStats.incomplete_count} incomplete`,
-        status: showStats.incomplete_count === 0 ? 'ALL COMPLETE' : 'INCOMPLETE',
+        actuals_completeness: `${showStats.started_count} started, ${showStats.not_started_count} not started · ${showStats.late_start_count} late (${formatDurationMinutes(showStats.missing_duration_minutes)} lost)`,
+        status: showStats.not_started_count === 0 ? 'ALL STARTED' : 'MISSING STARTS',
       },
     ];
   }, [showStats]);
@@ -419,34 +434,52 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
               <CalendarDays className="h-4 w-4 text-blue-500" />
             </div>
             <CardTitle className="text-2xl font-bold">
-              {showStats.complete_count}
+              {showStats.started_count}
               {' '}
               <span className="text-sm font-normal text-muted-foreground">
                 /
                 {showStats.total_count}
               </span>
+              {' '}
+              <span className="text-sm font-normal text-muted-foreground">started</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Completeness</span>
+                <span>Started</span>
                 <span className="font-semibold text-foreground">
-                  {completenessPercentage}
+                  {startedPercentage}
                   %
                 </span>
               </div>
               <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
-                  style={{ width: `${completenessPercentage}%` }}
+                  style={{ width: `${startedPercentage}%` }}
                 />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {showStats.incomplete_count}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Late starts</span>
+                <span className="font-semibold text-amber-700">{showStats.late_start_count}</span>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Missing duration</span>
+                <span className="font-semibold text-amber-700">{formatDurationMinutes(showStats.missing_duration_minutes)}</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground border-t pt-2">
+              {showStats.not_started_count}
               {' '}
-              shows missing actual start/end times
+              not started ·
+              {' '}
+              {showStats.end_recorded_count}
+              /
+              {showStats.total_count}
+              {' '}
+              end times recorded
             </p>
           </CardContent>
         </Card>
@@ -752,8 +785,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ALL">All States</SelectItem>
-                      <SelectItem value="ALL COMPLETE">ALL COMPLETE</SelectItem>
-                      <SelectItem value="INCOMPLETE">INCOMPLETE</SelectItem>
+                      <SelectItem value="ALL STARTED">ALL STARTED</SelectItem>
+                      <SelectItem value="MISSING STARTS">MISSING STARTS</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

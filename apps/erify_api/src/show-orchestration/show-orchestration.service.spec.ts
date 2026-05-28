@@ -1679,8 +1679,11 @@ describe('showOrchestrationService', () => {
 
       expect(result.shows).toEqual({
         total_count: 3,
-        complete_count: 2,
-        incomplete_count: 1,
+        started_count: 2,
+        not_started_count: 1,
+        late_start_count: 1,
+        missing_duration_minutes: 5,
+        end_recorded_count: 2,
       });
 
       expect(result.creators.total_count).toBe(2);

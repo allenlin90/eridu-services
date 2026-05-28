@@ -1140,7 +1140,10 @@ export class ShowOrchestrationService {
 
     const shows = await this.showService.getShowsForReview(studioId, start, end);
 
-    let completeCount = 0;
+    let startedCount = 0;
+    let lateStartCount = 0;
+    let missingDurationMinutes = 0;
+    let endRecordedCount = 0;
     let totalCreatorsCount = 0;
     let lateCreatorsCount = 0;
     let missingCreatorsCount = 0;
@@ -1150,9 +1153,21 @@ export class ShowOrchestrationService {
     const incompleteTasksList: ShowRunReviewSummary['tasks']['incomplete_tasks'] = [];
 
     for (const show of shows) {
-      // 1. Shows actual completeness
-      if (show.actualStartTime !== null && show.actualEndTime !== null) {
-        completeCount++;
+      // 1. Show actuals: start time is the primary signal that a show ran and
+      // whether it was late. End time is recorded as secondary detail; a late
+      // start that ends on the planned end implies lost (missing) duration.
+      if (show.actualStartTime !== null) {
+        startedCount++;
+        const actualStart = new Date(show.actualStartTime);
+        const plannedStart = new Date(show.startTime);
+        if (actualStart > plannedStart) {
+          lateStartCount++;
+          const diffMs = actualStart.getTime() - plannedStart.getTime();
+          missingDurationMinutes += Math.max(0, Math.floor(diffMs / 60000));
+        }
+      }
+      if (show.actualEndTime !== null) {
+        endRecordedCount++;
       }
 
       // 2. Creator lateness / presence exceptions
@@ -1228,8 +1243,11 @@ export class ShowOrchestrationService {
       date_to: query.date_to,
       shows: {
         total_count: shows.length,
-        complete_count: completeCount,
-        incomplete_count: shows.length - completeCount,
+        started_count: startedCount,
+        not_started_count: shows.length - startedCount,
+        late_start_count: lateStartCount,
+        missing_duration_minutes: missingDurationMinutes,
+        end_recorded_count: endRecordedCount,
       },
       creators: {
         total_count: totalCreatorsCount,

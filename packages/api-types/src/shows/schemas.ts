@@ -243,8 +243,11 @@ export const showRunReviewSummarySchema = z.object({
   date_to: z.string(),
   shows: z.object({
     total_count: z.number().int(),
-    complete_count: z.number().int(),
-    incomplete_count: z.number().int(),
+    started_count: z.number().int(),
+    not_started_count: z.number().int(),
+    late_start_count: z.number().int(),
+    missing_duration_minutes: z.number().int(),
+    end_recorded_count: z.number().int(),
   }),
   creators: z.object({
     total_count: z.number().int(),
