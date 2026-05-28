@@ -181,11 +181,11 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
             </div>
 
             {/* Custom styled modern tabs */}
-            <div className="flex items-center gap-1 rounded-lg bg-muted p-1 text-xs">
+            <div className="flex w-full overflow-x-auto scrollbar-none flex-nowrap items-center gap-1 rounded-lg bg-muted p-1 text-xs scroll-smooth">
               <button
                 type="button"
                 onClick={() => setActiveTab('creators')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
                   activeTab === 'creators'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -203,7 +203,7 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
               <button
                 type="button"
                 onClick={() => setActiveTab('violations')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
                   activeTab === 'violations'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -221,7 +221,7 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
               <button
                 type="button"
                 onClick={() => setActiveTab('tasks')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
                   activeTab === 'tasks'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -239,7 +239,7 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
               <button
                 type="button"
                 onClick={() => setActiveTab('shows')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all flex-shrink-0 ${
                   activeTab === 'shows'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'

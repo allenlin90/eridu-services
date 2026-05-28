@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
+import { Button } from '@eridu/ui';
+
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { ShowRunReviewScopeCard } from '@/features/show-run-review/components/show-run-review-scope-card';
@@ -38,6 +40,10 @@ function ShowRunReviewPage() {
     });
   }, [navigate]);
 
+  const handleResetDateRange = useCallback(() => {
+    updateSearch({ date_from: undefined, date_to: undefined });
+  }, [updateSearch]);
+
   const dateRange = useMemo(
     () => buildShowRunReviewDateRange(search),
     [search],
@@ -64,8 +70,18 @@ function ShowRunReviewPage() {
         description="Review submitted and signed-off show results for the selected range."
       >
         <div className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full">
             <ShowRunReviewScopeCard search={search} onSearchChange={updateSearch} />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetDateRange}
+              >
+                Today
+              </Button>
+            </div>
           </div>
 
           {isLoading

@@ -49,7 +49,7 @@ export function ShowRunReviewScopeCard({
 
   return (
     <DatePickerWithRange
-      className="sm:w-72"
+      className="w-full sm:w-72"
       date={selectedDateRange}
       setDate={handleDateRangeChange}
     />
