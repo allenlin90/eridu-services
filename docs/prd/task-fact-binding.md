@@ -268,7 +268,7 @@ Implementation is structured into **three logical sections**. Each section serve
 #### 🟨 PR 12.4.4 · Operational Facts Summary and Filters
 * **Purpose**: Summarize confirmed operational facts after task approval/extraction.
 * **Functional Deliverable**:
-  * Show-level actual completeness.
+  * Show-level start completeness (started vs. not started), late-start count, and total missing duration from late starts; end-time recording is secondary detail rather than a completeness gate.
   * Creator late/missing counts with submitted reasons.
   * Active platform violation counts.
   * Incomplete phase checks and missing operational facts.
