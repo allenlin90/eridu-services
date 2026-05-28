@@ -172,7 +172,7 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
       {/* Tab Panel Navigation */}
       <Card className="border border-border/80 shadow-sm">
         <CardHeader className="pb-0 border-b">
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
             <div className="space-y-1">
               <CardTitle className="text-lg font-semibold">Run Exception Logs</CardTitle>
               <CardDescription>
@@ -181,7 +181,7 @@ export function ShowRunSummary({ data, isFetching = false }: ShowRunSummaryProps
             </div>
 
             {/* Custom styled modern tabs */}
-            <div className="flex w-full overflow-x-auto scrollbar-none flex-nowrap items-center gap-1 rounded-lg bg-muted p-1 text-xs scroll-smooth">
+            <div className="flex w-full sm:w-auto overflow-x-auto scrollbar-none flex-nowrap items-center gap-1 rounded-lg bg-muted p-1 text-xs scroll-smooth">
               <button
                 type="button"
                 onClick={() => setActiveTab('creators')}
