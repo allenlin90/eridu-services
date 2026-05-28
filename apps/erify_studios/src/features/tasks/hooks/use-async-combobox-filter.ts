@@ -40,8 +40,12 @@ export function useAsyncComboboxFilter<TItem>({
 }: UseAsyncComboboxFilterParams<TItem>) {
   const [search, setSearch] = useState('');
 
+  // `options` (not `list`) deliberately namespaces this query: it caches the
+  // unwrapped item array, whereas other callers may cache the full paginated
+  // response under `[base, 'list', ...]`. Sharing that key would surface a
+  // response object where this hook expects an array.
   const listQuery = useQuery({
-    queryKey: [queryKeyBase, 'list', studioId, { search }],
+    queryKey: [queryKeyBase, 'options', studioId, { search }],
     queryFn: ({ signal }) =>
       fetchList({ search, limit: search ? SEARCH_LIMIT : DEFAULT_LIMIT, signal }),
     enabled: Boolean(studioId),
