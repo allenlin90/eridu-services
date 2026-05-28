@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Last updated**: 2026-05-27 · **Status**: 🚧 Active · **Remaining**: 15 PRs · **Next**: 12.4.5 Range sign-off audit
+> **Last updated**: 2026-05-28 · **Status**: 🚧 Active · **Remaining**: 15 PRs · **Next**: 12.4.5 Range sign-off audit
 
 **Quick links**
 
@@ -36,6 +36,8 @@ Build the L-side (cost) of P&L on existing studio entities and finish studio ope
 - ✅ **PR 12.3.2 — `ShowPlatformViolation` extractor** ([#106](https://github.com/allenlin90/eridu-services/pull/106)): platform-scoped violation facts use the shared `show_platform_violation` binding, route through the PR 12 extraction registry, and replace active violation rows only for the same hydrated task field while preserving manual rows and sibling platform rows.
 - ✅ **PR 12.4.1 — Operations Review foundation** ([#108](https://github.com/allenlin90/eridu-services/pull/108)): Show Run Review shell at `/show-run-review` (picker-only scope), Task Setup route at `/task-setup`, `/task-review` operational-day due-date filtering (06:00–05:59) with silent current-day refetch, and Operations sidebar grouping.
 - ✅ **PR 12.4.2 — Task review summary and exception queues** ([#109](https://github.com/allenlin90/eridu-services/pull/109)): summarize `REVIEW` tasks by operational day/range in `/task-review`, identify ready-for-approval rows, and tag blocking issues by pre-production, on-air, and post-production phase.
+- ✅ **PR 12.4.3 — Bulk submitted-task approval + extraction result summary** ([#110](https://github.com/allenlin90/eridu-services/pull/110)): manager/admin bulk approval transitions eligible `REVIEW` tasks to `COMPLETED` through `TaskOrchestrationService`, firing fact extraction per task on the fresh transition and reporting per-task write/skip/error outcomes. This is the approval path that actually **populates** `Show` / `ShowCreator` / `ShowPlatform` actuals from bound task fields — the review surface below only reads them.
+- ✅ **PR 12.4.4 — Operational facts summary and filters** ([#111](https://github.com/allenlin90/eridu-services/pull/111)): Show Run Review (`/show-run-review`) summarizes confirmed extracted facts for an operational day/range — show-actuals completeness, late/missing creators with reasons, active platform violations, and incomplete phase checks — across four URL-synced DataTable tabs (creators / violations / tasks / shows) with per-tab search and status filters. Operational-day window math moved fully to the frontend: the client computes 06:00→05:59 local bounds via shared `operational-day-range` utilities and serializes absolute ISO-8601 strings; the backend `GET /studios/:studioId/shows/run-review` endpoint stays timezone-agnostic, validates the explicit bounds, and caps the window at 31 days to bound the in-memory aggregation (FE surfaces the returned validation message). **Read-only**: it reports the state of already-extracted `Show` / `ShowCreator` / `ShowPlatform` / `ShowPlatformViolation` columns and never writes them; actuals are populated upstream by the extraction pipeline (12.0.5 / 12.1.1) on task approval (12.4.3). Show-actuals "complete" requires **both** `actualStartTime` and `actualEndTime` — `show_actual_start_time` and `show_actual_end_time` are separate fact-key bindings, so a template that binds only the start leaves every show counted as incomplete.
 
 ## Remaining PRs
 
