@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { del, get, set } from 'idb-keyval';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -24,6 +25,7 @@ import {
 import type { JsonFormHandle, JsonFormUploadState } from '@/components/json-form/json-form';
 import { JsonForm } from '@/components/json-form/json-form';
 import { getStudioTask, studioTaskKeys } from '@/features/tasks/api/get-studio-task';
+import { getExtractionStatus } from '@/features/tasks/lib/extraction-warnings';
 import { pruneContentAgainstSchema, resolveHydratedTaskSchema } from '@/features/tasks/lib/hydrate-task-schema';
 
 type StudioTaskActionSheetProps = {
@@ -187,6 +189,9 @@ function StudioTaskActionSheetBody({
     () => (isDirty ? (contentDraft ?? {}) : ((resolvedTask?.content as Record<string, unknown> | null) ?? {})),
     [contentDraft, isDirty, resolvedTask?.content],
   );
+  const extractionStatus = useMemo(() => {
+    return getExtractionStatus(schema, content);
+  }, [schema, content]);
   const loopProgressById = useMemo<Record<string, LoopProgress>>(() => {
     if (!schema) {
       return {};
@@ -357,6 +362,42 @@ function StudioTaskActionSheetBody({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {requiresContent && (
             <>
+              {action === TASK_ACTION.APPROVE_COMPLETED && resolvedTask?.has_binding_drift && (
+                <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Snapshot Drift</p>
+                    <p className="text-sm text-amber-700 mt-0.5">
+                      This task's frozen snapshot is older than the current template bindings. Consider regenerating the task if newly-added bindings are required.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {action === TASK_ACTION.APPROVE_COMPLETED && !extractionStatus.hasBindings && (
+                <div className="flex gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-800">No Fact Bindings</p>
+                    <p className="text-sm text-red-700 mt-0.5">
+                      This task snapshot has no system fact bindings configured. Approving this task will extract **zero operational facts**.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {action === TASK_ACTION.APPROVE_COMPLETED && extractionStatus.hasBindings && extractionStatus.willExtractZeroFacts && (
+                <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Zero Facts to Extract</p>
+                    <p className="text-sm text-amber-700 mt-0.5">
+                      All bound fields are currently empty. Approving this task will extract **zero operational facts**.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {isLoadingTask && (
                 <p className="text-sm text-muted-foreground">Loading task schema...</p>
               )}

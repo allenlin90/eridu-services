@@ -24,6 +24,8 @@ import {
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
+import { getExtractionStatus } from '../lib/extraction-warnings';
+
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
 const STUDIO_REVIEW_ACTIONS: Partial<Record<TaskStatus, TaskAction[]>> = {
@@ -113,6 +115,25 @@ export function getTaskIssues(task: TaskWithRelationsDto): string[] {
     issues.push('Overdue');
     issues.push('Pending Submission');
   }
+
+  if (task.status === 'REVIEW') {
+    if (task.has_binding_drift) {
+      issues.push('Binding Drift');
+    }
+
+    if (task.template) {
+      const { hasBindings, willExtractZeroFacts } = getExtractionStatus(
+        task.snapshot?.schema,
+        (task.content as Record<string, unknown> | null) ?? {},
+      );
+      if (!hasBindings) {
+        issues.push('No Fact Bindings');
+      } else if (willExtractZeroFacts) {
+        issues.push('Zero Facts');
+      }
+    }
+  }
+
   return issues;
 }
 
