@@ -288,4 +288,72 @@ describe('shiftAlignmentService', () => {
       }),
     }));
   });
+
+  it('should identify active loop-based tasks as moderation tasks', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-05T04:00:00.000Z'));
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([
+      {
+        id: BigInt(40),
+        uid: 'show_premium_with_mod',
+        name: 'Premium Show with Moderation',
+        startTime: new Date('2026-03-05T10:00:00.000Z'),
+        endTime: new Date('2026-03-05T11:00:00.000Z'),
+        showStandard: { name: 'premium' },
+      },
+    ] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([
+      {
+        uid: 'task_loop_active',
+        type: 'ACTIVE',
+        assigneeId: BigInt(100),
+        description: 'Workflow check',
+        template: {
+          name: 'BAU Workflow',
+          currentSchema: {
+            metadata: {
+              loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }]
+            }
+          }
+        },
+        targets: [
+          { showId: BigInt(40), targetType: 'SHOW', deletedAt: null },
+        ],
+      },
+      {
+        uid: 'task_setup_1',
+        type: 'SETUP',
+        assigneeId: BigInt(100),
+        description: 'Setup check',
+        template: { name: 'Setup template' },
+        targets: [
+          { showId: BigInt(40), targetType: 'SHOW', deletedAt: null },
+        ],
+      },
+      {
+        uid: 'task_closure_1',
+        type: 'CLOSURE',
+        assigneeId: BigInt(100),
+        description: 'Closure check',
+        template: { name: 'Closure template' },
+        targets: [
+          { showId: BigInt(40), targetType: 'SHOW', deletedAt: null },
+        ],
+      },
+    ] as never);
+
+    const result = await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-05'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
+      includeCancelled: false,
+      includePast: false,
+      matchShowScope: false,
+    });
+
+    expect(result.summary.premium_shows_missing_moderation_count).toBe(0);
+    expect(result.task_readiness_warnings.length).toBe(0);
+  });
 });
