@@ -12,9 +12,8 @@ import {
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
-import { auditApiResponseSchema } from '@eridu/api-types/audits';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { showRunReviewSummarySchema, signOffShowRunReviewInputSchema } from '@eridu/api-types/shows';
+import { showRunReviewSummarySchema } from '@eridu/api-types/shows';
 import {
   showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
   studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
@@ -124,8 +123,6 @@ const paginatedShowRunReviewQuerySchema = showRunReviewQuerySchema.extend({
 
 export class PaginatedShowRunReviewQueryDto extends createZodDto(paginatedShowRunReviewQuerySchema) {}
 
-export class SignOffShowRunReviewDto extends createZodDto(signOffShowRunReviewInputSchema) {}
-
 @StudioProtected() // All studio members can view
 @Controller('studios/:studioId/shows')
 export class StudioShowController extends BaseStudioController {
@@ -200,17 +197,6 @@ export class StudioShowController extends BaseStudioController {
   ) {
     const { items, total } = await this.showOrchestrationService.getShowRunReviewShows(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
-  }
-
-  @Post('run-review/sign-off')
-  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
-  @ZodResponse(auditApiResponseSchema, HttpStatus.CREATED)
-  async signOff(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
-    @Body() body: SignOffShowRunReviewDto,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
-    return this.showOrchestrationService.signOffShowRunReview(studioId, user.ext_id, body);
   }
 
   @Get(':id')

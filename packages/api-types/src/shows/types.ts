@@ -7,8 +7,6 @@ import type {
   showApiResponseSchema,
   showListResponseSchema,
   showRunReviewSummarySchema,
-  signOffDetailsSchema,
-  signOffShowRunReviewInputSchema,
   studioShowDetailSchema,
   studioShowPlatformSummarySchema,
   updateShowInputSchema,
@@ -32,8 +30,6 @@ export type ShowListResponse = z.infer<typeof showListResponseSchema>;
 export type StudioShowPlatformSummary = z.infer<typeof studioShowPlatformSummarySchema>;
 export type StudioShowDetail = z.infer<typeof studioShowDetailSchema>;
 export type ShowRunReviewSummary = z.infer<typeof showRunReviewSummarySchema>;
-export type SignOffDetails = z.infer<typeof signOffDetailsSchema>;
-export type SignOffShowRunReviewInput = z.infer<typeof signOffShowRunReviewInputSchema>;
 
 /**
  * List Shows Query Parameters Type

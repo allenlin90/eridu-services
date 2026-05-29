@@ -13,7 +13,6 @@ export const auditActionSchema = z.enum([
   'DELETE',
   'OVERRIDE',
   'SKIPPED_LOWER_PRIORITY',
-  'SIGN_OFF',
 ]);
 
 /**

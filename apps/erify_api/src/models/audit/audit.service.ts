@@ -34,7 +34,7 @@ export class AuditService extends BaseModelService {
   async create(
     payload: Omit<CreateAuditPayload, 'uid'> & { uid?: string },
   ): Promise<AuditWithTargets> {
-    if (payload.action !== 'SIGN_OFF' && (!payload.targets || payload.targets.length === 0)) {
+    if (!payload.targets || payload.targets.length === 0) {
       throw HttpError.badRequest('Audit requires at least one target');
     }
 
@@ -53,21 +53,5 @@ export class AuditService extends BaseModelService {
     opts?: { take?: number; skip?: number },
   ): Promise<AuditWithTargets[]> {
     return this.auditRepository.findForTargets(filters, opts);
-  }
-
-  async findSignOff(
-    studioUid: string,
-    dateFrom: string,
-    dateTo: string,
-  ) {
-    return this.auditRepository.findSignOff(studioUid, dateFrom, dateTo);
-  }
-
-  async lockSignOffRange(
-    studioUid: string,
-    dateFrom: string,
-    dateTo: string,
-  ): Promise<void> {
-    return this.auditRepository.lockSignOffRange(studioUid, dateFrom, dateTo);
   }
 }

@@ -27,7 +27,6 @@ describe('studioShowController', () => {
     bulkAssignCreatorsToShow: jest.fn(),
     removeCreatorsFromShow: jest.fn(),
     getShowRunReviewSummary: jest.fn(),
-    signOffShowRunReview: jest.fn(),
   };
 
   const studioShowManagementServiceMock = {
@@ -305,30 +304,6 @@ describe('studioShowController', () => {
 
       expect(showOrchestrationServiceMock.getShowRunReviewSummary).toHaveBeenCalledWith(studioId, query);
       expect(result).toEqual(expectedSummary);
-    });
-  });
-
-  describe('signOff', () => {
-    it('should invoke showOrchestrationService.signOffShowRunReview', async () => {
-      const studioId = 'std_123';
-      const body = {
-        date_from: '2026-05-12T06:00:00.000Z',
-        date_to: '2026-05-13T05:59:59.999Z',
-        reason: 'Looks good',
-      };
-      const mockUser = { ext_id: 'actor_123' } as any;
-      const expectedAudit = { uid: 'aud_123', action: 'SIGN_OFF' };
-
-      showOrchestrationServiceMock.signOffShowRunReview.mockResolvedValue(expectedAudit);
-
-      const result = await controller.signOff(studioId, body, mockUser);
-
-      expect(showOrchestrationServiceMock.signOffShowRunReview).toHaveBeenCalledWith(
-        studioId,
-        'actor_123',
-        body,
-      );
-      expect(result).toEqual(expectedAudit);
     });
   });
 });
