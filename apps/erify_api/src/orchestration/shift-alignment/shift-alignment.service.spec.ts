@@ -356,4 +356,107 @@ describe('shiftAlignmentService', () => {
     expect(result.summary.premium_shows_missing_moderation_count).toBe(0);
     expect(result.task_readiness_warnings.length).toBe(0);
   });
+
+  it('should flag a premium show whose ACTIVE task has no loops as missing moderation', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-05T04:00:00.000Z'));
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([
+      {
+        id: BigInt(41),
+        uid: 'show_premium_no_loops',
+        name: 'Premium Show without Loops',
+        startTime: new Date('2026-03-05T10:00:00.000Z'),
+        endTime: new Date('2026-03-05T11:00:00.000Z'),
+        showStandard: { name: 'premium' },
+      },
+    ] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([
+      {
+        uid: 'task_active_no_loops',
+        type: 'ACTIVE',
+        assigneeId: BigInt(100),
+        description: 'Workflow check',
+        template: { name: 'BAU Workflow', currentSchema: { metadata: {} } },
+        targets: [{ showId: BigInt(41), targetType: 'SHOW', deletedAt: null }],
+      },
+      {
+        uid: 'task_setup_2',
+        type: 'SETUP',
+        assigneeId: BigInt(100),
+        description: 'Setup check',
+        template: { name: 'Setup template' },
+        targets: [{ showId: BigInt(41), targetType: 'SHOW', deletedAt: null }],
+      },
+      {
+        uid: 'task_closure_2',
+        type: 'CLOSURE',
+        assigneeId: BigInt(100),
+        description: 'Closure check',
+        template: { name: 'Closure template' },
+        targets: [{ showId: BigInt(41), targetType: 'SHOW', deletedAt: null }],
+      },
+    ] as never);
+
+    const result = await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-05'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
+      includeCancelled: false,
+      includePast: false,
+      matchShowScope: false,
+    });
+
+    expect(result.summary.premium_shows_missing_moderation_count).toBe(1);
+    expect(result.task_readiness_warnings).toHaveLength(1);
+    expect(result.task_readiness_warnings[0]?.missing_moderation_task).toBe(true);
+  });
+
+  it('should not treat a non-ACTIVE task named "moderation" as a moderation task', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-05T04:00:00.000Z'));
+    studioService.findByUid.mockResolvedValue({ id: BigInt(1), uid: 'std_1' } as never);
+    studioShiftService.findShiftsInWindow.mockResolvedValue([] as never);
+    showService.findMany.mockResolvedValue([
+      {
+        id: BigInt(42),
+        uid: 'show_premium_named_mod',
+        name: 'Premium Show with name-only moderation',
+        startTime: new Date('2026-03-05T10:00:00.000Z'),
+        endTime: new Date('2026-03-05T11:00:00.000Z'),
+        showStandard: { name: 'premium' },
+      },
+    ] as never);
+    taskService.findTasksByShowIds.mockResolvedValue([
+      {
+        uid: 'task_setup_named_moderation',
+        type: 'SETUP',
+        assigneeId: BigInt(100),
+        description: 'Moderation setup',
+        template: { name: 'Moderation template' },
+        targets: [{ showId: BigInt(42), targetType: 'SHOW', deletedAt: null }],
+      },
+      {
+        uid: 'task_closure_3',
+        type: 'CLOSURE',
+        assigneeId: BigInt(100),
+        description: 'Closure check',
+        template: { name: 'Closure template' },
+        targets: [{ showId: BigInt(42), targetType: 'SHOW', deletedAt: null }],
+      },
+    ] as never);
+
+    const result = await service.getAlignment('std_1', {
+      dateFrom: new Date('2026-03-05'),
+      dateTo: new Date('2026-03-05'),
+      dateFromIsDateOnly: true,
+      dateToIsDateOnly: true,
+      includeCancelled: false,
+      includePast: false,
+      matchShowScope: false,
+    });
+
+    expect(result.summary.premium_shows_missing_moderation_count).toBe(1);
+    expect(result.task_readiness_warnings[0]?.missing_moderation_task).toBe(true);
+  });
 });

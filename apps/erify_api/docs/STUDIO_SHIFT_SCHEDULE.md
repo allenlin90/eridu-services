@@ -31,7 +31,7 @@
 
 ## Key rules
 
-- **Required task type baseline**: `SETUP` + `CLOSURE` are required for all standard shows. Premium shows (standard name `'premium'`) also require at least one active, loop-based task template (`missing_moderation_task`). `ACTIVE` (unless loop-based) is not a readiness gate by default. Under the proposed **Studio Configuration & Settings** architecture (see [studio-config-settings.md](file:///Users/allenlin/Desktop/projects/eridu-services/docs/ideation/studio-config-settings.md)), this baseline will be dynamically configurable per-studio, allowing customized assignment requirements to count a show's tasks as fully complete.
+- **Required task type baseline**: `SETUP` + `CLOSURE` are required for all standard shows. Premium shows (standard name `'premium'`) also require at least one active, loop-based task template (`missing_moderation_task`). `ACTIVE` (unless loop-based) is not a readiness gate by default. Under the proposed **Studio Configuration & Settings** architecture (see [studio-config-settings.md](../../../docs/ideation/studio-config-settings.md)), this baseline will be dynamically configurable per-studio, allowing customized assignment requirements to count a show's tasks as fully complete.
 - **Operational day bucketing**: 06:00 UTC boundary for duty-manager coverage grouping.
 - **Block UID stability**: positional match on update reuses existing UIDs; removed blocks are soft-deleted.
 - **Hourly rate on reassignment**: re-derived from membership only when `payload.userId` differs from the existing user; same-user PATCH preserves the stored rate.

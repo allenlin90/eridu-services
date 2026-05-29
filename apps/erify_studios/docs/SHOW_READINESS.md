@@ -37,4 +37,4 @@ Currently, the baseline required task type assignments are hardcoded:
 - **ACTIVE** tasks (unless loop-based) are not a readiness gate by default.
 
 ### Future Configurable Settings
-Under the proposed **Studio Configuration & Settings** architecture (see [studio-config-settings.md](file:///Users/allenlin/Desktop/projects/eridu-services/docs/ideation/studio-config-settings.md)), this baseline will be configurable per-studio. Studios will be able to define exactly what task type assignments and structural check policies (like loop tasks) are required for `bau` and `premium` shows to be counted as fully complete and ready.
+Under the proposed **Studio Configuration & Settings** architecture (see [studio-config-settings.md](../../../docs/ideation/studio-config-settings.md)), this baseline will be configurable per-studio. Studios will be able to define exactly what task type assignments and structural check policies (like loop tasks) are required for `bau` and `premium` shows to be counted as fully complete and ready.

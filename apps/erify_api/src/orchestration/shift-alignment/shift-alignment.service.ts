@@ -370,12 +370,8 @@ export class ShiftAlignmentService {
       return false;
     }
 
-    const schema = task.template?.currentSchema as any;
-    if (!schema) {
-      return false;
-    }
-
-    const loops = schema.metadata?.loops;
+    const schema = task.template?.currentSchema as { metadata?: { loops?: unknown[] } } | null;
+    const loops = schema?.metadata?.loops;
     return Array.isArray(loops) && loops.length > 0;
   }
 
