@@ -47,6 +47,64 @@ export const taskListInclude = {
   },
 } satisfies Prisma.TaskInclude;
 
+/**
+ * Member-facing task lists (e.g. GET /me/tasks) render the execution form
+ * inline from the snapshot schema, so they must carry it. The studio review
+ * list deliberately omits the (large) JSONB schema and lazy-loads it via the
+ * task detail endpoint instead — see {@link taskListInclude}.
+ */
+export const taskListIncludeWithSchema = {
+  ...taskListInclude,
+  snapshot: {
+    select: {
+      version: true,
+      schema: true,
+    },
+  },
+} satisfies Prisma.TaskInclude;
+
+/**
+ * Date scope for the review queue stats: a task counts when its due date falls
+ * in range, OR when it has no due date but is attached to a show that starts in
+ * range. Mirrors the dated + undated passes the review summary used to fetch
+ * separately, so undated review tasks are not dropped from the tab counts.
+ */
+export function buildReviewStatsDateScope(
+  dueDateFrom?: string,
+  dueDateTo?: string,
+): Prisma.TaskWhereInput | null {
+  if (!dueDateFrom && !dueDateTo) {
+    return null;
+  }
+
+  const dueDateFilter: Prisma.DateTimeFilter = {};
+  const showStartFilter: Prisma.DateTimeFilter = {};
+  if (dueDateFrom) {
+    dueDateFilter.gte = new Date(dueDateFrom);
+    showStartFilter.gte = new Date(dueDateFrom);
+  }
+  if (dueDateTo) {
+    dueDateFilter.lte = new Date(dueDateTo);
+    showStartFilter.lte = new Date(dueDateTo);
+  }
+
+  return {
+    OR: [
+      { dueDate: dueDateFilter },
+      {
+        dueDate: null,
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: { startTime: showStartFilter },
+          },
+        },
+      },
+    ],
+  };
+}
+
 export function buildTaskListWhere(
   query: ListMyTasksQueryTransformed,
 ): Prisma.TaskWhereInput;

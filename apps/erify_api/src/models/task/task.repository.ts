@@ -6,9 +6,11 @@ import { Prisma, Task, TaskStatus, TaskType } from '@prisma/client';
 import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
 
 import {
+  buildReviewStatsDateScope,
   buildTaskListOrderBy,
   buildTaskListWhere,
   taskListInclude,
+  taskListIncludeWithSchema,
 } from './task-list-query';
 import type {
   TaskWithRelations,
@@ -276,7 +278,7 @@ export class TaskRepository extends BaseRepository<
         orderBy,
         skip,
         take: limit,
-        include: taskListInclude,
+        include: taskListIncludeWithSchema,
       }),
       this.delegate.count({ where }),
     ]);
@@ -587,7 +589,19 @@ export class TaskRepository extends BaseRepository<
   }
 
   async findTaskReviewStats(query: ListMyTasksQueryTransformed) {
-    const baseWhere = buildTaskListWhere(query);
+    // Scope by "dated-in-range OR undated-with-show-in-range" instead of the
+    // plain due-date range so review tasks without a due date are still counted.
+    const { due_date_from, due_date_to, ...rest } = query;
+    const baseWhere = buildTaskListWhere(rest as ListMyTasksQueryTransformed);
+    const dateScope = buildReviewStatsDateScope(due_date_from, due_date_to);
+    if (dateScope) {
+      const baseAnd = baseWhere.AND
+        ? Array.isArray(baseWhere.AND)
+          ? baseWhere.AND
+          : [baseWhere.AND]
+        : [];
+      baseWhere.AND = [...baseAnd, dateScope];
+    }
     const now = new Date();
 
     const countTab = async (extraCriteria: Prisma.TaskWhereInput) => {

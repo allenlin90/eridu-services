@@ -24,6 +24,7 @@ describe('taskRepository', () => {
   const txTaskDelegate = {
     findFirst: jest.fn(),
     update: jest.fn(),
+    count: jest.fn(),
   };
 
   beforeEach(() => {
@@ -276,6 +277,45 @@ describe('taskRepository', () => {
       ).rejects.toThrow(VersionConflictError);
 
       expect(txTaskDelegate.findFirst).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('findTaskReviewStats', () => {
+    it('counts dated-in-range OR undated tasks whose show starts in range', async () => {
+      txTaskDelegate.count.mockResolvedValue(0);
+
+      await repository.findTaskReviewStats({
+        page: 1,
+        limit: 10,
+        sort: 'due_date:asc',
+        due_date_from: '2026-05-12T00:00:00.000Z',
+        due_date_to: '2026-05-13T00:00:00.000Z',
+      } as any);
+
+      // Every tab count must be scoped so undated review tasks are not dropped.
+      expect(txTaskDelegate.count).toHaveBeenCalled();
+      for (const call of txTaskDelegate.count.mock.calls) {
+        const where = call[0].where as Prisma.TaskWhereInput;
+        const andClauses = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+        const dateScope = andClauses.find((clause) => Array.isArray((clause as any)?.OR));
+        expect(dateScope).toBeDefined();
+        const orBranches = (dateScope as any).OR as any[];
+        // Branch 1: tasks whose due date falls in range.
+        expect(orBranches).toContainEqual(
+          expect.objectContaining({ dueDate: expect.objectContaining({ gte: expect.any(Date), lte: expect.any(Date) }) }),
+        );
+        // Branch 2: undated tasks attached to a show starting in range.
+        expect(orBranches).toContainEqual(
+          expect.objectContaining({
+            dueDate: null,
+            targets: expect.objectContaining({
+              some: expect.objectContaining({
+                show: expect.objectContaining({ startTime: expect.objectContaining({ gte: expect.any(Date), lte: expect.any(Date) }) }),
+              }),
+            }),
+          }),
+        );
+      }
     });
   });
 });

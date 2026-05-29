@@ -961,7 +961,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                 isFetching={creatorsQuery.isFetching}
                 emptyMessage="No creator lateness exceptions or missing attendance flags recorded for this day range."
                 manualPagination
-                pageCount={creatorsQuery.data?.pagination.total_pages ?? 0}
+                pageCount={creatorsQuery.data?.meta.totalPages ?? 0}
                 paginationState={{
                   pageIndex: (search.creators_page ?? 1) - 1,
                   pageSize: 10,
@@ -972,8 +972,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     pagination={{
                       pageIndex: (search.creators_page ?? 1) - 1,
                       pageSize: 10,
-                      total: creatorsQuery.data?.pagination.total ?? 0,
-                      pageCount: creatorsQuery.data?.pagination.total_pages ?? 0,
+                      total: creatorsQuery.data?.meta.total ?? 0,
+                      pageCount: creatorsQuery.data?.meta.totalPages ?? 0,
                     }}
                     onPaginationChange={creatorsPaginationChange}
                   />
@@ -1020,7 +1020,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                 isFetching={violationsQuery.isFetching}
                 emptyMessage="No active platform stream lag, offline, or configuration violations reported."
                 manualPagination
-                pageCount={violationsQuery.data?.pagination.total_pages ?? 0}
+                pageCount={violationsQuery.data?.meta.totalPages ?? 0}
                 paginationState={{
                   pageIndex: (search.violations_page ?? 1) - 1,
                   pageSize: 10,
@@ -1031,8 +1031,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     pagination={{
                       pageIndex: (search.violations_page ?? 1) - 1,
                       pageSize: 10,
-                      total: violationsQuery.data?.pagination.total ?? 0,
-                      pageCount: violationsQuery.data?.pagination.total_pages ?? 0,
+                      total: violationsQuery.data?.meta.total ?? 0,
+                      pageCount: violationsQuery.data?.meta.totalPages ?? 0,
                     }}
                     onPaginationChange={violationsPaginationChange}
                   />
@@ -1077,7 +1077,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                 isFetching={tasksQuery.isFetching}
                 emptyMessage="Every task, pre-production check, on-air, and post-production template task has been completed!"
                 manualPagination
-                pageCount={tasksQuery.data?.pagination.total_pages ?? 0}
+                pageCount={tasksQuery.data?.meta.totalPages ?? 0}
                 paginationState={{
                   pageIndex: (search.tasks_page ?? 1) - 1,
                   pageSize: 10,
@@ -1088,8 +1088,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     pagination={{
                       pageIndex: (search.tasks_page ?? 1) - 1,
                       pageSize: 10,
-                      total: tasksQuery.data?.pagination.total ?? 0,
-                      pageCount: tasksQuery.data?.pagination.total_pages ?? 0,
+                      total: tasksQuery.data?.meta.total ?? 0,
+                      pageCount: tasksQuery.data?.meta.totalPages ?? 0,
                     }}
                     onPaginationChange={tasksPaginationChange}
                   />
@@ -1133,7 +1133,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                 isFetching={showsQuery.isFetching}
                 emptyMessage="No shows scheduled in the selected date range."
                 manualPagination
-                pageCount={showsQuery.data?.pagination.total_pages ?? 0}
+                pageCount={showsQuery.data?.meta.totalPages ?? 0}
                 paginationState={{
                   pageIndex: (search.shows_page ?? 1) - 1,
                   pageSize: 10,
@@ -1144,8 +1144,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     pagination={{
                       pageIndex: (search.shows_page ?? 1) - 1,
                       pageSize: 10,
-                      total: showsQuery.data?.pagination.total ?? 0,
-                      pageCount: showsQuery.data?.pagination.total_pages ?? 0,
+                      total: showsQuery.data?.meta.total ?? 0,
+                      pageCount: showsQuery.data?.meta.totalPages ?? 0,
                     }}
                     onPaginationChange={showsPaginationChange}
                   />
