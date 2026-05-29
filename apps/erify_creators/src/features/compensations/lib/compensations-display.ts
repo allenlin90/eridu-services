@@ -1,4 +1,10 @@
+import Big from 'big.js';
+
 import type { StudioCreatorCompensationShow } from '@eridu/api-types/studio-creators';
+
+import { toDecimalDisplayString } from '@/lib/decimal-format';
+
+const EM_DASH = '—';
 
 export const UNRESOLVED_REASON_LABELS: Record<string, string> = {
   AGREEMENT_SNAPSHOT_MISSING: 'Agreement pending',
@@ -6,7 +12,7 @@ export const UNRESOLVED_REASON_LABELS: Record<string, string> = {
 };
 
 export function formatAmount(value: string | null) {
-  return value ? `$${value}` : '—';
+  return value ? `$${toDecimalDisplayString(value)}` : EM_DASH;
 }
 
 export function formatUnresolvedReason(value: string | null) {
@@ -18,43 +24,46 @@ export function formatUnresolvedReason(value: string | null) {
 
 export function formatAgreedRate(show: StudioCreatorCompensationShow) {
   if (show.compensation_type === 'COMMISSION' && !show.agreed_rate) {
-    return '—';
+    return EM_DASH;
   }
   return formatAmount(show.agreed_rate);
 }
 
 export function formatCommissionRate(show: StudioCreatorCompensationShow) {
-  return show.commission_rate ? `${show.commission_rate}%` : '—';
+  return show.commission_rate ? `${show.commission_rate}%` : EM_DASH;
 }
 
 export function formatAdjustmentTotal(adjustmentTotal: string) {
-  const value = Number.parseFloat(adjustmentTotal);
-  if (value === 0) {
+  const value = new Big(adjustmentTotal);
+  const magnitude = value.abs().toFixed(2);
+  if (value.eq(0)) {
     return '$0.00';
   }
-  if (value < 0) {
-    return `-$${Math.abs(value).toFixed(2)}`;
+  if (value.lt(0)) {
+    return `-$${magnitude}`;
   }
-  return `+$${adjustmentTotal}`;
+  return `+$${magnitude}`;
 }
 
 export function getAdjustmentTone(adjustmentTotal: string) {
-  const value = Number.parseFloat(adjustmentTotal);
-  if (value === 0) {
+  const value = new Big(adjustmentTotal);
+  if (value.eq(0)) {
     return 'muted' as const;
   }
-  if (value < 0) {
+  if (value.lt(0)) {
     return 'negative' as const;
   }
   return 'positive' as const;
 }
 
-export function getCompensationTypeBadgeClass(compensationType: string) {
+export function compensationTypeBadgeVariant(
+  compensationType: string,
+): 'default' | 'secondary' | 'outline' {
   if (compensationType === 'FIXED') {
-    return 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/10 border-indigo-500/20 text-[10px]';
+    return 'secondary';
   }
   if (compensationType === 'COMMISSION') {
-    return 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20 text-[10px]';
+    return 'default';
   }
-  return 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/10 border-cyan-500/20 text-[10px]';
+  return 'outline';
 }

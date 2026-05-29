@@ -1,10 +1,10 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
 
 import type { ShowApiResponse } from '@eridu/api-types/shows';
 
+import { formatShowDate } from '@/features/shows/lib/format-show-date';
 import * as m from '@/paraglide/messages.js';
 
 export const columns: ColumnDef<ShowApiResponse>[] = [
@@ -26,40 +26,16 @@ export const columns: ColumnDef<ShowApiResponse>[] = [
     id: 'date',
     accessorKey: 'start_time',
     header: m['table.date'](),
-    cell: ({ row }) => {
-      const startTime = row.getValue('start_time') as string;
-      if (!startTime)
-        return '-';
-      const date = new Date(startTime);
-      if (Number.isNaN(date.getTime()))
-        return '-';
-      return format(date, 'MMM d, yyyy');
-    },
+    cell: ({ row }) => formatShowDate(row.getValue('start_time'), 'MMM d, yyyy'),
   },
   {
     accessorKey: 'start_time',
     header: m['table.startTime'](),
-    cell: ({ row }) => {
-      const startTime = row.getValue('start_time') as string;
-      if (!startTime)
-        return '-';
-      const date = new Date(startTime);
-      if (Number.isNaN(date.getTime()))
-        return '-';
-      return format(date, 'HH:mm');
-    },
+    cell: ({ row }) => formatShowDate(row.getValue('start_time'), 'HH:mm'),
   },
   {
     accessorKey: 'end_time',
     header: m['table.endTime'](),
-    cell: ({ row }) => {
-      const endTime = row.getValue('end_time') as string;
-      if (!endTime)
-        return '-';
-      const date = new Date(endTime);
-      if (Number.isNaN(date.getTime()))
-        return '-';
-      return format(date, 'HH:mm');
-    },
+    cell: ({ row }) => formatShowDate(row.getValue('end_time'), 'HH:mm'),
   },
 ];

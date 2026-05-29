@@ -19,20 +19,20 @@ export function CompensationsToolbar({
   isQueryEnabled,
 }: CompensationsToolbarProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-slate-900/40 p-4 border border-slate-800/80 rounded-xl backdrop-blur-sm">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border bg-card p-4">
       <div className="flex items-center gap-2">
-        <Calendar className="h-4 w-4 text-slate-400" />
+        <Calendar className="h-4 w-4 text-muted-foreground" />
         <DatePickerWithRange date={dateRange} setDate={onDateRangeChange} />
       </div>
       <Button
         variant="outline"
         size="icon"
-        className="h-9 w-9 border-slate-800 bg-slate-900/60 hover:bg-slate-800"
+        className="h-9 w-9"
         onClick={onRefresh}
         disabled={isFetching || !isQueryEnabled}
         aria-label="Refresh compensations"
       >
-        <RefreshCw className={`h-4 w-4 text-slate-300 ${isFetching ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
       </Button>
     </div>
   );

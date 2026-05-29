@@ -12,13 +12,13 @@ import {
 } from '@eridu/ui';
 
 import {
+  compensationTypeBadgeVariant,
   formatAdjustmentTotal,
   formatAgreedRate,
   formatAmount,
   formatCommissionRate,
   formatUnresolvedReason,
   getAdjustmentTone,
-  getCompensationTypeBadgeClass,
 } from '@/features/compensations/lib/compensations-display';
 
 export type CompensationsBreakdownTableProps = {
@@ -26,27 +26,27 @@ export type CompensationsBreakdownTableProps = {
 };
 
 const ADJUSTMENT_CELL_CLASS: Record<ReturnType<typeof getAdjustmentTone>, string> = {
-  muted: 'text-slate-400',
-  negative: 'text-rose-400',
-  positive: 'text-emerald-400',
+  muted: 'text-muted-foreground',
+  negative: 'text-destructive',
+  positive: 'text-emerald-600 dark:text-emerald-400',
 };
 
 export function CompensationsBreakdownTable({ shows }: CompensationsBreakdownTableProps) {
   return (
     <div className="overflow-x-auto">
       <Table>
-        <TableHeader className="bg-slate-900/50 hover:bg-slate-900/50 border-b border-slate-800">
-          <TableRow className="border-b border-slate-800">
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs">Show Name</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs">Date &amp; Time</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs">Type</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">Agreed Rate</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">Commission</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">Base Amount</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">Adjustments</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs text-right">Total Amount</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs">Status</TableHead>
-            <TableHead className="text-slate-300 font-semibold h-11 text-xs">Notes</TableHead>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Show Name</TableHead>
+            <TableHead>Date &amp; Time</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead className="text-right">Agreed Rate</TableHead>
+            <TableHead className="text-right">Commission</TableHead>
+            <TableHead className="text-right">Base Amount</TableHead>
+            <TableHead className="text-right">Adjustments</TableHead>
+            <TableHead className="text-right">Total Amount</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Notes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -56,56 +56,53 @@ export function CompensationsBreakdownTable({ shows }: CompensationsBreakdownTab
             const adjustmentTone = getAdjustmentTone(show.adjustment_total);
 
             return (
-              <TableRow
-                key={show.show_creator_id}
-                className="border-b border-slate-800/60 hover:bg-slate-900/20 transition-colors"
-              >
-                <TableCell className="font-medium text-slate-100 max-w-[200px] truncate text-xs py-3.5">
+              <TableRow key={show.show_creator_id}>
+                <TableCell className="max-w-[200px] truncate font-medium">
                   {show.show_name}
                 </TableCell>
-                <TableCell className="text-slate-300 text-xs py-3.5 whitespace-nowrap">
+                <TableCell className="whitespace-nowrap text-muted-foreground">
                   {format(new Date(show.show_start_time), 'PPP p')}
                 </TableCell>
-                <TableCell className="text-xs py-3.5 whitespace-nowrap">
+                <TableCell className="whitespace-nowrap">
                   {show.compensation_type
                     ? (
-                        <Badge className={getCompensationTypeBadgeClass(show.compensation_type)}>
+                        <Badge variant={compensationTypeBadgeVariant(show.compensation_type)}>
                           {show.compensation_type}
                         </Badge>
                       )
                     : (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                 </TableCell>
-                <TableCell className="text-right text-slate-300 text-xs py-3.5 whitespace-nowrap">
+                <TableCell className="whitespace-nowrap text-right text-muted-foreground">
                   {formatAgreedRate(show)}
                 </TableCell>
-                <TableCell className="text-right text-slate-300 text-xs py-3.5 whitespace-nowrap">
+                <TableCell className="whitespace-nowrap text-right text-muted-foreground">
                   {formatCommissionRate(show)}
                 </TableCell>
-                <TableCell className="text-right text-slate-300 text-xs py-3.5 whitespace-nowrap">
+                <TableCell className="whitespace-nowrap text-right text-muted-foreground">
                   {formatAmount(show.base_amount)}
                 </TableCell>
                 <TableCell
-                  className={`text-right text-xs py-3.5 whitespace-nowrap font-medium ${ADJUSTMENT_CELL_CLASS[adjustmentTone]}`}
+                  className={`whitespace-nowrap text-right font-medium ${ADJUSTMENT_CELL_CLASS[adjustmentTone]}`}
                 >
                   {formatAdjustmentTotal(show.adjustment_total)}
                 </TableCell>
-                <TableCell className="text-right text-slate-100 font-semibold text-xs py-3.5 whitespace-nowrap">
+                <TableCell className="whitespace-nowrap text-right font-semibold">
                   {isUnresolved
-                    ? <span className="text-slate-400">Unresolved</span>
+                    ? <span className="text-muted-foreground">Unresolved</span>
                     : formatAmount(show.total_amount)}
                 </TableCell>
-                <TableCell className="text-xs py-3.5">
+                <TableCell>
                   {isUnresolved
                     ? (
                         <div className="flex flex-col gap-0.5">
-                          <Badge className="w-fit bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/10 text-[9px] font-medium">
+                          <Badge variant="outline" className="w-fit">
                             Unresolved
                           </Badge>
                           {unresolvedReason
                             ? (
-                                <span className="text-[10px] text-amber-500/90 leading-tight block max-w-[150px] truncate">
+                                <span className="block max-w-[150px] truncate text-xs leading-tight text-muted-foreground">
                                   {unresolvedReason}
                                 </span>
                               )
@@ -113,13 +110,13 @@ export function CompensationsBreakdownTable({ shows }: CompensationsBreakdownTab
                         </div>
                       )
                     : (
-                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 text-[9px] font-medium">
+                        <Badge variant="secondary">
                           Resolved
                         </Badge>
                       )}
                 </TableCell>
-                <TableCell className="text-xs py-3.5 max-w-[150px] truncate text-slate-300" title={show.note ?? ''}>
-                  {show.note ? show.note : <span className="text-slate-500">—</span>}
+                <TableCell className="max-w-[150px] truncate text-muted-foreground" title={show.note ?? ''}>
+                  {show.note ? show.note : <span className="text-muted-foreground">—</span>}
                 </TableCell>
               </TableRow>
             );
