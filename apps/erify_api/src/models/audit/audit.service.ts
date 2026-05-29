@@ -62,4 +62,12 @@ export class AuditService extends BaseModelService {
   ) {
     return this.auditRepository.findSignOff(studioUid, dateFrom, dateTo);
   }
+
+  async lockSignOffRange(
+    studioUid: string,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<void> {
+    return this.auditRepository.lockSignOffRange(studioUid, dateFrom, dateTo);
+  }
 }

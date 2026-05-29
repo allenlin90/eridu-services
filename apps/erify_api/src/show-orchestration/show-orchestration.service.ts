@@ -1301,6 +1301,14 @@ export class ShowOrchestrationService {
   ) {
     await this.studioService.getStudioById(studioUid);
 
+    // Serialize concurrent sign-offs for this range before the existence check
+    // so the check-then-insert below cannot race a sibling request.
+    await this.auditService.lockSignOffRange(
+      studioUid,
+      payload.date_from,
+      payload.date_to,
+    );
+
     // Check if sign-off already exists for this exact range
     const existing = await this.auditService.findSignOff(
       studioUid,

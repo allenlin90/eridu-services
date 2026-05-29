@@ -171,4 +171,27 @@ export class AuditRepository {
       },
     });
   }
+
+  /**
+   * Serializes concurrent sign-offs for the same studio + range.
+   *
+   * `findSignOff` + `create` is a check-then-insert: under READ COMMITTED two
+   * concurrent requests can both observe no existing sign-off and both insert.
+   * The range identity lives in JSON `metadata`, so there is no row to lock and
+   * no natural unique constraint on the generic audit envelope. A transaction-
+   * scoped advisory lock keyed on the normalized range makes the second caller
+   * wait until the first commits — it then sees the row and 409s. The lock is
+   * released automatically on commit/rollback.
+   */
+  async lockSignOffRange(
+    studioUid: string,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<void> {
+    const normalizedFrom = new Date(dateFrom).toISOString();
+    const normalizedTo = new Date(dateTo).toISOString();
+    const key = `sign_off:${studioUid}:${normalizedFrom}:${normalizedTo}`;
+
+    await this.txHost.tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+  }
 }

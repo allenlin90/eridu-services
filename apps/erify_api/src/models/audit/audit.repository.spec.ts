@@ -16,12 +16,14 @@ function createPrismaAuditDelegateMock() {
 describe('auditRepository', () => {
   let repository: AuditRepository;
   let txAuditDelegate: ReturnType<typeof createPrismaAuditDelegateMock>;
+  let txExecuteRaw: jest.Mock;
 
   beforeEach(() => {
     txAuditDelegate = createPrismaAuditDelegateMock();
+    txExecuteRaw = jest.fn();
     const prisma = { audit: txAuditDelegate } as unknown as PrismaService;
     const txHost = {
-      tx: { audit: txAuditDelegate },
+      tx: { audit: txAuditDelegate, $executeRaw: txExecuteRaw },
     } as unknown as TransactionHost<any>;
 
     repository = new AuditRepository(prisma, txHost);
@@ -189,6 +191,21 @@ describe('auditRepository', () => {
       expect(args.where.AND[1]).toEqual({
         metadata: { path: ['date_from'], equals: '2026-05-12T06:00:00.000Z' },
       });
+    });
+  });
+
+  describe('lockSignOffRange', () => {
+    it('acquires a transaction-scoped advisory lock keyed on the normalized range', async () => {
+      await repository.lockSignOffRange(
+        'std_abc',
+        '2026-05-12T06:00:00+00:00',
+        '2026-05-13T05:59:59.999Z',
+      );
+
+      expect(txExecuteRaw).toHaveBeenCalledTimes(1);
+      const [strings, key] = txExecuteRaw.mock.calls[0];
+      expect(strings.join('?')).toContain('pg_advisory_xact_lock(hashtextextended(');
+      expect(key).toBe('sign_off:std_abc:2026-05-12T06:00:00.000Z:2026-05-13T05:59:59.999Z');
     });
   });
 

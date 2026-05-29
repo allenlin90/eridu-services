@@ -216,6 +216,7 @@ describe('showOrchestrationService', () => {
           useValue: {
             create: jest.fn(),
             findSignOff: jest.fn(),
+            lockSignOffRange: jest.fn(),
           },
         },
         {
@@ -1924,6 +1925,18 @@ describe('showOrchestrationService', () => {
         targets: [],
       });
       expect(result).toEqual(mockAuditResult);
+
+      expect(auditService.lockSignOffRange).toHaveBeenCalledWith(
+        studioUid,
+        '2026-05-12T06:00:00.000Z',
+        '2026-05-13T05:59:59.999Z',
+      );
+      // The advisory lock must be acquired before the existence check and insert.
+      const lockOrder = auditService.lockSignOffRange.mock.invocationCallOrder[0];
+      const checkOrder = auditService.findSignOff.mock.invocationCallOrder[0];
+      const createOrder = auditService.create.mock.invocationCallOrder[0];
+      expect(lockOrder).toBeLessThan(checkOrder);
+      expect(lockOrder).toBeLessThan(createOrder);
     });
   });
 });
