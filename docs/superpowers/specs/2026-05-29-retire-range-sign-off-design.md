@@ -57,11 +57,11 @@ Confirmed safe to **hard-remove** the `SIGN_OFF` enum value: no sign-off audit r
 
 Add an **Export CSV** affordance to each of the four tabs (creators / violations / tasks / shows) in `show-run-summary.tsx`.
 
-- **Scope of export — the key requirement**: serialize **every row matching the tab's active filters**, not the paginated page. The summary endpoint already returns the full set for the range (it aggregates in memory, capped at 31 days), and the tabs paginate **client-side**, so the full filtered set is already in the client. Source the export from the tab's filtered-but-not-paginated rows (the table's filtered row model / the full array with the same URL-synced search + status filters applied), bypassing the pagination slice. Mirrors the existing `report-result-table.tsx` pattern, which exports `sortedAllRows`, not the page.
-- **Reuse**: `serializeRowsToCsv` + `CsvColumn` from `@/lib/csv` and `triggerBrowserDownload` from `@/lib/file-download`. Per-tab column maps (label + cell accessor). Filename like `show-run-<tab>-<date_from>_<date_to>.csv`.
-- **No backend change.** Pure client-side serialization of data already fetched.
-- **Race guard**: apply PR 16's active-controller guard convention if any async work is introduced (download itself is synchronous, so likely none).
-- **Optional, in-scope-if-cheap refinement**: `show-run-summary.tsx` is ~1,056 lines. Removing the sign-off block (B1) plus adding export is a natural moment to extract each tab table (and its export) into a small focused component. Keep this light; do not refactor unrelated code.
+- **Architecture reality**: the four tabs are **server-side paginated** via dedicated endpoints — `GET /studios/:studioId/shows/run-review/{creators,violations,tasks,shows}` — each returning `PaginatedResponse<T>` (query: `page`, `limit` default 10 / min 1 / **no max**, plus `search` / `status` / `severity` / `completeness`). The client therefore holds only the current page, not the full filtered set. (The separate `GET …/run-review` summary endpoint returns full arrays for the count cards, but the tab tables do **not** read it.)
+- **Scope of export — the key requirement**: serialize **every row matching the tab's active filters**, not the visible page. Mechanism: **high-limit refetch** (chosen). On Export click, call the *same* tab endpoint with the *same* active filter params and `limit = total` (the `total` already returned by that tab's current paginated query), `page = 1`; serialize the returned `items`. No backend change. The set is bounded by the existing 31-day range cap, consistent with the backend's in-memory aggregation design. If `total === 0`, no-op (disable the button).
+- **Reuse**: `serializeRowsToCsv({ rows, columns })` + `CsvColumn` from `@/lib/csv` and `triggerBrowserDownload({ content, mimeType, filename })` from `@/lib/file-download`. Rows must be `Record<string, string>`, so each tab needs a row-mapper that flattens its typed row to string cells. Per-tab `CsvColumn` list. Filename `show-run-<tab>-<date_from>_<date_to>.csv`.
+- **Loading/disabled state**: the Export button shows a pending state during the refetch and is disabled while fetching or when `total === 0`. Reuse the existing per-tab fetch hook with explicit params (do not mutate the table's paginated query key).
+- **Optional, in-scope-if-cheap refinement**: `show-run-summary.tsx` is ~1,056 lines. Removing the sign-off block (B1) plus adding export is a natural moment to extract each tab's table + export into a small focused component. Keep this light; do not refactor unrelated code.
 
 ## 4. Roadmap / PRD bookkeeping (clean removal, no "reverted" noise)
 
@@ -95,5 +95,6 @@ pnpm sherif
 ## 7. Risks
 
 - **Hard-removing `SIGN_OFF`** breaks audit reads *iff* a row exists. Mitigation: product confirmed none exist; add a one-line check (`SELECT count(*) FROM audits WHERE action='SIGN_OFF'`) before shipping B1 to any environment with real data.
-- **Export filter/pagination mismatch**: the whole point is exporting the filtered set, not the page — the plan must source rows pre-pagination and assert it in a test.
+- **Export filter/pagination mismatch**: the tabs are server-paginated, so the page holds ≪ the filtered total. Export must refetch with `limit = total` and the same filters — the plan must assert the exported row count equals `total`, not the page size.
+- **Unbounded `limit`**: the tab endpoints enforce no max `limit`. The 31-day range cap bounds the underlying set, so a `limit = total` refetch is acceptable; if abuse becomes a concern later, add a server max as a follow-up (option (b)).
 - **Large component churn**: keep the optional extraction minimal to avoid coupling deletion with a broad refactor in one review.
