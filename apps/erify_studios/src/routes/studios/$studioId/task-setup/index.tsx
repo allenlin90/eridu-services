@@ -265,7 +265,10 @@ function StudioTaskSetupPage() {
   const isLoadingSnapshot = isLoadingShiftAlignment || isLoadingShowsScope;
   const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;
   const showsInScopeCount = showsScopeResponse?.meta.total ?? 0;
-  const taskReadinessWarnings = shiftAlignmentResponse?.task_readiness_warnings ?? [];
+  const taskReadinessWarnings = useMemo(
+    () => shiftAlignmentResponse?.task_readiness_warnings ?? [],
+    [shiftAlignmentResponse],
+  );
   const attentionShowUids = useMemo(() => taskReadinessWarnings.map((w) => w.show_id), [taskReadinessWarnings]);
 
   return (
@@ -389,6 +392,8 @@ function ShowTaskReadinessSection({
   );
 }
 
+const EMPTY_ATTENTION_SHOW_UIDS: string[] = [];
+
 function StudioShowsTableSection({
   studioId,
   scopeDateFrom,
@@ -397,7 +402,7 @@ function StudioShowsTableSection({
   needsAttention,
   onShowsMutated,
   onToggleNeedsAttention,
-  attentionShowUids = [],
+  attentionShowUids = EMPTY_ATTENTION_SHOW_UIDS,
 }: {
   studioId: string;
   scopeDateFrom?: string;
