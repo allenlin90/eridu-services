@@ -135,14 +135,28 @@ export class AuditRepository {
     }
   }
 
-  async findSignOff(
-    studioUid: string,
-    dateFrom: string,
-    dateTo: string,
-  ) {
-    const audits = await this.delegate.findMany({
+  /**
+   * Finds an existing sign-off for a studio's date range.
+   *
+   * A sign-off targets a date range rather than a DB row, so its identity lives
+   * in the JSON `metadata` envelope. The range bounds are normalized to a
+   * canonical ISO instant before matching so that equivalent-but-differently-
+   * formatted inputs (e.g. `Z` vs `+00:00`, varying precision) resolve to the
+   * same range. The predicate is pushed into the query via JSON-path filters so
+   * Postgres can scope by `studio_uid` instead of scanning every sign-off.
+   */
+  async findSignOff(studioUid: string, dateFrom: string, dateTo: string) {
+    const normalizedFrom = new Date(dateFrom).toISOString();
+    const normalizedTo = new Date(dateTo).toISOString();
+
+    return this.delegate.findFirst({
       where: {
         action: 'SIGN_OFF',
+        AND: [
+          { metadata: { path: ['studio_uid'], equals: studioUid } },
+          { metadata: { path: ['date_from'], equals: normalizedFrom } },
+          { metadata: { path: ['date_to'], equals: normalizedTo } },
+        ],
       },
       include: {
         actor: {
@@ -156,18 +170,5 @@ export class AuditRepository {
         createdAt: 'desc',
       },
     });
-
-    for (const audit of audits) {
-      const meta = audit.metadata as Record<string, any> || {};
-      if (
-        meta.studio_uid === studioUid
-        && meta.date_from === dateFrom
-        && meta.date_to === dateTo
-      ) {
-        return audit;
-      }
-    }
-
-    return null;
   }
 }

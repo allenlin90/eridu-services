@@ -10,7 +10,7 @@ const DEFAULT_MESSAGE = 'Failed to load show run review summary. Please try agai
  * Backend validation errors (e.g. the date-range limit) carry their detail in
  * `errors[].message`; the top-level `message` is only a generic label.
  */
-export function getShowRunReviewErrorMessage(error: unknown): string {
+export function getShowRunReviewErrorMessage(error: unknown, fallback: string = DEFAULT_MESSAGE): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiErrorBody | undefined;
 
@@ -28,5 +28,5 @@ export function getShowRunReviewErrorMessage(error: unknown): string {
     }
   }
 
-  return DEFAULT_MESSAGE;
+  return fallback;
 }

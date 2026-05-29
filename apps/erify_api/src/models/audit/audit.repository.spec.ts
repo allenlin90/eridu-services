@@ -9,6 +9,7 @@ function createPrismaAuditDelegateMock() {
     create: jest.fn(),
     findUnique: jest.fn(),
     findMany: jest.fn(),
+    findFirst: jest.fn(),
   };
 }
 
@@ -151,6 +152,43 @@ describe('auditRepository', () => {
       expect(args.orderBy).toEqual({ createdAt: 'desc' });
       expect(args.take).toBe(50);
       expect(args.include).toEqual({ targets: true });
+    });
+  });
+
+  describe('findSignOff', () => {
+    it('scopes by studio and normalized range via JSON-path filters', async () => {
+      txAuditDelegate.findFirst.mockResolvedValue(null);
+
+      await repository.findSignOff(
+        'std_abc',
+        '2026-05-12T06:00:00.000Z',
+        '2026-05-13T05:59:59.999Z',
+      );
+
+      const args = txAuditDelegate.findFirst.mock.calls[0]?.[0];
+      expect(args.where.action).toBe('SIGN_OFF');
+      expect(args.where.AND).toEqual([
+        { metadata: { path: ['studio_uid'], equals: 'std_abc' } },
+        { metadata: { path: ['date_from'], equals: '2026-05-12T06:00:00.000Z' } },
+        { metadata: { path: ['date_to'], equals: '2026-05-13T05:59:59.999Z' } },
+      ]);
+      expect(args.orderBy).toEqual({ createdAt: 'desc' });
+      expect(args.include).toEqual({ actor: { select: { uid: true, name: true } } });
+    });
+
+    it('normalizes equivalent-but-differently-formatted range bounds before matching', async () => {
+      txAuditDelegate.findFirst.mockResolvedValue(null);
+
+      await repository.findSignOff(
+        'std_abc',
+        '2026-05-12T06:00:00+00:00',
+        '2026-05-13T05:59:59.999Z',
+      );
+
+      const args = txAuditDelegate.findFirst.mock.calls[0]?.[0];
+      expect(args.where.AND[1]).toEqual({
+        metadata: { path: ['date_from'], equals: '2026-05-12T06:00:00.000Z' },
+      });
     });
   });
 

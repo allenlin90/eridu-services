@@ -41,6 +41,7 @@ import {
 } from '@eridu/ui';
 
 import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
+import { getShowRunReviewErrorMessage } from '@/features/show-run-review/lib/get-show-run-review-error-message';
 import { useSignOffShowRunReview } from '@/features/shows/api/sign-off-show-run-review';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -316,13 +317,17 @@ const showColumns: ColumnDef<ShowsSummaryRow>[] = [
   },
 ];
 
-function formatDate(dateStr: string | Date): string {
-  const d = new Date(dateStr);
-  return `${d.toLocaleDateString(undefined, {
+function formatDateOnly(dateStr: string | Date): string {
+  return new Date(dateStr).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  })} ${d.toLocaleTimeString(undefined, {
+  });
+}
+
+function formatDate(dateStr: string | Date): string {
+  const d = new Date(dateStr);
+  return `${formatDateOnly(d)} ${d.toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
   })}`;
@@ -353,8 +358,8 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
           setIsDialogOpen(false);
           setReason('');
         },
-        onError: (err: any) => {
-          toast.error(err.response?.data?.message ?? 'Failed to sign off range');
+        onError: (err) => {
+          toast.error(getShowRunReviewErrorMessage(err, 'Failed to sign off range'));
         },
       },
     );
@@ -571,11 +576,11 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                               <DialogDescription className="text-xs text-muted-foreground">
                                 Confirm operational sign-off for the range:
                                 {' '}
-                                <span className="font-semibold text-foreground">{formatDate(data.date_from).split(' ')[0]}</span>
+                                <span className="font-semibold text-foreground">{formatDateOnly(data.date_from)}</span>
                                 {' '}
                                 to
                                 {' '}
-                                <span className="font-semibold text-foreground">{formatDate(data.date_to).split(' ')[0]}</span>
+                                <span className="font-semibold text-foreground">{formatDateOnly(data.date_to)}</span>
                               </DialogDescription>
                             </DialogHeader>
 

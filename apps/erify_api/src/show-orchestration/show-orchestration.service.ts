@@ -4,7 +4,7 @@ import type { Show } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
-import type { ShowRunReviewSummary, SignOffShowRunReviewInput } from '@eridu/api-types/shows';
+import type { ShowRunReviewSummary, SignOffDetails, SignOffShowRunReviewInput } from '@eridu/api-types/shows';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import {
@@ -1157,7 +1157,7 @@ export class ShowOrchestrationService {
           actor_name: signOffAudit.actor?.name ?? null,
           signed_at: signOffAudit.createdAt.toISOString(),
           reason: signOffAudit.reason,
-          unresolved_exceptions: (signOffAudit.metadata as any)?.unresolved_exceptions ?? {
+          unresolved_exceptions: (signOffAudit.metadata as { unresolved_exceptions?: SignOffDetails['unresolved_exceptions'] } | null)?.unresolved_exceptions ?? {
             late_creators: 0,
             missing_creators: 0,
             platform_violations: 0,
@@ -1324,14 +1324,15 @@ export class ShowOrchestrationService {
       date_to: payload.date_to,
     });
 
+    // Persist canonical ISO instants so range identity matches `findSignOff`.
     const audit = await this.auditService.create({
       action: 'SIGN_OFF',
       actorId: user.id,
       reason: payload.reason ?? null,
       metadata: {
         studio_uid: studioUid,
-        date_from: payload.date_from,
-        date_to: payload.date_to,
+        date_from: new Date(payload.date_from).toISOString(),
+        date_to: new Date(payload.date_to).toISOString(),
         unresolved_exceptions: {
           late_creators: summary.creators.late_count,
           missing_creators: summary.creators.missing_count,
