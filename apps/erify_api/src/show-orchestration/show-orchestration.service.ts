@@ -100,6 +100,8 @@ type ResolvedCreatorSnapshot = {
   metadata: Record<string, unknown>;
 };
 
+type ReviewShow = Awaited<ReturnType<ShowService['getShowsForReview']>>[number];
+
 @Injectable()
 export class ShowOrchestrationService {
   constructor(
@@ -1166,103 +1168,15 @@ export class ShowOrchestrationService {
         }
       : null;
 
-    let startedCount = 0;
-    let lateStartCount = 0;
-    let missingDurationMinutes = 0;
-    let endRecordedCount = 0;
-    let totalCreatorsCount = 0;
-    let lateCreatorsCount = 0;
-    let missingCreatorsCount = 0;
-    const creatorExceptions: ShowRunReviewSummary['creators']['exceptions'] = [];
-    const activeViolations: ShowRunReviewSummary['platforms']['violations'] = [];
-    const seenTaskUids = new Set<string>();
-    const incompleteTasksList: ShowRunReviewSummary['tasks']['incomplete_tasks'] = [];
-
-    for (const show of shows) {
-      // 1. Show actuals: start time is the primary signal that a show ran and
-      // whether it was late. End time is recorded as secondary detail; a late
-      // start that ends on the planned end implies lost (missing) duration.
-      if (show.actualStartTime !== null) {
-        startedCount++;
-        const actualStart = new Date(show.actualStartTime);
-        const plannedStart = new Date(show.startTime);
-        if (actualStart > plannedStart) {
-          lateStartCount++;
-          const diffMs = actualStart.getTime() - plannedStart.getTime();
-          missingDurationMinutes += Math.max(0, Math.floor(diffMs / 60000));
-        }
-      }
-      if (show.actualEndTime !== null) {
-        endRecordedCount++;
-      }
-
-      // 2. Creator lateness / presence exceptions
-      for (const sc of show.showCreators) {
-        totalCreatorsCount++;
-        if (sc.attendanceMissing) {
-          missingCreatorsCount++;
-          creatorExceptions.push({
-            show_creator_uid: sc.uid,
-            creator_name: sc.creator.aliasName || sc.creator.name,
-            show_name: show.name,
-            show_start_time: show.startTime.toISOString(),
-            status: 'MISSING' as const,
-            late_minutes: 0,
-            reason: sc.attendanceReason,
-          });
-        } else if (sc.actualStartTime) {
-          const actualStart = new Date(sc.actualStartTime);
-          const plannedStart = new Date(show.startTime);
-          if (actualStart > plannedStart) {
-            lateCreatorsCount++;
-            const diffMs = actualStart.getTime() - plannedStart.getTime();
-            const lateMinutes = Math.max(0, Math.floor(diffMs / 60000));
-            creatorExceptions.push({
-              show_creator_uid: sc.uid,
-              creator_name: sc.creator.aliasName || sc.creator.name,
-              show_name: show.name,
-              show_start_time: show.startTime.toISOString(),
-              status: 'LATE' as const,
-              late_minutes: lateMinutes,
-              reason: sc.attendanceReason,
-            });
-          }
-        }
-      }
-
-      // 3. Platform violations
-      for (const sp of show.showPlatforms) {
-        for (const violation of sp.violations) {
-          activeViolations.push({
-            violation_uid: violation.uid,
-            platform_name: sp.platform.name,
-            show_name: show.name,
-            show_start_time: show.startTime.toISOString(),
-            violation_type: violation.violationType,
-            severity: violation.severity,
-            reason: violation.reason,
-            observed_at: violation.observedAt.toISOString(),
-          });
-        }
-      }
-
-      // 4. Incomplete tasks
-      for (const target of show.taskTargets) {
-        const task = target.task;
-        if (task && task.deletedAt === null && task.status !== 'COMPLETED' && task.status !== 'CLOSED') {
-          if (!seenTaskUids.has(task.uid)) {
-            seenTaskUids.add(task.uid);
-            incompleteTasksList.push({
-              task_uid: task.uid,
-              description: task.description,
-              status: task.status,
-              type: task.type,
-              show_name: show.name,
-            });
-          }
-        }
-      }
-    }
+    // Counts are derived from the same helpers the paginated sub-resource
+    // endpoints use, so the summary totals always match the detail lists.
+    const { startedCount, lateStartCount, missingDurationMinutes, endRecordedCount } = this.deriveShowActuals(shows);
+    const creatorExceptions = this.deriveCreatorExceptions(shows);
+    const activeViolations = this.deriveViolations(shows);
+    const incompleteTasksList = this.deriveIncompleteTasks(shows);
+    const totalCreatorsCount = shows.reduce((count, show) => count + show.showCreators.length, 0);
+    const lateCreatorsCount = creatorExceptions.filter((exception) => exception.status === 'LATE').length;
+    const missingCreatorsCount = creatorExceptions.filter((exception) => exception.status === 'MISSING').length;
 
     return {
       date_from: query.date_from,
@@ -1297,55 +1211,9 @@ export class ShowOrchestrationService {
     studioUid: string,
     query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; status?: 'LATE' | 'MISSING' },
   ) {
-    const studio = await this.studioService.getStudioById(studioUid);
-    const start = new Date(query.date_from);
-    const end = new Date(query.date_to);
+    const shows = await this.loadReviewShows(studioUid, query);
 
-    const shows = await this.showService.getShowsForReview(studio.id, start, end);
-    const exceptions: Array<{
-      show_creator_uid: string;
-      creator_name: string;
-      show_name: string;
-      show_start_time: string;
-      status: 'LATE' | 'MISSING';
-      late_minutes: number;
-      reason: string | null;
-    }> = [];
-
-    for (const show of shows) {
-      for (const sc of show.showCreators) {
-        if (sc.attendanceMissing) {
-          exceptions.push({
-            show_creator_uid: sc.uid,
-            creator_name: sc.creator.aliasName || sc.creator.name,
-            show_name: show.name,
-            show_start_time: show.startTime.toISOString(),
-            status: 'MISSING' as const,
-            late_minutes: 0,
-            reason: sc.attendanceReason,
-          });
-        } else if (sc.actualStartTime) {
-          const actualStart = new Date(sc.actualStartTime);
-          const plannedStart = new Date(show.startTime);
-          if (actualStart > plannedStart) {
-            const diffMs = actualStart.getTime() - plannedStart.getTime();
-            const lateMinutes = Math.max(0, Math.floor(diffMs / 60000));
-            exceptions.push({
-              show_creator_uid: sc.uid,
-              creator_name: sc.creator.aliasName || sc.creator.name,
-              show_name: show.name,
-              show_start_time: show.startTime.toISOString(),
-              status: 'LATE' as const,
-              late_minutes: lateMinutes,
-              reason: sc.attendanceReason,
-            });
-          }
-        }
-      }
-    }
-
-    // Apply filters
-    let filtered = exceptions;
+    let filtered = this.deriveCreatorExceptions(shows);
     if (query.status) {
       filtered = filtered.filter((ex) => ex.status === query.status);
     }
@@ -1355,38 +1223,140 @@ export class ShowOrchestrationService {
         (ex) =>
           ex.creator_name.toLowerCase().includes(s)
           || ex.show_name.toLowerCase().includes(s)
-          || (ex.reason && ex.reason.toLowerCase().includes(s)),
+          || (ex.reason !== null && ex.reason.toLowerCase().includes(s)),
       );
     }
 
-    const total = filtered.length;
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const items = filtered.slice((page - 1) * limit, page * limit);
-
-    return { items, total };
+    return this.paginate(filtered, query.page, query.limit);
   }
 
   async getShowRunReviewViolations(
     studioUid: string,
     query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; severity?: string },
   ) {
+    const shows = await this.loadReviewShows(studioUid, query);
+
+    let filtered = this.deriveViolations(shows);
+    if (query.severity) {
+      filtered = filtered.filter((v) => v.severity === query.severity);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (v) =>
+          v.platform_name.toLowerCase().includes(s)
+          || v.show_name.toLowerCase().includes(s)
+          || v.reason.toLowerCase().includes(s)
+          || v.violation_type.toLowerCase().includes(s),
+      );
+    }
+
+    return this.paginate(filtered, query.page, query.limit);
+  }
+
+  async getShowRunReviewTasks(
+    studioUid: string,
+    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; status?: string },
+  ) {
+    const shows = await this.loadReviewShows(studioUid, query);
+
+    let filtered = this.deriveIncompleteTasks(shows);
+    if (query.status) {
+      filtered = filtered.filter((t) => t.status === query.status);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          t.description.toLowerCase().includes(s)
+          || t.show_name.toLowerCase().includes(s)
+          || t.type.toLowerCase().includes(s),
+      );
+    }
+
+    return this.paginate(filtered, query.page, query.limit);
+  }
+
+  async getShowRunReviewShows(
+    studioUid: string,
+    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; completeness?: string },
+  ) {
+    const shows = await this.loadReviewShows(studioUid, query);
+
+    let filtered = this.buildShowsRangeRows(shows);
+    if (query.completeness) {
+      filtered = filtered.filter((r) => r.status === query.completeness);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (r) =>
+          r.shows_range.toLowerCase().includes(s)
+          || r.actuals_completeness.toLowerCase().includes(s),
+      );
+    }
+
+    return this.paginate(filtered, query.page, query.limit);
+  }
+
+  /**
+   * Loads the shows graph for a review range. Shared by the summary and every
+   * paginated sub-resource so they derive from the same data set.
+   */
+  private async loadReviewShows(
+    studioUid: string,
+    query: { date_from: string; date_to: string },
+  ): Promise<ReviewShow[]> {
     const studio = await this.studioService.getStudioById(studioUid);
-    const start = new Date(query.date_from);
-    const end = new Date(query.date_to);
+    return this.showService.getShowsForReview(
+      studio.id,
+      new Date(query.date_from),
+      new Date(query.date_to),
+    );
+  }
 
-    const shows = await this.showService.getShowsForReview(studio.id, start, end);
-    const violations: Array<{
-      violation_uid: string;
-      platform_name: string;
-      show_name: string;
-      show_start_time: string;
-      violation_type: string;
-      severity: string;
-      reason: string;
-      observed_at: string;
-    }> = [];
+  /**
+   * Single source of truth for the derived run-review views. The summary uses
+   * these to compute counts; the sub-resource endpoints use them for the list
+   * contents — keeping the two from drifting apart.
+   */
+  private deriveCreatorExceptions(shows: ReviewShow[]): ShowRunReviewSummary['creators']['exceptions'] {
+    const exceptions: ShowRunReviewSummary['creators']['exceptions'] = [];
+    for (const show of shows) {
+      for (const sc of show.showCreators) {
+        if (sc.attendanceMissing) {
+          exceptions.push({
+            show_creator_uid: sc.uid,
+            creator_name: sc.creator.aliasName || sc.creator.name,
+            show_name: show.name,
+            show_start_time: show.startTime.toISOString(),
+            status: 'MISSING',
+            late_minutes: 0,
+            reason: sc.attendanceReason,
+          });
+        } else if (sc.actualStartTime) {
+          const actualStart = new Date(sc.actualStartTime);
+          const plannedStart = new Date(show.startTime);
+          if (actualStart > plannedStart) {
+            const diffMs = actualStart.getTime() - plannedStart.getTime();
+            exceptions.push({
+              show_creator_uid: sc.uid,
+              creator_name: sc.creator.aliasName || sc.creator.name,
+              show_name: show.name,
+              show_start_time: show.startTime.toISOString(),
+              status: 'LATE',
+              late_minutes: Math.max(0, Math.floor(diffMs / 60000)),
+              reason: sc.attendanceReason,
+            });
+          }
+        }
+      }
+    }
+    return exceptions;
+  }
 
+  private deriveViolations(shows: ReviewShow[]): ShowRunReviewSummary['platforms']['violations'] {
+    const violations: ShowRunReviewSummary['platforms']['violations'] = [];
     for (const show of shows) {
       for (const sp of show.showPlatforms) {
         for (const v of sp.violations) {
@@ -1403,56 +1373,19 @@ export class ShowOrchestrationService {
         }
       }
     }
-
-    // Apply filters
-    let filtered = violations;
-    if (query.severity) {
-      filtered = filtered.filter((v) => v.severity === query.severity);
-    }
-    if (query.search) {
-      const s = query.search.toLowerCase();
-      filtered = filtered.filter(
-        (v) =>
-          v.platform_name.toLowerCase().includes(s)
-          || v.show_name.toLowerCase().includes(s)
-          || v.reason.toLowerCase().includes(s)
-          || v.violation_type.toLowerCase().includes(s),
-      );
-    }
-
-    const total = filtered.length;
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const items = filtered.slice((page - 1) * limit, page * limit);
-
-    return { items, total };
+    return violations;
   }
 
-  async getShowRunReviewTasks(
-    studioUid: string,
-    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; status?: string },
-  ) {
-    const studio = await this.studioService.getStudioById(studioUid);
-    const start = new Date(query.date_from);
-    const end = new Date(query.date_to);
-
-    const shows = await this.showService.getShowsForReview(studio.id, start, end);
-    const incompleteTasksList: Array<{
-      task_uid: string;
-      description: string;
-      status: string;
-      type: string;
-      show_name: string;
-    }> = [];
+  private deriveIncompleteTasks(shows: ReviewShow[]): ShowRunReviewSummary['tasks']['incomplete_tasks'] {
+    const tasks: ShowRunReviewSummary['tasks']['incomplete_tasks'] = [];
     const seenTaskUids = new Set<string>();
-
     for (const show of shows) {
       for (const target of show.taskTargets) {
         const task = target.task;
         if (task && task.deletedAt === null && task.status !== 'COMPLETED' && task.status !== 'CLOSED') {
           if (!seenTaskUids.has(task.uid)) {
             seenTaskUids.add(task.uid);
-            incompleteTasksList.push({
+            tasks.push({
               task_uid: task.uid,
               description: task.description,
               status: task.status,
@@ -1463,50 +1396,19 @@ export class ShowOrchestrationService {
         }
       }
     }
-
-    // Apply filters
-    let filtered = incompleteTasksList;
-    if (query.status) {
-      filtered = filtered.filter((t) => t.status === query.status);
-    }
-    if (query.search) {
-      const s = query.search.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.description.toLowerCase().includes(s)
-          || t.show_name.toLowerCase().includes(s)
-          || t.type.toLowerCase().includes(s),
-      );
-    }
-
-    const total = filtered.length;
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const items = filtered.slice((page - 1) * limit, page * limit);
-
-    return { items, total };
+    return tasks;
   }
 
-  async getShowRunReviewShows(
-    studioUid: string,
-    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; completeness?: string },
-  ) {
-    const studio = await this.studioService.getStudioById(studioUid);
-    const start = new Date(query.date_from);
-    const end = new Date(query.date_to);
-
-    const shows = await this.showService.getShowsForReview(studio.id, start, end);
-    const showsData: Array<{
-      id: string;
-      shows_range: string;
-      actuals_completeness: string;
-      status: string;
-    }> = [];
-
+  private deriveShowActuals(shows: ReviewShow[]): {
+    startedCount: number;
+    lateStartCount: number;
+    missingDurationMinutes: number;
+    endRecordedCount: number;
+  } {
     let startedCount = 0;
     let lateStartCount = 0;
     let missingDurationMinutes = 0;
-
+    let endRecordedCount = 0;
     for (const show of shows) {
       if (show.actualStartTime !== null) {
         startedCount++;
@@ -1518,37 +1420,40 @@ export class ShowOrchestrationService {
           missingDurationMinutes += Math.max(0, Math.floor(diffMs / 60000));
         }
       }
+      if (show.actualEndTime !== null) {
+        endRecordedCount++;
+      }
     }
+    return { startedCount, lateStartCount, missingDurationMinutes, endRecordedCount };
+  }
 
-    if (shows.length > 0) {
-      showsData.push({
+  private buildShowsRangeRows(shows: ReviewShow[]): Array<{
+    id: string;
+    shows_range: string;
+    actuals_completeness: string;
+    status: string;
+  }> {
+    if (shows.length === 0) {
+      return [];
+    }
+    const { startedCount, lateStartCount, missingDurationMinutes } = this.deriveShowActuals(shows);
+    return [
+      {
         id: 'shows-range-summary',
         shows_range: `Shows scheduled within range: ${shows.length} scheduled`,
         actuals_completeness: `${startedCount} started, ${shows.length - startedCount} not started · ${lateStartCount} late (${this.formatDurationMinutes(missingDurationMinutes)} lost)`,
         status: shows.length - startedCount === 0 ? 'ALL STARTED' : 'MISSING STARTS',
-      });
-    }
+      },
+    ];
+  }
 
-    // Apply filters
-    let filtered = showsData;
-    if (query.completeness) {
-      filtered = filtered.filter((r) => r.status === query.completeness);
-    }
-    if (query.search) {
-      const s = query.search.toLowerCase();
-      filtered = filtered.filter(
-        (r) =>
-          r.shows_range.toLowerCase().includes(s)
-          || r.actuals_completeness.toLowerCase().includes(s),
-      );
-    }
-
-    const total = filtered.length;
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const items = filtered.slice((page - 1) * limit, page * limit);
-
-    return { items, total };
+  private paginate<T>(items: T[], page?: number, limit?: number): { items: T[]; total: number } {
+    const pageNum = page ?? 1;
+    const pageSize = limit ?? 10;
+    return {
+      items: items.slice((pageNum - 1) * pageSize, pageNum * pageSize),
+      total: items.length,
+    };
   }
 
   private formatDurationMinutes(totalMinutes: number): string {
