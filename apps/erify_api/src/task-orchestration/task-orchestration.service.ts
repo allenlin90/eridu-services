@@ -3,6 +3,7 @@ import type { TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
 import type { ActualsSource } from '@eridu/api-types/audits';
+import { STUDIO_ROLE, type StudioRole } from '@eridu/api-types/memberships';
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 
@@ -40,7 +41,7 @@ export type SubmitTaskContentMode = 'assignee' | 'admin';
 export type SubmitTaskAuditContext = {
   actorExtId?: string;
   actorEmail?: string;
-  actorRole?: string;
+  actorRole?: StudioRole;
   source?: 'studio' | 'me' | 'admin';
 };
 
@@ -115,9 +116,18 @@ export class TaskOrchestrationService {
       return updated;
     }
 
-    const extractionSource: ActualsSource = (options.mode === 'admin' && (options.auditContext?.actorRole === 'ADMIN' || options.auditContext?.actorRole === 'MANAGER'))
-      ? 'MANAGER'
-      : 'OPERATOR';
+    // Provenance for the priority resolver (see `source-priority.ts`). A
+    // MANAGER write (rank 4) outranks PLATFORM (3) and OPERATOR (1) and is
+    // reserved for an actual manager *override* — i.e. an admin/manager who
+    // changed the content in this call. A plain approval (no content change,
+    // including every bulk approval) stays OPERATOR so a later PLATFORM sync
+    // can still overwrite it. `actorRole` is the studio membership role, so
+    // it must be compared against the lowercase `STUDIO_ROLE` values, not
+    // uppercased string literals.
+    const isManagerOverride = options.mode === 'admin'
+      && contentChanged
+      && (options.auditContext?.actorRole === STUDIO_ROLE.ADMIN || options.auditContext?.actorRole === STUDIO_ROLE.MANAGER);
+    const extractionSource: ActualsSource = isManagerOverride ? 'MANAGER' : 'OPERATOR';
 
     let extractionResult: any;
     let extractionError: string | undefined;

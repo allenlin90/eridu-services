@@ -585,12 +585,4 @@ export class TaskRepository extends BaseRepository<
       },
     });
   }
-
-  async findLatestTemplateSnapshot(templateId: bigint) {
-    return this.prisma.taskTemplateSnapshot.findFirst({
-      where: { templateId },
-      orderBy: { version: 'desc' },
-      select: { id: true },
-    });
-  }
 }

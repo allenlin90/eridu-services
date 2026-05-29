@@ -1,6 +1,15 @@
 /**
  * Helper to analyze a task schema and content for fact bindings and extraction outcomes.
  * Surfaces warnings when a task will extract zero facts or has no bindings configured.
+ *
+ * NOTE: this is a deliberately lightweight *heuristic* for an advisory banner —
+ * it is not a re-implementation of the server's `collectBoundFacts`
+ * (apps/erify_api/.../fact-extraction.service.ts). In particular it does not
+ * filter `__reason`/`__extra` sidecar keys, nor does it require a bound field's
+ * `system_fact_key` to be a registered, scope-matching definition. As a result
+ * it can under-warn in edge cases (e.g. a hydrated reason sidecar carrying a
+ * value while the actual field is blank). The authoritative extraction outcome
+ * is always the server's; this only nudges the approver before they confirm.
  */
 export function getExtractionStatus(
   schema: any,

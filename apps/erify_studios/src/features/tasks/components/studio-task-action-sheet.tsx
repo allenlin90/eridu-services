@@ -380,7 +380,10 @@ function StudioTaskActionSheetBody({
                   <div>
                     <p className="text-sm font-semibold text-red-800">No Fact Bindings</p>
                     <p className="text-sm text-red-700 mt-0.5">
-                      This task snapshot has no system fact bindings configured. Approving this task will extract **zero operational facts**.
+                      This task snapshot has no system fact bindings configured. Approving this task will extract
+                      {' '}
+                      <strong>zero operational facts</strong>
+                      .
                     </p>
                   </div>
                 </div>
@@ -392,7 +395,10 @@ function StudioTaskActionSheetBody({
                   <div>
                     <p className="text-sm font-semibold text-amber-800">Zero Facts to Extract</p>
                     <p className="text-sm text-amber-700 mt-0.5">
-                      All bound fields are currently empty. Approving this task will extract **zero operational facts**.
+                      All bound fields are currently empty. Approving this task will extract
+                      {' '}
+                      <strong>zero operational facts</strong>
+                      .
                     </p>
                   </div>
                 </div>
