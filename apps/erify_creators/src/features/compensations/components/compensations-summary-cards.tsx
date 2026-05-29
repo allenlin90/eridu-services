@@ -15,7 +15,6 @@ import {
 } from '@eridu/ui';
 
 import { formatAmount } from '@/features/compensations/lib/compensations-display';
-import * as m from '@/paraglide/messages.js';
 
 export type CompensationsSummaryCardsProps = {
   isLoading: boolean;
@@ -35,7 +34,7 @@ export function CompensationsSummaryCards({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            {m['compensations.summary.totalEarnings']()}
+            Total Earnings
           </CardTitle>
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
             <DollarSign className="h-4 w-4" />
@@ -47,7 +46,7 @@ export function CompensationsSummaryCards({
           </div>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
             <TrendingUp className="h-3 w-3" />
-            {m['compensations.summary.totalEarningsHint']()}
+            Cumulative show payments
           </p>
         </CardContent>
       </Card>
@@ -55,7 +54,7 @@ export function CompensationsSummaryCards({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            {m['compensations.summary.showsCompleted']()}
+            Shows Completed
           </CardTitle>
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
             <Award className="h-4 w-4" />
@@ -67,7 +66,7 @@ export function CompensationsSummaryCards({
           </div>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
-            {m['compensations.summary.showsCompletedHint']()}
+            Assigned shows in range
           </p>
         </CardContent>
       </Card>
@@ -75,7 +74,7 @@ export function CompensationsSummaryCards({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            {m['compensations.summary.pendingItems']()}
+            Pending Items
           </CardTitle>
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
             <AlertCircle className="h-4 w-4" />
@@ -87,7 +86,7 @@ export function CompensationsSummaryCards({
           </div>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
             <Info className="h-3 w-3" />
-            {m['compensations.summary.pendingItemsHint']()}
+            Awaiting verification
           </p>
         </CardContent>
       </Card>

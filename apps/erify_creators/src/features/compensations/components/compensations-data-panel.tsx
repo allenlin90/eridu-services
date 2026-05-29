@@ -12,7 +12,6 @@ import {
 } from '@eridu/ui';
 
 import { CompensationsBreakdownTable } from '@/features/compensations/components/compensations-breakdown-table';
-import * as m from '@/paraglide/messages.js';
 
 export type CompensationsDataPanelProps = {
   isLoading: boolean;
@@ -55,7 +54,7 @@ function selectBody({
     return (
       <PanelMessage
         icon={<RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />}
-        message={m['compensations.panel.loading']()}
+        message="Loading compensations data..."
       />
     );
   }
@@ -64,9 +63,9 @@ function selectBody({
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-12 text-sm text-destructive">
         <AlertTriangle className="h-8 w-8" />
-        <p>{m['compensations.panel.error']()}</p>
+        <p>Failed to load compensations data. Please try again.</p>
         <Button variant="outline" size="sm" onClick={onRetry}>
-          {m['compensations.panel.retry']()}
+          Try Again
         </Button>
       </div>
     );
@@ -80,8 +79,8 @@ function selectBody({
           ? <Calendar className="h-8 w-8 text-muted-foreground" />
           : <Info className="h-8 w-8 text-muted-foreground" />}
         message={awaitingEndDate
-          ? m['compensations.panel.selectEndDate']()
-          : m['compensations.panel.empty']()}
+          ? 'Please select an end date to view compensations.'
+          : 'No compensations found for the selected period.'}
       />
     );
   }
@@ -90,7 +89,7 @@ function selectBody({
     return (
       <PanelMessage
         icon={<Info className="h-8 w-8 text-muted-foreground" />}
-        message={m['compensations.panel.empty']()}
+        message="No compensations found for the selected period."
       />
     );
   }
@@ -102,8 +101,10 @@ export function CompensationsDataPanel(props: CompensationsDataPanelProps) {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="border-b">
-        <CardTitle className="text-base">{m['compensations.panel.title']()}</CardTitle>
-        <CardDescription>{m['compensations.panel.description']()}</CardDescription>
+        <CardTitle className="text-base">Show Compensation Breakdown</CardTitle>
+        <CardDescription>
+          Detailed listing of agreed contract rates, commissions, adjustments, and final payments.
+        </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         {selectBody(props)}

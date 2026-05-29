@@ -3,9 +3,13 @@ import Big from 'big.js';
 import type { StudioCreatorCompensationShow } from '@eridu/api-types/studio-creators';
 
 import { toDecimalDisplayString } from '@/lib/decimal-format';
-import * as m from '@/paraglide/messages.js';
 
 const EM_DASH = '—';
+
+export const UNRESOLVED_REASON_LABELS: Record<string, string> = {
+  AGREEMENT_SNAPSHOT_MISSING: 'Agreement pending',
+  COMMISSION_REVENUE_NOT_AVAILABLE: 'Revenue pending verification',
+};
 
 export function formatAmount(value: string | null) {
   return value ? `$${toDecimalDisplayString(value)}` : EM_DASH;
@@ -15,13 +19,7 @@ export function formatUnresolvedReason(value: string | null) {
   if (!value) {
     return null;
   }
-  if (value === 'AGREEMENT_SNAPSHOT_MISSING') {
-    return m['compensations.unresolvedReason.agreementPending']();
-  }
-  if (value === 'COMMISSION_REVENUE_NOT_AVAILABLE') {
-    return m['compensations.unresolvedReason.revenuePending']();
-  }
-  return value;
+  return UNRESOLVED_REASON_LABELS[value] ?? value;
 }
 
 export function formatAgreedRate(show: StudioCreatorCompensationShow) {

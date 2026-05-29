@@ -20,7 +20,6 @@ import {
   formatUnresolvedReason,
   getAdjustmentTone,
 } from '@/features/compensations/lib/compensations-display';
-import * as m from '@/paraglide/messages.js';
 
 export type CompensationsBreakdownTableProps = {
   shows: StudioCreatorCompensationShow[];
@@ -38,16 +37,16 @@ export function CompensationsBreakdownTable({ shows }: CompensationsBreakdownTab
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{m['compensations.table.showName']()}</TableHead>
-            <TableHead>{m['compensations.table.dateTime']()}</TableHead>
-            <TableHead>{m['compensations.table.type']()}</TableHead>
-            <TableHead className="text-right">{m['compensations.table.agreedRate']()}</TableHead>
-            <TableHead className="text-right">{m['compensations.table.commission']()}</TableHead>
-            <TableHead className="text-right">{m['compensations.table.baseAmount']()}</TableHead>
-            <TableHead className="text-right">{m['compensations.table.adjustments']()}</TableHead>
-            <TableHead className="text-right">{m['compensations.table.totalAmount']()}</TableHead>
-            <TableHead>{m['compensations.table.status']()}</TableHead>
-            <TableHead>{m['compensations.table.notes']()}</TableHead>
+            <TableHead>Show Name</TableHead>
+            <TableHead>Date &amp; Time</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead className="text-right">Agreed Rate</TableHead>
+            <TableHead className="text-right">Commission</TableHead>
+            <TableHead className="text-right">Base Amount</TableHead>
+            <TableHead className="text-right">Adjustments</TableHead>
+            <TableHead className="text-right">Total Amount</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Notes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -91,7 +90,7 @@ export function CompensationsBreakdownTable({ shows }: CompensationsBreakdownTab
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right font-semibold">
                   {isUnresolved
-                    ? <span className="text-muted-foreground">{m['compensations.status.unresolved']()}</span>
+                    ? <span className="text-muted-foreground">Unresolved</span>
                     : formatAmount(show.total_amount)}
                 </TableCell>
                 <TableCell>
@@ -99,7 +98,7 @@ export function CompensationsBreakdownTable({ shows }: CompensationsBreakdownTab
                     ? (
                         <div className="flex flex-col gap-0.5">
                           <Badge variant="outline" className="w-fit">
-                            {m['compensations.status.unresolved']()}
+                            Unresolved
                           </Badge>
                           {unresolvedReason
                             ? (
@@ -112,7 +111,7 @@ export function CompensationsBreakdownTable({ shows }: CompensationsBreakdownTab
                       )
                     : (
                         <Badge variant="secondary">
-                          {m['compensations.status.resolved']()}
+                          Resolved
                         </Badge>
                       )}
                 </TableCell>

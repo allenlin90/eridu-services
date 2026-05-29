@@ -3,8 +3,6 @@ import type { DateRange } from 'react-day-picker';
 
 import { Button, DatePickerWithRange } from '@eridu/ui';
 
-import * as m from '@/paraglide/messages.js';
-
 export type CompensationsToolbarProps = {
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange | undefined) => void;
@@ -32,7 +30,7 @@ export function CompensationsToolbar({
         className="h-9 w-9"
         onClick={onRefresh}
         disabled={isFetching || !isQueryEnabled}
-        aria-label={m['compensations.refresh']()}
+        aria-label="Refresh compensations"
       >
         <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
       </Button>
