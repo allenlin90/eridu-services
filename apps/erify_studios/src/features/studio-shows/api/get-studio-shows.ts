@@ -48,6 +48,7 @@ type GetStudioShowsParams = {
   show_status_name?: string;
   platform_name?: string;
   actuals_state?: 'missing' | 'complete';
+  show_uids?: string[];
 };
 
 type StudioShowsResponse = {

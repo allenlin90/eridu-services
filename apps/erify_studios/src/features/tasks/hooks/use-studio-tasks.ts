@@ -24,9 +24,10 @@ const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
 
 type UseStudioTasksProps = {
   studioId: string;
+  reviewTab?: string;
 };
 
-export function useStudioTasks({ studioId }: UseStudioTasksProps) {
+export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
   const queryClient = useQueryClient();
 
   const {
@@ -105,6 +106,7 @@ export function useStudioTasks({ studioId }: UseStudioTasksProps) {
     status,
     task_type: taskType,
     sort: 'due_date:asc',
+    review_tab: reviewTab,
   };
 
   const { data, isLoading, isFetching } = useQuery({

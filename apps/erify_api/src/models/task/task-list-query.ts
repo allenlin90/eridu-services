@@ -11,7 +11,6 @@ export const taskListInclude = {
   template: true,
   snapshot: {
     select: {
-      schema: true,
       version: true,
     },
   },
@@ -76,6 +75,7 @@ export function buildTaskListWhere(
     reference_id,
     studio_id,
     client_id,
+    review_tab,
   } = query;
 
   const where: Prisma.TaskWhereInput = {
@@ -247,6 +247,10 @@ export function buildTaskListWhere(
     });
   }
 
+  if (review_tab) {
+    applyReviewTabFilter(where, review_tab);
+  }
+
   return where;
 }
 
@@ -320,4 +324,49 @@ function appendAndFilter(
       : [where.AND]
     : [];
   where.AND = [...existingAnd, filter];
+}
+
+function applyReviewTabFilter(
+  where: Prisma.TaskWhereInput,
+  tab: string,
+): void {
+  const now = new Date();
+
+  // 1. Resolve phase based on tab prefix
+  if (tab.startsWith('pre-prod-')) {
+    where.type = 'SETUP';
+  } else if (tab.startsWith('post-prod-')) {
+    where.type = 'CLOSURE';
+  } else if (tab.startsWith('on-air-')) {
+    where.type = { in: ['ACTIVE', 'ADMIN', 'ROUTINE', 'OTHER'] };
+  }
+
+  // 2. Resolve issues/status based on tab suffix or name
+  if (tab === 'ready' || tab.endsWith('-ready')) {
+    where.status = 'REVIEW';
+    where.assigneeId = { not: null };
+  } else if (tab === 'attention' || tab.endsWith('-attention')) {
+    where.status = { notIn: ['COMPLETED', 'CLOSED'] };
+    const existingAnd = where.AND
+      ? Array.isArray(where.AND)
+        ? where.AND
+        : [where.AND]
+      : [];
+    where.AND = [
+      ...existingAnd,
+      {
+        OR: [
+          { assigneeId: null },
+          {
+            AND: [
+              { status: { not: 'REVIEW' } },
+              { dueDate: { lt: now } },
+            ],
+          },
+        ],
+      },
+    ];
+  } else if (tab === 'done' || tab.endsWith('-done')) {
+    where.status = { in: ['COMPLETED', 'CLOSED'] };
+  }
 }

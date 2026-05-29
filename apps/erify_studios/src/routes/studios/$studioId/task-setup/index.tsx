@@ -202,96 +202,9 @@ function StudioTaskSetupPage() {
     setSnapshotRefreshSignal((previous) => previous + 1);
   }, []);
 
-  return (
-    <PageLayout
-      title="Task Setup"
-      description="Generate tasks, review readiness, and assign work across studio shows."
-    >
-      <div className="space-y-4">
-        <Card>
-          <CardHeader className="gap-3">
-            <div className="space-y-1">
-              <CardTitle className="text-base">Scope</CardTitle>
-              <CardDescription>
-                This date range applies to both readiness summary and show list.
-              </CardDescription>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <DatePickerWithRange
-                  date={pickerScopeDateRange}
-                  setDate={setDraftScopeDateRange}
-                  open={isScopeDatePickerOpen}
-                  onOpenChange={handleScopeDatePickerOpenChange}
-                />
-                <Button variant="outline" size="sm" onClick={handleResetScope}>
-                  Next 7 Days
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <ShowTaskReadinessSection
-          studioId={studioId}
-          scopeDateFrom={search.date_from}
-          scopeDateTo={search.date_to}
-          refreshSignal={snapshotRefreshSignal}
-          isVisible={isReadinessSnapshotVisible}
-          needsAttention={isNeedsAttentionActive}
-          onActivateIssuesFilter={() => {
-            if (!isNeedsAttentionActive) {
-              updateSearch((previous) => ({
-                ...previous,
-                page: 1,
-                needs_attention: true,
-              }));
-            }
-          }}
-          onToggleVisibility={() => setIsReadinessSnapshotVisible((previous) => !previous)}
-        />
-
-        <StudioShowsTableSection
-          studioId={studioId}
-          scopeDateFrom={search.date_from}
-          scopeDateTo={search.date_to}
-          scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
-          needsAttention={isNeedsAttentionActive}
-          onShowsMutated={triggerSnapshotRefresh}
-          onToggleNeedsAttention={() => {
-            updateSearch((previous) => ({
-              ...previous,
-              page: 1,
-              needs_attention: isNeedsAttentionActive ? undefined : true,
-            }));
-          }}
-        />
-      </div>
-    </PageLayout>
-  );
-}
-
-function ShowTaskReadinessSection({
-  studioId,
-  scopeDateFrom,
-  scopeDateTo,
-  refreshSignal,
-  isVisible,
-  needsAttention,
-  onActivateIssuesFilter,
-  onToggleVisibility,
-}: {
-  studioId: string;
-  scopeDateFrom?: string;
-  scopeDateTo?: string;
-  refreshSignal: number;
-  isVisible: boolean;
-  needsAttention: boolean;
-  onActivateIssuesFilter: () => void;
-  onToggleVisibility: () => void;
-}) {
-  const planningDateFrom = toApiDate(scopeDateFrom);
-  const planningDateTo = toApiDate(scopeDateTo);
+  // Shift alignment and scope totals queries (lifted up for shared state)
+  const planningDateFrom = toApiDate(search.date_from);
+  const planningDateTo = toApiDate(search.date_to);
   const hasIncompletePlanningRange = !planningDateFrom || !planningDateTo;
   const hasInvalidPlanningRange = !hasIncompletePlanningRange && planningDateFrom > planningDateTo;
   const showScopeDateBounds = useMemo(
@@ -325,7 +238,7 @@ function ShowTaskReadinessSection({
     isFetching: isFetchingShowsScope,
     refetch: refetchShowsScope,
   } = useQuery({
-    queryKey: ['studio-shows', 'scope-total', studioId, showScopeDateBounds.date_from, showScopeDateBounds.date_to, refreshSignal],
+    queryKey: ['studio-shows', 'scope-total', studioId, showScopeDateBounds.date_from, showScopeDateBounds.date_to, snapshotRefreshSignal],
     queryFn: ({ signal }) =>
       getStudioShows(studioId, {
         page: 1,
@@ -334,43 +247,142 @@ function ShowTaskReadinessSection({
         date_to: showScopeDateBounds.date_to,
       }, { signal }),
     enabled: !hasIncompletePlanningRange && !hasInvalidPlanningRange,
-    // Prevent a spurious GET /studio-shows?page=1&limit=1 every time the user
-    // switches back to this tab — the scope-total counter only needs to refresh
-    // on explicit user actions (date change, task save), not on window focus.
     refetchOnWindowFocus: false,
   });
-  const prevRefreshSignal = useRef(refreshSignal);
+
+  const prevRefreshSignal = useRef(snapshotRefreshSignal);
   useEffect(() => {
-    if (prevRefreshSignal.current === refreshSignal) {
+    if (prevRefreshSignal.current === snapshotRefreshSignal) {
       return;
     }
-    prevRefreshSignal.current = refreshSignal;
+    prevRefreshSignal.current = snapshotRefreshSignal;
     if (hasIncompletePlanningRange || hasInvalidPlanningRange) {
       return;
     }
     void refetchShiftAlignment();
-    // Scope changes are already handled by the query key; only manually refetch on mutation signal.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshSignal, refetchShiftAlignment]);
+  }, [snapshotRefreshSignal, refetchShiftAlignment, hasIncompletePlanningRange, hasInvalidPlanningRange]);
 
   const isLoadingSnapshot = isLoadingShiftAlignment || isLoadingShowsScope;
   const isFetchingSnapshot = isFetchingShiftAlignment || isFetchingShowsScope;
   const showsInScopeCount = showsScopeResponse?.meta.total ?? 0;
   const taskReadinessWarnings = shiftAlignmentResponse?.task_readiness_warnings ?? [];
+  const attentionShowUids = useMemo(() => taskReadinessWarnings.map((w) => w.show_id), [taskReadinessWarnings]);
+
+  return (
+    <PageLayout
+      title="Task Setup"
+      description="Generate tasks, review readiness, and assign work across studio shows."
+    >
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="gap-3">
+            <div className="space-y-1">
+              <CardTitle className="text-base">Scope</CardTitle>
+              <CardDescription>
+                This date range applies to both readiness summary and show list.
+              </CardDescription>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <DatePickerWithRange
+                  date={pickerScopeDateRange}
+                  setDate={setDraftScopeDateRange}
+                  open={isScopeDatePickerOpen}
+                  onOpenChange={handleScopeDatePickerOpenChange}
+                />
+                <Button variant="outline" size="sm" onClick={handleResetScope}>
+                  Next 7 Days
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <ShowTaskReadinessSection
+          scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
+          showsInScopeCount={showsInScopeCount}
+          taskReadinessWarnings={taskReadinessWarnings}
+          isLoading={isLoadingSnapshot}
+          isFetching={isFetchingSnapshot}
+          isVisible={isReadinessSnapshotVisible}
+          hasIncompletePlanningRange={hasIncompletePlanningRange}
+          hasInvalidPlanningRange={hasInvalidPlanningRange}
+          needsAttention={isNeedsAttentionActive}
+          onRefresh={() => {
+            void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
+          }}
+          onActivateIssuesFilter={() => {
+            if (!isNeedsAttentionActive) {
+              updateSearch((previous) => ({
+                ...previous,
+                page: 1,
+                needs_attention: true,
+              }));
+            }
+          }}
+          onToggleVisibility={() => setIsReadinessSnapshotVisible((previous) => !previous)}
+        />
+
+        <StudioShowsTableSection
+          studioId={studioId}
+          scopeDateFrom={search.date_from}
+          scopeDateTo={search.date_to}
+          scopeLabel={formatScopeLabel(search.date_from, search.date_to)}
+          needsAttention={isNeedsAttentionActive}
+          attentionShowUids={attentionShowUids}
+          onShowsMutated={triggerSnapshotRefresh}
+          onToggleNeedsAttention={() => {
+            updateSearch((previous) => ({
+              ...previous,
+              page: 1,
+              needs_attention: isNeedsAttentionActive ? undefined : true,
+            }));
+          }}
+        />
+      </div>
+    </PageLayout>
+  );
+}
+
+function ShowTaskReadinessSection({
+  scopeLabel,
+  showsInScopeCount,
+  taskReadinessWarnings,
+  isLoading,
+  isFetching,
+  isVisible,
+  hasIncompletePlanningRange,
+  hasInvalidPlanningRange,
+  needsAttention,
+  onRefresh,
+  onActivateIssuesFilter,
+  onToggleVisibility,
+}: {
+  scopeLabel: string;
+  showsInScopeCount: number;
+  taskReadinessWarnings: any[];
+  isLoading: boolean;
+  isFetching: boolean;
+  isVisible: boolean;
+  hasIncompletePlanningRange: boolean;
+  hasInvalidPlanningRange: boolean;
+  needsAttention: boolean;
+  onRefresh: () => void;
+  onActivateIssuesFilter: () => void;
+  onToggleVisibility: () => void;
+}) {
   return (
     <ShowReadinessTriagePanel
-      scopeLabel={formatScopeLabel(planningDateFrom, planningDateTo)}
+      scopeLabel={scopeLabel}
       showsInScopeCount={showsInScopeCount}
       taskReadinessWarnings={taskReadinessWarnings}
-      isLoading={isLoadingSnapshot}
-      isFetching={isFetchingSnapshot}
+      isLoading={isLoading}
+      isFetching={isFetching}
       isVisible={isVisible}
       hasIncompletePlanningRange={hasIncompletePlanningRange}
       hasInvalidPlanningRange={hasInvalidPlanningRange}
       needsAttentionActive={needsAttention}
-      onRefresh={() => {
-        void Promise.all([refetchShiftAlignment(), refetchShowsScope()]);
-      }}
+      onRefresh={onRefresh}
       onToggleVisibility={onToggleVisibility}
       onActivateIssuesFilter={onActivateIssuesFilter}
     />
@@ -385,6 +397,7 @@ function StudioShowsTableSection({
   needsAttention,
   onShowsMutated,
   onToggleNeedsAttention,
+  attentionShowUids = [],
 }: {
   studioId: string;
   scopeDateFrom?: string;
@@ -393,6 +406,7 @@ function StudioShowsTableSection({
   needsAttention: boolean;
   onShowsMutated: () => void;
   onToggleNeedsAttention: () => void;
+  attentionShowUids?: string[];
 }) {
   const [bulkGeneratingShows, setBulkGeneratingShows] = useState<StudioShow[] | null>(null);
   const [bulkAssigningShows, setBulkAssigningShows] = useState<StudioShow[] | null>(null);
@@ -412,7 +426,7 @@ function StudioShowsTableSection({
     sorting,
     onSortingChange,
     queryParams,
-  } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo, needsAttention });
+  } = useStudioShows({ studioId, dateFrom: scopeDateFrom, dateTo: scopeDateTo, needsAttention, attentionShowUids });
 
   const actualsShow = useMemo(() => {
     if (!actualsShowId) {

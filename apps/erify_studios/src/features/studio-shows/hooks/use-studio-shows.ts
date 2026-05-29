@@ -11,6 +11,7 @@ type UseStudioShowsProps = {
   dateFrom?: string;
   dateTo?: string;
   needsAttention?: boolean;
+  attentionShowUids?: string[];
 };
 
 const TABLE_OPTIONS = {
@@ -25,7 +26,7 @@ const TABLE_OPTIONS = {
   defaultSorting: [{ id: 'start_time', desc: true }],
 };
 
-export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: UseStudioShowsProps) {
+export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention, attentionShowUids = [] }: UseStudioShowsProps) {
   const {
     pagination,
     onPaginationChange,
@@ -70,10 +71,12 @@ export function useStudioShows({ studioId, dateFrom, dateTo, needsAttention }: U
     planning_date_from: planningDateFrom,
     planning_date_to: planningDateTo,
     needs_attention: needsAttention,
+    show_uids: (needsAttention && attentionShowUids.length > 0) ? attentionShowUids : undefined,
     ...filters,
   }), [
     filters,
     needsAttention,
+    attentionShowUids,
     pagination.pageIndex,
     pagination.pageSize,
     planningDateFrom,

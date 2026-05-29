@@ -1280,17 +1280,290 @@ export class ShowOrchestrationService {
         total_count: totalCreatorsCount,
         late_count: lateCreatorsCount,
         missing_count: missingCreatorsCount,
-        exceptions: creatorExceptions,
+        exceptions: [],
       },
       platforms: {
         active_violations_count: activeViolations.length,
-        violations: activeViolations,
+        violations: [],
       },
       tasks: {
         incomplete_phase_checks_count: incompleteTasksList.length,
-        incomplete_tasks: incompleteTasksList,
+        incomplete_tasks: [],
       },
     };
+  }
+
+  async getShowRunReviewCreators(
+    studioUid: string,
+    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; status?: 'LATE' | 'MISSING' },
+  ) {
+    const studio = await this.studioService.getStudioById(studioUid);
+    const start = new Date(query.date_from);
+    const end = new Date(query.date_to);
+
+    const shows = await this.showService.getShowsForReview(studio.id, start, end);
+    const exceptions: Array<{
+      show_creator_uid: string;
+      creator_name: string;
+      show_name: string;
+      show_start_time: string;
+      status: 'LATE' | 'MISSING';
+      late_minutes: number;
+      reason: string | null;
+    }> = [];
+
+    for (const show of shows) {
+      for (const sc of show.showCreators) {
+        if (sc.attendanceMissing) {
+          exceptions.push({
+            show_creator_uid: sc.uid,
+            creator_name: sc.creator.aliasName || sc.creator.name,
+            show_name: show.name,
+            show_start_time: show.startTime.toISOString(),
+            status: 'MISSING' as const,
+            late_minutes: 0,
+            reason: sc.attendanceReason,
+          });
+        } else if (sc.actualStartTime) {
+          const actualStart = new Date(sc.actualStartTime);
+          const plannedStart = new Date(show.startTime);
+          if (actualStart > plannedStart) {
+            const diffMs = actualStart.getTime() - plannedStart.getTime();
+            const lateMinutes = Math.max(0, Math.floor(diffMs / 60000));
+            exceptions.push({
+              show_creator_uid: sc.uid,
+              creator_name: sc.creator.aliasName || sc.creator.name,
+              show_name: show.name,
+              show_start_time: show.startTime.toISOString(),
+              status: 'LATE' as const,
+              late_minutes: lateMinutes,
+              reason: sc.attendanceReason,
+            });
+          }
+        }
+      }
+    }
+
+    // Apply filters
+    let filtered = exceptions;
+    if (query.status) {
+      filtered = filtered.filter((ex) => ex.status === query.status);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (ex) =>
+          ex.creator_name.toLowerCase().includes(s)
+          || ex.show_name.toLowerCase().includes(s)
+          || (ex.reason && ex.reason.toLowerCase().includes(s)),
+      );
+    }
+
+    const total = filtered.length;
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const items = filtered.slice((page - 1) * limit, page * limit);
+
+    return { items, total };
+  }
+
+  async getShowRunReviewViolations(
+    studioUid: string,
+    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; severity?: string },
+  ) {
+    const studio = await this.studioService.getStudioById(studioUid);
+    const start = new Date(query.date_from);
+    const end = new Date(query.date_to);
+
+    const shows = await this.showService.getShowsForReview(studio.id, start, end);
+    const violations: Array<{
+      violation_uid: string;
+      platform_name: string;
+      show_name: string;
+      show_start_time: string;
+      violation_type: string;
+      severity: string;
+      reason: string;
+      observed_at: string;
+    }> = [];
+
+    for (const show of shows) {
+      for (const sp of show.showPlatforms) {
+        for (const v of sp.violations) {
+          violations.push({
+            violation_uid: v.uid,
+            platform_name: sp.platform.name,
+            show_name: show.name,
+            show_start_time: show.startTime.toISOString(),
+            violation_type: v.violationType,
+            severity: v.severity,
+            reason: v.reason,
+            observed_at: v.observedAt.toISOString(),
+          });
+        }
+      }
+    }
+
+    // Apply filters
+    let filtered = violations;
+    if (query.severity) {
+      filtered = filtered.filter((v) => v.severity === query.severity);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (v) =>
+          v.platform_name.toLowerCase().includes(s)
+          || v.show_name.toLowerCase().includes(s)
+          || v.reason.toLowerCase().includes(s)
+          || v.violation_type.toLowerCase().includes(s),
+      );
+    }
+
+    const total = filtered.length;
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const items = filtered.slice((page - 1) * limit, page * limit);
+
+    return { items, total };
+  }
+
+  async getShowRunReviewTasks(
+    studioUid: string,
+    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; status?: string },
+  ) {
+    const studio = await this.studioService.getStudioById(studioUid);
+    const start = new Date(query.date_from);
+    const end = new Date(query.date_to);
+
+    const shows = await this.showService.getShowsForReview(studio.id, start, end);
+    const incompleteTasksList: Array<{
+      task_uid: string;
+      description: string;
+      status: string;
+      type: string;
+      show_name: string;
+    }> = [];
+    const seenTaskUids = new Set<string>();
+
+    for (const show of shows) {
+      for (const target of show.taskTargets) {
+        const task = target.task;
+        if (task && task.deletedAt === null && task.status !== 'COMPLETED' && task.status !== 'CLOSED') {
+          if (!seenTaskUids.has(task.uid)) {
+            seenTaskUids.add(task.uid);
+            incompleteTasksList.push({
+              task_uid: task.uid,
+              description: task.description,
+              status: task.status,
+              type: task.type,
+              show_name: show.name,
+            });
+          }
+        }
+      }
+    }
+
+    // Apply filters
+    let filtered = incompleteTasksList;
+    if (query.status) {
+      filtered = filtered.filter((t) => t.status === query.status);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          t.description.toLowerCase().includes(s)
+          || t.show_name.toLowerCase().includes(s)
+          || t.type.toLowerCase().includes(s),
+      );
+    }
+
+    const total = filtered.length;
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const items = filtered.slice((page - 1) * limit, page * limit);
+
+    return { items, total };
+  }
+
+  async getShowRunReviewShows(
+    studioUid: string,
+    query: { date_from: string; date_to: string; page?: number; limit?: number; search?: string; completeness?: string },
+  ) {
+    const studio = await this.studioService.getStudioById(studioUid);
+    const start = new Date(query.date_from);
+    const end = new Date(query.date_to);
+
+    const shows = await this.showService.getShowsForReview(studio.id, start, end);
+    const showsData: Array<{
+      id: string;
+      shows_range: string;
+      actuals_completeness: string;
+      status: string;
+    }> = [];
+
+    let startedCount = 0;
+    let lateStartCount = 0;
+    let missingDurationMinutes = 0;
+
+    for (const show of shows) {
+      if (show.actualStartTime !== null) {
+        startedCount++;
+        const actualStart = new Date(show.actualStartTime);
+        const plannedStart = new Date(show.startTime);
+        if (actualStart > plannedStart) {
+          lateStartCount++;
+          const diffMs = actualStart.getTime() - plannedStart.getTime();
+          missingDurationMinutes += Math.max(0, Math.floor(diffMs / 60000));
+        }
+      }
+    }
+
+    if (shows.length > 0) {
+      showsData.push({
+        id: 'shows-range-summary',
+        shows_range: `Shows scheduled within range: ${shows.length} scheduled`,
+        actuals_completeness: `${startedCount} started, ${shows.length - startedCount} not started · ${lateStartCount} late (${this.formatDurationMinutes(missingDurationMinutes)} lost)`,
+        status: shows.length - startedCount === 0 ? 'ALL STARTED' : 'MISSING STARTS',
+      });
+    }
+
+    // Apply filters
+    let filtered = showsData;
+    if (query.completeness) {
+      filtered = filtered.filter((r) => r.status === query.completeness);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      filtered = filtered.filter(
+        (r) =>
+          r.shows_range.toLowerCase().includes(s)
+          || r.actuals_completeness.toLowerCase().includes(s),
+      );
+    }
+
+    const total = filtered.length;
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const items = filtered.slice((page - 1) * limit, page * limit);
+
+    return { items, total };
+  }
+
+  private formatDurationMinutes(totalMinutes: number): string {
+    if (totalMinutes <= 0) {
+      return '0m';
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours === 0) {
+      return `${minutes}m`;
+    }
+    if (minutes === 0) {
+      return `${hours}h`;
+    }
+    return `${hours}h ${minutes}m`;
   }
 
   @Transactional()

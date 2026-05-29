@@ -141,6 +141,10 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findTasks(query);
   }
 
+  async findTaskReviewStats(query: ListMyTasksQueryTransformed) {
+    return this.taskRepository.findTaskReviewStats(query);
+  }
+
   /** @internal */
   async update(...args: Parameters<TaskRepository['update']>): ReturnType<TaskRepository['update']> {
     return this.taskRepository.update(...args);

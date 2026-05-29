@@ -55,6 +55,14 @@ When investigating slow endpoints: log query count → check N+1 → check inclu
 
 Track per endpoint: DB query count, P50/P99 response time, payload size. Document in `apps/erify_api/docs/design/`.
 
+## 8. Decoupled Summaries vs. Nested Detail Lists
+
+Avoid consolidating too many actions or detail lists in a single monolithic API response. Instead, separate them into:
+1. A **lightweight summary/stats endpoint** (e.g. `GET /review-stats`, `GET /run-review`) returning high-level operational counts, percentages, and metrics.
+2. **Lazy-loaded paginated sub-resource endpoints** (e.g. `GET /run-review/creators`) queried dynamically only when the corresponding tab or detail view is activated on the frontend.
+
+This prevents fanning out deeply nested DB graphs, avoids database locking during expensive mock/alignment updates, reduces JSON payload transfer sizes by 95%+, and guarantees page load times remain constant as data scale increases.
+
 ## Related Skills
 
 - [Database Patterns](../database-patterns/SKILL.md) — Foundational query rules

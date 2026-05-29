@@ -470,31 +470,35 @@ export class TaskOrchestrationService {
 
     let effectiveQuery: StudioShowsQueryWithAttention = query;
     if (query.needs_attention) {
-      const alignmentDateFrom = query.date_from
-        ? new Date(query.date_from)
-        : this.parseLegacyPlanningDateOrThrow(query.planning_date_from, 'planning_date_from');
-      const alignmentDateTo = query.date_to
-        ? new Date(query.date_to)
-        : this.parseLegacyPlanningDateOrThrow(query.planning_date_to, 'planning_date_to');
-      const shiftAlignment = await this.shiftAlignmentService.getAlignment(studioUid, {
-        dateFrom: alignmentDateFrom,
-        dateTo: alignmentDateTo,
-        dateFromIsDateOnly: Boolean(!query.date_from && query.planning_date_from),
-        dateToIsDateOnly: Boolean(!query.date_to && query.planning_date_to),
-        includeCancelled: false,
-        includePast: true,
-        matchShowScope: true,
-      });
-      const attentionShowUids = [...new Set(shiftAlignment.task_readiness_warnings.map((warning) => warning.show_id))];
+      if (query.show_uids && query.show_uids.length > 0) {
+        effectiveQuery = query;
+      } else {
+        const alignmentDateFrom = query.date_from
+          ? new Date(query.date_from)
+          : this.parseLegacyPlanningDateOrThrow(query.planning_date_from, 'planning_date_from');
+        const alignmentDateTo = query.date_to
+          ? new Date(query.date_to)
+          : this.parseLegacyPlanningDateOrThrow(query.planning_date_to, 'planning_date_to');
+        const shiftAlignment = await this.shiftAlignmentService.getAlignment(studioUid, {
+          dateFrom: alignmentDateFrom,
+          dateTo: alignmentDateTo,
+          dateFromIsDateOnly: Boolean(!query.date_from && query.planning_date_from),
+          dateToIsDateOnly: Boolean(!query.date_to && query.planning_date_to),
+          includeCancelled: false,
+          includePast: true,
+          matchShowScope: true,
+        });
+        const attentionShowUids = [...new Set(shiftAlignment.task_readiness_warnings.map((warning) => warning.show_id))];
 
-      if (attentionShowUids.length === 0) {
-        return { data: [], total: 0 };
+        if (attentionShowUids.length === 0) {
+          return { data: [], total: 0 };
+        }
+
+        effectiveQuery = {
+          ...query,
+          show_uids: attentionShowUids,
+        };
       }
-
-      effectiveQuery = {
-        ...query,
-        show_uids: attentionShowUids,
-      };
     }
 
     const { data: shows, total } = await this.showService.findPaginatedWithTaskSummary(

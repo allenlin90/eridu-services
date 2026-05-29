@@ -399,6 +399,10 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
       .optional(),
+    show_uids: z
+      .union([z.string(), z.array(z.string())])
+      .transform((value) => (Array.isArray(value) ? value : [value]))
+      .optional(),
     sort: z.enum(['asc', 'desc']).optional().default('desc'),
   })
   .transform(transformPagination);
@@ -468,6 +472,23 @@ export const listMyTasksQuerySchema = paginationBaseSchema
       .optional(),
     studio_id: z.string().optional(),
     client_id: z.string().optional(),
+    review_tab: z
+      .enum([
+        'all',
+        'ready',
+        'attention',
+        'done',
+        'pre-prod-attention',
+        'pre-prod-ready',
+        'pre-prod-done',
+        'on-air-attention',
+        'on-air-ready',
+        'on-air-done',
+        'post-prod-attention',
+        'post-prod-ready',
+        'post-prod-done',
+      ])
+      .optional(),
   })
   .transform(transformPagination);
 
@@ -533,3 +554,24 @@ export const bulkApproveTasksResponseSchema = z.object({
 });
 
 export type BulkApproveTasksResponse = z.infer<typeof bulkApproveTasksResponseSchema>;
+
+/**
+ * Schema for Task Review Queue tab statistics
+ */
+export const taskReviewStatsSchema = z.object({
+  total: z.number().int(),
+  ready: z.number().int(),
+  attention: z.number().int(),
+  done: z.number().int(),
+  preProdAttentionCount: z.number().int(),
+  preProdReadyCount: z.number().int(),
+  preProdDoneCount: z.number().int(),
+  onAirAttentionCount: z.number().int(),
+  onAirReadyCount: z.number().int(),
+  onAirDoneCount: z.number().int(),
+  postProdAttentionCount: z.number().int(),
+  postProdReadyCount: z.number().int(),
+  postProdDoneCount: z.number().int(),
+});
+
+export type TaskReviewStats = z.infer<typeof taskReviewStatsSchema>;

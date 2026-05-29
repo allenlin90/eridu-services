@@ -113,6 +113,17 @@ const showRunReviewQuerySchema = z
 
 export class ShowRunReviewQueryDto extends createZodDto(showRunReviewQuerySchema) {}
 
+const paginatedShowRunReviewQuerySchema = showRunReviewQuerySchema.extend({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).optional().default(10),
+  search: z.string().optional(),
+  status: z.enum(['LATE', 'MISSING']).optional(),
+  severity: z.string().optional(),
+  completeness: z.string().optional(),
+});
+
+export class PaginatedShowRunReviewQueryDto extends createZodDto(paginatedShowRunReviewQuerySchema) {}
+
 export class SignOffShowRunReviewDto extends createZodDto(signOffShowRunReviewInputSchema) {}
 
 @StudioProtected() // All studio members can view
@@ -145,6 +156,50 @@ export class StudioShowController extends BaseStudioController {
     @Query() query: ShowRunReviewQueryDto,
   ) {
     return this.showOrchestrationService.getShowRunReviewSummary(studioId, query);
+  }
+
+  @Get('run-review/creators')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  async runReviewCreators(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PaginatedShowRunReviewQueryDto,
+  ) {
+    const { items, total } = await this.showOrchestrationService.getShowRunReviewCreators(studioId, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @Get('run-review/violations')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  async runReviewViolations(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PaginatedShowRunReviewQueryDto,
+  ) {
+    const { items, total } = await this.showOrchestrationService.getShowRunReviewViolations(studioId, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @Get('run-review/tasks')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  async runReviewTasks(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PaginatedShowRunReviewQueryDto,
+  ) {
+    const { items, total } = await this.showOrchestrationService.getShowRunReviewTasks(studioId, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @Get('run-review/shows')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  async runReviewShows(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PaginatedShowRunReviewQueryDto,
+  ) {
+    const { items, total } = await this.showOrchestrationService.getShowRunReviewShows(studioId, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
   @Post('run-review/sign-off')
