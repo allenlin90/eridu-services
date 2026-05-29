@@ -31,4 +31,10 @@ The readiness panel on the studio task setup page:
 
 ## Required task type baseline
 
-`SETUP` + `CLOSURE` are required for all shows. Premium shows (standard name = `'premium'`) additionally require at least one moderation task (`missing_moderation_task`). `ACTIVE` is not a readiness gate.
+Currently, the baseline required task type assignments are hardcoded:
+- **All shows**: Require `SETUP` + `CLOSURE` task types.
+- **Premium shows** (where show standard name is `'premium'`): Additionally require at least one active, loop-based task template (`missing_moderation_task`) to be generated and assigned.
+- **ACTIVE** tasks (unless loop-based) are not a readiness gate by default.
+
+### Future Configurable Settings
+Under the proposed **Studio Configuration & Settings** architecture (see [studio-config-settings.md](file:///Users/allenlin/Desktop/projects/eridu-services/docs/ideation/studio-config-settings.md)), this baseline will be configurable per-studio. Studios will be able to define exactly what task type assignments and structural check policies (like loop tasks) are required for `bau` and `premium` shows to be counted as fully complete and ready.

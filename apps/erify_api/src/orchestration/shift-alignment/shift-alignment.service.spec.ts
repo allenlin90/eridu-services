@@ -313,9 +313,9 @@ describe('shiftAlignmentService', () => {
           name: 'BAU Workflow',
           currentSchema: {
             metadata: {
-              loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }]
-            }
-          }
+              loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }],
+            },
+          },
         },
         targets: [
           { showId: BigInt(40), targetType: 'SHOW', deletedAt: null },

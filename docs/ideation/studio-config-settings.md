@@ -72,8 +72,16 @@ interface StudioSettings {
     operationalDayStartHour: number; // default: 6
   };
   readiness: {
-    // Show standards that require moderation task coverage
-    premiumShowStandards: string[]; // default: ["premium"]
+    // Configurable baseline assignment requirements per show standard (e.g., 'bau', 'premium')
+    // Tells exactly what task assignments a show needs to be counted as fully complete and ready.
+    showStandardRequirements: {
+      [standardName: string]: {
+        // Required task types that must be present and assigned (e.g., SETUP, CLOSURE)
+        requiredTaskTypes: ('SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN')[];
+        // If true, requires at least one active, loop-based (moderation) task assigned to the show
+        requireActiveLoopTask: boolean; 
+      }
+    };
     
     // Configurable matching criteria to identify moderation tasks
     moderationTaskPatterns: {
@@ -98,10 +106,16 @@ const timezone = settings.planning.timezone;
 const cutoffHour = settings.planning.operationalDayStartHour;
 // (Calculations move to centralized timezone-boundary utilities)
 
-// 2. Check if show is premium
-const isPremiumShow = settings.readiness.premiumShowStandards
-  .map(s => s.toLowerCase())
-  .includes(show.standardName.toLowerCase());
+// 2. Resolve required task types and moderation checks dynamically based on show standard.
+// This allows the studio setting to explicitly dictate what assignments a bau/premium show
+// needs in order to be counted as fully complete and ready.
+const standardName = show.standardName.toLowerCase();
+const standardConfig = settings.readiness.showStandardRequirements[standardName] 
+  || settings.readiness.showStandardRequirements['default']
+  || { requiredTaskTypes: ['SETUP', 'CLOSURE'], requireActiveLoopTask: false };
+
+const requiredTaskTypes = standardConfig.requiredTaskTypes;
+const requiresModeration = standardConfig.requireActiveLoopTask;
 
 // 3. Match moderation tasks dynamically and structurally
 const moderationPattern = new RegExp(
