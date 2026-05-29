@@ -134,4 +134,40 @@ export class AuditRepository {
       }
     }
   }
+
+  async findSignOff(
+    studioUid: string,
+    dateFrom: string,
+    dateTo: string,
+  ) {
+    const audits = await this.delegate.findMany({
+      where: {
+        action: 'SIGN_OFF',
+      },
+      include: {
+        actor: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    for (const audit of audits) {
+      const meta = audit.metadata as Record<string, any> || {};
+      if (
+        meta.studio_uid === studioUid
+        && meta.date_from === dateFrom
+        && meta.date_to === dateTo
+      ) {
+        return audit;
+      }
+    }
+
+    return null;
+  }
 }

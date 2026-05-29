@@ -1,39 +1,55 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   CalendarDays,
+  CheckCircle2,
   Clock,
   ListTodo,
   Loader2,
   MonitorX,
+  ShieldAlert,
   Users2,
   XCircle,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
   DataTable,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
   Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
 } from '@eridu/ui';
 
 import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
+import { useSignOffShowRunReview } from '@/features/shows/api/sign-off-show-run-review';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 type ShowRunSummaryProps = {
   data: ShowRunReviewSummary;
   isFetching?: boolean;
   search: ShowRunReviewSearch;
   onSearchChange: (nextSearch: Partial<ShowRunReviewSearch>) => void;
+  studioId: string;
 };
 
 type CreatorException = ShowRunReviewSummary['creators']['exceptions'][number];
@@ -300,7 +316,49 @@ const showColumns: ColumnDef<ShowsSummaryRow>[] = [
   },
 ];
 
-export function ShowRunSummary({ data, isFetching = false, search, onSearchChange }: ShowRunSummaryProps) {
+function formatDate(dateStr: string | Date): string {
+  const d = new Date(dateStr);
+  return `${d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })} ${d.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`;
+}
+
+export function ShowRunSummary({ data, isFetching = false, search, onSearchChange, studioId }: ShowRunSummaryProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [reason, setReason] = useState('');
+
+  const { role } = useStudioAccess(studioId);
+  const isManagerOrAdmin = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
+
+  const { mutate: signOff, isPending } = useSignOffShowRunReview(studioId);
+
+  const handleSignOff = () => {
+    signOff(
+      {
+        studioId,
+        data: {
+          date_from: data.date_from,
+          date_to: data.date_to,
+          reason: reason.trim() || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Operational range signed off successfully');
+          setIsDialogOpen(false);
+          setReason('');
+        },
+        onError: (err: any) => {
+          toast.error(err.response?.data?.message ?? 'Failed to sign off range');
+        },
+      },
+    );
+  };
   const activeTab = search.tab ?? 'creators';
   const setActiveTab = (tab: string) => {
     onSearchChange({
@@ -421,6 +479,193 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
           <span>Refreshing operational facts in background...</span>
         </div>
       )}
+
+      {/* Sign-Off Range Banner */}
+      {data.sign_off
+        ? (
+            <Card className="relative overflow-hidden border border-emerald-200 bg-emerald-50/30 p-5 shadow-sm transition-all dark:border-emerald-950 dark:bg-emerald-950/10">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start justify-between">
+                <div className="flex gap-3">
+                  <div className="rounded-full bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                      Operational Range Signed Off
+                    </h3>
+                    <p className="text-xs text-emerald-700/95 dark:text-emerald-400/90">
+                      Signed off by
+                      {' '}
+                      <span className="font-semibold">{data.sign_off.actor_name ?? 'Unknown Manager'}</span>
+                      {' '}
+                      on
+                      {' '}
+                      {formatDate(data.sign_off.signed_at)}
+                    </p>
+                    {data.sign_off.reason && (
+                      <div className="mt-2 text-xs border-l-2 border-emerald-300 pl-2 italic text-emerald-800 dark:text-emerald-300">
+                        &ldquo;
+                        {data.sign_off.reason}
+                        &rdquo;
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 self-end sm:self-center bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-emerald-100/50 rounded-lg p-3 text-xs text-zinc-700 dark:text-zinc-300 min-w-[200px]">
+                  <div className="font-semibold text-emerald-800 dark:text-emerald-400 border-b pb-1 mb-1">
+                    Exception Snapshot
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Late Creators:</span>
+                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.late_creators}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Missing Creators:</span>
+                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.missing_creators}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Stream Violations:</span>
+                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.platform_violations}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Incomplete Tasks:</span>
+                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.incomplete_tasks}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )
+        : (
+            <Card className="relative overflow-hidden border border-amber-200 bg-amber-50/20 p-5 shadow-sm dark:border-amber-950 dark:bg-amber-950/5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
+                <div className="flex gap-3">
+                  <div className="rounded-full bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                    <ShieldAlert className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                      Sign-Off Pending
+                    </h3>
+                    <p className="text-xs text-amber-700 dark:text-amber-400/90">
+                      This operational date range has not been signed off yet. Review exceptions before sign-off.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  {isManagerOrAdmin
+                    ? (
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button
+                              type="button"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all px-4 py-2 hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                              Sign Off Range
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[480px]">
+                            <DialogHeader>
+                              <DialogTitle className="text-lg font-bold">Sign Off Operational Range</DialogTitle>
+                              <DialogDescription className="text-xs text-muted-foreground">
+                                Confirm operational sign-off for the range:
+                                {' '}
+                                <span className="font-semibold text-foreground">{formatDate(data.date_from).split(' ')[0]}</span>
+                                {' '}
+                                to
+                                {' '}
+                                <span className="font-semibold text-foreground">{formatDate(data.date_to).split(' ')[0]}</span>
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4 py-3">
+                              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-900 border p-4 space-y-2">
+                                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Unresolved Exception Counts</h4>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                  <div className="flex justify-between border-b pb-1">
+                                    <span className="text-zinc-500">Late Creators:</span>
+                                    <span className={`font-mono font-semibold ${creatorStats.exceptions.length > 0 ? 'text-amber-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{creatorStats.exceptions.length}</span>
+                                  </div>
+                                  <div className="flex justify-between border-b pb-1">
+                                    <span className="text-zinc-500">Missing Attendance:</span>
+                                    <span className={`font-mono font-semibold ${creatorStats.missing_count > 0 ? 'text-rose-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{creatorStats.missing_count}</span>
+                                  </div>
+                                  <div className="flex justify-between border-b pb-1">
+                                    <span className="text-zinc-500">Stream Violations:</span>
+                                    <span className={`font-mono font-semibold ${platformStats.active_violations_count > 0 ? 'text-rose-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{platformStats.active_violations_count}</span>
+                                  </div>
+                                  <div className="flex justify-between border-b pb-1">
+                                    <span className="text-zinc-500">Incomplete Tasks:</span>
+                                    <span className={`font-mono font-semibold ${taskStats.incomplete_phase_checks_count > 0 ? 'text-purple-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{taskStats.incomplete_phase_checks_count}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {(creatorStats.exceptions.length > 0 || creatorStats.missing_count > 0 || platformStats.active_violations_count > 0 || taskStats.incomplete_phase_checks_count > 0) && (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-800 flex gap-2">
+                                  <ShieldAlert className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                  <div>
+                                    <span className="font-semibold">Unresolved exceptions exist.</span>
+                                    {' '}
+                                    Signing off will record and acknowledge these exceptions in the immutable range audit log.
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="space-y-1.5">
+                                <label htmlFor="reason" className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                                  Acknowledgment Reason / Operator Note
+                                </label>
+                                <Textarea
+                                  id="reason"
+                                  placeholder="Provide details about exceptions or acknowledgment notes..."
+                                  value={reason}
+                                  onChange={(e) => setReason(e.target.value)}
+                                  className="min-h-[80px]"
+                                />
+                              </div>
+                            </div>
+
+                            <DialogFooter className="gap-2 sm:gap-0">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsDialogOpen(false)}
+                                disabled={isPending}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="button"
+                                onClick={handleSignOff}
+                                disabled={isPending}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                              >
+                                {isPending
+                                  ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Signing Off...
+                                      </>
+                                    )
+                                  : (
+                                      'Confirm & Sign Off'
+                                    )}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )
+                    : (
+                        <span className="text-xs text-amber-700/80 bg-amber-50 dark:bg-amber-950/20 px-3 py-1.5 rounded-md font-medium border border-amber-200/50">
+                          Awaiting Manager Sign-Off
+                        </span>
+                      )}
+                </div>
+              </div>
+            </Card>
+          )}
 
       {/* Grid of Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
