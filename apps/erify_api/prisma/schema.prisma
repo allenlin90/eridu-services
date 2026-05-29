@@ -791,7 +791,7 @@ model ShowPlatformViolation {
 model Audit {
   id        BigInt        @id @default(autoincrement())
   uid       String        @unique
-  // "CREATE" | "UPDATE" | "DELETE" | "OVERRIDE" | "SKIPPED_LOWER_PRIORITY"
+  // "CREATE" | "UPDATE" | "DELETE" | "OVERRIDE" | "SKIPPED_LOWER_PRIORITY" | "SIGN_OFF"
   action    String        @map("action")
   // Null for engine writes (extraction pipeline); populated for manager-initiated overrides.
   actorId   BigInt?       @map("actor_id")
