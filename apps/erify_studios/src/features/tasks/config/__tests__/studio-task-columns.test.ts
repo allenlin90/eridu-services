@@ -68,6 +68,58 @@ describe('getTaskIssues', () => {
     const task = createTask({ status: 'IN_PROGRESS', due_date: null });
     expect(getTaskIssues(task)).toEqual([]);
   });
+
+  it('flags Binding Drift for a REVIEW task whose snapshot is behind the template', () => {
+    const task = createTask({
+      status: 'REVIEW',
+      has_binding_drift: true,
+      template: { id: 'tpl-1', name: 'T' },
+      snapshot: { schema: { items: [{ id: 'f1', system_fact_key: 'show_actual_start_time' }] }, version: 1 },
+      content: { f1: '2026-05-20T00:00:00Z' },
+    });
+    expect(getTaskIssues(task)).toEqual(['Binding Drift']);
+  });
+
+  it('flags No Fact Bindings for a REVIEW task whose snapshot has no bound fields', () => {
+    const task = createTask({
+      status: 'REVIEW',
+      template: { id: 'tpl-1', name: 'T' },
+      snapshot: { schema: { items: [{ id: 'f1', label: 'Field 1' }] }, version: 1 },
+      content: { f1: 'value' },
+    });
+    expect(getTaskIssues(task)).toEqual(['No Fact Bindings']);
+  });
+
+  it('flags Zero Facts for a REVIEW task with bindings but no values', () => {
+    const task = createTask({
+      status: 'REVIEW',
+      template: { id: 'tpl-1', name: 'T' },
+      snapshot: { schema: { items: [{ id: 'f1', system_fact_key: 'show_actual_start_time' }] }, version: 1 },
+      content: {},
+    });
+    expect(getTaskIssues(task)).toEqual(['Zero Facts']);
+  });
+
+  it('flags no extraction issues for a REVIEW task with bindings and values', () => {
+    const task = createTask({
+      status: 'REVIEW',
+      template: { id: 'tpl-1', name: 'T' },
+      snapshot: { schema: { items: [{ id: 'f1', system_fact_key: 'show_actual_start_time' }] }, version: 1 },
+      content: { f1: '2026-05-20T00:00:00Z' },
+    });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
+
+  it('does not run extraction checks for non-REVIEW tasks', () => {
+    const task = createTask({
+      status: 'IN_PROGRESS',
+      due_date: FUTURE,
+      template: { id: 'tpl-1', name: 'T' },
+      snapshot: { schema: { items: [] }, version: 1 },
+      content: {},
+    });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
 });
 
 describe('getTaskPhase', () => {

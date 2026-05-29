@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { STUDIO_ROLE, type StudioRole } from '@eridu/api-types/memberships';
 import {
   TASK_ACTION,
   TASK_STATUS,
@@ -188,7 +188,7 @@ export class StudioTaskController extends BaseStudioController {
         auditContext: {
           actorExtId: request.user?.ext_id,
           actorEmail: request.user?.email,
-          actorRole: request.studioMembership?.role,
+          actorRole: request.studioMembership?.role as StudioRole | undefined,
           source: 'studio',
         },
       },
@@ -230,7 +230,7 @@ export class StudioTaskController extends BaseStudioController {
         auditContext: {
           actorExtId: request.user?.ext_id,
           actorEmail: request.user?.email,
-          actorRole: request.studioMembership?.role,
+          actorRole: request.studioMembership?.role as StudioRole | undefined,
           source: 'studio',
         },
       },
@@ -256,7 +256,7 @@ export class StudioTaskController extends BaseStudioController {
       {
         actorExtId: request.user?.ext_id,
         actorEmail: request.user?.email,
-        actorRole: request.studioMembership?.role,
+        actorRole: request.studioMembership?.role as StudioRole | undefined,
         source: 'studio',
       },
     );

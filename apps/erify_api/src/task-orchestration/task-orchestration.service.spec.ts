@@ -497,16 +497,84 @@ describe('taskOrchestrationService', () => {
       });
     });
 
-    it('does not fire extraction when the task was already COMPLETED before this call', async () => {
+    it('does not fire extraction when the task was already COMPLETED and no content was updated', async () => {
       taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.COMPLETED }));
       taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
         uid: 'task_alpha',
         status: TaskStatus.COMPLETED,
       } as never);
 
-      await service.submitTaskContent('task_alpha', 1, { content: {} as never }, { mode: 'admin' });
+      await service.submitTaskContent('task_alpha', 1, { status: TaskStatus.COMPLETED as any }, { mode: 'admin' });
 
       expect(factExtractionService.extractFromTask).not.toHaveBeenCalled();
+    });
+
+    it('re-extracts with MANAGER provenance when a manager edits an already-COMPLETED task', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.COMPLETED }));
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { content: {} as never }, {
+        mode: 'admin',
+        auditContext: { actorRole: 'manager' },
+      });
+
+      expect(factExtractionService.extractFromTask).toHaveBeenCalledWith(
+        expect.objectContaining({ source: 'MANAGER' }),
+      );
+    });
+
+    it('uses MANAGER provenance for an admin-role content override', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.COMPLETED }));
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { content: {} as never }, {
+        mode: 'admin',
+        auditContext: { actorRole: 'admin' },
+      });
+
+      expect(factExtractionService.extractFromTask).toHaveBeenCalledWith(
+        expect.objectContaining({ source: 'MANAGER' }),
+      );
+    });
+
+    it('keeps OPERATOR provenance for a manager approval that does not change content', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.REVIEW }));
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { status: TaskStatus.COMPLETED as never }, {
+        mode: 'admin',
+        auditContext: { actorRole: 'manager' },
+      });
+
+      expect(factExtractionService.extractFromTask).toHaveBeenCalledWith(
+        expect.objectContaining({ source: 'OPERATOR' }),
+      );
+    });
+
+    it('keeps OPERATOR provenance when content changes but the actor is not an admin/manager', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.REVIEW }));
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { content: {} as never }, {
+        mode: 'admin',
+        auditContext: { actorRole: 'member' },
+      });
+
+      expect(factExtractionService.extractFromTask).toHaveBeenCalledWith(
+        expect.objectContaining({ source: 'OPERATOR' }),
+      );
     });
 
     it('does not fire extraction for status transitions that do not land at COMPLETED', async () => {

@@ -2,6 +2,8 @@ import { HttpException, Injectable, Logger } from '@nestjs/common';
 import type { TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
+import type { ActualsSource } from '@eridu/api-types/audits';
+import { STUDIO_ROLE, type StudioRole } from '@eridu/api-types/memberships';
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 
@@ -39,7 +41,7 @@ export type SubmitTaskContentMode = 'assignee' | 'admin';
 export type SubmitTaskAuditContext = {
   actorExtId?: string;
   actorEmail?: string;
-  actorRole?: string;
+  actorRole?: StudioRole;
   source?: 'studio' | 'me' | 'admin';
 };
 
@@ -103,9 +105,29 @@ export class TaskOrchestrationService {
     const wasNotCompleted = before.status !== TASK_STATUS.COMPLETED;
     const isNowCompleted = updated.status === TASK_STATUS.COMPLETED;
     const targetShow = before.targets?.[0]?.show;
-    if (!wasNotCompleted || !isNowCompleted || !targetShow) {
+    if (!isNowCompleted || !targetShow) {
       return updated;
     }
+
+    const contentChanged = payload.content !== undefined;
+    const shouldExtract = wasNotCompleted || (before.status === TASK_STATUS.COMPLETED && options.mode === 'admin' && contentChanged);
+
+    if (!shouldExtract) {
+      return updated;
+    }
+
+    // Provenance for the priority resolver (see `source-priority.ts`). A
+    // MANAGER write (rank 4) outranks PLATFORM (3) and OPERATOR (1) and is
+    // reserved for an actual manager *override* — i.e. an admin/manager who
+    // changed the content in this call. A plain approval (no content change,
+    // including every bulk approval) stays OPERATOR so a later PLATFORM sync
+    // can still overwrite it. `actorRole` is the studio membership role, so
+    // it must be compared against the lowercase `STUDIO_ROLE` values, not
+    // uppercased string literals.
+    const isManagerOverride = options.mode === 'admin'
+      && contentChanged
+      && (options.auditContext?.actorRole === STUDIO_ROLE.ADMIN || options.auditContext?.actorRole === STUDIO_ROLE.MANAGER);
+    const extractionSource: ActualsSource = isManagerOverride ? 'MANAGER' : 'OPERATOR';
 
     let extractionResult: any;
     let extractionError: string | undefined;
@@ -116,7 +138,7 @@ export class TaskOrchestrationService {
         studioId: before.studioId,
         showId: targetShow.id,
         showUid: targetShow.uid,
-        source: 'OPERATOR',
+        source: extractionSource,
       });
     } catch (err) {
       this.logger.error(

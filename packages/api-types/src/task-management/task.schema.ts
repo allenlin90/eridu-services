@@ -115,6 +115,9 @@ export const taskWithRelationsSchema = taskSchema.extend({
   template: z.object({
     uid: z.string(),
     name: z.string(),
+    // Denormalized current template version. The task's frozen snapshot
+    // version is compared against this to detect binding drift.
+    version: z.number().int().optional(),
   }).nullable().optional(),
   targets: z.array(z.object({
     show: z.object({
@@ -205,6 +208,14 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
     template: obj.template ? { id: obj.template.uid, name: obj.template.name } : null,
     show,
     hydration_context: hydrationContext,
+    // Binding drift: the task's frozen snapshot is older than the template's
+    // current version. `TaskTemplate.version` is bumped in lockstep with each
+    // new snapshot, so a version comparison is an exact, query-free drift
+    // signal that resolves identically for list and detail responses.
+    has_binding_drift:
+      obj.snapshot != null
+      && obj.template?.version != null
+      && obj.snapshot.version < obj.template.version,
   };
 });
 

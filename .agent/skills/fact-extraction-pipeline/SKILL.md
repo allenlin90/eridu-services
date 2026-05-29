@@ -103,6 +103,16 @@ try {
 
 **Why**: collapsing all errors as `target_stale` would silently swallow production incidents (Prisma outage, connection failure) as routine stale assignments. The outer service catch wraps unknowns as `extractor_error` so the failure stays visible. (Codex P1 #2.)
 
+## Provenance assignment at the submission boundary
+
+`ActualsSource` (the `source` the resolver compares via `canResolverOverwrite`) is decided **upstream of the engine**, in [`TaskOrchestrationService.submitTaskContent`](../../../apps/erify_api/src/task-orchestration/task-orchestration.service.ts) — NOT inside `fact-extraction.service.ts`. The engine only consumes it. Get this wrong and every downstream priority decision is wrong while every test that asserts only "extraction fired" stays green.
+
+Rules (PR 12.4.6):
+
+- **`MANAGER` (rank 4) is reserved for an actual manager *override*** — `options.mode === 'admin'` AND `payload.content !== undefined` (the actor changed content) AND the role is `STUDIO_ROLE.ADMIN`/`STUDIO_ROLE.MANAGER`. Everything else — a plain approval, and **every bulk approval** (`bulkApproveTasks` routes through `submitTaskContent` with `{ status }` only, no content) — stays `OPERATOR` (rank 1) so a later `PLATFORM` sync (rank 3) can still overwrite it. Tagging plain approvals `MANAGER` would permanently freeze actuals against platform truth.
+- **`auditContext.actorRole` is a lowercase `StudioRole`** (`'admin'`/`'manager'`, from `request.studioMembership.role`). Compare against the `STUDIO_ROLE` constants, **never** uppercase literals like `'ADMIN'` — that comparison is silently always-false and collapses every write back to `OPERATOR`. Type the field as `StudioRole`, not `string`, so the compiler catches it.
+- **Tests MUST assert the resolved `source`** (`extractFromTask` called with `expect.objectContaining({ source: 'MANAGER' })`), not merely that extraction was invoked — a "did it fire" assertion cannot catch a provenance regression.
+
 ## Persisted-JSON registry lookups
 
 Snapshots, metadata, and task content are persisted JSON cast to a TS type at read time. **The TS type is NOT load-bearing** — mixed-version / legacy / future-binary data can carry keys this binary doesn't know.
