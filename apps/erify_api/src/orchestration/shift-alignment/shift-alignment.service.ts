@@ -366,7 +366,7 @@ export class ShiftAlignmentService {
   }
 
   private isModerationTask(task: TaskWithTargets): boolean {
-    const moderationPattern = /moderation/i;
+    const moderationPattern = /moderation|moderator/i;
     return moderationPattern.test(task.description ?? '') || moderationPattern.test(task.template?.name ?? '');
   }
 
