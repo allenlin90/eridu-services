@@ -30,6 +30,67 @@
     "client": "Client",
     "studioRoom": "Studio Room"
   },
+  "compensations": {
+    "title": "My Compensations",
+    "descriptionWithStudio": "Viewing show earnings with {studio}",
+    "descriptionDefault": "Review your agreed rates and earnings across assigned shows",
+    "refresh": "Refresh compensations",
+    "summary": {
+      "totalEarnings": "Total Earnings",
+      "totalEarningsHint": "Cumulative show payments",
+      "showsCompleted": "Shows Completed",
+      "showsCompletedHint": "Assigned shows in range",
+      "pendingItems": "Pending Items",
+      "pendingItemsHint": "Awaiting verification"
+    },
+    "panel": {
+      "title": "Show Compensation Breakdown",
+      "description": "Detailed listing of agreed contract rates, commissions, adjustments, and final payments.",
+      "loading": "Loading compensations data...",
+      "error": "Failed to load compensations data. Please try again.",
+      "retry": "Try Again",
+      "selectEndDate": "Please select an end date to view compensations.",
+      "empty": "No compensations found for the selected period."
+    },
+    "table": {
+      "showName": "Show Name",
+      "dateTime": "Date & Time",
+      "type": "Type",
+      "agreedRate": "Agreed Rate",
+      "commission": "Commission",
+      "baseAmount": "Base Amount",
+      "adjustments": "Adjustments",
+      "totalAmount": "Total Amount",
+      "status": "Status",
+      "notes": "Notes"
+    },
+    "status": {
+      "unresolved": "Unresolved",
+      "resolved": "Resolved"
+    },
+    "unresolvedReason": {
+      "agreementPending": "Agreement pending",
+      "revenuePending": "Revenue pending verification"
+    }
+  },
+  "guards": {
+    "signOut": "Sign Out",
+    "unlinked": {
+      "title": "Account Unlinked",
+      "description": "Your account is not yet connected to a Creator Profile. Please contact your studio manager to link your account.",
+      "recheck": "Check Status Again"
+    },
+    "noStudio": {
+      "title": "Roster Verification Pending",
+      "description": "Your profile is not yet active on any studio rosters. Contact your studio manager to activate your studio memberships.",
+      "recheck": "Recheck Roster Status"
+    },
+    "profileError": {
+      "title": "Failed to Load Profile",
+      "description": "An error occurred while loading your creator profile information. This may be due to a transient connection failure. Please try again.",
+      "recheck": "Try Again"
+    }
+  },
   "pages": {
     "notFound": "Page Not Found",
     "error": "An error occurred",

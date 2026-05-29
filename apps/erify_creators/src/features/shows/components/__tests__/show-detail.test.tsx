@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { format } from 'date-fns';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Show } from '../../types';
@@ -104,12 +105,8 @@ describe('showDetailView', () => {
   it('renders start and end time with proper formatting', () => {
     render(<ShowDetailView show={mockShow} />);
 
-    const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-    const startTime = dateTimeFormatter.format(new Date(mockShow.start_time!));
-    const endTime = dateTimeFormatter.format(new Date(mockShow.end_time!));
+    const startTime = format(new Date(mockShow.start_time!), 'MMM d, yyyy h:mm a');
+    const endTime = format(new Date(mockShow.end_time!), 'MMM d, yyyy h:mm a');
 
     expect(screen.getByText(startTime)).toBeInTheDocument();
     expect(screen.getByText(endTime)).toBeInTheDocument();
@@ -127,11 +124,8 @@ describe('showDetailView', () => {
   it('renders created and updated dates', () => {
     render(<ShowDetailView show={mockShow} />);
 
-    const dateFormatter = new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-    });
-    const createdAt = dateFormatter.format(new Date(mockShow.created_at));
-    const updatedAt = dateFormatter.format(new Date(mockShow.updated_at));
+    const createdAt = format(new Date(mockShow.created_at), 'MMM d, yyyy');
+    const updatedAt = format(new Date(mockShow.updated_at), 'MMM d, yyyy');
 
     // Dates appear in the system information section
     expect(screen.getAllByText(createdAt).length).toBeGreaterThan(0);

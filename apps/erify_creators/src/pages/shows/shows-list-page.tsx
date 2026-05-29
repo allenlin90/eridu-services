@@ -77,9 +77,9 @@ export function ShowsListPage() {
   if (error) {
     return (
       <div className="p-4">
-        <div className="bg-red-50 border border-red-200 rounded p-4">
-          <h3 className="font-semibold text-red-800">{m['pages.error']()}</h3>
-          <p className="text-red-600 mt-1">{m['pages.failedToLoadShows']()}</p>
+        <div className="rounded border border-destructive/40 bg-destructive/10 p-4">
+          <h3 className="font-semibold text-destructive">{m['pages.error']()}</h3>
+          <p className="mt-1 text-destructive">{m['pages.failedToLoadShows']()}</p>
         </div>
       </div>
     );

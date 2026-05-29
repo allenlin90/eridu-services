@@ -18,9 +18,10 @@ export type ShowResponse = z.infer<typeof showApiResponseSchema>;
 /**
  * Fetch shows list for current user with pagination and filters
  */
-export async function getMyShows(params: ListShowsParams): Promise<ShowListResponse> {
+export async function getMyShows(params: ListShowsParams, signal?: AbortSignal): Promise<ShowListResponse> {
   const { data } = await apiClient.get<ShowListResponse>('/me/shows', {
     params,
+    signal,
   });
   return data;
 }
@@ -28,8 +29,8 @@ export async function getMyShows(params: ListShowsParams): Promise<ShowListRespo
 /**
  * Fetch single show by ID for current user
  */
-export async function getMyShow(id: string): Promise<ShowResponse> {
-  const { data } = await apiClient.get<ShowResponse>(`/me/shows/${id}`);
+export async function getMyShow(id: string, signal?: AbortSignal): Promise<ShowResponse> {
+  const { data } = await apiClient.get<ShowResponse>(`/me/shows/${id}`, { signal });
   return data;
 }
 
@@ -40,7 +41,7 @@ export async function getMyShow(id: string): Promise<ShowResponse> {
 export function useMyShows(params: ListShowsParams) {
   return useQuery({
     queryKey: queryKeys.shows.list(params),
-    queryFn: () => getMyShows(params),
+    queryFn: ({ signal }) => getMyShows(params, signal),
     placeholderData: keepPreviousData,
   });
 }
@@ -52,8 +53,8 @@ export function useMyShows(params: ListShowsParams) {
 export function useMyShow(id: string) {
   return useQuery({
     queryKey: queryKeys.shows.detail(id),
-    queryFn: async () => {
-      const response = await getMyShow(id);
+    queryFn: async ({ signal }) => {
+      const response = await getMyShow(id, signal);
       return showApiResponseToShow(response);
     },
     enabled: !!id,

@@ -5,6 +5,7 @@ import type { DateRange } from 'react-day-picker';
 import { useMyShowCompensations } from '@/features/compensations/api/compensations.api';
 import { getInitialDateRange } from '@/features/compensations/config/compensations-search-schema';
 import { useActiveStudio } from '@/lib/hooks';
+import * as m from '@/paraglide/messages.js';
 
 export function useMyCompensationsViewModel() {
   const navigate = useNavigate();
@@ -47,8 +48,8 @@ export function useMyCompensationsViewModel() {
   };
 
   const description = activeStudio
-    ? `Viewing show earnings with ${activeStudio.studio.name}`
-    : 'Review your agreed rates and earnings across assigned shows';
+    ? m['compensations.descriptionWithStudio']({ studio: activeStudio.studio.name })
+    : m['compensations.descriptionDefault']();
 
   const shows = data?.shows ?? [];
 

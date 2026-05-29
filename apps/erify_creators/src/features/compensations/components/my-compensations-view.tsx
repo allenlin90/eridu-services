@@ -4,6 +4,7 @@ import { CompensationsDataPanel } from '@/features/compensations/components/comp
 import { CompensationsSummaryCards } from '@/features/compensations/components/compensations-summary-cards';
 import { CompensationsToolbar } from '@/features/compensations/components/compensations-toolbar';
 import type { MyCompensationsViewModel } from '@/features/compensations/hooks/use-my-compensations-view-model';
+import * as m from '@/paraglide/messages.js';
 
 export function MyCompensationsView({
   description,
@@ -14,7 +15,7 @@ export function MyCompensationsView({
 }: MyCompensationsViewModel) {
   return (
     <PageContainer>
-      <PageLayout title="My Compensations" description={description}>
+      <PageLayout title={m['compensations.title']()} description={description}>
         <div className="space-y-6">
           <CompensationsToolbar {...toolbar} />
           <CompensationsSummaryCards {...summary} />

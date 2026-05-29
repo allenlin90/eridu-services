@@ -16,11 +16,13 @@ export type ListCompensationsParams = {
  */
 export async function getMyShowCompensations(
   params: ListCompensationsParams,
+  signal?: AbortSignal,
 ): Promise<StudioCreatorCompensationResponse> {
   const { data } = await apiClient.get<StudioCreatorCompensationResponse>(
     '/me/show-compensations',
     {
       params,
+      signal,
     },
   );
   return data;
@@ -33,7 +35,7 @@ export async function getMyShowCompensations(
 export function useMyShowCompensations(params: ListCompensationsParams) {
   return useQuery({
     queryKey: queryKeys.compensations.list(params),
-    queryFn: () => getMyShowCompensations(params),
+    queryFn: ({ signal }) => getMyShowCompensations(params, signal),
     enabled: !!params.studio_id && !!params.date_from && !!params.date_to,
   });
 }
