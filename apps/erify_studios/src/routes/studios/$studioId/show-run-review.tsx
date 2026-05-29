@@ -100,6 +100,7 @@ function ShowRunReviewPage() {
                     isFetching={isFetching}
                     search={search}
                     onSearchChange={updateSearch}
+                    studioId={studioId}
                   />
                 )
               : isError

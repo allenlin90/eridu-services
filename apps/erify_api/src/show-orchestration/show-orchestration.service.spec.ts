@@ -23,6 +23,8 @@ import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioService } from '@/models/studio/studio.service';
+import { AuditService } from '@/models/audit/audit.service';
+import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import type {
   CreateShowWithAssignmentsDto,
@@ -58,6 +60,8 @@ describe('showOrchestrationService', () => {
   let taskService: jest.Mocked<TaskService>;
   let taskTargetService: jest.Mocked<TaskTargetService>;
   let studioService: jest.Mocked<StudioService>;
+  let auditService: jest.Mocked<AuditService>;
+  let userService: jest.Mocked<UserService>;
 
   const mockShow: Show = {
     id: BigInt(1),
@@ -207,6 +211,20 @@ describe('showOrchestrationService', () => {
             getStudioById: jest.fn(),
           },
         },
+        {
+          provide: AuditService,
+          useValue: {
+            create: jest.fn(),
+            findSignOff: jest.fn(),
+            lockSignOffRange: jest.fn(),
+          },
+        },
+        {
+          provide: UserService,
+          useValue: {
+            getUserByExtId: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -224,6 +242,8 @@ describe('showOrchestrationService', () => {
     taskService = module.get<TaskService>(TaskService) as jest.Mocked<TaskService>;
     taskTargetService = module.get<TaskTargetService>(TaskTargetService) as jest.Mocked<TaskTargetService>;
     studioService = module.get<StudioService>(StudioService) as jest.Mocked<StudioService>;
+    auditService = module.get<AuditService>(AuditService) as jest.Mocked<AuditService>;
+    userService = module.get<UserService>(UserService) as jest.Mocked<UserService>;
   });
 
   beforeEach(() => {
@@ -1730,6 +1750,193 @@ describe('showOrchestrationService', () => {
           show_name: 'Show 1',
         })
       );
+    });
+
+    it('should attach sign-off details if sign-off exists', async () => {
+      studioService.getStudioById.mockResolvedValue(mockStudio as any);
+      showService.getShowsForReview.mockResolvedValue([]);
+      
+      const mockSignOffDate = new Date();
+      auditService.findSignOff.mockResolvedValue({
+        uid: 'audit_sign_off_123',
+        action: 'SIGN_OFF',
+        createdAt: mockSignOffDate,
+        reason: 'Everything checked',
+        actor: {
+          uid: 'usr_actor123',
+          name: 'Manager Bob',
+        },
+        metadata: {
+          unresolved_exceptions: {
+            late_creators: 1,
+            missing_creators: 0,
+            platform_violations: 2,
+            incomplete_tasks: 3,
+          },
+        },
+      } as any);
+
+      const result = await service.getShowRunReviewSummary(studioUid, {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+      });
+
+      expect(auditService.findSignOff).toHaveBeenCalledWith(
+        studioUid,
+        '2026-05-12T06:00:00.000Z',
+        '2026-05-13T05:59:59.999Z',
+      );
+      expect(result.sign_off).toEqual({
+        id: 'audit_sign_off_123',
+        actor_uid: 'usr_actor123',
+        actor_name: 'Manager Bob',
+        signed_at: mockSignOffDate.toISOString(),
+        reason: 'Everything checked',
+        unresolved_exceptions: {
+          late_creators: 1,
+          missing_creators: 0,
+          platform_violations: 2,
+          incomplete_tasks: 3,
+        },
+      });
+    });
+  });
+
+  describe('signOffShowRunReview', () => {
+    const studioUid = 'std_test123';
+    const mockStudio = { id: BigInt(1), uid: studioUid, deletedAt: null };
+    const actorExtId = 'usr_actor_ext_123';
+    const mockUser = { id: BigInt(5), uid: 'usr_actor_123', extId: actorExtId };
+
+    it('should throw NotFoundException if studio does not exist', async () => {
+      studioService.getStudioById.mockRejectedValue(HttpError.notFound('Studio', studioUid));
+
+      await expect(
+        service.signOffShowRunReview(studioUid, actorExtId, {
+          date_from: '2026-05-12T06:00:00.000Z',
+          date_to: '2026-05-13T05:59:59.999Z',
+          reason: 'Looks good',
+        }),
+      ).rejects.toThrow('Studio not found with id std_test123');
+    });
+
+    it('should throw NotFoundException if user does not exist', async () => {
+      studioService.getStudioById.mockResolvedValue(mockStudio as any);
+      auditService.findSignOff.mockResolvedValue(null);
+      userService.getUserByExtId.mockResolvedValue(null);
+
+      await expect(
+        service.signOffShowRunReview(studioUid, actorExtId, {
+          date_from: '2026-05-12T06:00:00.000Z',
+          date_to: '2026-05-13T05:59:59.999Z',
+          reason: 'Looks good',
+        }),
+      ).rejects.toThrow('User not found with id usr_actor_ext_123');
+    });
+
+    it('should throw Conflict if range is already signed off', async () => {
+      studioService.getStudioById.mockResolvedValue(mockStudio as any);
+      auditService.findSignOff.mockResolvedValue({ uid: 'existing_audit' } as any);
+
+      await expect(
+        service.signOffShowRunReview(studioUid, actorExtId, {
+          date_from: '2026-05-12T06:00:00.000Z',
+          date_to: '2026-05-13T05:59:59.999Z',
+          reason: 'Looks good',
+        }),
+      ).rejects.toThrow('This range (2026-05-12T06:00:00.000Z to 2026-05-13T05:59:59.999Z) is already signed off.');
+    });
+
+    it('should successfully capture sign-off with exception snapshots', async () => {
+      studioService.getStudioById.mockResolvedValue(mockStudio as any);
+      auditService.findSignOff.mockResolvedValue(null);
+      userService.getUserByExtId.mockResolvedValue(mockUser as any);
+      showService.getShowsForReview.mockResolvedValue([
+        {
+          id: BigInt(10),
+          uid: 'show_10',
+          name: 'Show 1',
+          startTime: new Date('2026-05-12T10:00:00.000Z'),
+          endTime: new Date('2026-05-12T12:00:00.000Z'),
+          actualStartTime: new Date('2026-05-12T10:05:00.000Z'),
+          actualEndTime: new Date('2026-05-12T12:05:00.000Z'),
+          showCreators: [
+            {
+              uid: 'sc_1',
+              attendanceMissing: false,
+              actualStartTime: new Date('2026-05-12T10:15:00.000Z'), // 1 late
+              attendanceReason: 'Traffic',
+              creator: { uid: 'creator_alice', name: 'Alice', aliasName: 'Ali' },
+            },
+          ],
+          showPlatforms: [
+            {
+              platform: { name: 'YouTube' },
+              violations: [
+                {
+                  uid: 'v_1',
+                  violationType: 'AUDIO_LAG',
+                  severity: 'HIGH',
+                  reason: 'Laggy audio',
+                  observedAt: new Date('2026-05-12T10:30:00.000Z'), // 1 violation
+                },
+              ],
+            },
+          ],
+          taskTargets: [
+            {
+              task: {
+                uid: 'task_1',
+                description: 'Pre-production sound check',
+                status: 'IN_PROGRESS', // 1 incomplete task
+                type: 'PRE_PRODUCTION',
+                deletedAt: null,
+              },
+            },
+          ],
+        },
+      ] as any);
+
+      const mockAuditResult = { uid: 'new_sign_off_audit_uid', action: 'SIGN_OFF' };
+      auditService.create.mockResolvedValue(mockAuditResult as any);
+
+      const result = await service.signOffShowRunReview(studioUid, actorExtId, {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+        reason: 'Everything checked and verified',
+      });
+
+      expect(auditService.create).toHaveBeenCalledWith({
+        action: 'SIGN_OFF',
+        actorId: mockUser.id,
+        reason: 'Everything checked and verified',
+        metadata: {
+          studio_uid: studioUid,
+          date_from: '2026-05-12T06:00:00.000Z',
+          date_to: '2026-05-13T05:59:59.999Z',
+          unresolved_exceptions: {
+            late_creators: 1,
+            missing_creators: 0,
+            platform_violations: 1,
+            incomplete_tasks: 1,
+          },
+          shows_total: 1,
+        },
+        targets: [],
+      });
+      expect(result).toEqual(mockAuditResult);
+
+      expect(auditService.lockSignOffRange).toHaveBeenCalledWith(
+        studioUid,
+        '2026-05-12T06:00:00.000Z',
+        '2026-05-13T05:59:59.999Z',
+      );
+      // The advisory lock must be acquired before the existence check and insert.
+      const lockOrder = auditService.lockSignOffRange.mock.invocationCallOrder[0];
+      const checkOrder = auditService.findSignOff.mock.invocationCallOrder[0];
+      const createOrder = auditService.create.mock.invocationCallOrder[0];
+      expect(lockOrder).toBeLessThan(checkOrder);
+      expect(lockOrder).toBeLessThan(createOrder);
     });
   });
 });

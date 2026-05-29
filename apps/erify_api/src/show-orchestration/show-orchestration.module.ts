@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { ShowOrchestrationService } from './show-orchestration.service';
 
+import { AuditModule } from '@/models/audit/audit.module';
 import { CompensationLineItemModule } from '@/models/compensation-line-item/compensation-line-item.module';
 import { CreatorModule } from '@/models/creator/creator.module';
 import { PlatformModule } from '@/models/platform/platform.module';
@@ -12,6 +13,7 @@ import { StudioModule } from '@/models/studio/studio.module';
 import { StudioCreatorModelModule } from '@/models/studio-creator/studio-creator.module';
 import { TaskModule } from '@/models/task/task.module';
 import { TaskTargetModule } from '@/models/task-target/task-target.module';
+import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
@@ -27,6 +29,8 @@ import { PrismaModule } from '@/prisma/prisma.module';
     StudioCreatorModelModule,
     TaskModule,
     TaskTargetModule,
+    AuditModule,
+    UserModule,
   ],
   providers: [ShowOrchestrationService],
   exports: [ShowOrchestrationService],

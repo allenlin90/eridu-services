@@ -70,7 +70,7 @@ Use Prisma nested writes for atomic parent + child creation. Use `@Transactional
 
 ## 9. Advisory Locks
 
-Use `pg_advisory_xact_lock` to serialize concurrent operations within a transaction. Transaction-scoped, auto-releases. Use entity primary key as lock key.
+Use `pg_advisory_xact_lock` to serialize concurrent operations within a transaction. Transaction-scoped, auto-releases. Use entity primary key as lock key. When the protected identity has no single-row PK (e.g. a date range whose identity lives in JSONB `metadata`), lock on a hashed composite key: `pg_advisory_xact_lock(hashtextextended(${key}, 0))` where `key` is the normalized identity string. This guards a check-then-insert (see `AuditRepository.lockSignOffRange`) without adding a unique constraint to a generic envelope table.
 
 ## 10. Operational Facts vs Analytical Metrics
 

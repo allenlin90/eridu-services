@@ -134,4 +134,64 @@ export class AuditRepository {
       }
     }
   }
+
+  /**
+   * Finds an existing sign-off for a studio's date range.
+   *
+   * A sign-off targets a date range rather than a DB row, so its identity lives
+   * in the JSON `metadata` envelope. The range bounds are normalized to a
+   * canonical ISO instant before matching so that equivalent-but-differently-
+   * formatted inputs (e.g. `Z` vs `+00:00`, varying precision) resolve to the
+   * same range. The predicate is pushed into the query via JSON-path filters so
+   * Postgres can scope by `studio_uid` instead of scanning every sign-off.
+   */
+  async findSignOff(studioUid: string, dateFrom: string, dateTo: string) {
+    const normalizedFrom = new Date(dateFrom).toISOString();
+    const normalizedTo = new Date(dateTo).toISOString();
+
+    return this.delegate.findFirst({
+      where: {
+        action: 'SIGN_OFF',
+        AND: [
+          { metadata: { path: ['studio_uid'], equals: studioUid } },
+          { metadata: { path: ['date_from'], equals: normalizedFrom } },
+          { metadata: { path: ['date_to'], equals: normalizedTo } },
+        ],
+      },
+      include: {
+        actor: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Serializes concurrent sign-offs for the same studio + range.
+   *
+   * `findSignOff` + `create` is a check-then-insert: under READ COMMITTED two
+   * concurrent requests can both observe no existing sign-off and both insert.
+   * The range identity lives in JSON `metadata`, so there is no row to lock and
+   * no natural unique constraint on the generic audit envelope. A transaction-
+   * scoped advisory lock keyed on the normalized range makes the second caller
+   * wait until the first commits — it then sees the row and 409s. The lock is
+   * released automatically on commit/rollback.
+   */
+  async lockSignOffRange(
+    studioUid: string,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<void> {
+    const normalizedFrom = new Date(dateFrom).toISOString();
+    const normalizedTo = new Date(dateTo).toISOString();
+    const key = `sign_off:${studioUid}:${normalizedFrom}:${normalizedTo}`;
+
+    await this.txHost.tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+  }
 }
