@@ -366,8 +366,13 @@ export class ShiftAlignmentService {
   }
 
   private isModerationTask(task: TaskWithTargets): boolean {
-    const moderationPattern = /moderation/i;
-    return moderationPattern.test(task.description ?? '') || moderationPattern.test(task.template?.name ?? '');
+    if (task.type !== 'ACTIVE') {
+      return false;
+    }
+
+    const schema = task.template?.currentSchema as { metadata?: { loops?: unknown[] } } | null;
+    const loops = schema?.metadata?.loops;
+    return Array.isArray(loops) && loops.length > 0;
   }
 
   private toOperationalDay(value: Date): string {

@@ -2,7 +2,7 @@
 import { Link, useParams } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { AlertTriangle, CheckCircle2, ChevronRight, Clock3 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Clock3, FileQuestion, UserMinus } from 'lucide-react';
 
 import { Badge, Checkbox, DataTableActions, DropdownMenuItem } from '@eridu/ui';
 
@@ -63,10 +63,7 @@ function ShowNameCell({ show }: { show: StudioShow }) {
   );
 }
 
-function NoTaskAssignedBadge({ show }: { show: StudioShow }) {
-  // Reuses the column's route-context studioId fallback so the badge renders
-  // a working deep link even when the table is hosted outside the
-  // /studios/:studioId scope (e.g. embedded dashboards).
+function NoTasksGeneratedBadge({ show }: { show: StudioShow }) {
   const { studioId: routeStudioId } = useParams({ strict: false }) as { studioId?: string };
   const actualStudioId = routeStudioId || (show.studio_id as string) || 'fallback';
 
@@ -74,15 +71,37 @@ function NoTaskAssignedBadge({ show }: { show: StudioShow }) {
     <Link
       to="/studios/$studioId/task-setup/$showId/tasks"
       params={{ studioId: actualStudioId, showId: show.id }}
-      aria-label="No task assigned — click to assign tasks"
-      title="No task is on the hook for actuals on this show. Click to assign tasks."
+      aria-label="No tasks generated — click to generate tasks"
+      title="No tasks have been generated for this show yet. Click to setup and generate tasks."
+    >
+      <Badge
+        variant="outline"
+        className="border-slate-300 bg-slate-50 text-slate-600 font-normal shadow-sm hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+      >
+        <FileQuestion className="h-3 w-3 mr-1" />
+        No Tasks Generated
+      </Badge>
+    </Link>
+  );
+}
+
+function NoTaskAssigneeBadge({ show }: { show: StudioShow }) {
+  const { studioId: routeStudioId } = useParams({ strict: false }) as { studioId?: string };
+  const actualStudioId = routeStudioId || (show.studio_id as string) || 'fallback';
+
+  return (
+    <Link
+      to="/studios/$studioId/task-setup/$showId/tasks"
+      params={{ studioId: actualStudioId, showId: show.id }}
+      aria-label="No task assignee — click to assign tasks"
+      title="Tasks are generated but no assignee is on the hook. Click to assign tasks."
     >
       <Badge
         variant="outline"
         className="border-amber-300 bg-amber-50 text-amber-800 font-normal shadow-sm hover:bg-amber-100"
       >
-        <AlertTriangle className="h-3 w-3 mr-1" />
-        No Task Assigned
+        <UserMinus className="h-3 w-3 mr-1" />
+        No Assignee
       </Badge>
     </Link>
   );
@@ -186,12 +205,13 @@ export function getStudioShowOperationsColumns({
         const show = row.original;
         const summary = show.task_summary;
 
-        // PR 12.0.5 — the BE flag is the canonical source for whether the
-        // show has an operator on the hook for actuals. Covers "no tasks at
-        // all" and "every assigned task is closed", which the old summary-
-        // only logic mis-classified as a benign "No tasks" badge.
+        // Separate status clearly: "No Tasks Generated" vs "No Assignee"
+        if (summary.total === 0) {
+          return <NoTasksGeneratedBadge show={show} />;
+        }
+
         if (!show.has_proper_task_assignment) {
-          return <NoTaskAssignedBadge show={show} />;
+          return <NoTaskAssigneeBadge show={show} />;
         }
 
         if (summary.total === summary.completed) {

@@ -21,7 +21,8 @@ Studio Shift Schedule: shift planning, duty-manager coverage, and show-task read
 2. **Per-operational-day**: continuous duty-manager coverage first-show-start → last-show-end
 
 ### Task Readiness
-Each upcoming show checked for: `has_no_tasks`, `unassigned_task_count`, `missing_required_task_types` (SETUP, CLOSURE), `missing_moderation_task` (premium only).
+Each upcoming show checked for: `has_no_tasks`, `unassigned_task_count`, `missing_required_task_types` (SETUP, CLOSURE), `missing_moderation_task` (premium shows require ≥1 active loop-based task template).
+- Under the proposed **Studio Configuration & Settings** architecture, these requirements (e.g. required types for `bau` vs `premium` shows) will be dynamically defined per studio to determine what assignments a show needs to be counted as fully complete.
 
 ### Studio Shows "Issues" Filter
 - Same datetime scope window (`date_from/date_to`) across shows table, readiness panel, and `needs_attention`
