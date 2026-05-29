@@ -2,6 +2,7 @@ import { HttpException, Injectable, Logger } from '@nestjs/common';
 import type { TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
+import type { ActualsSource } from '@eridu/api-types/audits';
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 
@@ -103,9 +104,20 @@ export class TaskOrchestrationService {
     const wasNotCompleted = before.status !== TASK_STATUS.COMPLETED;
     const isNowCompleted = updated.status === TASK_STATUS.COMPLETED;
     const targetShow = before.targets?.[0]?.show;
-    if (!wasNotCompleted || !isNowCompleted || !targetShow) {
+    if (!isNowCompleted || !targetShow) {
       return updated;
     }
+
+    const contentChanged = payload.content !== undefined;
+    const shouldExtract = wasNotCompleted || (before.status === TASK_STATUS.COMPLETED && options.mode === 'admin' && contentChanged);
+
+    if (!shouldExtract) {
+      return updated;
+    }
+
+    const extractionSource: ActualsSource = (options.mode === 'admin' && (options.auditContext?.actorRole === 'ADMIN' || options.auditContext?.actorRole === 'MANAGER'))
+      ? 'MANAGER'
+      : 'OPERATOR';
 
     let extractionResult: any;
     let extractionError: string | undefined;
@@ -116,7 +128,7 @@ export class TaskOrchestrationService {
         studioId: before.studioId,
         showId: targetShow.id,
         showUid: targetShow.uid,
-        source: 'OPERATOR',
+        source: extractionSource,
       });
     } catch (err) {
       this.logger.error(

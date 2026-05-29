@@ -74,8 +74,24 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findByUidWithRelations(...args);
   }
 
-  async findByUidWithRelationsAdmin(...args: Parameters<TaskRepository['findByUidWithRelationsAdmin']>): ReturnType<TaskRepository['findByUidWithRelationsAdmin']> {
-    return this.taskRepository.findByUidWithRelationsAdmin(...args);
+  async findByUidWithRelationsAdmin(uid: string) {
+    const task = await this.taskRepository.findByUidWithRelationsAdmin(uid);
+    if (!task) {
+      return null;
+    }
+
+    let hasBindingDrift = false;
+    if (task.templateId) {
+      const latestSnapshot = await this.taskRepository.findLatestTemplateSnapshot(task.templateId);
+      if (latestSnapshot && task.snapshotId !== latestSnapshot.id) {
+        hasBindingDrift = true;
+      }
+    }
+
+    return {
+      ...task,
+      hasBindingDrift,
+    };
   }
 
   /** @internal */

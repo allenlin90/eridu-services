@@ -497,7 +497,19 @@ describe('taskOrchestrationService', () => {
       });
     });
 
-    it('does not fire extraction when the task was already COMPLETED before this call', async () => {
+    it('does not fire extraction when the task was already COMPLETED and no content was updated', async () => {
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.COMPLETED }));
+      taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+      } as never);
+
+      await service.submitTaskContent('task_alpha', 1, { status: TaskStatus.COMPLETED as any }, { mode: 'admin' });
+
+      expect(factExtractionService.extractFromTask).not.toHaveBeenCalled();
+    });
+
+    it('fires extraction when the task was already COMPLETED and content is updated by admin/manager', async () => {
       taskService.findByUidWithSnapshot.mockResolvedValue(buildShowTargetedTask({ status: TaskStatus.COMPLETED }));
       taskService.updateTaskContentAndStatusAsAdmin.mockResolvedValue({
         uid: 'task_alpha',
@@ -506,7 +518,7 @@ describe('taskOrchestrationService', () => {
 
       await service.submitTaskContent('task_alpha', 1, { content: {} as never }, { mode: 'admin' });
 
-      expect(factExtractionService.extractFromTask).not.toHaveBeenCalled();
+      expect(factExtractionService.extractFromTask).toHaveBeenCalled();
     });
 
     it('does not fire extraction for status transitions that do not land at COMPLETED', async () => {
