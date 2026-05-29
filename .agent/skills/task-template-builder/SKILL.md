@@ -33,6 +33,12 @@ Not yet implemented in builder (React-only state). Pattern established in task e
 ### 5. Payload Transformation
 Keep `fld_...` IDs, nest as `{ schema: { items: [...] } }`, filter empty options.
 
+🔴 **Engine-aware round-tripping (clone / duplicate / derive).** Any helper that rebuilds a `schema` payload from an existing template (clone, duplicate, "save as", import) MUST be schema-engine aware. The backend `safeParseTemplateSchema` selects the v1 vs v2 validator solely from the top-level `schema_engine` marker — there is no inference from item shape. Two failure modes:
+- **Dropping engine metadata** (`schema_engine`, `schema_version`, `content_key_strategy`, `report_projection_strategy`) silently downgrades a v2 template to the v1 validator, which then rejects v2-only keys like `shared_field_key` / `system_fact_key` with `unrecognized_keys` → HTTP 400 `Invalid template schema`.
+- **Wrong field IDs**: v2 field `id`s must match `TASK_TEMPLATE_FIELD_ID_PATTERN` (`fld_…`). Regenerate v2 IDs with `createTaskTemplateFieldId()`, NOT `crypto.randomUUID()` (the v1 format). Use `getSchemaEngine(schema)` to branch.
+
+When the schema gains a new top-level engine field, audit every transform helper (grep for `current_schema` / `schema.items`) so the new field is preserved, not silently stripped.
+
 ### 6. Shared Fields (Studio Settings)
 - Source: `GET /studios/:studioId/settings/shared-fields`
 - `shared_field_key` links to canonical shared key; type locked, label/description editable
@@ -52,6 +58,7 @@ Keep `fld_...` IDs, nest as `{ schema: { items: [...] } }`, filter empty options
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
 - [ ] `@dnd-kit` items have stable `fld_...` ids
 - [ ] Payload transformed before API submission (empty options filtered)
+- [ ] Clone/duplicate/derive helpers are engine-aware: preserve `schema_engine` + version markers and regenerate v2 IDs with `createTaskTemplateFieldId()`
 - [ ] `require_reason` operators match field type
 - [ ] Shared-field insertions use `shared_field_key` with locked type
 - [ ] System-fact insertions use `system_fact_key` with the shared catalog's compatible field type and do not duplicate a fact key in the same template
