@@ -32,7 +32,9 @@ BEGIN;
 -- field's current type) must equal the catalog's required type for p_key, or the
 -- migration aborts. Source of truth for the catalog:
 --   packages/api-types/src/task-management/template-definition.schema.ts
---   (SYSTEM_FACT_KEY_DEFINITIONS) — keep the map below in sync.
+--   (SYSTEM_FACT_KEY_DEFINITIONS). The key->required_type CASE below duplicates it;
+--   check-fact-key-sync.mjs (run by the shell runner before applying) fails the
+--   migration if the two drift, so this map cannot silently fall out of sync.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION bind_template_fact(
   p_uid      TEXT,

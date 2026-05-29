@@ -54,10 +54,15 @@ done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQL_FILE="$SCRIPT_DIR/bind-template-system-facts.sql"
+SYNC_CHECK="$SCRIPT_DIR/check-fact-key-sync.mjs"
 # Resolve repo root regardless of where this script lives in the tree.
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null \
   || (cd "$SCRIPT_DIR/../../../.." && pwd))"
 cd "$REPO_ROOT"
+
+# Hard gate: the SQL type-guard map must match the fact-key catalog.
+SCHEMA_FILE="$REPO_ROOT/packages/api-types/src/task-management/template-definition.schema.ts"
+node "$SYNC_CHECK" "$SCHEMA_FILE" "$SQL_FILE"
 
 if [[ -f ".env" ]];               then set -a; source ".env";               set +a; fi
 if [[ -f "apps/erify_api/.env" ]]; then set -a; source "apps/erify_api/.env"; set +a; fi

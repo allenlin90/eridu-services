@@ -122,9 +122,12 @@ SELECT bind_template_fact(
     "validation":{"require_reason":"on-true"},"options":null}'::jsonb);
 ```
 
-The helper's embedded `key → required_type` map (kept in sync with the catalog) aborts
-the migration with a clear error if the resulting field type doesn't match the key — so
-a wrong-type binding fails at migration time, not silently at extraction time.
+The helper's embedded `key → required_type` map aborts the migration with a clear error
+if the resulting field type doesn't match the key — so a wrong-type binding fails at
+migration time, not silently at extraction time. That map duplicates the catalog;
+[`scripts/check-fact-key-sync.mjs`](./scripts/check-fact-key-sync.mjs) (run by the shell
+runner before applying) fails the migration if the SQL map drifts from
+`SYSTEM_FACT_KEY_DEFINITIONS`, so it cannot silently fall out of sync.
 
 **All calls run inside a single `BEGIN; … COMMIT;`** (the helper is created and dropped
 within that transaction) — all succeed or none commit.
