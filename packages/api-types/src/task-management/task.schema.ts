@@ -144,6 +144,7 @@ export const taskWithRelationsSchema = taskSchema.extend({
       })).optional(),
     }).nullable(),
   })).optional(),
+  hasBindingDrift: z.boolean().optional(),
 });
 
 /**
@@ -205,6 +206,7 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
     template: obj.template ? { id: obj.template.uid, name: obj.template.name } : null,
     show,
     hydration_context: hydrationContext,
+    has_binding_drift: obj.hasBindingDrift ?? false,
   };
 });
 
