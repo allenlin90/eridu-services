@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 
-import { getStudioTasks, studioTasksKeys } from '@/features/tasks/api/get-studio-tasks';
-import { getTaskIssues, getTaskPhase } from '@/features/tasks/config/studio-task-columns';
+import { getStudioTasksReviewStats, studioTasksKeys } from '@/features/tasks/api/get-studio-tasks';
 import { isCurrentOperationalDay, OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS, operationalWindowToDayRange } from '@/lib/operational-day-range';
 
 type UseTaskReviewSummaryProps = {
@@ -11,31 +10,8 @@ type UseTaskReviewSummaryProps = {
   dateRange: DateRange | undefined;
 };
 
-// Cap concurrent page fetches so studios with many review tasks don't fan out
-// hundreds of simultaneous requests across the dated + undated queries.
-const PAGE_FETCH_CONCURRENCY = 5;
-
-async function fetchPagesWithConcurrency<T>(
-  pageNumbers: number[],
-  fetchPage: (page: number) => Promise<T>,
-  concurrency: number,
-): Promise<T[]> {
-  const results: T[] = Array.from({ length: pageNumbers.length });
-  let cursor = 0;
-  const workers = Array.from({ length: Math.min(concurrency, pageNumbers.length) }, async () => {
-    while (true) {
-      const index = cursor++;
-      if (index >= pageNumbers.length)
-        return;
-      results[index] = await fetchPage(pageNumbers[index]);
-    }
-  });
-  await Promise.all(workers);
-  return results;
-}
-
 export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSummaryProps) {
-  // Compute effective date range for fetching ALL Review-status tasks in parallel
+  // Compute effective date range for fetching review stats
   const effectiveRange = useMemo(
     () => operationalWindowToDayRange(dateRange),
     [dateRange],
@@ -45,7 +21,6 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
   const summaryParams = useMemo(() => ({
     due_date_from: effectiveRange.windowStart.toISOString(),
     due_date_to: effectiveRange.windowEnd.toISOString(),
-    limit: 100,
   }), [effectiveRange]);
 
   const isViewingCurrentOperationalDay = useMemo(
@@ -53,75 +28,9 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
     [effectiveRange],
   );
 
-  const { data: summaryData, isFetching } = useQuery({
-    queryKey: studioTasksKeys.list(studioId, summaryParams),
-    queryFn: async ({ signal }) => {
-      // 1. Fetch dated tasks in parallel batches
-      const fetchDated = async () => {
-        const firstPage = await getStudioTasks(studioId, { ...summaryParams, page: 1 }, { signal });
-        const totalPages = firstPage.meta?.totalPages || 1;
-
-        if (totalPages <= 1) {
-          return firstPage.data;
-        }
-
-        const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
-        const otherPages = await fetchPagesWithConcurrency(
-          remainingPages,
-          (page) => getStudioTasks(studioId, { ...summaryParams, page }, { signal }),
-          PAGE_FETCH_CONCURRENCY,
-        );
-        return [
-          ...firstPage.data,
-          ...otherPages.flatMap((page) => page.data),
-        ];
-      };
-
-      // 2. Fetch undated tasks in parallel batches to capture tasks with due_date = null
-      const fetchUndated = async () => {
-        const undatedParams = {
-          has_due_date: false,
-          show_start_from: effectiveRange.windowStart.toISOString(),
-          show_start_to: effectiveRange.windowEnd.toISOString(),
-          limit: 100,
-        };
-        const firstPage = await getStudioTasks(studioId, { ...undatedParams, page: 1 }, { signal });
-        const totalPages = firstPage.meta?.totalPages || 1;
-
-        if (totalPages <= 1) {
-          return firstPage.data;
-        }
-
-        const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
-        const otherPages = await fetchPagesWithConcurrency(
-          remainingPages,
-          (page) => getStudioTasks(studioId, { ...undatedParams, page }, { signal }),
-          PAGE_FETCH_CONCURRENCY,
-        );
-        return [
-          ...firstPage.data,
-          ...otherPages.flatMap((page) => page.data),
-        ];
-      };
-
-      // Concurrently query both subsets and merge results
-      const [datedData, undatedData] = await Promise.all([
-        fetchDated(),
-        fetchUndated(),
-      ]);
-
-      const allData = [...datedData, ...undatedData];
-
-      return {
-        data: allData,
-        meta: {
-          total: allData.length,
-          limit: allData.length,
-          totalPages: 1,
-          page: 1,
-        },
-      };
-    },
+  const { data: stats, isFetching } = useQuery({
+    queryKey: studioTasksKeys.stats(studioId, summaryParams),
+    queryFn: ({ signal }) => getStudioTasksReviewStats(studioId, summaryParams, { signal }),
     enabled: !!studioId,
     refetchInterval: isViewingCurrentOperationalDay
       ? OPERATIONAL_DAY_CURRENT_REFETCH_INTERVAL_MS
@@ -129,71 +38,24 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
     refetchIntervalInBackground: false,
   });
 
-  // Group and compute statistics dynamically
-  const stats = useMemo(() => {
-    const allReviewTasks = summaryData?.data || [];
-    let ready = 0;
-    let attention = 0;
-    let done = 0;
-    const preProdAttention: string[] = [];
-    const preProdReady: string[] = [];
-    const preProdDone: string[] = [];
-    const onAirAttention: string[] = [];
-    const onAirReady: string[] = [];
-    const onAirDone: string[] = [];
-    const postProdAttention: string[] = [];
-    const postProdReady: string[] = [];
-    const postProdDone: string[] = [];
-
-    allReviewTasks.forEach((task) => {
-      const issues = getTaskIssues(task);
-      const hasIssues = issues.length > 0;
-      const phase = getTaskPhase(task.type);
-
-      if (['COMPLETED', 'CLOSED'].includes(task.status)) {
-        done++;
-        if (phase === 'pre-production')
-          preProdDone.push(task.id);
-        else if (phase === 'post-production')
-          postProdDone.push(task.id);
-        else onAirDone.push(task.id);
-      } else if (task.status === 'REVIEW' && !hasIssues) {
-        ready++;
-        if (phase === 'pre-production')
-          preProdReady.push(task.id);
-        else if (phase === 'post-production')
-          postProdReady.push(task.id);
-        else onAirReady.push(task.id);
-      } else if (hasIssues) {
-        attention++;
-        if (phase === 'pre-production')
-          preProdAttention.push(task.id);
-        else if (phase === 'post-production')
-          postProdAttention.push(task.id);
-        else onAirAttention.push(task.id);
-      }
-    });
-
-    return {
-      total: allReviewTasks.length,
-      ready,
-      attention,
-      done,
-      preProdAttentionCount: preProdAttention.length,
-      preProdReadyCount: preProdReady.length,
-      preProdDoneCount: preProdDone.length,
-      onAirAttentionCount: onAirAttention.length,
-      onAirReadyCount: onAirReady.length,
-      onAirDoneCount: onAirDone.length,
-      postProdAttentionCount: postProdAttention.length,
-      postProdReadyCount: postProdReady.length,
-      postProdDoneCount: postProdDone.length,
-    };
-  }, [summaryData]);
+  const defaultStats = useMemo(() => ({
+    total: 0,
+    ready: 0,
+    attention: 0,
+    done: 0,
+    preProdAttentionCount: 0,
+    preProdReadyCount: 0,
+    preProdDoneCount: 0,
+    onAirAttentionCount: 0,
+    onAirReadyCount: 0,
+    onAirDoneCount: 0,
+    postProdAttentionCount: 0,
+    postProdReadyCount: 0,
+    postProdDoneCount: 0,
+  }), []);
 
   return {
-    summaryData,
-    stats,
+    stats: stats || defaultStats,
     isFetching,
     isViewingCurrentOperationalDay,
   };

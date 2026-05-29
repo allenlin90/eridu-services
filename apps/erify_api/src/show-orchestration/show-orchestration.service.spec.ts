@@ -1709,8 +1709,22 @@ describe('showOrchestrationService', () => {
       expect(result.creators.total_count).toBe(2);
       expect(result.creators.late_count).toBe(1);
       expect(result.creators.missing_count).toBe(1);
-      expect(result.creators.exceptions).toHaveLength(2);
-      expect(result.creators.exceptions).toContainEqual(
+      expect(result.creators.exceptions).toHaveLength(0);
+
+      expect(result.platforms.active_violations_count).toBe(1);
+      expect(result.platforms.violations).toHaveLength(0);
+
+      expect(result.tasks.incomplete_phase_checks_count).toBe(1);
+      expect(result.tasks.incomplete_tasks).toHaveLength(0);
+
+      // Verify the new paginated sub-resource helper methods
+      const creatorsRes = await service.getShowRunReviewCreators(studioUid, {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+      });
+      expect(creatorsRes.total).toBe(2);
+      expect(creatorsRes.items).toHaveLength(2);
+      expect(creatorsRes.items).toContainEqual(
         expect.objectContaining({
           show_creator_uid: 'sc_1',
           creator_name: 'Ali',
@@ -1719,7 +1733,7 @@ describe('showOrchestrationService', () => {
           reason: 'Traffic',
         })
       );
-      expect(result.creators.exceptions).toContainEqual(
+      expect(creatorsRes.items).toContainEqual(
         expect.objectContaining({
           show_creator_uid: 'sc_2',
           creator_name: 'Bob',
@@ -1729,8 +1743,13 @@ describe('showOrchestrationService', () => {
         })
       );
 
-      expect(result.platforms.active_violations_count).toBe(1);
-      expect(result.platforms.violations[0]).toEqual(
+      const violationsRes = await service.getShowRunReviewViolations(studioUid, {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+      });
+      expect(violationsRes.total).toBe(1);
+      expect(violationsRes.items).toHaveLength(1);
+      expect(violationsRes.items[0]).toEqual(
         expect.objectContaining({
           violation_uid: 'v_1',
           platform_name: 'YouTube',
@@ -1740,14 +1759,32 @@ describe('showOrchestrationService', () => {
         })
       );
 
-      expect(result.tasks.incomplete_phase_checks_count).toBe(1);
-      expect(result.tasks.incomplete_tasks[0]).toEqual(
+      const tasksRes = await service.getShowRunReviewTasks(studioUid, {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+      });
+      expect(tasksRes.total).toBe(1);
+      expect(tasksRes.items).toHaveLength(1);
+      expect(tasksRes.items[0]).toEqual(
         expect.objectContaining({
           task_uid: 'task_1',
           description: 'Pre-production sound check',
           status: 'IN_PROGRESS',
           type: 'PRE_PRODUCTION',
           show_name: 'Show 1',
+        })
+      );
+
+      const showsRes = await service.getShowRunReviewShows(studioUid, {
+        date_from: '2026-05-12T06:00:00.000Z',
+        date_to: '2026-05-13T05:59:59.999Z',
+      });
+      expect(showsRes.total).toBe(1);
+      expect(showsRes.items).toHaveLength(1);
+      expect(showsRes.items[0]).toEqual(
+        expect.objectContaining({
+          id: 'shows-range-summary',
+          status: 'MISSING STARTS',
         })
       );
     });

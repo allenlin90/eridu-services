@@ -10,7 +10,7 @@ import {
   Users2,
   XCircle,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
   DataTable,
+  DataTablePagination,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -42,6 +43,12 @@ import {
 
 import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
 import { getShowRunReviewErrorMessage } from '@/features/show-run-review/lib/get-show-run-review-error-message';
+import {
+  useShowRunReviewCreatorsQuery,
+  useShowRunReviewShowsQuery,
+  useShowRunReviewTasksQuery,
+  useShowRunReviewViolationsQuery,
+} from '@/features/shows/api/get-show-run-review-paginated';
 import { useSignOffShowRunReview } from '@/features/shows/api/sign-off-show-run-review';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -371,12 +378,16 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
       // Clear filters of other tabs to keep URL clean on tab changes
       creators_search: undefined,
       creators_status: undefined,
+      creators_page: undefined,
       violations_search: undefined,
       violations_severity: undefined,
+      violations_page: undefined,
       tasks_search: undefined,
       tasks_status: undefined,
+      tasks_page: undefined,
       shows_search: undefined,
       shows_completeness: undefined,
+      shows_page: undefined,
     });
   };
 
@@ -389,91 +400,104 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
     ? Math.round((showStats.started_count / showStats.total_count) * 100)
     : 0;
 
-  // Local filtered datasets mapped to URL search query parameters
-  const filteredCreators = useMemo(() => {
-    let list = creatorStats.exceptions;
-    const query = search.creators_search?.toLowerCase();
-    if (query) {
-      list = list.filter(
-        (ex) =>
-          ex.creator_name.toLowerCase().includes(query)
-          || ex.show_name.toLowerCase().includes(query)
-          || ex.reason?.toLowerCase().includes(query),
-      );
-    }
-    const status = search.creators_status;
-    if (status) {
-      list = list.filter((ex) => ex.status === status);
-    }
-    return list;
-  }, [creatorStats.exceptions, search.creators_search, search.creators_status]);
+  // React Query lazy loaded sub-resources
+  const creatorsQuery = useShowRunReviewCreatorsQuery(
+    studioId,
+    {
+      date_from: data.date_from,
+      date_to: data.date_to,
+      page: search.creators_page ?? 1,
+      limit: 10,
+      search: search.creators_search,
+      status: search.creators_status,
+    },
+    activeTab === 'creators',
+  );
 
-  const filteredViolations = useMemo(() => {
-    let list = platformStats.violations;
-    const query = search.violations_search?.toLowerCase();
-    if (query) {
-      list = list.filter(
-        (violation) =>
-          violation.platform_name.toLowerCase().includes(query)
-          || violation.show_name.toLowerCase().includes(query)
-          || violation.reason.toLowerCase().includes(query)
-          || violation.violation_type.toLowerCase().includes(query),
-      );
-    }
-    const severity = search.violations_severity;
-    if (severity) {
-      list = list.filter((v) => v.severity === severity);
-    }
-    return list;
-  }, [platformStats.violations, search.violations_search, search.violations_severity]);
+  const violationsQuery = useShowRunReviewViolationsQuery(
+    studioId,
+    {
+      date_from: data.date_from,
+      date_to: data.date_to,
+      page: search.violations_page ?? 1,
+      limit: 10,
+      search: search.violations_search,
+      severity: search.violations_severity,
+    },
+    activeTab === 'violations',
+  );
 
-  const filteredTasks = useMemo(() => {
-    let list = taskStats.incomplete_tasks;
-    const query = search.tasks_search?.toLowerCase();
-    if (query) {
-      list = list.filter(
-        (task) =>
-          task.description.toLowerCase().includes(query)
-          || task.show_name.toLowerCase().includes(query)
-          || task.type.toLowerCase().includes(query),
-      );
-    }
-    const status = search.tasks_status;
-    if (status) {
-      list = list.filter((t) => t.status === status);
-    }
-    return list;
-  }, [taskStats.incomplete_tasks, search.tasks_search, search.tasks_status]);
+  const tasksQuery = useShowRunReviewTasksQuery(
+    studioId,
+    {
+      date_from: data.date_from,
+      date_to: data.date_to,
+      page: search.tasks_page ?? 1,
+      limit: 10,
+      search: search.tasks_search,
+      status: search.tasks_status,
+    },
+    activeTab === 'tasks',
+  );
 
-  const showsData = useMemo(() => {
-    if (showStats.total_count === 0)
-      return [];
-    return [
-      {
-        id: 'shows-range-summary',
-        shows_range: `Shows scheduled within range: ${showStats.total_count} scheduled`,
-        actuals_completeness: `${showStats.started_count} started, ${showStats.not_started_count} not started · ${showStats.late_start_count} late (${formatDurationMinutes(showStats.missing_duration_minutes)} lost)`,
-        status: showStats.not_started_count === 0 ? 'ALL STARTED' : 'MISSING STARTS',
-      },
-    ];
-  }, [showStats]);
+  const showsQuery = useShowRunReviewShowsQuery(
+    studioId,
+    {
+      date_from: data.date_from,
+      date_to: data.date_to,
+      page: search.shows_page ?? 1,
+      limit: 10,
+      search: search.shows_search,
+      completeness: search.shows_completeness,
+    },
+    activeTab === 'shows',
+  );
 
-  const filteredShows = useMemo(() => {
-    let list = showsData;
-    const query = search.shows_search?.toLowerCase();
-    if (query) {
-      list = list.filter(
-        (row) =>
-          row.shows_range.toLowerCase().includes(query)
-          || row.actuals_completeness.toLowerCase().includes(query),
-      );
-    }
-    const completeness = search.shows_completeness;
-    if (completeness) {
-      list = list.filter((r) => r.status === completeness);
-    }
-    return list;
-  }, [showsData, search.shows_search, search.shows_completeness]);
+  // Pagination Change Handlers
+  const createPaginationChangeHandler = (tab: 'creators' | 'violations' | 'tasks' | 'shows') => {
+    const pageKey = `${tab}_page` as const;
+    return (updater: any) => {
+      const currentPage = search[pageKey] ?? 1;
+      const nextVal = typeof updater === 'function'
+        ? updater({ pageIndex: currentPage - 1, pageSize: 10 })
+        : updater;
+      onSearchChange({ [pageKey]: nextVal.pageIndex + 1 });
+    };
+  };
+
+  const creatorsPaginationChange = createPaginationChangeHandler('creators');
+  const violationsPaginationChange = createPaginationChangeHandler('violations');
+  const tasksPaginationChange = createPaginationChangeHandler('tasks');
+  const showsPaginationChange = createPaginationChangeHandler('shows');
+
+  // Search/Filter Reset Helpers (resets page back to 1)
+  const onCreatorsSearchChange = (val: string | undefined) => {
+    onSearchChange({ creators_search: val, creators_page: 1 });
+  };
+  const onCreatorsStatusChange = (val: string | undefined) => {
+    onSearchChange({ creators_status: val as any, creators_page: 1 });
+  };
+
+  const onViolationsSearchChange = (val: string | undefined) => {
+    onSearchChange({ violations_search: val, violations_page: 1 });
+  };
+  const onViolationsSeverityChange = (val: string | undefined) => {
+    onSearchChange({ violations_severity: val, violations_page: 1 });
+  };
+
+  const onTasksSearchChange = (val: string | undefined) => {
+    onSearchChange({ tasks_search: val, tasks_page: 1 });
+  };
+  const onTasksStatusChange = (val: string | undefined) => {
+    onSearchChange({ tasks_status: val, tasks_page: 1 });
+  };
+
+  const onShowsSearchChange = (val: string | undefined) => {
+    onSearchChange({ shows_search: val, shows_page: 1 });
+  };
+  const onShowsCompletenessChange = (val: string | undefined) => {
+    onSearchChange({ shows_completeness: val, shows_page: 1 });
+  };
 
   return (
     <div className="space-y-6 min-w-0 w-full overflow-hidden">
@@ -590,7 +614,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                                 <div className="grid grid-cols-2 gap-3 text-sm">
                                   <div className="flex justify-between border-b pb-1">
                                     <span className="text-zinc-500">Late Creators:</span>
-                                    <span className={`font-mono font-semibold ${creatorStats.exceptions.length > 0 ? 'text-amber-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{creatorStats.exceptions.length}</span>
+                                    <span className={`font-mono font-semibold ${creatorStats.late_count > 0 ? 'text-amber-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{creatorStats.late_count}</span>
                                   </div>
                                   <div className="flex justify-between border-b pb-1">
                                     <span className="text-zinc-500">Missing Attendance:</span>
@@ -607,7 +631,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                                 </div>
                               </div>
 
-                              {(creatorStats.exceptions.length > 0 || creatorStats.missing_count > 0 || platformStats.active_violations_count > 0 || taskStats.incomplete_phase_checks_count > 0) && (
+                              {(creatorStats.late_count > 0 || creatorStats.missing_count > 0 || platformStats.active_violations_count > 0 || taskStats.incomplete_phase_checks_count > 0) && (
                                 <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-800 flex gap-2">
                                   <ShieldAlert className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                                   <div>
@@ -744,7 +768,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
               <Users2 className="h-4 w-4 text-amber-500" />
             </div>
             <CardTitle className="text-2xl font-bold">
-              {creatorStats.exceptions.length}
+              {creatorStats.late_count + creatorStats.missing_count}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
@@ -845,7 +869,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                 activeTab === 'creators' ? 'bg-amber-100 text-amber-800' : 'bg-muted-foreground/20'
               }`}
               >
-                {creatorStats.exceptions.length}
+                {creatorStats.late_count + creatorStats.missing_count}
               </span>
             </button>
 
@@ -910,13 +934,13 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                   <Input
                     placeholder="Search creators, shows, or reasons..."
                     value={search.creators_search ?? ''}
-                    onChange={(e) => onSearchChange({ creators_search: e.target.value || undefined })}
+                    onChange={(e) => onCreatorsSearchChange(e.target.value || undefined)}
                     className="max-w-md w-full"
                   />
                   <Select
                     value={search.creators_status ?? 'ALL'}
                     onValueChange={(val) =>
-                      onSearchChange({ creators_status: val === 'ALL' ? undefined : val })}
+                      onCreatorsStatusChange(val === 'ALL' ? undefined : val)}
                   >
                     <SelectTrigger className="w-full sm:w-48">
                       <SelectValue placeholder="All Exceptions" />
@@ -931,9 +955,29 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
               </div>
 
               <DataTable
-                data={filteredCreators}
+                data={creatorsQuery.data?.data ?? []}
                 columns={creatorColumns}
+                isLoading={creatorsQuery.isLoading}
+                isFetching={creatorsQuery.isFetching}
                 emptyMessage="No creator lateness exceptions or missing attendance flags recorded for this day range."
+                manualPagination
+                pageCount={creatorsQuery.data?.meta.totalPages ?? 0}
+                paginationState={{
+                  pageIndex: (search.creators_page ?? 1) - 1,
+                  pageSize: 10,
+                }}
+                onPaginationChange={creatorsPaginationChange}
+                renderFooter={() => (
+                  <DataTablePagination
+                    pagination={{
+                      pageIndex: (search.creators_page ?? 1) - 1,
+                      pageSize: 10,
+                      total: creatorsQuery.data?.meta.total ?? 0,
+                      pageCount: creatorsQuery.data?.meta.totalPages ?? 0,
+                    }}
+                    onPaginationChange={creatorsPaginationChange}
+                  />
+                )}
               />
             </div>
           )}
@@ -946,13 +990,13 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                   <Input
                     placeholder="Search platforms, shows, or details..."
                     value={search.violations_search ?? ''}
-                    onChange={(e) => onSearchChange({ violations_search: e.target.value || undefined })}
+                    onChange={(e) => onViolationsSearchChange(e.target.value || undefined)}
                     className="max-w-md w-full"
                   />
                   <Select
                     value={search.violations_severity ?? 'ALL'}
                     onValueChange={(val) =>
-                      onSearchChange({ violations_severity: val === 'ALL' ? undefined : val })}
+                      onViolationsSeverityChange(val === 'ALL' ? undefined : val)}
                   >
                     <SelectTrigger className="w-full sm:w-48">
                       <SelectValue placeholder="All Severities" />
@@ -970,9 +1014,29 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
               </div>
 
               <DataTable
-                data={filteredViolations}
+                data={violationsQuery.data?.data ?? []}
                 columns={violationColumns}
+                isLoading={violationsQuery.isLoading}
+                isFetching={violationsQuery.isFetching}
                 emptyMessage="No active platform stream lag, offline, or configuration violations reported."
+                manualPagination
+                pageCount={violationsQuery.data?.meta.totalPages ?? 0}
+                paginationState={{
+                  pageIndex: (search.violations_page ?? 1) - 1,
+                  pageSize: 10,
+                }}
+                onPaginationChange={violationsPaginationChange}
+                renderFooter={() => (
+                  <DataTablePagination
+                    pagination={{
+                      pageIndex: (search.violations_page ?? 1) - 1,
+                      pageSize: 10,
+                      total: violationsQuery.data?.meta.total ?? 0,
+                      pageCount: violationsQuery.data?.meta.totalPages ?? 0,
+                    }}
+                    onPaginationChange={violationsPaginationChange}
+                  />
+                )}
               />
             </div>
           )}
@@ -985,13 +1049,13 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                   <Input
                     placeholder="Search tasks or associated shows..."
                     value={search.tasks_search ?? ''}
-                    onChange={(e) => onSearchChange({ tasks_search: e.target.value || undefined })}
+                    onChange={(e) => onTasksSearchChange(e.target.value || undefined)}
                     className="max-w-md w-full"
                   />
                   <Select
                     value={search.tasks_status ?? 'ALL'}
                     onValueChange={(val) =>
-                      onSearchChange({ tasks_status: val === 'ALL' ? undefined : val })}
+                      onTasksStatusChange(val === 'ALL' ? undefined : val)}
                   >
                     <SelectTrigger className="w-full sm:w-48">
                       <SelectValue placeholder="All Statuses" />
@@ -1007,9 +1071,29 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
               </div>
 
               <DataTable
-                data={filteredTasks}
+                data={tasksQuery.data?.data ?? []}
                 columns={taskColumns}
+                isLoading={tasksQuery.isLoading}
+                isFetching={tasksQuery.isFetching}
                 emptyMessage="Every task, pre-production check, on-air, and post-production template task has been completed!"
+                manualPagination
+                pageCount={tasksQuery.data?.meta.totalPages ?? 0}
+                paginationState={{
+                  pageIndex: (search.tasks_page ?? 1) - 1,
+                  pageSize: 10,
+                }}
+                onPaginationChange={tasksPaginationChange}
+                renderFooter={() => (
+                  <DataTablePagination
+                    pagination={{
+                      pageIndex: (search.tasks_page ?? 1) - 1,
+                      pageSize: 10,
+                      total: tasksQuery.data?.meta.total ?? 0,
+                      pageCount: tasksQuery.data?.meta.totalPages ?? 0,
+                    }}
+                    onPaginationChange={tasksPaginationChange}
+                  />
+                )}
               />
             </div>
           )}
@@ -1022,13 +1106,13 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                   <Input
                     placeholder="Search shows or completeness..."
                     value={search.shows_search ?? ''}
-                    onChange={(e) => onSearchChange({ shows_search: e.target.value || undefined })}
+                    onChange={(e) => onShowsSearchChange(e.target.value || undefined)}
                     className="max-w-md w-full"
                   />
                   <Select
                     value={search.shows_completeness ?? 'ALL'}
                     onValueChange={(val) =>
-                      onSearchChange({ shows_completeness: val === 'ALL' ? undefined : val })}
+                      onShowsCompletenessChange(val === 'ALL' ? undefined : val)}
                   >
                     <SelectTrigger className="w-full sm:w-48">
                       <SelectValue placeholder="All States" />
@@ -1043,9 +1127,29 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
               </div>
 
               <DataTable
-                data={filteredShows}
+                data={showsQuery.data?.data ?? []}
                 columns={showColumns}
+                isLoading={showsQuery.isLoading}
+                isFetching={showsQuery.isFetching}
                 emptyMessage="No shows scheduled in the selected date range."
+                manualPagination
+                pageCount={showsQuery.data?.meta.totalPages ?? 0}
+                paginationState={{
+                  pageIndex: (search.shows_page ?? 1) - 1,
+                  pageSize: 10,
+                }}
+                onPaginationChange={showsPaginationChange}
+                renderFooter={() => (
+                  <DataTablePagination
+                    pagination={{
+                      pageIndex: (search.shows_page ?? 1) - 1,
+                      pageSize: 10,
+                      total: showsQuery.data?.meta.total ?? 0,
+                      pageCount: showsQuery.data?.meta.totalPages ?? 0,
+                    }}
+                    onPaginationChange={showsPaginationChange}
+                  />
+                )}
               />
             </div>
           )}

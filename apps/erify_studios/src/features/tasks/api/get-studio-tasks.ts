@@ -1,5 +1,6 @@
 import type {
   ListMyTasksQuery,
+  TaskReviewStatsDto,
   TaskWithRelationsDto,
 } from '@eridu/api-types/task-management';
 
@@ -26,6 +27,7 @@ export type GetStudioTasksParams = Pick<
   | 'search'
   | 'sort'
   | 'client_id'
+  | 'review_tab'
 >;
 
 export const studioTasksKeys = {
@@ -33,6 +35,8 @@ export const studioTasksKeys = {
   lists: (studioId: string) => [...studioTasksKeys.all(studioId), 'list'] as const,
   list: (studioId: string, params: GetStudioTasksParams) =>
     [...studioTasksKeys.lists(studioId), params] as const,
+  stats: (studioId: string, params: GetStudioTasksParams) =>
+    [...studioTasksKeys.all(studioId), 'stats', params] as const,
 };
 
 export async function getStudioTasks(
@@ -41,6 +45,18 @@ export async function getStudioTasks(
   options?: { signal?: AbortSignal },
 ): Promise<StudioTasksResponse> {
   const response = await apiClient.get<StudioTasksResponse>(`/studios/${studioId}/tasks`, {
+    params,
+    signal: options?.signal,
+  });
+  return response.data;
+}
+
+export async function getStudioTasksReviewStats(
+  studioId: string,
+  params: GetStudioTasksParams,
+  options?: { signal?: AbortSignal },
+): Promise<TaskReviewStatsDto> {
+  const response = await apiClient.get<TaskReviewStatsDto>(`/studios/${studioId}/tasks/review-stats`, {
     params,
     signal: options?.signal,
   });

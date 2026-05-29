@@ -1,12 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import type { BulkApproveTasksResponse, TaskWithRelationsDto } from '@eridu/api-types/task-management';
+import type { BulkApproveTasksResponse } from '@eridu/api-types/task-management';
 import {
   adaptColumnFiltersChange,
-  adaptPaginationChange,
   Button,
   Card,
   CardDescription,
@@ -24,7 +23,7 @@ import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-a
 import { StudioTaskReviewFilterTabs } from '@/features/tasks/components/studio-task-review-filter-tabs';
 import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
-import { getTaskIssues, getTaskPhase, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
+import { getTaskIssues, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
 import { useBulkApproveTasks } from '@/features/tasks/hooks/use-bulk-approve-tasks';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
 import { useTaskReviewClientFilter } from '@/features/tasks/hooks/use-task-review-client-filter';
@@ -38,8 +37,12 @@ export const Route = createFileRoute('/studios/$studioId/task-review/')({
 
 function StudioTaskReviewPage() {
   const { studioId } = Route.useParams();
-  const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps, setPageCount } = useStudioTasksPageController({
+  // State for active filter tab (server-filtered)
+  const [activeFilter, setActiveFilter] = useState<TaskReviewActiveFilter>('all');
+
+  const { tableProps, toolbarProps, reviewScopeProps, actionSheetProps, dueDateDialogProps } = useStudioTasksPageController({
     studioId,
+    reviewTab: activeFilter,
   });
   const { onPaginationChange, onColumnFiltersChange, columnFilters } = tableProps;
   const { onDateRangeChange, onResetDateRange } = reviewScopeProps;
@@ -130,11 +133,8 @@ function StudioTaskReviewPage() {
     setShowSearch,
   ]);
 
-  // State for client-side filter
-  const [activeFilter, setActiveFilter] = useState<TaskReviewActiveFilter>('all');
-
   // Load summary and statistics using extracted hook
-  const { summaryData, stats, isFetching: isSummaryFetching } = useTaskReviewSummary({
+  const { stats, isFetching: isSummaryFetching } = useTaskReviewSummary({
     studioId,
     dateRange: reviewScopeProps.dateRange,
   });
@@ -155,11 +155,12 @@ function StudioTaskReviewPage() {
     },
   });
 
-  // Handler to clear selection when changing active filter tabs
+  // Handler to clear selection and reset pagination when changing active filter tabs
   const handleActiveFilterChange = useCallback((filter: TaskReviewActiveFilter) => {
     setActiveFilter(filter);
     setRowSelection({});
-  }, []);
+    onPaginationChange({ pageIndex: 0, pageSize: tableProps.pagination.pageSize });
+  }, [onPaginationChange, tableProps.pagination.pageSize]);
 
   // Handlers to clear selection when review scope, date range, or column filters change
   const handleDateRangeChange = useCallback((dateRange: any) => {
@@ -186,182 +187,6 @@ function StudioTaskReviewPage() {
       .filter(([_, isSelected]) => isSelected)
       .map(([taskId]) => taskId);
   }, [rowSelection]);
-
-  // Get pagination parameters from tableProps
-  const { pageIndex, pageSize } = tableProps.pagination;
-
-  // Helper to check if a task matches all active column filters client-side
-  const matchesColumnFilters = useCallback((task: TaskWithRelationsDto, filters: { id: string; value: unknown }[]) => {
-    return filters.every((filter) => {
-      const { id, value } = filter;
-      if (!value)
-        return true;
-
-      if (id === 'description') {
-        const query = String(value).toLowerCase();
-        const desc = (task.description || '').toLowerCase();
-        const show = (task.show?.name || '').toLowerCase();
-        const assignee = (task.assignee?.name || '').toLowerCase();
-        return desc.includes(query) || show.includes(query) || assignee.includes(query);
-      }
-      if (id === 'client_name') {
-        const query = String(value).toLowerCase();
-        const client = (task.show?.client_name || '').toLowerCase();
-        return client.includes(query);
-      }
-      if (id === 'assignee_name') {
-        const query = String(value).toLowerCase();
-        const assignee = (task.assignee?.name || '').toLowerCase();
-        return assignee.includes(query);
-      }
-      if (id === 'show_name') {
-        const query = String(value).toLowerCase();
-        const show = (task.show?.name || '').toLowerCase();
-        return show.includes(query);
-      }
-      if (id === 'status') {
-        return task.status === value;
-      }
-      if (id === 'task_type') {
-        return task.type === value;
-      }
-      if (id === 'has_assignee') {
-        const isAssigned = !!task.assignee;
-        if (value === 'true')
-          return isAssigned;
-        if (value === 'false')
-          return !isAssigned;
-        return true;
-      }
-      if (id === 'has_due_date') {
-        const hasDate = !!task.due_date;
-        if (value === 'true')
-          return hasDate;
-        if (value === 'false')
-          return !hasDate;
-        return true;
-      }
-      return true;
-    });
-  }, []);
-
-  // Client-side table data filtering on the fully fetched summaryData dataset.
-  // All tabs (including 'all') source from summaryData so dated + undated review
-  // tasks form a single consistent partition across the tabs.
-  const filteredAllData = useMemo(() => {
-    const allTasks = (summaryData?.data || []).filter(
-      (task) => matchesColumnFilters(task, tableProps.columnFilters),
-    );
-    if (activeFilter === 'all') {
-      return allTasks;
-    }
-    if (activeFilter === 'ready') {
-      return allTasks.filter((task) => task.status === 'REVIEW' && getTaskIssues(task).length === 0);
-    }
-    if (activeFilter === 'attention') {
-      return allTasks.filter((task) => getTaskIssues(task).length > 0);
-    }
-    if (activeFilter === 'done') {
-      return allTasks.filter((task) => ['COMPLETED', 'CLOSED'].includes(task.status));
-    }
-    if (activeFilter === 'pre-prod-attention') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'pre-production' && getTaskIssues(task).length > 0,
-      );
-    }
-    if (activeFilter === 'pre-prod-ready') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'pre-production' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
-      );
-    }
-    if (activeFilter === 'pre-prod-done') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'pre-production' && ['COMPLETED', 'CLOSED'].includes(task.status),
-      );
-    }
-    if (activeFilter === 'on-air-attention') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'on-air' && getTaskIssues(task).length > 0,
-      );
-    }
-    if (activeFilter === 'on-air-ready') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'on-air' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
-      );
-    }
-    if (activeFilter === 'on-air-done') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'on-air' && ['COMPLETED', 'CLOSED'].includes(task.status),
-      );
-    }
-    if (activeFilter === 'post-prod-attention') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'post-production' && getTaskIssues(task).length > 0,
-      );
-    }
-    if (activeFilter === 'post-prod-ready') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'post-production' && task.status === 'REVIEW' && getTaskIssues(task).length === 0,
-      );
-    }
-    if (activeFilter === 'post-prod-done') {
-      return allTasks.filter(
-        (task) => getTaskPhase(task.type) === 'post-production' && ['COMPLETED', 'CLOSED'].includes(task.status),
-      );
-    }
-    return allTasks;
-  }, [summaryData?.data, activeFilter, tableProps.columnFilters, matchesColumnFilters]);
-
-  // Client-paginate the filtered list
-  const displayedData = useMemo(
-    () => filteredAllData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize),
-    [filteredAllData, pageIndex, pageSize],
-  );
-
-  const pageCount = useMemo(
-    () => Math.max(1, Math.ceil(filteredAllData.length / pageSize)),
-    [filteredAllData.length, pageSize],
-  );
-
-  const serializedColumnFilters = useMemo(
-    () => JSON.stringify(tableProps.columnFilters),
-    [tableProps.columnFilters],
-  );
-
-  // Store onPaginationChange callback in a mutable ref to decouple it from pagination state changes
-  const onPaginationChangeRef = useRef(onPaginationChange);
-  useEffect(() => {
-    onPaginationChangeRef.current = onPaginationChange;
-  }, [onPaginationChange]);
-
-  // Reset pagination pageIndex to 0 when activeFilter or column filters change
-  useEffect(() => {
-    onPaginationChangeRef.current((prev) => {
-      if (prev.pageIndex === 0)
-        return prev;
-      return {
-        ...prev,
-        pageIndex: 0,
-      };
-    });
-  }, [activeFilter, serializedColumnFilters]);
-
-  const effectivePagination = useMemo(() => ({
-    pageIndex,
-    pageSize,
-    total: filteredAllData.length,
-    pageCount,
-  }), [filteredAllData.length, pageIndex, pageSize, pageCount]);
-
-  // Once summaryData has resolved, override the URL-state page count with the
-  // merged (dated + undated) page count so useTableUrlState's auto-correction
-  // does not clamp pageIndex to the smaller server-only range, which would
-  // make later pages of the merged queue unreachable.
-  useEffect(() => {
-    if (summaryData !== undefined) {
-      setPageCount(pageCount);
-    }
-  }, [pageCount, summaryData, setPageCount]);
 
   return (
     <PageLayout
@@ -414,19 +239,19 @@ function StudioTaskReviewPage() {
 
         {/* Data Table */}
         <DataTable
-          data={displayedData}
+          data={tableProps.data}
           columns={tableProps.columns}
-          isLoading={tableProps.isLoading || (isSummaryFetching && !summaryData)}
+          isLoading={tableProps.isLoading}
           isFetching={tableProps.isFetching || isSummaryFetching}
           emptyMessage={tableProps.emptyMessage}
           manualPagination
           manualFiltering
-          pageCount={pageCount}
+          pageCount={tableProps.pagination.pageCount}
           paginationState={{
-            pageIndex: effectivePagination.pageIndex,
-            pageSize: effectivePagination.pageSize,
+            pageIndex: tableProps.pagination.pageIndex,
+            pageSize: tableProps.pagination.pageSize,
           }}
-          onPaginationChange={adaptPaginationChange(effectivePagination, tableProps.onPaginationChange)}
+          onPaginationChange={tableProps.onPaginationChange}
           columnFilters={tableProps.columnFilters}
           onColumnFiltersChange={handleColumnFiltersChange}
           enableRowSelection={(row) => row.original.status === 'REVIEW' && getTaskIssues(row.original).length === 0}
@@ -455,7 +280,7 @@ function StudioTaskReviewPage() {
           )}
           renderFooter={() => (
             <DataTablePagination
-              pagination={effectivePagination}
+              pagination={tableProps.pagination}
               onPaginationChange={tableProps.onPaginationChange}
             />
           )}

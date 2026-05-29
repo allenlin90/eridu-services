@@ -11,7 +11,6 @@ export const taskListInclude = {
   template: true,
   snapshot: {
     select: {
-      schema: true,
       version: true,
     },
   },
@@ -48,6 +47,64 @@ export const taskListInclude = {
   },
 } satisfies Prisma.TaskInclude;
 
+/**
+ * Member-facing task lists (e.g. GET /me/tasks) render the execution form
+ * inline from the snapshot schema, so they must carry it. The studio review
+ * list deliberately omits the (large) JSONB schema and lazy-loads it via the
+ * task detail endpoint instead — see {@link taskListInclude}.
+ */
+export const taskListIncludeWithSchema = {
+  ...taskListInclude,
+  snapshot: {
+    select: {
+      version: true,
+      schema: true,
+    },
+  },
+} satisfies Prisma.TaskInclude;
+
+/**
+ * Date scope for the review queue stats: a task counts when its due date falls
+ * in range, OR when it has no due date but is attached to a show that starts in
+ * range. Mirrors the dated + undated passes the review summary used to fetch
+ * separately, so undated review tasks are not dropped from the tab counts.
+ */
+export function buildReviewStatsDateScope(
+  dueDateFrom?: string,
+  dueDateTo?: string,
+): Prisma.TaskWhereInput | null {
+  if (!dueDateFrom && !dueDateTo) {
+    return null;
+  }
+
+  const dueDateFilter: Prisma.DateTimeFilter = {};
+  const showStartFilter: Prisma.DateTimeFilter = {};
+  if (dueDateFrom) {
+    dueDateFilter.gte = new Date(dueDateFrom);
+    showStartFilter.gte = new Date(dueDateFrom);
+  }
+  if (dueDateTo) {
+    dueDateFilter.lte = new Date(dueDateTo);
+    showStartFilter.lte = new Date(dueDateTo);
+  }
+
+  return {
+    OR: [
+      { dueDate: dueDateFilter },
+      {
+        dueDate: null,
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: { startTime: showStartFilter },
+          },
+        },
+      },
+    ],
+  };
+}
+
 export function buildTaskListWhere(
   query: ListMyTasksQueryTransformed,
 ): Prisma.TaskWhereInput;
@@ -76,6 +133,7 @@ export function buildTaskListWhere(
     reference_id,
     studio_id,
     client_id,
+    review_tab,
   } = query;
 
   const where: Prisma.TaskWhereInput = {
@@ -247,6 +305,10 @@ export function buildTaskListWhere(
     });
   }
 
+  if (review_tab) {
+    applyReviewTabFilter(where, review_tab);
+  }
+
   return where;
 }
 
@@ -320,4 +382,49 @@ function appendAndFilter(
       : [where.AND]
     : [];
   where.AND = [...existingAnd, filter];
+}
+
+function applyReviewTabFilter(
+  where: Prisma.TaskWhereInput,
+  tab: string,
+): void {
+  const now = new Date();
+
+  // 1. Resolve phase based on tab prefix
+  if (tab.startsWith('pre-prod-')) {
+    where.type = 'SETUP';
+  } else if (tab.startsWith('post-prod-')) {
+    where.type = 'CLOSURE';
+  } else if (tab.startsWith('on-air-')) {
+    where.type = { in: ['ACTIVE', 'ADMIN', 'ROUTINE', 'OTHER'] };
+  }
+
+  // 2. Resolve issues/status based on tab suffix or name
+  if (tab === 'ready' || tab.endsWith('-ready')) {
+    where.status = 'REVIEW';
+    where.assigneeId = { not: null };
+  } else if (tab === 'attention' || tab.endsWith('-attention')) {
+    where.status = { notIn: ['COMPLETED', 'CLOSED'] };
+    const existingAnd = where.AND
+      ? Array.isArray(where.AND)
+        ? where.AND
+        : [where.AND]
+      : [];
+    where.AND = [
+      ...existingAnd,
+      {
+        OR: [
+          { assigneeId: null },
+          {
+            AND: [
+              { status: { not: 'REVIEW' } },
+              { dueDate: { lt: now } },
+            ],
+          },
+        ],
+      },
+    ];
+  } else if (tab === 'done' || tab.endsWith('-done')) {
+    where.status = { in: ['COMPLETED', 'CLOSED'] };
+  }
 }

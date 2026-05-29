@@ -23,6 +23,7 @@ import {
   studioShowLookupsDto,
   taskActionRequestSchema,
   taskDto,
+  taskReviewStatsSchema,
   taskSchema,
   taskWithRelationsDto,
   updateTaskRequestSchema,
@@ -46,6 +47,7 @@ export {
   studioShowLookupsDto,
   taskActionRequestSchema,
   taskDto,
+  taskReviewStatsSchema,
   taskSchema,
   taskWithRelationsDto,
   updateTaskRequestSchema,
@@ -69,6 +71,7 @@ export class TaskWithRelationsDto extends createZodDto(taskWithRelationsDto) {}
 export class ShowWithTaskSummaryDto extends createZodDto(showWithTaskSummaryDto) {}
 export class UpdateTaskDto extends createZodDto(updateTaskRequestSchema) {}
 export class TaskActionDto extends createZodDto(taskActionRequestSchema) {}
+export class TaskReviewStatsDto extends createZodDto(taskReviewStatsSchema) {}
 
 /**
  * Internal payload for creating a task (service layer).

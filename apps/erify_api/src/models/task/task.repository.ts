@@ -6,9 +6,11 @@ import { Prisma, Task, TaskStatus, TaskType } from '@prisma/client';
 import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
 
 import {
+  buildReviewStatsDateScope,
   buildTaskListOrderBy,
   buildTaskListWhere,
   taskListInclude,
+  taskListIncludeWithSchema,
 } from './task-list-query';
 import type {
   TaskWithRelations,
@@ -276,7 +278,7 @@ export class TaskRepository extends BaseRepository<
         orderBy,
         skip,
         take: limit,
-        include: taskListInclude,
+        include: taskListIncludeWithSchema,
       }),
       this.delegate.count({ where }),
     ]);
@@ -584,5 +586,150 @@ export class TaskRepository extends BaseRepository<
         dueDate,
       },
     });
+  }
+
+  async findTaskReviewStats(query: ListMyTasksQueryTransformed) {
+    // Scope by "dated-in-range OR undated-with-show-in-range" instead of the
+    // plain due-date range so review tasks without a due date are still counted.
+    const { due_date_from, due_date_to, ...rest } = query;
+    const baseWhere = buildTaskListWhere(rest as ListMyTasksQueryTransformed);
+    const dateScope = buildReviewStatsDateScope(due_date_from, due_date_to);
+    if (dateScope) {
+      const baseAnd = baseWhere.AND
+        ? Array.isArray(baseWhere.AND)
+          ? baseWhere.AND
+          : [baseWhere.AND]
+        : [];
+      baseWhere.AND = [...baseAnd, dateScope];
+    }
+    const now = new Date();
+
+    const countTab = async (extraCriteria: Prisma.TaskWhereInput) => {
+      const mergedWhere: Prisma.TaskWhereInput = {
+        ...baseWhere,
+        ...extraCriteria,
+      };
+      if (extraCriteria.AND && baseWhere.AND) {
+        const baseAnd = Array.isArray(baseWhere.AND) ? baseWhere.AND : [baseWhere.AND];
+        const extraAnd = Array.isArray(extraCriteria.AND) ? extraCriteria.AND : [extraCriteria.AND];
+        mergedWhere.AND = [...baseAnd, ...extraAnd];
+      }
+      return this.delegate.count({ where: mergedWhere });
+    };
+
+    const [
+      total,
+      ready,
+      attention,
+      done,
+      preProdAttentionCount,
+      preProdReadyCount,
+      preProdDoneCount,
+      onAirAttentionCount,
+      onAirReadyCount,
+      onAirDoneCount,
+      postProdAttentionCount,
+      postProdReadyCount,
+      postProdDoneCount,
+    ] = await Promise.all([
+      countTab({}),
+      countTab({ status: 'REVIEW', assigneeId: { not: null } }),
+      countTab({
+        status: { notIn: ['COMPLETED', 'CLOSED'] },
+        AND: [
+          {
+            OR: [
+              { assigneeId: null },
+              {
+                AND: [
+                  { status: { not: 'REVIEW' } },
+                  { dueDate: { lt: now } },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      countTab({ status: { in: ['COMPLETED', 'CLOSED'] } }),
+
+      // Pre-prod
+      countTab({
+        type: 'SETUP',
+        status: { notIn: ['COMPLETED', 'CLOSED'] },
+        AND: [
+          {
+            OR: [
+              { assigneeId: null },
+              {
+                AND: [
+                  { status: { not: 'REVIEW' } },
+                  { dueDate: { lt: now } },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      countTab({ type: 'SETUP', status: 'REVIEW', assigneeId: { not: null } }),
+      countTab({ type: 'SETUP', status: { in: ['COMPLETED', 'CLOSED'] } }),
+
+      // On-air
+      countTab({
+        type: { in: ['ACTIVE', 'ADMIN', 'ROUTINE', 'OTHER'] },
+        status: { notIn: ['COMPLETED', 'CLOSED'] },
+        AND: [
+          {
+            OR: [
+              { assigneeId: null },
+              {
+                AND: [
+                  { status: { not: 'REVIEW' } },
+                  { dueDate: { lt: now } },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      countTab({ type: { in: ['ACTIVE', 'ADMIN', 'ROUTINE', 'OTHER'] }, status: 'REVIEW', assigneeId: { not: null } }),
+      countTab({ type: { in: ['ACTIVE', 'ADMIN', 'ROUTINE', 'OTHER'] }, status: { in: ['COMPLETED', 'CLOSED'] } }),
+
+      // Post-prod
+      countTab({
+        type: 'CLOSURE',
+        status: { notIn: ['COMPLETED', 'CLOSED'] },
+        AND: [
+          {
+            OR: [
+              { assigneeId: null },
+              {
+                AND: [
+                  { status: { not: 'REVIEW' } },
+                  { dueDate: { lt: now } },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      countTab({ type: 'CLOSURE', status: 'REVIEW', assigneeId: { not: null } }),
+      countTab({ type: 'CLOSURE', status: { in: ['COMPLETED', 'CLOSED'] } }),
+    ]);
+
+    return {
+      total,
+      ready,
+      attention,
+      done,
+      preProdAttentionCount,
+      preProdReadyCount,
+      preProdDoneCount,
+      onAirAttentionCount,
+      onAirReadyCount,
+      onAirDoneCount,
+      postProdAttentionCount,
+      postProdReadyCount,
+      postProdDoneCount,
+    };
   }
 }

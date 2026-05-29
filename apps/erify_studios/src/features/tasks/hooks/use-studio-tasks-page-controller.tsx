@@ -10,6 +10,7 @@ import { requiresTaskActionSheet } from '@/features/tasks/lib/task-action-sheet'
 
 type UseStudioTasksPageControllerProps = {
   studioId: string;
+  reviewTab?: string;
 };
 
 type ActionDraft = {
@@ -17,7 +18,7 @@ type ActionDraft = {
   action: TaskAction;
 };
 
-export function useStudioTasksPageController({ studioId }: UseStudioTasksPageControllerProps) {
+export function useStudioTasksPageController({ studioId, reviewTab }: UseStudioTasksPageControllerProps) {
   const [actionDraft, setActionDraft] = useState<ActionDraft | null>(null);
   const [dueDateTask, setDueDateTask] = useState<TaskWithRelationsDto | null>(null);
 
@@ -34,7 +35,7 @@ export function useStudioTasksPageController({ studioId }: UseStudioTasksPageCon
     onDueDateRangeChange,
     onDueDateRangeReset,
     handleRefresh,
-  } = useStudioTasks({ studioId });
+  } = useStudioTasks({ studioId, reviewTab });
 
   const {
     mutate: updateTaskStatus,

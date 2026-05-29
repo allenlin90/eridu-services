@@ -42,6 +42,7 @@ import {
   ReassignTaskDto,
   TaskActionDto,
   taskDto,
+  taskReviewStatsSchema,
   taskWithRelationsDto,
   UpdateTaskDto,
   type UpdateTaskPayload,
@@ -96,6 +97,21 @@ export class StudioTaskController extends BaseStudioController {
     @Body() dto: ReassignTaskDto,
   ) {
     return this.taskOrchestrationService.reassignTask(studioId, id, dto.assignee_uid);
+  }
+
+  @ApiOperation({ summary: 'Get studio tasks review statistics' })
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @Get('review-stats')
+  @ReadBurstThrottle()
+  @ZodResponse(taskReviewStatsSchema)
+  async getReviewStats(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: ListMyTasksQueryDto,
+  ) {
+    return this.taskService.findTaskReviewStats({
+      ...query,
+      studio_id: studioId,
+    });
   }
 
   @ApiOperation({ summary: 'Get task details (including schema) for studio workflow actions' })
