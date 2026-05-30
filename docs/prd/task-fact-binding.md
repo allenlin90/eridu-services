@@ -238,8 +238,8 @@ Implementation is structured into **three logical sections**. Each section serve
 
 ---
 
-### SECTION C: Operations Review Surface (PRs 12.4.1 – 12.4.6)
-*This section builds the management portal where studio managers confirm submitted tasks, populate operational facts, manage anomalies, and log operational sign-offs.*
+### SECTION C: Operations Review Surface (PRs 12.4.1 – 12.4.7)
+*This section builds the management portal where studio managers confirm submitted tasks, populate operational facts, manage anomalies, and export operational metrics.*
 
 #### 🟨 PR 12.4.1 · Operations Review Foundation
 * **Purpose**: Establish the Operations Review navigation model for the two-layer review workflow.
@@ -273,12 +273,6 @@ Implementation is structured into **three logical sections**. Each section serve
   * Active platform violation counts.
   * Incomplete phase checks and missing operational facts.
 
-#### 🟨 PR 12.4.5 · Range Sign-Off Audit
-* **Purpose**: Let managers sign off an operational day/range after reviewing populated facts and unresolved exceptions.
-* **Functional Deliverable**:
-  * Sign-off action records selected range, signing manager, timestamp, and unresolved exception counts.
-  * Sign-off does not hide exceptions; it records manager acknowledgement.
-
 #### 🟨 PR 12.4.6 · Correction, Manager Override, and Stale Input Re-Population Workflow
 * **Purpose**: Route operator corrections and manager overrides through submitted tasks so target columns are re-populated only through confirmed submissions.
 * **Functional Deliverable**:
@@ -287,6 +281,12 @@ Implementation is structured into **three logical sections**. Each section serve
   * Re-enter corrected tasks into Task Review and re-run extraction on approval.
   * Resolve stale submitted values explicitly instead of silently writing to unassigned targets.
   * Surface extraction visibility at approval time: warn when a task will extract **zero facts** — its frozen snapshot carries no `system_fact_key` binding (e.g. it was generated before the binding was added to the template) or the bound fields are empty — instead of approving silently. Flag binding-drift where a task's snapshot predates the template's current bindings so managers know a regenerate is needed to capture the fact. (Surfaced during 12.4.4 review: completed tasks on pre-binding snapshots extracted nothing, leaving Show Run Review actuals empty with no explanation.)
+
+#### 🟨 PR 12.4.7 · Show Run Review Export
+* **Purpose**: Make `/show-run-review` a self-service reporting surface — filter, quick-sight, export.
+* **Functional Deliverable**:
+  * Each run-review tab (creators / violations / tasks / shows) exports the **full filtered set** to CSV — every row matching the active filters, not the current page.
+  * Mechanism: refetch the tab's paginated endpoint with the same filters and `limit = total`, then serialize client-side (no new endpoint).
 
 ---
 
