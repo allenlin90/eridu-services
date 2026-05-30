@@ -8,10 +8,12 @@ import {
   Users2,
   XCircle,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -29,6 +31,17 @@ import {
 
 import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
 import {
+  exportShowRunReviewCreators,
+  exportShowRunReviewShows,
+  exportShowRunReviewTasks,
+  exportShowRunReviewViolations,
+  type ShowRunReviewExportTab,
+} from '@/features/show-run-review/lib/show-run-review-csv';
+import {
+  getShowRunReviewCreators,
+  getShowRunReviewShows,
+  getShowRunReviewTasks,
+  getShowRunReviewViolations,
   useShowRunReviewCreatorsQuery,
   useShowRunReviewShowsQuery,
   useShowRunReviewTasksQuery,
@@ -436,6 +449,94 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
     onSearchChange({ shows_completeness: val, shows_page: 1 });
   };
 
+  // Export the FULL filtered set for a tab (not the current page): refetch the
+  // same endpoint with the active filters and limit = total, then serialize.
+  const [exportingTab, setExportingTab] = useState<ShowRunReviewExportTab | null>(null);
+
+  const handleExportCreators = async () => {
+    const total = creatorsQuery.data?.meta.total ?? 0;
+    if (total === 0 || !search.date_from || !search.date_to) {
+      return;
+    }
+    setExportingTab('creators');
+    try {
+      const all = await getShowRunReviewCreators(studioId, {
+        date_from: search.date_from,
+        date_to: search.date_to,
+        page: 1,
+        limit: total,
+        search: search.creators_search,
+        status: search.creators_status,
+      });
+      exportShowRunReviewCreators(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+    } finally {
+      setExportingTab(null);
+    }
+  };
+
+  const handleExportViolations = async () => {
+    const total = violationsQuery.data?.meta.total ?? 0;
+    if (total === 0 || !search.date_from || !search.date_to) {
+      return;
+    }
+    setExportingTab('violations');
+    try {
+      const all = await getShowRunReviewViolations(studioId, {
+        date_from: search.date_from,
+        date_to: search.date_to,
+        page: 1,
+        limit: total,
+        search: search.violations_search,
+        severity: search.violations_severity,
+      });
+      exportShowRunReviewViolations(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+    } finally {
+      setExportingTab(null);
+    }
+  };
+
+  const handleExportTasks = async () => {
+    const total = tasksQuery.data?.meta.total ?? 0;
+    if (total === 0 || !search.date_from || !search.date_to) {
+      return;
+    }
+    setExportingTab('tasks');
+    try {
+      const all = await getShowRunReviewTasks(studioId, {
+        date_from: search.date_from,
+        date_to: search.date_to,
+        page: 1,
+        limit: total,
+        search: search.tasks_search,
+        status: search.tasks_status,
+      });
+      exportShowRunReviewTasks(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+    } finally {
+      setExportingTab(null);
+    }
+  };
+
+  const handleExportShows = async () => {
+    const total = showsQuery.data?.meta.total ?? 0;
+    if (total === 0 || !search.date_from || !search.date_to) {
+      return;
+    }
+    setExportingTab('shows');
+    try {
+      const all = await getShowRunReviewShows(studioId, {
+        date_from: search.date_from,
+        date_to: search.date_to,
+        page: 1,
+        limit: total,
+        search: search.shows_search,
+        completeness: search.shows_completeness,
+      });
+      exportShowRunReviewShows(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+    } finally {
+      setExportingTab(null);
+    }
+  };
+
   return (
     <div className="space-y-6 min-w-0 w-full overflow-hidden">
       {/* Background Refetch Banner */}
@@ -702,6 +803,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportCreators}
+                  disabled={exportingTab === 'creators' || (creatorsQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'creators' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable
@@ -761,6 +870,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportViolations}
+                  disabled={exportingTab === 'violations' || (violationsQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'violations' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable
@@ -818,6 +935,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportTasks}
+                  disabled={exportingTab === 'tasks' || (tasksQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'tasks' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable
@@ -874,6 +999,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportShows}
+                  disabled={exportingTab === 'shows' || (showsQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'shows' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable
