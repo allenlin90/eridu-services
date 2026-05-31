@@ -58,6 +58,18 @@ describe('exportShowRunReviewCreators', () => {
     expect(arg.filename).toBe('show-run-creators-2026-05-20_2026-05-20.csv');
     expect(arg.mimeType).toContain('text/csv');
   });
+
+  it('reduces ISO-instant range bounds to a filesystem-safe date-only filename', () => {
+    const download = vi.fn();
+
+    exportShowRunReviewCreators([], {
+      dateFrom: '2026-05-20T06:00:00.000Z',
+      dateTo: '2026-05-21T05:59:59.999Z',
+      download,
+    });
+
+    expect(download.mock.calls[0][0].filename).toBe('show-run-creators-2026-05-20_2026-05-21.csv');
+  });
 });
 
 describe('other tab mappers stay total against their column lists', () => {

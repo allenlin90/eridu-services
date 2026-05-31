@@ -22,7 +22,9 @@ type ExportOptions = {
 const CSV_MIME = 'text/csv;charset=utf-8;';
 
 function fileName(tab: ShowRunReviewExportTab, dateFrom: string, dateTo: string): string {
-  return `show-run-${tab}-${dateFrom}_${dateTo}.csv`;
+  // Use the date-only portion: range bounds are ISO instants whose colons are
+  // illegal in Windows filenames and get mangled by browser download sanitizers.
+  return `show-run-${tab}-${dateFrom.slice(0, 10)}_${dateTo.slice(0, 10)}.csv`;
 }
 
 function runExport<TRow extends CsvRow>(

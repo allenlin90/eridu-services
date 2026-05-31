@@ -9,6 +9,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import {
@@ -30,6 +31,7 @@ import {
 } from '@eridu/ui';
 
 import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
+import { getShowRunReviewErrorMessage } from '@/features/show-run-review/lib/get-show-run-review-error-message';
 import {
   exportShowRunReviewCreators,
   exportShowRunReviewShows,
@@ -37,6 +39,7 @@ import {
   exportShowRunReviewViolations,
   type ShowRunReviewExportTab,
 } from '@/features/show-run-review/lib/show-run-review-csv';
+import type { GetShowRunReviewPaginatedParams } from '@/features/shows/api/get-show-run-review-paginated';
 import {
   getShowRunReviewCreators,
   getShowRunReviewShows,
@@ -453,89 +456,71 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
   // same endpoint with the active filters and limit = total, then serialize.
   const [exportingTab, setExportingTab] = useState<ShowRunReviewExportTab | null>(null);
 
-  const handleExportCreators = async () => {
-    const total = creatorsQuery.data?.meta.total ?? 0;
+  // `total` is read from the cached list query, so a snapshot taken just before
+  // export. If rows changed since the last list fetch the export caps at that
+  // older total — acceptable for an operational snapshot, not a fix to chase.
+  const runTabExport = async <TRow,>(
+    tab: ShowRunReviewExportTab,
+    total: number,
+    filters: Pick<GetShowRunReviewPaginatedParams, 'search' | 'status' | 'severity' | 'completeness'>,
+    fetcher: (studioId: string, params: GetShowRunReviewPaginatedParams) => Promise<{ data: TRow[] }>,
+    exporter: (rows: TRow[], opts: { dateFrom: string; dateTo: string }) => void,
+  ): Promise<void> => {
     if (total === 0) {
       return;
     }
-    setExportingTab('creators');
+    setExportingTab(tab);
     try {
-      const all = await getShowRunReviewCreators(studioId, {
+      const all = await fetcher(studioId, {
         date_from: data.date_from,
         date_to: data.date_to,
         page: 1,
         limit: total,
-        search: search.creators_search,
-        status: search.creators_status,
+        ...filters,
       });
-      exportShowRunReviewCreators(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
+      exporter(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
+    } catch (err) {
+      toast.error(getShowRunReviewErrorMessage(err, 'Failed to export CSV'));
     } finally {
       setExportingTab(null);
     }
   };
 
-  const handleExportViolations = async () => {
-    const total = violationsQuery.data?.meta.total ?? 0;
-    if (total === 0) {
-      return;
-    }
-    setExportingTab('violations');
-    try {
-      const all = await getShowRunReviewViolations(studioId, {
-        date_from: data.date_from,
-        date_to: data.date_to,
-        page: 1,
-        limit: total,
-        search: search.violations_search,
-        severity: search.violations_severity,
-      });
-      exportShowRunReviewViolations(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
-    } finally {
-      setExportingTab(null);
-    }
-  };
+  const handleExportCreators = () =>
+    runTabExport(
+      'creators',
+      creatorsQuery.data?.meta.total ?? 0,
+      { search: search.creators_search, status: search.creators_status },
+      getShowRunReviewCreators,
+      exportShowRunReviewCreators,
+    );
 
-  const handleExportTasks = async () => {
-    const total = tasksQuery.data?.meta.total ?? 0;
-    if (total === 0) {
-      return;
-    }
-    setExportingTab('tasks');
-    try {
-      const all = await getShowRunReviewTasks(studioId, {
-        date_from: data.date_from,
-        date_to: data.date_to,
-        page: 1,
-        limit: total,
-        search: search.tasks_search,
-        status: search.tasks_status,
-      });
-      exportShowRunReviewTasks(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
-    } finally {
-      setExportingTab(null);
-    }
-  };
+  const handleExportViolations = () =>
+    runTabExport(
+      'violations',
+      violationsQuery.data?.meta.total ?? 0,
+      { search: search.violations_search, severity: search.violations_severity },
+      getShowRunReviewViolations,
+      exportShowRunReviewViolations,
+    );
 
-  const handleExportShows = async () => {
-    const total = showsQuery.data?.meta.total ?? 0;
-    if (total === 0) {
-      return;
-    }
-    setExportingTab('shows');
-    try {
-      const all = await getShowRunReviewShows(studioId, {
-        date_from: data.date_from,
-        date_to: data.date_to,
-        page: 1,
-        limit: total,
-        search: search.shows_search,
-        completeness: search.shows_completeness,
-      });
-      exportShowRunReviewShows(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
-    } finally {
-      setExportingTab(null);
-    }
-  };
+  const handleExportTasks = () =>
+    runTabExport(
+      'tasks',
+      tasksQuery.data?.meta.total ?? 0,
+      { search: search.tasks_search, status: search.tasks_status },
+      getShowRunReviewTasks,
+      exportShowRunReviewTasks,
+    );
+
+  const handleExportShows = () =>
+    runTabExport(
+      'shows',
+      showsQuery.data?.meta.total ?? 0,
+      { search: search.shows_search, completeness: search.shows_completeness },
+      getShowRunReviewShows,
+      exportShowRunReviewShows,
+    );
 
   return (
     <div className="space-y-6 min-w-0 w-full overflow-hidden">
