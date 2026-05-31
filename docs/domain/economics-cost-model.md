@@ -143,7 +143,7 @@ Planned fallback is an admin/manager and operational review behavior. Creator/op
 
 Manager corrections to past actuals are allowed only through submitted manager override or correction tasks. Notifications to recipients are deferred (§4).
 
-Task-submitted actuals and operational facts write to their scoped models only when the task is confirmed into `COMPLETED`. Operator submissions first land in `REVIEW`; manager confirmation is the gate that triggers extraction and populates target columns. Manager overrides use the same submitted-task path, so operational facts always trace back to a confirmed task submission. The review surface is the Phase 4 home for submitted-task review, bulk confirmation, exception queues, confirmed operational-fact summaries, and range sign-off. The surface can group by operational day, week, or date range without requiring managers to inspect each task individually.
+Task-submitted actuals and operational facts write to their scoped models only when the task is confirmed into `COMPLETED`. Operator submissions first land in `REVIEW`; manager confirmation is the gate that triggers extraction and populates target columns. Manager overrides use the same submitted-task path, so operational facts always trace back to a confirmed task submission. The review surface is the Phase 4 home for submitted-task review, bulk confirmation, exception queues, confirmed operational-fact summaries, and filtered exports. The surface can group by operational day, week, or date range without requiring managers to inspect each task individually.
 
 ### Compensation line items
 

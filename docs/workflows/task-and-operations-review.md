@@ -1,6 +1,6 @@
 # Workflow: Task & Operations Review
 
-End-to-end workflow for how a studio manages operator task execution, manager bulk approvals, database fact extraction, and compiled daily operations sign-offs.
+End-to-end workflow for how a studio manages operator task execution, manager bulk approvals, database fact extraction, and compiled daily operations review.
 
 ---
 
@@ -9,7 +9,7 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
 | Actor | Role | Key Capability |
 | --- | --- | --- |
 | Operator (Host/Producer) | All | Executes check-lists, fills out forms, auto-saves input, and submits tasks. |
-| Studio Manager | `MANAGER` | Reviews submissions, bulk-approves tasks, reviews compiled daily facts, and logs sign-offs. |
+| Studio Manager | `MANAGER` | Reviews submissions, bulk-approves tasks, reviews compiled daily facts, and exports filtered operational rows. |
 | Studio Admin | `ADMIN` | Same as Manager, plus template creation and task configuration. |
 
 ---
@@ -31,7 +31,7 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
        ↓
 7. Manager reviews consolidated daily outcomes in Show Run Review (/show-run-review)
        ↓
-8. Manager signs off the operational range (PR 12.4.5)
+8. Manager exports filtered operational rows when reporting is needed
 ```
 
 ---
@@ -81,8 +81,8 @@ Once tasks are bulk-approved and facts are populated in the database, the manage
 * Creator attendance reports with submitted reasons.
 * Active platform violation lists.
 
-### 7. Range Sign-Off
-Once daily outcomes are verified, the manager signs off the operational range (PR 12.4.5), which logs the sign-off event with a count of unresolved exceptions into the permanent audit history, making the operational cost facts ready for downstream financial visibility.
+### 7. Filtered Export
+Once daily outcomes are reviewed, the manager can export each Show Run Review tab to CSV. Exports refetch the full filtered set for the selected operational range rather than only the visible page.
 
 ---
 
@@ -123,14 +123,14 @@ sequenceDiagram
     StudiosPortal->>Manager: Open results dialog (visual summaries & outcome badges)
     StudiosPortal->>StudiosPortal: Invalidate Query Cache (refresh review queue & stats)
 
-    Note over Manager, PostgreSQL: Post-Confirmation & Sign-off Phase
+    Note over Manager, PostgreSQL: Post-Confirmation Review Phase
     Manager->>StudiosPortal: Navigate to /show-run-review
     StudiosPortal->>ApiServer: GET /studios/:id/shows/run-review
     ApiServer->>PostgreSQL: Query extracted facts (Shows, Creators, Platforms)
     ApiServer-->>StudiosPortal: Return compiled daily metrics
-    Manager->>StudiosPortal: Click "Operational Range Sign-off"
-    StudiosPortal->>ApiServer: POST /studios/:id/sign-off
-    ApiServer->>PostgreSQL: Log range SignOffAudit record
+    Manager->>StudiosPortal: Click "Export CSV" on a tab
+    StudiosPortal->>ApiServer: GET /studios/:id/shows/run-review/{tab}?limit=total
+    ApiServer-->>StudiosPortal: Return full filtered tab rows
 ```
 
 ---

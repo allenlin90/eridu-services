@@ -65,7 +65,7 @@ function ShowRunReviewPage() {
     >
       <PageLayout
         title="Show Run Review"
-        description="Review submitted and signed-off show results for the selected range."
+        description="Review submitted show results and export filtered operational rows for the selected range."
       >
         <div className="space-y-4 min-w-0 w-full overflow-hidden">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full">

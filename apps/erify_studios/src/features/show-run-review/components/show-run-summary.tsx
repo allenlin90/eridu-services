@@ -455,20 +455,20 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
 
   const handleExportCreators = async () => {
     const total = creatorsQuery.data?.meta.total ?? 0;
-    if (total === 0 || !search.date_from || !search.date_to) {
+    if (total === 0) {
       return;
     }
     setExportingTab('creators');
     try {
       const all = await getShowRunReviewCreators(studioId, {
-        date_from: search.date_from,
-        date_to: search.date_to,
+        date_from: data.date_from,
+        date_to: data.date_to,
         page: 1,
         limit: total,
         search: search.creators_search,
         status: search.creators_status,
       });
-      exportShowRunReviewCreators(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+      exportShowRunReviewCreators(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
     } finally {
       setExportingTab(null);
     }
@@ -476,20 +476,20 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
 
   const handleExportViolations = async () => {
     const total = violationsQuery.data?.meta.total ?? 0;
-    if (total === 0 || !search.date_from || !search.date_to) {
+    if (total === 0) {
       return;
     }
     setExportingTab('violations');
     try {
       const all = await getShowRunReviewViolations(studioId, {
-        date_from: search.date_from,
-        date_to: search.date_to,
+        date_from: data.date_from,
+        date_to: data.date_to,
         page: 1,
         limit: total,
         search: search.violations_search,
         severity: search.violations_severity,
       });
-      exportShowRunReviewViolations(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+      exportShowRunReviewViolations(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
     } finally {
       setExportingTab(null);
     }
@@ -497,20 +497,20 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
 
   const handleExportTasks = async () => {
     const total = tasksQuery.data?.meta.total ?? 0;
-    if (total === 0 || !search.date_from || !search.date_to) {
+    if (total === 0) {
       return;
     }
     setExportingTab('tasks');
     try {
       const all = await getShowRunReviewTasks(studioId, {
-        date_from: search.date_from,
-        date_to: search.date_to,
+        date_from: data.date_from,
+        date_to: data.date_to,
         page: 1,
         limit: total,
         search: search.tasks_search,
         status: search.tasks_status,
       });
-      exportShowRunReviewTasks(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+      exportShowRunReviewTasks(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
     } finally {
       setExportingTab(null);
     }
@@ -518,20 +518,20 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
 
   const handleExportShows = async () => {
     const total = showsQuery.data?.meta.total ?? 0;
-    if (total === 0 || !search.date_from || !search.date_to) {
+    if (total === 0) {
       return;
     }
     setExportingTab('shows');
     try {
       const all = await getShowRunReviewShows(studioId, {
-        date_from: search.date_from,
-        date_to: search.date_to,
+        date_from: data.date_from,
+        date_to: data.date_to,
         page: 1,
         limit: total,
         search: search.shows_search,
         completeness: search.shows_completeness,
       });
-      exportShowRunReviewShows(all.data, { dateFrom: search.date_from, dateTo: search.date_to });
+      exportShowRunReviewShows(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
     } finally {
       setExportingTab(null);
     }

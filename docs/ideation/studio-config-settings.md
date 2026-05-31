@@ -176,5 +176,5 @@ This consolidated topic should be promoted to a PRD and scheduled for execution 
 ## Out of Scope for MVP
 
 *   User-level preference UI (settings are studio-level, not personal manager display preferences).
-*   Historical regrouping or backfill of already signed-off ranges.
+*   Historical regrouping or backfill of already reviewed operational ranges.
 *   Timezone migration for stored timestamps; persisted timestamps remain UTC instants.

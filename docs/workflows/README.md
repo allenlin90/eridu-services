@@ -10,7 +10,7 @@ These are **navigation guides**, not specs or API references. They orient a deve
 | --- | --- |
 | [Creator Operations](./creator-operations.md) | RBAC roles → creator roster → show assignment → economics |
 | [Shift Operations](./shift-operations.md) | Member roster → shift creation → actuals entry → cost review (operator side) |
-| [Task & Operations Review](./task-and-operations-review.md) | Template field bindings → task generation → operator execution → bulk approval → daily sign-off |
+| [Task & Operations Review](./task-and-operations-review.md) | Template field bindings → task generation → operator execution → bulk approval → daily review/export |
 
 ## When to Add a Workflow Doc
 
