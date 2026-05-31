@@ -125,7 +125,7 @@ flowchart TB
 **Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated across perspectives that *do* ship together. Unit components (`ActualsTimelineViewer`, `ShowRunSummary`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) live in reusable packages or shared app folders and are consumed identically by each perspective, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
 
 ### G. Operations Review as Upstream of Economics Review
-PR 12 stands up the **operations review workflow** (PR 12.4.x). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first in Task Review, confirmed tasks populate operational facts, and Show Run Review summarizes the signed-off show execution, creator attendance, and platform issues. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 12.6.
+PR 12 stands up the **operations review workflow** (PR 12.4.x). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first in Task Review, confirmed tasks populate operational facts, and Show Run Review summarizes the submitted show execution, creator attendance, and platform issues. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 12.6.
 
 ---
 
@@ -244,11 +244,11 @@ Implementation is structured into **three logical sections**. Each section serve
 #### 🟨 PR 12.4.1 · Operations Review Foundation
 * **Purpose**: Establish the Operations Review navigation model for the two-layer review workflow.
 * **Functional Deliverable**:
-  * **Route shell**: Add `/studios/:studioId/show-run-review` for submitted and signed-off operational metrics.
+  * **Route shell**: Add `/studios/:studioId/show-run-review` for submitted operational metrics.
   * **Review consolidation**: Keep submitted-task review under `/studios/:studioId/task-review`; future bulk review extends that page instead of adding a separate submitted-task review route.
   * **Sidebar refinement**: Use `/task-setup` for **Task Setup** and group Task Setup, Task Review, Show Run Review, and Task Reports under **Operations**.
   * **Operational day scope**: Default to the active 06:00–05:59 operational day, with `date_from` / `date_to` URL state reflected directly in the date range picker. `/task-review` queries use the same window for `due_date_from` / `due_date_to` and silently refetches every 5 minutes while the current operational day is selected; historical ranges stay manual refresh. `/show-run-review` keeps the picker-only scope control (no separate window label or refresh affordance) until summary queries land in 12.4.4.
-  * **Two-layer framing**: Task Review is the pre-confirmation layer; Show Run Review counts only submitted and signed-off extracted facts using manager-friendly show execution language.
+  * **Two-layer framing**: Task Review is the pre-confirmation layer; Show Run Review counts only submitted extracted facts using manager-friendly show execution language.
 
 #### 🟨 PR 12.4.2 · Task Review Summary and Exception Queues
 * **Purpose**: Replace one-by-one review as the only manager workflow.
