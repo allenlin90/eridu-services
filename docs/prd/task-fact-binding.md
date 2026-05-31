@@ -136,7 +136,7 @@ Implementation is structured into **three logical sections**. Each section serve
 ```
    ┌─────────────────────────────────────────────────────────────┐
    │                    SECTION C: REVIEW SURFACE                │
-   │  - PR 12.4.x: Task Review, Show Run Review, Sign-Off       │
+   │  - PR 12.4.x: Task Review, Show Run Review, Export          │
    └──────────────────────────────┬──────────────────────────────┘
                                   ▼
    ┌─────────────────────────────────────────────────────────────┐
