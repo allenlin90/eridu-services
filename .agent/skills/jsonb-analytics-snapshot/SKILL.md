@@ -9,7 +9,7 @@ This skill provides one architectural pattern for using JSONB to store pre-aggre
 
 It is not the default answer for every metric. First classify the need:
 
-- **OLTP operational path**: current-state writes, exception review, sign-off, overrides, constraints, and filters that must stay close to source records.
+- **OLTP operational path**: current-state writes, exception review, overrides, constraints, and filters that must stay close to source records.
 - **OLAP/read-model path**: post-show analysis, trends, cross-entity comparisons, dashboards, exports, and derived aggregates.
 
 When the need is analytical, decide whether this JSONB snapshot pattern, normalized Postgres projections/materialized views, application-managed projection tables, or separate OLAP infrastructure best matches the query shape and freshness requirements.
