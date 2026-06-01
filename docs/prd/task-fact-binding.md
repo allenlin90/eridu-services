@@ -241,7 +241,7 @@ Implementation is structured into **three logical sections**. Each section serve
 ### SECTION C: Operations Review Surface (PRs 12.4.1 – 12.4.7)
 *This section builds the management portal where studio managers confirm submitted tasks, populate operational facts, manage anomalies, and export operational metrics.*
 
-#### 🟨 PR 12.4.1 · Operations Review Foundation
+#### 🟩 PR 12.4.1 · Operations Review Foundation — ✅ Shipped in [#108](https://github.com/allenlin90/eridu-services/pull/108)
 * **Purpose**: Establish the Operations Review navigation model for the two-layer review workflow.
 * **Functional Deliverable**:
   * **Route shell**: Add `/studios/:studioId/show-run-review` for submitted operational metrics.
@@ -250,7 +250,7 @@ Implementation is structured into **three logical sections**. Each section serve
   * **Operational day scope**: Default to the active 06:00–05:59 operational day, with `date_from` / `date_to` URL state reflected directly in the date range picker. `/task-review` queries use the same window for `due_date_from` / `due_date_to` and silently refetches every 5 minutes while the current operational day is selected; historical ranges stay manual refresh. `/show-run-review` keeps the picker-only scope control (no separate window label or refresh affordance) until summary queries land in 12.4.4.
   * **Two-layer framing**: Task Review is the pre-confirmation layer; Show Run Review counts only submitted extracted facts using manager-friendly show execution language.
 
-#### 🟨 PR 12.4.2 · Task Review Summary and Exception Queues
+#### 🟩 PR 12.4.2 · Task Review Summary and Exception Queues — ✅ Shipped in [#109](https://github.com/allenlin90/eridu-services/pull/109)
 * **Purpose**: Replace one-by-one review as the only manager workflow.
 * **Functional Deliverable**:
   * Summarize `REVIEW` tasks in the selected operational day/range.
@@ -258,14 +258,14 @@ Implementation is structured into **three logical sections**. Each section serve
   * Tag issues by pre-production, on-air, and post-production phase.
   * Deep-link rows back to show tasks and task submission detail.
 
-#### 🟨 PR 12.4.3 · Bulk Submitted-Task Approval and Extraction Result Summary — ✅ Shipped in [#110](https://github.com/allenlin90/eridu-services/pull/110)
+#### 🟩 PR 12.4.3 · Bulk Submitted-Task Approval and Extraction Result Summary — ✅ Shipped in [#110](https://github.com/allenlin90/eridu-services/pull/110)
 * **Purpose**: Make manager confirmation the bulk gate that populates operational facts.
 * **Functional Deliverable**:
   * Bulk approve eligible `REVIEW` tasks by transitioning each through `TaskOrchestrationService.submitTaskContent`.
   * Preserve per-task optimistic-lock results and validation errors.
   * Report extraction outcomes so "approved but extraction failed" remains visible.
 
-#### 🟨 PR 12.4.4 · Operational Facts Summary and Filters
+#### 🟩 PR 12.4.4 · Operational Facts Summary and Filters — ✅ Shipped in [#111](https://github.com/allenlin90/eridu-services/pull/111)
 * **Purpose**: Summarize confirmed operational facts after task approval/extraction.
 * **Functional Deliverable**:
   * Show-level start completeness (started vs. not started), late-start count, and total missing duration from late starts; end-time recording is secondary detail rather than a completeness gate.
@@ -273,7 +273,7 @@ Implementation is structured into **three logical sections**. Each section serve
   * Active platform violation counts.
   * Incomplete phase checks and missing operational facts.
 
-#### 🟨 PR 12.4.6 · Correction, Manager Override, and Stale Input Re-Population Workflow
+#### 🟩 PR 12.4.6 · Correction, Manager Override, and Stale Input Re-Population Workflow — ✅ Shipped in [#118](https://github.com/allenlin90/eridu-services/pull/118)
 * **Purpose**: Route operator corrections and manager overrides through submitted tasks so target columns are re-populated only through confirmed submissions.
 * **Functional Deliverable**:
   * Send tasks back for correction with manager reason.
