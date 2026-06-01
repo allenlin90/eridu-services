@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
-import { getTaskIssues, getTaskPhase } from '@/features/tasks/config/studio-task-columns';
+import {
+  getBulkApprovalBlockers,
+  getTaskIssues,
+  getTaskPhase,
+} from '@/features/tasks/config/studio-task-columns';
 
 const NOW = new Date('2026-05-28T12:00:00Z');
 const PAST = '2026-05-20T00:00:00Z';
@@ -90,6 +94,16 @@ describe('getTaskIssues', () => {
     expect(getTaskIssues(task)).toEqual(['No Fact Bindings']);
   });
 
+  it('does not infer No Fact Bindings when the list payload omits snapshot schema', () => {
+    const task = createTask({
+      status: 'REVIEW',
+      template: { id: 'tpl-1', name: 'T' },
+      snapshot: { version: 1 } as TaskWithRelationsDto['snapshot'],
+      content: { f1: 'value' },
+    });
+    expect(getTaskIssues(task)).toEqual([]);
+  });
+
   it('flags Zero Facts for a REVIEW task with bindings but no values', () => {
     const task = createTask({
       status: 'REVIEW',
@@ -119,6 +133,27 @@ describe('getTaskIssues', () => {
       content: {},
     });
     expect(getTaskIssues(task)).toEqual([]);
+  });
+});
+
+describe('getBulkApprovalBlockers', () => {
+  it('does not block bulk approval for advisory extraction warnings', () => {
+    const task = createTask({
+      status: 'REVIEW',
+      has_binding_drift: true,
+      template: { id: 'tpl-1', name: 'T' },
+      snapshot: { schema: { items: [{ id: 'f1', label: 'Field 1' }] }, version: 1 },
+      content: { f1: 'value' },
+    });
+
+    expect(getTaskIssues(task)).toEqual(['Binding Drift', 'No Fact Bindings']);
+    expect(getBulkApprovalBlockers(task)).toEqual([]);
+  });
+
+  it('blocks bulk approval when a review task is unassigned', () => {
+    const task = createTask({ status: 'REVIEW', assignee: null });
+
+    expect(getBulkApprovalBlockers(task)).toEqual(['Unassigned']);
   });
 });
 

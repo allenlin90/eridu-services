@@ -84,6 +84,15 @@ useEffect(() => {
 - **Local state**: Selected row id (not full objects), dialog/drawer open state, draft inline edits
 - Row selection surviving page changes: use `useSelectedRowSnapshots` feature hook
 
+## Row Selection Eligibility
+
+When a table has both issue badges and bulk actions, keep the two decisions separate:
+
+- Issue helpers can return advisory review signals that explain row state to the user.
+- Bulk-action selection must use a dedicated blocker helper that returns only conditions the bulk endpoint cannot process.
+- Do not reuse all issue badges as `enableRowSelection`; advisory warnings such as extraction visibility, binding drift, or stale-template context can block a valid backend action.
+- If a list payload omits large lazy-loaded fields such as `snapshot.schema`, do not infer a negative condition from absence alone. Run schema-dependent checks only when the field is actually present, or lazy-load detail before making a blocking decision.
+
 ## Async Combobox Filters
 
 For filters that query large backend collections (e.g., Clients, Memberships/Users, Shows) in dense tables:
@@ -115,6 +124,7 @@ See [references/table-view-details.md](references/table-view-details.md) for ref
 - [ ] `isLoading` and `isFetching` both handled
 - [ ] Mutation invalidation scoped correctly
 - [ ] Stable row ids for selection/editing
+- [ ] Row-selection eligibility uses hard blockers, not every issue badge or advisory warning
 - [ ] Current-view export (if present) uses shared params + `AbortSignal` + shared CSV/download helpers + concurrency cap (no `Promise.all` fan-out) + spinner on trigger
 - [ ] Route decomposition clean and maintainable
 - [ ] Layout compared against nearest canonical table

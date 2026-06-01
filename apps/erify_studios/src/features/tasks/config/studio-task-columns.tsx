@@ -103,27 +103,30 @@ function ActionCell({
 
 export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   const issues: string[] = [];
-  if (['COMPLETED', 'CLOSED'].includes(task.status)) {
+  if ([TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED].includes(task.status)) {
     return issues;
   }
   if (!task.assignee) {
     issues.push('Unassigned');
   }
-  const isNotSubmitted = !['REVIEW'].includes(task.status);
+  const isNotSubmitted = task.status !== TASK_STATUS.REVIEW;
   const isOverdue = task.due_date && new Date(task.due_date) < new Date();
   if (isNotSubmitted && isOverdue) {
     issues.push('Overdue');
     issues.push('Pending Submission');
   }
 
-  if (task.status === 'REVIEW') {
+  if (task.status === TASK_STATUS.REVIEW) {
     if (task.has_binding_drift) {
       issues.push('Binding Drift');
     }
 
-    if (task.template) {
+    const snapshotSchema = task.snapshot && 'schema' in task.snapshot
+      ? task.snapshot.schema
+      : undefined;
+    if (task.template && snapshotSchema !== undefined) {
       const { hasBindings, willExtractZeroFacts } = getExtractionStatus(
-        task.snapshot?.schema,
+        snapshotSchema,
         (task.content as Record<string, unknown> | null) ?? {},
       );
       if (!hasBindings) {
@@ -135,6 +138,18 @@ export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   }
 
   return issues;
+}
+
+export function getBulkApprovalBlockers(task: TaskWithRelationsDto): string[] {
+  const blockers: string[] = [];
+  if (task.status !== TASK_STATUS.REVIEW) {
+    blockers.push('Not In Review');
+  }
+  if (!task.assignee) {
+    blockers.push('Unassigned');
+  }
+
+  return blockers;
 }
 
 export function getTaskPhase(type: string): 'pre-production' | 'on-air' | 'post-production' {
