@@ -63,7 +63,8 @@ Studio managers review submitted operator task checklists for the operational da
 
 
 ### 4. Multi-Selection and Bulk Approval
-Managers use individual row checkboxes (or the table header toggle to select all clean rows) to select tasks they wish to confirm:
+Managers use individual row checkboxes (or the table header toggle to select all eligible rows) to select tasks they wish to confirm:
+* **Selection Eligibility**: A row is selectable only when it clears the *hard* bulk-approval blockers — it must be in `REVIEW` status and have an assignee. Advisory issue badges (Binding Drift, Zero Facts, No Fact Bindings) remain visible for reviewer context but do **not** block selection, because single approval follows the same backend transition and extraction path.
 * **Floating Selection Bar**: Checking one or more rows causes a bottom toolbar to slide up, showing the selected count.
 * **Trigger Bulk Approval**: Clicking `Approve Selected` triggers `POST /studios/:studioId/tasks/bulk-approve` carrying the task UIDs.
 * **Error Isolation**: The loop processes each task inside its own transaction. If one task fails (validation issues or concurrency conflicts), its diagnostic error is preserved while adjacent clean tasks successfully commit and complete.
