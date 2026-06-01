@@ -156,6 +156,18 @@ describe('getBulkApprovalBlockers', () => {
 
     expect(getBulkApprovalBlockers(task)).toEqual(['Unassigned']);
   });
+
+  it('blocks bulk approval when a task is not in REVIEW', () => {
+    const task = createTask({ status: 'IN_PROGRESS' });
+
+    expect(getBulkApprovalBlockers(task)).toEqual(['Not In Review']);
+  });
+
+  it('reports both blockers for an unassigned non-review task', () => {
+    const task = createTask({ status: 'IN_PROGRESS', assignee: null });
+
+    expect(getBulkApprovalBlockers(task)).toEqual(['Not In Review', 'Unassigned']);
+  });
 });
 
 describe('getTaskIssueDescription', () => {

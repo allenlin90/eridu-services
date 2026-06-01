@@ -16,14 +16,14 @@ import {
   Badge,
   Button,
   Checkbox,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
@@ -113,9 +113,8 @@ function ActionCell({
 }
 
 function TaskIssueBadge({ issue }: { issue: string }) {
-  const [open, setOpen] = useState(false);
   const description = getTaskIssueDescription(issue);
-  const badgeClassName = 'text-[9px] px-1.5 py-0.2 text-red-600 border-red-200 bg-red-500/5 dark:text-red-400 dark:border-red-900/30 font-semibold uppercase flex items-center gap-0.5';
+  const badgeClassName = 'text-[9px] px-1.5 py-0.5 text-red-600 border-red-200 bg-red-500/5 dark:text-red-400 dark:border-red-900/30 font-semibold uppercase flex items-center gap-0.5';
 
   if (!description) {
     return (
@@ -127,8 +126,8 @@ function TaskIssueBadge({ issue }: { issue: string }) {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Tooltip>
+      <TooltipTrigger asChild>
         <button
           type="button"
           className={cn(
@@ -136,27 +135,19 @@ function TaskIssueBadge({ issue }: { issue: string }) {
             'rounded-md border leading-none outline-none transition-colors hover:bg-red-500/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
           )}
           aria-label={`${issue}: ${description}`}
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setOpen(false)}
-          onClick={(event) => {
-            event.stopPropagation();
-            setOpen(true);
-          }}
+          onClick={(event) => event.stopPropagation()}
         >
           <AlertTriangle className="h-2.5 w-2.5" />
           {issue}
         </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
+      </TooltipTrigger>
+      <TooltipContent
         side="top"
-        className="max-w-[min(20rem,calc(100vw-2rem))] text-xs leading-relaxed"
+        className="max-w-[min(20rem,calc(100vw-2rem))] leading-relaxed"
       >
         {description}
-      </PopoverContent>
-    </Popover>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
