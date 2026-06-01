@@ -20,6 +20,7 @@ Run when any of these are true:
 6. An `apps/*/docs/design/` document describes behavior that has shipped — promote it via the **Design Doc Promotion** section below.
 7. A mid-phase scope simplification has made multiple downstream PRDs stale — consolidate the remaining work into `docs/roadmap/PHASE_<n>.md` via the **Tracker Consolidation** section below.
 8. A PRD has become a locked operating contract that active features conform to (rather than pre-ship requirements) — promote it to `docs/domain/<name>.md` via classification **Operating Contract** in Step 2.
+9. A `docs/superpowers/` spec or plan has been fully implemented and merged — retire it via the **Superpowers Spec/Plan Retirement** section below.
 
 ---
 
@@ -174,6 +175,22 @@ The Phase 4 consolidation (2026-05-16) is the canonical example: 5 PRDs + 1 brea
 - A truly novel feature is in flight — write a PRD instead.
 - Scope is stable and PRDs are being implemented as-written — leave them alone.
 - The phase is closing soon — promote shipped PRDs to `docs/features/` per Step 2 rather than consolidating mid-flight.
+
+---
+
+## Superpowers Spec/Plan Retirement
+
+`docs/superpowers/specs/` and `docs/superpowers/plans/` hold transient brainstorming specs and task-by-task implementation plans. They exist to drive a change to completion — they are not durable references. Once the work they describe has shipped, the canonical record is the code plus the PR/commit history, so the spec and plan are retired.
+
+### Procedure
+
+Run in the same PR that completes the plan (not a follow-up), so the planning artifacts and their implementation land and retire together:
+
+1. **Delete the implemented spec and plan.** Remove both files from `docs/superpowers/specs/` and `docs/superpowers/plans/`. Do not leave a stub or a "retired" marker — git history preserves them if anyone needs to trace the reasoning.
+2. **Capture any still-useful durable decision before deleting.** If the spec recorded a decision the code does not make obvious (a rejected option, a deliberate trade-off, a cross-cutting pattern), fold it into its proper canonical home first — a skill, a `docs/domain/` contract, or the feature's `apps/*/docs/` reference — then delete. The plan's checklists, file inventories, and `pnpm` blocks are not durable; let them go.
+3. **Verify no cross-references.** `grep -rn "docs/superpowers/<name>" . --include="*.md" --exclude-dir=node_modules --exclude-dir=.git` and repoint or remove any survivors. (PR descriptions on GitHub may still link the deleted files; that is an external artifact and acceptable.)
+
+Leave specs/plans in place while the work is still active, partially shipped, or split across multiple in-flight PRs — retire only once the whole plan is implemented and merged.
 
 ---
 
