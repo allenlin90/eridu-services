@@ -4,6 +4,7 @@ import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
 import {
   getBulkApprovalBlockers,
+  getTaskIssueDescription,
   getTaskIssues,
   getTaskPhase,
 } from '@/features/tasks/config/studio-task-columns';
@@ -154,6 +155,18 @@ describe('getBulkApprovalBlockers', () => {
     const task = createTask({ status: 'REVIEW', assignee: null });
 
     expect(getBulkApprovalBlockers(task)).toEqual(['Unassigned']);
+  });
+});
+
+describe('getTaskIssueDescription', () => {
+  it('explains Binding Drift as an older frozen snapshot than the current template', () => {
+    expect(getTaskIssueDescription('Binding Drift')).toBe(
+      'This task was generated from an older frozen template snapshot than the current template version. Approval is still allowed, but newly-added bindings may require regenerating the task.',
+    );
+  });
+
+  it('does not describe generic issues without extra review context', () => {
+    expect(getTaskIssueDescription('Unassigned')).toBeNull();
   });
 });
 

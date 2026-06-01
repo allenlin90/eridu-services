@@ -16,6 +16,9 @@ import {
   Badge,
   Button,
   Checkbox,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -35,6 +38,14 @@ const STUDIO_REVIEW_ACTIONS: Partial<Record<TaskStatus, TaskAction[]>> = {
   [TASK_STATUS.BLOCKED]: [TASK_ACTION.CONTINUE_EDITING, TASK_ACTION.SUBMIT_FOR_REVIEW, TASK_ACTION.CLOSE_TASK],
   [TASK_STATUS.CLOSED]: [TASK_ACTION.REOPEN_TASK],
 };
+
+const TASK_ISSUE_DESCRIPTIONS: Partial<Record<string, string>> = {
+  'Binding Drift': 'This task was generated from an older frozen template snapshot than the current template version. Approval is still allowed, but newly-added bindings may require regenerating the task.',
+};
+
+export function getTaskIssueDescription(issue: string): string | null {
+  return TASK_ISSUE_DESCRIPTIONS[issue] ?? null;
+}
 
 function getActionLabel(action: TaskAction): string {
   if (action === TASK_ACTION.START_WORK) {
@@ -98,6 +109,54 @@ function ActionCell({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+function TaskIssueBadge({ issue }: { issue: string }) {
+  const [open, setOpen] = useState(false);
+  const description = getTaskIssueDescription(issue);
+  const badgeClassName = 'text-[9px] px-1.5 py-0.2 text-red-600 border-red-200 bg-red-500/5 dark:text-red-400 dark:border-red-900/30 font-semibold uppercase flex items-center gap-0.5';
+
+  if (!description) {
+    return (
+      <Badge variant="outline" className={badgeClassName}>
+        <AlertTriangle className="h-2.5 w-2.5" />
+        {issue}
+      </Badge>
+    );
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            badgeClassName,
+            'rounded-md border leading-none outline-none transition-colors hover:bg-red-500/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+          )}
+          aria-label={`${issue}: ${description}`}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen(true);
+          }}
+        >
+          <AlertTriangle className="h-2.5 w-2.5" />
+          {issue}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        side="top"
+        className="max-w-[min(20rem,calc(100vw-2rem))] text-xs leading-relaxed"
+      >
+        {description}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -226,12 +285,7 @@ export function getStudioTaskColumns(
                 {phase === 'pre-production' ? 'Pre-Prod' : phase === 'on-air' ? 'On-Air' : 'Post-Prod'}
               </Badge>
 
-              {issues.map((issue) => (
-                <Badge key={issue} variant="outline" className="text-[9px] px-1.5 py-0.2 text-red-600 border-red-200 bg-red-500/5 dark:text-red-400 dark:border-red-900/30 font-semibold uppercase flex items-center gap-0.5">
-                  <AlertTriangle className="h-2.5 w-2.5" />
-                  {issue}
-                </Badge>
-              ))}
+              {issues.map((issue) => <TaskIssueBadge key={issue} issue={issue} />)}
             </div>
           </div>
         );
