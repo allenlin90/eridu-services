@@ -125,7 +125,7 @@ flowchart TB
 **Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated across perspectives that *do* ship together. Unit components (`ActualsTimelineViewer`, `ShowRunSummary`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) live in reusable packages or shared app folders and are consumed identically by each perspective, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
 
 ### G. Operations Review as Upstream of Economics Review
-PR 12 stands up the **operations review workflow** (PR 12.4.x). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first in Task Review, confirmed tasks populate operational facts, and Show Run Review summarizes the signed-off show execution, creator attendance, and platform issues. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 12.6.
+PR 12 stands up the **operations review workflow** (PR 12.4.x). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first in Task Review, confirmed tasks populate operational facts, and Show Run Review summarizes the submitted show execution, creator attendance, and platform issues. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 12.6.
 
 ---
 
@@ -136,7 +136,7 @@ Implementation is structured into **three logical sections**. Each section serve
 ```
    ┌─────────────────────────────────────────────────────────────┐
    │                    SECTION C: REVIEW SURFACE                │
-   │  - PR 12.4.x: Task Review, Show Run Review, Sign-Off       │
+   │  - PR 12.4.x: Task Review, Show Run Review, Export          │
    └──────────────────────────────┬──────────────────────────────┘
                                   ▼
    ┌─────────────────────────────────────────────────────────────┐
@@ -238,19 +238,19 @@ Implementation is structured into **three logical sections**. Each section serve
 
 ---
 
-### SECTION C: Operations Review Surface (PRs 12.4.1 – 12.4.6)
-*This section builds the management portal where studio managers confirm submitted tasks, populate operational facts, manage anomalies, and log operational sign-offs.*
+### SECTION C: Operations Review Surface (PRs 12.4.1 – 12.4.7)
+*This section builds the management portal where studio managers confirm submitted tasks, populate operational facts, manage anomalies, and export operational metrics.*
 
-#### 🟨 PR 12.4.1 · Operations Review Foundation
+#### 🟩 PR 12.4.1 · Operations Review Foundation — ✅ Shipped in [#108](https://github.com/allenlin90/eridu-services/pull/108)
 * **Purpose**: Establish the Operations Review navigation model for the two-layer review workflow.
 * **Functional Deliverable**:
-  * **Route shell**: Add `/studios/:studioId/show-run-review` for submitted and signed-off operational metrics.
+  * **Route shell**: Add `/studios/:studioId/show-run-review` for submitted operational metrics.
   * **Review consolidation**: Keep submitted-task review under `/studios/:studioId/task-review`; future bulk review extends that page instead of adding a separate submitted-task review route.
   * **Sidebar refinement**: Use `/task-setup` for **Task Setup** and group Task Setup, Task Review, Show Run Review, and Task Reports under **Operations**.
   * **Operational day scope**: Default to the active 06:00–05:59 operational day, with `date_from` / `date_to` URL state reflected directly in the date range picker. `/task-review` queries use the same window for `due_date_from` / `due_date_to` and silently refetches every 5 minutes while the current operational day is selected; historical ranges stay manual refresh. `/show-run-review` keeps the picker-only scope control (no separate window label or refresh affordance) until summary queries land in 12.4.4.
-  * **Two-layer framing**: Task Review is the pre-confirmation layer; Show Run Review counts only submitted and signed-off extracted facts using manager-friendly show execution language.
+  * **Two-layer framing**: Task Review is the pre-confirmation layer; Show Run Review counts only submitted extracted facts using manager-friendly show execution language.
 
-#### 🟨 PR 12.4.2 · Task Review Summary and Exception Queues
+#### 🟩 PR 12.4.2 · Task Review Summary and Exception Queues — ✅ Shipped in [#109](https://github.com/allenlin90/eridu-services/pull/109)
 * **Purpose**: Replace one-by-one review as the only manager workflow.
 * **Functional Deliverable**:
   * Summarize `REVIEW` tasks in the selected operational day/range.
@@ -258,14 +258,14 @@ Implementation is structured into **three logical sections**. Each section serve
   * Tag issues by pre-production, on-air, and post-production phase.
   * Deep-link rows back to show tasks and task submission detail.
 
-#### 🟨 PR 12.4.3 · Bulk Submitted-Task Approval and Extraction Result Summary — ✅ Shipped in [#110](https://github.com/allenlin90/eridu-services/pull/110)
+#### 🟩 PR 12.4.3 · Bulk Submitted-Task Approval and Extraction Result Summary — ✅ Shipped in [#110](https://github.com/allenlin90/eridu-services/pull/110)
 * **Purpose**: Make manager confirmation the bulk gate that populates operational facts.
 * **Functional Deliverable**:
   * Bulk approve eligible `REVIEW` tasks by transitioning each through `TaskOrchestrationService.submitTaskContent`.
   * Preserve per-task optimistic-lock results and validation errors.
   * Report extraction outcomes so "approved but extraction failed" remains visible.
 
-#### 🟨 PR 12.4.4 · Operational Facts Summary and Filters
+#### 🟩 PR 12.4.4 · Operational Facts Summary and Filters — ✅ Shipped in [#111](https://github.com/allenlin90/eridu-services/pull/111)
 * **Purpose**: Summarize confirmed operational facts after task approval/extraction.
 * **Functional Deliverable**:
   * Show-level start completeness (started vs. not started), late-start count, and total missing duration from late starts; end-time recording is secondary detail rather than a completeness gate.
@@ -273,13 +273,7 @@ Implementation is structured into **three logical sections**. Each section serve
   * Active platform violation counts.
   * Incomplete phase checks and missing operational facts.
 
-#### 🟨 PR 12.4.5 · Range Sign-Off Audit
-* **Purpose**: Let managers sign off an operational day/range after reviewing populated facts and unresolved exceptions.
-* **Functional Deliverable**:
-  * Sign-off action records selected range, signing manager, timestamp, and unresolved exception counts.
-  * Sign-off does not hide exceptions; it records manager acknowledgement.
-
-#### 🟨 PR 12.4.6 · Correction, Manager Override, and Stale Input Re-Population Workflow
+#### 🟩 PR 12.4.6 · Correction, Manager Override, and Stale Input Re-Population Workflow — ✅ Shipped in [#118](https://github.com/allenlin90/eridu-services/pull/118)
 * **Purpose**: Route operator corrections and manager overrides through submitted tasks so target columns are re-populated only through confirmed submissions.
 * **Functional Deliverable**:
   * Send tasks back for correction with manager reason.
@@ -287,6 +281,12 @@ Implementation is structured into **three logical sections**. Each section serve
   * Re-enter corrected tasks into Task Review and re-run extraction on approval.
   * Resolve stale submitted values explicitly instead of silently writing to unassigned targets.
   * Surface extraction visibility at approval time: warn when a task will extract **zero facts** — its frozen snapshot carries no `system_fact_key` binding (e.g. it was generated before the binding was added to the template) or the bound fields are empty — instead of approving silently. Flag binding-drift where a task's snapshot predates the template's current bindings so managers know a regenerate is needed to capture the fact. (Surfaced during 12.4.4 review: completed tasks on pre-binding snapshots extracted nothing, leaving Show Run Review actuals empty with no explanation.)
+
+#### 🟩 PR 12.4.7 · Show Run Review Export — ✅ Shipped in [#120](https://github.com/allenlin90/eridu-services/pull/120)
+* **Purpose**: Make `/show-run-review` a self-service reporting surface — filter, quick-sight, export.
+* **Functional Deliverable**:
+  * Each run-review tab (creators / violations / tasks / shows) exports the **full filtered set** to CSV — every row matching the active filters, not the current page.
+  * Mechanism: refetch the tab's paginated endpoint with the same filters and `limit = total`, then serialize client-side (no new endpoint).
 
 ---
 

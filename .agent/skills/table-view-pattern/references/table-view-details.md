@@ -125,6 +125,14 @@ Reference implementations:
 - `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts` — older fan-out (to be migrated to the batched form)
 - `apps/erify_studios/src/features/studio-shifts/utils/studio-shifts-export.utils.ts`
 
+### Bounded result sets: single high-limit refetch
+
+When the result set is bounded by an upstream constraint (e.g. a date-range cap), a single refetch at `limit = total` is an acceptable alternative to the batched loop — it is one request, not a fan-out, so it does not violate the no-burst rule above. Do **not** use it for unbounded lists; those must use the batched pattern. Pick one mechanism per export and match the nearest existing export rather than introducing a third variant.
+
+Stale-`total` gate — required whenever the export bound is read from a list query that uses `placeholderData: keepPreviousData`: gate the export trigger on the query's `isPlaceholderData`, not only on `isFetching` or an export-in-progress flag. On a filter/search change the query key changes and the hook keeps serving the previous result — including a stale `total` — until the refetch resolves. Exporting in that window sends the new filters with the old `limit`, silently truncating a narrow→broad transition. `isPlaceholderData` is true for exactly that stale window and flips false the instant the fresh `total` lands, so it is the precise gate (`isFetching` also fires on background refetches where the `total` is not stale, needlessly flicker-disabling the button).
+
+Reference: `apps/erify_studios/src/features/show-run-review/lib/show-run-review-csv.ts` (per-tab `CsvColumn` lists + row mappers + injectable-download helper) and the `runTabExport` handler in `apps/erify_studios/src/features/show-run-review/components/show-run-summary.tsx` (the high-limit refetch mechanism).
+
 ## CRUD Table UX Consistency Rules
 
 Preferred shape:

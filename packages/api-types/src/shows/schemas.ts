@@ -238,30 +238,9 @@ export const updateStudioShowInputSchema = z
 /**
  * Show Run Review Summary Response Schema (PR 12.4.4)
  */
-export const signOffDetailsSchema = z.object({
-  id: z.string().startsWith(UID_PREFIXES.AUDIT),
-  actor_uid: z.string().startsWith(UID_PREFIXES.USER).nullable(),
-  actor_name: z.string().nullable(),
-  signed_at: z.string(), // ISO 8601 datetime string
-  reason: z.string().nullable(),
-  unresolved_exceptions: z.object({
-    late_creators: z.number().int(),
-    missing_creators: z.number().int(),
-    platform_violations: z.number().int(),
-    incomplete_tasks: z.number().int(),
-  }),
-});
-
-export const signOffShowRunReviewInputSchema = z.object({
-  date_from: z.iso.datetime(),
-  date_to: z.iso.datetime(),
-  reason: z.string().trim().max(1000).nullable().optional(),
-});
-
 export const showRunReviewSummarySchema = z.object({
   date_from: z.string(),
   date_to: z.string(),
-  sign_off: signOffDetailsSchema.nullable(),
   shows: z.object({
     total_count: z.number().int(),
     started_count: z.number().int(),

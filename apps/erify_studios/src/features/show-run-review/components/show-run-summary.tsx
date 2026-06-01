@@ -1,19 +1,16 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   CalendarDays,
-  CheckCircle2,
   Clock,
   ListTodo,
   Loader2,
   MonitorX,
-  ShieldAlert,
   Users2,
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import {
   Badge,
@@ -25,32 +22,34 @@ import {
   CardTitle,
   DataTable,
   DataTablePagination,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
   Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Textarea,
 } from '@eridu/ui';
 
 import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
 import { getShowRunReviewErrorMessage } from '@/features/show-run-review/lib/get-show-run-review-error-message';
 import {
+  exportShowRunReviewCreators,
+  exportShowRunReviewShows,
+  exportShowRunReviewTasks,
+  exportShowRunReviewViolations,
+  type ShowRunReviewExportTab,
+} from '@/features/show-run-review/lib/show-run-review-csv';
+import type { GetShowRunReviewPaginatedParams } from '@/features/shows/api/get-show-run-review-paginated';
+import {
+  getShowRunReviewCreators,
+  getShowRunReviewShows,
+  getShowRunReviewTasks,
+  getShowRunReviewViolations,
   useShowRunReviewCreatorsQuery,
   useShowRunReviewShowsQuery,
   useShowRunReviewTasksQuery,
   useShowRunReviewViolationsQuery,
 } from '@/features/shows/api/get-show-run-review-paginated';
-import { useSignOffShowRunReview } from '@/features/shows/api/sign-off-show-run-review';
-import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 type ShowRunSummaryProps = {
   data: ShowRunReviewSummary;
@@ -324,53 +323,7 @@ const showColumns: ColumnDef<ShowsSummaryRow>[] = [
   },
 ];
 
-function formatDateOnly(dateStr: string | Date): string {
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function formatDate(dateStr: string | Date): string {
-  const d = new Date(dateStr);
-  return `${formatDateOnly(d)} ${d.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  })}`;
-}
-
 export function ShowRunSummary({ data, isFetching = false, search, onSearchChange, studioId }: ShowRunSummaryProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [reason, setReason] = useState('');
-
-  const { role } = useStudioAccess(studioId);
-  const isManagerOrAdmin = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
-
-  const { mutate: signOff, isPending } = useSignOffShowRunReview(studioId);
-
-  const handleSignOff = () => {
-    signOff(
-      {
-        studioId,
-        data: {
-          date_from: data.date_from,
-          date_to: data.date_to,
-          reason: reason.trim() || undefined,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast.success('Operational range signed off successfully');
-          setIsDialogOpen(false);
-          setReason('');
-        },
-        onError: (err) => {
-          toast.error(getShowRunReviewErrorMessage(err, 'Failed to sign off range'));
-        },
-      },
-    );
-  };
   const activeTab = search.tab ?? 'creators';
   const setActiveTab = (tab: string) => {
     onSearchChange({
@@ -499,6 +452,76 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
     onSearchChange({ shows_completeness: val, shows_page: 1 });
   };
 
+  // Export the FULL filtered set for a tab (not the current page): refetch the
+  // same endpoint with the active filters and limit = total, then serialize.
+  const [exportingTab, setExportingTab] = useState<ShowRunReviewExportTab | null>(null);
+
+  // `total` is read from the cached list query, so a snapshot taken just before
+  // export. If rows changed since the last list fetch the export caps at that
+  // older total — acceptable for an operational snapshot, not a fix to chase.
+  const runTabExport = async <TRow,>(
+    tab: ShowRunReviewExportTab,
+    total: number,
+    filters: Pick<GetShowRunReviewPaginatedParams, 'search' | 'status' | 'severity' | 'completeness'>,
+    fetcher: (studioId: string, params: GetShowRunReviewPaginatedParams) => Promise<{ data: TRow[] }>,
+    exporter: (rows: TRow[], opts: { dateFrom: string; dateTo: string }) => void,
+  ): Promise<void> => {
+    if (total === 0) {
+      return;
+    }
+    setExportingTab(tab);
+    try {
+      const all = await fetcher(studioId, {
+        date_from: data.date_from,
+        date_to: data.date_to,
+        page: 1,
+        limit: total,
+        ...filters,
+      });
+      exporter(all.data, { dateFrom: data.date_from, dateTo: data.date_to });
+    } catch (err) {
+      toast.error(getShowRunReviewErrorMessage(err, 'Failed to export CSV'));
+    } finally {
+      setExportingTab(null);
+    }
+  };
+
+  const handleExportCreators = () =>
+    runTabExport(
+      'creators',
+      creatorsQuery.data?.meta.total ?? 0,
+      { search: search.creators_search, status: search.creators_status },
+      getShowRunReviewCreators,
+      exportShowRunReviewCreators,
+    );
+
+  const handleExportViolations = () =>
+    runTabExport(
+      'violations',
+      violationsQuery.data?.meta.total ?? 0,
+      { search: search.violations_search, severity: search.violations_severity },
+      getShowRunReviewViolations,
+      exportShowRunReviewViolations,
+    );
+
+  const handleExportTasks = () =>
+    runTabExport(
+      'tasks',
+      tasksQuery.data?.meta.total ?? 0,
+      { search: search.tasks_search, status: search.tasks_status },
+      getShowRunReviewTasks,
+      exportShowRunReviewTasks,
+    );
+
+  const handleExportShows = () =>
+    runTabExport(
+      'shows',
+      showsQuery.data?.meta.total ?? 0,
+      { search: search.shows_search, completeness: search.shows_completeness },
+      getShowRunReviewShows,
+      exportShowRunReviewShows,
+    );
+
   return (
     <div className="space-y-6 min-w-0 w-full overflow-hidden">
       {/* Background Refetch Banner */}
@@ -508,193 +531,6 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
           <span>Refreshing operational facts in background...</span>
         </div>
       )}
-
-      {/* Sign-Off Range Banner */}
-      {data.sign_off
-        ? (
-            <Card className="relative overflow-hidden border border-emerald-200 bg-emerald-50/30 p-5 shadow-sm transition-all dark:border-emerald-950 dark:bg-emerald-950/10">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start justify-between">
-                <div className="flex gap-3">
-                  <div className="rounded-full bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                    <CheckCircle2 className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
-                      Operational Range Signed Off
-                    </h3>
-                    <p className="text-xs text-emerald-700/95 dark:text-emerald-400/90">
-                      Signed off by
-                      {' '}
-                      <span className="font-semibold">{data.sign_off.actor_name ?? 'Unknown Manager'}</span>
-                      {' '}
-                      on
-                      {' '}
-                      {formatDate(data.sign_off.signed_at)}
-                    </p>
-                    {data.sign_off.reason && (
-                      <div className="mt-2 text-xs border-l-2 border-emerald-300 pl-2 italic text-emerald-800 dark:text-emerald-300">
-                        &ldquo;
-                        {data.sign_off.reason}
-                        &rdquo;
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5 self-end sm:self-center bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-emerald-100/50 rounded-lg p-3 text-xs text-zinc-700 dark:text-zinc-300 min-w-[200px]">
-                  <div className="font-semibold text-emerald-800 dark:text-emerald-400 border-b pb-1 mb-1">
-                    Exception Snapshot
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Late Creators:</span>
-                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.late_creators}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Missing Creators:</span>
-                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.missing_creators}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Stream Violations:</span>
-                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.platform_violations}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Incomplete Tasks:</span>
-                    <span className="font-mono font-semibold">{data.sign_off.unresolved_exceptions.incomplete_tasks}</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )
-        : (
-            <Card className="relative overflow-hidden border border-amber-200 bg-amber-50/20 p-5 shadow-sm dark:border-amber-950 dark:bg-amber-950/5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
-                <div className="flex gap-3">
-                  <div className="rounded-full bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                    <ShieldAlert className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                      Sign-Off Pending
-                    </h3>
-                    <p className="text-xs text-amber-700 dark:text-amber-400/90">
-                      This operational date range has not been signed off yet. Review exceptions before sign-off.
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  {isManagerOrAdmin
-                    ? (
-                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button
-                              type="button"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all px-4 py-2 hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                              Sign Off Range
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[480px]">
-                            <DialogHeader>
-                              <DialogTitle className="text-lg font-bold">Sign Off Operational Range</DialogTitle>
-                              <DialogDescription className="text-xs text-muted-foreground">
-                                Confirm operational sign-off for the range:
-                                {' '}
-                                <span className="font-semibold text-foreground">{formatDateOnly(data.date_from)}</span>
-                                {' '}
-                                to
-                                {' '}
-                                <span className="font-semibold text-foreground">{formatDateOnly(data.date_to)}</span>
-                              </DialogDescription>
-                            </DialogHeader>
-
-                            <div className="space-y-4 py-3">
-                              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-900 border p-4 space-y-2">
-                                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Unresolved Exception Counts</h4>
-                                <div className="grid grid-cols-2 gap-3 text-sm">
-                                  <div className="flex justify-between border-b pb-1">
-                                    <span className="text-zinc-500">Late Creators:</span>
-                                    <span className={`font-mono font-semibold ${creatorStats.late_count > 0 ? 'text-amber-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{creatorStats.late_count}</span>
-                                  </div>
-                                  <div className="flex justify-between border-b pb-1">
-                                    <span className="text-zinc-500">Missing Attendance:</span>
-                                    <span className={`font-mono font-semibold ${creatorStats.missing_count > 0 ? 'text-rose-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{creatorStats.missing_count}</span>
-                                  </div>
-                                  <div className="flex justify-between border-b pb-1">
-                                    <span className="text-zinc-500">Stream Violations:</span>
-                                    <span className={`font-mono font-semibold ${platformStats.active_violations_count > 0 ? 'text-rose-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{platformStats.active_violations_count}</span>
-                                  </div>
-                                  <div className="flex justify-between border-b pb-1">
-                                    <span className="text-zinc-500">Incomplete Tasks:</span>
-                                    <span className={`font-mono font-semibold ${taskStats.incomplete_phase_checks_count > 0 ? 'text-purple-600 font-bold' : 'text-zinc-700 dark:text-zinc-300'}`}>{taskStats.incomplete_phase_checks_count}</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {(creatorStats.late_count > 0 || creatorStats.missing_count > 0 || platformStats.active_violations_count > 0 || taskStats.incomplete_phase_checks_count > 0) && (
-                                <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-800 flex gap-2">
-                                  <ShieldAlert className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                                  <div>
-                                    <span className="font-semibold">Unresolved exceptions exist.</span>
-                                    {' '}
-                                    Signing off will record and acknowledge these exceptions in the immutable range audit log.
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="space-y-1.5">
-                                <label htmlFor="reason" className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-                                  Acknowledgment Reason / Operator Note
-                                </label>
-                                <Textarea
-                                  id="reason"
-                                  placeholder="Provide details about exceptions or acknowledgment notes..."
-                                  value={reason}
-                                  onChange={(e) => setReason(e.target.value)}
-                                  className="min-h-[80px]"
-                                />
-                              </div>
-                            </div>
-
-                            <DialogFooter className="gap-2 sm:gap-0">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsDialogOpen(false)}
-                                disabled={isPending}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                type="button"
-                                onClick={handleSignOff}
-                                disabled={isPending}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
-                              >
-                                {isPending
-                                  ? (
-                                      <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Signing Off...
-                                      </>
-                                    )
-                                  : (
-                                      'Confirm & Sign Off'
-                                    )}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      )
-                    : (
-                        <span className="text-xs text-amber-700/80 bg-amber-50 dark:bg-amber-950/20 px-3 py-1.5 rounded-md font-medium border border-amber-200/50">
-                          Awaiting Manager Sign-Off
-                        </span>
-                      )}
-                </div>
-              </div>
-            </Card>
-          )}
 
       {/* Grid of Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -805,7 +641,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
           </CardHeader>
           <CardContent className="space-y-1">
             <p className="text-xs text-muted-foreground">
-              Active platform stream alerts requiring confirmation before sign-off.
+              Active platform stream alerts requiring manager confirmation.
             </p>
             <div className="pt-1">
               <Badge variant={platformStats.active_violations_count > 0 ? 'destructive' : 'secondary'} className="text-[10px] py-0 px-2 font-normal">
@@ -952,6 +788,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportCreators}
+                  disabled={exportingTab === 'creators' || (creatorsQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'creators' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable
@@ -1011,6 +855,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportViolations}
+                  disabled={exportingTab === 'violations' || (violationsQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'violations' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable
@@ -1068,6 +920,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportTasks}
+                  disabled={exportingTab === 'tasks' || (tasksQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'tasks' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable
@@ -1124,6 +984,14 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportShows}
+                  disabled={exportingTab === 'shows' || (showsQuery.data?.meta.total ?? 0) === 0}
+                >
+                  {exportingTab === 'shows' ? 'Exporting…' : 'Export CSV'}
+                </Button>
               </div>
 
               <DataTable

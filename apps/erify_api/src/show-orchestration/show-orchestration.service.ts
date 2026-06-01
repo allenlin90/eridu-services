@@ -4,7 +4,7 @@ import type { Show } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
-import type { ShowRunReviewSummary, SignOffDetails, SignOffShowRunReviewInput } from '@eridu/api-types/shows';
+import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import {
@@ -16,7 +16,6 @@ import {
 import { appendSnapshotAudit, isSnapshotValueEqual, SnapshotChange } from '@/lib/audit/snapshot-audit.helper';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
-import { AuditService } from '@/models/audit/audit.service';
 import { CompensationLineItemService } from '@/models/compensation-line-item/compensation-line-item.service';
 import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformRepository } from '@/models/platform/platform.repository';
@@ -32,7 +31,6 @@ import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
-import { UserService } from '@/models/user/user.service';
 
 type CreatorAssignmentPayload = {
   creatorId: string;
@@ -118,8 +116,6 @@ export class ShowOrchestrationService {
     private readonly taskService: TaskService,
     private readonly taskTargetService: TaskTargetService,
     private readonly studioService: StudioService,
-    private readonly auditService: AuditService,
-    private readonly userService: UserService,
   ) {}
 
   async createShowWithAssignments(
@@ -1146,28 +1142,6 @@ export class ShowOrchestrationService {
 
     const shows = await this.showService.getShowsForReview(studioId, start, end);
 
-    const signOffAudit = await this.auditService.findSignOff(
-      studioUid,
-      query.date_from,
-      query.date_to,
-    );
-
-    const sign_off = signOffAudit
-      ? {
-          id: signOffAudit.uid,
-          actor_uid: signOffAudit.actor?.uid ?? null,
-          actor_name: signOffAudit.actor?.name ?? null,
-          signed_at: signOffAudit.createdAt.toISOString(),
-          reason: signOffAudit.reason,
-          unresolved_exceptions: (signOffAudit.metadata as { unresolved_exceptions?: SignOffDetails['unresolved_exceptions'] } | null)?.unresolved_exceptions ?? {
-            late_creators: 0,
-            missing_creators: 0,
-            platform_violations: 0,
-            incomplete_tasks: 0,
-          },
-        }
-      : null;
-
     // Counts are derived from the same helpers the paginated sub-resource
     // endpoints use, so the summary totals always match the detail lists.
     const { startedCount, lateStartCount, missingDurationMinutes, endRecordedCount } = this.deriveShowActuals(shows);
@@ -1181,7 +1155,6 @@ export class ShowOrchestrationService {
     return {
       date_from: query.date_from,
       date_to: query.date_to,
-      sign_off,
       shows: {
         total_count: shows.length,
         started_count: startedCount,
@@ -1469,67 +1442,5 @@ export class ShowOrchestrationService {
       return `${hours}h`;
     }
     return `${hours}h ${minutes}m`;
-  }
-
-  @Transactional()
-  async signOffShowRunReview(
-    studioUid: string,
-    actorExtId: string,
-    payload: SignOffShowRunReviewInput,
-  ) {
-    await this.studioService.getStudioById(studioUid);
-
-    // Serialize concurrent sign-offs for this range before the existence check
-    // so the check-then-insert below cannot race a sibling request.
-    await this.auditService.lockSignOffRange(
-      studioUid,
-      payload.date_from,
-      payload.date_to,
-    );
-
-    // Check if sign-off already exists for this exact range
-    const existing = await this.auditService.findSignOff(
-      studioUid,
-      payload.date_from,
-      payload.date_to,
-    );
-    if (existing) {
-      throw HttpError.conflict(
-        `This range (${payload.date_from} to ${payload.date_to}) is already signed off.`,
-      );
-    }
-
-    const user = await this.userService.getUserByExtId(actorExtId);
-    if (!user) {
-      throw HttpError.notFound('User', actorExtId);
-    }
-
-    // Compile exceptions at sign-off time
-    const summary = await this.getShowRunReviewSummary(studioUid, {
-      date_from: payload.date_from,
-      date_to: payload.date_to,
-    });
-
-    // Persist canonical ISO instants so range identity matches `findSignOff`.
-    const audit = await this.auditService.create({
-      action: 'SIGN_OFF',
-      actorId: user.id,
-      reason: payload.reason ?? null,
-      metadata: {
-        studio_uid: studioUid,
-        date_from: new Date(payload.date_from).toISOString(),
-        date_to: new Date(payload.date_to).toISOString(),
-        unresolved_exceptions: {
-          late_creators: summary.creators.late_count,
-          missing_creators: summary.creators.missing_count,
-          platform_violations: summary.platforms.active_violations_count,
-          incomplete_tasks: summary.tasks.incomplete_phase_checks_count,
-        },
-        shows_total: summary.shows.total_count,
-      },
-      targets: [],
-    });
-
-    return audit;
   }
 }

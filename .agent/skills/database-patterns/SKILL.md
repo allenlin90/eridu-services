@@ -70,11 +70,11 @@ Use Prisma nested writes for atomic parent + child creation. Use `@Transactional
 
 ## 9. Advisory Locks
 
-Use `pg_advisory_xact_lock` to serialize concurrent operations within a transaction. Transaction-scoped, auto-releases. Use entity primary key as lock key. When the protected identity has no single-row PK (e.g. a date range whose identity lives in JSONB `metadata`), lock on a hashed composite key: `pg_advisory_xact_lock(hashtextextended(${key}, 0))` where `key` is the normalized identity string. This guards a check-then-insert (see `AuditRepository.lockSignOffRange`) without adding a unique constraint to a generic envelope table.
+Use `pg_advisory_xact_lock` to serialize concurrent operations within a transaction. Transaction-scoped, auto-releases. Use entity primary key as lock key. When the protected identity has no single-row PK (e.g. a date range whose identity lives in JSONB `metadata`), lock on a hashed composite key: `pg_advisory_xact_lock(hashtextextended(${key}, 0))` where `key` is the normalized identity string. This guards a check-then-insert without adding a unique constraint to a generic envelope table.
 
 ## 10. Operational Facts vs Analytical Metrics
 
-Persist OLTP facts on the narrowest scoped table when they support operational writes, exception review, filtering, sign-off, overrides, or constraints. Examples: actual time pairs, missing attendance markers, stale binding review state, and platform violation records.
+Persist OLTP facts on the narrowest scoped table when they support operational writes, exception review, filtering, export, overrides, or constraints. Examples: actual time pairs, missing attendance markers, stale binding review state, and platform violation records.
 
 Do not add operational columns just because a metric is useful for post-show analysis. GMV, conversion, trend, ranking, and cross-show aggregate needs should first be classified as analytical unless a concrete operational workflow depends on them. Analytical features may use the same Postgres database through read models/materialized views or a separate OLAP path; decide that in a design/ideation step before schema promotion.
 
