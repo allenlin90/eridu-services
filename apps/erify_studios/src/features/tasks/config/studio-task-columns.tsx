@@ -21,6 +21,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
@@ -35,6 +38,14 @@ const STUDIO_REVIEW_ACTIONS: Partial<Record<TaskStatus, TaskAction[]>> = {
   [TASK_STATUS.BLOCKED]: [TASK_ACTION.CONTINUE_EDITING, TASK_ACTION.SUBMIT_FOR_REVIEW, TASK_ACTION.CLOSE_TASK],
   [TASK_STATUS.CLOSED]: [TASK_ACTION.REOPEN_TASK],
 };
+
+const TASK_ISSUE_DESCRIPTIONS: Partial<Record<string, string>> = {
+  'Binding Drift': 'This task was generated from an older frozen template snapshot than the current template version. Approval is still allowed, but newly-added bindings may require regenerating the task.',
+};
+
+export function getTaskIssueDescription(issue: string): string | null {
+  return TASK_ISSUE_DESCRIPTIONS[issue] ?? null;
+}
 
 function getActionLabel(action: TaskAction): string {
   if (action === TASK_ACTION.START_WORK) {
@@ -101,29 +112,71 @@ function ActionCell({
   );
 }
 
+function TaskIssueBadge({ issue }: { issue: string }) {
+  const description = getTaskIssueDescription(issue);
+  const badgeClassName = 'text-[9px] px-1.5 py-0.5 text-red-600 border-red-200 bg-red-500/5 dark:text-red-400 dark:border-red-900/30 font-semibold uppercase flex items-center gap-0.5';
+
+  if (!description) {
+    return (
+      <Badge variant="outline" className={badgeClassName}>
+        <AlertTriangle className="h-2.5 w-2.5" />
+        {issue}
+      </Badge>
+    );
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            badgeClassName,
+            'rounded-md border leading-none outline-none transition-colors hover:bg-red-500/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+          )}
+          aria-label={`${issue}: ${description}`}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <AlertTriangle className="h-2.5 w-2.5" />
+          {issue}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-[min(20rem,calc(100vw-2rem))] leading-relaxed"
+      >
+        {description}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   const issues: string[] = [];
-  if (['COMPLETED', 'CLOSED'].includes(task.status)) {
+  if ([TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED].includes(task.status)) {
     return issues;
   }
   if (!task.assignee) {
     issues.push('Unassigned');
   }
-  const isNotSubmitted = !['REVIEW'].includes(task.status);
+  const isNotSubmitted = task.status !== TASK_STATUS.REVIEW;
   const isOverdue = task.due_date && new Date(task.due_date) < new Date();
   if (isNotSubmitted && isOverdue) {
     issues.push('Overdue');
     issues.push('Pending Submission');
   }
 
-  if (task.status === 'REVIEW') {
+  if (task.status === TASK_STATUS.REVIEW) {
     if (task.has_binding_drift) {
       issues.push('Binding Drift');
     }
 
-    if (task.template) {
+    const snapshotSchema = task.snapshot && 'schema' in task.snapshot
+      ? task.snapshot.schema
+      : undefined;
+    if (task.template && snapshotSchema !== undefined) {
       const { hasBindings, willExtractZeroFacts } = getExtractionStatus(
-        task.snapshot?.schema,
+        snapshotSchema,
         (task.content as Record<string, unknown> | null) ?? {},
       );
       if (!hasBindings) {
@@ -135,6 +188,18 @@ export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   }
 
   return issues;
+}
+
+export function getBulkApprovalBlockers(task: TaskWithRelationsDto): string[] {
+  const blockers: string[] = [];
+  if (task.status !== TASK_STATUS.REVIEW) {
+    blockers.push('Not In Review');
+  }
+  if (!task.assignee) {
+    blockers.push('Unassigned');
+  }
+
+  return blockers;
 }
 
 export function getTaskPhase(type: string): 'pre-production' | 'on-air' | 'post-production' {
@@ -211,12 +276,7 @@ export function getStudioTaskColumns(
                 {phase === 'pre-production' ? 'Pre-Prod' : phase === 'on-air' ? 'On-Air' : 'Post-Prod'}
               </Badge>
 
-              {issues.map((issue) => (
-                <Badge key={issue} variant="outline" className="text-[9px] px-1.5 py-0.2 text-red-600 border-red-200 bg-red-500/5 dark:text-red-400 dark:border-red-900/30 font-semibold uppercase flex items-center gap-0.5">
-                  <AlertTriangle className="h-2.5 w-2.5" />
-                  {issue}
-                </Badge>
-              ))}
+              {issues.map((issue) => <TaskIssueBadge key={issue} issue={issue} />)}
             </div>
           </div>
         );

@@ -23,7 +23,7 @@ import { StudioTaskActionSheet } from '@/features/tasks/components/studio-task-a
 import { StudioTaskReviewFilterTabs } from '@/features/tasks/components/studio-task-review-filter-tabs';
 import { StudioTaskReviewSummaryPanel, type TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { TaskDueDateDialog } from '@/features/tasks/components/task-due-date-dialog';
-import { getTaskIssues, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
+import { getBulkApprovalBlockers, studioTaskSearchableColumns } from '@/features/tasks/config/studio-task-columns';
 import { useBulkApproveTasks } from '@/features/tasks/hooks/use-bulk-approve-tasks';
 import { useStudioTasksPageController } from '@/features/tasks/hooks/use-studio-tasks-page-controller';
 import { useTaskReviewClientFilter } from '@/features/tasks/hooks/use-task-review-client-filter';
@@ -254,7 +254,7 @@ function StudioTaskReviewPage() {
           onPaginationChange={tableProps.onPaginationChange}
           columnFilters={tableProps.columnFilters}
           onColumnFiltersChange={handleColumnFiltersChange}
-          enableRowSelection={(row) => row.original.status === 'REVIEW' && getTaskIssues(row.original).length === 0}
+          enableRowSelection={(row) => getBulkApprovalBlockers(row.original).length === 0}
           rowSelection={rowSelection}
           onRowSelectionChange={setRowSelection}
           getRowId={(task) => task.id}

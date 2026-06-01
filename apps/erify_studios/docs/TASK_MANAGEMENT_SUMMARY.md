@@ -54,7 +54,7 @@ Show detail → inline assignee dropdown on task card → PATCH `/tasks/:taskUid
 My Tasks → tap card → Task Execution Sheet (JsonForm) → auto-save on field change (300ms debounce) → status actions (`Start Task` / `Submit for Review` / `Report Blocker`)
 
 ### 5. Task Review (Admin/Manager)
-Task Review → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, Block. Approving a submitted task is the extraction gate for system fact bindings; `REVIEW` submissions are not yet trusted operational facts.
+Task Review → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, Block. Approving a submitted task is the extraction gate for system fact bindings; `REVIEW` submissions are not yet trusted operational facts. Binding drift and zero-fact extraction warnings are advisory review signals, not hard blockers for approval.
 
 ### 6. Moderation Loop Execution (Moderator)
 My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress block** → navigate loops via Previous/Next → auto-save per field → Submit for Review when done. See [MODERATION_WORKFLOW.md](./MODERATION_WORKFLOW.md) for full data contract and business rules.
@@ -73,7 +73,7 @@ The `Issues` filter uses the same datetime window and same in-scope show set as 
 Readiness scope totals should be refreshed by query-key changes (for example `refreshSignal`) and not duplicated with extra effect-level `refetch()` for the same query key.
 
 ### 9. Task Review (Admin/Manager)
-Task Review → choose operational day range → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Clean rows can later support bulk approval into `COMPLETED`.
+Task Review → choose operational day range → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Submitted, assigned rows can be selected for bulk approval into `COMPLETED`; extraction warnings remain visible for reviewer context.
 
 **Parallel query architecture**: `useTaskReviewSummary` runs one `useQuery` that internally fans out across all pages of two complementary queries — dated (`due_date_from/to`) and undated (`has_due_date=false` scoped by `show_start_from/to`) — using a worker-pool helper capped at `PAGE_FETCH_CONCURRENCY = 5`. The results are merged into a single flat dataset used for client-side filtering.
 
@@ -87,7 +87,7 @@ Show Run Review → choose operational day range → review submitted show recor
 The default operational day is 06:00-05:59 local time for PR 12.4. Task Review applies that window to `due_date_from` / `due_date_to` and silently refetches every 5 minutes for the current operational day; historical ranges use the table refresh action. Show Run Review exposes only the range picker until summary queries ship in 12.4.4.
 
 ### 11. Bulk Submitted-Task Approval (Admin/Manager)
-Task Review → select "Ready for Approval" tab → click `Approve All Ready ({count})` button → triggers API bulk approve request.
+Task Review → select one or more eligible `REVIEW` rows → click `Approve Selected` → triggers API bulk approve request. Selection eligibility is intentionally narrower than the issue badges: hard blockers include non-`REVIEW` state and missing assignee, while binding drift, zero-fact, and no-binding extraction warnings remain advisory because single approval follows the same backend transition and extraction path.
 - The button is only enabled when there are clean, eligible `REVIEW` tasks.
 - A premium result summary dialog opens showing real-time processing statistics and detailed extraction results.
 - Successful approvals render color-coded cards highlighting specific operational facts (`WRITTEN`, `SKIPPED`, `NOOP`) written or resolved in database tables.

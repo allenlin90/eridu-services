@@ -280,7 +280,7 @@ Implementation is structured into **three logical sections**. Each section serve
   * Capture manager override/correction tasks with manager-source provenance.
   * Re-enter corrected tasks into Task Review and re-run extraction on approval.
   * Resolve stale submitted values explicitly instead of silently writing to unassigned targets.
-  * Surface extraction visibility at approval time: warn when a task will extract **zero facts** — its frozen snapshot carries no `system_fact_key` binding (e.g. it was generated before the binding was added to the template) or the bound fields are empty — instead of approving silently. Flag binding-drift where a task's snapshot predates the template's current bindings so managers know a regenerate is needed to capture the fact. (Surfaced during 12.4.4 review: completed tasks on pre-binding snapshots extracted nothing, leaving Show Run Review actuals empty with no explanation.)
+  * Surface extraction visibility at approval time: warn when a task will extract **zero facts** — its frozen snapshot carries no `system_fact_key` binding (e.g. it was generated before the binding was added to the template) or the bound fields are empty — instead of approving silently. Flag binding-drift where a task's snapshot predates the template's current bindings so managers know a regenerate is needed to capture newly-added facts. Extraction warnings are advisory; hard approval blockers are task-state and assignment constraints enforced by the review workflow.
 
 #### 🟩 PR 12.4.7 · Show Run Review Export — ✅ Shipped in [#120](https://github.com/allenlin90/eridu-services/pull/120)
 * **Purpose**: Make `/show-run-review` a self-service reporting surface — filter, quick-sight, export.
