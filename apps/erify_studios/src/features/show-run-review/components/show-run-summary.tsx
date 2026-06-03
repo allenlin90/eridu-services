@@ -1,4 +1,4 @@
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, PaginationState, Updater } from '@tanstack/react-table';
 import {
   CalendarDays,
   Clock,
@@ -409,12 +409,11 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
   // Pagination Change Handlers
   const createPaginationChangeHandler = (tab: 'creators' | 'violations' | 'tasks' | 'shows') => {
     const pageKey = `${tab}_page` as const;
-    return (updater: any) => {
+    return (updater: Updater<PaginationState>) => {
       const currentPage = search[pageKey] ?? 1;
-      const nextVal = typeof updater === 'function'
-        ? updater({ pageIndex: currentPage - 1, pageSize: 10 })
-        : updater;
-      onSearchChange({ [pageKey]: nextVal.pageIndex + 1 });
+      const currentState: PaginationState = { pageIndex: currentPage - 1, pageSize: 10 };
+      const nextState = typeof updater === 'function' ? updater(currentState) : updater;
+      onSearchChange({ [pageKey]: nextState.pageIndex + 1 });
     };
   };
 
@@ -428,7 +427,7 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
     onSearchChange({ creators_search: val, creators_page: 1 });
   };
   const onCreatorsStatusChange = (val: string | undefined) => {
-    onSearchChange({ creators_status: val as any, creators_page: 1 });
+    onSearchChange({ creators_status: val as ShowRunReviewSearch['creators_status'], creators_page: 1 });
   };
 
   const onViolationsSearchChange = (val: string | undefined) => {

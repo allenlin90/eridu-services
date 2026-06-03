@@ -4,7 +4,13 @@ import { StudioMembership, TaskStatus, TaskType, User } from '@prisma/client';
 
 import type { ActualsSource } from '@eridu/api-types/audits';
 import { STUDIO_ROLE, type StudioRole } from '@eridu/api-types/memberships';
-import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
+import type {
+  BulkApproveExtractionEntry,
+  BulkApproveExtractionResult,
+  BulkApproveTaskResult,
+  BulkApproveTasksResponse,
+  ListStudioShowsQueryTransformed,
+} from '@eridu/api-types/task-management';
 import { TASK_STATUS } from '@eridu/api-types/task-management';
 
 import { TaskGenerationProcessor } from './task-generation-processor.service';
@@ -22,7 +28,10 @@ import type { UpdateTaskPayload } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
-import { FactExtractionService } from '@/orchestration/fact-extraction/fact-extraction.service';
+import {
+  type ExtractionResult,
+  FactExtractionService,
+} from '@/orchestration/fact-extraction/fact-extraction.service';
 import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
 
 type MembershipWithUser = StudioMembership & { user: User };
@@ -44,6 +53,23 @@ export type SubmitTaskAuditContext = {
   actorRole?: StudioRole;
   source?: 'studio' | 'me' | 'admin';
 };
+
+/** Updated task as returned by the underlying `TaskService` write. */
+type SubmittedTask = NonNullable<
+  Awaited<ReturnType<TaskService['updateTaskContentAndStatusAsAdmin']>>
+>;
+
+/**
+ * `submitTaskContent` augments the updated task with the fact-extraction
+ * outcome when (and only when) it fired extraction on a fresh `COMPLETED`
+ * transition. Both fields are absent on a plain status/content update.
+ */
+export type SubmitTaskContentResult =
+  | (SubmittedTask & {
+    extractionResult?: ExtractionResult;
+    extractionError?: string;
+  })
+  | null;
 
 @Injectable()
 export class TaskOrchestrationService {
@@ -88,7 +114,7 @@ export class TaskOrchestrationService {
       mode: SubmitTaskContentMode;
       auditContext?: SubmitTaskAuditContext;
     },
-  ) {
+  ): Promise<SubmitTaskContentResult> {
     // Snapshot before the update so we can detect a *transition* into
     // COMPLETED (vs. a re-save of an already-completed task) and capture
     // the show target without an extra round-trip after the write.
@@ -129,7 +155,7 @@ export class TaskOrchestrationService {
       && (options.auditContext?.actorRole === STUDIO_ROLE.ADMIN || options.auditContext?.actorRole === STUDIO_ROLE.MANAGER);
     const extractionSource: ActualsSource = isManagerOverride ? 'MANAGER' : 'OPERATOR';
 
-    let extractionResult: any;
+    let extractionResult: ExtractionResult | undefined;
     let extractionError: string | undefined;
     try {
       extractionResult = await this.factExtractionService.extractFromTask({
@@ -167,8 +193,8 @@ export class TaskOrchestrationService {
     studioUid: string,
     taskUids: string[],
     auditContext?: SubmitTaskAuditContext,
-  ): Promise<any> {
-    const results: any[] = [];
+  ): Promise<BulkApproveTasksResponse> {
+    const results: BulkApproveTaskResult[] = [];
     let totalSuccess = 0;
     let totalFailed = 0;
 
@@ -189,11 +215,13 @@ export class TaskOrchestrationService {
           throw HttpError.badRequest(`Task ${taskUid} is not in REVIEW status (current status: ${task.status})`);
         }
 
-        // 2. Call submitTaskContent in admin mode to transition to COMPLETED
+        // 2. Call submitTaskContent in admin mode to transition to COMPLETED.
+        // Bulk approval carries no content change, so provenance stays
+        // OPERATOR (see `submitTaskContent`).
         const updated = await this.submitTaskContent(
           taskUid,
           task.version,
-          { status: TASK_STATUS.COMPLETED as any },
+          { status: TaskStatus.COMPLETED },
           {
             mode: 'admin',
             auditContext,
@@ -202,45 +230,43 @@ export class TaskOrchestrationService {
 
         totalSuccess++;
 
-        // 3. Map extraction outcomes
-        const extractionEntries = (updated as any).extractionResult?.entries.map((entry: any) => ({
+        // 3. Map extraction outcomes onto the wire contract.
+        const extractionResult = updated?.extractionResult;
+        const extractionError = updated?.extractionError;
+        const entries: BulkApproveExtractionEntry[] = (extractionResult?.entries ?? []).map((entry) => ({
           fact_key: entry.factKey,
           source_field_id: entry.sourceFieldId,
           target_uid: entry.targetUid,
           outcome: entry.outcome,
           audit_uid: entry.auditUid,
           reason: entry.reason,
-        })) || [];
+        }));
 
-        const hasExtractorError = (updated as any).extractionResult?.entries.some(
-          (entry: any) => entry.outcome === 'noop' && entry.reason === 'extractor_error',
+        const hasExtractorError = (extractionResult?.entries ?? []).some(
+          (entry) => entry.outcome === 'noop' && entry.reason === 'extractor_error',
         );
 
-        const extractionStatus = (updated as any).extractionError
+        const extractionStatus: BulkApproveExtractionResult['status'] = extractionError
           ? 'error'
-          : (updated as any).extractionResult
-              ? (hasExtractorError ? 'error' : 'success')
-              : 'skipped';
+          : extractionResult
+            ? (hasExtractorError ? 'error' : 'success')
+            : 'skipped';
 
         results.push({
           task_uid: taskUid,
-          status: 'success' as const,
+          status: 'success',
           extraction: {
-            status: extractionStatus as any,
-            error: (updated as any).extractionError,
-            entries: extractionEntries,
+            status: extractionStatus,
+            error: extractionError,
+            entries,
           },
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         totalFailed++;
-        const errorMessage = error instanceof HttpException
-          ? (typeof error.getResponse() === 'object' && error.getResponse() !== null ? (error.getResponse() as any).message || error.message : error.message)
-          : error.message || 'Unknown error';
-
         results.push({
           task_uid: taskUid,
-          status: 'error' as const,
-          error: errorMessage,
+          status: 'error',
+          error: extractHttpErrorMessage(error),
         });
       }
     }
@@ -608,4 +634,31 @@ export class TaskOrchestrationService {
 
     return parsed;
   }
+}
+
+/**
+ * Extracts a human-readable, string-typed message from an unknown error for
+ * the bulk-approval per-task `error` field (`z.string().optional()`).
+ * `HttpException` bodies can carry a `message` that is a string or a
+ * `string[]` (class-validator); the array is joined so the response always
+ * satisfies the wire contract.
+ */
+function extractHttpErrorMessage(error: unknown): string {
+  if (error instanceof HttpException) {
+    const response = error.getResponse();
+    if (typeof response === 'object' && response !== null && 'message' in response) {
+      const message = (response as { message?: unknown }).message;
+      if (typeof message === 'string') {
+        return message;
+      }
+      if (Array.isArray(message)) {
+        return message.join(', ');
+      }
+    }
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return 'Unknown error';
 }
