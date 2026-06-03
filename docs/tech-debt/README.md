@@ -16,3 +16,4 @@ Use this register for accepted risk, consistency gaps, migration cleanup, and re
 | Issue | Area | Trigger To Fix | Related Context |
 | --- | --- | --- | --- |
 | [Admin Route Business Logic Bypass](./admin-route-business-logic-bypass.md) | `erify_api` admin mutations | Any admin mutation touches finance, assignment snapshots, actuals, lifecycle transitions, or cross-domain side effects | [Economics cost model](../domain/economics-cost-model.md), [Phase 4 remaining-work tracker](../roadmap/PHASE_4.md) |
+| [`fact-extraction.service.ts` exceeds the file-size trigger](./fact-extraction-service-size.md) | `erify_api` fact-extraction pipeline | A fourth paired/hydrated extractor scope is added, or the file crosses ~1300 LOC | [fact-extraction-pipeline skill](../../.agent/skills/fact-extraction-pipeline/SKILL.md), [Phase 4 tracker](../roadmap/PHASE_4.md) |

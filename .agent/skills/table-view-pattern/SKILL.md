@@ -131,6 +131,7 @@ See [references/table-view-details.md](references/table-view-details.md) for ref
 
 ## Related Skills
 
+- [operations-review-surface](../operations-review-surface/SKILL.md) — Multi-tab operational-day review screens composed on top of these table primitives
 - [studio-list-pattern](../studio-list-pattern/SKILL.md) — Card-based infinite scroll
 - [frontend-ui-components](../frontend-ui-components/SKILL.md) — Shared UI primitives
 - [frontend-state-management](../frontend-state-management/SKILL.md) — State patterns
