@@ -4,7 +4,7 @@
 
 This document defines the architectural specifications, database schemas, and extraction pipeline rules for **PR 12 (Critical task-input semantics for actuals and performance)**. It bridges the gap between generic, operator-completed task submissions and first-class indexed operational metrics across shows, platforms, creators, and platform violations.
 
-> **Roadmap pointer**: PR 12's operational pipeline ships as foundation PRs (12.0.1-12.0.5), extractor PRs (12.1.1-12.3.2), and the expanded Operations Review workstream (12.4.1-12.4.6). The Phase 4 roadmap ([`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md)) owns the sub-PR sequencing and dependencies, including the PR 12.6 analytics infrastructure investigation. Every schema addition in §2 below lands as one atomic migration in **PR 12.0.2** before any consumer wiring, so the binding picker (12.0.3), hydration engine (12.0.4), extraction pipeline (12.0.5), and each downstream extractor (12.1.1-12.3.2) all assume the columns and tables already exist.
+> **Roadmap pointer**: PR 12's operational pipeline ships as foundation PRs (12.0.1-12.0.5), extractor PRs (12.1.1-12.3.2), and the expanded Operations Review workstream (12.4.1-12.4.6). The Phase 4 roadmap ([`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md)) owns the sub-PR sequencing and dependencies, including the PR 21 analytics infrastructure investigation. Every schema addition in §2 below lands as one atomic migration in **PR 12.0.2** before any consumer wiring, so the binding picker (12.0.3), hydration engine (12.0.4), extraction pipeline (12.0.5), and each downstream extractor (12.1.1-12.3.2) all assume the columns and tables already exist.
 
 ---
 
@@ -108,7 +108,7 @@ model ShowPlatform {
   actualStartTime    DateTime?                  @map("actual_start_time")
   actualEndTime      DateTime?                  @map("actual_end_time")
   // viewerCount, gmv, and any other platform performance metric are analytical;
-// their schema home (typed column vs read-model vs OLAP) is decided in 12.6
+// their schema home (typed column vs read-model vs OLAP) is decided in PR 21
   // (see docs/ideation/show-performance-analytics-infra.md).
 
   @@index([actualStartTime, actualEndTime])
@@ -272,7 +272,7 @@ Generic task templates do not reference static creators or platforms. The linkag
 2. **Snapshot Hydration (at generation)**: The generation engine scans the template's schema definitions for `system_fact_key` bindings:
    - If a field is bound to `creator_attendance_missing`, the engine queries the show's assigned `ShowCreator` relationships. For each assigned creator, it generates a deterministic, stable field input in the task's `snapshot.schema`.
      - *Generated unique input keys*: `fld_attendance_missing_creator_<creatorUid>`, `fld_actual_start_creator_<creatorUid>`, etc. Field keys MUST include the target UID, not a sequential index, so the same target always lands on the same key across re-hydrations.
-   - Platform-scoped fields like `platform_actual_start_time` undergo the same expansion, producing one input per assigned platform (e.g., `fld_actual_start_platform_<platformUid>`). Analytical platform metrics (GMV, viewer count, etc.) are not in the Phase 4 fact-key catalog; they re-enter once 12.6 decides their storage shape.
+   - Platform-scoped fields like `platform_actual_start_time` undergo the same expansion, producing one input per assigned platform (e.g., `fld_actual_start_platform_<platformUid>`). Analytical platform metrics (GMV, viewer count, etc.) are not in the Phase 4 fact-key catalog; they re-enter once PR 21 decides their storage shape.
 3. **Additive Re-Hydration (at render)**: Before rendering a not-yet-submitted task, the engine reconciles the snapshot's hydrated fields against the current `ShowCreator` / `ShowPlatform` set:
    - **Newly assigned targets** get newly appended hydrated fields, defaulted to empty.
    - **Already-hydrated fields** for targets that are still assigned: untouched (operator's in-progress values preserved).
@@ -404,7 +404,7 @@ The same indexed columns and audit history feed every consumer. PR 12 stabilizes
 | Show timeline | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` per fact | `Show(actual_start_time, actual_end_time)` | `/show-run-review`, `/task-setup`, `/studios/:id/shows/:showId` |
 | Creator attendance | derived `ON_TIME` / `LATE` / `MISSING`, `late_minutes`, `attendance_reason` | `ShowCreator(actual_start_time)`, `(attendance_missing)` joined to `Show.start_time` | `/show-run-review`, `/studios/:id/creators/:creatorId`, `/me/shows` |
 | Platform actual window | `actual_start_time`, `actual_end_time`, `metadata.actuals_source` | `ShowPlatform(actual_start_time, actual_end_time)` | `/show-run-review`, `/task-setup`, `/studios/:id/shows/:showId` |
-| Platform performance (GMV, viewer count, etc.) | deferred to 12.6 — see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md) | analytical layer (TBD: read model vs OLAP) | PR 12.6 |
+| Platform performance (GMV, viewer count, etc.) | deferred to PR 21 — see [`show-performance-analytics-infra.md`](../../../docs/ideation/show-performance-analytics-infra.md) | analytical layer (TBD: read model vs OLAP) | PR 21 |
 | Platform violations (active) | `violation_type`, `severity`, `reason`, `observed_at` (excluding superseded) | `ShowPlatformViolation(show_platform_id, superseded_at)` | `/show-run-review`, show / platform detail surfaces |
 | Audit history | unified `Audit` + `AuditTarget` rows (engine + manager + legacy sidecar merger) | `AuditTarget(targetType, targetId)` and per-target FK indexes | every detail surface that hosts `AuditLogTimeline` |
 
@@ -459,7 +459,7 @@ Coverage matrix — what each shared widget renders in each perspective:
 | --- | --- | --- | --- |
 | `ActualsTimelineViewer` | aggregated per-show row strip in `/task-setup` | full timeline on show / creator / member detail | own upcoming + completed shows |
 | `ShowRunSummary` | `/show-run-review` summary for submitted show runs only | detail-page summaries as host routes land | own show-run summaries as self-view routes land |
-| `PerformanceMetricsWidget` | deferred to 12.6 (analytics infra investigation) | deferred to 12.6 | deferred to 12.6 |
+| `PerformanceMetricsWidget` | deferred to PR 21 (analytics infra investigation) | deferred to PR 21 | deferred to PR 21 |
 | `CompensationBreakdownCard` | not used (roll-up only) | per-creator / per-show breakdown | own breakdown for the logged-in entity |
 | `AttendanceStatusBadge` | grid cells in roster + ops tables | header status on creator / show detail | own attendance per show |
 | `AuditLogTimeline` | not used (too noisy) | full override + ingestion history | own override / ingestion history (read-only) |
@@ -468,4 +468,4 @@ Coverage matrix — what each shared widget renders in each perspective:
 
 **Cross-app boundary for P3**: creator self-view lives in `erify_creators` (top-level `/shows`, `/shows/:showId` — no `/me/*` prefix because the entire app is scoped to the logged-in creator). Member self-view, when it ships, lives in `erify_studios` under `/me/*` to disambiguate from manager-facing `/studios/:id/*` routes in the same app. Any widget reused across P1/P2 (in `erify_studios`) and creator P3 (in `erify_creators`) must therefore live in a **shared package** (`@eridu/ui` or a new domain package), not in either app's `src/features/`.
 
-**Performance review, not economics review**: this is the upstream performance/quality layer. Late and missing creator events, platform violations, and incomplete actuals are tracked here primarily because they are *damage-causing performance facts*. Downstream, [PR 13's economics review surface](../../../../docs/roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics` consumes the same indexed columns as cost inputs. PR 12 never writes derived finance totals; the storage and review layer stays monetary-agnostic so it remains useful as an operational quality view even without economics consuming it.
+**Performance review, not economics review**: this is the upstream performance/quality layer. Late and missing creator events, platform violations, and incomplete actuals are tracked here primarily because they are *damage-causing performance facts*. Downstream, [PR 19's economics review surface](../../../../docs/roadmap/PHASE_4.md#pr-19--economics-review-surface) at `/studios/:id/finance/economics` consumes the same indexed columns as cost inputs. PR 12 never writes derived finance totals; the storage and review layer stays monetary-agnostic so it remains useful as an operational quality view even without economics consuming it.

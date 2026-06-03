@@ -5,7 +5,7 @@ description: Patterns for building the studio Operations review surfaces in erif
 
 # Operations Review Surface
 
-The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-setup`) share one composition pattern: an operational-day-scoped read model summarized into KPI cards plus URL-synced multi-tab DataTables, each tab lazily fetched and independently exportable. PR 13 (`/finance/economics`) and PR 12.6 (analytics) will reuse it. This skill captures that pattern so the next surface doesn't copy a monolith.
+The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-setup`) share one composition pattern: an operational-day-scoped read model summarized into KPI cards plus URL-synced multi-tab DataTables, each tab lazily fetched and independently exportable. PR 19 (`/finance/economics`) and PR 21 (analytics) will reuse it. This skill captures that pattern so the next surface doesn't copy a monolith.
 
 > This is the **composition** layer on top of [`table-view-pattern`](../table-view-pattern/SKILL.md). That skill owns the table mechanics (DataTable, `useTableUrlState`, pagination, current-view export). This skill owns how a multi-tab operational-review screen is assembled from those primitives. Read both.
 

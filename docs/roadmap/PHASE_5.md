@@ -71,7 +71,7 @@ These are explicitly out of Phase 4 scope and candidates for Phase 5:
 | Studio snapshot/audit trail visibility | Phase 4 gap analysis | C |
 | Strict-mode creator availability with conflict metadata | Phase 4 re-sequencing; availability is currently advisory — strict-mode + conflict metadata payload is the next layer once a business driver pulls it in | C |
 | Hardware / creator-app actuals sources beyond task submissions | Phase 4 adds task-submission and manager-entry paths; hardware and creator-app automation remain future work | A |
-| Additional platform performance metrics beyond GMV/views | Phase 4 PR 12.6 decides the analytics storage path for GMV, views, CTR/CTO, and related metrics; they are not promoted through the 12.4 operational review track | A |
+| Additional platform performance metrics beyond GMV/views | Phase 4 PR 21 decides the analytics storage path for GMV, views, CTR/CTO, and related metrics; they are not promoted through the 12.4 operational review track | A |
 | P&L revenue workflow, commission resolution, contribution margin | Phase 4 persists operational actuals and violation records; Phase 5 owns financial revenue semantics and commission resolution | A |
 
 ## Promotion Rule

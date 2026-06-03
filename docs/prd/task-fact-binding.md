@@ -13,7 +13,7 @@
 ### The Problem
 Generic task templates in Erify are highly customizable and modular, but the data captured in task sheets lives as generic, untyped JSON blobs in `task.content`. 
 Because the system cannot natively associate these inputs with canonical operational facts:
-1. Managers must review task submissions one by one before actual start/end times, host attendance, and platform violations become trusted operational records; platform statistics such as GMV/views remain analytical and are deferred to 12.6.
+1. Managers must review task submissions one by one before actual start/end times, host attendance, and platform violations become trusted operational records; platform statistics such as GMV/views remain analytical and are deferred to PR 21.
 2. The database has no structured, indexed columns for these metrics, preventing efficient aggregation, real-time lateness calculation, or platform violation tracking.
 3. Multiple conflicting inputs (e.g. automated scraper metrics, operator task sheets, and manager manual overrides) have no structured resolution hierarchy, leading to inconsistent actuals reporting.
 
@@ -74,7 +74,7 @@ All automated ingestion writes and confirmed manager override tasks write to a u
 
 ### D. Safe Monetary Casting (Finance Guardrail #2)
 To prevent IEEE-754 precision issues (IEEE float inaccuracies):
-* Platform GMV is deferred to 12.6 (analytical). When it returns, values entered on task forms will be transported numerically but cast immediately to strict `Prisma.Decimal` in the ingestion pipe before any write; the precision (`Decimal(12, 2)` or other) is decided by the analytics infrastructure step.
+* Platform GMV is deferred to PR 21 (analytical). When it returns, values entered on task forms will be transported numerically but cast immediately to strict `Prisma.Decimal` in the ingestion pipe before any write; the precision (`Decimal(12, 2)` or other) is decided by the analytics infrastructure step.
 * No raw JS floats are used in calculations or updates.
 
 ### E. Derived Status (Read-Side Metrics)
@@ -125,7 +125,7 @@ flowchart TB
 **Shared Component Mandate**: To avoid logic drift, raw queries or visualization code must not be duplicated across perspectives that *do* ship together. Unit components (`ActualsTimelineViewer`, `ShowRunSummary`, `CompensationBreakdownCard`, `AttendanceStatusBadge`, `AuditLogTimeline`) live in reusable packages or shared app folders and are consumed identically by each perspective, varying only by the query parameters / role scopes passed in. See [`TASK_INPUT_FACT_BINDING_DESIGN.md` §5–6](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md#5-frontend-surfaces--endpoint-map) for the read-shape map and per-widget coverage matrix.
 
 ### G. Operations Review as Upstream of Economics Review
-PR 12 stands up the **operations review workflow** (PR 12.4.x). It is the upstream counterpart to [PR 13's economics review surface](../roadmap/PHASE_4.md#pr-13--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first in Task Review, confirmed tasks populate operational facts, and Show Run Review summarizes the submitted show execution, creator attendance, and platform issues. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 12.6.
+PR 12 stands up the **operations review workflow** (PR 12.4.x). It is the upstream counterpart to [PR 19's economics review surface](../roadmap/PHASE_4.md#pr-19--economics-review-surface) at `/studios/:id/finance/economics`: submitted tasks are confirmed first in Task Review, confirmed tasks populate operational facts, and Show Run Review summarizes the submitted show execution, creator attendance, and platform issues. Late arrivals, no-shows, and platform violations are tracked here primarily because they are **damage-causing operational events** that downstream economics may translate into deductions and penalties — but the storage and review layer is intentionally agnostic to monetary impact. PR 12 never writes derived finance totals or analytical aggregates; it only emits typed operational facts. Analytical metrics (GMV, viewer count, CTR, CTO, trend dashboards, OLAP/read-model infrastructure) are deferred to PR 21.
 
 ---
 
@@ -143,7 +143,7 @@ Implementation is structured into **three logical sections**. Each section serve
    │                    SECTION B: EXTRACTORS                    │
    │  - PR 12.1.1: Show Times      - PR 12.2: Creator Attendance │
    │  - PR 12.1.2: Platform Times  - PR 12.3.2: Violations       │
-   │  - PR 12.3.1 (GMV/Views) → deferred to 12.6                 │
+   │  - PR 12.3.1 (GMV/Views) → deferred to PR 21                │
    └──────────────────────────────┬──────────────────────────────┘
                                   ▼
    ┌─────────────────────────────────────────────────────────────┐
@@ -180,7 +180,7 @@ Implementation is structured into **three logical sections**. Each section serve
 * **Purpose**: Allow studio producers to bind template fields to system fact keys.
 * **Functional Deliverable**:
   * Binds `FieldItemV2Schema` in `@eridu/api-types` to a closed `system_fact_key` enum.
-  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`) and rejects duplicate fact-key bindings in the same template. Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once 12.6 lands.
+  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`) and rejects duplicate fact-key bindings in the same template. Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once PR 21 lands.
   * **Template Builder UI**: Exposes a searchable "Auto-fill record field" binding picker (with an info-icon tooltip explaining downstream behavior) for template designers.
   * `creator_attendance_missing` uses the existing `require_reason: "on-true"` sidecar flow for the operator's explanation; there is no separate `creator_attendance_reason` binding input.
 
@@ -227,8 +227,8 @@ Implementation is structured into **three logical sections**. Each section serve
   * **Read-Side Derivation**: Implements live lateness, presence (`ON_TIME` / `LATE` / `MISSING`), and `lateMinutes` math (e.g. `ShowCreator.actualStartTime` compared against `Show.startTime`).
   * Enforces `attendanceReason` on `LATE`/`MISSING` statuses from the task field reason sidecar. Safe fallback logic writes a system flag if the builder failed to collect the operator reason, preventing form blockages.
 
-#### ⬜ PR 12.3.1 · Platform GMV/Views Extractor — **Deferred to 12.6**
-* **Status**: Removed from Phase 4 critical path. GMV and viewer count are analytical metrics; their storage shape (typed column, read model, or OLAP path) is decided by the 12.6 analytics infrastructure investigation. The original purpose, casting rules, and default-zero disambiguation logic carry forward; see [`show-performance-analytics-infra.md`](../ideation/show-performance-analytics-infra.md).
+#### ⬜ PR 12.3.1 · Platform GMV/Views Extractor — **Deferred to PR 21**
+* **Status**: Removed from Phase 4 critical path. GMV and viewer count are analytical metrics; their storage shape (typed column, read model, or OLAP path) is decided by the PR 21 analytics infrastructure investigation. The original purpose, casting rules, and default-zero disambiguation logic carry forward; see [`show-performance-analytics-infra.md`](../ideation/show-performance-analytics-infra.md).
 
 #### 🟦 PR 12.3.2 · Platform Violations Extractor
 * **Purpose**: Extract stream-level warnings and violations.
