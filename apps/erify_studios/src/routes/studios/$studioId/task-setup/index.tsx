@@ -47,6 +47,7 @@ import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/sho
 import { getStudioShowOperationsColumns } from '@/features/studio-shows/components/studio-shows-table/columns';
 import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
 import { useStudioShows } from '@/features/studio-shows/hooks/use-studio-shows';
+import type { TaskReadinessWarning } from '@/features/studio-shows/utils/show-readiness.utils';
 import {
   normalizeScopeDate,
   parseScopeDateAsLocal,
@@ -363,7 +364,7 @@ function ShowTaskReadinessSection({
 }: {
   scopeLabel: string;
   showsInScopeCount: number;
-  taskReadinessWarnings: any[];
+  taskReadinessWarnings: TaskReadinessWarning[];
   isLoading: boolean;
   isFetching: boolean;
   isVisible: boolean;
