@@ -11,13 +11,13 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 
 ## Canonical files
 
-- **Route shell + summary query**: [`routes/studios/$studioId/show-run-review.tsx`](../../apps/erify_studios/src/routes/studios/$studioId/show-run-review.tsx)
-- **Container** (composition, <200 LOC): [`features/show-run-review/components/show-run-summary.tsx`](../../apps/erify_studios/src/features/show-run-review/components/show-run-summary.tsx)
-- **View model hook**: [`components/show-run-summary/use-show-run-summary.ts`](../../apps/erify_studios/src/features/show-run-review/components/show-run-summary/use-show-run-summary.ts)
-- **Generic tab panel**: [`components/show-run-summary/show-run-review-tab-panel.tsx`](../../apps/erify_studios/src/features/show-run-review/components/show-run-summary/show-run-review-tab-panel.tsx)
-- **Operational-day window math**: [`lib/operational-day-range.ts`](../../apps/erify_studios/src/lib/operational-day-range.ts) + [`features/show-run-review/lib/show-run-review-date-range.ts`](../../apps/erify_studios/src/features/show-run-review/lib/show-run-review-date-range.ts)
-- **Summary vs paginated sub-resource queries**: [`features/shows/api/get-show-run-review-summary.ts`](../../apps/erify_studios/src/features/shows/api/get-show-run-review-summary.ts) + [`get-show-run-review-paginated.ts`](../../apps/erify_studios/src/features/shows/api/get-show-run-review-paginated.ts)
-- **Merged-dataset review reference**: [`routes/studios/$studioId/task-review/index.tsx`](../../apps/erify_studios/src/routes/studios/$studioId/task-review/index.tsx)
+- **Route shell + summary query**: [`routes/studios/$studioId/show-run-review.tsx`](../../../apps/erify_studios/src/routes/studios/$studioId/show-run-review.tsx)
+- **Container** (composition, <200 LOC): [`features/show-run-review/components/show-run-summary.tsx`](../../../apps/erify_studios/src/features/show-run-review/components/show-run-summary.tsx)
+- **View model hook**: [`components/show-run-summary/use-show-run-summary.ts`](../../../apps/erify_studios/src/features/show-run-review/components/show-run-summary/use-show-run-summary.ts)
+- **Generic tab panel**: [`components/show-run-summary/show-run-review-tab-panel.tsx`](../../../apps/erify_studios/src/features/show-run-review/components/show-run-summary/show-run-review-tab-panel.tsx)
+- **Operational-day window math**: [`lib/operational-day-range.ts`](../../../apps/erify_studios/src/lib/operational-day-range.ts) + [`features/show-run-review/lib/show-run-review-date-range.ts`](../../../apps/erify_studios/src/features/show-run-review/lib/show-run-review-date-range.ts)
+- **Summary vs paginated sub-resource queries**: [`features/shows/api/get-show-run-review-summary.ts`](../../../apps/erify_studios/src/features/shows/api/get-show-run-review-summary.ts) + [`get-show-run-review-paginated.ts`](../../../apps/erify_studios/src/features/shows/api/get-show-run-review-paginated.ts)
+- **Merged-dataset review reference**: [`routes/studios/$studioId/task-review/index.tsx`](../../../apps/erify_studios/src/routes/studios/$studioId/task-review/index.tsx)
 - **Backend split + guard rails**: [`api-performance-optimization` skill §8](../api-performance-optimization/SKILL.md)
 
 ## When to use / not use
