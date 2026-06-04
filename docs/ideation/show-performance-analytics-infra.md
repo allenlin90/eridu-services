@@ -1,6 +1,6 @@
 # Ideation: Show Performance Analytics Infrastructure
 
-> **Status**: Deferred until after PR 12.4
+> **Status**: Scheduled after the Phase 4 feature rows — broken into roadmap rows 21.1 (this investigation, the decision gate) → 21.2 (GMV/Views) → 21.3 (extended metrics) → 21.4 (show-level read model + aggregates)
 > **Origin**: PR 12.0.2 / Phase 4 actuals schema review
 > **Related**: [Phase 4 roadmap](../roadmap/PHASE_4.md), [PR 12 PRD](../prd/task-fact-binding.md), [PR 12 design](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md), [Task Analytics Summaries](./task-analytics-summaries.md)
 
