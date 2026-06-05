@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 
 import type {
   CreateShowPlatformPayload,
@@ -185,6 +186,36 @@ export class ShowPlatformService extends BaseModelService {
       {
         ...(payload.actualStartTime !== undefined ? { actualStartTime: payload.actualStartTime } : {}),
         ...(payload.actualEndTime !== undefined ? { actualEndTime: payload.actualEndTime } : {}),
+        ...(payload.metadata !== undefined ? { metadata: payload.metadata as never } : {}),
+      },
+    );
+    if (result.count === 0) {
+      throw HttpError.notFound('ShowPlatform', uid);
+    }
+  }
+
+  /**
+   * Partial-update helper for performance metrics extraction.
+   * Scoped to showId and active status, throwing NotFoundException on race.
+   */
+  async updatePerformanceMetrics(
+    uid: string,
+    showId: bigint,
+    payload: {
+      gmv?: Prisma.Decimal | null;
+      ctr?: Prisma.Decimal | null;
+      cto?: Prisma.Decimal | null;
+      viewerCount?: number;
+      metadata?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    const result = await this.showPlatformRepository.updateMany(
+      { uid, showId, deletedAt: null },
+      {
+        ...(payload.gmv !== undefined ? { gmv: payload.gmv } : {}),
+        ...(payload.ctr !== undefined ? { ctr: payload.ctr } : {}),
+        ...(payload.cto !== undefined ? { cto: payload.cto } : {}),
+        ...(payload.viewerCount !== undefined ? { viewerCount: payload.viewerCount } : {}),
         ...(payload.metadata !== undefined ? { metadata: payload.metadata as never } : {}),
       },
     );

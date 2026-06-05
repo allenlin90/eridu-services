@@ -6,6 +6,12 @@ import { CreatorActualEndTimeExtractor } from './creator-actual-end-time.extract
 import { CreatorActualStartTimeExtractor } from './creator-actual-start-time.extractor';
 import { CreatorAttendanceMissingExtractor } from './creator-attendance-missing.extractor';
 import type { IngestionExtractor } from './extractor.types';
+import {
+  PlatformCtoExtractor,
+  PlatformCtrExtractor,
+  PlatformGmvExtractor,
+  PlatformViewCountExtractor,
+} from './platform-performance-extractors';
 import { ShowActualEndTimeExtractor } from './show-actual-end-time.extractor';
 import { ShowActualStartTimeExtractor } from './show-actual-start-time.extractor';
 import { ShowPlatformActualEndTimeExtractor } from './show-platform-actual-end-time.extractor';
@@ -36,6 +42,10 @@ export class ExtractorRegistry {
     showPlatformActualStartTimeExtractor: ShowPlatformActualStartTimeExtractor,
     showPlatformActualEndTimeExtractor: ShowPlatformActualEndTimeExtractor,
     showPlatformViolationExtractor: ShowPlatformViolationExtractor,
+    platformGmvExtractor: PlatformGmvExtractor,
+    platformViewCountExtractor: PlatformViewCountExtractor,
+    platformCtrExtractor: PlatformCtrExtractor,
+    platformCtoExtractor: PlatformCtoExtractor,
   ) {
     this.byFactKey = new Map<SystemFactKey, IngestionExtractor>([
       [showActualStartTimeExtractor.factKey, showActualStartTimeExtractor],
@@ -46,6 +56,10 @@ export class ExtractorRegistry {
       [showPlatformActualStartTimeExtractor.factKey, showPlatformActualStartTimeExtractor],
       [showPlatformActualEndTimeExtractor.factKey, showPlatformActualEndTimeExtractor],
       [showPlatformViolationExtractor.factKey, showPlatformViolationExtractor],
+      [platformGmvExtractor.factKey, platformGmvExtractor],
+      [platformViewCountExtractor.factKey, platformViewCountExtractor],
+      [platformCtrExtractor.factKey, platformCtrExtractor],
+      [platformCtoExtractor.factKey, platformCtoExtractor],
     ]);
   }
 

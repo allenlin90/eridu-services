@@ -52,6 +52,8 @@ export type ExtractionContext = {
    * write as `OPERATOR`; manager and platform writers use their own paths.
    */
   source: ActualsSource;
+  /** Task template UID (if the task is template-backed). */
+  templateUid?: string;
 };
 
 /**

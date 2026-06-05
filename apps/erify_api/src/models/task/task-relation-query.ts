@@ -11,6 +11,7 @@ export type TaskShowPlatformTarget = {
 };
 
 export type TaskWithSnapshotTargets = Task & {
+  template: { uid: string; name: string } | null;
   snapshot: TaskTemplateSnapshot | null;
   targets: {
     show: {
@@ -72,6 +73,12 @@ const showHydrationTargetSelect = {
 } as const;
 
 export const taskSnapshotTargetInclude = {
+  template: {
+    select: {
+      uid: true,
+      name: true,
+    },
+  },
   snapshot: true,
   targets: {
     where: { targetType: 'SHOW', deletedAt: null },

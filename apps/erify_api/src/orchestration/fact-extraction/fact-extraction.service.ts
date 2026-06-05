@@ -198,6 +198,7 @@ export class FactExtractionService {
       showId: input.showId,
       showUid: input.showUid,
       source: input.source,
+      templateUid: task.template?.uid ?? undefined,
     };
 
     const entries: ExtractionResultEntry[] = [];
