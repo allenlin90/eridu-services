@@ -29,7 +29,7 @@ To deliver high-performance reporting and keep templates clean, the analytical l
 ### A. Single Task with Target-Hydrated Multicast Fields
 Rather than duplicating task sheets for each platform of a multicast show:
 * **One Task per Show**: A show has at most one task of a given template (e.g. one post-production task).
-* **Target-Hydrated Fields**: Template fields bound to platform performance facts (e.g. `platform_gmv` bound to target type `ShowPlatform`) dynamically expand during hydration to render one input field *per active platform* of the show.
+* **Target-Hydrated Fields**: Template fields bound to platform performance facts (e.g. `show_platform_gmv` bound to target type `ShowPlatform`) dynamically expand during hydration to render one input field *per active platform* of the show.
 * **Multicast Collection**: The operator enters metrics for all active platforms (e.g., TikTok and Shopee) in one single task sheet. The submitted keys are stored deterministically as `<fieldId>:SHOW_PLATFORM:<platformUid>` in the task content JSON.
 
 ### B. Stream-Level Performance on ShowPlatform
@@ -83,7 +83,7 @@ To isolate analytics reads from OLTP operational paths, we expose two dedicated 
 ## 3. Extraction & Projection Pipeline
 
 When a task transitions into `COMPLETED` or `REVIEW`:
-1. **Fact Extraction**: The `FactExtractionService` identifies fields bound to analytical fact keys (e.g. `platform_gmv`).
+1. **Fact Extraction**: The `FactExtractionService` identifies fields bound to analytical fact keys (e.g. `show_platform_gmv`).
 2. **Platform Resolution**: The service parses the target UID from the hydrated keys (`<fieldId>:SHOW_PLATFORM:<platformUid>`) and resolves the corresponding `Platform` of the show.
 3. **Database Projection**: The `ShowPlatformProjectionService` (or ingestion pipeline helper) upserts/updates the performance columns (`gmv`, `ctr`, `cto`, `viewerCount`) directly on the `ShowPlatform` row using the resolved `showId` and `platformId`.
 
@@ -124,7 +124,7 @@ To support progressive integration, testing, and clean reviews, the show perform
 
 ### PR 21.3: System Fact Key Catalog Expansion
 - **Deliverables**:
-  - Add `platform_gmv`, `platform_view_count`, `platform_ctr`, and `platform_cto` to `SystemFactKeyEnum` in `@eridu/api-types`.
+  - Add `show_platform_gmv`, `show_platform_view_count`, `show_platform_ctr`, and `show_platform_cto` to `SystemFactKeyEnum` in `@eridu/api-types`.
   - Register matching type constraints in `bind-template-system-facts.sql` to pass key sync checks.
 
 ### PR 21.4: Ingestion Pipeline & Fact Extraction Updates
