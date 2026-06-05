@@ -11,7 +11,7 @@ Per-entity edits in `erify_studios` open `Dialog`s from row actions. Dialogs los
 **Goal**: convert each single-entity detail/edit dialog into a `/studios/:studioId/<entity>/:entityId` route. This branch delivers:
 
 1. **Audit doc** — `apps/erify_studios/docs/ENTITY_DETAIL_ROUTES.md`: target route per entity, share-link contract, migration order.
-2. **14a pilot** — creator detail route at `/studios/:studioId/creators/:creatorId` hosting a **Defaults** tab (the converted `edit-studio-creator-dialog`) and a **Compensation** tab (the already-extracted `creator-compensations` view), with deep-linkable URLs.
+2. **14a pilot** — creator detail route at `/studios/:studioId/creators/:creatorId` hosting a **Profile** tab (the converted `edit-studio-creator-dialog`) and a **Compensation** tab (the already-extracted `creator-compensations` view), with deep-linkable URLs.
 
 **Design principle (user-stated)**: *reuse UI and flow, keep UX consistent, with proper scope and authorization.* No new UI primitive, no new dependency, no broadened access surface.
 
@@ -19,12 +19,12 @@ Per-entity edits in `erify_studios` open `Dialog`s from row actions. Dialogs los
 
 | #   | Today (dialog)                                                       | Target route                                | Share-link contract (surviving search params)                                  | Notes                                                                                     |
 | --- | ------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| 14a | `edit-studio-creator-dialog` + creator compensation view            | `/studios/:studioId/creators/:creatorId`    | Compensation tab: `date_from`, `date_to` (existing). Defaults tab: none.       | **This branch.** Layout + Link tabs. Compensation route already exists; folds in as a tab. |
+| 14a | `edit-studio-creator-dialog` + creator compensation view            | `/studios/:studioId/creators/:creatorId`    | Compensation tab: `date_from`, `date_to` (existing). Profile tab: none.        | **This branch.** Layout + Link tabs. Compensation route already exists; folds in as a tab. |
 | 14b | `edit-member-dialog`                                                 | `/studios/:studioId/members/:memberId`      | Compensation tab: `date_from`, `date_to` (mirror creator).                     | Wait for PR 8 (string wire type). `members/$memberId/compensations.tsx` already exists.     |
 | 14c | `show-update-dialog`                                                 | `/studios/:studioId/shows/:showId`          | None expected (no range filter); finalized when 14c is scoped.                  | Show-creator compensation becomes a section; `show-actuals-dialog` folds in (PR 12.1).      |
 | 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`            | `/studios/:studioId/shifts/:shiftId`        | None expected (no range filter); finalized when 14d is scoped.                  | Compensation becomes a tab/section.                                                         |
 
-**Migration order**: 14a (creator, pilot) → 14b (member, after PR 8) → 14c (show) → 14d (shift). Each is its own scoped PR. The pilot establishes the reusable **entity-detail layout pattern** (nested layout route + Link tab strip + per-tab authorization) the others copy.
+**Migration order**: 14a (creator, pilot) → 14b (member, after PR 8) → 14c (show) → 14d (shift). Each is its own scoped PR. The pilot establishes the reusable **entity-detail layout pattern** (nested layout route + Link tab strip + per-tab authorization) the others copy. Refined follow-up: the first tab is user-facing **Profile**, not Defaults, and the detail header follows the in-content task-setup show-tasks pattern.
 
 **Out of scope** (stay as `Dialog`): confirmation/destructive (`delete-*`, `remove-*`), inline add-to-list (`add-studio-creator`, `add-member`, `add-creator`), bulk (`bulk-task-generation`, `bulk-creator-assignment`), task-scoped sub-forms (`system-task-details`, `task-due-date`, `compensation-line-item-form`). Note: `show-creator-compensation-dialog` (per-show, opened from inside the compensation view) **stays a Dialog** — it is a sub-edit of a show assignment, not a single top-level entity.
 
@@ -38,9 +38,9 @@ routes/studios/$studioId/creators/
 ├── creators/index.tsx               (UNCHANGED — roster list)
 └── creators/$creatorId/
     ├── route.tsx        ← NEW  layout: fetch creator (GET :creatorId), header
-    │                            (name + AttendanceStatus-style active badge + back link)
-    │                            + Link tab strip (Defaults | Compensation) + <Outlet/>
-    ├── index.tsx        ← NEW  "Defaults" tab: converted edit form (admin-only edit)
+    │                            (compact icon back link + name + metadata panel)
+    │                            + Link tab strip (Profile | Compensation) + <Outlet/>
+    ├── index.tsx        ← NEW  "Profile" tab: converted edit form (admin-only edit)
     └── compensations.tsx← EXISTING view, de-chromed (drop its own PageLayout/back button;
                                   keep StudioRouteGuard + date-range + cards + list). Now a tab.
 ```
@@ -51,16 +51,16 @@ Rationale vs alternatives: a single page with radix `Tabs` needs a new dependenc
 
 - `createFileRoute('/studios/$studioId/creators/$creatorId')`.
 - Fetches the creator via a new `useStudioCreatorRosterEntry(studioId, creatorId)` query (see §4 endpoint).
-- Loading / not-found states mirror `task-templates/$templateId.tsx` (`PageLayout` with a centered spinner / destructive message).
-- Renders a shared **header**: back `<Link>` to `/studios/$studioId/creators`, creator name, an active/inactive badge, short description.
-- Renders a **tab strip** of TanStack `<Link>`s using `activeProps`/`data-status` styling (reuse existing utility classes; segmented-control look). The **Compensation** tab `<Link>` is rendered **only** when the viewer has `creatorCompensations` access (`hasStudioRouteAccess(role, 'creatorCompensations')`); otherwise the Defaults tab is the only tab.
+- Loading / not-found states stay in the same in-content layout with a short bordered status message.
+- Renders a shared **in-content header**: compact icon back `<Link>` to `/studios/$studioId/creators`, creator name, short description, and a small metadata panel. Use `task-setup/$showId/tasks` / `ShowHeaderSection` as the navigation precedent; do not put the back action in `PageLayout.actions`.
+- Renders a **tab strip** of TanStack `<Link>`s using `activeProps`/`data-status` styling (reuse existing utility classes; segmented-control look). The **Compensation** tab `<Link>` is rendered **only** when the viewer has `creatorCompensations` access (`hasStudioRouteAccess(role, 'creatorCompensations')`); otherwise the Profile tab is the only tab.
 - `<Outlet/>` renders the active child.
 - The whole subtree already sits under `creators.tsx`'s `routeKey="creatorRoster"` guard (MANAGER / TALENT_MANAGER / ADMIN), so no extra guard is needed on the layout itself.
 
-### 3.2 Defaults tab (`creators/$creatorId/index.tsx`)
+### 3.2 Profile tab (`creators/$creatorId/index.tsx`)
 
 - `createFileRoute('/studios/$studioId/creators/$creatorId/')`.
-- Reuses the **exact form fields + submit logic** currently in `EditStudioCreatorForm` (default rate, compensation type, commission rate, status), refactored out of the dialog into a reusable `CreatorDefaultsForm` component under `studio-creator-roster/components/`. Same `buildUpdateStudioCreatorRosterPayload` helper, same `useUpdateStudioCreatorRoster` mutation, same 409/optimistic-concurrency handling (`version` round-trip), same toasts.
+- Reuses the **exact form fields + submit logic** currently in `EditStudioCreatorForm` (default rate, compensation type, commission rate, status), refactored out of the dialog into a reusable `CreatorProfileForm` component under `studio-creator-roster/components/`. Same `buildUpdateStudioCreatorRosterPayload` helper, same `useUpdateStudioCreatorRoster` mutation, same 409/optimistic-concurrency handling (`version` round-trip), same toasts.
 - **Authorization**: editing is **ADMIN + MANAGER**. This **loosens** the existing `PATCH :creatorId` guard, which is admin-only today (§4) — an intentional behavior change requested for 14a. For TALENT_MANAGER the form renders **read-only** (disabled inputs / value chips, no Save). Gate via `useStudioAccess(studioId)` role check (`role === ADMIN || role === MANAGER`).
 - On successful save: stay on the page (toast + query invalidation refreshes the header/badge). No dialog close / navigation. This is the UX upgrade — the edit is a page, not a modal.
 
@@ -88,30 +88,30 @@ A single-creator read is required so the detail page hydrates on deep-link / ref
 
 ## 5. Entry points / wiring changes
 
-- `studio-creator-actions-cell.tsx`: the row **Edit** action changes from "open `EditStudioCreatorDialog`" to **navigate** to `/studios/$studioId/creators/$creatorId` (the Defaults tab). The "Review Compensation" item **stays** as a deep link, now pointing straight at the Compensation tab (`/creators/$creatorId/compensations`). Remove the local `editOpen` state and the `EditStudioCreatorDialog` mount.
-- `edit-studio-creator-dialog.tsx`: the dialog wrapper is **removed** once no other caller exists; its form body is extracted into `CreatorDefaultsForm`. (Verify no other importers before deleting.)
+- `studio-creator-actions-cell.tsx`: the row **Edit** action changes from "open `EditStudioCreatorDialog`" to **navigate** to `/studios/$studioId/creators/$creatorId` (the Profile tab). The "Review Compensation" item **stays** as a deep link, now pointing straight at the Compensation tab (`/creators/$creatorId/compensations`). Remove the local `editOpen` state and the `EditStudioCreatorDialog` mount.
+- `edit-studio-creator-dialog.tsx`: the dialog wrapper is **removed** once no other caller exists; its form body is extracted into `CreatorProfileForm`. (Verify no other importers before deleting.)
 
 ## 6. Authorization matrix (14a)
 
 | Capability                          | ADMIN | MANAGER | TALENT_MANAGER | Mechanism                                                        |
 | ----------------------------------- | :---: | :-----: | :------------: | --------------------------------------------------------------- |
 | Reach `/creators/:creatorId`        |  ✅   |   ✅    |       ✅       | `creators.tsx` `routeKey="creatorRoster"` layout guard          |
-| `GET :creatorId` (read defaults)    |  ✅   |   ✅    |       ✅       | `@StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)`                 |
-| Edit defaults (Save)                |  ✅   |   ✅    |       ❌       | `PATCH :creatorId` guard `[ADMIN, MANAGER]` (loosened) + FE read-only form for TALENT_MANAGER |
+| `GET :creatorId` (read profile)     |  ✅   |   ✅    |       ✅       | `@StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)`                 |
+| Edit profile/default fields (Save)  |  ✅   |   ✅    |       ❌       | `PATCH :creatorId` guard `[ADMIN, MANAGER]` (loosened) + FE read-only form for TALENT_MANAGER |
 | See / open Compensation tab         |  ✅   |   ✅    |       ❌       | Tab hidden + `StudioRouteGuard routeKey="creatorCompensations"` |
 
-**Intentional change**: MANAGER gains edit-defaults access (previously ADMIN-only). All other capabilities are unchanged from today's dialogs/links.
+**Intentional change**: MANAGER gains edit access to creator profile/default fields (previously ADMIN-only). All other capabilities are unchanged from today's dialogs/links.
 
 ## 7. Reuse & cross-perspective consistency
 
 - This route is **Perspective 2 (Studio Individual Overview)** per the Three-Perspective guide; it is *not* the erify_creators self-view (Perspective 3 = the whole app, sidebar-navigated). The local tab strip is the correct in-page navigator for P2 because the studio sidebar shows studio-level sections.
 - `CreatorCompensationsView` currently lives in `erify_studios/src/features/`. The roadmap's "Mandated Reusable Widgets" note says compensation widgets should eventually be shared between P2 (this page) and P3 (erify_creators). **For the pilot we reuse it in place** and record "extract compensation view to `@eridu/ui` when erify_creators converges" as an explicit follow-up in `ENTITY_DETAIL_ROUTES.md` — we do **not** expand the pilot into a cross-app package extraction.
-- The entity-detail layout pattern (nested layout route + Link tab strip + per-tab auth + single-entity GET) is documented in `ENTITY_DETAIL_ROUTES.md` as the template 14b–14d follow.
+- The entity-detail layout pattern (nested layout route + Link tab strip + per-tab auth + single-entity GET + Profile first tab + task-setup-style in-content header) is documented in `ENTITY_DETAIL_ROUTES.md` as the template 14b–14d follow.
 
 ## 8. Testing
 
 - **Backend** (`studio-creator.controller.spec.ts`): `GET :creatorId` returns the roster item for ADMIN/MANAGER/TALENT_MANAGER; 404 for an unknown creator; route ordering does not break `availability`/`catalog`/`onboarding-users`.
-- **Frontend**: route renders header + tabs from the detail query; Defaults form is editable for ADMIN and read-only for MANAGER; Compensation tab hidden for TALENT_MANAGER; 409 path surfaces the conflict toast and invalidates. Reuse existing `EditStudioCreatorForm` test coverage by retargeting it to `CreatorDefaultsForm`.
+- **Frontend**: route renders header + tabs from the detail query; Profile form is editable for ADMIN and read-only for MANAGER; Compensation tab hidden for TALENT_MANAGER; 409 path surfaces the conflict toast and invalidates. Reuse existing `EditStudioCreatorForm` test coverage by retargeting it to `CreatorProfileForm`.
 
 ## 9. Docs & roadmap
 

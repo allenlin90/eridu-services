@@ -25,18 +25,18 @@ import {
 import { creatorAvailabilityKeys } from '@/features/studio-show-creators/api/get-creator-availability';
 import { creatorCatalogKeys } from '@/features/studio-show-creators/api/get-creator-catalog';
 
-type CreatorDefaultsFormProps = {
+type CreatorProfileFormProps = {
   studioId: string;
   creator: StudioCreatorRosterItem;
   canEdit: boolean;
 };
 
 /**
- * Studio creator roster defaults form. Extracted from the former
- * `edit-studio-creator-dialog` so it can host the defaults tab of the creator
+ * Studio creator roster profile form. Extracted from the former
+ * `edit-studio-creator-dialog` so it can host the profile tab of the creator
  * detail route. Editable for admins and managers; read-only otherwise.
  */
-export function CreatorDefaultsForm({ studioId, creator, canEdit }: CreatorDefaultsFormProps) {
+export function CreatorProfileForm({ studioId, creator, canEdit }: CreatorProfileFormProps) {
   const queryClient = useQueryClient();
   const [defaultRate, setDefaultRate] = useState(creator.default_rate ?? '');
   const [defaultRateType, setDefaultRateType] = useState<StudioCreatorCompensationTypeOption>(
@@ -165,7 +165,7 @@ export function CreatorDefaultsForm({ studioId, creator, canEdit }: CreatorDefau
           )
         : (
             <p className="text-sm text-muted-foreground">
-              You have read-only access to creator defaults.
+              You have read-only access to creator profile details.
             </p>
           )}
     </form>
