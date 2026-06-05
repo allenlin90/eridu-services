@@ -6,7 +6,7 @@ can't share a link to one entity's edit surface or step through edits with
 back/forward — and they constrain richer detail views. Each conversion ships as
 its own scoped PR. `task-templates/$templateId.tsx` is the original precedent.
 
-> Status: **14a (creator) shipped**; **14b (member) shipped**; **14d (shift) in progress**; 14c planned. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
+> Status: **14a (creator) shipped**; **14b (member) shipped**; **14d (shift) shipped**; 14c planned. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
 
 ## Route map
 
@@ -15,7 +15,7 @@ its own scoped PR. `task-templates/$templateId.tsx` is the original precedent.
 | 14a | `edit-studio-creator-dialog` + creator compensation view   | `/studios/:studioId/creators/:creatorId`      | Compensation tab: `date_from`, `date_to`. Profile tab: none.   | ✅ Shipped |
 | 14b | `edit-member-dialog`                                        | `/studios/:studioId/members/:memberId`        | Compensation tab: `date_from`, `date_to` (mirror creator).     | ✅ Shipped |
 | 14c | `show-update-dialog`                                        | `/studios/:studioId/shows/:showId`            | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
-| 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`    | `/studios/:studioId/shifts/:shiftId`          | None. Profile and Compensation tabs are direct share links.    | 🚧 In progress |
+| 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`    | `/studios/:studioId/shifts/:shiftId`          | None. Profile and Compensation tabs are direct share links.    | ✅ Shipped |
 
 **Migration order**: 14a → 14b → 14c → 14d. No row depends on a later row.
 
@@ -125,7 +125,7 @@ Rules every conversion follows:
 | Edit profile (Save)            |  ✅   |   ❌ (read-only) |
 | See / open Compensation tab    |  ✅   |   ✅    |
 
-## 14d — shift detail (in progress)
+## 14d — shift detail (shipped)
 
 - **Route**: `/studios/:studioId/shifts/:shiftId`
   - `route.tsx` — layout: fetches the shift, renders header + tab strip.
