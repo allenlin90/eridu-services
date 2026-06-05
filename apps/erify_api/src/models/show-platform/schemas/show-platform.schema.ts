@@ -6,6 +6,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { PlatformService } from '@/models/platform/platform.service';
 import { platformSchema } from '@/models/platform/schemas/platform.schema';
 import { showSchema } from '@/models/show/schemas/show.schema';
@@ -21,6 +22,9 @@ export const showPlatformSchema = z.object({
   liveStreamLink: z.string().nullable(),
   platformShowId: z.string().nullable(),
   viewerCount: z.number().int(),
+  gmv: z.unknown().nullable(),
+  ctr: z.unknown().nullable(),
+  cto: z.unknown().nullable(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -100,6 +104,9 @@ export const showPlatformDto = showPlatformWithRelationsSchema
     live_stream_link: obj.liveStreamLink,
     platform_show_id: obj.platformShowId,
     viewer_count: obj.viewerCount,
+    gmv: decimalToString(obj.gmv),
+    ctr: decimalToString(obj.ctr),
+    cto: decimalToString(obj.cto),
     metadata: obj.metadata,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
@@ -114,6 +121,9 @@ export const showPlatformDto = showPlatformWithRelationsSchema
       live_stream_link: z.string().nullable(),
       platform_show_id: z.string().nullable(),
       viewer_count: z.number().int(),
+      gmv: z.string().nullable(),
+      ctr: z.string().nullable(),
+      cto: z.string().nullable(),
       metadata: z.record(z.string(), z.any()),
       created_at: z.iso.datetime(),
       updated_at: z.iso.datetime(),
