@@ -77,8 +77,9 @@ To isolate analytics reads from OLTP operational paths, we expose two dedicated 
 ### E. Unified Show Details & Tasks Revamp
 * Deprecate the old route `/studios/:studioId/task-setup/:showId/tasks` which mixes management concerns with task details.
 * Implement a unified Show Details page at `/studios/:studioId/shows/:showId` using a tabbed layout:
-  - **Details & Performance**: Displays metadata and the `ShowPerformance` metrics.
-  - **Submitted Tasks**: Renders the task setup table and action panel.
+  - **Details & Performance** (delivered in PR 21.x): Displays metadata and the `ShowPerformance` metrics.
+  - **Submitted Tasks** (delivered in PR 21.x): Renders the task setup table and action panel.
+  - **Compensation** (dependent on **14c**): Show-creator compensation detail section will be integrated as a dedicated tab after `14c` lands.
 * Redirect all application links pointing to the old task-setup route to `/shows/:showId/tasks`.
 
 ---
@@ -110,3 +111,44 @@ A show's performance metrics can be supplied by multiple tasks over its lifecycl
 - Verify that a multicast show correctly displays separate platform input fields on the task form.
 - Verify that completing the task projects individual records for each platform.
 - Verify that filtering by platform on the dashboard properly refetches and displays correct aggregates.
+
+---
+
+## 5. Pull Request Execution Plan (PR Breakdown)
+
+To support progressive integration, testing, and clean reviews, the show performance workstream is broken down into the following sequential, mergeable PRs:
+
+### PR 21.1: Design & Requirements Document (✅ Completed)
+- **Deliverables**: Create `docs/prd/show-performance-analytics.md` design spec and revise `docs/roadmap/PHASE_4.md`.
+
+### PR 21.2: Database Migration & Schema Additions
+- **Deliverables**:
+  - Add the `ShowPerformance` model to `apps/erify_api/prisma/schema.prisma` (including `showId` and nullable `platformId` columns with unique constraint `@@unique([showId, platformId])`).
+  - Generate Prisma clients and verify model definitions.
+
+### PR 21.3: System Fact Key Catalog Expansion
+- **Deliverables**:
+  - Add `platform_gmv`, `platform_view_count`, `platform_ctr`, and `platform_cto` to `SystemFactKeyEnum` in `@eridu/api-types`.
+  - Register matching type constraints in `bind-template-system-facts.sql` to pass key sync checks.
+
+### PR 21.4: Ingestion Pipeline & Fact Extraction Updates
+- **Deliverables**:
+  - Create `ShowPerformanceProjectionService` and update `FactExtractionService` to support extracting metrics from multicast task forms.
+  - Implement coalescing precedence: Post-production wrap-up tasks override moderation loop 8 metrics.
+
+### PR 21.5: Backend Analytics Endpoints
+- **Deliverables**:
+  - Implement query schema validations and response DTO types in `@eridu/api-types/performance`.
+  - Expose `GET /studios/:studioId/performance/summary` and `GET /studios/:studioId/performance/shows` endpoints in `erify_api`.
+  - Add backend integration tests.
+
+### PR 21.6: Frontend Performance Dashboard
+- **Deliverables**:
+  - Add Lucide icon and "Performance" route to sidebar configurations.
+  - Implement `/studios/:studioId/performance` view in `erify_studios` containing Recharts trend graphs, stats cards, and multi-select filter sync logic.
+
+### PR 21.7: Frontend Show Details Tabs & Route Revamp (Post-14c Merge)
+- **Deliverables**:
+  - Integrate the unified tabbed Show Details layout at `/studios/:studioId/shows/:showId` with `Performance` and `Submitted Tasks` tabs once the 14c show detail route has landed on master.
+  - Deprecate/delete the old `/task-setup/:showId/tasks` view and set up redirects.
+
