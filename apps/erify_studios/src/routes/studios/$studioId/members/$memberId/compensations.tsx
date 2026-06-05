@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { useStudioMemberCompensations } from '@/features/studio-members/api/members';
 import { MemberCompensationsView } from '@/features/studio-members/components/member-compensations-view';
 import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
@@ -66,18 +67,26 @@ function StudioMemberCompensationsPage() {
   };
 
   return (
-    <MemberCompensationsView
+    <StudioRouteGuard
       studioId={studioId}
-      dateRange={dateRange}
-      data={query.data}
-      isLoading={query.isLoading}
-      isFetching={query.isFetching}
-      isError={query.isError}
-      onDateRangeChange={handleDateRangeChange}
-      onRefresh={() => {
-        void query.refetch();
-      }}
-      enableShiftDrillIn
-    />
+      routeKey="members"
+      deniedTitle="Studio Settings Access Required"
+      deniedDescription="Only studio admins and managers can review member compensation."
+    >
+      <MemberCompensationsView
+        studioId={studioId}
+        dateRange={dateRange}
+        data={query.data}
+        isLoading={query.isLoading}
+        isFetching={query.isFetching}
+        isError={query.isError}
+        onDateRangeChange={handleDateRangeChange}
+        onRefresh={() => {
+          void query.refetch();
+        }}
+        enableShiftDrillIn
+        showChrome={false}
+      />
+    </StudioRouteGuard>
   );
 }

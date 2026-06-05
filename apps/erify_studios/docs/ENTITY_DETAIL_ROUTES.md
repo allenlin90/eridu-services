@@ -6,14 +6,14 @@ can't share a link to one entity's edit surface or step through edits with
 back/forward — and they constrain richer detail views. Each conversion ships as
 its own scoped PR. `task-templates/$templateId.tsx` is the original precedent.
 
-> Status: **14a (creator) shipped**; 14b–14d planned. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
+> Status: **14a (creator) shipped**; **14b (member) in progress**; 14c–14d planned. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
 
 ## Route map
 
 | #   | Today (dialog)                                              | Target route                                  | Share-link contract (surviving search params)                  | Status   |
 | --- | ---------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- | -------- |
 | 14a | `edit-studio-creator-dialog` + creator compensation view   | `/studios/:studioId/creators/:creatorId`      | Compensation tab: `date_from`, `date_to`. Defaults tab: none.  | ✅ Shipped |
-| 14b | `edit-member-dialog`                                        | `/studios/:studioId/members/:memberId`        | Compensation tab: `date_from`, `date_to` (mirror creator).     | 🔲 Planned — after PR 8 (string wire type) |
+| 14b | `edit-member-dialog`                                        | `/studios/:studioId/members/:memberId`        | Compensation tab: `date_from`, `date_to` (mirror creator).     | 🚧 In progress |
 | 14c | `show-update-dialog`                                        | `/studios/:studioId/shows/:showId`            | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
 | 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`    | `/studios/:studioId/shifts/:shiftId`          | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
 
@@ -92,5 +92,29 @@ Rules every conversion follows:
   (`@eridu/ui` or a domain-shared package) so the studio P2 detail page and the
   `erify_creators` P3 self-view consume one widget. Deferred until that convergence —
   intentionally **not** part of the 14a pilot.
-- **14b** waits on PR 8 (member string wire type). `members/$memberId/compensations.tsx`
-  already exists and folds in as the member's Compensation tab the same way.
+- **14c–14d** continue the same route pattern for shows and shifts.
+
+## 14b — member detail (in progress)
+
+- **Route**: `/studios/:studioId/members/:memberId`
+  - `route.tsx` — layout: fetches the member, renders header + tab strip.
+  - `index.tsx` — **Defaults** tab: `MemberDefaultsForm` (extracted from the retired
+    `edit-member-dialog`).
+  - `compensations.tsx` — **Compensation** tab: existing `MemberCompensationsView`,
+    de-chromed when hosted under the detail layout. Search params `date_from` /
+    `date_to` are preserved.
+- **Backend**: `GET /studios/:studioId/members/:memberId` (read: ADMIN / MANAGER).
+  `PATCH :membershipId` remains ADMIN-only; managers can view the Defaults tab but
+  cannot save roster changes.
+- **Entry points**: the member roster row **Edit** action navigates to the Defaults
+  tab; **View Compensations** deep-links to the Compensation tab. The edit dialog is
+  removed.
+
+### Authorization
+
+| Capability                     | ADMIN | MANAGER |
+| ------------------------------ | :---: | :-----: |
+| Reach `/members/:memberId`     |  ✅   |   ✅    |
+| `GET :memberId` (read defaults) |  ✅   |   ✅    |
+| Edit defaults (Save)           |  ✅   |   ❌ (read-only) |
+| See / open Compensation tab    |  ✅   |   ✅    |

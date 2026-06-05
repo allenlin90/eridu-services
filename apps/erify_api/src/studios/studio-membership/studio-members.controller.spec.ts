@@ -1,7 +1,10 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { studioMemberCompensationResponseSchema } from '@eridu/api-types/memberships';
+import {
+  studioMemberCompensationResponseSchema,
+  studioMemberResponseSchema,
+} from '@eridu/api-types/memberships';
 
 import { StudioMembersController } from './studio-members.controller';
 
@@ -106,6 +109,43 @@ describe('studioMembersController', () => {
         baseHourlyRate: '25.00',
         studioUid: studioId,
       });
+    });
+  });
+
+  describe('getMember', () => {
+    it('uses the serialized API response schema for response serialization', () => {
+      const serializerSchema = Reflect.getMetadata(
+        'ZOD_SERIALIZER_DTO_OPTIONS',
+        StudioMembersController.prototype.getMember,
+      );
+
+      expect(serializerSchema).toBe(studioMemberResponseSchema);
+    });
+
+    it('returns a single studio member by membership uid', async () => {
+      studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(mockMembership as any);
+
+      const result = await controller.getMember('std_test123', 'smb_test123');
+
+      expect(studioMembershipService.findStudioMemberByUidAndStudio).toHaveBeenCalledWith(
+        'smb_test123',
+        'std_test123',
+      );
+      expect(result).toEqual({
+        membership_id: 'smb_test123',
+        user_id: 'user_abc123',
+        user_name: 'Jane Doe',
+        user_email: 'jane@example.com',
+        role: 'admin',
+        base_hourly_rate: '25.00',
+        created_at: '2026-01-01T00:00:00.000Z',
+      });
+    });
+
+    it('throws 404 when the membership is outside the studio', async () => {
+      studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(null);
+
+      await expect(controller.getMember('std_test123', 'smb_missing')).rejects.toThrow();
     });
   });
 
