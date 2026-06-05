@@ -64,11 +64,18 @@ When designing a feature scoped to an **identity-bearing entity** — `Creator`,
 ### Entity Detail Route Layout Standard
 
 For Studio Individual Overview routes such as `/studios/:studioId/creators/:creatorId`,
-`/studios/:studioId/members/:memberId`, `/studios/:studioId/shifts/:shiftId`, and future show detail routes:
+`/studios/:studioId/members/:memberId`, `/studios/:studioId/shifts/:shiftId`, and
+`/studios/:studioId/shows/:showId`:
 
-- Name the first tab **Profile**, not `Defaults`. Field labels can still say
-  `Default Rate` or similar when they describe stored operational defaults, but
-  the user-facing detail page tab should read as the entity profile.
+- Name the first tab for the **entity kind**, never `Defaults`:
+  - **Profile** for identity/people entities — creator, member, shift (a member's roster row).
+  - **Details** for record entities — show. Field labels can still say `Default Rate` or
+    similar when they describe stored operational defaults, but the user-facing first tab
+    reads as the entity profile/detail page.
+- Split additional concerns into their own tabs by domain rather than overloading the first
+  tab. The show detail route (14c) is the reference: **Details** (attributes) · **Actuals**
+  (operational metrics) · **Compensation** (costs). People entities typically use
+  **Profile · Compensation**.
 - Use the in-content header pattern from the show task setup route
   (`task-setup/$showId/tasks` / `ShowHeaderSection`): compact icon-only back
   link, entity title / subtitle, and a metadata panel above the tabs.
@@ -122,7 +129,7 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 - [ ] `onSearch` wired to real search state
 - [ ] Cross-field invariants enforced via `buildXxxPayload` helper + disabled inputs (not by trusting form state on submit)
 - [ ] Entity features designed against the three perspectives (Studio Overview, Studio Individual Overview for creators/members/shows, Individual `/me/*` self-view) — perspectives in scope share one set of widgets; perspectives out of scope are an explicit PRD decision, not an oversight
-- [ ] Entity detail routes use an in-content task-setup-style header and a first tab named `Profile` rather than `Defaults`
+- [ ] Entity detail routes use an in-content task-setup-style header and an entity-appropriate first tab (`Profile` for people entities, `Details` for record entities like shows) rather than `Defaults`
 
 ## Related Skills
 

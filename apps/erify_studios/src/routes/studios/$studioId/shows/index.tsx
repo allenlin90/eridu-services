@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Plus, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -24,10 +24,8 @@ import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { useCreateStudioShow } from '@/features/studio-shows/api/create-studio-show';
 import { useDeleteStudioShow } from '@/features/studio-shows/api/delete-studio-show';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
-import { useUpdateStudioShow } from '@/features/studio-shows/api/update-studio-show';
 import { getStudioShowManagementColumns } from '@/features/studio-shows/components/studio-show-management-columns';
 import { StudioShowManagementForm } from '@/features/studio-shows/components/studio-show-management-form';
-import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { useStudioShowManagement } from '@/features/studio-shows/hooks/use-studio-show-management';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -37,8 +35,8 @@ export const Route = createFileRoute('/studios/$studioId/shows/')({
 
 function StudioShowsPage() {
   const { studioId } = Route.useParams();
+  const navigate = useNavigate();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingShow, setEditingShow] = useState<StudioShow | null>(null);
   const [deletingShow, setDeletingShow] = useState<StudioShow | null>(null);
   const { role } = useStudioAccess(studioId);
 
@@ -56,15 +54,8 @@ function StudioShowsPage() {
   } = useStudioShowManagement(studioId);
   const { data: showLookups } = useShowLookupsQuery(studioId);
   const createMutation = useCreateStudioShow(studioId);
-  const updateMutation = useUpdateStudioShow(studioId);
   const deleteMutation = useDeleteStudioShow(studioId);
   const canDeleteShows = role === STUDIO_ROLE.ADMIN;
-
-  const editingShowQuery = useStudioShow({
-    studioId,
-    showId: editingShow?.id ?? '',
-    enabled: Boolean(editingShow?.id),
-  });
 
   const searchableColumns = useMemo(
     () => [
@@ -103,12 +94,17 @@ function StudioShowsPage() {
 
   const columns = useMemo(
     () => getStudioShowManagementColumns(studioId, {
-      onEdit: (show) => setEditingShow(show),
+      onEdit: (show) => {
+        void navigate({
+          to: '/studios/$studioId/shows/$showId',
+          params: { studioId, showId: show.id },
+        });
+      },
       onDelete: canDeleteShows
         ? (show) => setDeletingShow(show)
         : undefined,
     }),
-    [canDeleteShows, studioId],
+    [canDeleteShows, navigate, studioId],
   );
 
   return (
@@ -191,36 +187,6 @@ function StudioShowsPage() {
                 ...(external_id ? { external_id } : {}),
               }, {
                 onSuccess: () => setIsCreateOpen(false),
-              });
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={Boolean(editingShow)} onOpenChange={(open) => !open && setEditingShow(null)}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Show</DialogTitle>
-            <DialogDescription>Update the core show record without entering task setup.</DialogDescription>
-          </DialogHeader>
-          <StudioShowManagementForm
-            studioId={studioId}
-            show={editingShowQuery.data}
-            isSubmitting={updateMutation.isPending}
-            onCancel={() => setEditingShow(null)}
-            onSubmit={(values) => {
-              if (!editingShow) {
-                return;
-              }
-
-              // Send schedule_id: null explicitly to unlink the schedule; only omit the field
-              // when the user never touched it (undefined). An empty/falsy value means "clear".
-              const { schedule_id, external_id: _externalId, ...rest } = values;
-              updateMutation.mutate({
-                showId: editingShow.id,
-                data: { ...rest, ...(schedule_id !== undefined && { schedule_id: schedule_id || null }) },
-              }, {
-                onSuccess: () => setEditingShow(null),
               });
             }}
           />
