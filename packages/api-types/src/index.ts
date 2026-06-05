@@ -37,3 +37,4 @@ export * from './studios/index.js';
 export * from './task-management/index.js';
 export * from './uploads/index.js';
 export * from './users/index.js';
+export * from './performance/index.js';
