@@ -104,7 +104,7 @@ export function getStudioCreatorRosterColumns(ctx: ColumnContext): ColumnDef<Stu
         <StudioCreatorActionsCell
           creator={row.original}
           studioId={ctx.studioId}
-          canEditRoster={ctx.isAdmin}
+          canEditRoster={ctx.canManageCompensation}
         />
       ),
     });

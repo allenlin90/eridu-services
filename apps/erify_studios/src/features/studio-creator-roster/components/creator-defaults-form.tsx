@@ -5,12 +5,6 @@ import { toast } from 'sonner';
 import type { StudioCreatorRosterItem } from '@eridu/api-types/studio-creators';
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   Input,
   Label,
   Select,
@@ -31,22 +25,18 @@ import {
 import { creatorAvailabilityKeys } from '@/features/studio-show-creators/api/get-creator-availability';
 import { creatorCatalogKeys } from '@/features/studio-show-creators/api/get-creator-catalog';
 
-type EditStudioCreatorDialogProps = {
-  studioId: string;
-  creator: StudioCreatorRosterItem | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
-function EditStudioCreatorForm({
-  studioId,
-  creator,
-  onOpenChange,
-}: {
+type CreatorDefaultsFormProps = {
   studioId: string;
   creator: StudioCreatorRosterItem;
-  onOpenChange: (open: boolean) => void;
-}) {
+  canEdit: boolean;
+};
+
+/**
+ * Studio creator roster defaults form. Extracted from the former
+ * `edit-studio-creator-dialog` so it can host the defaults tab of the creator
+ * detail route. Editable for admins and managers; read-only otherwise.
+ */
+export function CreatorDefaultsForm({ studioId, creator, canEdit }: CreatorDefaultsFormProps) {
   const queryClient = useQueryClient();
   const [defaultRate, setDefaultRate] = useState(creator.default_rate ?? '');
   const [defaultRateType, setDefaultRateType] = useState<StudioCreatorCompensationTypeOption>(
@@ -80,17 +70,16 @@ function EditStudioCreatorForm({
         payload,
       });
       toast.success('Creator roster updated');
-      onOpenChange(false);
     } catch (error: unknown) {
       const err = error as { response?: { status?: number; data?: { message?: string } } };
       if (err.response?.status === 409) {
         await Promise.all([
+          queryClient.invalidateQueries({ queryKey: studioCreatorRosterKeys.detail(studioId, creator.creator_id) }),
           queryClient.invalidateQueries({ queryKey: studioCreatorRosterKeys.listPrefix(studioId) }),
           queryClient.invalidateQueries({ queryKey: creatorCatalogKeys.listPrefix(studioId) }),
           queryClient.invalidateQueries({ queryKey: creatorAvailabilityKeys.listPrefix(studioId) }),
         ]);
         toast.error('Creator roster changed in another session. Review the latest data and try again.');
-        onOpenChange(false);
         return;
       }
 
@@ -98,10 +87,13 @@ function EditStudioCreatorForm({
     }
   };
 
-  const commissionDisabled = defaultRateType === UNSET_COMPENSATION_TYPE || defaultRateType === 'FIXED';
+  const fieldsDisabled = !canEdit || updateMutation.isPending;
+  const commissionDisabled = fieldsDisabled
+    || defaultRateType === UNSET_COMPENSATION_TYPE
+    || defaultRateType === 'FIXED';
 
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
+    <form onSubmit={(event) => void handleSubmit(event)} className="max-w-md space-y-4">
       <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
         Roster edits update defaults for future show assignments only. Existing show assignments
         keep their saved compensation snapshot; edit assignment compensation to change a show.
@@ -116,6 +108,7 @@ function EditStudioCreatorForm({
           placeholder="0.00"
           value={defaultRate}
           onChange={(event) => setDefaultRate(event.target.value)}
+          disabled={fieldsDisabled}
         />
       </div>
       <div className="space-y-1.5">
@@ -123,6 +116,7 @@ function EditStudioCreatorForm({
         <Select
           value={defaultRateType}
           onValueChange={(value) => setDefaultRateType(value as StudioCreatorCompensationTypeOption)}
+          disabled={fieldsDisabled}
         >
           <SelectTrigger id="edit-default-rate-type">
             <SelectValue placeholder="Select compensation type" />
@@ -151,7 +145,7 @@ function EditStudioCreatorForm({
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="edit-is-active">Status</Label>
-        <Select value={isActive} onValueChange={setIsActive}>
+        <Select value={isActive} onValueChange={setIsActive} disabled={fieldsDisabled}>
           <SelectTrigger id="edit-is-active">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
@@ -161,50 +155,19 @@ function EditStudioCreatorForm({
           </SelectContent>
         </Select>
       </div>
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={updateMutation.isPending}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={updateMutation.isPending}>
-          {updateMutation.isPending ? 'Saving...' : 'Save'}
-        </Button>
-      </DialogFooter>
+      {canEdit
+        ? (
+            <div className="flex justify-end">
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          )
+        : (
+            <p className="text-sm text-muted-foreground">
+              You have read-only access to creator defaults.
+            </p>
+          )}
     </form>
-  );
-}
-
-export function EditStudioCreatorDialog({
-  studioId,
-  creator,
-  open,
-  onOpenChange,
-}: EditStudioCreatorDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
-        <DialogHeader>
-          <DialogTitle>Edit Creator Roster Entry</DialogTitle>
-          <DialogDescription>
-            Update the studio defaults and roster status for
-            {' '}
-            {creator?.creator_name ?? 'this creator'}
-            .
-          </DialogDescription>
-        </DialogHeader>
-        {creator && (
-          <EditStudioCreatorForm
-            key={`${creator.id}:${creator.version}`}
-            studioId={studioId}
-            creator={creator}
-            onOpenChange={onOpenChange}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
   );
 }

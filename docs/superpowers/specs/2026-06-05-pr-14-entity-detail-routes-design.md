@@ -61,7 +61,7 @@ Rationale vs alternatives: a single page with radix `Tabs` needs a new dependenc
 
 - `createFileRoute('/studios/$studioId/creators/$creatorId/')`.
 - Reuses the **exact form fields + submit logic** currently in `EditStudioCreatorForm` (default rate, compensation type, commission rate, status), refactored out of the dialog into a reusable `CreatorDefaultsForm` component under `studio-creator-roster/components/`. Same `buildUpdateStudioCreatorRosterPayload` helper, same `useUpdateStudioCreatorRoster` mutation, same 409/optimistic-concurrency handling (`version` round-trip), same toasts.
-- **Authorization**: editing is **ADMIN-only** (matches the `@StudioProtected([ADMIN])` PATCH). For MANAGER / TALENT_MANAGER the form renders **read-only** (disabled inputs / value chips, no Save). Gate via `useStudioAccess(studioId)` role check — same `canEditRoster` semantics the row action uses today.
+- **Authorization**: editing is **ADMIN + MANAGER**. This **loosens** the existing `PATCH :creatorId` guard, which is admin-only today (§4) — an intentional behavior change requested for 14a. For TALENT_MANAGER the form renders **read-only** (disabled inputs / value chips, no Save). Gate via `useStudioAccess(studioId)` role check (`role === ADMIN || role === MANAGER`).
 - On successful save: stay on the page (toast + query invalidation refreshes the header/badge). No dialog close / navigation. This is the UX upgrade — the edit is a page, not a modal.
 
 ### 3.3 Compensation tab (`creators/$creatorId/compensations.tsx`)
@@ -77,7 +77,8 @@ A single-creator read is required so the detail page hydrates on deep-link / ref
 - **Route**: `GET /studios/:studioId/creators/:creatorId` on `StudioCreatorController`.
 - **Reuse**: the service already exposes `findRosterEntry(studioUid, creatorUid)` → `studioCreatorRepository.findByStudioUidAndCreatorUid`. The controller parses the result through the existing `studioCreatorRosterItemDto` (same transform the list uses), returning the same `StudioCreatorRosterItem` shape the FE already consumes. **No new api-types schema.**
 - **404**: when `findRosterEntry` returns `null`, throw `HttpError.notFound` (creator not on this studio's roster).
-- **Roles**: `@StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)` (ADMIN, MANAGER, TALENT_MANAGER) — matches the read scope of the roster list. Editing remains the existing ADMIN-only PATCH.
+- **Roles (read)**: `@StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)` (ADMIN, MANAGER, TALENT_MANAGER) — matches the read scope of the roster list.
+- **Roles (edit)**: change the existing `PATCH :creatorId` guard from `@StudioProtected([ADMIN])` to `@StudioProtected([ADMIN, MANAGER])` — managers can now edit creator roster defaults (intentional loosening for 14a). The companion FE row action and detail form gate on `ADMIN || MANAGER` accordingly.
 - **Route ordering caveat**: register `@Get(':creatorId')` **after** the static `@Get('availability')`, `@Get('catalog')`, `@Get('onboarding-users')` handlers (place it at the end of the controller) so the `:creatorId` param route does not shadow those literal paths. (The existing `:creatorId/compensations` is safe — distinct 2-segment path.)
 - **Verification point**: confirm `findByStudioUidAndCreatorUid` includes the `creator` relation (`uid`/`name`/`aliasName`) the DTO transform reads; if its `include` differs from the paginated finder, align it. Covered by the controller spec.
 
@@ -96,10 +97,10 @@ A single-creator read is required so the detail page hydrates on deep-link / ref
 | ----------------------------------- | :---: | :-----: | :------------: | --------------------------------------------------------------- |
 | Reach `/creators/:creatorId`        |  ✅   |   ✅    |       ✅       | `creators.tsx` `routeKey="creatorRoster"` layout guard          |
 | `GET :creatorId` (read defaults)    |  ✅   |   ✅    |       ✅       | `@StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)`                 |
-| Edit defaults (Save)                |  ✅   |   ❌    |       ❌       | ADMIN-only PATCH + FE read-only form for non-admin              |
+| Edit defaults (Save)                |  ✅   |   ✅    |       ❌       | `PATCH :creatorId` guard `[ADMIN, MANAGER]` (loosened) + FE read-only form for TALENT_MANAGER |
 | See / open Compensation tab         |  ✅   |   ✅    |       ❌       | Tab hidden + `StudioRouteGuard routeKey="creatorCompensations"` |
 
-No role gains access it didn't already have via the dialogs/links today.
+**Intentional change**: MANAGER gains edit-defaults access (previously ADMIN-only). All other capabilities are unchanged from today's dialogs/links.
 
 ## 7. Reuse & cross-perspective consistency
 

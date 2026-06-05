@@ -32,6 +32,8 @@ export const studioCreatorRosterKeys = {
   listPrefix: (studioId: string) => [...studioCreatorRosterKeys.lists(), studioId] as const,
   list: (studioId: string, params?: GetStudioCreatorRosterParams) =>
     [...studioCreatorRosterKeys.listPrefix(studioId), params] as const,
+  detail: (studioId: string, creatorId: string) =>
+    [...studioCreatorRosterKeys.all, 'detail', studioId, creatorId] as const,
   compensation: (studioId: string, creatorId: string, params: StudioCreatorCompensationQuery) =>
     [...studioCreatorRosterKeys.all, 'compensation', studioId, creatorId, params] as const,
 };
@@ -53,6 +55,18 @@ export async function getStudioCreatorRoster(
       },
       signal: options?.signal,
     },
+  );
+  return data;
+}
+
+export async function getStudioCreatorRosterEntry(
+  studioId: string,
+  creatorId: string,
+  options?: { signal?: AbortSignal },
+): Promise<StudioCreatorRosterItem> {
+  const { data } = await apiClient.get<StudioCreatorRosterItem>(
+    `/studios/${studioId}/creators/${creatorId}`,
+    { signal: options?.signal },
   );
   return data;
 }
@@ -121,6 +135,19 @@ export function useStudioCreatorRosterQuery(
   });
 }
 
+export function useStudioCreatorRosterEntry(
+  studioId: string,
+  creatorId: string,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: studioCreatorRosterKeys.detail(studioId, creatorId),
+    queryFn: ({ signal }) => getStudioCreatorRosterEntry(studioId, creatorId, { signal }),
+    enabled: Boolean(studioId && creatorId) && (options?.enabled ?? true),
+    staleTime: 20_000,
+  });
+}
+
 export function useStudioCreatorCompensations(
   studioId: string,
   creatorId: string,
@@ -162,8 +189,11 @@ export function useUpdateStudioCreatorRoster(studioId: string) {
   return useMutation({
     mutationFn: ({ creatorId, payload }: { creatorId: string; payload: UpdateStudioCreatorRosterInput }) =>
       updateStudioCreatorRoster(studioId, creatorId, payload),
-    onSuccess: () => {
+    onSuccess: (_data, { creatorId }) => {
       invalidateStudioCreatorDependencies(queryClient, studioId);
+      void queryClient.invalidateQueries({
+        queryKey: studioCreatorRosterKeys.detail(studioId, creatorId),
+      });
     },
   });
 }

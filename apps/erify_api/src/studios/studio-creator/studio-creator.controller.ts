@@ -38,6 +38,7 @@ import {
 
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
@@ -130,7 +131,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Update studio creator defaults or active state' })
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Patch(':creatorId')
   @ZodResponse(studioCreatorRosterItemApiSchema)
   async updateCreator(
@@ -211,5 +212,25 @@ export class StudioCreatorController extends BaseStudioController {
       limit: query.limit,
     });
     return users.map((user) => userDto.parse(user));
+  }
+
+  // Registered after the static GET routes above (`availability`, `catalog`,
+  // `onboarding-users`) so the `:creatorId` param route does not shadow them.
+  @ApiOperation({ summary: 'Get a single studio creator roster entry' })
+  @StudioProtected(STUDIO_CREATOR_ACCESS_ROLES)
+  @Get(':creatorId')
+  @ReadBurstThrottle()
+  @ZodResponse(studioCreatorRosterItemApiSchema)
+  async getCreator(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
+  ) {
+    const creator = await this.studioCreatorService.findRosterEntry(studioId, creatorId);
+
+    if (!creator) {
+      throw HttpError.notFound('Creator not found in studio roster');
+    }
+
+    return studioCreatorRosterItemDto.parse(creator);
   }
 }
