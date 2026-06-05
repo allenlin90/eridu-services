@@ -61,6 +61,20 @@ When designing a feature scoped to an **identity-bearing entity** — `Creator`,
 >
 > When a PRD does add a feature in more than one perspective, the perspectives must consume the **same shared widgets** with only filter / role-scope variation — no duplicated visualization or query code. Whether all three perspectives are in scope is a PRD decision; widget reuse across whichever perspectives ship is not.
 
+### Entity Detail Route Layout Standard
+
+For Studio Individual Overview routes such as `/studios/:studioId/creators/:creatorId`,
+`/studios/:studioId/members/:memberId`, and future show / shift detail routes:
+
+- Name the first tab **Profile**, not `Defaults`. Field labels can still say
+  `Default Rate` or similar when they describe stored operational defaults, but
+  the user-facing detail page tab should read as the entity profile.
+- Use the in-content header pattern from the show task setup route
+  (`task-setup/$showId/tasks` / `ShowHeaderSection`): compact icon-only back
+  link, entity title / subtitle, and a metadata panel above the tabs.
+- Avoid putting entity-detail back navigation in `PageLayout.actions`; it is
+  less consistent with adjacent detail routes and less clear on mobile.
+
 ### Reusable Unit Component Standard
 To prevent code duplication and logic drift across these three views, **extract and share core unit components**. Component wrappers should simply configure the appropriate API filters and role context before passing them to the shared visual unit:
 - `ActualsTimelineViewer`: Shared timeline block visualizing planned vs actual times.
@@ -108,6 +122,7 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 - [ ] `onSearch` wired to real search state
 - [ ] Cross-field invariants enforced via `buildXxxPayload` helper + disabled inputs (not by trusting form state on submit)
 - [ ] Entity features designed against the three perspectives (Studio Overview, Studio Individual Overview for creators/members/shows, Individual `/me/*` self-view) — perspectives in scope share one set of widgets; perspectives out of scope are an explicit PRD decision, not an oversight
+- [ ] Entity detail routes use an in-content task-setup-style header and a first tab named `Profile` rather than `Defaults`
 
 ## Related Skills
 

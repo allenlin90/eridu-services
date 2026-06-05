@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StudioCreatorRosterItem } from '@eridu/api-types/studio-creators';
 
-import { CreatorDefaultsForm } from '../creator-defaults-form';
+import { CreatorProfileForm } from '../creator-profile-form';
 
 const mockInvalidateQueries = vi.fn();
 const mockUseUpdateStudioCreatorRoster = vi.fn();
@@ -75,7 +75,7 @@ function createCreator(overrides: Partial<StudioCreatorRosterItem> = {}): Studio
   };
 }
 
-describe('creatorDefaultsForm', () => {
+describe('creatorProfileForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -86,7 +86,7 @@ describe('creatorDefaultsForm', () => {
   });
 
   it('warns that creator roster default edits do not rewrite show assignment snapshots', () => {
-    render(<CreatorDefaultsForm studioId="std_1" creator={createCreator()} canEdit />);
+    render(<CreatorProfileForm studioId="std_1" creator={createCreator()} canEdit />);
 
     expect(
       screen.getByText(
@@ -96,15 +96,15 @@ describe('creatorDefaultsForm', () => {
   });
 
   it('shows the Save action for editors', () => {
-    render(<CreatorDefaultsForm studioId="std_1" creator={createCreator()} canEdit />);
+    render(<CreatorProfileForm studioId="std_1" creator={createCreator()} canEdit />);
 
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 
   it('renders read-only without a Save action for non-editors', () => {
-    render(<CreatorDefaultsForm studioId="std_1" creator={createCreator()} canEdit={false} />);
+    render(<CreatorProfileForm studioId="std_1" creator={createCreator()} canEdit={false} />);
 
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
-    expect(screen.getByText('You have read-only access to creator defaults.')).toBeInTheDocument();
+    expect(screen.getByText('You have read-only access to creator profile details.')).toBeInTheDocument();
   });
 });

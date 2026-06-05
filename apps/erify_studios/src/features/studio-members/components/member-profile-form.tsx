@@ -20,19 +20,19 @@ import { useUpdateStudioMember } from '../api/members';
 import { buildStudioMemberUpdatePayload } from '../lib/build-studio-member-update-payload';
 import { ROLE_OPTIONS } from '../lib/roles';
 
-type MemberDefaultsFormProps = {
+type MemberProfileFormProps = {
   studioId: string;
   member: StudioMemberResponse;
   isSelf: boolean;
   canEdit: boolean;
 };
 
-export function MemberDefaultsForm({
+export function MemberProfileForm({
   studioId,
   member,
   isSelf,
   canEdit,
-}: MemberDefaultsFormProps) {
+}: MemberProfileFormProps) {
   const [role, setRole] = useState(member.role);
   const [baseHourlyRate, setBaseHourlyRate] = useState(member.base_hourly_rate ?? '');
   const updateMutation = useUpdateStudioMember(studioId);
@@ -113,7 +113,7 @@ export function MemberDefaultsForm({
           )
         : (
             <p className="text-sm text-muted-foreground">
-              You have read-only access to member defaults.
+              You have read-only access to member profile details.
             </p>
           )}
     </form>

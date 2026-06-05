@@ -12,7 +12,7 @@ its own scoped PR. `task-templates/$templateId.tsx` is the original precedent.
 
 | #   | Today (dialog)                                              | Target route                                  | Share-link contract (surviving search params)                  | Status   |
 | --- | ---------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- | -------- |
-| 14a | `edit-studio-creator-dialog` + creator compensation view   | `/studios/:studioId/creators/:creatorId`      | Compensation tab: `date_from`, `date_to`. Defaults tab: none.  | ✅ Shipped |
+| 14a | `edit-studio-creator-dialog` + creator compensation view   | `/studios/:studioId/creators/:creatorId`      | Compensation tab: `date_from`, `date_to`. Profile tab: none.   | ✅ Shipped |
 | 14b | `edit-member-dialog`                                        | `/studios/:studioId/members/:memberId`        | Compensation tab: `date_from`, `date_to` (mirror creator).     | 🚧 In progress |
 | 14c | `show-update-dialog`                                        | `/studios/:studioId/shows/:showId`            | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
 | 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`    | `/studios/:studioId/shifts/:shiftId`          | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
@@ -39,9 +39,9 @@ routes/studios/$studioId/<entity>/
 ├── <entity>.tsx                 section layout/guard (e.g. routeKey)
 ├── <entity>/index.tsx           list page (unchanged)
 └── <entity>/$entityId/
-    ├── route.tsx     layout: single-entity GET → header (name, status badge,
-    │                  back link) + Link tab strip (per-tab auth) + <Outlet/>
-    ├── index.tsx      first tab (e.g. Defaults edit)
+    ├── route.tsx     layout: single-entity GET → in-content header (icon back,
+    │                  title, metadata panel) + Link tab strip (per-tab auth) + <Outlet/>
+    ├── index.tsx      first tab (Profile edit)
     └── <tab>.tsx      additional tabs (e.g. compensations) — reuse existing routes
 ```
 
@@ -59,12 +59,18 @@ Rules every conversion follows:
 5. **Reuse payload builders**: e.g. `buildUpdateStudioCreatorRosterPayload`; never
    submit raw form state.
 6. Each tab is its own route so back/forward and share-links work natively.
+7. The first tab is named **Profile**, not Defaults. It may edit operational defaults
+   for that entity, but the user-facing route is a profile/detail page.
+8. Use an in-content header like
+   `task-setup/$showId/tasks` (`ShowHeaderSection`): compact icon back link, title /
+   subtitle, and a small responsive metadata panel. Avoid putting the back action in
+   `PageLayout.actions` for entity detail routes; it is less clear on mobile.
 
 ## 14a — creator detail (shipped)
 
 - **Route**: `/studios/:studioId/creators/:creatorId`
   - `route.tsx` — layout: fetches the creator, renders header + tab strip.
-  - `index.tsx` — **Defaults** tab: `CreatorDefaultsForm` (extracted from the retired
+  - `index.tsx` — **Profile** tab: `CreatorProfileForm` (extracted from the retired
     `edit-studio-creator-dialog`).
   - `compensations.tsx` — **Compensation** tab: existing `CreatorCompensationsView`,
     de-chromed (header now provided by the layout). Search params `date_from` /
@@ -72,7 +78,7 @@ Rules every conversion follows:
 - **Backend**: `GET /studios/:studioId/creators/:creatorId` (read: ADMIN / MANAGER /
   TALENT_MANAGER). The `PATCH :creatorId` guard was **loosened** from ADMIN-only to
   **ADMIN + MANAGER** — managers can now edit creator roster defaults.
-- **Entry points**: the roster row **Edit** action navigates to the Defaults tab;
+- **Entry points**: the roster row **Edit** action navigates to the Profile tab;
   **Review Compensation** deep-links to the Compensation tab. The edit dialog is removed.
 
 ### Authorization
@@ -80,8 +86,8 @@ Rules every conversion follows:
 | Capability                       | ADMIN | MANAGER | TALENT_MANAGER |
 | -------------------------------- | :---: | :-----: | :------------: |
 | Reach `/creators/:creatorId`     |  ✅   |   ✅    |       ✅       |
-| `GET :creatorId` (read defaults) |  ✅   |   ✅    |       ✅       |
-| Edit defaults (Save)             |  ✅   |   ✅    |       ❌ (read-only) |
+| `GET :creatorId` (read profile) |  ✅   |   ✅    |       ✅       |
+| Edit profile (Save)             |  ✅   |   ✅    |       ❌ (read-only) |
 | See / open Compensation tab      |  ✅   |   ✅    |       ❌       |
 
 ## Follow-ups
@@ -98,15 +104,15 @@ Rules every conversion follows:
 
 - **Route**: `/studios/:studioId/members/:memberId`
   - `route.tsx` — layout: fetches the member, renders header + tab strip.
-  - `index.tsx` — **Defaults** tab: `MemberDefaultsForm` (extracted from the retired
+  - `index.tsx` — **Profile** tab: `MemberProfileForm` (extracted from the retired
     `edit-member-dialog`).
   - `compensations.tsx` — **Compensation** tab: existing `MemberCompensationsView`,
     de-chromed when hosted under the detail layout. Search params `date_from` /
     `date_to` are preserved.
 - **Backend**: `GET /studios/:studioId/members/:memberId` (read: ADMIN / MANAGER).
-  `PATCH :membershipId` remains ADMIN-only; managers can view the Defaults tab but
+  `PATCH :membershipId` remains ADMIN-only; managers can view the Profile tab but
   cannot save roster changes.
-- **Entry points**: the member roster row **Edit** action navigates to the Defaults
+- **Entry points**: the member roster row **Edit** action navigates to the Profile
   tab; **View Compensations** deep-links to the Compensation tab. The edit dialog is
   removed.
 
@@ -115,6 +121,6 @@ Rules every conversion follows:
 | Capability                     | ADMIN | MANAGER |
 | ------------------------------ | :---: | :-----: |
 | Reach `/members/:memberId`     |  ✅   |   ✅    |
-| `GET :memberId` (read defaults) |  ✅   |   ✅    |
-| Edit defaults (Save)           |  ✅   |   ❌ (read-only) |
+| `GET :memberId` (read profile) |  ✅   |   ✅    |
+| Edit profile (Save)            |  ✅   |   ❌ (read-only) |
 | See / open Compensation tab    |  ✅   |   ✅    |
