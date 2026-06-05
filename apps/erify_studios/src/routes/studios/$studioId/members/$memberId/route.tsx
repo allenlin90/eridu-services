@@ -18,11 +18,11 @@ const TAB_LINK_ACTIVE_CLASS = 'border-primary text-foreground';
 
 function BackToMembers({ studioId }: { studioId: string }) {
   return (
-    <Link to="/studios/$studioId/members" params={{ studioId }}>
-      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Back to members">
+    <Button asChild variant="ghost" size="icon" className="h-8 w-8" aria-label="Back to members">
+      <Link to="/studios/$studioId/members" params={{ studioId }}>
         <ArrowLeft className="h-4 w-4" />
-      </Button>
-    </Link>
+      </Link>
+    </Button>
   );
 }
 
