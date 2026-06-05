@@ -350,8 +350,8 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     } finally {
       if (exportAbortRef.current === controller) {
         exportAbortRef.current = null;
+        setIsExporting(false);
       }
-      setIsExporting(false);
     }
   }, [memberMap, search, studioId]);
 
