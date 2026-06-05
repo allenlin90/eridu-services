@@ -131,7 +131,6 @@ describe('creatorCompensationsView', () => {
       />,
     );
 
-    expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByTestId('date-range-picker')).toBeInTheDocument();
     expect(screen.getByText('May Show')).toBeInTheDocument();
     expect(screen.getAllByText('125.00')).toHaveLength(2);

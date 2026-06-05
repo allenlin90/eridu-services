@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { format } from 'date-fns';
-import { ArrowLeft, ArrowUpRight, CalendarDays, Edit2, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, Edit2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -19,7 +19,6 @@ import {
   DatePickerWithRange,
 } from '@eridu/ui';
 
-import { PageLayout } from '@/components/layouts/page-layout';
 import { ShowCreatorCompensationDialog } from '@/features/studio-show-creators/components/show-creator-compensation-dialog';
 
 export type CreatorCompensationsViewProps = {
@@ -84,18 +83,7 @@ export function CreatorCompensationsView({
   };
 
   return (
-    <PageLayout
-      title="Creator Compensations"
-      description={data?.creator_name ?? 'Review per-show compensation by date range.'}
-      actions={(
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/studios/$studioId/creators" params={{ studioId }}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Creators
-          </Link>
-        </Button>
-      )}
-    >
+    <>
       <div className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <DatePickerWithRange date={dateRange} setDate={onDateRangeChange} />
@@ -230,6 +218,6 @@ export function CreatorCompensationsView({
           creator={toDialogCreator(editingShow)}
         />
       )}
-    </PageLayout>
+    </>
   );
 }

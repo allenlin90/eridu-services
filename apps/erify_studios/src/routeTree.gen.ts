@@ -59,8 +59,10 @@ import { Route as StudiosStudioIdTaskTemplatesTemplateIdRouteImport } from './ro
 import { Route as StudiosStudioIdTaskReportsResultsRouteImport } from './routes/studios/$studioId/task-reports/results'
 import { Route as StudiosStudioIdTaskReportsBuilderRouteImport } from './routes/studios/$studioId/task-reports/builder'
 import { Route as StudiosStudioIdCreatorMappingShowIdRouteImport } from './routes/studios/$studioId/creator-mapping/$showId'
+import { Route as StudiosStudioIdCreatorsCreatorIdRouteRouteImport } from './routes/studios/$studioId/creators/$creatorId/route'
 import { Route as SystemStudiosStudioIdStudioRoomsIndexRouteImport } from './routes/system/studios/$studioId/studio-rooms/index'
 import { Route as SystemSchedulesScheduleIdSnapshotsIndexRouteImport } from './routes/system/schedules/$scheduleId/snapshots/index'
+import { Route as StudiosStudioIdCreatorsCreatorIdIndexRouteImport } from './routes/studios/$studioId/creators/$creatorId/index'
 import { Route as StudiosStudioIdTaskSetupShowIdTasksRouteImport } from './routes/studios/$studioId/task-setup/$showId/tasks'
 import { Route as StudiosStudioIdMembersMemberIdCompensationsRouteImport } from './routes/studios/$studioId/members/$memberId/compensations'
 import { Route as StudiosStudioIdCreatorsCreatorIdCompensationsRouteImport } from './routes/studios/$studioId/creators/$creatorId/compensations'
@@ -341,6 +343,12 @@ const StudiosStudioIdCreatorMappingShowIdRoute =
     path: '/$showId',
     getParentRoute: () => StudiosStudioIdCreatorMappingRoute,
   } as any)
+const StudiosStudioIdCreatorsCreatorIdRouteRoute =
+  StudiosStudioIdCreatorsCreatorIdRouteRouteImport.update({
+    id: '/$creatorId',
+    path: '/$creatorId',
+    getParentRoute: () => StudiosStudioIdCreatorsRoute,
+  } as any)
 const SystemStudiosStudioIdStudioRoomsIndexRoute =
   SystemStudiosStudioIdStudioRoomsIndexRouteImport.update({
     id: '/studios/$studioId/studio-rooms/',
@@ -352,6 +360,12 @@ const SystemSchedulesScheduleIdSnapshotsIndexRoute =
     id: '/schedules/$scheduleId/snapshots/',
     path: '/schedules/$scheduleId/snapshots/',
     getParentRoute: () => SystemRouteRoute,
+  } as any)
+const StudiosStudioIdCreatorsCreatorIdIndexRoute =
+  StudiosStudioIdCreatorsCreatorIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => StudiosStudioIdCreatorsCreatorIdRouteRoute,
   } as any)
 const StudiosStudioIdTaskSetupShowIdTasksRoute =
   StudiosStudioIdTaskSetupShowIdTasksRouteImport.update({
@@ -367,9 +381,9 @@ const StudiosStudioIdMembersMemberIdCompensationsRoute =
   } as any)
 const StudiosStudioIdCreatorsCreatorIdCompensationsRoute =
   StudiosStudioIdCreatorsCreatorIdCompensationsRouteImport.update({
-    id: '/$creatorId/compensations',
-    path: '/$creatorId/compensations',
-    getParentRoute: () => StudiosStudioIdCreatorsRoute,
+    id: '/compensations',
+    path: '/compensations',
+    getParentRoute: () => StudiosStudioIdCreatorsCreatorIdRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -408,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/system/task-templates': typeof SystemTaskTemplatesIndexRoute
   '/system/tasks': typeof SystemTasksIndexRoute
   '/system/users': typeof SystemUsersIndexRoute
+  '/studios/$studioId/creators/$creatorId': typeof StudiosStudioIdCreatorsCreatorIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
   '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
@@ -426,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/creators/$creatorId/compensations': typeof StudiosStudioIdCreatorsCreatorIdCompensationsRoute
   '/studios/$studioId/members/$memberId/compensations': typeof StudiosStudioIdMembersMemberIdCompensationsRoute
   '/studios/$studioId/task-setup/$showId/tasks': typeof StudiosStudioIdTaskSetupShowIdTasksRoute
+  '/studios/$studioId/creators/$creatorId/': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
   '/system/schedules/$scheduleId/snapshots': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -474,6 +490,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/creators/$creatorId/compensations': typeof StudiosStudioIdCreatorsCreatorIdCompensationsRoute
   '/studios/$studioId/members/$memberId/compensations': typeof StudiosStudioIdMembersMemberIdCompensationsRoute
   '/studios/$studioId/task-setup/$showId/tasks': typeof StudiosStudioIdTaskSetupShowIdTasksRoute
+  '/studios/$studioId/creators/$creatorId': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
   '/system/schedules/$scheduleId/snapshots': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -514,6 +531,7 @@ export interface FileRoutesById {
   '/system/task-templates/': typeof SystemTaskTemplatesIndexRoute
   '/system/tasks/': typeof SystemTasksIndexRoute
   '/system/users/': typeof SystemUsersIndexRoute
+  '/studios/$studioId/creators/$creatorId': typeof StudiosStudioIdCreatorsCreatorIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
   '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
@@ -532,6 +550,7 @@ export interface FileRoutesById {
   '/studios/$studioId/creators/$creatorId/compensations': typeof StudiosStudioIdCreatorsCreatorIdCompensationsRoute
   '/studios/$studioId/members/$memberId/compensations': typeof StudiosStudioIdMembersMemberIdCompensationsRoute
   '/studios/$studioId/task-setup/$showId/tasks': typeof StudiosStudioIdTaskSetupShowIdTasksRoute
+  '/studios/$studioId/creators/$creatorId/': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
   '/system/schedules/$scheduleId/snapshots/': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms/': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -573,6 +592,7 @@ export interface FileRouteTypes {
     | '/system/task-templates'
     | '/system/tasks'
     | '/system/users'
+    | '/studios/$studioId/creators/$creatorId'
     | '/studios/$studioId/creator-mapping/$showId'
     | '/studios/$studioId/task-reports/builder'
     | '/studios/$studioId/task-reports/results'
@@ -591,6 +611,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId/compensations'
     | '/studios/$studioId/members/$memberId/compensations'
     | '/studios/$studioId/task-setup/$showId/tasks'
+    | '/studios/$studioId/creators/$creatorId/'
     | '/system/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   fileRoutesByTo: FileRoutesByTo
@@ -639,6 +660,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId/compensations'
     | '/studios/$studioId/members/$memberId/compensations'
     | '/studios/$studioId/task-setup/$showId/tasks'
+    | '/studios/$studioId/creators/$creatorId'
     | '/system/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   id:
@@ -678,6 +700,7 @@ export interface FileRouteTypes {
     | '/system/task-templates/'
     | '/system/tasks/'
     | '/system/users/'
+    | '/studios/$studioId/creators/$creatorId'
     | '/studios/$studioId/creator-mapping/$showId'
     | '/studios/$studioId/task-reports/builder'
     | '/studios/$studioId/task-reports/results'
@@ -696,6 +719,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId/compensations'
     | '/studios/$studioId/members/$memberId/compensations'
     | '/studios/$studioId/task-setup/$showId/tasks'
+    | '/studios/$studioId/creators/$creatorId/'
     | '/system/schedules/$scheduleId/snapshots/'
     | '/system/studios/$studioId/studio-rooms/'
   fileRoutesById: FileRoutesById
@@ -1060,6 +1084,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdCreatorMappingShowIdRouteImport
       parentRoute: typeof StudiosStudioIdCreatorMappingRoute
     }
+    '/studios/$studioId/creators/$creatorId': {
+      id: '/studios/$studioId/creators/$creatorId'
+      path: '/$creatorId'
+      fullPath: '/studios/$studioId/creators/$creatorId'
+      preLoaderRoute: typeof StudiosStudioIdCreatorsCreatorIdRouteRouteImport
+      parentRoute: typeof StudiosStudioIdCreatorsRoute
+    }
     '/system/studios/$studioId/studio-rooms/': {
       id: '/system/studios/$studioId/studio-rooms/'
       path: '/studios/$studioId/studio-rooms'
@@ -1073,6 +1104,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/system/schedules/$scheduleId/snapshots'
       preLoaderRoute: typeof SystemSchedulesScheduleIdSnapshotsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
+    }
+    '/studios/$studioId/creators/$creatorId/': {
+      id: '/studios/$studioId/creators/$creatorId/'
+      path: '/'
+      fullPath: '/studios/$studioId/creators/$creatorId/'
+      preLoaderRoute: typeof StudiosStudioIdCreatorsCreatorIdIndexRouteImport
+      parentRoute: typeof StudiosStudioIdCreatorsCreatorIdRouteRoute
     }
     '/studios/$studioId/task-setup/$showId/tasks': {
       id: '/studios/$studioId/task-setup/$showId/tasks'
@@ -1090,10 +1128,10 @@ declare module '@tanstack/react-router' {
     }
     '/studios/$studioId/creators/$creatorId/compensations': {
       id: '/studios/$studioId/creators/$creatorId/compensations'
-      path: '/$creatorId/compensations'
+      path: '/compensations'
       fullPath: '/studios/$studioId/creators/$creatorId/compensations'
       preLoaderRoute: typeof StudiosStudioIdCreatorsCreatorIdCompensationsRouteImport
-      parentRoute: typeof StudiosStudioIdCreatorsRoute
+      parentRoute: typeof StudiosStudioIdCreatorsCreatorIdRouteRoute
     }
   }
 }
@@ -1116,16 +1154,34 @@ const StudiosStudioIdCreatorMappingRouteWithChildren =
     StudiosStudioIdCreatorMappingRouteChildren,
   )
 
-interface StudiosStudioIdCreatorsRouteChildren {
-  StudiosStudioIdCreatorsIndexRoute: typeof StudiosStudioIdCreatorsIndexRoute
+interface StudiosStudioIdCreatorsCreatorIdRouteRouteChildren {
   StudiosStudioIdCreatorsCreatorIdCompensationsRoute: typeof StudiosStudioIdCreatorsCreatorIdCompensationsRoute
+  StudiosStudioIdCreatorsCreatorIdIndexRoute: typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
+}
+
+const StudiosStudioIdCreatorsCreatorIdRouteRouteChildren: StudiosStudioIdCreatorsCreatorIdRouteRouteChildren =
+  {
+    StudiosStudioIdCreatorsCreatorIdCompensationsRoute:
+      StudiosStudioIdCreatorsCreatorIdCompensationsRoute,
+    StudiosStudioIdCreatorsCreatorIdIndexRoute:
+      StudiosStudioIdCreatorsCreatorIdIndexRoute,
+  }
+
+const StudiosStudioIdCreatorsCreatorIdRouteRouteWithChildren =
+  StudiosStudioIdCreatorsCreatorIdRouteRoute._addFileChildren(
+    StudiosStudioIdCreatorsCreatorIdRouteRouteChildren,
+  )
+
+interface StudiosStudioIdCreatorsRouteChildren {
+  StudiosStudioIdCreatorsCreatorIdRouteRoute: typeof StudiosStudioIdCreatorsCreatorIdRouteRouteWithChildren
+  StudiosStudioIdCreatorsIndexRoute: typeof StudiosStudioIdCreatorsIndexRoute
 }
 
 const StudiosStudioIdCreatorsRouteChildren: StudiosStudioIdCreatorsRouteChildren =
   {
+    StudiosStudioIdCreatorsCreatorIdRouteRoute:
+      StudiosStudioIdCreatorsCreatorIdRouteRouteWithChildren,
     StudiosStudioIdCreatorsIndexRoute: StudiosStudioIdCreatorsIndexRoute,
-    StudiosStudioIdCreatorsCreatorIdCompensationsRoute:
-      StudiosStudioIdCreatorsCreatorIdCompensationsRoute,
   }
 
 const StudiosStudioIdCreatorsRouteWithChildren =

@@ -8,14 +8,17 @@
 
 ## Purpose
 
-Technical reference for the shipped studio creator roster page, including route access, URL-backed table state, query invalidation, admin-only mutations, and 409 conflict handling.
+Technical reference for the shipped studio creator roster page, including route access, URL-backed table state, query invalidation, admin/manager mutations, and 409 conflict handling.
+
+> **PR 14a update**: per-creator editing moved from the `edit-studio-creator-dialog` modal to the dedicated **creator detail route** `/studios/$studioId/creators/$creatorId` (Defaults + Compensation tabs). Editing creator defaults is now allowed for **`ADMIN` and `MANAGER`** (previously admin-only). See [`ENTITY_DETAIL_ROUTES.md`](./ENTITY_DETAIL_ROUTES.md).
 
 ## Route And Access
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/studios/$studioId/creators` | Creator roster CRUD surface | `ADMIN` roster write, `ADMIN` + `MANAGER` + `TALENT_MANAGER` read |
-| `/studios/$studioId/creators/$creatorId/compensations` | Per-creator date-range compensation review with per-show edit dialog | `ADMIN` + `MANAGER` |
+| `/studios/$studioId/creators` | Creator roster list surface | `ADMIN` + `MANAGER` roster write, `ADMIN` + `MANAGER` + `TALENT_MANAGER` read |
+| `/studios/$studioId/creators/$creatorId` | Creator detail layout — **Defaults** tab (edit roster defaults) | edit `ADMIN` + `MANAGER`; read-only `TALENT_MANAGER` |
+| `/studios/$studioId/creators/$creatorId/compensations` | **Compensation** tab — per-creator date-range review with per-show edit dialog | `ADMIN` + `MANAGER` |
 
 Route guard requirements:
 
@@ -32,15 +35,18 @@ Follow the shipped member-roster split instead of a single route file:
 
 - `src/routes/studios/$studioId/creators.tsx` => layout shell + `creatorRoster` route guard wrapping `<Outlet />`
 - `src/routes/studios/$studioId/creators/index.tsx` => roster list page, search validation, page composition
-- `src/routes/studios/$studioId/creators/$creatorId/compensations.tsx` => dedicated compensation review page with its own `creatorCompensations` guard
+- `src/routes/studios/$studioId/creators/$creatorId/route.tsx` => creator detail layout (single-creator GET, header, `<Link>` tab strip, `<Outlet />`)
+- `src/routes/studios/$studioId/creators/$creatorId/index.tsx` => **Defaults** tab (hosts `CreatorDefaultsForm`)
+- `src/routes/studios/$studioId/creators/$creatorId/compensations.tsx` => **Compensation** tab (de-chromed view) with its own `creatorCompensations` guard
 - `src/features/studio-creator-roster/hooks/use-studio-creator-roster.ts` => query wiring, URL-backed table state, mutation helpers
 - `src/features/studio-creator-roster/config/studio-creator-roster-search-schema.ts` => route/search schema
 - `src/features/studio-creator-roster/config/studio-creator-roster-columns.tsx` => table columns
 - `src/features/studio-creator-roster/components/studio-creator-roster-table.tsx` => table shell
 - `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx`
-- `src/features/studio-creator-roster/components/edit-studio-creator-dialog.tsx`
+- `src/features/studio-creator-roster/components/creator-defaults-form.tsx` => roster defaults form hosted by the Defaults tab (replaces the retired `edit-studio-creator-dialog`)
 - `src/features/studio-creator-roster/components/studio-creator-actions-cell.tsx`
 - `src/features/studio-creator-roster/components/creator-compensations-view.tsx` => presentational view shared by the route shell and tests
+- `src/features/studio-creator-roster/api/studio-creator-roster.ts` => list/detail/create/update API declarations and query keys (`detail` key added for the single-creator GET)
 - `src/features/studio-creator-roster/api/*` => list/create/update API declarations and query keys
 
 ## Table And Search State
@@ -64,7 +70,7 @@ Columns:
 - compensation type
 - commission rate
 - active badge
-- actions (`ADMIN` roster edit; `ADMIN` and `MANAGER` "Review Compensation" link to the dedicated route)
+- actions (`ADMIN` + `MANAGER` Edit → navigates to the creator detail route's Defaults tab; `ADMIN` + `MANAGER` "Review Compensation" → Compensation tab)
 
 ## Data And Query Model
 
@@ -76,6 +82,7 @@ Columns:
   - creator availability list family
 - use shared API types from `@eridu/api-types/studio-creators`
 - PATCH flows must send `version` and treat 409 as a refetch-and-review conflict path
+- creator detail hydrates via `GET /studios/:studioId/creators/:creatorId` (key `studioCreatorRosterKeys.detail`), invalidated on PATCH so the Defaults tab + header stay fresh
 - compensation review uses `GET /studios/:studioId/creators/:creatorId/compensations`
 - assignment-term edits from review use `PATCH /studios/:studioId/shows/:showId/creators/:showCreatorId` and invalidate show creator list/summary caches
 
@@ -93,17 +100,20 @@ Columns:
   - `default_commission_rate`
 - POST does not expose an active toggle
 
-### Edit dialog
+### Defaults tab (creator detail route)
 
-- opens from the actions cell for admins only
+- `CreatorDefaultsForm` on `/studios/$studioId/creators/$creatorId` (index tab); reached
+  from the actions cell **Edit** action (navigation, not a modal)
+- editable for `ADMIN` + `MANAGER`; renders read-only for `TALENT_MANAGER`
 - edits:
   - `default_rate`
   - `default_rate_type`
   - `default_commission_rate`
   - `is_active`
-- sends `version` on PATCH
+- sends `version` on PATCH; on success stays on the page (toast + query invalidation
+  refresh the detail/header)
 - on 409:
-  - refetch roster list
+  - refetch roster list + creator detail
   - replace stale assumptions with fresh server state or prompt reload
   - show conflict feedback instead of silent overwrite
 

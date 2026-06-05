@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StudioCreatorRosterItem } from '@eridu/api-types/studio-creators';
 
-import { EditStudioCreatorDialog } from '../edit-studio-creator-dialog';
+import { CreatorDefaultsForm } from '../creator-defaults-form';
 
 const mockInvalidateQueries = vi.fn();
 const mockUseUpdateStudioCreatorRoster = vi.fn();
@@ -19,12 +19,6 @@ vi.mock('@eridu/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type={props.type ?? 'button'} {...props}>{children}</button>
   ),
-  Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div>{children}</div> : null),
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   Label: ({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) => (
     <label htmlFor={htmlFor}>{children}</label>
@@ -58,6 +52,7 @@ vi.mock('@/features/studio-show-creators/api/get-creator-catalog', () => ({
 vi.mock('../../api/studio-creator-roster', () => ({
   studioCreatorRosterKeys: {
     listPrefix: (studioId: string) => ['studio-creator-roster', studioId],
+    detail: (studioId: string, creatorId: string) => ['studio-creator-roster', 'detail', studioId, creatorId],
   },
   useUpdateStudioCreatorRoster: (...args: unknown[]) => mockUseUpdateStudioCreatorRoster(...args),
 }));
@@ -80,7 +75,7 @@ function createCreator(overrides: Partial<StudioCreatorRosterItem> = {}): Studio
   };
 }
 
-describe('editStudioCreatorDialog', () => {
+describe('creatorDefaultsForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -91,19 +86,25 @@ describe('editStudioCreatorDialog', () => {
   });
 
   it('warns that creator roster default edits do not rewrite show assignment snapshots', () => {
-    render(
-      <EditStudioCreatorDialog
-        studioId="std_1"
-        creator={createCreator()}
-        open
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<CreatorDefaultsForm studioId="std_1" creator={createCreator()} canEdit />);
 
     expect(
       screen.getByText(
         'Roster edits update defaults for future show assignments only. Existing show assignments keep their saved compensation snapshot; edit assignment compensation to change a show.',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('shows the Save action for editors', () => {
+    render(<CreatorDefaultsForm studioId="std_1" creator={createCreator()} canEdit />);
+
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('renders read-only without a Save action for non-editors', () => {
+    render(<CreatorDefaultsForm studioId="std_1" creator={createCreator()} canEdit={false} />);
+
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.getByText('You have read-only access to creator defaults.')).toBeInTheDocument();
   });
 });

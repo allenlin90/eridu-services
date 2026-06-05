@@ -1,6 +1,8 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import type { StudioCreatorAvailabilityQueryDto } from './schemas/studio-creator-availability.schema';
 import type { StudioCreatorCatalogQueryDto } from './schemas/studio-creator-catalog.schema';
 import type { StudioCreatorCompensationQueryDto } from './schemas/studio-creator-compensation.schema';
@@ -13,6 +15,7 @@ import type {
 } from './schemas/studio-creator-roster-write.schema';
 import { StudioCreatorController } from './studio-creator.controller';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
@@ -35,6 +38,7 @@ describe('studioCreatorController', () => {
             onboardCreator: jest.fn(),
             searchOnboardingUsers: jest.fn(),
             updateRosterEntry: jest.fn(),
+            findRosterEntry: jest.fn(),
           },
         },
         {
@@ -439,5 +443,61 @@ describe('studioCreatorController', () => {
         name: 'Alice',
       }),
     ]);
+  });
+
+  it('should return a single creator roster entry scoped by studio', async () => {
+    const studioId = 'std_00000000000000000001';
+    const creatorId = 'creator_00000000000000000001';
+
+    studioCreatorService.findRosterEntry.mockResolvedValue({
+      id: 1n,
+      uid: 'smc_00000000000000000001',
+      studioId: 1n,
+      creatorId: 1n,
+      defaultRate: '650.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: null,
+      isActive: true,
+      version: 4,
+      metadata: {},
+      createdAt: new Date('2026-03-11T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-12T00:00:00.000Z'),
+      deletedAt: null,
+      creator: {
+        uid: creatorId,
+        name: 'Ann',
+        aliasName: 'Ann',
+      },
+    } as any);
+
+    const result = await controller.getCreator(studioId, creatorId);
+
+    expect(studioCreatorService.findRosterEntry).toHaveBeenCalledWith(studioId, creatorId);
+    expect(result).toEqual(expect.objectContaining({
+      id: 'smc_00000000000000000001',
+      creator_id: creatorId,
+      default_rate: '650.00',
+      is_active: true,
+      version: 4,
+    }));
+  });
+
+  it('should throw not-found when the creator is not on the studio roster', async () => {
+    const studioId = 'std_00000000000000000001';
+    const creatorId = 'creator_00000000000000000009';
+
+    studioCreatorService.findRosterEntry.mockResolvedValue(null);
+
+    await expect(controller.getCreator(studioId, creatorId)).rejects.toThrow('Creator not found in studio roster');
+  });
+
+  it('should restrict creator read to admin, manager, and talent manager roles', () => {
+    const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.getCreator);
+    expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER]);
+  });
+
+  it('should allow admins and managers to edit creator defaults', () => {
+    const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.updateCreator);
+    expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER]);
   });
 });
