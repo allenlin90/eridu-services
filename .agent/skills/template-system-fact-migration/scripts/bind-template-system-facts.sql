@@ -61,10 +61,10 @@ BEGIN
     WHEN 'show_platform_actual_start_time' THEN 'datetime'
     WHEN 'show_platform_actual_end_time'   THEN 'datetime'
     WHEN 'show_platform_violation'         THEN 'multiselect'
-    WHEN 'platform_gmv'                    THEN 'number'
-    WHEN 'platform_view_count'             THEN 'number'
-    WHEN 'platform_ctr'                    THEN 'number'
-    WHEN 'platform_cto'                    THEN 'number'
+    WHEN 'show_platform_gmv'               THEN 'number'
+    WHEN 'show_platform_view_count'        THEN 'number'
+    WHEN 'show_platform_ctr'               THEN 'number'
+    WHEN 'show_platform_cto'               THEN 'number'
     ELSE NULL
   END;
 

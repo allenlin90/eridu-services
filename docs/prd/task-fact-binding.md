@@ -180,7 +180,7 @@ Implementation is structured into **three logical sections**. Each section serve
 * **Purpose**: Allow studio producers to bind template fields to system fact keys.
 * **Functional Deliverable**:
   * Binds `FieldItemV2Schema` in `@eridu/api-types` to a closed `system_fact_key` enum.
-  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`) and rejects duplicate fact-key bindings in the same template. Analytical fact keys (`platform_gmv`, `platform_view_count`, etc.) re-enter the catalog once PR 21 lands.
+  * Adds save-time Zod validations: ensures field types match fact key types (e.g. `creator_attendance_missing` restricts type to `checkbox`, `show_actual_start_time` restricts to `datetime`) and rejects duplicate fact-key bindings in the same template. Analytical fact keys (`show_platform_gmv`, `show_platform_view_count`, etc.) re-enter the catalog once PR 21 lands.
   * **Template Builder UI**: Exposes a searchable "Auto-fill record field" binding picker (with an info-icon tooltip explaining downstream behavior) for template designers.
   * `creator_attendance_missing` uses the existing `require_reason: "on-true"` sidecar flow for the operator's explanation; there is no separate `creator_attendance_reason` binding input.
 

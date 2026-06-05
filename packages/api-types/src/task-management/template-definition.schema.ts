@@ -29,10 +29,10 @@ export const SystemFactKeyEnum = z.enum([
   'show_platform_actual_start_time',
   'show_platform_actual_end_time',
   'show_platform_violation',
-  'platform_gmv',
-  'platform_view_count',
-  'platform_ctr',
-  'platform_cto',
+  'show_platform_gmv',
+  'show_platform_view_count',
+  'show_platform_ctr',
+  'show_platform_cto',
 ]);
 
 export type SystemFactKey = z.infer<typeof SystemFactKeyEnum>;
@@ -94,28 +94,28 @@ export const SYSTEM_FACT_KEY_DEFINITIONS = {
     backing_column: 'ShowPlatformViolation',
     field_type: 'multiselect',
   },
-  platform_gmv: {
+  show_platform_gmv: {
     label: 'Platform GMV',
     description: 'Gross Merchandise Value recorded per show platform.',
     target: 'show_platform',
     backing_column: 'ShowPlatform.gmv',
     field_type: 'number',
   },
-  platform_view_count: {
+  show_platform_view_count: {
     label: 'Platform view count',
     description: 'Total viewers recorded per show platform.',
     target: 'show_platform',
     backing_column: 'ShowPlatform.viewerCount',
     field_type: 'number',
   },
-  platform_ctr: {
+  show_platform_ctr: {
     label: 'Platform CTR',
     description: 'Click-Through Rate percentage recorded per show platform.',
     target: 'show_platform',
     backing_column: 'ShowPlatform.ctr',
     field_type: 'number',
   },
-  platform_cto: {
+  show_platform_cto: {
     label: 'Platform CTO',
     description: 'Click-To-Order percentage recorded per show platform.',
     target: 'show_platform',
