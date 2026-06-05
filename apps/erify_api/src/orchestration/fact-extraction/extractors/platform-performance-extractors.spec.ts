@@ -61,7 +61,7 @@ const postProdCtx = {
 const factGmv = {
   contentKey: 'fld_gmv:platform:show_plt_200',
   sourceFieldId: 'fld_gmv',
-  factKey: 'platform_gmv' as const,
+  factKey: 'show_platform_gmv' as const,
   scope: 'platform' as const,
   targetUid: 'show_plt_200',
   rawValue: 1250.5,
@@ -83,7 +83,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
           gmv: new Prisma.Decimal(1250.5),
           metadata: {
             performance_templates: {
-              platform_gmv: 'ttpl_loop8',
+              show_platform_gmv: 'ttpl_loop8',
             },
           },
         },
@@ -96,12 +96,42 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
       });
     });
 
+    it('preserves full decimal precision from a string GMV (no float round-trip)', async () => {
+      const showPlatformService = buildShowPlatformService();
+      const extractor = new PlatformGmvExtractor(showPlatformService);
+
+      // 18 significant digits — Number() would silently truncate this; the
+      // Decimal must carry every digit through to the column and the audit.
+      const rawValue = '1250.123456789012345';
+      const decision = await extractor.apply({ ...factGmv, rawValue }, ctx);
+
+      expect(showPlatformService.updatePerformanceMetrics).toHaveBeenCalledWith(
+        'show_plt_200',
+        10n,
+        {
+          gmv: new Prisma.Decimal(rawValue),
+          metadata: {
+            performance_templates: {
+              show_platform_gmv: 'ttpl_loop8',
+            },
+          },
+        },
+      );
+      expect(decision).toEqual({
+        kind: 'write',
+        action: 'CREATE',
+        oldValue: null,
+        newValue: rawValue,
+      });
+      expect(String(Number(rawValue))).not.toBe(rawValue);
+    });
+
     it('prefers post-production wrap-up and skips lower-priority loop 8 update when post-production exists', async () => {
       const showPlatformService = buildShowPlatformService({
         gmv: new Prisma.Decimal(1500.0),
         metadata: {
           performance_templates: {
-            platform_gmv: POST_PRODUCTION_TEMPLATE_UID,
+            show_platform_gmv: POST_PRODUCTION_TEMPLATE_UID,
           },
         },
       });
@@ -114,7 +144,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         kind: 'skip',
         action: 'SKIPPED_LOWER_PRIORITY',
         skippedBy: 'OPERATOR',
-        attemptedValue: 1250.5,
+        attemptedValue: '1250.5',
       });
     });
 
@@ -123,7 +153,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         gmv: new Prisma.Decimal(1250.5),
         metadata: {
           performance_templates: {
-            platform_gmv: 'ttpl_loop8',
+            show_platform_gmv: 'ttpl_loop8',
           },
         },
       });
@@ -138,7 +168,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
           gmv: new Prisma.Decimal(1600.0),
           metadata: {
             performance_templates: {
-              platform_gmv: POST_PRODUCTION_TEMPLATE_UID,
+              show_platform_gmv: POST_PRODUCTION_TEMPLATE_UID,
             },
           },
         },
@@ -156,7 +186,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         gmv: new Prisma.Decimal(1250.5),
         metadata: {
           performance_templates: {
-            platform_gmv: 'ttpl_loop8',
+            show_platform_gmv: 'ttpl_loop8',
           },
         },
       });
@@ -194,7 +224,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
     const factViews = {
       contentKey: 'fld_views:platform:show_plt_200',
       sourceFieldId: 'fld_views',
-      factKey: 'platform_view_count' as const,
+      factKey: 'show_platform_view_count' as const,
       scope: 'platform' as const,
       targetUid: 'show_plt_200',
       rawValue: 500,
@@ -213,7 +243,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
           viewerCount: 500,
           metadata: {
             performance_templates: {
-              platform_view_count: 'ttpl_loop8',
+              show_platform_view_count: 'ttpl_loop8',
             },
           },
         },
@@ -237,7 +267,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         {
           contentKey: 'fld_ctr:platform:show_plt_200',
           sourceFieldId: 'fld_ctr',
-          factKey: 'platform_ctr' as const,
+          factKey: 'show_platform_ctr' as const,
           scope: 'platform' as const,
           targetUid: 'show_plt_200',
           rawValue: '5.25',
@@ -249,7 +279,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         {
           contentKey: 'fld_cto:platform:show_plt_200',
           sourceFieldId: 'fld_cto',
-          factKey: 'platform_cto' as const,
+          factKey: 'show_platform_cto' as const,
           scope: 'platform' as const,
           targetUid: 'show_plt_200',
           rawValue: '2.45',
@@ -264,7 +294,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
           ctr: new Prisma.Decimal('5.25'),
           metadata: {
             performance_templates: {
-              platform_ctr: 'ttpl_loop8',
+              show_platform_ctr: 'ttpl_loop8',
             },
           },
         },
@@ -277,7 +307,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
           cto: new Prisma.Decimal('2.45'),
           metadata: {
             performance_templates: {
-              platform_cto: 'ttpl_loop8',
+              show_platform_cto: 'ttpl_loop8',
             },
           },
         },

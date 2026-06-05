@@ -15,6 +15,7 @@ The extraction pipeline routes `COMPLETED` task content into typed indexed colum
 - **Decision types**: [`extractors/extractor.types.ts`](../../../apps/erify_api/src/orchestration/fact-extraction/extractors/extractor.types.ts)
 - **Show extractors** (PR 12.1.1): `show-actual-{start,end}-time.extractor.ts`
 - **Platform extractors** (PR 12.1.2 — the reference for hydrated scopes): `show-platform-actual-{start,end}-time.extractor.ts`
+- **Platform performance extractors** (PR 21.4 — the reference for numeric/Decimal facts + template-based precedence): `platform-performance-extractors.ts`
 - **Source priority resolver**: [`source-priority.ts`](../../../apps/erify_api/src/orchestration/fact-extraction/source-priority.ts)
 - **Fact-key catalog**: [`packages/api-types/src/task-management/template-definition.schema.ts`](../../../packages/api-types/src/task-management/template-definition.schema.ts)
 - **PRD**: [`docs/prd/task-fact-binding.md`](../../../docs/prd/task-fact-binding.md)
@@ -137,6 +138,17 @@ When a fact has both `*_start_time` and `*_end_time` (or any merged-validation p
 
 Reference template: [`applyPairedShowPlatformActuals`](../../../apps/erify_api/src/orchestration/fact-extraction/fact-extraction.processor.ts) + [`tryAtomicPairedShowPlatformActuals`](../../../apps/erify_api/src/orchestration/fact-extraction/fact-extraction.service.ts).
 
+## Numeric / Decimal-backed facts (PR 21.4)
+
+Performance metrics (`show_platform_{gmv,view_count,ctr,cto}`) are the first **numeric** facts. Two rules that don't apply to datetime/checkbox extractors:
+
+- **Build `Prisma.Decimal` from the RAW value, never from `Number(rawValue)`.** Round-tripping a monetary GMV or a percentage through a JS float silently truncates precision (`Number('1250.123456789012345')` loses digits) and then re-introduces float drift on the column. Construct `new Prisma.Decimal(fact.rawValue as Prisma.Decimal.Value)` directly, inside a `try/catch` that collapses an unparseable value to `noop:value_absent`. Reuse the same Decimal for the column write, the idempotency check, and the audit `newValue` (`.toString()`). Only the integer `viewerCount` goes through `Number()`. (This review on PR #132.)
+- **Idempotency compares decimals with `Decimal.equals`, not `===` on `Number(...)`.** `5.25 === 5.250` via float works by luck; `.equals` is the correct, drift-free comparison and keeps `value_unchanged` honest.
+
+### Template-based precedence (vs. source-priority resolver)
+
+This family does NOT use `canResolverOverwrite(ctx.source, recordedSource)` — every Phase 4 submission writes as `OPERATOR`, so source rank can't distinguish a post-production wrap-up from a loop-8 moderation write. Precedence is instead keyed on the **template UID** that last wrote each metric, persisted in `ShowPlatform.metadata.performance_templates[factKey]`. Once `POST_PRODUCTION_TEMPLATE_UID` owns a metric, only the post-production template may overwrite it; a lower-priority template returns `skip:SKIPPED_LOWER_PRIORITY`. When adding metrics to this family, thread `ctx.templateUid` (sourced from `task.template?.uid` in `fact-extraction.service.ts`) and write it into the metadata map alongside the column. The read-modify-write of `performance_templates` is safe only because the per-fact loop is sequential — do not parallelize per-fact application without making that merge atomic.
+
 ## Adding a new extractor — checklist
 
 For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box maps to a real Codex finding from PRs #91 / #101 / #103.
@@ -157,6 +169,7 @@ For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box ma
 **Extractor class**:
 - [ ] Absent-value short-circuit BEFORE any DB read
 - [ ] `parseValue` short-circuit BEFORE any DB read (malformed values are operator submission issues, not pipeline failures)
+- [ ] For numeric/Decimal facts: build `Prisma.Decimal` from the raw value (not `Number(rawValue)`) and compare with `Decimal.equals` — see "Numeric / Decimal-backed facts"
 - [ ] `try/catch NotFoundException` around `getByUid` → `target_stale`
 - [ ] Cross-scope defence-in-depth (`row.scopeParentId !== ctx.scopeParentId` → `target_stale`)
 - [ ] Priority resolver via `canResolverOverwrite(ctx.source, recordedSource)`

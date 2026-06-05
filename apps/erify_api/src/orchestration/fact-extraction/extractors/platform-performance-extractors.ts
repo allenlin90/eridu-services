@@ -25,10 +25,31 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
       return { kind: 'noop', reason: 'value_absent' };
     }
 
-    const incomingValue = Number(fact.rawValue);
-    if (Number.isNaN(incomingValue)) {
-      return { kind: 'noop', reason: 'value_absent' };
+    const isDecimal = this.dbField !== 'viewerCount';
+
+    // Parse + validate the incoming value. Decimal-backed metrics (GMV, CTR,
+    // CTO) are built straight from the raw value so monetary / percentage
+    // precision is never truncated through a JS float; the view count is an
+    // integer counter. An unparseable value is treated as "not recorded".
+    let incomingDecimal: Prisma.Decimal | null = null;
+    let incomingViewCount = 0;
+    if (isDecimal) {
+      try {
+        incomingDecimal = new Prisma.Decimal(fact.rawValue as Prisma.Decimal.Value);
+      } catch {
+        return { kind: 'noop', reason: 'value_absent' };
+      }
+      if (!incomingDecimal.isFinite()) {
+        return { kind: 'noop', reason: 'value_absent' };
+      }
+    } else {
+      incomingViewCount = Number(fact.rawValue);
+      if (!Number.isFinite(incomingViewCount)) {
+        return { kind: 'noop', reason: 'value_absent' };
+      }
     }
+
+    const attemptedValue = isDecimal ? incomingDecimal!.toString() : incomingViewCount;
 
     let showPlatform;
     try {
@@ -56,39 +77,36 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
       return {
         kind: 'skip',
         action: 'SKIPPED_LOWER_PRIORITY',
-        skippedBy: 'OPERATOR',
-        attemptedValue: incomingValue,
+        skippedBy: ctx.source,
+        attemptedValue,
       };
     }
 
     const currentValue = showPlatform[this.dbField];
-    const isDecimal = this.dbField !== 'viewerCount';
 
-    // Check if the value has changed
-    const currentNum = currentValue !== null ? Number(currentValue) : null;
-    if (currentNum === incomingValue && recordedTemplate === ctx.templateUid) {
+    // Resubmission of the same value by the same template is a no-op. Decimal
+    // columns compare via `Decimal.equals` so 5.25 and 5.250 are treated as
+    // equal without re-introducing float drift.
+    const unchanged = isDecimal
+      ? currentValue !== null && incomingDecimal!.equals(currentValue as Prisma.Decimal)
+      : currentValue === incomingViewCount;
+    if (unchanged && recordedTemplate === ctx.templateUid) {
       return { kind: 'noop', reason: 'value_unchanged' };
     }
 
     // Prepare metadata
-    const nextPerformanceTemplates = {
-      ...(metadata.performance_templates ?? {}),
-      [this.factKey]: ctx.templateUid ?? '',
-    };
     const nextMetadata = {
       ...metadata,
-      performance_templates: nextPerformanceTemplates,
+      performance_templates: {
+        ...(metadata.performance_templates ?? {}),
+        [this.factKey]: ctx.templateUid ?? '',
+      },
     };
 
-    // Prepare update data
     const updateData: Record<string, any> = {
       metadata: nextMetadata,
+      [this.dbField]: isDecimal ? incomingDecimal : incomingViewCount,
     };
-    if (isDecimal) {
-      updateData[this.dbField] = new Prisma.Decimal(incomingValue);
-    } else {
-      updateData[this.dbField] = incomingValue;
-    }
 
     try {
       await this.showPlatformService.updatePerformanceMetrics(
@@ -107,31 +125,31 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
       kind: 'write',
       action: currentValue !== null ? 'UPDATE' : 'CREATE',
       oldValue: currentValue !== null ? currentValue.toString() : null,
-      newValue: incomingValue.toString(),
+      newValue: isDecimal ? incomingDecimal!.toString() : String(incomingViewCount),
     };
   }
 }
 
 @Injectable()
 export class PlatformGmvExtractor extends BasePlatformPerformanceExtractor {
-  readonly factKey = 'platform_gmv' as const;
+  readonly factKey = 'show_platform_gmv' as const;
   readonly dbField = 'gmv' as const;
 }
 
 @Injectable()
 export class PlatformViewCountExtractor extends BasePlatformPerformanceExtractor {
-  readonly factKey = 'platform_view_count' as const;
+  readonly factKey = 'show_platform_view_count' as const;
   readonly dbField = 'viewerCount' as const;
 }
 
 @Injectable()
 export class PlatformCtrExtractor extends BasePlatformPerformanceExtractor {
-  readonly factKey = 'platform_ctr' as const;
+  readonly factKey = 'show_platform_ctr' as const;
   readonly dbField = 'ctr' as const;
 }
 
 @Injectable()
 export class PlatformCtoExtractor extends BasePlatformPerformanceExtractor {
-  readonly factKey = 'platform_cto' as const;
+  readonly factKey = 'show_platform_cto' as const;
   readonly dbField = 'cto' as const;
 }
