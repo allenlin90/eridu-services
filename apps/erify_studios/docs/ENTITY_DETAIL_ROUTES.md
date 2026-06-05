@@ -41,7 +41,7 @@ routes/studios/$studioId/<entity>/
 └── <entity>/$entityId/
     ├── route.tsx     layout: single-entity GET → header (name, status badge,
     │                  back link) + Link tab strip (per-tab auth) + <Outlet/>
-    ├── index.tsx      first tab (e.g. Defaults edit)
+    ├── index.tsx      first tab (e.g. Profile edit)
     └── <tab>.tsx      additional tabs (e.g. compensations) — reuse existing routes
 ```
 
@@ -98,15 +98,15 @@ Rules every conversion follows:
 
 - **Route**: `/studios/:studioId/members/:memberId`
   - `route.tsx` — layout: fetches the member, renders header + tab strip.
-  - `index.tsx` — **Defaults** tab: `MemberDefaultsForm` (extracted from the retired
+  - `index.tsx` — **Profile** tab: `MemberProfileForm` (extracted from the retired
     `edit-member-dialog`).
   - `compensations.tsx` — **Compensation** tab: existing `MemberCompensationsView`,
     de-chromed when hosted under the detail layout. Search params `date_from` /
     `date_to` are preserved.
 - **Backend**: `GET /studios/:studioId/members/:memberId` (read: ADMIN / MANAGER).
-  `PATCH :membershipId` remains ADMIN-only; managers can view the Defaults tab but
+  `PATCH :membershipId` remains ADMIN-only; managers can view the Profile tab but
   cannot save roster changes.
-- **Entry points**: the member roster row **Edit** action navigates to the Defaults
+- **Entry points**: the member roster row **Edit** action navigates to the Profile
   tab; **View Compensations** deep-links to the Compensation tab. The edit dialog is
   removed.
 
@@ -115,6 +115,6 @@ Rules every conversion follows:
 | Capability                     | ADMIN | MANAGER |
 | ------------------------------ | :---: | :-----: |
 | Reach `/members/:memberId`     |  ✅   |   ✅    |
-| `GET :memberId` (read defaults) |  ✅   |   ✅    |
-| Edit defaults (Save)           |  ✅   |   ❌ (read-only) |
+| `GET :memberId` (read profile) |  ✅   |   ✅    |
+| Edit profile (Save)            |  ✅   |   ❌ (read-only) |
 | See / open Compensation tab    |  ✅   |   ✅    |

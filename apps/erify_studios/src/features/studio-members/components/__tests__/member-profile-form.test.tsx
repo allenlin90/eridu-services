@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { STUDIO_ROLE, type StudioMemberResponse } from '@eridu/api-types/memberships';
 
-import { MemberDefaultsForm } from '../member-defaults-form';
+import { MemberProfileForm } from '../member-profile-form';
 
 const mockUseUpdateStudioMember = vi.fn();
 
@@ -47,7 +47,7 @@ function createMember(overrides: Partial<StudioMemberResponse> = {}): StudioMemb
   };
 }
 
-describe('memberDefaultsForm', () => {
+describe('memberProfileForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -58,7 +58,7 @@ describe('memberDefaultsForm', () => {
   });
 
   it('warns that member roster edits do not rewrite shift snapshots', () => {
-    render(<MemberDefaultsForm studioId="std_1" member={createMember()} isSelf={false} canEdit />);
+    render(<MemberProfileForm studioId="std_1" member={createMember()} isSelf={false} canEdit />);
 
     expect(
       screen.getByText(
@@ -68,15 +68,15 @@ describe('memberDefaultsForm', () => {
   });
 
   it('shows the Save action for editors', () => {
-    render(<MemberDefaultsForm studioId="std_1" member={createMember()} isSelf={false} canEdit />);
+    render(<MemberProfileForm studioId="std_1" member={createMember()} isSelf={false} canEdit />);
 
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 
   it('renders read-only without a Save action for non-editors', () => {
-    render(<MemberDefaultsForm studioId="std_1" member={createMember()} isSelf={false} canEdit={false} />);
+    render(<MemberProfileForm studioId="std_1" member={createMember()} isSelf={false} canEdit={false} />);
 
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
-    expect(screen.getByText('You have read-only access to member defaults.')).toBeInTheDocument();
+    expect(screen.getByText('You have read-only access to member profile details.')).toBeInTheDocument();
   });
 });

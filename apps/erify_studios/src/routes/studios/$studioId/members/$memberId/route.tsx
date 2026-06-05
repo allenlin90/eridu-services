@@ -1,11 +1,12 @@
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 
+import type { StudioMemberResponse } from '@eridu/api-types/memberships';
 import { Badge, Button } from '@eridu/ui';
 
-import { PageLayout } from '@/components/layouts/page-layout';
 import { useStudioMember } from '@/features/studio-members/api/members';
 import { ROLE_LABELS } from '@/features/studio-members/lib/roles';
+import { toDecimalDisplayString } from '@/lib/decimal-format';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 export const Route = createFileRoute('/studios/$studioId/members/$memberId')({
@@ -17,12 +18,57 @@ const TAB_LINK_ACTIVE_CLASS = 'border-primary text-foreground';
 
 function BackToMembers({ studioId }: { studioId: string }) {
   return (
-    <Button variant="outline" size="sm" asChild>
-      <Link to="/studios/$studioId/members" params={{ studioId }}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Members
-      </Link>
-    </Button>
+    <Link to="/studios/$studioId/members" params={{ studioId }}>
+      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Back to members">
+        <ArrowLeft className="h-4 w-4" />
+      </Button>
+    </Link>
+  );
+}
+
+function formatHourlyRate(value: string | null) {
+  return value === null ? 'No hourly rate set' : `$${toDecimalDisplayString(value)} / hr`;
+}
+
+function MemberHeader({
+  studioId,
+  member,
+  isLoading,
+}: {
+  studioId: string;
+  member?: Pick<StudioMemberResponse, 'user_name' | 'user_email' | 'role' | 'base_hourly_rate'>;
+  isLoading: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex min-w-0 items-center gap-4">
+        <BackToMembers studioId={studioId} />
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-bold tracking-tight">
+            {isLoading && !member ? 'Loading member...' : (member?.user_name ?? 'Member')}
+          </h1>
+          <p className="truncate text-sm text-muted-foreground">
+            {member?.user_email ?? 'Studio member profile and compensation'}
+          </p>
+        </div>
+      </div>
+
+      {member
+        ? (
+            <div className="rounded-md border bg-muted/20 p-3">
+              <p className="text-xs font-medium text-muted-foreground">Member Profile</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge variant="outline">
+                  {ROLE_LABELS[member.role] ?? member.role}
+                </Badge>
+                <Badge variant="secondary">
+                  {formatHourlyRate(member.base_hourly_rate)}
+                </Badge>
+              </div>
+            </div>
+          )
+        : null}
+    </div>
   );
 }
 
@@ -35,37 +81,30 @@ function StudioMemberDetailLayout() {
 
   if (isLoading) {
     return (
-      <PageLayout title="Member" actions={<BackToMembers studioId={studioId} />}>
+      <div className="space-y-4">
+        <MemberHeader studioId={studioId} isLoading={isLoading} />
         <p className="rounded-md border p-3 text-sm text-muted-foreground">
           Loading member...
         </p>
-      </PageLayout>
+      </div>
     );
   }
 
   if (isError || !member) {
     return (
-      <PageLayout title="Member" actions={<BackToMembers studioId={studioId} />}>
+      <div className="space-y-4">
+        <MemberHeader studioId={studioId} isLoading={false} />
         <p className="rounded-md border p-3 text-sm text-destructive">
           Failed to load this member. They may not belong to this studio.
         </p>
-      </PageLayout>
+      </div>
     );
   }
 
   return (
-    <PageLayout
-      title={member.user_name}
-      description={member.user_email}
-      actions={(
-        <div className="flex items-center gap-3">
-          <Badge variant="outline">
-            {ROLE_LABELS[member.role] ?? member.role}
-          </Badge>
-          <BackToMembers studioId={studioId} />
-        </div>
-      )}
-    >
+    <div className="space-y-4">
+      <MemberHeader studioId={studioId} member={member} isLoading={isLoading} />
+
       <div className="space-y-4">
         <nav className="flex gap-6 border-b">
           <Link
@@ -75,7 +114,7 @@ function StudioMemberDetailLayout() {
             className={TAB_LINK_CLASS}
             activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
           >
-            Defaults
+            Profile
           </Link>
           {canViewCompensation
             ? (
@@ -93,6 +132,6 @@ function StudioMemberDetailLayout() {
 
         <Outlet />
       </div>
-    </PageLayout>
+    </div>
   );
 }
