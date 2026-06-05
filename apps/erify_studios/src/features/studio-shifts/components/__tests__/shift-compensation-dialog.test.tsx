@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ShiftCompensationDialog } from '../shift-compensation-dialog';
+import { ShiftCompensationDialog, ShiftCompensationView } from '../shift-compensation-dialog';
 
 const mockUseStudioCompensationLineItems = vi.fn();
 const mockCreateLineItem = vi.fn();
@@ -159,6 +159,19 @@ describe('shiftCompensationDialog', () => {
       expect.objectContaining({ target_type: 'STUDIO_SHIFT_BLOCK', target_id: 'ssb_1' }),
       true,
     );
+  });
+
+  it('renders the route-friendly compensation view without dialog chrome', () => {
+    render(
+      <ShiftCompensationView
+        studioId="std_1"
+        shift={shift}
+      />,
+    );
+
+    expect(screen.queryByRole('heading', { name: 'Shift Compensation' })).not.toBeInTheDocument();
+    expect(screen.getByText('Shift adjustments')).toBeInTheDocument();
+    expect(screen.getByText('Block 1 adjustments')).toBeInTheDocument();
   });
 
   it('renders planned and actual cost rows; actual is "Pending" when actuals are incomplete', () => {

@@ -52,8 +52,13 @@ export function useUpdateStudioShift(studioId: string) {
       if (updatedShift.is_duty_manager) {
         queryClient.setQueryData<StudioShift>(studioShiftsKeys.dutyManager(studioId), updatedShift);
       }
+      queryClient.setQueryData<StudioShift>(
+        studioShiftsKeys.detail(studioId, updatedShift.id),
+        updatedShift,
+      );
 
       await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.listPrefix(studioId) });
+      await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.detail(studioId, updatedShift.id) });
       await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.dutyManager(studioId) });
     },
   });

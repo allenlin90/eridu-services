@@ -51,8 +51,13 @@ export function useUpdateStudioShiftBlock(studioId: string) {
           };
         },
       );
+      queryClient.setQueryData<StudioShift>(
+        studioShiftsKeys.detail(studioId, updatedShift.id),
+        updatedShift,
+      );
 
       await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.listPrefix(studioId) });
+      await queryClient.invalidateQueries({ queryKey: studioShiftsKeys.detail(studioId, updatedShift.id) });
       await queryClient.invalidateQueries({ queryKey: shiftCalendarKeys.all(studioId) });
     },
   });

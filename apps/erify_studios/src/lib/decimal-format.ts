@@ -11,3 +11,13 @@ export function toDecimalDisplayString(value: string): string {
   }
   return new Big(value).toFixed(2);
 }
+
+/**
+ * Formats a decimal string as a USD amount, keeping the minus sign ahead of the
+ * currency symbol (e.g. `-$1.50` rather than `$-1.50`). Wraps
+ * {@link toDecimalDisplayString}, so it inherits the string-only contract.
+ */
+export function toCurrencyDisplayString(value: string): string {
+  const formatted = toDecimalDisplayString(value);
+  return formatted.startsWith('-') ? `-$${formatted.slice(1)}` : `$${formatted}`;
+}

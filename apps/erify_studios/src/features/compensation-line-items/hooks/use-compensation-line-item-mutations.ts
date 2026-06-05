@@ -62,12 +62,13 @@ export function useDeleteAdminCompensationLineItem() {
 type StudioMutationContext = {
   studioId: string;
   showId?: string;
+  shiftId?: string;
   invalidateShiftWorkflow?: boolean;
 };
 
 function invalidateStudioCompensationQueries(
   queryClient: ReturnType<typeof useQueryClient>,
-  { studioId, showId, invalidateShiftWorkflow }: StudioMutationContext,
+  { studioId, showId, shiftId, invalidateShiftWorkflow }: StudioMutationContext,
 ) {
   queryClient.invalidateQueries({
     queryKey: studioCompensationLineItemKeys.listPrefix(studioId),
@@ -80,6 +81,9 @@ function invalidateStudioCompensationQueries(
   if (invalidateShiftWorkflow) {
     queryClient.invalidateQueries({ queryKey: studioShiftsKeys.listPrefix(studioId) });
     queryClient.invalidateQueries({ queryKey: shiftCalendarKeys.all(studioId) });
+    if (shiftId) {
+      queryClient.invalidateQueries({ queryKey: studioShiftsKeys.detail(studioId, shiftId) });
+    }
   }
 }
 

@@ -11,6 +11,7 @@ import {
 } from '@/features/studio-shifts/api/get-shift-calendar';
 import {
   getDutyManager,
+  getStudioShift,
   getStudioShifts,
   type GetStudioShiftsParams,
   studioShiftsKeys,
@@ -42,6 +43,21 @@ export function useStudioShifts(
     queryFn: ({ signal }) => getStudioShifts(studioId, queryParams, { signal }),
     enabled: Boolean(studioId) && (options?.enabled ?? true),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useStudioShift(
+  studioId: string,
+  shiftId: string,
+  options?: {
+    enabled?: boolean;
+  },
+) {
+  return useQuery({
+    queryKey: studioShiftsKeys.detail(studioId, shiftId),
+    queryFn: ({ signal }) => getStudioShift(studioId, shiftId, { signal }),
+    enabled: Boolean(studioId && shiftId) && (options?.enabled ?? true),
+    staleTime: 20_000,
   });
 }
 

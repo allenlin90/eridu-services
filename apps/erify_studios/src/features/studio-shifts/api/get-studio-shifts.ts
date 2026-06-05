@@ -31,6 +31,7 @@ export const studioShiftsKeys = {
   lists: (studioId: string) => [...studioShiftsKeys.all(studioId), 'list'] as const,
   listPrefix: (studioId: string) => [...studioShiftsKeys.lists(studioId)] as const,
   list: (studioId: string, filters?: unknown) => [...studioShiftsKeys.lists(studioId), filters] as const,
+  detail: (studioId: string, shiftId: string) => [...studioShiftsKeys.all(studioId), 'detail', shiftId] as const,
   dutyManager: (studioId: string, time?: string) => [...studioShiftsKeys.all(studioId), 'duty-manager', time] as const,
 };
 
@@ -112,6 +113,17 @@ export async function getStudioShifts(
     signal: options?.signal,
   });
   return normalizeStudioShiftsResponse(response.data);
+}
+
+export async function getStudioShift(
+  studioId: string,
+  shiftId: string,
+  options?: { signal?: AbortSignal },
+): Promise<StudioShift> {
+  const response = await apiClient.get<StudioShift>(`/studios/${studioId}/shifts/${shiftId}`, {
+    signal: options?.signal,
+  });
+  return normalizeShiftCostFields(response.data);
 }
 
 export async function getAllStudioShiftsForExport(

@@ -22,7 +22,7 @@ import { useUpdateStudioShiftBlock } from '@/features/studio-shifts/api/update-s
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDateTime } from '@/features/studio-shifts/utils/shift-form.utils';
 import { getApiErrorMessage } from '@/features/studio-shifts/utils/studio-shifts-table.utils';
-import { toDecimalDisplayString } from '@/lib/decimal-format';
+import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
 const OVERRIDE_REASON_MAX_LENGTH = 1000;
 
@@ -33,13 +33,10 @@ type ShiftCompensationDialogProps = {
   shift: StudioShift | null;
 };
 
-function formatMoneyString(value: string): string {
-  const formatted = toDecimalDisplayString(value);
-  if (formatted.startsWith('-')) {
-    return `-$${formatted.slice(1)}`;
-  }
-  return `$${formatted}`;
-}
+type ShiftCompensationViewProps = {
+  studioId: string;
+  shift: StudioShift;
+};
 
 type HourlyRateTileProps = {
   studioId: string;
@@ -144,7 +141,7 @@ function HourlyRateTile({ studioId, shift }: HourlyRateTileProps) {
       {!isEditing
         ? (
             <p className="text-lg font-semibold">
-              {formatMoneyString(storedRate)}
+              {toCurrencyDisplayString(storedRate)}
               <span className="text-sm font-normal text-muted-foreground">/hr</span>
             </p>
           )
@@ -209,15 +206,91 @@ function HourlyRateTile({ studioId, shift }: HourlyRateTileProps) {
   );
 }
 
+export function ShiftCompensationView({
+  studioId,
+  shift,
+}: ShiftCompensationViewProps) {
+  const updateBlockActuals = useUpdateStudioShiftBlock(studioId);
+  const sortedBlocks = sortShiftBlocksByStart(shift.blocks);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <HourlyRateTile key={shift.id} studioId={studioId} shift={shift} />
+        <div className="rounded-md border bg-muted/20 p-3">
+          <p className="text-xs font-medium text-muted-foreground">Planned</p>
+          <p className="text-lg font-semibold">{toCurrencyDisplayString(shift.planned_cost)}</p>
+        </div>
+        <div className="rounded-md border bg-muted/20 p-3">
+          <p className="text-xs font-medium text-muted-foreground">Actual</p>
+          {shift.actual_cost === null
+            ? <p className="text-lg font-semibold text-muted-foreground">Pending</p>
+            : <p className="text-lg font-semibold">{toCurrencyDisplayString(shift.actual_cost)}</p>}
+        </div>
+      </div>
+
+      <StudioTargetCompensationLineItemPanel
+        studioId={studioId}
+        targetType="STUDIO_SHIFT"
+        targetId={shift.id}
+        title="Shift adjustments"
+        description="Supplemental items attached to the whole shift."
+        invalidateShiftWorkflow
+        shiftId={shift.id}
+      />
+
+      {sortedBlocks.map((block, index) => (
+        <section key={block.id} className="space-y-3 rounded-md border bg-background p-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium">
+              Block
+              {' '}
+              {index + 1}
+              {' '}
+              actuals
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {formatDateTime(block.start_time)}
+              {' '}
+              -
+              {' '}
+              {formatDateTime(block.end_time)}
+            </p>
+          </div>
+
+          <ShiftBlockActualsInput
+            key={`${block.id}-${block.actual_start_time ?? 'none'}-${block.actual_end_time ?? 'none'}`}
+            block={block}
+            isSubmitting={updateBlockActuals.isPending}
+            onSubmit={(payload) =>
+              updateBlockActuals.mutateAsync({
+                shiftId: shift.id,
+                blockId: block.id,
+                payload,
+              })}
+          />
+
+          <StudioTargetCompensationLineItemPanel
+            studioId={studioId}
+            targetType="STUDIO_SHIFT_BLOCK"
+            targetId={block.id}
+            title={`Block ${index + 1} adjustments`}
+            description="Supplemental items attached to this shift block."
+            invalidateShiftWorkflow
+            shiftId={shift.id}
+          />
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export function ShiftCompensationDialog({
   open,
   onOpenChange,
   studioId,
   shift,
 }: ShiftCompensationDialogProps) {
-  const updateBlockActuals = useUpdateStudioShiftBlock(studioId);
-  const sortedBlocks = shift ? sortShiftBlocksByStart(shift.blocks) : [];
-
   return (
     <Dialog open={open && Boolean(shift)} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[920px] max-h-[90vh] overflow-y-auto">
@@ -230,74 +303,7 @@ export function ShiftCompensationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {shift && (
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <HourlyRateTile key={shift.id} studioId={studioId} shift={shift} />
-              <div className="rounded-md border bg-muted/20 p-3">
-                <p className="text-xs font-medium text-muted-foreground">Planned</p>
-                <p className="text-lg font-semibold">{formatMoneyString(shift.planned_cost)}</p>
-              </div>
-              <div className="rounded-md border bg-muted/20 p-3">
-                <p className="text-xs font-medium text-muted-foreground">Actual</p>
-                {shift.actual_cost === null
-                  ? <p className="text-lg font-semibold text-muted-foreground">Pending</p>
-                  : <p className="text-lg font-semibold">{formatMoneyString(shift.actual_cost)}</p>}
-              </div>
-            </div>
-
-            <StudioTargetCompensationLineItemPanel
-              studioId={studioId}
-              targetType="STUDIO_SHIFT"
-              targetId={shift.id}
-              title="Shift adjustments"
-              description="Supplemental items attached to the whole shift."
-              invalidateShiftWorkflow
-            />
-
-            {sortedBlocks.map((block, index) => (
-              <section key={block.id} className="space-y-3 rounded-md border bg-background p-3">
-                <div className="space-y-1">
-                  <h3 className="text-sm font-medium">
-                    Block
-                    {' '}
-                    {index + 1}
-                    {' '}
-                    actuals
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDateTime(block.start_time)}
-                    {' '}
-                    -
-                    {' '}
-                    {formatDateTime(block.end_time)}
-                  </p>
-                </div>
-
-                <ShiftBlockActualsInput
-                  key={`${block.id}-${block.actual_start_time ?? 'none'}-${block.actual_end_time ?? 'none'}`}
-                  block={block}
-                  isSubmitting={updateBlockActuals.isPending}
-                  onSubmit={(payload) =>
-                    updateBlockActuals.mutateAsync({
-                      shiftId: shift.id,
-                      blockId: block.id,
-                      payload,
-                    })}
-                />
-
-                <StudioTargetCompensationLineItemPanel
-                  studioId={studioId}
-                  targetType="STUDIO_SHIFT_BLOCK"
-                  targetId={block.id}
-                  title={`Block ${index + 1} adjustments`}
-                  description="Supplemental items attached to this shift block."
-                  invalidateShiftWorkflow
-                />
-              </section>
-            ))}
-          </div>
-        )}
+        {shift ? <ShiftCompensationView studioId={studioId} shift={shift} /> : null}
       </DialogContent>
     </Dialog>
   );
