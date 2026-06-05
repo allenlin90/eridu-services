@@ -59,15 +59,19 @@ import { Route as StudiosStudioIdTaskTemplatesTemplateIdRouteImport } from './ro
 import { Route as StudiosStudioIdTaskReportsResultsRouteImport } from './routes/studios/$studioId/task-reports/results'
 import { Route as StudiosStudioIdTaskReportsBuilderRouteImport } from './routes/studios/$studioId/task-reports/builder'
 import { Route as StudiosStudioIdCreatorMappingShowIdRouteImport } from './routes/studios/$studioId/creator-mapping/$showId'
+import { Route as StudiosStudioIdShowsShowIdRouteRouteImport } from './routes/studios/$studioId/shows/$showId/route'
 import { Route as StudiosStudioIdShiftsShiftIdRouteRouteImport } from './routes/studios/$studioId/shifts/$shiftId/route'
 import { Route as StudiosStudioIdMembersMemberIdRouteRouteImport } from './routes/studios/$studioId/members/$memberId/route'
 import { Route as StudiosStudioIdCreatorsCreatorIdRouteRouteImport } from './routes/studios/$studioId/creators/$creatorId/route'
 import { Route as SystemStudiosStudioIdStudioRoomsIndexRouteImport } from './routes/system/studios/$studioId/studio-rooms/index'
 import { Route as SystemSchedulesScheduleIdSnapshotsIndexRouteImport } from './routes/system/schedules/$scheduleId/snapshots/index'
+import { Route as StudiosStudioIdShowsShowIdIndexRouteImport } from './routes/studios/$studioId/shows/$showId/index'
 import { Route as StudiosStudioIdShiftsShiftIdIndexRouteImport } from './routes/studios/$studioId/shifts/$shiftId/index'
 import { Route as StudiosStudioIdMembersMemberIdIndexRouteImport } from './routes/studios/$studioId/members/$memberId/index'
 import { Route as StudiosStudioIdCreatorsCreatorIdIndexRouteImport } from './routes/studios/$studioId/creators/$creatorId/index'
 import { Route as StudiosStudioIdTaskSetupShowIdTasksRouteImport } from './routes/studios/$studioId/task-setup/$showId/tasks'
+import { Route as StudiosStudioIdShowsShowIdCompensationRouteImport } from './routes/studios/$studioId/shows/$showId/compensation'
+import { Route as StudiosStudioIdShowsShowIdActualsRouteImport } from './routes/studios/$studioId/shows/$showId/actuals'
 import { Route as StudiosStudioIdShiftsShiftIdCompensationRouteImport } from './routes/studios/$studioId/shifts/$shiftId/compensation'
 import { Route as StudiosStudioIdMembersMemberIdCompensationsRouteImport } from './routes/studios/$studioId/members/$memberId/compensations'
 import { Route as StudiosStudioIdCreatorsCreatorIdCompensationsRouteImport } from './routes/studios/$studioId/creators/$creatorId/compensations'
@@ -348,6 +352,12 @@ const StudiosStudioIdCreatorMappingShowIdRoute =
     path: '/$showId',
     getParentRoute: () => StudiosStudioIdCreatorMappingRoute,
   } as any)
+const StudiosStudioIdShowsShowIdRouteRoute =
+  StudiosStudioIdShowsShowIdRouteRouteImport.update({
+    id: '/$showId',
+    path: '/$showId',
+    getParentRoute: () => StudiosStudioIdShowsRoute,
+  } as any)
 const StudiosStudioIdShiftsShiftIdRouteRoute =
   StudiosStudioIdShiftsShiftIdRouteRouteImport.update({
     id: '/$shiftId',
@@ -378,6 +388,12 @@ const SystemSchedulesScheduleIdSnapshotsIndexRoute =
     path: '/schedules/$scheduleId/snapshots/',
     getParentRoute: () => SystemRouteRoute,
   } as any)
+const StudiosStudioIdShowsShowIdIndexRoute =
+  StudiosStudioIdShowsShowIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => StudiosStudioIdShowsShowIdRouteRoute,
+  } as any)
 const StudiosStudioIdShiftsShiftIdIndexRoute =
   StudiosStudioIdShiftsShiftIdIndexRouteImport.update({
     id: '/',
@@ -401,6 +417,18 @@ const StudiosStudioIdTaskSetupShowIdTasksRoute =
     id: '/$showId/tasks',
     path: '/$showId/tasks',
     getParentRoute: () => StudiosStudioIdTaskSetupRoute,
+  } as any)
+const StudiosStudioIdShowsShowIdCompensationRoute =
+  StudiosStudioIdShowsShowIdCompensationRouteImport.update({
+    id: '/compensation',
+    path: '/compensation',
+    getParentRoute: () => StudiosStudioIdShowsShowIdRouteRoute,
+  } as any)
+const StudiosStudioIdShowsShowIdActualsRoute =
+  StudiosStudioIdShowsShowIdActualsRouteImport.update({
+    id: '/actuals',
+    path: '/actuals',
+    getParentRoute: () => StudiosStudioIdShowsShowIdRouteRoute,
   } as any)
 const StudiosStudioIdShiftsShiftIdCompensationRoute =
   StudiosStudioIdShiftsShiftIdCompensationRouteImport.update({
@@ -460,6 +488,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/creators/$creatorId': typeof StudiosStudioIdCreatorsCreatorIdRouteRouteWithChildren
   '/studios/$studioId/members/$memberId': typeof StudiosStudioIdMembersMemberIdRouteRouteWithChildren
   '/studios/$studioId/shifts/$shiftId': typeof StudiosStudioIdShiftsShiftIdRouteRouteWithChildren
+  '/studios/$studioId/shows/$showId': typeof StudiosStudioIdShowsShowIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
   '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
@@ -478,10 +507,13 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/creators/$creatorId/compensations': typeof StudiosStudioIdCreatorsCreatorIdCompensationsRoute
   '/studios/$studioId/members/$memberId/compensations': typeof StudiosStudioIdMembersMemberIdCompensationsRoute
   '/studios/$studioId/shifts/$shiftId/compensation': typeof StudiosStudioIdShiftsShiftIdCompensationRoute
+  '/studios/$studioId/shows/$showId/actuals': typeof StudiosStudioIdShowsShowIdActualsRoute
+  '/studios/$studioId/shows/$showId/compensation': typeof StudiosStudioIdShowsShowIdCompensationRoute
   '/studios/$studioId/task-setup/$showId/tasks': typeof StudiosStudioIdTaskSetupShowIdTasksRoute
   '/studios/$studioId/creators/$creatorId/': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
   '/studios/$studioId/members/$memberId/': typeof StudiosStudioIdMembersMemberIdIndexRoute
   '/studios/$studioId/shifts/$shiftId/': typeof StudiosStudioIdShiftsShiftIdIndexRoute
+  '/studios/$studioId/shows/$showId/': typeof StudiosStudioIdShowsShowIdIndexRoute
   '/system/schedules/$scheduleId/snapshots': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -530,10 +562,13 @@ export interface FileRoutesByTo {
   '/studios/$studioId/creators/$creatorId/compensations': typeof StudiosStudioIdCreatorsCreatorIdCompensationsRoute
   '/studios/$studioId/members/$memberId/compensations': typeof StudiosStudioIdMembersMemberIdCompensationsRoute
   '/studios/$studioId/shifts/$shiftId/compensation': typeof StudiosStudioIdShiftsShiftIdCompensationRoute
+  '/studios/$studioId/shows/$showId/actuals': typeof StudiosStudioIdShowsShowIdActualsRoute
+  '/studios/$studioId/shows/$showId/compensation': typeof StudiosStudioIdShowsShowIdCompensationRoute
   '/studios/$studioId/task-setup/$showId/tasks': typeof StudiosStudioIdTaskSetupShowIdTasksRoute
   '/studios/$studioId/creators/$creatorId': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
   '/studios/$studioId/members/$memberId': typeof StudiosStudioIdMembersMemberIdIndexRoute
   '/studios/$studioId/shifts/$shiftId': typeof StudiosStudioIdShiftsShiftIdIndexRoute
+  '/studios/$studioId/shows/$showId': typeof StudiosStudioIdShowsShowIdIndexRoute
   '/system/schedules/$scheduleId/snapshots': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -577,6 +612,7 @@ export interface FileRoutesById {
   '/studios/$studioId/creators/$creatorId': typeof StudiosStudioIdCreatorsCreatorIdRouteRouteWithChildren
   '/studios/$studioId/members/$memberId': typeof StudiosStudioIdMembersMemberIdRouteRouteWithChildren
   '/studios/$studioId/shifts/$shiftId': typeof StudiosStudioIdShiftsShiftIdRouteRouteWithChildren
+  '/studios/$studioId/shows/$showId': typeof StudiosStudioIdShowsShowIdRouteRouteWithChildren
   '/studios/$studioId/creator-mapping/$showId': typeof StudiosStudioIdCreatorMappingShowIdRoute
   '/studios/$studioId/task-reports/builder': typeof StudiosStudioIdTaskReportsBuilderRoute
   '/studios/$studioId/task-reports/results': typeof StudiosStudioIdTaskReportsResultsRoute
@@ -595,10 +631,13 @@ export interface FileRoutesById {
   '/studios/$studioId/creators/$creatorId/compensations': typeof StudiosStudioIdCreatorsCreatorIdCompensationsRoute
   '/studios/$studioId/members/$memberId/compensations': typeof StudiosStudioIdMembersMemberIdCompensationsRoute
   '/studios/$studioId/shifts/$shiftId/compensation': typeof StudiosStudioIdShiftsShiftIdCompensationRoute
+  '/studios/$studioId/shows/$showId/actuals': typeof StudiosStudioIdShowsShowIdActualsRoute
+  '/studios/$studioId/shows/$showId/compensation': typeof StudiosStudioIdShowsShowIdCompensationRoute
   '/studios/$studioId/task-setup/$showId/tasks': typeof StudiosStudioIdTaskSetupShowIdTasksRoute
   '/studios/$studioId/creators/$creatorId/': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
   '/studios/$studioId/members/$memberId/': typeof StudiosStudioIdMembersMemberIdIndexRoute
   '/studios/$studioId/shifts/$shiftId/': typeof StudiosStudioIdShiftsShiftIdIndexRoute
+  '/studios/$studioId/shows/$showId/': typeof StudiosStudioIdShowsShowIdIndexRoute
   '/system/schedules/$scheduleId/snapshots/': typeof SystemSchedulesScheduleIdSnapshotsIndexRoute
   '/system/studios/$studioId/studio-rooms/': typeof SystemStudiosStudioIdStudioRoomsIndexRoute
 }
@@ -643,6 +682,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId'
     | '/studios/$studioId/members/$memberId'
     | '/studios/$studioId/shifts/$shiftId'
+    | '/studios/$studioId/shows/$showId'
     | '/studios/$studioId/creator-mapping/$showId'
     | '/studios/$studioId/task-reports/builder'
     | '/studios/$studioId/task-reports/results'
@@ -661,10 +701,13 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId/compensations'
     | '/studios/$studioId/members/$memberId/compensations'
     | '/studios/$studioId/shifts/$shiftId/compensation'
+    | '/studios/$studioId/shows/$showId/actuals'
+    | '/studios/$studioId/shows/$showId/compensation'
     | '/studios/$studioId/task-setup/$showId/tasks'
     | '/studios/$studioId/creators/$creatorId/'
     | '/studios/$studioId/members/$memberId/'
     | '/studios/$studioId/shifts/$shiftId/'
+    | '/studios/$studioId/shows/$showId/'
     | '/system/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   fileRoutesByTo: FileRoutesByTo
@@ -713,10 +756,13 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId/compensations'
     | '/studios/$studioId/members/$memberId/compensations'
     | '/studios/$studioId/shifts/$shiftId/compensation'
+    | '/studios/$studioId/shows/$showId/actuals'
+    | '/studios/$studioId/shows/$showId/compensation'
     | '/studios/$studioId/task-setup/$showId/tasks'
     | '/studios/$studioId/creators/$creatorId'
     | '/studios/$studioId/members/$memberId'
     | '/studios/$studioId/shifts/$shiftId'
+    | '/studios/$studioId/shows/$showId'
     | '/system/schedules/$scheduleId/snapshots'
     | '/system/studios/$studioId/studio-rooms'
   id:
@@ -759,6 +805,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId'
     | '/studios/$studioId/members/$memberId'
     | '/studios/$studioId/shifts/$shiftId'
+    | '/studios/$studioId/shows/$showId'
     | '/studios/$studioId/creator-mapping/$showId'
     | '/studios/$studioId/task-reports/builder'
     | '/studios/$studioId/task-reports/results'
@@ -777,10 +824,13 @@ export interface FileRouteTypes {
     | '/studios/$studioId/creators/$creatorId/compensations'
     | '/studios/$studioId/members/$memberId/compensations'
     | '/studios/$studioId/shifts/$shiftId/compensation'
+    | '/studios/$studioId/shows/$showId/actuals'
+    | '/studios/$studioId/shows/$showId/compensation'
     | '/studios/$studioId/task-setup/$showId/tasks'
     | '/studios/$studioId/creators/$creatorId/'
     | '/studios/$studioId/members/$memberId/'
     | '/studios/$studioId/shifts/$shiftId/'
+    | '/studios/$studioId/shows/$showId/'
     | '/system/schedules/$scheduleId/snapshots/'
     | '/system/studios/$studioId/studio-rooms/'
   fileRoutesById: FileRoutesById
@@ -1145,6 +1195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdCreatorMappingShowIdRouteImport
       parentRoute: typeof StudiosStudioIdCreatorMappingRoute
     }
+    '/studios/$studioId/shows/$showId': {
+      id: '/studios/$studioId/shows/$showId'
+      path: '/$showId'
+      fullPath: '/studios/$studioId/shows/$showId'
+      preLoaderRoute: typeof StudiosStudioIdShowsShowIdRouteRouteImport
+      parentRoute: typeof StudiosStudioIdShowsRoute
+    }
     '/studios/$studioId/shifts/$shiftId': {
       id: '/studios/$studioId/shifts/$shiftId'
       path: '/$shiftId'
@@ -1180,6 +1237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemSchedulesScheduleIdSnapshotsIndexRouteImport
       parentRoute: typeof SystemRouteRoute
     }
+    '/studios/$studioId/shows/$showId/': {
+      id: '/studios/$studioId/shows/$showId/'
+      path: '/'
+      fullPath: '/studios/$studioId/shows/$showId/'
+      preLoaderRoute: typeof StudiosStudioIdShowsShowIdIndexRouteImport
+      parentRoute: typeof StudiosStudioIdShowsShowIdRouteRoute
+    }
     '/studios/$studioId/shifts/$shiftId/': {
       id: '/studios/$studioId/shifts/$shiftId/'
       path: '/'
@@ -1207,6 +1271,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/studios/$studioId/task-setup/$showId/tasks'
       preLoaderRoute: typeof StudiosStudioIdTaskSetupShowIdTasksRouteImport
       parentRoute: typeof StudiosStudioIdTaskSetupRoute
+    }
+    '/studios/$studioId/shows/$showId/compensation': {
+      id: '/studios/$studioId/shows/$showId/compensation'
+      path: '/compensation'
+      fullPath: '/studios/$studioId/shows/$showId/compensation'
+      preLoaderRoute: typeof StudiosStudioIdShowsShowIdCompensationRouteImport
+      parentRoute: typeof StudiosStudioIdShowsShowIdRouteRoute
+    }
+    '/studios/$studioId/shows/$showId/actuals': {
+      id: '/studios/$studioId/shows/$showId/actuals'
+      path: '/actuals'
+      fullPath: '/studios/$studioId/shows/$showId/actuals'
+      preLoaderRoute: typeof StudiosStudioIdShowsShowIdActualsRouteImport
+      parentRoute: typeof StudiosStudioIdShowsShowIdRouteRoute
     }
     '/studios/$studioId/shifts/$shiftId/compensation': {
       id: '/studios/$studioId/shifts/$shiftId/compensation'
@@ -1354,11 +1432,34 @@ const StudiosStudioIdShiftsRouteWithChildren =
     StudiosStudioIdShiftsRouteChildren,
   )
 
+interface StudiosStudioIdShowsShowIdRouteRouteChildren {
+  StudiosStudioIdShowsShowIdActualsRoute: typeof StudiosStudioIdShowsShowIdActualsRoute
+  StudiosStudioIdShowsShowIdCompensationRoute: typeof StudiosStudioIdShowsShowIdCompensationRoute
+  StudiosStudioIdShowsShowIdIndexRoute: typeof StudiosStudioIdShowsShowIdIndexRoute
+}
+
+const StudiosStudioIdShowsShowIdRouteRouteChildren: StudiosStudioIdShowsShowIdRouteRouteChildren =
+  {
+    StudiosStudioIdShowsShowIdActualsRoute:
+      StudiosStudioIdShowsShowIdActualsRoute,
+    StudiosStudioIdShowsShowIdCompensationRoute:
+      StudiosStudioIdShowsShowIdCompensationRoute,
+    StudiosStudioIdShowsShowIdIndexRoute: StudiosStudioIdShowsShowIdIndexRoute,
+  }
+
+const StudiosStudioIdShowsShowIdRouteRouteWithChildren =
+  StudiosStudioIdShowsShowIdRouteRoute._addFileChildren(
+    StudiosStudioIdShowsShowIdRouteRouteChildren,
+  )
+
 interface StudiosStudioIdShowsRouteChildren {
+  StudiosStudioIdShowsShowIdRouteRoute: typeof StudiosStudioIdShowsShowIdRouteRouteWithChildren
   StudiosStudioIdShowsIndexRoute: typeof StudiosStudioIdShowsIndexRoute
 }
 
 const StudiosStudioIdShowsRouteChildren: StudiosStudioIdShowsRouteChildren = {
+  StudiosStudioIdShowsShowIdRouteRoute:
+    StudiosStudioIdShowsShowIdRouteRouteWithChildren,
   StudiosStudioIdShowsIndexRoute: StudiosStudioIdShowsIndexRoute,
 }
 

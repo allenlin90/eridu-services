@@ -6,7 +6,7 @@ can't share a link to one entity's edit surface or step through edits with
 back/forward — and they constrain richer detail views. Each conversion ships as
 its own scoped PR. `task-templates/$templateId.tsx` is the original precedent.
 
-> Status: **14a (creator) shipped**; **14b (member) shipped**; **14d (shift) shipped**; 14c planned. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
+> Status: **all conversions shipped** — 14a (creator), 14b (member), 14c (show), 14d (shift). PR 14 closed. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
 
 ## Route map
 
@@ -14,7 +14,7 @@ its own scoped PR. `task-templates/$templateId.tsx` is the original precedent.
 | --- | ---------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- | -------- |
 | 14a | `edit-studio-creator-dialog` + creator compensation view   | `/studios/:studioId/creators/:creatorId`      | Compensation tab: `date_from`, `date_to`. Profile tab: none.   | ✅ Shipped |
 | 14b | `edit-member-dialog`                                        | `/studios/:studioId/members/:memberId`        | Compensation tab: `date_from`, `date_to` (mirror creator).     | ✅ Shipped |
-| 14c | `show-update-dialog`                                        | `/studios/:studioId/shows/:showId`            | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
+| 14c | studio Edit Show dialog (on `StudioShowManagementForm`)     | `/studios/:studioId/shows/:showId`            | None. Details / Actuals / Compensation are direct share links. | ✅ Shipped |
 | 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`    | `/studios/:studioId/shifts/:shiftId`          | None. Profile and Compensation tabs are direct share links.    | ✅ Shipped |
 
 **Migration order**: 14a → 14b → 14c → 14d. No row depends on a later row.
@@ -59,8 +59,11 @@ Rules every conversion follows:
 5. **Reuse payload builders**: e.g. `buildUpdateStudioCreatorRosterPayload`; never
    submit raw form state.
 6. Each tab is its own route so back/forward and share-links work natively.
-7. The first tab is named **Profile**, not Defaults. It may edit operational defaults
-   for that entity, but the user-facing route is a profile/detail page.
+7. The first tab is named for the entity kind: **Profile** for identity/people
+   entities (creator, member), **Details** for record entities (show). It may edit
+   operational defaults, but the user-facing route is a profile/detail page — not
+   "Defaults". Shows additionally split operational metrics into an **Actuals** tab
+   and costs into a **Compensation** tab (see 14c).
 8. Use an in-content header like
    `task-setup/$showId/tasks` (`ShowHeaderSection`): compact icon back link, title /
    subtitle, and a small responsive metadata panel. Avoid putting the back action in
@@ -98,7 +101,12 @@ Rules every conversion follows:
   (`@eridu/ui` or a domain-shared package) so the studio P2 detail page and the
   `erify_creators` P3 self-view consume one widget. Deferred until that convergence —
   intentionally **not** part of the 14a pilot.
-- **14c** continues the same route pattern for shows.
+- **14c** continued the same route pattern for shows (Details / Actuals / Compensation) — shipped.
+- **Show route convergence (PR 21.7)**: the 14c Compensation tab embeds `ShowCreatorList`,
+  the same surface still mounted at `/creator-mapping/:showId`. PR 21.7 (post-14c "Route
+  Revamp") converges them: rewire the `/creator-mapping/:showId` entry points (creator-mapping
+  list, task-setup deep links) to `/shows/:showId/compensation` and **remove** the legacy route
+  — a clean rename, **no redirect shim** — alongside the same treatment for `/task-setup/:showId/tasks`.
 
 ## 14b — member detail (shipped)
 
@@ -147,3 +155,43 @@ Rules every conversion follows:
 | Edit profile (Save)                |  ✅   |   ✅    |
 | See / open Compensation tab        |  ✅   |   ✅    |
 | Edit compensation / actuals fields |  ✅   |   ✅    |
+
+## 14c — show detail (shipped)
+
+Shows are **record entities**, not people, so the first tab is **Details** (not "Profile").
+Operational metrics and costs split into their own tabs, per a product decision: **Details**
+(attributes) · **Actuals** (operational metrics) · **Compensation** (costs).
+
+- **Route**: `/studios/:studioId/shows/:showId`
+  - `route.tsx` — layout: fetches the show via `useStudioShow` (`GET :showId`), renders the
+    `ShowDetailHeader` (icon back to shows + name + status/client/schedule/actuals badges) and
+    a `<Link>` tab strip (Details | Actuals | Compensation).
+  - `index.tsx` — **Details** tab: `StudioShowManagementForm` (edit mode) in a card. Reuses the
+    list dialog's submit transform (`external_id` create-only; `schedule_id` empty→unlink). Save
+    stays on the page (the `useUpdateStudioShow` mutation updates the detail cache + toasts);
+    Cancel resets via remount.
+  - `actuals.tsx` — **Actuals** tab: `ShowActualsForm` (actual start/end). The form body was
+    **extracted** from `show-actuals-dialog.tsx`; the task-setup `ShowActualsDialog` quick-action
+    now consumes the same `ShowActualsForm`, so there is one implementation, two shells.
+  - `compensation.tsx` — **Compensation** tab: reuses `ShowCreatorList` (per-show creator
+    assignment + per-creator compensation). The inner `ShowCreatorCompensationDialog` and
+    `AddCreatorDialog` stay dialogs (sub-edits, out of scope).
+- **Backend**: none. `GET` / `PATCH /studios/:studioId/shows/:showId` already exist and are
+  studio-scoped; `GET` returns `StudioShowDetail` (core fields + `platforms` + actuals).
+- **Entry points**: the show roster row **Edit** action navigates to the Details tab (mirrors the
+  14d shift table). Create and delete remain dialogs (inline-create + destructive, out of scope).
+- **Out of scope / deferred to PR 21.7**: Performance + Submitted Tasks tabs, and converging
+  `/creator-mapping/:showId` into `/shows/:showId/compensation` (see Follow-ups — clean rename, no
+  redirect shim).
+
+### Authorization
+
+No change from today's dialogs — the whole subtree inherits `shows.tsx`'s `routeKey="shows"` guard.
+
+| Capability                         | ADMIN | MANAGER |
+| ---------------------------------- | :---: | :-----: |
+| Reach `/shows/:showId`             |  ✅   |   ✅    |
+| `GET :showId` (read detail)        |  ✅   |   ✅    |
+| Edit Details (Save)                |  ✅   |   ✅    |
+| Edit Actuals (Save)                |  ✅   |   ✅    |
+| Manage Compensation / creators     |  ✅   |   ✅    |
