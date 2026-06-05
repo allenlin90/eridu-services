@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getStudioMemberCompensations } from '../members';
+import { getStudioMember, getStudioMemberCompensations } from '../members';
 
 import { apiClient } from '@/lib/api/client';
 
@@ -11,6 +11,17 @@ vi.mock('@/lib/api/client', () => ({
 }));
 
 describe('studio member api', () => {
+  it('fetches a single member from the member detail route', async () => {
+    (apiClient.get as any).mockResolvedValue({ data: { membership_id: 'smb_456' } });
+
+    await getStudioMember('std_123', 'smb_456', { signal: undefined });
+
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/studios/std_123/members/smb_456',
+      { signal: undefined },
+    );
+  });
+
   it('fetches member compensations from the member-scoped route', async () => {
     (apiClient.get as any).mockResolvedValue({ data: { shifts: [] } });
 

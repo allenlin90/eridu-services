@@ -7,12 +7,6 @@ import type {
 } from '@eridu/api-types/memberships';
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   Input,
   Label,
   Select,
@@ -26,25 +20,19 @@ import { useUpdateStudioMember } from '../api/members';
 import { buildStudioMemberUpdatePayload } from '../lib/build-studio-member-update-payload';
 import { ROLE_OPTIONS } from '../lib/roles';
 
-type EditMemberDialogProps = {
-  studioId: string;
-  member: StudioMemberResponse | null;
-  isSelf: boolean;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
-function EditMemberForm({
-  studioId,
-  member,
-  isSelf,
-  onOpenChange,
-}: {
+type MemberDefaultsFormProps = {
   studioId: string;
   member: StudioMemberResponse;
   isSelf: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
+  canEdit: boolean;
+};
+
+export function MemberDefaultsForm({
+  studioId,
+  member,
+  isSelf,
+  canEdit,
+}: MemberDefaultsFormProps) {
   const [role, setRole] = useState(member.role);
   const [baseHourlyRate, setBaseHourlyRate] = useState(member.base_hourly_rate ?? '');
   const updateMutation = useUpdateStudioMember(studioId);
@@ -66,22 +54,24 @@ function EditMemberForm({
         payload,
       });
       toast.success('Member updated');
-      onOpenChange(false);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err?.response?.data?.message ?? 'Failed to update member');
     }
   };
 
+  const fieldsDisabled = !canEdit || updateMutation.isPending;
+  const roleDisabled = fieldsDisabled || isSelf;
+
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+    <form onSubmit={(event) => void handleSubmit(event)} className="max-w-md space-y-4">
       <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
         Roster edits update the default for future shifts only. Existing shift snapshots keep
         their saved hourly rate; edit shift compensation to change a scheduled shift.
       </p>
       <div className="space-y-1.5">
         <Label htmlFor="edit-role">Role</Label>
-        <Select value={role} onValueChange={setRole} disabled={isSelf}>
+        <Select value={role} onValueChange={setRole} disabled={roleDisabled}>
           <SelectTrigger id="edit-role">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
@@ -93,9 +83,11 @@ function EditMemberForm({
             ))}
           </SelectContent>
         </Select>
-        {isSelf && (
-          <p className="text-xs text-muted-foreground">You cannot change your own role.</p>
-        )}
+        {isSelf
+          ? (
+              <p className="text-xs text-muted-foreground">You cannot change your own role.</p>
+            )
+          : null}
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="edit-rate">Base Hourly Rate ($)</Label>
@@ -106,49 +98,24 @@ function EditMemberForm({
           step="0.01"
           placeholder={member.base_hourly_rate === null ? 'Not set' : undefined}
           value={baseHourlyRate}
-          onChange={(e) => setBaseHourlyRate(e.target.value)}
+          onChange={(event) => setBaseHourlyRate(event.target.value)}
           required={member.base_hourly_rate !== null && member.base_hourly_rate !== undefined}
+          disabled={fieldsDisabled}
         />
       </div>
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={updateMutation.isPending}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={updateMutation.isPending}>
-          {updateMutation.isPending ? 'Saving...' : 'Save'}
-        </Button>
-      </DialogFooter>
+      {canEdit
+        ? (
+            <div className="flex justify-end">
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          )
+        : (
+            <p className="text-sm text-muted-foreground">
+              You have read-only access to member defaults.
+            </p>
+          )}
     </form>
-  );
-}
-
-export function EditMemberDialog({ studioId, member, isSelf, open, onOpenChange }: EditMemberDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
-        <DialogHeader>
-          <DialogTitle>Edit Member</DialogTitle>
-          <DialogDescription>
-            Update role and hourly rate for
-            {' '}
-            {member?.user_name ?? 'this member'}
-            .
-          </DialogDescription>
-        </DialogHeader>
-        {member && (
-          <EditMemberForm
-            studioId={studioId}
-            member={member}
-            isSelf={isSelf}
-            onOpenChange={onOpenChange}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
   );
 }

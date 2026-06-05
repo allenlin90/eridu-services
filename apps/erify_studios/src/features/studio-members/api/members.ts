@@ -29,6 +29,8 @@ export const studioMemberKeys = {
   listPrefix: (studioId: string) => [...studioMemberKeys.lists(), studioId] as const,
   list: (studioId: string, params?: GetStudioMembersParams) =>
     [...studioMemberKeys.listPrefix(studioId), params] as const,
+  detail: (studioId: string, membershipId: string) =>
+    [...studioMemberKeys.all, 'detail', studioId, membershipId] as const,
   compensation: (
     studioId: string,
     membershipId: string,
@@ -55,6 +57,18 @@ export async function getStudioMembers(
       },
       signal: options?.signal,
     },
+  );
+  return data;
+}
+
+export async function getStudioMember(
+  studioId: string,
+  membershipId: string,
+  options?: { signal?: AbortSignal },
+): Promise<StudioMemberResponse> {
+  const { data } = await apiClient.get<StudioMemberResponse>(
+    `/studios/${studioId}/members/${membershipId}`,
+    { signal: options?.signal },
   );
   return data;
 }
@@ -123,6 +137,19 @@ export function useStudioMembers(
   });
 }
 
+export function useStudioMember(
+  studioId: string,
+  membershipId: string,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: studioMemberKeys.detail(studioId, membershipId),
+    queryFn: ({ signal }) => getStudioMember(studioId, membershipId, { signal }),
+    enabled: Boolean(studioId && membershipId) && (options?.enabled ?? true),
+    staleTime: 20_000,
+  });
+}
+
 export function useAddStudioMember(studioId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -140,9 +167,12 @@ export function useUpdateStudioMember(studioId: string) {
   return useMutation({
     mutationFn: ({ membershipId, payload }: { membershipId: string; payload: UpdateStudioMemberRequest }) =>
       updateStudioMember(studioId, membershipId, payload),
-    onSuccess: () => {
+    onSuccess: (_data, { membershipId }) => {
       void queryClient.invalidateQueries({
         queryKey: studioMemberKeys.listPrefix(studioId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: studioMemberKeys.detail(studioId, membershipId),
       });
     },
   });

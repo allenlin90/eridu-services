@@ -5,6 +5,7 @@ import { studioMemberCompensationResponseSchema } from '@eridu/api-types/members
 
 import { StudioMembersController } from './studio-members.controller';
 
+import { studioMemberDto } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 
@@ -106,6 +107,35 @@ describe('studioMembersController', () => {
         baseHourlyRate: '25.00',
         studioUid: studioId,
       });
+    });
+  });
+
+  describe('getMember', () => {
+    it('uses the transformer DTO so serialization transforms the raw member once', () => {
+      const serializerSchema = Reflect.getMetadata(
+        'ZOD_SERIALIZER_DTO_OPTIONS',
+        StudioMembersController.prototype.getMember,
+      );
+
+      expect(serializerSchema).toBe(studioMemberDto);
+    });
+
+    it('returns the raw studio member for the decorator to serialize', async () => {
+      studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(mockMembership as any);
+
+      const result = await controller.getMember('std_test123', 'smb_test123');
+
+      expect(studioMembershipService.findStudioMemberByUidAndStudio).toHaveBeenCalledWith(
+        'smb_test123',
+        'std_test123',
+      );
+      expect(result).toBe(mockMembership);
+    });
+
+    it('throws 404 when the membership is outside the studio', async () => {
+      studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(null);
+
+      await expect(controller.getMember('std_test123', 'smb_missing')).rejects.toThrow();
     });
   });
 

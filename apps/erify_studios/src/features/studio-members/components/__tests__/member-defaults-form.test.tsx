@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { STUDIO_ROLE, type StudioMemberResponse } from '@eridu/api-types/memberships';
 
-import { EditMemberDialog } from '../edit-member-dialog';
+import { MemberDefaultsForm } from '../member-defaults-form';
 
 const mockUseUpdateStudioMember = vi.fn();
 
@@ -12,12 +12,6 @@ vi.mock('@eridu/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type={props.type ?? 'button'} {...props}>{children}</button>
   ),
-  Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div>{children}</div> : null),
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   Label: ({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) => (
     <label htmlFor={htmlFor}>{children}</label>
@@ -53,7 +47,7 @@ function createMember(overrides: Partial<StudioMemberResponse> = {}): StudioMemb
   };
 }
 
-describe('editMemberDialog copy', () => {
+describe('memberDefaultsForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -63,21 +57,26 @@ describe('editMemberDialog copy', () => {
     });
   });
 
-  it('warns that member roster rate edits do not rewrite shift snapshots', () => {
-    render(
-      <EditMemberDialog
-        studioId="std_1"
-        member={createMember()}
-        isSelf={false}
-        open
-        onOpenChange={vi.fn()}
-      />,
-    );
+  it('warns that member roster edits do not rewrite shift snapshots', () => {
+    render(<MemberDefaultsForm studioId="std_1" member={createMember()} isSelf={false} canEdit />);
 
     expect(
       screen.getByText(
         'Roster edits update the default for future shifts only. Existing shift snapshots keep their saved hourly rate; edit shift compensation to change a scheduled shift.',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('shows the Save action for editors', () => {
+    render(<MemberDefaultsForm studioId="std_1" member={createMember()} isSelf={false} canEdit />);
+
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('renders read-only without a Save action for non-editors', () => {
+    render(<MemberDefaultsForm studioId="std_1" member={createMember()} isSelf={false} canEdit={false} />);
+
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.getByText('You have read-only access to member defaults.')).toBeInTheDocument();
   });
 });

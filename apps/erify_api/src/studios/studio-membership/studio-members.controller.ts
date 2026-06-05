@@ -85,6 +85,25 @@ export class StudioMembersController extends BaseStudioController {
     });
   }
 
+  @ApiOperation({ summary: 'Get a single active studio member with user details' })
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @Get(':memberId')
+  @ReadBurstThrottle()
+  @ZodResponse(studioMemberDto)
+  async getMember(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('memberId', new UidValidationPipe(StudioMembershipService.UID_PREFIX, 'Membership')) memberId: string,
+  ) {
+    const member = await this.studioMembershipService.findStudioMemberByUidAndStudio(
+      memberId,
+      studioId,
+    );
+
+    this.ensureResourceExists(member, 'Membership', memberId);
+
+    return member;
+  }
+
   @ApiOperation({ summary: 'Update a studio member role or hourly rate' })
   @StudioProtected([STUDIO_ROLE.ADMIN])
   @Patch(':membershipId')

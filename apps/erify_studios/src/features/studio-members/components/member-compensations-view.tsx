@@ -45,6 +45,8 @@ export type MemberCompensationsViewProps = {
    * admin-only, so showing this on the member self-view leads to access-denied.
    */
   enableShiftDrillIn?: boolean;
+  /** Render only the compensation content when hosted inside an entity detail layout. */
+  showChrome?: boolean;
 };
 
 function formatMoney(value: string | null) {
@@ -73,6 +75,7 @@ export function MemberCompensationsView({
   backLink,
   refreshAriaLabel,
   enableShiftDrillIn = false,
+  showChrome = true,
 }: MemberCompensationsViewProps) {
   const summary = data?.summary;
   const shifts = data?.shifts ?? [];
@@ -83,6 +86,135 @@ export function MemberCompensationsView({
     label: 'Members',
   };
   const columnCount = enableShiftDrillIn ? 7 : 6;
+
+  const content = (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <DatePickerWithRange date={dateRange} setDate={onDateRangeChange} />
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9"
+          onClick={onRefresh}
+          disabled={isFetching}
+          aria-label={refreshAriaLabel ?? 'Refresh member compensations'}
+        >
+          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Planned</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-semibold">
+            {formatMoney(summary?.total_planned_cost ?? '0.00')}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Actual</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-semibold">
+            {formatMoney(summary?.total_actual_cost ?? '0.00')}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Pending</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-semibold">
+            {pendingCount}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Hourly Rate</TableHead>
+              <TableHead>Planned</TableHead>
+              <TableHead>Actual</TableHead>
+              <TableHead>Blocks</TableHead>
+              {enableShiftDrillIn && (
+                <TableHead className="w-12 text-right">Open</TableHead>
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={columnCount} className="text-sm text-muted-foreground">
+                  Loading compensations...
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && isError && (
+              <TableRow>
+                <TableCell colSpan={columnCount} className="text-sm text-destructive">
+                  Failed to load member compensations.
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && !isError && shifts.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={columnCount} className="text-sm text-muted-foreground">
+                  No shifts in this range.
+                </TableCell>
+              </TableRow>
+            )}
+            {!isError && shifts.map((shift) => (
+              <TableRow key={shift.shift_id}>
+                <TableCell>{shift.date}</TableCell>
+                <TableCell>
+                  <Badge variant={shiftStatusBadgeVariant(shift.status)}>
+                    {shift.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{formatMoney(shift.hourly_rate)}</TableCell>
+                <TableCell>{formatMoney(shift.planned_cost)}</TableCell>
+                <TableCell>{formatMoney(shift.actual_cost)}</TableCell>
+                <TableCell>{shift.blocks.length}</TableCell>
+                {enableShiftDrillIn && (
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Open shift ${shift.date}`}
+                      asChild
+                    >
+                      <Link
+                        to="/studios/$studioId/shifts"
+                        params={{ studioId }}
+                        search={{
+                          view: 'table',
+                          page: 1,
+                          limit: 20,
+                          user_id: data?.user_id,
+                          date_from: shift.date,
+                          date_to: shift.date,
+                        }}
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+
+  if (!showChrome) {
+    return content;
+  }
 
   return (
     <PageLayout
@@ -97,128 +229,7 @@ export function MemberCompensationsView({
         </Button>
       )}
     >
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <DatePickerWithRange date={dateRange} setDate={onDateRangeChange} />
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9"
-            onClick={onRefresh}
-            disabled={isFetching}
-            aria-label={refreshAriaLabel ?? 'Refresh member compensations'}
-          >
-            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Planned</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold">
-              {formatMoney(summary?.total_planned_cost ?? '0.00')}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Actual</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold">
-              {formatMoney(summary?.total_actual_cost ?? '0.00')}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Pending</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold">
-              {pendingCount}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Hourly Rate</TableHead>
-                <TableHead>Planned</TableHead>
-                <TableHead>Actual</TableHead>
-                <TableHead>Blocks</TableHead>
-                {enableShiftDrillIn && (
-                  <TableHead className="w-12 text-right">Open</TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={columnCount} className="text-sm text-muted-foreground">
-                    Loading compensations...
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoading && isError && (
-                <TableRow>
-                  <TableCell colSpan={columnCount} className="text-sm text-destructive">
-                    Failed to load member compensations.
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoading && !isError && shifts.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={columnCount} className="text-sm text-muted-foreground">
-                    No shifts in this range.
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isError && shifts.map((shift) => (
-                <TableRow key={shift.shift_id}>
-                  <TableCell>{shift.date}</TableCell>
-                  <TableCell>
-                    <Badge variant={shiftStatusBadgeVariant(shift.status)}>
-                      {shift.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatMoney(shift.hourly_rate)}</TableCell>
-                  <TableCell>{formatMoney(shift.planned_cost)}</TableCell>
-                  <TableCell>{formatMoney(shift.actual_cost)}</TableCell>
-                  <TableCell>{shift.blocks.length}</TableCell>
-                  {enableShiftDrillIn && (
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Open shift ${shift.date}`}
-                        asChild
-                      >
-                        <Link
-                          to="/studios/$studioId/shifts"
-                          params={{ studioId }}
-                          search={{
-                            view: 'table',
-                            page: 1,
-                            limit: 20,
-                            user_id: data?.user_id,
-                            date_from: shift.date,
-                            date_to: shift.date,
-                          }}
-                        >
-                          <ArrowUpRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      {content}
     </PageLayout>
   );
 }
