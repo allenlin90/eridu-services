@@ -16,9 +16,9 @@ While Phase 4 PR 12 handles operational timing actuals (start/end times, attenda
 3. Multi-platform (multicast) stream attribution when a show streams on multiple platforms simultaneously (e.g., Shopee and Lazada dual streams).
 
 ### The Solution: PR 21.x
-PR 21.x introduces a normalized analytics read-model projection (`ShowPerformance`) and a dedicated performance dashboard in `erify_studios`. 
+PR 21.x extends the database schema by adding performance metrics directly to the existing `ShowPlatform` model and introduces a dedicated performance dashboard in `erify_studios`. 
 
-By extending the task template hydration framework, we allow a single task template to collect multicast performance records at once. Confirmed metrics are projected into a normalized read-model table with direct `show_id` and `platform_id` columns for maximum query performance. The front-end leverages a dedicated analytics endpoint, synchronizing multi-select filter controls with Recharts and tabular show views.
+By extending the task template hydration framework, we collect multicast performance records within a single task sheet. Confirmed metrics are projected directly onto the corresponding `ShowPlatform` rows, where the platform and show association is already defined. This design keeps the schema extremely simple, prevents data inconsistency, and avoids redundant tables. The front-end leverages a dedicated analytics endpoint, synchronizing multi-select filter controls with Recharts and tabular show views.
 
 ---
 
@@ -32,31 +32,27 @@ Rather than duplicating task sheets for each platform of a multicast show:
 * **Target-Hydrated Fields**: Template fields bound to platform performance facts (e.g. `platform_gmv` bound to target type `ShowPlatform`) dynamically expand during hydration to render one input field *per active platform* of the show.
 * **Multicast Collection**: The operator enters metrics for all active platforms (e.g., TikTok and Shopee) in one single task sheet. The submitted keys are stored deterministically as `<fieldId>:SHOW_PLATFORM:<platformUid>` in the task content JSON.
 
-### B. Normalized Read Model with Direct Columns
-We project performance metrics into a dedicated database table `show_performances` to decouple analytics from core operational tables:
-* **Direct Joins**: The `ShowPerformance` table stores `show_id` and `platform_id` directly as columns. 
-* **Query Efficiency**: We link directly to the core `Show` and `Platform` tables to optimize query execution, intentionally bypassing the `ShowPlatform` assignment join table which is reserved for scheduling/assignment.
-* **Nullable Platform with App Enforcement**: The `platform_id` column is nullable at the database schema level to support migration fallback safety, but the application code and API layers enforce that it must have a non-null platform.
+### B. Stream-Level Performance on ShowPlatform
+Rather than creating a separate projection table, we store performance metrics directly on the existing `ShowPlatform` model:
+* **No Redundant Tables**: We avoid creating a new `ShowPerformance` table, as `ShowPlatform` already represents the exact same show-platform grain.
+* **Data Consistency**: Because performance metrics are columns on `ShowPlatform` itself, we naturally eliminate any risk of orphan performance records for unassigned platforms.
+* **Query Simplicity**: The analytics endpoints query `ShowPlatform` directly rather than left-joining a secondary table.
+* **Metrics Columns**: Added `gmv`, `ctr`, and `cto` as nullable Decimal columns, joining the existing `viewerCount` column (renamed or mapped as `views` / `viewer_count` in API).
 
 ```
 +-----------------------------------------------------------+
-|                      ShowPerformance                      |
+|                       ShowPlatform                        |
 +-----------------------------------------------------------+
 | - id: BigInt (PK)                                         |
 | - uid: String (Unique)                                    |
 | - show_id: BigInt (FK to Show)                            |
-| - platform_id: BigInt? (FK to Platform)                   |
-| - gmv: Decimal(12, 2)                                     |
-| - views: Int                                              |
-| - ctr: Decimal(5, 2)                                      |
-| - cto: Decimal(5, 2)                                      |
+| - platform_id: BigInt (FK to Platform)                    |
+| - live_stream_link: String?                               |
+| - viewer_count: Int (used for views)                      |
+| - gmv: Decimal(12, 2)?                                    |
+| - ctr: Decimal(5, 2)?                                     |
+| - cto: Decimal(5, 2)?                                     |
 +-----------------------------------------------------------+
-                        │           │
-           Direct Join  │           │  Direct Join
-          (No junction) ▼           ▼ (No junction)
-            +--------------+     +--------------+
-            |     Show     |     |   Platform   |
-            +--------------+     +--------------+
 ```
 
 ### C. Dedicated Performance Endpoints
@@ -67,8 +63,8 @@ To isolate analytics reads from OLTP operational paths, we expose two dedicated 
    - Exposes the operational ratio `"Shows with Records: X / Y"` where `X` is the count of shows with performance records and `Y` is the total count of shows in the date range matching filters.
 2. **`GET /studios/:studioId/performance/shows`**:
    - Primary data source for the dashboard table.
-   - Queries the `Show` table as the base (to list **all** shows in the range matching filters) and `LEFT JOIN`s the `ShowPerformance` read model. 
-   - Displays performance metrics where they exist, and empty/null cells for shows without completed records.
+   - Queries the `Show` table as the base (to list **all** shows in the range matching filters) and joins `ShowPlatform` to retrieve their platforms and performance metrics.
+   - Displays performance metrics where they exist, and empty/null cells for shows/platforms without completed records.
 
 ### D. Filter State Synchronization
 * Multi-select filters on the dashboard (date range, client, show type, platform) synchronize state in URL search parameters.
@@ -77,7 +73,7 @@ To isolate analytics reads from OLTP operational paths, we expose two dedicated 
 ### E. Unified Show Details & Tasks Revamp
 * Deprecate the old route `/studios/:studioId/task-setup/:showId/tasks` which mixes management concerns with task details.
 * Implement a unified Show Details page at `/studios/:studioId/shows/:showId` using a tabbed layout:
-  - **Details & Performance** (delivered in PR 21.x): Displays metadata and the `ShowPerformance` metrics.
+  - **Details & Performance** (delivered in PR 21.x): Displays metadata and the `ShowPlatform` performance metrics.
   - **Submitted Tasks** (delivered in PR 21.x): Renders the task setup table and action panel.
   - **Compensation** (dependent on **14c**): Show-creator compensation detail section will be integrated as a dedicated tab after `14c` lands.
 * Redirect all application links pointing to the old task-setup route to `/shows/:showId/tasks`.
@@ -89,14 +85,14 @@ To isolate analytics reads from OLTP operational paths, we expose two dedicated 
 When a task transitions into `COMPLETED` or `REVIEW`:
 1. **Fact Extraction**: The `FactExtractionService` identifies fields bound to analytical fact keys (e.g. `platform_gmv`).
 2. **Platform Resolution**: The service parses the target UID from the hydrated keys (`<fieldId>:SHOW_PLATFORM:<platformUid>`) and resolves the corresponding `Platform` of the show.
-3. **Database Projection**: The `ShowPerformanceProjectionService` upserts the metrics into `ShowPerformance` using the resolved `showId` and `platformId`.
+3. **Database Projection**: The `ShowPlatformProjectionService` (or ingestion pipeline helper) upserts/updates the performance columns (`gmv`, `ctr`, `cto`, `viewerCount`) directly on the `ShowPlatform` row using the resolved `showId` and `platformId`.
 
 ### A. Precedence & Override Logic (Coalescing Rules)
 A show's performance metrics can be supplied by multiple tasks over its lifecycle (e.g., during-show moderation vs. post-show wrap-up). We enforce a strict priority hierarchy when projecting facts:
 - **Post-Production Wrap-Up (`Post_production_check` template, ID 93) takes priority** over Moderation Loop 8 workflow tasks.
-- If a post-production check task is completed, its extracted metrics will override any existing moderation loop 8 metrics for that show and platform in `ShowPerformance`.
+- If a post-production check task is completed, its extracted metrics will override any existing moderation loop 8 metrics for that show and platform on `ShowPlatform`.
 - If a moderation loop 8 task is completed but post-production check data already exists, the loop 8 write is skipped.
-- This ensures the read-model projection always reflects the final, verified post-production wrap-up figures.
+- This ensures the `ShowPlatform` performance values always reflect the final, verified post-production wrap-up figures.
 
 ---
 
@@ -123,8 +119,8 @@ To support progressive integration, testing, and clean reviews, the show perform
 
 ### PR 21.2: Database Migration & Schema Additions
 - **Deliverables**:
-  - Add the `ShowPerformance` model to `apps/erify_api/prisma/schema.prisma` (including `showId` and nullable `platformId` columns with unique constraint `@@unique([showId, platformId])`).
-  - Generate Prisma clients and verify model definitions.
+  - Add `gmv`, `ctr`, and `cto` nullable Decimal columns directly to the `ShowPlatform` model in `apps/erify_api/prisma/schema.prisma`.
+  - Generate Prisma client types and run the schema migration.
 
 ### PR 21.3: System Fact Key Catalog Expansion
 - **Deliverables**:
@@ -133,7 +129,7 @@ To support progressive integration, testing, and clean reviews, the show perform
 
 ### PR 21.4: Ingestion Pipeline & Fact Extraction Updates
 - **Deliverables**:
-  - Create `ShowPerformanceProjectionService` and update `FactExtractionService` to support extracting metrics from multicast task forms.
+  - Create `ShowPlatformProjectionService` (or update `FactExtractionService`) to support projecting extracted performance metrics directly onto the corresponding `ShowPlatform` columns.
   - Implement coalescing precedence: Post-production wrap-up tasks override moderation loop 8 metrics.
 
 ### PR 21.5: Backend Analytics Endpoints
