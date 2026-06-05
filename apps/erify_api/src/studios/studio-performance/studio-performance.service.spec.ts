@@ -120,7 +120,7 @@ describe('studioPerformanceService', () => {
     });
 
     it('returns aggregate summary metrics and full trend coordinates', async () => {
-      prisma.show.findMany.mockResolvedValue(mockShows as any);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(mockShows as any);
 
       const result = await service.getPerformanceSummary('std_1', query);
 
@@ -164,8 +164,8 @@ describe('studioPerformanceService', () => {
 
   describe('getPerformanceShows', () => {
     it('returns paginated list of shows with platform metrics', async () => {
-      prisma.show.count.mockResolvedValue(3);
-      prisma.show.findMany.mockResolvedValue(mockShows as any);
+      (prisma.show.count as jest.Mock).mockResolvedValue(3);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(mockShows as any);
 
       const result = await service.getPerformanceShows('std_1', {
         ...query,
