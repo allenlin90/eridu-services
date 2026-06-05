@@ -1,13 +1,11 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import {
-  studioMemberCompensationResponseSchema,
-  studioMemberResponseSchema,
-} from '@eridu/api-types/memberships';
+import { studioMemberCompensationResponseSchema } from '@eridu/api-types/memberships';
 
 import { StudioMembersController } from './studio-members.controller';
 
+import { studioMemberDto } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 
@@ -113,16 +111,16 @@ describe('studioMembersController', () => {
   });
 
   describe('getMember', () => {
-    it('uses the serialized API response schema for response serialization', () => {
+    it('uses the transformer DTO so serialization transforms the raw member once', () => {
       const serializerSchema = Reflect.getMetadata(
         'ZOD_SERIALIZER_DTO_OPTIONS',
         StudioMembersController.prototype.getMember,
       );
 
-      expect(serializerSchema).toBe(studioMemberResponseSchema);
+      expect(serializerSchema).toBe(studioMemberDto);
     });
 
-    it('returns a single studio member by membership uid', async () => {
+    it('returns the raw studio member for the decorator to serialize', async () => {
       studioMembershipService.findStudioMemberByUidAndStudio.mockResolvedValue(mockMembership as any);
 
       const result = await controller.getMember('std_test123', 'smb_test123');
@@ -131,15 +129,7 @@ describe('studioMembersController', () => {
         'smb_test123',
         'std_test123',
       );
-      expect(result).toEqual({
-        membership_id: 'smb_test123',
-        user_id: 'user_abc123',
-        user_name: 'Jane Doe',
-        user_email: 'jane@example.com',
-        role: 'admin',
-        base_hourly_rate: '25.00',
-        created_at: '2026-01-01T00:00:00.000Z',
-      });
+      expect(result).toBe(mockMembership);
     });
 
     it('throws 404 when the membership is outside the studio', async () => {

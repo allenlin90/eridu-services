@@ -17,7 +17,6 @@ import {
   STUDIO_MEMBER_ERROR,
   STUDIO_ROLE,
   studioMemberCompensationResponseSchema,
-  studioMemberResponseSchema,
 } from '@eridu/api-types/memberships';
 
 import { BaseStudioController } from '../base-studio.controller';
@@ -90,7 +89,7 @@ export class StudioMembersController extends BaseStudioController {
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Get(':memberId')
   @ReadBurstThrottle()
-  @ZodResponse(studioMemberResponseSchema)
+  @ZodResponse(studioMemberDto)
   async getMember(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('memberId', new UidValidationPipe(StudioMembershipService.UID_PREFIX, 'Membership')) memberId: string,
@@ -102,7 +101,7 @@ export class StudioMembersController extends BaseStudioController {
 
     this.ensureResourceExists(member, 'Membership', memberId);
 
-    return studioMemberDto.parse(member);
+    return member;
   }
 
   @ApiOperation({ summary: 'Update a studio member role or hourly rate' })
