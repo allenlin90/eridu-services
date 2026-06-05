@@ -22,7 +22,7 @@ import { useUpdateStudioShiftBlock } from '@/features/studio-shifts/api/update-s
 import { sortShiftBlocksByStart } from '@/features/studio-shifts/utils/shift-blocks.utils';
 import { formatDateTime } from '@/features/studio-shifts/utils/shift-form.utils';
 import { getApiErrorMessage } from '@/features/studio-shifts/utils/studio-shifts-table.utils';
-import { toDecimalDisplayString } from '@/lib/decimal-format';
+import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
 const OVERRIDE_REASON_MAX_LENGTH = 1000;
 
@@ -37,14 +37,6 @@ type ShiftCompensationViewProps = {
   studioId: string;
   shift: StudioShift;
 };
-
-function formatMoneyString(value: string): string {
-  const formatted = toDecimalDisplayString(value);
-  if (formatted.startsWith('-')) {
-    return `-$${formatted.slice(1)}`;
-  }
-  return `$${formatted}`;
-}
 
 type HourlyRateTileProps = {
   studioId: string;
@@ -149,7 +141,7 @@ function HourlyRateTile({ studioId, shift }: HourlyRateTileProps) {
       {!isEditing
         ? (
             <p className="text-lg font-semibold">
-              {formatMoneyString(storedRate)}
+              {toCurrencyDisplayString(storedRate)}
               <span className="text-sm font-normal text-muted-foreground">/hr</span>
             </p>
           )
@@ -227,13 +219,13 @@ export function ShiftCompensationView({
         <HourlyRateTile key={shift.id} studioId={studioId} shift={shift} />
         <div className="rounded-md border bg-muted/20 p-3">
           <p className="text-xs font-medium text-muted-foreground">Planned</p>
-          <p className="text-lg font-semibold">{formatMoneyString(shift.planned_cost)}</p>
+          <p className="text-lg font-semibold">{toCurrencyDisplayString(shift.planned_cost)}</p>
         </div>
         <div className="rounded-md border bg-muted/20 p-3">
           <p className="text-xs font-medium text-muted-foreground">Actual</p>
           {shift.actual_cost === null
             ? <p className="text-lg font-semibold text-muted-foreground">Pending</p>
-            : <p className="text-lg font-semibold">{formatMoneyString(shift.actual_cost)}</p>}
+            : <p className="text-lg font-semibold">{toCurrencyDisplayString(shift.actual_cost)}</p>}
         </div>
       </div>
 

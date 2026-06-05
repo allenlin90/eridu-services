@@ -8,21 +8,13 @@ import {
   formatDate,
   getShiftWindowLabel,
 } from '@/features/studio-shifts/utils/shift-form.utils';
-import { toDecimalDisplayString } from '@/lib/decimal-format';
+import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
 type ShiftDetailHeaderProps = {
   studioId: string;
   shift?: StudioShift;
   isLoading: boolean;
 };
-
-function formatMoney(value: string): string {
-  const formatted = toDecimalDisplayString(value);
-  if (formatted.startsWith('-')) {
-    return `-$${formatted.slice(1)}`;
-  }
-  return `$${formatted}`;
-}
 
 export function ShiftDetailHeader({
   studioId,
@@ -58,19 +50,19 @@ export function ShiftDetailHeader({
                   ? <Badge variant="secondary">Duty Manager</Badge>
                   : null}
                 <Badge variant="outline">
-                  {formatMoney(shift.hourly_rate)}
+                  {toCurrencyDisplayString(shift.hourly_rate)}
                   {' '}
                   / hr
                 </Badge>
                 <Badge variant="outline">
-                  {formatMoney(shift.planned_cost)}
+                  {toCurrencyDisplayString(shift.planned_cost)}
                   {' '}
                   planned
                 </Badge>
                 <Badge variant={shift.actual_cost === null ? 'outline' : 'secondary'}>
                   {shift.actual_cost === null
                     ? 'Actual pending'
-                    : `${formatMoney(shift.actual_cost)} actual`}
+                    : `${toCurrencyDisplayString(shift.actual_cost)} actual`}
                 </Badge>
               </div>
             </div>
