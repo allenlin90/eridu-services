@@ -67,6 +67,7 @@ export function ShiftEditCard({
           formState={formState}
           onChange={onChange}
           includeStatus
+          includeHourlyRate={false}
         />
 
         {formError && (

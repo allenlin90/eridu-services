@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getAllStudioShiftsForExport,
   getDutyManager,
+  getStudioShift,
   getStudioShifts,
   SHIFT_EXPORT_MAX_RECORDS,
   ShiftExportTooLargeError,
@@ -179,6 +180,36 @@ describe('getStudioShifts', () => {
     expect(response.data[1]).toMatchObject({
       hourly_rate: '25.00',
       planned_cost: '75.00',
+      actual_cost: null,
+    });
+  });
+});
+
+describe('getStudioShift', () => {
+  beforeEach(() => {
+    (apiClient.get as any).mockReset();
+  });
+
+  it('fetches one shift by id, forwards the abort signal, and normalizes legacy numeric cost fields', async () => {
+    const controller = new AbortController();
+    (apiClient.get as any).mockResolvedValueOnce({
+      data: {
+        id: 'ssh_1',
+        hourly_rate: 20,
+        planned_cost: 60,
+        actual_cost: null,
+      },
+    });
+
+    const response = await getStudioShift('std_123', 'ssh_1', { signal: controller.signal });
+
+    expect(apiClient.get).toHaveBeenCalledWith('/studios/std_123/shifts/ssh_1', {
+      signal: controller.signal,
+    });
+    expect(response).toMatchObject({
+      id: 'ssh_1',
+      hourly_rate: '20.00',
+      planned_cost: '60.00',
       actual_cost: null,
     });
   });

@@ -64,7 +64,7 @@ When designing a feature scoped to an **identity-bearing entity** — `Creator`,
 ### Entity Detail Route Layout Standard
 
 For Studio Individual Overview routes such as `/studios/:studioId/creators/:creatorId`,
-`/studios/:studioId/members/:memberId`, and future show / shift detail routes:
+`/studios/:studioId/members/:memberId`, `/studios/:studioId/shifts/:shiftId`, and future show detail routes:
 
 - Name the first tab **Profile**, not `Defaults`. Field labels can still say
   `Default Rate` or similar when they describe stored operational defaults, but

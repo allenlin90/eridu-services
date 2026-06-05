@@ -6,16 +6,16 @@ can't share a link to one entity's edit surface or step through edits with
 back/forward — and they constrain richer detail views. Each conversion ships as
 its own scoped PR. `task-templates/$templateId.tsx` is the original precedent.
 
-> Status: **14a (creator) shipped**; **14b (member) in progress**; 14c–14d planned. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
+> Status: **14a (creator) shipped**; **14b (member) shipped**; **14d (shift) in progress**; 14c planned. See [PHASE_4 #14](../../../docs/roadmap/PHASE_4.md#pr-14--entity-edit-dialogs--dedicated-routes).
 
 ## Route map
 
 | #   | Today (dialog)                                              | Target route                                  | Share-link contract (surviving search params)                  | Status   |
 | --- | ---------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- | -------- |
 | 14a | `edit-studio-creator-dialog` + creator compensation view   | `/studios/:studioId/creators/:creatorId`      | Compensation tab: `date_from`, `date_to`. Profile tab: none.   | ✅ Shipped |
-| 14b | `edit-member-dialog`                                        | `/studios/:studioId/members/:memberId`        | Compensation tab: `date_from`, `date_to` (mirror creator).     | 🚧 In progress |
+| 14b | `edit-member-dialog`                                        | `/studios/:studioId/members/:memberId`        | Compensation tab: `date_from`, `date_to` (mirror creator).     | ✅ Shipped |
 | 14c | `show-update-dialog`                                        | `/studios/:studioId/shows/:showId`            | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
-| 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`    | `/studios/:studioId/shifts/:shiftId`          | None expected (no range filter); finalize when scoped.         | 🔲 Planned |
+| 14d | `studio-shift-form-dialog` + `shift-compensation-dialog`    | `/studios/:studioId/shifts/:shiftId`          | None. Profile and Compensation tabs are direct share links.    | 🚧 In progress |
 
 **Migration order**: 14a → 14b → 14c → 14d. No row depends on a later row.
 
@@ -98,9 +98,9 @@ Rules every conversion follows:
   (`@eridu/ui` or a domain-shared package) so the studio P2 detail page and the
   `erify_creators` P3 self-view consume one widget. Deferred until that convergence —
   intentionally **not** part of the 14a pilot.
-- **14c–14d** continue the same route pattern for shows and shifts.
+- **14c** continues the same route pattern for shows.
 
-## 14b — member detail (in progress)
+## 14b — member detail (shipped)
 
 - **Route**: `/studios/:studioId/members/:memberId`
   - `route.tsx` — layout: fetches the member, renders header + tab strip.
@@ -124,3 +124,26 @@ Rules every conversion follows:
 | `GET :memberId` (read profile) |  ✅   |   ✅    |
 | Edit profile (Save)            |  ✅   |   ❌ (read-only) |
 | See / open Compensation tab    |  ✅   |   ✅    |
+
+## 14d — shift detail (in progress)
+
+- **Route**: `/studios/:studioId/shifts/:shiftId`
+  - `route.tsx` — layout: fetches the shift, renders header + tab strip.
+  - `index.tsx` — **Profile** tab: edits member, date, blocks, status, and duty-manager flag.
+  - `compensation.tsx` — **Compensation** tab: shift hourly-rate override, planned/actual
+    cost summary, shift-level adjustments, block actuals, and block-level adjustments.
+- **Backend**: `GET /studios/:studioId/shifts/:shiftId` already exists and is scoped by
+  studio. Mutations continue through the existing shift and block update endpoints.
+- **Entry points**: the shift table row **Edit Shift** action navigates to the Profile
+  tab; **Manage Compensation** deep-links to the Compensation tab. Create shift and
+  delete confirmation remain dialogs.
+
+### Authorization
+
+| Capability                         | ADMIN | MANAGER |
+| ---------------------------------- | :---: | :-----: |
+| Reach `/shifts/:shiftId`           |  ✅   |   ✅    |
+| `GET :shiftId` (read profile)      |  ✅   |   ✅    |
+| Edit profile (Save)                |  ✅   |   ✅    |
+| See / open Compensation tab        |  ✅   |   ✅    |
+| Edit compensation / actuals fields |  ✅   |   ✅    |

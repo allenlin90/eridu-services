@@ -4,13 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { StudioShiftsTable } from '../studio-shifts-table';
 
-import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
-
 const mockDeleteMutateAsync = vi.fn();
-const mockUpdateMutateAsync = vi.fn();
 const mockUpdateSearch = vi.fn();
 const mockUseStudioShiftsPageController = vi.fn();
 const mockGetAllStudioShiftsForExport = vi.fn();
+const mockNavigate = vi.fn();
+
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => mockNavigate,
+}));
 
 vi.mock('@/features/studio-shifts/hooks/use-studio-member-map', () => ({
   useStudioMemberMap: () => ({ memberMap: new Map([['user_1', { name: 'Ava Manager', email: 'ava@example.com' }]]) }),
@@ -42,10 +44,6 @@ vi.mock('@/features/studio-shifts/api/get-studio-shifts', () => {
 
 vi.mock('@/features/studio-shifts/api/create-studio-shift', () => ({
   useCreateStudioShift: () => ({ mutateAsync: vi.fn(), isPending: false }),
-}));
-
-vi.mock('@/features/studio-shifts/api/update-studio-shift', () => ({
-  useUpdateStudioShift: () => ({ mutateAsync: mockUpdateMutateAsync, isPending: false }),
 }));
 
 vi.mock('@/features/studio-shifts/api/assign-duty-manager', () => ({
@@ -104,11 +102,13 @@ vi.mock('@/features/studio-shifts/components/shift-roster-card', () => ({
   ShiftRosterCard: ({
     shifts,
     onEdit,
+    onManageCompensation,
     onDelete,
     onPaginationChange,
   }: {
     shifts: Array<{ id: string }>;
     onEdit: (shift: unknown) => void;
+    onManageCompensation: (shift: unknown) => void;
     onDelete: (shiftId: string) => void;
     onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   }) => (
@@ -117,6 +117,11 @@ vi.mock('@/features/studio-shifts/components/shift-roster-card', () => ({
       {shifts[0] && (
         <button type="button" onClick={() => onEdit(shifts[0])}>
           edit-first-shift
+        </button>
+      )}
+      {shifts[0] && (
+        <button type="button" onClick={() => onManageCompensation(shifts[0])}>
+          compensate-first-shift
         </button>
       )}
       <button type="button" onClick={() => onDelete('ssh_1')}>
@@ -133,39 +138,14 @@ vi.mock('@/features/studio-shifts/components/studio-shift-form-dialog', () => ({
   StudioShiftFormDialog: ({
     idPrefix,
     open,
-    formState,
-    onFormChange,
-    onSubmit,
   }: {
     idPrefix: string;
     open: boolean;
-    formState: ShiftFormState;
-    onFormChange: (next: ShiftFormState) => void;
-    onSubmit: () => void;
   }) => (
     <div>
       <p data-testid={`dialog-${idPrefix}`}>
         {open ? 'open' : 'closed'}
       </p>
-      {open && idPrefix === 'edit' && (
-        <div>
-          <button
-            type="button"
-            onClick={() => onFormChange({ ...formState, hourlyRate: '25.00' })}
-          >
-            set-hourly-rate-25
-          </button>
-          <button
-            type="button"
-            onClick={() => onFormChange({ ...formState, hourlyRate: '20' })}
-          >
-            set-hourly-rate-20
-          </button>
-          <button type="button" onClick={onSubmit}>
-            submit-edit
-          </button>
-        </div>
-      )}
     </div>
   ),
 }));
@@ -202,8 +182,8 @@ function createShift(id: string, startIso: string) {
 describe('studioShiftsTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUpdateMutateAsync.mockResolvedValue(undefined);
     mockGetAllStudioShiftsForExport.mockResolvedValue([]);
+    mockNavigate.mockReset();
 
     mockUseStudioShiftsPageController.mockReturnValue({
       data: undefined,
@@ -367,7 +347,7 @@ describe('studioShiftsTable', () => {
     expect(mockOnPaginationChange).toHaveBeenCalledWith({ pageIndex: 0, pageSize: 20 });
   });
 
-  it('edit submit dispatches a payload without hourly_rate or override_reason (rate edits live in the compensation dialog)', async () => {
+  it('navigates edit and compensation row actions to the shift detail route tabs', async () => {
     const user = userEvent.setup();
     mockUseStudioShiftsPageController.mockReturnValue({
       data: undefined,
@@ -389,17 +369,15 @@ describe('studioShiftsTable', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'edit-first-shift' }));
-    await user.click(screen.getByRole('button', { name: 'set-hourly-rate-20' }));
-    await user.click(screen.getByRole('button', { name: 'submit-edit' }));
+    await user.click(screen.getByRole('button', { name: 'compensate-first-shift' }));
 
-    await waitFor(() => {
-      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
-        shiftId: 'ssh_1',
-        payload: expect.not.objectContaining({
-          hourly_rate: expect.anything(),
-          override_reason: expect.anything(),
-        }),
-      });
+    expect(mockNavigate).toHaveBeenNthCalledWith(1, {
+      to: '/studios/$studioId/shifts/$shiftId',
+      params: { studioId: 'std_1', shiftId: 'ssh_1' },
+    });
+    expect(mockNavigate).toHaveBeenNthCalledWith(2, {
+      to: '/studios/$studioId/shifts/$shiftId/compensation',
+      params: { studioId: 'std_1', shiftId: 'ssh_1' },
     });
   });
 });

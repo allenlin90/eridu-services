@@ -35,6 +35,7 @@ type StudioTargetCompensationLineItemPanelProps = {
   description?: string;
   enabled?: boolean;
   invalidateShiftWorkflow?: boolean;
+  shiftId?: string;
 };
 
 const ITEM_TYPE_OPTIONS = [
@@ -61,6 +62,7 @@ export function StudioTargetCompensationLineItemPanel({
   description,
   enabled = true,
   invalidateShiftWorkflow = false,
+  shiftId,
 }: StudioTargetCompensationLineItemPanelProps) {
   const [editingItem, setEditingItem] = useState<CompensationLineItemApiResponse | null>(null);
   const [amount, setAmount] = useState('');
@@ -79,7 +81,7 @@ export function StudioTargetCompensationLineItemPanel({
     enabled && Boolean(studioId && targetId),
   );
 
-  const mutationContext = { studioId, invalidateShiftWorkflow };
+  const mutationContext = { studioId, invalidateShiftWorkflow, shiftId };
   const createLineItem = useCreateStudioCompensationLineItem(mutationContext);
   const updateLineItem = useUpdateStudioCompensationLineItem(mutationContext);
   const deleteLineItem = useDeleteStudioCompensationLineItem(mutationContext);

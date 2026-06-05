@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -15,11 +16,6 @@ import {
   ShiftExportTooLargeError,
 } from '@/features/studio-shifts/api/get-studio-shifts';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
-import {
-  type UpdateStudioShiftPayload,
-  useUpdateStudioShift,
-} from '@/features/studio-shifts/api/update-studio-shift';
-import { ShiftCompensationDialog } from '@/features/studio-shifts/components/shift-compensation-dialog';
 import { ShiftRosterCard } from '@/features/studio-shifts/components/shift-roster-card';
 import { ShiftToolbar } from '@/features/studio-shifts/components/shift-toolbar';
 import { StudioShiftFormDialog } from '@/features/studio-shifts/components/studio-shift-form-dialog';
@@ -28,7 +24,6 @@ import { useStudioShiftsPageController } from '@/features/studio-shifts/hooks/us
 import type { ShiftFormState } from '@/features/studio-shifts/types/shift-form.types';
 import {
   createDefaultFormState,
-  createEditFormState,
   formatDateTime,
   getShiftBlockLabels,
   getShiftDisplayDate,
@@ -60,12 +55,6 @@ export type StudioShiftsTableProps = {
   updateSearch: (updater: StudioShiftsTableSearchUpdater, options?: { replace?: boolean }) => void;
 };
 
-type EditDialogState = {
-  shiftId: string;
-  formState: ShiftFormState;
-  error: string | null;
-};
-
 type ToolbarSearchParams = {
   user_id?: string;
   status?: ShiftListStatus;
@@ -73,6 +62,7 @@ type ToolbarSearchParams = {
 };
 
 export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearch }: StudioShiftsTableProps) {
+  const navigate = useNavigate();
   const [deleteDialogShiftId, setDeleteDialogShiftId] = useState<string | null>(null);
   const [tableMemberSearch, setTableMemberSearch] = useState('');
 
@@ -81,9 +71,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   const [createFormState, setCreateFormState] = useState<ShiftFormState>(() => createDefaultFormState());
   const [createFormError, setCreateFormError] = useState<string | null>(null);
 
-  const [editDialogState, setEditDialogState] = useState<EditDialogState | null>(null);
-  const [editMemberSearch, setEditMemberSearch] = useState('');
-  const [compensationShiftId, setCompensationShiftId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const exportAbortRef = useRef<AbortController | null>(null);
 
@@ -104,11 +91,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     studioId,
     { page: 1, limit: 50, name: createMemberSearch || undefined },
     { enabled: isStudioAdmin && isCreateDialogOpen },
-  );
-  const { data: editMemberOptionsResponse, isLoading: isLoadingEditMemberOptions } = useStudioMembershipsQuery(
-    studioId,
-    { page: 1, limit: 50, name: editMemberSearch || undefined },
-    { enabled: isStudioAdmin && Boolean(editDialogState) },
   );
   const { data: tableMemberOptionsResponse, isLoading: isLoadingTableMemberOptions } = useStudioMembershipsQuery(
     studioId,
@@ -132,7 +114,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
 
   const createShiftMutation = useCreateStudioShift(studioId);
   const deleteShiftMutation = useDeleteStudioShift(studioId);
-  const updateShiftMutation = useUpdateStudioShift(studioId);
   const assignDutyManagerMutation = useAssignDutyManager(studioId);
 
   const tableMemberOptions = useMemo(() => {
@@ -142,22 +123,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
       label: `${member.user.name} (${member.user.email})`,
     }));
   }, [tableMemberOptionsResponse?.data]);
-
-  const editingShift = useMemo(() => {
-    if (!editDialogState) {
-      return null;
-    }
-
-    return tableShifts.find((shift) => shift.id === editDialogState.shiftId) ?? null;
-  }, [editDialogState, tableShifts]);
-
-  const compensationShift = useMemo(() => {
-    if (!compensationShiftId) {
-      return null;
-    }
-
-    return tableShifts.find((shift) => shift.id === compensationShiftId) ?? null;
-  }, [compensationShiftId, tableShifts]);
 
   const handleCreateShift = useCallback(async () => {
     setCreateFormError(null);
@@ -226,61 +191,18 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
   }, [assignDutyManagerMutation]);
 
   const handleStartEdit = useCallback((shift: StudioShift) => {
-    setEditDialogState({
-      shiftId: shift.id,
-      formState: createEditFormState(shift),
-      error: null,
+    void navigate({
+      to: '/studios/$studioId/shifts/$shiftId',
+      params: { studioId, shiftId: shift.id },
     });
-    setEditMemberSearch('');
-  }, []);
+  }, [navigate, studioId]);
 
   const handleManageCompensation = useCallback((shift: StudioShift) => {
-    setCompensationShiftId(shift.id);
-  }, []);
-
-  const handleUpdateShift = useCallback(async () => {
-    if (!editDialogState || !editingShift) {
-      return;
-    }
-
-    const { formState } = editDialogState;
-    setEditDialogState((previous) => (previous ? { ...previous, error: null } : null));
-
-    if (!formState.userId) {
-      setEditDialogState((previous) => (previous ? { ...previous, error: 'Please select a studio member.' } : null));
-      return;
-    }
-
-    if (!formState.date) {
-      setEditDialogState((previous) => (previous ? { ...previous, error: 'Date is required.' } : null));
-      return;
-    }
-
-    const { error: blocksError, blocks } = validateShiftBlocks(formState.date, formState.blocks);
-    if (blocksError || !blocks) {
-      setEditDialogState((previous) => (previous ? { ...previous, error: blocksError } : null));
-      return;
-    }
-
-    const payload: UpdateStudioShiftPayload = {
-      user_id: formState.userId,
-      date: formState.date,
-      status: formState.status ?? 'SCHEDULED',
-      is_duty_manager: formState.isDutyManager,
-      blocks,
-    };
-
-    try {
-      await updateShiftMutation.mutateAsync({ shiftId: editingShift.id, payload });
-      setEditDialogState(null);
-    } catch (error) {
-      setEditDialogState((previous) => (
-        previous
-          ? { ...previous, error: getApiErrorMessage(error, 'Failed to update shift. Please try again.') }
-          : null
-      ));
-    }
-  }, [editDialogState, editingShift, updateShiftMutation]);
+    void navigate({
+      to: '/studios/$studioId/shifts/$shiftId/compensation',
+      params: { studioId, shiftId: shift.id },
+    });
+  }, [navigate, studioId]);
 
   const handleResetFilters = useCallback(() => {
     setTableMemberSearch('');
@@ -368,17 +290,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     handleCreateDialogOpenChange(false);
   }, [handleCreateDialogOpenChange]);
 
-  const handleEditDialogOpenChange = useCallback((open: boolean) => {
-    if (!open) {
-      setEditDialogState(null);
-      setEditMemberSearch('');
-    }
-  }, []);
-
-  const handleCloseEditDialog = useCallback(() => {
-    handleEditDialogOpenChange(false);
-  }, [handleEditDialogOpenChange]);
-
   return (
     <div className="space-y-4">
       <ShiftToolbar
@@ -410,7 +321,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         memberMap={memberMap}
         isMutating={
           assignDutyManagerMutation.isPending
-          || updateShiftMutation.isPending
           || deleteShiftMutation.isPending
         }
         getShiftDisplayDate={getShiftDisplayDate}
@@ -421,17 +331,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         onEdit={handleStartEdit}
         onManageCompensation={handleManageCompensation}
         onDelete={handleDeleteClick}
-      />
-
-      <ShiftCompensationDialog
-        open={Boolean(compensationShiftId)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setCompensationShiftId(null);
-          }
-        }}
-        studioId={studioId}
-        shift={compensationShift}
       />
 
       <DeleteConfirmDialog
@@ -465,29 +364,6 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
         onCancel={handleCloseCreateDialog}
       />
 
-      <StudioShiftFormDialog
-        open={Boolean(editDialogState)}
-        title="Edit Shift"
-        description="Update an existing shift."
-        idPrefix="edit"
-        members={editMemberOptionsResponse?.data ?? []}
-        onMemberSearch={setEditMemberSearch}
-        isLoadingMembers={isLoadingEditMemberOptions}
-        formState={editDialogState?.formState ?? createFormState}
-        onFormChange={(next) => {
-          setEditDialogState((previous) => (previous ? { ...previous, formState: next } : null));
-        }}
-        includeStatus
-        includeHourlyRate={false}
-        formError={editDialogState?.error ?? null}
-        isSubmitting={updateShiftMutation.isPending}
-        submitLabel="Save Changes"
-        onSubmit={() => {
-          void handleUpdateShift();
-        }}
-        onOpenChange={handleEditDialogOpenChange}
-        onCancel={handleCloseEditDialog}
-      />
     </div>
   );
 }
