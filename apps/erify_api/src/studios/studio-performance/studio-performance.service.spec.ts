@@ -272,5 +272,41 @@ describe('studioPerformanceService', () => {
         }),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('applies a case-insensitive name filter when name is provided', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        name: 'Alpha',
+      });
+
+      const expectedNameFilter = { name: { contains: 'Alpha', mode: 'insensitive' } };
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining(expectedNameFilter),
+      });
+      expect(prisma.show.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining(expectedNameFilter) }),
+      );
+    });
+
+    it('omits the name filter when name is not provided', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+      });
+
+      const countWhere = (prisma.show.count as jest.Mock).mock.calls[0][0].where;
+      const findManyWhere = (prisma.show.findMany as jest.Mock).mock.calls[0][0].where;
+      expect(countWhere).not.toHaveProperty('name');
+      expect(findManyWhere).not.toHaveProperty('name');
+    });
   });
 });
