@@ -9,7 +9,7 @@ import { scheduleApiResponseSchema } from '../schedules/index.js';
 import { showStandardApiResponseSchema } from '../show-standards/index.js';
 import { showStatusApiResponseSchema } from '../show-statuses/index.js';
 import { showTypeApiResponseSchema } from '../show-types/index.js';
-import { showApiResponseSchema, studioShowPlatformSummarySchema } from '../shows/index.js';
+import { showApiResponseSchema, showListPlatformSummarySchema } from '../shows/index.js';
 import { studioRoomApiResponseSchema } from '../studio-rooms/index.js';
 
 /**
@@ -338,7 +338,7 @@ const showSummaryCreatorSchema = z.object({
 export const showWithTaskSummaryDto = showApiResponseSchema
   .extend({
     creators: z.array(showSummaryCreatorSchema).default([]),
-    platforms: z.array(studioShowPlatformSummarySchema).default([]),
+    platforms: z.array(showListPlatformSummarySchema).default([]),
     task_summary: z.object({
       total: z.number().int(),
       assigned: z.number().int(),

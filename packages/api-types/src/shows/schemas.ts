@@ -42,13 +42,28 @@ export const showApiResponseSchema = z.object({
 export const showListResponseSchema
   = createPaginatedResponseSchema(showApiResponseSchema);
 
-export const studioShowPlatformSummarySchema = z.object({
+/**
+ * Lightweight per-platform shape for the all-members shows LIST
+ * (`GET /studios/:studioId/shows`). Intentionally excludes the performance
+ * metrics (`gmv`/`ctr`/`cto`): the list table never renders them and those
+ * facts are gated to ADMIN/MANAGER on the `/performance` surface, so the
+ * all-members list must not carry them. Keep list/detail contracts separate
+ * so a field added for one surface cannot leak into — or break — the other.
+ */
+export const showListPlatformSummarySchema = z.object({
   id: z.string(),
   name: z.string(),
   show_platform_uid: z.string(),
   live_stream_link: z.string().nullable().optional(),
   platform_show_id: z.string().nullable().optional(),
   viewer_count: z.number().int().default(0),
+});
+
+/**
+ * Per-platform shape for the show DETAIL / performance surfaces, which DO
+ * render the performance metrics. Do not reuse this on the lightweight list.
+ */
+export const studioShowPlatformSummarySchema = showListPlatformSummarySchema.extend({
   gmv: z.string().nullable().optional(),
   ctr: z.string().nullable().optional(),
   cto: z.string().nullable().optional(),

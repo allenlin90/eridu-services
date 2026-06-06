@@ -316,6 +316,10 @@ describe('taskOrchestrationService', () => {
           commission_rate: null,
         },
       ]);
+      // The list summary is intentionally lightweight: it carries
+      // `show_platform_uid` + links + viewer_count, but NOT the gmv/ctr/cto
+      // performance metrics (those are ADMIN/MANAGER-gated and only served on
+      // the detail/performance surfaces).
       expect(result.data[0].platforms).toEqual([
         {
           id: 'platform_1',
@@ -324,11 +328,9 @@ describe('taskOrchestrationService', () => {
           live_stream_link: 'https://youtube.com/live/abc',
           platform_show_id: 'yt-123',
           viewer_count: 1500,
-          gmv: '12345.67',
-          ctr: null,
-          cto: null,
         },
       ]);
+      expect(result.data[0].platforms[0]).not.toHaveProperty('gmv');
 
       // Regression guard: the row must satisfy the response contract the
       // controller serializes through. `show_platform_uid` became required in
