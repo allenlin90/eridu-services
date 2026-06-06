@@ -155,11 +155,15 @@ export class StudioPerformanceService {
       for (const sp of show.showPlatforms) {
         const metadata = (sp.metadata as Record<string, any> | null) ?? {};
         const templates = metadata.performance_templates ?? {};
+        // `viewerCount` is a non-nullable column (defaults to 0), so only count
+        // it when a view-count fact was actually recorded — keeping the summary
+        // totals/trend consistent with the per-platform list response.
+        const hasViewCount = templates.show_platform_view_count !== undefined;
         const hasRecord
           = sp.gmv !== null
           || sp.ctr !== null
           || sp.cto !== null
-          || templates.show_platform_view_count !== undefined;
+          || hasViewCount;
 
         if (hasRecord) {
           showHasPerformance = true;
@@ -170,9 +174,12 @@ export class StudioPerformanceService {
               trendData.gmv = trendData.gmv.add(sp.gmv);
             }
           }
-          totalViews += sp.viewerCount;
-          if (trendData) {
-            trendData.views += sp.viewerCount;
+
+          if (hasViewCount) {
+            totalViews += sp.viewerCount;
+            if (trendData) {
+              trendData.views += sp.viewerCount;
+            }
           }
 
           if (sp.ctr !== null) {

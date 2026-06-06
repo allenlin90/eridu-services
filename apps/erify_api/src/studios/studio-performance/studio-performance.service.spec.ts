@@ -166,6 +166,50 @@ describe('studioPerformanceService', () => {
         cto: '4.2',
       });
     });
+
+    it('excludes viewerCount from totals when view-count provenance is absent', async () => {
+      const gmvOnlyShows = [
+        {
+          id: 40n,
+          uid: 'show_40',
+          name: 'GMV only (no view provenance)',
+          startTime: new Date('2026-06-02T10:00:00Z'),
+          endTime: new Date('2026-06-02T12:00:00Z'),
+          client: { name: 'Client A' },
+          showType: { name: 'Live Stream' },
+          showPlatforms: [
+            {
+              id: 201n,
+              uid: 'show_plt_201',
+              gmv: new Prisma.Decimal('500.00'),
+              viewerCount: 999,
+              ctr: null,
+              cto: null,
+              metadata: {
+                performance_templates: {
+                  show_platform_gmv: 'ttpl_post_prod',
+                },
+              },
+              platform: { uid: 'plat_shopee', name: 'Shopee' },
+            },
+          ],
+        },
+      ];
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(gmvOnlyShows as any);
+
+      const result = await service.getPerformanceSummary('std_1', query);
+
+      expect(result.total_gmv).toBe('500');
+      expect(result.total_views).toBe(0);
+      expect(result.recorded_shows_count).toBe(1);
+      expect(result.trend[1]).toEqual({
+        date: '2026-06-02',
+        gmv: '500',
+        views: 0,
+        ctr: '0',
+        cto: '0',
+      });
+    });
   });
 
   describe('getPerformanceShows', () => {
