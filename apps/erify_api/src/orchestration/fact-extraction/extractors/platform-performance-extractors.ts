@@ -35,6 +35,16 @@ const DECIMAL_COLUMN_SPECS = {
   cto: { precision: 5, scale: 2 },
 } as const satisfies Record<string, { precision: number; scale: number }>;
 
+/**
+ * `viewer_count` is a Postgres `Int` (Int4) column. `parseNumberValue` only
+ * guarantees finiteness, so a non-integer (`12.5`) or out-of-range (`3e9`)
+ * value would reach the raw UPDATE and fail as an unhandled `extractor_error`
+ * instead of a controlled noop — the integer analogue of the Decimal precision
+ * guard. (Codex P2 on PR #132.)
+ */
+const INT4_MIN = -2_147_483_648;
+const INT4_MAX = 2_147_483_647;
+
 export abstract class BasePlatformPerformanceExtractor implements IngestionExtractor {
   abstract readonly factKey: SystemFactKey;
   abstract readonly dbField: 'gmv' | 'viewerCount' | 'ctr' | 'cto';
@@ -90,6 +100,16 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
       }
     } else {
       incomingViewCount = Number(fact.rawValue);
+      // Reject a non-integer or out-of-Int4-range view count before it reaches
+      // the write — Postgres would otherwise raise an integer / out-of-range
+      // error that surfaces as a silent `extractor_error` drop.
+      if (
+        !Number.isInteger(incomingViewCount)
+        || incomingViewCount < INT4_MIN
+        || incomingViewCount > INT4_MAX
+      ) {
+        return { kind: 'noop', reason: 'value_out_of_range' };
+      }
     }
 
     const attemptedValue = isDecimal ? incomingDecimal!.toString() : incomingViewCount;

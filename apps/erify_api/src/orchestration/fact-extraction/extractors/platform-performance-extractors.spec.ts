@@ -333,6 +333,19 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         newValue: '500',
       });
     });
+
+    it.each([12.5, 3_000_000_000])(
+      'rejects a non-integer / out-of-Int4-range viewerCount %p as value_out_of_range',
+      async (rawValue) => {
+        const showPlatformService = buildShowPlatformService();
+        const extractor = new PlatformViewCountExtractor(showPlatformService);
+
+        const decision = await extractor.apply({ ...factViews, rawValue }, ctx);
+
+        expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
+        expect(decision).toEqual({ kind: 'noop', reason: 'value_out_of_range' });
+      },
+    );
   });
 
   describe('platformCtrExtractor & PlatformCtoExtractor', () => {
