@@ -15,6 +15,26 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 
 export const POST_PRODUCTION_TEMPLATE_UID = 'ttpl_n6f7qAZQmPA4He6MOR-y';
 
+/**
+ * Postgres column shape for each Decimal-backed metric (see
+ * `prisma/schema.prisma`: `gmv Decimal(12,2)`, `ctr`/`cto Decimal(5,2)`).
+ *
+ * Postgres silently rounds `numeric(p,s)` to `scale` on write, so the
+ * extractor must round the incoming value to the SAME scale BEFORE the
+ * idempotency comparison, the column write, and the audit `newValue` —
+ * otherwise a `1250.125` submission is audited at full precision while the
+ * column stores `1250.12`, and every resubmission re-reads the rounded value,
+ * fails the `Decimal.equals` check, and re-writes forever (`value_unchanged`
+ * can never fire). A value whose integer part exceeds `precision - scale`
+ * digits would raise `numeric field overflow` on the write, so it is rejected
+ * up front as `value_out_of_range` rather than thrown as an unhandled error.
+ */
+const DECIMAL_COLUMN_SPECS = {
+  gmv: { precision: 12, scale: 2 },
+  ctr: { precision: 5, scale: 2 },
+  cto: { precision: 5, scale: 2 },
+} as const satisfies Record<string, { precision: number; scale: number }>;
+
 export abstract class BasePlatformPerformanceExtractor implements IngestionExtractor {
   abstract readonly factKey: SystemFactKey;
   abstract readonly dbField: 'gmv' | 'viewerCount' | 'ctr' | 'cto';
@@ -41,13 +61,32 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
     let incomingDecimal: Prisma.Decimal | null = null;
     let incomingViewCount = 0;
     if (isDecimal) {
+      const spec = DECIMAL_COLUMN_SPECS[this.dbField];
+      // Trim string input before constructing the Decimal. `parseNumberValue`
+      // (and the orchestrator's matching prefilter) accept a whitespace-padded
+      // numeric string like `' 1250.5 '`, but `Prisma.Decimal` rejects
+      // surrounding whitespace — without this trim the gate and the extractor
+      // disagree, so a valid value would be advertised as a writing fact yet
+      // silently noop here. Trimming preserves every significant digit.
+      const normalized = typeof fact.rawValue === 'string' ? fact.rawValue.trim() : fact.rawValue;
       try {
-        incomingDecimal = new Prisma.Decimal(fact.rawValue as Prisma.Decimal.Value);
+        incomingDecimal = new Prisma.Decimal(normalized as Prisma.Decimal.Value);
       } catch {
         return { kind: 'noop', reason: 'value_absent' };
       }
       if (!incomingDecimal.isFinite()) {
         return { kind: 'noop', reason: 'value_absent' };
+      }
+      // Round to the column scale so the idempotency check and the audit value
+      // match what Postgres actually persists (it rounds `numeric(p,s)` on
+      // write). ROUND_HALF_UP mirrors Postgres' round-half-away-from-zero.
+      incomingDecimal = incomingDecimal.toDecimalPlaces(spec.scale, Prisma.Decimal.ROUND_HALF_UP);
+      // Reject values that exceed the column precision before they reach the
+      // write — otherwise Postgres raises `numeric field overflow`, which would
+      // surface as an unhandled `extractor_error` and silently drop the value.
+      const maxMagnitude = new Prisma.Decimal(10).pow(spec.precision - spec.scale);
+      if (incomingDecimal.abs().gte(maxMagnitude)) {
+        return { kind: 'noop', reason: 'value_out_of_range' };
       }
     } else {
       incomingViewCount = Number(fact.rawValue);

@@ -93,12 +93,16 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
       });
     });
 
-    it('preserves full decimal precision from a string GMV (no float round-trip)', async () => {
+    it('rounds a high-precision string GMV to the column scale (no float round-trip)', async () => {
       const showPlatformService = buildShowPlatformService();
       const extractor = new PlatformGmvExtractor(showPlatformService);
 
-      // 18 significant digits — Number() would silently truncate this; the
-      // Decimal must carry every digit through to the column and the audit.
+      // 18 significant digits. The `gmv` column is `Decimal(12,2)`, so Postgres
+      // rounds to 2 places on write — the extractor must round to the SAME
+      // scale up front so the persisted column, the idempotency check, and the
+      // audit `newValue` all agree (instead of auditing a precision the column
+      // never stored). Decimal rounding still avoids the JS-float truncation
+      // that `Number('1250.123456789012345')` would introduce.
       const rawValue = '1250.123456789012345';
       const decision = await extractor.apply({ ...factGmv, rawValue }, ctx);
 
@@ -106,7 +110,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         uid: 'show_plt_200',
         showId: 10n,
         dbField: 'gmv',
-        value: new Prisma.Decimal(rawValue),
+        value: new Prisma.Decimal('1250.12'),
         factKey: 'show_platform_gmv',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
@@ -115,9 +119,48 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         kind: 'write',
         action: 'CREATE',
         oldValue: null,
-        newValue: rawValue,
+        newValue: '1250.12',
       });
-      expect(String(Number(rawValue))).not.toBe(rawValue);
+    });
+
+    it('writes a whitespace-padded numeric GMV string the prefilter accepts', async () => {
+      const showPlatformService = buildShowPlatformService();
+      const extractor = new PlatformGmvExtractor(showPlatformService);
+
+      // `parseNumberValue` (the value gate AND the orchestrator prefilter)
+      // trims and accepts this, so the extractor must not silently noop on the
+      // surrounding whitespace that bare `Prisma.Decimal` rejects — otherwise
+      // the fact is advertised as a writer yet dropped here.
+      const decision = await extractor.apply({ ...factGmv, rawValue: '  1250.50  ' }, ctx);
+
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith(
+        expect.objectContaining({ dbField: 'gmv', value: new Prisma.Decimal('1250.5') }),
+      );
+      expect(decision).toEqual({
+        kind: 'write',
+        action: 'CREATE',
+        oldValue: null,
+        newValue: '1250.5',
+      });
+    });
+
+    it('treats a rounded resubmission of the recorded value as value_unchanged', async () => {
+      const showPlatformService = buildShowPlatformService({
+        gmv: new Prisma.Decimal('1250.50'),
+        metadata: {
+          performance_templates: {
+            show_platform_gmv: 'ttpl_loop8',
+          },
+        },
+      });
+      const extractor = new PlatformGmvExtractor(showPlatformService);
+
+      // 1250.504 rounds to the stored 1250.50 at column scale, so a re-submit
+      // by the same template must noop instead of re-writing.
+      const decision = await extractor.apply({ ...factGmv, rawValue: '1250.504' }, ctx);
+
+      expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
+      expect(decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
     });
 
     it.each(['abc', '   ', true, {}])(
@@ -355,6 +398,29 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         oldValue: null,
         newValue: '2.45',
       });
+    });
+
+    it('rejects a ctr value that would overflow the Decimal(5,2) column', async () => {
+      const showPlatformService = buildShowPlatformService();
+      const extractor = new PlatformCtrExtractor(showPlatformService);
+
+      // ctr is `Decimal(5,2)` → max 999.99. 1000 would raise a Postgres
+      // `numeric field overflow` on the write, so it must be rejected up front
+      // as an out-of-range noop rather than reaching the DB.
+      const decision = await extractor.apply(
+        {
+          contentKey: 'fld_ctr:platform:show_plt_200',
+          sourceFieldId: 'fld_ctr',
+          factKey: 'show_platform_ctr' as const,
+          scope: 'platform' as const,
+          targetUid: 'show_plt_200',
+          rawValue: '1000',
+        },
+        ctx,
+      );
+
+      expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
+      expect(decision).toEqual({ kind: 'noop', reason: 'value_out_of_range' });
     });
   });
 });
