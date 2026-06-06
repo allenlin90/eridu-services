@@ -64,3 +64,39 @@ The current local seed cannot exercise this path: 0 tasks carry v2 hydrated `:pl
 - Range semantics for shows spanning a boundary or with no completed task — skip or partial?
 - Should preview surface a per-show / per-metric breakdown, or only aggregate counts?
 - Retention/visibility of past re-backfill runs (audit trail vs ephemeral).
+
+---
+
+## Prerequisite: getting performance data flowing at all (investigated 2026-06-07)
+
+The re-backfill *service* above is moot until performance data actually lands on `ShowPlatform`. A DB investigation showed it currently does not, and the PR 21.9 script alone cannot help, because real submissions are **show-scoped**, not the per-platform `<fieldId>:platform:<uid>` hydrated keys the script expects.
+
+### Where performance is captured today (no `system_fact_key` bindings yet)
+
+| Template | Fields | Shape |
+| --- | --- | --- |
+| **Post_production_check** (`ttpl_n6f7qAZQmPA4He6MOR-y`, the protected source) | `GMV`, `View`, `CTR`, `CTO` number fields | one value **per show** |
+| **Moderator workflows** (~50 brand templates) | `gmv_l1..l8`, `views_l1..l8`, `ctr_l1..l8`, `cto_l1..l8`, `ads_cost`, `show_gpm` | **per-loop** (8 × 15-min) |
+| Pre_production / On_air | none | — |
+
+Two structural facts: **every task targets `SHOW`, never a platform**; **shows have 1 platform (~80%) or 2 (~20%)**. Verified value semantics: `gmv_l*` is **cumulative** (total = last non-empty loop, NOT a sum); `views_l*` is per-loop concurrent (non-monotonic); `ctr/cto_l*` are per-loop rates.
+
+The core mismatch: capture is per-show / per-loop, but the model + extractor are per-`ShowPlatform`. The hydration framework is the bridge (a `platform`-scoped fact field renders one input per platform at form time), but existing templates have no bindings and existing content is show-scoped.
+
+### Track A — Template binding (going forward) — DECIDED
+
+Bind **Post_production_check only** (decision): its `GMV/View/CTR/CTO` → `show_platform_gmv / _view_count / _ctr / _cto` with **`platform` scope**. The form then hydrates one input per platform → operator enters per-platform → the existing extractor writes the authoritative (protected) value. Resolves 1- and 2-platform shows with zero ambiguity (attribution happens at entry). Do **not** fact-bind moderator loop-8 fields (8 loops × 4 metrics don't map to one platform fact; keep them operational). Caveat: templates are immutable snapshots, so this affects only tasks created after the new version.
+
+### Track B — Backfill existing shows (derivation-aware; a DIFFERENT job from the 21.9 script) — DECIDED
+
+- **Derive** show-level value: GMV = last non-empty loop (post-production `GMV` wins on precedence when present); **viewer_count = peak (max across loops)** (decision); ctr/cto = last non-empty loop *(confirm)*.
+- **Attribute:** 1-platform shows → assign to the single platform (unambiguous, automatable, ~88% of submitted tasks). **2-platform shows → skip + flag for manual per-platform entry** via the hydrated post-production form (decision); do not guess a revenue split.
+- Write through the **real extractor path** (precedence, scale rounding, range guards, provenance) — not the divergent standalone script.
+
+### Sequencing
+
+1. Track A first (bind Post_production_check) so new shows self-populate.
+2. Track B as the one-off historical migration for already-submitted shows (1-platform auto, 2-platform manual).
+3. Only then is the admin re-backfill *service* (top of this doc) a useful operator tool, layered on the same derivation core.
+
+Note: in the local seed, post-production tasks have empty GMV/View/CTR/CTO (only moderator loop-8 is populated), so confirm prod actually has post-production numbers filled before relying on that source.
