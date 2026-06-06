@@ -63,6 +63,39 @@ describe('updateStudioCreatorRosterInputSchema', () => {
       expect(result.data.default_commission_rate).toBe('12.50');
     }
   });
+
+  it('accepts a commission rate at the 100 upper bound', () => {
+    const result = updateStudioCreatorRosterInputSchema.safeParse({
+      version: 2,
+      default_rate_type: 'HYBRID',
+      default_commission_rate: '100.00',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.default_commission_rate).toBe('100.00');
+    }
+  });
+
+  it('rejects a commission rate just over 100', () => {
+    const result = updateStudioCreatorRosterInputSchema.safeParse({
+      version: 2,
+      default_rate_type: 'HYBRID',
+      default_commission_rate: '100.01',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a commission rate well above 100', () => {
+    const result = updateStudioCreatorRosterInputSchema.safeParse({
+      version: 2,
+      default_rate_type: 'HYBRID',
+      default_commission_rate: '200',
+    });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe('updateStudioShowCreatorInputSchema', () => {
