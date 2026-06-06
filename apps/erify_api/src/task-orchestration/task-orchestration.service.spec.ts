@@ -10,6 +10,7 @@ import { StudioMembershipService } from '@/models/membership/studio-membership.s
 import { showDtoListInclude } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
+import { showWithTaskSummaryDto } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
@@ -274,6 +275,12 @@ describe('taskOrchestrationService', () => {
             showPlatforms: [
               {
                 uid: 'showplatform_1',
+                liveStreamLink: 'https://youtube.com/live/abc',
+                platformShowId: 'yt-123',
+                viewerCount: 1500,
+                gmv: '12345.67',
+                ctr: null,
+                cto: null,
                 platform: {
                   uid: 'platform_1',
                   name: 'YouTube',
@@ -313,8 +320,21 @@ describe('taskOrchestrationService', () => {
         {
           id: 'platform_1',
           name: 'YouTube',
+          show_platform_uid: 'showplatform_1',
+          live_stream_link: 'https://youtube.com/live/abc',
+          platform_show_id: 'yt-123',
+          viewer_count: 1500,
+          gmv: '12345.67',
+          ctr: null,
+          cto: null,
         },
       ]);
+
+      // Regression guard: the row must satisfy the response contract the
+      // controller serializes through. `show_platform_uid` became required in
+      // PR 21.7; the list mapper omitting it produced a 500 on every show with
+      // platforms until this assertion was added.
+      expect(() => showWithTaskSummaryDto.parse(result.data[0])).not.toThrow();
     });
 
     it('should flag has_proper_task_assignment=false when every task is unassigned or closed', async () => {

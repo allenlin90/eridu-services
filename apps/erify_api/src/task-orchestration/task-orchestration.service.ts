@@ -571,6 +571,13 @@ export class TaskOrchestrationService {
         .map((showPlatform) => ({
           id: showPlatform.platform.uid,
           name: showPlatform.platform.name,
+          show_platform_uid: showPlatform.uid,
+          live_stream_link: showPlatform.liveStreamLink ?? null,
+          platform_show_id: showPlatform.platformShowId ?? null,
+          viewer_count: showPlatform.viewerCount ?? 0,
+          gmv: decimalToString(showPlatform.gmv),
+          ctr: decimalToString(showPlatform.ctr),
+          cto: decimalToString(showPlatform.cto),
         }));
 
       // prisma include type complexity
