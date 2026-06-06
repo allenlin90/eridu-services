@@ -4,6 +4,12 @@ import { CreatorActualEndTimeExtractor } from './extractors/creator-actual-end-t
 import { CreatorActualStartTimeExtractor } from './extractors/creator-actual-start-time.extractor';
 import { CreatorAttendanceMissingExtractor } from './extractors/creator-attendance-missing.extractor';
 import { ExtractorRegistry } from './extractors/extractor-registry';
+import {
+  PlatformCtoExtractor,
+  PlatformCtrExtractor,
+  PlatformGmvExtractor,
+  PlatformViewCountExtractor,
+} from './extractors/platform-performance-extractors';
 import { ShowActualEndTimeExtractor } from './extractors/show-actual-end-time.extractor';
 import { ShowActualStartTimeExtractor } from './extractors/show-actual-start-time.extractor';
 import { ShowPlatformActualEndTimeExtractor } from './extractors/show-platform-actual-end-time.extractor';
@@ -57,6 +63,10 @@ import { TaskModule } from '@/models/task/task.module';
     ShowPlatformActualStartTimeExtractor,
     ShowPlatformActualEndTimeExtractor,
     ShowPlatformViolationExtractor,
+    PlatformGmvExtractor,
+    PlatformViewCountExtractor,
+    PlatformCtrExtractor,
+    PlatformCtoExtractor,
   ],
   exports: [FactExtractionService],
 })

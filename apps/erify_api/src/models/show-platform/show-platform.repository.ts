@@ -11,6 +11,11 @@ type ShowPlatformWithIncludes<T extends Prisma.ShowPlatformInclude> =
     include: T;
   }>;
 
+export type PerformanceMetricUpdateResult =
+  | 'updated'
+  | 'blocked_by_higher_priority'
+  | 'not_found';
+
 // Custom model wrapper that implements IBaseModel with ShowPlatformWhereInput
 
 @Injectable()
@@ -93,6 +98,75 @@ export class ShowPlatformRepository extends BaseRepository<
 
   async updateMany(where: Prisma.ShowPlatformWhereInput, data: Prisma.ShowPlatformUpdateManyMutationInput): Promise<Prisma.BatchPayload> {
     return this.delegate.updateMany({ where, data });
+  }
+
+  /**
+   * Atomically write a single performance metric column AND merge its
+   * provenance entry into `metadata.performance_templates` in one UPDATE.
+   *
+   * The metadata merge uses a JSON concat (`||`) evaluated against the row's
+   * CURRENT value, so it only ever touches the one `factKey` it owns. This
+   * avoids the read-modify-write lost-update where two concurrent task
+   * submissions writing DIFFERENT metrics each replace the whole metadata
+   * blob and drop the other's provenance — which could leave a protected
+   * post-production value overwriteable by a loop-8 task (Codex P1 on PR #132).
+   *
+   * `column` is a fixed snake_case identifier from a closed union, never user
+   * input, so interpolating it via `Prisma.raw` is injection-safe; all values
+   * are parameterised. The precedence guard is part of the same UPDATE
+   * predicate, so a lower-priority template cannot pass an earlier extractor
+   * read, wait behind a concurrent post-production write, then overwrite it.
+   */
+  async updatePerformanceMetric(params: {
+    uid: string;
+    showId: bigint;
+    column: 'gmv' | 'viewer_count' | 'ctr' | 'cto';
+    value: Prisma.Decimal | number;
+    factKey: string;
+    templateUid: string;
+    protectedTemplateUid: string;
+  }): Promise<PerformanceMetricUpdateResult> {
+    const { uid, showId, column, value, factKey, templateUid, protectedTemplateUid } = params;
+    const affected = await this.txHost.tx.$executeRaw(Prisma.sql`
+      UPDATE "show_platform"
+      SET ${Prisma.raw(`"${column}"`)} = ${value},
+          "metadata" = jsonb_set(
+            COALESCE("metadata", '{}'::jsonb),
+            '{performance_templates}',
+            COALESCE("metadata" #> '{performance_templates}', '{}'::jsonb)
+              || jsonb_build_object(${factKey}::text, ${templateUid}::text),
+            true
+          )
+      WHERE "uid" = ${uid}
+        AND "show_id" = ${showId}
+        AND "deleted_at" IS NULL
+        AND (
+          ${templateUid}::text = ${protectedTemplateUid}::text
+          OR COALESCE(
+            jsonb_extract_path_text("metadata", 'performance_templates', ${factKey}::text),
+            ''
+          ) <> ${protectedTemplateUid}::text
+        )
+    `);
+
+    if (affected > 0) {
+      return 'updated';
+    }
+
+    const [current] = await this.txHost.tx.$queryRaw<Array<{
+      recordedTemplate: string | null;
+    }>>(Prisma.sql`
+      SELECT jsonb_extract_path_text("metadata", 'performance_templates', ${factKey}::text)
+        AS "recordedTemplate"
+      FROM "show_platform"
+      WHERE "uid" = ${uid} AND "show_id" = ${showId} AND "deleted_at" IS NULL
+      LIMIT 1
+    `);
+
+    return current?.recordedTemplate === protectedTemplateUid
+      && templateUid !== protectedTemplateUid
+      ? 'blocked_by_higher_priority'
+      : 'not_found';
   }
 
   async softDelete(where: Prisma.ShowPlatformWhereUniqueInput): Promise<ShowPlatform> {

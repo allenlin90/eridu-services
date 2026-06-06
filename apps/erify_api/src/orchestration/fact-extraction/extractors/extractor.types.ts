@@ -52,6 +52,8 @@ export type ExtractionContext = {
    * write as `OPERATOR`; manager and platform writers use their own paths.
    */
   source: ActualsSource;
+  /** Task template UID (if the task is template-backed). */
+  templateUid?: string;
 };
 
 /**
@@ -78,14 +80,18 @@ export type ExtractionDecision =
   | {
     kind: 'noop';
     /**
-     * `value_absent`     — operator left the field blank.
-     * `value_unchanged`  — resubmission of the recorded value by the same source.
-     * `target_stale`     — hydrated target is no longer assigned / has been
-     *                      soft-deleted between submission and extraction.
-     *                      No write, no audit; the value stays in
-     *                      `task.content` for the PR 12.4 review queue.
+     * `value_absent`       — operator left the field blank.
+     * `value_unchanged`    — resubmission of the recorded value by the same source.
+     * `value_out_of_range` — numeric value exceeds the target column's
+     *                        precision (would overflow on write). No write,
+     *                        no audit; the value stays in `task.content` for
+     *                        the review queue.
+     * `target_stale`       — hydrated target is no longer assigned / has been
+     *                        soft-deleted between submission and extraction.
+     *                        No write, no audit; the value stays in
+     *                        `task.content` for the PR 12.4 review queue.
      */
-    reason: 'value_absent' | 'value_unchanged' | 'target_stale';
+    reason: 'value_absent' | 'value_unchanged' | 'value_out_of_range' | 'target_stale';
   };
 
 /**

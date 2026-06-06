@@ -1,14 +1,26 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 
 import type {
   CreateShowPlatformPayload,
   UpdateShowPlatformPayload,
 } from './schemas/show-platform.schema';
-import { ShowPlatformRepository } from './show-platform.repository';
+import {
+  type PerformanceMetricUpdateResult,
+  ShowPlatformRepository,
+} from './show-platform.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
+
+/** Maps a performance extractor's `dbField` to its snake_case DB column. */
+const PERFORMANCE_METRIC_COLUMNS = {
+  gmv: 'gmv',
+  viewerCount: 'viewer_count',
+  ctr: 'ctr',
+  cto: 'cto',
+} as const satisfies Record<string, 'gmv' | 'viewer_count' | 'ctr' | 'cto'>;
 
 @Injectable()
 export class ShowPlatformService extends BaseModelService {
@@ -191,5 +203,39 @@ export class ShowPlatformService extends BaseModelService {
     if (result.count === 0) {
       throw HttpError.notFound('ShowPlatform', uid);
     }
+  }
+
+  /**
+   * Atomic partial-update helper for performance metrics extraction. Writes
+   * the metric column and merges its `metadata.performance_templates`
+   * provenance entry in a single statement (see
+   * `ShowPlatformRepository.updatePerformanceMetric` for the lost-update
+   * rationale). Scoped to `showId` and active status; throws
+   * `NotFoundException` on the stale-target race so the extractor can convert
+   * it to `target_stale`.
+   */
+  async updatePerformanceMetric(payload: {
+    uid: string;
+    showId: bigint;
+    dbField: 'gmv' | 'viewerCount' | 'ctr' | 'cto';
+    value: Prisma.Decimal | number;
+    factKey: string;
+    templateUid: string;
+    protectedTemplateUid: string;
+  }): Promise<Exclude<PerformanceMetricUpdateResult, 'not_found'>> {
+    const column = PERFORMANCE_METRIC_COLUMNS[payload.dbField];
+    const result = await this.showPlatformRepository.updatePerformanceMetric({
+      uid: payload.uid,
+      showId: payload.showId,
+      column,
+      value: payload.value,
+      factKey: payload.factKey,
+      templateUid: payload.templateUid,
+      protectedTemplateUid: payload.protectedTemplateUid,
+    });
+    if (result === 'not_found') {
+      throw HttpError.notFound('ShowPlatform', payload.uid);
+    }
+    return result;
   }
 }

@@ -15,6 +15,7 @@ The extraction pipeline routes `COMPLETED` task content into typed indexed colum
 - **Decision types**: [`extractors/extractor.types.ts`](../../../apps/erify_api/src/orchestration/fact-extraction/extractors/extractor.types.ts)
 - **Show extractors** (PR 12.1.1): `show-actual-{start,end}-time.extractor.ts`
 - **Platform extractors** (PR 12.1.2 — the reference for hydrated scopes): `show-platform-actual-{start,end}-time.extractor.ts`
+- **Platform performance extractors** (PR 21.4 — the reference for numeric/Decimal facts + template-based precedence): `platform-performance-extractors.ts`
 - **Source priority resolver**: [`source-priority.ts`](../../../apps/erify_api/src/orchestration/fact-extraction/source-priority.ts)
 - **Fact-key catalog**: [`packages/api-types/src/task-management/template-definition.schema.ts`](../../../packages/api-types/src/task-management/template-definition.schema.ts)
 - **PRD**: [`docs/prd/task-fact-binding.md`](../../../docs/prd/task-fact-binding.md)
@@ -137,6 +138,22 @@ When a fact has both `*_start_time` and `*_end_time` (or any merged-validation p
 
 Reference template: [`applyPairedShowPlatformActuals`](../../../apps/erify_api/src/orchestration/fact-extraction/fact-extraction.processor.ts) + [`tryAtomicPairedShowPlatformActuals`](../../../apps/erify_api/src/orchestration/fact-extraction/fact-extraction.service.ts).
 
+## Numeric / Decimal-backed facts (PR 21.4)
+
+Performance metrics (`show_platform_{gmv,view_count,ctr,cto}`) are the first **numeric** facts (`field_type: 'number'`). Rules that don't apply to datetime/checkbox extractors:
+
+- **Build `Prisma.Decimal` from the RAW value, never from `Number(rawValue)`.** Round-tripping a monetary GMV or a percentage through a JS float silently truncates precision (`Number('1250.123456789012345')` loses digits) and then re-introduces float drift on the column. Construct `new Prisma.Decimal(fact.rawValue as Prisma.Decimal.Value)` directly, inside a `try/catch` that collapses an unparseable value to `noop:value_absent`. **Trim string input first** (`typeof raw === 'string' ? raw.trim() : raw`) — `parseNumberValue`/the prefilter accept a whitespace-padded `' 1250.5 '`, but bare `Prisma.Decimal` throws on surrounding whitespace, so without the trim the gate and the extractor disagree and a valid value is dropped. Only the integer `viewerCount` goes through `Number()`. (This + the rounding review on PR #132.)
+- **Round to the column scale, and reject values that overflow the column precision.** The columns are low-scale `numeric(p,s)` (`gmv Decimal(12,2)`, `ctr`/`cto Decimal(5,2)`), and Postgres silently rounds to `scale` on write. Round the incoming Decimal to that scale (`toDecimalPlaces(scale, Prisma.Decimal.ROUND_HALF_UP)`) BEFORE the idempotency check, the write, and the audit `newValue`, then reuse that one rounded Decimal for all three — otherwise the audit records a precision the column never stored, and (worse) every resubmission re-reads the rounded value, fails `Decimal.equals`, and re-writes forever so `value_unchanged` never fires. A value whose integer part exceeds `precision - scale` digits (e.g. a `ctr` ≥ 1000 on `Decimal(5,2)`) would raise `numeric field overflow` on the write; reject it up front as `noop:value_out_of_range` so it doesn't surface as an unhandled `extractor_error`. (PR #132 review.)
+- **Idempotency compares decimals with `Decimal.equals`, not `===` on `Number(...)`.** `5.25 === 5.250` via float works by luck; `.equals` is the correct, drift-free comparison and keeps `value_unchanged` honest — but only after rounding both sides to the column scale (above), since the stored value is already rounded.
+- **The `number` field-type needs a prefilter parser.** `isFactValueParseable` had no `number` case, so it defaulted to `true` and let `'abc'` / whitespace into `writingFacts` → a false `skipped_collision` audit for a value the extractor would noop on. The shared `parseNumberValue` (`extractors/number-value.ts`) is now used by BOTH the extractor's value gate and the prefilter so they agree exactly — the same invariant as #4 in "State-transition handoff". (Codex P2 on PR #132.)
+- **Use `Prisma.Decimal` (decimal.js) on the backend, NOT `big.js`.** `Prisma.Decimal` is already an arbitrary-precision decimal and is the type the Prisma column write requires, so it's the house convention for backend money/percentages (cf. `studio-shift.service.ts`). `big.js` is a frontend-only dependency for display formatting (`erify_creators` / `erify_studios`) and isn't installed in `erify_api`; routing through it would just force a `Big → string → Prisma.Decimal` conversion for zero precision gain. The real precision frontier is upstream: if `task.content` stores the value as a JSON number, `JSON.parse` already bounded it before any extractor sees it — only a string-typed submission preserves full precision end-to-end.
+
+### Template-based precedence (vs. source-priority resolver)
+
+This family does NOT use `canResolverOverwrite(ctx.source, recordedSource)` — every Phase 4 submission writes as `OPERATOR`, so source rank can't distinguish a post-production wrap-up from a loop-8 moderation write. Precedence is instead keyed on the **template UID** that last wrote each metric, persisted in `ShowPlatform.metadata.performance_templates[factKey]`. Once `POST_PRODUCTION_TEMPLATE_UID` owns a metric, only the post-production template may overwrite it; a lower-priority template returns `skip:SKIPPED_LOWER_PRIORITY`. When adding metrics to this family, thread `ctx.templateUid` (sourced from `task.template?.uid` in `fact-extraction.service.ts`) and write it into the metadata map alongside the column.
+
+**Never read-modify-write the whole `metadata` blob to record provenance.** Two concurrent task submissions writing DIFFERENT metrics each read `metadata`, build a full replacement, and last-write-wins drops the sibling's `performance_templates` entry — which can leave a protected post-production value overwriteable by a loop-8 task (Codex P1 on PR #132). `ShowPlatformRepository.updatePerformanceMetric` instead writes the column and merges ONLY its own `factKey` via a single `jsonb` `||` UPDATE, evaluated against the row's current value, so no sibling entry is ever lost. The same UPDATE predicate also re-checks current `performance_templates[factKey]` and rejects lower-priority writes if post-production took ownership after the extractor's earlier read, closing the same-metric TOCTOU.
+
 ## Adding a new extractor — checklist
 
 For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box maps to a real Codex finding from PRs #91 / #101 / #103.
@@ -157,6 +174,7 @@ For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box ma
 **Extractor class**:
 - [ ] Absent-value short-circuit BEFORE any DB read
 - [ ] `parseValue` short-circuit BEFORE any DB read (malformed values are operator submission issues, not pipeline failures)
+- [ ] For numeric/Decimal facts: build `Prisma.Decimal` from the raw value (not `Number(rawValue)`) and compare with `Decimal.equals` — see "Numeric / Decimal-backed facts"
 - [ ] `try/catch NotFoundException` around `getByUid` → `target_stale`
 - [ ] Cross-scope defence-in-depth (`row.scopeParentId !== ctx.scopeParentId` → `target_stale`)
 - [ ] Priority resolver via `canResolverOverwrite(ctx.source, recordedSource)`
