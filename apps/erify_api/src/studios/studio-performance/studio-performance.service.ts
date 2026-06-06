@@ -13,7 +13,84 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class StudioPerformanceService {
+  /** Maximum span (in days) a performance query is allowed to cover. */
+  private static readonly MAX_DATE_RANGE_DAYS = 31;
+
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Normalizes an optional single value or array into a flat array.
+   * Returns an empty array when the value is absent.
+   */
+  private toArray<T>(value: T | T[] | undefined): T[] {
+    if (value === undefined) {
+      return [];
+    }
+
+    return Array.isArray(value) ? value : [value];
+  }
+
+  /**
+   * Validates that the requested date range does not exceed the allowed span.
+   */
+  private validateDateRange(startDate: Date, endDate: Date): void {
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays > StudioPerformanceService.MAX_DATE_RANGE_DAYS) {
+      throw new BadRequestException(
+        `Date range cannot exceed ${StudioPerformanceService.MAX_DATE_RANGE_DAYS} days`,
+      );
+    }
+  }
+
+  /**
+   * Builds the shared `Show` where clause scoping results to a studio, the
+   * requested date range, and any optional client / show type / platform filters.
+   */
+  private buildShowWhere(
+    studioUid: string,
+    query: PerformanceQuery,
+  ): Prisma.ShowWhereInput {
+    const clientUids = this.toArray(query.client_id);
+    const showTypeUids = this.toArray(query.show_type_id);
+    const platformUids = this.toArray(query.platform_id);
+
+    return {
+      studio: { uid: studioUid },
+      deletedAt: null,
+      startTime: {
+        gte: new Date(query.start_date),
+        lte: new Date(query.end_date),
+      },
+      ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
+      ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
+      ...(platformUids.length > 0
+        ? {
+            showPlatforms: {
+              some: {
+                deletedAt: null,
+                platform: { uid: { in: platformUids } },
+              },
+            },
+          }
+        : {}),
+    };
+  }
+
+  /**
+   * Builds the where clause for the nested `showPlatforms` include, excluding
+   * soft-deleted rows and narrowing to the requested platforms when filtered.
+   */
+  private buildShowPlatformsWhere(
+    query: PerformanceQuery,
+  ): Prisma.ShowPlatformWhereInput {
+    const platformUids = this.toArray(query.platform_id);
+
+    return {
+      deletedAt: null,
+      ...(platformUids.length > 0 ? { platform: { uid: { in: platformUids } } } : {}),
+    };
+  }
 
   async getPerformanceSummary(
     studioUid: string,
@@ -21,60 +98,13 @@ export class StudioPerformanceService {
   ): Promise<PerformanceSummaryResponse> {
     const startDate = new Date(query.start_date);
     const endDate = new Date(query.end_date);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays > 31) {
-      throw new BadRequestException('Date range cannot exceed 31 days');
-    }
-
-    // Parse filters
-    const clientUids = query.client_id
-      ? Array.isArray(query.client_id)
-        ? query.client_id
-        : [query.client_id]
-      : [];
-    const showTypeUids = query.show_type_id
-      ? Array.isArray(query.show_type_id)
-        ? query.show_type_id
-        : [query.show_type_id]
-      : [];
-    const platformUids = query.platform_id
-      ? Array.isArray(query.platform_id)
-        ? query.platform_id
-        : [query.platform_id]
-      : [];
-
-    const platformFilter = platformUids.length > 0
-      ? {
-          showPlatforms: {
-            some: {
-              deletedAt: null,
-              platform: { uid: { in: platformUids } },
-            },
-          },
-        }
-      : {};
-
-    const whereClause: Prisma.ShowWhereInput = {
-      studio: { uid: studioUid },
-      deletedAt: null,
-      startTime: {
-        gte: startDate,
-        lte: endDate,
-      },
-      ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
-      ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
-      ...platformFilter,
-    };
+    this.validateDateRange(startDate, endDate);
 
     const shows = await this.prisma.show.findMany({
-      where: whereClause,
+      where: this.buildShowWhere(studioUid, query),
       include: {
         showPlatforms: {
-          where: {
-            deletedAt: null,
-            ...(platformUids.length > 0 ? { platform: { uid: { in: platformUids } } } : {}),
-          },
+          where: this.buildShowPlatformsWhere(query),
           include: {
             platform: true,
           },
@@ -199,54 +229,13 @@ export class StudioPerformanceService {
   ): Promise<{ items: ShowPerformanceResponse[]; total: number }> {
     const startDate = new Date(query.start_date);
     const endDate = new Date(query.end_date);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays > 31) {
-      throw new BadRequestException('Date range cannot exceed 31 days');
-    }
+    this.validateDateRange(startDate, endDate);
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const clientUids = query.client_id
-      ? Array.isArray(query.client_id)
-        ? query.client_id
-        : [query.client_id]
-      : [];
-    const showTypeUids = query.show_type_id
-      ? Array.isArray(query.show_type_id)
-        ? query.show_type_id
-        : [query.show_type_id]
-      : [];
-    const platformUids = query.platform_id
-      ? Array.isArray(query.platform_id)
-        ? query.platform_id
-        : [query.platform_id]
-      : [];
-
-    const platformFilter = platformUids.length > 0
-      ? {
-          showPlatforms: {
-            some: {
-              deletedAt: null,
-              platform: { uid: { in: platformUids } },
-            },
-          },
-        }
-      : {};
-
-    const whereClause: Prisma.ShowWhereInput = {
-      studio: { uid: studioUid },
-      deletedAt: null,
-      startTime: {
-        gte: startDate,
-        lte: endDate,
-      },
-      ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
-      ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
-      ...platformFilter,
-    };
+    const whereClause = this.buildShowWhere(studioUid, query);
 
     const total = await this.prisma.show.count({ where: whereClause });
     const shows = await this.prisma.show.findMany({
@@ -255,10 +244,7 @@ export class StudioPerformanceService {
         client: true,
         showType: true,
         showPlatforms: {
-          where: {
-            deletedAt: null,
-            ...(platformUids.length > 0 ? { platform: { uid: { in: platformUids } } } : {}),
-          },
+          where: this.buildShowPlatformsWhere(query),
           include: {
             platform: true,
           },
