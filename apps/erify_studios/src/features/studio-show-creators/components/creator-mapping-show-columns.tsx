@@ -15,9 +15,8 @@ function ShowNameCell({ show }: { show: StudioShow }) {
   return (
     <div className="flex min-w-0 flex-col gap-1 pr-4">
       <Link
-        to="/studios/$studioId/creator-mapping/$showId"
+        to="/studios/$studioId/shows/$showId/compensation"
         params={{ studioId, showId: show.id }}
-        search={{ from: 'mapping' }}
         className="flex items-center gap-1 font-medium hover:underline"
       >
         <span className="truncate" title={show.name}>{show.name}</span>

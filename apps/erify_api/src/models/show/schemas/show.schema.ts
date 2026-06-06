@@ -10,6 +10,7 @@ import {
 } from '@eridu/api-types/shows';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
+import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { ClientService } from '@/models/client/client.service';
 import { SCHEDULE_UID_PREFIX } from '@/models/schedule/schedule.constants';
 import { SHOW_UID_PREFIX } from '@/models/show/show-uid.util';
@@ -93,6 +94,12 @@ const showPlatformSummaryRelationSchema = z.object({
     uid: z.string(),
     name: z.string(),
   }).optional(),
+  liveStreamLink: z.string().nullable().optional(),
+  platformShowId: z.string().nullable().optional(),
+  viewerCount: z.number().int().optional(),
+  gmv: z.any().nullable().optional(),
+  ctr: z.any().nullable().optional(),
+  cto: z.any().nullable().optional(),
 });
 
 // Internal schema for database entity
@@ -389,8 +396,15 @@ export const studioShowDetailDto = showWithRelationsSchema
   .transform((obj) => {
     const base = transformShowToApi(obj);
     const platforms = (obj.showPlatforms ?? []).map((item) => ({
-      id: item.platform?.uid ?? item.uid,
+      id: item.platform?.uid ?? '',
       name: item.platform?.name ?? '',
+      show_platform_uid: item.uid,
+      live_stream_link: item.liveStreamLink ?? null,
+      platform_show_id: item.platformShowId ?? null,
+      viewer_count: item.viewerCount ?? 0,
+      gmv: decimalToString(item.gmv),
+      ctr: decimalToString(item.ctr),
+      cto: decimalToString(item.cto),
     }));
     return { ...base, platforms };
   })

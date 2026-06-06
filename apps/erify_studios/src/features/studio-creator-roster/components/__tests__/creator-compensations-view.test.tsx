@@ -149,7 +149,7 @@ describe('creatorCompensationsView', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Open show May Show' }))
-      .toHaveAttribute('href', '/studios/std_1/creator-mapping/show_1');
+      .toHaveAttribute('href', '/studios/std_1/shows/show_1/compensation');
   });
 
   it('fires onRefresh when the refresh button is clicked', async () => {

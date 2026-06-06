@@ -45,6 +45,13 @@ export const showListResponseSchema
 export const studioShowPlatformSummarySchema = z.object({
   id: z.string(),
   name: z.string(),
+  show_platform_uid: z.string(),
+  live_stream_link: z.string().nullable().optional(),
+  platform_show_id: z.string().nullable().optional(),
+  viewer_count: z.number().int().default(0),
+  gmv: z.string().nullable().optional(),
+  ctr: z.string().nullable().optional(),
+  cto: z.string().nullable().optional(),
 });
 
 export const studioShowDetailSchema = showApiResponseSchema.extend({
