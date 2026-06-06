@@ -34,6 +34,7 @@ describe('studioPerformanceService', () => {
     metadata: {
       performance_templates: {
         show_platform_gmv: 'ttpl_post_prod',
+        show_platform_view_count: 'ttpl_post_prod',
       },
     },
     platform: {
@@ -52,6 +53,7 @@ describe('studioPerformanceService', () => {
     metadata: {
       performance_templates: {
         show_platform_gmv: 'ttpl_post_prod',
+        show_platform_view_count: 'ttpl_post_prod',
       },
     },
     platform: {
@@ -203,16 +205,28 @@ describe('studioPerformanceService', () => {
         ],
       });
 
-      // Show Gamma (with only show_platform_view_count) should have populated views and other fields default to '0.00'
+      // Show Gamma records only show_platform_view_count: views are populated
+      // from provenance while the absent gmv/ctr/cto columns stay null (not '0.00').
       expect(result.items[2].platforms[0]).toEqual({
         show_platform_uid: 'show_plt_103',
         platform_id: 'plat_shopee',
         platform_name: 'Shopee',
-        gmv: '0.00',
+        gmv: null,
         views: 100,
-        ctr: '0.00',
-        cto: '0.00',
+        ctr: null,
+        cto: null,
       });
+    });
+
+    it('throws BadRequestException if end_date is before start_date', async () => {
+      await expect(
+        service.getPerformanceShows('std_1', {
+          start_date: '2026-06-05T00:00:00.000Z',
+          end_date: '2026-06-01T00:00:00.000Z',
+          page: 1,
+          limit: 10,
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

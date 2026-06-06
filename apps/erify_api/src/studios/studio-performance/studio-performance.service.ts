@@ -31,10 +31,16 @@ export class StudioPerformanceService {
   }
 
   /**
-   * Validates that the requested date range does not exceed the allowed span.
+   * Validates that the requested date range is ordered and does not exceed the
+   * allowed span. A reversed range (end before start) is rejected so callers get
+   * a 400 instead of a silently empty result set.
    */
   private validateDateRange(startDate: Date, endDate: Date): void {
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    if (endDate.getTime() < startDate.getTime()) {
+      throw new BadRequestException('end_date must be on or after start_date');
+    }
+
+    const diffTime = endDate.getTime() - startDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays > StudioPerformanceService.MAX_DATE_RANGE_DAYS) {
       throw new BadRequestException(
@@ -268,20 +274,19 @@ export class StudioPerformanceService {
         platforms: show.showPlatforms.map((sp) => {
           const metadata = (sp.metadata as Record<string, any> | null) ?? {};
           const templates = metadata.performance_templates ?? {};
-          const hasRecord
-            = sp.gmv !== null
-            || sp.ctr !== null
-            || sp.cto !== null
-            || templates.show_platform_view_count !== undefined;
+          // `viewerCount` is a non-nullable column (defaults to 0), so its
+          // provenance comes from the recorded view-count fact rather than the
+          // column itself; gmv/ctr/cto are nullable and speak for themselves.
+          const hasViewCount = templates.show_platform_view_count !== undefined;
 
           return {
             show_platform_uid: sp.uid,
             platform_id: sp.platform.uid,
             platform_name: sp.platform.name,
-            gmv: hasRecord ? (decimalToString(sp.gmv) ?? '0.00') : null,
-            views: hasRecord ? sp.viewerCount : null,
-            ctr: hasRecord ? (decimalToString(sp.ctr) ?? '0.00') : null,
-            cto: hasRecord ? (decimalToString(sp.cto) ?? '0.00') : null,
+            gmv: decimalToString(sp.gmv),
+            views: hasViewCount ? sp.viewerCount : null,
+            ctr: decimalToString(sp.ctr),
+            cto: decimalToString(sp.cto),
           };
         }),
       };
