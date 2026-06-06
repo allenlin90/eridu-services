@@ -566,11 +566,19 @@ export class TaskOrchestrationService {
         agreed_rate: decimalToString(showCreator.agreedRate),
         commission_rate: decimalToString(showCreator.commissionRate),
       }));
+      // Lightweight per-platform summary for the all-members shows list.
+      // Deliberately omits the performance metrics (gmv/ctr/cto): the list
+      // never renders them and they are ADMIN/MANAGER-gated on `/performance`.
+      // See `showListPlatformSummarySchema`.
       const platforms = (show.showPlatforms ?? [])
         .filter((showPlatform) => showPlatform.platform != null)
         .map((showPlatform) => ({
           id: showPlatform.platform.uid,
           name: showPlatform.platform.name,
+          show_platform_uid: showPlatform.uid,
+          live_stream_link: showPlatform.liveStreamLink ?? null,
+          platform_show_id: showPlatform.platformShowId ?? null,
+          viewer_count: showPlatform.viewerCount ?? 0,
         }));
 
       // prisma include type complexity
