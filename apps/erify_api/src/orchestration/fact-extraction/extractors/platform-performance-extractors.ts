@@ -9,6 +9,7 @@ import type {
   ExtractionDecision,
   IngestionExtractor,
 } from './extractor.types';
+import { parseNumberValue } from './number-value';
 
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 
@@ -27,10 +28,16 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
 
     const isDecimal = this.dbField !== 'viewerCount';
 
-    // Parse + validate the incoming value. Decimal-backed metrics (GMV, CTR,
-    // CTO) are built straight from the raw value so monetary / percentage
-    // precision is never truncated through a JS float; the view count is an
-    // integer counter. An unparseable value is treated as "not recorded".
+    // Parse + validate the incoming value. `parseNumberValue` is the SAME gate
+    // the orchestrator's `isFactValueParseable` prefilter uses, so an
+    // unparseable value noops here AND is never advertised as a colliding
+    // write. Decimal-backed metrics (GMV, CTR, CTO) are then built straight
+    // from the raw value so monetary / percentage precision is never truncated
+    // through a JS float; the view count is an integer counter.
+    if (parseNumberValue(fact.rawValue) === null) {
+      return { kind: 'noop', reason: 'value_absent' };
+    }
+
     let incomingDecimal: Prisma.Decimal | null = null;
     let incomingViewCount = 0;
     if (isDecimal) {
@@ -44,9 +51,6 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
       }
     } else {
       incomingViewCount = Number(fact.rawValue);
-      if (!Number.isFinite(incomingViewCount)) {
-        return { kind: 'noop', reason: 'value_absent' };
-      }
     }
 
     const attemptedValue = isDecimal ? incomingDecimal!.toString() : incomingViewCount;
@@ -94,26 +98,19 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
       return { kind: 'noop', reason: 'value_unchanged' };
     }
 
-    // Prepare metadata
-    const nextMetadata = {
-      ...metadata,
-      performance_templates: {
-        ...(metadata.performance_templates ?? {}),
-        [this.factKey]: ctx.templateUid ?? '',
-      },
-    };
-
-    const updateData: Record<string, any> = {
-      metadata: nextMetadata,
-      [this.dbField]: isDecimal ? incomingDecimal : incomingViewCount,
-    };
-
+    // Write the column and merge ONLY this metric's provenance entry into
+    // `metadata.performance_templates` atomically (single statement). A whole
+    // -blob replacement here would let a concurrent write to a sibling metric
+    // drop this entry — see ShowPlatformService.updatePerformanceMetric.
     try {
-      await this.showPlatformService.updatePerformanceMetrics(
-        fact.targetUid,
-        ctx.showId,
-        updateData,
-      );
+      await this.showPlatformService.updatePerformanceMetric({
+        uid: fact.targetUid,
+        showId: ctx.showId,
+        dbField: this.dbField,
+        value: isDecimal ? incomingDecimal! : incomingViewCount,
+        factKey: this.factKey,
+        templateUid: ctx.templateUid ?? '',
+      });
     } catch (err) {
       if (err instanceof NotFoundException) {
         return { kind: 'noop', reason: 'target_stale' };

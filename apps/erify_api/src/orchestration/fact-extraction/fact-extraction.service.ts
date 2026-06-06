@@ -21,6 +21,7 @@ import type {
   ExtractionDecision,
 } from './extractors/extractor.types';
 import { ExtractorRegistry } from './extractors/extractor-registry';
+import { parseNumberValue } from './extractors/number-value';
 import { parseViolationValue } from './extractors/violation-value';
 import {
   FactExtractionProcessor,
@@ -912,6 +913,11 @@ function isFactValueParseable(fact: ExtractedFact): boolean {
       return parseDateTimeValue(fact.rawValue) !== null;
     case 'checkbox':
       return parseBooleanValue(fact.rawValue) !== null;
+    case 'number':
+      // Number-backed facts (performance metrics) noop on `value_absent`
+      // for non-numeric / whitespace input; the prefilter must agree so an
+      // unwritable value is never advertised as a colliding write.
+      return parseNumberValue(fact.rawValue) !== null;
     case 'multiselect':
       // Defer to the shared violation parser so collision routing matches
       // the extractor's write decision. A `string[]`-only check would

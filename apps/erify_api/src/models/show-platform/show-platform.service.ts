@@ -11,6 +11,14 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
+/** Maps a performance extractor's `dbField` to its snake_case DB column. */
+const PERFORMANCE_METRIC_COLUMNS = {
+  gmv: 'gmv',
+  viewerCount: 'viewer_count',
+  ctr: 'ctr',
+  cto: 'cto',
+} as const satisfies Record<string, 'gmv' | 'viewer_count' | 'ctr' | 'cto'>;
+
 @Injectable()
 export class ShowPlatformService extends BaseModelService {
   static readonly UID_PREFIX = 'show_plt';
@@ -195,32 +203,33 @@ export class ShowPlatformService extends BaseModelService {
   }
 
   /**
-   * Partial-update helper for performance metrics extraction.
-   * Scoped to showId and active status, throwing NotFoundException on race.
+   * Atomic partial-update helper for performance metrics extraction. Writes
+   * the metric column and merges its `metadata.performance_templates`
+   * provenance entry in a single statement (see
+   * `ShowPlatformRepository.updatePerformanceMetric` for the lost-update
+   * rationale). Scoped to `showId` and active status; throws
+   * `NotFoundException` on the stale-target race so the extractor can convert
+   * it to `target_stale`.
    */
-  async updatePerformanceMetrics(
-    uid: string,
-    showId: bigint,
-    payload: {
-      gmv?: Prisma.Decimal | null;
-      ctr?: Prisma.Decimal | null;
-      cto?: Prisma.Decimal | null;
-      viewerCount?: number;
-      metadata?: Record<string, unknown>;
-    },
-  ): Promise<void> {
-    const result = await this.showPlatformRepository.updateMany(
-      { uid, showId, deletedAt: null },
-      {
-        ...(payload.gmv !== undefined ? { gmv: payload.gmv } : {}),
-        ...(payload.ctr !== undefined ? { ctr: payload.ctr } : {}),
-        ...(payload.cto !== undefined ? { cto: payload.cto } : {}),
-        ...(payload.viewerCount !== undefined ? { viewerCount: payload.viewerCount } : {}),
-        ...(payload.metadata !== undefined ? { metadata: payload.metadata as never } : {}),
-      },
-    );
-    if (result.count === 0) {
-      throw HttpError.notFound('ShowPlatform', uid);
+  async updatePerformanceMetric(payload: {
+    uid: string;
+    showId: bigint;
+    dbField: 'gmv' | 'viewerCount' | 'ctr' | 'cto';
+    value: Prisma.Decimal | number;
+    factKey: string;
+    templateUid: string;
+  }): Promise<void> {
+    const column = PERFORMANCE_METRIC_COLUMNS[payload.dbField];
+    const affected = await this.showPlatformRepository.updatePerformanceMetric({
+      uid: payload.uid,
+      showId: payload.showId,
+      column,
+      value: payload.value,
+      factKey: payload.factKey,
+      templateUid: payload.templateUid,
+    });
+    if (affected === 0) {
+      throw HttpError.notFound('ShowPlatform', payload.uid);
     }
   }
 }

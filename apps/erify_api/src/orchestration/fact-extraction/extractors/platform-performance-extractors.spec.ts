@@ -31,7 +31,7 @@ function buildShowPlatformService(overrides: {
       cto: overrides.cto ?? null,
       metadata: overrides.metadata ?? {},
     }),
-    updatePerformanceMetrics: jest.fn().mockResolvedValue(undefined),
+    updatePerformanceMetric: jest.fn().mockResolvedValue(undefined),
   };
 
   if (overrides.notFound) {
@@ -76,18 +76,14 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
       const decision = await extractor.apply(factGmv, ctx);
 
       expect(showPlatformService.getShowPlatformById).toHaveBeenCalledWith('show_plt_200');
-      expect(showPlatformService.updatePerformanceMetrics).toHaveBeenCalledWith(
-        'show_plt_200',
-        10n,
-        {
-          gmv: new Prisma.Decimal(1250.5),
-          metadata: {
-            performance_templates: {
-              show_platform_gmv: 'ttpl_loop8',
-            },
-          },
-        },
-      );
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_200',
+        showId: 10n,
+        dbField: 'gmv',
+        value: new Prisma.Decimal(1250.5),
+        factKey: 'show_platform_gmv',
+        templateUid: 'ttpl_loop8',
+      });
       expect(decision).toEqual({
         kind: 'write',
         action: 'CREATE',
@@ -105,18 +101,14 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
       const rawValue = '1250.123456789012345';
       const decision = await extractor.apply({ ...factGmv, rawValue }, ctx);
 
-      expect(showPlatformService.updatePerformanceMetrics).toHaveBeenCalledWith(
-        'show_plt_200',
-        10n,
-        {
-          gmv: new Prisma.Decimal(rawValue),
-          metadata: {
-            performance_templates: {
-              show_platform_gmv: 'ttpl_loop8',
-            },
-          },
-        },
-      );
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_200',
+        showId: 10n,
+        dbField: 'gmv',
+        value: new Prisma.Decimal(rawValue),
+        factKey: 'show_platform_gmv',
+        templateUid: 'ttpl_loop8',
+      });
       expect(decision).toEqual({
         kind: 'write',
         action: 'CREATE',
@@ -125,6 +117,20 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
       });
       expect(String(Number(rawValue))).not.toBe(rawValue);
     });
+
+    it.each(['abc', '   ', true, {}])(
+      'returns value_absent for non-numeric rawValue %p without touching the DB',
+      async (rawValue) => {
+        const showPlatformService = buildShowPlatformService();
+        const extractor = new PlatformGmvExtractor(showPlatformService);
+
+        const decision = await extractor.apply({ ...factGmv, rawValue }, ctx);
+
+        expect(decision).toEqual({ kind: 'noop', reason: 'value_absent' });
+        expect(showPlatformService.getShowPlatformById).not.toHaveBeenCalled();
+        expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
+      },
+    );
 
     it('prefers post-production wrap-up and skips lower-priority loop 8 update when post-production exists', async () => {
       const showPlatformService = buildShowPlatformService({
@@ -139,7 +145,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
 
       const decision = await extractor.apply(factGmv, ctx);
 
-      expect(showPlatformService.updatePerformanceMetrics).not.toHaveBeenCalled();
+      expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
       expect(decision).toEqual({
         kind: 'skip',
         action: 'SKIPPED_LOWER_PRIORITY',
@@ -161,18 +167,14 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
 
       const decision = await extractor.apply({ ...factGmv, rawValue: 1600.0 }, postProdCtx);
 
-      expect(showPlatformService.updatePerformanceMetrics).toHaveBeenCalledWith(
-        'show_plt_200',
-        10n,
-        {
-          gmv: new Prisma.Decimal(1600.0),
-          metadata: {
-            performance_templates: {
-              show_platform_gmv: POST_PRODUCTION_TEMPLATE_UID,
-            },
-          },
-        },
-      );
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_200',
+        showId: 10n,
+        dbField: 'gmv',
+        value: new Prisma.Decimal(1600.0),
+        factKey: 'show_platform_gmv',
+        templateUid: POST_PRODUCTION_TEMPLATE_UID,
+      });
       expect(decision).toEqual({
         kind: 'write',
         action: 'UPDATE',
@@ -194,7 +196,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
 
       const decision = await extractor.apply(factGmv, ctx);
 
-      expect(showPlatformService.updatePerformanceMetrics).not.toHaveBeenCalled();
+      expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
       expect(decision).toEqual({
         kind: 'noop',
         reason: 'value_unchanged',
@@ -236,18 +238,14 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
 
       const decision = await extractor.apply(factViews, ctx);
 
-      expect(showPlatformService.updatePerformanceMetrics).toHaveBeenCalledWith(
-        'show_plt_200',
-        10n,
-        {
-          viewerCount: 500,
-          metadata: {
-            performance_templates: {
-              show_platform_view_count: 'ttpl_loop8',
-            },
-          },
-        },
-      );
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_200',
+        showId: 10n,
+        dbField: 'viewerCount',
+        value: 500,
+        factKey: 'show_platform_view_count',
+        templateUid: 'ttpl_loop8',
+      });
       expect(decision).toEqual({
         kind: 'write',
         action: 'UPDATE',
@@ -287,31 +285,23 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         ctx,
       );
 
-      expect(showPlatformService.updatePerformanceMetrics).toHaveBeenCalledWith(
-        'show_plt_200',
-        10n,
-        {
-          ctr: new Prisma.Decimal('5.25'),
-          metadata: {
-            performance_templates: {
-              show_platform_ctr: 'ttpl_loop8',
-            },
-          },
-        },
-      );
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_200',
+        showId: 10n,
+        dbField: 'ctr',
+        value: new Prisma.Decimal('5.25'),
+        factKey: 'show_platform_ctr',
+        templateUid: 'ttpl_loop8',
+      });
 
-      expect(showPlatformService.updatePerformanceMetrics).toHaveBeenCalledWith(
-        'show_plt_200',
-        10n,
-        {
-          cto: new Prisma.Decimal('2.45'),
-          metadata: {
-            performance_templates: {
-              show_platform_cto: 'ttpl_loop8',
-            },
-          },
-        },
-      );
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_200',
+        showId: 10n,
+        dbField: 'cto',
+        value: new Prisma.Decimal('2.45'),
+        factKey: 'show_platform_cto',
+        templateUid: 'ttpl_loop8',
+      });
 
       expect(ctrDecision).toEqual({
         kind: 'write',
