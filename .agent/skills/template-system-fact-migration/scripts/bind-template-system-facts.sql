@@ -161,6 +161,29 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION bind_matching_template_facts(
+  p_group     TEXT,
+  p_field_key TEXT,
+  p_key       TEXT
+) RETURNS VOID AS $$
+DECLARE
+  v_match RECORD;
+BEGIN
+  FOR v_match IN
+    SELECT tt.uid, item->>'id' AS field_id
+    FROM task_templates tt
+      CROSS JOIN LATERAL jsonb_array_elements(tt."current_schema"->'items') item
+    WHERE tt.deleted_at IS NULL
+      AND tt."current_schema"->'metadata'->>'task_type' = 'ACTIVE'
+      AND item->>'group' = p_group
+      AND item->>'key' = p_field_key
+    ORDER BY tt.uid
+  LOOP
+    PERFORM bind_template_fact(v_match.uid, v_match.field_id, p_key);
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Bindings (worked example — extend this list for future migrations)
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -182,6 +205,22 @@ SELECT bind_template_fact(
     "validation":{},
     "default_value":[]}'::jsonb);
 
+-- Post_production_check — verified performance fields
+SELECT bind_template_fact(
+  'ttpl_n6f7qAZQmPA4He6MOR-y', 'fld_7iw3yoy7fct', 'show_platform_gmv');
+SELECT bind_template_fact(
+  'ttpl_n6f7qAZQmPA4He6MOR-y', 'fld_20b2xmcxx3v', 'show_platform_view_count');
+SELECT bind_template_fact(
+  'ttpl_n6f7qAZQmPA4He6MOR-y', 'fld_e3lhi21gb1t', 'show_platform_ctr');
+SELECT bind_template_fact(
+  'ttpl_n6f7qAZQmPA4He6MOR-y', 'fld_h1su9d0wzhd', 'show_platform_cto');
+
+-- Active moderator workflows — Loop 8 performance fields feed lower-priority facts.
+SELECT bind_matching_template_facts('l8', 'gmv', 'show_platform_gmv');
+SELECT bind_matching_template_facts('l8', 'views', 'show_platform_view_count');
+SELECT bind_matching_template_facts('l8', 'ctr', 'show_platform_ctr');
+SELECT bind_matching_template_facts('l8', 'cto', 'show_platform_cto');
+
 -- On air_check — MC_attended: 3-way select → checkbox + creator_attendance_missing
 -- options removed (invalid on checkbox); require_reason flips to "on-true" so the
 -- operator gives a reason when the box is checked (flows to ShowCreator.attendanceReason).
@@ -193,6 +232,7 @@ SELECT bind_template_fact(
     "options":null}'::jsonb);
 
 -- ─────────────────────────────────────────────────────────────────────────────
+DROP FUNCTION bind_matching_template_facts(TEXT, TEXT, TEXT);
 DROP FUNCTION bind_template_fact(TEXT, TEXT, TEXT, JSONB);
 
 COMMIT;

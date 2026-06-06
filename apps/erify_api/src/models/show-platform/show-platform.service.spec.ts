@@ -26,6 +26,7 @@ describe('showPlatformService', () => {
       findPaginated: jest.fn(),
       findByShowAndPlatform: jest.fn(),
       softDelete: jest.fn(),
+      updatePerformanceMetric: jest.fn(),
     });
 
     utilityMock = createMockUtilityService('show_plt_123');
@@ -313,6 +314,67 @@ describe('showPlatformService', () => {
         showPlatformRepositoryMock.findPaginated,
       ).toHaveBeenCalledWith({});
       expect(result).toEqual({ data: showPlatforms, total: 1 });
+    });
+  });
+
+  describe('updatePerformanceMetric', () => {
+    it('maps dbField to the DB column and returns updated writes', async () => {
+      (showPlatformRepositoryMock.updatePerformanceMetric as jest.Mock).mockResolvedValue('updated');
+
+      const result = await service.updatePerformanceMetric({
+        uid: 'show_plt_123',
+        showId: 10n,
+        dbField: 'viewerCount',
+        value: 500,
+        factKey: 'show_platform_view_count',
+        templateUid: 'ttpl_loop8',
+        protectedTemplateUid: 'ttpl_post_production',
+      });
+
+      expect(showPlatformRepositoryMock.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_123',
+        showId: 10n,
+        column: 'viewer_count',
+        value: 500,
+        factKey: 'show_platform_view_count',
+        templateUid: 'ttpl_loop8',
+        protectedTemplateUid: 'ttpl_post_production',
+      });
+      expect(result).toBe('updated');
+    });
+
+    it('returns blocked_by_higher_priority without converting it to not found', async () => {
+      (showPlatformRepositoryMock.updatePerformanceMetric as jest.Mock).mockResolvedValue(
+        'blocked_by_higher_priority',
+      );
+
+      const result = await service.updatePerformanceMetric({
+        uid: 'show_plt_123',
+        showId: 10n,
+        dbField: 'gmv',
+        value: 1250,
+        factKey: 'show_platform_gmv',
+        templateUid: 'ttpl_loop8',
+        protectedTemplateUid: 'ttpl_post_production',
+      });
+
+      expect(result).toBe('blocked_by_higher_priority');
+    });
+
+    it('converts not_found update results to a stale-target not-found error', async () => {
+      (showPlatformRepositoryMock.updatePerformanceMetric as jest.Mock).mockResolvedValue('not_found');
+
+      await expect(
+        service.updatePerformanceMetric({
+          uid: 'show_plt_missing',
+          showId: 10n,
+          dbField: 'gmv',
+          value: 1250,
+          factKey: 'show_platform_gmv',
+          templateUid: 'ttpl_loop8',
+          protectedTemplateUid: 'ttpl_post_production',
+        }),
+      ).rejects.toThrow('ShowPlatform');
     });
   });
 });

@@ -92,6 +92,7 @@ A show's performance metrics can be supplied by multiple tasks over its lifecycl
 - **Post-Production Wrap-Up (`Post_production_check` template, ID 93) takes priority** over Moderation Loop 8 workflow tasks.
 - If a post-production check task is completed, its extracted metrics will override any existing moderation loop 8 metrics for that show and platform on `ShowPlatform`.
 - If a moderation loop 8 task is completed but post-production check data already exists, the loop 8 write is skipped.
+- Provenance is tracked per metric in `ShowPlatform.metadata.performance_templates[factKey]`; the metric column and provenance entry are written in one guarded database update so a lower-priority Loop 8 write cannot race behind and overwrite a newly completed post-production value.
 - This ensures the `ShowPlatform` performance values always reflect the final, verified post-production wrap-up figures.
 
 ---
@@ -147,4 +148,3 @@ To support progressive integration, testing, and clean reviews, the show perform
 - **Deliverables**:
   - Integrate the unified tabbed Show Details layout at `/studios/:studioId/shows/:showId` with `Performance` and `Submitted Tasks` tabs once the 14c show detail route (Details | Actuals | Compensation) has landed on master.
   - Converge the legacy operational routes into the show detail: rewire the entry-point links/buttons for `/task-setup/:showId/tasks` **and** `/creator-mapping/:showId` (the latter to `/shows/:showId/compensation`, which 14c already mounts via `ShowCreatorList`), then **delete** the legacy routes. Clean route renames — **no redirect shims** (internal-app convention; bookmarks are not a contract here).
-

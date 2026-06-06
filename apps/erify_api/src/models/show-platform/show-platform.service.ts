@@ -5,7 +5,10 @@ import type {
   CreateShowPlatformPayload,
   UpdateShowPlatformPayload,
 } from './schemas/show-platform.schema';
-import { ShowPlatformRepository } from './show-platform.repository';
+import {
+  type PerformanceMetricUpdateResult,
+  ShowPlatformRepository,
+} from './show-platform.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
@@ -218,18 +221,21 @@ export class ShowPlatformService extends BaseModelService {
     value: Prisma.Decimal | number;
     factKey: string;
     templateUid: string;
-  }): Promise<void> {
+    protectedTemplateUid: string;
+  }): Promise<Exclude<PerformanceMetricUpdateResult, 'not_found'>> {
     const column = PERFORMANCE_METRIC_COLUMNS[payload.dbField];
-    const affected = await this.showPlatformRepository.updatePerformanceMetric({
+    const result = await this.showPlatformRepository.updatePerformanceMetric({
       uid: payload.uid,
       showId: payload.showId,
       column,
       value: payload.value,
       factKey: payload.factKey,
       templateUid: payload.templateUid,
+      protectedTemplateUid: payload.protectedTemplateUid,
     });
-    if (affected === 0) {
+    if (result === 'not_found') {
       throw HttpError.notFound('ShowPlatform', payload.uid);
     }
+    return result;
   }
 }

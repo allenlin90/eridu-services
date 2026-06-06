@@ -31,7 +31,7 @@ function buildShowPlatformService(overrides: {
       cto: overrides.cto ?? null,
       metadata: overrides.metadata ?? {},
     }),
-    updatePerformanceMetric: jest.fn().mockResolvedValue(undefined),
+    updatePerformanceMetric: jest.fn().mockResolvedValue('updated'),
   };
 
   if (overrides.notFound) {
@@ -83,6 +83,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         value: new Prisma.Decimal(1250.5),
         factKey: 'show_platform_gmv',
         templateUid: 'ttpl_loop8',
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
       expect(decision).toEqual({
         kind: 'write',
@@ -108,6 +109,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         value: new Prisma.Decimal(rawValue),
         factKey: 'show_platform_gmv',
         templateUid: 'ttpl_loop8',
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
       expect(decision).toEqual({
         kind: 'write',
@@ -174,12 +176,46 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         value: new Prisma.Decimal(1600.0),
         factKey: 'show_platform_gmv',
         templateUid: POST_PRODUCTION_TEMPLATE_UID,
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
       expect(decision).toEqual({
         kind: 'write',
         action: 'UPDATE',
         oldValue: '1250.5',
         newValue: '1600',
+      });
+    });
+
+    it('skips a lower-priority write when post-production wins the same-metric race after the read', async () => {
+      const showPlatformService = buildShowPlatformService({
+        gmv: new Prisma.Decimal(1250.5),
+        metadata: {
+          performance_templates: {
+            show_platform_gmv: 'ttpl_loop8',
+          },
+        },
+      });
+      (showPlatformService.updatePerformanceMetric as jest.Mock).mockResolvedValueOnce(
+        'blocked_by_higher_priority',
+      );
+      const extractor = new PlatformGmvExtractor(showPlatformService);
+
+      const decision = await extractor.apply({ ...factGmv, rawValue: 1300.0 }, ctx);
+
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
+        uid: 'show_plt_200',
+        showId: 10n,
+        dbField: 'gmv',
+        value: new Prisma.Decimal(1300.0),
+        factKey: 'show_platform_gmv',
+        templateUid: 'ttpl_loop8',
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
+      });
+      expect(decision).toEqual({
+        kind: 'skip',
+        action: 'SKIPPED_LOWER_PRIORITY',
+        skippedBy: 'OPERATOR',
+        attemptedValue: '1300',
       });
     });
 
@@ -245,6 +281,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         value: 500,
         factKey: 'show_platform_view_count',
         templateUid: 'ttpl_loop8',
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
       expect(decision).toEqual({
         kind: 'write',
@@ -292,6 +329,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         value: new Prisma.Decimal('5.25'),
         factKey: 'show_platform_ctr',
         templateUid: 'ttpl_loop8',
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
 
       expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith({
@@ -301,6 +339,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         value: new Prisma.Decimal('2.45'),
         factKey: 'show_platform_cto',
         templateUid: 'ttpl_loop8',
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
 
       expect(ctrDecision).toEqual({

@@ -103,14 +103,23 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
     // -blob replacement here would let a concurrent write to a sibling metric
     // drop this entry — see ShowPlatformService.updatePerformanceMetric.
     try {
-      await this.showPlatformService.updatePerformanceMetric({
+      const updateResult = await this.showPlatformService.updatePerformanceMetric({
         uid: fact.targetUid,
         showId: ctx.showId,
         dbField: this.dbField,
         value: isDecimal ? incomingDecimal! : incomingViewCount,
         factKey: this.factKey,
         templateUid: ctx.templateUid ?? '',
+        protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
+      if (updateResult === 'blocked_by_higher_priority') {
+        return {
+          kind: 'skip',
+          action: 'SKIPPED_LOWER_PRIORITY',
+          skippedBy: ctx.source,
+          attemptedValue,
+        };
+      }
     } catch (err) {
       if (err instanceof NotFoundException) {
         return { kind: 'noop', reason: 'target_stale' };
