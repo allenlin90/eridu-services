@@ -55,11 +55,14 @@ export class StudioPerformanceService {
    */
   private buildShowWhere(
     studioUid: string,
-    query: PerformanceQuery & { name?: string },
+    query: PerformanceQuery & Pick<PerformanceShowsQuery, 'name'>,
   ): Prisma.ShowWhereInput {
     const clientUids = this.toArray(query.client_id);
     const showTypeUids = this.toArray(query.show_type_id);
     const platformUids = this.toArray(query.platform_id);
+    // Trim so a whitespace-only search collapses to "no filter" rather than a
+    // `contains: ' '` clause that matches every row with an interior space.
+    const name = query.name?.trim();
 
     return {
       studio: { uid: studioUid },
@@ -80,10 +83,10 @@ export class StudioPerformanceService {
             },
           }
         : {}),
-      ...(query.name
+      ...(name
         ? {
             name: {
-              contains: query.name,
+              contains: name,
               mode: 'insensitive',
             },
           }

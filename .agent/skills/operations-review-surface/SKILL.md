@@ -62,6 +62,14 @@ The window math is on the **frontend**; the backend endpoint is timezone-agnosti
 - "Current day" detection (`isCurrentShowRunReviewDay`) gates silent background refetch — only the live operational day refetches; historical ranges are stable.
 - Reuse the existing range utilities; do not reimplement the 06:00 boundary inline per surface.
 
+### Operational-day bucketing: never `.slice` UTC ISO
+
+When the backend groups rows **into days** for a trend/series (not just filtering by a range), it must bucket by the **same operational-day definition the frontend selected**, not by the server's incidental UTC calendar.
+
+- ❌ `someDate.toISOString().slice(0, 10)` — this is **not** a date-bucketing primitive. It silently assumes UTC, so for any non-UTC studio the day boundaries fall at UTC midnight instead of the local 06:00 boundary: edge buckets are off by one and rows near local midnight land in the wrong day. (Bug fixed in PR 21.8 — the performance trend bucketed both its keys and per-show assignment this way.)
+- ✅ Carry the operational timezone (or the precomputed per-day boundaries) into the aggregation and group by an explicit timezone-aware day key. The endpoint stays timezone-agnostic for *validation*; *grouping* is not timezone-agnostic.
+- Range **filtering** with absolute ISO bounds is fine as-is — this rule is specifically about deriving discrete day buckets from a timestamp.
+
 ## URL-synced multi-tab state
 
 - Active tab + every tab's search/filter/page live in **validated route search params** (`validateSearch` with a Zod schema). The screen is fully shareable and back/forward-navigable.
@@ -89,6 +97,7 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Container <200 LOC; tabs collapse into ONE generic `ReviewTabPanel`
 - [ ] View-model hook owns queries + handlers + export; presentation config stays in the container
 - [ ] Operational-day bounds computed FE-side via shared range utilities, serialized as absolute ISO-8601
+- [ ] Backend day-bucketing (trends/series) uses a timezone-aware operational-day key, never `toISOString().slice(0, 10)`
 - [ ] Only the current operational day silently refetches
 - [ ] Active tab + all tab filters/pages in validated route search; tab switch clears other tabs' params
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils

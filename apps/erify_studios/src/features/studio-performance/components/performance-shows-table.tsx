@@ -53,7 +53,10 @@ type PerformanceShowsTableProps = {
   page: number;
   limit: number;
   isLoading: boolean;
+  /** Shows-query freshness — drives the table's own background overlay. */
   isFetching: boolean;
+  /** Either query fetching — drives the manual refresh button, which refetches both. */
+  isRefreshing: boolean;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
   studioId: string;
@@ -200,6 +203,7 @@ export function PerformanceShowsTable({
   limit,
   isLoading,
   isFetching,
+  isRefreshing,
   onPageChange,
   onLimitChange,
   studioId,
@@ -315,8 +319,9 @@ export function PerformanceShowsTable({
   const handleColumnFiltersChange: OnChangeFn<ColumnFiltersState> = (updater) => {
     const nextFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
     const nameFilter = nextFilters.find((f) => f.id === 'name');
+    const nextName = (nameFilter?.value as string | undefined)?.trim();
     updateSearch({
-      name: nameFilter?.value as string | undefined,
+      name: nextName || undefined,
       page: 1,
     });
   };
@@ -633,10 +638,10 @@ export function PerformanceShowsTable({
               size="icon"
               className="h-8 w-8 shrink-0"
               onClick={onRefresh}
-              disabled={isFetching}
+              disabled={isRefreshing}
               aria-label="Refresh Dashboard"
             >
-              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </DataTableToolbar>
         )}

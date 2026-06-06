@@ -308,5 +308,29 @@ describe('studioPerformanceService', () => {
       expect(countWhere).not.toHaveProperty('name');
       expect(findManyWhere).not.toHaveProperty('name');
     });
+
+    it('trims the name filter and omits it when only whitespace', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        name: '  Alpha  ',
+      });
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({ name: { contains: 'Alpha', mode: 'insensitive' } }),
+      });
+
+      (prisma.show.count as jest.Mock).mockClear();
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        name: '   ',
+      });
+      expect((prisma.show.count as jest.Mock).mock.calls[0][0].where).not.toHaveProperty('name');
+    });
   });
 });

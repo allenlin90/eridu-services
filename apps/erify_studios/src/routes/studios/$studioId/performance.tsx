@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
@@ -17,13 +17,20 @@ import { usePerformanceShowsQuery } from '@/features/studio-performance/api/get-
 import { usePerformanceSummaryQuery } from '@/features/studio-performance/api/get-performance-summary';
 import { PerformanceShowsTable } from '@/features/studio-performance/components/performance-shows-table';
 import { PerformanceSummaryCards } from '@/features/studio-performance/components/performance-summary-cards';
-import { PerformanceTrendGraph } from '@/features/studio-performance/components/performance-trend-graph';
 import { fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
 import {
   buildOperationalDayRange,
   getCurrentOperationalDate,
   toOperationalDateInputValue,
 } from '@/lib/operational-day-range';
+
+// Lazy-loaded so Recharts (a heavy dependency) is split out of the route's
+// initial bundle and only fetched when the dashboard actually renders.
+const PerformanceTrendGraph = lazy(() =>
+  import('@/features/studio-performance/components/performance-trend-graph').then(
+    (module) => ({ default: module.PerformanceTrendGraph }),
+  ),
+);
 
 const performanceSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
@@ -173,11 +180,13 @@ function StudioPerformanceDashboard() {
             isLoading={summaryQuery.isLoading}
           />
 
-          {/* Daily Trend Area Chart */}
-          <PerformanceTrendGraph
-            data={summaryQuery.data}
-            isLoading={summaryQuery.isLoading}
-          />
+          {/* Daily Trend Area Chart (Recharts is lazy-loaded — see top of file) */}
+          <Suspense fallback={<div className="h-88 w-full animate-pulse rounded-xl bg-muted/20" />}>
+            <PerformanceTrendGraph
+              data={summaryQuery.data}
+              isLoading={summaryQuery.isLoading}
+            />
+          </Suspense>
 
           {/* Detailed Shows Table */}
           <div className="rounded-xl border bg-card p-1 shadow-sm">
@@ -194,7 +203,8 @@ function StudioPerformanceDashboard() {
                 page={search.page}
                 limit={search.limit}
                 isLoading={showsQuery.isLoading}
-                isFetching={isFetchingAny}
+                isFetching={showsQuery.isFetching}
+                isRefreshing={isFetchingAny}
                 onPageChange={(page) => updateSearch({ page })}
                 onLimitChange={(limit) => updateSearch({ limit, page: 1 })}
                 studioId={studioId}
