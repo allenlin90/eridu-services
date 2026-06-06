@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronDown, RefreshCw, X } from 'lucide-react';
+import { ChevronDown, Filter, RefreshCw, RotateCcw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
 import {
   AsyncCombobox,
+  Badge,
   Button,
   Card,
   CardDescription,
@@ -18,7 +19,17 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from '@eridu/ui';
+import { cn } from '@eridu/ui/lib/utils';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
@@ -58,11 +69,138 @@ function toArrayParam(val: string | string[] | undefined): string[] | undefined 
   return Array.isArray(val) ? val : [val];
 }
 
+type FilterFieldsProps = {
+  setClientSearch: (val: string) => void;
+  clientOptions: Array<{ value: string; label: string }>;
+  isLoadingClients: boolean;
+  search: PerformanceSearch;
+  handleFilterChange: (key: 'client_id', value: string) => void;
+  selectedShowTypes: Array<{ id: string; name: string }>;
+  showTypeOptions: Array<{ value: string; label: string }>;
+  handleMultiFilterChange: (key: 'show_type_id' | 'platform_id', value: string[]) => void;
+  selectedPlatforms: Array<{ id: string; name: string }>;
+  platformOptions: Array<{ value: string; label: string }>;
+};
+
+function FilterFields({
+  setClientSearch,
+  clientOptions,
+  isLoadingClients,
+  search,
+  handleFilterChange,
+  selectedShowTypes,
+  showTypeOptions,
+  handleMultiFilterChange,
+  selectedPlatforms,
+  platformOptions,
+}: FilterFieldsProps) {
+  return (
+    <div className="p-4 space-y-4">
+      {/* Client Combobox */}
+      <div className="space-y-1.5">
+        <Label>Client</Label>
+        <AsyncCombobox
+          value={search.client_id ?? ''}
+          onChange={(val) => handleFilterChange('client_id', val)}
+          onSearch={setClientSearch}
+          options={clientOptions}
+          isLoading={isLoadingClients}
+          placeholder="Search Client..."
+        />
+      </div>
+
+      {/* Show Types Dropdown */}
+      <div className="space-y-1.5">
+        <Label>Show Types</Label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between h-10 px-3 font-normal"
+            >
+              <span className="truncate">
+                {selectedShowTypes.length > 0
+                  ? selectedShowTypes.map((st) => st.name).join(', ')
+                  : 'Any Show Type'}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[280px] max-h-[300px] overflow-y-auto" align="start">
+            {showTypeOptions.map((opt) => {
+              const isSelected = toArrayParam(search.show_type_id)?.includes(opt.value) ?? false;
+              return (
+                <DropdownMenuCheckboxItem
+                  key={opt.value}
+                  checked={isSelected}
+                  onCheckedChange={() => {
+                    const current = toArrayParam(search.show_type_id) ?? [];
+                    const next = isSelected
+                      ? current.filter((val) => val !== opt.value)
+                      : [...current, opt.value];
+                    handleMultiFilterChange('show_type_id', next);
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {opt.label}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Platforms Dropdown */}
+      <div className="space-y-1.5">
+        <Label>Platforms</Label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between h-10 px-3 font-normal"
+            >
+              <span className="truncate">
+                {selectedPlatforms.length > 0
+                  ? selectedPlatforms.map((p) => p.name).join(', ')
+                  : 'Any Platform'}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[280px] max-h-[300px] overflow-y-auto" align="start">
+            {platformOptions.map((opt) => {
+              const isSelected = toArrayParam(search.platform_id)?.includes(opt.value) ?? false;
+              return (
+                <DropdownMenuCheckboxItem
+                  key={opt.value}
+                  checked={isSelected}
+                  onCheckedChange={() => {
+                    const current = toArrayParam(search.platform_id) ?? [];
+                    const next = isSelected
+                      ? current.filter((val) => val !== opt.value)
+                      : [...current, opt.value];
+                    handleMultiFilterChange('platform_id', next);
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {opt.label}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
+
 function StudioPerformanceDashboard() {
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [clientSearch, setClientSearch] = useState('');
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const updateSearch = useCallback(
     (nextSearch: Partial<PerformanceSearch>) => {
@@ -122,14 +260,26 @@ function StudioPerformanceDashboard() {
 
   const handleResetFilters = useCallback(() => {
     updateSearch({
-      date_from: undefined,
-      date_to: undefined,
       client_id: undefined,
       show_type_id: undefined,
       platform_id: undefined,
       page: 1,
     });
+    setClientSearch('');
+    setIsPopoverOpen(false);
+    setIsSheetOpen(false);
   }, [updateSearch]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (search.client_id)
+      count++;
+    if (toArrayParam(search.show_type_id)?.length)
+      count++;
+    if (toArrayParam(search.platform_id)?.length)
+      count++;
+    return count;
+  }, [search.client_id, search.show_type_id, search.platform_id]);
 
   const { data: lookups } = useShowLookupsQuery(studioId);
 
@@ -200,10 +350,6 @@ function StudioPerformanceDashboard() {
     limit: search.limit,
   });
 
-  const isAnyFilterActive = Boolean(
-    search.date_from || search.date_to || search.client_id || search.show_type_id || search.platform_id,
-  );
-
   const isFetchingAny = summaryQuery.isFetching || showsQuery.isFetching;
   const handleRefresh = () => {
     void summaryQuery.refetch();
@@ -231,9 +377,9 @@ function StudioPerformanceDashboard() {
                   Select date range and filter by clients, show types, and platforms.
                 </CardDescription>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 w-full">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end w-full">
                 {/* Date Range Picker */}
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 w-full sm:w-72">
                   <Label>Date Range</Label>
                   <DatePickerWithRange
                     date={selectedPickerRange}
@@ -242,122 +388,124 @@ function StudioPerformanceDashboard() {
                   />
                 </div>
 
-                {/* Clients Combobox */}
-                <div className="space-y-1.5">
-                  <Label>Client</Label>
-                  <AsyncCombobox
-                    value={search.client_id ?? ''}
-                    onChange={(val) => handleFilterChange('client_id', val)}
-                    onSearch={setClientSearch}
-                    options={clientOptions}
-                    isLoading={isLoadingClients}
-                    placeholder="Search Client..."
-                  />
-                </div>
-
-                {/* Show Types Dropdown */}
-                <div className="space-y-1.5">
-                  <Label>Show Types</Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                {/* Filters Trigger Popover & Mobile Sheet */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* Mobile Sheet (Drawer) */}
+                  <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                    <SheetTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-10 px-3 font-normal"
+                        className={cn(
+                          'h-10 gap-2 border-dashed sm:hidden flex-1 justify-center',
+                          activeFilterCount > 0 && 'border-primary',
+                        )}
                       >
-                        <span className="truncate">
-                          {selectedShowTypes.length > 0
-                            ? selectedShowTypes.map((st) => st.name).join(', ')
-                            : 'Any Show Type'}
-                        </span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <Filter className="h-4 w-4" />
+                        <span>Filters</span>
+                        {activeFilterCount > 0 && (
+                          <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                            {activeFilterCount}
+                          </Badge>
+                        )}
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto" align="start">
-                      {showTypeOptions.map((opt) => {
-                        const isSelected = toArrayParam(search.show_type_id)?.includes(opt.value) ?? false;
-                        return (
-                          <DropdownMenuCheckboxItem
-                            key={opt.value}
-                            checked={isSelected}
-                            onCheckedChange={() => {
-                              const current = toArrayParam(search.show_type_id) ?? [];
-                              const next = isSelected
-                                ? current.filter((val) => val !== opt.value)
-                                : [...current, opt.value];
-                              handleMultiFilterChange('show_type_id', next);
-                            }}
-                            onSelect={(e) => e.preventDefault()}
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-[min(85dvh,42rem)] rounded-t-xl p-0">
+                      <SheetHeader className="border-b px-4 py-3 flex-row items-center justify-between space-y-0">
+                        <div className="space-y-0.5">
+                          <SheetTitle>Filters</SheetTitle>
+                          <SheetDescription>
+                            Filter performance data by clients, show types, and platforms.
+                          </SheetDescription>
+                        </div>
+                        {activeFilterCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleResetFilters}
+                            className="h-7 px-2 text-xs text-muted-foreground mr-6"
                           >
-                            {opt.label}
-                          </DropdownMenuCheckboxItem>
-                        );
-                      })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                            <RotateCcw className="mr-1 h-3 w-3" />
+                            Reset
+                          </Button>
+                        )}
+                      </SheetHeader>
+                      <div className="overflow-y-auto overscroll-contain">
+                        {isSheetOpen && (
+                          <FilterFields
+                            setClientSearch={setClientSearch}
+                            clientOptions={clientOptions}
+                            isLoadingClients={isLoadingClients}
+                            search={search}
+                            handleFilterChange={handleFilterChange}
+                            selectedShowTypes={selectedShowTypes}
+                            showTypeOptions={showTypeOptions}
+                            handleMultiFilterChange={handleMultiFilterChange}
+                            selectedPlatforms={selectedPlatforms}
+                            platformOptions={platformOptions}
+                          />
+                        )}
+                      </div>
+                    </SheetContent>
+                  </Sheet>
 
-                {/* Platforms Dropdown */}
-                <div className="space-y-1.5">
-                  <Label>Platforms</Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                  {/* Desktop Popover */}
+                  <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                    <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-10 px-3 font-normal"
+                        className={cn(
+                          'h-10 gap-2 border-dashed hidden sm:inline-flex',
+                          activeFilterCount > 0 && 'border-primary',
+                        )}
                       >
-                        <span className="truncate">
-                          {selectedPlatforms.length > 0
-                            ? selectedPlatforms.map((p) => p.name).join(', ')
-                            : 'Any Platform'}
-                        </span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <Filter className="h-4 w-4" />
+                        <span>Filters</span>
+                        {activeFilterCount > 0 && (
+                          <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                            {activeFilterCount}
+                          </Badge>
+                        )}
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto" align="start">
-                      {platformOptions.map((opt) => {
-                        const isSelected = toArrayParam(search.platform_id)?.includes(opt.value) ?? false;
-                        return (
-                          <DropdownMenuCheckboxItem
-                            key={opt.value}
-                            checked={isSelected}
-                            onCheckedChange={() => {
-                              const current = toArrayParam(search.platform_id) ?? [];
-                              const next = isSelected
-                                ? current.filter((val) => val !== opt.value)
-                                : [...current, opt.value];
-                              handleMultiFilterChange('platform_id', next);
-                            }}
-                            onSelect={(e) => e.preventDefault()}
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-80 p-0 flex flex-col max-h-[min(calc(100vh-8rem),35rem)]">
+                      <div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
+                        <span className="font-medium text-sm">Filters</span>
+                        {activeFilterCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleResetFilters}
+                            className="h-7 px-2 text-xs text-muted-foreground"
                           >
-                            {opt.label}
-                          </DropdownMenuCheckboxItem>
-                        );
-                      })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
+                            <RotateCcw className="mr-1 h-3 w-3" />
+                            Reset
+                          </Button>
+                        )}
+                      </div>
+                      {isPopoverOpen && (
+                        <div className="overflow-y-auto flex-grow overscroll-contain">
+                          <FilterFields
+                            setClientSearch={setClientSearch}
+                            clientOptions={clientOptions}
+                            isLoadingClients={isLoadingClients}
+                            search={search}
+                            handleFilterChange={handleFilterChange}
+                            selectedShowTypes={selectedShowTypes}
+                            showTypeOptions={showTypeOptions}
+                            handleMultiFilterChange={handleMultiFilterChange}
+                            selectedPlatforms={selectedPlatforms}
+                            platformOptions={platformOptions}
+                          />
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
 
-              <div className="flex items-center justify-between border-t pt-3 mt-1">
-                <div className="text-xs text-muted-foreground">
-                  {isAnyFilterActive ? 'Filters applied' : 'Showing all records'}
-                </div>
-                <div className="flex items-center gap-2">
-                  {isAnyFilterActive && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleResetFilters}
-                      className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="mr-1 h-4 w-4" />
-                      Reset Filters
-                    </Button>
-                  )}
+                  {/* Refresh Button */}
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-10 w-10 shrink-0"
                     onClick={handleRefresh}
                     disabled={isFetchingAny}
                     aria-label="Refresh Dashboard"
