@@ -39,7 +39,7 @@ Standard patterns for large tabular views in `erify_studios`, `erify_creators`, 
 - **Route**: `createFileRoute(...)({ validateSearch, component })` — focused on composition
 - **Feature hook**: Owns `useTableUrlState`, maps to API params, executes queries, handles refresh/invalidation, feeds `setPageCount`
 - **Columns**: In feature config files, pure render logic, stable column ids, action columns via `useMemo`
-- **Toolbar**: Use `DataTableToolbar` — primary search maps to URL-backed filter, debounced, manual refresh with icon-only button + `aria-label`
+- **Toolbar**: Use `DataTableToolbar` — primary search maps to URL-backed filter, debounced, manual refresh with icon-only button + `aria-label`. If the view requires custom filters (like clients, show types, platforms) alongside search, integrate the responsive Popover/Sheet triggers directly as children of `DataTableToolbar` (sizing buttons down to `h-8` to align with the search input) to provide a consistent, integrated toolbar UX.
 - **Pagination**: Use `DataTablePagination` — `useTableUrlState` owns `page`/`pageSize`, `placeholderData: keepPreviousData`, never clamp against fallback during loading
 
 ## Pagination Review Gate

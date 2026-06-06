@@ -55,7 +55,7 @@ export class StudioPerformanceService {
    */
   private buildShowWhere(
     studioUid: string,
-    query: PerformanceQuery,
+    query: PerformanceQuery & { name?: string },
   ): Prisma.ShowWhereInput {
     const clientUids = this.toArray(query.client_id);
     const showTypeUids = this.toArray(query.show_type_id);
@@ -77,6 +77,14 @@ export class StudioPerformanceService {
                 deletedAt: null,
                 platform: { uid: { in: platformUids } },
               },
+            },
+          }
+        : {}),
+      ...(query.name
+        ? {
+            name: {
+              contains: query.name,
+              mode: 'insensitive',
             },
           }
         : {}),
