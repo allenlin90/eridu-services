@@ -15,6 +15,7 @@ import {
   Settings,
   Shapes,
   ShieldCheck,
+  TrendingUp,
   Users,
   UserSquare2,
   Videotape,
@@ -372,6 +373,15 @@ export function useSidebarConfig(
           icon: ClipboardCheck,
           isActive: studioOperationsItems.some((item) => item.isActive),
           items: studioOperationsItems,
+        });
+      }
+
+      if (hasStudioRouteAccess(activeStudio.role as StudioRole, 'performance')) {
+        navItems.push({
+          title: 'Performance',
+          url: `/studios/${activeStudio.studio.uid}/performance`,
+          icon: TrendingUp,
+          isActive: isPathActive(currentPath, `/studios/${activeStudio.studio.uid}/performance`),
         });
       }
 

@@ -66,9 +66,11 @@ To isolate analytics reads from OLTP operational paths, we expose two dedicated 
    - Queries the `Show` table as the base (to list **all** shows in the range matching filters) and joins `ShowPlatform` to retrieve their platforms and performance metrics.
    - Displays performance metrics where they exist, and empty/null cells for shows/platforms without completed records.
 
-### D. Filter State Synchronization
-* Multi-select filters on the dashboard (date range, client, show type, platform) synchronize state in URL search parameters.
-* When filters change, they trigger both `/performance/summary` and `/performance/shows` in parallel to keep the trend graph and the table synchronized.
+### D. Filter State & Search Synchronization
+* **Default Range**: When dates are omitted, the dashboard defaults to the previous 7 days (including today) to display active trends immediately.
+* **Toolbar Placement**: The Client, Show Type, and Platform filter triggers (popover on desktop, drawer on mobile) and the Refresh button are placed directly inside the table's `DataTableToolbar` alongside the Show Name search input to provide a clean and consistent layout.
+* **Show Name Search**: The Show Name search input triggers a case-insensitive backend query on `/studios/:studioId/performance/shows` using the new `name` query parameter, filtering only the tabular shows list.
+* **URL Sync**: All filters and search states synchronize with URL search parameters to keep links fully shareable and refreshable.
 
 ### E. Unified Show Details & Tasks Revamp
 * Deprecate the old route `/studios/:studioId/task-setup/:showId/tasks` which mixes management concerns with task details.

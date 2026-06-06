@@ -19,6 +19,7 @@ vi.mock('lucide-react', () => ({
   Ruler: vi.fn(),
   Settings: vi.fn(),
   ShieldCheck: vi.fn(),
+  TrendingUp: vi.fn(),
   Shapes: vi.fn(),
   Users: vi.fn(),
   UserSquare2: vi.fn(),
@@ -136,7 +137,7 @@ describe('useSidebarConfig', () => {
 
     const { result } = renderHook(() => useSidebarConfig(mockSession));
 
-    expect(result.current.navMain).toHaveLength(7); // Dashboard + System + My Workspace + Planning + Operations + People + Studio Settings
+    expect(result.current.navMain).toHaveLength(8); // Dashboard + System + My Workspace + Planning + Operations + Performance + People + Studio Settings
     expect(result.current.navMain[0]).toEqual({
       title: 'Dashboard',
       url: '/dashboard',
@@ -239,6 +240,13 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[5]).toEqual(expect.objectContaining({
+      title: 'Performance',
+      url: '/studios/studio-1/performance',
+      icon: expect.any(Function),
+      isActive: false,
+    }));
+
+    expect(result.current.navMain[6]).toEqual(expect.objectContaining({
       title: 'People',
       url: '/studios/studio-1/members',
       icon: expect.any(Function),
@@ -255,7 +263,7 @@ describe('useSidebarConfig', () => {
       ]),
     }));
 
-    expect(result.current.navMain[6]).toEqual(expect.objectContaining({
+    expect(result.current.navMain[7]).toEqual(expect.objectContaining({
       title: 'Studio Settings',
       url: '/studios/studio-1/shared-fields',
       icon: expect.any(Function),

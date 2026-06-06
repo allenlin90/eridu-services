@@ -38,6 +38,7 @@ export type PerformanceQuery = z.infer<typeof performanceQuerySchema>;
 export const performanceShowsQuerySchema = performanceQuerySchema.extend({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
+  name: z.string().optional(),
 });
 
 export type PerformanceShowsQueryInput = z.input<typeof performanceShowsQuerySchema>;

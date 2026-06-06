@@ -49,6 +49,10 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
+  performance: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
   taskTemplates: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
