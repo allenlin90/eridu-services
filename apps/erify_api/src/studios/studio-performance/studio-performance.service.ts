@@ -123,7 +123,7 @@ export class StudioPerformanceService {
           = sp.gmv !== null
           || sp.ctr !== null
           || sp.cto !== null
-          || templates.platform_view_count !== undefined;
+          || templates.show_platform_view_count !== undefined;
 
         if (hasRecord) {
           showHasPerformance = true;
@@ -286,7 +286,7 @@ export class StudioPerformanceService {
             = sp.gmv !== null
             || sp.ctr !== null
             || sp.cto !== null
-            || templates.platform_view_count !== undefined;
+            || templates.show_platform_view_count !== undefined;
 
           return {
             show_platform_uid: sp.uid,

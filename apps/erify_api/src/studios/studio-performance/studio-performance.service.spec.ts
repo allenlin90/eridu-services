@@ -33,7 +33,7 @@ describe('studioPerformanceService', () => {
     cto: new Prisma.Decimal('2.45'),
     metadata: {
       performance_templates: {
-        platform_gmv: 'ttpl_post_prod',
+        show_platform_gmv: 'ttpl_post_prod',
       },
     },
     platform: {
@@ -51,7 +51,7 @@ describe('studioPerformanceService', () => {
     cto: new Prisma.Decimal('4.20'),
     metadata: {
       performance_templates: {
-        platform_gmv: 'ttpl_post_prod',
+        show_platform_gmv: 'ttpl_post_prod',
       },
     },
     platform: {
@@ -94,10 +94,14 @@ describe('studioPerformanceService', () => {
           id: 103n,
           uid: 'show_plt_103',
           gmv: null,
-          viewerCount: 0,
+          viewerCount: 100,
           ctr: null,
           cto: null,
-          metadata: {},
+          metadata: {
+            performance_templates: {
+              show_platform_view_count: 'ttpl_post_prod',
+            },
+          },
           platform: {
             uid: 'plat_shopee',
             name: 'Shopee',
@@ -126,12 +130,12 @@ describe('studioPerformanceService', () => {
 
       // Verify aggregates
       expect(result.total_gmv).toBe('3000.5');
-      expect(result.total_views).toBe(2000);
+      expect(result.total_views).toBe(2100);
       // CTR: (5.25 + 8.5) / 2 = 6.875 -> 6.875
       expect(result.avg_ctr).toBe('6.875');
       // CTO: (2.45 + 4.2) / 2 = 3.325
       expect(result.avg_cto).toBe('3.325');
-      expect(result.recorded_shows_count).toBe(2);
+      expect(result.recorded_shows_count).toBe(3);
       expect(result.total_shows_count).toBe(3);
 
       // Verify trend contains 5 days (June 1st to June 5th)
@@ -199,15 +203,15 @@ describe('studioPerformanceService', () => {
         ],
       });
 
-      // Show Gamma (No Records) should have null metrics (dimmed cells)
+      // Show Gamma (with only show_platform_view_count) should have populated views and other fields default to '0.00'
       expect(result.items[2].platforms[0]).toEqual({
         show_platform_uid: 'show_plt_103',
         platform_id: 'plat_shopee',
         platform_name: 'Shopee',
-        gmv: null,
-        views: null,
-        ctr: null,
-        cto: null,
+        gmv: '0.00',
+        views: 100,
+        ctr: '0.00',
+        cto: '0.00',
       });
     });
   });
