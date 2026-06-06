@@ -5,6 +5,8 @@ import type {
   UpdateStudioCreatorRosterInput,
 } from '@eridu/api-types/studio-creators';
 
+import { toMoneyString } from '@/features/compensation-line-items/utils/money-input';
+
 export const UNSET_COMPENSATION_TYPE = 'UNSET' as const;
 
 export type StudioCreatorCompensationTypeOption =
@@ -18,21 +20,24 @@ export const STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS = [
   { value: CREATOR_COMPENSATION_TYPE.HYBRID, label: 'Hybrid', disabled: true },
 ] as const;
 
-function parseOptionalNonNegativeNumber(
+function normalizeOptionalNonNegativeDecimalString(
   value: string,
   fieldLabel: string,
-): number | null {
+): string | null {
   const trimmed = value.trim();
   if (trimmed.length === 0) {
     return null;
   }
 
-  const parsed = Number.parseFloat(trimmed);
-  if (Number.isNaN(parsed) || parsed < 0) {
+  try {
+    const normalized = toMoneyString(trimmed);
+    if (normalized.startsWith('-')) {
+      throw new Error('negative amount');
+    }
+    return normalized;
+  } catch {
     throw new Error(`${fieldLabel} must be a non-negative number`);
   }
-
-  return parsed;
 }
 
 function normalizeCompensationType(
@@ -56,7 +61,7 @@ function buildCompensationFields(params: {
   defaultRateType: StudioCreatorCompensationTypeOption;
   defaultCommissionRate: string;
 }) {
-  const defaultRate = parseOptionalNonNegativeNumber(params.defaultRate, 'Default rate');
+  const defaultRate = normalizeOptionalNonNegativeDecimalString(params.defaultRate, 'Default rate');
   const normalizedType = normalizeCompensationType(params.defaultRateType);
 
   if (normalizedType === CREATOR_COMPENSATION_TYPE.FIXED || normalizedType === null) {
@@ -67,7 +72,7 @@ function buildCompensationFields(params: {
     } as const;
   }
 
-  const commissionRate = parseOptionalNonNegativeNumber(
+  const commissionRate = normalizeOptionalNonNegativeDecimalString(
     params.defaultCommissionRate,
     'Default commission rate',
   );

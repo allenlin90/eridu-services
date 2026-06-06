@@ -246,7 +246,7 @@ export class StudioCreatorService extends BaseModelService {
 
   private validateCompensationDefaults(payload: {
     defaultRateType: string | null;
-    defaultCommissionRate: number | null;
+    defaultCommissionRate: string | null;
   }) {
     if (
       payload.defaultRateType === CREATOR_COMPENSATION_TYPE.FIXED
@@ -273,7 +273,7 @@ export class StudioCreatorService extends BaseModelService {
   private resolveNextCommissionRate(
     existingDefaultCommissionRate: unknown,
     payload: UpdateStudioCreatorRosterPayload,
-  ): number | null {
+  ): string | null {
     if (payload.defaultRateType !== undefined) {
       if (payload.defaultRateType === CREATOR_COMPENSATION_TYPE.FIXED || payload.defaultRateType === null) {
         return null;
@@ -284,23 +284,23 @@ export class StudioCreatorService extends BaseModelService {
       return payload.defaultCommissionRate;
     }
 
-    return this.toNullableNumber(existingDefaultCommissionRate);
+    return this.toNullableDecimalString(existingDefaultCommissionRate);
   }
 
-  private toDecimalString(value: number | null | undefined): string | null | undefined {
+  private toDecimalString(value: string | null | undefined): string | null | undefined {
     if (value === undefined) {
       return undefined;
     }
     if (value === null) {
       return null;
     }
-    return value.toFixed(2);
+    return value;
   }
 
-  private toNullableNumber(value: unknown): number | null {
+  private toNullableDecimalString(value: unknown): string | null {
     if (value === null || value === undefined) {
       return null;
     }
-    return Number(value);
+    return String(value);
   }
 }

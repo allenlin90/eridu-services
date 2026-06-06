@@ -15,15 +15,15 @@ export class CreateStudioCreatorRosterDto extends createZodDto(
   })),
 ) {
   declare creator_id: string;
-  declare default_rate: number | null | undefined;
+  declare default_rate: string | null | undefined;
   declare default_rate_type: string | null | undefined;
-  declare default_commission_rate: number | null | undefined;
+  declare default_commission_rate: string | null | undefined;
   declare metadata: Record<string, unknown> | undefined;
 
   declare creatorId: string;
-  declare defaultRate: number | null | undefined;
+  declare defaultRate: string | null | undefined;
   declare defaultRateType: string | null | undefined;
-  declare defaultCommissionRate: number | null | undefined;
+  declare defaultCommissionRate: string | null | undefined;
 }
 
 export class UpdateStudioCreatorRosterDto extends createZodDto(
@@ -37,14 +37,14 @@ export class UpdateStudioCreatorRosterDto extends createZodDto(
   })),
 ) {
   declare version: number;
-  declare default_rate: number | null | undefined;
+  declare default_rate: string | null | undefined;
   declare default_rate_type: string | null | undefined;
-  declare default_commission_rate: number | null | undefined;
+  declare default_commission_rate: string | null | undefined;
   declare is_active: boolean | undefined;
   declare metadata: Record<string, unknown> | undefined;
 
-  declare defaultRate: number | null | undefined;
+  declare defaultRate: string | null | undefined;
   declare defaultRateType: string | null | undefined;
-  declare defaultCommissionRate: number | null | undefined;
+  declare defaultCommissionRate: string | null | undefined;
   declare isActive: boolean | undefined;
 }

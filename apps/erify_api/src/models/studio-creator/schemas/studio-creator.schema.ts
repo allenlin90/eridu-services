@@ -13,17 +13,17 @@ export type StudioCreatorCatalogItemPayload = {
 
 export type CreateStudioCreatorRosterPayload = {
   creatorId: string;
-  defaultRate?: number | null;
+  defaultRate?: string | null;
   defaultRateType?: string | null;
-  defaultCommissionRate?: number | null;
+  defaultCommissionRate?: string | null;
   metadata?: object;
 };
 
 export type UpdateStudioCreatorRosterPayload = {
   version: number;
-  defaultRate?: number | null;
+  defaultRate?: string | null;
   defaultRateType?: string | null;
-  defaultCommissionRate?: number | null;
+  defaultCommissionRate?: string | null;
   isActive?: boolean;
   metadata?: object;
 };
@@ -36,9 +36,9 @@ export type OnboardCreatorPayload = {
     metadata?: object;
   };
   roster: {
-    defaultRate?: number | null;
+    defaultRate?: string | null;
     defaultRateType?: string | null;
-    defaultCommissionRate?: number | null;
+    defaultCommissionRate?: string | null;
     metadata?: object;
   };
 };

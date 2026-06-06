@@ -26,14 +26,14 @@ describe('studio creator compensation payload builders', () => {
   it('builds a FIXED create payload with null commission', () => {
     const payload = buildCreateStudioCreatorRosterPayload({
       creatorId: 'creator_123',
-      defaultRate: '500',
+      defaultRate: '9007199254740993.01',
       defaultRateType: CREATOR_COMPENSATION_TYPE.FIXED,
       defaultCommissionRate: '',
     });
 
     expect(payload).toEqual({
       creator_id: 'creator_123',
-      default_rate: 500,
+      default_rate: '9007199254740993.01',
       default_rate_type: CREATOR_COMPENSATION_TYPE.FIXED,
       default_commission_rate: null,
     });
@@ -73,7 +73,7 @@ describe('studio creator compensation payload builders', () => {
       name: 'Alice Example',
       aliasName: 'Alice',
       userId: 'user_123',
-      defaultRate: '500',
+      defaultRate: '500.25',
       defaultRateType: CREATOR_COMPENSATION_TYPE.FIXED,
       defaultCommissionRate: '',
     });
@@ -86,7 +86,7 @@ describe('studio creator compensation payload builders', () => {
         metadata: undefined,
       },
       roster: {
-        default_rate: 500,
+        default_rate: '500.25',
         default_rate_type: CREATOR_COMPENSATION_TYPE.FIXED,
         default_commission_rate: null,
         metadata: undefined,
