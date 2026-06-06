@@ -194,14 +194,6 @@ function getStudioPlanningItems(
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'performance')) {
-    planningItems.push({
-      title: 'Performance',
-      url: `/studios/${studioId}/performance`,
-      icon: TrendingUp,
-    });
-  }
-
   return planningItems;
 }
 
@@ -381,6 +373,15 @@ export function useSidebarConfig(
           icon: ClipboardCheck,
           isActive: studioOperationsItems.some((item) => item.isActive),
           items: studioOperationsItems,
+        });
+      }
+
+      if (hasStudioRouteAccess(activeStudio.role as StudioRole, 'performance')) {
+        navItems.push({
+          title: 'Performance',
+          url: `/studios/${activeStudio.studio.uid}/performance`,
+          icon: TrendingUp,
+          isActive: isPathActive(currentPath, `/studios/${activeStudio.studio.uid}/performance`),
         });
       }
 

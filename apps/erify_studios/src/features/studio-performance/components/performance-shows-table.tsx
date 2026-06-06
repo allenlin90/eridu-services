@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { useMemo } from 'react';
 
 import type { ShowPerformanceResponse } from '@eridu/api-types/performance';
@@ -8,6 +8,8 @@ import {
   DataTablePagination,
   DataTableToolbar,
 } from '@eridu/ui';
+
+import { resolvePaginationAction } from './pagination-action';
 
 import { DateCell } from '@/features/admin/components/show-table-cells';
 import { toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
@@ -187,6 +189,24 @@ export function PerformanceShowsTable({
     [studioId],
   );
 
+  const applyPagination = (next: { pageIndex: number; pageSize: number }) => {
+    const action = resolvePaginationAction({ page, limit }, next);
+    if (action?.type === 'limit') {
+      onLimitChange(action.limit);
+    } else if (action?.type === 'page') {
+      onPageChange(action.page);
+    }
+  };
+
+  const handlePaginationChange = (
+    updater: PaginationState | ((old: PaginationState) => PaginationState),
+  ) => {
+    const next = typeof updater === 'function'
+      ? updater({ pageIndex: page - 1, pageSize: limit })
+      : updater;
+    applyPagination(next);
+  };
+
   return (
     <div className="space-y-4">
       <DataTable
@@ -201,16 +221,7 @@ export function PerformanceShowsTable({
           pageIndex: page - 1,
           pageSize: limit,
         }}
-        onPaginationChange={(updater) => {
-          if (typeof updater === 'function') {
-            const nextState = updater({ pageIndex: page - 1, pageSize: limit });
-            onPageChange(nextState.pageIndex + 1);
-            onLimitChange(nextState.pageSize);
-          } else {
-            onPageChange(updater.pageIndex + 1);
-            onLimitChange(updater.pageSize);
-          }
-        }}
+        onPaginationChange={handlePaginationChange}
         renderToolbar={(table) => (
           <DataTableToolbar
             table={table}
@@ -227,16 +238,7 @@ export function PerformanceShowsTable({
               total,
               pageCount,
             }}
-            onPaginationChange={(updater) => {
-              if (typeof updater === 'function') {
-                const nextState = updater({ pageIndex: page - 1, pageSize: limit });
-                onPageChange(nextState.pageIndex + 1);
-                onLimitChange(nextState.pageSize);
-              } else {
-                onPageChange(updater.pageIndex + 1);
-                onLimitChange(updater.pageSize);
-              }
-            }}
+            onPaginationChange={applyPagination}
           />
         )}
       />

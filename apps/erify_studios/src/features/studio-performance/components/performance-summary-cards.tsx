@@ -1,28 +1,18 @@
-import { BarChart2, DollarSign, Eye, Percent, TrendingUp } from 'lucide-react';
+import { BarChart2, DollarSign, Eye } from 'lucide-react';
 
 import type { PerformanceSummaryResponse } from '@eridu/api-types/performance';
 import { Card, CardContent, CardHeader, CardTitle } from '@eridu/ui';
 
-import { toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
+import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
 type PerformanceSummaryCardsProps = {
   data?: PerformanceSummaryResponse;
   isLoading: boolean;
 };
 
-const SKELETON_IDS = ['ske-gmv', 'ske-views', 'ske-ctr', 'ske-cto', 'ske-recorded'];
+const SKELETON_IDS = ['ske-gmv', 'ske-views', 'ske-recorded'];
 
 export function PerformanceSummaryCards({ data, isLoading }: PerformanceSummaryCardsProps) {
-  const formatPercentage = (val?: string) => {
-    if (!val)
-      return '0.00%';
-    try {
-      return `${toDecimalDisplayString(val)}%`;
-    } catch {
-      return `${val}%`;
-    }
-  };
-
   const formatCurrency = (val?: string) => {
     if (!val)
       return '$0.00';
@@ -59,24 +49,6 @@ export function PerformanceSummaryCards({ data, isLoading }: PerformanceSummaryC
       iconColor: 'text-blue-500',
     },
     {
-      title: 'Average CTR',
-      value: formatPercentage(data?.avg_ctr),
-      description: 'Click-Through Rate',
-      icon: Percent,
-      gradient: 'from-amber-500/10 to-orange-500/5 dark:from-amber-500/20 dark:to-orange-500/10',
-      border: 'border-amber-500/20',
-      iconColor: 'text-amber-500',
-    },
-    {
-      title: 'Average CTO',
-      value: formatPercentage(data?.avg_cto),
-      description: 'Click-to-Order Rate',
-      icon: TrendingUp,
-      gradient: 'from-violet-500/10 to-purple-500/5 dark:from-violet-500/20 dark:to-purple-500/10',
-      border: 'border-violet-500/20',
-      iconColor: 'text-violet-500',
-    },
-    {
       title: 'Recorded Shows',
       value: data ? `${data.recorded_shows_count} / ${data.total_shows_count}` : '0 / 0',
       description: 'Shows with performance data',
@@ -89,7 +61,7 @@ export function PerformanceSummaryCards({ data, isLoading }: PerformanceSummaryC
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {SKELETON_IDS.map((id) => (
           <Card key={id} className="animate-pulse border-muted/40 bg-muted/5">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -107,7 +79,7 @@ export function PerformanceSummaryCards({ data, isLoading }: PerformanceSummaryC
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => {
         const Icon = card.icon;
         return (

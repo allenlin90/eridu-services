@@ -1,21 +1,23 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { RefreshCw, X } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
 import {
+  AsyncCombobox,
   Button,
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   DatePickerWithRange,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Label,
 } from '@eridu/ui';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
+import { MultiSelect } from '@/components/task-templates/shared/multi-select';
 import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { usePerformanceShowsQuery } from '@/features/studio-performance/api/get-performance-shows';
 import { usePerformanceSummaryQuery } from '@/features/studio-performance/api/get-performance-summary';
@@ -34,8 +36,8 @@ const performanceSearchSchema = z.object({
   date_from: z.string().optional().catch(undefined),
   date_to: z.string().optional().catch(undefined),
   client_id: z.string().optional().catch(undefined),
-  show_type_id: z.string().optional().catch(undefined),
-  platform_id: z.string().optional().catch(undefined),
+  show_type_id: z.union([z.string(), z.array(z.string())]).optional().catch(undefined),
+  platform_id: z.union([z.string(), z.array(z.string())]).optional().catch(undefined),
 });
 
 type PerformanceSearch = z.infer<typeof performanceSearchSchema>;
@@ -45,10 +47,17 @@ export const Route = createFileRoute('/studios/$studioId/performance')({
   component: StudioPerformanceDashboard,
 });
 
+function toArrayParam(val: string | string[] | undefined): string[] | undefined {
+  if (!val)
+    return undefined;
+  return Array.isArray(val) ? val : [val];
+}
+
 function StudioPerformanceDashboard() {
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const [clientSearch, setClientSearch] = useState('');
 
   const updateSearch = useCallback(
     (nextSearch: Partial<PerformanceSearch>) => {
@@ -87,9 +96,19 @@ function StudioPerformanceDashboard() {
   );
 
   const handleFilterChange = useCallback(
-    (key: 'client_id' | 'show_type_id' | 'platform_id', value: string) => {
+    (key: 'client_id', value: string) => {
       updateSearch({
-        [key]: value === 'all' ? undefined : value,
+        [key]: value || undefined,
+        page: 1,
+      });
+    },
+    [updateSearch],
+  );
+
+  const handleMultiFilterChange = useCallback(
+    (key: 'show_type_id' | 'platform_id', value: string[]) => {
+      updateSearch({
+        [key]: value.length > 0 ? value : undefined,
         page: 1,
       });
     },
@@ -109,13 +128,38 @@ function StudioPerformanceDashboard() {
 
   const { data: lookups } = useShowLookupsQuery(studioId);
 
+  const clientOptions = useMemo(() => {
+    const allClients = (lookups?.clients ?? []).map((c) => ({
+      value: c.id,
+      label: c.name,
+    }));
+    if (!clientSearch)
+      return allClients;
+    const lower = clientSearch.toLowerCase();
+    return allClients.filter((c) => c.label.toLowerCase().includes(lower));
+  }, [lookups?.clients, clientSearch]);
+
+  const showTypeOptions = useMemo(() => {
+    return (lookups?.show_types ?? []).map((st) => ({
+      value: st.id,
+      label: st.name,
+    }));
+  }, [lookups?.show_types]);
+
+  const platformOptions = useMemo(() => {
+    return (lookups?.platforms ?? []).map((p) => ({
+      value: p.id,
+      label: p.name,
+    }));
+  }, [lookups?.platforms]);
+
   const apiParams = useMemo(() => {
     return {
       start_date: dateRange.windowStart.toISOString(),
       end_date: dateRange.windowEnd.toISOString(),
       client_id: search.client_id ? [search.client_id] : undefined,
-      show_type_id: search.show_type_id ? [search.show_type_id] : undefined,
-      platform_id: search.platform_id ? [search.platform_id] : undefined,
+      show_type_id: toArrayParam(search.show_type_id),
+      platform_id: toArrayParam(search.platform_id),
     };
   }, [dateRange, search.client_id, search.show_type_id, search.platform_id]);
 
@@ -145,94 +189,94 @@ function StudioPerformanceDashboard() {
     >
       <PageLayout
         title="Performance Dashboard"
-        description="Monitor daily trends, total GMV, viewership metrics, CTR, and platform conversion rates across your shows."
+        description="Monitor daily trends, total GMV, and viewership metrics across your shows."
       >
         <div className="space-y-6">
-          {/* Filters Bar */}
-          <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1">
-              <DatePickerWithRange
-                date={selectedPickerRange}
-                setDate={handleDateRangeChange}
-                className="w-full sm:w-64"
-              />
+          {/* Filters Card Panel */}
+          <Card className="border-muted/60 dark:border-muted/30">
+            <CardHeader className="gap-4 pb-4">
+              <div className="space-y-1">
+                <CardTitle className="text-base font-semibold">Filter Performance Data</CardTitle>
+                <CardDescription>
+                  Select date range and filter by clients, show types, and platforms.
+                </CardDescription>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 w-full">
+                {/* Date Range Picker */}
+                <div className="space-y-1.5">
+                  <Label>Date Range</Label>
+                  <DatePickerWithRange
+                    date={selectedPickerRange}
+                    setDate={handleDateRangeChange}
+                    className="w-full"
+                  />
+                </div>
 
-              <Select
-                value={search.client_id ?? 'all'}
-                onValueChange={(val) => handleFilterChange('client_id', val)}
-              >
-                <SelectTrigger className="w-full sm:w-44">
-                  <SelectValue placeholder="Select Client" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Clients</SelectItem>
-                  {(lookups?.clients ?? []).map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {/* Clients Combobox */}
+                <div className="space-y-1.5">
+                  <Label>Client</Label>
+                  <AsyncCombobox
+                    value={search.client_id ?? ''}
+                    onChange={(val) => handleFilterChange('client_id', val)}
+                    onSearch={setClientSearch}
+                    options={clientOptions}
+                    placeholder="Search Client..."
+                  />
+                </div>
 
-              <Select
-                value={search.show_type_id ?? 'all'}
-                onValueChange={(val) => handleFilterChange('show_type_id', val)}
-              >
-                <SelectTrigger className="w-full sm:w-44">
-                  <SelectValue placeholder="Select Show Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Show Types</SelectItem>
-                  {(lookups?.show_types ?? []).map((st) => (
-                    <SelectItem key={st.id} value={st.id}>
-                      {st.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {/* Show Types MultiSelect */}
+                <div className="space-y-1.5">
+                  <Label>Show Types</Label>
+                  <MultiSelect
+                    options={showTypeOptions}
+                    value={toArrayParam(search.show_type_id) ?? []}
+                    onChange={(val) => handleMultiFilterChange('show_type_id', val)}
+                    placeholder="Any Show Type"
+                  />
+                </div>
 
-              <Select
-                value={search.platform_id ?? 'all'}
-                onValueChange={(val) => handleFilterChange('platform_id', val)}
-              >
-                <SelectTrigger className="w-full sm:w-44">
-                  <SelectValue placeholder="Select Platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Platforms</SelectItem>
-                  {(lookups?.platforms ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                {/* Platforms MultiSelect */}
+                <div className="space-y-1.5">
+                  <Label>Platforms</Label>
+                  <MultiSelect
+                    options={platformOptions}
+                    value={toArrayParam(search.platform_id) ?? []}
+                    onChange={(val) => handleMultiFilterChange('platform_id', val)}
+                    placeholder="Any Platform"
+                  />
+                </div>
+              </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              {isAnyFilterActive && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetFilters}
-                  className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="mr-1 h-4 w-4" />
-                  Clear Filters
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleRefresh}
-                disabled={isFetchingAny}
-                aria-label="Refresh Dashboard"
-              >
-                <RefreshCw className={`h-4 w-4 ${isFetchingAny ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
+              <div className="flex items-center justify-between border-t pt-3 mt-1">
+                <div className="text-xs text-muted-foreground">
+                  {isAnyFilterActive ? 'Filters applied' : 'Showing all records'}
+                </div>
+                <div className="flex items-center gap-2">
+                  {isAnyFilterActive && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetFilters}
+                      className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="mr-1 h-4 w-4" />
+                      Reset Filters
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleRefresh}
+                    disabled={isFetchingAny}
+                    aria-label="Refresh Dashboard"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isFetchingAny ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
 
           {/* Aggregate Stats Cards */}
           <PerformanceSummaryCards

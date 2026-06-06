@@ -13,19 +13,30 @@ import {
 import type { PerformanceSummaryResponse } from '@eridu/api-types/performance';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@eridu/ui';
 
-import { toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
+import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
 type PerformanceTrendGraphProps = {
   data?: PerformanceSummaryResponse;
   isLoading: boolean;
 };
 
-type MetricKey = 'gmv' | 'views' | 'ctr' | 'cto';
+type MetricKey = 'gmv' | 'views';
 
-const BTN_SKELETONS = ['btn-ske-1', 'btn-ske-2', 'btn-ske-3', 'btn-ske-4'];
+const BTN_SKELETONS = ['btn-ske-1', 'btn-ske-2'];
+
+type TrendTooltipProps = {
+  // Injected by Recharts when used as a `content` element.
+  active?: boolean;
+  payload?: Array<{ value: number | string; payload: { date: string } }>;
+  // Our own props. Note: do NOT name a prop `label` — Recharts injects its own
+  // `label` (the active x-axis value) and would shadow it.
+  activeMetric: MetricKey;
+  metricLabel: string;
+  color: string;
+};
 
 // Custom Tooltip component defined outside of the render function
-function CustomTooltip({ active, payload, activeMetric, label, color }: any) {
+function CustomTooltip({ active, payload, activeMetric, metricLabel, color }: TrendTooltipProps) {
   if (active && payload && payload.length) {
     const item = payload[0];
     let dateStr = '';
@@ -35,14 +46,11 @@ function CustomTooltip({ active, payload, activeMetric, label, color }: any) {
       dateStr = item.payload.date;
     }
 
-    const formatTooltipValue = (value: any) => {
+    const formatTooltipValue = (value: number | string) => {
       if (activeMetric === 'gmv') {
         return toCurrencyDisplayString(String(value));
       }
-      if (activeMetric === 'views') {
-        return new Intl.NumberFormat().format(Number(value));
-      }
-      return `${toDecimalDisplayString(String(value))}%`;
+      return new Intl.NumberFormat().format(Number(value));
     };
 
     return (
@@ -54,7 +62,7 @@ function CustomTooltip({ active, payload, activeMetric, label, color }: any) {
             style={{ backgroundColor: color }}
           />
           <span className="text-sm font-medium">
-            {label}
+            {metricLabel}
             :
           </span>
           <span className="text-sm font-bold">{formatTooltipValue(item.value)}</span>
@@ -74,8 +82,6 @@ export function PerformanceTrendGraph({ data, isLoading }: PerformanceTrendGraph
   const metrics = [
     { key: 'gmv' as const, label: 'GMV', color: '#10b981', gradientId: 'colorGmv' },
     { key: 'views' as const, label: 'Views', color: '#3b82f6', gradientId: 'colorViews' },
-    { key: 'ctr' as const, label: 'CTR', color: '#f59e0b', gradientId: 'colorCtr' },
-    { key: 'cto' as const, label: 'CTO', color: '#8b5cf6', gradientId: 'colorCto' },
   ];
 
   const activeMetricConfig = metrics.find((m) => m.key === activeMetric)!;
@@ -95,12 +101,9 @@ export function PerformanceTrendGraph({ data, isLoading }: PerformanceTrendGraph
         return `$${(tickItem / 1000).toFixed(0)}k`;
       return `$${tickItem}`;
     }
-    if (activeMetric === 'views') {
-      if (tickItem >= 1000)
-        return `${(tickItem / 1000).toFixed(0)}k`;
-      return `${tickItem}`;
-    }
-    return `${tickItem}%`;
+    if (tickItem >= 1000)
+      return `${(tickItem / 1000).toFixed(0)}k`;
+    return `${tickItem}`;
   };
 
   if (isLoading) {
@@ -182,7 +185,7 @@ export function PerformanceTrendGraph({ data, isLoading }: PerformanceTrendGraph
                       content={(
                         <CustomTooltip
                           activeMetric={activeMetric}
-                          label={activeMetricConfig.label}
+                          metricLabel={activeMetricConfig.label}
                           color={activeMetricConfig.color}
                         />
                       )}
