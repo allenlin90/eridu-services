@@ -19,6 +19,7 @@ vi.mock('lucide-react', () => ({
   Ruler: vi.fn(),
   Settings: vi.fn(),
   ShieldCheck: vi.fn(),
+  TrendingUp: vi.fn(),
   Shapes: vi.fn(),
   Users: vi.fn(),
   UserSquare2: vi.fn(),
@@ -209,6 +210,10 @@ describe('useSidebarConfig', () => {
         expect.objectContaining({
           title: 'Creator Mapping',
           url: '/studios/studio-1/creator-mapping',
+        }),
+        expect.objectContaining({
+          title: 'Performance',
+          url: '/studios/studio-1/performance',
         }),
       ]),
     }));

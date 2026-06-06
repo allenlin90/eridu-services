@@ -15,6 +15,7 @@ import {
   Settings,
   Shapes,
   ShieldCheck,
+  TrendingUp,
   Users,
   UserSquare2,
   Videotape,
@@ -190,6 +191,14 @@ function getStudioPlanningItems(
       title: 'Shift Schedule',
       url: `/studios/${studioId}/shifts`,
       icon: CalendarDays,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'performance')) {
+    planningItems.push({
+      title: 'Performance',
+      url: `/studios/${studioId}/performance`,
+      icon: TrendingUp,
     });
   }
 
