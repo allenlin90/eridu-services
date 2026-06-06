@@ -79,7 +79,7 @@ Feature: [Creator Mapping](../features/creator-mapping.md)
 
 ### 5. Per-show creator compensation
 
-ADMIN and MANAGER review and adjust per-show creator compensation from `/studios/:studioId/creator-mapping/:showId`:
+ADMIN and MANAGER review and adjust per-show creator compensation from the show detail Compensation tab `/studios/:studioId/shows/:showId/compensation` (the standalone `/creator-mapping/:showId` route was retired in PR 21.7):
 
 - The route shows client, platform, scheduled/actual timing, studio room, status/type/standard, and show UID above the compensation table so the money review stays anchored to the source show.
 - `GET /studios/:studioId/shows/:showId/creators/compensation-summary` — backend-calculated base, adjustment total, creator total, show total, and `unresolved_reason` per assigned MC. Restricted to ADMIN/MANAGER; `TALENT_MANAGER` can see the assignment list but not the money totals.

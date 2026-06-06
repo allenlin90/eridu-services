@@ -73,11 +73,12 @@ For Studio Individual Overview routes such as `/studios/:studioId/creators/:crea
     similar when they describe stored operational defaults, but the user-facing first tab
     reads as the entity profile/detail page.
 - Split additional concerns into their own tabs by domain rather than overloading the first
-  tab. The show detail route (14c) is the reference: **Details** (attributes) · **Actuals**
-  (operational metrics) · **Compensation** (costs). People entities typically use
-  **Profile · Compensation**.
-- Use the in-content header pattern from the show task setup route
-  (`task-setup/$showId/tasks` / `ShowHeaderSection`): compact icon-only back
+  tab. The show detail route (14c, extended by PR 21.7) is the reference: **Details**
+  (attributes) · **Actuals** (operational metrics) · **Performance** (platform GMV/views/CTR/CTO)
+  · **Compensation** (costs) · **Submitted Tasks** (the former standalone task checklist, now a
+  tab). People entities typically use **Profile · Compensation**.
+- Use the in-content header pattern from the show tasks route
+  (`shows/$showId/tasks` / `ShowHeaderSection`): compact icon-only back
   link, entity title / subtitle, and a metadata panel above the tabs.
 - Avoid putting entity-detail back navigation in `PageLayout.actions`; it is
   less consistent with adjacent detail routes and less clear on mobile.

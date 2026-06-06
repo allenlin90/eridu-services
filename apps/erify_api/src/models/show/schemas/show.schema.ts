@@ -97,9 +97,11 @@ const showPlatformSummaryRelationSchema = z.object({
   liveStreamLink: z.string().nullable().optional(),
   platformShowId: z.string().nullable().optional(),
   viewerCount: z.number().int().optional(),
-  gmv: z.any().nullable().optional(),
-  ctr: z.any().nullable().optional(),
-  cto: z.any().nullable().optional(),
+  // Prisma Decimal | null — kept as `unknown` (not `any`) so the transform's
+  // `decimalToString` is the single point that validates/serializes the value.
+  gmv: z.unknown().nullable().optional(),
+  ctr: z.unknown().nullable().optional(),
+  cto: z.unknown().nullable().optional(),
 });
 
 // Internal schema for database entity

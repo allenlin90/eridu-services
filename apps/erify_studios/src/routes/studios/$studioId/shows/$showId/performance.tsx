@@ -36,7 +36,7 @@ function StudioShowPerformanceTab() {
       totalGmv = (totalGmv ?? new Big(0)).add(new Big(p.gmv));
       platformsWithGmvCount++;
     }
-    if (p.viewer_count !== undefined && p.viewer_count > 0) {
+    if (p.viewer_count > 0) {
       totalViews += p.viewer_count;
       platformsWithViewsCount++;
     }
@@ -152,7 +152,12 @@ function StudioShowPerformanceTab() {
               {avgCtr ? `${toDecimalDisplayString(avgCtr.toString())}%` : '—'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Click-through rate average
+              Unweighted avg across
+              {' '}
+              {platformsWithCtrCount}
+              {' '}
+              platform
+              {platformsWithCtrCount === 1 ? '' : 's'}
             </p>
           </CardContent>
         </Card>
@@ -167,7 +172,12 @@ function StudioShowPerformanceTab() {
               {avgCto ? `${toDecimalDisplayString(avgCto.toString())}%` : '—'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Click-to-order rate average
+              Unweighted avg across
+              {' '}
+              {platformsWithCtoCount}
+              {' '}
+              platform
+              {platformsWithCtoCount === 1 ? '' : 's'}
             </p>
           </CardContent>
         </Card>
@@ -225,7 +235,7 @@ function StudioShowPerformanceTab() {
                           <div className="rounded-lg bg-muted/40 p-2.5">
                             <span className="text-xs text-muted-foreground block">Views</span>
                             <span className="text-lg font-semibold block mt-0.5">
-                              {p.viewer_count !== undefined ? p.viewer_count.toLocaleString() : '—'}
+                              {p.viewer_count > 0 ? p.viewer_count.toLocaleString() : '—'}
                             </span>
                           </div>
                           <div className="rounded-lg bg-muted/40 p-2.5">

@@ -51,7 +51,7 @@ For `HYBRID` and `COMMISSION` assignments the compensation summary returns `tota
 
 ### Show context on per-show compensation review
 
-The per-show creator-mapping detail route (`/studios/:studioId/creator-mapping/:showId`) shows the operational show context above the creator compensation table: client, platforms, scheduled and actual times, studio, room, type, standard, status, and show UID. This keeps admin/manager review anchored to the show being costed while the table continues to render backend-calculated creator compensation totals.
+The per-show creator compensation review lives on the show detail **Compensation** tab (`/studios/:studioId/shows/:showId/compensation`). It shows the operational show context above the creator compensation table: client, platforms, scheduled and actual times, studio, room, type, standard, status, and show UID. This keeps admin/manager review anchored to the show being costed while the table continues to render backend-calculated creator compensation totals. (The standalone `/creator-mapping/:showId` detail route was retired in PR 21.7 in favor of this tab — clean rename, no redirect shim; the `/creator-mapping` list page remains.)
 
 ## Key Product Decisions
 

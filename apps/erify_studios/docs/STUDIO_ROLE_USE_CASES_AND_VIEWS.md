@@ -35,14 +35,14 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/task-review` | View/Review | View/Review | No access | No access | No access | No access |
 | `/studios/:studioId/shifts` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-setup` | View + Manage | View + Manage | No access | No access | No access | No access |
-| `/studios/:studioId/task-setup/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
+| `/studios/:studioId/shows/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-templates` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/shared-fields` | View + Manage | No access | No access | No access | No access | No access |
 | `/studios/:studioId/members` | View + Manage | View | No access | No access | No access | No access |
 | `/studios/:studioId/members/:memberId/compensations` | View | View | No access | No access | No access | No access |
 | `/studios/:studioId/creators` | View + Manage | View | View | No access | No access | No access |
 | `/studios/:studioId/creator-mapping` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
-| `/studios/:studioId/creator-mapping/:showId` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
+| `/studios/:studioId/shows/:showId/compensation` | View + Manage | View + Manage | View + Manage | No access | No access | No access |
 
 ## Sidebar Sections by Role
 
