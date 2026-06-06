@@ -36,13 +36,37 @@ const creatorCompensationTypeSchema = z.enum(
   Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]],
 );
 
-const defaultRateInputSchema = z.coerce.number().min(0).nullable().optional();
-const defaultCommissionRateInputSchema = z.coerce.number().min(0).max(100).nullable().optional();
+const nonNegativeDecimalStringSchema = z
+  .string()
+  .regex(/^(?:\d+(?:\.\d+)?|\.\d+)$/, 'Must be a non-negative decimal string');
+
+function isAtMostOneHundred(value: string): boolean {
+  const [wholePart = '0', fractionPart = ''] = value.startsWith('.')
+    ? ['0', value.slice(1)]
+    : value.split('.');
+  const normalizedWhole = wholePart.replace(/^0+/, '') || '0';
+
+  if (normalizedWhole.length > 3) {
+    return false;
+  }
+
+  if (normalizedWhole.length < 3 || normalizedWhole < '100') {
+    return true;
+  }
+
+  return normalizedWhole === '100' && /^0*$/.test(fractionPart);
+}
+
+const defaultRateInputSchema = nonNegativeDecimalStringSchema.nullable().optional();
+const defaultCommissionRateInputSchema = nonNegativeDecimalStringSchema
+  .refine(isAtMostOneHundred, 'Must be at most 100')
+  .nullable()
+  .optional();
 
 function validateCreateCompensationDefaults(
   data: {
     default_rate_type?: string | null;
-    default_commission_rate?: number | null;
+    default_commission_rate?: string | null;
   },
   ctx: z.RefinementCtx,
 ) {
@@ -82,7 +106,7 @@ function validateCreateCompensationDefaults(
 function validatePartialCompensationDefaults(
   data: {
     default_rate_type?: string | null;
-    default_commission_rate?: number | null;
+    default_commission_rate?: string | null;
   },
   ctx: z.RefinementCtx,
 ) {

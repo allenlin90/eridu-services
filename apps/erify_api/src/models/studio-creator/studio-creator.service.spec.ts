@@ -165,7 +165,7 @@ describe('studioCreatorService', () => {
 
     const result = await service.addCreatorToRoster('std_1', {
       creatorId: 'creator_1',
-      defaultRate: 500,
+      defaultRate: '500.00',
       defaultRateType: 'FIXED',
       defaultCommissionRate: null,
       metadata: { source: 'ui' },
@@ -199,7 +199,7 @@ describe('studioCreatorService', () => {
 
     await service.addCreatorToRoster('std_1', {
       creatorId: 'creator_1',
-      defaultRate: 600,
+      defaultRate: '600.00',
       defaultRateType: 'FIXED',
       defaultCommissionRate: null,
     });
@@ -274,7 +274,7 @@ describe('studioCreatorService', () => {
         metadata: { source: 'onboard' },
       },
       roster: {
-        defaultRate: 500,
+        defaultRate: '500.00',
         defaultRateType: 'FIXED',
         defaultCommissionRate: null,
         metadata: { team: 'studio' },
@@ -324,7 +324,7 @@ describe('studioCreatorService', () => {
         metadata: { source: 'onboard' },
       },
       roster: {
-        defaultRate: 400,
+        defaultRate: '400.00',
         defaultRateType: 'FIXED',
         defaultCommissionRate: null,
       },
@@ -425,7 +425,7 @@ describe('studioCreatorService', () => {
 
     await expect(service.updateRosterEntry('std_1', 'creator_1', {
       version: 2,
-      defaultRate: 650,
+      defaultRate: '650.00',
     })).rejects.toMatchObject({
       response: expect.objectContaining({
         message: expect.stringContaining(STUDIO_CREATOR_ROSTER_ERROR.VERSION_CONFLICT),
@@ -443,7 +443,7 @@ describe('studioCreatorService', () => {
 
     await expect(service.updateRosterEntry('std_1', 'creator_1', {
       version: 2,
-      defaultCommissionRate: 15,
+      defaultCommissionRate: '15.00',
     })).rejects.toMatchObject({
       response: expect.objectContaining({
         message: expect.stringContaining('default_commission_rate must be null'),

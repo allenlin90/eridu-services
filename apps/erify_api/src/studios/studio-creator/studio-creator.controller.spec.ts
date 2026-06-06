@@ -188,7 +188,7 @@ describe('studioCreatorController', () => {
     const studioId = 'std_00000000000000000001';
     const dto = {
       creatorId: 'creator_00000000000000000001',
-      defaultRate: 500,
+      defaultRate: '500.00',
       defaultRateType: 'FIXED',
       defaultCommissionRate: null,
       metadata: {},
@@ -219,7 +219,7 @@ describe('studioCreatorController', () => {
 
     expect(studioCreatorService.addCreatorToRoster).toHaveBeenCalledWith(studioId, {
       creatorId: 'creator_00000000000000000001',
-      defaultRate: 500,
+      defaultRate: '500.00',
       defaultRateType: 'FIXED',
       defaultCommissionRate: null,
       metadata: {},
@@ -236,7 +236,7 @@ describe('studioCreatorController', () => {
     const creatorId = 'creator_00000000000000000001';
     const dto = {
       version: 2,
-      defaultRate: 650,
+      defaultRate: '650.00',
       defaultRateType: 'FIXED',
       defaultCommissionRate: null,
       isActive: false,
@@ -268,7 +268,7 @@ describe('studioCreatorController', () => {
 
     expect(studioCreatorService.updateRosterEntry).toHaveBeenCalledWith(studioId, creatorId, {
       version: 2,
-      defaultRate: 650,
+      defaultRate: '650.00',
       defaultRateType: 'FIXED',
       defaultCommissionRate: null,
       isActive: false,
@@ -354,7 +354,7 @@ describe('studioCreatorController', () => {
         metadata: { source: 'onboard' },
       },
       roster: {
-        defaultRate: 550,
+        defaultRate: '550.00',
         defaultRateType: 'FIXED',
         defaultCommissionRate: null,
         metadata: { source: 'ui' },
@@ -392,7 +392,7 @@ describe('studioCreatorController', () => {
         metadata: { source: 'onboard' },
       },
       roster: {
-        defaultRate: 550,
+        defaultRate: '550.00',
         defaultRateType: 'FIXED',
         defaultCommissionRate: null,
         metadata: { source: 'ui' },

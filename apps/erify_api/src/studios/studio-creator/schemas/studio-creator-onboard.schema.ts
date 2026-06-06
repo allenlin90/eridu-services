@@ -26,9 +26,9 @@ export class OnboardStudioCreatorDto extends createZodDto(
   };
 
   declare roster: {
-    defaultRate: number | null | undefined;
+    defaultRate: string | null | undefined;
     defaultRateType: string | null | undefined;
-    defaultCommissionRate: number | null | undefined;
+    defaultCommissionRate: string | null | undefined;
     metadata: Record<string, unknown> | undefined;
   };
 }

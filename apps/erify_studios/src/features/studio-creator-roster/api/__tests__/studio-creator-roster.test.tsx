@@ -38,7 +38,7 @@ describe('studioCreatorRoster onboarding api', () => {
         alias_name: 'Alice',
       },
       roster: {
-        default_rate: 500,
+        default_rate: '500.00',
         default_rate_type: 'FIXED',
       },
     };

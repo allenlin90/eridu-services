@@ -13,7 +13,7 @@ describe('onboardCreatorInputSchema', () => {
         metadata: {},
       },
       roster: {
-        default_rate: 500,
+        default_rate: '500.00',
         default_rate_type: 'FIXED',
         default_commission_rate: null,
         metadata: {},
@@ -31,7 +31,7 @@ describe('onboardCreatorInputSchema', () => {
       },
       roster: {
         default_rate_type: 'FIXED',
-        default_commission_rate: 10,
+        default_commission_rate: '10.00',
       },
     });
 

@@ -1,6 +1,35 @@
 import {
+  createStudioCreatorRosterInputSchema,
   updateStudioCreatorRosterInputSchema,
+  updateStudioShowCreatorInputSchema,
 } from '@eridu/api-types/studio-creators';
+
+describe('createStudioCreatorRosterInputSchema', () => {
+  it('accepts decimal strings without coercing through numbers', () => {
+    const result = createStudioCreatorRosterInputSchema.safeParse({
+      creator_id: 'creator_00000000000000000001',
+      default_rate: '9007199254740993.01',
+      default_rate_type: 'FIXED',
+      default_commission_rate: null,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.default_rate).toBe('9007199254740993.01');
+    }
+  });
+
+  it('rejects numeric decimal inputs at the API boundary', () => {
+    const result = createStudioCreatorRosterInputSchema.safeParse({
+      creator_id: 'creator_00000000000000000001',
+      default_rate: 500,
+      default_rate_type: 'FIXED',
+      default_commission_rate: null,
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
 
 describe('updateStudioCreatorRosterInputSchema', () => {
   it('allows commission-based updates without resending an unchanged commission rate', () => {
@@ -17,6 +46,45 @@ describe('updateStudioCreatorRosterInputSchema', () => {
       version: 2,
       default_rate_type: 'HYBRID',
       default_commission_rate: null,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('keeps commission decimal strings intact', () => {
+    const result = updateStudioCreatorRosterInputSchema.safeParse({
+      version: 2,
+      default_rate_type: 'HYBRID',
+      default_commission_rate: '12.50',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.default_commission_rate).toBe('12.50');
+    }
+  });
+});
+
+describe('updateStudioShowCreatorInputSchema', () => {
+  it('keeps show creator rate decimal strings intact', () => {
+    const result = updateStudioShowCreatorInputSchema.safeParse({
+      agreed_rate: '9007199254740993.01',
+      compensation_type: 'HYBRID',
+      commission_rate: '12.50',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.agreed_rate).toBe('9007199254740993.01');
+      expect(result.data.commission_rate).toBe('12.50');
+    }
+  });
+
+  it('rejects numeric show creator rate inputs', () => {
+    const result = updateStudioShowCreatorInputSchema.safeParse({
+      agreed_rate: 500,
+      compensation_type: 'FIXED',
+      commission_rate: null,
     });
 
     expect(result.success).toBe(false);
