@@ -24,6 +24,7 @@ export * from './constants.js';
 export * from './creators/index.js';
 export * from './memberships/index.js';
 export * from './pagination/index.js';
+export * from './performance/index.js';
 export * from './platforms/index.js';
 export * from './schedules/index.js';
 export * from './show-standards/index.js';

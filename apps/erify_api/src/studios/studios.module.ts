@@ -4,6 +4,7 @@ import { StudioCompensationLineItemModule } from './studio-compensation-line-ite
 import { StudioCreatorApiModule } from './studio-creator/studio-creator.module';
 import { StudioLookupModule } from './studio-lookup/studio-lookup.module';
 import { StudioMembershipModule } from './studio-membership/studio-membership.module';
+import { StudioPerformanceModule } from './studio-performance/studio-performance.module';
 import { StudioSettingsModule } from './studio-settings/studio-settings.module';
 import { StudioShiftApiModule } from './studio-shift/studio-shift.module';
 import { StudioShowModule } from './studio-show/studio-show.module';
@@ -23,6 +24,7 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
     StudioTaskReportModule,
     StudioShowModule,
     StudioCompensationLineItemModule,
+    StudioPerformanceModule,
   ],
   exports: [
     StudioTaskTemplateModule,
