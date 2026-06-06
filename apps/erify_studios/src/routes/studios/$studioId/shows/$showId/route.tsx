@@ -60,12 +60,28 @@ function StudioShowDetailLayout() {
             Actuals
           </Link>
           <Link
+            to="/studios/$studioId/shows/$showId/performance"
+            params={{ studioId, showId }}
+            className={TAB_LINK_CLASS}
+            activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+          >
+            Performance
+          </Link>
+          <Link
             to="/studios/$studioId/shows/$showId/compensation"
             params={{ studioId, showId }}
             className={TAB_LINK_CLASS}
             activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
           >
             Compensation
+          </Link>
+          <Link
+            to="/studios/$studioId/shows/$showId/tasks"
+            params={{ studioId, showId }}
+            className={TAB_LINK_CLASS}
+            activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+          >
+            Submitted Tasks
           </Link>
         </nav>
 

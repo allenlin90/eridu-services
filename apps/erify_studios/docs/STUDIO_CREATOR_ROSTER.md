@@ -123,7 +123,7 @@ Columns:
 - dedicated route at `/studios/$studioId/creators/$creatorId/compensations` (mirror of the per-member route)
 - URL-backed `date_from` / `date_to` (YYYY-MM-DD); default range is today through 30 days ahead
 - shows per-show base, adjustment, total, and unresolved reason
-- per-row drill-in opens `/studios/$studioId/creator-mapping/$showId` for the source show, where the creator compensation table is paired with visible client, platform, schedule, actuals, room, status, type, standard, and show UID context
+- per-row drill-in opens the show detail Compensation tab `/studios/$studioId/shows/$showId/compensation` for the source show (the standalone `/creator-mapping/$showId` route was retired in PR 21.7), where the creator compensation table is paired with visible client, platform, schedule, actuals, room, status, type, standard, and show UID context
 - per-row edit action still opens the `ShowCreatorCompensationDialog` for that `ShowCreator` row (inline modal, not a sub-route)
 - assignment-term save edits only the show assignment snapshot, not `StudioCreator` defaults; the route refetches on dialog close
 

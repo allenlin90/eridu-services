@@ -20,7 +20,7 @@ function ShowNameCell({ show }: { show: StudioShow }) {
   return (
     <div className="flex flex-col gap-1 pr-4">
       <Link
-        to="/studios/$studioId/task-setup/$showId/tasks"
+        to="/studios/$studioId/shows/$showId/tasks"
         params={{ studioId: actualStudioId, showId: show.id }}
         state={{
           show: {
@@ -69,7 +69,7 @@ function NoTasksGeneratedBadge({ show }: { show: StudioShow }) {
 
   return (
     <Link
-      to="/studios/$studioId/task-setup/$showId/tasks"
+      to="/studios/$studioId/shows/$showId/tasks"
       params={{ studioId: actualStudioId, showId: show.id }}
       aria-label="No tasks generated — click to generate tasks"
       title="No tasks have been generated for this show yet. Click to setup and generate tasks."
@@ -91,7 +91,7 @@ function NoTaskAssigneeBadge({ show }: { show: StudioShow }) {
 
   return (
     <Link
-      to="/studios/$studioId/task-setup/$showId/tasks"
+      to="/studios/$studioId/shows/$showId/tasks"
       params={{ studioId: actualStudioId, showId: show.id }}
       aria-label="No task assignee — click to assign tasks"
       title="Tasks are generated but no assignee is on the hook. Click to assign tasks."

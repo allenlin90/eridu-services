@@ -60,7 +60,7 @@ System admins use `/system/compensation-line-items` as support tooling backed by
 | ------- | -------- | -------- |
 | System line-item support | `/system/compensation-line-items` | system admin |
 | Bulk creator assignment | `/studios/$studioId/creator-mapping` | studio `ADMIN`, `MANAGER` |
-| Show-creator line-item dialog and cost summary | `/studios/$studioId/creator-mapping/$showId` | studio `ADMIN`, `MANAGER` |
+| Show-creator line-item dialog and cost summary | `/studios/$studioId/shows/$showId/compensation` | studio `ADMIN`, `MANAGER` |
 | Creator-based compensation review | Creator compensation review route | studio `ADMIN`, `MANAGER` |
 | Show line-item panel | Show operational/detail surface | studio `ADMIN`, `MANAGER` |
 | Shift line-item panel | Shift operational/detail surface | studio `ADMIN`, `MANAGER` |
@@ -109,7 +109,7 @@ Component responsibilities:
 - **SystemCompensationLineItemsRoute** - support page with table, filters, and create/edit dialogs. Uses `useTableUrlState`, `DataTablePagination`, real API metadata, and `placeholderData: keepPreviousData`.
 - **TargetScopedLineItemsPanel** - reusable panel mounted by show, show-creator, shift, and shift-block workflows. The target is passed by props and sent to the flat studio line-item API as `target_type` / `target_id`.
 - **BulkCreatorAssignmentDialog** - assigns selected creators to selected shows. It does not expose rates, commission, compensation items, or total-cost previews. New assignment snapshots resolve from creator roster defaults on the backend.
-- **ShowCreatorCompensationDialog** - mounted from `/creator-mapping/$showId` rows. Uses the row's `ShowCreator` assignment UID as `target_id`, manages `SHOW_CREATOR` line items, and renders backend summary values.
+- **ShowCreatorCompensationDialog** - mounted from `/shows/$showId/compensation` rows (the show detail Compensation tab; formerly `/creator-mapping/$showId`, retired in PR 21.7). Uses the row's `ShowCreator` assignment UID as `target_id`, manages `SHOW_CREATOR` line items, and renders backend summary values.
 - **CompensationLineItemFormDialog** - shared create/edit form. Target fields are controlled by the mounted workflow in target-scoped panels and selectable only in system-admin support tooling.
 - **CompensationLineItemsTable** - columns: target summary, item type, amount (`SignedAmountCell`), reason, created by, created at, actions.
 - **ShowActualsInput / ShiftBlockActualsInput** - paired datetime inputs with clear controls and client-side inverted-range guard.

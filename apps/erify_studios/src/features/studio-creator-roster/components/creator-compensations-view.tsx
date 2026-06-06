@@ -185,7 +185,7 @@ export function CreatorCompensationsView({
                       asChild
                     >
                       <Link
-                        to="/studios/$studioId/creator-mapping/$showId"
+                        to="/studios/$studioId/shows/$showId/compensation"
                         params={{ studioId, showId: show.show_id }}
                         aria-label={`Open show ${show.show_name}`}
                       >

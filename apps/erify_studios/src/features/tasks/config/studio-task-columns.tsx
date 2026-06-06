@@ -309,7 +309,7 @@ export function getStudioTaskColumns(
           return '-';
         return (
           <Link
-            to="/studios/$studioId/task-setup/$showId/tasks"
+            to="/studios/$studioId/shows/$showId/tasks"
             params={{ studioId, showId: show.id }}
             className="text-primary hover:underline font-medium"
           >

@@ -102,11 +102,13 @@ Rules every conversion follows:
   `erify_creators` P3 self-view consume one widget. Deferred until that convergence —
   intentionally **not** part of the 14a pilot.
 - **14c** continued the same route pattern for shows (Details / Actuals / Compensation) — shipped.
-- **Show route convergence (PR 21.7)**: the 14c Compensation tab embeds `ShowCreatorList`,
-  the same surface still mounted at `/creator-mapping/:showId`. PR 21.7 (post-14c "Route
-  Revamp") converges them: rewire the `/creator-mapping/:showId` entry points (creator-mapping
-  list, task-setup deep links) to `/shows/:showId/compensation` and **remove** the legacy route
-  — a clean rename, **no redirect shim** — alongside the same treatment for `/task-setup/:showId/tasks`.
+- **Show route convergence (PR 21.7, shipped)**: the 14c Compensation tab embeds `ShowCreatorList`,
+  the same surface previously mounted at `/creator-mapping/:showId`. PR 21.7 (post-14c "Route
+  Revamp") converged them: the `/creator-mapping/:showId` entry points (creator-mapping list,
+  task-setup deep links) now point at `/shows/:showId/compensation` and the legacy route was
+  **removed** — a clean rename, **no redirect shim** — alongside the same treatment for
+  `/task-setup/:showId/tasks` (now `/shows/:showId/tasks`). PR 21.7 also added **Performance**
+  and **Submitted Tasks** tabs to the show detail layout (see 14c below).
 
 ## 14b — member detail (shipped)
 
@@ -165,7 +167,8 @@ Operational metrics and costs split into their own tabs, per a product decision:
 - **Route**: `/studios/:studioId/shows/:showId`
   - `route.tsx` — layout: fetches the show via `useStudioShow` (`GET :showId`), renders the
     `ShowDetailHeader` (icon back to shows + name + status/client/schedule/actuals badges) and
-    a `<Link>` tab strip (Details | Actuals | Compensation).
+    a `<Link>` tab strip (Details | Actuals | Performance | Compensation | Submitted Tasks —
+    Performance and Submitted Tasks added by PR 21.7).
   - `index.tsx` — **Details** tab: `StudioShowManagementForm` (edit mode) in a card. Reuses the
     list dialog's submit transform (`external_id` create-only; `schedule_id` empty→unlink). Save
     stays on the page (the `useUpdateStudioShow` mutation updates the detail cache + toasts);
@@ -180,9 +183,13 @@ Operational metrics and costs split into their own tabs, per a product decision:
   studio-scoped; `GET` returns `StudioShowDetail` (core fields + `platforms` + actuals).
 - **Entry points**: the show roster row **Edit** action navigates to the Details tab (mirrors the
   14d shift table). Create and delete remain dialogs (inline-create + destructive, out of scope).
-- **Out of scope / deferred to PR 21.7**: Performance + Submitted Tasks tabs, and converging
-  `/creator-mapping/:showId` into `/shows/:showId/compensation` (see Follow-ups — clean rename, no
-  redirect shim).
+- **Shipped in PR 21.7** (post-14c "Route Revamp"): the **Performance** tab
+  (`performance.tsx` — platform GMV / views / CTR / CTO aggregates + per-platform breakdown,
+  reading the `platforms[]` metrics now surfaced on `StudioShowDetail`) and the **Submitted
+  Tasks** tab (`tasks.tsx` — the former `/task-setup/:showId/tasks` checklist page, moved under
+  the show subtree). The legacy `/creator-mapping/:showId` and `/task-setup/:showId/tasks` routes
+  were removed and their entry points rewired to `/shows/:showId/compensation` and
+  `/shows/:showId/tasks` — clean rename, no redirect shim (see Follow-ups).
 
 ### Authorization
 
