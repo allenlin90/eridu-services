@@ -13,9 +13,17 @@ type MultiSelectProps = {
   onChange: (val: string[]) => void;
   placeholder?: string;
   className?: string;
+  showSearch?: boolean;
 };
 
-export function MultiSelect({ options, value, onChange, placeholder = 'Select options...', className }: MultiSelectProps) {
+export function MultiSelect({
+  options,
+  value,
+  onChange,
+  placeholder = 'Select options...',
+  className,
+  showSearch = true,
+}: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const selected = Array.isArray(value) ? value : [];
   const validOptions = options?.filter((opt) => opt.value) || [];
@@ -64,9 +72,9 @@ export function MultiSelect({ options, value, onChange, placeholder = 'Select op
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
-          <CommandInput placeholder="Search options..." />
+          {showSearch && <CommandInput placeholder="Search options..." />}
           <CommandList>
-            <CommandEmpty>No option found.</CommandEmpty>
+            {showSearch && <CommandEmpty>No option found.</CommandEmpty>}
             <CommandGroup>
               {validOptions.map((option) => (
                 <CommandItem

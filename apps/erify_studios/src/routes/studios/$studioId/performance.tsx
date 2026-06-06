@@ -1,5 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { RefreshCw, X } from 'lucide-react';
+import { ChevronDown, RefreshCw, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
@@ -12,12 +13,16 @@ import {
   CardHeader,
   CardTitle,
   DatePickerWithRange,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
   Label,
 } from '@eridu/ui';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
-import { MultiSelect } from '@/components/task-templates/shared/multi-select';
+import { getClients } from '@/features/clients/api/get-clients';
 import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { usePerformanceShowsQuery } from '@/features/studio-performance/api/get-performance-shows';
 import { usePerformanceSummaryQuery } from '@/features/studio-performance/api/get-performance-summary';
@@ -128,16 +133,31 @@ function StudioPerformanceDashboard() {
 
   const { data: lookups } = useShowLookupsQuery(studioId);
 
+  const selectedClient = useMemo(() => {
+    return (lookups?.clients ?? []).find((c) => c.id === search.client_id);
+  }, [lookups?.clients, search.client_id]);
+
+  const { data: clientsResponse, isLoading: isLoadingClients } = useQuery({
+    queryKey: ['performance-clients', studioId, clientSearch],
+    queryFn: ({ signal }) => getClients({ name: clientSearch || undefined, limit: 50 }, studioId, { signal }),
+    enabled: Boolean(studioId),
+  });
+
   const clientOptions = useMemo(() => {
-    const allClients = (lookups?.clients ?? []).map((c) => ({
+    const fetched = (clientsResponse?.data ?? []).map((c) => ({
       value: c.id,
       label: c.name,
     }));
-    if (!clientSearch)
-      return allClients;
-    const lower = clientSearch.toLowerCase();
-    return allClients.filter((c) => c.label.toLowerCase().includes(lower));
-  }, [lookups?.clients, clientSearch]);
+
+    if (selectedClient && !fetched.some((opt) => opt.value === selectedClient.id)) {
+      fetched.unshift({
+        value: selectedClient.id,
+        label: selectedClient.name,
+      });
+    }
+
+    return fetched;
+  }, [clientsResponse, selectedClient]);
 
   const showTypeOptions = useMemo(() => {
     return (lookups?.show_types ?? []).map((st) => ({
@@ -152,6 +172,16 @@ function StudioPerformanceDashboard() {
       label: p.name,
     }));
   }, [lookups?.platforms]);
+
+  const selectedShowTypes = useMemo(() => {
+    const ids = toArrayParam(search.show_type_id) ?? [];
+    return (lookups?.show_types ?? []).filter((st) => ids.includes(st.id));
+  }, [lookups?.show_types, search.show_type_id]);
+
+  const selectedPlatforms = useMemo(() => {
+    const ids = toArrayParam(search.platform_id) ?? [];
+    return (lookups?.platforms ?? []).filter((p) => ids.includes(p.id));
+  }, [lookups?.platforms, search.platform_id]);
 
   const apiParams = useMemo(() => {
     return {
@@ -220,30 +250,91 @@ function StudioPerformanceDashboard() {
                     onChange={(val) => handleFilterChange('client_id', val)}
                     onSearch={setClientSearch}
                     options={clientOptions}
+                    isLoading={isLoadingClients}
                     placeholder="Search Client..."
                   />
                 </div>
 
-                {/* Show Types MultiSelect */}
+                {/* Show Types Dropdown */}
                 <div className="space-y-1.5">
                   <Label>Show Types</Label>
-                  <MultiSelect
-                    options={showTypeOptions}
-                    value={toArrayParam(search.show_type_id) ?? []}
-                    onChange={(val) => handleMultiFilterChange('show_type_id', val)}
-                    placeholder="Any Show Type"
-                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between h-10 px-3 font-normal"
+                      >
+                        <span className="truncate">
+                          {selectedShowTypes.length > 0
+                            ? selectedShowTypes.map((st) => st.name).join(', ')
+                            : 'Any Show Type'}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto" align="start">
+                      {showTypeOptions.map((opt) => {
+                        const isSelected = toArrayParam(search.show_type_id)?.includes(opt.value) ?? false;
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={opt.value}
+                            checked={isSelected}
+                            onCheckedChange={() => {
+                              const current = toArrayParam(search.show_type_id) ?? [];
+                              const next = isSelected
+                                ? current.filter((val) => val !== opt.value)
+                                : [...current, opt.value];
+                              handleMultiFilterChange('show_type_id', next);
+                            }}
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            {opt.label}
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
-                {/* Platforms MultiSelect */}
+                {/* Platforms Dropdown */}
                 <div className="space-y-1.5">
                   <Label>Platforms</Label>
-                  <MultiSelect
-                    options={platformOptions}
-                    value={toArrayParam(search.platform_id) ?? []}
-                    onChange={(val) => handleMultiFilterChange('platform_id', val)}
-                    placeholder="Any Platform"
-                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between h-10 px-3 font-normal"
+                      >
+                        <span className="truncate">
+                          {selectedPlatforms.length > 0
+                            ? selectedPlatforms.map((p) => p.name).join(', ')
+                            : 'Any Platform'}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto" align="start">
+                      {platformOptions.map((opt) => {
+                        const isSelected = toArrayParam(search.platform_id)?.includes(opt.value) ?? false;
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={opt.value}
+                            checked={isSelected}
+                            onCheckedChange={() => {
+                              const current = toArrayParam(search.platform_id) ?? [];
+                              const next = isSelected
+                                ? current.filter((val) => val !== opt.value)
+                                : [...current, opt.value];
+                              handleMultiFilterChange('platform_id', next);
+                            }}
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            {opt.label}
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
