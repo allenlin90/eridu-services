@@ -46,6 +46,10 @@ This document unifies three previously scattered ideation tracks:
     2. Preset windows are tied to server locale rather than studio timezone.
     3. Mismatches create off-by-hours/day inclusion or exclusion at date boundaries.
 
+### 5. Hardcoded Money / Currency Display Formatting
+*   **Current Logic:** Monetary values (e.g. GMV on the `/performance` dashboard) render as raw decimal strings with no currency symbol or grouping.
+*   **The Problem:** Surfaced during `/performance` review (PR 21 follow-up [roadmap 21.12](../roadmap/PHASE_4.md)). Money is hard to read without a thousands separator and a currency unit; the operating market is Thailand, so GMV should display in Thai Baht (`฿`/THB) with `th-TH` grouping. The chosen currency and number locale are studio-scoped, so they belong in studio settings (`localization.currency` / `localization.locale`) and flow into a shared formatter used by the dashboard and any other monetary surface. Until the settings model exists, a sensible default (`THB` / `th-TH`) can be applied app-side, but the value must ultimately be configurable per studio.
+
 ---
 
 ## Proposed Unified Solution: Studio Settings Schema
@@ -92,6 +96,12 @@ interface StudioSettings {
       checkLoops: boolean; // default: true (loop-based templates are moderation-first)
       checkPlatformViolationBinding: boolean; // default: true (contains fields bound to platform violations)
     };
+  };
+  localization: {
+    // BCP-47 locale used for number / currency formatting in studio UIs
+    locale: string; // e.g. "th-TH" (default: "en-US")
+    // ISO-4217 currency for monetary display (GMV, compensation totals, etc.)
+    currency: string; // e.g. "THB" (default: "THB")
   };
 }
 ```

@@ -1,6 +1,6 @@
 # PRD: Show Performance Analytics & Read-Model Projection (PR 21)
 
-> **Status**: 📝 Draft Under Review  
+> **Status**: ✅ Implemented  
 > **Phase**: 4 — Wave 2 Ingestion & Analytics  
 > **Workstream**: Show Performance Dashboard & Show Details  
 > **Tracks**: [PHASE_4.md](../roadmap/PHASE_4.md) (PR 21 Meta-Row)
