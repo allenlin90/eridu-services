@@ -704,6 +704,42 @@ describe('studioPerformanceService', () => {
         ],
       });
     });
+
+    it('does not throw on a malformed snapshot (non-array items, non-string keys)', async () => {
+      const mockTask = {
+        id: 1n,
+        uid: 'task_1',
+        snapshot: {
+          schema: {
+            // `items` is an object rather than an array, and a field key is a
+            // number — both would crash naive parsing.
+            items: { junk: true },
+            metadata: {
+              loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }],
+            },
+          },
+        },
+        content: {},
+      };
+
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+
+      // The loop is still returned, with every metric resolving to null.
+      expect(result.loops).toHaveLength(1);
+      expect(result.loops[0].metrics).toEqual([
+        {
+          show_platform_uid: 'show_plt_101',
+          platform_name: 'Shopee',
+          gmv: null,
+          ctr: null,
+          cto: null,
+          viewer_count: null,
+        },
+      ]);
+    });
   });
 
   describe('getPerformanceShows - in-memory sorting', () => {
@@ -777,7 +813,7 @@ describe('studioPerformanceService', () => {
         ...query,
         page: 1,
         limit: 10,
-        sort: 'gmv:desc',
+        sort: [{ field: 'gmv', desc: true }],
       });
 
       // Expected order: Show Beta (200.00) -> Show Alpha (100.00) -> Show Gamma (null)
@@ -793,7 +829,7 @@ describe('studioPerformanceService', () => {
         ...query,
         page: 1,
         limit: 10,
-        sort: 'gmv:asc',
+        sort: [{ field: 'gmv', desc: false }],
       });
 
       // Expected order: Show Alpha (100.00) -> Show Beta (200.00) -> Show Gamma (null)
@@ -809,7 +845,7 @@ describe('studioPerformanceService', () => {
         ...query,
         page: 1,
         limit: 10,
-        sort: 'views:desc,start_time:asc',
+        sort: [{ field: 'views', desc: true }, { field: 'start_time', desc: false }],
       });
 
       expect(result.items[0].id).toBe('show_20'); // 100 views
@@ -828,7 +864,7 @@ describe('studioPerformanceService', () => {
         ...query,
         page: 1,
         limit: 2,
-        sort: 'gmv:desc',
+        sort: [{ field: 'gmv', desc: true }],
       });
 
       const findManyArgs = (prisma.show.findMany as jest.Mock).mock.calls[0][0];

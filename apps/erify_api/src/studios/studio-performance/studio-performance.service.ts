@@ -4,6 +4,8 @@ import { Prisma } from '@prisma/client';
 import type {
   PerformanceQuery,
   PerformanceShowsQuery,
+  PerformanceSortField,
+  PerformanceSortRule,
   PerformanceSummaryResponse,
   ShowPerformanceLoopsResponse,
   ShowPerformanceResponse,
@@ -11,9 +13,6 @@ import type {
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { PrismaService } from '@/prisma/prisma.service';
-
-/** A single parsed sort directive, e.g. `gmv:desc` → `{ field: 'gmv', desc: true }`. */
-type ShowSortRule = { field: string; desc: boolean };
 
 /** A primitive sort key: numeric, a Prisma Decimal, or `null` (sorted last). */
 type SortValue = number | Prisma.Decimal | null;
@@ -430,7 +429,7 @@ export class StudioPerformanceService {
       },
     } satisfies Prisma.ShowInclude;
 
-    const sortRules = this.parseShowSortRules(query.sort);
+    const sortRules = this.withSortTieBreaker(query.sort);
 
     // Sorting by a derived metric (GMV/Views/CTR/CTO) can't be expressed in SQL
     // — those values live in per-platform columns/JSON aggregated per show — so
@@ -506,22 +505,17 @@ export class StudioPerformanceService {
   }
 
   /**
-   * Parses a `"gmv:desc,ctr:asc"` sort string into rules, ignoring malformed
-   * segments. `start_time desc` is always appended as the final tie-breaker so
-   * ordering is deterministic regardless of the requested keys.
+   * Takes the already-validated sort rules (parsed and field-checked by the
+   * `performanceSortSchema` at the request boundary) and appends `start_time
+   * desc` as the final tie-breaker when absent, so ordering is deterministic
+   * regardless of the requested keys.
    */
-  private parseShowSortRules(sort: string | undefined): ShowSortRule[] {
-    const rules: ShowSortRule[] = [];
-    for (const part of sort?.split(',') ?? []) {
-      const [field, dir] = part.split(':');
-      if (field && (dir === 'asc' || dir === 'desc')) {
-        rules.push({ field, desc: dir === 'desc' });
-      }
+  private withSortTieBreaker(rules: PerformanceSortRule[] | undefined): PerformanceSortRule[] {
+    const result = rules ? [...rules] : [];
+    if (!result.some((rule) => rule.field === 'start_time')) {
+      result.push({ field: 'start_time', desc: true });
     }
-    if (!rules.some((rule) => rule.field === 'start_time')) {
-      rules.push({ field: 'start_time', desc: true });
-    }
-    return rules;
+    return result;
   }
 
   /**
@@ -529,7 +523,7 @@ export class StudioPerformanceService {
    * platforms (sum for GMV/Views, average for the CTR/CTO rates). Returns `null`
    * when no platform carries the metric, so it sorts to the end.
    */
-  private calculateShowSortValue(item: ShowPerformanceResponse, field: string): SortValue {
+  private calculateShowSortValue(item: ShowPerformanceResponse, field: PerformanceSortField): SortValue {
     if (field === 'start_time') {
       return new Date(item.start_time).getTime();
     }
@@ -668,8 +662,15 @@ export class StudioPerformanceService {
     }
 
     const schema = selectedTask.snapshot.schema as any;
-    const items = (schema.items ?? []) as any[];
+    // Snapshot JSON is untyped; guard against a non-array `items` so a malformed
+    // schema yields empty metrics rather than throwing at `.filter`.
+    const items: any[] = Array.isArray(schema.items) ? schema.items : [];
     const content = (selectedTask.content as Record<string, any>) ?? {};
+
+    // Field keys may be absent or non-string in legacy snapshots; lowercase
+    // only real strings so matching never throws on, say, a numeric key.
+    const lower = (value: unknown): string | undefined =>
+      typeof value === 'string' ? value.toLowerCase() : undefined;
 
     const loops = loopsMetadata.map((loop) => {
       const loopFields = items.filter((item) => item.group === loop.id);
@@ -680,8 +681,8 @@ export class StudioPerformanceService {
       let ctoFieldId: string | null = null;
 
       for (const item of loopFields) {
-        const key = item.key?.toLowerCase();
-        const sharedKey = item.shared_field_key?.toLowerCase();
+        const key = lower(item.key);
+        const sharedKey = lower(item.shared_field_key);
         const factKey = item.system_fact_key;
 
         if (factKey === 'show_platform_gmv' || sharedKey === 'gmv' || key === 'gmv') {

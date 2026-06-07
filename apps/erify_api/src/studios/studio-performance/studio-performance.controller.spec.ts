@@ -23,7 +23,7 @@ describe('studioPerformanceController', () => {
     limit: 10,
     skip: 0,
     take: 10,
-    sort: 'desc' as const,
+    sort: [{ field: 'gmv' as const, desc: true }],
   };
 
   it('gets show performance summary from the service', async () => {
