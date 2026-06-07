@@ -21,7 +21,7 @@ const AUDIT_WITH_TARGETS_INCLUDE = {
  *
  * `BaseRepository<T extends WithSoftDelete>` requires a `deletedAt` column,
  * but the `Audit` envelope is intentionally append-only per
- * `TASK_INPUT_FACT_BINDING_DESIGN.md` §2.B — deletes on target entities
+ * TASK_INPUT_FACT_BINDING.md §2.B — deletes on target entities
  * cascade only into the `AuditTarget` junction, never the parent envelope.
  * Adding a dead `deletedAt` column purely to satisfy a generic constraint
  * would mis-signal the lifecycle, so this repo is a thin Prisma wrapper.

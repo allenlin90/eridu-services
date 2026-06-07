@@ -41,7 +41,7 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
 ### 1. Template and Field Binding Setup
 The admin configures task checklists at `/studios/:studioId/task-templates`. While designing template schemas, the admin binds specific fields to standard `SystemFactKey` definitions (e.g. `show_actual_start_time` or `creator_attendance_missing`) from the `@eridu/api-types/task-management` catalog.
 * **Feature**: [Task Templates](../features/task-templates.md)
-* **Design Ref**: [TASK_INPUT_FACT_BINDING_DESIGN.md](../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md)
+* **Design Ref**: [TASK_INPUT_FACT_BINDING.md](../../apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md)
 
 ### 2. Task Generation and Operator Execution
 When shows are scheduled, tasks are instantiated from these templates:

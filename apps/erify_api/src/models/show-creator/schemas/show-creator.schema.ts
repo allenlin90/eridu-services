@@ -7,6 +7,10 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
+import {
+  defaultCommissionRateInputSchema,
+  defaultRateInputSchema,
+} from '@eridu/api-types/studio-creators';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { isCreatorUid } from '@/models/creator/creator-uid.util';
@@ -36,11 +40,11 @@ export const createShowCreatorSchema = z.object({
   show_id: z.string().startsWith(ShowService.UID_PREFIX), // UID
   creator_id: z.string().refine(isCreatorUid, 'Invalid creator UID'), // UID
   note: z.string().max(1000).optional(), // Add max length for notes
-  agreed_rate: z.coerce.number().positive().optional(),
+  agreed_rate: defaultRateInputSchema,
   compensation_type: z
     .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
     .optional(),
-  commission_rate: z.coerce.number().min(0).max(100).optional(),
+  commission_rate: defaultCommissionRateInputSchema,
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
@@ -48,9 +52,9 @@ const transformCreateShowCreatorSchema = createShowCreatorSchema.transform((data
   showId: data.show_id,
   creatorId: data.creator_id,
   note: data.note,
-  agreedRate: data.agreed_rate !== undefined ? data.agreed_rate.toFixed(2) : undefined,
+  agreedRate: data.agreed_rate,
   compensationType: data.compensation_type,
-  commissionRate: data.commission_rate !== undefined ? data.commission_rate.toFixed(2) : undefined,
+  commissionRate: data.commission_rate,
   metadata: data.metadata,
 }));
 
@@ -60,31 +64,21 @@ export const updateShowCreatorSchema = z
     show_id: z.string().startsWith(ShowService.UID_PREFIX).optional(), // UID
     creator_id: z.string().refine(isCreatorUid, 'Invalid creator UID').optional(), // UID
     note: z.string().max(1000).nullable().optional(), // Add max length for notes
-    agreed_rate: z.coerce.number().positive().nullable().optional(),
+    agreed_rate: defaultRateInputSchema,
     compensation_type: z
       .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
       .nullable()
       .optional(),
-    commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+    commission_rate: defaultCommissionRateInputSchema,
     metadata: z.record(z.string(), z.any()).optional(),
   })
   .transform((data) => ({
     showId: data.show_id,
     creatorId: data.creator_id,
     note: data.note,
-    agreedRate:
-      data.agreed_rate === undefined
-        ? undefined
-        : data.agreed_rate === null
-          ? null
-          : data.agreed_rate.toFixed(2),
+    agreedRate: data.agreed_rate,
     compensationType: data.compensation_type,
-    commissionRate:
-      data.commission_rate === undefined
-        ? undefined
-        : data.commission_rate === null
-          ? null
-          : data.commission_rate.toFixed(2),
+    commissionRate: data.commission_rate,
     metadata: data.metadata,
   }));
 
@@ -143,9 +137,9 @@ export type CreateShowCreatorPayload = {
   showId: string;
   creatorId: string;
   note?: string | null;
-  agreedRate?: string;
-  compensationType?: string;
-  commissionRate?: string;
+  agreedRate?: string | null;
+  compensationType?: string | null;
+  commissionRate?: string | null;
   metadata?: Record<string, any>;
 };
 

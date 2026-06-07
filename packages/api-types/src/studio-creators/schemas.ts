@@ -57,8 +57,8 @@ function isAtMostOneHundred(value: string): boolean {
   return normalizedWhole === '100' && /^0*$/.test(fractionPart);
 }
 
-const defaultRateInputSchema = nonNegativeDecimalStringSchema.nullable().optional();
-const defaultCommissionRateInputSchema = nonNegativeDecimalStringSchema
+export const defaultRateInputSchema = nonNegativeDecimalStringSchema.nullable().optional();
+export const defaultCommissionRateInputSchema = nonNegativeDecimalStringSchema
   .refine(isAtMostOneHundred, 'Must be at most 100')
   .nullable()
   .optional();

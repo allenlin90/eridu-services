@@ -12,7 +12,7 @@ import type { AuditWithTargets } from './schemas/audit.schema';
  * `metadata.audit.snapshot_overrides[]` sidecar shape carried on existing
  * compensation / shift / show entities.
  *
- * Design reference: `TASK_INPUT_FACT_BINDING_DESIGN.md` §3.C — "the
+ * Design reference: `TASK_INPUT_FACT_BINDING.md` §3.C — "the
  * compensation-snapshot override pattern is migrated by a sidecar reader: PR 12
  * ships a read-time merger that returns both legacy and new audit rows as one
  * history". The eventual back-fill into the `audits` table is tracked
