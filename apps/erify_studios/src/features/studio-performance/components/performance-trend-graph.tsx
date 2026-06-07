@@ -13,7 +13,7 @@ import {
 import type { PerformanceSummaryResponse } from '@eridu/api-types/performance';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@eridu/ui';
 
-import { toCurrencyDisplayString } from '@/lib/decimal-format';
+import { currencySymbol, toCurrencyDisplayString } from '@/lib/decimal-format';
 
 type PerformanceTrendGraphProps = {
   data?: PerformanceSummaryResponse;
@@ -101,17 +101,7 @@ export function PerformanceTrendGraph({ data, isLoading }: PerformanceTrendGraph
     const locale = data?.locale ?? 'th-TH';
     const currency = data?.currency ?? 'THB';
     if (activeMetric === 'gmv') {
-      let prefix = '$';
-      try {
-        const parts = new Intl.NumberFormat(locale, { style: 'currency', currency }).formatToParts(0);
-        const currencyPart = parts.find((p) => p.type === 'currency');
-        if (currencyPart) {
-          prefix = currencyPart.value;
-        }
-      } catch {
-        prefix = currency === 'THB' ? '฿' : '$';
-      }
-
+      const prefix = currencySymbol(locale, currency);
       if (tickItem >= 1000)
         return `${prefix}${(tickItem / 1000).toFixed(0)}k`;
       return `${prefix}${tickItem}`;

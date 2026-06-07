@@ -16,6 +16,31 @@ export class StudioPerformanceService {
   /** Maximum span (in days) a performance query is allowed to cover. */
   private static readonly MAX_DATE_RANGE_DAYS = 31;
 
+  /**
+   * The hour (in the studio's local "operational" timezone) at which a new
+   * operational day begins. Mirrors the frontend's `OPERATIONAL_DAY_START_HOUR`
+   * so a show at, say, 03:00 local is bucketed into the *previous* calendar day.
+   */
+  private static readonly OPERATIONAL_DAY_START_HOUR = 6;
+
+  /**
+   * Predicate matching a single `ShowPlatform` row that carries at least one
+   * recorded performance fact (GMV, CTR, CTO, or a view-count template entry).
+   * Shared by the presence filter and the summary aggregation so that "has a
+   * record" means the same thing in the list filter and the trend totals.
+   */
+  private static readonly PERFORMANCE_RECORD_OR: Prisma.ShowPlatformWhereInput['OR'] = [
+    { gmv: { not: null } },
+    { ctr: { not: null } },
+    { cto: { not: null } },
+    {
+      metadata: {
+        path: ['performance_templates', 'show_platform_view_count'],
+        not: Prisma.JsonNull,
+      },
+    },
+  ];
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -50,6 +75,45 @@ export class StudioPerformanceService {
   }
 
   /**
+   * Derives the client's UTC offset (in ms) from the `start_date` query param.
+   *
+   * CONTRACT: the frontend always sends `start_date` at exactly the start of an
+   * operational day — i.e. its local time-of-day is `OPERATIONAL_DAY_START_HOUR`
+   * (06:00). We recover the offset from the gap between that fixed local hour and
+   * the value's UTC time-of-day, which avoids threading an explicit timezone
+   * param through the API. This is brittle by design: if the frontend ever sends
+   * a `start_date` whose local time is not 06:00 the trend buckets shift. A
+   * single offset is applied across the whole range (no DST handling), which is
+   * correct for the fixed-offset locales we serve (e.g. Asia/Bangkok, UTC+7).
+   */
+  private deriveClientOffsetMs(startDate: Date): number {
+    const utcTimeInMinutes = startDate.getUTCHours() * 60 + startDate.getUTCMinutes();
+    const localTimeInMinutes = StudioPerformanceService.OPERATIONAL_DAY_START_HOUR * 60;
+    let offsetInMinutes = localTimeInMinutes - utcTimeInMinutes;
+    // Normalize into (-12h, +12h] so a value near the UTC day boundary doesn't
+    // read as a ~±24h offset (e.g. UTC+7 sent as 23:00Z the previous day).
+    if (offsetInMinutes > 720) {
+      offsetInMinutes -= 1440;
+    } else if (offsetInMinutes < -720) {
+      offsetInMinutes += 1440;
+    }
+    return offsetInMinutes * 60 * 1000;
+  }
+
+  /**
+   * Maps a UTC instant to its operational-day key (`YYYY-MM-DD`) in the client's
+   * local timezone, where each operational day starts at
+   * `OPERATIONAL_DAY_START_HOUR`. Shifting by the start hour before taking the
+   * date portion means a show at 03:00 local lands in the prior day's bucket.
+   */
+  private toOperationalDayKey(instant: Date, offsetMs: number): string {
+    const startHourMs = StudioPerformanceService.OPERATIONAL_DAY_START_HOUR * 60 * 60 * 1000;
+    return new Date(instant.getTime() + offsetMs - startHourMs)
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  /**
    * Builds the shared `Show` where clause scoping results to a studio, the
    * requested date range, and any optional client / show type / platform filters.
    */
@@ -64,48 +128,34 @@ export class StudioPerformanceService {
     // `contains: ' '` clause that matches every row with an interior space.
     const name = query.name?.trim();
 
-    const hasPerformance = query.has_performance;
-    let performanceFilter: Prisma.ShowWhereInput = {};
-    if (hasPerformance === 'true') {
-      performanceFilter = {
+    // Both the platform filter and the presence filter constrain the
+    // `showPlatforms` relation, so they must be composed via `AND` — spreading
+    // them as sibling keys would silently let the later one clobber the former.
+    const andConditions: Prisma.ShowWhereInput[] = [];
+
+    if (platformUids.length > 0) {
+      andConditions.push({
         showPlatforms: {
           some: {
             deletedAt: null,
-            OR: [
-              { gmv: { not: null } },
-              { ctr: { not: null } },
-              { cto: { not: null } },
-              {
-                metadata: {
-                  path: ['performance_templates', 'show_platform_view_count'],
-                  not: Prisma.JsonNull,
-                },
-              },
-            ],
+            platform: { uid: { in: platformUids } },
           },
         },
-      };
-    } else if (hasPerformance === 'false') {
-      performanceFilter = {
-        NOT: {
-          showPlatforms: {
-            some: {
-              deletedAt: null,
-              OR: [
-                { gmv: { not: null } },
-                { ctr: { not: null } },
-                { cto: { not: null } },
-                {
-                  metadata: {
-                    path: ['performance_templates', 'show_platform_view_count'],
-                    not: Prisma.JsonNull,
-                  },
-                },
-              ],
-            },
-          },
+      });
+    }
+
+    const recordedSome: Prisma.ShowWhereInput = {
+      showPlatforms: {
+        some: {
+          deletedAt: null,
+          OR: StudioPerformanceService.PERFORMANCE_RECORD_OR,
         },
-      };
+      },
+    };
+    if (query.has_performance === 'true') {
+      andConditions.push(recordedSome);
+    } else if (query.has_performance === 'false') {
+      andConditions.push({ NOT: recordedSome });
     }
 
     return {
@@ -117,16 +167,6 @@ export class StudioPerformanceService {
       },
       ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
       ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
-      ...(platformUids.length > 0
-        ? {
-            showPlatforms: {
-              some: {
-                deletedAt: null,
-                platform: { uid: { in: platformUids } },
-              },
-            },
-          }
-        : {}),
       ...(name
         ? {
             name: {
@@ -135,7 +175,7 @@ export class StudioPerformanceService {
             },
           }
         : {}),
-      ...performanceFilter,
+      ...(andConditions.length > 0 ? { AND: andConditions } : {}),
     };
   }
 
@@ -171,8 +211,12 @@ export class StudioPerformanceService {
     const locale = localization.locale ?? 'th-TH';
     const currency = localization.currency ?? 'THB';
 
+    // The presence filter (`has_performance`) is a list-only concern. Applying
+    // it here would make the summary self-referential — e.g. with
+    // `has_performance=true` the "recorded vs total" card would always read
+    // 100% — so the summary always aggregates the whole date-range population.
     const shows = await this.prisma.show.findMany({
-      where: this.buildShowWhere(studioUid, query),
+      where: this.buildShowWhere(studioUid, { ...query, has_performance: undefined }),
       include: {
         showPlatforms: {
           where: this.buildShowPlatformsWhere(query),
@@ -194,18 +238,10 @@ export class StudioPerformanceService {
     let ctoSum = new Prisma.Decimal(0);
     let ctoCount = 0;
 
-    // Derive client timezone offset from start_date parameter
-    const startUtcHours = startDate.getUTCHours();
-    const startUtcMinutes = startDate.getUTCMinutes();
-    const utcTimeInMinutes = startUtcHours * 60 + startUtcMinutes;
-    const localTimeInMinutes = 6 * 60; // 06:00
-    let offsetInMinutes = localTimeInMinutes - utcTimeInMinutes;
-    if (offsetInMinutes > 720) {
-      offsetInMinutes -= 1440;
-    } else if (offsetInMinutes < -720) {
-      offsetInMinutes += 1440;
-    }
-    const timezoneOffsetMs = offsetInMinutes * 60 * 1000;
+    // Bucket each show into its operational-day key in the client's timezone,
+    // derived from the start_date parameter (see `deriveClientOffsetMs`).
+    const offsetMs = this.deriveClientOffsetMs(startDate);
+    const startHourMs = StudioPerformanceService.OPERATIONAL_DAY_START_HOUR * 60 * 60 * 1000;
 
     // Daily trend mapping
     const trendMap = new Map<
@@ -213,34 +249,30 @@ export class StudioPerformanceService {
       { gmv: Prisma.Decimal; views: number; ctrs: Prisma.Decimal[]; ctos: Prisma.Decimal[] }
     >();
 
-    const startOp = new Date(startDate.getTime() + timezoneOffsetMs - 6 * 60 * 60 * 1000);
-    const endOp = new Date(endDate.getTime() + timezoneOffsetMs - 6 * 60 * 60 * 1000);
+    // Seed every operational day in range so gaps render as explicit zeros.
+    const cursor = new Date(startDate.getTime() + offsetMs - startHourMs);
+    cursor.setUTCHours(0, 0, 0, 0);
+    const lastDay = new Date(endDate.getTime() + offsetMs - startHourMs);
+    lastDay.setUTCHours(0, 0, 0, 0);
 
-    const curr = new Date(startOp);
-    curr.setUTCHours(0, 0, 0, 0);
-    const endOpTime = new Date(endOp);
-    endOpTime.setUTCHours(0, 0, 0, 0);
-
-    while (curr.getTime() <= endOpTime.getTime()) {
-      const dateStr = curr.toISOString().slice(0, 10);
-      trendMap.set(dateStr, {
+    while (cursor.getTime() <= lastDay.getTime()) {
+      trendMap.set(cursor.toISOString().slice(0, 10), {
         gmv: new Prisma.Decimal(0),
         views: 0,
         ctrs: [],
         ctos: [],
       });
-      curr.setUTCDate(curr.getUTCDate() + 1);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     for (const show of shows) {
       let showHasPerformance = false;
-      const opTime = new Date(show.startTime.getTime() + timezoneOffsetMs - 6 * 60 * 60 * 1000);
-      const dateStr = opTime.toISOString().slice(0, 10);
+      const dateStr = this.toOperationalDayKey(show.startTime, offsetMs);
       const trendData = trendMap.get(dateStr);
 
       for (const sp of show.showPlatforms) {
-        const metadata = (sp.metadata as Record<string, any> | null) ?? {};
-        const templates = metadata.performance_templates ?? {};
+        const spMetadata = (sp.metadata as Record<string, any> | null) ?? {};
+        const templates = spMetadata.performance_templates ?? {};
         // `viewerCount` is a non-nullable column (defaults to 0), so only count
         // it when a view-count fact was actually recorded — keeping the summary
         // totals/trend consistent with the per-platform list response.
