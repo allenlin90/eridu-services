@@ -3,6 +3,10 @@ import { z } from 'zod';
 import { UID_PREFIXES } from '../constants.js';
 import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
 import { createPaginatedResponseSchema } from '../pagination/schemas.js';
+import {
+  defaultCommissionRateInputSchema,
+  defaultRateInputSchema,
+} from '../studio-creators/schemas.js';
 
 /**
  * Show API Response Schema (snake_case - matches backend API output)
@@ -156,11 +160,11 @@ export const updateShowInputSchema = z
         z.object({
           creator_id: z.string(),
           note: z.string().optional(),
-          agreed_rate: z.coerce.number().positive().optional(),
+          agreed_rate: defaultRateInputSchema,
           compensation_type: z
             .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
             .optional(),
-          commission_rate: z.coerce.number().min(0).max(100).optional(),
+          commission_rate: defaultCommissionRateInputSchema,
           override_reason: z.string().trim().min(1).max(1000).optional(),
           metadata: z.record(z.string(), z.any()).optional(),
         }),

@@ -44,5 +44,5 @@ App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design*
 ## Current Phase State
 
 - Phase 1–3: ✅ Closed. Summarized in [Phase 3](./roadmap/PHASE_3.md).
-- Phase 4: 🚧 Active. Wave 1 shipped (studio member roster, studio creator roster, studio creator onboarding, studio show management, and the internal `eridu_docs` knowledge base). Wave 2 cost foundation is in progress: the cost model is signed off, compensation-line-items Tasks 1-6 are merged, the content Creator Portal and personal compensations are fully implemented, and Task 7 shift cost cleanup is next. See [Phase 4](./roadmap/PHASE_4.md).
+- Phase 4: 🚧 Active. Wave 1 (rosters, onboarding, show management, docs platform) and Wave 2 (cost model, compensation line items, task-input fact binding ingestion, performance analytics, and creator-rate wire-type migrations) are fully shipped. PR 19 (Economics review surface) is next. See [Phase 4](./roadmap/PHASE_4.md).
 - Phase 5: Placeholder. Scope TBD after Phase 4 economics ships. See [Phase 5](./roadmap/PHASE_5.md).

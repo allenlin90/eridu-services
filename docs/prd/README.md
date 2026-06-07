@@ -38,13 +38,12 @@ PRDs are **phase-scoped and transient**:
 
 ## Phase 4
 
-Phase 4 has **one active PRD** for the task-input fact binding workstream:
-
-- [Task-Input Fact Binding](./task-fact-binding.md) (PR 12) — core requirements, deliverables, and sub-PR breakdown for the actuals extraction pipeline.
+Phase 4 has **no active PRDs** (the task-input fact binding PRD was promoted to [shipped feature docs](../features/task-fact-binding.md)).
 
 All other remaining work (2.2 compensation line items, 2.3 economics service, 3.1 economics review surface, 3.2 page-local exports, 3.3 creator availability hardening) is tracked PR-by-PR in [`PHASE_4.md`](../roadmap/PHASE_4.md) as 15 user-flow-first entries.
 - Studio schedule management was deferred (revisit with the Client Portal workstream); retained at [`future/studio-schedule-management.md`](./future/studio-schedule-management.md).
 - Future P&L revenue workflow is sketched in [`future/pnl-revenue-workflow.md`](./future/pnl-revenue-workflow.md); redraft when revenue planning restarts.
+
 
 ### Phase 5 Candidates (PRDs created, implementation deferred)
 

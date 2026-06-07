@@ -18,8 +18,8 @@ The extraction pipeline routes `COMPLETED` task content into typed indexed colum
 - **Platform performance extractors** (PR 21.4 — the reference for numeric/Decimal facts + template-based precedence): `platform-performance-extractors.ts`
 - **Source priority resolver**: [`source-priority.ts`](../../../apps/erify_api/src/orchestration/fact-extraction/source-priority.ts)
 - **Fact-key catalog**: [`packages/api-types/src/task-management/template-definition.schema.ts`](../../../packages/api-types/src/task-management/template-definition.schema.ts)
-- **PRD**: [`docs/prd/task-fact-binding.md`](../../../docs/prd/task-fact-binding.md)
-- **Design**: [`apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md`](../../../apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md)
+- **Feature**: [`docs/features/task-fact-binding.md`](../../../docs/features/task-fact-binding.md)
+- **Design**: [`apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md`](../../../apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md)
 
 ## Outcome routing order (HARD RULE)
 
@@ -227,7 +227,7 @@ For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box ma
 
 ## State-transition handoff between co-submitted facts
 
-PR 12.2 (creator actuals + attendance) shipped after **eight Codex iterations**. Reading them now, the column itself is fine: `ShowCreator.attendanceReason` holds either the **LATE** reason (`creator_actual_start_time > Show.startTime`) or the **MISSING** reason (`attendanceMissing = true`), and those states are **mutually exclusive** under the read-side derivation rule in `TASK_INPUT_FACT_BINDING_DESIGN.md`. In any steady state, only one writer's reason is semantically meaningful.
+PR 12.2 (creator actuals + attendance) shipped after **eight Codex iterations**. Reading them now, the column itself is fine: `ShowCreator.attendanceReason` holds either the **LATE** reason (`creator_actual_start_time > Show.startTime`) or the **MISSING** reason (`attendanceMissing = true`), and those states are **mutually exclusive** under the read-side derivation rule in `TASK_INPUT_FACT_BINDING.md`. In any steady state, only one writer's reason is semantically meaningful.
 
 The real bug pattern was **the cross-fact handoff during state transitions in the same submission**. A submission can simultaneously toggle `attendance_missing = false` AND set `actual_start_time > show.startTime` — that's a legitimate `MISSING → LATE` transition, and the late extractor's reason needs to take the column while the missing extractor's `false`-write must NOT clear it. Each extractor runs in its own transaction with no shared context, so the coordination had to be threaded through `ExtractedFact.coSubmittedFactKeysForTarget` — and every iteration uncovered a new way that signal could be wrong.
 

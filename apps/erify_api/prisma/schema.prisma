@@ -758,7 +758,7 @@ model TaskTarget {
 // Append-only platform-violation log. Soft-history via `supersededAt`: a later
 // extraction for the same `(sourceTaskId, sourceFieldId)` marks earlier rows
 // superseded rather than deleting them. No `updatedAt` / `deletedAt` by design.
-// See apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md §2.A.
+// See apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md §2.A.
 model ShowPlatformViolation {
   id             BigInt       @id @default(autoincrement())
   uid            String       @unique
@@ -789,7 +789,7 @@ model ShowPlatformViolation {
 // Append-only history of automated extraction writes and manual manager overrides.
 // Audit envelopes carry no FK to target entities, so deletes on target rows cascade
 // only into the AuditTarget junction; the timeline itself is preserved. See
-// apps/erify_api/docs/design/TASK_INPUT_FACT_BINDING_DESIGN.md §2.B.
+// apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md §2.B.
 
 model Audit {
   id        BigInt        @id @default(autoincrement())

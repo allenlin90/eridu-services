@@ -3,6 +3,10 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
+import {
+  defaultCommissionRateInputSchema,
+  defaultRateInputSchema,
+} from '@eridu/api-types/studio-creators';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import {
@@ -22,11 +26,11 @@ export const createShowWithAssignmentsSchema = createShowSchema.safeExtend({
     z.object({
       creator_id: z.string(),
       note: z.string().nullable().optional(),
-      agreed_rate: z.coerce.number().positive().optional(),
+      agreed_rate: defaultRateInputSchema,
       compensation_type: z
         .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
         .optional(),
-      commission_rate: z.coerce.number().min(0).max(100).optional(),
+      commission_rate: defaultCommissionRateInputSchema,
       override_reason: z.string().trim().min(1).max(1000).optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
@@ -59,9 +63,9 @@ const transformCreateShowWithAssignmentsSchema
       creators: creatorAssignments?.map((creator) => ({
         creatorId: creator.creator_id,
         note: creator.note,
-        agreedRate: creator.agreed_rate?.toFixed(2),
+        agreedRate: creator.agreed_rate,
         compensationType: creator.compensation_type,
-        commissionRate: creator.commission_rate?.toFixed(2),
+        commissionRate: creator.commission_rate,
         ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
         metadata: creator.metadata,
       })),
@@ -83,12 +87,12 @@ export const updateShowWithAssignmentsSchema = createShowObjectSchema
       z.object({
         creator_id: z.string(),
         note: z.string().nullable().optional(),
-        agreed_rate: z.coerce.number().positive().nullable().optional(),
+        agreed_rate: defaultRateInputSchema,
         compensation_type: z
           .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
           .nullable()
           .optional(),
-        commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+        commission_rate: defaultCommissionRateInputSchema,
         override_reason: z.string().trim().min(1).max(1000).optional(),
         metadata: z.record(z.string(), z.any()).optional(),
       }),
@@ -129,19 +133,9 @@ const transformUpdateShowWithAssignmentsSchema
       showCreators: creatorAssignments?.map((creator) => ({
         creatorId: creator.creator_id,
         note: creator.note,
-        agreedRate:
-          creator.agreed_rate === undefined
-            ? undefined
-            : creator.agreed_rate === null
-              ? null
-              : creator.agreed_rate.toFixed(2),
+        agreedRate: creator.agreed_rate,
         compensationType: creator.compensation_type,
-        commissionRate:
-          creator.commission_rate === undefined
-            ? undefined
-            : creator.commission_rate === null
-              ? null
-              : creator.commission_rate.toFixed(2),
+        commissionRate: creator.commission_rate,
         ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
         metadata: creator.metadata,
       })),
@@ -258,12 +252,12 @@ export const replaceCreatorsOnShowSchema = z.object({
     z.object({
       creator_id: z.string(),
       note: z.string().nullable().optional(),
-      agreed_rate: z.coerce.number().positive().nullable().optional(),
+      agreed_rate: defaultRateInputSchema,
       compensation_type: z
         .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
         .nullable()
         .optional(),
-      commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+      commission_rate: defaultCommissionRateInputSchema,
       override_reason: z.string().trim().min(1).max(1000).optional(),
       metadata: z.record(z.string(), z.any()).optional(),
     }),
@@ -340,9 +334,9 @@ export class ReplaceCreatorsOnShowDto extends createZodDto(
     creators: data.creators.map((creator) => ({
       creatorId: creator.creator_id,
       note: creator.note ?? null,
-      agreedRate: creator.agreed_rate == null ? null : creator.agreed_rate.toFixed(2),
+      agreedRate: creator.agreed_rate ?? null,
       compensationType: creator.compensation_type ?? null,
-      commissionRate: creator.commission_rate == null ? null : creator.commission_rate.toFixed(2),
+      commissionRate: creator.commission_rate ?? null,
       ...(creator.override_reason !== undefined && { overrideReason: creator.override_reason }),
       metadata: creator.metadata ?? {},
     })),

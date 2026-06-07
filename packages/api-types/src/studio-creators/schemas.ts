@@ -36,9 +36,25 @@ const creatorCompensationTypeSchema = z.enum(
   Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]],
 );
 
+/**
+ * Backing columns are `Decimal(10, 2)` (see `apps/erify_api/prisma/schema.prisma`):
+ * at most 8 integer digits and 2 fractional digits. Enforce that envelope at the
+ * wire boundary so out-of-range values fail with a clean 400 instead of rounding
+ * silently (excess scale) or overflowing the column at insert time (excess precision).
+ */
+function fitsMoneyPrecision(value: string): boolean {
+  const [rawWhole = '0', fraction = ''] = value.startsWith('.')
+    ? ['0', value.slice(1)]
+    : value.split('.');
+  const whole = rawWhole.replace(/^0+/, '') || '0';
+
+  return whole.length <= 8 && fraction.length <= 2;
+}
+
 const nonNegativeDecimalStringSchema = z
   .string()
-  .regex(/^(?:\d+(?:\.\d+)?|\.\d+)$/, 'Must be a non-negative decimal string');
+  .regex(/^(?:\d+(?:\.\d+)?|\.\d+)$/, 'Must be a non-negative decimal string')
+  .refine(fitsMoneyPrecision, 'Must have at most 8 integer digits and 2 decimal places');
 
 function isAtMostOneHundred(value: string): boolean {
   const [wholePart = '0', fractionPart = ''] = value.startsWith('.')
@@ -57,8 +73,8 @@ function isAtMostOneHundred(value: string): boolean {
   return normalizedWhole === '100' && /^0*$/.test(fractionPart);
 }
 
-const defaultRateInputSchema = nonNegativeDecimalStringSchema.nullable().optional();
-const defaultCommissionRateInputSchema = nonNegativeDecimalStringSchema
+export const defaultRateInputSchema = nonNegativeDecimalStringSchema.nullable().optional();
+export const defaultCommissionRateInputSchema = nonNegativeDecimalStringSchema
   .refine(isAtMostOneHundred, 'Must be at most 100')
   .nullable()
   .optional();

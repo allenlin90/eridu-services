@@ -1,10 +1,10 @@
-# TASK_INPUT_FACT_BINDING_DESIGN.md
+# Task-Input Fact Binding & Event-Driven Actuals
 
-## Technical Design: Task-Input Fact Binding and Event-Driven Actuals
+> **Status**: ✅ Implemented — Phase 4
+> **Workstream**: Operational Actuals & Operations Review
+> **Roadmap pointer**: [PHASE_4.md](../../../docs/roadmap/PHASE_4.md) (PR 12 Meta-Row)
 
 This document defines the architectural specifications, database schemas, and extraction pipeline rules for **PR 12 (Critical task-input semantics for actuals and performance)**. It bridges the gap between generic, operator-completed task submissions and first-class indexed operational metrics across shows, platforms, creators, and platform violations.
-
-> **Roadmap pointer**: PR 12's operational pipeline ships as foundation PRs (12.0.1-12.0.5), extractor PRs (12.1.1-12.3.2), and the expanded Operations Review workstream (12.4.1-12.4.6). The Phase 4 roadmap ([`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md)) owns the sub-PR sequencing and dependencies, including the PR 21 analytics infrastructure investigation. Every schema addition in §2 below lands as one atomic migration in **PR 12.0.2** before any consumer wiring, so the binding picker (12.0.3), hydration engine (12.0.4), extraction pipeline (12.0.5), and each downstream extractor (12.1.1-12.3.2) all assume the columns and tables already exist.
 
 ---
 
