@@ -307,8 +307,12 @@ describe('studioPerformanceService', () => {
 
   describe('getPerformanceShows', () => {
     it('returns paginated list of shows with platform metrics', async () => {
+      // Default sort (start_time only) takes the fast DB path: ordering and
+      // pagination are delegated to the database, so the mock returns rows in
+      // the order the DB would (start_time desc) and the service preserves it.
+      const dbOrdered = [mockShows[2], mockShows[1], mockShows[0]];
       (prisma.show.count as jest.Mock).mockResolvedValue(3);
-      (prisma.show.findMany as jest.Mock).mockResolvedValue(mockShows as any);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(dbOrdered as any);
 
       const result = await service.getPerformanceShows('std_1', {
         ...query,
@@ -316,15 +320,22 @@ describe('studioPerformanceService', () => {
         limit: 10,
       });
 
+      // Ordering and pagination are pushed down to the database.
+      expect(prisma.show.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { startTime: 'desc' },
+          skip: 0,
+          take: 10,
+        }),
+      );
       expect(prisma.show.count).toHaveBeenCalled();
-      expect(prisma.show.findMany).toHaveBeenCalled();
       expect(result.total).toBe(3);
       expect(result.items).toHaveLength(3);
 
-      // Show Gamma (at index 0 due to start_time desc default sort)
+      // Show Gamma (first under start_time desc).
       expect(result.items[0].id).toBe('show_30');
 
-      // Show Alpha (at index 2 due to start_time desc default sort)
+      // Show Alpha (last under start_time desc).
       expect(result.items[2]).toEqual({
         id: 'show_10',
         name: 'Show Alpha',
@@ -586,6 +597,20 @@ describe('studioPerformanceService', () => {
       expect(result).toEqual({ loops: [], currency: 'THB', locale: 'th-TH' });
     });
 
+    it('sources loop metrics only from finalized (terminal) tasks', async () => {
+      // Fact extraction writes the show-level aggregates on COMPLETED, so the
+      // loop breakdown must read from the same finalized states to stay
+      // consistent — in-progress statuses (incl. REVIEW) are excluded.
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getShowPerformanceLoops('std_1', 'show_10');
+
+      const where = (prisma.task.findMany as jest.Mock).mock.calls[0][0].where;
+      expect(where.status.in).toEqual(['COMPLETED', 'CLOSED']);
+      expect(where.status.in).not.toContain('REVIEW');
+    });
+
     it('returns parsed loops when tasks have loop schemas and contents', async () => {
       const mockTask = {
         id: 1n,
@@ -651,8 +676,8 @@ describe('studioPerformanceService', () => {
           },
         },
         content: {
-          'fld_gmv_l1': '1500.25',
-          'fld_views_l1': 120,
+          fld_gmv_l1: '1500.25',
+          fld_views_l1: 120,
         },
       };
 
@@ -790,6 +815,28 @@ describe('studioPerformanceService', () => {
       expect(result.items[0].id).toBe('show_20'); // 100 views
       expect(result.items[1].id).toBe('show_10'); // 50 views
       expect(result.items[2].id).toBe('show_30'); // null/0 views
+    });
+
+    it('does not push pagination to the DB and derives total from the full set', async () => {
+      // Metric sorts must load every matching row, so skip/take are NOT sent to
+      // the database and a separate COUNT query is unnecessary — `total` is the
+      // length of the in-memory set.
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(sortMockShows);
+      (prisma.show.count as jest.Mock).mockClear();
+
+      const result = await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 2,
+        sort: 'gmv:desc',
+      });
+
+      const findManyArgs = (prisma.show.findMany as jest.Mock).mock.calls[0][0];
+      expect(findManyArgs).not.toHaveProperty('skip');
+      expect(findManyArgs).not.toHaveProperty('take');
+      expect(prisma.show.count).not.toHaveBeenCalled();
+      expect(result.total).toBe(3);
+      expect(result.items).toHaveLength(2); // page size applied in memory
     });
   });
 });

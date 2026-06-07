@@ -234,16 +234,16 @@ Goal: convert each single-entity detail/edit dialog into a `/studios/:studioId/<
 
 **Context** — Enhancing `/performance` dashboard and detail pages. This workstream delivers loop-level progression trend graphs for show details and multi-column sorting for the show performance breakdown table.
 
-- **22.1 — Show performance by moderation loops**. Implement `GET /studios/:studioId/shows/:id/performance/loops` backend endpoint to query tasks, extract loop metadata, and parse content. Render a Recharts `LineChart` on the show's Performance tab with Views, CTR, and CTO toggles.
-- **22.2 — Multi-sort for table view in /performance**. Add Zod query schema, backend in-memory multi-sorting on aggregated metrics (GMV/Views sums, CTR/CTO averages across active platforms), URL query parameter syncing, and a frontend `<SortableHeader>` component with priority badges.
+- **22.1 — Show performance by moderation loops**. Implement `GET /studios/:studioId/performance/shows/:id/loops` backend endpoint to query finalized tasks (latest wins), extract loop metadata, and parse content. Render a Recharts `LineChart` on the show's Performance tab with Views, CTR, and CTO toggles.
+- **22.2 — Multi-sort for table view in /performance**. Add Zod query schema, backend metric multi-sorting (GMV/Views sums, CTR/CTO averages across active platforms) — in memory only when a derived metric is sorted, with the default `start_time` sort kept on the DB path — plus URL query parameter syncing and a frontend `<SortableHeader>` component with priority badges.
 
 #### PR 22.1 · Show performance by moderation loops
 
-**Brief** — Display moderation loop progression charts. Fetch tasks for a show in terminal statuses, map metadata loop structures to hydrated platform-metric keys, and return loop metrics. Frontend uses Recharts `LineChart` with metric toggles.
+**Brief** — Display moderation loop progression charts. Fetch a show's finalized tasks (`COMPLETED`/`CLOSED` — the same states fact extraction uses for show-level aggregates, so loop totals stay consistent; latest finalized task with a loop schema wins), map metadata loop structures to hydrated platform-metric keys, and return loop metrics. Frontend uses Recharts `LineChart` with metric toggles.
 
 #### PR 22.2 · Multi-sort for table view in /performance
 
-**Brief** — Enable sorting records by GMV, Views, CTR, and CTO simultaneously. Sync sorting state with the URL `sort` query parameter. Perform multi-column sorting in memory on the backend with nulls consistently sorted to the end of the array. Render custom `SortableHeader` headers on the frontend with priority and direction badges.
+**Brief** — Enable sorting records by GMV, Views, CTR, and CTO simultaneously. Sync sorting state with the URL `sort` query parameter. Derived-metric sorts run in memory on the backend (nulls consistently sorted to the end), loading the full matched set; the default `start_time` sort stays on the database path (DB-ordered and paginated) to avoid loading every row when no metric sort is requested. `start_time desc` is always appended as the final tie-breaker. Render custom `SortableHeader` headers on the frontend with priority and direction badges.
 
 
 ## Out of scope (post-Phase-4)

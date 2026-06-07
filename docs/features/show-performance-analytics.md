@@ -27,14 +27,14 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 - Expanded the `SystemFactKeyEnum` catalog to support platform performance keys: `show_platform_gmv`, `show_platform_view_count`, `show_platform_ctr`, and `show_platform_cto`.
 
 ### Ingestion Pipeline & Fact Extraction
-- Integrated performance metric extraction into `FactExtractionService` when a task transitions to `COMPLETED` or `REVIEW`.
+- Integrated performance metric extraction into `FactExtractionService` when a task transitions to `COMPLETED` (and on subsequent admin content edits of an already-completed task). This is the authoritative write of show-level platform aggregates, which is why the loop-metrics endpoint reads from the same finalized states.
 - Implemented a strict priority coalescing logic: Post-production wrap-up tasks (`Post_production_check` template, ID 93) take priority over Moderation Loop 8 workflow tasks.
 - Used safe JSONB updates to record provenance metadata and prevent race conditions.
 
 ### Dedicated Performance Endpoints
 - `GET /studios/:studioId/performance/summary` — Returns dashboard summaries (Total GMV, Total Views, Average CTR, Average CTO) and computes timezone-aware, operational-day daily trend data.
-- `GET /studios/:studioId/performance/shows` — Paginated and filterable shows list mapping show metadata and platform metrics, with support for searching by show name, filtering by performance record presence (`has_performance`), and multi-column sorting.
-- `GET /studios/:studioId/shows/:id/performance/loops` — Returns loop-scoped platform metrics (GMV, views, CTR, CTO) extracted from completed/reviewed moderation tasks, alongside studio localization configurations.
+- `GET /studios/:studioId/performance/shows` — Paginated and filterable shows list mapping show metadata and platform metrics, with support for searching by show name, filtering by performance record presence (`has_performance`), show standard, and multi-column sorting. A pure `start_time` sort (the default) is ordered and paginated by the database; sorting by a derived metric (GMV/Views/CTR/CTO) loads the full matched set and orders it in memory before slicing the page.
+- `GET /studios/:studioId/performance/shows/:id/loops` — Returns loop-scoped platform metrics (GMV, views, CTR, CTO) alongside studio localization configuration. Metrics are sourced from **finalized** moderation tasks only (`COMPLETED`/`CLOSED`), matching the states fact extraction uses to write the show-level aggregates, so loop totals stay consistent with the rest of the dashboard. When several finalized tasks carry a loop schema, the most recently updated one wins.
 
 ### Localized Money Formatting
 - Formats GMV in local studio settings (Thai Baht `฿` with thousands separators) dynamically determined by the studio's localization configuration on both backend and frontend.

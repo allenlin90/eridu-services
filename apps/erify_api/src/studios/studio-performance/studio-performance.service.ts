@@ -12,10 +12,42 @@ import type {
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { PrismaService } from '@/prisma/prisma.service';
 
+/** A single parsed sort directive, e.g. `gmv:desc` → `{ field: 'gmv', desc: true }`. */
+type ShowSortRule = { field: string; desc: boolean };
+
+/** A primitive sort key: numeric, a Prisma Decimal, or `null` (sorted last). */
+type SortValue = number | Prisma.Decimal | null;
+
+/** Show row shape returned by the performance-shows query (relations included). */
+type ShowWithPerformanceRelations = Prisma.ShowGetPayload<{
+  include: {
+    client: true;
+    showType: true;
+    showPlatforms: { include: { platform: true } };
+  };
+}>;
+
 @Injectable()
 export class StudioPerformanceService {
   /** Maximum span (in days) a performance query is allowed to cover. */
   private static readonly MAX_DATE_RANGE_DAYS = 31;
+
+  /** Locale/currency applied when a studio has no localization metadata. */
+  private static readonly DEFAULT_LOCALE = 'th-TH';
+  private static readonly DEFAULT_CURRENCY = 'THB';
+
+  /** Fallback loop length (minutes) when a loop omits its own duration. */
+  private static readonly DEFAULT_LOOP_DURATION_MIN = 15;
+
+  /**
+   * Task statuses whose snapshots are authoritative for loop-level metrics.
+   * Fact extraction writes the show-level GMV/view aggregates on transition to
+   * COMPLETED (see TaskOrchestrationService), so the loop breakdown must read
+   * from the same finalized states — otherwise loop totals would diverge from
+   * the show-level figures shown elsewhere on the dashboard. In-progress
+   * statuses (incl. REVIEW) are intentionally excluded.
+   */
+  private static readonly LOOP_METRIC_TASK_STATUSES = ['COMPLETED', 'CLOSED'] as const;
 
   /**
    * The hour (in the studio's local "operational" timezone) at which a new
@@ -205,6 +237,18 @@ export class StudioPerformanceService {
     };
   }
 
+  /**
+   * Resolves the display `locale`/`currency` from a studio's `metadata.localization`,
+   * falling back to the platform defaults when either is absent.
+   */
+  private resolveLocalization(metadata: unknown): { locale: string; currency: string } {
+    const localization = ((metadata as Record<string, any> | null)?.localization ?? {}) as Record<string, any>;
+    return {
+      locale: localization.locale ?? StudioPerformanceService.DEFAULT_LOCALE,
+      currency: localization.currency ?? StudioPerformanceService.DEFAULT_CURRENCY,
+    };
+  }
+
   async getPerformanceSummary(
     studioUid: string,
     query: PerformanceQuery,
@@ -217,10 +261,7 @@ export class StudioPerformanceService {
       where: { uid: studioUid },
       select: { metadata: true },
     });
-    const metadata = (studio?.metadata as Record<string, any> | null) ?? {};
-    const localization = metadata.localization ?? {};
-    const locale = localization.locale ?? 'th-TH';
-    const currency = localization.currency ?? 'THB';
+    const { locale, currency } = this.resolveLocalization(studio?.metadata);
 
     // The presence filter (`has_performance`) is a list-only concern. Applying
     // it here would make the summary self-referential — e.g. with
@@ -380,158 +421,53 @@ export class StudioPerformanceService {
     const skip = (page - 1) * limit;
 
     const whereClause = this.buildShowWhere(studioUid, query);
-
-    // Fetch all matching shows to sort in memory
-    const shows = await this.prisma.show.findMany({
-      where: whereClause,
-      include: {
-        client: true,
-        showType: true,
-        showPlatforms: {
-          where: this.buildShowPlatformsWhere(query),
-          include: {
-            platform: true,
-          },
-        },
+    const include = {
+      client: true,
+      showType: true,
+      showPlatforms: {
+        where: this.buildShowPlatformsWhere(query),
+        include: { platform: true },
       },
-    });
+    } satisfies Prisma.ShowInclude;
 
-    const total = await this.prisma.show.count({ where: whereClause });
+    const sortRules = this.parseShowSortRules(query.sort);
 
-    // Map each show to its response shape
-    const mappedItems: ShowPerformanceResponse[] = shows.map((show) => {
-      return {
-        id: show.uid,
-        name: show.name,
-        start_time: show.startTime.toISOString(),
-        end_time: show.endTime.toISOString(),
-        client_name: show.client?.name ?? null,
-        show_type_name: show.showType?.name ?? null,
-        platforms: show.showPlatforms.map((sp) => {
-          const metadata = (sp.metadata as Record<string, any> | null) ?? {};
-          const templates = metadata.performance_templates ?? {};
-          const hasViewCount = templates.show_platform_view_count !== undefined;
+    // Sorting by a derived metric (GMV/Views/CTR/CTO) can't be expressed in SQL
+    // — those values live in per-platform columns/JSON aggregated per show — so
+    // it requires loading the full result set and ordering in memory. A pure
+    // start_time sort (the default) stays on the fast DB path: the database
+    // orders and paginates, returning at most `limit` rows.
+    const needsInMemorySort = sortRules.some((rule) => rule.field !== 'start_time');
 
-          return {
-            show_platform_uid: sp.uid,
-            platform_id: sp.platform.uid,
-            platform_name: sp.platform.name,
-            gmv: decimalToString(sp.gmv),
-            views: hasViewCount ? sp.viewerCount : null,
-            ctr: decimalToString(sp.ctr),
-            cto: decimalToString(sp.cto),
-          };
+    if (!needsInMemorySort) {
+      const startTimeDesc = sortRules.find((rule) => rule.field === 'start_time')?.desc ?? true;
+      const [shows, total] = await Promise.all([
+        this.prisma.show.findMany({
+          where: whereClause,
+          include,
+          orderBy: { startTime: startTimeDesc ? 'desc' : 'asc' },
+          skip,
+          take: limit,
         }),
-      };
-    });
-
-    // Parse the sort rules (e.g. "gmv:desc,ctr:asc")
-    const sortRules: { field: string; desc: boolean }[] = [];
-    if (query.sort) {
-      const parts = query.sort.split(',');
-      for (const part of parts) {
-        const [field, dir] = part.split(':');
-        if (field && (dir === 'asc' || dir === 'desc')) {
-          sortRules.push({ field, desc: dir === 'desc' });
-        }
-      }
+        this.prisma.show.count({ where: whereClause }),
+      ]);
+      return { items: shows.map((show) => this.mapShowToPerformance(show)), total };
     }
 
-    // Fallback: always ensure start_time desc is the final resolver for deterministic ordering
-    if (!sortRules.some((rule) => rule.field === 'start_time')) {
-      sortRules.push({ field: 'start_time', desc: true });
-    }
+    // Metric sort path: load every matching row, order in memory, then slice.
+    const shows = await this.prisma.show.findMany({ where: whereClause, include });
+    const mappedItems = shows.map((show) => this.mapShowToPerformance(show));
+    // The full matched set is already in hand, so `total` is its length — no
+    // separate COUNT query (which could also race the findMany under writes).
+    const total = mappedItems.length;
 
-    // Helper to calculate sorting value for a mapped item
-    const calculateSortValue = (item: ShowPerformanceResponse, field: string): number | Prisma.Decimal | null => {
-      if (field === 'start_time') {
-        return new Date(item.start_time).getTime();
-      }
-
-      if (field === 'gmv') {
-        let sum: Prisma.Decimal | null = null;
-        for (const p of item.platforms) {
-          if (p.gmv !== null) {
-            try {
-              const d = new Prisma.Decimal(p.gmv);
-              sum = sum ? sum.add(d) : d;
-            } catch {}
-          }
-        }
-        return sum;
-      }
-
-      if (field === 'views') {
-        let sum: number | null = null;
-        for (const p of item.platforms) {
-          if (p.views !== null) {
-            sum = (sum ?? 0) + p.views;
-          }
-        }
-        return sum;
-      }
-
-      if (field === 'ctr') {
-        let sum: Prisma.Decimal | null = null;
-        let count = 0;
-        for (const p of item.platforms) {
-          if (p.ctr !== null) {
-            try {
-              const d = new Prisma.Decimal(p.ctr);
-              sum = sum ? sum.add(d) : d;
-              count++;
-            } catch {}
-          }
-        }
-        return sum && count > 0 ? sum.div(count) : null;
-      }
-
-      if (field === 'cto') {
-        let sum: Prisma.Decimal | null = null;
-        let count = 0;
-        for (const p of item.platforms) {
-          if (p.cto !== null) {
-            try {
-              const d = new Prisma.Decimal(p.cto);
-              sum = sum ? sum.add(d) : d;
-              count++;
-            } catch {}
-          }
-        }
-        return sum && count > 0 ? sum.div(count) : null;
-      }
-
-      return null;
-    };
-
-    // Helper to compare two sort values, placing nulls at the end
-    const compareSortValues = (a: number | Prisma.Decimal | null, b: number | Prisma.Decimal | null, desc: boolean): number => {
-      if (a === null && b === null)
-        return 0;
-      if (a === null)
-        return 1;
-      if (b === null)
-        return -1;
-
-      const valA = a instanceof Prisma.Decimal ? a.toNumber() : a;
-      const valB = b instanceof Prisma.Decimal ? b.toNumber() : b;
-
-      if (valA === valB)
-        return 0;
-
-      if (desc) {
-        return valB - valA;
-      } else {
-        return valA - valB;
-      }
-    };
-
-    // Sort items in place
     mappedItems.sort((a, b) => {
       for (const rule of sortRules) {
-        const valA = calculateSortValue(a, rule.field);
-        const valB = calculateSortValue(b, rule.field);
-        const comp = compareSortValues(valA, valB, rule.desc);
+        const comp = this.compareSortValues(
+          this.calculateShowSortValue(a, rule.field),
+          this.calculateShowSortValue(b, rule.field),
+          rule.desc,
+        );
         if (comp !== 0) {
           return comp;
         }
@@ -539,10 +475,125 @@ export class StudioPerformanceService {
       return 0;
     });
 
-    // Apply pagination slice in memory
-    const items = mappedItems.slice(skip, skip + limit);
+    return { items: mappedItems.slice(skip, skip + limit), total };
+  }
 
-    return { items, total };
+  /** Maps a show row (with relations) to its performance response shape. */
+  private mapShowToPerformance(show: ShowWithPerformanceRelations): ShowPerformanceResponse {
+    return {
+      id: show.uid,
+      name: show.name,
+      start_time: show.startTime.toISOString(),
+      end_time: show.endTime.toISOString(),
+      client_name: show.client?.name ?? null,
+      show_type_name: show.showType?.name ?? null,
+      platforms: show.showPlatforms.map((sp) => {
+        const metadata = (sp.metadata as Record<string, any> | null) ?? {};
+        const templates = metadata.performance_templates ?? {};
+        const hasViewCount = templates.show_platform_view_count !== undefined;
+
+        return {
+          show_platform_uid: sp.uid,
+          platform_id: sp.platform.uid,
+          platform_name: sp.platform.name,
+          gmv: decimalToString(sp.gmv),
+          views: hasViewCount ? sp.viewerCount : null,
+          ctr: decimalToString(sp.ctr),
+          cto: decimalToString(sp.cto),
+        };
+      }),
+    };
+  }
+
+  /**
+   * Parses a `"gmv:desc,ctr:asc"` sort string into rules, ignoring malformed
+   * segments. `start_time desc` is always appended as the final tie-breaker so
+   * ordering is deterministic regardless of the requested keys.
+   */
+  private parseShowSortRules(sort: string | undefined): ShowSortRule[] {
+    const rules: ShowSortRule[] = [];
+    for (const part of sort?.split(',') ?? []) {
+      const [field, dir] = part.split(':');
+      if (field && (dir === 'asc' || dir === 'desc')) {
+        rules.push({ field, desc: dir === 'desc' });
+      }
+    }
+    if (!rules.some((rule) => rule.field === 'start_time')) {
+      rules.push({ field: 'start_time', desc: true });
+    }
+    return rules;
+  }
+
+  /**
+   * Resolves a show's sort key for a given field by aggregating across its
+   * platforms (sum for GMV/Views, average for the CTR/CTO rates). Returns `null`
+   * when no platform carries the metric, so it sorts to the end.
+   */
+  private calculateShowSortValue(item: ShowPerformanceResponse, field: string): SortValue {
+    if (field === 'start_time') {
+      return new Date(item.start_time).getTime();
+    }
+
+    if (field === 'gmv') {
+      let sum: Prisma.Decimal | null = null;
+      for (const p of item.platforms) {
+        if (p.gmv !== null) {
+          // Defensive: skip values that aren't valid decimals rather than throw.
+          try {
+            const d = new Prisma.Decimal(p.gmv);
+            sum = sum ? sum.add(d) : d;
+          } catch {}
+        }
+      }
+      return sum;
+    }
+
+    if (field === 'views') {
+      let sum: number | null = null;
+      for (const p of item.platforms) {
+        if (p.views !== null) {
+          sum = (sum ?? 0) + p.views;
+        }
+      }
+      return sum;
+    }
+
+    if (field === 'ctr' || field === 'cto') {
+      let sum: Prisma.Decimal | null = null;
+      let count = 0;
+      for (const p of item.platforms) {
+        const raw = field === 'ctr' ? p.ctr : p.cto;
+        if (raw !== null) {
+          // Defensive: skip values that aren't valid decimals rather than throw.
+          try {
+            const d = new Prisma.Decimal(raw);
+            sum = sum ? sum.add(d) : d;
+            count++;
+          } catch {}
+        }
+      }
+      return sum && count > 0 ? sum.div(count) : null;
+    }
+
+    return null;
+  }
+
+  /** Compares two sort values for the given direction, ordering `null` last. */
+  private compareSortValues(a: SortValue, b: SortValue, desc: boolean): number {
+    if (a === null && b === null)
+      return 0;
+    if (a === null)
+      return 1;
+    if (b === null)
+      return -1;
+
+    const valA = a instanceof Prisma.Decimal ? a.toNumber() : a;
+    const valB = b instanceof Prisma.Decimal ? b.toNumber() : b;
+
+    if (valA === valB)
+      return 0;
+
+    return desc ? valB - valA : valA - valB;
   }
 
   async getShowPerformanceLoops(
@@ -574,10 +625,7 @@ export class StudioPerformanceService {
       throw new NotFoundException('Show not found');
     }
 
-    const metadata = (show.studio?.metadata as Record<string, any> | null) ?? {};
-    const localization = metadata.localization ?? {};
-    const locale = localization.locale ?? 'th-TH';
-    const currency = localization.currency ?? 'THB';
+    const { locale, currency } = this.resolveLocalization(show.studio?.metadata);
 
     const tasks = await this.prisma.task.findMany({
       where: {
@@ -588,7 +636,7 @@ export class StudioPerformanceService {
           },
         },
         status: {
-          in: ['REVIEW', 'COMPLETED', 'CLOSED'],
+          in: [...StudioPerformanceService.LOOP_METRIC_TASK_STATUSES],
         },
         deletedAt: null,
       },
@@ -600,6 +648,9 @@ export class StudioPerformanceService {
       },
     });
 
+    // A show may have several finalized moderation tasks; the most recently
+    // updated one that carries a loop schema is authoritative ("latest wins").
+    // Older tasks are intentionally ignored — re-moderation supersedes prior runs.
     let selectedTask: any = null;
     let loopsMetadata: any[] = [];
 
@@ -697,7 +748,7 @@ export class StudioPerformanceService {
       return {
         id: loop.id,
         name: loop.name,
-        durationMin: Number(loop.durationMin) || 15,
+        durationMin: Number(loop.durationMin) || StudioPerformanceService.DEFAULT_LOOP_DURATION_MIN,
         metrics,
       };
     });
