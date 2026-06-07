@@ -69,7 +69,9 @@ The current local seed cannot exercise this path: 0 tasks carry v2 hydrated `:pl
 
 ## Prerequisite: getting performance data flowing at all (investigated 2026-06-07)
 
-The re-backfill *service* above is moot until performance data actually lands on `ShowPlatform`. A DB investigation showed it currently does not, and the PR 21.9 script alone cannot help, because real submissions are **show-scoped**, not the per-platform `<fieldId>:platform:<uid>` hydrated keys the script expects.
+> **Status: ✅ Shipped to prod (PR #137, 2026-06-07).** Both tracks below are done — the admin-triggered re-backfill *service* (top of this doc) remains the deferred topic. Track A used the [template-system-fact-migration skill](../../.agent/skills/template-system-fact-migration/SKILL.md); Track B is `scripts/backfill-performance-from-submissions.ts`.
+
+The re-backfill *service* above was moot until performance data actually lands on `ShowPlatform`. A DB investigation showed it did not, and the PR 21.9 hydrated-key script alone could not help, because real submissions are **show-scoped**, not the per-platform `<fieldId>:platform:<uid>` hydrated keys that script expects.
 
 ### Where performance is captured today (no `system_fact_key` bindings yet)
 
@@ -83,11 +85,11 @@ Two structural facts: **every task targets `SHOW`, never a platform**; **shows h
 
 The core mismatch: capture is per-show / per-loop, but the model + extractor are per-`ShowPlatform`. The hydration framework is the bridge (a `platform`-scoped fact field renders one input per platform at form time), but existing templates have no bindings and existing content is show-scoped.
 
-### Track A — Template binding (going forward) — DECIDED
+### Track A — Template binding (going forward) — ✅ SHIPPED
 
-Bind **Post_production_check only** (decision): its `GMV/View/CTR/CTO` → `show_platform_gmv / _view_count / _ctr / _cto` with **`platform` scope**. The form then hydrates one input per platform → operator enters per-platform → the existing extractor writes the authoritative (protected) value. Resolves 1- and 2-platform shows with zero ambiguity (attribution happens at entry). Do **not** fact-bind moderator loop-8 fields (8 loops × 4 metrics don't map to one platform fact; keep them operational). Caveat: templates are immutable snapshots, so this affects only tasks created after the new version.
+Bound **Post_production_check only**: its `GMV/View/CTR/CTO` → `show_platform_gmv / _view_count / _ctr / _cto` with **`platform` scope**. The form hydrates one input per platform → operator enters per-platform → the existing extractor writes the authoritative (protected) value on approval. Resolves 1- and 2-platform shows with zero ambiguity (attribution happens at entry). Moderator loop-8 fields are intentionally left unbound (8 loops × 4 metrics don't map to one platform fact). Applied via the [template-system-fact-migration skill](../../.agent/skills/template-system-fact-migration/SKILL.md)'s `bind_template_fact` SQL (idempotent, version-bumps + snapshots). Templates are immutable snapshots, so this affects only tasks generated from the new version.
 
-### Track B — Backfill existing shows (derivation-aware; a DIFFERENT job from the 21.9 script) — DECIDED
+### Track B — Backfill existing shows (derivation-aware; a DIFFERENT job from the 21.9 script) — ✅ SHIPPED
 
 - **Derive** show-level value: GMV = last non-empty loop (post-production `GMV` wins on precedence when present); **viewer_count = peak (max across loops)** (decision); ctr/cto = last non-empty loop *(confirm)*.
 - **Attribute:** 1-platform shows → assign to the single platform (unambiguous, automatable, ~88% of submitted tasks). **2-platform shows → skip + flag for manual per-platform entry** via the hydrated post-production form (decision); do not guess a revenue split.
@@ -99,4 +101,4 @@ Bind **Post_production_check only** (decision): its `GMV/View/CTR/CTO` → `show
 2. Track B as the one-off historical migration for already-submitted shows (1-platform auto, 2-platform manual).
 3. Only then is the admin re-backfill *service* (top of this doc) a useful operator tool, layered on the same derivation core.
 
-Note: in the local seed, post-production tasks have empty GMV/View/CTR/CTO (only moderator loop-8 is populated), so confirm prod actually has post-production numbers filled before relying on that source.
+Note: on prod, post-production tasks **are** populated (750 with GMV at rollout), so the backfill used post-production as the authoritative source (loop-8 as fallback). Post-production field ids differ across snapshot versions, so the backfill resolves them by label per snapshot.
