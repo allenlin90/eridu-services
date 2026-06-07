@@ -38,9 +38,9 @@ export const createCreatorSchema = createCreatorInputSchema.transform((data) => 
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
-  defaultRate: data.default_rate?.toFixed(2),
+  defaultRate: data.default_rate,
   defaultRateType: data.default_rate_type,
-  defaultCommissionRate: data.default_commission_rate?.toFixed(2),
+  defaultCommissionRate: data.default_commission_rate,
   metadata: data.metadata,
 }));
 
@@ -50,22 +50,9 @@ export const updateCreatorSchema = updateCreatorInputSchema.transform((data) => 
   name: data.name,
   aliasName: data.alias_name,
   isBanned: data.is_banned,
-  defaultRate:
-    data.default_rate === undefined
-      ? undefined
-      : data.default_rate === null
-        ? null
-        : data.default_rate.toFixed(2),
-  defaultRateType:
-    data.default_rate_type === undefined
-      ? undefined
-      : data.default_rate_type,
-  defaultCommissionRate:
-    data.default_commission_rate === undefined
-      ? undefined
-      : data.default_commission_rate === null
-        ? null
-        : data.default_commission_rate.toFixed(2),
+  defaultRate: data.default_rate,
+  defaultRateType: data.default_rate_type,
+  defaultCommissionRate: data.default_commission_rate,
   metadata: data.metadata,
 }));
 
