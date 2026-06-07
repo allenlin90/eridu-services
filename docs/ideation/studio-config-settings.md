@@ -74,6 +74,9 @@ interface StudioSettings {
     
     // Configurable day cutoff hour (local to studio timezone)
     operationalDayStartHour: number; // default: 6
+
+    // Default date range (in days) to load on dashboards (Performance, Costs) on first load
+    defaultDashboardRangeDays: number; // default: 7
   };
   readiness: {
     // Configurable baseline assignment requirements per show standard (e.g., 'bau', 'premium')
@@ -166,11 +169,13 @@ const hasModerationTask = tasks.some(task => {
     *   `ShiftAlignmentService` refactored to consume `StudioSettings`.
     *   `task-report-scope.service.ts` refactored to normalize boundaries using studio timezone.
 *   **Frontend Routing & UI Pages:**
+    *   `/studios/:studioId/performance` (Performance dashboard loads date ranges from settings)
+    *   `/studios/:studioId/costs` (Costs dashboard loads date ranges from settings)
     *   `/studios/:studioId/task-review`
     *   `/studios/:studioId/show-run-review`
     *   `/studios/:studioId/task-setup`
     *   Studio dashboard operational-day cards.
-*   **Studio Settings UI:** A new settings page/tab in `erify_studios` (`/studios/:studioId/settings`) for authorized administrators to adjust operational day boundaries, timezones, premium show standard qualifiers, and moderation task regexes.
+*   **Studio Settings UI:** A new settings page/tab in `erify_studios` (`/studios/:studioId/settings`) for authorized administrators to adjust operational day boundaries, timezones, default range days, premium show standard qualifiers, and moderation task regexes.
 
 ---
 
