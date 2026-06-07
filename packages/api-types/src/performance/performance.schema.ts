@@ -40,6 +40,7 @@ export const performanceShowsQuerySchema = performanceQuerySchema.extend({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
   name: z.string().optional(),
+  sort: z.string().optional(),
 });
 
 export type PerformanceShowsQueryInput = z.input<typeof performanceShowsQuerySchema>;
@@ -115,3 +116,33 @@ export const paginatedShowPerformanceResponseSchema = createPaginatedResponseSch
 export type PaginatedShowPerformanceResponse = z.infer<
   typeof paginatedShowPerformanceResponseSchema
 >;
+
+/**
+ * Loop-level platform performance metrics
+ */
+export const showPerformanceLoopMetricSchema = z.object({
+  show_platform_uid: z.string(),
+  platform_name: z.string(),
+  gmv: z.string().nullable(),
+  ctr: z.string().nullable(),
+  cto: z.string().nullable(),
+  viewer_count: z.number().int().nullable(),
+});
+
+export type ShowPerformanceLoopMetric = z.infer<typeof showPerformanceLoopMetricSchema>;
+
+export const showPerformanceLoopItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  durationMin: z.number().int(),
+  metrics: z.array(showPerformanceLoopMetricSchema),
+});
+
+export type ShowPerformanceLoopItem = z.infer<typeof showPerformanceLoopItemSchema>;
+
+export const showPerformanceLoopsResponseSchema = z.object({
+  loops: z.array(showPerformanceLoopItemSchema),
+});
+
+export type ShowPerformanceLoopsResponse = z.infer<typeof showPerformanceLoopsResponseSchema>;
+

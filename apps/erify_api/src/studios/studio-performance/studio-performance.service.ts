@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import type {
@@ -6,6 +6,7 @@ import type {
   PerformanceShowsQuery,
   PerformanceSummaryResponse,
   ShowPerformanceResponse,
+  ShowPerformanceLoopsResponse,
 } from '@eridu/api-types/performance';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
@@ -378,7 +379,7 @@ export class StudioPerformanceService {
 
     const whereClause = this.buildShowWhere(studioUid, query);
 
-    const total = await this.prisma.show.count({ where: whereClause });
+    // Fetch all matching shows to sort in memory
     const shows = await this.prisma.show.findMany({
       where: whereClause,
       include: {
@@ -391,14 +392,12 @@ export class StudioPerformanceService {
           },
         },
       },
-      orderBy: {
-        startTime: 'desc',
-      },
-      skip,
-      take: limit,
     });
 
-    const items = shows.map((show) => {
+    const total = await this.prisma.show.count({ where: whereClause });
+
+    // Map each show to its response shape
+    const mappedItems: ShowPerformanceResponse[] = shows.map((show) => {
       return {
         id: show.uid,
         name: show.name,
@@ -409,9 +408,6 @@ export class StudioPerformanceService {
         platforms: show.showPlatforms.map((sp) => {
           const metadata = (sp.metadata as Record<string, any> | null) ?? {};
           const templates = metadata.performance_templates ?? {};
-          // `viewerCount` is a non-nullable column (defaults to 0), so its
-          // provenance comes from the recorded view-count fact rather than the
-          // column itself; gmv/ctr/cto are nullable and speak for themselves.
           const hasViewCount = templates.show_platform_view_count !== undefined;
 
           return {
@@ -427,6 +423,263 @@ export class StudioPerformanceService {
       };
     });
 
+    // Parse the sort rules (e.g. "gmv:desc,ctr:asc")
+    const sortRules: { field: string; desc: boolean }[] = [];
+    if (query.sort) {
+      const parts = query.sort.split(',');
+      for (const part of parts) {
+        const [field, dir] = part.split(':');
+        if (field && (dir === 'asc' || dir === 'desc')) {
+          sortRules.push({ field, desc: dir === 'desc' });
+        }
+      }
+    }
+
+    // Fallback: always ensure start_time desc is the final resolver for deterministic ordering
+    if (!sortRules.some((rule) => rule.field === 'start_time')) {
+      sortRules.push({ field: 'start_time', desc: true });
+    }
+
+    // Helper to calculate sorting value for a mapped item
+    const calculateSortValue = (item: ShowPerformanceResponse, field: string): number | Prisma.Decimal | null => {
+      if (field === 'start_time') {
+        return new Date(item.start_time).getTime();
+      }
+
+      if (field === 'gmv') {
+        let sum: Prisma.Decimal | null = null;
+        for (const p of item.platforms) {
+          if (p.gmv !== null) {
+            try {
+              const d = new Prisma.Decimal(p.gmv);
+              sum = sum ? sum.add(d) : d;
+            } catch {}
+          }
+        }
+        return sum;
+      }
+
+      if (field === 'views') {
+        let sum: number | null = null;
+        for (const p of item.platforms) {
+          if (p.views !== null) {
+            sum = (sum ?? 0) + p.views;
+          }
+        }
+        return sum;
+      }
+
+      if (field === 'ctr') {
+        let sum: Prisma.Decimal | null = null;
+        let count = 0;
+        for (const p of item.platforms) {
+          if (p.ctr !== null) {
+            try {
+              const d = new Prisma.Decimal(p.ctr);
+              sum = sum ? sum.add(d) : d;
+              count++;
+            } catch {}
+          }
+        }
+        return sum && count > 0 ? sum.div(count) : null;
+      }
+
+      if (field === 'cto') {
+        let sum: Prisma.Decimal | null = null;
+        let count = 0;
+        for (const p of item.platforms) {
+          if (p.cto !== null) {
+            try {
+              const d = new Prisma.Decimal(p.cto);
+              sum = sum ? sum.add(d) : d;
+              count++;
+            } catch {}
+          }
+        }
+        return sum && count > 0 ? sum.div(count) : null;
+      }
+
+      return null;
+    };
+
+    // Helper to compare two sort values, placing nulls at the end
+    const compareSortValues = (a: number | Prisma.Decimal | null, b: number | Prisma.Decimal | null, desc: boolean): number => {
+      if (a === null && b === null) return 0;
+      if (a === null) return 1;
+      if (b === null) return -1;
+
+      const valA = a instanceof Prisma.Decimal ? a.toNumber() : a;
+      const valB = b instanceof Prisma.Decimal ? b.toNumber() : b;
+
+      if (valA === valB) return 0;
+
+      if (desc) {
+        return valB - valA;
+      } else {
+        return valA - valB;
+      }
+    };
+
+    // Sort items in place
+    mappedItems.sort((a, b) => {
+      for (const rule of sortRules) {
+        const valA = calculateSortValue(a, rule.field);
+        const valB = calculateSortValue(b, rule.field);
+        const comp = compareSortValues(valA, valB, rule.desc);
+        if (comp !== 0) {
+          return comp;
+        }
+      }
+      return 0;
+    });
+
+    // Apply pagination slice in memory
+    const items = mappedItems.slice(skip, skip + limit);
+
     return { items, total };
+  }
+
+  async getShowPerformanceLoops(
+    studioUid: string,
+    showUid: string,
+  ): Promise<ShowPerformanceLoopsResponse> {
+    const show = await this.prisma.show.findFirst({
+      where: {
+        uid: showUid,
+        studio: { uid: studioUid },
+        deletedAt: null,
+      },
+      include: {
+        showPlatforms: {
+          where: { deletedAt: null },
+          include: {
+            platform: true,
+          },
+        },
+      },
+    });
+
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        targets: {
+          some: {
+            showId: show.id,
+            deletedAt: null,
+          },
+        },
+        status: {
+          in: ['REVIEW', 'COMPLETED', 'CLOSED'],
+        },
+        deletedAt: null,
+      },
+      include: {
+        snapshot: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    let selectedTask: any = null;
+    let loopsMetadata: any[] = [];
+
+    for (const task of tasks) {
+      const schema = task.snapshot?.schema as any;
+      if (schema && schema.metadata && Array.isArray(schema.metadata.loops)) {
+        selectedTask = task;
+        loopsMetadata = schema.metadata.loops;
+        break;
+      }
+    }
+
+    if (!selectedTask) {
+      return { loops: [] };
+    }
+
+    const schema = selectedTask.snapshot.schema as any;
+    const items = (schema.items ?? []) as any[];
+    const content = (selectedTask.content as Record<string, any>) ?? {};
+
+    const loops = loopsMetadata.map((loop) => {
+      const loopFields = items.filter((item) => item.group === loop.id);
+
+      let gmvFieldId: string | null = null;
+      let viewFieldId: string | null = null;
+      let ctrFieldId: string | null = null;
+      let ctoFieldId: string | null = null;
+
+      for (const item of loopFields) {
+        const key = item.key?.toLowerCase();
+        const sharedKey = item.shared_field_key?.toLowerCase();
+        const factKey = item.system_fact_key;
+
+        if (factKey === 'show_platform_gmv' || sharedKey === 'gmv' || key === 'gmv') {
+          gmvFieldId = item.id;
+        } else if (
+          factKey === 'show_platform_view_count'
+          || sharedKey === 'viewer_count'
+          || key === 'views'
+          || key === 'viewercount'
+          || key === 'viewer_count'
+        ) {
+          viewFieldId = item.id;
+        } else if (factKey === 'show_platform_ctr' || sharedKey === 'ctr' || key === 'ctr') {
+          ctrFieldId = item.id;
+        } else if (factKey === 'show_platform_cto' || sharedKey === 'cto' || key === 'cto') {
+          ctoFieldId = item.id;
+        }
+      }
+
+      const metrics = show.showPlatforms.map((sp) => {
+        const getVal = (fieldId: string | null) => {
+          if (!fieldId) return null;
+          const key = `${fieldId}:platform:${sp.uid}`;
+          return content[key] ?? null;
+        };
+
+        const rawGmv = getVal(gmvFieldId);
+        const rawViews = getVal(viewFieldId);
+        const rawCtr = getVal(ctrFieldId);
+        const rawCto = getVal(ctoFieldId);
+
+        const formatDecimal = (val: any) => {
+          if (val === null || val === undefined || val === '') return null;
+          try {
+            const d = new Prisma.Decimal(val);
+            return decimalToString(d);
+          } catch {
+            return String(val);
+          }
+        };
+
+        const formatInt = (val: any) => {
+          if (val === null || val === undefined || val === '') return null;
+          const n = Math.round(Number(val));
+          return Number.isFinite(n) ? n : null;
+        };
+
+        return {
+          show_platform_uid: sp.uid,
+          platform_name: sp.platform.name,
+          gmv: formatDecimal(rawGmv),
+          ctr: formatDecimal(rawCtr),
+          cto: formatDecimal(rawCto),
+          viewer_count: formatInt(rawViews),
+        };
+      });
+
+      return {
+        id: loop.id,
+        name: loop.name,
+        durationMin: Number(loop.durationMin) || 15,
+        metrics,
+      };
+    });
+
+    return { loops };
   }
 }
