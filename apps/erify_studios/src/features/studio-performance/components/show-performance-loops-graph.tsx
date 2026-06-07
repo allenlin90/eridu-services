@@ -13,14 +13,14 @@ import {
 import type { ShowPerformanceLoopsResponse } from '@eridu/api-types/performance';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@eridu/ui';
 
-import { toDecimalDisplayString } from '@/lib/decimal-format';
+import { currencySymbol, toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
 
 type ShowPerformanceLoopsGraphProps = {
   data?: ShowPerformanceLoopsResponse;
   isLoading: boolean;
 };
 
-type MetricKey = 'viewer_count' | 'ctr' | 'cto';
+type MetricKey = 'viewer_count' | 'gmv' | 'ctr' | 'cto';
 
 const PALETTE = [
   '#ea580c', // Shopee orange
@@ -37,13 +37,18 @@ type LoopTooltipProps = {
   payload?: any[];
   label?: string;
   activeMetric: MetricKey;
+  locale?: string;
+  currency?: string;
 };
 
-function CustomTooltip({ active, payload, label, activeMetric }: LoopTooltipProps) {
+function CustomTooltip({ active, payload, label, activeMetric, locale, currency }: LoopTooltipProps) {
   if (active && payload && payload.length) {
     const formatValue = (value: any) => {
       if (activeMetric === 'viewer_count') {
-        return new Intl.NumberFormat().format(Number(value));
+        return new Intl.NumberFormat(locale ?? 'th-TH').format(Number(value));
+      }
+      if (activeMetric === 'gmv') {
+        return toCurrencyDisplayString(String(value), locale ?? 'th-TH', currency ?? 'THB');
       }
       return `${toDecimalDisplayString(String(value))}%`;
     };
@@ -108,6 +113,8 @@ export function ShowPerformanceLoopsGraph({ data, isLoading }: ShowPerformanceLo
           val = m.ctr !== null ? Number(m.ctr) : null;
         } else if (activeMetric === 'cto') {
           val = m.cto !== null ? Number(m.cto) : null;
+        } else if (activeMetric === 'gmv') {
+          val = m.gmv !== null ? Number(m.gmv) : null;
         }
         dataPoint[m.platform_name] = val;
       });
@@ -118,15 +125,24 @@ export function ShowPerformanceLoopsGraph({ data, isLoading }: ShowPerformanceLo
 
   const metrics = [
     { key: 'viewer_count' as const, label: 'Views' },
+    { key: 'gmv' as const, label: 'GMV' },
     { key: 'ctr' as const, label: 'CTR (%)' },
     { key: 'cto' as const, label: 'CTO (%)' },
   ];
 
   const formatYAxis = (tickItem: number) => {
+    const locale = data?.locale ?? 'th-TH';
+    const currency = data?.currency ?? 'THB';
     if (activeMetric === 'viewer_count') {
       if (tickItem >= 1000)
         return `${(tickItem / 1000).toFixed(0)}k`;
       return String(tickItem);
+    }
+    if (activeMetric === 'gmv') {
+      const prefix = currencySymbol(locale, currency);
+      if (tickItem >= 1000)
+        return `${prefix}${(tickItem / 1000).toFixed(0)}k`;
+      return `${prefix}${tickItem}`;
     }
     return `${tickItem}%`;
   };

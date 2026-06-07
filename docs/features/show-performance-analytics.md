@@ -33,7 +33,8 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 
 ### Dedicated Performance Endpoints
 - `GET /studios/:studioId/performance/summary` — Returns dashboard summaries (Total GMV, Total Views, Average CTR, Average CTO) and computes timezone-aware, operational-day daily trend data.
-- `GET /studios/:studioId/performance/shows` — Paginated and filterable shows list mapping show metadata and platform metrics, with support for searching by show name and filtering by performance record presence (`has_performance`).
+- `GET /studios/:studioId/performance/shows` — Paginated and filterable shows list mapping show metadata and platform metrics, with support for searching by show name, filtering by performance record presence (`has_performance`), and multi-column sorting.
+- `GET /studios/:studioId/shows/:id/performance/loops` — Returns loop-scoped platform metrics (GMV, views, CTR, CTO) extracted from completed/reviewed moderation tasks, alongside studio localization configurations.
 
 ### Localized Money Formatting
 - Formats GMV in local studio settings (Thai Baht `฿` with thousands separators) dynamically determined by the studio's localization configuration on both backend and frontend.
@@ -44,6 +45,10 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 ### Frontend Dashboard and Show Details Tab
 - Built `/studios/:studioId/performance` containing metrics summary cards, a Recharts trend graph, and a tabular list of shows with platform metrics.
 - Revamped show details to `/studios/:studioId/shows/:showId` using a tabbed structure (**Details** · **Actuals** · **Performance** · **Compensation** · **Submitted Tasks**), retiring old `/task-setup/:showId/tasks` and `/creator-mapping/:showId` routes.
+- Added loop-scoped performance trend visualization on the show's Performance tab: plots loop-by-loop metric progression (Views, GMV, CTR, CTO) by platform channel using a Recharts line graph, with dynamic localization support for ticks and tooltips.
+- Support priority-based multi-column sorting on the shows breakdown table (Google Sheets-style click sequence: unsorted -> ASC -> DESC -> unsorted) with active badges, arrows, and URL synchronization.
+- Featured Show Standard (Standard / Premium) filter dropdown on the performance table and filter pills on Shows list and Task Setup views.
+- Configured tab navigation list to gracefully overflow with horizontal scrolling and hidden scrollbars on mobile widths (e.g., 375px iPhone SE) to prevent page layout breaking.
 
 ## Key Product Decisions
 
@@ -64,6 +69,11 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 - [x] GMV displays locally formatted Thai Baht with thousands separators using `Intl.NumberFormat`.
 - [x] Legacy `/task-setup/:showId/tasks` and `/creator-mapping/:showId` routes are retired and converged into unified tabs on show details.
 - [x] Backend and frontend test suites pass with full code coverage for newly introduced formatters, endpoint controllers, and services.
+- [x] Expose loop performance API returning loop-level metrics and studio localization metadata (currency, locale).
+- [x] Renders moderation loop trend line chart plotting Views, GMV, CTR, and CTO progression by loop and platform channel.
+- [x] Support multiple sort parameters concurrently with active priorities and URL sync on the Shows breakdown grid.
+- [x] Show Standard (Standard vs Premium) filter operates on the shows analytics list and is featured on show list / task setup quick filters.
+- [x] Tab list header on show details route is responsive and supports touch-swipe horizontal scrolling on mobile viewports.
 
 ## Forward References
 

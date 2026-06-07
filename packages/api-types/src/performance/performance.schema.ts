@@ -148,6 +148,8 @@ export type ShowPerformanceLoopItem = z.infer<typeof showPerformanceLoopItemSche
 
 export const showPerformanceLoopsResponseSchema = z.object({
   loops: z.array(showPerformanceLoopItemSchema),
+  currency: z.string().optional(),
+  locale: z.string().optional(),
 });
 
 export type ShowPerformanceLoopsResponse = z.infer<typeof showPerformanceLoopsResponseSchema>;

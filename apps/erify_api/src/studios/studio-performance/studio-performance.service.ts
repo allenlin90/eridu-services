@@ -556,6 +556,11 @@ export class StudioPerformanceService {
         deletedAt: null,
       },
       include: {
+        studio: {
+          select: {
+            metadata: true,
+          },
+        },
         showPlatforms: {
           where: { deletedAt: null },
           include: {
@@ -568,6 +573,11 @@ export class StudioPerformanceService {
     if (!show) {
       throw new NotFoundException('Show not found');
     }
+
+    const metadata = (show.studio?.metadata as Record<string, any> | null) ?? {};
+    const localization = metadata.localization ?? {};
+    const locale = localization.locale ?? 'th-TH';
+    const currency = localization.currency ?? 'THB';
 
     const tasks = await this.prisma.task.findMany({
       where: {
@@ -603,7 +613,7 @@ export class StudioPerformanceService {
     }
 
     if (!selectedTask) {
-      return { loops: [] };
+      return { loops: [], currency, locale };
     }
 
     const schema = selectedTask.snapshot.schema as any;
@@ -689,6 +699,6 @@ export class StudioPerformanceService {
       };
     });
 
-    return { loops };
+    return { loops, currency, locale };
   }
 }

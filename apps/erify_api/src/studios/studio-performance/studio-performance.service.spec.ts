@@ -583,7 +583,7 @@ describe('studioPerformanceService', () => {
       (prisma.task.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getShowPerformanceLoops('std_1', 'show_10');
-      expect(result).toEqual({ loops: [] });
+      expect(result).toEqual({ loops: [], currency: 'THB', locale: 'th-TH' });
     });
 
     it('returns parsed loops when tasks have loop schemas and contents', async () => {
@@ -613,6 +613,8 @@ describe('studioPerformanceService', () => {
       (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
 
       const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+      expect(result.currency).toBe('THB');
+      expect(result.locale).toBe('th-TH');
       expect(result.loops).toHaveLength(1);
       expect(result.loops[0]).toEqual({
         id: 'l1',

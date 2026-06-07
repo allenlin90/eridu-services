@@ -7,7 +7,7 @@ export const Route = createFileRoute('/studios/$studioId/shows/$showId')({
   component: StudioShowDetailLayout,
 });
 
-const TAB_LINK_CLASS = 'inline-flex items-center border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground';
+const TAB_LINK_CLASS = 'inline-flex items-center shrink-0 border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground';
 const TAB_LINK_ACTIVE_CLASS = 'border-primary text-foreground';
 
 function StudioShowDetailLayout() {
@@ -41,7 +41,7 @@ function StudioShowDetailLayout() {
       <ShowDetailHeader studioId={studioId} show={show} isLoading={isLoading} />
 
       <div className="space-y-4">
-        <nav className="flex gap-6 border-b">
+        <nav className="flex gap-6 border-b overflow-x-auto scrollbar-none flex-nowrap scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0">
           <Link
             to="/studios/$studioId/shows/$showId"
             params={{ studioId, showId }}
