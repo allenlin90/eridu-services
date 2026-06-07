@@ -6,14 +6,21 @@ import { useMemo, useState } from 'react';
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import {
   Button,
-  DateTimePicker,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
   Label,
+  ResponsiveDateTimePicker,
+  useIsMobile,
 } from '@eridu/ui';
 
 import { getStudioTask, studioTaskKeys } from '@/features/tasks/api/get-studio-task';
@@ -67,6 +74,7 @@ export function TaskDueDateDialog({
   isSaving,
   studioId,
 }: TaskDueDateDialogProps) {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const shouldFetch = Boolean(open && studioId && task?.id);
   const { data: taskDetail, isLoading: isLoadingTask } = useQuery({
@@ -131,6 +139,84 @@ export function TaskDueDateDialog({
     }
   };
 
+  const body = (
+    <div className="space-y-3">
+      <Label htmlFor="task_due_date">Due Date</Label>
+      <ResponsiveDateTimePicker
+        value={dueDate ?? ''}
+        onChange={(value) => updateDraftDueDate(value ?? '')}
+        className="w-full"
+      />
+      {inputError && (
+        <div className="text-xs text-destructive">{inputError}</div>
+      )}
+      {isLoadingTask && (
+        <div className="text-xs text-muted-foreground">Loading show details...</div>
+      )}
+      {suggestedLabel && suggestedDueDate && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            Suggested:
+            {' '}
+            {suggestedLabel}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => updateDraftDueDate(suggestedDueDate)}
+            disabled={isSaving}
+          >
+            <RotateCcw className="mr-1 h-3 w-3" />
+            Apply
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  const footer = (
+    <>
+      <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+        Cancel
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => updateDraftDueDate('')}
+        disabled={isSaving || isResolvingVersion}
+      >
+        Clear
+      </Button>
+      <Button onClick={handleSave} disabled={isSaving || isResolvingVersion || isLoadingTask}>
+        {(isSaving || isResolvingVersion) ? 'Saving...' : 'Save'}
+      </Button>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Update Due Date</DrawerTitle>
+            <DrawerDescription>
+              Adjust the deadline for this task.
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="px-4">
+            {body}
+          </div>
+
+          <DrawerFooter>
+            {footer}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[80vh] overflow-y-auto">
@@ -141,55 +227,10 @@ export function TaskDueDateDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <Label htmlFor="task_due_date">Due Date</Label>
-          <DateTimePicker
-            value={dueDate ?? ''}
-            onChange={(value) => updateDraftDueDate(value ?? '')}
-            className="w-full"
-          />
-          {inputError && (
-            <div className="text-xs text-destructive">{inputError}</div>
-          )}
-          {isLoadingTask && (
-            <div className="text-xs text-muted-foreground">Loading show details...</div>
-          )}
-          {suggestedLabel && suggestedDueDate && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>
-                Suggested:
-                {' '}
-                {suggestedLabel}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                onClick={() => updateDraftDueDate(suggestedDueDate)}
-                disabled={isSaving}
-              >
-                <RotateCcw className="mr-1 h-3 w-3" />
-                Apply
-              </Button>
-            </div>
-          )}
-        </div>
+        {body}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => updateDraftDueDate('')}
-            disabled={isSaving || isResolvingVersion}
-          >
-            Clear
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving || isResolvingVersion || isLoadingTask}>
-            {(isSaving || isResolvingVersion) ? 'Saving...' : 'Save'}
-          </Button>
+          {footer}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -11,12 +11,12 @@ import {
   CommandItem,
   CommandList,
   DatePicker,
-  DateTimePicker,
   Input,
   Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
+  ResponsiveDateTimePicker,
   Select,
   SelectContent,
   SelectItem,
@@ -206,7 +206,7 @@ const DefaultValueInput = memo(({
       <div className="space-y-2">
         <Label htmlFor={id}>Default Value</Label>
         <div className="flex gap-2">
-          <DateTimePicker value={item.default_value as string} onChange={onChange} className="flex-1" />
+          <ResponsiveDateTimePicker value={item.default_value as string} onChange={onChange} className="flex-1" />
           {item.default_value && (
             <Button
               variant="ghost"
@@ -548,7 +548,7 @@ const ConditionValueInput = memo(({
   if (item.type === 'datetime') {
     return (
       <div className="flex gap-2 flex-1">
-        <DateTimePicker
+        <ResponsiveDateTimePicker
           value={condition.value as string}
           onChange={(val) => onChange(index, val)}
           className="flex-1"

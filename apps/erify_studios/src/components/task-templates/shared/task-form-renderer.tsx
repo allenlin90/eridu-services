@@ -6,9 +6,9 @@ import {
   Button,
   Checkbox,
   DatePicker,
-  DateTimePicker,
   Input,
   Label,
+  ResponsiveDateTimePicker,
   Select,
   SelectContent,
   SelectItem,
@@ -98,7 +98,7 @@ const FieldRenderer = memo(({ index, field, readOnly }: { index?: number; field:
       case 'datetime':
         return (
           <div className="flex gap-2">
-            <DateTimePicker value={value} onChange={handleChange} className="flex-1" />
+            <ResponsiveDateTimePicker value={value} onChange={handleChange} className="flex-1" />
             {!field.required && value && (
               <Button
                 variant="ghost"

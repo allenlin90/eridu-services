@@ -16,7 +16,7 @@ vi.mock('@eridu/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type={props.type ?? 'button'} {...props}>{children}</button>
   ),
-  DateTimePicker: ({
+  ResponsiveDateTimePicker: ({
     value,
     onChange,
   }: {
@@ -29,6 +29,11 @@ vi.mock('@eridu/ui', () => ({
       onChange={(event) => onChange(event.target.value)}
     />
   ),
+  Drawer: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div data-testid="mobile-drawer">{children}</div> : null),
+  DrawerContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DrawerDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  DrawerHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DrawerTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
   Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div>{children}</div> : null),
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
@@ -57,6 +62,7 @@ vi.mock('@eridu/ui', () => ({
   SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   SelectValue: () => null,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+  useIsMobile: () => true,
 }));
 
 vi.mock('@/features/compensation-line-items/api/compensation-line-items.api', () => ({
@@ -159,6 +165,20 @@ describe('shiftCompensationDialog', () => {
       expect.objectContaining({ target_type: 'STUDIO_SHIFT_BLOCK', target_id: 'ssb_1' }),
       true,
     );
+  });
+
+  it('uses a drawer shell on mobile', () => {
+    render(
+      <ShiftCompensationDialog
+        open
+        onOpenChange={vi.fn()}
+        studioId="std_1"
+        shift={shift}
+      />,
+    );
+
+    expect(screen.getByTestId('mobile-drawer')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Shift Compensation' })).toBeInTheDocument();
   });
 
   it('renders the route-friendly compensation view without dialog chrome', () => {

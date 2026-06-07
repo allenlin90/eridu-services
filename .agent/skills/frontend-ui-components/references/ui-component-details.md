@@ -130,6 +130,7 @@ Rules:
 ### Reference implementation
 
 - `packages/ui/src/components/date-picker.tsx` — `ResponsiveDateTimePicker` (shared body via `DateTimePickerBody`, Popover on desktop, vaul Drawer on mobile)
+- `apps/erify_studios/src/components/responsive-dialog.tsx` — app-local responsive Dialog → Drawer shell for feature forms and modal workflows
 - `apps/erify_studios/src/features/studio-shows/components/show-actuals-dialog.tsx` — first consumer
 
 ### Migration guide for existing Dialogs
@@ -140,6 +141,8 @@ Rules:
 4. Wire the same `open`/`onOpenChange` to both `Dialog` and `Drawer`.
 5. Match `DialogHeader`/`DialogFooter` content in `DrawerHeader`/`DrawerFooter` (keep the same primary action label).
 6. Mobile-verify at 375×667: every interactive element reachable, no off-screen content, keyboard does not push controls under the viewport edge.
+
+For `erify_studios`, prefer the app-local `ResponsiveDialog` wrapper when the modal fits the standard shape (`title`, optional `description`, body, optional footer). Keep a custom shell only when the component needs unusual scroll regions, nested focus behavior, or route-specific chrome.
 
 ## Async Lookup Field Isolation
 

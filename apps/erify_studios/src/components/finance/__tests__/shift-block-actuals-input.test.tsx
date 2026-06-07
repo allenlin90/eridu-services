@@ -9,7 +9,7 @@ vi.mock('@eridu/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type={props.type ?? 'button'} {...props}>{children}</button>
   ),
-  DateTimePicker: ({
+  ResponsiveDateTimePicker: ({
     value,
     onChange,
   }: {

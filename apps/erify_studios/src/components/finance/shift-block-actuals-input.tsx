@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Button, DateTimePicker, Label } from '@eridu/ui';
+import { Button, Label, ResponsiveDateTimePicker } from '@eridu/ui';
 
 import type { StudioShiftBlock } from '@/features/studio-shifts/api/studio-shifts.types';
 import type { UpdateStudioShiftBlockPayload } from '@/features/studio-shifts/api/update-studio-shift-block';
@@ -50,7 +50,7 @@ export function ShiftBlockActualsInput({
               Clear
             </Button>
           </div>
-          <DateTimePicker
+          <ResponsiveDateTimePicker
             value={actualStartTime}
             onChange={setActualStartTime}
             className="w-full"
@@ -71,7 +71,7 @@ export function ShiftBlockActualsInput({
               Clear
             </Button>
           </div>
-          <DateTimePicker
+          <ResponsiveDateTimePicker
             value={actualEndTime}
             onChange={setActualEndTime}
             className="w-full"
