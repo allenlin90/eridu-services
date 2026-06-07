@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { StudioPerformanceService } from './studio-performance.service';
@@ -14,9 +14,13 @@ describe('studioPerformanceService', () => {
       show: {
         findMany: jest.fn(),
         count: jest.fn(),
+        findFirst: jest.fn(),
       },
       studio: {
         findUnique: jest.fn(),
+      },
+      task: {
+        findMany: jest.fn(),
       },
     } as any;
     service = new StudioPerformanceService(prisma);
@@ -303,8 +307,12 @@ describe('studioPerformanceService', () => {
 
   describe('getPerformanceShows', () => {
     it('returns paginated list of shows with platform metrics', async () => {
+      // Default sort (start_time only) takes the fast DB path: ordering and
+      // pagination are delegated to the database, so the mock returns rows in
+      // the order the DB would (start_time desc) and the service preserves it.
+      const dbOrdered = [mockShows[2], mockShows[1], mockShows[0]];
       (prisma.show.count as jest.Mock).mockResolvedValue(3);
-      (prisma.show.findMany as jest.Mock).mockResolvedValue(mockShows as any);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(dbOrdered as any);
 
       const result = await service.getPerformanceShows('std_1', {
         ...query,
@@ -312,13 +320,23 @@ describe('studioPerformanceService', () => {
         limit: 10,
       });
 
+      // Ordering and pagination are pushed down to the database.
+      expect(prisma.show.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { startTime: 'desc' },
+          skip: 0,
+          take: 10,
+        }),
+      );
       expect(prisma.show.count).toHaveBeenCalled();
-      expect(prisma.show.findMany).toHaveBeenCalled();
       expect(result.total).toBe(3);
       expect(result.items).toHaveLength(3);
 
-      // Show Alpha
-      expect(result.items[0]).toEqual({
+      // Show Gamma (first under start_time desc).
+      expect(result.items[0].id).toBe('show_30');
+
+      // Show Alpha (last under start_time desc).
+      expect(result.items[2]).toEqual({
         id: 'show_10',
         name: 'Show Alpha',
         start_time: mockShows[0].startTime.toISOString(),
@@ -340,7 +358,7 @@ describe('studioPerformanceService', () => {
 
       // Show Gamma records only show_platform_view_count: views are populated
       // from provenance while the absent gmv/ctr/cto columns stay null (not '0.00').
-      expect(result.items[2].platforms[0]).toEqual({
+      expect(result.items[0].platforms[0]).toEqual({
         show_platform_uid: 'show_plt_103',
         platform_id: 'plat_shopee',
         platform_name: 'Shopee',
@@ -380,6 +398,24 @@ describe('studioPerformanceService', () => {
       expect(prisma.show.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining(expectedNameFilter) }),
       );
+    });
+
+    it('applies show_standard_id filter when provided', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        show_standard_id: 'shsd_1',
+      });
+
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          showStandard: { uid: { in: ['shsd_1'] } },
+        }),
+      });
     });
 
     it('omits the name filter when name is not provided', async () => {
@@ -529,6 +565,356 @@ describe('studioPerformanceService', () => {
       // platform constraint — any platform with data qualifies the show.
       const presenceEntry = where.AND[0];
       expect(presenceEntry.showPlatforms.some).not.toHaveProperty('platform');
+    });
+  });
+
+  describe('getShowPerformanceLoops', () => {
+    const mockShowWithPlatforms = {
+      id: 10n,
+      uid: 'show_10',
+      name: 'Show Alpha',
+      showPlatforms: [
+        {
+          uid: 'show_plt_101',
+          platform: { name: 'Shopee' },
+        },
+      ],
+    };
+
+    it('throws NotFoundException if show is not found', async () => {
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.getShowPerformanceLoops('std_1', 'nonexistent_show'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('returns empty loops if no moderation tasks are associated', async () => {
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+      expect(result).toEqual({ loops: [], currency: 'THB', locale: 'th-TH' });
+    });
+
+    it('sources loop metrics only from finalized (terminal) tasks', async () => {
+      // Fact extraction writes the show-level aggregates on COMPLETED, so the
+      // loop breakdown must read from the same finalized states to stay
+      // consistent — in-progress statuses (incl. REVIEW) are excluded.
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getShowPerformanceLoops('std_1', 'show_10');
+
+      const where = (prisma.task.findMany as jest.Mock).mock.calls[0][0].where;
+      expect(where.status.in).toEqual(['COMPLETED', 'CLOSED']);
+      expect(where.status.in).not.toContain('REVIEW');
+    });
+
+    it('returns parsed loops when tasks have loop schemas and contents', async () => {
+      const mockTask = {
+        id: 1n,
+        uid: 'task_1',
+        snapshot: {
+          schema: {
+            items: [
+              { id: 'fld_gmv_l1', key: 'gmv', group: 'l1', system_fact_key: 'show_platform_gmv' },
+              { id: 'fld_views_l1', key: 'views', group: 'l1', system_fact_key: 'show_platform_view_count' },
+            ],
+            metadata: {
+              loops: [
+                { id: 'l1', name: 'Loop 1', durationMin: 15 },
+              ],
+            },
+          },
+        },
+        content: {
+          'fld_gmv_l1:platform:show_plt_101': '1500.25',
+          'fld_views_l1:platform:show_plt_101': 120,
+        },
+      };
+
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+      expect(result.currency).toBe('THB');
+      expect(result.locale).toBe('th-TH');
+      expect(result.loops).toHaveLength(1);
+      expect(result.loops[0]).toEqual({
+        id: 'l1',
+        name: 'Loop 1',
+        durationMin: 15,
+        metrics: [
+          {
+            show_platform_uid: 'show_plt_101',
+            platform_name: 'Shopee',
+            gmv: '1500.25',
+            ctr: null,
+            cto: null,
+            viewer_count: 120,
+          },
+        ],
+      });
+    });
+
+    it('returns parsed loops when task content has show-level platform-agnostic keys', async () => {
+      const mockTask = {
+        id: 1n,
+        uid: 'task_1',
+        snapshot: {
+          schema: {
+            items: [
+              { id: 'fld_gmv_l1', key: 'gmv', group: 'l1', system_fact_key: 'show_platform_gmv' },
+              { id: 'fld_views_l1', key: 'views', group: 'l1', system_fact_key: 'show_platform_view_count' },
+            ],
+            metadata: {
+              loops: [
+                { id: 'l1', name: 'Loop 1', durationMin: 15 },
+              ],
+            },
+          },
+        },
+        content: {
+          fld_gmv_l1: '1500.25',
+          fld_views_l1: 120,
+        },
+      };
+
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+      expect(result.currency).toBe('THB');
+      expect(result.locale).toBe('th-TH');
+      expect(result.loops).toHaveLength(1);
+      expect(result.loops[0]).toEqual({
+        id: 'l1',
+        name: 'Loop 1',
+        durationMin: 15,
+        metrics: [
+          {
+            show_platform_uid: 'show_plt_101',
+            platform_name: 'Shopee',
+            gmv: '1500.25',
+            ctr: null,
+            cto: null,
+            viewer_count: 120,
+          },
+        ],
+      });
+    });
+
+    it('resolves legacy loop-suffixed field keys (gmv_l1, views_l1) without shared_field_key', async () => {
+      // Legacy moderator snapshots store loop fields with the loop suffixed onto
+      // the key and without `shared_field_key`/`system_fact_key`.
+      const mockTask = {
+        id: 1n,
+        uid: 'task_1',
+        snapshot: {
+          schema: {
+            items: [
+              { id: 'fld_gmv_l1', key: 'gmv_l1', group: 'l1' },
+              { id: 'fld_views_l1', key: 'views_l1', group: 'l1' },
+              { id: 'fld_ctr_l1', key: 'ctr_l1', group: 'l1' },
+              { id: 'fld_cto_l1', key: 'cto_l1', group: 'l1' },
+            ],
+            metadata: {
+              loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }],
+            },
+          },
+        },
+        content: {
+          'fld_gmv_l1:platform:show_plt_101': '1500.25',
+          'fld_views_l1:platform:show_plt_101': 120,
+          'fld_ctr_l1:platform:show_plt_101': '3.50',
+          'fld_cto_l1:platform:show_plt_101': '1.25',
+        },
+      };
+
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+
+      expect(result.loops[0].metrics[0]).toEqual({
+        show_platform_uid: 'show_plt_101',
+        platform_name: 'Shopee',
+        gmv: '1500.25',
+        ctr: '3.5', // Prisma.Decimal normalizes the trailing zero from '3.50'
+        cto: '1.25',
+        viewer_count: 120,
+      });
+    });
+
+    it('does not throw on a malformed snapshot (non-array items, non-string keys)', async () => {
+      const mockTask = {
+        id: 1n,
+        uid: 'task_1',
+        snapshot: {
+          schema: {
+            // `items` is an object rather than an array, and a field key is a
+            // number — both would crash naive parsing.
+            items: { junk: true },
+            metadata: {
+              loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }],
+            },
+          },
+        },
+        content: {},
+      };
+
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+
+      // The loop is still returned, with every metric resolving to null.
+      expect(result.loops).toHaveLength(1);
+      expect(result.loops[0].metrics).toEqual([
+        {
+          show_platform_uid: 'show_plt_101',
+          platform_name: 'Shopee',
+          gmv: null,
+          ctr: null,
+          cto: null,
+          viewer_count: null,
+        },
+      ]);
+    });
+  });
+
+  describe('getPerformanceShows - in-memory sorting', () => {
+    const sortMockShows = [
+      {
+        id: 10n,
+        uid: 'show_10',
+        name: 'Show Alpha',
+        startTime: new Date('2026-06-02T10:00:00Z'),
+        endTime: new Date('2026-06-02T12:00:00Z'),
+        client: { name: 'Client A' },
+        showType: { name: 'Live Stream' },
+        showPlatforms: [
+          {
+            uid: 'show_plt_101',
+            gmv: new Prisma.Decimal('100.00'),
+            viewerCount: 50,
+            ctr: new Prisma.Decimal('1.00'),
+            cto: new Prisma.Decimal('0.50'),
+            metadata: { performance_templates: { show_platform_gmv: 'tpl', show_platform_view_count: 'tpl' } },
+            platform: { uid: 'plat_shopee', name: 'Shopee' },
+          },
+        ],
+      },
+      {
+        id: 20n,
+        uid: 'show_20',
+        name: 'Show Beta',
+        startTime: new Date('2026-06-03T18:00:00Z'),
+        endTime: new Date('2026-06-03T20:00:00Z'),
+        client: { name: 'Client B' },
+        showType: { name: 'TikTok Live' },
+        showPlatforms: [
+          {
+            uid: 'show_plt_102',
+            gmv: new Prisma.Decimal('200.00'),
+            viewerCount: 100,
+            ctr: new Prisma.Decimal('2.00'),
+            cto: new Prisma.Decimal('1.00'),
+            metadata: { performance_templates: { show_platform_gmv: 'tpl', show_platform_view_count: 'tpl' } },
+            platform: { uid: 'plat_tiktok', name: 'TikTok' },
+          },
+        ],
+      },
+      {
+        id: 30n,
+        uid: 'show_30',
+        name: 'Show Gamma (No data)',
+        startTime: new Date('2026-06-04T12:00:00Z'),
+        endTime: new Date('2026-06-04T14:00:00Z'),
+        client: { name: 'Client A' },
+        showType: { name: 'Live Stream' },
+        showPlatforms: [
+          {
+            uid: 'show_plt_103',
+            gmv: null,
+            viewerCount: 0,
+            ctr: null,
+            cto: null,
+            metadata: { performance_templates: {} },
+            platform: { uid: 'plat_shopee', name: 'Shopee' },
+          },
+        ],
+      },
+    ];
+
+    it('sorts by GMV descending with nulls at the end', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(sortMockShows);
+
+      const result = await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        sort: [{ field: 'gmv', desc: true }],
+      });
+
+      // Expected order: Show Beta (200.00) -> Show Alpha (100.00) -> Show Gamma (null)
+      expect(result.items[0].id).toBe('show_20');
+      expect(result.items[1].id).toBe('show_10');
+      expect(result.items[2].id).toBe('show_30');
+    });
+
+    it('sorts by GMV ascending with nulls at the end', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(sortMockShows);
+
+      const result = await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        sort: [{ field: 'gmv', desc: false }],
+      });
+
+      // Expected order: Show Alpha (100.00) -> Show Beta (200.00) -> Show Gamma (null)
+      expect(result.items[0].id).toBe('show_10');
+      expect(result.items[1].id).toBe('show_20');
+      expect(result.items[2].id).toBe('show_30');
+    });
+
+    it('supports multiple sorting columns (e.g. name:asc, views:desc)', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(sortMockShows);
+
+      const result = await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        sort: [{ field: 'views', desc: true }, { field: 'start_time', desc: false }],
+      });
+
+      expect(result.items[0].id).toBe('show_20'); // 100 views
+      expect(result.items[1].id).toBe('show_10'); // 50 views
+      expect(result.items[2].id).toBe('show_30'); // null/0 views
+    });
+
+    it('does not push pagination to the DB and derives total from the full set', async () => {
+      // Metric sorts must load every matching row, so skip/take are NOT sent to
+      // the database and a separate COUNT query is unnecessary — `total` is the
+      // length of the in-memory set.
+      (prisma.show.findMany as jest.Mock).mockResolvedValue(sortMockShows);
+      (prisma.show.count as jest.Mock).mockClear();
+
+      const result = await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 2,
+        sort: [{ field: 'gmv', desc: true }],
+      });
+
+      const findManyArgs = (prisma.show.findMany as jest.Mock).mock.calls[0][0];
+      expect(findManyArgs).not.toHaveProperty('skip');
+      expect(findManyArgs).not.toHaveProperty('take');
+      expect(prisma.show.count).not.toHaveBeenCalled();
+      expect(result.total).toBe(3);
+      expect(result.items).toHaveLength(2); // page size applied in memory
     });
   });
 });

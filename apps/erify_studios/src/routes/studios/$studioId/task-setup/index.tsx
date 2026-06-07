@@ -122,7 +122,7 @@ function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
 }
 
 const QUICK_FILTER_COLUMNS: string[] = [];
-const FEATURED_FILTER_COLUMNS = ['actuals_state', 'has_tasks', 'client_name', 'show_status_name'];
+const FEATURED_FILTER_COLUMNS = ['actuals_state', 'has_tasks', 'client_name', 'show_standard_name', 'show_status_name'];
 
 function StudioTaskSetupPage() {
   const { studioId } = taskSetupRouteApi.useParams();

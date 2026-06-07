@@ -27,11 +27,72 @@ export const performanceQuerySchema = z.object({
       z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)),
     ])
     .optional(),
+  show_standard_id: z
+    .union([
+      z.string().startsWith(UID_PREFIXES.SHOW_STANDARD),
+      z.array(z.string().startsWith(UID_PREFIXES.SHOW_STANDARD)),
+    ])
+    .optional(),
   has_performance: z.enum(['all', 'true', 'false']).optional(),
 });
 
 export type PerformanceQueryInput = z.input<typeof performanceQuerySchema>;
 export type PerformanceQuery = z.infer<typeof performanceQuerySchema>;
+
+/**
+ * Columns the performance shows table can be sorted by. Per-show aggregation:
+ * `gmv`/`views` are summed across platforms, `ctr`/`cto` are averaged, and
+ * `start_time` sorts by the show's scheduled start. The server always appends
+ * `start_time:desc` as the final tie-breaker for deterministic ordering.
+ */
+export const PERFORMANCE_SORT_FIELDS = ['start_time', 'gmv', 'views', 'ctr', 'cto'] as const;
+export type PerformanceSortField = (typeof PERFORMANCE_SORT_FIELDS)[number];
+export type PerformanceSortDirection = 'asc' | 'desc';
+export type PerformanceSortRule = { field: PerformanceSortField; desc: boolean };
+
+const PERFORMANCE_SORT_FIELD_SET = new Set<string>(PERFORMANCE_SORT_FIELDS);
+
+/**
+ * Parses a comma-separated `field:direction` sort string (e.g.
+ * `gmv:desc,ctr:asc`) into structured rules, preserving priority order. Empty
+ * segments are skipped. Returns `null` if any segment names an unknown field or
+ * a direction other than `asc`/`desc`, so the schema can reject it with a 400.
+ */
+export function parsePerformanceSort(value: string): PerformanceSortRule[] | null {
+  const rules: PerformanceSortRule[] = [];
+  for (const segment of value.split(',')) {
+    const trimmed = segment.trim();
+    if (trimmed === '') {
+      continue;
+    }
+    const [field, direction] = trimmed.split(':');
+    if (field === undefined || !PERFORMANCE_SORT_FIELD_SET.has(field) || (direction !== 'asc' && direction !== 'desc')) {
+      return null;
+    }
+    rules.push({ field: field as PerformanceSortField, desc: direction === 'desc' });
+  }
+  return rules;
+}
+
+/**
+ * `sort` query parameter: comma-separated `<field>:<asc|desc>` pairs applied in
+ * priority order, e.g. `?sort=gmv:desc,ctr:asc`. Validates field names and
+ * directions at the boundary and transforms the raw string into typed rules.
+ */
+export const performanceSortSchema = z
+  .string()
+  .transform((value, ctx) => {
+    const rules = parsePerformanceSort(value);
+    if (rules === null) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Invalid sort. Use comma-separated <field>:<asc|desc> pairs where field is one of: ${PERFORMANCE_SORT_FIELDS.join(', ')}.`,
+      });
+      return z.NEVER;
+    }
+    return rules;
+  })
+  .describe(`Comma-separated <field>:<asc|desc> sort pairs. Allowed fields: ${PERFORMANCE_SORT_FIELDS.join(', ')}. Example: gmv:desc,ctr:asc`);
 
 /**
  * Query parameters for performance shows list (with pagination)
@@ -40,6 +101,7 @@ export const performanceShowsQuerySchema = performanceQuerySchema.extend({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
   name: z.string().optional(),
+  sort: performanceSortSchema.optional(),
 });
 
 export type PerformanceShowsQueryInput = z.input<typeof performanceShowsQuerySchema>;
@@ -115,3 +177,34 @@ export const paginatedShowPerformanceResponseSchema = createPaginatedResponseSch
 export type PaginatedShowPerformanceResponse = z.infer<
   typeof paginatedShowPerformanceResponseSchema
 >;
+
+/**
+ * Loop-level platform performance metrics
+ */
+export const showPerformanceLoopMetricSchema = z.object({
+  show_platform_uid: z.string(),
+  platform_name: z.string(),
+  gmv: z.string().nullable(),
+  ctr: z.string().nullable(),
+  cto: z.string().nullable(),
+  viewer_count: z.number().int().nullable(),
+});
+
+export type ShowPerformanceLoopMetric = z.infer<typeof showPerformanceLoopMetricSchema>;
+
+export const showPerformanceLoopItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  durationMin: z.number().int(),
+  metrics: z.array(showPerformanceLoopMetricSchema),
+});
+
+export type ShowPerformanceLoopItem = z.infer<typeof showPerformanceLoopItemSchema>;
+
+export const showPerformanceLoopsResponseSchema = z.object({
+  loops: z.array(showPerformanceLoopItemSchema),
+  currency: z.string().optional(),
+  locale: z.string().optional(),
+});
+
+export type ShowPerformanceLoopsResponse = z.infer<typeof showPerformanceLoopsResponseSchema>;

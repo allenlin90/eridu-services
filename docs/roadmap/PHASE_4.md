@@ -90,6 +90,8 @@ Each row is one user-facing change or explicit design investigation. Rows are or
 | 21.9   | [Performance data backfill, derivation & forward binding](#pr-21--show-performance-analytics-211-2111) — populate `ShowPlatform` performance metrics: historical per-platform backfill derived from existing show-scoped / loop-8 submissions (1-platform auto, 2-platform skipped for manual entry) **plus** forward `Post_production_check` fact-key binding so new submissions auto-extract on manager approval. Both applied to production. Forward binding uses the [template-system-fact-migration skill](../../.agent/skills/template-system-fact-migration/SKILL.md); also includes the original hydrated-key script and doc cleanup. | PR 21.6, PR 21.7 | ✅ Shipped | [#137](https://github.com/allenlin90/eridu-services/pull/137) |
 | 21.10  | [`/performance` money formatting (THB + thousands separator)](#pr-21--show-performance-analytics-211-2111) — render GMV in Thai Baht with thousands separators; source currency/locale from a studio setting (see [studio-config-settings ideation](../ideation/studio-config-settings.md)). | PR 21.6 | ✅ Shipped | — |
 | 21.11  | [`/performance` filter by performance-record presence](#pr-21--show-performance-analytics-211-2111) — let the shows filter include/exclude shows with vs without recorded performance metrics, aligned with the "recorded shows" card count. | PR 21.6 | ✅ Shipped | — |
+| 22.1   | [Show performance by moderation loops](#pr-22--loop-performance--table-multi-sorting-221-222) — new backend endpoint and Recharts line graph in show details. | PR 21.7 | 🚧 In progress | — |
+| 22.2   | [Multi-sort for table view in /performance](#pr-22--loop-performance--table-multi-sorting-221-222) — backend in-memory multi-sorting + URL sync + header UI with priority badges. | PR 21.11 | 🚧 In progress | — |
 
 ### How to use this list
 
@@ -226,6 +228,22 @@ Goal: convert each single-entity detail/edit dialog into a `/studios/:studioId/<
 **Brief** — Surfaced during PR 21.6 review. `StudioPerformanceService.getPerformanceSummary` builds the daily trend by slicing the UTC calendar date off each timestamp — both the bucket keys (`curr.toISOString().slice(0, 10)` while walking `start_date → end_date`) and the per-show assignment (`show.startTime.toISOString().slice(0, 10)`). The frontend sends **absolute ISO bounds** derived from the local 06:00–05:59 operational day (PR 12.4.4 pattern), so for any non-UTC studio the trend's day boundaries fall at UTC midnight rather than the operational-day boundary: the first/last buckets are off by one and shows near local midnight land in the wrong day.
 
 **Fix** — Bucket by an explicit, timezone-aware operational-day key instead of a raw UTC `.slice(0, 10)`. The backend stays timezone-agnostic for validation, but day-grouping must use the same operational-day definition the frontend selected (pass the studio/operational timezone or the precomputed day boundaries through to the aggregation), not the server's incidental UTC calendar. `slice(0, 10)` on an ISO string is **not** a date-bucketing primitive — it silently assumes UTC. Guard rail captured in the [`operations-review-surface` skill](../../.agent/skills/operations-review-surface/SKILL.md#operational-day-bucketing-never-slice-utc-iso) and project memory.
+
+
+### PR 22 · Loop performance & table multi-sorting (22.1-22.2)
+
+**Context** — Enhancing `/performance` dashboard and detail pages. This workstream delivers loop-level progression trend graphs for show details and multi-column sorting for the show performance breakdown table.
+
+- **22.1 — Show performance by moderation loops**. Implement `GET /studios/:studioId/performance/shows/:id/loops` backend endpoint to query finalized tasks (latest wins), extract loop metadata, and parse content. Render a Recharts `LineChart` on the show's Performance tab with Views, CTR, and CTO toggles.
+- **22.2 — Multi-sort for table view in /performance**. Add Zod query schema, backend metric multi-sorting (GMV/Views sums, CTR/CTO averages across active platforms) — in memory only when a derived metric is sorted, with the default `start_time` sort kept on the DB path — plus URL query parameter syncing and a frontend `<SortableHeader>` component with priority badges.
+
+#### PR 22.1 · Show performance by moderation loops
+
+**Brief** — Display moderation loop progression charts. Fetch a show's finalized tasks (`COMPLETED`/`CLOSED` — the same states fact extraction uses for show-level aggregates, so loop totals stay consistent; latest finalized task with a loop schema wins), map metadata loop structures to hydrated platform-metric keys, and return loop metrics. Frontend uses Recharts `LineChart` with metric toggles.
+
+#### PR 22.2 · Multi-sort for table view in /performance
+
+**Brief** — Enable sorting records by GMV, Views, CTR, and CTO simultaneously. Sync sorting state with the URL `sort` query parameter. Derived-metric sorts run in memory on the backend (nulls consistently sorted to the end), loading the full matched set; the default `start_time` sort stays on the database path (DB-ordered and paginated) to avoid loading every row when no metric sort is requested. `start_time desc` is always appended as the final tie-breaker. Render custom `SortableHeader` headers on the frontend with priority and direction badges.
 
 
 ## Out of scope (post-Phase-4)

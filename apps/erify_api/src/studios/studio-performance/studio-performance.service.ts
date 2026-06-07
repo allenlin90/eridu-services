@@ -1,20 +1,52 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import type {
   PerformanceQuery,
   PerformanceShowsQuery,
+  PerformanceSortField,
+  PerformanceSortRule,
   PerformanceSummaryResponse,
+  ShowPerformanceLoopsResponse,
   ShowPerformanceResponse,
 } from '@eridu/api-types/performance';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { PrismaService } from '@/prisma/prisma.service';
 
+/** A primitive sort key: numeric, a Prisma Decimal, or `null` (sorted last). */
+type SortValue = number | Prisma.Decimal | null;
+
+/** Show row shape returned by the performance-shows query (relations included). */
+type ShowWithPerformanceRelations = Prisma.ShowGetPayload<{
+  include: {
+    client: true;
+    showType: true;
+    showPlatforms: { include: { platform: true } };
+  };
+}>;
+
 @Injectable()
 export class StudioPerformanceService {
   /** Maximum span (in days) a performance query is allowed to cover. */
   private static readonly MAX_DATE_RANGE_DAYS = 31;
+
+  /** Locale/currency applied when a studio has no localization metadata. */
+  private static readonly DEFAULT_LOCALE = 'th-TH';
+  private static readonly DEFAULT_CURRENCY = 'THB';
+
+  /** Fallback loop length (minutes) when a loop omits its own duration. */
+  private static readonly DEFAULT_LOOP_DURATION_MIN = 15;
+
+  /**
+   * Task statuses whose snapshots are authoritative for loop-level metrics.
+   * Fact extraction writes the show-level GMV/view aggregates on transition to
+   * COMPLETED (see TaskOrchestrationService), so the loop breakdown must read
+   * from the same finalized states — otherwise loop totals would diverge from
+   * the show-level figures shown elsewhere on the dashboard. In-progress
+   * statuses (incl. REVIEW) are intentionally excluded.
+   */
+  private static readonly LOOP_METRIC_TASK_STATUSES = ['COMPLETED', 'CLOSED'] as const;
 
   /**
    * The hour (in the studio's local "operational" timezone) at which a new
@@ -124,6 +156,7 @@ export class StudioPerformanceService {
     const clientUids = this.toArray(query.client_id);
     const showTypeUids = this.toArray(query.show_type_id);
     const platformUids = this.toArray(query.platform_id);
+    const showStandardUids = this.toArray(query.show_standard_id);
     // Trim so a whitespace-only search collapses to "no filter" rather than a
     // `contains: ' '` clause that matches every row with an interior space.
     const name = query.name?.trim();
@@ -175,6 +208,7 @@ export class StudioPerformanceService {
       },
       ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
       ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
+      ...(showStandardUids.length > 0 ? { showStandard: { uid: { in: showStandardUids } } } : {}),
       ...(name
         ? {
             name: {
@@ -202,6 +236,18 @@ export class StudioPerformanceService {
     };
   }
 
+  /**
+   * Resolves the display `locale`/`currency` from a studio's `metadata.localization`,
+   * falling back to the platform defaults when either is absent.
+   */
+  private resolveLocalization(metadata: unknown): { locale: string; currency: string } {
+    const localization = ((metadata as Record<string, any> | null)?.localization ?? {}) as Record<string, any>;
+    return {
+      locale: localization.locale ?? StudioPerformanceService.DEFAULT_LOCALE,
+      currency: localization.currency ?? StudioPerformanceService.DEFAULT_CURRENCY,
+    };
+  }
+
   async getPerformanceSummary(
     studioUid: string,
     query: PerformanceQuery,
@@ -214,10 +260,7 @@ export class StudioPerformanceService {
       where: { uid: studioUid },
       select: { metadata: true },
     });
-    const metadata = (studio?.metadata as Record<string, any> | null) ?? {};
-    const localization = metadata.localization ?? {};
-    const locale = localization.locale ?? 'th-TH';
-    const currency = localization.currency ?? 'THB';
+    const { locale, currency } = this.resolveLocalization(studio?.metadata);
 
     // The presence filter (`has_performance`) is a list-only concern. Applying
     // it here would make the summary self-referential — e.g. with
@@ -377,56 +420,349 @@ export class StudioPerformanceService {
     const skip = (page - 1) * limit;
 
     const whereClause = this.buildShowWhere(studioUid, query);
+    const include = {
+      client: true,
+      showType: true,
+      showPlatforms: {
+        where: this.buildShowPlatformsWhere(query),
+        include: { platform: true },
+      },
+    } satisfies Prisma.ShowInclude;
 
-    const total = await this.prisma.show.count({ where: whereClause });
-    const shows = await this.prisma.show.findMany({
-      where: whereClause,
+    const sortRules = this.withSortTieBreaker(query.sort);
+
+    // Sorting by a derived metric (GMV/Views/CTR/CTO) can't be expressed in SQL
+    // — those values live in per-platform columns/JSON aggregated per show — so
+    // it requires loading the full result set and ordering in memory. A pure
+    // start_time sort (the default) stays on the fast DB path: the database
+    // orders and paginates, returning at most `limit` rows.
+    const needsInMemorySort = sortRules.some((rule) => rule.field !== 'start_time');
+
+    if (!needsInMemorySort) {
+      const startTimeDesc = sortRules.find((rule) => rule.field === 'start_time')?.desc ?? true;
+      const [shows, total] = await Promise.all([
+        this.prisma.show.findMany({
+          where: whereClause,
+          include,
+          orderBy: { startTime: startTimeDesc ? 'desc' : 'asc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.show.count({ where: whereClause }),
+      ]);
+      return { items: shows.map((show) => this.mapShowToPerformance(show)), total };
+    }
+
+    // Metric sort path: load every matching row, order in memory, then slice.
+    const shows = await this.prisma.show.findMany({ where: whereClause, include });
+    const mappedItems = shows.map((show) => this.mapShowToPerformance(show));
+    // The full matched set is already in hand, so `total` is its length — no
+    // separate COUNT query (which could also race the findMany under writes).
+    const total = mappedItems.length;
+
+    mappedItems.sort((a, b) => {
+      for (const rule of sortRules) {
+        const comp = this.compareSortValues(
+          this.calculateShowSortValue(a, rule.field),
+          this.calculateShowSortValue(b, rule.field),
+          rule.desc,
+        );
+        if (comp !== 0) {
+          return comp;
+        }
+      }
+      return 0;
+    });
+
+    return { items: mappedItems.slice(skip, skip + limit), total };
+  }
+
+  /** Maps a show row (with relations) to its performance response shape. */
+  private mapShowToPerformance(show: ShowWithPerformanceRelations): ShowPerformanceResponse {
+    return {
+      id: show.uid,
+      name: show.name,
+      start_time: show.startTime.toISOString(),
+      end_time: show.endTime.toISOString(),
+      client_name: show.client?.name ?? null,
+      show_type_name: show.showType?.name ?? null,
+      platforms: show.showPlatforms.map((sp) => {
+        const metadata = (sp.metadata as Record<string, any> | null) ?? {};
+        const templates = metadata.performance_templates ?? {};
+        const hasViewCount = templates.show_platform_view_count !== undefined;
+
+        return {
+          show_platform_uid: sp.uid,
+          platform_id: sp.platform.uid,
+          platform_name: sp.platform.name,
+          gmv: decimalToString(sp.gmv),
+          views: hasViewCount ? sp.viewerCount : null,
+          ctr: decimalToString(sp.ctr),
+          cto: decimalToString(sp.cto),
+        };
+      }),
+    };
+  }
+
+  /**
+   * Takes the already-validated sort rules (parsed and field-checked by the
+   * `performanceSortSchema` at the request boundary) and appends `start_time
+   * desc` as the final tie-breaker when absent, so ordering is deterministic
+   * regardless of the requested keys.
+   */
+  private withSortTieBreaker(rules: PerformanceSortRule[] | undefined): PerformanceSortRule[] {
+    const result = rules ? [...rules] : [];
+    if (!result.some((rule) => rule.field === 'start_time')) {
+      result.push({ field: 'start_time', desc: true });
+    }
+    return result;
+  }
+
+  /**
+   * Resolves a show's sort key for a given field by aggregating across its
+   * platforms (sum for GMV/Views, average for the CTR/CTO rates). Returns `null`
+   * when no platform carries the metric, so it sorts to the end.
+   */
+  private calculateShowSortValue(item: ShowPerformanceResponse, field: PerformanceSortField): SortValue {
+    if (field === 'start_time') {
+      return new Date(item.start_time).getTime();
+    }
+
+    if (field === 'gmv') {
+      let sum: Prisma.Decimal | null = null;
+      for (const p of item.platforms) {
+        if (p.gmv !== null) {
+          // Defensive: skip values that aren't valid decimals rather than throw.
+          try {
+            const d = new Prisma.Decimal(p.gmv);
+            sum = sum ? sum.add(d) : d;
+          } catch {}
+        }
+      }
+      return sum;
+    }
+
+    if (field === 'views') {
+      let sum: number | null = null;
+      for (const p of item.platforms) {
+        if (p.views !== null) {
+          sum = (sum ?? 0) + p.views;
+        }
+      }
+      return sum;
+    }
+
+    if (field === 'ctr' || field === 'cto') {
+      let sum: Prisma.Decimal | null = null;
+      let count = 0;
+      for (const p of item.platforms) {
+        const raw = field === 'ctr' ? p.ctr : p.cto;
+        if (raw !== null) {
+          // Defensive: skip values that aren't valid decimals rather than throw.
+          try {
+            const d = new Prisma.Decimal(raw);
+            sum = sum ? sum.add(d) : d;
+            count++;
+          } catch {}
+        }
+      }
+      return sum && count > 0 ? sum.div(count) : null;
+    }
+
+    return null;
+  }
+
+  /** Compares two sort values for the given direction, ordering `null` last. */
+  private compareSortValues(a: SortValue, b: SortValue, desc: boolean): number {
+    if (a === null && b === null)
+      return 0;
+    if (a === null)
+      return 1;
+    if (b === null)
+      return -1;
+
+    const valA = a instanceof Prisma.Decimal ? a.toNumber() : a;
+    const valB = b instanceof Prisma.Decimal ? b.toNumber() : b;
+
+    if (valA === valB)
+      return 0;
+
+    return desc ? valB - valA : valA - valB;
+  }
+
+  async getShowPerformanceLoops(
+    studioUid: string,
+    showUid: string,
+  ): Promise<ShowPerformanceLoopsResponse> {
+    const show = await this.prisma.show.findFirst({
+      where: {
+        uid: showUid,
+        studio: { uid: studioUid },
+        deletedAt: null,
+      },
       include: {
-        client: true,
-        showType: true,
+        studio: {
+          select: {
+            metadata: true,
+          },
+        },
         showPlatforms: {
-          where: this.buildShowPlatformsWhere(query),
+          where: { deletedAt: null },
           include: {
             platform: true,
           },
         },
       },
-      orderBy: {
-        startTime: 'desc',
-      },
-      skip,
-      take: limit,
     });
 
-    const items = shows.map((show) => {
-      return {
-        id: show.uid,
-        name: show.name,
-        start_time: show.startTime.toISOString(),
-        end_time: show.endTime.toISOString(),
-        client_name: show.client?.name ?? null,
-        show_type_name: show.showType?.name ?? null,
-        platforms: show.showPlatforms.map((sp) => {
-          const metadata = (sp.metadata as Record<string, any> | null) ?? {};
-          const templates = metadata.performance_templates ?? {};
-          // `viewerCount` is a non-nullable column (defaults to 0), so its
-          // provenance comes from the recorded view-count fact rather than the
-          // column itself; gmv/ctr/cto are nullable and speak for themselves.
-          const hasViewCount = templates.show_platform_view_count !== undefined;
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
 
-          return {
-            show_platform_uid: sp.uid,
-            platform_id: sp.platform.uid,
-            platform_name: sp.platform.name,
-            gmv: decimalToString(sp.gmv),
-            views: hasViewCount ? sp.viewerCount : null,
-            ctr: decimalToString(sp.ctr),
-            cto: decimalToString(sp.cto),
-          };
-        }),
+    const { locale, currency } = this.resolveLocalization(show.studio?.metadata);
+
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        targets: {
+          some: {
+            showId: show.id,
+            deletedAt: null,
+          },
+        },
+        status: {
+          in: [...StudioPerformanceService.LOOP_METRIC_TASK_STATUSES],
+        },
+        deletedAt: null,
+      },
+      include: {
+        snapshot: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    // A show may have several finalized moderation tasks; the most recently
+    // updated one that carries a loop schema is authoritative ("latest wins").
+    // Older tasks are intentionally ignored — re-moderation supersedes prior runs.
+    let selectedTask: any = null;
+    let loopsMetadata: any[] = [];
+
+    for (const task of tasks) {
+      const schema = task.snapshot?.schema as any;
+      if (schema && schema.metadata && Array.isArray(schema.metadata.loops)) {
+        selectedTask = task;
+        loopsMetadata = schema.metadata.loops;
+        break;
+      }
+    }
+
+    if (!selectedTask) {
+      return { loops: [], currency, locale };
+    }
+
+    const schema = selectedTask.snapshot.schema as any;
+    // Snapshot JSON is untyped; guard against a non-array `items` so a malformed
+    // schema yields empty metrics rather than throwing at `.filter`.
+    const items: any[] = Array.isArray(schema.items) ? schema.items : [];
+    const content = (selectedTask.content as Record<string, any>) ?? {};
+
+    // Field keys may be absent or non-string in legacy snapshots; lowercase
+    // only real strings so matching never throws on, say, a numeric key.
+    const lower = (value: unknown): string | undefined =>
+      typeof value === 'string' ? value.toLowerCase() : undefined;
+
+    const loops = loopsMetadata.map((loop) => {
+      const loopFields = items.filter((item) => item.group === loop.id);
+
+      let gmvFieldId: string | null = null;
+      let viewFieldId: string | null = null;
+      let ctrFieldId: string | null = null;
+      let ctoFieldId: string | null = null;
+
+      for (const item of loopFields) {
+        const key = lower(item.key);
+        const sharedKey = lower(item.shared_field_key);
+        const factKey = item.system_fact_key;
+
+        // Match a metric by its system fact key, shared field key, or field
+        // key. Legacy moderator snapshots store loop fields without a
+        // `shared_field_key` and with the loop suffixed onto the key (e.g.
+        // `gmv_l1`, `views_l1`), so a `<token>_…` prefix is accepted too.
+        // `loopFields` is already scoped to this loop's group, so a prefix
+        // can't collide across loops.
+        const matches = (factName: string, tokens: string[]): boolean => {
+          if (factKey === factName) {
+            return true;
+          }
+          return tokens.some(
+            (token) => sharedKey === token || key === token || (key?.startsWith(`${token}_`) ?? false),
+          );
+        };
+
+        if (matches('show_platform_gmv', ['gmv'])) {
+          gmvFieldId = item.id;
+        } else if (matches('show_platform_view_count', ['views', 'viewer_count', 'viewercount'])) {
+          viewFieldId = item.id;
+        } else if (matches('show_platform_ctr', ['ctr'])) {
+          ctrFieldId = item.id;
+        } else if (matches('show_platform_cto', ['cto'])) {
+          ctoFieldId = item.id;
+        }
+      }
+
+      const metrics = show.showPlatforms.map((sp) => {
+        const getVal = (fieldId: string | null) => {
+          if (!fieldId)
+            return null;
+          const multicastKey = `${fieldId}:platform:${sp.uid}`;
+          if (content[multicastKey] !== undefined && content[multicastKey] !== null) {
+            return content[multicastKey];
+          }
+          return content[fieldId] ?? null;
+        };
+
+        const rawGmv = getVal(gmvFieldId);
+        const rawViews = getVal(viewFieldId);
+        const rawCtr = getVal(ctrFieldId);
+        const rawCto = getVal(ctoFieldId);
+
+        const formatDecimal = (val: any) => {
+          if (val === null || val === undefined || val === '')
+            return null;
+          try {
+            const d = new Prisma.Decimal(val);
+            return decimalToString(d);
+          } catch {
+            return String(val);
+          }
+        };
+
+        const formatInt = (val: any) => {
+          if (val === null || val === undefined || val === '')
+            return null;
+          const n = Math.round(Number(val));
+          return Number.isFinite(n) ? n : null;
+        };
+
+        return {
+          show_platform_uid: sp.uid,
+          platform_name: sp.platform.name,
+          gmv: formatDecimal(rawGmv),
+          ctr: formatDecimal(rawCtr),
+          cto: formatDecimal(rawCto),
+          viewer_count: formatInt(rawViews),
+        };
+      });
+
+      return {
+        id: loop.id,
+        name: loop.name,
+        durationMin: Number(loop.durationMin) || StudioPerformanceService.DEFAULT_LOOP_DURATION_MIN,
+        metrics,
       };
     });
 
-    return { items, total };
+    return { loops, currency, locale };
   }
 }

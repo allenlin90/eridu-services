@@ -40,8 +40,10 @@ const performanceSearchSchema = z.object({
   client_id: z.string().optional().catch(undefined),
   show_type_id: z.union([z.string(), z.array(z.string())]).optional().catch(undefined),
   platform_id: z.union([z.string(), z.array(z.string())]).optional().catch(undefined),
+  show_standard_id: z.union([z.string(), z.array(z.string())]).optional().catch(undefined),
   name: z.string().optional().catch(undefined),
   has_performance: z.enum(['all', 'true', 'false']).optional().catch(undefined),
+  sort: z.string().optional().catch(undefined),
 });
 
 type PerformanceSearch = z.infer<typeof performanceSearchSchema>;
@@ -127,9 +129,11 @@ function StudioPerformanceDashboard() {
       client_id: search.client_id ? [search.client_id] : undefined,
       show_type_id: toArrayParam(search.show_type_id),
       platform_id: toArrayParam(search.platform_id),
+      show_standard_id: toArrayParam(search.show_standard_id),
       has_performance: search.has_performance,
+      sort: search.sort,
     };
-  }, [dateRange, search.client_id, search.show_type_id, search.platform_id, search.has_performance]);
+  }, [dateRange, search.client_id, search.show_type_id, search.platform_id, search.show_standard_id, search.has_performance, search.sort]);
 
   const summaryQuery = usePerformanceSummaryQuery(studioId, apiParams);
   const showsQuery = usePerformanceShowsQuery(studioId, {

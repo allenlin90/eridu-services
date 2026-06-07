@@ -83,6 +83,7 @@ For Studio Individual Overview routes such as `/studios/:studioId/creators/:crea
   link, entity title / subtitle, and a metadata panel above the tabs.
 - Avoid putting entity-detail back navigation in `PageLayout.actions`; it is
   less consistent with adjacent detail routes and less clear on mobile.
+- **Mobile Tabs Overflow**: To prevent tab navigation links from breaking containment or causing whole-page horizontal overflow on narrow mobile viewports (e.g. 375px screens like iPhone SE), wrap the navigation container in a horizontally scrollable container with hidden scrollbars: `overflow-x-auto scrollbar-none flex-nowrap scroll-smooth` and style each link as `shrink-0`.
 
 ### Reusable Unit Component Standard
 To prevent code duplication and logic drift across these three views, **extract and share core unit components**. Component wrappers should simply configure the appropriate API filters and role context before passing them to the shared visual unit:

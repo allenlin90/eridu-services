@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef, ColumnFiltersState, OnChangeFn, PaginationState } from '@tanstack/react-table';
-import { ChevronDown, Filter, RefreshCw, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Filter, RefreshCw, RotateCcw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import type { ShowPerformanceResponse } from '@eridu/api-types/performance';
@@ -44,8 +44,10 @@ type PerformanceSearch = {
   client_id?: string;
   show_type_id?: string | string[];
   platform_id?: string | string[];
+  show_standard_id?: string | string[];
   name?: string;
   has_performance?: string;
+  sort?: string;
 };
 
 type PerformanceShowsTableProps = {
@@ -82,9 +84,11 @@ type FilterFieldsProps = {
   handleFilterChange: (key: 'client_id' | 'has_performance', value: string) => void;
   selectedShowTypes: Array<{ id: string; name: string }>;
   showTypeOptions: Array<{ value: string; label: string }>;
-  handleMultiFilterChange: (key: 'show_type_id' | 'platform_id', value: string[]) => void;
+  handleMultiFilterChange: (key: 'show_type_id' | 'platform_id' | 'show_standard_id', value: string[]) => void;
   selectedPlatforms: Array<{ id: string; name: string }>;
   platformOptions: Array<{ value: string; label: string }>;
+  selectedShowStandards: Array<{ id: string; name: string }>;
+  showStandardOptions: Array<{ value: string; label: string }>;
 };
 
 function FilterFields({
@@ -98,6 +102,8 @@ function FilterFields({
   handleMultiFilterChange,
   selectedPlatforms,
   platformOptions,
+  selectedShowStandards,
+  showStandardOptions,
 }: FilterFieldsProps) {
   return (
     <div className="p-4 space-y-4">
@@ -196,6 +202,47 @@ function FilterFields({
         </DropdownMenu>
       </div>
 
+      {/* Show Standards Dropdown */}
+      <div className="space-y-1.5">
+        <Label>Show Standards</Label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between h-10 px-3 font-normal"
+            >
+              <span className="truncate">
+                {selectedShowStandards.length > 0
+                  ? selectedShowStandards.map((s) => s.name).join(', ')
+                  : 'Any Show Standard'}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[280px] max-h-[300px] overflow-y-auto" align="start">
+            {showStandardOptions.map((opt) => {
+              const isSelected = toArrayParam(search.show_standard_id)?.includes(opt.value) ?? false;
+              return (
+                <DropdownMenuCheckboxItem
+                  key={opt.value}
+                  checked={isSelected}
+                  onCheckedChange={() => {
+                    const current = toArrayParam(search.show_standard_id) ?? [];
+                    const next = isSelected
+                      ? current.filter((val) => val !== opt.value)
+                      : [...current, opt.value];
+                    handleMultiFilterChange('show_standard_id', next);
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {opt.label}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Record Presence Dropdown */}
       <div className="space-y-1.5">
         <Label>Performance Record Presence</Label>
@@ -241,6 +288,53 @@ function FilterFields({
         </DropdownMenu>
       </div>
     </div>
+  );
+}
+
+type SortRule = { id: string; desc: boolean };
+
+type SortableHeaderProps = {
+  columnId: string;
+  label: string;
+  sortRules: SortRule[];
+  onSort: (columnId: string) => void;
+};
+
+function SortableHeader({ columnId, label, sortRules, onSort }: SortableHeaderProps) {
+  const ruleIndex = sortRules.findIndex((r) => r.id === columnId);
+  const isSorted = ruleIndex !== -1;
+  const rule = isSorted ? sortRules[ruleIndex] : null;
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="-ml-3 h-8 gap-1 font-medium hover:bg-muted/50 text-xs"
+      onClick={() => onSort(columnId)}
+    >
+      <span>{label}</span>
+      {isSorted
+        ? (
+            <div className="flex items-center gap-1">
+              {rule?.desc
+                ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-primary" />
+                  )
+                : (
+                    <ChevronUp className="h-3.5 w-3.5 text-primary" />
+                  )}
+              <Badge
+                variant="secondary"
+                className="h-4 min-w-4 p-0 px-1 text-[10px] flex items-center justify-center font-bold bg-primary/10 text-primary border-none"
+              >
+                {ruleIndex + 1}
+              </Badge>
+            </div>
+          )
+        : (
+            <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+          )}
+    </Button>
   );
 }
 
@@ -311,6 +405,13 @@ export function PerformanceShowsTable({
     }));
   }, [lookups?.platforms]);
 
+  const showStandardOptions = useMemo(() => {
+    return (lookups?.show_standards ?? []).map((s) => ({
+      value: s.id,
+      label: s.name,
+    }));
+  }, [lookups?.show_standards]);
+
   const selectedShowTypes = useMemo(() => {
     const ids = toArrayParam(search.show_type_id) ?? [];
     return (lookups?.show_types ?? []).filter((st) => ids.includes(st.id));
@@ -320,6 +421,11 @@ export function PerformanceShowsTable({
     const ids = toArrayParam(search.platform_id) ?? [];
     return (lookups?.platforms ?? []).filter((p) => ids.includes(p.id));
   }, [lookups?.platforms, search.platform_id]);
+
+  const selectedShowStandards = useMemo(() => {
+    const ids = toArrayParam(search.show_standard_id) ?? [];
+    return (lookups?.show_standards ?? []).filter((s) => ids.includes(s.id));
+  }, [lookups?.show_standards, search.show_standard_id]);
 
   const handleFilterChange = useCallback(
     (key: 'client_id' | 'has_performance', value: string) => {
@@ -332,7 +438,7 @@ export function PerformanceShowsTable({
   );
 
   const handleMultiFilterChange = useCallback(
-    (key: 'show_type_id' | 'platform_id', value: string[]) => {
+    (key: 'show_type_id' | 'platform_id' | 'show_standard_id', value: string[]) => {
       updateSearch({
         [key]: value.length > 0 ? value : undefined,
         page: 1,
@@ -346,6 +452,7 @@ export function PerformanceShowsTable({
       client_id: undefined,
       show_type_id: undefined,
       platform_id: undefined,
+      show_standard_id: undefined,
       has_performance: undefined,
       page: 1,
     });
@@ -362,10 +469,45 @@ export function PerformanceShowsTable({
       count++;
     if (toArrayParam(search.platform_id)?.length)
       count++;
+    if (toArrayParam(search.show_standard_id)?.length)
+      count++;
     if (search.has_performance && search.has_performance !== 'all')
       count++;
     return count;
-  }, [search.client_id, search.show_type_id, search.platform_id, search.has_performance]);
+  }, [search.client_id, search.show_type_id, search.platform_id, search.show_standard_id, search.has_performance]);
+
+  // Parse current URL sort rules
+  const sortRules = useMemo(() => {
+    const sortStr = search.sort;
+    if (!sortStr)
+      return [];
+    return sortStr.split(',').map((part) => {
+      const [id, dir] = part.split(':');
+      return { id, desc: dir === 'desc' };
+    }).filter((r) => r.id);
+  }, [search.sort]);
+
+  const handleSort = useCallback((columnId: string) => {
+    const nextRules = [...sortRules];
+    const existingIndex = nextRules.findIndex((r) => r.id === columnId);
+
+    if (existingIndex === -1) {
+      // Not sorted: append to the end as ASC
+      nextRules.push({ id: columnId, desc: false });
+    } else {
+      const existing = nextRules[existingIndex];
+      if (!existing.desc) {
+        // ASC -> Toggle to DESC (keep priority)
+        nextRules[existingIndex] = { id: columnId, desc: true };
+      } else {
+        // DESC -> Remove from sort list
+        nextRules.splice(existingIndex, 1);
+      }
+    }
+
+    const sortStr = nextRules.map((r) => `${r.id}:${r.desc ? 'desc' : 'asc'}`).join(',') || undefined;
+    updateSearch({ sort: sortStr, page: 1 });
+  }, [sortRules, updateSearch]);
 
   const columnFilters = useMemo<ColumnFiltersState>(() => {
     return search.name ? [{ id: 'name', value: search.name }] : [];
@@ -453,7 +595,7 @@ export function PerformanceShowsTable({
       },
       {
         id: 'gmv',
-        header: 'GMV',
+        header: () => <SortableHeader columnId="gmv" label="GMV" sortRules={sortRules} onSort={handleSort} />,
         cell: ({ row }) => {
           const platforms = row.original.platforms;
           if (platforms.length === 0)
@@ -471,7 +613,7 @@ export function PerformanceShowsTable({
       },
       {
         id: 'views',
-        header: 'Views',
+        header: () => <SortableHeader columnId="views" label="Views" sortRules={sortRules} onSort={handleSort} />,
         cell: ({ row }) => {
           const platforms = row.original.platforms;
           if (platforms.length === 0)
@@ -489,7 +631,7 @@ export function PerformanceShowsTable({
       },
       {
         id: 'ctr',
-        header: 'CTR',
+        header: () => <SortableHeader columnId="ctr" label="CTR" sortRules={sortRules} onSort={handleSort} />,
         cell: ({ row }) => {
           const platforms = row.original.platforms;
           if (platforms.length === 0)
@@ -507,7 +649,7 @@ export function PerformanceShowsTable({
       },
       {
         id: 'cto',
-        header: 'CTO',
+        header: () => <SortableHeader columnId="cto" label="CTO" sortRules={sortRules} onSort={handleSort} />,
         cell: ({ row }) => {
           const platforms = row.original.platforms;
           if (platforms.length === 0)
@@ -525,11 +667,11 @@ export function PerformanceShowsTable({
       },
       {
         accessorKey: 'start_time',
-        header: 'Start Time',
+        header: () => <SortableHeader columnId="start_time" label="Start Time" sortRules={sortRules} onSort={handleSort} />,
         cell: ({ row }) => <DateCell date={row.original.start_time} />,
       },
     ],
-    [formatCurrency, formatNumber, formatPercentage, studioId],
+    [formatCurrency, formatNumber, formatPercentage, studioId, sortRules, handleSort],
   );
 
   const applyPagination = (next: { pageIndex: number; pageSize: number }) => {
@@ -628,6 +770,8 @@ export function PerformanceShowsTable({
                       handleMultiFilterChange={handleMultiFilterChange}
                       selectedPlatforms={selectedPlatforms}
                       platformOptions={platformOptions}
+                      selectedShowStandards={selectedShowStandards}
+                      showStandardOptions={showStandardOptions}
                     />
                   )}
                 </div>
@@ -682,6 +826,8 @@ export function PerformanceShowsTable({
                       handleMultiFilterChange={handleMultiFilterChange}
                       selectedPlatforms={selectedPlatforms}
                       platformOptions={platformOptions}
+                      selectedShowStandards={selectedShowStandards}
+                      showStandardOptions={showStandardOptions}
                     />
                   </div>
                 )}
