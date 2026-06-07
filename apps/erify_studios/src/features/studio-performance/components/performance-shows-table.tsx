@@ -258,11 +258,15 @@ export function PerformanceShowsTable({
   search,
   updateSearch,
   onRefresh,
+  locale,
+  currency,
 }: PerformanceShowsTableProps) {
   const pageCount = Math.ceil(total / limit);
   const [clientSearch, setClientSearch] = useState('');
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const resolvedLocale = locale ?? 'th-TH';
+  const resolvedCurrency = currency ?? 'THB';
 
   // Sync lookups and async combobox filters
   const { data: lookups } = useShowLookupsQuery(studioId);
@@ -377,7 +381,7 @@ export function PerformanceShowsTable({
     });
   };
 
-  const formatPercentage = (val: string | null) => {
+  const formatPercentage = useCallback((val: string | null) => {
     if (val === null)
       return '—';
     try {
@@ -385,24 +389,24 @@ export function PerformanceShowsTable({
     } catch {
       return `${val}%`;
     }
-  };
+  }, []);
 
-  const formatCurrency = (val: string | null) => {
+  const formatCurrency = useCallback((val: string | null) => {
     if (val === null)
       return '—';
     try {
-      return toCurrencyDisplayString(val, locale ?? 'th-TH', currency ?? 'THB');
+      return toCurrencyDisplayString(val, resolvedLocale, resolvedCurrency);
     } catch {
-      const fallbackSymbol = currency === 'THB' ? '฿' : '$';
+      const fallbackSymbol = resolvedCurrency === 'THB' ? '฿' : '$';
       return `${fallbackSymbol}${val}`;
     }
-  };
+  }, [resolvedCurrency, resolvedLocale]);
 
-  const formatNumber = (val: number | null) => {
+  const formatNumber = useCallback((val: number | null) => {
     if (val === null)
       return '—';
     return new Intl.NumberFormat().format(val);
-  };
+  }, []);
 
   const columns = useMemo<ColumnDef<ShowPerformanceResponse>[]>(
     () => [
@@ -525,7 +529,7 @@ export function PerformanceShowsTable({
         cell: ({ row }) => <DateCell date={row.original.start_time} />,
       },
     ],
-    [studioId],
+    [formatCurrency, formatNumber, formatPercentage, studioId],
   );
 
   const applyPagination = (next: { pageIndex: number; pageSize: number }) => {
