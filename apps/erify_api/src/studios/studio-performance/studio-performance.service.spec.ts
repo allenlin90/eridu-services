@@ -632,6 +632,53 @@ describe('studioPerformanceService', () => {
         ],
       });
     });
+
+    it('returns parsed loops when task content has show-level platform-agnostic keys', async () => {
+      const mockTask = {
+        id: 1n,
+        uid: 'task_1',
+        snapshot: {
+          schema: {
+            items: [
+              { id: 'fld_gmv_l1', key: 'gmv', group: 'l1', system_fact_key: 'show_platform_gmv' },
+              { id: 'fld_views_l1', key: 'views', group: 'l1', system_fact_key: 'show_platform_view_count' },
+            ],
+            metadata: {
+              loops: [
+                { id: 'l1', name: 'Loop 1', durationMin: 15 },
+              ],
+            },
+          },
+        },
+        content: {
+          'fld_gmv_l1': '1500.25',
+          'fld_views_l1': 120,
+        },
+      };
+
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+      expect(result.currency).toBe('THB');
+      expect(result.locale).toBe('th-TH');
+      expect(result.loops).toHaveLength(1);
+      expect(result.loops[0]).toEqual({
+        id: 'l1',
+        name: 'Loop 1',
+        durationMin: 15,
+        metrics: [
+          {
+            show_platform_uid: 'show_plt_101',
+            platform_name: 'Shopee',
+            gmv: '1500.25',
+            ctr: null,
+            cto: null,
+            viewer_count: 120,
+          },
+        ],
+      });
+    });
   });
 
   describe('getPerformanceShows - in-memory sorting', () => {

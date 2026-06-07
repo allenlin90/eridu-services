@@ -654,8 +654,11 @@ export class StudioPerformanceService {
         const getVal = (fieldId: string | null) => {
           if (!fieldId)
             return null;
-          const key = `${fieldId}:platform:${sp.uid}`;
-          return content[key] ?? null;
+          const multicastKey = `${fieldId}:platform:${sp.uid}`;
+          if (content[multicastKey] !== undefined && content[multicastKey] !== null) {
+            return content[multicastKey];
+          }
+          return content[fieldId] ?? null;
         };
 
         const rawGmv = getVal(gmvFieldId);
