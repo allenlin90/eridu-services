@@ -389,6 +389,24 @@ describe('studioPerformanceService', () => {
       );
     });
 
+    it('applies show_standard_id filter when provided', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        show_standard_id: 'shsd_1',
+      });
+
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          showStandard: { uid: { in: ['shsd_1'] } },
+        }),
+      });
+    });
+
     it('omits the name filter when name is not provided', async () => {
       (prisma.show.count as jest.Mock).mockResolvedValue(0);
       (prisma.show.findMany as jest.Mock).mockResolvedValue([]);

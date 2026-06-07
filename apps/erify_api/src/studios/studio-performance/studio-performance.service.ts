@@ -125,6 +125,7 @@ export class StudioPerformanceService {
     const clientUids = this.toArray(query.client_id);
     const showTypeUids = this.toArray(query.show_type_id);
     const platformUids = this.toArray(query.platform_id);
+    const showStandardUids = this.toArray(query.show_standard_id);
     // Trim so a whitespace-only search collapses to "no filter" rather than a
     // `contains: ' '` clause that matches every row with an interior space.
     const name = query.name?.trim();
@@ -176,6 +177,7 @@ export class StudioPerformanceService {
       },
       ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
       ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
+      ...(showStandardUids.length > 0 ? { showStandard: { uid: { in: showStandardUids } } } : {}),
       ...(name
         ? {
             name: {

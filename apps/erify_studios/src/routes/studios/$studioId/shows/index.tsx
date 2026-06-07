@@ -137,7 +137,7 @@ function StudioShowsPage() {
             searchColumn="name"
             searchableColumns={searchableColumns}
             searchPlaceholder="Search shows..."
-            featuredFilterColumns={['show_status_name', 'schedule_name', 'start_time']}
+            featuredFilterColumns={['show_status_name', 'show_standard_name', 'schedule_name', 'start_time']}
           >
             <Button
               variant="outline"

@@ -27,6 +27,12 @@ export const performanceQuerySchema = z.object({
       z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)),
     ])
     .optional(),
+  show_standard_id: z
+    .union([
+      z.string().startsWith(UID_PREFIXES.SHOW_STANDARD),
+      z.array(z.string().startsWith(UID_PREFIXES.SHOW_STANDARD)),
+    ])
+    .optional(),
   has_performance: z.enum(['all', 'true', 'false']).optional(),
 });
 

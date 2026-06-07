@@ -4,6 +4,8 @@ import { BarChart3, ExternalLink, Eye, Globe, Percent, TrendingUp } from 'lucide
 
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui';
 
+import { usePerformanceLoopsQuery } from '@/features/studio-performance/api/get-performance-loops';
+import { ShowPerformanceLoopsGraph } from '@/features/studio-performance/components/show-performance-loops-graph';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
 
@@ -14,6 +16,7 @@ export const Route = createFileRoute('/studios/$studioId/shows/$showId/performan
 function StudioShowPerformanceTab() {
   const { studioId, showId } = Route.useParams();
   const { data: show } = useStudioShow({ studioId, showId });
+  const { data: loopData, isLoading: isLoadingLoops } = usePerformanceLoopsQuery(studioId, showId);
 
   if (!show) {
     return null;
@@ -182,6 +185,9 @@ function StudioShowPerformanceTab() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Moderation Loop Trend */}
+      <ShowPerformanceLoopsGraph data={loopData} isLoading={isLoadingLoops} />
 
       {/* Platform Breakdown */}
       <div className="space-y-3">
