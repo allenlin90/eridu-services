@@ -9,9 +9,9 @@ import {
 // Mock UI components
 vi.mock('@eridu/ui', () => ({
   Input: ({ value, ...props }: any) => <input value={value} {...props} />,
-  DateTimePicker: ({ value, onChange, ...props }: any) => (
+  ResponsiveDateTimePicker: ({ value, onChange, ...props }: any) => (
     <input
-      data-testid="datetime-picker"
+      data-testid="responsive-datetime-picker"
       value={value}
       onChange={(event) => onChange?.(event.target.value)}
       {...props}
@@ -118,12 +118,13 @@ describe('scheduleUpdateDialog', () => {
 
     expect(screen.queryByTestId('admin-form-dialog')).not.toBeInTheDocument();
   });
-  it('should pass the current start_date value to the shared datetime picker', () => {
+  it('should pass the current start_date value to the responsive datetime picker', () => {
     render(<ScheduleUpdateDialog {...mockProps} />);
 
     const startDateInput = screen.getByTestId('field-start_date').querySelector('input');
     expect(startDateInput).toBeInTheDocument();
     expect(startDateInput).toHaveValue('2024-01-01T10:00:00Z');
+    expect(screen.getAllByTestId('responsive-datetime-picker')).toHaveLength(2);
   });
 });
 

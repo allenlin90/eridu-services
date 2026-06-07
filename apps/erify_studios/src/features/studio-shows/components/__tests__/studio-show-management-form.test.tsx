@@ -43,9 +43,9 @@ vi.mock('@eridu/ui', () => ({
     </button>
   ),
   DialogFooter: ({ children }: any) => <div>{children}</div>,
-  DateTimePicker: ({ value, onChange }: any) => (
+  ResponsiveDateTimePicker: ({ value, onChange }: any) => (
     <button type="button" onClick={() => onChange(value)}>
-      DateTimePicker
+      ResponsiveDateTimePicker
     </button>
   ),
   Form: ({ children }: any) => <>{children}</>,
@@ -106,7 +106,7 @@ describe('studioShowManagementForm', () => {
 
     expect(screen.getByText('External ID')).toBeInTheDocument();
     expect(screen.getByText('Name')).toBeInTheDocument();
-    expect(screen.getAllByText('DateTimePicker')).toHaveLength(2);
+    expect(screen.getAllByText('ResponsiveDateTimePicker')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 

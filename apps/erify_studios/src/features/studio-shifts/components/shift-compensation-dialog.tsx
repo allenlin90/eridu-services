@@ -3,17 +3,13 @@ import { useState } from 'react';
 
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   Input,
   Label,
   Textarea,
 } from '@eridu/ui';
 
 import { ShiftBlockActualsInput } from '@/components/finance/shift-block-actuals-input';
+import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { StudioTargetCompensationLineItemPanel } from '@/features/compensation-line-items/components/studio-target-compensation-line-item-panel';
 import { toMoneyString } from '@/features/compensation-line-items/utils/money-input';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
@@ -291,20 +287,22 @@ export function ShiftCompensationDialog({
   studioId,
   shift,
 }: ShiftCompensationDialogProps) {
-  return (
-    <Dialog open={open && Boolean(shift)} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[920px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Shift Compensation</DialogTitle>
-          <DialogDescription>
-            {shift
-              ? `${shift.user_name} · ${shift.date}`
-              : 'Shift compensation inputs'}
-          </DialogDescription>
-        </DialogHeader>
+  const shellOpen = open && Boolean(shift);
+  const description = shift
+    ? `${shift.user_name} · ${shift.date}`
+    : 'Shift compensation inputs';
+  const body = shift ? <ShiftCompensationView studioId={studioId} shift={shift} /> : null;
 
-        {shift ? <ShiftCompensationView studioId={studioId} shift={shift} /> : null}
-      </DialogContent>
-    </Dialog>
+  return (
+    <ResponsiveDialog
+      open={shellOpen}
+      onOpenChange={onOpenChange}
+      title="Shift Compensation"
+      description={description}
+      contentClassName="sm:max-w-[920px] max-h-[90vh] overflow-y-auto"
+      mobileBodyClassName="max-h-[75vh] pb-4"
+    >
+      {body}
+    </ResponsiveDialog>
   );
 }

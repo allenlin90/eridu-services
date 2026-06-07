@@ -6,13 +6,13 @@ import type { updateShowInputSchema } from '@eridu/api-types/shows';
 import {
   AsyncCombobox,
   AsyncMultiCombobox,
-  DateTimePicker,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
   Input,
+  ResponsiveDateTimePicker,
 } from '@eridu/ui';
 
 import { useClientFieldData } from './hooks/use-client-field-data';
@@ -67,7 +67,7 @@ export const ShowTimeFields = memo(({
           <FormItem>
             <FormLabel>Start Time</FormLabel>
             <FormControl>
-              <DateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
+              <ResponsiveDateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -81,7 +81,7 @@ export const ShowTimeFields = memo(({
           <FormItem>
             <FormLabel>End Time</FormLabel>
             <FormControl>
-              <DateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
+              <ResponsiveDateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
             </FormControl>
             <FormMessage />
           </FormItem>
