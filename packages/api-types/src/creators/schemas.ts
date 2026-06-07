@@ -25,13 +25,41 @@ export const creatorApiResponseSchema = z.object({
   updated_at: z.string(),
 });
 
+const decimalStringSchema = z
+  .string()
+  .regex(/^(?:\d+(?:\.\d+)?|\.\d+)$/, 'Must be a non-negative decimal string');
+
+function isPositiveDecimalString(value: string): boolean {
+  return /[1-9]/.test(value);
+}
+
+function isAtMostOneHundred(value: string): boolean {
+  const [wholePart = '0', fractionPart = ''] = value.startsWith('.')
+    ? ['0', value.slice(1)]
+    : value.split('.');
+  const normalizedWhole = wholePart.replace(/^0+/, '') || '0';
+
+  if (normalizedWhole.length > 3) {
+    return false;
+  }
+
+  if (normalizedWhole.length < 3 || normalizedWhole < '100') {
+    return true;
+  }
+
+  return normalizedWhole === '100' && /^0*$/.test(fractionPart);
+}
+
+const defaultRateInputSchema = decimalStringSchema.refine(isPositiveDecimalString, 'Must be greater than 0');
+const defaultCommissionRateInputSchema = decimalStringSchema.refine(isAtMostOneHundred, 'Must be at most 100');
+
 export const createCreatorInputSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   alias_name: z.string().min(1, 'Alias name is required'),
   user_id: z.string().optional(),
-  default_rate: z.coerce.number().positive().optional(),
+  default_rate: defaultRateInputSchema.optional(),
   default_rate_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).optional(),
-  default_commission_rate: z.coerce.number().min(0).max(100).optional(),
+  default_commission_rate: defaultCommissionRateInputSchema.optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
@@ -40,9 +68,9 @@ export const updateCreatorInputSchema = z.object({
   alias_name: z.string().min(1, 'Alias name is required').optional(),
   is_banned: z.boolean().optional(),
   user_id: z.string().optional(),
-  default_rate: z.coerce.number().positive().nullable().optional(),
+  default_rate: defaultRateInputSchema.nullable().optional(),
   default_rate_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).nullable().optional(),
-  default_commission_rate: z.coerce.number().min(0).max(100).nullable().optional(),
+  default_commission_rate: defaultCommissionRateInputSchema.nullable().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
