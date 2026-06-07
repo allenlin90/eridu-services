@@ -33,10 +33,12 @@ type TrendTooltipProps = {
   activeMetric: MetricKey;
   metricLabel: string;
   color: string;
+  locale?: string;
+  currency?: string;
 };
 
 // Custom Tooltip component defined outside of the render function
-function CustomTooltip({ active, payload, activeMetric, metricLabel, color }: TrendTooltipProps) {
+function CustomTooltip({ active, payload, activeMetric, metricLabel, color, locale, currency }: TrendTooltipProps) {
   if (active && payload && payload.length) {
     const item = payload[0];
     let dateStr = '';
@@ -48,9 +50,9 @@ function CustomTooltip({ active, payload, activeMetric, metricLabel, color }: Tr
 
     const formatTooltipValue = (value: number | string) => {
       if (activeMetric === 'gmv') {
-        return toCurrencyDisplayString(String(value));
+        return toCurrencyDisplayString(String(value), locale ?? 'th-TH', currency ?? 'THB');
       }
-      return new Intl.NumberFormat().format(Number(value));
+      return new Intl.NumberFormat(locale ?? 'th-TH').format(Number(value));
     };
 
     return (
@@ -96,10 +98,23 @@ export function PerformanceTrendGraph({ data, isLoading }: PerformanceTrendGraph
   };
 
   const formatYAxis = (tickItem: number) => {
+    const locale = data?.locale ?? 'th-TH';
+    const currency = data?.currency ?? 'THB';
     if (activeMetric === 'gmv') {
+      let prefix = '$';
+      try {
+        const parts = new Intl.NumberFormat(locale, { style: 'currency', currency }).formatToParts(0);
+        const currencyPart = parts.find((p) => p.type === 'currency');
+        if (currencyPart) {
+          prefix = currencyPart.value;
+        }
+      } catch {
+        prefix = currency === 'THB' ? '฿' : '$';
+      }
+
       if (tickItem >= 1000)
-        return `$${(tickItem / 1000).toFixed(0)}k`;
-      return `$${tickItem}`;
+        return `${prefix}${(tickItem / 1000).toFixed(0)}k`;
+      return `${prefix}${tickItem}`;
     }
     if (tickItem >= 1000)
       return `${(tickItem / 1000).toFixed(0)}k`;
@@ -187,6 +202,8 @@ export function PerformanceTrendGraph({ data, isLoading }: PerformanceTrendGraph
                           activeMetric={activeMetric}
                           metricLabel={activeMetricConfig.label}
                           color={activeMetricConfig.color}
+                          locale={data?.locale}
+                          currency={data?.currency}
                         />
                       )}
                     />

@@ -64,6 +64,50 @@ export class StudioPerformanceService {
     // `contains: ' '` clause that matches every row with an interior space.
     const name = query.name?.trim();
 
+    const hasPerformance = query.has_performance;
+    let performanceFilter: Prisma.ShowWhereInput = {};
+    if (hasPerformance === 'true') {
+      performanceFilter = {
+        showPlatforms: {
+          some: {
+            deletedAt: null,
+            OR: [
+              { gmv: { not: null } },
+              { ctr: { not: null } },
+              { cto: { not: null } },
+              {
+                metadata: {
+                  path: ['performance_templates', 'show_platform_view_count'],
+                  not: Prisma.JsonNull,
+                },
+              },
+            ],
+          },
+        },
+      };
+    } else if (hasPerformance === 'false') {
+      performanceFilter = {
+        NOT: {
+          showPlatforms: {
+            some: {
+              deletedAt: null,
+              OR: [
+                { gmv: { not: null } },
+                { ctr: { not: null } },
+                { cto: { not: null } },
+                {
+                  metadata: {
+                    path: ['performance_templates', 'show_platform_view_count'],
+                    not: Prisma.JsonNull,
+                  },
+                },
+              ],
+            },
+          },
+        },
+      };
+    }
+
     return {
       studio: { uid: studioUid },
       deletedAt: null,
@@ -91,6 +135,7 @@ export class StudioPerformanceService {
             },
           }
         : {}),
+      ...performanceFilter,
     };
   }
 
@@ -117,6 +162,15 @@ export class StudioPerformanceService {
     const endDate = new Date(query.end_date);
     this.validateDateRange(startDate, endDate);
 
+    const studio = await this.prisma.studio.findUnique({
+      where: { uid: studioUid },
+      select: { metadata: true },
+    });
+    const metadata = (studio?.metadata as Record<string, any> | null) ?? {};
+    const localization = metadata.localization ?? {};
+    const locale = localization.locale ?? 'th-TH';
+    const currency = localization.currency ?? 'THB';
+
     const shows = await this.prisma.show.findMany({
       where: this.buildShowWhere(studioUid, query),
       include: {
@@ -140,14 +194,34 @@ export class StudioPerformanceService {
     let ctoSum = new Prisma.Decimal(0);
     let ctoCount = 0;
 
+    // Derive client timezone offset from start_date parameter
+    const startUtcHours = startDate.getUTCHours();
+    const startUtcMinutes = startDate.getUTCMinutes();
+    const utcTimeInMinutes = startUtcHours * 60 + startUtcMinutes;
+    const localTimeInMinutes = 6 * 60; // 06:00
+    let offsetInMinutes = localTimeInMinutes - utcTimeInMinutes;
+    if (offsetInMinutes > 720) {
+      offsetInMinutes -= 1440;
+    } else if (offsetInMinutes < -720) {
+      offsetInMinutes += 1440;
+    }
+    const timezoneOffsetMs = offsetInMinutes * 60 * 1000;
+
     // Daily trend mapping
     const trendMap = new Map<
       string,
       { gmv: Prisma.Decimal; views: number; ctrs: Prisma.Decimal[]; ctos: Prisma.Decimal[] }
     >();
 
-    let curr = new Date(startDate.getTime());
-    while (curr <= endDate) {
+    const startOp = new Date(startDate.getTime() + timezoneOffsetMs - 6 * 60 * 60 * 1000);
+    const endOp = new Date(endDate.getTime() + timezoneOffsetMs - 6 * 60 * 60 * 1000);
+
+    const curr = new Date(startOp);
+    curr.setUTCHours(0, 0, 0, 0);
+    const endOpTime = new Date(endOp);
+    endOpTime.setUTCHours(0, 0, 0, 0);
+
+    while (curr.getTime() <= endOpTime.getTime()) {
       const dateStr = curr.toISOString().slice(0, 10);
       trendMap.set(dateStr, {
         gmv: new Prisma.Decimal(0),
@@ -155,12 +229,13 @@ export class StudioPerformanceService {
         ctrs: [],
         ctos: [],
       });
-      curr = new Date(curr.getTime() + 24 * 60 * 60 * 1000);
+      curr.setUTCDate(curr.getUTCDate() + 1);
     }
 
     for (const show of shows) {
       let showHasPerformance = false;
-      const dateStr = show.startTime.toISOString().slice(0, 10);
+      const opTime = new Date(show.startTime.getTime() + timezoneOffsetMs - 6 * 60 * 60 * 1000);
+      const dateStr = opTime.toISOString().slice(0, 10);
       const trendData = trendMap.get(dateStr);
 
       for (const sp of show.showPlatforms) {
@@ -244,6 +319,8 @@ export class StudioPerformanceService {
       recorded_shows_count: recordedShowsCount,
       total_shows_count: totalShowsCount,
       trend,
+      currency,
+      locale,
     };
   }
 

@@ -14,12 +14,20 @@ const SKELETON_IDS = ['ske-gmv', 'ske-views', 'ske-recorded'];
 
 export function PerformanceSummaryCards({ data, isLoading }: PerformanceSummaryCardsProps) {
   const formatCurrency = (val?: string) => {
-    if (!val)
-      return '$0.00';
+    const locale = data?.locale ?? 'th-TH';
+    const currency = data?.currency ?? 'THB';
+    if (!val) {
+      try {
+        return toCurrencyDisplayString('0', locale, currency);
+      } catch {
+        return currency === 'THB' ? '฿0.00' : '$0.00';
+      }
+    }
     try {
-      return toCurrencyDisplayString(val);
+      return toCurrencyDisplayString(val, locale, currency);
     } catch {
-      return `$${val}`;
+      const fallbackSymbol = currency === 'THB' ? '฿' : '$';
+      return `${fallbackSymbol}${val}`;
     }
   };
 

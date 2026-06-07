@@ -45,6 +45,7 @@ type PerformanceSearch = {
   show_type_id?: string | string[];
   platform_id?: string | string[];
   name?: string;
+  has_performance?: string;
 };
 
 type PerformanceShowsTableProps = {
@@ -63,6 +64,8 @@ type PerformanceShowsTableProps = {
   search: PerformanceSearch;
   updateSearch: (nextSearch: Partial<PerformanceSearch>) => void;
   onRefresh: () => void;
+  locale?: string;
+  currency?: string;
 };
 
 function toArrayParam(val: string | string[] | undefined): string[] | undefined {
@@ -76,7 +79,7 @@ type FilterFieldsProps = {
   clientOptions: Array<{ value: string; label: string }>;
   isLoadingClients: boolean;
   search: PerformanceSearch;
-  handleFilterChange: (key: 'client_id', value: string) => void;
+  handleFilterChange: (key: 'client_id' | 'has_performance', value: string) => void;
   selectedShowTypes: Array<{ id: string; name: string }>;
   showTypeOptions: Array<{ value: string; label: string }>;
   handleMultiFilterChange: (key: 'show_type_id' | 'platform_id', value: string[]) => void;
@@ -192,6 +195,51 @@ function FilterFields({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Record Presence Dropdown */}
+      <div className="space-y-1.5">
+        <Label>Performance Record Presence</Label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between h-10 px-3 font-normal"
+            >
+              <span className="truncate">
+                {search.has_performance === 'true'
+                  ? 'With Performance Records'
+                  : search.has_performance === 'false'
+                    ? 'Without Performance Records'
+                    : 'All Shows'}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[280px]" align="start">
+            <DropdownMenuCheckboxItem
+              checked={!search.has_performance || search.has_performance === 'all'}
+              onCheckedChange={() => handleFilterChange('has_performance', 'all')}
+              onSelect={(e) => e.preventDefault()}
+            >
+              All Shows
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={search.has_performance === 'true'}
+              onCheckedChange={() => handleFilterChange('has_performance', 'true')}
+              onSelect={(e) => e.preventDefault()}
+            >
+              With Performance Records
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={search.has_performance === 'false'}
+              onCheckedChange={() => handleFilterChange('has_performance', 'false')}
+              onSelect={(e) => e.preventDefault()}
+            >
+              Without Performance Records
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }
@@ -270,9 +318,9 @@ export function PerformanceShowsTable({
   }, [lookups?.platforms, search.platform_id]);
 
   const handleFilterChange = useCallback(
-    (key: 'client_id', value: string) => {
+    (key: 'client_id' | 'has_performance', value: string) => {
       updateSearch({
-        [key]: value || undefined,
+        [key]: value === 'all' ? undefined : (value || undefined),
         page: 1,
       });
     },
@@ -294,6 +342,7 @@ export function PerformanceShowsTable({
       client_id: undefined,
       show_type_id: undefined,
       platform_id: undefined,
+      has_performance: undefined,
       page: 1,
     });
     setClientSearch('');
@@ -309,8 +358,10 @@ export function PerformanceShowsTable({
       count++;
     if (toArrayParam(search.platform_id)?.length)
       count++;
+    if (search.has_performance && search.has_performance !== 'all')
+      count++;
     return count;
-  }, [search.client_id, search.show_type_id, search.platform_id]);
+  }, [search.client_id, search.show_type_id, search.platform_id, search.has_performance]);
 
   const columnFilters = useMemo<ColumnFiltersState>(() => {
     return search.name ? [{ id: 'name', value: search.name }] : [];
@@ -340,9 +391,10 @@ export function PerformanceShowsTable({
     if (val === null)
       return '—';
     try {
-      return toCurrencyDisplayString(val);
+      return toCurrencyDisplayString(val, locale ?? 'th-TH', currency ?? 'THB');
     } catch {
-      return `$${val}`;
+      const fallbackSymbol = currency === 'THB' ? '฿' : '$';
+      return `${fallbackSymbol}${val}`;
     }
   };
 

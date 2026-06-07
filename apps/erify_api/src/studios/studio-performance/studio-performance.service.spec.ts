@@ -15,8 +15,22 @@ describe('studioPerformanceService', () => {
         findMany: jest.fn(),
         count: jest.fn(),
       },
+      studio: {
+        findUnique: jest.fn(),
+      },
     } as any;
     service = new StudioPerformanceService(prisma);
+
+    if (prisma.studio && prisma.studio.findUnique) {
+      (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
+        metadata: {
+          localization: {
+            locale: 'th-TH',
+            currency: 'THB',
+          },
+        },
+      });
+    }
   });
 
   const query = {
@@ -139,6 +153,8 @@ describe('studioPerformanceService', () => {
       expect(result.avg_cto).toBe('3.325');
       expect(result.recorded_shows_count).toBe(3);
       expect(result.total_shows_count).toBe(3);
+      expect(result.currency).toBe('THB');
+      expect(result.locale).toBe('th-TH');
 
       // Verify trend contains 5 days (June 1st to June 5th)
       expect(result.trend).toHaveLength(5);
@@ -165,6 +181,22 @@ describe('studioPerformanceService', () => {
         ctr: '8.5',
         cto: '4.2',
       });
+    });
+
+    it('returns custom studio localization settings from metadata', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
+        metadata: {
+          localization: {
+            locale: 'en-US',
+            currency: 'USD',
+          },
+        },
+      });
+
+      const result = await service.getPerformanceSummary('std_1', query);
+      expect(result.currency).toBe('USD');
+      expect(result.locale).toBe('en-US');
     });
 
     it('excludes viewerCount from totals when view-count provenance is absent', async () => {
@@ -331,6 +363,58 @@ describe('studioPerformanceService', () => {
         name: '   ',
       });
       expect((prisma.show.count as jest.Mock).mock.calls[0][0].where).not.toHaveProperty('name');
+    });
+
+    it('applies has_performance filter when set to true', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        has_performance: 'true',
+      });
+
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          showPlatforms: {
+            some: expect.objectContaining({
+              deletedAt: null,
+              OR: expect.arrayContaining([
+                expect.objectContaining({ gmv: { not: null } }),
+              ]),
+            }),
+          },
+        }),
+      });
+    });
+
+    it('applies has_performance filter when set to false', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        has_performance: 'false',
+      });
+
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          NOT: {
+            showPlatforms: {
+              some: expect.objectContaining({
+                deletedAt: null,
+                OR: expect.arrayContaining([
+                  expect.objectContaining({ gmv: { not: null } }),
+                ]),
+              }),
+            },
+          },
+        }),
+      });
     });
   });
 });

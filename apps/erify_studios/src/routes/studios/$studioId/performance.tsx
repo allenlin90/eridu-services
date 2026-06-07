@@ -41,6 +41,7 @@ const performanceSearchSchema = z.object({
   show_type_id: z.union([z.string(), z.array(z.string())]).optional().catch(undefined),
   platform_id: z.union([z.string(), z.array(z.string())]).optional().catch(undefined),
   name: z.string().optional().catch(undefined),
+  has_performance: z.enum(['all', 'true', 'false']).optional().catch(undefined),
 });
 
 type PerformanceSearch = z.infer<typeof performanceSearchSchema>;
@@ -126,8 +127,9 @@ function StudioPerformanceDashboard() {
       client_id: search.client_id ? [search.client_id] : undefined,
       show_type_id: toArrayParam(search.show_type_id),
       platform_id: toArrayParam(search.platform_id),
+      has_performance: search.has_performance,
     };
-  }, [dateRange, search.client_id, search.show_type_id, search.platform_id]);
+  }, [dateRange, search.client_id, search.show_type_id, search.platform_id, search.has_performance]);
 
   const summaryQuery = usePerformanceSummaryQuery(studioId, apiParams);
   const showsQuery = usePerformanceShowsQuery(studioId, {
@@ -211,6 +213,8 @@ function StudioPerformanceDashboard() {
                 search={search}
                 updateSearch={updateSearch}
                 onRefresh={handleRefresh}
+                locale={summaryQuery.data?.locale ?? 'th-TH'}
+                currency={summaryQuery.data?.currency ?? 'THB'}
               />
             </div>
           </div>

@@ -36,6 +36,8 @@ describe('studioPerformanceController', () => {
       recorded_shows_count: 2,
       total_shows_count: 3,
       trend: [],
+      currency: 'THB',
+      locale: 'th-TH',
     };
     service.getPerformanceSummary.mockResolvedValue(mockSummary);
 
