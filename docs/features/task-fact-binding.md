@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Shipped — Phase 4
 > **Workstream**: Operational Actuals & Operations Review
-> **Canonical docs**: [/apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md](file:///Users/allenlin/.gemini/antigravity/worktrees/eridu-services/complete-phase-four-tasks/apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md)
+> **Canonical docs**: [apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md](../../apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md)
 
 ## Problem
 
