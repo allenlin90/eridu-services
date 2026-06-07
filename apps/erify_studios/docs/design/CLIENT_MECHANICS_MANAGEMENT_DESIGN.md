@@ -1,274 +1,205 @@
 # Client Mechanics Management — Design
 
-> **Status**: Planned design reset
-> **Date**: 2026-05-20
-> **Scope**: client-owned mechanics management, campaign-scoped mechanic sets, and task-template mechanic assignment for loop-based moderation.
-> **Phase**: 4 direction change. Supersedes the narrower task-template grid-only plan from PR #86; that branch is reference material, not source of truth.
+> **Status**: Planned — lean reset (2026-06-07)
+> **Scope**: client-owned mechanics catalog, task-template mechanic assignment for loop-based moderation, and account-manager mechanic↔show coverage.
+> **Roadmap**: [PHASE_4.md rows 20.1–20.7](../../../../docs/roadmap/PHASE_4.md#pr-20--direction-2026-06-07-reset)
+> **Product spec**: [docs/prd/client-mechanics.md](../../../../docs/prd/client-mechanics.md)
+> **Supersedes**: the heavyweight 4-entity/versioned/campaign-set plan in this doc's prior revision (derived from [#87](https://github.com/allenlin90/eridu-services/pull/87)); PR [#86](https://github.com/allenlin90/eridu-services/pull/86)'s template-local grid is reference material, not source of truth.
 
 ## Problem
 
-Loop-based moderation templates currently embed product and promotion cue cards directly as task-template checkbox fields. That made sense when templates were the only authoring surface, but it fails once the same client runs recurring campaigns across many shows, templates, or studios.
+Loop-based moderation templates currently embed product and promotion cue cards directly as task-template checkbox fields. That made sense when templates were the only authoring surface, but it fails once the same client runs recurring campaigns across many shows and templates.
 
-The concrete failure surfaced on template `ttpl_pWi1mbHEtHU0D-Zc3cHa`: most checkbox labels are generic values such as `Product machenic` and `Promotion machenic`, while the real instruction lives in each field's description/key. A grid that groups by label collapses unrelated instructions. A positional grid also lets identical-looking instructions drift because each cell is still independent.
+The concrete failure surfaced on template `ttpl_pWi1mbHEtHU0D-Zc3cHa`: most checkbox labels are generic values such as `Product machenic` and `Promotion machenic`, while the real instruction lives in each field's description/key. Grouping by label collapses unrelated instructions; a positional grid lets identical-looking instructions drift because each cell is independent.
 
-The actual domain object is the **mechanic**: a reusable client instruction, product cue, or promotion cue that content teams manage and template authors assign into workflow loops.
+The actual domain object is the **mechanic**: a reusable client instruction, product cue, or promotion cue that content teams manage and template authors assign into workflow loops. Editing a mechanic once should propagate to every loop that uses it.
 
-## Pain Points
+Separately, the people who own a client relationship (account managers) need to **verify** that the right, current mechanics are actually reaching the shows they care about — without seeing cost/compensation data.
 
-- Mechanics are content assets, but they are edited inside task-template structure.
-- Content teams need to manage mechanics without also editing template validation, shared fields, or loop structure.
-- Template authors need to prevent wrong-campaign assignments, especially when a client has similar mechanics for monthly events such as mid-month, payday, or doubles.
-- Multiple studios may work with the same client, so studio-local mechanic copies would create drift.
-- Historical tasks must stay traceable. Changing mechanic wording later must not rewrite past task snapshots.
-- Producers need usage visibility before editing, retiring, or replacing a mechanic.
+## Lean reset — what changed and why
+
+The prior revision specified a four-entity catalog (`ClientMechanic`, `ClientMechanicVersion`, `ClientMechanicCampaignSet`, `ClientMechanicCampaignSetItem`) with immutable content versioning and campaign-scoped sets. A 2026-06-07 design pass kept the **client-owned catalog as the durable model** but **deferred the expensive layers**, because the stated near-term targets are narrower (a reviewer role + applying a mechanic across loops) and client-facing access is real-but-not-imminent.
+
+**Locked decisions:**
+
+| ID | Decision |
+| --- | --- |
+| Model | Keep the client-owned catalog (drop PR#86's template-local metadata storage; reuse its Loop×Mechanic matrix UX). Ship **one mutable `ClientMechanic` per client**. |
+| B1 | **Mechanic-bearing templates are client-bound.** `TaskTemplate` is studio-scoped today; add an optional `clientId` so one client's cues never leak onto another client's shows. |
+| B2 | **Catalog scope: client-global, studio-authorized writes.** `ClientMechanic` is owned by the global `Client` (single truth across studios); writes are authorized only to studio members linked to that client. Cross-studio propagation is intended. |
+| B3 | **`ACCOUNT_MANAGER` edits the catalog, read-only on operations** (task templates, shows, creator mapping) with money fields redacted. ADMIN/MANAGER retain catalog write. |
+| S1 | **Staleness without versioning:** a monotonic `contentRevision` int on `ClientMechanic`, bumped on content edit, is frozen into each template snapshot's `mechanic_ref`. Coverage compares frozen-vs-current revision exactly — no version history needed. |
+| S2 | **Coverage is queryable:** a denormalized `TaskTemplateMechanicRef` link table (template/snapshot ↔ mechanic + loop), written on template save, backs both coverage directions — never a JSONB scan. |
+| S3 | **Money redaction: allow-list projection**, not a field blacklist, plus a negative golden test enumerating money-bearing fields (Finance Guardrails). |
+| S4 | **Lifecycle:** mechanics retire (soft); hard-delete is blocked while referenced. |
+
+**Deferred** (added when client-facing access / multi-campaign curation becomes concrete): immutable `ClientMechanicVersion` history, `ClientMechanicCampaignSet` + items (campaign-scoped assignment guard), cross-studio mechanic copies, and per-template label overrides. See [PHASE_4 Out of scope](../../../../docs/roadmap/PHASE_4.md#out-of-scope-post-phase-4).
 
 ## Goals
 
-- Make mechanic identity independent from task-template field labels.
-- Scope mechanics to clients, with campaign sets limiting which mechanics are available for a given moderation workflow.
-- Version mechanic content for audit, analysis, and traceability.
-- Add a studio role for account/service users who manage client mechanics while only reading operational context.
-- Let task templates reference approved mechanic versions while still freezing resolved instructions into immutable template snapshots.
-- Provide separate management UIs for mechanics and task templates.
-- Keep task template builder focused on workflow structure, loop layout, shared fields, validation, and assignment.
+- Make mechanic identity independent from task-template field labels (identity is a UID, not the rendered label).
+- Scope mechanics to clients; a mechanic-bearing template binds to one client.
+- Let template authors apply the same mechanic across multiple loops, with edit-once-propagates semantics.
+- Add a studio role for account/service users who manage client mechanics while only reading non-financial operational context.
+- Let account managers verify, per target show, whether the latest mechanic content is actually reaching the show.
+- Keep the task-template builder focused on workflow structure; mechanic management lives in its own surface.
 
-## Non-Goals
+## Non-Goals (this cut)
 
-- No cross-client mechanic sharing in the first implementation.
+- No immutable mechanic version history (a monotonic `contentRevision` covers staleness detection).
+- No campaign sets / campaign-scoped assignment guard.
+- No cross-client mechanic sharing and no per-template label overrides.
 - No automatic rewrite of historical task-template snapshots or submitted task content.
-- No advanced approval workflow beyond active/retired/versioned lifecycle unless a later PR adds it.
-- No analytics on per-show mechanic performance in the first pass. The first rollup is usage: templates, loops, snapshots.
+- No mutation rights for `ACCOUNT_MANAGER` over operational records.
 
 ## Ownership Model
 
-### Client
+### Client (global)
 
-The client owns the mechanic catalog. A client-level catalog can be reused by more than one studio if the same client works across studios.
+`Client` is a global entity (unique name, related to shows/schedules) — **not** studio-scoped. It owns the mechanic catalog, so the same client's mechanics are a single truth reused by any studio that runs that client's shows (B2).
 
-### Mechanic
+### Mechanic (`ClientMechanic`)
 
-A mechanic is the stable identity for a reusable moderation instruction. Examples:
-
-- A product cue for a specific SKU or talking point.
-- A promotion cue such as price comparison, voucher callout, or bundle explanation.
-- A recurring speaking instruction that content teams want to manage centrally.
-
-Mechanic identity is not the label rendered in a task field. Labels may be generic; identity must come from a UID.
-
-### Mechanic Version
-
-A mechanic version is an immutable content snapshot. It stores the resolved instruction text and metadata at a point in time.
-
-Recommended fields:
+The stable identity for a reusable moderation instruction (product cue, promotion cue, recurring speaking instruction). One **mutable** row per mechanic. Recommended fields:
 
 - `uid`
-- `mechanic_uid`
-- `version`
+- `client_id` (FK → global `Client`)
 - `title`
-- `instruction_label`
-- `instruction_body`
-- `description`
+- `instruction_label` — the rendered field label (may be generic)
+- `instruction_body` — the resolved instruction shown to moderators
+- `status` — `active` | `retired`
+- `version` — optimistic-lock integer (row concurrency, **not** content history)
+- `content_revision` — monotonic integer, bumped whenever `instruction_label`/`instruction_body` change (S1)
 - `metadata`
-- `created_by`
-- `created_at`
+- `created_by`, `created_at`, `updated_at`
 
-Only the latest active version is normally offered for new campaign sets, but older versions remain available for traceability.
-
-### Campaign Mechanic Set
-
-A campaign set groups the approved mechanic versions for a client campaign or recurring event type, for example:
-
-- `Mid-month`
-- `Payday`
-- `Double`
-- `Fashion Week May 2026`
-
-Task templates choose from a campaign set, not the full client catalog. This is the primary guard against assigning mechanics from the wrong campaign.
-
-### Campaign Mechanic Set Item
-
-A set item links one campaign set to one mechanic version and may carry ordering/grouping metadata for the management UI.
+Identity comes from the UID; the label may be generic. Editing content bumps `content_revision` and propagates to every linked loop's resolved field; it does **not** mutate already-frozen template snapshots.
 
 ## Task Template Integration
 
-Task templates do not own mechanics. They assign mechanics into loops.
+Task templates do not own mechanics — they **assign** mechanics into loops. Loops remain `metadata.loops[]` plus `items[].group`; no separate loop entity.
 
-The builder flow should be:
+Builder flow:
 
-1. Template author selects a client and campaign mechanic set.
-2. The builder loads active mechanics from that set.
-3. The assignment grid renders loops by mechanic.
-4. Assigning a mechanic to a loop creates or updates a task-template field linked to that mechanic version.
-5. Saving the template stores both the mechanic reference and the resolved instruction content in the template schema.
-6. Template snapshot creation freezes that resolved content for future generated tasks.
+1. The template is bound to a client (`TaskTemplate.clientId`, B1); the builder shows a client selector that establishes/reads this binding.
+2. The builder loads that client's **active** mechanics.
+3. A **Loop × Mechanic matrix** renders loops (rows) by mechanics (columns); each cell is a checkbox.
+4. Checking a cell links a checkbox field into that loop's `group`, carrying the mechanic's resolved label/description. The **same mechanic checked down multiple loops** creates one field per loop, all sharing one `mechanic_id` identity (edit-once-in-catalog propagates).
+5. Cards view stays canonical for structural fields; mechanic fields interleave and reorder there, but their label/description are catalog-owned (read-only in Cards).
+6. Saving writes a `TaskTemplateMechanicRef` row per reference (S2) and freezes resolved content + `content_revision` into the template snapshot.
 
-The task-template schema should keep enough denormalized content for runtime safety:
+### Field shape
+
+Additive, validated in `@eridu/api-types/task-management`; the exact key is finalized there before implementation. It must be additive and rides the existing v2 field schema:
 
 ```jsonc
 {
   "id": "fld_...",
   "key": "mechanic_...",
   "type": "checkbox",
-  "label": "Product mechanic",
+  "label": "Product mechanic",                 // resolved (denormalized) at save
   "description": "Resolved instruction text shown to moderators",
   "group": "l1",
   "mechanic_ref": {
     "client_id": "client_...",
-    "campaign_set_id": "mset_...",
-    "mechanic_id": "mech_...",
-    "mechanic_version_id": "mver_..."
+    "mechanic_id": "cmech_...",
+    "content_revision": 7                       // frozen for staleness comparison (S1)
   }
 }
 ```
 
-The exact schema key should be finalized in `@eridu/api-types/task-management` before implementation. It must be additive and validated by the shared schema package.
+### Validation rules
 
-## Snapshot Rules
+- **Per-loop `(mechanic_id, group)` uniqueness** — a mechanic is assign-once per loop; re-assigning is a no-op. Mirrors the existing v2 per-loop `(key, group)` uniqueness. Genuine "duplicates" live as distinct catalog entries or manual fields, never as two references to the same mechanic in one loop.
+- A mechanic-bearing field requires the template's `clientId` to be set and to match `mechanic_ref.client_id`.
 
-- Mechanic versions are immutable.
-- Task-template saves reference a specific mechanic version.
-- Task-template snapshots freeze the resolved field label/description plus the mechanic reference.
-- Generated tasks read the task-template snapshot, not the live mechanic catalog.
-- Editing a mechanic creates a new mechanic version. It does not mutate old template snapshots.
-- Updating a template to a newer mechanic version is an explicit template edit that bumps template version and creates a new task-template snapshot.
+## Snapshot & Coverage Rules
 
-This preserves historical moderation traceability while allowing content teams to improve mechanics for future tasks.
+- `ClientMechanic` rows are mutable; editing content bumps `content_revision`.
+- Task-template saves reference a mechanic by `mechanic_id` and freeze resolved label/description + `content_revision` into the snapshot.
+- Generated tasks read the task-template snapshot, not the live catalog.
+- A show's task is **stale** for a mechanic when its frozen `content_revision` is behind the catalog's current `content_revision`. **Dropped** when the template's latest version no longer carries the mechanic. **Unassigned** when no relevant task carries it. Otherwise **current**.
+- "Latest finalized task with a loop schema wins" per show (reuse the PR 22.1 selection); a planned show with no task reads as unassigned.
 
 ## UI Surfaces
 
-### Account Manager Role
+### Account Manager role (`ACCOUNT_MANAGER`)
 
-Add a studio role tentatively named `ACCOUNT_MANAGER`.
+A studio role for client service / account-management users (B3).
 
-Purpose: represent a client service or account-management user who maintains client-specific mechanics and campaign sets while understanding the surrounding operational plan.
-
-Access rules:
-
-- Can manage client mechanics, mechanic versions, campaign mechanic sets, and campaign-set membership.
-- Can read non-financial planning context needed to avoid bad assignments: clients, shows, show metadata, creator mapping, and task-template mechanic references.
-- Cannot create, update, or delete operational records such as shows, shifts, creator assignments, tasks, task templates, members, creators, or shared fields.
-- Cannot access cost, compensation, finance, economics, rate, or payroll views.
-- Must receive redacted read models where an otherwise-readable planning endpoint includes money fields.
-
-Route intent:
+- **Writes**: client mechanics (create / edit / retire), authorized to studio members linked to that client (B2).
+- **Reads (money-redacted)**: task templates, shows / show context, creator mapping. Reads use an **allow-list projection** that strips rate / commission / compensation fields (S3).
+- **No access**: members, shifts, compensation, economics; no operational mutations (shows, shifts, creator assignments, tasks, task templates, members, creators).
 
 | Surface | Access |
 | --- | --- |
 | Mechanics Management | View + Manage |
+| Mechanic↔show coverage | View |
 | Shows / show context | Read-only, no money fields |
 | Creator Mapping | Read-only, no compensation fields |
-| Task Templates | Read-only mechanic references only; no template editing |
+| Task Templates | Read-only (review, no editing) |
 | Members / shifts / compensation / economics | No access |
 
-Operational edits remain owned by `ADMIN` and `MANAGER`. `ACCOUNT_MANAGER` is deliberately not an operations role.
+The membership `role` column is a free `String`, so adding `account_manager` needs **no DB enum migration** — only the `STUDIO_ROLE` enum in `@eridu/api-types/memberships`, the guard allow-lists, and the roster role picker (ADMIN grants it).
 
 ### Mechanics Management
 
-Purpose: content/reference management.
-
-Expected capabilities:
-
-- Browse mechanics by client.
-- Filter by campaign set, active/retired state, and search text.
-- Create mechanics and new mechanic versions.
-- Create and manage campaign sets.
-- Add/remove mechanic versions from campaign sets.
-- Retire mechanics or campaign-set entries without deleting history.
-- View usage: templates, loops, snapshots, and later tasks/shows.
+Content/reference management for account managers (and ADMIN/MANAGER): browse by client, create / edit / retire, search + active/retired filter. No campaign-set UI in this cut.
 
 ### Task Template Builder
 
-Purpose: workflow assembly.
+Workflow assembly: client selector, Loop × Mechanic matrix sourced from the bound client's active mechanics, Cards view for structural fields, read-only mechanic detail when a linked field is selected, and warnings when a linked mechanic is retired or its `content_revision` has advanced beyond the template's frozen reference (superseded).
 
-Expected capabilities:
+### Coverage & Verification (bidirectional)
 
-- Select client and campaign set for a moderation template.
-- Assign campaign-set mechanics into loops through a matrix.
-- Keep Cards view for structural task-template fields, validation, shared fields, and non-mechanic fields.
-- Show read-only mechanic source/version details when a linked field is selected.
-- Warn when a linked mechanic version is retired or superseded.
-
-### Usage And Audit
-
-Purpose: trace and change safety.
-
-Expected capabilities:
-
-- For a mechanic version: show templates and loops that reference it.
-- For a campaign set: show which templates consume it.
-- For a template: show mechanic references by loop.
-- Later: show generated task/show usage.
+- **Mechanic→shows**: for a mechanic, which templates reference it and whether its latest version still carries it; for each target show (date-ranged), current / stale / dropped / unassigned status.
+- **Show→mechanics**: for a show (or set of target shows), which mechanics are current / stale / missing.
+- Read-only for `ACCOUNT_MANAGER`; problem rows offer a **Flag to manager** hand-off. The actual fix (regenerate the task from the latest snapshot) stays an ADMIN/MANAGER action.
 
 ## Data Model Direction
 
-Use dedicated tables rather than JSON metadata for the core mechanic catalog.
+Dedicated tables for the catalog and the coverage link; no JSON metadata for core identity.
 
-Proposed entities:
+- `ClientMechanic` (fields above; FK → global `Client`).
+- `TaskTemplateMechanicRef` — denormalized link written on template save: `(template_id, snapshot_id?, mechanic_id, group/loop_id)` with indexes for both coverage directions (S2).
+- `TaskTemplate` gains an optional `clientId` + relation (B1).
 
-- `ClientMechanic`
-- `ClientMechanicVersion`
-- `ClientMechanicCampaignSet`
-- `ClientMechanicCampaignSetItem`
-
-The task-template schema stores references to mechanic versions because task template fields are already the layer that snapshots into generated tasks. Do not add a separate loop entity; loops remain `metadata.loops[]` plus `items[].group`.
-
-Mechanic catalog routes should follow the existing shallow studio-scoped route style while respecting client ownership. A likely first shape:
+Routes follow the existing shallow studio-scoped style while respecting global client ownership; external IDs are UID-based:
 
 ```text
-GET  /studios/:studioId/clients/:clientId/mechanics
-POST /studios/:studioId/clients/:clientId/mechanics
-GET  /studios/:studioId/clients/:clientId/mechanic-campaign-sets
-POST /studios/:studioId/clients/:clientId/mechanic-campaign-sets
+GET    /studios/:studioId/clients/:clientId/mechanics
+POST   /studios/:studioId/clients/:clientId/mechanics
+PATCH  /studios/:studioId/clients/:clientId/mechanics/:mechanicId
+DELETE /studios/:studioId/clients/:clientId/mechanics/:mechanicId   # retire; hard-delete blocked while referenced
 ```
 
-Detailed endpoint naming should be finalized with backend implementation, but the external IDs must be UID-based and never expose internal DB IDs.
+Coverage endpoints (read-only) are finalized with backend implementation (20.6/20.7).
 
 ## PR Breakdown
 
-### PR #87 — Design Reset And Roadmap
+Tracked as [PHASE_4 rows 20.1–20.7](../../../../docs/roadmap/PHASE_4.md):
 
-Document the direction change, retire the task-template grid-only plan as source of truth, and add this design. No product code.
-
-### PR 14.1 — Client Mechanic Catalog Foundation
-
-Add shared API schemas, Prisma models, repositories, services, controllers, `ACCOUNT_MANAGER` role support, and tests for client mechanics, mechanic versions, campaign sets, and set items.
-
-### PR 14.2 — Mechanics Management UI
-
-Add the client-scoped mechanics management route and campaign-set management UI. This can ship before task-template integration so content teams can start curating mechanics.
-
-### PR 14.3 — Task Template Mechanic References
-
-Extend task-template schema support for mechanic references, update validation, payload transformation, and backend schema validation. Add migration/backfill only if needed for existing templates.
-
-### PR 14.4 — Template Assignment Matrix
-
-Build the moderation assignment matrix in the task-template builder using campaign-set mechanics. Cards remains the structural editor.
-
-### PR 14.5 — Usage Rollup And Drift Warnings
-
-Add usage views and warnings for retired or superseded mechanic versions used by templates.
+- **20.1** — Client mechanic catalog foundation + `ACCOUNT_MANAGER` role (BE).
+- **20.2** — Mechanics management UI (FE).
+- **20.3** — `ACCOUNT_MANAGER` read-only ops + money redaction (BE+FE).
+- **20.4** — Template→client binding (`TaskTemplate.clientId`).
+- **20.5** — Mechanic references + Loop×Mechanic matrix (builder).
+- **20.6** — Mechanic coverage read model + mechanic→shows view.
+- **20.7** — Show→mechanics coverage view + builder drift warnings.
 
 ## Open Questions
 
-- Should campaign sets be linked to existing show/campaign concepts if a normalized campaign model appears later, or remain a mechanics-domain resource for now?
+- Should `TaskTemplate.clientId` be enforced (non-null) for the moderation template kind, or stay optional with mechanics simply unavailable until set? (Current plan: optional.)
 - Should the role label remain `ACCOUNT_MANAGER`, or should product copy call it "Client Service Manager" while the API enum stays stable?
-- Should a template be allowed to reference mechanics from more than one campaign set?
-- What imported source format replaces the current CSV generator once mechanics are first-class?
+- Migration of existing moderation templates: mint one `ClientMechanic` per existing cue field (conservative, no lossy label-merge) once the template's `clientId` is set — confirm the backfill trigger and who runs it.
 
 ## Verification Gates
 
-Each implementation PR should run affected workspace checks:
+Each implementation PR runs affected workspace checks:
 
 ```bash
-pnpm --filter erify_api lint
-pnpm --filter erify_api typecheck
-pnpm --filter erify_api test
-pnpm --filter erify_api build
-pnpm --filter erify_studios lint
-pnpm --filter erify_studios typecheck
-pnpm --filter erify_studios test
-pnpm --filter erify_studios build
+pnpm --filter erify_api    lint && pnpm --filter erify_api    typecheck && pnpm --filter erify_api    test && pnpm --filter erify_api    build
+pnpm --filter erify_studios lint && pnpm --filter erify_studios typecheck && pnpm --filter erify_studios test && pnpm --filter erify_studios build
 ```
 
-Design-only PRs should at minimum run `git diff --check`.
+Design-only changes run at minimum `git diff --check`.
