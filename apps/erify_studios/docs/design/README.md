@@ -7,7 +7,7 @@ Design/proposal/in-progress documents for `erify_studios`.
 1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned follow-up for studio resolve UX
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
 3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-4. [Client Mechanics Management](./CLIENT_MECHANICS_MANAGEMENT_DESIGN.md) — 📐 Planned design reset for client-owned, campaign-scoped moderation mechanics
+4. [Client Mechanics Management](./CLIENT_MECHANICS_MANAGEMENT_DESIGN.md) — 📐 Planned (lean reset 2026-06-07): client-owned mechanics catalog + `ACCOUNT_MANAGER` + mechanic↔show coverage (PR 20.1–20.7; [PRD](../../../../docs/prd/client-mechanics.md))
 5. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — ⏸️ Deferred Phase 5 reference (revisit for Client Portal)
 
 ## Note
