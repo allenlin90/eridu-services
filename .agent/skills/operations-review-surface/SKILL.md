@@ -66,9 +66,17 @@ The window math is on the **frontend**; the backend endpoint is timezone-agnosti
 
 When the backend groups rows **into days** for a trend/series (not just filtering by a range), it must bucket by the **same operational-day definition the frontend selected**, not by the server's incidental UTC calendar.
 
-- ❌ `someDate.toISOString().slice(0, 10)` — this is **not** a date-bucketing primitive. It silently assumes UTC, so for any non-UTC studio the day boundaries fall at UTC midnight instead of the local 06:00 boundary: edge buckets are off by one and rows near local midnight land in the wrong day. (Bug fixed in PR 21.8 — the performance trend bucketed both its keys and per-show assignment this way.)
-- ✅ Carry the operational timezone (or the precomputed per-day boundaries) into the aggregation and group by an explicit timezone-aware day key. The endpoint stays timezone-agnostic for *validation*; *grouping* is not timezone-agnostic.
+- ❌ `someDate.toISOString().slice(0, 10)` on a **timestamp/instant** — this is **not** a date-bucketing primitive. It silently assumes UTC, so for any non-UTC studio the day boundaries fall at UTC midnight instead of the local 06:00 boundary: edge buckets are off by one and rows near local midnight land in the wrong day. (Bug fixed in PR 21.8 — the performance trend bucketed both its keys and per-show assignment this way.)
+- ✅ Use the shared backend helper [`@/lib/utils/operational-day.util`](../../../apps/erify_api/src/lib/utils/operational-day.util.ts) — `deriveClientOffsetMs(startDate)` + `toOperationalDayKey(instant, offsetMs)` — to derive a timezone-aware day key from the FE-supplied `start_date`. Both `StudioPerformanceService` and `StudioCostsService` consume it; **do not re-copy these methods into a new service** (they were private duplicates until PR 19.x extracted them). The endpoint stays timezone-agnostic for *validation*; *grouping* is not.
+- ⚠️ Exception — a **date-only column** (e.g. `StudioShift.date`, persisted at UTC-midnight of the operational day) already *is* the bucket key; `.slice(0, 10)` on it is correct because it carries no time-of-day. Only instants (`startTime`, `createdAt`, …) need the offset math. Comment the distinction at the call site.
 - Range **filtering** with absolute ISO bounds is fine as-is — this rule is specifically about deriving discrete day buckets from a timestamp.
+
+### Trend must reconcile with its subtotals
+
+A stacked trend/series whose columns are also reported as scalar subtotals (e.g. `show_cost_subtotal`, `shift_cost_subtotal`) must satisfy `sum(trend[col]) === subtotal[col]`. The silent-failure mode: a row's bucket key falls outside the pre-seeded day range, so its cost is dropped from the trend but still counted in the subtotal — the chart no longer adds up.
+
+- ✅ Accumulate through a helper that **lazily creates the bucket** if the key is missing, then sort the emitted series by date. Pre-seeding the full range gives contiguous days; lazy creation guarantees no resolved value is ever dropped.
+- ✅ Add a regression test asserting `sum(trend) === subtotal` for a multi-day fixture (see `studio-costs.service.spec.ts › keeps the trend reconciled with the subtotals`).
 
 ## URL-synced multi-tab state
 
@@ -97,7 +105,8 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Container <200 LOC; tabs collapse into ONE generic `ReviewTabPanel`
 - [ ] View-model hook owns queries + handlers + export; presentation config stays in the container
 - [ ] Operational-day bounds computed FE-side via shared range utilities, serialized as absolute ISO-8601
-- [ ] Backend day-bucketing (trends/series) uses a timezone-aware operational-day key, never `toISOString().slice(0, 10)`
+- [ ] Backend day-bucketing (trends/series) uses the shared `operational-day.util` helper, never an inline `toISOString().slice(0, 10)` on an instant (date-only columns excepted)
+- [ ] Trend columns reconcile with their scalar subtotals (`sum(trend) === subtotal`), guarded by a test
 - [ ] Only the current operational day silently refetches
 - [ ] Active tab + all tab filters/pages in validated route search; tab switch clears other tabs' params
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils

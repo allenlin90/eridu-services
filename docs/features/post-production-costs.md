@@ -61,7 +61,7 @@ export const costsShowsQuerySchema = costsQuerySchema.extend({
 });
 
 export const costsShiftsQuerySchema = costsQuerySchema.extend({
-  page: z.coerce.number().int().min(1).optional().default(10),
+  page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
   role: z.string().optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
@@ -201,7 +201,7 @@ To implement this surface cleanly, task 19 in `PHASE_4.md` is redesigned into th
     *   Export these schemas and infer types in `packages/api-types/src/index.ts`.
 *   **PR 19.2: Backend Costs Module, Controller & Services**
     *   Create NestJS `studio-costs` module, controller, and service in `apps/erify_api/src/studios/studio-costs`.
-    *   Implement pure live-calculators for show costs and shift costs, integrating DB queries for `Show`, `ShowCreator`, `StudioShift`, and `CompensationLineItem` with timezone-aware daily trend aggregation.
+    *   Implement pure live-calculators for show costs and shift costs, integrating DB queries for `Show`, `ShowCreator`, `StudioShift`, and `CompensationLineItem` with timezone-aware daily trend aggregation via the shared [`operational-day.util`](../../apps/erify_api/src/lib/utils/operational-day.util.ts) (shared with `StudioPerformanceService`). The trend reconciles with the reported subtotals — each resolved cost lands in exactly one operational-day bucket (`sum(trend) === subtotal`).
     *   Resolve date range defaults from a shared studio setting (`metadata.planning.defaultDashboardRangeDays`), defaulting to 7.
     *   Write service and controller unit tests matching the patterns in `studio-performance.service.spec.ts`.
 *   **PR 19.3: Frontend Sidebar & Route Configuration**

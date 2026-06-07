@@ -129,7 +129,7 @@ export const costsShiftsSortSchema = z
  * Query parameters for Shift Costs breakdown
  */
 export const costsShiftsQuerySchema = costsQuerySchema.extend({
-  page: z.coerce.number().int().min(1).optional().default(10),
+  page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
   role: z.string().optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),

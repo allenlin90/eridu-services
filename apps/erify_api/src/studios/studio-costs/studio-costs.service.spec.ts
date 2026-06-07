@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, StudioShiftStatus } from '@prisma/client';
 
+import { costsShiftsQuerySchema, costsShowsQuerySchema } from '@eridu/api-types/costs';
+
 import { StudioCostsService } from './studio-costs.service';
 
 import type { PrismaService } from '@/prisma/prisma.service';
@@ -222,6 +224,30 @@ describe('studioCostsService', () => {
       expect(result.shift_cost_subtotal).toBe('830.00');
       expect(result.unresolved_shifts_count).toBe(0);
     });
+
+    it('keeps the trend reconciled with the subtotals', async () => {
+      const showOnDay2 = mockShow; // 2026-06-02, resolved cost 1200
+      const shiftOnDay3 = mockShift; // 2026-06-03, resolved cost 850
+
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([showOnDay2]);
+      (prisma.studioShift.findMany as jest.Mock).mockResolvedValue([shiftOnDay3]);
+
+      const result = await service.getCostsSummary('std_1', query);
+
+      const sum = (key: 'show_cost' | 'shift_cost' | 'total_cost') =>
+        result.trend.reduce((acc, point) => acc + Number(point[key]), 0).toFixed(2);
+
+      // Each resolved cost must appear in exactly one bucket, so the trend
+      // columns sum back to the reported subtotals (regression guard for the
+      // "silent drop" failure mode).
+      expect(sum('show_cost')).toBe(result.show_cost_subtotal);
+      expect(sum('shift_cost')).toBe(result.shift_cost_subtotal);
+      expect(sum('total_cost')).toBe(result.total_cost);
+
+      // Trend is emitted in ascending date order.
+      const dates = result.trend.map((point) => point.date);
+      expect(dates).toEqual([...dates].sort((a, b) => a.localeCompare(b)));
+    });
   });
 
   describe('getCostsShows', () => {
@@ -233,7 +259,7 @@ describe('studioCostsService', () => {
         ...query,
         page: 1,
         limit: 10,
-        sort: 'start_time:desc',
+        sort: [{ field: 'start_time' as const, desc: true }],
       });
 
       expect(prisma.show.findMany).toHaveBeenCalledWith(
@@ -276,12 +302,31 @@ describe('studioCostsService', () => {
         ...query,
         page: 1,
         limit: 10,
-        sort: 'total_cost:desc',
+        sort: [{ field: 'total_cost' as const, desc: true }],
       });
 
       expect(result.items).toHaveLength(2);
       expect(result.items[0].id).toBe('show_2'); // 1200 first
       expect(result.items[1].id).toBe('show_1'); // 700 second
+    });
+  });
+
+  describe('query schema defaults', () => {
+    const dateRange = {
+      start_date: '2026-06-01T00:00:00.000Z',
+      end_date: '2026-06-05T23:59:59.999Z',
+    };
+
+    it('defaults shifts pagination to the first page', () => {
+      const parsed = costsShiftsQuerySchema.parse(dateRange);
+      expect(parsed.page).toBe(1);
+      expect(parsed.limit).toBe(10);
+    });
+
+    it('defaults shows pagination to the first page', () => {
+      const parsed = costsShowsQuerySchema.parse(dateRange);
+      expect(parsed.page).toBe(1);
+      expect(parsed.limit).toBe(10);
     });
   });
 
@@ -294,7 +339,7 @@ describe('studioCostsService', () => {
         ...query,
         page: 1,
         limit: 10,
-        sort: 'date:asc',
+        sort: [{ field: 'date' as const, desc: false }],
       });
 
       expect(prisma.studioShift.findMany).toHaveBeenCalledWith(

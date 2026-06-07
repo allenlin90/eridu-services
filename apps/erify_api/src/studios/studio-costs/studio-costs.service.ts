@@ -20,6 +20,11 @@ import {
 } from '@eridu/api-types/costs';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
+import {
+  deriveClientOffsetMs,
+  OPERATIONAL_DAY_START_HOUR,
+  toOperationalDayKey,
+} from '@/lib/utils/operational-day.util';
 import { PrismaService } from '@/prisma/prisma.service';
 
 type ShowWithRelations = Prisma.ShowGetPayload<{
@@ -74,7 +79,6 @@ export class StudioCostsService {
   private static readonly MAX_DATE_RANGE_DAYS = 31;
   private static readonly DEFAULT_LOCALE = 'th-TH';
   private static readonly DEFAULT_CURRENCY = 'THB';
-  private static readonly OPERATIONAL_DAY_START_HOUR = 6;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -97,25 +101,6 @@ export class StudioCostsService {
         `Date range cannot exceed ${StudioCostsService.MAX_DATE_RANGE_DAYS} days`,
       );
     }
-  }
-
-  private deriveClientOffsetMs(startDate: Date): number {
-    const utcTimeInMinutes = startDate.getUTCHours() * 60 + startDate.getUTCMinutes();
-    const localTimeInMinutes = StudioCostsService.OPERATIONAL_DAY_START_HOUR * 60;
-    let offsetInMinutes = localTimeInMinutes - utcTimeInMinutes;
-    if (offsetInMinutes > 720) {
-      offsetInMinutes -= 1440;
-    } else if (offsetInMinutes < -720) {
-      offsetInMinutes += 1440;
-    }
-    return offsetInMinutes * 60 * 1000;
-  }
-
-  private toOperationalDayKey(instant: Date, offsetMs: number): string {
-    const startHourMs = StudioCostsService.OPERATIONAL_DAY_START_HOUR * 60 * 60 * 1000;
-    return new Date(instant.getTime() + offsetMs - startHourMs)
-      .toISOString()
-      .slice(0, 10);
   }
 
   private resolveLocalization(metadata: unknown): { locale: string; currency: string } {
@@ -184,9 +169,9 @@ export class StudioCostsService {
 
     const startDate = new Date(query.start_date);
     const endDate = new Date(query.end_date);
-    const offsetMs = this.deriveClientOffsetMs(startDate);
-    const localStartDateStr = this.toOperationalDayKey(startDate, offsetMs);
-    const localEndDateStr = this.toOperationalDayKey(endDate, offsetMs);
+    const offsetMs = deriveClientOffsetMs(startDate);
+    const localStartDateStr = toOperationalDayKey(startDate, offsetMs);
+    const localEndDateStr = toOperationalDayKey(endDate, offsetMs);
     const startLocalDate = new Date(`${localStartDateStr}T00:00:00Z`);
     const endLocalDate = new Date(`${localEndDateStr}T00:00:00Z`);
 
@@ -522,10 +507,25 @@ export class StudioCostsService {
     let unresolvedShiftsCount = 0;
     let shiftCostSubtotal = new Prisma.Decimal(0);
 
-    const offsetMs = this.deriveClientOffsetMs(startDate);
-    const startHourMs = StudioCostsService.OPERATIONAL_DAY_START_HOUR * 60 * 60 * 1000;
+    const offsetMs = deriveClientOffsetMs(startDate);
+    const startHourMs = OPERATIONAL_DAY_START_HOUR * 60 * 60 * 1000;
 
     const trendMap = new Map<string, { show_cost: Prisma.Decimal; shift_cost: Prisma.Decimal }>();
+
+    // Accumulates a resolved cost into its operational-day bucket. Buckets are
+    // pre-seeded for every day in range (below), but we lazily create one for
+    // any straggler key so the trend always reconciles with the subtotals —
+    // i.e. sum(trend.show_cost) === show_cost_subtotal and likewise for shifts.
+    // Without this a key outside the seeded range would silently drop the cost
+    // from the trend while still counting it in the subtotal.
+    const addToTrend = (dateStr: string, field: 'show_cost' | 'shift_cost', amount: Prisma.Decimal) => {
+      let bucket = trendMap.get(dateStr);
+      if (!bucket) {
+        bucket = { show_cost: new Prisma.Decimal(0), shift_cost: new Prisma.Decimal(0) };
+        trendMap.set(dateStr, bucket);
+      }
+      bucket[field] = bucket[field].add(amount);
+    };
 
     // Seed every operational day in range
     const cursor = new Date(startDate.getTime() + offsetMs - startHourMs);
@@ -543,40 +543,39 @@ export class StudioCostsService {
 
     for (const show of shows) {
       const calculated = this.calculateShowCost(show);
-      const dateStr = this.toOperationalDayKey(show.startTime, offsetMs);
-      const trendData = trendMap.get(dateStr);
 
       if (calculated.total_cost === null) {
         unresolvedShowsCount++;
       } else {
         showCostSubtotal = showCostSubtotal.add(calculated.total_cost);
-        if (trendData) {
-          trendData.show_cost = trendData.show_cost.add(calculated.total_cost);
-        }
+        // `startTime` is a UTC instant, so it must be mapped through the
+        // operational-day offset to land in the right local-day bucket.
+        addToTrend(toOperationalDayKey(show.startTime, offsetMs), 'show_cost', calculated.total_cost);
       }
     }
 
     for (const shift of shifts) {
       const calculated = this.calculateShiftCost(shift);
-      const dateStr = shift.date.toISOString().slice(0, 10);
-      const trendData = trendMap.get(dateStr);
 
       if (calculated.total_cost === null) {
         unresolvedShiftsCount++;
       } else {
         shiftCostSubtotal = shiftCostSubtotal.add(calculated.total_cost);
-        if (trendData) {
-          trendData.shift_cost = trendData.shift_cost.add(calculated.total_cost);
-        }
+        // `shift.date` is a date-only column persisted at UTC midnight of the
+        // operational day, so its date portion is already the bucket key — no
+        // offset math (unlike `show.startTime`, which is a true instant).
+        addToTrend(shift.date.toISOString().slice(0, 10), 'shift_cost', calculated.total_cost);
       }
     }
 
-    const trend: CostsTrendCoordinate[] = Array.from(trendMap.entries()).map(([date, data]) => ({
-      date,
-      show_cost: data.show_cost.toFixed(2),
-      shift_cost: data.shift_cost.toFixed(2),
-      total_cost: data.show_cost.add(data.shift_cost).toFixed(2),
-    }));
+    const trend: CostsTrendCoordinate[] = Array.from(trendMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => ({
+        date,
+        show_cost: data.show_cost.toFixed(2),
+        shift_cost: data.shift_cost.toFixed(2),
+        total_cost: data.show_cost.add(data.shift_cost).toFixed(2),
+      }));
 
     return {
       total_cost: showCostSubtotal.add(shiftCostSubtotal).toFixed(2),
@@ -713,7 +712,11 @@ export class StudioCostsService {
       return { items, total };
     }
 
-    // In-memory sort required for total_cost
+    // total_cost is a computed (non-column) value, so it cannot be ordered or
+    // paginated in the database. We deliberately load the full filtered set,
+    // sort in memory, then slice. This is bounded by MAX_DATE_RANGE_DAYS (31d)
+    // which caps the row count; revisit (e.g. a materialized cost column) if
+    // the deep include tree ever makes this load too heavy.
     const shows = await this.prisma.show.findMany({ where: whereClause, include });
     const mappedItems = shows.map((show) => {
       const calculated = this.calculateShowCost(show);
@@ -864,7 +867,11 @@ export class StudioCostsService {
       return { items, total };
     }
 
-    // In-memory sort required for total_cost
+    // total_cost is a computed (non-column) value, so it cannot be ordered or
+    // paginated in the database. We deliberately load the full filtered set,
+    // sort in memory, then slice. This is bounded by MAX_DATE_RANGE_DAYS (31d)
+    // which caps the row count; revisit (e.g. a materialized cost column) if
+    // the deep include tree ever makes this load too heavy.
     const shifts = await this.prisma.studioShift.findMany({ where: whereClause, include });
     const mappedItems = shifts.map((shift) => {
       const calculated = this.calculateShiftCost(shift);
@@ -872,8 +879,11 @@ export class StudioCostsService {
         id: shift.uid,
         date: shift.date.toISOString().slice(0, 10),
         member_name: shift.user.name,
+        // Current studio membership role (first active membership), not the
+        // role held at shift time — acceptable for a cost breakdown view.
         member_role: shift.user.studioMemberships[0]?.role ?? 'MEMBER',
-        hourly_rate: decimalToString(shift.hourlyRate) ?? '0.00',
+        // hourlyRate is a non-null Decimal column; format directly.
+        hourly_rate: shift.hourlyRate.toFixed(2),
         status: shift.status,
         blocks: calculated.blocks,
         line_item_subtotal: calculated.line_item_subtotal.toFixed(2),
