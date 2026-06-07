@@ -4,8 +4,8 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   performanceSummaryResponseSchema,
-  showPerformanceResponseSchema,
   showPerformanceLoopsResponseSchema,
+  showPerformanceResponseSchema,
 } from '@eridu/api-types/performance';
 
 import { BaseStudioController } from '../base-studio.controller';

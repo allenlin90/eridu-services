@@ -5,8 +5,8 @@ import type {
   PerformanceQuery,
   PerformanceShowsQuery,
   PerformanceSummaryResponse,
-  ShowPerformanceResponse,
   ShowPerformanceLoopsResponse,
+  ShowPerformanceResponse,
 } from '@eridu/api-types/performance';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
@@ -504,14 +504,18 @@ export class StudioPerformanceService {
 
     // Helper to compare two sort values, placing nulls at the end
     const compareSortValues = (a: number | Prisma.Decimal | null, b: number | Prisma.Decimal | null, desc: boolean): number => {
-      if (a === null && b === null) return 0;
-      if (a === null) return 1;
-      if (b === null) return -1;
+      if (a === null && b === null)
+        return 0;
+      if (a === null)
+        return 1;
+      if (b === null)
+        return -1;
 
       const valA = a instanceof Prisma.Decimal ? a.toNumber() : a;
       const valB = b instanceof Prisma.Decimal ? b.toNumber() : b;
 
-      if (valA === valB) return 0;
+      if (valA === valB)
+        return 0;
 
       if (desc) {
         return valB - valA;
@@ -636,7 +640,8 @@ export class StudioPerformanceService {
 
       const metrics = show.showPlatforms.map((sp) => {
         const getVal = (fieldId: string | null) => {
-          if (!fieldId) return null;
+          if (!fieldId)
+            return null;
           const key = `${fieldId}:platform:${sp.uid}`;
           return content[key] ?? null;
         };
@@ -647,7 +652,8 @@ export class StudioPerformanceService {
         const rawCto = getVal(ctoFieldId);
 
         const formatDecimal = (val: any) => {
-          if (val === null || val === undefined || val === '') return null;
+          if (val === null || val === undefined || val === '')
+            return null;
           try {
             const d = new Prisma.Decimal(val);
             return decimalToString(d);
@@ -657,7 +663,8 @@ export class StudioPerformanceService {
         };
 
         const formatInt = (val: any) => {
-          if (val === null || val === undefined || val === '') return null;
+          if (val === null || val === undefined || val === '')
+            return null;
           const n = Math.round(Number(val));
           return Number.isFinite(n) ? n : null;
         };

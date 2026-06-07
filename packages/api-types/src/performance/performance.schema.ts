@@ -145,4 +145,3 @@ export const showPerformanceLoopsResponseSchema = z.object({
 });
 
 export type ShowPerformanceLoopsResponse = z.infer<typeof showPerformanceLoopsResponseSchema>;
-
