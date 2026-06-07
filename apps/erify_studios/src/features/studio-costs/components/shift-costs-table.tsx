@@ -1,4 +1,4 @@
-import type { ColumnDef, PaginationState } from '@tanstack/react-table';
+import type { ColumnDef, ColumnFiltersState, OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { format, parseISO } from 'date-fns';
 import { AlertTriangle, ChevronDown, ChevronsUpDown, ChevronUp, Filter, RotateCcw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -37,6 +37,7 @@ type CostsShiftsSearch = {
   limit: number;
   date_from?: string;
   date_to?: string;
+  member_name?: string;
   role?: string;
   status?: string;
   sort?: string;
@@ -193,6 +194,20 @@ export function ShiftCostsTable({
     const sortStr = nextRules.map((r) => `${r.id}:${r.desc ? 'desc' : 'asc'}`).join(',') || undefined;
     updateSearch({ sort: sortStr, page: 1 });
   }, [sortRules, updateSearch]);
+
+  const columnFilters = useMemo<ColumnFiltersState>(() => {
+    return search.member_name ? [{ id: 'member_name', value: search.member_name }] : [];
+  }, [search.member_name]);
+
+  const handleColumnFiltersChange: OnChangeFn<ColumnFiltersState> = (updater) => {
+    const nextFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
+    const nameFilter = nextFilters.find((f) => f.id === 'member_name');
+    const nextName = (nameFilter?.value as string | undefined)?.trim();
+    updateSearch({
+      member_name: nextName || undefined,
+      page: 1,
+    });
+  };
 
   const formatCurrency = useCallback((val: string | null | undefined) => {
     if (val === null || val === undefined)
@@ -431,6 +446,8 @@ export function ShiftCostsTable({
           pageSize: limit,
         }}
         onPaginationChange={handlePaginationChange}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={handleColumnFiltersChange}
         renderToolbar={(table) => (
           <DataTableToolbar
             table={table}

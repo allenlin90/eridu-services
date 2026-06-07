@@ -63,6 +63,7 @@ export const costsShowsQuerySchema = costsQuerySchema.extend({
 export const costsShiftsQuerySchema = costsQuerySchema.extend({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
+  member_name: z.string().optional(), // case-insensitive contains on the shift operator's name
   role: z.string().optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
   sort: z.string().optional(), // e.g. date:desc,total_cost:asc
@@ -186,9 +187,9 @@ The Costs view will live at `/studios/:studioId/costs` and mimic the `/performan
    - Hovering displays a tooltip breakdown.
 3. **Detail Tables Section (Tabs)**:
    - Contains a Radix Tabs interface with two views:
-     - **Show Costs** tab: Displays shows table with client, show type, creator list, adjustments subtotal, total cost, warnings (e.g. orange exclamation badge for planned fallback), and a details link (`/shows/:showId`).
+     - **Show Costs** tab: Displays shows table with client, show type, creator list, adjustments subtotal, total cost, warnings (e.g. orange exclamation badge for planned fallback), and a details link targeting the compensation tab (`/shows/:showId/compensation`).
      - **Shift Costs** tab: Displays operator shifts table with operator name, role, date, status, duration, adjustments subtotal, total cost, warnings, and details link (`/shifts/:shiftId`).
-   - Both tables support server-side pagination, search by name, and multi-sort priorities synced to URL state.
+   - Both tables support server-side pagination, server-side text search (Show Costs by show `name`, Shift Costs by operator `member_name` — both wired through the table's `columnFilters`/`onColumnFiltersChange` into the route's `*_name` search param), and multi-sort priorities synced to URL state.
 
 ---
 

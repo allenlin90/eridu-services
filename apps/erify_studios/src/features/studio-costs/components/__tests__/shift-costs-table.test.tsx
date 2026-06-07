@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -65,5 +65,25 @@ describe('shiftCostsTable', () => {
 
     expect(screen.getByText('John Operator')).toBeInTheDocument();
     expect(screen.getAllByText('฿1,050.00')[0]).toBeInTheDocument();
+  });
+
+  it('drives the member_name query state when typing in the operator search', async () => {
+    const updateSearch = vi.fn();
+    render(
+      <ShiftCostsTable
+        {...baseProps}
+        updateSearch={updateSearch}
+        locale="th-TH"
+        currency="THB"
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Search operator...'), {
+      target: { value: 'John' },
+    });
+
+    await waitFor(() =>
+      expect(updateSearch).toHaveBeenCalledWith({ member_name: 'John', page: 1 }),
+    );
   });
 });

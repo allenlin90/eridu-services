@@ -352,5 +352,27 @@ describe('studioCostsService', () => {
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('shift_20');
     });
+
+    it('filters shifts by operator name (case-insensitive contains)', async () => {
+      (prisma.studioShift.count as jest.Mock).mockResolvedValue(1);
+      (prisma.studioShift.findMany as jest.Mock).mockResolvedValue([mockShift]);
+
+      await service.getCostsShifts('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        member_name: 'operator',
+      });
+
+      expect(prisma.studioShift.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              { user: { name: { contains: 'operator', mode: 'insensitive' } } },
+            ]),
+          }),
+        }),
+      );
+    });
   });
 });

@@ -85,6 +85,16 @@ A stacked trend/series whose columns are also reported as scalar subtotals (e.g.
 - Each tab's status/severity/completeness filter is a narrowed enum in the schema; the `ALL` Select option maps to `undefined`, never a literal `'ALL'` in the URL.
 - Reset the tab's page to 1 on any of its own search/filter changes.
 
+### `manualFiltering` search must be wired both ways AND backed by a query param
+
+A `DataTable` with `manualFiltering` does **not** filter rows in-memory — the toolbar's search box only mutates table filter state. If you render a `<DataTableToolbar searchColumn="…">` but don't pass `columnFilters` + `onColumnFiltersChange`, and don't add the matching query param server-side, the search box is a **dead no-op**: it neither filters the page nor refetches. (Bug fixed in PR 19.x — the Shift Costs "Search operator…" box looked functional but did nothing.)
+
+Wire all three layers, mirroring the sibling table that already works:
+- **Schema + backend** — add the filter param (`member_name`) to the tab's query schema and translate it in the repository/service `where` builder (`user: { name: { contains, mode: 'insensitive' } }`).
+- **Route** — add the `*_name` search param and map it into both the tab's API query and the table's `search`/`updateSearch` props.
+- **Table** — derive `columnFilters` from `search.<param>` and pass `onColumnFiltersChange` that writes the trimmed value back through `updateSearch` (page → 1). The filter `id` must equal the toolbar's `searchColumn`.
+- **Evidence** — add a test that typing into the search input drives the intended query state (frontend) and that the param reaches the `where` clause (backend).
+
 ## Per-tab "export the full filtered set" CSV
 
 Each tab's Export action exports **every matching row across the filter, not the visible page** (see [`table-view-pattern` § Current-View Export](../table-view-pattern/SKILL.md) for the mechanics):
@@ -109,6 +119,7 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Trend columns reconcile with their scalar subtotals (`sum(trend) === subtotal`), guarded by a test
 - [ ] Only the current operational day silently refetches
 - [ ] Active tab + all tab filters/pages in validated route search; tab switch clears other tabs' params
+- [ ] Every `manualFiltering` search box is wired end-to-end (`columnFilters`/`onColumnFiltersChange` + route `*_name` param + backend `where` filter) and proven by a test — no dead toolbar search
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils
 - [ ] No write to any actuals column from the review surface
 

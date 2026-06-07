@@ -143,9 +143,21 @@ export class StudioCostsService {
 
   private buildShiftWhere(
     studioUid: string,
-    query: CostsQuery & { role?: string; status?: StudioShiftStatus },
+    query: CostsQuery & { member_name?: string; role?: string; status?: StudioShiftStatus },
   ): Prisma.StudioShiftWhereInput {
     const andConditions: Prisma.StudioShiftWhereInput[] = [];
+
+    const memberName = query.member_name?.trim();
+    if (memberName) {
+      andConditions.push({
+        user: {
+          name: {
+            contains: memberName,
+            mode: 'insensitive',
+          },
+        },
+      });
+    }
 
     if (query.role) {
       andConditions.push({

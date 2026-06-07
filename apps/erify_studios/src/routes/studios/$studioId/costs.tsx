@@ -52,6 +52,7 @@ const costsSearchSchema = z.object({
   // Shifts-specific filters/pagination
   shifts_page: z.coerce.number().int().min(1).catch(1),
   shifts_limit: z.coerce.number().int().min(1).catch(10),
+  shifts_name: z.string().optional().catch(undefined),
   shifts_role: z.string().optional().catch(undefined),
   shifts_status: z.string().optional().catch(undefined),
   shifts_sort: z.string().optional().catch(undefined),
@@ -163,6 +164,7 @@ function StudioCostsDashboard() {
     ...sharedApiParams,
     page: search.shifts_page,
     limit: search.shifts_limit,
+    member_name: search.shifts_name,
     role: search.shifts_role,
     status: search.shifts_status as any,
     sort: search.shifts_sort,
@@ -307,6 +309,7 @@ function StudioCostsDashboard() {
                         limit: search.shifts_limit,
                         date_from: search.date_from,
                         date_to: search.date_to,
+                        member_name: search.shifts_name,
                         role: search.shifts_role,
                         status: search.shifts_status,
                         sort: search.shifts_sort,
@@ -315,6 +318,7 @@ function StudioCostsDashboard() {
                         updateSearch({
                           shifts_page: next.page,
                           shifts_limit: next.limit,
+                          shifts_name: next.member_name,
                           shifts_role: next.role,
                           shifts_status: next.status,
                           shifts_sort: next.sort,
