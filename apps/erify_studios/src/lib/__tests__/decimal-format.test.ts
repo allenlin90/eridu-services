@@ -30,4 +30,13 @@ describe('toCurrencyDisplayString', () => {
   it('inherits the string-only contract', () => {
     expect(() => toCurrencyDisplayString(10 as never)).toThrow('Decimal display values must be strings');
   });
+
+  it('supports custom locale and currency (e.g. th-TH / THB)', () => {
+    // Note: Intl formats THB with ฿ symbol. We clean up non-breaking spaces if any.
+    const resultPositive = toCurrencyDisplayString('12345.67', 'th-TH', 'THB').replace(/\u00A0/g, ' ');
+    const resultNegative = toCurrencyDisplayString('-12345.67', 'th-TH', 'THB').replace(/\u00A0/g, ' ');
+
+    expect(resultPositive).toMatch(/฿\s*12,345\.67/);
+    expect(resultNegative).toMatch(/-\s*฿\s*12,345\.67/);
+  });
 });

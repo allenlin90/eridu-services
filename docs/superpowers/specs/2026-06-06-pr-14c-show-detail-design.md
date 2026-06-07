@@ -109,7 +109,7 @@ rather than widening 14c's blast radius.
 
 - `apps/erify_studios/docs/ENTITY_DETAIL_ROUTES.md`: flip 14c → ✅ Shipped; status line → all four shipped; add a **"14c — show detail (shipped)"** section with the Details/Actuals/Compensation tabs, the entity-appropriate naming note, the authorization table, and the finalized share-link contract (none). Add the 21.7 convergence follow-up.
 - `docs/roadmap/PHASE_4.md`: row 14 → ✅ Shipped; add a **Landed (2026-06-06, PR #…)** note for 14c; update the header "Remaining" count and drop "🚧 In progress (14c)". Add the `/creator-mapping/:showId` link-rewire + retirement (no redirect) to PR 21.7's row/section scope.
-- `docs/prd/show-performance-analytics.md` PR 21.7 deliverables: add rewiring `/creator-mapping/:showId` entry points to `/shows/:showId/compensation` and retiring the legacy route (no redirect shim), alongside the task-setup retirement.
+- `docs/features/show-performance-analytics.md` PR 21.7 deliverables: add rewiring `/creator-mapping/:showId` entry points to `/shows/:showId/compensation` and retiring the legacy route (no redirect shim), alongside the task-setup retirement.
 - **Skill**: `.agent/skills/frontend-ui-components/SKILL.md` — update the entity-detail-route pattern note: the first tab is **entity-appropriate** ("Profile" for people entities; "Details" for record entities like shows), and shows use **Details | Actuals | Compensation**.
 - **Retire** `docs/superpowers/specs/2026-06-05-pr-14-entity-detail-routes-design.md` (the 14a draft spec) — the 14a–14d series is now closed and durable content lives in `ENTITY_DETAIL_ROUTES.md`.
 - Run `knowledge-sync.md`; retire **this** spec via `doc-lifecycle.md` once 14c merges.

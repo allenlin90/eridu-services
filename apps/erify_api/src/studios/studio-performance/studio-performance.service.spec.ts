@@ -15,8 +15,22 @@ describe('studioPerformanceService', () => {
         findMany: jest.fn(),
         count: jest.fn(),
       },
+      studio: {
+        findUnique: jest.fn(),
+      },
     } as any;
     service = new StudioPerformanceService(prisma);
+
+    if (prisma.studio && prisma.studio.findUnique) {
+      (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
+        metadata: {
+          localization: {
+            locale: 'th-TH',
+            currency: 'THB',
+          },
+        },
+      });
+    }
   });
 
   const query = {
@@ -139,6 +153,8 @@ describe('studioPerformanceService', () => {
       expect(result.avg_cto).toBe('3.325');
       expect(result.recorded_shows_count).toBe(3);
       expect(result.total_shows_count).toBe(3);
+      expect(result.currency).toBe('THB');
+      expect(result.locale).toBe('th-TH');
 
       // Verify trend contains 5 days (June 1st to June 5th)
       expect(result.trend).toHaveLength(5);
@@ -165,6 +181,79 @@ describe('studioPerformanceService', () => {
         ctr: '8.5',
         cto: '4.2',
       });
+    });
+
+    it('returns custom studio localization settings from metadata', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
+        metadata: {
+          localization: {
+            locale: 'en-US',
+            currency: 'USD',
+          },
+        },
+      });
+
+      const result = await service.getPerformanceSummary('std_1', query);
+      expect(result.currency).toBe('USD');
+      expect(result.locale).toBe('en-US');
+    });
+
+    it('buckets shows by operational day across the timezone boundary', async () => {
+      // start_date 23:00Z == 06:00 local in UTC+7 (Bangkok), so the derived
+      // offset is +7h and each operational day runs 06:00 -> 06:00 local.
+      const bkkQuery = {
+        start_date: '2026-05-31T23:00:00.000Z',
+        end_date: '2026-06-02T23:00:00.000Z',
+      };
+
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 40n,
+          uid: 'show_40',
+          name: 'Pre-boundary',
+          // 05:30 local Jun 2 -> still operational day Jun 1
+          startTime: new Date('2026-06-01T22:30:00Z'),
+          endTime: new Date('2026-06-01T23:30:00Z'),
+          client: { name: 'C' },
+          showType: { name: 'T' },
+          showPlatforms: [showPlatform1],
+        },
+        {
+          id: 41n,
+          uid: 'show_41',
+          name: 'Post-boundary',
+          // 06:30 local Jun 2 -> operational day Jun 2
+          startTime: new Date('2026-06-01T23:30:00Z'),
+          endTime: new Date('2026-06-02T00:30:00Z'),
+          client: { name: 'C' },
+          showType: { name: 'T' },
+          showPlatforms: [showPlatform2],
+        },
+      ] as any);
+
+      const result = await service.getPerformanceSummary('std_1', bkkQuery);
+      const byDate = Object.fromEntries(result.trend.map((t) => [t.date, t.gmv]));
+
+      // Shows one hour apart in UTC straddle the 06:00 local boundary and land
+      // in different operational days.
+      expect(byDate['2026-06-01']).toBe('1000.5');
+      expect(byDate['2026-06-02']).toBe('2000');
+    });
+
+    it('ignores has_performance when aggregating the summary', async () => {
+      // The presence filter is a list-only concern; folding it into the summary
+      // would make "recorded vs total" self-referential.
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceSummary('std_1', {
+        ...query,
+        has_performance: 'false',
+      } as any);
+
+      const where = (prisma.show.findMany as jest.Mock).mock.calls[0][0].where;
+      expect(where).not.toHaveProperty('AND');
+      expect(where).not.toHaveProperty('NOT');
     });
 
     it('excludes viewerCount from totals when view-count provenance is absent', async () => {
@@ -331,6 +420,115 @@ describe('studioPerformanceService', () => {
         name: '   ',
       });
       expect((prisma.show.count as jest.Mock).mock.calls[0][0].where).not.toHaveProperty('name');
+    });
+
+    const recordedSome = expect.objectContaining({
+      showPlatforms: {
+        some: expect.objectContaining({
+          deletedAt: null,
+          OR: expect.arrayContaining([
+            expect.objectContaining({ gmv: { not: null } }),
+          ]),
+        }),
+      },
+    });
+
+    it('applies has_performance filter when set to true', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        has_performance: 'true',
+      });
+
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([recordedSome]),
+        }),
+      });
+    });
+
+    it('applies has_performance filter when set to false', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        has_performance: 'false',
+      });
+
+      expect(prisma.show.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([
+            expect.objectContaining({ NOT: recordedSome }),
+          ]),
+        }),
+      });
+    });
+
+    it('composes the platform filter with has_performance without clobbering it', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        platform_id: 'plat_shopee',
+        has_performance: 'true',
+      });
+
+      const where = (prisma.show.count as jest.Mock).mock.calls[0][0].where;
+      // Both the platform filter and the presence filter must survive — they
+      // are separate entries in `AND`, not a single key one overwrites.
+      expect(where.AND).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            showPlatforms: {
+              some: expect.objectContaining({
+                deletedAt: null,
+                platform: { uid: { in: ['plat_shopee'] } },
+              }),
+            },
+          }),
+          // Presence predicate is also scoped to the selected platform so a
+          // show whose *other* platform has records doesn't pass the filter.
+          expect.objectContaining({
+            showPlatforms: {
+              some: expect.objectContaining({
+                deletedAt: null,
+                platform: { uid: { in: ['plat_shopee'] } },
+                OR: expect.arrayContaining([
+                  expect.objectContaining({ gmv: { not: null } }),
+                ]),
+              }),
+            },
+          }),
+        ]),
+      );
+    });
+
+    it('does not add platform constraint to presence predicate when no platform filter', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        has_performance: 'true',
+      });
+
+      const where = (prisma.show.count as jest.Mock).mock.calls[0][0].where;
+      // Without a platform filter the presence predicate must not contain a
+      // platform constraint — any platform with data qualifies the show.
+      const presenceEntry = where.AND[0];
+      expect(presenceEntry.showPlatforms.some).not.toHaveProperty('platform');
     });
   });
 });

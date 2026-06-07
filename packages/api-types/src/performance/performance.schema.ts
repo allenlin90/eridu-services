@@ -27,6 +27,7 @@ export const performanceQuerySchema = z.object({
       z.array(z.string().startsWith(UID_PREFIXES.PLATFORM)),
     ])
     .optional(),
+  has_performance: z.enum(['all', 'true', 'false']).optional(),
 });
 
 export type PerformanceQueryInput = z.input<typeof performanceQuerySchema>;
@@ -68,6 +69,8 @@ export const performanceSummaryResponseSchema = z.object({
   recorded_shows_count: z.number().int(),
   total_shows_count: z.number().int(),
   trend: z.array(performanceTrendCoordinateSchema),
+  currency: z.string(),
+  locale: z.string(),
 });
 
 export type PerformanceSummaryResponse = z.infer<typeof performanceSummaryResponseSchema>;
