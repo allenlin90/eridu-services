@@ -88,7 +88,7 @@ For Studio Individual Overview routes such as `/studios/:studioId/creators/:crea
 To prevent code duplication and logic drift across these three views, **extract and share core unit components**. Component wrappers should simply configure the appropriate API filters and role context before passing them to the shared visual unit:
 - `ActualsTimelineViewer`: Shared timeline block visualizing planned vs actual times.
 - `ShowRunSummary`: Shared range summary for submitted and signed-off show runs, creator attendance, phase checks, and active platform issues.
-- `PerformanceMetricsWidget`: Graphical/tabular widget detailing analytical platform statistics (GMV, views) once the analytics infrastructure track lands.
+- `PerformanceMetricsWidget`: Graphical/tabular widget detailing analytical platform statistics (GMV, views, CTR, CTO) (shipped in PR 21.6/7).
 - `CompensationBreakdownCard`: Shared card computing base compensation, commissions, and line items.
 - `AttendanceStatusBadge`: Shared visual badge translating `actualStartTime` and `Show.startTime` into colored status highlights.
 - `AuditLogTimeline`: Polymorphic audit log history renderer.
