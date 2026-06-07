@@ -3,23 +3,13 @@ import { useState } from 'react';
 
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
   Input,
   Label,
   Textarea,
-  useIsMobile,
 } from '@eridu/ui';
 
 import { ShiftBlockActualsInput } from '@/components/finance/shift-block-actuals-input';
+import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { StudioTargetCompensationLineItemPanel } from '@/features/compensation-line-items/components/studio-target-compensation-line-item-panel';
 import { toMoneyString } from '@/features/compensation-line-items/utils/money-input';
 import type { StudioShift } from '@/features/studio-shifts/api/studio-shifts.types';
@@ -297,39 +287,22 @@ export function ShiftCompensationDialog({
   studioId,
   shift,
 }: ShiftCompensationDialogProps) {
-  const isMobile = useIsMobile();
   const shellOpen = open && Boolean(shift);
   const description = shift
     ? `${shift.user_name} · ${shift.date}`
     : 'Shift compensation inputs';
   const body = shift ? <ShiftCompensationView studioId={studioId} shift={shift} /> : null;
 
-  if (isMobile) {
-    return (
-      <Drawer open={shellOpen} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Shift Compensation</DrawerTitle>
-            <DrawerDescription>{description}</DrawerDescription>
-          </DrawerHeader>
-          <div className="max-h-[75vh] overflow-y-auto px-4 pb-4">
-            {body}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
-    <Dialog open={shellOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[920px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Shift Compensation</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-
-        {body}
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialog
+      open={shellOpen}
+      onOpenChange={onOpenChange}
+      title="Shift Compensation"
+      description={description}
+      contentClassName="sm:max-w-[920px] max-h-[90vh] overflow-y-auto"
+      mobileBodyClassName="max-h-[75vh] pb-4"
+    >
+      {body}
+    </ResponsiveDialog>
   );
 }

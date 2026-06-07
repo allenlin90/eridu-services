@@ -6,27 +6,15 @@ import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import {
   Badge,
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
   Input,
   Label,
   ResponsiveDateTimePicker,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  useIsMobile,
 } from '@eridu/ui';
 
+import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { computeSuggestedDueDate } from '@/features/tasks/lib/task-due-date';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
@@ -53,7 +41,6 @@ export function SystemTaskDetailsDialog({
   isReassigningShow,
   isUpdatingDueDate,
 }: SystemTaskDetailsDialogProps) {
-  const isMobile = useIsMobile();
   const [assigneeUid, setAssigneeUid] = useState(task?.assignee?.id ?? '');
   const [showUid, setShowUid] = useState(task?.show?.id ?? '');
   const suggestedDueDate = computeSuggestedDueDate(task);
@@ -225,43 +212,16 @@ export function SystemTaskDetailsDialog({
     </>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Task Details</DrawerTitle>
-            <DrawerDescription>
-              System scope: content is immutable.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="max-h-[70vh] overflow-y-auto px-4">
-            {body}
-          </div>
-          <DrawerFooter>
-            {footer}
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[640px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Task Details</DialogTitle>
-          <DialogDescription>
-            System scope: content is immutable.
-          </DialogDescription>
-        </DialogHeader>
-
-        {body}
-
-        <DialogFooter>
-          {footer}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Task Details"
+      description="System scope: content is immutable."
+      footer={footer}
+      contentClassName="sm:max-w-[640px] max-h-[80vh] overflow-y-auto"
+    >
+      {body}
+    </ResponsiveDialog>
   );
 }

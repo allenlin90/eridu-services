@@ -6,23 +6,11 @@ import { useMemo, useState } from 'react';
 import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
   Label,
   ResponsiveDateTimePicker,
-  useIsMobile,
 } from '@eridu/ui';
 
+import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { getStudioTask, studioTaskKeys } from '@/features/tasks/api/get-studio-task';
 import { computeSuggestedDueDate } from '@/features/tasks/lib/task-due-date';
 
@@ -74,7 +62,6 @@ export function TaskDueDateDialog({
   isSaving,
   studioId,
 }: TaskDueDateDialogProps) {
-  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const shouldFetch = Boolean(open && studioId && task?.id);
   const { data: taskDetail, isLoading: isLoadingTask } = useQuery({
@@ -194,45 +181,16 @@ export function TaskDueDateDialog({
     </>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Update Due Date</DrawerTitle>
-            <DrawerDescription>
-              Adjust the deadline for this task.
-            </DrawerDescription>
-          </DrawerHeader>
-
-          <div className="px-4">
-            {body}
-          </div>
-
-          <DrawerFooter>
-            {footer}
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Update Due Date</DialogTitle>
-          <DialogDescription>
-            Adjust the deadline for this task.
-          </DialogDescription>
-        </DialogHeader>
-
-        {body}
-
-        <DialogFooter>
-          {footer}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Update Due Date"
+      description="Adjust the deadline for this task."
+      footer={footer}
+      contentClassName="sm:max-w-[520px] max-h-[80vh] overflow-y-auto"
+    >
+      {body}
+    </ResponsiveDialog>
   );
 }

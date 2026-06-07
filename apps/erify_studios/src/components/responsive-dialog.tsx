@@ -39,11 +39,15 @@ export function ResponsiveDialog({
   mobileBodyClassName,
 }: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
+  // When no description is rendered, explicitly pass aria-describedby={undefined} to suppress the
+  // Radix "Missing Description" warning. When a description IS rendered we omit the prop entirely so
+  // Radix keeps its auto-generated association — passing undefined here would drop it and break a11y.
+  const describedByProps = description ? {} : { 'aria-describedby': undefined };
 
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
+        <DrawerContent {...describedByProps}>
           <DrawerHeader>
             <DrawerTitle>{title}</DrawerTitle>
             {description ? <DrawerDescription>{description}</DrawerDescription> : null}
@@ -59,7 +63,7 @@ export function ResponsiveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={contentClassName}>
+      <DialogContent className={contentClassName} {...describedByProps}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}

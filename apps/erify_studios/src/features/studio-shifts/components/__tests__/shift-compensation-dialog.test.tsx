@@ -65,6 +65,11 @@ vi.mock('@eridu/ui', () => ({
   useIsMobile: () => true,
 }));
 
+// ResponsiveDialog reads useIsMobile from this subpath, not the @eridu/ui barrel.
+vi.mock('@eridu/ui/hooks/use-is-mobile', () => ({
+  useIsMobile: () => true,
+}));
+
 vi.mock('@/features/compensation-line-items/api/compensation-line-items.api', () => ({
   useStudioCompensationLineItems: (...args: unknown[]) => mockUseStudioCompensationLineItems(...args),
 }));
