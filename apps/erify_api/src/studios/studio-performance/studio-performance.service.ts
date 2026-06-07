@@ -144,10 +144,18 @@ export class StudioPerformanceService {
       });
     }
 
+    // When a platform filter is active, the presence check must be scoped to
+    // the same set of platforms — otherwise a show passes "With Records" because
+    // a *different* platform has GMV/CTR/etc., even though the selected platform
+    // row is empty. Narrowing the `some` predicate to `platformUids` keeps the
+    // presence semantics consistent with what the user is actually filtering on.
     const recordedSome: Prisma.ShowWhereInput = {
       showPlatforms: {
         some: {
           deletedAt: null,
+          ...(platformUids.length > 0
+            ? { platform: { uid: { in: platformUids } } }
+            : {}),
           OR: StudioPerformanceService.PERFORMANCE_RECORD_OR,
         },
       },

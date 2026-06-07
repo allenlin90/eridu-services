@@ -106,7 +106,7 @@ FE forms editing these fields **must** clear the irrelevant rate fields before s
 - `Show.actualStartTime` / `Show.actualEndTime` — nullable, entered any time.
 - `ShowCreator.actualStartTime` / `ShowCreator.actualEndTime` — nullable, creator participation window for a specific show assignment.
 - `ShowPlatform.actualStartTime` / `ShowPlatform.actualEndTime` — nullable, platform stream window for a specific platform on a show.
-- `ShowPlatform` performance facts — **deferred to the PR 21 analytics infrastructure** (see [`show-performance-analytics.md`](../prd/show-performance-analytics.md)). Phase 4 does not promote GMV, view count, CTR/CTO, or any other platform performance metric to a typed `ShowPlatform` column. `viewerCount` keeps its pre-existing `Int @default(0)` shape from the init migration but its read path is analytical.
+- `ShowPlatform` performance facts — **deferred to the PR 21 analytics infrastructure** (see [`show-performance-analytics.md`](../features/show-performance-analytics.md)). Phase 4 does not promote GMV, view count, CTR/CTO, or any other platform performance metric to a typed `ShowPlatform` column. `viewerCount` keeps its pre-existing `Int @default(0)` shape from the init migration but its read path is analytical.
 - `ShowPlatformViolation` records — zero or more violation records attached to a `ShowPlatform`.
 - `StudioShiftBlock.actualStartTime` / `StudioShiftBlock.actualEndTime` — nullable, entered any time.
 

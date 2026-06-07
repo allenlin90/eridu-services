@@ -172,7 +172,7 @@ Implementation is structured into **three logical sections**. Each section serve
 * **Functional Deliverable**:
   * `Show`: Uses the existing `actualStartTime` / `actualEndTime` operational columns and adds the actual-time index. No show-level performance JSONB bucket.
   * `ShowCreator`: Adds `actualStartTime`, `actualEndTime`, `attendanceMissing`, and `attendanceReason`.
-  * `ShowPlatform`: Adds `actualStartTime`, `actualEndTime`, and the actual-time index. **No** `gmv`, `performanceMetrics`, or new index on `viewerCount` — all platform-scoped performance metrics are classified as analytical and deferred to PR 21 (see [`show-performance-analytics.md`](show-performance-analytics.md)). `viewerCount` retains its pre-existing `Int @default(0)` column from the init migration but is treated as an analytical fact.
+  * `ShowPlatform`: Adds `actualStartTime`, `actualEndTime`, and the actual-time index. **No** `gmv`, `performanceMetrics`, or new index on `viewerCount` — all platform-scoped performance metrics are classified as analytical and deferred to PR 21 (see [`show-performance-analytics.md`](../features/show-performance-analytics.md)). `viewerCount` retains its pre-existing `Int @default(0)` column from the init migration but is treated as an analytical fact.
   * `ShowPlatformViolation`: Creates the violation table and indices.
   * **No logic, no routes**: This is a pure DDL migration. Downstream PRs assume these columns compile.
 
@@ -228,7 +228,7 @@ Implementation is structured into **three logical sections**. Each section serve
   * Enforces `attendanceReason` on `LATE`/`MISSING` statuses from the task field reason sidecar. Safe fallback logic writes a system flag if the builder failed to collect the operator reason, preventing form blockages.
 
 #### ⬜ PR 12.3.1 · Platform GMV/Views Extractor — **Deferred to PR 21**
-* **Status**: Removed from Phase 4 critical path. GMV and viewer count are analytical metrics; their storage shape (typed column, read model, or OLAP path) is decided by PR 21. The original purpose, casting rules, and default-zero disambiguation logic carry forward; see [`show-performance-analytics.md`](show-performance-analytics.md).
+* **Status**: Removed from Phase 4 critical path. GMV and viewer count are analytical metrics; their storage shape (typed column, read model, or OLAP path) is decided by PR 21. The original purpose, casting rules, and default-zero disambiguation logic carry forward; see [`show-performance-analytics.md`](../features/show-performance-analytics.md).
 
 #### 🟦 PR 12.3.2 · Platform Violations Extractor
 * **Purpose**: Extract stream-level warnings and violations.

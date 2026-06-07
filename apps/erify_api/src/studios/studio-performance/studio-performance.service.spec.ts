@@ -496,9 +496,39 @@ describe('studioPerformanceService', () => {
               }),
             },
           }),
-          recordedSome,
+          // Presence predicate is also scoped to the selected platform so a
+          // show whose *other* platform has records doesn't pass the filter.
+          expect.objectContaining({
+            showPlatforms: {
+              some: expect.objectContaining({
+                deletedAt: null,
+                platform: { uid: { in: ['plat_shopee'] } },
+                OR: expect.arrayContaining([
+                  expect.objectContaining({ gmv: { not: null } }),
+                ]),
+              }),
+            },
+          }),
         ]),
       );
+    });
+
+    it('does not add platform constraint to presence predicate when no platform filter', async () => {
+      (prisma.show.count as jest.Mock).mockResolvedValue(0);
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShows('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        has_performance: 'true',
+      });
+
+      const where = (prisma.show.count as jest.Mock).mock.calls[0][0].where;
+      // Without a platform filter the presence predicate must not contain a
+      // platform constraint — any platform with data qualifies the show.
+      const presenceEntry = where.AND[0];
+      expect(presenceEntry.showPlatforms.some).not.toHaveProperty('platform');
     });
   });
 });
