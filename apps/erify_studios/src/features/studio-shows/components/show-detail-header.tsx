@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
 
@@ -19,17 +18,21 @@ function buildShowSubtitle(show: StudioShowDetail): string {
 }
 
 export function ShowDetailHeader({
-  studioId,
+  studioId: _studioId,
   show,
   isLoading,
 }: ShowDetailHeaderProps) {
   return (
     <div className="space-y-3">
       <div className="flex min-w-0 items-center gap-4">
-        <Button asChild variant="ghost" size="icon" className="h-8 w-8" aria-label="Back to shows">
-          <Link to="/studios/$studioId/shows" params={{ studioId }}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Back"
+          onClick={() => window.history.back()}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-bold tracking-tight">

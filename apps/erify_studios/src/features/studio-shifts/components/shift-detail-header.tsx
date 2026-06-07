@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 
 import { Badge, Button } from '@eridu/ui';
@@ -17,17 +16,21 @@ type ShiftDetailHeaderProps = {
 };
 
 export function ShiftDetailHeader({
-  studioId,
+  studioId: _studioId,
   shift,
   isLoading,
 }: ShiftDetailHeaderProps) {
   return (
     <div className="space-y-3">
       <div className="flex min-w-0 items-center gap-4">
-        <Button asChild variant="ghost" size="icon" className="h-8 w-8" aria-label="Back to shifts">
-          <Link to="/studios/$studioId/shifts" params={{ studioId }}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Back"
+          onClick={() => window.history.back()}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-bold tracking-tight">

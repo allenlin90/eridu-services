@@ -304,7 +304,7 @@ export function ShowCostsTable({
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5 max-w-[200px]">
             <Link
-              to="/studios/$studioId/shows/$showId"
+              to="/studios/$studioId/shows/$showId/compensation"
               params={{ studioId, showId: row.original.id }}
               className="font-semibold text-primary hover:underline truncate"
             >

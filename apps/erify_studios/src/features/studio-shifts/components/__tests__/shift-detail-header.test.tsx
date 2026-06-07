@@ -44,7 +44,7 @@ describe('shiftDetailHeader', () => {
     render(<ShiftDetailHeader studioId="std_1" shift={undefined} isLoading />);
 
     expect(screen.getByRole('heading', { name: 'Loading shift...' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Back to shifts')).toBeInTheDocument();
+    expect(screen.getByLabelText('Back')).toBeInTheDocument();
   });
 
   it('renders shift identity and metadata badges', () => {
