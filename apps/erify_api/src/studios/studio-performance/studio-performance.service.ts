@@ -685,19 +685,28 @@ export class StudioPerformanceService {
         const sharedKey = lower(item.shared_field_key);
         const factKey = item.system_fact_key;
 
-        if (factKey === 'show_platform_gmv' || sharedKey === 'gmv' || key === 'gmv') {
+        // Match a metric by its system fact key, shared field key, or field
+        // key. Legacy moderator snapshots store loop fields without a
+        // `shared_field_key` and with the loop suffixed onto the key (e.g.
+        // `gmv_l1`, `views_l1`), so a `<token>_…` prefix is accepted too.
+        // `loopFields` is already scoped to this loop's group, so a prefix
+        // can't collide across loops.
+        const matches = (factName: string, tokens: string[]): boolean => {
+          if (factKey === factName) {
+            return true;
+          }
+          return tokens.some(
+            (token) => sharedKey === token || key === token || (key?.startsWith(`${token}_`) ?? false),
+          );
+        };
+
+        if (matches('show_platform_gmv', ['gmv'])) {
           gmvFieldId = item.id;
-        } else if (
-          factKey === 'show_platform_view_count'
-          || sharedKey === 'viewer_count'
-          || key === 'views'
-          || key === 'viewercount'
-          || key === 'viewer_count'
-        ) {
+        } else if (matches('show_platform_view_count', ['views', 'viewer_count', 'viewercount'])) {
           viewFieldId = item.id;
-        } else if (factKey === 'show_platform_ctr' || sharedKey === 'ctr' || key === 'ctr') {
+        } else if (matches('show_platform_ctr', ['ctr'])) {
           ctrFieldId = item.id;
-        } else if (factKey === 'show_platform_cto' || sharedKey === 'cto' || key === 'cto') {
+        } else if (matches('show_platform_cto', ['cto'])) {
           ctoFieldId = item.id;
         }
       }

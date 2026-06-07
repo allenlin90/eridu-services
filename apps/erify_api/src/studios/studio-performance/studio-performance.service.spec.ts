@@ -705,6 +705,48 @@ describe('studioPerformanceService', () => {
       });
     });
 
+    it('resolves legacy loop-suffixed field keys (gmv_l1, views_l1) without shared_field_key', async () => {
+      // Legacy moderator snapshots store loop fields with the loop suffixed onto
+      // the key and without `shared_field_key`/`system_fact_key`.
+      const mockTask = {
+        id: 1n,
+        uid: 'task_1',
+        snapshot: {
+          schema: {
+            items: [
+              { id: 'fld_gmv_l1', key: 'gmv_l1', group: 'l1' },
+              { id: 'fld_views_l1', key: 'views_l1', group: 'l1' },
+              { id: 'fld_ctr_l1', key: 'ctr_l1', group: 'l1' },
+              { id: 'fld_cto_l1', key: 'cto_l1', group: 'l1' },
+            ],
+            metadata: {
+              loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }],
+            },
+          },
+        },
+        content: {
+          'fld_gmv_l1:platform:show_plt_101': '1500.25',
+          'fld_views_l1:platform:show_plt_101': 120,
+          'fld_ctr_l1:platform:show_plt_101': '3.50',
+          'fld_cto_l1:platform:show_plt_101': '1.25',
+        },
+      };
+
+      (prisma.show.findFirst as jest.Mock).mockResolvedValue(mockShowWithPlatforms);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([mockTask]);
+
+      const result = await service.getShowPerformanceLoops('std_1', 'show_10');
+
+      expect(result.loops[0].metrics[0]).toEqual({
+        show_platform_uid: 'show_plt_101',
+        platform_name: 'Shopee',
+        gmv: '1500.25',
+        ctr: '3.5', // Prisma.Decimal normalizes the trailing zero from '3.50'
+        cto: '1.25',
+        viewer_count: 120,
+      });
+    });
+
     it('does not throw on a malformed snapshot (non-array items, non-string keys)', async () => {
       const mockTask = {
         id: 1n,

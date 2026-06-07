@@ -221,6 +221,8 @@ export function ShowPerformanceLoopsGraph({ data, isLoading }: ShowPerformanceLo
                 content={(
                   <CustomTooltip
                     activeMetric={activeMetric}
+                    locale={data?.locale}
+                    currency={data?.currency}
                   />
                 )}
               />
