@@ -1,11 +1,11 @@
 # Feature: Costs Dashboard
 
-> **Status**: 🔲 Proposed / Review Required  
+> **Status**: ✅ Implemented / Active  
 > **Phase**: 4 — Wave 3 final feature  
 > **Workstream**: L-side P&L visibility — Costs review surface  
 > **Depends on**: PR 12 Fact Binding  
 > **Target Route**: `/studios/:studioId/costs`  
-> **Sidebar Group**: `Analytics` or `Performance & Costs` (alongside `/performance`)
+> **Sidebar Group**: `Analytics` (alongside `/performance`)
 
 ---
 
