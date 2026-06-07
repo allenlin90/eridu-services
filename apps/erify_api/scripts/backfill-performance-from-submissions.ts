@@ -29,7 +29,15 @@ import { Pool } from 'pg';
  */
 
 const POST_PRODUCTION_TEMPLATE_UID = 'ttpl_n6f7qAZQmPA4He6MOR-y';
-const EXCLUDED_TEMPLATE_IDS = [36, 84]; // Pre_production_check, On_air_check (no perf)
+
+// Loop-8 performance content keys (env-agnostic: this is the template field-key
+// convention, not a per-environment numeric id). Used to select only tasks that
+// actually carry derivable metrics, so the script behaves identically across
+// local and production where template *IDs* differ.
+const LOOP_METRIC_PREFIXES = ['gmv', 'views', 'ctr', 'cto'] as const;
+const LOOP_PERF_KEYS: string[] = LOOP_METRIC_PREFIXES.flatMap((prefix) =>
+  Array.from({ length: 8 }, (_, i) => `${prefix}_l${i + 1}`),
+);
 
 const INT4_MAX = 2_147_483_647;
 
@@ -156,9 +164,9 @@ export async function runDerivationBackfill(
        join task_targets x on x.task_id = t.id and x.target_type = 'SHOW' and x.deleted_at is null
        left join task_templates tt on tt.id = t.template_id
       where t.status in ('COMPLETED','REVIEW') and t.deleted_at is null
-        and (t.template_id is null or t.template_id <> all($1::bigint[]))
+        and (tt.uid = $1 or t.content ?| $2::text[])
       order by t.completed_at asc nulls first`,
-    [EXCLUDED_TEMPLATE_IDS],
+    [POST_PRODUCTION_TEMPLATE_UID, LOOP_PERF_KEYS],
   );
 
   const acc = new Map<string, PlatformAcc>();
