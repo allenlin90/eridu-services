@@ -25,6 +25,10 @@
       "types": "./dist/constants.d.ts",
       "default": "./dist/constants.js"
     },
+    "./costs": {
+      "types": "./dist/costs/index.d.ts",
+      "default": "./dist/costs/index.js"
+    },
     "./creators": {
       "types": "./dist/creators/index.d.ts",
       "default": "./dist/creators/index.js"

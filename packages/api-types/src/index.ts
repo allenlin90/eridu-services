@@ -21,6 +21,7 @@ export * from './audits/index.js';
 export * from './clients/index.js';
 export * from './compensation-line-items/index.js';
 export * from './constants.js';
+export * from './costs/index.js';
 export * from './creators/index.js';
 export * from './memberships/index.js';
 export * from './pagination/index.js';
