@@ -20,7 +20,6 @@ import {
   Button,
   Checkbox,
   DatePicker,
-  DateTimePicker,
   Form,
   FormControl,
   FormDescription,
@@ -29,6 +28,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  ResponsiveDateTimePicker,
   Select,
   SelectContent,
   SelectItem,
@@ -998,7 +998,7 @@ function FieldRenderer({
       );
     case 'datetime':
       return (
-        <DateTimePicker
+        <ResponsiveDateTimePicker
           value={field.value as string}
           onChange={field.onChange}
           className="w-full"

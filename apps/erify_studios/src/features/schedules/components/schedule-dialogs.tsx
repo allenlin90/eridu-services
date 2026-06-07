@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import type { ScheduleApiResponse } from '@eridu/api-types/schedules';
 import { updateScheduleInputSchema } from '@eridu/api-types/schedules';
 import {
-  DateTimePicker,
+  ResponsiveDateTimePicker,
   Select,
   SelectContent,
   SelectItem,
@@ -97,7 +97,7 @@ export function ScheduleUpdateDialog({
           name: 'start_date',
           label: 'Start Date',
           render: (field) => (
-            <DateTimePicker
+            <ResponsiveDateTimePicker
               value={field.value ?? ''}
               onChange={(value) => field.onChange(value || undefined)}
               className="w-full"
@@ -108,7 +108,7 @@ export function ScheduleUpdateDialog({
           name: 'end_date',
           label: 'End Date',
           render: (field) => (
-            <DateTimePicker
+            <ResponsiveDateTimePicker
               value={field.value ?? ''}
               onChange={(value) => field.onChange(value || undefined)}
               className="w-full"

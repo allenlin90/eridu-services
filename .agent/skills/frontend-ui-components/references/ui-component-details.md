@@ -130,7 +130,8 @@ Rules:
 ### Reference implementation
 
 - `packages/ui/src/components/date-picker.tsx` — `ResponsiveDateTimePicker` (shared body via `DateTimePickerBody`, Popover on desktop, vaul Drawer on mobile)
-- `apps/erify_studios/src/features/studio-shows/components/show-actuals-dialog.tsx` — first consumer
+- `apps/erify_studios/src/components/responsive-dialog.tsx` — app-local responsive Dialog → Drawer shell for feature forms and modal workflows. Handles the `aria-describedby` suppression internally (see below), so consumers never re-add it.
+- Consumers (`erify_studios`): `studio-shows/components/show-actuals-dialog.tsx`, `admin/components/admin-form-dialog.tsx`, `schedules/components/schedule-dialogs.tsx`, `shows/components/bulk-task-generation-dialog.tsx`, `tasks/components/task-due-date-dialog.tsx`, `tasks/components/system-task-details-dialog.tsx`, `studio-shifts/components/shift-compensation-dialog.tsx`
 
 ### Migration guide for existing Dialogs
 
@@ -140,6 +141,12 @@ Rules:
 4. Wire the same `open`/`onOpenChange` to both `Dialog` and `Drawer`.
 5. Match `DialogHeader`/`DialogFooter` content in `DrawerHeader`/`DrawerFooter` (keep the same primary action label).
 6. Mobile-verify at 375×667: every interactive element reachable, no off-screen content, keyboard does not push controls under the viewport edge.
+
+For `erify_studios`, prefer the app-local `ResponsiveDialog` wrapper when the modal fits the standard shape (`title`, optional `description`, body, optional footer). Keep a custom shell only when the component needs unusual scroll regions, nested focus behavior, or route-specific chrome. The wrapper is forgiving enough that most "I need a custom shell" instincts are wrong — `title` + `description` + body + a `footer` of action buttons covers task-due-date, system-task-details, shift-compensation, and the admin/schedule/show-actuals forms.
+
+#### `aria-describedby` suppression (don't hand-roll it)
+
+Radix `DialogContent` sets `aria-describedby={context.descriptionId}` then spreads your props **after**, so passing an explicit `aria-describedby={undefined}` drops the attribute and silences the "Missing `Description`" console warning. But that same explicit `undefined` also **breaks the auto-association when a description IS rendered** (screen readers lose the description). So the rule is conditional: inject `aria-describedby={undefined}` only when there is no description; omit the prop entirely when there is one. `ResponsiveDialog` already does this — consumers must NOT re-add `aria-describedby` on top of it. Only hand-rolled `Dialog`/`Drawer` shells (e.g. a one-button confirmation that intentionally has no description) need the inline `aria-describedby={undefined}`.
 
 ## Async Lookup Field Isolation
 

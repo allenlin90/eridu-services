@@ -38,6 +38,7 @@ On viewports below the `md` breakpoint (768px), Radix `Popover`/`Dialog` content
 - **Desktop (≥ md)**: render the desktop primitive (`Dialog`, `Popover`).
 - **Mobile (< md)**: render a vaul `Drawer` with the same body, switched via `useIsMobile()` from `@eridu/ui`.
 - **One body, two shells**: extract the form/picker body into a shared internal component; never duplicate logic between Dialog and Drawer.
+- **`erify_studios` wrapper**: use `apps/erify_studios/src/components/responsive-dialog.tsx` for app-local Dialog → Drawer conversions before hand-rolling the shell in feature code. It owns the `aria-describedby` suppression — never re-add that prop on top of it.
 - **Precedent**: `ResponsiveDateTimePicker` in `packages/ui/src/components/date-picker.tsx`.
 
 Applies to: every dialog reachable on a mobile route (actuals editing, shift compensation, task forms, json-form modals, schedule dialogs). Plain confirmations with one button can stay as `Dialog` — escalate when the dialog contains forms, pickers, multi-step content, or anything wider than ~280px.
@@ -126,6 +127,7 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 - [ ] Date fields use `DatePicker` / `DateTimePicker` / `ResponsiveDateTimePicker`
 - [ ] Datetime pickers on mobile-reachable forms use `ResponsiveDateTimePicker`
 - [ ] Mobile-reachable Dialogs render as `Drawer` below `md` (responsive dialog → drawer pattern) with a shared body
+- [ ] `erify_studios` mobile-reachable forms use the app-local `ResponsiveDialog` wrapper unless a feature needs custom shell behavior
 - [ ] 2+ async lookups → isolated `memo()` field components
 - [ ] `onSearch` wired to real search state
 - [ ] Cross-field invariants enforced via `buildXxxPayload` helper + disabled inputs (not by trusting form state on submit)

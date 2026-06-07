@@ -7,13 +7,13 @@ import type { StudioShowDetail } from '@eridu/api-types/shows';
 import {
   AsyncCombobox,
   AsyncMultiCombobox,
-  DateTimePicker,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
   Input,
+  ResponsiveDateTimePicker,
 } from '@eridu/ui';
 
 import type { StudioShowFormValues } from './studio-show-management-form';
@@ -81,7 +81,7 @@ export const StudioShowStartTimeField = memo(({ control }: { control: Control<St
       <FormItem>
         <FormLabel>Start Time</FormLabel>
         <FormControl>
-          <DateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
+          <ResponsiveDateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
         </FormControl>
         <FormMessage />
       </FormItem>
@@ -98,7 +98,7 @@ export const StudioShowEndTimeField = memo(({ control }: { control: Control<Stud
       <FormItem>
         <FormLabel>End Time</FormLabel>
         <FormControl>
-          <DateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
+          <ResponsiveDateTimePicker value={field.value ?? ''} onChange={field.onChange} className="w-full" />
         </FormControl>
         <FormMessage />
       </FormItem>
