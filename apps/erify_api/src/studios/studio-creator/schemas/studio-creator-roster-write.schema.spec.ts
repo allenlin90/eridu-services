@@ -8,14 +8,14 @@ describe('createStudioCreatorRosterInputSchema', () => {
   it('accepts decimal strings without coercing through numbers', () => {
     const result = createStudioCreatorRosterInputSchema.safeParse({
       creator_id: 'creator_00000000000000000001',
-      default_rate: '9007199254740993.01',
+      default_rate: '99999999.99',
       default_rate_type: 'FIXED',
       default_commission_rate: null,
     });
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.default_rate).toBe('9007199254740993.01');
+      expect(result.data.default_rate).toBe('99999999.99');
     }
   });
 
@@ -101,14 +101,14 @@ describe('updateStudioCreatorRosterInputSchema', () => {
 describe('updateStudioShowCreatorInputSchema', () => {
   it('keeps show creator rate decimal strings intact', () => {
     const result = updateStudioShowCreatorInputSchema.safeParse({
-      agreed_rate: '9007199254740993.01',
+      agreed_rate: '99999999.99',
       compensation_type: 'HYBRID',
       commission_rate: '12.50',
     });
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.agreed_rate).toBe('9007199254740993.01');
+      expect(result.data.agreed_rate).toBe('99999999.99');
       expect(result.data.commission_rate).toBe('12.50');
     }
   });

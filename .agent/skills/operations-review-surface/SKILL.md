@@ -1,11 +1,11 @@
 ---
 name: operations-review-surface
-description: Patterns for building the studio Operations review surfaces in erify_studios (`/task-review`, `/show-run-review`, `/task-setup`, and future `/finance/economics` / analytics views). Use BEFORE adding or changing an operational-day-scoped review screen — the lean-summary + lazy-paginated-sub-resources read model, URL-synced multi-tab DataTables, per-tab "export the full filtered set" CSV, and the 06:00–05:59 operational-day window computed on the frontend. Required reading before cloning `show-run-summary` for a new review surface.
+description: Patterns for building the studio Operations review surfaces in erify_studios (`/task-review`, `/show-run-review`, `/task-setup`, and future `/costs` / analytics views). Use BEFORE adding or changing an operational-day-scoped review screen — the lean-summary + lazy-paginated-sub-resources read model, URL-synced multi-tab DataTables, per-tab "export the full filtered set" CSV, and the 06:00–05:59 operational-day window computed on the frontend. Required reading before cloning `show-run-summary` for a new review surface.
 ---
 
 # Operations Review Surface
 
-The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-setup`) share one composition pattern: an operational-day-scoped read model summarized into KPI cards plus URL-synced multi-tab DataTables, each tab lazily fetched and independently exportable. PR 19 (`/finance/economics`) and PR 21 (analytics) will reuse it. This skill captures that pattern so the next surface doesn't copy a monolith.
+The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-setup`) share one composition pattern: an operational-day-scoped read model summarized into KPI cards plus URL-synced multi-tab DataTables, each tab lazily fetched and independently exportable. PR 19 (`/studios/:studioId/costs`) and PR 21 (`/studios/:studioId/performance`) reuse it. This skill captures that pattern so the next surface doesn't copy a monolith.
 
 > This is the **composition** layer on top of [`table-view-pattern`](../table-view-pattern/SKILL.md). That skill owns the table mechanics (DataTable, `useTableUrlState`, pagination, current-view export). This skill owns how a multi-tab operational-review screen is assembled from those primitives. Read both.
 
@@ -22,7 +22,7 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 
 ## When to use / not use
 
-**Use**: a studio review screen scoped to an operational day/range that summarizes already-extracted operational facts and drills into them across tabs; adding a tab or filter to an existing Operations surface; a new downstream read surface over the same indexed columns (economics, analytics).
+**Use**: a studio review screen scoped to an operational day/range that summarizes already-extracted operational facts and drills into them across tabs; adding a tab or filter to an existing Operations surface; a new downstream read surface over the same indexed columns (costs, analytics).
 
 **Don't use**: single-table list routes → [`table-view-pattern`](../table-view-pattern/SKILL.md). Card-based lists → [`studio-list-pattern`](../studio-list-pattern/SKILL.md). The **write** path (extraction) → [`fact-extraction-pipeline`](../fact-extraction-pipeline/SKILL.md). These surfaces are **read-only over extracted facts**; never write actuals from a review screen (see PR 12 §G — Operations review is upstream of economics).
 
