@@ -41,6 +41,17 @@ export const taskListInclude = {
               },
             },
           },
+          showPlatforms: {
+            where: { deletedAt: null },
+            select: {
+              uid: true,
+              platform: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
         },
       },
     },
