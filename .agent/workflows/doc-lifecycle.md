@@ -6,7 +6,7 @@ description: Maintain documentation structure and content at phase boundaries �
 
 Run this workflow when closing a phase, after confirming features are deployed to `master`, or when the set of active PRDs changes.
 
-> **Companion**: Run `knowledge-sync.md` when *content* changes (API contracts, behavior, architecture). Run this workflow when *structure* changes (PRDs shipping, phase boundaries, doc reorganization).
+> **Companion**: Run `knowledge-sync.md` when *content* changes (API contracts, behavior, architecture). Run this workflow when *structure* changes (PRDs shipping, phase boundaries, doc reorganization). When a single PR fully implements a design doc, PRD, or superpowers spec, the relevant retirement sub-process runs in that PR via the [Wrap-up step of `pr-review.md`](./pr-review.md#wrap-up--knowledge-sync--merge-readiness-verdict) — promoting and deleting the artifact alongside the code, not in a follow-up.
 
 ## Trigger Conditions
 
@@ -212,13 +212,13 @@ For each entry in `apps/*/docs/design/README.md`:
 
 Create a new file at `apps/*/docs/<FEATURE_NAME>.md`. Keep only:
 
-| Keep | Strip |
-| --- | --- |
-| Purpose / scope | Ordered task list / checklist |
-| API surface (endpoints, guards, request/response, errors) | File inventory |
-| Design decisions (the "why" — tradeoffs, rejections, scope boundaries) | Verification / `pnpm` command blocks |
-| Key business rules (delete rules, restore rules, enforcement logic) | "Status: Planning" / "Planned for Phase N" language |
-| Follow-ups / known limitations | Inline code examples that mirror the actual implementation |
+| Keep                                                                   | Strip                                                      |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Purpose / scope                                                        | Ordered task list / checklist                              |
+| API surface (endpoints, guards, request/response, errors)              | File inventory                                             |
+| Design decisions (the "why" — tradeoffs, rejections, scope boundaries) | Verification / `pnpm` command blocks                       |
+| Key business rules (delete rules, restore rules, enforcement logic)    | "Status: Planning" / "Planned for Phase N" language        |
+| Follow-ups / known limitations                                         | Inline code examples that mirror the actual implementation |
 
 Update the status header to `✅ Implemented — Phase N`.
 
@@ -282,8 +282,8 @@ Fix any remaining references in skills, phase docs, or cross-app READMEs.
 ## Users
 
 | Role | Need |
-| --- | --- |
-| ... | ... |
+| ---- | ---- |
+| ...  | ...  |
 
 ## What Was Delivered
 
@@ -309,7 +309,7 @@ Fix any remaining references in skills, phase docs, or cross-app READMEs.
 ## Actors
 
 | Actor | Role | Key Capability |
-| --- | --- | --- |
+| ----- | ---- | -------------- |
 
 ## Flow Overview
 
@@ -338,10 +338,10 @@ Fix any remaining references in skills, phase docs, or cross-app READMEs.
 
 ## Related Docs
 
-| Layer | Document |
-| --- | --- |
-| Feature | [docs/features/...](../features/...) |
-| PRD | [docs/prd/...](../prd/...) |
-| Backend | [apps/erify_api/docs/...](../../apps/erify_api/docs/...) |
+| Layer    | Document                                                         |
+| -------- | ---------------------------------------------------------------- |
+| Feature  | [docs/features/...](../features/...)                             |
+| PRD      | [docs/prd/...](../prd/...)                                       |
+| Backend  | [apps/erify_api/docs/...](../../apps/erify_api/docs/...)         |
 | Frontend | [apps/erify_studios/docs/...](../../apps/erify_studios/docs/...) |
 ```

@@ -6,6 +6,8 @@ description: Sync agent knowledge artifacts (docs, skills, workflows, rules, mem
 
 Run this workflow for feature delivery, behavior changes, refactors, and notable architecture/contract updates.
 
+> **Companion**: When the trigger is a PR heading for merge, this sweep runs as the [Wrap-up step of `pr-review.md`](./pr-review.md#wrap-up--knowledge-sync--merge-readiness-verdict) so the artifact updates land in the same PR — scoped to what that PR changed, not a full repo audit.
+
 ## Trigger Conditions
 
 Run when any of these are true:

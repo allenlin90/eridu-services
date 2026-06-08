@@ -123,7 +123,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - When a phase closes, PRDs ship, or docs are reorganized, run `.agent/workflows/doc-lifecycle.md`.
 - When a backwards-incompatible schema redesign lands for a shipped feature, run `.agent/workflows/feature-version-cutover.md` (manual trigger). It decides whether to update docs in place or promote the feature doc to a versioned folder (`v1.md` archived, `README.md` describing v2), and enforces same-PR updates across all related docs and skills.
 - Use `docs/tech-debt/` for accepted implementation gaps and cleanup issues that should be fixed later; use `docs/ideation/` for deferred product or architecture ideas that need future discovery or PRD promotion.
-- Before merging a PR, run `.agent/workflows/pr-review.md`.
+- Before merging a PR, run `.agent/workflows/pr-review.md` — or invoke the `/pr-ready` command, which runs that workflow end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and `doc-lifecycle.md` so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
 - During design review, optimization investigations, or phase planning, cross-check `.agent/workflows/ideation-lifecycle.md`.
 
 ### Core Engineering Rules

@@ -4,9 +4,9 @@ description: Pre-merge quality gate — pattern compliance, code review, and ver
 
 # PR Review Workflow
 
-Run this workflow before merging any PR. Scope the changed layers first, then run only the gates that apply.
+Run this workflow before merging any PR. Scope the changed layers first, then run only the gates that apply. The final **Wrap-up** step is part of the merge-readiness verdict — a PR is not "ready" until the knowledge and doc changes it implies have landed in the same PR.
 
-> **Companion**: Run `knowledge-sync.md` after merge when behavior, contracts, or architecture changed.
+> **Companion**: The [Wrap-up step](#wrap-up--knowledge-sync--merge-readiness-verdict) folds `knowledge-sync.md` and `doc-lifecycle.md` into this gate, so skill/doc/lifecycle updates land *in the same PR* before the verdict — not in a follow-up commit after merge.
 
 ---
 
@@ -18,13 +18,13 @@ git diff --name-only origin/master...HEAD
 
 Map each changed path to its review gate:
 
-| Path prefix | Gate |
-| --- | --- |
-| `apps/erify_api/src/` | [§ erify\_api gate](#erify_api-gate) |
-| `apps/eridu_auth/src/` | [§ eridu\_auth gate](#eridu_auth-gate) |
-| `apps/erify_studios/src/` · `apps/erify_creators/src/` | [§ Frontend gate](#frontend-gate) |
+| Path prefix                                                                      | Gate                                          |
+| -------------------------------------------------------------------------------- | --------------------------------------------- |
+| `apps/erify_api/src/`                                                            | [§ erify\_api gate](#erify_api-gate)          |
+| `apps/eridu_auth/src/`                                                           | [§ eridu\_auth gate](#eridu_auth-gate)        |
+| `apps/erify_studios/src/` · `apps/erify_creators/src/`                           | [§ Frontend gate](#frontend-gate)             |
 | `packages/api-types/` · `packages/auth-sdk/` · `packages/ui/` · `packages/i18n/` | [§ Shared package gate](#shared-package-gate) |
-| `apps/*/docs/` · `docs/` | [§ Documentation gate](#documentation-gate) |
+| `apps/*/docs/` · `docs/`                                                         | [§ Documentation gate](#documentation-gate)   |
 
 Multiple gates apply when a PR spans layers. Run all that match.
 
@@ -171,6 +171,42 @@ All checks must pass before merge.
 
 ---
 
+## Wrap-up — knowledge sync & merge-readiness verdict
+
+Run this after the gates and verification pass, **before** declaring the PR ready to merge. Correct code is necessary but not sufficient: the knowledge artifacts a PR touches — skills, canonical docs, lifecycle docs — must travel *with the code in the same PR*. Updates deferred to "after merge" drift out of sync and skip the review that would have caught them, which is exactly the failure the `phase-roadmap-status-update-timing` rule exists to prevent.
+
+Scope this to what **this PR** changed. This is not a full phase audit — that belongs to `doc-lifecycle.md` at phase close.
+
+### 1. Sync knowledge artifacts
+
+Run the parts of `knowledge-sync.md` that apply to the behavior/contracts this PR changed:
+
+- [ ] **Skills** — the most relevant `.agent/skills/*/SKILL.md` reflect any new or changed pattern this PR establishes. Capture recurring implementation/review patterns for future agents; skip one-off task logs. If this PR introduced a review rule worth enforcing, it is added to the matching gate in *this* workflow too.
+- [ ] **Workflows / rules** — if this PR changed a repeatable process or added a mandatory constraint, the relevant `.agent/workflows/*.md` / `.agent/rules/*.md` (and `AGENTS.md`) are updated.
+- [ ] **Canonical docs** — implemented behavior is recorded in `docs/features/` or `apps/*/docs/` per `knowledge-sync.md` § 2; feature docs reference source files, not inline code.
+- [ ] **Memory** — durable project knowledge recorded in `.claude/memory/*.md` where applicable.
+
+### 2. Retire shipped lifecycle docs
+
+For artifacts **this PR completes**, run the matching `doc-lifecycle.md` sub-process — and retire them in this PR so the planning artifact and its implementation land and close together:
+
+- [ ] **Design docs** — any `apps/*/docs/design/*.md` whose behavior shipped here is promoted to the app's `docs/` root and removed from the design index (`doc-lifecycle.md` § Design Doc Promotion).
+- [ ] **PRDs** — any `docs/prd/*.md` this PR fully implements is promoted to `docs/features/` and deleted (`doc-lifecycle.md` § 2 → Shipped PRDs).
+- [ ] **Superpowers specs/plans** — any `docs/superpowers/specs|plans/*` this PR fully implements is retired (`doc-lifecycle.md` § Superpowers Spec/Plan Retirement).
+- [ ] **Roadmap** — the relevant `docs/roadmap/PHASE_*.md` row status is updated to what actually shipped, in this PR.
+- [ ] **Links** — no stale references to moved/deleted docs remain: `grep -rn "<old-path>" . --include="*.md" --exclude-dir=node_modules --exclude-dir=.git`.
+
+### 3. Fold the changes into the PR
+
+The doc/skill/lifecycle edits above must travel with the code they describe:
+
+- [ ] Wrap-up changes are committed on the PR branch and pushed (confirm before pushing per house rules; squash-merge style per `pr-merge-style`).
+- [ ] The PR description is updated to match what was actually delivered — run the PR description check below.
+
+Only once §1–§3 are done is the verdict **ready to merge**.
+
+---
+
 ## PR description check
 
 - [ ] Title is concise (under 70 characters) and describes the change, not the implementation.
@@ -188,4 +224,6 @@ All checks must pass before merge.
 - [ ] All implemented design docs promoted; no `✅` items remaining in any Design table.
 - [ ] All PRDs for shipped features promoted to `docs/features/`.
 - [ ] lint ✅ · typecheck ✅ · test ✅ · build ✅ for all affected workspaces.
+- [ ] **Wrap-up done**: skills/workflows/rules synced for patterns this PR established; canonical docs and memory updated; design docs/PRDs/superpowers specs this PR completed are retired and links are clean; roadmap row status updated in this PR.
+- [ ] **Folded into the PR**: wrap-up changes committed, pushed, and the PR description updated to match delivery.
 - [ ] PR description references canonical paths and reflects current state.
