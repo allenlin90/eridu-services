@@ -22,6 +22,7 @@ export const STUDIO_ROLE = {
   TALENT_MANAGER: 'talent_manager',
   DESIGNER: 'designer',
   MODERATION_MANAGER: 'moderation_manager',
+  ACCOUNT_MANAGER: 'account_manager',
 } as const;
 
 export type StudioRole = (typeof STUDIO_ROLE)[keyof typeof STUDIO_ROLE];
