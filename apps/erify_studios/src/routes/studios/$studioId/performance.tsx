@@ -14,7 +14,9 @@ import {
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { usePerformanceShowsQuery } from '@/features/studio-performance/api/get-performance-shows';
+import { usePerformanceShowsSeriesQuery } from '@/features/studio-performance/api/get-performance-shows-series';
 import { usePerformanceSummaryQuery } from '@/features/studio-performance/api/get-performance-summary';
+import { PerformanceClientSelect } from '@/features/studio-performance/components/performance-client-select';
 import { PerformanceShowsTable } from '@/features/studio-performance/components/performance-shows-table';
 import { PerformanceSummaryCards } from '@/features/studio-performance/components/performance-summary-cards';
 import { fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
@@ -44,6 +46,7 @@ const performanceSearchSchema = z.object({
   name: z.string().optional().catch(undefined),
   has_performance: z.enum(['all', 'true', 'false']).optional().catch(undefined),
   sort: z.string().optional().catch(undefined),
+  chart_mode: z.enum(['daily', 'by_show']).optional().catch(undefined),
 });
 
 type PerformanceSearch = z.infer<typeof performanceSearchSchema>;
@@ -135,6 +138,8 @@ function StudioPerformanceDashboard() {
     };
   }, [dateRange, search.client_id, search.show_type_id, search.platform_id, search.show_standard_id, search.has_performance, search.sort]);
 
+  const chartMode = search.chart_mode ?? 'daily';
+
   const summaryQuery = usePerformanceSummaryQuery(studioId, apiParams);
   const showsQuery = usePerformanceShowsQuery(studioId, {
     ...apiParams,
@@ -142,11 +147,18 @@ function StudioPerformanceDashboard() {
     limit: search.limit,
     name: search.name,
   });
+  // Only fetch the per-show series when the By-Show chart mode is active.
+  const seriesQuery = usePerformanceShowsSeriesQuery(studioId, apiParams, {
+    enabled: chartMode === 'by_show',
+  });
 
   const isFetchingAny = summaryQuery.isFetching || showsQuery.isFetching;
   const handleRefresh = () => {
     void summaryQuery.refetch();
     void showsQuery.refetch();
+    if (chartMode === 'by_show') {
+      void seriesQuery.refetch();
+    }
   };
 
   return (
@@ -186,11 +198,24 @@ function StudioPerformanceDashboard() {
             isLoading={summaryQuery.isLoading}
           />
 
-          {/* Daily Trend Area Chart (Recharts is lazy-loaded — see top of file) */}
+          {/* Trend chart — Daily (operational-day) or By-Show modes.
+              Recharts is lazy-loaded — see top of file. */}
           <Suspense fallback={<div className="h-88 w-full animate-pulse rounded-xl bg-muted/20" />}>
             <PerformanceTrendGraph
               data={summaryQuery.data}
               isLoading={summaryQuery.isLoading}
+              mode={chartMode}
+              onModeChange={(nextMode) =>
+                updateSearch({ chart_mode: nextMode === 'daily' ? undefined : nextMode })}
+              seriesData={seriesQuery.data}
+              seriesLoading={seriesQuery.isLoading}
+              clientSelector={(
+                <PerformanceClientSelect
+                  studioId={studioId}
+                  value={search.client_id ?? ''}
+                  onChange={(clientId) => updateSearch({ client_id: clientId || undefined, page: 1 })}
+                />
+              )}
             />
           </Suspense>
 

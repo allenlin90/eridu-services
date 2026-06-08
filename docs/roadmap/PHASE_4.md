@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Last updated**: 2026-06-07 · **Status**: 🚧 Active · **Remaining**: 7 PRs · **Next**: 20.1 Client mechanic catalog foundation + ACCOUNT_MANAGER role
+> **Last updated**: 2026-06-08 · **Status**: 🚧 Active · **Remaining**: 7 PRs · **Next**: 20.1 Client mechanic catalog foundation + ACCOUNT_MANAGER role
 
 **Quick links**
 
@@ -96,8 +96,9 @@ Each row is one user-facing change or explicit design investigation. Rows are or
 | 21.9   | [Performance data backfill, derivation & forward binding](#pr-21--show-performance-analytics-211-2111) — populate `ShowPlatform` performance metrics: historical per-platform backfill derived from existing show-scoped / loop-8 submissions (1-platform auto, 2-platform skipped for manual entry) **plus** forward `Post_production_check` fact-key binding so new submissions auto-extract on manager approval. Both applied to production. Forward binding uses the [template-system-fact-migration skill](../../.agent/skills/template-system-fact-migration/SKILL.md); also includes the original hydrated-key script and doc cleanup. | PR 21.6, PR 21.7 | ✅ Shipped | [#137](https://github.com/allenlin90/eridu-services/pull/137) |
 | 21.10  | [`/performance` money formatting (THB + thousands separator)](#pr-21--show-performance-analytics-211-2111) — render GMV in Thai Baht with thousands separators; source currency/locale from a studio setting (see [studio-config-settings ideation](../ideation/studio-config-settings.md)). | PR 21.6 | ✅ Shipped | — |
 | 21.11  | [`/performance` filter by performance-record presence](#pr-21--show-performance-analytics-211-2111) — let the shows filter include/exclude shows with vs without recorded performance metrics, aligned with the "recorded shows" card count. | PR 21.6 | ✅ Shipped | — |
-| 22.1   | [Show performance by moderation loops](#pr-22--loop-performance--table-multi-sorting-221-222) — new backend endpoint and Recharts line graph in show details. | PR 21.7 | ✅ Shipped               | [#142](https://github.com/allenlin90/eridu-services/pull/142)        |
-| 22.2   | [Multi-sort for table view in /performance](#pr-22--loop-performance--table-multi-sorting-221-222) — backend in-memory multi-sorting + URL sync + header UI with priority badges. | PR 21.11 | ✅ Shipped               | [#142](https://github.com/allenlin90/eridu-services/pull/142)        |
+| 22.1   | [Show performance by moderation loops](#pr-22--performance-dashboard-enhancements-221-223) — new backend endpoint and Recharts line graph in show details. | PR 21.7 | ✅ Shipped               | [#142](https://github.com/allenlin90/eridu-services/pull/142)        |
+| 22.2   | [Multi-sort for table view in /performance](#pr-22--performance-dashboard-enhancements-221-223) — backend in-memory multi-sorting + URL sync + header UI with priority badges. | PR 21.11 | ✅ Shipped               | [#142](https://github.com/allenlin90/eridu-services/pull/142)        |
+| 22.3   | [Per-show performance graph by client](#pr-223--per-show-performance-graph-by-client) — new By-Show x-axis mode on the `/performance` trend graph: a selected client's shows across the range (ordered by `startTime`) instead of operational-day buckets, with per-show GMV / Views and **peak CTR / CTO** (max across loops). Multi-client overlay deferred to a future view. | PR 21.6, PR 22.1 | ✅ Shipped | [#151](https://github.com/allenlin90/eridu-services/pull/151) |
 
 ### How to use this list
 
@@ -276,12 +277,13 @@ Goal: convert each single-entity detail/edit dialog into a `/studios/:studioId/<
 **Fix** — Bucket by an explicit, timezone-aware operational-day key instead of a raw UTC `.slice(0, 10)`. The backend stays timezone-agnostic for validation, but day-grouping must use the same operational-day definition the frontend selected (pass the studio/operational timezone or the precomputed day boundaries through to the aggregation), not the server's incidental UTC calendar. `slice(0, 10)` on an ISO string is **not** a date-bucketing primitive — it silently assumes UTC. Guard rail captured in the [`operations-review-surface` skill](../../.agent/skills/operations-review-surface/SKILL.md#operational-day-bucketing-never-slice-utc-iso) and project memory.
 
 
-### PR 22 · Loop performance & table multi-sorting (22.1-22.2)
+### PR 22 · Performance dashboard enhancements (22.1-22.3)
 
-**Context** — Enhancing `/performance` dashboard and detail pages. This workstream delivers loop-level progression trend graphs for show details and multi-column sorting for the show performance breakdown table.
+**Context** — Enhancing the `/performance` dashboard and show detail pages. This workstream delivers loop-level progression trend graphs for show details, multi-column sorting for the show performance breakdown table, and a per-show-by-client trend graph mode.
 
 - **22.1 — Show performance by moderation loops**. Implement `GET /studios/:studioId/performance/shows/:id/loops` backend endpoint to query finalized tasks (latest wins), extract loop metadata, and parse content. Render a Recharts `LineChart` on the show's Performance tab with Views, CTR, and CTO toggles.
 - **22.2 — Multi-sort for table view in /performance**. Add Zod query schema, backend metric multi-sorting (GMV/Views sums, CTR/CTO averages across active platforms) — in memory only when a derived metric is sorted, with the default `start_time` sort kept on the DB path — plus URL query parameter syncing and a frontend `<SortableHeader>` component with priority badges.
+- **22.3 — Per-show performance graph by client**. A new **By-Show** x-axis mode on the `/performance` trend graph (toggled against the existing Daily mode) that switches the x-axis from operational-day buckets to a selected client's shows across the range (ordered by `startTime`). Plots per-show GMV / Views (stored aggregates) and **peak CTR / CTO** per show (max across the show's moderation loops × platforms, reusing the 22.1 loop-parsing path) via a metric toggle, served by a dedicated `GET /performance/shows-series` endpoint. Multi-client overlay is deferred to a future view with its own requirements.
 
 #### PR 22.1 · Show performance by moderation loops
 
@@ -290,6 +292,13 @@ Goal: convert each single-entity detail/edit dialog into a `/studios/:studioId/<
 #### PR 22.2 · Multi-sort for table view in /performance
 
 **Brief** — Enable sorting records by GMV, Views, CTR, and CTO simultaneously. Sync sorting state with the URL `sort` query parameter. Derived-metric sorts run in memory on the backend (nulls consistently sorted to the end), loading the full matched set; the default `start_time` sort stays on the database path (DB-ordered and paginated) to avoid loading every row when no metric sort is requested. `start_time desc` is always appended as the final tie-breaker. Render custom `SortableHeader` headers on the frontend with priority and direction badges.
+
+
+#### PR 22.3 · Per-show performance graph by client
+
+**Brief** — Today `/performance`'s trend graph plots accumulated / sum GMV or views over the operational-day timeline (PR 21.6, timezone-bucketed by PR 21.8). Add a new **per-show** chart mode whose x-axis is the shows of a selected client across the chosen range, ordered by `startTime`, instead of day buckets. Each x position is one show; series plot that show's GMV and view count plus its **peak CTR and CTO** (the max across the show's moderation loops / active platforms — reuse the loop-metric source from PR 22.1 rather than the last-value `ShowPlatform.ctr` / `cto` columns). A client selector supports **multiple clients**: each selected client contributes its own series so several clients' shows compare on one graph. `Show.clientId` is already a required relation indexed on `(client_id, start_time, deleted_at)`, so the per-client / per-range query needs no migration and has **no dependency on the PR 20 mechanic / `ACCOUNT_MANAGER` work**. Read-only analytics over existing `ShowPlatform` performance metrics; it reuses the dashboard's studio scoping, range, and performance-record-presence (21.11) filters.
+
+**Shipped** ([#151](https://github.com/allenlin90/eridu-services/pull/151)) — Canonical record: [`show-performance-analytics.md`](../features/show-performance-analytics.md). Decisions: peak CTR/CTO = **true peak across loops × platforms** (reuse 22.1 parsing, batched per-show to avoid N+1, shared loop-parser); **dedicated** `GET /performance/shows-series` endpoint (all shows in range, no pagination); rendered as an x-axis **mode toggle on the existing trend-graph card**; no-client default shows all shows in range; **line** chart. Multi-client overlay deferred to a future view.
 
 
 ## Out of scope (post-Phase-4)

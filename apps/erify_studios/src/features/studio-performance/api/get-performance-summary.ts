@@ -8,6 +8,7 @@ export const studioPerformanceKeys = {
   all: ['studio-performance'] as const,
   summary: (studioId: string, filters?: unknown) => [...studioPerformanceKeys.all, 'summary', studioId, filters] as const,
   shows: (studioId: string, filters?: unknown) => [...studioPerformanceKeys.all, 'shows', studioId, filters] as const,
+  showsSeries: (studioId: string, filters?: unknown) => [...studioPerformanceKeys.all, 'shows-series', studioId, filters] as const,
 };
 
 export async function getPerformanceSummary(

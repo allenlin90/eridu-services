@@ -6,6 +6,7 @@ import {
   performanceSummaryResponseSchema,
   showPerformanceLoopsResponseSchema,
   showPerformanceResponseSchema,
+  showPerformanceSeriesResponseSchema,
 } from '@eridu/api-types/performance';
 
 import { BaseStudioController } from '../base-studio.controller';
@@ -52,6 +53,17 @@ export class StudioPerformanceController extends BaseStudioController {
   ) {
     const { items, total } = await this.performanceService.getPerformanceShows(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @ApiOperation({ summary: 'Get per-show performance series for the By-Show graph' })
+  @Get('shows-series')
+  @ReadBurstThrottle()
+  @ZodResponse(showPerformanceSeriesResponseSchema)
+  async listShowsSeries(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PerformanceQueryDto,
+  ) {
+    return this.performanceService.getPerformanceShowsSeries(studioId, query);
   }
 
   @ApiOperation({ summary: 'Get loop-level performance metrics for a show' })

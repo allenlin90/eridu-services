@@ -7,8 +7,10 @@ import type {
   PerformanceSortField,
   PerformanceSortRule,
   PerformanceSummaryResponse,
+  ShowPerformanceLoopItem,
   ShowPerformanceLoopsResponse,
   ShowPerformanceResponse,
+  ShowPerformanceSeriesResponse,
 } from '@eridu/api-types/performance';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
@@ -601,37 +603,62 @@ export class StudioPerformanceService {
       },
     });
 
-    // A show may have several finalized moderation tasks; the most recently
-    // updated one that carries a loop schema is authoritative ("latest wins").
-    // Older tasks are intentionally ignored — re-moderation supersedes prior runs.
-    let selectedTask: any = null;
-    let loopsMetadata: any[] = [];
-
-    for (const task of tasks) {
-      const schema = task.snapshot?.schema as any;
-      if (schema && schema.metadata && Array.isArray(schema.metadata.loops)) {
-        selectedTask = task;
-        loopsMetadata = schema.metadata.loops;
-        break;
-      }
-    }
-
-    if (!selectedTask) {
+    const selected = this.selectLoopBearingTask(tasks);
+    if (!selected) {
       return { loops: [], currency, locale };
     }
 
-    const schema = selectedTask.snapshot.schema as any;
+    const loops = this.buildLoopItems(
+      selected.loopsMetadata,
+      selected.task.snapshot.schema,
+      (selected.task.content as Record<string, any>) ?? {},
+      show.showPlatforms,
+    );
+
+    return { loops, currency, locale };
+  }
+
+  /**
+   * Selects the authoritative loop-bearing task from a list ordered most-recent
+   * first: the first task whose snapshot schema carries a `metadata.loops` array
+   * ("latest wins"). Older finalized tasks are ignored — re-moderation
+   * supersedes prior runs. Returns `null` when no task carries a loop schema.
+   */
+  private selectLoopBearingTask(
+    tasks: Array<{ snapshot?: { schema?: unknown } | null; content?: unknown }>,
+  ): { task: { snapshot: { schema: any }; content: unknown }; loopsMetadata: any[] } | null {
+    for (const task of tasks) {
+      const schema = task.snapshot?.schema as any;
+      if (schema && schema.metadata && Array.isArray(schema.metadata.loops)) {
+        return { task: task as { snapshot: { schema: any }; content: unknown }, loopsMetadata: schema.metadata.loops };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Maps a selected task's loop metadata + snapshot schema + content into
+   * per-loop, per-platform metric rows. Shared by the single-show loops endpoint
+   * (which returns the full breakdown) and the per-show series endpoint (which
+   * folds these rows to a peak), so both read loop metrics through one
+   * implementation and can't drift.
+   */
+  private buildLoopItems(
+    loopsMetadata: any[],
+    schema: any,
+    content: Record<string, any>,
+    showPlatforms: Array<{ uid: string; platform: { name: string } }>,
+  ): ShowPerformanceLoopItem[] {
     // Snapshot JSON is untyped; guard against a non-array `items` so a malformed
     // schema yields empty metrics rather than throwing at `.filter`.
-    const items: any[] = Array.isArray(schema.items) ? schema.items : [];
-    const content = (selectedTask.content as Record<string, any>) ?? {};
+    const items: any[] = Array.isArray(schema?.items) ? schema.items : [];
 
     // Field keys may be absent or non-string in legacy snapshots; lowercase
     // only real strings so matching never throws on, say, a numeric key.
     const lower = (value: unknown): string | undefined =>
       typeof value === 'string' ? value.toLowerCase() : undefined;
 
-    const loops = loopsMetadata.map((loop) => {
+    return loopsMetadata.map((loop) => {
       const loopFields = items.filter((item) => item.group === loop.id);
 
       let gmvFieldId: string | null = null;
@@ -670,7 +697,7 @@ export class StudioPerformanceService {
         }
       }
 
-      const metrics = show.showPlatforms.map((sp) => {
+      const metrics = showPlatforms.map((sp) => {
         const getVal = (fieldId: string | null) => {
           if (!fieldId)
             return null;
@@ -721,7 +748,181 @@ export class StudioPerformanceService {
         metrics,
       };
     });
+  }
 
-    return { loops, currency, locale };
+  /**
+   * Per-show "By Show" graph series: every show matching the query (no
+   * pagination), ordered by `start_time` ascending. Carries show-level GMV /
+   * view aggregates from the stored `ShowPlatform` columns and the **peak** CTR /
+   * CTO reached across the show's moderation loops × platforms.
+   */
+  async getPerformanceShowsSeries(
+    studioUid: string,
+    query: PerformanceQuery,
+  ): Promise<ShowPerformanceSeriesResponse> {
+    const startDate = new Date(query.start_date);
+    const endDate = new Date(query.end_date);
+    this.validateDateRange(startDate, endDate);
+
+    const studio = await this.prisma.studio.findUnique({
+      where: { uid: studioUid },
+      select: { metadata: true },
+    });
+    const { locale, currency } = this.resolveLocalization(studio?.metadata);
+
+    const shows = await this.prisma.show.findMany({
+      where: this.buildShowWhere(studioUid, query),
+      include: {
+        showPlatforms: {
+          where: this.buildShowPlatformsWhere(query),
+          include: { platform: true },
+        },
+      },
+      orderBy: { startTime: 'asc' },
+    });
+
+    if (shows.length === 0) {
+      return { shows: [], currency, locale };
+    }
+
+    // Batch-load finalized loop-bearing tasks for every show in range in one
+    // query (no N+1), ordered most-recent first, then group by target show so
+    // each show resolves its own "latest wins" task locally.
+    const showIds = shows.map((s) => s.id);
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        targets: { some: { showId: { in: showIds }, deletedAt: null } },
+        status: { in: [...StudioPerformanceService.LOOP_METRIC_TASK_STATUSES] },
+        deletedAt: null,
+      },
+      include: {
+        snapshot: true,
+        targets: { where: { deletedAt: null }, select: { showId: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    const tasksByShowId = new Map<string, typeof tasks>();
+    for (const task of tasks) {
+      for (const target of task.targets) {
+        if (target.showId === null) {
+          continue;
+        }
+        const key = target.showId.toString();
+        const list = tasksByShowId.get(key);
+        if (list) {
+          list.push(task);
+        } else {
+          tasksByShowId.set(key, [task]);
+        }
+      }
+    }
+
+    const seriesShows = shows.map((show) => {
+      const { gmv, views } = this.sumShowStoredAggregates(show.showPlatforms);
+
+      let peakCtr: string | null = null;
+      let peakCto: string | null = null;
+
+      const selected = this.selectLoopBearingTask(tasksByShowId.get(show.id.toString()) ?? []);
+      if (selected) {
+        const loops = this.buildLoopItems(
+          selected.loopsMetadata,
+          selected.task.snapshot.schema,
+          (selected.task.content as Record<string, any>) ?? {},
+          show.showPlatforms,
+        );
+        const peak = this.computePeakFromLoops(loops);
+        peakCtr = peak.peakCtr;
+        peakCto = peak.peakCto;
+      }
+
+      return {
+        id: show.uid,
+        name: show.name,
+        start_time: show.startTime.toISOString(),
+        gmv,
+        views,
+        peak_ctr: peakCtr,
+        peak_cto: peakCto,
+      };
+    });
+
+    return { shows: seriesShows, currency, locale };
+  }
+
+  /**
+   * Sums the stored per-platform GMV and view counts for a show. GMV sums every
+   * non-null platform value; views only count platforms with a recorded
+   * view-count fact (mirroring the summary/list semantics — `viewerCount`
+   * defaults to 0, so an unrecorded platform must not inflate the total).
+   * Returns `null` for a metric when no platform carries it.
+   */
+  private sumShowStoredAggregates(
+    showPlatforms: Array<{ gmv: Prisma.Decimal | null; viewerCount: number; metadata: unknown }>,
+  ): { gmv: string | null; views: number | null } {
+    let gmvSum: Prisma.Decimal | null = null;
+    let viewsSum: number | null = null;
+
+    for (const sp of showPlatforms) {
+      if (sp.gmv !== null) {
+        gmvSum = gmvSum ? gmvSum.add(sp.gmv) : sp.gmv;
+      }
+
+      const templates = (sp.metadata as Record<string, any> | null)?.performance_templates ?? {};
+      if (templates.show_platform_view_count !== undefined) {
+        viewsSum = (viewsSum ?? 0) + sp.viewerCount;
+      }
+    }
+
+    return {
+      gmv: gmvSum !== null ? decimalToString(gmvSum) : null,
+      views: viewsSum,
+    };
+  }
+
+  /**
+   * Reduces per-loop, per-platform metric rows to the single highest CTR / CTO
+   * reached for the show — the "peak" across the entire stream. Returns `null`
+   * for a metric when no loop/platform recorded it.
+   */
+  private computePeakFromLoops(
+    loops: ShowPerformanceLoopItem[],
+  ): { peakCtr: string | null; peakCto: string | null } {
+    let maxCtr: Prisma.Decimal | null = null;
+    let maxCto: Prisma.Decimal | null = null;
+
+    for (const loop of loops) {
+      for (const metric of loop.metrics) {
+        maxCtr = this.maxDecimal(maxCtr, metric.ctr);
+        maxCto = this.maxDecimal(maxCto, metric.cto);
+      }
+    }
+
+    return {
+      peakCtr: maxCtr !== null ? decimalToString(maxCtr) : null,
+      peakCto: maxCto !== null ? decimalToString(maxCto) : null,
+    };
+  }
+
+  /**
+   * Returns the larger of `current` and the decimal parsed from `raw`. A null or
+   * unparseable `raw` leaves `current` unchanged, so malformed snapshot values
+   * never poison the peak.
+   */
+  private maxDecimal(current: Prisma.Decimal | null, raw: string | null): Prisma.Decimal | null {
+    if (raw === null) {
+      return current;
+    }
+    let parsed: Prisma.Decimal;
+    try {
+      parsed = new Prisma.Decimal(raw);
+    } catch {
+      return current;
+    }
+    if (current === null) {
+      return parsed;
+    }
+    return parsed.greaterThan(current) ? parsed : current;
   }
 }

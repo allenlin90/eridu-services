@@ -6,6 +6,7 @@ describe('studioPerformanceController', () => {
     const service = {
       getPerformanceSummary: jest.fn(),
       getPerformanceShows: jest.fn(),
+      getPerformanceShowsSeries: jest.fn(),
     } as unknown as jest.Mocked<StudioPerformanceService>;
     const controller = new StudioPerformanceController(service);
 
@@ -45,6 +46,23 @@ describe('studioPerformanceController', () => {
 
     expect(service.getPerformanceSummary).toHaveBeenCalledWith('std_123', query);
     expect(result).toEqual(mockSummary);
+  });
+
+  it('gets the per-show performance series from the service', async () => {
+    const { controller, service } = buildController();
+    const mockSeries = {
+      shows: [
+        { id: 'show_1', name: 'Show 1', start_time: query.start_date, gmv: '100', views: 10, peak_ctr: '5', peak_cto: '2' },
+      ],
+      currency: 'THB',
+      locale: 'th-TH',
+    };
+    service.getPerformanceShowsSeries.mockResolvedValue(mockSeries);
+
+    const result = await controller.listShowsSeries('std_123', query);
+
+    expect(service.getPerformanceShowsSeries).toHaveBeenCalledWith('std_123', query);
+    expect(result).toEqual(mockSeries);
   });
 
   it('gets paginated list of shows with performance metrics from the service', async () => {
