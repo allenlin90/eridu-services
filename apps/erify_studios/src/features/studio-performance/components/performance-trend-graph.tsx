@@ -239,13 +239,13 @@ export function PerformanceTrendGraph({
             </p>
           </div>
           {/* X-axis mode toggle */}
-          <div className="flex flex-wrap gap-1.5 p-1 bg-muted/40 rounded-lg self-start sm:self-auto">
+          <div className="flex flex-nowrap shrink-0 gap-1.5 p-1 bg-muted/40 rounded-lg self-start sm:self-auto">
             {MODES.map((m) => (
               <Button
                 key={m.key}
                 variant={mode === m.key ? 'secondary' : 'ghost'}
                 size="sm"
-                className={`h-7 px-3 text-xs font-semibold rounded-md transition-all duration-200 ${
+                className={`h-7 px-3 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-all duration-200 ${
                   mode === m.key
                     ? 'bg-background shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
@@ -261,9 +261,9 @@ export function PerformanceTrendGraph({
         {/* Metric toggle (set depends on mode) + client selector for By-Show */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {mode === 'by_show'
-            ? <div className="w-full sm:max-w-xs">{clientSelector}</div>
+            ? <div className="w-full sm:flex-1 sm:min-w-0 sm:max-w-xs">{clientSelector}</div>
             : <div />}
-          <div className="flex flex-wrap gap-1.5 p-1 bg-muted/40 rounded-lg self-start sm:self-auto">
+          <div className="flex flex-nowrap shrink-0 gap-1.5 p-1 bg-muted/40 rounded-lg self-start overflow-x-auto max-w-full sm:self-auto">
             {(mode === 'daily' ? DAILY_METRICS : SERIES_METRICS).map((metric) => {
               const active = mode === 'daily' ? dailyMetric === metric.key : seriesMetric === metric.key;
               return (
@@ -271,7 +271,7 @@ export function PerformanceTrendGraph({
                   key={metric.key}
                   variant={active ? 'secondary' : 'ghost'}
                   size="sm"
-                  className={`h-7 px-3 text-xs font-semibold rounded-md transition-all duration-200 ${
+                  className={`h-7 px-3 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-all duration-200 ${
                     active
                       ? 'bg-background shadow-sm text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
