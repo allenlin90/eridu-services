@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { StudioCompensationLineItemModule } from './studio-compensation-line-item/studio-compensation-line-item.module';
+import { StudioCostsModule } from './studio-costs/studio-costs.module';
 import { StudioCreatorApiModule } from './studio-creator/studio-creator.module';
 import { StudioLookupModule } from './studio-lookup/studio-lookup.module';
 import { StudioMembershipModule } from './studio-membership/studio-membership.module';
@@ -24,6 +25,7 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
     StudioTaskReportModule,
     StudioShowModule,
     StudioCompensationLineItemModule,
+    StudioCostsModule,
     StudioPerformanceModule,
   ],
   exports: [

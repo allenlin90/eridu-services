@@ -240,10 +240,20 @@ describe('useSidebarConfig', () => {
     }));
 
     expect(result.current.navMain[5]).toEqual(expect.objectContaining({
-      title: 'Performance',
+      title: 'Analytics',
       url: '/studios/studio-1/performance',
       icon: expect.any(Function),
       isActive: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Performance',
+          url: '/studios/studio-1/performance',
+        }),
+        expect.objectContaining({
+          title: 'Costs',
+          url: '/studios/studio-1/costs',
+        }),
+      ]),
     }));
 
     expect(result.current.navMain[6]).toEqual(expect.objectContaining({

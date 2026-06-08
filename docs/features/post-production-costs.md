@@ -1,11 +1,11 @@
 # Feature: Costs Dashboard
 
-> **Status**: 🔲 Proposed / Review Required  
+> **Status**: ✅ Implemented / Active  
 > **Phase**: 4 — Wave 3 final feature  
 > **Workstream**: L-side P&L visibility — Costs review surface  
 > **Depends on**: PR 12 Fact Binding  
 > **Target Route**: `/studios/:studioId/costs`  
-> **Sidebar Group**: `Analytics` or `Performance & Costs` (alongside `/performance`)
+> **Sidebar Group**: `Analytics` (alongside `/performance`)
 
 ---
 
@@ -61,9 +61,11 @@ export const costsShowsQuerySchema = costsQuerySchema.extend({
 });
 
 export const costsShiftsQuerySchema = costsQuerySchema.extend({
-  page: z.coerce.number().int().min(1).optional().default(10),
+  page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
-  role: z.string().optional(),
+  member_name: z.string().optional(), // case-insensitive contains on the shift operator's name
+  role: z.string().optional(), // persisted lowercase STUDIO_ROLE value (e.g. `member`/`manager`) matched on the operator's active membership
+  is_duty_manager: z.boolean().optional(), // shift-level StudioShift.isDutyManager flag — orthogonal to membership role
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
   sort: z.string().optional(), // e.g. date:desc,total_cost:asc
 });
@@ -186,9 +188,11 @@ The Costs view will live at `/studios/:studioId/costs` and mimic the `/performan
    - Hovering displays a tooltip breakdown.
 3. **Detail Tables Section (Tabs)**:
    - Contains a Radix Tabs interface with two views:
-     - **Show Costs** tab: Displays shows table with client, show type, creator list, adjustments subtotal, total cost, warnings (e.g. orange exclamation badge for planned fallback), and a details link (`/shows/:showId`).
+     - **Show Costs** tab: Displays shows table with client, show type, creator list, adjustments subtotal, total cost, warnings (e.g. orange exclamation badge for planned fallback), and a details link targeting the compensation tab (`/shows/:showId/compensation`).
      - **Shift Costs** tab: Displays operator shifts table with operator name, role, date, status, duration, adjustments subtotal, total cost, warnings, and details link (`/shifts/:shiftId`).
-   - Both tables support server-side pagination, search by name, and multi-sort priorities synced to URL state.
+   - Both tables support server-side pagination, server-side text search (Show Costs by show `name`, Shift Costs by operator `member_name` — both wired through the table's `columnFilters`/`onColumnFiltersChange` into the route's `*_name` search param), and multi-sort priorities synced to URL state.
+   - **Only the active tab's breakdown fetches.** Each tab's paginated query is `enabled` only while its tab is selected (`enabled: activeTab === 'shows' | 'shifts'`), per the operations-review-surface lazy-sub-resource rule — an unopened tab costs zero rows.
+   - **Shift "Member Role" filter** is a single selector spanning two data-model concepts. `Operator` → membership role `member`; `Manager` → membership role `manager`; `Duty Manager` → the shift-level `is_duty_manager` flag. The UI discriminator is translated to API params by `features/studio-costs/lib/shift-role-filter.ts` (`toShiftRoleQueryParams`) so the dropdown options and the persisted query values can't drift.
 
 ---
 
@@ -201,7 +205,7 @@ To implement this surface cleanly, task 19 in `PHASE_4.md` is redesigned into th
     *   Export these schemas and infer types in `packages/api-types/src/index.ts`.
 *   **PR 19.2: Backend Costs Module, Controller & Services**
     *   Create NestJS `studio-costs` module, controller, and service in `apps/erify_api/src/studios/studio-costs`.
-    *   Implement pure live-calculators for show costs and shift costs, integrating DB queries for `Show`, `ShowCreator`, `StudioShift`, and `CompensationLineItem` with timezone-aware daily trend aggregation.
+    *   Implement pure live-calculators for show costs and shift costs, integrating DB queries for `Show`, `ShowCreator`, `StudioShift`, and `CompensationLineItem` with timezone-aware daily trend aggregation via the shared [`operational-day.util`](../../apps/erify_api/src/lib/utils/operational-day.util.ts) (shared with `StudioPerformanceService`). The trend reconciles with the reported subtotals — each resolved cost lands in exactly one operational-day bucket (`sum(trend) === subtotal`).
     *   Resolve date range defaults from a shared studio setting (`metadata.planning.defaultDashboardRangeDays`), defaulting to 7.
     *   Write service and controller unit tests matching the patterns in `studio-performance.service.spec.ts`.
 *   **PR 19.3: Frontend Sidebar & Route Configuration**

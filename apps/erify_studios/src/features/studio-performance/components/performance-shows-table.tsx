@@ -558,7 +558,7 @@ export function PerformanceShowsTable({
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
             <Link
-              to="/studios/$studioId/shows/$showId"
+              to="/studios/$studioId/shows/$showId/performance"
               params={{ studioId, showId: row.original.id }}
               className="font-semibold text-primary hover:underline"
             >

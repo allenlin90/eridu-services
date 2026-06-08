@@ -376,12 +376,30 @@ export function useSidebarConfig(
         });
       }
 
+      const studioAnalyticsItems: SidebarNavItem['items'] = [];
       if (hasStudioRouteAccess(activeStudio.role as StudioRole, 'performance')) {
-        navItems.push({
+        studioAnalyticsItems.push({
           title: 'Performance',
           url: `/studios/${activeStudio.studio.uid}/performance`,
           icon: TrendingUp,
-          isActive: isPathActive(currentPath, `/studios/${activeStudio.studio.uid}/performance`),
+        });
+      }
+      if (hasStudioRouteAccess(activeStudio.role as StudioRole, 'costs')) {
+        studioAnalyticsItems.push({
+          title: 'Costs',
+          url: `/studios/${activeStudio.studio.uid}/costs`,
+          icon: Receipt,
+        });
+      }
+
+      if (studioAnalyticsItems.length > 0) {
+        const activeAnalyticsItems = buildActiveItems(studioAnalyticsItems);
+        navItems.push({
+          title: 'Analytics',
+          url: activeAnalyticsItems[0]?.url ?? `/studios/${activeStudio.studio.uid}/performance`,
+          icon: TrendingUp,
+          isActive: activeAnalyticsItems.some((item) => item.isActive),
+          items: activeAnalyticsItems,
         });
       }
 

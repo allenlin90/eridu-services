@@ -1,11 +1,11 @@
 ---
 name: operations-review-surface
-description: Patterns for building the studio Operations review surfaces in erify_studios (`/task-review`, `/show-run-review`, `/task-setup`, and future `/finance/economics` / analytics views). Use BEFORE adding or changing an operational-day-scoped review screen — the lean-summary + lazy-paginated-sub-resources read model, URL-synced multi-tab DataTables, per-tab "export the full filtered set" CSV, and the 06:00–05:59 operational-day window computed on the frontend. Required reading before cloning `show-run-summary` for a new review surface.
+description: Patterns for building the studio Operations review surfaces in erify_studios (`/task-review`, `/show-run-review`, `/task-setup`, and future `/costs` / analytics views). Use BEFORE adding or changing an operational-day-scoped review screen — the lean-summary + lazy-paginated-sub-resources read model, URL-synced multi-tab DataTables, per-tab "export the full filtered set" CSV, and the 06:00–05:59 operational-day window computed on the frontend. Required reading before cloning `show-run-summary` for a new review surface.
 ---
 
 # Operations Review Surface
 
-The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-setup`) share one composition pattern: an operational-day-scoped read model summarized into KPI cards plus URL-synced multi-tab DataTables, each tab lazily fetched and independently exportable. PR 19 (`/finance/economics`) and PR 21 (analytics) will reuse it. This skill captures that pattern so the next surface doesn't copy a monolith.
+The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-setup`) share one composition pattern: an operational-day-scoped read model summarized into KPI cards plus URL-synced multi-tab DataTables, each tab lazily fetched and independently exportable. PR 19 (`/studios/:studioId/costs`) and PR 21 (`/studios/:studioId/performance`) reuse it. This skill captures that pattern so the next surface doesn't copy a monolith.
 
 > This is the **composition** layer on top of [`table-view-pattern`](../table-view-pattern/SKILL.md). That skill owns the table mechanics (DataTable, `useTableUrlState`, pagination, current-view export). This skill owns how a multi-tab operational-review screen is assembled from those primitives. Read both.
 
@@ -22,7 +22,7 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 
 ## When to use / not use
 
-**Use**: a studio review screen scoped to an operational day/range that summarizes already-extracted operational facts and drills into them across tabs; adding a tab or filter to an existing Operations surface; a new downstream read surface over the same indexed columns (economics, analytics).
+**Use**: a studio review screen scoped to an operational day/range that summarizes already-extracted operational facts and drills into them across tabs; adding a tab or filter to an existing Operations surface; a new downstream read surface over the same indexed columns (costs, analytics).
 
 **Don't use**: single-table list routes → [`table-view-pattern`](../table-view-pattern/SKILL.md). Card-based lists → [`studio-list-pattern`](../studio-list-pattern/SKILL.md). The **write** path (extraction) → [`fact-extraction-pipeline`](../fact-extraction-pipeline/SKILL.md). These surfaces are **read-only over extracted facts**; never write actuals from a review screen (see PR 12 §G — Operations review is upstream of economics).
 
@@ -66,9 +66,17 @@ The window math is on the **frontend**; the backend endpoint is timezone-agnosti
 
 When the backend groups rows **into days** for a trend/series (not just filtering by a range), it must bucket by the **same operational-day definition the frontend selected**, not by the server's incidental UTC calendar.
 
-- ❌ `someDate.toISOString().slice(0, 10)` — this is **not** a date-bucketing primitive. It silently assumes UTC, so for any non-UTC studio the day boundaries fall at UTC midnight instead of the local 06:00 boundary: edge buckets are off by one and rows near local midnight land in the wrong day. (Bug fixed in PR 21.8 — the performance trend bucketed both its keys and per-show assignment this way.)
-- ✅ Carry the operational timezone (or the precomputed per-day boundaries) into the aggregation and group by an explicit timezone-aware day key. The endpoint stays timezone-agnostic for *validation*; *grouping* is not timezone-agnostic.
+- ❌ `someDate.toISOString().slice(0, 10)` on a **timestamp/instant** — this is **not** a date-bucketing primitive. It silently assumes UTC, so for any non-UTC studio the day boundaries fall at UTC midnight instead of the local 06:00 boundary: edge buckets are off by one and rows near local midnight land in the wrong day. (Bug fixed in PR 21.8 — the performance trend bucketed both its keys and per-show assignment this way.)
+- ✅ Use the shared backend helper [`@/lib/utils/operational-day.util`](../../../apps/erify_api/src/lib/utils/operational-day.util.ts) — `deriveClientOffsetMs(startDate)` + `toOperationalDayKey(instant, offsetMs)` — to derive a timezone-aware day key from the FE-supplied `start_date`. Both `StudioPerformanceService` and `StudioCostsService` consume it; **do not re-copy these methods into a new service** (they were private duplicates until PR 19.x extracted them). The endpoint stays timezone-agnostic for *validation*; *grouping* is not.
+- ⚠️ Exception — a **date-only column** (e.g. `StudioShift.date`, persisted at UTC-midnight of the operational day) already *is* the bucket key; `.slice(0, 10)` on it is correct because it carries no time-of-day. Only instants (`startTime`, `createdAt`, …) need the offset math. Comment the distinction at the call site.
 - Range **filtering** with absolute ISO bounds is fine as-is — this rule is specifically about deriving discrete day buckets from a timestamp.
+
+### Trend must reconcile with its subtotals
+
+A stacked trend/series whose columns are also reported as scalar subtotals (e.g. `show_cost_subtotal`, `shift_cost_subtotal`) must satisfy `sum(trend[col]) === subtotal[col]`. The silent-failure mode: a row's bucket key falls outside the pre-seeded day range, so its cost is dropped from the trend but still counted in the subtotal — the chart no longer adds up.
+
+- ✅ Accumulate through a helper that **lazily creates the bucket** if the key is missing, then sort the emitted series by date. Pre-seeding the full range gives contiguous days; lazy creation guarantees no resolved value is ever dropped.
+- ✅ Add a regression test asserting `sum(trend) === subtotal` for a multi-day fixture (see `studio-costs.service.spec.ts › keeps the trend reconciled with the subtotals`).
 
 ## URL-synced multi-tab state
 
@@ -76,6 +84,25 @@ When the backend groups rows **into days** for a trend/series (not just filterin
 - **Switching tabs clears the other tabs' filter/page params** so the URL stays clean (see `setActiveTab` in the view model).
 - Each tab's status/severity/completeness filter is a narrowed enum in the schema; the `ALL` Select option maps to `undefined`, never a literal `'ALL'` in the URL.
 - Reset the tab's page to 1 on any of its own search/filter changes.
+
+### `manualFiltering` search must be wired both ways AND backed by a query param
+
+A `DataTable` with `manualFiltering` does **not** filter rows in-memory — the toolbar's search box only mutates table filter state. If you render a `<DataTableToolbar searchColumn="…">` but don't pass `columnFilters` + `onColumnFiltersChange`, and don't add the matching query param server-side, the search box is a **dead no-op**: it neither filters the page nor refetches. (Bug fixed in PR 19.x — the Shift Costs "Search operator…" box looked functional but did nothing.)
+
+Wire all three layers, mirroring the sibling table that already works:
+- **Schema + backend** — add the filter param (`member_name`) to the tab's query schema and translate it in the repository/service `where` builder (`user: { name: { contains, mode: 'insensitive' } }`).
+- **Route** — add the `*_name` search param and map it into both the tab's API query and the table's `search`/`updateSearch` props.
+- **Table** — derive `columnFilters` from `search.<param>` and pass `onColumnFiltersChange` that writes the trimmed value back through `updateSearch` (page → 1). The filter `id` must equal the toolbar's `searchColumn`.
+- **Evidence** — add a test that typing into the search input drives the intended query state (frontend) and that the param reaches the `where` clause (backend).
+
+### A role/enum filter must send the *persisted* value, not the UI label
+
+When a tab filter targets a stored column (a membership `role`, a status enum), the dropdown's option **values** must be the persisted constants the `where` clause compares against — not human labels. Sending `OPERATOR`/`MANAGER` to `studioMemberships.some.role` (whose stored values are lowercase `member`/`manager`) silently matches nothing: no error, just an always-empty result. (Bug fixed in PR 19.x — the Shift Costs "Member Role" dropdown.)
+
+Worse, a single selector can conflate **two distinct data-model concepts**. The Shift Costs role filter mixes the operator's membership role (`member`/`manager`) with the shift-level `isDutyManager` boolean — duty-manager is **not** a role. Resolve this by:
+- Co-locating the option list and a `to<Filter>QueryParams(value)` translator in one feature `lib/` module so options and API params can't drift, and unit-testing the mapping.
+- Translating each UI discriminator to the correct param: persisted role → `role` (lowercase `STUDIO_ROLE` value); the flag → its own boolean param (`is_duty_manager` → `where.isDutyManager`).
+- Importing the persisted constants (`STUDIO_ROLE.MEMBER`, …) rather than retyping string literals.
 
 ## Per-tab "export the full filtered set" CSV
 
@@ -97,9 +124,12 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Container <200 LOC; tabs collapse into ONE generic `ReviewTabPanel`
 - [ ] View-model hook owns queries + handlers + export; presentation config stays in the container
 - [ ] Operational-day bounds computed FE-side via shared range utilities, serialized as absolute ISO-8601
-- [ ] Backend day-bucketing (trends/series) uses a timezone-aware operational-day key, never `toISOString().slice(0, 10)`
+- [ ] Backend day-bucketing (trends/series) uses the shared `operational-day.util` helper, never an inline `toISOString().slice(0, 10)` on an instant (date-only columns excepted)
+- [ ] Trend columns reconcile with their scalar subtotals (`sum(trend) === subtotal`), guarded by a test
 - [ ] Only the current operational day silently refetches
 - [ ] Active tab + all tab filters/pages in validated route search; tab switch clears other tabs' params
+- [ ] Every `manualFiltering` search box is wired end-to-end (`columnFilters`/`onColumnFiltersChange` + route `*_name` param + backend `where` filter) and proven by a test — no dead toolbar search
+- [ ] Role/enum filter options send the **persisted** value (lowercase `STUDIO_ROLE`, stored enum), not the UI label; a selector spanning two concepts (role vs `isDutyManager`) maps each via a co-located, unit-tested `to<Filter>QueryParams` translator
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils
 - [ ] No write to any actuals column from the review surface
 
