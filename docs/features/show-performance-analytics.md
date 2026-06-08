@@ -44,6 +44,7 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 
 ### Frontend Dashboard and Show Details Tab
 - Built `/studios/:studioId/performance` containing metrics summary cards, a Recharts trend graph, and a tabular list of shows with platform metrics.
+- Added a **By-Show** x-axis mode to the performance trend graph (toggled against the default **Daily** mode, `chart_mode` URL-synced): plots a selected client's shows across the range (ordered by `start_time`) on a Recharts line chart, with a metric toggle for GMV / Views / Peak CTR / Peak CTO and a single-client selector (empty = all shows in range). Served by a dedicated `GET /studios/:studioId/performance/shows-series` endpoint.
 - Revamped show details to `/studios/:studioId/shows/:showId` using a tabbed structure (**Details** · **Actuals** · **Performance** · **Compensation** · **Submitted Tasks**), retiring old `/task-setup/:showId/tasks` and `/creator-mapping/:showId` routes.
 - Added loop-scoped performance trend visualization on the show's Performance tab: plots loop-by-loop metric progression (Views, GMV, CTR, CTO) by platform channel using a Recharts line graph, with dynamic localization support for ticks and tooltips.
 - Support priority-based multi-column sorting on the shows breakdown table (Google Sheets-style click sequence: unsorted -> ASC -> DESC -> unsorted) with active badges, arrows, and URL synchronization.
@@ -55,6 +56,7 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 - **Single Task with Multicast Hydration** — Render one field per active platform inside a single post-production task form, storing keys in task content JSON as `<fieldId>:SHOW_PLATFORM:<platformUid>`.
 - **Direct ShowPlatform Storage** — Avoided adding a standalone `ShowPerformance` table since `ShowPlatform` perfectly represents the show-platform grain.
 - **Timezone-Agnostic API Contracts** — The frontend calculates and serializes explicit operational-day window bounds (06:00 to 05:59 local time), while the backend processes these bounds timezone-agnostically to remain simple and performant.
+- **Peak CTR/CTO = max across loops × platforms** — The By-Show graph reports CTR/CTO as the true peak reached during the stream (max over the show's moderation loops and platforms), not the last-value `ShowPlatform.ctr/cto` columns. The shows-series endpoint batches one finalized-task query across all in-range show ids and groups by show ("latest loop-bearing task wins") to avoid an N+1, and the loop-parser is shared with the single-show loops endpoint so the two never drift.
 
 ## Acceptance Record
 
@@ -74,6 +76,7 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 - [x] Support multiple sort parameters concurrently with active priorities and URL sync on the Shows breakdown grid.
 - [x] Show Standard (Standard vs Premium) filter operates on the shows analytics list and is featured on show list / task setup quick filters.
 - [x] Tab list header on show details route is responsive and supports touch-swipe horizontal scrolling on mobile viewports.
+- [x] Performance trend graph supports a By-Show x-axis mode plotting a client's shows (GMV / Views / peak CTR / peak CTO) via a dedicated `shows-series` endpoint; peak CTR/CTO are the max across the show's moderation loops × platforms.
 
 ## Forward References
 
