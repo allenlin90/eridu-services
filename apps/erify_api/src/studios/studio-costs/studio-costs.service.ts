@@ -143,7 +143,7 @@ export class StudioCostsService {
 
   private buildShiftWhere(
     studioUid: string,
-    query: CostsQuery & { member_name?: string; role?: string; status?: StudioShiftStatus },
+    query: CostsQuery & { member_name?: string; role?: string; is_duty_manager?: boolean; status?: StudioShiftStatus },
   ): Prisma.StudioShiftWhereInput {
     const andConditions: Prisma.StudioShiftWhereInput[] = [];
 
@@ -159,6 +159,9 @@ export class StudioCostsService {
       });
     }
 
+    // `role` is the operator's persisted studio-membership role — the caller must
+    // send the lowercase `STUDIO_ROLE` value (e.g. `member`/`manager`) so it
+    // matches `studioMemberships.role`, which stores lowercase constants.
     if (query.role) {
       andConditions.push({
         user: {
@@ -171,6 +174,11 @@ export class StudioCostsService {
           },
         },
       });
+    }
+
+    // Duty-manager is a shift-level flag, not a membership role.
+    if (query.is_duty_manager !== undefined) {
+      andConditions.push({ isDutyManager: query.is_duty_manager });
     }
 
     if (query.status) {

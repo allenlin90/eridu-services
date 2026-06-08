@@ -95,6 +95,15 @@ Wire all three layers, mirroring the sibling table that already works:
 - **Table** — derive `columnFilters` from `search.<param>` and pass `onColumnFiltersChange` that writes the trimmed value back through `updateSearch` (page → 1). The filter `id` must equal the toolbar's `searchColumn`.
 - **Evidence** — add a test that typing into the search input drives the intended query state (frontend) and that the param reaches the `where` clause (backend).
 
+### A role/enum filter must send the *persisted* value, not the UI label
+
+When a tab filter targets a stored column (a membership `role`, a status enum), the dropdown's option **values** must be the persisted constants the `where` clause compares against — not human labels. Sending `OPERATOR`/`MANAGER` to `studioMemberships.some.role` (whose stored values are lowercase `member`/`manager`) silently matches nothing: no error, just an always-empty result. (Bug fixed in PR 19.x — the Shift Costs "Member Role" dropdown.)
+
+Worse, a single selector can conflate **two distinct data-model concepts**. The Shift Costs role filter mixes the operator's membership role (`member`/`manager`) with the shift-level `isDutyManager` boolean — duty-manager is **not** a role. Resolve this by:
+- Co-locating the option list and a `to<Filter>QueryParams(value)` translator in one feature `lib/` module so options and API params can't drift, and unit-testing the mapping.
+- Translating each UI discriminator to the correct param: persisted role → `role` (lowercase `STUDIO_ROLE` value); the flag → its own boolean param (`is_duty_manager` → `where.isDutyManager`).
+- Importing the persisted constants (`STUDIO_ROLE.MEMBER`, …) rather than retyping string literals.
+
 ## Per-tab "export the full filtered set" CSV
 
 Each tab's Export action exports **every matching row across the filter, not the visible page** (see [`table-view-pattern` § Current-View Export](../table-view-pattern/SKILL.md) for the mechanics):
@@ -120,6 +129,7 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Only the current operational day silently refetches
 - [ ] Active tab + all tab filters/pages in validated route search; tab switch clears other tabs' params
 - [ ] Every `manualFiltering` search box is wired end-to-end (`columnFilters`/`onColumnFiltersChange` + route `*_name` param + backend `where` filter) and proven by a test — no dead toolbar search
+- [ ] Role/enum filter options send the **persisted** value (lowercase `STUDIO_ROLE`, stored enum), not the UI label; a selector spanning two concepts (role vs `isDutyManager`) maps each via a co-located, unit-tested `to<Filter>QueryParams` translator
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils
 - [ ] No write to any actuals column from the review surface
 

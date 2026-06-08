@@ -19,6 +19,7 @@ import { useCostsSummaryQuery } from '@/features/studio-costs/api/get-costs-summ
 import { CostsSummaryCards } from '@/features/studio-costs/components/costs-summary-cards';
 import { ShiftCostsTable } from '@/features/studio-costs/components/shift-costs-table';
 import { ShowCostsTable } from '@/features/studio-costs/components/show-costs-table';
+import { toShiftRoleQueryParams } from '@/features/studio-costs/lib/shift-role-filter';
 import { fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
 import { useActiveStudio } from '@/lib/hooks/use-active-studio';
 import {
@@ -147,30 +148,32 @@ function StudioCostsDashboard() {
     };
   }, [dateRange, search.client_id, search.show_type_id, search.show_standard_id]);
 
+  const activeTab = search.tab ?? 'shows';
+
   // Query summary details
   const summaryQuery = useCostsSummaryQuery(studioId, sharedApiParams);
 
-  // Query show costs detail
+  // Query show costs detail — only the visible tab's breakdown fetches so an
+  // inactive tab costs zero rows (operations-review-surface lazy sub-resource
+  // hard rule).
   const showCostsQuery = useCostsShowsQuery(studioId, {
     ...sharedApiParams,
     page: search.shows_page,
     limit: search.shows_limit,
     name: search.shows_name,
     sort: search.shows_sort,
-  });
+  }, { enabled: activeTab === 'shows' });
 
-  // Query shift costs detail
+  // Query shift costs detail — gated on the active tab for the same reason.
   const shiftCostsQuery = useCostsShiftsQuery(studioId, {
     ...sharedApiParams,
     page: search.shifts_page,
     limit: search.shifts_limit,
     member_name: search.shifts_name,
-    role: search.shifts_role,
+    ...toShiftRoleQueryParams(search.shifts_role),
     status: search.shifts_status as any,
     sort: search.shifts_sort,
-  });
-
-  const activeTab = search.tab ?? 'shows';
+  }, { enabled: activeTab === 'shifts' });
 
   return (
     <StudioRouteGuard

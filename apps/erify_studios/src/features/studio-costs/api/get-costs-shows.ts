@@ -21,11 +21,16 @@ export async function getCostsShows(
   return response.data;
 }
 
-export function useCostsShowsQuery(studioId: string, params: CostsShowsQuery) {
+export function useCostsShowsQuery(
+  studioId: string,
+  params: CostsShowsQuery,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: studioCostsKeys.shows(studioId, params),
     queryFn: ({ signal }) => getCostsShows(studioId, params, { signal }),
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
+    enabled: options?.enabled ?? true,
   });
 }

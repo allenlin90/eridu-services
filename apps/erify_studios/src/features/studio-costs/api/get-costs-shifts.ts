@@ -21,11 +21,16 @@ export async function getCostsShifts(
   return response.data;
 }
 
-export function useCostsShiftsQuery(studioId: string, params: CostsShiftsQuery) {
+export function useCostsShiftsQuery(
+  studioId: string,
+  params: CostsShiftsQuery,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: studioCostsKeys.shifts(studioId, params),
     queryFn: ({ signal }) => getCostsShifts(studioId, params, { signal }),
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
+    enabled: options?.enabled ?? true,
   });
 }

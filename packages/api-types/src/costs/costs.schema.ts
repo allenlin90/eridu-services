@@ -132,7 +132,16 @@ export const costsShiftsQuerySchema = costsQuerySchema.extend({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(10),
   member_name: z.string().optional(),
+  // Persisted studio-membership role (lowercase `STUDIO_ROLE` value, e.g.
+  // `member`/`manager`) applied to the shift operator's active membership.
+  // The duty-manager case is NOT a role — it maps to `is_duty_manager` below.
   role: z.string().optional(),
+  // Shift-level duty-manager flag (`StudioShift.isDutyManager`), orthogonal to
+  // the operator's membership role.
+  is_duty_manager: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value))
+    .optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
   sort: costsShiftsSortSchema.optional(),
 });

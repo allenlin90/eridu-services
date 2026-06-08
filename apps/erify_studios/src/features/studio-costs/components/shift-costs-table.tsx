@@ -30,6 +30,7 @@ import {
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
+import { SHIFT_ROLE_FILTER_OPTIONS } from '@/features/studio-costs/lib/shift-role-filter';
 import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
 type CostsShiftsSearch = {
@@ -125,11 +126,7 @@ export function ShiftCostsTable({
   const resolvedLocale = locale ?? 'th-TH';
   const resolvedCurrency = currency ?? 'THB';
 
-  const roleOptions = [
-    { value: 'OPERATOR', label: 'Operator' },
-    { value: 'DUTY_MANAGER', label: 'Duty Manager' },
-    { value: 'MANAGER', label: 'Manager' },
-  ];
+  const roleOptions = SHIFT_ROLE_FILTER_OPTIONS;
 
   const statusOptions = [
     { value: 'SCHEDULED', label: 'Scheduled' },

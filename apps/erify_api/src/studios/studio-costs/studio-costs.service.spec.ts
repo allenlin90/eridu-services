@@ -374,5 +374,59 @@ describe('studioCostsService', () => {
         }),
       );
     });
+
+    it('filters shifts by persisted membership role on the operator', async () => {
+      (prisma.studioShift.count as jest.Mock).mockResolvedValue(1);
+      (prisma.studioShift.findMany as jest.Mock).mockResolvedValue([mockShift]);
+
+      await service.getCostsShifts('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        role: 'member',
+      });
+
+      expect(prisma.studioShift.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              {
+                user: {
+                  studioMemberships: {
+                    some: {
+                      studio: { uid: 'std_1' },
+                      role: 'member',
+                      deletedAt: null,
+                    },
+                  },
+                },
+              },
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it('filters shifts by the duty-manager flag (not a membership role)', async () => {
+      (prisma.studioShift.count as jest.Mock).mockResolvedValue(1);
+      (prisma.studioShift.findMany as jest.Mock).mockResolvedValue([mockShift]);
+
+      await service.getCostsShifts('std_1', {
+        ...query,
+        page: 1,
+        limit: 10,
+        is_duty_manager: true,
+      });
+
+      expect(prisma.studioShift.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              { isDutyManager: true },
+            ]),
+          }),
+        }),
+      );
+    });
   });
 });
