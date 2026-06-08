@@ -34,6 +34,12 @@ export class ClientMechanicRepository extends BaseRepository<
   /**
    * Finds a mechanic by UID scoped to its owning client. Returns `null` when the
    * mechanic does not exist or belongs to a different client.
+   *
+   * Engineering decision: not a thin `findMany` wrapper — it is the canonical
+   * client-scoped unique lookup reused by `getMechanic` / `updateMechanic` /
+   * `retireMechanic` and the version-conflict re-fetch, and it returns the
+   * `include`-typed payload (`client.uid`) the response DTO needs. Centralising
+   * the scope + include here keeps the three callers from re-deriving it.
    */
   async findByUidForClient(params: {
     uid: string;
@@ -47,8 +53,11 @@ export class ClientMechanicRepository extends BaseRepository<
 
   /**
    * Lists a client's mechanics with pagination, status filter, and a free-text
-   * search across title / instruction label / UID. Non-trivial where-clause
-   * building justifies a named method.
+   * search across title / instruction label / UID.
+   *
+   * Engineering decision: non-trivial where building (multi-field `OR` search +
+   * status + client scope) plus the paired data/count `Promise.all` — cannot be
+   * a plain `findMany({ where })` call from the service.
    */
   async findPaginated(
     params: ListClientMechanicsParams,
@@ -92,6 +101,10 @@ export class ClientMechanicRepository extends BaseRepository<
    * Updates a mechanic guarding the optimistic-lock `version`. Throws
    * `VersionConflictError` (domain error) when the row exists but the version is
    * stale; the service maps it to a 409.
+   *
+   * Engineering decision: multi-step optimistic-lock op — version-guarded update,
+   * then on `RecordNotFound` a re-fetch to distinguish "stale version" (409) from
+   * "genuinely gone" (404). Mirrors `task-template.repository`; not a `findMany`.
    */
   async updateWithVersionCheck(
     params: { uid: string; clientUid: string; version: number },
