@@ -18,6 +18,7 @@
  */
 
 export * from './audits/index.js';
+export * from './client-mechanics/index.js';
 export * from './clients/index.js';
 export * from './compensation-line-items/index.js';
 export * from './constants.js';

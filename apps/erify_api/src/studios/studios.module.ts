@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { StudioClientMechanicModule } from './studio-client-mechanic/studio-client-mechanic.module';
 import { StudioCompensationLineItemModule } from './studio-compensation-line-item/studio-compensation-line-item.module';
 import { StudioCostsModule } from './studio-costs/studio-costs.module';
 import { StudioCreatorApiModule } from './studio-creator/studio-creator.module';
@@ -27,6 +28,7 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
     StudioCompensationLineItemModule,
     StudioCostsModule,
     StudioPerformanceModule,
+    StudioClientMechanicModule,
   ],
   exports: [
     StudioTaskTemplateModule,

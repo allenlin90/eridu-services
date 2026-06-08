@@ -27,6 +27,7 @@ model User {
   assignedTasks                Task[]
   createdTaskReportDefinitions TaskReportDefinition[] @relation("TaskReportDefinitionCreatedBy")
   createdCompensationLineItems CompensationLineItem[] @relation("CompensationLineItemCreatedBy")
+  createdClientMechanics       ClientMechanic[]       @relation("ClientMechanicCreatedBy")
   audits                       Audit[]
   createdAt                    DateTime               @default(now()) @map("created_at")
   updatedAt                    DateTime               @updatedAt @map("updated_at")
@@ -81,6 +82,7 @@ model Client {
   metadata      Json       @default("{}")
   shows         Show[]
   schedules     Schedule[]
+  mechanics     ClientMechanic[]
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
   deletedAt     DateTime?  @map("deleted_at")
@@ -91,6 +93,40 @@ model Client {
   @@index([contactEmail])
   @@index([deletedAt])
   @@map("clients")
+}
+
+// Client-owned reusable moderation instruction (product / promotion cue).
+// Single mutable row per mechanic — assigned into task-template loops by
+// reference. Editing the moderator-facing instruction bumps `contentRevision`
+// (frozen into template snapshots for staleness comparison); `version` is the
+// optimistic-lock token. `status` (active|retired) is a reversible lifecycle,
+// distinct from soft-delete (`deletedAt`).
+model ClientMechanic {
+  id               BigInt    @id @default(autoincrement())
+  uid              String    @unique
+  clientId         BigInt    @map("client_id")
+  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title            String
+  instructionLabel String    @map("instruction_label")
+  instructionBody  String    @map("instruction_body")
+  status           String    @default("active") // active | retired
+  version          Int       @default(1)
+  contentRevision  Int       @default(1) @map("content_revision")
+  metadata         Json      @default("{}")
+  createdBy        BigInt?   @map("created_by")
+  createdByUser    User?     @relation("ClientMechanicCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  @@index([uid])
+  @@index([clientId])
+  @@index([status])
+  @@index([createdBy])
+  @@index([deletedAt])
+  @@index([clientId, deletedAt])
+  @@index([clientId, status, deletedAt])
+  @@map("client_mechanics")
 }
 
 model Platform {
