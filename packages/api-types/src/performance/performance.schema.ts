@@ -179,6 +179,38 @@ export type PaginatedShowPerformanceResponse = z.infer<
 >;
 
 /**
+ * A single point on the "By Show" performance graph: one show plotted on the
+ * x-axis with its show-level GMV / view aggregates and the **peak** CTR / CTO
+ * reached across the show's moderation loops (max over loops × platforms), as
+ * opposed to the last-value `ShowPlatform.ctr/cto` columns. `null` when the show
+ * has no recorded value / no finalized loop-bearing task for that metric.
+ */
+export const showPerformanceSeriesItemSchema = z.object({
+  id: z.string(), // show uid
+  name: z.string(),
+  start_time: z.string(), // ISO 8601 datetime string
+  gmv: z.string().nullable(), // summed across platforms, decimal string
+  views: z.number().int().nullable(), // summed across platforms
+  peak_ctr: z.string().nullable(), // max across loops × platforms, decimal string
+  peak_cto: z.string().nullable(), // max across loops × platforms, decimal string
+});
+
+export type ShowPerformanceSeriesItem = z.infer<typeof showPerformanceSeriesItemSchema>;
+
+/**
+ * Response for the per-show "By Show" graph mode: all shows matching the query
+ * (no pagination) ordered by `start_time` ascending, so the frontend can plot
+ * them chronologically on the x-axis.
+ */
+export const showPerformanceSeriesResponseSchema = z.object({
+  shows: z.array(showPerformanceSeriesItemSchema),
+  currency: z.string(),
+  locale: z.string(),
+});
+
+export type ShowPerformanceSeriesResponse = z.infer<typeof showPerformanceSeriesResponseSchema>;
+
+/**
  * Loop-level platform performance metrics
  */
 export const showPerformanceLoopMetricSchema = z.object({

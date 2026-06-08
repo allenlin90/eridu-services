@@ -917,4 +917,133 @@ describe('studioPerformanceService', () => {
       expect(result.items).toHaveLength(2); // page size applied in memory
     });
   });
+
+  describe('getPerformanceShowsSeries', () => {
+    const seriesShow1 = {
+      id: 10n,
+      uid: 'show_10',
+      name: 'Show Alpha',
+      startTime: new Date('2026-06-02T10:00:00Z'),
+      showPlatforms: [
+        {
+          uid: 'show_plt_101',
+          gmv: new Prisma.Decimal('1000.5'),
+          viewerCount: 500,
+          metadata: { performance_templates: { show_platform_view_count: 'ttpl_post_prod' } },
+          platform: { name: 'Shopee' },
+        },
+      ],
+    };
+
+    // No recorded view-count fact, so `viewerCount` (defaults to 0) must NOT be
+    // summed into `views` — the show should report `views: null`.
+    const seriesShow2 = {
+      id: 20n,
+      uid: 'show_20',
+      name: 'Show Beta',
+      startTime: new Date('2026-06-03T18:00:00Z'),
+      showPlatforms: [
+        {
+          uid: 'show_plt_201',
+          gmv: new Prisma.Decimal('2000'),
+          viewerCount: 0,
+          metadata: {},
+          platform: { name: 'TikTok' },
+        },
+      ],
+    };
+
+    // Two loops on show_10: the later loop (l2) has the LOWER ctr, so a
+    // last-value read would report 3.1 — the peak must be the max (5.25).
+    const loopTaskForShow10 = {
+      id: 1n,
+      uid: 'task_1',
+      snapshot: {
+        schema: {
+          items: [
+            { id: 'fld_ctr_l1', key: 'ctr', group: 'l1', system_fact_key: 'show_platform_ctr' },
+            { id: 'fld_ctr_l2', key: 'ctr', group: 'l2', system_fact_key: 'show_platform_ctr' },
+            { id: 'fld_cto_l1', key: 'cto', group: 'l1', system_fact_key: 'show_platform_cto' },
+          ],
+          metadata: {
+            loops: [
+              { id: 'l1', name: 'Loop 1', durationMin: 15 },
+              { id: 'l2', name: 'Loop 2', durationMin: 15 },
+            ],
+          },
+        },
+      },
+      content: {
+        'fld_ctr_l1:platform:show_plt_101': '5.25',
+        'fld_ctr_l2:platform:show_plt_101': '3.1',
+        'fld_cto_l1:platform:show_plt_101': '2.45',
+      },
+      targets: [{ showId: 10n }],
+    };
+
+    it('sums stored GMV/views and reports peak CTR/CTO as the max across loops', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([seriesShow1, seriesShow2]);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([loopTaskForShow10]);
+
+      const result = await service.getPerformanceShowsSeries('std_1', query);
+
+      expect(result.currency).toBe('THB');
+      expect(result.locale).toBe('th-TH');
+      // Preserves the DB `start_time asc` ordering.
+      expect(result.shows.map((s) => s.id)).toEqual(['show_10', 'show_20']);
+
+      expect(result.shows[0]).toEqual({
+        id: 'show_10',
+        name: 'Show Alpha',
+        start_time: '2026-06-02T10:00:00.000Z',
+        gmv: '1000.5',
+        views: 500,
+        peak_ctr: '5.25', // max(5.25, 3.1), NOT the last-value 3.1
+        peak_cto: '2.45',
+      });
+
+      // show_20 has no finalized loop-bearing task → null peaks; no view-count
+      // fact → null views; GMV still sums the stored column.
+      expect(result.shows[1]).toEqual({
+        id: 'show_20',
+        name: 'Show Beta',
+        start_time: '2026-06-03T18:00:00.000Z',
+        gmv: '2000',
+        views: null,
+        peak_ctr: null,
+        peak_cto: null,
+      });
+    });
+
+    it('returns an empty series without querying tasks when no shows match', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.task.findMany as jest.Mock).mockClear();
+
+      const result = await service.getPerformanceShowsSeries('std_1', query);
+
+      expect(result).toEqual({ shows: [], currency: 'THB', locale: 'th-TH' });
+      expect(prisma.task.findMany).not.toHaveBeenCalled();
+    });
+
+    it('batches finalized loop-bearing tasks scoped to the in-range show ids', async () => {
+      (prisma.show.findMany as jest.Mock).mockResolvedValue([seriesShow1, seriesShow2]);
+      (prisma.task.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPerformanceShowsSeries('std_1', query);
+
+      expect(prisma.task.findMany).toHaveBeenCalledTimes(1);
+      const where = (prisma.task.findMany as jest.Mock).mock.calls[0][0].where;
+      expect(where.status.in).toEqual(['COMPLETED', 'CLOSED']);
+      expect(where.targets.some.showId.in).toEqual([10n, 20n]);
+    });
+
+    it('rejects a reversed date range', async () => {
+      await expect(
+        service.getPerformanceShowsSeries('std_1', {
+          start_date: '2026-06-05T00:00:00.000Z',
+          end_date: '2026-06-01T00:00:00.000Z',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
 });
