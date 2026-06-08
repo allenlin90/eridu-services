@@ -121,6 +121,7 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Read model is **lean summary + per-tab lazy paginated sub-resource**, not one nested payload
 - [ ] Each tab query is `enabled` only when its tab is active
 - [ ] Summary counts and tab rows derive from shared backend helpers (no drift)
+- [ ] Task list includes (`taskListInclude` / `taskListIncludeWithSchema`) populate the target `show` and its `showPlatforms` relation (including nested `platform.name`) to ensure platform-specific metrics can render inline
 - [ ] Container <200 LOC; tabs collapse into ONE generic `ReviewTabPanel`
 - [ ] View-model hook owns queries + handlers + export; presentation config stays in the container
 - [ ] Operational-day bounds computed FE-side via shared range utilities, serialized as absolute ISO-8601
