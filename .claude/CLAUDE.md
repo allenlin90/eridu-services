@@ -2,7 +2,9 @@
 
 This file exists because Claude Code auto-loads `.claude/CLAUDE.md`.
 
-`../AGENTS.md` is the canonical shared instruction file for this repository. Read it at the start of the session and follow it as the source of truth for shared behavioral and project-specific guidance.
+`../AGENTS.md` is the canonical shared instruction file for this repository. It is auto-imported below so its guidance — including the skill routing map for `../.agent/skills/` — is always in context. Follow it as the source of truth for shared behavioral and project-specific guidance.
+
+@../AGENTS.md
 
 ## Claude Code Adapter Rules
 - Do not duplicate shared repo guidance in this file.
