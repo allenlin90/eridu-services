@@ -18,6 +18,22 @@ describe('backfill-performance script', () => {
     };
   });
 
+  it('defaults to completed tasks only so review submissions are not projected', async () => {
+    mockPrisma.task.findMany.mockResolvedValue([]);
+
+    await runBackfill({
+      prisma: mockPrisma,
+      dryRun: true,
+      logger: mockLogger,
+    });
+
+    expect(mockPrisma.task.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        status: { in: ['COMPLETED'] },
+      }),
+    }));
+  });
+
   it('runs backfill successfully and updates platforms', async () => {
     // Mock task
     const mockTasks = [

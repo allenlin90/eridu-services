@@ -7,6 +7,7 @@ export const POST_PRODUCTION_TEMPLATE_UID = 'ttpl_n6f7qAZQmPA4He6MOR-y';
 
 type Args = {
   dryRun: boolean;
+  includeReview: boolean;
 };
 
 function parseArgs(): Args {
@@ -17,7 +18,7 @@ function parseArgs(): Args {
     dryRun = false;
   }
 
-  return { dryRun };
+  return { dryRun, includeReview: args.includes('--include-review') };
 }
 
 export type BackfillResult = {
@@ -29,10 +30,12 @@ export type BackfillResult = {
 export async function runBackfill({
   prisma,
   dryRun,
+  includeReview = false,
   logger = console.log,
 }: {
   prisma: any;
   dryRun: boolean;
+  includeReview?: boolean;
   logger?: (msg: string) => void;
 }): Promise<BackfillResult> {
   logger('--- Starting Show Performance Data Backfill ---');
@@ -41,11 +44,15 @@ export async function runBackfill({
   } else {
     logger('Running in APPLY mode. Changes will be written to the database.');
   }
+  const statuses = includeReview ? ['COMPLETED', 'REVIEW'] : ['COMPLETED'];
+  logger(`Task statuses included: ${statuses.join(', ')}`);
 
-  // Query all completed/review tasks with snapshots and templates
+  // Query finalized tasks with snapshots and templates. REVIEW is opt-in only:
+  // projecting unapproved submissions would make analytics disagree with the
+  // approval gate.
   const tasks = await prisma.task.findMany({
     where: {
-      status: { in: ['COMPLETED', 'REVIEW'] },
+      status: { in: statuses },
       deletedAt: null,
     },
     include: {
@@ -57,7 +64,7 @@ export async function runBackfill({
     },
   });
 
-  logger(`Loaded ${tasks.length} completed/review tasks.`);
+  logger(`Loaded ${tasks.length} task(s).`);
 
   let processedCount = 0;
   let updatedCount = 0;
@@ -212,7 +219,7 @@ export async function runBackfill({
 }
 
 async function main() {
-  const { dryRun } = parseArgs();
+  const { dryRun, includeReview } = parseArgs();
   
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
@@ -223,7 +230,7 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
 
   try {
-    await runBackfill({ prisma, dryRun });
+    await runBackfill({ prisma, dryRun, includeReview });
   } finally {
     await prisma.$disconnect();
     await pool.end();
