@@ -128,7 +128,7 @@ export class ShowPlatformRepository extends BaseRepository<
   }): Promise<PerformanceMetricUpdateResult> {
     const { uid, showId, column, value, factKey, templateUid, protectedTemplateUid } = params;
     const affected = await this.txHost.tx.$executeRaw(Prisma.sql`
-      UPDATE "show_platform"
+      UPDATE "show_platforms"
       SET ${Prisma.raw(`"${column}"`)} = ${value},
           "metadata" = jsonb_set(
             COALESCE("metadata", '{}'::jsonb),
@@ -158,7 +158,7 @@ export class ShowPlatformRepository extends BaseRepository<
     }>>(Prisma.sql`
       SELECT jsonb_extract_path_text("metadata", 'performance_templates', ${factKey}::text)
         AS "recordedTemplate"
-      FROM "show_platform"
+      FROM "show_platforms"
       WHERE "uid" = ${uid} AND "show_id" = ${showId} AND "deleted_at" IS NULL
       LIMIT 1
     `);
