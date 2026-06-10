@@ -79,6 +79,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## Tool-Specific Notes
 
 - **Claude Code**: see `.claude/CLAUDE.md` for loading behavior, paths, and adapter rules.
+- **OpenCode**: `opencode.json` loads this file. Skills are routed from `.agent/skills/` via `.opencode/skills` symlink.
 
 ## Project-Specific Guidelines
 
