@@ -60,6 +60,9 @@ Accept domain-level parameters, build Prisma where clauses internally. Use `Prom
 ### Optimistic Locking
 Implement `updateWithVersionCheck()` for versioned entities. Throw `VersionConflictError` (domain error), not HTTP exceptions. Service converts to `HttpError.conflict()`.
 
+### Raw SQL (`$executeRaw` / `$queryRaw`)
+Prisma applies **no** name mapping to raw queries — `Prisma.sql` strings hit the database verbatim. Always reference the `@@map`-ed table name and `@map`-ed column names (`"show_platforms"`, not the `ShowPlatform` model name). A model-name table reference compiles fine and only fails at runtime, where a swallowed extractor/approval error can hide it (silent no-op, nothing persisted). When a repository hand-writes raw SQL, add a regression test that asserts the literal table name in the generated SQL (e.g. `expect(sql.strings.join('')).toContain('UPDATE "show_platforms"')`).
+
 ## Checklist
 
 - [ ] 🔴 Extends `BaseRepository` with `ModelWrapper`
@@ -71,6 +74,7 @@ Implement `updateWithVersionCheck()` for versioned entities. Throw `VersionConfl
 - [ ] `Promise.all` for pagination (count + data)
 - [ ] `VersionConflictError` for version conflicts
 - [ ] Use `findFirst` when filtering by non-unique fields
+- [ ] Raw SQL uses `@@map`/`@map` names, with a test asserting the literal table name
 
 ## Related Skills
 

@@ -45,6 +45,7 @@ For **every new named repository method** (beyond `findOne`/`findByUid`):
 - [ ] No `Prisma.*` types leaking into service method signatures — payload types defined in schema files.
 - [ ] No `findByUidOrThrow` — return `null`, let the controller call `ensureResourceExists()`.
 - [ ] No Prisma query-building in services — `where` clauses belong in repositories.
+- [ ] Raw SQL (`$executeRaw` / `$queryRaw`) references `@@map`/`@map` names, not model/field names — Prisma does not map raw queries. New raw-SQL methods carry a regression test asserting the literal table name.
 
 Full reference: `.agent/skills/repository-pattern-nestjs/SKILL.md`
 
