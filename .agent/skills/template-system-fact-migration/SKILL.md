@@ -75,6 +75,10 @@ For each candidate field, check compatibility against `SYSTEM_FACT_KEY_DEFINITIO
 | `show_platform_actual_start_time` | `datetime` | `show_platform` (hydrated) |
 | `show_platform_actual_end_time` | `datetime` | `show_platform` (hydrated) |
 | `show_platform_violation` | `multiselect` | `show_platform` (hydrated) |
+| `show_platform_gmv` | `number` | `show_platform` (hydrated) |
+| `show_platform_view_count` | `number` | `show_platform` (hydrated) |
+| `show_platform_ctr` | `number` | `show_platform` (hydrated) |
+| `show_platform_cto` | `number` | `show_platform` (hydrated) |
 
 **Type mismatches must be resolved in the same binding call** (via `p_patch`) — never bind
 a field whose type doesn't match the catalog. The v2 schema Zod validator rejects mismatches

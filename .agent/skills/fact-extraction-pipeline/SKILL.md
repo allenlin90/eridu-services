@@ -1,6 +1,6 @@
 ---
 name: fact-extraction-pipeline
-description: Patterns for adding extractors and write surfaces to the PR 12 fact-extraction pipeline (`apps/erify_api/src/orchestration/fact-extraction/`). Use BEFORE implementing any new `IngestionExtractor`, paired-atomic write, `SystemFactKey`, or hydrated-scope target type. Required reading before PR 12.3.2 (violations), 12.4 (review surface), or any follow-on extractor work — every Codex finding on PR 12.1.2 (#103) and PR 12.2 (#104) is encoded here. The "State-transition handoff between co-submitted facts" section is mandatory before adding ANY fact whose write semantics depend on another fact's value in the same submission.
+description: Patterns for adding extractors and write surfaces to the PR 12 fact-extraction pipeline (`apps/erify_api/src/orchestration/fact-extraction/`). Use BEFORE implementing any new `IngestionExtractor`, paired-atomic write, `SystemFactKey`, numeric performance fact, or hydrated-scope target type. Required reading before adding any new extractor or follow-on work. The "State-transition handoff between co-submitted facts" section is mandatory before adding ANY fact whose write semantics depend on another fact's value in the same submission.
 ---
 
 # Fact Extraction Pipeline
@@ -156,7 +156,9 @@ This family does NOT use `canResolverOverwrite(ctx.source, recordedSource)` — 
 
 ## Adding a new extractor — checklist
 
-For PR 12.2 (creator), 12.3.2 (violations), or any future extractor. Each box maps to a real Codex finding from PRs #91 / #101 / #103.
+For any new extractor. These checks cover the failure modes that have caused
+silent no-ops, incorrect audit rows, stale-target writes, and lost provenance in
+the extraction pipeline.
 
 **Catalog + schema**:
 - [ ] Add fact key + definition to `SYSTEM_FACT_KEY_DEFINITIONS` (`packages/api-types/.../template-definition.schema.ts`)

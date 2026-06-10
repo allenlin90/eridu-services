@@ -26,7 +26,7 @@ Current authorization implementation patterns for erify_api.
 
 ## Studio Role Model
 
-`StudioMembership.role` has 6 values:
+`StudioMembership.role` currently has 6 values:
 
 | Role | Scope | Can manage memberships |
 |---|---|---|
@@ -36,6 +36,10 @@ Current authorization implementation patterns for erify_api.
 | `DESIGNER` | Dashboard, own tasks, own shifts | ❌ |
 | `MODERATION_MANAGER` | Dashboard, own tasks, own shifts | ❌ |
 | `MEMBER` | Dashboard, own tasks, own shifts | ❌ |
+
+`ACCOUNT_MANAGER` is planned for client mechanics work but is not exported from
+`STUDIO_ROLE` yet. Do not use it in guards, schemas, or frontend route access
+until the shared membership contract adds it.
 
 ## Endpoint Role Conventions
 
