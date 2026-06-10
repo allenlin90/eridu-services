@@ -16,11 +16,15 @@ Implementation guide for NestJS Repositories using Prisma.
 
 ## Core Rules
 
-### 1. Extend BaseRepository
+### 1. Use BaseRepository by Default
 
-🔴 All repositories MUST extend `BaseRepository<T, C, U, W>`.
+🔴 Repositories for soft-deletable CRUD models should extend `BaseRepository<T, C, U, W>`.
 
-Current implementation uses a `ModelWrapper` class bridging BaseRepository generics to Prisma delegates. This wrapper will be simplified in Phase 4 to inject PrismaService directly. Follow the existing pattern for consistency.
+BaseRepository-based repositories use `PrismaModelWrapper` to bridge repository
+generics to Prisma delegates. Follow that pattern for CRUD models. Standalone
+repositories exist for audit logs, schedule snapshots, task-report scopes, and
+custom replacement/write flows such as show-platform violations; keep those as
+explicit exceptions with module-local service APIs.
 
 ### 2. Soft Delete Filtering
 
@@ -65,7 +69,7 @@ Prisma applies **no** name mapping to raw queries — `Prisma.sql` strings hit t
 
 ## Checklist
 
-- [ ] 🔴 Extends `BaseRepository` with `ModelWrapper`
+- [ ] 🔴 Extends `BaseRepository` with `PrismaModelWrapper` for soft-deletable CRUD models
 - [ ] 🔴 No thin `findMany` wrappers — call `findMany` from service
 - [ ] 🔴 No `findByUidOrThrow` — controller handles 404
 - [ ] 🔴 Always filter `deletedAt: null`

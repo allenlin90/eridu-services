@@ -51,7 +51,6 @@ When the schema gains a new top-level engine field, audit every transform helper
 - Selecting a system fact in the builder should set the field type to the catalog's compatible `field_type`.
 - `creator_attendance_missing` should use `validation.require_reason = 'on-true'` for the explanation instead of a separate reason binding field.
 - Save-time validation must reject mismatched field type ↔ fact key pairs and duplicate fact-key bindings in the same template through the shared Zod schema.
-- Analytical platform metrics such as GMV and viewer count are not valid system fact keys until the 12.5 analytics storage decision lands.
 
 ## Checklist
 
