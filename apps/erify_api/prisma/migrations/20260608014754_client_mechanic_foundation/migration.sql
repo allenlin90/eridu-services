@@ -22,15 +22,6 @@ CREATE TABLE "client_mechanics" (
 CREATE UNIQUE INDEX "client_mechanics_uid_key" ON "client_mechanics"("uid");
 
 -- CreateIndex
-CREATE INDEX "client_mechanics_uid_idx" ON "client_mechanics"("uid");
-
--- CreateIndex
-CREATE INDEX "client_mechanics_client_id_idx" ON "client_mechanics"("client_id");
-
--- CreateIndex
-CREATE INDEX "client_mechanics_status_idx" ON "client_mechanics"("status");
-
--- CreateIndex
 CREATE INDEX "client_mechanics_created_by_idx" ON "client_mechanics"("created_by");
 
 -- CreateIndex
