@@ -8,6 +8,8 @@ export const POST_PRODUCTION_TEMPLATE_UID = 'ttpl_n6f7qAZQmPA4He6MOR-y';
 type Args = {
   dryRun: boolean;
   includeReview: boolean;
+  startDate?: Date;
+  endDate?: Date;
 };
 
 function parseArgs(): Args {
@@ -18,7 +20,25 @@ function parseArgs(): Args {
     dryRun = false;
   }
 
-  return { dryRun, includeReview: args.includes('--include-review') };
+  let startDate: Date | undefined;
+  let endDate: Date | undefined;
+
+  const startIdx = args.indexOf('--start');
+  if (startIdx !== -1 && args[startIdx + 1]) {
+    startDate = new Date(args[startIdx + 1]);
+  }
+
+  const endIdx = args.indexOf('--end');
+  if (endIdx !== -1 && args[endIdx + 1]) {
+    endDate = new Date(args[endIdx + 1]);
+  }
+
+  return {
+    dryRun,
+    includeReview: args.includes('--include-review'),
+    startDate,
+    endDate,
+  };
 }
 
 export type BackfillResult = {
@@ -31,11 +51,15 @@ export async function runBackfill({
   prisma,
   dryRun,
   includeReview = false,
+  startDate,
+  endDate,
   logger = console.log,
 }: {
   prisma: any;
   dryRun: boolean;
   includeReview?: boolean;
+  startDate?: Date;
+  endDate?: Date;
   logger?: (msg: string) => void;
 }): Promise<BackfillResult> {
   logger('--- Starting Show Performance Data Backfill ---');
@@ -47,14 +71,26 @@ export async function runBackfill({
   const statuses = includeReview ? ['COMPLETED', 'REVIEW'] : ['COMPLETED'];
   logger(`Task statuses included: ${statuses.join(', ')}`);
 
+  const whereClause: any = {
+    status: { in: statuses },
+    deletedAt: null,
+  };
+
+  if (startDate || endDate) {
+    whereClause.completedAt = {};
+    if (startDate) {
+      whereClause.completedAt.gte = startDate;
+    }
+    if (endDate) {
+      whereClause.completedAt.lte = endDate;
+    }
+  }
+
   // Query finalized tasks with snapshots and templates. REVIEW is opt-in only:
   // projecting unapproved submissions would make analytics disagree with the
   // approval gate.
   const tasks = await prisma.task.findMany({
-    where: {
-      status: { in: statuses },
-      deletedAt: null,
-    },
+    where: whereClause,
     include: {
       snapshot: true,
       template: true,
@@ -145,7 +181,7 @@ export async function runBackfill({
         }
         if (!incomingDecimal.isFinite()) continue;
       } else {
-        incomingViewCount = Number(rawValue);
+        incomingViewCount = Math.round(Number(rawValue));
         if (!Number.isFinite(incomingViewCount)) continue;
       }
 
@@ -219,7 +255,7 @@ export async function runBackfill({
 }
 
 async function main() {
-  const { dryRun, includeReview } = parseArgs();
+  const { dryRun, includeReview, startDate, endDate } = parseArgs();
   
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
@@ -230,7 +266,7 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
 
   try {
-    await runBackfill({ prisma, dryRun, includeReview });
+    await runBackfill({ prisma, dryRun, includeReview, startDate, endDate });
   } finally {
     await prisma.$disconnect();
     await pool.end();

@@ -195,26 +195,51 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
   }
 }
 
+// Each concrete extractor MUST declare its own constructor that forwards to
+// `super(showPlatformService)`. TypeScript only emits `design:paramtypes`
+// (the metadata Nest reads to inject constructor deps) for a class that has
+// its OWN constructor — a decorated subclass that inherits the base
+// constructor gets `design:paramtypes === undefined`, so Nest injects nothing
+// and `this.showPlatformService` is `undefined` at runtime. That made every
+// platform-performance write throw `extractor_error` and silently noop (no
+// column write, no audit), which is why these metrics only ever populated via
+// the backfill. Do NOT remove these constructors as "redundant".
 @Injectable()
 export class PlatformGmvExtractor extends BasePlatformPerformanceExtractor {
   readonly factKey = 'show_platform_gmv' as const;
   readonly dbField = 'gmv' as const;
+
+  constructor(showPlatformService: ShowPlatformService) {
+    super(showPlatformService);
+  }
 }
 
 @Injectable()
 export class PlatformViewCountExtractor extends BasePlatformPerformanceExtractor {
   readonly factKey = 'show_platform_view_count' as const;
   readonly dbField = 'viewerCount' as const;
+
+  constructor(showPlatformService: ShowPlatformService) {
+    super(showPlatformService);
+  }
 }
 
 @Injectable()
 export class PlatformCtrExtractor extends BasePlatformPerformanceExtractor {
   readonly factKey = 'show_platform_ctr' as const;
   readonly dbField = 'ctr' as const;
+
+  constructor(showPlatformService: ShowPlatformService) {
+    super(showPlatformService);
+  }
 }
 
 @Injectable()
 export class PlatformCtoExtractor extends BasePlatformPerformanceExtractor {
   readonly factKey = 'show_platform_cto' as const;
   readonly dbField = 'cto' as const;
+
+  constructor(showPlatformService: ShowPlatformService) {
+    super(showPlatformService);
+  }
 }

@@ -1,4 +1,7 @@
+import 'reflect-metadata';
+
 import { NotFoundException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 
 import {
@@ -9,7 +12,7 @@ import {
   POST_PRODUCTION_TEMPLATE_UID,
 } from './platform-performance-extractors';
 
-import type { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 
 function buildShowPlatformService(overrides: {
   showId?: bigint;
@@ -436,4 +439,64 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
       expect(decision).toEqual({ kind: 'noop', reason: 'value_out_of_range' });
     });
   });
+});
+
+describe('platform performance extractors — Nest DI wiring (regression)', () => {
+  // The unit tests above hand-construct each extractor (`new PlatformGmvExtractor(mock)`),
+  // so they pass even when Nest cannot inject `ShowPlatformService`. These tests
+  // resolve the extractors through the real DI container instead.
+  //
+  // Root cause they guard against: a concrete extractor that inherits its base
+  // constructor WITHOUT declaring its own emits no `design:paramtypes`, so Nest
+  // injects `undefined`. `this.showPlatformService` is then undefined and every
+  // write throws (`extractor_error`) and silently noops — which is why platform
+  // performance metrics only ever populated via the backfill, never via live
+  // extraction. Each concrete extractor must keep its own constructor.
+  const extractorClasses = [
+    PlatformGmvExtractor,
+    PlatformViewCountExtractor,
+    PlatformCtrExtractor,
+    PlatformCtoExtractor,
+  ];
+
+  it.each(extractorClasses)('emits constructor DI metadata: %p', (ExtractorClass) => {
+    const paramTypes = Reflect.getMetadata('design:paramtypes', ExtractorClass) as
+      | unknown[]
+      | undefined;
+    expect(paramTypes).toBeDefined();
+    expect(paramTypes).toContain(ShowPlatformService);
+  });
+
+  it.each(extractorClasses)(
+    'injects ShowPlatformService and writes when resolved via Nest DI: %p',
+    async (ExtractorClass) => {
+      const showPlatformService = buildShowPlatformService();
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          ExtractorClass,
+          { provide: ShowPlatformService, useValue: showPlatformService },
+        ],
+      }).compile();
+
+      const extractor = moduleRef.get(ExtractorClass);
+      const fact = {
+        contentKey: 'fld_x:platform:show_plt_200',
+        sourceFieldId: 'fld_x',
+        factKey: extractor.factKey,
+        scope: 'platform' as const,
+        targetUid: 'show_plt_200',
+        rawValue: 5,
+      };
+
+      // Pre-fix, this throws `Cannot read properties of undefined (reading
+      // 'getShowPlatformById')` because the dependency was never injected.
+      const decision = await extractor.apply(fact as never, postProdCtx);
+
+      expect(showPlatformService.getShowPlatformById).toHaveBeenCalledWith('show_plt_200');
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalled();
+      expect(decision.kind).toBe('write');
+
+      await moduleRef.close();
+    },
+  );
 });

@@ -34,6 +34,29 @@ describe('backfill-performance script', () => {
     }));
   });
 
+  it('applies completedAt date range filters to task query if provided', async () => {
+    mockPrisma.task.findMany.mockResolvedValue([]);
+    const start = new Date('2026-06-09T00:00:00Z');
+    const end = new Date('2026-06-12T00:00:00Z');
+
+    await runBackfill({
+      prisma: mockPrisma,
+      dryRun: true,
+      startDate: start,
+      endDate: end,
+      logger: mockLogger,
+    });
+
+    expect(mockPrisma.task.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        completedAt: {
+          gte: start,
+          lte: end,
+        },
+      }),
+    }));
+  });
+
   it('runs backfill successfully and updates platforms', async () => {
     // Mock task
     const mockTasks = [
