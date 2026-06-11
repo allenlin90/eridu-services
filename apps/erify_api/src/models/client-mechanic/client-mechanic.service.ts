@@ -179,4 +179,24 @@ export class ClientMechanicService extends BaseModelService {
       throw error;
     }
   }
+
+  /**
+   * Soft-deletes a client mechanic (sets deletedAt to current timestamp).
+   * Returns null when the mechanic does not exist or is not under the client.
+   */
+  async deleteMechanic(scope: MechanicScope) {
+    const existing = await this.clientMechanicRepository.findByUidForClient({
+      uid: scope.mechanicUid,
+      clientUid: scope.clientUid,
+    });
+
+    if (!existing) {
+      return null;
+    }
+
+    return this.clientMechanicRepository.softDelete({
+      uid: scope.mechanicUid,
+    });
+  }
 }
+

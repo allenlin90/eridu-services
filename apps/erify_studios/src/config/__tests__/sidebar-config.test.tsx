@@ -26,6 +26,7 @@ vi.mock('lucide-react', () => ({
   CalendarDays: vi.fn(),
   Videotape: vi.fn(),
   Warehouse: vi.fn(),
+  Wrench: vi.fn(),
 }));
 
 // Mock auth client

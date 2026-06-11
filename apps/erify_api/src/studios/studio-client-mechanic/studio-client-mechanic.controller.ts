@@ -129,12 +129,12 @@ export class StudioClientMechanicController extends BaseStudioController {
 
   @Delete(':mechanicId')
   @ZodResponse(clientMechanicDto)
-  async retire(
+  async remove(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Param('mechanicId', new UidValidationPipe(ClientMechanicService.UID_PREFIX, 'ClientMechanic')) mechanicId: string,
   ) {
-    const mechanic = await this.clientMechanicService.retireMechanic({
+    const mechanic = await this.clientMechanicService.deleteMechanic({
       mechanicUid: mechanicId,
       clientUid: clientId,
     });

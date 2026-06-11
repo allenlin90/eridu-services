@@ -30,6 +30,7 @@ describe('studioClientMechanicController', () => {
             createMechanic: jest.fn(),
             updateMechanic: jest.fn(),
             retireMechanic: jest.fn(),
+            deleteMechanic: jest.fn(),
           },
         },
         {
@@ -118,24 +119,24 @@ describe('studioClientMechanicController', () => {
     });
   });
 
-  describe('retire', () => {
-    it('delegates to retireMechanic and returns the row', async () => {
-      const retired = { uid: 'cmech_1', status: 'retired' } as any;
-      mechanicService.retireMechanic.mockResolvedValue(retired);
+  describe('remove', () => {
+    it('delegates to deleteMechanic and returns the row', async () => {
+      const deleted = { uid: 'cmech_1', deletedAt: new Date() } as any;
+      mechanicService.deleteMechanic.mockResolvedValue(deleted);
 
-      const result = await controller.retire(studioId, clientId, 'cmech_1');
+      const result = await controller.remove(studioId, clientId, 'cmech_1');
 
-      expect(mechanicService.retireMechanic).toHaveBeenCalledWith({
+      expect(mechanicService.deleteMechanic).toHaveBeenCalledWith({
         mechanicUid: 'cmech_1',
         clientUid: clientId,
       });
-      expect(result).toBe(retired);
+      expect(result).toBe(deleted);
     });
 
     it('404s when the mechanic is not found', async () => {
-      mechanicService.retireMechanic.mockResolvedValue(null);
+      mechanicService.deleteMechanic.mockResolvedValue(null);
 
-      await expect(controller.retire(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
+      await expect(controller.remove(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
         NotFoundException,
       );
     });
