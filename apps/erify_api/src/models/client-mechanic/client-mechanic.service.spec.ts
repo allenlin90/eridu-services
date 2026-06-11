@@ -166,18 +166,31 @@ describe('clientMechanicService', () => {
   });
 
   describe('retireMechanic', () => {
-    it('sets status to retired and bumps version', async () => {
+    it('sets status to retired and bumps version via the version-guarded update', async () => {
       (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
-      (repositoryMock.update as jest.Mock).mockResolvedValue({ ...baseMechanic, status: 'retired' });
+      (repositoryMock.updateWithVersionCheck as jest.Mock).mockResolvedValue({
+        ...baseMechanic,
+        status: 'retired',
+      });
 
       const result = await service.retireMechanic({ mechanicUid: 'cmech_123', clientUid: 'client_1' });
 
-      expect(repositoryMock.update).toHaveBeenCalledWith(
-        { uid: 'cmech_123', client: { uid: 'client_1' } },
+      expect(repositoryMock.updateWithVersionCheck).toHaveBeenCalledWith(
+        { uid: 'cmech_123', clientUid: 'client_1', version: 3 },
         { status: 'retired', version: 4 },
-        expect.anything(),
       );
       expect(result).toMatchObject({ status: 'retired' });
+    });
+
+    it('maps a concurrent edit racing the retire to a 409 conflict', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
+      (repositoryMock.updateWithVersionCheck as jest.Mock).mockRejectedValue(
+        new VersionConflictError('stale', 3, 4),
+      );
+
+      await expect(
+        service.retireMechanic({ mechanicUid: 'cmech_123', clientUid: 'client_1' }),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
 
     it('is idempotent for an already-retired mechanic (no write)', async () => {
@@ -188,7 +201,7 @@ describe('clientMechanicService', () => {
 
       const result = await service.retireMechanic({ mechanicUid: 'cmech_123', clientUid: 'client_1' });
 
-      expect(repositoryMock.update).not.toHaveBeenCalled();
+      expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
       expect(result).toMatchObject({ status: 'retired' });
     });
 
@@ -198,7 +211,7 @@ describe('clientMechanicService', () => {
       const result = await service.retireMechanic({ mechanicUid: 'cmech_404', clientUid: 'client_1' });
 
       expect(result).toBeNull();
-      expect(repositoryMock.update).not.toHaveBeenCalled();
+      expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
     });
   });
 });

@@ -130,8 +130,9 @@ export class ClientMechanicService extends BaseModelService {
   /**
    * Retires a mechanic (soft, reversible lifecycle). Idempotent: retiring an
    * already-retired mechanic is a no-op that still returns the row. Returns
-   * `null` for not-found. Hard-delete is intentionally not exposed — mechanics
-   * are kept for coverage/history once referenced.
+   * `null` for not-found; throws 409 when a concurrent edit raced the retire.
+   * Hard-delete is intentionally not exposed — mechanics are kept for
+   * coverage/history once referenced.
    */
   async retireMechanic(scope: MechanicScope) {
     const existing = await this.clientMechanicRepository.findByUidForClient({
@@ -147,10 +148,23 @@ export class ClientMechanicService extends BaseModelService {
       return existing;
     }
 
-    return this.clientMechanicRepository.update(
-      { uid: scope.mechanicUid, client: { uid: scope.clientUid } },
-      { status: 'retired', version: existing.version + 1 },
-      clientMechanicDefaultInclude,
-    );
+    // Guard the retire with the just-read `version`. DELETE carries no client
+    // version (unlike the PATCH status='retired' path), so without this guard a
+    // content edit landing between the read and the write would be lost and the
+    // `version` counter would collide. Surfacing the race as a 409 keeps the
+    // optimistic-lock invariant intact; the rare retry re-reads and succeeds.
+    try {
+      return await this.clientMechanicRepository.updateWithVersionCheck(
+        { uid: scope.mechanicUid, clientUid: scope.clientUid, version: existing.version },
+        { status: 'retired', version: existing.version + 1 },
+      );
+    } catch (error) {
+      if (error instanceof VersionConflictError) {
+        throw HttpError.conflict(
+          'Client mechanic record is out of date. Please refresh your record and try again.',
+        );
+      }
+      throw error;
+    }
   }
 }
