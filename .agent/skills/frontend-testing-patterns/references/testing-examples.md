@@ -48,7 +48,7 @@ describe('TaskTemplateCard', () => {
 
 ```typescript
 import { render, screen } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { TaskTemplateToolbar } from './task-template-toolbar';
 
@@ -378,7 +378,7 @@ afterAll(() => server.close());
 
 ```typescript
 import { render, screen, waitFor } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import { server } from '@/test/mocks/server';
 import { http, HttpResponse } from 'msw';

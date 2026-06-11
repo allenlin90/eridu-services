@@ -14,7 +14,7 @@ Extended guidance for building and optimizing large tabular views.
 - `apps/erify_studios/src/routes/system/users/index.tsx`
 - `apps/erify_studios/src/routes/system/task-templates/index.tsx`
 - `apps/erify_studios/src/routes/system/shows/index.tsx`
-- `apps/erify_studios/src/routes/studios/$studioId/show-operations/index.tsx`
+- `apps/erify_studios/src/routes/studios/$studioId/shows/index.tsx`
 - `apps/erify_studios/src/routes/studios/$studioId/task-review/index.tsx` — merged-dataset + client-side partition tabs (canonical for summary-panel + exception-queue pattern)
 
 ### Query persistence
@@ -23,8 +23,8 @@ Extended guidance for building and optimizing large tabular views.
 - `apps/erify_creators/src/lib/api/query-client.ts`
 - `apps/erify_creators/src/lib/api/persister.ts`
 
-### Parallel summary query (dated + undated merge)
-- `apps/erify_studios/src/features/tasks/hooks/use-task-review-summary.ts` — canonical example: one `useQuery` that internally fans out across all pages of two complementary queries (dated tasks, undated tasks) with bounded concurrency (`PAGE_FETCH_CONCURRENCY = 5`) using a worker-pool helper, then returns the union as a single flat dataset for client-side filtering and pagination.
+### Summary query for the review panel
+- `apps/erify_studios/src/features/tasks/hooks/use-task-review-summary.ts` — canonical example: a single `useQuery` against a dedicated stats endpoint that returns precomputed per-status counts for the active date range, with a refetch interval that is only enabled while viewing the current operational day.
 
 ## Decomposition Shape
 

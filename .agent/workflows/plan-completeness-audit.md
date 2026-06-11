@@ -155,4 +155,4 @@ The Phase 4 compensation-line-items work was audited post-Task-5 (now PR 4 in [P
 2. **Actuals input UX orphaned.** Schema columns were added by an earlier task; UI was scoped out across two tasks with no forwarding address. → New PR 6 (show-actuals input) + PR 7 (missing-actuals queue).
 3. **Read views unreachable from the operator perspective.** Contract named three views; plan shipped only the per-show creator view. → New PR 8 (per-member shifts) + PR 5 (per-creator shows).
 
-All three would have been caught at plan time with this audit. They were caught at PR-review time instead, which cost one extra round trip. The 2026-05-15 plan→tracker consolidation absorbed all of these as named PR entries.
+All three would have been caught at plan time with this audit. They were caught at PR-review time instead, which cost one extra round trip. The 2026-05-16 plan→tracker consolidation absorbed all of these as named PR entries.

@@ -12,8 +12,6 @@ Run this workflow after making code changes to ensure quality before marking wor
 
 Determine which app(s) were modified (e.g., `erify_api`, `erify_studios`, `erify_creators`).
 
-// turbo-all
-
 1. **Lint check**
 ```bash
 pnpm --filter <app> lint

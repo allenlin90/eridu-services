@@ -38,7 +38,7 @@ Cite or extend existing entries instead of opening parallel issues.
 | Content type | Location |
 |---|---|
 | Implemented/canonical docs | `docs/` root |
-| Unimplemented proposals/plans | `docs/design/` |
+| Unimplemented proposals/plans | `docs/ideation/` |
 | Status index | `docs/README.md` |
 
 ## Output Contract

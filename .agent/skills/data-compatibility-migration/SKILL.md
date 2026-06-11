@@ -5,7 +5,7 @@ description: Frontend data compatibility and fallback patterns for API contract 
 
 # Data Compatibility Migration
 
-Patterns for safely consuming API responses that may contain old field names, new field names, or both during a domain cutover. Derived from the Phase 4 mc→creator frontend migration.
+Patterns for safely consuming API responses that may contain old field names, new field names, or both during a domain cutover. Derived from the mc→creator frontend migration.
 
 ## When to Use
 
@@ -25,6 +25,7 @@ export type CreatorIdentity = {
   creator_id?: string | null;
   creator_name?: string | null;
   name?: string | null;
+  alias_name?: string | null;
 };
 
 // Primary field first, legacy fallback second
@@ -33,7 +34,7 @@ export function getCreatorId(creator: CreatorIdentity): string | null {
 }
 
 export function getCreatorName(creator: CreatorIdentity): string | null {
-  return creator.creator_name ?? creator.name ?? null;
+  return creator.creator_name ?? creator.name ?? creator.alias_name ?? null;
 }
 
 // Collection accessor with empty-array default

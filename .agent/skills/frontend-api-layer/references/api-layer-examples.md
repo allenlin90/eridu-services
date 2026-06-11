@@ -254,7 +254,7 @@ export async function apiRequest<T>(config: AxiosRequestConfig): Promise<T> {
 ### Task Templates API
 
 ```typescript
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api/client';
 import type {
   TaskTemplateDto,
   CreateTaskTemplateDto,
@@ -281,29 +281,29 @@ export async function getTaskTemplates(
     limit?: number;
   }
 ) {
-  const { data } = await apiClient.get<PaginatedResponse<TaskTemplateDto>>(
+  const response = await apiClient.get<PaginatedResponse<TaskTemplateDto>>(
     `/studios/${studioId}/task-templates`,
     { params }
   );
-  return data;
+  return response.data;
 }
 
 export async function getTaskTemplate(studioId: string, templateId: string) {
-  const { data } = await apiClient.get<TaskTemplateDto>(
+  const response = await apiClient.get<TaskTemplateDto>(
     `/studios/${studioId}/task-templates/${templateId}`
   );
-  return data;
+  return response.data;
 }
 
 export async function createTaskTemplate(
   studioId: string,
   payload: CreateTaskTemplateDto
 ) {
-  const { data } = await apiClient.post<TaskTemplateDto>(
+  const response = await apiClient.post<TaskTemplateDto>(
     `/studios/${studioId}/task-templates`,
     payload
   );
-  return data;
+  return response.data;
 }
 
 export async function updateTaskTemplate(
@@ -311,11 +311,11 @@ export async function updateTaskTemplate(
   templateId: string,
   payload: UpdateTaskTemplateDto
 ) {
-  const { data } = await apiClient.put<TaskTemplateDto>(
+  const response = await apiClient.put<TaskTemplateDto>(
     `/studios/${studioId}/task-templates/${templateId}`,
     payload
   );
-  return data;
+  return response.data;
 }
 
 export async function deleteTaskTemplate(studioId: string, templateId: string) {
@@ -326,7 +326,7 @@ export async function deleteTaskTemplate(studioId: string, templateId: string) {
 ### Users API
 
 ```typescript
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api/client';
 import type { UserDto, UpdateUserDto } from '@eridu/api-types';
 
 export const userKeys = {
@@ -336,18 +336,18 @@ export const userKeys = {
 };
 
 export async function getCurrentUser() {
-  const { data } = await apiClient.get<UserDto>('/users/me');
-  return data;
+  const response = await apiClient.get<UserDto>('/users/me');
+  return response.data;
 }
 
 export async function updateCurrentUser(payload: UpdateUserDto) {
-  const { data } = await apiClient.put<UserDto>('/users/me', payload);
-  return data;
+  const response = await apiClient.put<UserDto>('/users/me', payload);
+  return response.data;
 }
 
 export async function getUser(userId: string) {
-  const { data } = await apiClient.get<UserDto>(`/users/${userId}`);
-  return data;
+  const response = await apiClient.get<UserDto>(`/users/${userId}`);
+  return response.data;
 }
 ```
 
@@ -496,7 +496,7 @@ export function useInfiniteTaskTemplates(
 ## File Upload API
 
 ```typescript
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api/client';
 import type { FileUploadDto } from '@eridu/api-types';
 
 export async function uploadFile(
@@ -506,7 +506,7 @@ export async function uploadFile(
   const formData = new FormData();
   formData.append('file', file);
 
-  const { data } = await apiClient.post<FileUploadDto>('/files/upload', formData, {
+  const response = await apiClient.post<FileUploadDto>('/files/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -518,7 +518,7 @@ export async function uploadFile(
     },
   });
 
-  return data;
+  return response.data;
 }
 
 // Usage with mutation
@@ -633,7 +633,7 @@ Use this pattern for all API fetchers that are called from TanStack Query hooks.
 ### Fetcher with Optional Signal
 
 ```typescript
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api/client';
 import type { PaginatedResponse, TaskTemplateDto } from '@eridu/api-types';
 
 // Accept signal as an optional second-level options object
@@ -642,11 +642,11 @@ export async function getTaskTemplates(
   params?: { page?: number; limit?: number; name?: string; cursor?: string },
   options?: { signal?: AbortSignal },
 ): Promise<PaginatedResponse<TaskTemplateDto>> {
-  const { data } = await apiClient.get<PaginatedResponse<TaskTemplateDto>>(
+  const response = await apiClient.get<PaginatedResponse<TaskTemplateDto>>(
     `/studios/${studioId}/task-templates`,
     { params, signal: options?.signal },
   );
-  return data;
+  return response.data;
 }
 ```
 

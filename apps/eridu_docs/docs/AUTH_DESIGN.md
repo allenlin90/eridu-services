@@ -112,7 +112,7 @@ Cookie helpers (`setTokenCookie`, `clearTokenCookie`), `buildLoginUrl`, and `ext
 
 This matches the browser-driven logout model used by the SPA apps. The key constraint is that `eridu_docs_token` is `HttpOnly`, so the browser cannot clear it directly; Astro still needs a small server route to delete the docs cookie after Better Auth has cleared the shared session cookies.
 
-**Known issue (2026-04-01):** the current browser-initiated logout flow is directionally correct but not yet reliable enough to treat as a hardened contract. Track the open bug/investigation in [docs/ideation/eridu-docs-logout-investigation.md](../../../docs/ideation/eridu-docs-logout-investigation.md).
+**Known issue:** the current browser-initiated logout flow is directionally correct but not yet reliable enough to treat as a hardened contract. Track the open bug/investigation in [docs/ideation/eridu-docs-logout-investigation.md](../../../docs/ideation/eridu-docs-logout-investigation.md).
 
 ## File Structure
 
