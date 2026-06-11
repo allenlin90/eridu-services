@@ -119,9 +119,8 @@ model ClientMechanic {
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  @@index([uid])
-  @@index([clientId])
-  @@index([status])
+  // uid is already indexed by @unique; clientId/status are served by the
+  // composite indexes below — no standalone duplicates needed.
   @@index([createdBy])
   @@index([deletedAt])
   @@index([clientId, deletedAt])
