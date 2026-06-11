@@ -46,6 +46,7 @@ import { Route as StudiosStudioIdDashboardRouteImport } from './routes/studios/$
 import { Route as StudiosStudioIdCreatorsRouteImport } from './routes/studios/$studioId/creators'
 import { Route as StudiosStudioIdCreatorMappingRouteImport } from './routes/studios/$studioId/creator-mapping'
 import { Route as StudiosStudioIdCostsRouteImport } from './routes/studios/$studioId/costs'
+import { Route as StudiosStudioIdClientMechanicsRouteImport } from './routes/studios/$studioId/client-mechanics'
 import { Route as StudiosStudioIdTaskTemplatesIndexRouteImport } from './routes/studios/$studioId/task-templates/index'
 import { Route as StudiosStudioIdTaskSetupIndexRouteImport } from './routes/studios/$studioId/task-setup/index'
 import { Route as StudiosStudioIdTaskReviewIndexRouteImport } from './routes/studios/$studioId/task-review/index'
@@ -276,6 +277,12 @@ const StudiosStudioIdCostsRoute = StudiosStudioIdCostsRouteImport.update({
   path: '/costs',
   getParentRoute: () => StudiosStudioIdRouteRoute,
 } as any)
+const StudiosStudioIdClientMechanicsRoute =
+  StudiosStudioIdClientMechanicsRouteImport.update({
+    id: '/client-mechanics',
+    path: '/client-mechanics',
+    getParentRoute: () => StudiosStudioIdRouteRoute,
+  } as any)
 const StudiosStudioIdTaskTemplatesIndexRoute =
   StudiosStudioIdTaskTemplatesIndexRouteImport.update({
     id: '/',
@@ -469,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
+  '/studios/$studioId/client-mechanics': typeof StudiosStudioIdClientMechanicsRoute
   '/studios/$studioId/costs': typeof StudiosStudioIdCostsRoute
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
   '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRouteWithChildren
@@ -539,6 +547,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
+  '/studios/$studioId/client-mechanics': typeof StudiosStudioIdClientMechanicsRoute
   '/studios/$studioId/costs': typeof StudiosStudioIdCostsRoute
   '/studios/$studioId/dashboard': typeof StudiosStudioIdDashboardRoute
   '/studios/$studioId/my-compensations': typeof StudiosStudioIdMyCompensationsRoute
@@ -597,6 +606,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/settings': typeof SettingsRoute
   '/studios/$studioId': typeof StudiosStudioIdRouteRouteWithChildren
+  '/studios/$studioId/client-mechanics': typeof StudiosStudioIdClientMechanicsRoute
   '/studios/$studioId/costs': typeof StudiosStudioIdCostsRoute
   '/studios/$studioId/creator-mapping': typeof StudiosStudioIdCreatorMappingRouteWithChildren
   '/studios/$studioId/creators': typeof StudiosStudioIdCreatorsRouteWithChildren
@@ -669,6 +679,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/studios/$studioId'
+    | '/studios/$studioId/client-mechanics'
     | '/studios/$studioId/costs'
     | '/studios/$studioId/creator-mapping'
     | '/studios/$studioId/creators'
@@ -739,6 +750,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/studios/$studioId'
+    | '/studios/$studioId/client-mechanics'
     | '/studios/$studioId/costs'
     | '/studios/$studioId/dashboard'
     | '/studios/$studioId/my-compensations'
@@ -796,6 +808,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/studios/$studioId'
+    | '/studios/$studioId/client-mechanics'
     | '/studios/$studioId/costs'
     | '/studios/$studioId/creator-mapping'
     | '/studios/$studioId/creators'
@@ -1127,6 +1140,13 @@ declare module '@tanstack/react-router' {
       path: '/costs'
       fullPath: '/studios/$studioId/costs'
       preLoaderRoute: typeof StudiosStudioIdCostsRouteImport
+      parentRoute: typeof StudiosStudioIdRouteRoute
+    }
+    '/studios/$studioId/client-mechanics': {
+      id: '/studios/$studioId/client-mechanics'
+      path: '/client-mechanics'
+      fullPath: '/studios/$studioId/client-mechanics'
+      preLoaderRoute: typeof StudiosStudioIdClientMechanicsRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
     '/studios/$studioId/task-templates/': {
@@ -1576,6 +1596,7 @@ const StudiosStudioIdTaskTemplatesRouteWithChildren =
   )
 
 interface StudiosStudioIdRouteRouteChildren {
+  StudiosStudioIdClientMechanicsRoute: typeof StudiosStudioIdClientMechanicsRoute
   StudiosStudioIdCostsRoute: typeof StudiosStudioIdCostsRoute
   StudiosStudioIdCreatorMappingRoute: typeof StudiosStudioIdCreatorMappingRouteWithChildren
   StudiosStudioIdCreatorsRoute: typeof StudiosStudioIdCreatorsRouteWithChildren
@@ -1596,6 +1617,7 @@ interface StudiosStudioIdRouteRouteChildren {
 }
 
 const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
+  StudiosStudioIdClientMechanicsRoute: StudiosStudioIdClientMechanicsRoute,
   StudiosStudioIdCostsRoute: StudiosStudioIdCostsRoute,
   StudiosStudioIdCreatorMappingRoute:
     StudiosStudioIdCreatorMappingRouteWithChildren,
