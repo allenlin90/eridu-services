@@ -48,10 +48,9 @@ import { z } from 'zod';
 
 // Define the shape
 const envSchema = z.object({
-  DEV: z.coerce.boolean().default(false),
-  JWT_SECRET: z.string().min(1).default('fallback_secret_override_in_env'),
-  AUTH_COOKIE_NAME: z.string().default('eridu_session_token'),
-  LOGIN_URL: z.url().default('https://app.erify.io/login'),
+  AUTH_URL: z.url().default('http://localhost:3001'),
+  AUTH_INTERNAL_URL: z.url().optional(),
+  BYPASS_AUTH: z.coerce.boolean().default(false),
 });
 
 // Infer strict typings
@@ -59,10 +58,9 @@ export type Env = z.infer<typeof envSchema>;
 
 // Parse instantly when the file is loaded
 export const CONFIG: Env = envSchema.parse({
-  DEV: import.meta.env.DEV,
-  JWT_SECRET: import.meta.env.JWT_SECRET,
-  AUTH_COOKIE_NAME: import.meta.env.AUTH_COOKIE_NAME,
-  LOGIN_URL: import.meta.env.LOGIN_URL,
+  AUTH_URL: import.meta.env.AUTH_URL,
+  AUTH_INTERNAL_URL: import.meta.env.AUTH_INTERNAL_URL,
+  BYPASS_AUTH: import.meta.env.BYPASS_AUTH,
 });
 ```
 

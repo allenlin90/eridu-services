@@ -33,7 +33,7 @@ Why not create normalized RDBMS tables for the aggregated results (e.g., `analyt
 
 ## Prisma Schema Implementation
 
-To implement this pattern, create a snapshot table scoped to the entity and the time period:
+To implement this pattern, create a snapshot table scoped to the entity and the time period. Example shape (no such model exists yet — name and fields per your domain):
 
 ```prisma
 model TaskAnalyticsSnapshot {

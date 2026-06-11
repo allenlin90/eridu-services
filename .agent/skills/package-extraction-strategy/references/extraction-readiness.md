@@ -1,41 +1,37 @@
 # Extraction Readiness — Concrete Examples
 
-## Backend Example: Task Submission Reporting
+## Backend Example: A Reporting Module
 
 ```
-src/models/task-report/
-  ├── task-report.module.ts                 # NestJS wiring
-  ├── task-report.controller.ts             # HTTP transport
-  ├── task-report-definition.service.ts     # Definition CRUD (NestJS-coupled)
-  ├── task-report-definition.repository.ts  # Definition persistence (Prisma-coupled)
-  ├── task-report-result.service.ts         # Result CRUD (NestJS-coupled)
-  ├── task-report-result.repository.ts      # Result persistence (Prisma-coupled)
-  ├── task-report-query.service.ts          # Orchestration (NestJS-coupled)
-  ├── schemas/                              # Zod + payload types
-  └── lib/                                  # PORTABLE
-      ├── extract-row-values.ts             # snapshot schema + content → flat row
-      ├── normalize-field-type.ts           # field type normalization rules
-      ├── partition-key.ts                  # template_uid + snapshot_version grouping
-      └── compute-summaries.ts              # numeric aggregation (count/sum/avg)
+src/models/{feature}/
+  ├── {feature}.module.ts                 # NestJS wiring
+  ├── {feature}.controller.ts             # HTTP transport
+  ├── {feature}-definition.service.ts     # CRUD (NestJS-coupled)
+  ├── {feature}-definition.repository.ts  # Persistence (Prisma-coupled)
+  ├── schemas/                            # Zod + payload types
+  └── lib/                                # PORTABLE
+      ├── extract-row-values.ts           # snapshot schema + content → flat row
+      ├── normalize-field-type.ts         # field type normalization rules
+      └── compute-summaries.ts            # numeric aggregation (count/sum/avg)
 ```
 
-If a second consumer (e.g. a dedicated reporting microservice) needs these functions, the `lib/` directory moves to `@eridu/report-core` with zero rewrite.
+If a second consumer (e.g. a dedicated reporting microservice) needs these functions, the `lib/` directory moves to a shared package with zero rewrite.
 
-## Frontend Example: Task Submission Reporting
+## Frontend Example: A Reporting Feature
 
 ```
-src/features/task-reports/
+src/features/{feature}/
   ├── api/                                  # TanStack Query hooks (React-coupled)
   ├── components/                           # UI components (React-coupled)
   ├── hooks/                                # React hooks (React-coupled)
   └── lib/                                  # PORTABLE
-      ├── merge-partitions-to-shows.ts      # partition → show-centric merge
+      ├── merge-partitions.ts               # partition merge logic
       ├── compute-summaries.ts              # client-side numeric re-computation
       ├── serialize-csv.ts                  # CSV export serializer
       └── serialize-xlsx.ts                 # XLSX export serializer
 ```
 
-If `erify_creators` needs the same CSV/XLSX serialization, extract `lib/` to `@eridu/report-engine`.
+If another app needs the same CSV/XLSX serialization, extract `lib/` to a shared package.
 
 ## Portable vs Framework-Coupled Decision
 
@@ -44,5 +40,5 @@ If `erify_creators` needs the same CSV/XLSX serialization, extract `lib/` to `@e
 | `extractRowValues(schema, content)` | plain objects | flat row object | None | `lib/` |
 | `computeSummaries(partitions)` | array of objects | summary object | None | `lib/` |
 | `serializeCsv(rows, columns)` | arrays | string | None | `lib/` |
-| `TaskReportQueryService.generateResult()` | payload type | void (stores result) | NestJS, Prisma | `service` |
-| `useRunReportMutation()` | — | mutation hook | React, TanStack | `hooks/` |
+| `{Feature}QueryService.generateResult()` | payload type | void (stores result) | NestJS, Prisma | `service` |
+| `useRunMutation()` | — | mutation hook | React, TanStack | `hooks/` |

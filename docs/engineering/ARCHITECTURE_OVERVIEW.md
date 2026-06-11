@@ -114,11 +114,13 @@ block-beta
 
 | Package                | Purpose                                           |
 | ---------------------- | ------------------------------------------------- |
-| `@eridu/api-types`     | Shared Zod schemas and TypeScript types (FE ↔ BE) |
-| `@eridu/auth-sdk`      | JWT validation, JWKS management                   |
-| `@eridu/ui`            | Shared React UI components                        |
-| `@eridu/i18n`          | Internationalization                              |
-| `@eridu/eslint-config` | Shared linting rules                              |
+| `@eridu/api-types`       | Shared Zod schemas and TypeScript types (FE ↔ BE) |
+| `@eridu/auth-sdk`        | JWT validation, JWKS management                   |
+| `@eridu/browser-upload`  | Client-side image compression and upload helpers  |
+| `@eridu/ui`              | Shared React UI components                        |
+| `@eridu/i18n`            | Internationalization                              |
+| `@eridu/eslint-config`   | Shared linting rules                              |
+| `@eridu/typescript-config` | Shared TypeScript configs                      |
 
 ## Skills Reference
 

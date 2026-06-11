@@ -96,7 +96,7 @@ sidebar: [
 
 ## Applied Mapping
 
-This repo pass applies the following moves:
+This repo pass applied the following moves:
 
 | Old Path | New Path | Reason |
 | --- | --- | --- |

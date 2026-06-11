@@ -1,7 +1,7 @@
 # Prod → Local Data Sync: Design
 
 **Status:** Design accepted. Implemented.
-**Author triggered by:** task-template-redesign verification need (`docs/ideation/task-template-redesign.md`); generalized so other features can reuse.
+**Author triggered by:** task-template-redesign verification need (now shipped; see [Task Templates](../../../../docs/features/task-templates.md)); generalized so other features can reuse.
 
 ## Purpose
 

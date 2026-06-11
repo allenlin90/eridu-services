@@ -99,7 +99,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - `@eridu/ui`
   - `@eridu/i18n`
   - `@eridu/eslint-config`
-  - `@eridu/prettier-config`
   - `@eridu/typescript-config`
 
 ### Workflow Rules

@@ -22,7 +22,7 @@ import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class TaskTemplateService extends BaseModelService {
-  static readonly UID_PREFIX = 'task_template';
+  static readonly UID_PREFIX = 'ttpl';
   protected readonly uidPrefix = TaskTemplateService.UID_PREFIX;
 
   constructor(

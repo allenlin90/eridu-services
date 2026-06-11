@@ -1,4 +1,4 @@
-# PRD: Economics Cost Model (2.1)
+# Economics Cost Model (2.1)
 
 > **Status**: ✅ Signed off — canonical Phase 4 cost semantics locked
 > **Phase**: 4 — Wave 2 critical-path gate
