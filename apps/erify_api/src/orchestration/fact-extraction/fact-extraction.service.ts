@@ -3,6 +3,7 @@ import { TaskStatus } from '@prisma/client';
 
 import type { ActualsSource, AuditTargetType } from '@eridu/api-types/audits';
 import {
+  buildHydratedContentKey,
   type FieldItemV2,
   getTaskContentReasonKey,
   parseHydratedContentKey,
@@ -123,7 +124,7 @@ export class FactExtractionService {
 
     const content = (task.content as Record<string, unknown> | null) ?? {};
 
-    const rawFacts = collectBoundFacts(schema, content, input.showUid);
+    const rawFacts = collectBoundFacts(schema, content, input.showUid, task);
     if (rawFacts.length === 0) {
       return { taskId: input.taskId, taskUid: input.taskUid, entries: [] };
     }
@@ -963,11 +964,13 @@ function collectBoundFacts(
   schema: UiSchemaV2,
   content: Record<string, unknown>,
   showUid: string,
+  task?: any,
 ): ExtractedFact[] {
   const facts: ExtractedFact[] = [];
   const itemByFieldId = new Map<string, FieldItemV2>(schema.items.map((item) => [item.id, item]));
 
   // Show-scoped bindings — no per-target hydration; one fact per template field.
+  // Also supports unhydrated fallback for platform/creator scoped bindings.
   for (const item of schema.items) {
     const factKey = item.system_fact_key;
     if (!factKey)
@@ -977,17 +980,57 @@ function collectBoundFacts(
     // unknown to this binary. Skip silently — unknown keys can't be
     // extracted by any registered extractor anyway.
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[factKey];
-    if (!definition || definition.target !== 'show')
+    if (!definition)
       continue;
-    facts.push({
-      contentKey: item.id,
-      sourceFieldId: item.id,
-      factKey,
-      scope: 'show',
-      targetUid: showUid,
-      rawValue: content[item.id],
-      reason: readReasonSidecar(content, item.id),
-    });
+
+    const hasRawValue = content[item.id] !== undefined || (item.key && content[item.key] !== undefined);
+    const rawValue = content[item.id] !== undefined ? content[item.id] : content[item.key as string];
+
+    if (definition.target === 'show') {
+      facts.push({
+        contentKey: item.id,
+        sourceFieldId: item.id,
+        factKey,
+        scope: 'show',
+        targetUid: showUid,
+        rawValue,
+        reason: readReasonSidecar(content, item.id) || (item.key ? readReasonSidecar(content, item.key) : undefined),
+      });
+    } else if (hasRawValue) {
+      // Unhydrated fallback for show_platform or show_creator
+      const targetShow = task?.targets?.[0]?.show;
+      if (definition.target === 'show_platform' && targetShow?.showPlatforms) {
+        for (const sp of targetShow.showPlatforms) {
+          const hydratedKey = buildHydratedContentKey(item.id, 'platform', sp.uid);
+          if (content[hydratedKey] === undefined) {
+            facts.push({
+              contentKey: item.id,
+              sourceFieldId: item.id,
+              factKey,
+              scope: 'platform',
+              targetUid: sp.uid,
+              rawValue,
+              reason: readReasonSidecar(content, item.id) || (item.key ? readReasonSidecar(content, item.key) : undefined),
+            });
+          }
+        }
+      } else if (definition.target === 'show_creator' && targetShow?.showCreators) {
+        for (const sc of targetShow.showCreators) {
+          const hydratedKey = buildHydratedContentKey(item.id, 'creator', sc.uid);
+          if (content[hydratedKey] === undefined) {
+            facts.push({
+              contentKey: item.id,
+              sourceFieldId: item.id,
+              factKey,
+              scope: 'creator',
+              targetUid: sc.uid,
+              rawValue,
+              reason: readReasonSidecar(content, item.id) || (item.key ? readReasonSidecar(content, item.key) : undefined),
+            });
+          }
+        }
+      }
+    }
   }
 
   // Per-target hydrated keys for creator / platform scopes — parsed at extraction
