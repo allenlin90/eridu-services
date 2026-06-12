@@ -264,6 +264,53 @@ export const updateStudioShowInputSchema = z
 /**
  * Show Run Review Summary Response Schema (PR 12.4.4)
  */
+/**
+ * Row schemas for the paginated `run-review/*` sub-resources. These are the
+ * exact element shapes the summary endpoint already exposes (reused below so
+ * the summary stays identical), so the paginated endpoints can declare the same
+ * proven contract via `@ZodPaginatedResponse`.
+ */
+export const showRunReviewCreatorExceptionSchema = z.object({
+  show_creator_uid: z.string(),
+  creator_name: z.string(),
+  show_name: z.string(),
+  show_start_time: z.string(),
+  status: z.enum(['LATE', 'MISSING']),
+  late_minutes: z.number(),
+  reason: z.string().nullable(),
+});
+
+export const showRunReviewViolationSchema = z.object({
+  violation_uid: z.string(),
+  platform_name: z.string(),
+  show_name: z.string(),
+  show_start_time: z.string(),
+  violation_type: z.string(),
+  severity: z.string(),
+  reason: z.string(),
+  observed_at: z.string(),
+});
+
+export const showRunReviewIncompleteTaskSchema = z.object({
+  task_uid: z.string(),
+  description: z.string(),
+  status: z.string(),
+  type: z.string(),
+  show_name: z.string(),
+});
+
+/**
+ * Row shape for the `run-review/shows` range view. Unlike the three above this
+ * is not embedded in the summary (the summary exposes aggregate `shows` counts),
+ * so it is defined here to back the paginated endpoint's response contract.
+ */
+export const showRunReviewShowsRangeRowSchema = z.object({
+  id: z.string(),
+  shows_range: z.string(),
+  actuals_completeness: z.string(),
+  status: z.string(),
+});
+
 export const showRunReviewSummarySchema = z.object({
   date_from: z.string(),
   date_to: z.string(),
@@ -279,43 +326,14 @@ export const showRunReviewSummarySchema = z.object({
     total_count: z.number().int(),
     late_count: z.number().int(),
     missing_count: z.number().int(),
-    exceptions: z.array(
-      z.object({
-        show_creator_uid: z.string(),
-        creator_name: z.string(),
-        show_name: z.string(),
-        show_start_time: z.string(),
-        status: z.enum(['LATE', 'MISSING']),
-        late_minutes: z.number(),
-        reason: z.string().nullable(),
-      }),
-    ),
+    exceptions: z.array(showRunReviewCreatorExceptionSchema),
   }),
   platforms: z.object({
     active_violations_count: z.number().int(),
-    violations: z.array(
-      z.object({
-        violation_uid: z.string(),
-        platform_name: z.string(),
-        show_name: z.string(),
-        show_start_time: z.string(),
-        violation_type: z.string(),
-        severity: z.string(),
-        reason: z.string(),
-        observed_at: z.string(),
-      }),
-    ),
+    violations: z.array(showRunReviewViolationSchema),
   }),
   tasks: z.object({
     incomplete_phase_checks_count: z.number().int(),
-    incomplete_tasks: z.array(
-      z.object({
-        task_uid: z.string(),
-        description: z.string(),
-        status: z.string(),
-        type: z.string(),
-        show_name: z.string(),
-      }),
-    ),
+    incomplete_tasks: z.array(showRunReviewIncompleteTaskSchema),
   }),
 });

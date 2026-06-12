@@ -13,7 +13,13 @@ import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { showRunReviewSummarySchema } from '@eridu/api-types/shows';
+import {
+  showRunReviewCreatorExceptionSchema,
+  showRunReviewIncompleteTaskSchema,
+  showRunReviewShowsRangeRowSchema,
+  showRunReviewSummarySchema,
+  showRunReviewViolationSchema,
+} from '@eridu/api-types/shows';
 import {
   showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
   studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
@@ -158,6 +164,7 @@ export class StudioShowController extends BaseStudioController {
   @Get('run-review/creators')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ReadBurstThrottle()
+  @ZodPaginatedResponse(showRunReviewCreatorExceptionSchema)
   async runReviewCreators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
@@ -169,6 +176,7 @@ export class StudioShowController extends BaseStudioController {
   @Get('run-review/violations')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ReadBurstThrottle()
+  @ZodPaginatedResponse(showRunReviewViolationSchema)
   async runReviewViolations(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
@@ -180,6 +188,7 @@ export class StudioShowController extends BaseStudioController {
   @Get('run-review/tasks')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ReadBurstThrottle()
+  @ZodPaginatedResponse(showRunReviewIncompleteTaskSchema)
   async runReviewTasks(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
@@ -191,6 +200,7 @@ export class StudioShowController extends BaseStudioController {
   @Get('run-review/shows')
   @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ReadBurstThrottle()
+  @ZodPaginatedResponse(showRunReviewShowsRangeRowSchema)
   async runReviewShows(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
