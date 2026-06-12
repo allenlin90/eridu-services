@@ -18,7 +18,22 @@
 **Operating model (confirmed 2026-06-12):**
 - **Direction now, details later.** Only direction-level decisions are locked up front; structural details are decided at the phase/ticket that touches them, with current code in view. Deferred decisions must NOT be pre-implemented.
 - **Converge on canonical patterns; improve only with sign-off.** Align divergent code onto `task.service.ts` / `task.repository.ts` / studio-membership schema. A better pattern may be *proposed* where the canonical one is weak, but is applied only after explicit approval — never silently introduced mid-refactor.
-- **One PR per work item.** Smallest reviewable unit; characterization test + fix paired in the same PR. Merge gate: baseline green (130/1157+) → characterization pins behavior → `/pr-ready` verdict. This is a long, pre-feature debt-paydown process; validity and not breaking existing behavior outrank speed.
+- **One PR per work item — parallelizable.** Smallest reviewable unit. Independent test-only WI-T* items run on separate branches as concurrent open PRs (they touch disjoint files). To avoid progress-log merge conflicts, **parallel PRs do not edit this doc**; the tracker is reconciled after merges. Merge gate per PR: baseline green → behavior pinned → review.
+
+---
+
+## Testing principles (how to write WI-T* specs)
+
+Right altitude matters more than coverage count. **A behavior-preserving refactor must not break a test.** If an equivalent reimplementation would fail it, the test is over-specified — trim it.
+
+- **Test observable behavior and contracts, not implementation.** Assert real input→output for pure logic (the gold model: `task-report-content-value.spec.ts`).
+- **Mock-argument assertions are a last resort, kept minimal.** For a repository with no DB in unit tests, only assert the query shape for genuine *contracts*: soft-delete exclusion (don't leak deleted rows), tenant scoping (don't cross studios), and real logic branches (e.g. the targetId 4-way OR fallback) or mapping/aggregation logic. **Do not** enumerate every filter field / date-range / order-by shape — that is ORM plumbing a refactor may freely change.
+- **Collaborator-interaction assertions are legitimate when the collaboration IS the unit's job** — e.g. an orchestrator routing facts to a processor (`expect(processor.applyAndAudit).toHaveBeenCalledWith(...)`). They are a smell only when they assert plumbing. Still prefer asserting the returned outcome where it is the real signal; match the existing spec's balance.
+- **Representative + boundary cases, not every permutation.** No combinatorial `it.each` over plumbing.
+- **Don't test the framework.** Prisma/Nest/Zod do their own jobs.
+- **Characterization vs expectation:** a temporary exact-shape pin is only justified for a deliberately *byte-identical mechanical* refactor (e.g. WI-24 paired-router de-dup), and should be removed once the refactor lands — not left as permanent suite bloat.
+
+> Open follow-up (not blocking): true repository **query correctness** needs integration tests against a real DB. Mock-arg unit tests give limited confidence; if we want stronger guarantees on the analytics/finance query paths, raise an integration-test decision rather than over-investing in mock-arg unit tests.
 
 ---
 
@@ -30,8 +45,11 @@
 | --- | --- | --- | --- |
 | WI-T3 | ✅ done | #157 | Characterization spec for `task-report-content-value.ts` (pure-function, public-API only). +29 tests → **131 suites / 1186 tests green**. Locks blank-numeric→`0`, multiselect non-array→`null`, checkbox `'true'`-only coercion as *current* behavior for WI-34/D9/D13 to flip. No false positives — every assertion verified against source. |
 | WI-T-platform | ✅ done | #158 | Net-new `platform.repository.spec.ts` (delegate-mock, mirrors `show-platform.repository.spec.ts`). +7 tests → **132 suites / 1193 tests green**. Pins soft-delete filtering + case-insensitive search; locks the `findMany` override footgun (no `deletedAt` injection) and the `findByUids` "ignores deleted" docstring-vs-code mismatch as *current* behavior for WI-33/D10. Verified against source. |
+| WI-T2 | ✅ done | #159 | Net-new `compensation-line-item.repository.spec.ts` (delegate-mock). **Right-sized to 7 behavior/contract tests** (down from an initial 20) per the testing principles above — keeps soft-delete exclusion, tenant scoping, the targetId 4-way OR fallback, and the `findActiveAmountsByShowCreatorUids` money path (short-circuit + null-relation drop); drops per-field where-shape enumeration. → **133 suites / 1200 tests green**. `typecheck` caught a wrong enum literal (`'MANUAL'`→`'BONUS'`) the Babel run missed. |
 
-**Baseline now:** 132 suites / 1193 tests (was 131 / 1186).
+**Baseline now:** 133 suites / 1200 tests (was 132 / 1193).
+
+> Consistency note: the merged `platform.repository.spec.ts` (#158) and the WI-T-platform/WI-T-platform style use the same mock-arg approach. They are not harmful, but a small follow-up could trim them to the same behavior/contract altitude if desired.
 
 ---
 
