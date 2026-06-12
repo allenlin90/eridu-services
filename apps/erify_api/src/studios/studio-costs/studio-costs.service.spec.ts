@@ -139,6 +139,104 @@ describe('studioCostsService', () => {
     ],
   };
 
+  // Direct characterization of the pure cost-calculation method ahead of WI-21,
+  // which extracts it into a focused cost-calc module. getCostsSummary covers it
+  // only transitively; these pin the per-compensation-type branch matrix, the
+  // line-item summation, and the actuals_source derivation so the extraction can
+  // prove the contract unchanged.
+  describe('calculateShowCost (direct)', () => {
+    type ShowArg = Parameters<StudioCostsService['calculateShowCost']>[0];
+
+    function showWithCreator(
+      creatorOverrides: Record<string, unknown>,
+      showOverrides: Record<string, unknown> = {},
+    ): ShowArg {
+      return {
+        ...mockShow,
+        ...showOverrides,
+        showCreators: [{ ...mockShow.showCreators[0], ...creatorOverrides }],
+      } as unknown as ShowArg;
+    }
+
+    it('a FIXED creator resolves to a numeric total (base + creator + show line items)', () => {
+      const result = service.calculateShowCost(mockShow as unknown as ShowArg);
+
+      expect(result.base_subtotal.toFixed(2)).toBe('1000.00');
+      // creator line item 150 + show line item 50
+      expect(result.line_item_subtotal.toFixed(2)).toBe('200.00');
+      expect(result.total_cost?.toFixed(2)).toBe('1200.00');
+      expect(result.unresolved_reasons).toEqual([]);
+      expect(result.creators[0]).toMatchObject({
+        compensation_type: 'FIXED',
+        adjustment_total: '150.00', // toFixed(2), deterministic
+        unresolved_reason: null,
+      });
+      // base_amount / total_amount go through decimalToString (.toString),
+      // so assert the numeric value, not the trailing-zero formatting.
+      expect(Number(result.creators[0].base_amount)).toBe(1000);
+      expect(Number(result.creators[0].total_amount)).toBe(1150);
+    });
+
+    it('a COMMISSION creator is unresolved (commission_pending_revenue) → total_cost null', () => {
+      const result = service.calculateShowCost(
+        showWithCreator({ compensationType: 'COMMISSION', agreedRate: null }),
+      );
+
+      expect(result.total_cost).toBeNull();
+      expect(result.unresolved_reasons).toContain('creator:creator_1:commission_pending_revenue');
+      expect(result.creators[0].total_amount).toBeNull();
+    });
+
+    it('a HYBRID creator adds base to the subtotal but stays unresolved on commission → total_cost null', () => {
+      const result = service.calculateShowCost(
+        showWithCreator({ compensationType: 'HYBRID' }),
+      );
+
+      // base still accrues even though the row is unresolved
+      expect(result.base_subtotal.toFixed(2)).toBe('1000.00');
+      expect(result.total_cost).toBeNull();
+      expect(result.unresolved_reasons).toContain('creator:creator_1:commission_pending_revenue');
+    });
+
+    it('a FIXED creator with a missing agreedRate snapshot is unresolved (agreement_snapshot_missing)', () => {
+      const result = service.calculateShowCost(
+        showWithCreator({ compensationType: 'FIXED', agreedRate: null }),
+      );
+
+      expect(result.total_cost).toBeNull();
+      expect(result.unresolved_reasons).toContain('creator:creator_1:agreement_snapshot_missing');
+      expect(result.creators[0].base_amount).toBeNull();
+    });
+
+    it('null compensationType falls back to agreement_snapshot_missing', () => {
+      const result = service.calculateShowCost(
+        showWithCreator({ compensationType: null }),
+      );
+
+      expect(result.unresolved_reasons).toContain('creator:creator_1:agreement_snapshot_missing');
+      expect(result.total_cost).toBeNull();
+    });
+
+    it('derives actuals_source: MANAGER override beats the OPERATOR default', () => {
+      const result = service.calculateShowCost(
+        showWithCreator({}, {
+          metadata: { actuals_source: { actual_start_time: 'MANAGER' } },
+        }),
+      );
+
+      expect(result.actuals_source).toBe('MANAGER_OVERRIDE');
+    });
+
+    it('missing actuals fall back to PLANNED with an actuals_missing warning', () => {
+      const result = service.calculateShowCost(
+        showWithCreator({}, { actualStartTime: null, actualEndTime: null }),
+      );
+
+      expect(result.actuals_source).toBe('PLANNED');
+      expect(result.calculation_warnings).toContain('show:show_10:actuals_missing_using_planned');
+    });
+  });
+
   describe('getCostsSummary', () => {
     it('throws BadRequestException if date range exceeds 31 days', async () => {
       const badQuery = {
