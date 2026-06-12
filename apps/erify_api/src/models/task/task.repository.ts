@@ -315,7 +315,6 @@ export class TaskRepository extends BaseRepository<
       select: {
         id: true,
         metadata: true,
-        version: true,
       },
     });
 
@@ -336,40 +335,27 @@ export class TaskRepository extends BaseRepository<
       : 0;
     const nextVersion = currentVersion + 1;
 
-    try {
-      await this.delegate.update({
-        where: { id: task.id, version: task.version, deletedAt: null },
-        data: {
-          metadata: {
-            ...metadataObj,
-            material_asset_upload_versions: {
-              ...versionsByField,
-              [fieldKey]: nextVersion,
-            },
-          } as Prisma.InputJsonValue,
-        },
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === PRISMA_ERROR.RecordNotFound) {
-          const activeTask = await this.delegate.findFirst({
-            where: { id: task.id, deletedAt: null },
-            select: { version: true },
-          });
-
-          if (!activeTask) {
-            throw error; // Actually not found
-          }
-
-          throw new VersionConflictError(
-            'Task version is outdated',
-            task.version,
-            activeTask.version,
-          );
-        }
-      }
-      throw error;
-    }
+    // Reserving an upload version is pre-submission bookkeeping, not a semantic
+    // task mutation, so it must not gate on the task's optimistic-lock `version`.
+    // A `version` guard here only produced spurious VersionConflict 409s when an
+    // unrelated edit touched the task between this read and write, while giving
+    // no protection against the real race: two concurrent reserves both read the
+    // same version and — because neither bumps it — both writes pass anyway. The
+    // resulting rare same-field concurrent-presign collision is accepted; see
+    // docs/tech-debt/upload-version-reservation-race.md. The deletedAt guard is
+    // kept so counters are never written onto a soft-deleted task.
+    await this.delegate.update({
+      where: { id: task.id, deletedAt: null },
+      data: {
+        metadata: {
+          ...metadataObj,
+          material_asset_upload_versions: {
+            ...versionsByField,
+            [fieldKey]: nextVersion,
+          },
+        } as Prisma.InputJsonValue,
+      },
+    });
 
     return nextVersion;
   }
