@@ -237,6 +237,61 @@ describe('studioCostsService', () => {
     });
   });
 
+  // Sibling pure method to calculateShowCost; same WI-21 extraction target, also
+  // covered only transitively by getCostsSummary today. Pins per-block duration
+  // (actual vs planned fallback), the hourlyRate * hours base, line-item
+  // summation, and the dominant actuals_source precedence.
+  describe('calculateShiftCost (direct)', () => {
+    type ShiftArg = Parameters<StudioCostsService['calculateShiftCost']>[0];
+
+    function withBlock(blockOverrides: Record<string, unknown>): ShiftArg {
+      return {
+        ...mockShift,
+        blocks: [{ ...mockShift.blocks[0], ...blockOverrides }],
+      } as unknown as ShiftArg;
+    }
+
+    it('computes base from hourlyRate * actual hours and sums block + shift line items', () => {
+      const result = service.calculateShiftCost(mockShift as unknown as ShiftArg);
+
+      // 200/hr * 4h (10:00–14:00 actual) = 800
+      expect(result.base_subtotal.toFixed(2)).toBe('800.00');
+      // shift line item 30 + block line item 20
+      expect(result.line_item_subtotal.toFixed(2)).toBe('50.00');
+      expect(result.total_cost?.toFixed(2)).toBe('850.00');
+      expect(result.actuals_source).toBe('OPERATOR_INPUT');
+      // Shift totals never go unresolved (no agreement-snapshot dependency).
+      expect(result.unresolved_reasons).toEqual([]);
+      expect(result.blocks[0]).toMatchObject({
+        block_uid: 'block_201',
+        duration_hours: '4.00',
+        line_item_subtotal: '20.00',
+        total_cost: '820.00',
+      });
+    });
+
+    it('falls back to planned duration with an actuals_missing warning when block actuals are absent', () => {
+      const result = service.calculateShiftCost(
+        withBlock({ actualStartTime: null, actualEndTime: null }),
+      );
+
+      // Planned window is the same 4h, so base is unchanged, but the source and
+      // warning reflect the planned fallback.
+      expect(result.base_subtotal.toFixed(2)).toBe('800.00');
+      expect(result.actuals_source).toBe('PLANNED');
+      expect(result.calculation_warnings).toContain('shift_block:block_201:actuals_missing_using_planned');
+      expect(result.blocks[0].calculation_warnings).toContain('shift_block:block_201:actuals_missing_using_planned');
+    });
+
+    it('derives the dominant actuals_source: a MANAGER block lifts the shift to MANAGER_OVERRIDE', () => {
+      const result = service.calculateShiftCost(
+        withBlock({ metadata: { actuals_source: { actual_start_time: 'MANAGER' } } }),
+      );
+
+      expect(result.actuals_source).toBe('MANAGER_OVERRIDE');
+    });
+  });
+
   describe('getCostsSummary', () => {
     it('throws BadRequestException if date range exceeds 31 days', async () => {
       const badQuery = {
