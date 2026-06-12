@@ -1,8 +1,8 @@
-# Deferred: converge `metadata.actuals_source` onto a single-key jsonb merge
+# Won't-fix: `metadata.actuals_source` whole-blob write (no jsonb merge)
 
-**Status:** Deferred (the WI-24 de-dup shipped; this is the remaining half)
+**Status:** Won't-fix (decided 2026-06-12) — the race is not reachable in the real workflow
 **Area:** `erify_api` fact-extraction / show + show-creator + show-platform actuals
-**Origin:** WI-24 (erify_api hardening program) · **Decisions:** D8, D12
+**Origin:** WI-24 (erify_api hardening program) · **Decisions:** D8, D12 — resolved as won't-fix
 
 ## Context
 
@@ -11,44 +11,46 @@ The paired-actuals processors (`applyPairedShowActuals`, `applyPairedShowCreator
 `metadata.actuals_source` map. They rebuild the **entire** map in memory
 (`{ ...recordedSourceMap, ...changedKeys }`) and write it back via `updateShow` /
 `updateActuals` — a read-modify-write of the whole blob. An untouched sibling key
-survives only because of the in-memory spread, not a DB-level merge.
+survives via the in-memory spread, not a DB-level merge.
 
-This is the **C1 race**: two concurrent transactions writing *different* keys of
-`actuals_source` each read the old map, overlay their key, and write the whole
-map — last write wins, dropping the other transaction's key.
+The theoretical **C1 race**: two *concurrent* transactions writing *different* keys
+of the same target's `actuals_source` each read the old map, overlay their key, and
+write the whole map — last write wins, dropping the other key.
+`show_platforms.updatePerformanceMetric` avoids an analogous race with a single-key
+`jsonb ||` merge + priority-in-predicate.
 
-`show_platforms.updatePerformanceMetric` already uses the race-free pattern: a
-single-key `jsonb ||` merge evaluated against the row's current value (see that
-method's doc comment, Codex P1 on PR #132).
+## Why won't-fix (not deferred)
 
-## What WI-24 shipped vs deferred
+WI-24's de-dup shipped (#177). The jsonb-merge half was originally deferred, then
+**dropped** after a reachability check:
 
-- **Shipped:** de-duplicated the three `tryAtomicPaired*` routers — the creator
-  and platform per-target routers collapsed into one generic
-  `tryAtomicPairedPerTargetActuals`; the show router stays separate (single-target
-  shape). Behavior-preserving, protected by the paired routing + processor specs.
-- **Deferred (this note):** migrating the `actuals_source` whole-blob write to a
-  single-key `jsonb ||` merge in `show.service.updateShow` (and the creator /
-  platform `updateActuals` equivalents), matching `updatePerformanceMetric`.
+- **Actuals are recorded sequentially across operational phases** (pre-prod →
+  on-air → post-prod), and a single paired submission writes both start+end in one
+  `@Transactional`. There is no real flow that issues two concurrent writes to
+  *different* `actuals_source` keys on the *same* target.
+- The same-key cross-task case is already pre-filtered by the collision guard, and
+  per-target transactions serialize the rest.
+- So the whole-blob write is **correct for sequential writes**; the jsonb merge would
+  add raw-SQL complexity and a correctness-bearing rewrite to fix a race the system
+  cannot hit.
 
-## Current behavior is pinned
+`actuals_source` itself is **provenance**, not a duplicate of the actual time. It
+powers (a) the cost-summary display label in `studio-costs.service` and (b) the
+sequential **override-protection** priority in the extractors (`canResolverOverwrite`
+— a later lower-priority write can't clobber a MANAGER / post-production value). That
+priority is sequential ordering — a real, working feature, distinct from the
+concurrency race — and is unaffected by this decision.
 
-`fact-extraction.processor.spec.ts` (WI-T5, #172) characterizes the whole-blob
-write: a partial paired write rewrites the full `actuals_source` map, and the
-untouched sibling survives via the spread. When the jsonb-merge lands, that test
-flips from "full map rewritten (sibling preserved by spread)" to "only the
-changed key merged (sibling preserved at the DB level)" — the *outcome* (sibling
-survives) holds; the mechanism changes.
+## Revisit only if
 
-## Decisions to resolve when picking this up
+- Concurrent writes to the **same** target's actuals become possible (e.g. multiple
+  operator surfaces writing one show/creator/platform's actuals simultaneously), or
+- A future design removes the operational-phase sequencing.
 
-- **D8** — jsonb-merge convergence timing (now confirmed as its own PR) and shape.
-- **D12** — collision precedence: how a single-key merge interacts with the
-  cross-task `(factKey, target)` collision routing and the priority guard.
+If revisited, mirror `updatePerformanceMetric`: a single-key `jsonb_set(… || jsonb_build_object(…))`
+merge, with the source-priority guard moved into the UPDATE predicate (D8/D12).
 
-## Risk if left
+## Related
 
-Low-frequency: requires two concurrent task submissions writing *different*
-actuals keys on the *same* target within the read-write window. The collision
-pre-filter and the per-target transaction boundaries already serialize the common
-cases; the residual race is the cross-key whole-blob overwrite described above.
+- The whole-blob behavior is pinned by `fact-extraction.processor.spec.ts` (WI-T5,
+  #172) — keep that characterization; it documents the current (intended) behavior.
