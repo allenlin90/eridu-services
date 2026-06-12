@@ -3,7 +3,6 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
@@ -69,14 +68,14 @@ export abstract class BaseApiKeyGuard implements CanActivate {
     if (apiKey) {
       if (!providedApiKey) {
         this.logger.warn(`${this.serviceName} API key not provided in request`);
-        throw new UnauthorizedException(
+        throw HttpError.unauthorized(
           `${this.serviceName} API key is required`,
         );
       }
 
       if (!this.validateApiKey(providedApiKey, apiKey)) {
         this.logger.warn(`Invalid ${this.serviceName} API key provided`);
-        throw new UnauthorizedException(`Invalid ${this.serviceName} API key`);
+        throw HttpError.unauthorized(`Invalid ${this.serviceName} API key`);
       }
 
       // Attach service context to request
