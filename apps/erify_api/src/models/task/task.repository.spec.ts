@@ -224,11 +224,14 @@ describe('taskRepository', () => {
 
       expect(txTaskDelegate.findFirst).toHaveBeenCalledWith({
         where: { uid: 'task_abc', deletedAt: null },
-        select: { id: true, metadata: true, version: true },
+        select: { id: true, metadata: true },
       });
 
+      // Bookkeeping write is NOT guarded on the task's optimistic-lock version
+      // (only the soft-delete guard remains), so it can never raise a spurious
+      // VersionConflict on an unrelated concurrent edit.
       expect(txTaskDelegate.update).toHaveBeenCalledWith({
-        where: { id: BigInt(1000), version: 5, deletedAt: null },
+        where: { id: BigInt(1000), deletedAt: null },
         data: {
           metadata: {
             material_asset_upload_versions: {
@@ -249,34 +252,18 @@ describe('taskRepository', () => {
       ).rejects.toThrow('Task not found');
     });
 
-    it('throws VersionConflictError if concurrent update changed the version', async () => {
-      txTaskDelegate.findFirst
-        // Pre-read
-        .mockResolvedValueOnce({
-          id: BigInt(1000),
-          version: 5,
-          metadata: {},
-        })
-        // Post-error read to check active task version
-        .mockResolvedValueOnce({
-          id: BigInt(1000),
-          version: 6,
-        });
+    it('does not re-read or raise VersionConflict when the version differs (guard removed)', async () => {
+      txTaskDelegate.findFirst.mockResolvedValueOnce({
+        id: BigInt(1000),
+        metadata: { material_asset_upload_versions: { proof_photo: 0 } },
+      });
+      txTaskDelegate.update.mockResolvedValueOnce({ id: BigInt(1000) });
 
-      const prismaError = new Prisma.PrismaClientKnownRequestError(
-        'Record not found',
-        {
-          code: PRISMA_ERROR.RecordNotFound,
-          clientVersion: '5.0.0',
-        },
-      );
-      txTaskDelegate.update.mockRejectedValueOnce(prismaError);
+      const nextVersion = await repository.reserveMaterialAssetUploadVersion('task_abc', 'proof_photo');
 
-      await expect(
-        repository.reserveMaterialAssetUploadVersion('task_abc', 'proof_photo'),
-      ).rejects.toThrow(VersionConflictError);
-
-      expect(txTaskDelegate.findFirst).toHaveBeenCalledTimes(2);
+      // Single read only — no post-error re-read to compare versions.
+      expect(txTaskDelegate.findFirst).toHaveBeenCalledTimes(1);
+      expect(nextVersion).toBe(1);
     });
   });
 
