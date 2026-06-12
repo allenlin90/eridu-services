@@ -62,6 +62,8 @@ export class BackdoorAuthController extends BaseBackdoorController {
     } catch (error) {
       const errorMessage
         = error instanceof Error ? error.message : 'Unknown error';
+      // Full detail stays server-side; client responses are redacted below so
+      // internal URLs / upstream error text are never returned to callers.
       this.logger.error(`Failed to refresh JWKS: ${errorMessage}`, error);
 
       // Check if it's a network/connection error
@@ -72,8 +74,11 @@ export class BackdoorAuthController extends BaseBackdoorController {
           || errorMessage.includes('ECONNREFUSED')
           || errorMessage.includes('ENOTFOUND'))
       ) {
+        this.logger.error(
+          `JWKS refresh could not reach the auth service at ${this.authService.getJwksService().getJwksUrl()}`,
+        );
         throw HttpError.badRequest(
-          `Failed to connect to auth service at ${this.authService.getJwksService().getJwksUrl()}. Please ensure the auth service is running and accessible.`,
+          'Failed to connect to the auth service. Please ensure it is running and accessible.',
         );
       }
 
@@ -82,15 +87,11 @@ export class BackdoorAuthController extends BaseBackdoorController {
         error instanceof Error
         && (errorMessage.includes('status') || errorMessage.includes('HTTP'))
       ) {
-        throw HttpError.badRequest(
-          `Failed to fetch JWKS from auth service: ${errorMessage}`,
-        );
+        throw HttpError.badRequest('Failed to fetch JWKS from the auth service.');
       }
 
       // Generic error
-      throw HttpError.internalServerError(
-        `Failed to refresh JWKS: ${errorMessage}`,
-      );
+      throw HttpError.internalServerError('Failed to refresh JWKS.');
     }
   }
 }
