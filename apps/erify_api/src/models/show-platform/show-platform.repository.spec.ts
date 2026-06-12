@@ -51,7 +51,34 @@ describe('showPlatformRepository', () => {
       protectedTemplateUid: 'ttpl_post_production',
     });
 
-    const sql = executeRaw.mock.calls[0][0];
-    expect(sql.strings.join('')).toContain('UPDATE "show_platforms"');
+    const sql = executeRaw.mock.calls[0][0].strings.join('');
+    // Regression guard: the raw UPDATE is hand-written SQL with no compile-time
+    // column checking, so pin the table + identity/scope predicate literals.
+    // A typo in any of these (a Prisma model rename that desyncs the @@map, a
+    // fat-fingered column) must fail this test loudly rather than at runtime.
+    expect(sql).toContain('UPDATE "show_platforms"');
+    expect(sql).toContain('\'{performance_templates}\'');
+    expect(sql).toContain('"uid"');
+    expect(sql).toContain('"show_id"');
+    expect(sql).toContain('"deleted_at" IS NULL');
+  });
+
+  it('interpolates the metric column as a quoted identifier (per closed union)', async () => {
+    executeRaw.mockResolvedValue(1);
+
+    await repository.updatePerformanceMetric({
+      uid: 'show_plt_123',
+      showId: 10n,
+      column: 'viewer_count',
+      value: 4200,
+      factKey: 'show_platform_viewer_count',
+      templateUid: 'ttpl_loop',
+      protectedTemplateUid: 'ttpl_post_production',
+    });
+
+    // Prisma.raw splices the column name into the static SQL text, so the
+    // joined template strings must carry the quoted identifier verbatim.
+    const sql = executeRaw.mock.calls[0][0].strings.join('');
+    expect(sql).toContain('"viewer_count"');
   });
 });
