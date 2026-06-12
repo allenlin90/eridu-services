@@ -1713,4 +1713,86 @@ describe('factExtractionService', () => {
       ]);
     });
   });
+
+  describe('show platform performance routing (numeric facts)', () => {
+    function buildGmvService(gmvExtractor: IngestionExtractor): FactExtractionService {
+      return new FactExtractionService(
+        taskService,
+        auditService,
+        buildRegistry(gmvExtractor),
+        processor,
+        showCreatorService,
+        showPlatformService,
+      );
+    }
+
+    // Field ids must satisfy FIELD_ID_PART (/^fld_[a-z0-9]{10,}$/) for
+    // parseHydratedContentKey to recognize the per-target binding.
+    function buildGmvTask(templateUid?: string) {
+      return {
+        uid: 'task_alpha',
+        status: TaskStatus.COMPLETED,
+        content: { 'fld_gmvplatform:platform:show_plt_200': '1250' },
+        snapshot: { schema: { items: [{ id: 'fld_gmvplatform', system_fact_key: 'show_platform_gmv' }] } },
+        ...(templateUid ? { template: { uid: templateUid } } : {}),
+      } as never;
+    }
+
+    const ACTIVE_PLATFORM = new Map([['show_plt_200', { id: 200n, showId: 10n }]]);
+
+    const input = {
+      taskId: 99n,
+      taskUid: 'task_alpha',
+      studioId: 1n,
+      showId: 10n,
+      showUid: 'sho_10',
+      source: 'OPERATOR' as const,
+    };
+
+    it('routes a numeric platform fact to the per-target processor with the owning template uid', async () => {
+      const gmvExtractor = buildExtractor({ factKey: 'show_platform_gmv' });
+      gmvExtractor.apply.mockResolvedValue({ kind: 'write', action: 'CREATE', oldValue: null, newValue: '1250' });
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildGmvTask('ttpl_perf'));
+      showPlatformService.findActiveByUids.mockResolvedValue(ACTIVE_PLATFORM);
+
+      const result = await buildGmvService(gmvExtractor).extractFromTask(input);
+
+      expect(processor.applyAndAudit).toHaveBeenCalledTimes(1);
+      expect(processor.applyAndAudit).toHaveBeenCalledWith(
+        gmvExtractor,
+        expect.objectContaining({ factKey: 'show_platform_gmv', scope: 'platform', targetUid: 'show_plt_200' }),
+        expect.objectContaining({ templateUid: 'ttpl_perf' }),
+        [{ targetType: 'SHOW_PLATFORM', targetId: 200n }],
+      );
+      expect(result.entries).toEqual([
+        expect.objectContaining({ factKey: 'show_platform_gmv', outcome: 'written', targetUid: 'show_plt_200' }),
+      ]);
+    });
+
+    it('threads templateUid as undefined when the task has no template', async () => {
+      const gmvExtractor = buildExtractor({ factKey: 'show_platform_gmv' });
+      gmvExtractor.apply.mockResolvedValue({ kind: 'write', action: 'CREATE', oldValue: null, newValue: '1250' });
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildGmvTask());
+      showPlatformService.findActiveByUids.mockResolvedValue(ACTIVE_PLATFORM);
+
+      await buildGmvService(gmvExtractor).extractFromTask(input);
+
+      const ctxArg = processor.applyAndAudit.mock.calls[0]![2];
+      expect(ctxArg.templateUid).toBeUndefined();
+    });
+
+    it('emits skipped_stale_target without writing when the platform target is not active', async () => {
+      const gmvExtractor = buildExtractor({ factKey: 'show_platform_gmv' });
+      taskService.findByUidWithSnapshot.mockResolvedValue(buildGmvTask('ttpl_perf'));
+      showPlatformService.findActiveByUids.mockResolvedValue(new Map());
+
+      const result = await buildGmvService(gmvExtractor).extractFromTask(input);
+
+      expect(processor.applyAndAudit).not.toHaveBeenCalled();
+      expect(gmvExtractor.apply).not.toHaveBeenCalled();
+      expect(result.entries).toEqual([
+        expect.objectContaining({ factKey: 'show_platform_gmv', outcome: 'skipped_stale_target', targetUid: 'show_plt_200' }),
+      ]);
+    });
+  });
 });
