@@ -49,11 +49,16 @@ Right altitude matters more than coverage count. **A behavior-preserving refacto
 | WI-12 | ✅ done | #160 | Production: strict `task_type` typed guard in `task-generation-processor` (drops `as any`/`as TaskType`). Behavior-preserving (known→itself, unknown→`OTHER`); +1 behavior test via public `processShow`. |
 | WI-01 | ✅ done | #161 | Production (Phase 0 security): sanitize `useCase`/`actorId` path components in `storage.generateObjectKey` (case-preserving). Behavior-preserving for valid inputs; +1 traversal test (no `..`, exactly 4 segments). |
 | WI-02 | ✅ done | #162 | Production (Phase 0 security): redact internal JWKS URL + upstream error text from `backdoor-auth` error responses (status codes unchanged, detail logged at ERROR). Rewrote the leak-encoding tests → assert redaction + URL-is-logged; consolidated 7 error tests → 4. |
-| WI-T7 | ✅ done | this PR | Adds orchestrator-level coverage to `fact-extraction.service.spec.ts` for the numeric/performance-fact path: routes a `show_platform_gmv` fact through `applyAndAudit` with the SHOW_PLATFORM target, asserts `templateUid` threads into `ctx` (present + absent), and `skipped_stale_target` when the platform is inactive. +3 tests. A structurally-invalid fixture (too-short field id failing `FIELD_ID_PART`) was caught by running the test, not assumed. |
+| WI-T7 | ✅ done | #163 | Adds orchestrator-level coverage to `fact-extraction.service.spec.ts` for the numeric/performance-fact path: routes a `show_platform_gmv` fact through `applyAndAudit` with the SHOW_PLATFORM target, asserts `templateUid` threads into `ctx` (present + absent), and `skipped_stale_target` when the platform is inactive. +3 tests. A structurally-invalid fixture (too-short field id failing `FIELD_ID_PART`) was caught by running the test, not assumed. |
+| WI-04 | ✅ done | #164 | Extends the `show-platform.repository.spec.ts` regression for `updatePerformanceMetric` raw SQL: pins the table, the `metadata.performance_templates` path, the `uid`/`show_id`/`deleted_at` predicate, and the dynamic metric-column splice. Right-altitude (structural literals, not full SQL). `Prisma.raw`→`.strings` splice confirmed by running. |
+| WI-33 | ✅ done | #165 | Production (Phase 3, D10): removed the soft-delete-bypassing `PlatformRepository.findMany` override (zero callers — services use `findByUids`/`findPaginated`) and corrected the `findByUids` "ignores deleted" docstring. The WI-T-platform footgun characterization is **flipped to the expectation** (inherited `deletedAt: null` default restored). Net-zero test count. |
+| WI-31 | ✅ done | #166 | Production (Phase 3, D5): publish now bumps `version` (`publishing.service` — was leaving it unchanged, so publish→edit raised no conflict); `appendShows`/`restore` converted from `version: x+1` read-modify-write to atomic `{ increment: 1 }`. Equivalent in the happy path (in-memory optimistic check, not a versioned WHERE). Tests flipped from the `version: 2` literal to the increment contract. |
+| WI-03 | ✅ done | #167 | Production (Phase 0, **D1 resolved: accept-the-race**): removed the optimistic-`version` guard + `VersionConflictError` branch from `reserveMaterialAssetUploadVersion` — it only raised spurious 409s on unrelated edits and never blocked the real concurrent-reserve race (version never bumps). Rare same-field presign collision accepted + documented in `docs/tech-debt/upload-version-reservation-race.md`. Kept the `deletedAt` guard. |
+| WI-30 (item 2) | 🔄 in review | #168 | Phase 3 convention sweep, error-shape normalization: `base-api-key.guard` two `UnauthorizedException` throws → `HttpError.unauthorized` (converges on the file's own L99 canonical; `HttpError.unauthorized` returns an `UnauthorizedException`, so 401 + spec assertions hold). See WI-30 triage note below — most other sweep items are **not** quick wins. |
 
-**Baseline now:** 133 suites / 1202 tests.
+**Baseline now:** 133 suites / 1203 tests (at #167; #168 keeps it green).
 
-> Consistency note: the merged `platform.repository.spec.ts` (#158) and the WI-T-platform/WI-T-platform style use the same mock-arg approach. They are not harmful, but a small follow-up could trim them to the same behavior/contract altitude if desired.
+> WI-33 follow-up resolved: the platform-spec footgun pin was flipped to the inherited soft-delete-default expectation when the override was removed, so the earlier mock-arg consistency concern on that file is closed.
 
 ---
 
@@ -149,10 +154,16 @@ Right altitude matters more than coverage count. **A behavior-preserving refacto
 
 ## Phase 3 — Convention sweep + correctness fixes + tests
 
-### WI-30 · Convention sweep (batch quick wins) · T7 · M
-- **Scope:** `HttpError` in `show-platform-violation.service.ts:63` + `lib/guards/base-api-key.guard.ts`; missing `async` on admin create methods + `ensureResourceExists` in `admin-show` GET; `@ZodPaginatedResponse` on `studio-show.controller.ts` `runReview*`; standardize `@Param('id')`; centralize show-family UID prefixes (kills `show.schema.ts` circular-import risk); de-dup `api-response`/`zod-response` decorators, `BaseAdminController.ensureResourceExists`, `JwtAuthGuard.transformUser`; one shared response type for `planDocument: undefined as any` (3 sites).
-- **Test strategy:** *expectation* — the four `runReview*` endpoints return the documented paginated envelope; guard/service throw `HttpError` shape. Existing tests green for the rest (mechanical).
-- **Acceptance:** listed nits resolved; no behavior change beyond error-shape normalization. **Risk:** low. **Decision:** none.
+### WI-30 · Convention sweep · T7 · M (NOT a uniform quick-win batch — see triage)
+- **Scope:** `HttpError` in `show-platform-violation.service.ts:63` + `lib/guards/base-api-key.guard.ts`; missing `async` on admin create methods + `ensureResourceExists` in `admin-show` GET; `@ZodPaginatedResponse` on `studio-show.controller.ts` `runReview*`; standardize `@Param('id')`; centralize show-family UID prefixes (kills `show.schema.ts` circular-import risk); de-dup `api-response`/`zod-response` decorators, `BaseAdminController.ensureResourceExists`, `JwtAuthGuard.transformUser`; one shared response type for `planDocument: undefined as any`.
+- **Triage (2026-06-12, inspected against current code):**
+  - **item 2 — `base-api-key.guard` HttpError** → ✅ done (#168). The one cleanly-safe item.
+  - **item 1 — `show-platform-violation` `NotFoundException`** → ❌ **false positive.** The throw is an *intentional* control-flow signal the fact-extractor catches to collapse to `target_stale` (comment-documented). Left as-is; converting would risk the catch.
+  - **item 4 — `@ZodPaginatedResponse` on 4 `run-review/*` endpoints** → ⚠️ **not a sweep line.** That decorator applies `ZodSerializerDto`, which validates+strips the response at runtime. The 4 endpoints have no item schema today, so this needs 4 accurate response contracts + per-endpoint characterization (snapshot raw output, prove no field dropped). **Promoted to its own characterized PR.**
+  - **items 5/6/7 — `@Param('id')` std, UID-prefix centralization, decorator/helper de-dup** → 🔶 **structural**, assess individually; not mechanical.
+  - **item 8 — `planDocument: undefined as any`** → 🔹 1 site remains (audit said 3; 2 already gone). Marginal.
+- **Test strategy:** *expectation* — guard throws `HttpError` shape (done). The `runReview*` paginated-envelope work moves to its own PR with characterization. Remaining mechanical nits keep existing tests green.
+- **Acceptance:** safe items resolved; no behavior change beyond error-shape normalization. **Risk:** low (per surviving item). **Decision:** none.
 
 ### WI-31 · Standardize version increment + publish bump · T5 · S
 - **Files:** `schedule.service.ts:593` (→ `{ increment: 1 }`); `schedule-planning/publishing.service.ts` (bump `version` on publish per **D5**).
@@ -207,7 +218,7 @@ Per the operating model, **direction-level decisions are LOCKED now**; **structu
 | D5 publish version bump | **LOCKED** | WI-31 | Publish increments `version` (matches restore). |
 | D9 blank numeric semantics | **LOCKED** | WI-34 | Blank/whitespace numeric → `null`, not `0`. |
 | D10 platform findMany override | **LOCKED** | WI-33 | Delete the soft-delete-bypassing override. |
-| D1 upload counter location | DEFERRED | WI-03 | Direction only: stop bumping `version`. Side-table vs accept-race decided when WI-03 starts. |
+| D1 upload counter location | **RESOLVED** (#167) | WI-03 ✅ | **Accept-the-race.** Removed the `version` guard from the upload reserve (it only caused spurious 409s and never blocked the real race). Counter stays in `metadata`; the rare same-field concurrent-presign collision is accepted + documented in `docs/tech-debt/upload-version-reservation-race.md`. Revisit (dedicated table) only if concurrent same-field uploads or revision-retention become real requirements. |
 | D3 show-orchestration split | DEFERRED | WI-20 | Direction only: read-only review analytics leaves orchestration. Exact service boundaries decided in-ticket. |
 | D6 snapshot delete semantics | DEFERRED | WI-10 | Soft vs hard delete decided when WI-10 reaches schedule-snapshot. |
 | D8/D12 datetime merge & collision precedence | DEFERRED | WI-24 | jsonb-merge convergence timing + collision routing decided in-ticket. |
