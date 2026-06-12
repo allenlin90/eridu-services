@@ -3,6 +3,7 @@ import { Prisma, StudioShiftStatus } from '@prisma/client';
 
 import { costsShiftsQuerySchema, costsShowsQuerySchema } from '@eridu/api-types/costs';
 
+import { StudioCostsRepository } from './studio-costs.repository';
 import { StudioCostsService } from './studio-costs.service';
 
 import type { PrismaService } from '@/prisma/prisma.service';
@@ -25,7 +26,10 @@ describe('studioCostsService', () => {
         findUnique: jest.fn(),
       },
     } as any;
-    service = new StudioCostsService(prisma);
+    // Wire a real repository over the same prisma mock so the existing
+    // `prisma.*.toHaveBeenCalledWith` / `mockResolvedValue` assertions still
+    // drive and observe the queries the repository now owns (WI-21).
+    service = new StudioCostsService(new StudioCostsRepository(prisma));
 
     if (prisma.studio && prisma.studio.findUnique) {
       (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
