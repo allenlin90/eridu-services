@@ -402,6 +402,62 @@ describe('factExtractionProcessor', () => {
       expect(result.end.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
     });
 
+    it('rewrites the whole actuals_source map on a partial write, preserving the untouched sibling (C1)', async () => {
+      // C1 characterization (whole-blob read-modify-write). Stored start was
+      // already recorded by OPERATOR; the resubmission leaves start unchanged
+      // (noop) and only the end side actually writes. Today the processor
+      // rebuilds the ENTIRE actuals_source map in memory ({ ...recordedSourceMap,
+      // ...changedKeys }) and hands the full map to updateShow — so the
+      // untouched `show_actual_start_time` entry survives ONLY because of the
+      // spread, not a DB-level merge. WI-24 replaces this with a single-key
+      // `jsonb ||` merge; the OUTCOME pinned here (sibling survives) must hold,
+      // but the written payload will then carry only the changed key.
+      installEnsureValidImpl();
+      showService.getShowById.mockResolvedValue({
+        id: 10n,
+        uid: 'sho_10',
+        metadata: { actuals_source: { show_actual_start_time: 'OPERATOR' } },
+        actualStartTime: new Date('2026-05-23T12:00:00.000Z'),
+        actualEndTime: null,
+      } as never);
+
+      const result = await processor.applyPairedShowActuals(buildPairedInput());
+
+      expect(showService.updateShow).toHaveBeenCalledTimes(1);
+      const updateArg = showService.updateShow.mock.calls[0]![1];
+      // Only the end column moves; start is unchanged so it is not re-written.
+      expect(updateArg).toHaveProperty('actualEndTime', new Date('2026-05-23T13:00:00.000Z'));
+      expect(updateArg).not.toHaveProperty('actualStartTime');
+      // ...but the full actuals_source map is rewritten, carrying both the
+      // untouched sibling and the newly written key.
+      expect(updateArg.metadata).toMatchObject({
+        actuals_source: {
+          show_actual_start_time: 'OPERATOR',
+          show_actual_end_time: 'OPERATOR',
+        },
+      });
+      expect(result.start.decision).toEqual({ kind: 'noop', reason: 'value_unchanged' });
+      expect(result.end.decision).toMatchObject({ kind: 'write', action: 'CREATE' });
+    });
+
+    it('does NOT collapse a stale show to target_stale — surfaces as extractor_error (asymmetry)', async () => {
+      // Characterization of a known asymmetry: applyPairedShowCreatorActuals and
+      // applyPairedShowPlatformActuals catch NotFoundException from their
+      // transactional read and return `target_stale`, but the show-scope path
+      // has no such catch — a show soft-deleted between the service-level
+      // prefetch and this transactional read propagates, so the orchestrator
+      // classifies it as `extractor_error` rather than `skipped_stale_target`.
+      // Pinned so WI-20 / WI-24 make this convergence a conscious choice.
+      showService.getShowById.mockRejectedValue(new NotFoundException('Show not found'));
+
+      await expect(
+        processor.applyPairedShowActuals(buildPairedInput()),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(showService.updateShow).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+    });
+
     it('stays idempotent on resubmission even when the stored pair is already inverted', async () => {
       // Codex P2 review on PR #101: `ensureValidActualTimeRange` was gated
       // on `startCanWrite || endCanWrite`, so a pure resubmission of the
