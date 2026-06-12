@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 
+import { TaskAssignmentService } from './task-assignment.service';
+import { TaskDeletionService } from './task-deletion.service';
+import { TaskGenerationService } from './task-generation.service';
 import { TaskGenerationProcessor } from './task-generation-processor.service';
 import { TaskOrchestrationService } from './task-orchestration.service';
+import { TaskRetrievalService } from './task-retrieval.service';
+import { TaskSubmissionService } from './task-submission.service';
 
 import { MembershipModule } from '@/models/membership/membership.module';
 import { ShowModule } from '@/models/show/show.module';
@@ -27,7 +32,15 @@ import { UtilityModule } from '@/utility/utility.module';
     ShiftAlignmentModule,
     FactExtractionModule,
   ],
-  providers: [TaskOrchestrationService, TaskGenerationProcessor],
+  providers: [
+    TaskOrchestrationService,
+    TaskSubmissionService,
+    TaskGenerationService,
+    TaskAssignmentService,
+    TaskRetrievalService,
+    TaskDeletionService,
+    TaskGenerationProcessor,
+  ],
   exports: [TaskOrchestrationService],
 })
 export class TaskOrchestrationModule {}

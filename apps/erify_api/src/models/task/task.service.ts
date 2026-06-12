@@ -47,6 +47,10 @@ export class TaskService extends BaseModelService {
     return this.taskRepository.findOne(...args);
   }
 
+  async findMany(...args: Parameters<TaskRepository['findMany']>): ReturnType<TaskRepository['findMany']> {
+    return this.taskRepository.findMany(...args);
+  }
+
   async softDelete(...args: Parameters<TaskRepository['softDelete']>): ReturnType<TaskRepository['softDelete']> {
     return this.taskRepository.softDelete(...args);
   }
