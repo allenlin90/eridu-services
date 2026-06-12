@@ -105,88 +105,59 @@ describe('backdoorAuthController', () => {
       });
     });
 
-    it('should handle network connection errors', async () => {
-      const networkError = new Error('fetch failed: ECONNREFUSED');
-      mockJwksService.refreshJwks.mockRejectedValue(networkError);
+    function getLoggerErrorSpy() {
+      return jest
+        .spyOn((controller as unknown as { logger: { error: jest.Mock } }).logger, 'error')
+        .mockImplementation(() => undefined);
+    }
 
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        BadRequestException,
+    it('redacts the auth service URL from network-error responses but logs it server-side', async () => {
+      const logSpy = getLoggerErrorSpy();
+      mockJwksService.refreshJwks.mockRejectedValue(new Error('fetch failed: ECONNREFUSED'));
+
+      const error = await controller.refreshJwks().catch((e: unknown) => e as Error);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.message).toBe(
+        'Failed to connect to the auth service. Please ensure it is running and accessible.',
       );
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        'Failed to connect to auth service at http://localhost:3001/api/auth/jwks. Please ensure the auth service is running and accessible.',
+      expect(error.message).not.toContain('localhost');
+      // Full detail (the internal auth URL) is logged server-side, not returned to the client.
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('http://localhost:3001/api/auth/jwks'),
       );
     });
 
-    it('should handle ENOTFOUND network errors', async () => {
-      const networkError = new Error('fetch failed: ENOTFOUND');
-      mockJwksService.refreshJwks.mockRejectedValue(networkError);
+    it('redacts upstream detail from HTTP-error responses', async () => {
+      getLoggerErrorSpy();
+      mockJwksService.refreshJwks.mockRejectedValue(new Error('HTTP 500 Internal Server Error'));
 
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        'Failed to connect to auth service',
-      );
+      const error = await controller.refreshJwks().catch((e: unknown) => e as Error);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.message).toBe('Failed to fetch JWKS from the auth service.');
+      expect(error.message).not.toContain('500');
     });
 
-    it('should handle HTTP status errors', async () => {
-      const httpError = new Error('HTTP 500 Internal Server Error');
-      mockJwksService.refreshJwks.mockRejectedValue(httpError);
+    it('redacts upstream detail from generic errors and returns 500', async () => {
+      getLoggerErrorSpy();
+      mockJwksService.refreshJwks.mockRejectedValue(new Error('Invalid JWKS format: missing keys array'));
 
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        'Failed to fetch JWKS from auth service: HTTP 500 Internal Server Error',
-      );
+      const error = await controller.refreshJwks().catch((e: unknown) => e as Error);
+
+      expect(error).toBeInstanceOf(InternalServerErrorException);
+      expect(error.message).toBe('Failed to refresh JWKS.');
+      expect(error.message).not.toContain('missing keys array');
     });
 
-    it('should handle HTTP error responses', async () => {
-      const httpError = new Error('HTTP 404 Not Found');
-      mockJwksService.refreshJwks.mockRejectedValue(httpError);
+    it('returns a generic 500 for non-Error rejections', async () => {
+      getLoggerErrorSpy();
+      mockJwksService.refreshJwks.mockRejectedValue({ message: 'Something went wrong' });
 
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        'Failed to fetch JWKS from auth service: HTTP 404 Not Found',
-      );
-    });
+      const error = await controller.refreshJwks().catch((e: unknown) => e as Error);
 
-    it('should handle generic errors with 500 status', async () => {
-      const genericError = new Error('Invalid JWKS format: missing keys array');
-      mockJwksService.refreshJwks.mockRejectedValue(genericError);
-
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        InternalServerErrorException,
-      );
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        'Failed to refresh JWKS: Invalid JWKS format: missing keys array',
-      );
-    });
-
-    it('should handle unknown error types', async () => {
-      const unknownError = { message: 'Something went wrong' };
-      mockJwksService.refreshJwks.mockRejectedValue(unknownError);
-
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        InternalServerErrorException,
-      );
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        'Failed to refresh JWKS: Unknown error',
-      );
-    });
-
-    it('should handle errors without message property', async () => {
-      const errorWithoutMessage = {};
-      mockJwksService.refreshJwks.mockRejectedValue(errorWithoutMessage);
-
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        InternalServerErrorException,
-      );
-      await expect(controller.refreshJwks()).rejects.toThrow(
-        'Failed to refresh JWKS: Unknown error',
-      );
+      expect(error).toBeInstanceOf(InternalServerErrorException);
+      expect(error.message).toBe('Failed to refresh JWKS.');
     });
 
     it('should return correct response structure', async () => {
