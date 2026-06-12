@@ -450,6 +450,7 @@ export class PublishingService {
         status: 'published',
         publishedAt: new Date(),
         publishedBy: userId,
+        version: { increment: 1 },
       },
       include: {
         client: true,

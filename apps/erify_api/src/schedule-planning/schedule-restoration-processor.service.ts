@@ -37,7 +37,7 @@ export class ScheduleRestorationProcessor {
       where: { id: schedule.id },
       data: {
         planDocument: snapshot.planDocument as Prisma.InputJsonValue,
-        version: schedule.version + 1,
+        version: { increment: 1 },
         updatedAt: new Date(),
       },
       include: {
