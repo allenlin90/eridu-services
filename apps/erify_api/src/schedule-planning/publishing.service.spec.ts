@@ -587,7 +587,7 @@ describe('publishingService', () => {
           status: 'published',
           publishedAt: expect.any(Date) as Date,
           publishedBy: userId,
-
+          version: { increment: 1 },
         },
         include: {
           client: true,

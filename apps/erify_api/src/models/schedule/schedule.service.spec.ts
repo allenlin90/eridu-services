@@ -833,9 +833,9 @@ describe('scheduleService', () => {
       expect(scheduleRepository.update).toHaveBeenCalledWith(
         { uid: mockSchedule1.uid },
         expect.objectContaining({
-           
+
           planDocument: expect.any(Object),
-          version: 2,
+          version: { increment: 1 },
         }) as Prisma.ScheduleUpdateInput,
         undefined,
       );
@@ -854,7 +854,7 @@ describe('scheduleService', () => {
             },
           },
         },
-        version: 2,
+        version: { increment: 1 },
       });
     });
 

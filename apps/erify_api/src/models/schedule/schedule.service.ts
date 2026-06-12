@@ -590,7 +590,7 @@ export class ScheduleService extends BaseModelService {
       { uid: scheduleUid },
       {
         planDocument: updatedPlanDocument,
-        version: schedule.version + 1,
+        version: { increment: 1 },
       },
       include,
     );
