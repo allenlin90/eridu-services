@@ -10,6 +10,12 @@ import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
+const KNOWN_TASK_TYPES = new Set<string>(Object.values(TASK_TYPE));
+
+function isKnownTaskType(value: string): value is TaskType {
+  return KNOWN_TASK_TYPES.has(value);
+}
+
 @Injectable()
 export class TaskGenerationProcessor {
   private readonly logger = new Logger(TaskGenerationProcessor.name);
@@ -137,11 +143,7 @@ export class TaskGenerationProcessor {
 
   private resolveTemplateTaskType(schema: unknown): TaskType {
     const taskType = (schema as { metadata?: { task_type?: string } })?.metadata?.task_type;
-    if (taskType && Object.values(TASK_TYPE).includes(taskType as any)) {
-      return taskType as TaskType;
-    }
-
-    return TaskType.OTHER;
+    return taskType !== undefined && isKnownTaskType(taskType) ? taskType : TaskType.OTHER;
   }
 
   /**

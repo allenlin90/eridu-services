@@ -129,6 +129,31 @@ describe('taskGenerationProcessor', () => {
       expect(result.tasks_created).toBe(1);
     });
 
+    it('falls back to task type OTHER when the template task_type is unrecognized', async () => {
+      const startTime = new Date('2026-02-23T10:00:00.000Z');
+      const endTime = new Date('2026-02-23T12:00:00.000Z');
+      const show = { id: BigInt(10), uid: 'show_1', studioId: BigInt(1), startTime, endTime } as unknown as Show;
+      const templates = [
+        {
+          id: BigInt(1),
+          uid: 'tpl_1',
+          name: 'Mystery',
+          currentSchema: { metadata: { task_type: 'NOT_A_REAL_TYPE' } },
+          snapshots: [{ id: BigInt(100) }],
+        },
+      ] as unknown as (TaskTemplate & { snapshots: TaskTemplateSnapshot[] })[];
+
+      taskService.findByShowAndTemplate.mockResolvedValue(null);
+      taskService.generateTaskUid.mockReturnValue('task_123');
+      taskService.create.mockResolvedValue({ id: BigInt(1000), uid: 'task_123' } as any);
+
+      await processor.processShow(show, templates);
+
+      expect(taskService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: TaskType.OTHER }),
+      );
+    });
+
     it('should skip template if task already exists on latest snapshot', async () => {
       const show = {
         id: BigInt(10),
