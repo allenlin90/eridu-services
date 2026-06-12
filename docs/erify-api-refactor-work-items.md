@@ -1,0 +1,201 @@
+# erify_api Refactor — Work Items Backlog
+
+**Companion to:** `erify-api-pattern-audit-refactor-plan.md` (themes T1–T11, decisions D1–D13).
+**Date:** 2026-06-12
+**Goal:** Execute the hardening program as discrete, behavior-preserving tickets. Each item lists scope, the **test strategy that locks feature + expectation**, acceptance criteria, decision dependencies, risk, and effort.
+
+## How to use this backlog
+
+**Behavior-preserving discipline (non-negotiable):**
+- **Baseline is green** — `erify_api`: typecheck clean, **130 suites / 1157 tests pass**. Re-run `pnpm --filter erify_api test` before and after every ticket; it must stay green.
+- **Characterization-first for refactors.** Any ticket that restructures behavior-bearing code (Phase 2, T10/T11) is **blocked** until its characterization tests exist and pass against the *current* code. The test pins today's behavior so the refactor can prove it changed nothing. The test-hardening items (WI-T*) are therefore scheduled **before** their dependent refactors.
+- **Expectation vs characterization.** A *characterization* test asserts what the code does today (a safety net). An *expectation* test asserts what it *should* do (a contract). Where a correctness fix is intended (C2 blank→0, D9), add the characterization test first (locks current `0`), then flip it to the expectation (`null`) in the same PR as the fix — so the behavior change is visible in the diff.
+
+**Definition of done (every ticket):** scope-limited diff (no drive-by refactors per house rules); `pnpm --filter erify_api lint typecheck test` green; `build` when wiring/deps change; same-PR doc/skill sync per `knowledge-sync.md`; `pr-review.md` / `/pr-ready` before merge.
+
+**Sequencing:** Phase 0 → 1 → 2 → 3 (see plan). Test-hardening items slot in just ahead of the refactor they protect.
+
+**Operating model (confirmed 2026-06-12):**
+- **Direction now, details later.** Only direction-level decisions are locked up front; structural details are decided at the phase/ticket that touches them, with current code in view. Deferred decisions must NOT be pre-implemented.
+- **Converge on canonical patterns; improve only with sign-off.** Align divergent code onto `task.service.ts` / `task.repository.ts` / studio-membership schema. A better pattern may be *proposed* where the canonical one is weak, but is applied only after explicit approval — never silently introduced mid-refactor.
+- **One PR per work item.** Smallest reviewable unit; characterization test + fix paired in the same PR. Merge gate: baseline green (130/1157+) → characterization pins behavior → `/pr-ready` verdict. This is a long, pre-feature debt-paydown process; validity and not breaking existing behavior outrank speed.
+
+---
+
+## Progress log (living — retire this doc when every WI is ✅)
+
+> Update this on every PR. Baseline grows as characterization specs are added; record the new suite/test counts so regressions are visible.
+
+| Ticket | Status | PR | Notes |
+| --- | --- | --- | --- |
+| WI-T3 | ✅ done | #157 | Characterization spec for `task-report-content-value.ts` (pure-function, public-API only). +29 tests → **131 suites / 1186 tests green**. Locks blank-numeric→`0`, multiselect non-array→`null`, checkbox `'true'`-only coercion as *current* behavior for WI-34/D9/D13 to flip. No false positives — every assertion verified against source. |
+
+**Baseline now:** 131 suites / 1186 tests (was 130 / 1157).
+
+---
+
+## Phase 0 — Bugs & security (parallelizable, low-risk)
+
+### WI-01 · Sanitize all storage path components · T8 · S
+- **Files:** `lib/storage/storage.service.ts` (`generateObjectKey`, L66–71); caller `uploads/upload.service.ts:135`.
+- **Scope:** apply `sanitizeFileName` (or equivalent) to `useCase` and `actorId`, not just `fileName`.
+- **Test strategy:** *expectation* — `generateObjectKey('../../evil', actor, file)` must not produce a key with `..` segments; assert traversal sequences are stripped from every component. *characterization* — existing happy-path key shape unchanged.
+- **Acceptance:** no path-traversal sequence survives in the generated key; existing upload tests green.
+- **Risk:** low. **Decision:** none.
+
+### WI-02 · Redact internal detail from backdoor auth responses · T8 · S
+- **Files:** `backdoor/auth/backdoor-auth.controller.ts` (L75–93).
+- **Scope:** stop returning internal JWKS URLs / raw upstream error messages to clients; log full detail at ERROR.
+- **Test strategy:** *expectation* — on upstream failure the HTTP response body contains a generic message and no internal URL; a spy asserts the full detail is logged at ERROR.
+- **Acceptance:** client-facing payload carries no internal URL/upstream stack. **Risk:** low. **Decision:** none.
+
+### WI-03 · Stop optimistic-lock version bump on upload bookkeeping · T5 · S/M
+- **Files:** `models/task/task.repository.ts` `reserveMaterialAssetUploadVersion` (L309–375).
+- **Scope (D1-dependent):** remove the `version` bump for the pre-submission upload counter. Per **D1**: either move the counter to a dedicated `MaterialAssetUploadReservation` table (durable) or accept the race explicitly. At minimum, eliminate the spurious-409 path.
+- **Test strategy:** *characterization* first — pin current reserve behavior (counter increments, idempotent re-reserve). *expectation* — a reserve followed by a legitimate user mutation does **not** raise `VersionConflictError`; concurrent reserves don't 409 the user's next write.
+- **Acceptance:** no `version` bump on reserve; user's subsequent write succeeds. **Risk:** medium (touches upload flow). **Decision:** **D1 required.**
+
+### WI-04 · Raw-SQL regression test for show-platform metric update · T1-residual · S
+- **Files:** `models/show-platform/show-platform.repository.ts` (`updatePerformanceMetric`, raw SQL); add `show-platform.repository.spec.ts` assertion.
+- **Note:** this repo is **already correctly tx-wired** (verified) — this is only the missing raw-SQL guard.
+- **Test strategy:** *regression* — assert the generated SQL contains the literal `"show_platforms"` table and the expected column names, so a future typo fails loudly.
+- **Acceptance:** test fails if table/column literal changes. **Risk:** low. **Decision:** none.
+
+---
+
+## Phase 1 — Transaction & type foundations (precede decomposition)
+
+### WI-10 · Repository transaction-wiring audit & fixes · T1 · M
+- **Files:** `models/task-template/task-template.repository.ts` (inject `TransactionHost`, add `private get delegate()`, route all writes through `txHost.tx`); `models/show-standard/show-standard.repository.ts:40`; `models/schedule-snapshot/schedule-snapshot.repository.ts` (extend `BaseRepository`). **Do not touch `show-platform` — already correct.**
+- **Scope:** make every repository follow the `task.repository.ts` delegate pattern; grep-audit all repos for direct `this.prisma.*` writes.
+- **Test strategy:** *characterization* — wrap a write in a `@Transactional` test that rolls back and assert the repository write is rolled back too (proves it participates). Add for task-template specifically (today it would silently escape). *regression* — existing repo specs green.
+- **Acceptance:** no repository performs writes off the unbounded `PrismaService`; rollback test passes. **Risk:** medium. **Decision:** **D6** (snapshot soft vs hard delete) informs schedule-snapshot.
+
+### WI-11 · Zod schemas for recurring JSONB shapes · T3 · L
+- **Files:** new schemas for studio `metadata.localization` / `performance_templates`, task `snapshot.schema`, upload routing; parse at controller/DTO boundary. Consumers: `studio-costs`, `studio-performance`, `task.service.ts:222`, `task-template.service.ts`.
+- **Scope:** define typed shapes, parse at the boundary, pass typed objects inward; remove `Record<string,any>` / `as any` from business logic (keep unsafe casts only at the edge).
+- **Test strategy:** *expectation* — schema rejects malformed metadata at the boundary; *characterization* — well-formed current payloads parse unchanged (snapshot real fixtures from DB-shaped data).
+- **Acceptance:** named types replace `Record<string,any>` in the listed services; boundary parse covered. **Risk:** medium. **Decision:** none (enables T3/T4).
+
+### WI-12 · Strict `task_type` registry lookup · T3 · S
+- **Files:** `task-orchestration/task-generation-processor.service.ts:140`; related read in `task-template.service.ts`.
+- **Scope:** replace `includes(taskType as any)` with a strict typed resolver over `TASK_TYPE` (no `as any`); guard the persisted-JSON read.
+- **Test strategy:** *expectation* — unknown `task_type` string resolves to the safe default / is rejected, not silently accepted; valid types map correctly.
+- **Acceptance:** no `as any` on the enum path; coverage for unknown value. **Risk:** low. **Decision:** none.
+
+### WI-13 · Shared money utility + Decimal-at-boundary · T4 · M
+- **Files:** new shared money util (`@eridu/api-types` or `lib/utils`); consumers `models/studio-shift/studio-shift.service.ts:327`, `models/compensation-line-item/compensation-line-item.service.ts:95`, triplicated formatters in `show-orchestration`, `shift-calendar`, `studio-shift` schema.
+- **Scope (D4):** centralize Decimal parse/format; convert `Prisma.Decimal` → string at service boundaries; stop instantiating `Prisma.Decimal` in services.
+- **Test strategy:** *expectation* — util round-trips known money strings, rejects invalid; *characterization* — each migrated call site produces byte-identical output to today (snapshot current formatted values).
+- **Acceptance:** no `Prisma.Decimal` in public service signatures among listed files; one money util. **Risk:** medium (money). **Decision:** **D4 required.**
+
+---
+
+## Phase 2 — God-service decomposition (parallelizable by slice, after Phase 1)
+
+> Each Phase-2 ticket is **blocked by its characterization tests** (right column). Move methods only under green coverage.
+
+### WI-20 · Split `show-orchestration.service.ts` (1446 LOC) · T2 · XL · ⟵ needs WI-T7
+- **Target split (D3):** `ShowAssignmentOrchestrator` (creator/platform sync, show mutations, keep `@Transactional`) + `CreatorCompensationService` (compensation rows/totals) + `ShowRunReviewService` (read-only review analytics — *not* orchestration). Each <400 LOC. Fold in T6 (remove thin `getShows*WithRelations` pass-throughs) and the direct-`showRepository.update` layering fix.
+- **Test strategy:** characterization at the service public API for each of the three concern groups **before** moving code (WI-T7); after the split, the same tests pass against the new services unchanged (re-pointed imports only).
+- **Acceptance:** three services <400 LOC each; module/controller wiring updated; all prior tests green. **Risk:** high. **Decision:** **D3.**
+
+### WI-21 · Studio analytics: repositories + decomposition · T2 · XL · ⟵ needs WI-T-analytics
+- **Files:** `studios/studio-costs/studio-costs.service.ts` (939), `studios/studio-performance/studio-performance.service.ts` (928).
+- **Scope (D2):** introduce `StudioCostsRepository` / `StudioPerformanceRepository` (move all `where`/`include`/Prisma out of the services), then extract cost-calc and loop/metric helpers into focused modules/services; remove `Record<string,any>` metadata casts (uses WI-11 schemas).
+- **Test strategy:** characterization on the public analytics outputs (cost summary, performance rows) with representative fixtures, **before** extraction; repository-level tests for the new where/include builders (uses WI-T-analytics).
+- **Acceptance:** services carry no inline Prisma; each module <600 LOC; outputs identical. **Risk:** high (money/analytics). **Decision:** **D2.**
+
+### WI-22 · Split `task-orchestration.service.ts` (672 LOC) · T2 · L
+- **Scope:** split into submission / assignment / retrieval / deletion behind a coordinating facade; fix the sequential `bulkApproveTasks` loop (bulk op) and the in-memory `resolveStudioMember` find (repository filter).
+- **Test strategy:** characterization on each workflow's public method before the split; *expectation* for `bulkApproveTasks` — N tasks approved via bulk path, asserting no per-row round-trip.
+- **Acceptance:** facade preserves the public surface; sub-orchestrators ~100–150 LOC; tests green. **Risk:** high (reference-peer service). **Decision:** none.
+
+### WI-23 · Extract large repository query methods · T2 · M
+- **Files:** `models/task/task.repository.ts` (735 — extract `findTaskReviewStats`), `models/task-template/task-template.repository.ts` (560 — extract admin usage / binding queries).
+- **Test strategy:** characterization on the extracted query methods (assert generated where/include + result shape) before moving.
+- **Acceptance:** repositories <600 LOC; query services covered. **Risk:** medium. **Decision:** none.
+
+### WI-24 · fact-extraction: de-dup paired routers + converge datetime onto jsonb-merge · T2/T10 · L · ⟵ needs WI-T7, WI-T5
+- **Files:** `orchestration/fact-extraction/fact-extraction.service.ts` (collapse the three ~120-LOC `tryAtomicPaired*` routers into one generic helper — drops file <600 LOC); `fact-extraction.processor.ts` + datetime extractors + `show.service.updateShow` (migrate `actuals_source` whole-blob replace → single-key `jsonb ||` merge, matching `updatePerformanceMetric`).
+- **Scope:** per **D8**, the jsonb-merge convergence may ship later as its own PR; the de-dup is mechanical. Log the C1 race in `docs/tech-debt/` if deferring the merge.
+- **Test strategy:** **blocked on WI-T7** (orchestrator-level performance routing + templateUid) and **WI-T5** (C1 actuals_source characterization). De-dup must leave all paired/numeric outcomes byte-identical; the jsonb-merge change flips WI-T5 from "sibling key dropped" (characterized) to "sibling key preserved" (expectation) in the same PR.
+- **Acceptance:** file <600 LOC; paired-router behavior identical; merge change (if included) makes the C1 test assert preservation. **Risk:** high (correctness-bearing). **Decision:** **D8, D12.**
+
+---
+
+## Phase 3 — Convention sweep + correctness fixes + tests
+
+### WI-30 · Convention sweep (batch quick wins) · T7 · M
+- **Scope:** `HttpError` in `show-platform-violation.service.ts:63` + `lib/guards/base-api-key.guard.ts`; missing `async` on admin create methods + `ensureResourceExists` in `admin-show` GET; `@ZodPaginatedResponse` on `studio-show.controller.ts` `runReview*`; standardize `@Param('id')`; centralize show-family UID prefixes (kills `show.schema.ts` circular-import risk); de-dup `api-response`/`zod-response` decorators, `BaseAdminController.ensureResourceExists`, `JwtAuthGuard.transformUser`; one shared response type for `planDocument: undefined as any` (3 sites).
+- **Test strategy:** *expectation* — the four `runReview*` endpoints return the documented paginated envelope; guard/service throw `HttpError` shape. Existing tests green for the rest (mechanical).
+- **Acceptance:** listed nits resolved; no behavior change beyond error-shape normalization. **Risk:** low. **Decision:** none.
+
+### WI-31 · Standardize version increment + publish bump · T5 · S
+- **Files:** `schedule.service.ts:593` (→ `{ increment: 1 }`); `schedule-planning/publishing.service.ts` (bump `version` on publish per **D5**).
+- **Test strategy:** *expectation* — publish increments `version`; *regression* — restore still bumps; all version bumps use `{ increment: 1 }`.
+- **Acceptance:** consistent increment pattern; publish-bump test passes. **Risk:** low. **Decision:** **D5.**
+
+### WI-32 · Strengthen test-helper typing + migrate outlier specs · T9 · M
+- **Files:** `testing/model-service-test.helper.ts` (tighten generics, add typed mock factories); migrate `studio-performance`/`studio-costs`/`schedule-planning/validation` specs onto the helper as their services are refactored (rides WI-21).
+- **Acceptance:** reduced `as any` in mocks; outlier specs use the standard helper. **Risk:** low. **Decision:** none.
+
+### WI-33 · Remove soft-delete-bypassing `platform.findMany` override · C3/D10 · S
+- **Files:** `models/platform/platform.repository.ts` (delete the custom `findMany`; base method already filters); fix the `findByUids` docstring (**D11/finance D**) to match its `deletedAt: null` code.
+- **Test strategy:** **blocked on WI-T-platform** — characterize current override behavior (returns deleted) first, then assert removal restores the soft-delete invariant.
+- **Acceptance:** no soft-delete-bypassing path; docstring matches code. **Risk:** low (unexposed). **Decision:** **D10.**
+
+### WI-34 · Fix report blank-numeric semantics + normalization contract · T11/C2/D9 · M · ⟵ needs WI-T3
+- **Files:** `models/task-report/task-report-content-value.ts` (`normalizeFieldValue`).
+- **Scope (D9):** blank/whitespace numeric → `null` (guard `value.trim()===''` before `Number()`); review multiselect non-array and checkbox string-coercion per D13.
+- **Test strategy:** **blocked on WI-T3** (characterization of all branches). In this PR, flip the blank-numeric case from characterization (`0`) to expectation (`null`); add the run-service e2e asserting a blank `gmv` renders as not-reported.
+- **Acceptance:** blank numeric → null end-to-end; normalization branches pinned. **Risk:** medium (changes report values — coordinate with consumers). **Decision:** **D9, D13.**
+
+---
+
+## Test-hardening items (close the coverage gap; schedule ahead of dependent refactors)
+
+> These are the deliverable for "improve the tests to ensure feature and expectation." Several create **net-new spec files** for currently-untested high-logic code.
+
+| ID                    | New file? | Target                                      | Tests to add                                                                                                                                                                                                                                                                                                                                                                                                     | Priority | Unblocks                     |
+| --------------------- | --------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------- |
+| **WI-T7**             | no        | `fact-extraction.service.spec.ts`           | Orchestrator-level numeric/performance routing through `extractFromTask` (stale-target → no audit; sibling `(factKey,target)` collision → `skipped_collision`); assert `task.template?.uid` threads into `ctx.templateUid` (+ no-template → `undefined`); cross-fact ordering (attendance_missing=false + late actual_start → late reason survives); paired-key `factKey`-vs-`contentKey` no cross-contamination | high     | WI-20*, WI-24                |
+| **WI-T5**             | no        | `fact-extraction.processor`/extractor spec  | C1 characterization: seed `actuals_source={start:'OPERATOR'}`, write `end`, assert start entry survives (locks whole-blob behavior; flips to "preserved" when WI-24 merge lands); show-scope soft-delete paired path → documents `extractor_error` asymmetry                                                                                                                                                     | medium   | WI-24                        |
+| **WI-T2**             | **yes**   | `compensation-line-item.repository.spec.ts` | `buildWhere`/`buildTargetFilter`: includeDeleted on/off, studio UID scoping, from/to range, targetType+targetId pairing, targetId-without-targetType 4-way OR; `sum/findActiveAmountsByShowCreatorUids` Decimal aggregation + empty-input short-circuit (money path)                                                                                                                                             | high     | WI-13, future comp refactors |
+| **WI-T3**             | **yes**   | `task-report-content-value.spec.ts`         | `normalizeFieldValue` every branch: `('','number')`→ current 0 then expectation null; `('abc','number')`→null; `('5','number')`→5; multiselect non-array→null and `['a',1]`→`['a','1']`; checkbox `1`/`'yes'`/`'true'`/`true`; `formatInputExtra` ordering                                                                                                                                                       | high     | WI-34                        |
+| **WI-T-platform**     | **yes**   | `platform.repository.spec.ts`               | `findPaginated` deletedAt:null unless includeDeleted; name/uid `contains`+insensitive; `findByUids` deletedAt filter (exposes docstring mismatch); custom `findMany` returns deleted (characterize footgun)                                                                                                                                                                                                      | high     | WI-33                        |
+| **WI-T-analytics**    | partial   | `studio-costs`/`studio-performance` specs   | Characterize cost-summary + performance-row outputs on representative fixtures before extraction; new repository where/include builder tests                                                                                                                                                                                                                                                                     | high     | WI-21                        |
+| **WI-T-comp-extra**   | no        | comp service/schema/resolver specs          | `compensationLineItemDto` null-target throw paths; `line-item-target.resolver` exhaustive-default + null nested show/shift rejections; `findByUidForStudio` cross-studio + soft-deleted → null (404)                                                                                                                                                                                                             | medium   | WI-13                        |
+| **WI-T-report-extra** | no        | `task-report-run`/`scope` specs             | blank-numeric e2e (null); DUPLICATE_SOURCE across snapshot versions (disjoint keys merge); preflight/load TOCTOU characterization; `getSources` inactive shared-field visibility (D13); scope repo dual show-filter                                                                                                                                                                                              | medium   | WI-34                        |
+| **WI-T-audit**        | no        | `legacy-snapshot-merger.spec.ts`            | tie-order (equal timestamp → legacy-first) locks sort stability; out-of-enum `action` pass-through characterization                                                                                                                                                                                                                                                                                              | low      | —                            |
+
+\* WI-20 needs characterization on each of its three concern groups; WI-T7 covers the fact-pipeline portion — extend the pattern to compensation/review groups within WI-20's own prep.
+
+---
+
+## Decision status (confirmed 2026-06-12)
+
+Per the operating model, **direction-level decisions are LOCKED now**; **structural details are DEFERRED** and re-surfaced at the ticket with current code in view. Locked direction does not pre-commit implementation shape — that's decided in-ticket, where an improved pattern may be proposed with sign-off.
+
+| Decision | Status | Blocks | Direction (locked) / detail (deferred) |
+| --- | --- | --- | --- |
+| D2 analytics repositories | **LOCKED** | WI-21 | Analytics services get a repository layer (no inline Prisma in service). Repo shape decided in-ticket. |
+| D4 money representation | **LOCKED** | WI-13 | Shared money util; `Decimal`→string at boundary; no `Prisma.Decimal` in service signatures. Domain `Money` adopted incrementally. |
+| D5 publish version bump | **LOCKED** | WI-31 | Publish increments `version` (matches restore). |
+| D9 blank numeric semantics | **LOCKED** | WI-34 | Blank/whitespace numeric → `null`, not `0`. |
+| D10 platform findMany override | **LOCKED** | WI-33 | Delete the soft-delete-bypassing override. |
+| D1 upload counter location | DEFERRED | WI-03 | Direction only: stop bumping `version`. Side-table vs accept-race decided when WI-03 starts. |
+| D3 show-orchestration split | DEFERRED | WI-20 | Direction only: read-only review analytics leaves orchestration. Exact service boundaries decided in-ticket. |
+| D6 snapshot delete semantics | DEFERRED | WI-10 | Soft vs hard delete decided when WI-10 reaches schedule-snapshot. |
+| D8/D12 datetime merge & collision precedence | DEFERRED | WI-24 | jsonb-merge convergence timing + collision routing decided in-ticket. |
+| D11 UID-field naming | DEFERRED | WI-13/33 | Rename scope decided in-ticket after confirming no repo-wide `...Id`-for-UID convention. |
+| D13 report normalization details | DEFERRED | WI-34 | multiselect/checkbox coercion + `target_type`-required decided in-ticket. |
+
+---
+
+## Suggested first sprint (lowest risk, highest signal)
+1. **Phase 0:** WI-01, WI-02, WI-04 (no decision deps, all small).
+2. **Net-new safety nets:** WI-T2, WI-T3, WI-T-platform, WI-T7 — they create coverage for the currently-untested high-logic files and unblock the rest. Pure additions, zero production risk.
+3. **WI-12** (strict `task_type`) — small, self-contained type-safety win.
+
+This establishes the expanded safety net and clears the cheapest wins before any decision-gated or structural work begins.
