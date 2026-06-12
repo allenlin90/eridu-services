@@ -26,8 +26,6 @@ import { parseViolationValue } from './extractors/violation-value';
 import {
   FactExtractionProcessor,
   type PairedShowActualsResult,
-  type PairedShowCreatorActualsResult,
-  type PairedShowPlatformActualsResult,
 } from './fact-extraction.processor';
 
 import { AuditService } from '@/models/audit/audit.service';
@@ -221,12 +219,27 @@ export class FactExtractionService {
       entries,
     });
 
-    const handledPairedCreatorContentKeys = await this.tryAtomicPairedCreatorActuals({
+    const handledPairedCreatorContentKeys = await this.tryAtomicPairedPerTargetActuals({
       facts,
       collidingFacts,
-      creatorTargetById,
       ctx,
       entries,
+      targetById: creatorTargetById,
+      scope: 'creator',
+      startFactKey: 'creator_actual_start_time',
+      endFactKey: 'creator_actual_end_time',
+      targetType: 'SHOW_CREATOR',
+      label: 'creator-actuals',
+      apply: ({ targetUid, startFact, endFact, startIncoming, endIncoming, targetIds }) =>
+        this.factExtractionProcessor.applyPairedShowCreatorActuals({
+          showCreatorUid: targetUid,
+          startFact,
+          endFact,
+          startIncoming,
+          endIncoming,
+          ctx,
+          targetIds,
+        }),
     });
 
     // Same atomicity guarantee, applied per-platform: if a single submission
@@ -236,12 +249,27 @@ export class FactExtractionService {
     // together. Each platform target gets its own transaction so a
     // validation failure on platform A doesn't roll back platform B's
     // already-written pair.
-    const handledPairedPlatformContentKeys = await this.tryAtomicPairedShowPlatformActuals({
+    const handledPairedPlatformContentKeys = await this.tryAtomicPairedPerTargetActuals({
       facts,
       collidingFacts,
-      platformTargetById,
       ctx,
       entries,
+      targetById: platformTargetById,
+      scope: 'platform',
+      startFactKey: 'show_platform_actual_start_time',
+      endFactKey: 'show_platform_actual_end_time',
+      targetType: 'SHOW_PLATFORM',
+      label: 'show-platform-actuals',
+      apply: ({ targetUid, startFact, endFact, startIncoming, endIncoming, targetIds }) =>
+        this.factExtractionProcessor.applyPairedShowPlatformActuals({
+          showPlatformUid: targetUid,
+          startFact,
+          endFact,
+          startIncoming,
+          endIncoming,
+          ctx,
+          targetIds,
+        }),
     });
 
     for (const fact of facts) {
@@ -637,153 +665,53 @@ export class FactExtractionService {
     return [];
   }
 
-  private async tryAtomicPairedCreatorActuals(input: {
-    facts: ExtractedFact[];
-    collidingFacts: CollisionTracker;
-    creatorTargetById: Map<string, { id: bigint; showId: bigint }>;
-    ctx: ExtractionContext;
-    entries: ExtractionResultEntry[];
-  }): Promise<Set<string>> {
-    const consumed = new Set<string>();
-    if (
-      !this.extractorRegistry.has('creator_actual_start_time')
-      || !this.extractorRegistry.has('creator_actual_end_time')
-    ) {
-      return consumed;
-    }
-
-    const startByTarget = new Map<string, ExtractedFact>();
-    const endByTarget = new Map<string, ExtractedFact>();
-    for (const fact of input.facts) {
-      if (fact.scope !== 'creator') {
-        continue;
-      }
-      if (fact.factKey === 'creator_actual_start_time') {
-        startByTarget.set(fact.targetUid, fact);
-      } else if (fact.factKey === 'creator_actual_end_time') {
-        endByTarget.set(fact.targetUid, fact);
-      }
-    }
-
-    for (const [targetUid, startFact] of startByTarget) {
-      const endFact = endByTarget.get(targetUid);
-      if (!endFact) {
-        continue;
-      }
-      if (isFactValueAbsent(startFact.rawValue) || isFactValueAbsent(endFact.rawValue)) {
-        continue;
-      }
-      const resolved = input.creatorTargetById.get(targetUid);
-      if (!resolved) {
-        continue;
-      }
-      if (
-        input.collidingFacts.perTarget.has(
-          perTargetCollisionKey('creator_actual_start_time', targetUid),
-        )
-        || input.collidingFacts.perTarget.has(
-          perTargetCollisionKey('creator_actual_end_time', targetUid),
-        )
-      ) {
-        continue;
-      }
-      const startIncoming = parseDateTimeValue(startFact.rawValue);
-      const endIncoming = parseDateTimeValue(endFact.rawValue);
-      if (!startIncoming || !endIncoming) {
-        continue;
-      }
-
-      const targetIds = [{ targetType: 'SHOW_CREATOR' as AuditTargetType, targetId: resolved.id }];
-
-      let result: PairedShowCreatorActualsResult;
-      try {
-        result = await this.factExtractionProcessor.applyPairedShowCreatorActuals({
-          showCreatorUid: targetUid,
-          startFact,
-          endFact,
-          startIncoming,
-          endIncoming,
-          ctx: input.ctx,
-          targetIds,
-        });
-      } catch (err) {
-        this.logger.error(
-          `Paired creator-actuals processor threw on task ${input.ctx.taskUid} target ${targetUid}: ${(err as Error).message}`,
-        );
-        for (const fact of [startFact, endFact]) {
-          input.entries.push({
-            factKey: fact.factKey,
-            sourceFieldId: fact.sourceFieldId,
-            contentKey: fact.contentKey,
-            targetUid: fact.targetUid,
-            outcome: 'noop',
-            reason: 'extractor_error',
-          });
-          consumed.add(fact.contentKey);
-        }
-        continue;
-      }
-
-      input.entries.push({
-        factKey: startFact.factKey,
-        sourceFieldId: startFact.sourceFieldId,
-        contentKey: startFact.contentKey,
-        targetUid: startFact.targetUid,
-        outcome: outcomeFromDecision(result.start.decision),
-        auditUid: result.start.auditUid,
-        reason: result.start.decision.kind === 'noop' ? result.start.decision.reason : undefined,
-      });
-      input.entries.push({
-        factKey: endFact.factKey,
-        sourceFieldId: endFact.sourceFieldId,
-        contentKey: endFact.contentKey,
-        targetUid: endFact.targetUid,
-        outcome: outcomeFromDecision(result.end.decision),
-        auditUid: result.end.auditUid,
-        reason: result.end.decision.kind === 'noop' ? result.end.decision.reason : undefined,
-      });
-      consumed.add(startFact.contentKey);
-      consumed.add(endFact.contentKey);
-    }
-    return consumed;
-  }
-
   /**
-   * Per-target paired ShowPlatform actuals routing. Iterates unique
-   * `targetUid`s among the platform facts, and for each target that carries
-   * both `show_platform_actual_start_time` and `show_platform_actual_end_time`
-   * (non-absent, parseable, registered, non-colliding, non-stale), routes the
-   * pair through `applyPairedShowPlatformActuals` in its own transaction.
-   * Returns the set of content keys it consumed so the per-fact loop can
-   * skip them.
+   * Generic per-target paired-actuals router shared by the creator and platform
+   * scopes. (The show scope is single-target and routed by
+   * `tryAtomicPairedShowActuals`.) For each unique target carrying both the
+   * start and end fact — non-absent, parseable, registered, non-colliding, and
+   * with a live target — routes the pair through the scope's processor method in
+   * its own transaction, so a failure on one target cannot roll back another's
+   * already-written pair. Returns the content keys consumed so the per-fact loop
+   * skips them.
    */
-  private async tryAtomicPairedShowPlatformActuals(input: {
+  private async tryAtomicPairedPerTargetActuals(input: {
     facts: ExtractedFact[];
     collidingFacts: CollisionTracker;
-    platformTargetById: Map<string, { id: bigint; showId: bigint }>;
+    targetById: Map<string, { id: bigint; showId: bigint }>;
     ctx: ExtractionContext;
     entries: ExtractionResultEntry[];
+    scope: 'creator' | 'platform';
+    startFactKey: SystemFactKey;
+    endFactKey: SystemFactKey;
+    targetType: AuditTargetType;
+    label: string;
+    apply: (args: {
+      targetUid: string;
+      startFact: ExtractedFact;
+      endFact: ExtractedFact;
+      startIncoming: Date;
+      endIncoming: Date;
+      targetIds: { targetType: AuditTargetType; targetId: bigint }[];
+    }) => Promise<PairedShowActualsResult>;
   }): Promise<Set<string>> {
     const consumed = new Set<string>();
     if (
-      !this.extractorRegistry.has('show_platform_actual_start_time')
-      || !this.extractorRegistry.has('show_platform_actual_end_time')
+      !this.extractorRegistry.has(input.startFactKey)
+      || !this.extractorRegistry.has(input.endFactKey)
     ) {
       return consumed;
     }
 
-    // Group platform facts by target so each ShowPlatform pair commits or
-    // rolls back independently. A pair on platform A failing validation must
-    // not roll back platform B's already-written pair.
     const startByTarget = new Map<string, ExtractedFact>();
     const endByTarget = new Map<string, ExtractedFact>();
     for (const fact of input.facts) {
-      if (fact.scope !== 'platform') {
+      if (fact.scope !== input.scope) {
         continue;
       }
-      if (fact.factKey === 'show_platform_actual_start_time') {
+      if (fact.factKey === input.startFactKey) {
         startByTarget.set(fact.targetUid, fact);
-      } else if (fact.factKey === 'show_platform_actual_end_time') {
+      } else if (fact.factKey === input.endFactKey) {
         endByTarget.set(fact.targetUid, fact);
       }
     }
@@ -796,22 +724,16 @@ export class FactExtractionService {
       if (isFactValueAbsent(startFact.rawValue) || isFactValueAbsent(endFact.rawValue)) {
         continue;
       }
-      const resolved = input.platformTargetById.get(targetUid);
+      const resolved = input.targetById.get(targetUid);
       if (!resolved) {
-        // Stale targets fall through to the per-fact loop's stale-target
-        // pre-filter, which emits `skipped_stale_target` on each side.
         continue;
       }
-      // Per-target collision: only block the paired write when a sibling
-      // task has actual content for the same `(factKey, targetUid)` pair.
-      // Falls through to the per-fact loop so each side emits its own
-      // `skipped_collision` audit anchored on the SHOW_PLATFORM target.
       if (
         input.collidingFacts.perTarget.has(
-          perTargetCollisionKey('show_platform_actual_start_time', targetUid),
+          perTargetCollisionKey(input.startFactKey, targetUid),
         )
         || input.collidingFacts.perTarget.has(
-          perTargetCollisionKey('show_platform_actual_end_time', targetUid),
+          perTargetCollisionKey(input.endFactKey, targetUid),
         )
       ) {
         continue;
@@ -822,22 +744,14 @@ export class FactExtractionService {
         continue;
       }
 
-      const targetIds = [{ targetType: 'SHOW_PLATFORM' as AuditTargetType, targetId: resolved.id }];
+      const targetIds = [{ targetType: input.targetType, targetId: resolved.id }];
 
-      let result: PairedShowPlatformActualsResult;
+      let result: PairedShowActualsResult;
       try {
-        result = await this.factExtractionProcessor.applyPairedShowPlatformActuals({
-          showPlatformUid: targetUid,
-          startFact,
-          endFact,
-          startIncoming,
-          endIncoming,
-          ctx: input.ctx,
-          targetIds,
-        });
+        result = await input.apply({ targetUid, startFact, endFact, startIncoming, endIncoming, targetIds });
       } catch (err) {
         this.logger.error(
-          `Paired show-platform-actuals processor threw on task ${input.ctx.taskUid} target ${targetUid}: ${(err as Error).message}`,
+          `Paired ${input.label} processor threw on task ${input.ctx.taskUid} target ${targetUid}: ${(err as Error).message}`,
         );
         for (const fact of [startFact, endFact]) {
           input.entries.push({
