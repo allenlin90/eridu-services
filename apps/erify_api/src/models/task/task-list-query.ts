@@ -439,3 +439,58 @@ function applyReviewTabFilter(
     where.status = { in: ['COMPLETED', 'CLOSED'] };
   }
 }
+
+/**
+ * The review-stats tab keys (as returned to the API) mapped to the tab string
+ * understood by `applyReviewTabFilter`. `total` has no per-tab filter (the base
+ * scope only). Reusing `applyReviewTabFilter` keeps the stats counts and the
+ * list-view tab filtering on one definition.
+ */
+const REVIEW_STATS_TABS = {
+  total: '',
+  ready: 'ready',
+  attention: 'attention',
+  done: 'done',
+  preProdAttentionCount: 'pre-prod-attention',
+  preProdReadyCount: 'pre-prod-ready',
+  preProdDoneCount: 'pre-prod-done',
+  onAirAttentionCount: 'on-air-attention',
+  onAirReadyCount: 'on-air-ready',
+  onAirDoneCount: 'on-air-done',
+  postProdAttentionCount: 'post-prod-attention',
+  postProdReadyCount: 'post-prod-ready',
+  postProdDoneCount: 'post-prod-done',
+} as const;
+
+export type ReviewStatsTab = keyof typeof REVIEW_STATS_TABS;
+
+/**
+ * Builds the per-tab `where` criteria for the review-stats counts. Scopes by
+ * "dated-in-range OR undated-with-show-in-range" (so review tasks without a due
+ * date are still counted), then derives each tab's filter via the shared
+ * `applyReviewTabFilter`. Pure: returns one `TaskWhereInput` per tab for the
+ * repository to count. `applyReviewTabFilter` only reassigns top-level keys, so
+ * a shallow clone of the base scope per tab is sufficient isolation.
+ */
+export function buildReviewStatsTabCriteria(
+  query: ListMyTasksQueryTransformed,
+): Record<ReviewStatsTab, Prisma.TaskWhereInput> {
+  const { due_date_from, due_date_to, ...rest } = query;
+  const baseWhere = buildTaskListWhere(rest as ListMyTasksQueryTransformed);
+  const dateScope = buildReviewStatsDateScope(due_date_from, due_date_to);
+  if (dateScope) {
+    appendAndFilter(baseWhere, dateScope);
+  }
+
+  const keys = Object.keys(REVIEW_STATS_TABS) as ReviewStatsTab[];
+  return Object.fromEntries(
+    keys.map((key) => {
+      const where: Prisma.TaskWhereInput = { ...baseWhere };
+      const tab = REVIEW_STATS_TABS[key];
+      if (tab) {
+        applyReviewTabFilter(where, tab);
+      }
+      return [key, where];
+    }),
+  ) as Record<ReviewStatsTab, Prisma.TaskWhereInput>;
+}
