@@ -66,8 +66,10 @@ export class StorageService {
   generateObjectKey(useCase: string, actorId: string, fileName: string): string {
     const date = new Date().toISOString().slice(0, 10);
     const randomPart = randomUUID().replace(/-/g, '');
+    const safeUseCase = this.sanitizePathComponent(useCase.toLowerCase());
+    const safeActorId = this.sanitizePathComponent(actorId);
     const safeName = this.sanitizeFileName(fileName);
-    return `${useCase.toLowerCase()}/${actorId}/${date}/${randomPart}-${safeName}`;
+    return `${safeUseCase}/${safeActorId}/${date}/${randomPart}-${safeName}`;
   }
 
   private getRequiredConfig(key: keyof Env): string {
@@ -112,6 +114,22 @@ export class StorageService {
       .replace(/^-|-$/g, '');
 
     return cleaned || 'file';
+  }
+
+  /**
+   * Sanitizes a path component (use case, actor id) so it cannot inject extra
+   * path segments or traverse the key namespace. Case is preserved so UID
+   * actor ids are not corrupted.
+   */
+  private sanitizePathComponent(value: string): string {
+    const cleaned = value
+      .trim()
+      .replace(/\.{2,}/g, '-')
+      .replace(/[^\w.-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return cleaned || 'unknown';
   }
 
   private trimEndSlashes(value: string): string {

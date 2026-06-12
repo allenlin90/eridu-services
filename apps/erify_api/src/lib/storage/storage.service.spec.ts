@@ -38,6 +38,15 @@ describe('storageService', () => {
     jest.useRealTimers();
   });
 
+  it('neutralizes path traversal in the use case and actor id', () => {
+    const key = service.generateObjectKey('../../evil', '../secret', 'file.png');
+
+    // No traversal sequences survive, and no extra path segments are injected:
+    // the key always has exactly useCase / actorId / date / random-name.
+    expect(key).not.toContain('..');
+    expect(key.split('/')).toHaveLength(4);
+  });
+
   it('should generate presigned upload URL', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-03-03T10:00:00.000Z'));
     (getSignedUrl as jest.Mock).mockResolvedValue(
