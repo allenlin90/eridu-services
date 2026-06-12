@@ -29,8 +29,9 @@
 | Ticket | Status | PR | Notes |
 | --- | --- | --- | --- |
 | WI-T3 | ✅ done | #157 | Characterization spec for `task-report-content-value.ts` (pure-function, public-API only). +29 tests → **131 suites / 1186 tests green**. Locks blank-numeric→`0`, multiselect non-array→`null`, checkbox `'true'`-only coercion as *current* behavior for WI-34/D9/D13 to flip. No false positives — every assertion verified against source. |
+| WI-T-platform | ✅ done | #158 | Net-new `platform.repository.spec.ts` (delegate-mock, mirrors `show-platform.repository.spec.ts`). +7 tests → **132 suites / 1193 tests green**. Pins soft-delete filtering + case-insensitive search; locks the `findMany` override footgun (no `deletedAt` injection) and the `findByUids` "ignores deleted" docstring-vs-code mismatch as *current* behavior for WI-33/D10. Verified against source. |
 
-**Baseline now:** 131 suites / 1186 tests (was 130 / 1157).
+**Baseline now:** 132 suites / 1193 tests (was 131 / 1186).
 
 ---
 
