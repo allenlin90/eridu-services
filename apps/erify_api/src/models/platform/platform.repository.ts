@@ -67,18 +67,9 @@ export class PlatformRepository extends BaseRepository<
     return { data, total };
   }
 
-  async findMany(params: {
-    where?: Prisma.PlatformWhereInput;
-    skip?: number;
-    take?: number;
-    orderBy?: any;
-    include?: Record<string, any>;
-  }): Promise<Platform[]> {
-    return this.delegate.findMany(params);
-  }
-
   /**
-   * Find Platforms by their UIDs (domain-level, ignores deleted).
+   * Find Platforms by their UIDs (domain-level). Excludes soft-deleted rows
+   * via the explicit `deletedAt: null` filter below.
    */
   async findByUids(uids: string[]): Promise<Platform[]> {
     return this.delegate.findMany({

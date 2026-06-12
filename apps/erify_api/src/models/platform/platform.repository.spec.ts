@@ -6,13 +6,12 @@ import { PlatformRepository } from './platform.repository';
 import type { PrismaService } from '@/prisma/prisma.service';
 
 /**
- * Characterization spec for PlatformRepository (WI-T-platform).
+ * Behavior spec for PlatformRepository.
  *
- * Pins the current query-building behavior — soft-delete filtering,
- * case-insensitive search, and the findMany override that bypasses the
- * BaseRepository soft-delete default — before WI-33 / D10 act on it. The
- * findMany footgun and the findByUids docstring mismatch are tagged inline as
- * known smells, not endorsed behavior.
+ * Pins the query-building contracts: soft-delete filtering and case-insensitive
+ * search on findPaginated, the explicit deletedAt filter on findByUids, and the
+ * inherited BaseRepository.findMany soft-delete default (WI-33 removed the
+ * bespoke override that bypassed it).
  */
 
 function createPlatformDelegateMock() {
@@ -95,9 +94,7 @@ describe('platformRepository', () => {
   });
 
   describe('findByUids', () => {
-    // The docstring says "ignores deleted", but the code filters deletedAt: null
-    // and so EXCLUDES soft-deleted rows. WI-33 corrects the docstring to match.
-    it('filters by uid list and excludes soft-deleted rows (despite the "ignores deleted" docstring)', async () => {
+    it('filters by uid list and excludes soft-deleted rows (deletedAt: null)', async () => {
       txDelegate.findMany.mockResolvedValue([]);
 
       await repository.findByUids(['plt_1', 'plt_2']);
@@ -108,27 +105,29 @@ describe('platformRepository', () => {
     });
   });
 
-  describe('findMany (override)', () => {
-    // CURRENT BEHAVIOR — known smell (C3 / WI-33 / D10): this override forwards
-    // params verbatim and does NOT inject the deletedAt: null default that
-    // BaseRepository.findMany applies, so soft-deleted rows leak unless the
-    // caller filters. No caller routes through it today; WI-33 removes it.
-    it('forwards an explicit where verbatim without injecting a soft-delete filter', async () => {
-      txDelegate.findMany.mockResolvedValue([]);
+  describe('findMany (inherited BaseRepository default)', () => {
+    // WI-33 removed the bespoke override that forwarded params verbatim and
+    // leaked soft-deleted rows. findMany now comes from BaseRepository, which
+    // injects deletedAt: null unless includeDeleted is set — restoring the
+    // soft-delete invariant. (Base wraps the PrismaService delegate.)
+    it('injects deletedAt: null alongside the caller where by default', async () => {
+      prismaDelegate.findMany.mockResolvedValue([]);
 
       await repository.findMany({ where: { name: { contains: 'x' } } });
 
-      expect(txDelegate.findMany).toHaveBeenCalledWith({ where: { name: { contains: 'x' } } });
+      expect(prismaDelegate.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { name: { contains: 'x' }, deletedAt: null } }),
+      );
     });
 
-    it('passes no soft-delete filter when called without a where (the footgun)', async () => {
-      txDelegate.findMany.mockResolvedValue([]);
+    it('suppresses the soft-delete filter when includeDeleted is true', async () => {
+      prismaDelegate.findMany.mockResolvedValue([]);
 
-      await repository.findMany({});
+      await repository.findMany({ includeDeleted: true, where: { name: { contains: 'x' } } });
 
-      const callArg = txDelegate.findMany.mock.calls[0][0];
-      expect(callArg).toEqual({});
-      expect(callArg.where).toBeUndefined();
+      expect(prismaDelegate.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { name: { contains: 'x' } } }),
+      );
     });
   });
 });
