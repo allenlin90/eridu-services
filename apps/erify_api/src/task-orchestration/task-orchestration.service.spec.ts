@@ -1,10 +1,15 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { TaskStatus, TaskType } from '@prisma/client';
 
+import { TaskAssignmentService } from './task-assignment.service';
+import { TaskDeletionService } from './task-deletion.service';
+import { TaskGenerationService } from './task-generation.service';
 import { TaskGenerationProcessor } from './task-generation-processor.service';
 import { TaskOrchestrationService } from './task-orchestration.service';
+import { TaskRetrievalService } from './task-retrieval.service';
+import { TaskSubmissionService } from './task-submission.service';
 
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { showDtoListInclude } from '@/models/show/schemas/show.schema';
@@ -19,6 +24,7 @@ import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-ali
 
 describe('taskOrchestrationService', () => {
   let service: TaskOrchestrationService;
+  let submissionService: TaskSubmissionService;
   let taskService: jest.Mocked<TaskService>;
   let taskTemplateService: jest.Mocked<TaskTemplateService>;
   let showService: jest.Mocked<ShowService>;
@@ -33,6 +39,13 @@ describe('taskOrchestrationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TaskOrchestrationService,
+        // Real concern sub-services: the facade delegates to them, and they use
+        // the mocked leaf services below, so the behavioral assertions hold.
+        TaskSubmissionService,
+        TaskGenerationService,
+        TaskAssignmentService,
+        TaskRetrievalService,
+        TaskDeletionService,
         {
           provide: TaskService,
           useValue: {
@@ -41,6 +54,8 @@ describe('taskOrchestrationService', () => {
             findByUid: jest.fn(),
             findByUidWithSnapshot: jest.fn(),
             findOne: jest.fn(),
+            findMany: jest.fn(),
+            bulkSoftDelete: jest.fn(),
             update: jest.fn(),
             setAssignee: jest.fn(),
             updateTaskContentAndStatus: jest.fn(),
@@ -101,6 +116,7 @@ describe('taskOrchestrationService', () => {
     }).compile();
 
     service = module.get<TaskOrchestrationService>(TaskOrchestrationService);
+    submissionService = module.get(TaskSubmissionService);
     taskService = module.get(TaskService);
     taskTemplateService = module.get(TaskTemplateService);
     showService = module.get(ShowService);
@@ -637,13 +653,14 @@ describe('taskOrchestrationService', () => {
       const studioUid = 'std_1';
       const taskUids = ['task_1', 'task_2'];
 
-      // Mock task findOne
-      taskService.findOne
-        .mockResolvedValueOnce({ uid: 'task_1', version: 1, status: TaskStatus.REVIEW } as any)
-        .mockResolvedValueOnce({ uid: 'task_2', version: 2, status: TaskStatus.REVIEW } as any);
+      // Mock the bulk task resolution
+      taskService.findMany.mockResolvedValue([
+        { uid: 'task_1', version: 1, status: TaskStatus.REVIEW },
+        { uid: 'task_2', version: 2, status: TaskStatus.REVIEW },
+      ] as any);
 
-      // Mock submitTaskContent to behave successfully
-      jest.spyOn(service, 'submitTaskContent').mockImplementation(async (uid) => {
+      // Mock submitTaskContent on the submission sub-service that owns it
+      jest.spyOn(submissionService, 'submitTaskContent').mockImplementation(async (uid) => {
         if (uid === 'task_1') {
           return {
             uid: 'task_1',
@@ -692,14 +709,14 @@ describe('taskOrchestrationService', () => {
       const studioUid = 'std_1';
       const taskUids = ['task_not_found', 'task_not_review', 'task_ok'];
 
-      // Mock findOne
-      taskService.findOne
-        .mockResolvedValueOnce(null) // task_not_found
-        .mockResolvedValueOnce({ uid: 'task_not_review', version: 1, status: TaskStatus.IN_PROGRESS } as any)
-        .mockResolvedValueOnce({ uid: 'task_ok', version: 2, status: TaskStatus.REVIEW } as any);
+      // task_not_found is absent from the bulk read → resolves to a not-found error
+      taskService.findMany.mockResolvedValue([
+        { uid: 'task_not_review', version: 1, status: TaskStatus.IN_PROGRESS },
+        { uid: 'task_ok', version: 2, status: TaskStatus.REVIEW },
+      ] as any);
 
       // Mock submitTaskContent
-      jest.spyOn(service, 'submitTaskContent').mockResolvedValue({
+      jest.spyOn(submissionService, 'submitTaskContent').mockResolvedValue({
         uid: 'task_ok',
         status: TaskStatus.COMPLETED,
       } as any);
@@ -721,9 +738,9 @@ describe('taskOrchestrationService', () => {
       const studioUid = 'std_1';
       const taskUids = ['task_err'];
 
-      taskService.findOne.mockResolvedValue({ uid: 'task_err', version: 1, status: TaskStatus.REVIEW } as any);
+      taskService.findMany.mockResolvedValue([{ uid: 'task_err', version: 1, status: TaskStatus.REVIEW }] as any);
 
-      jest.spyOn(service, 'submitTaskContent').mockResolvedValue({
+      jest.spyOn(submissionService, 'submitTaskContent').mockResolvedValue({
         uid: 'task_err',
         status: TaskStatus.COMPLETED,
         extractionError: 'Database extraction connection timeout',
@@ -740,6 +757,32 @@ describe('taskOrchestrationService', () => {
           entries: [],
         },
       });
+    });
+  });
+
+  describe('bulkDeleteTasks', () => {
+    it('soft-deletes studio-scoped tasks and returns the deleted count', async () => {
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+      taskService.bulkSoftDelete.mockResolvedValue({ count: 2 } as any);
+
+      const result = await service.bulkDeleteTasks('std_1', ['task_1', 'task_2']);
+
+      expect(taskService.bulkSoftDelete).toHaveBeenCalledWith(BigInt(1), ['task_1', 'task_2']);
+      expect(result).toEqual({ deleted_count: 2 });
+    });
+
+    it('throws NotFound when the studio does not exist', async () => {
+      studioService.findByUid.mockResolvedValue(null as any);
+
+      await expect(service.bulkDeleteTasks('std_x', ['task_1'])).rejects.toThrow(NotFoundException);
+      expect(taskService.bulkSoftDelete).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFound when no tasks matched the studio scope', async () => {
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+      taskService.bulkSoftDelete.mockResolvedValue({ count: 0 } as any);
+
+      await expect(service.bulkDeleteTasks('std_1', ['task_missing'])).rejects.toThrow(NotFoundException);
     });
   });
 });

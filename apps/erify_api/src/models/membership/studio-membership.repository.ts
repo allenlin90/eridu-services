@@ -76,6 +76,7 @@ export class StudioMembershipRepository extends BaseRepository<
       studioId?: string;
       role?: string;
       userId?: UserId;
+      userUid?: string;
       name?: string;
     },
     include?: T,
@@ -111,8 +112,16 @@ export class StudioMembershipRepository extends BaseRepository<
       where.userId = params.userId;
     }
 
+    if (params.userUid) {
+      where.user = {
+        ...(where.user as Prisma.UserWhereInput | undefined),
+        uid: params.userUid,
+      };
+    }
+
     if (params.name) {
       where.user = {
+        ...(where.user as Prisma.UserWhereInput | undefined),
         name: {
           contains: params.name,
           mode: 'insensitive',
