@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { CreatorService } from '@/models/creator/creator.service';
 import { UserService } from '@/models/user/user.service';
-import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 
 type ListSelfShowCompensationsParams = {
   studioId: string;
@@ -16,7 +16,7 @@ export class MeShowCompensationsService {
   constructor(
     private readonly userService: UserService,
     private readonly creatorService: CreatorService,
-    private readonly showOrchestrationService: ShowOrchestrationService,
+    private readonly creatorCompensationService: CreatorCompensationService,
   ) {}
 
   async listSelfShowCompensations(userExtId: string, params: ListSelfShowCompensationsParams) {
@@ -30,7 +30,7 @@ export class MeShowCompensationsService {
       throw HttpError.notFound('Creator', `user=${user.uid}`);
     }
 
-    return this.showOrchestrationService.getCreatorCompensations(params.studioId, creator.uid, {
+    return this.creatorCompensationService.getCreatorCompensations(params.studioId, creator.uid, {
       dateFrom: params.dateFrom,
       dateTo: params.dateTo,
     });

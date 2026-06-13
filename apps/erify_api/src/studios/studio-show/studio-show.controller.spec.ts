@@ -8,6 +8,7 @@ import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import type { CreateStudioShowDto, UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
+import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
@@ -24,13 +25,16 @@ describe('studioShowController', () => {
   const showOrchestrationServiceMock = {
     listCreatorsForShow: jest.fn(),
     updateCreatorForShow: jest.fn(),
-    getCreatorCompensationSummaryForShow: jest.fn(),
     bulkAssignCreatorsToShow: jest.fn(),
     removeCreatorsFromShow: jest.fn(),
   };
 
   const showRunReviewServiceMock = {
     getShowRunReviewSummary: jest.fn(),
+  };
+
+  const creatorCompensationServiceMock = {
+    getCreatorCompensationSummaryForShow: jest.fn(),
   };
 
   const studioShowManagementServiceMock = {
@@ -55,6 +59,10 @@ describe('studioShowController', () => {
         {
           provide: ShowRunReviewService,
           useValue: showRunReviewServiceMock,
+        },
+        {
+          provide: CreatorCompensationService,
+          useValue: creatorCompensationServiceMock,
         },
         {
           provide: StudioShowManagementService,
@@ -199,7 +207,7 @@ describe('studioShowController', () => {
       const showId = 'show_123';
 
       taskOrchestrationServiceMock.getStudioShow.mockResolvedValue({ uid: showId });
-      showOrchestrationServiceMock.getCreatorCompensationSummaryForShow.mockResolvedValue({
+      creatorCompensationServiceMock.getCreatorCompensationSummaryForShow.mockResolvedValue({
         showId,
         totalAmount: '120.00',
         unresolvedCount: 0,
@@ -223,7 +231,7 @@ describe('studioShowController', () => {
       const result = await controller.creatorCompensationSummary(studioId, showId);
 
       expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
-      expect(showOrchestrationServiceMock.getCreatorCompensationSummaryForShow)
+      expect(creatorCompensationServiceMock.getCreatorCompensationSummaryForShow)
         .toHaveBeenCalledWith(studioId, showId);
       expect(() => showCreatorCompensationSummarySchema.parse(result)).not.toThrow();
       expect(result).toEqual(expect.objectContaining({

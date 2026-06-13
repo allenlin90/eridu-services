@@ -6,13 +6,13 @@ import { MeShowCompensationsService } from './me-show-compensations.service';
 
 import { CreatorService } from '@/models/creator/creator.service';
 import { UserService } from '@/models/user/user.service';
-import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 
 describe('meShowCompensationsService', () => {
   let service: MeShowCompensationsService;
   let userService: jest.Mocked<UserService>;
   let creatorService: jest.Mocked<CreatorService>;
-  let showOrchestrationService: jest.Mocked<ShowOrchestrationService>;
+  let creatorCompensationService: jest.Mocked<CreatorCompensationService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,7 +31,7 @@ describe('meShowCompensationsService', () => {
           },
         },
         {
-          provide: ShowOrchestrationService,
+          provide: CreatorCompensationService,
           useValue: {
             getCreatorCompensations: jest.fn(),
           },
@@ -42,7 +42,7 @@ describe('meShowCompensationsService', () => {
     service = module.get(MeShowCompensationsService);
     userService = module.get(UserService);
     creatorService = module.get(CreatorService);
-    showOrchestrationService = module.get(ShowOrchestrationService);
+    creatorCompensationService = module.get(CreatorCompensationService);
   });
 
   const params = {
@@ -64,15 +64,15 @@ describe('meShowCompensationsService', () => {
     await expect(service.listSelfShowCompensations('ext_1', params)).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('delegates to ShowOrchestrationService.getCreatorCompensations with the resolved creator uid', async () => {
+  it('delegates to CreatorCompensationService.getCreatorCompensations with the resolved creator uid', async () => {
     userService.getUserByExtId.mockResolvedValue({ uid: 'user_1' } as never);
     creatorService.findByUserUid.mockResolvedValue({ uid: 'creator_1' } as never);
-    showOrchestrationService.getCreatorCompensations.mockResolvedValue({ creatorId: 'creator_1' } as never);
+    creatorCompensationService.getCreatorCompensations.mockResolvedValue({ creatorId: 'creator_1' } as never);
 
     const result = await service.listSelfShowCompensations('ext_1', params);
 
     expect(creatorService.findByUserUid).toHaveBeenCalledWith('user_1');
-    expect(showOrchestrationService.getCreatorCompensations).toHaveBeenCalledWith('std_1', 'creator_1', {
+    expect(creatorCompensationService.getCreatorCompensations).toHaveBeenCalledWith('std_1', 'creator_1', {
       dateFrom: params.dateFrom,
       dateTo: params.dateTo,
     });
