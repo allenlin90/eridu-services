@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 
 import { StudioPerformanceRepository } from './studio-performance.repository';
 import { StudioPerformanceService } from './studio-performance.service';
+import { StudioPerformanceCalculatorService } from './studio-performance-calculator.service';
 
 import type { PrismaService } from '@/prisma/prisma.service';
 
@@ -27,7 +28,10 @@ describe('studioPerformanceService', () => {
     // Wire a real repository over the same prisma mock so the existing
     // `prisma.*.toHaveBeenCalledWith` / `mockResolvedValue` assertions still
     // drive and observe the queries the repository now owns (WI-21).
-    service = new StudioPerformanceService(new StudioPerformanceRepository(prisma));
+    service = new StudioPerformanceService(
+      new StudioPerformanceRepository(prisma),
+      new StudioPerformanceCalculatorService(),
+    );
 
     if (prisma.studio && prisma.studio.findUnique) {
       (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
