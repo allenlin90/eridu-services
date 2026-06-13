@@ -13,25 +13,20 @@ import type {
   ShowPerformanceSeriesResponse,
 } from '@eridu/api-types/performance';
 
+import type {
+  PerformanceListShow,
+} from './studio-performance.repository';
+import { StudioPerformanceRepository } from './studio-performance.repository';
+
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import {
   deriveClientOffsetMs,
   OPERATIONAL_DAY_START_HOUR,
   toOperationalDayKey,
 } from '@/lib/utils/operational-day.util';
-import { PrismaService } from '@/prisma/prisma.service';
 
 /** A primitive sort key: numeric, a Prisma Decimal, or `null` (sorted last). */
 type SortValue = number | Prisma.Decimal | null;
-
-/** Show row shape returned by the performance-shows query (relations included). */
-type ShowWithPerformanceRelations = Prisma.ShowGetPayload<{
-  include: {
-    client: true;
-    showType: true;
-    showPlatforms: { include: { platform: true } };
-  };
-}>;
 
 @Injectable()
 export class StudioPerformanceService {
@@ -45,47 +40,7 @@ export class StudioPerformanceService {
   /** Fallback loop length (minutes) when a loop omits its own duration. */
   private static readonly DEFAULT_LOOP_DURATION_MIN = 15;
 
-  /**
-   * Task statuses whose snapshots are authoritative for loop-level metrics.
-   * Fact extraction writes the show-level GMV/view aggregates on transition to
-   * COMPLETED (see TaskOrchestrationService), so the loop breakdown must read
-   * from the same finalized states — otherwise loop totals would diverge from
-   * the show-level figures shown elsewhere on the dashboard. In-progress
-   * statuses (incl. REVIEW) are intentionally excluded.
-   */
-  private static readonly LOOP_METRIC_TASK_STATUSES = ['COMPLETED', 'CLOSED'] as const;
-
-  /**
-   * Predicate matching a single `ShowPlatform` row that carries at least one
-   * recorded performance fact (GMV, CTR, CTO, or a view-count template entry).
-   * Shared by the presence filter and the summary aggregation so that "has a
-   * record" means the same thing in the list filter and the trend totals.
-   */
-  private static readonly PERFORMANCE_RECORD_OR: Prisma.ShowPlatformWhereInput['OR'] = [
-    { gmv: { not: null } },
-    { ctr: { not: null } },
-    { cto: { not: null } },
-    {
-      metadata: {
-        path: ['performance_templates', 'show_platform_view_count'],
-        not: Prisma.JsonNull,
-      },
-    },
-  ];
-
-  constructor(private readonly prisma: PrismaService) {}
-
-  /**
-   * Normalizes an optional single value or array into a flat array.
-   * Returns an empty array when the value is absent.
-   */
-  private toArray<T>(value: T | T[] | undefined): T[] {
-    if (value === undefined) {
-      return [];
-    }
-
-    return Array.isArray(value) ? value : [value];
-  }
+  constructor(private readonly performanceRepo: StudioPerformanceRepository) {}
 
   /**
    * Validates that the requested date range is ordered and does not exceed the
@@ -104,97 +59,6 @@ export class StudioPerformanceService {
         `Date range cannot exceed ${StudioPerformanceService.MAX_DATE_RANGE_DAYS} days`,
       );
     }
-  }
-
-  /**
-   * Builds the shared `Show` where clause scoping results to a studio, the
-   * requested date range, and any optional client / show type / platform filters.
-   */
-  private buildShowWhere(
-    studioUid: string,
-    query: PerformanceQuery & Pick<PerformanceShowsQuery, 'name'>,
-  ): Prisma.ShowWhereInput {
-    const clientUids = this.toArray(query.client_id);
-    const showTypeUids = this.toArray(query.show_type_id);
-    const platformUids = this.toArray(query.platform_id);
-    const showStandardUids = this.toArray(query.show_standard_id);
-    // Trim so a whitespace-only search collapses to "no filter" rather than a
-    // `contains: ' '` clause that matches every row with an interior space.
-    const name = query.name?.trim();
-
-    // Both the platform filter and the presence filter constrain the
-    // `showPlatforms` relation, so they must be composed via `AND` — spreading
-    // them as sibling keys would silently let the later one clobber the former.
-    const andConditions: Prisma.ShowWhereInput[] = [];
-
-    if (platformUids.length > 0) {
-      andConditions.push({
-        showPlatforms: {
-          some: {
-            deletedAt: null,
-            platform: { uid: { in: platformUids } },
-          },
-        },
-      });
-    }
-
-    // When a platform filter is active, the presence check must be scoped to
-    // the same set of platforms — otherwise a show passes "With Records" because
-    // a *different* platform has GMV/CTR/etc., even though the selected platform
-    // row is empty. Narrowing the `some` predicate to `platformUids` keeps the
-    // presence semantics consistent with what the user is actually filtering on.
-    const recordedSome: Prisma.ShowWhereInput = {
-      showPlatforms: {
-        some: {
-          deletedAt: null,
-          ...(platformUids.length > 0
-            ? { platform: { uid: { in: platformUids } } }
-            : {}),
-          OR: StudioPerformanceService.PERFORMANCE_RECORD_OR,
-        },
-      },
-    };
-    if (query.has_performance === 'true') {
-      andConditions.push(recordedSome);
-    } else if (query.has_performance === 'false') {
-      andConditions.push({ NOT: recordedSome });
-    }
-
-    return {
-      studio: { uid: studioUid },
-      deletedAt: null,
-      startTime: {
-        gte: new Date(query.start_date),
-        lte: new Date(query.end_date),
-      },
-      ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
-      ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
-      ...(showStandardUids.length > 0 ? { showStandard: { uid: { in: showStandardUids } } } : {}),
-      ...(name
-        ? {
-            name: {
-              contains: name,
-              mode: 'insensitive',
-            },
-          }
-        : {}),
-      ...(andConditions.length > 0 ? { AND: andConditions } : {}),
-    };
-  }
-
-  /**
-   * Builds the where clause for the nested `showPlatforms` include, excluding
-   * soft-deleted rows and narrowing to the requested platforms when filtered.
-   */
-  private buildShowPlatformsWhere(
-    query: PerformanceQuery,
-  ): Prisma.ShowPlatformWhereInput {
-    const platformUids = this.toArray(query.platform_id);
-
-    return {
-      deletedAt: null,
-      ...(platformUids.length > 0 ? { platform: { uid: { in: platformUids } } } : {}),
-    };
   }
 
   /**
@@ -217,27 +81,15 @@ export class StudioPerformanceService {
     const endDate = new Date(query.end_date);
     this.validateDateRange(startDate, endDate);
 
-    const studio = await this.prisma.studio.findUnique({
-      where: { uid: studioUid },
-      select: { metadata: true },
-    });
+    const studio = await this.performanceRepo.findStudioLocalizationMetadata(studioUid);
     const { locale, currency } = this.resolveLocalization(studio?.metadata);
 
     // The presence filter (`has_performance`) is a list-only concern. Applying
     // it here would make the summary self-referential — e.g. with
     // `has_performance=true` the "recorded vs total" card would always read
-    // 100% — so the summary always aggregates the whole date-range population.
-    const shows = await this.prisma.show.findMany({
-      where: this.buildShowWhere(studioUid, { ...query, has_performance: undefined }),
-      include: {
-        showPlatforms: {
-          where: this.buildShowPlatformsWhere(query),
-          include: {
-            platform: true,
-          },
-        },
-      },
-    });
+    // 100% — so the summary always aggregates the whole date-range population
+    // (the repository clears `has_performance` before building the where).
+    const shows = await this.performanceRepo.findShowsForSummary(studioUid, query);
 
     const totalShowsCount = shows.length;
     let recordedShowsCount = 0;
@@ -380,16 +232,6 @@ export class StudioPerformanceService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const whereClause = this.buildShowWhere(studioUid, query);
-    const include = {
-      client: true,
-      showType: true,
-      showPlatforms: {
-        where: this.buildShowPlatformsWhere(query),
-        include: { platform: true },
-      },
-    } satisfies Prisma.ShowInclude;
-
     const sortRules = this.withSortTieBreaker(query.sort);
 
     // Sorting by a derived metric (GMV/Views/CTR/CTO) can't be expressed in SQL
@@ -402,20 +244,18 @@ export class StudioPerformanceService {
     if (!needsInMemorySort) {
       const startTimeDesc = sortRules.find((rule) => rule.field === 'start_time')?.desc ?? true;
       const [shows, total] = await Promise.all([
-        this.prisma.show.findMany({
-          where: whereClause,
-          include,
+        this.performanceRepo.findShowsForList(studioUid, query, {
           orderBy: { startTime: startTimeDesc ? 'desc' : 'asc' },
           skip,
           take: limit,
         }),
-        this.prisma.show.count({ where: whereClause }),
+        this.performanceRepo.countShows(studioUid, query),
       ]);
       return { items: shows.map((show) => this.mapShowToPerformance(show)), total };
     }
 
     // Metric sort path: load every matching row, order in memory, then slice.
-    const shows = await this.prisma.show.findMany({ where: whereClause, include });
+    const shows = await this.performanceRepo.findShowsForList(studioUid, query);
     const mappedItems = shows.map((show) => this.mapShowToPerformance(show));
     // The full matched set is already in hand, so `total` is its length — no
     // separate COUNT query (which could also race the findMany under writes).
@@ -439,7 +279,7 @@ export class StudioPerformanceService {
   }
 
   /** Maps a show row (with relations) to its performance response shape. */
-  private mapShowToPerformance(show: ShowWithPerformanceRelations): ShowPerformanceResponse {
+  private mapShowToPerformance(show: PerformanceListShow): ShowPerformanceResponse {
     return {
       id: show.uid,
       name: show.name,
@@ -555,26 +395,7 @@ export class StudioPerformanceService {
     studioUid: string,
     showUid: string,
   ): Promise<ShowPerformanceLoopsResponse> {
-    const show = await this.prisma.show.findFirst({
-      where: {
-        uid: showUid,
-        studio: { uid: studioUid },
-        deletedAt: null,
-      },
-      include: {
-        studio: {
-          select: {
-            metadata: true,
-          },
-        },
-        showPlatforms: {
-          where: { deletedAt: null },
-          include: {
-            platform: true,
-          },
-        },
-      },
-    });
+    const show = await this.performanceRepo.findShowForLoops(studioUid, showUid);
 
     if (!show) {
       throw new NotFoundException('Show not found');
@@ -582,26 +403,7 @@ export class StudioPerformanceService {
 
     const { locale, currency } = this.resolveLocalization(show.studio?.metadata);
 
-    const tasks = await this.prisma.task.findMany({
-      where: {
-        targets: {
-          some: {
-            showId: show.id,
-            deletedAt: null,
-          },
-        },
-        status: {
-          in: [...StudioPerformanceService.LOOP_METRIC_TASK_STATUSES],
-        },
-        deletedAt: null,
-      },
-      include: {
-        snapshot: true,
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
+    const tasks = await this.performanceRepo.findFinalizedLoopTasksForShow(show.id);
 
     const selected = this.selectLoopBearingTask(tasks);
     if (!selected) {
@@ -764,22 +566,10 @@ export class StudioPerformanceService {
     const endDate = new Date(query.end_date);
     this.validateDateRange(startDate, endDate);
 
-    const studio = await this.prisma.studio.findUnique({
-      where: { uid: studioUid },
-      select: { metadata: true },
-    });
+    const studio = await this.performanceRepo.findStudioLocalizationMetadata(studioUid);
     const { locale, currency } = this.resolveLocalization(studio?.metadata);
 
-    const shows = await this.prisma.show.findMany({
-      where: this.buildShowWhere(studioUid, query),
-      include: {
-        showPlatforms: {
-          where: this.buildShowPlatformsWhere(query),
-          include: { platform: true },
-        },
-      },
-      orderBy: { startTime: 'asc' },
-    });
+    const shows = await this.performanceRepo.findShowsForSeries(studioUid, query);
 
     if (shows.length === 0) {
       return { shows: [], currency, locale };
@@ -789,18 +579,7 @@ export class StudioPerformanceService {
     // query (no N+1), ordered most-recent first, then group by target show so
     // each show resolves its own "latest wins" task locally.
     const showIds = shows.map((s) => s.id);
-    const tasks = await this.prisma.task.findMany({
-      where: {
-        targets: { some: { showId: { in: showIds }, deletedAt: null } },
-        status: { in: [...StudioPerformanceService.LOOP_METRIC_TASK_STATUSES] },
-        deletedAt: null,
-      },
-      include: {
-        snapshot: true,
-        targets: { where: { deletedAt: null }, select: { showId: true } },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
+    const tasks = await this.performanceRepo.findFinalizedLoopTasksForShows(showIds);
 
     const tasksByShowId = new Map<string, typeof tasks>();
     for (const task of tasks) {
