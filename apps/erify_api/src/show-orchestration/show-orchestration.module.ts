@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { ShowOrchestrationService } from './show-orchestration.service';
+import { ShowRunReviewService } from './show-run-review.service';
 
 import { CompensationLineItemModule } from '@/models/compensation-line-item/compensation-line-item.module';
 import { CreatorModule } from '@/models/creator/creator.module';
@@ -28,7 +29,7 @@ import { PrismaModule } from '@/prisma/prisma.module';
     TaskModule,
     TaskTargetModule,
   ],
-  providers: [ShowOrchestrationService],
-  exports: [ShowOrchestrationService],
+  providers: [ShowOrchestrationService, ShowRunReviewService],
+  exports: [ShowOrchestrationService, ShowRunReviewService],
 })
 export class ShowOrchestrationModule {}

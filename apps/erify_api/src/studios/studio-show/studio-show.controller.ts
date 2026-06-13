@@ -57,6 +57,7 @@ import {
   taskWithRelationsDto,
 } from '@/models/task/schemas/task.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
 const STUDIO_SHOW_CREATOR_ACCESS_ROLES = [
@@ -135,6 +136,7 @@ export class StudioShowController extends BaseStudioController {
   constructor(
     private readonly taskOrchestrationService: TaskOrchestrationService,
     private readonly showOrchestrationService: ShowOrchestrationService,
+    private readonly showRunReviewService: ShowRunReviewService,
     private readonly studioShowManagementService: StudioShowManagementService,
   ) {
     super();
@@ -158,7 +160,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ShowRunReviewQueryDto,
   ) {
-    return this.showOrchestrationService.getShowRunReviewSummary(studioId, query);
+    return this.showRunReviewService.getShowRunReviewSummary(studioId, query);
   }
 
   @Get('run-review/creators')
@@ -169,7 +171,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
   ) {
-    const { items, total } = await this.showOrchestrationService.getShowRunReviewCreators(studioId, query);
+    const { items, total } = await this.showRunReviewService.getShowRunReviewCreators(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
@@ -181,7 +183,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
   ) {
-    const { items, total } = await this.showOrchestrationService.getShowRunReviewViolations(studioId, query);
+    const { items, total } = await this.showRunReviewService.getShowRunReviewViolations(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
@@ -193,7 +195,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
   ) {
-    const { items, total } = await this.showOrchestrationService.getShowRunReviewTasks(studioId, query);
+    const { items, total } = await this.showRunReviewService.getShowRunReviewTasks(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
@@ -205,7 +207,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: PaginatedShowRunReviewQueryDto,
   ) {
-    const { items, total } = await this.showOrchestrationService.getShowRunReviewShows(studioId, query);
+    const { items, total } = await this.showRunReviewService.getShowRunReviewShows(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
