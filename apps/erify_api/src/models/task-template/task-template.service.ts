@@ -115,7 +115,7 @@ export class TaskTemplateService extends BaseModelService {
       }
 
       const nextSchema = payload.currentSchema
-        ? this.withTaskTypeInSchema(payload.currentSchema, payload.taskType ?? ((existing.currentSchema as any)?.metadata?.task_type ?? TASK_TYPE.OTHER))
+        ? this.withTaskTypeInSchema(payload.currentSchema, payload.taskType ?? ((existing.currentSchema as { metadata?: { task_type?: string } })?.metadata?.task_type ?? TASK_TYPE.OTHER))
         : (payload.taskType
             ? this.withTaskTypeInSchema(existing.currentSchema, payload.taskType)
             : null);

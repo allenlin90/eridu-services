@@ -5,6 +5,8 @@ import { TaskStatus, TaskType } from '@prisma/client';
 import {
   type ListMyTasksQueryTransformed,
   TASK_STATUS,
+  type UiSchema,
+  type UiSchemaV2,
 } from '@eridu/api-types/task-management';
 
 import { UpdateTaskPayload } from './schemas/task.schema';
@@ -223,7 +225,9 @@ export class TaskService extends BaseModelService {
     let newMetadata = task.metadata;
     let newDueDate = task.dueDate;
 
-    const uiSchema = task.snapshot?.schema as any;
+    // Immutable snapshot of the template's UI schema (v1 or v2);
+    // `validateContent` dispatches on the engine via `getSchemaEngine`.
+    const uiSchema = task.snapshot?.schema as UiSchema | UiSchemaV2 | undefined;
     const targetShow = task.targets?.[0]?.show;
     const hydrationContext = targetShow
       ? {
