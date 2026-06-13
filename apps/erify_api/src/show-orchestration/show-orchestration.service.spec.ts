@@ -30,6 +30,7 @@ import type {
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { showWithAssignmentsInclude } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { ShowPlatformAssignmentService } from '@/show-orchestration/show-platform-assignment.service';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
 
 // Mock PrismaService module for ClsPluginTransactional (must be exported from a @Module to satisfy useExisting)
@@ -99,6 +100,7 @@ describe('showOrchestrationService', () => {
       ],
       providers: [
         ShowOrchestrationService,
+        ShowPlatformAssignmentService,
         {
           provide: ShowService,
           useValue: {
