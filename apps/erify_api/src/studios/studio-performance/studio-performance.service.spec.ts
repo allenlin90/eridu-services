@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
+import { StudioPerformanceRepository } from './studio-performance.repository';
 import { StudioPerformanceService } from './studio-performance.service';
 
 import type { PrismaService } from '@/prisma/prisma.service';
@@ -23,7 +24,10 @@ describe('studioPerformanceService', () => {
         findMany: jest.fn(),
       },
     } as any;
-    service = new StudioPerformanceService(prisma);
+    // Wire a real repository over the same prisma mock so the existing
+    // `prisma.*.toHaveBeenCalledWith` / `mockResolvedValue` assertions still
+    // drive and observe the queries the repository now owns (WI-21).
+    service = new StudioPerformanceService(new StudioPerformanceRepository(prisma));
 
     if (prisma.studio && prisma.studio.findUnique) {
       (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
