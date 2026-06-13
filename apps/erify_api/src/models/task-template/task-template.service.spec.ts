@@ -76,6 +76,19 @@ describe('taskTemplateService', () => {
       expect(() => service.validateSchema(schema)).toThrow();
     });
 
+    it('should throw if metadata.task_type is an unknown value', () => {
+      const schema = createValidSchema();
+      schema.metadata.task_type = 'NOT_A_REAL_TYPE';
+
+      expect(() => service.validateSchema(schema)).toThrow(/valid task type/);
+    });
+
+    it('should throw if metadata.task_type is missing', () => {
+      const schema = { ...createValidSchema(), metadata: {} };
+
+      expect(() => service.validateSchema(schema)).toThrow(/valid task type/);
+    });
+
     it('should throw if duplicate keys exist', () => {
       const schema = {
         metadata: {

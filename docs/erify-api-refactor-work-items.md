@@ -121,11 +121,12 @@ Right altitude matters more than coverage count. **A behavior-preserving refacto
 - **Outcome:** named types now back every JSONB read in WI-11's listed set (studio localization, performance_templates, snapshot.schema, task content, task UI schema, template task_type, upload routing); remaining `any` on the JSONB path is confined to genuine edge conversions (e.g. `Prisma.Decimal.Value`) and out-of-scope shapes (cost `actuals_source`, the WI-12 task_type enum guard).
   - *Note:* the `show/block metadata.actuals_source` casts in `studio-cost-calculator.service` are a **different** JSONB shape (provenance), not in WI-11's listed set — track separately if hardening is wanted; they are not part of WI-21(c).
 
-### WI-12 · Strict `task_type` registry lookup · T3 · S
+### WI-12 · Strict `task_type` registry lookup · T3 · S · ✅ DONE
 - **Files:** `task-orchestration/task-generation-processor.service.ts:140`; related read in `task-template.service.ts`.
 - **Scope:** replace `includes(taskType as any)` with a strict typed resolver over `TASK_TYPE` (no `as any`); guard the persisted-JSON read.
 - **Test strategy:** *expectation* — unknown `task_type` string resolves to the safe default / is rejected, not silently accepted; valid types map correctly.
 - **Acceptance:** no `as any` on the enum path; coverage for unknown value. **Risk:** low. **Decision:** none.
+- **Done (this PR):** added a canonical `isTaskType(value): value is TaskType` guard to `@eridu/api-types/task-management` (next to `TASK_TYPE`, backed by a `Set`). Converged both consumers onto it: `task-template.service` now rejects an unknown/missing `metadata.task_type` via `!isTaskType(...)` (was `includes(taskType as any)`), and `task-generation-processor` dropped its **local** `KNOWN_TASK_TYPES`/`isKnownTaskType` copy for the shared guard (`resolveTemplateTaskType` still falls back to `OTHER`). No `as any` remains on the enum path. Coverage: processor's unknown→`OTHER` was already pinned; +2 template-service tests (unknown value and missing `task_type` both rejected with "valid task type"). Behavior unchanged; full suite green (138 suites / 1250 tests).
 
 ### WI-13 · Shared money utility + Decimal-at-boundary · T4 · M
 - **Files:** new shared money util (`@eridu/api-types` or `lib/utils`); consumers `models/studio-shift/studio-shift.service.ts:327`, `models/compensation-line-item/compensation-line-item.service.ts:95`, triplicated formatters in `show-orchestration`, `shift-calendar`, `studio-shift` schema.
