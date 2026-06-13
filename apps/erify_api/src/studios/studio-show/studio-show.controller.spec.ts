@@ -9,6 +9,7 @@ import { StudioShowManagementService } from './studio-show-management.service';
 
 import type { CreateStudioShowDto, UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
 describe('studioShowController', () => {
@@ -26,6 +27,9 @@ describe('studioShowController', () => {
     getCreatorCompensationSummaryForShow: jest.fn(),
     bulkAssignCreatorsToShow: jest.fn(),
     removeCreatorsFromShow: jest.fn(),
+  };
+
+  const showRunReviewServiceMock = {
     getShowRunReviewSummary: jest.fn(),
   };
 
@@ -47,6 +51,10 @@ describe('studioShowController', () => {
         {
           provide: ShowOrchestrationService,
           useValue: showOrchestrationServiceMock,
+        },
+        {
+          provide: ShowRunReviewService,
+          useValue: showRunReviewServiceMock,
         },
         {
           provide: StudioShowManagementService,
@@ -298,11 +306,11 @@ describe('studioShowController', () => {
       };
       const expectedSummary = { shows: { total_count: 1 } };
 
-      showOrchestrationServiceMock.getShowRunReviewSummary.mockResolvedValue(expectedSummary);
+      showRunReviewServiceMock.getShowRunReviewSummary.mockResolvedValue(expectedSummary);
 
       const result = await controller.runReview(studioId, query);
 
-      expect(showOrchestrationServiceMock.getShowRunReviewSummary).toHaveBeenCalledWith(studioId, query);
+      expect(showRunReviewServiceMock.getShowRunReviewSummary).toHaveBeenCalledWith(studioId, query);
       expect(result).toEqual(expectedSummary);
     });
   });
