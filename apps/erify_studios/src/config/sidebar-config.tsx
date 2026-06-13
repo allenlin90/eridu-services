@@ -20,6 +20,7 @@ import {
   UserSquare2,
   Videotape,
   Warehouse,
+  Wrench,
 } from 'lucide-react';
 import type * as React from 'react';
 import { useCallback, useMemo } from 'react';
@@ -256,6 +257,14 @@ function getStudioSettingsItems(
       title: 'Shared Fields',
       url: `/studios/${studioId}/shared-fields`,
       icon: Settings,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'clientMechanics')) {
+    settingsItems.push({
+      title: 'Client Mechanics',
+      url: `/studios/${studioId}/client-mechanics`,
+      icon: Wrench,
     });
   }
 

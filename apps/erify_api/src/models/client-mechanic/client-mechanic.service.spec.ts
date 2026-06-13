@@ -37,6 +37,7 @@ describe('clientMechanicService', () => {
       findByUidForClient: jest.fn(),
       findPaginated: jest.fn(),
       updateWithVersionCheck: jest.fn(),
+      softDelete: jest.fn(),
     });
     userServiceMock = { getUserByExtId: jest.fn() };
     utilityMock = createMockUtilityService('cmech_123');
@@ -212,6 +213,32 @@ describe('clientMechanicService', () => {
 
       expect(result).toBeNull();
       expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteMechanic', () => {
+    it('calls softDelete on the repository and returns the row', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
+      (repositoryMock.softDelete as jest.Mock).mockResolvedValue({
+        ...baseMechanic,
+        deletedAt: new Date(),
+      });
+
+      const result = await service.deleteMechanic({ mechanicUid: 'cmech_123', clientUid: 'client_1' });
+
+      expect(repositoryMock.softDelete).toHaveBeenCalledWith({
+        uid: 'cmech_123',
+      });
+      expect(result!.deletedAt).toBeDefined();
+    });
+
+    it('returns null when the mechanic is not found under the client', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.deleteMechanic({ mechanicUid: 'cmech_404', clientUid: 'client_1' });
+
+      expect(result).toBeNull();
+      expect(repositoryMock.softDelete).not.toHaveBeenCalled();
     });
   });
 });
