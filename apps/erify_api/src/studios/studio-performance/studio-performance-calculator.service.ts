@@ -8,6 +8,15 @@ import type {
   ShowPerformanceResponse,
 } from '@eridu/api-types/performance';
 
+import type {
+  SnapshotFieldItem,
+  SnapshotLoop,
+  TaskContent,
+} from './schemas/moderator-snapshot.schema';
+import {
+  parseModeratorSnapshot,
+  parseTaskContent,
+} from './schemas/moderator-snapshot.schema';
 import { parsePerformanceTemplates } from './schemas/show-platform-metadata.schema';
 import type { PerformanceListShow } from './studio-performance.repository';
 
@@ -147,45 +156,41 @@ export class StudioPerformanceCalculatorService {
    */
   selectLoopBearingTask(
     tasks: Array<{ snapshot?: { schema?: unknown } | null; content?: unknown }>,
-  ): { task: { snapshot: { schema: any }; content: unknown }; loopsMetadata: any[] } | null {
+  ): { content: TaskContent; items: SnapshotFieldItem[]; loops: SnapshotLoop[] } | null {
     for (const task of tasks) {
-      const schema = task.snapshot?.schema as any;
-      if (schema && schema.metadata && Array.isArray(schema.metadata.loops)) {
-        return { task: task as { snapshot: { schema: any }; content: unknown }, loopsMetadata: schema.metadata.loops };
+      const { items, loops } = parseModeratorSnapshot(task.snapshot?.schema);
+      if (loops !== null) {
+        return { content: parseTaskContent(task.content), items, loops };
       }
     }
     return null;
   }
 
   /**
-   * Maps a selected task's loop metadata + snapshot schema + content into
-   * per-loop, per-platform metric rows. Shared by the single-show loops endpoint
-   * (which returns the full breakdown) and the per-show series endpoint (which
-   * folds these rows to a peak), so both read loop metrics through one
-   * implementation and can't drift.
+   * Maps a selected task's loops + snapshot field items + content into per-loop,
+   * per-platform metric rows. Shared by the single-show loops endpoint (which
+   * returns the full breakdown) and the per-show series endpoint (which folds
+   * these rows to a peak), so both read loop metrics through one implementation
+   * and can't drift.
    */
   buildLoopItems(
-    loopsMetadata: any[],
-    schema: any,
-    content: Record<string, any>,
+    loops: SnapshotLoop[],
+    items: SnapshotFieldItem[],
+    content: TaskContent,
     showPlatforms: Array<{ uid: string; platform: { name: string } }>,
   ): ShowPerformanceLoopItem[] {
-    // Snapshot JSON is untyped; guard against a non-array `items` so a malformed
-    // schema yields empty metrics rather than throwing at `.filter`.
-    const items: any[] = Array.isArray(schema?.items) ? schema.items : [];
-
     // Field keys may be absent or non-string in legacy snapshots; lowercase
     // only real strings so matching never throws on, say, a numeric key.
     const lower = (value: unknown): string | undefined =>
       typeof value === 'string' ? value.toLowerCase() : undefined;
 
-    return loopsMetadata.map((loop) => {
+    return loops.map((loop) => {
       const loopFields = items.filter((item) => item.group === loop.id);
 
-      let gmvFieldId: string | null = null;
-      let viewFieldId: string | null = null;
-      let ctrFieldId: string | null = null;
-      let ctoFieldId: string | null = null;
+      let gmvFieldId: string | undefined;
+      let viewFieldId: string | undefined;
+      let ctrFieldId: string | undefined;
+      let ctoFieldId: string | undefined;
 
       for (const item of loopFields) {
         const key = lower(item.key);
@@ -219,7 +224,7 @@ export class StudioPerformanceCalculatorService {
       }
 
       const metrics = showPlatforms.map((sp) => {
-        const getVal = (fieldId: string | null) => {
+        const getVal = (fieldId: string | undefined): unknown => {
           if (!fieldId)
             return null;
           const multicastKey = `${fieldId}:platform:${sp.uid}`;
@@ -234,18 +239,18 @@ export class StudioPerformanceCalculatorService {
         const rawCtr = getVal(ctrFieldId);
         const rawCto = getVal(ctoFieldId);
 
-        const formatDecimal = (val: any) => {
+        const formatDecimal = (val: unknown): string | null => {
           if (val === null || val === undefined || val === '')
             return null;
           try {
-            const d = new Prisma.Decimal(val);
+            const d = new Prisma.Decimal(val as Prisma.Decimal.Value);
             return decimalToString(d);
           } catch {
             return String(val);
           }
         };
 
-        const formatInt = (val: any) => {
+        const formatInt = (val: unknown): number | null => {
           if (val === null || val === undefined || val === '')
             return null;
           const n = Math.round(Number(val));

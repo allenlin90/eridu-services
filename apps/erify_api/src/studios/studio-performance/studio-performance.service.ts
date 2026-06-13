@@ -292,9 +292,9 @@ export class StudioPerformanceService {
     }
 
     const loops = this.performanceCalculator.buildLoopItems(
-      selected.loopsMetadata,
-      selected.task.snapshot.schema,
-      (selected.task.content as Record<string, any>) ?? {},
+      selected.loops,
+      selected.items,
+      selected.content,
       show.showPlatforms,
     );
 
@@ -355,9 +355,9 @@ export class StudioPerformanceService {
       const selected = this.performanceCalculator.selectLoopBearingTask(tasksByShowId.get(show.id.toString()) ?? []);
       if (selected) {
         const loops = this.performanceCalculator.buildLoopItems(
-          selected.loopsMetadata,
-          selected.task.snapshot.schema,
-          (selected.task.content as Record<string, any>) ?? {},
+          selected.loops,
+          selected.items,
+          selected.content,
           show.showPlatforms,
         );
         const peak = this.performanceCalculator.computePeakFromLoops(loops);
