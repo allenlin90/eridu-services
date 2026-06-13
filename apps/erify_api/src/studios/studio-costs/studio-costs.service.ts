@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma, StudioShiftStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import type {
   CostsQuery,
@@ -19,60 +19,18 @@ import {
   parseCostsShowsSort,
 } from '@eridu/api-types/costs';
 
+import type {
+  ShiftWithCostRelations,
+  ShowWithCostRelations,
+} from './studio-costs.repository';
+import { StudioCostsRepository } from './studio-costs.repository';
+
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import {
   deriveClientOffsetMs,
   OPERATIONAL_DAY_START_HOUR,
   toOperationalDayKey,
 } from '@/lib/utils/operational-day.util';
-import { PrismaService } from '@/prisma/prisma.service';
-
-type ShowWithRelations = Prisma.ShowGetPayload<{
-  include: {
-    client: true;
-    showType: true;
-    showStandard: true;
-    showCreators: {
-      include: {
-        creator: true;
-        compensationLineItemTargets: {
-          include: {
-            lineItem: true;
-          };
-        };
-      };
-    };
-    compensationLineItemTargets: {
-      include: {
-        lineItem: true;
-      };
-    };
-  };
-}>;
-
-type StudioShiftWithRelations = Prisma.StudioShiftGetPayload<{
-  include: {
-    user: {
-      include: {
-        studioMemberships: true;
-      };
-    };
-    blocks: {
-      include: {
-        compensationLineItemTargets: {
-          include: {
-            lineItem: true;
-          };
-        };
-      };
-    };
-    compensationLineItemTargets: {
-      include: {
-        lineItem: true;
-      };
-    };
-  };
-}>;
 
 @Injectable()
 export class StudioCostsService {
@@ -80,14 +38,7 @@ export class StudioCostsService {
   private static readonly DEFAULT_LOCALE = 'th-TH';
   private static readonly DEFAULT_CURRENCY = 'THB';
 
-  constructor(private readonly prisma: PrismaService) {}
-
-  private toArray<T>(value: T | T[] | undefined): T[] {
-    if (value === undefined) {
-      return [];
-    }
-    return Array.isArray(value) ? value : [value];
-  }
+  constructor(private readonly costsRepo: StudioCostsRepository) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {
     if (endDate.getTime() < startDate.getTime()) {
@@ -111,102 +62,7 @@ export class StudioCostsService {
     };
   }
 
-  private buildShowWhere(
-    studioUid: string,
-    query: CostsQuery & { name?: string },
-  ): Prisma.ShowWhereInput {
-    const clientUids = this.toArray(query.client_id);
-    const showTypeUids = this.toArray(query.show_type_id);
-    const showStandardUids = this.toArray(query.show_standard_id);
-    const name = query.name?.trim();
-
-    return {
-      studio: { uid: studioUid },
-      deletedAt: null,
-      startTime: {
-        gte: new Date(query.start_date),
-        lte: new Date(query.end_date),
-      },
-      ...(clientUids.length > 0 ? { client: { uid: { in: clientUids } } } : {}),
-      ...(showTypeUids.length > 0 ? { showType: { uid: { in: showTypeUids } } } : {}),
-      ...(showStandardUids.length > 0 ? { showStandard: { uid: { in: showStandardUids } } } : {}),
-      ...(name
-        ? {
-            name: {
-              contains: name,
-              mode: 'insensitive',
-            },
-          }
-        : {}),
-    };
-  }
-
-  private buildShiftWhere(
-    studioUid: string,
-    query: CostsQuery & { member_name?: string; role?: string; is_duty_manager?: boolean; status?: StudioShiftStatus },
-  ): Prisma.StudioShiftWhereInput {
-    const andConditions: Prisma.StudioShiftWhereInput[] = [];
-
-    const memberName = query.member_name?.trim();
-    if (memberName) {
-      andConditions.push({
-        user: {
-          name: {
-            contains: memberName,
-            mode: 'insensitive',
-          },
-        },
-      });
-    }
-
-    // `role` is the operator's persisted studio-membership role — the caller must
-    // send the lowercase `STUDIO_ROLE` value (e.g. `member`/`manager`) so it
-    // matches `studioMemberships.role`, which stores lowercase constants.
-    if (query.role) {
-      andConditions.push({
-        user: {
-          studioMemberships: {
-            some: {
-              studio: { uid: studioUid },
-              role: query.role,
-              deletedAt: null,
-            },
-          },
-        },
-      });
-    }
-
-    // Duty-manager is a shift-level flag, not a membership role.
-    if (query.is_duty_manager !== undefined) {
-      andConditions.push({ isDutyManager: query.is_duty_manager });
-    }
-
-    if (query.status) {
-      andConditions.push({
-        status: query.status,
-      });
-    }
-
-    const startDate = new Date(query.start_date);
-    const endDate = new Date(query.end_date);
-    const offsetMs = deriveClientOffsetMs(startDate);
-    const localStartDateStr = toOperationalDayKey(startDate, offsetMs);
-    const localEndDateStr = toOperationalDayKey(endDate, offsetMs);
-    const startLocalDate = new Date(`${localStartDateStr}T00:00:00Z`);
-    const endLocalDate = new Date(`${localEndDateStr}T00:00:00Z`);
-
-    return {
-      studio: { uid: studioUid },
-      deletedAt: null,
-      date: {
-        gte: startLocalDate,
-        lte: endLocalDate,
-      },
-      ...(andConditions.length > 0 ? { AND: andConditions } : {}),
-    };
-  }
-
-  public calculateShowCost(show: ShowWithRelations): {
+  public calculateShowCost(show: ShowWithCostRelations): {
     base_subtotal: Prisma.Decimal;
     line_item_subtotal: Prisma.Decimal;
     total_cost: Prisma.Decimal | null;
@@ -326,7 +182,7 @@ export class StudioCostsService {
     };
   }
 
-  public calculateShiftCost(shift: StudioShiftWithRelations): {
+  public calculateShiftCost(shift: ShiftWithCostRelations): {
     base_subtotal: Prisma.Decimal;
     line_item_subtotal: Prisma.Decimal;
     total_cost: Prisma.Decimal | null;
@@ -445,79 +301,11 @@ export class StudioCostsService {
     const endDate = new Date(query.end_date);
     this.validateDateRange(startDate, endDate);
 
-    const studio = await this.prisma.studio.findUnique({
-      where: { uid: studioUid },
-      select: { metadata: true },
-    });
+    const studio = await this.costsRepo.findStudioLocalizationMetadata(studioUid);
     const { locale, currency } = this.resolveLocalization(studio?.metadata);
 
-    const shows = await this.prisma.show.findMany({
-      where: this.buildShowWhere(studioUid, query),
-      include: {
-        client: true,
-        showType: true,
-        showStandard: true,
-        showCreators: {
-          where: { deletedAt: null },
-          include: {
-            creator: true,
-            compensationLineItemTargets: {
-              where: {
-                lineItem: { deletedAt: null },
-              },
-              include: {
-                lineItem: true,
-              },
-            },
-          },
-        },
-        compensationLineItemTargets: {
-          where: {
-            lineItem: { deletedAt: null },
-          },
-          include: {
-            lineItem: true,
-          },
-        },
-      },
-    });
-
-    const shifts = await this.prisma.studioShift.findMany({
-      where: this.buildShiftWhere(studioUid, query),
-      include: {
-        user: {
-          include: {
-            studioMemberships: {
-              where: {
-                studio: { uid: studioUid },
-                deletedAt: null,
-              },
-            },
-          },
-        },
-        blocks: {
-          where: { deletedAt: null },
-          include: {
-            compensationLineItemTargets: {
-              where: {
-                lineItem: { deletedAt: null },
-              },
-              include: {
-                lineItem: true,
-              },
-            },
-          },
-        },
-        compensationLineItemTargets: {
-          where: {
-            lineItem: { deletedAt: null },
-          },
-          include: {
-            lineItem: true,
-          },
-        },
-      },
-    });
+    const shows = await this.costsRepo.findShowsForCosts(studioUid, query);
+    const shifts = await this.costsRepo.findShiftsForCosts(studioUid, query);
 
     const totalShowsCount = shows.length;
     let unresolvedShowsCount = 0;
@@ -656,35 +444,6 @@ export class StudioCostsService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const whereClause = this.buildShowWhere(studioUid, query);
-    const include = {
-      client: true,
-      showType: true,
-      showStandard: true,
-      showCreators: {
-        where: { deletedAt: null },
-        include: {
-          creator: true,
-          compensationLineItemTargets: {
-            where: {
-              lineItem: { deletedAt: null },
-            },
-            include: {
-              lineItem: true,
-            },
-          },
-        },
-      },
-      compensationLineItemTargets: {
-        where: {
-          lineItem: { deletedAt: null },
-        },
-        include: {
-          lineItem: true,
-        },
-      },
-    } satisfies Prisma.ShowInclude;
-
     const sortRules = this.withShowsSortTieBreaker(query.sort);
     const needsInMemorySort = sortRules.some((rule) => rule.field === 'total_cost');
 
@@ -700,14 +459,12 @@ export class StudioCostsService {
       });
 
       const [shows, total] = await Promise.all([
-        this.prisma.show.findMany({
-          where: whereClause,
-          include,
+        this.costsRepo.findShowsForCosts(studioUid, query, {
           orderBy: dbOrderBy,
           skip,
           take: limit,
         }),
-        this.prisma.show.count({ where: whereClause }),
+        this.costsRepo.countShows(studioUid, query),
       ]);
 
       const items = shows.map((show) => {
@@ -737,7 +494,7 @@ export class StudioCostsService {
     // sort in memory, then slice. This is bounded by MAX_DATE_RANGE_DAYS (31d)
     // which caps the row count; revisit (e.g. a materialized cost column) if
     // the deep include tree ever makes this load too heavy.
-    const shows = await this.prisma.show.findMany({ where: whereClause, include });
+    const shows = await this.costsRepo.findShowsForCosts(studioUid, query);
     const mappedItems = shows.map((show) => {
       const calculated = this.calculateShowCost(show);
       return {
@@ -809,41 +566,6 @@ export class StudioCostsService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const whereClause = this.buildShiftWhere(studioUid, query);
-    const include = {
-      user: {
-        include: {
-          studioMemberships: {
-            where: {
-              studio: { uid: studioUid },
-              deletedAt: null,
-            },
-          },
-        },
-      },
-      blocks: {
-        where: { deletedAt: null },
-        include: {
-          compensationLineItemTargets: {
-            where: {
-              lineItem: { deletedAt: null },
-            },
-            include: {
-              lineItem: true,
-            },
-          },
-        },
-      },
-      compensationLineItemTargets: {
-        where: {
-          lineItem: { deletedAt: null },
-        },
-        include: {
-          lineItem: true,
-        },
-      },
-    } satisfies Prisma.StudioShiftInclude;
-
     const sortRules = this.withShiftsSortTieBreaker(query.sort);
     const needsInMemorySort = sortRules.some((rule) => rule.field === 'total_cost');
 
@@ -856,14 +578,12 @@ export class StudioCostsService {
       });
 
       const [shifts, total] = await Promise.all([
-        this.prisma.studioShift.findMany({
-          where: whereClause,
-          include,
+        this.costsRepo.findShiftsForCosts(studioUid, query, {
           orderBy: dbOrderBy,
           skip,
           take: limit,
         }),
-        this.prisma.studioShift.count({ where: whereClause }),
+        this.costsRepo.countShifts(studioUid, query),
       ]);
 
       const items = shifts.map((shift) => {
@@ -892,7 +612,7 @@ export class StudioCostsService {
     // sort in memory, then slice. This is bounded by MAX_DATE_RANGE_DAYS (31d)
     // which caps the row count; revisit (e.g. a materialized cost column) if
     // the deep include tree ever makes this load too heavy.
-    const shifts = await this.prisma.studioShift.findMany({ where: whereClause, include });
+    const shifts = await this.costsRepo.findShiftsForCosts(studioUid, query);
     const mappedItems = shifts.map((shift) => {
       const calculated = this.calculateShiftCost(shift);
       return {

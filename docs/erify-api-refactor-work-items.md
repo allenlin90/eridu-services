@@ -138,11 +138,13 @@ Right altitude matters more than coverage count. **A behavior-preserving refacto
 - **Test strategy:** characterization at the service public API for each of the three concern groups **before** moving code (WI-T7); after the split, the same tests pass against the new services unchanged (re-pointed imports only).
 - **Acceptance:** three services <400 LOC each; module/controller wiring updated; all prior tests green. **Risk:** high. **Decision:** **D3.**
 
-### WI-21 · Studio analytics: repositories + decomposition · T2 · XL · ⟵ needs WI-T-analytics
+### WI-21 · Studio analytics: repositories + decomposition · T2 · XL · ⟵ needs WI-T-analytics · 🟡 IN PROGRESS
 - **Files:** `studios/studio-costs/studio-costs.service.ts` (939), `studios/studio-performance/studio-performance.service.ts` (928).
 - **Scope (D2):** introduce `StudioCostsRepository` / `StudioPerformanceRepository` (move all `where`/`include`/Prisma out of the services), then extract cost-calc and loop/metric helpers into focused modules/services; remove `Record<string,any>` metadata casts (uses WI-11 schemas).
 - **Test strategy:** characterization on the public analytics outputs (cost summary, performance rows) with representative fixtures, **before** extraction; repository-level tests for the new where/include builders (uses WI-T-analytics).
 - **Acceptance:** services carry no inline Prisma; each module <600 LOC; outputs identical. **Risk:** high (money/analytics). **Decision:** **D2.**
+- **Progress:**
+  - **studio-costs repository extraction** → ✅ done (this PR). `StudioCostsRepository` now owns `findStudioLocalizationMetadata` / `findShows*` / `countShows` / `findShifts*` / `countShifts` plus the `buildShow/ShiftWhere` builders and the `SHOW_COST_INCLUDE` constant / `buildShiftCostInclude(studioUid)` builder; `*WithCostRelations` payload types derive from the include so they stay in sync. Service injects the repo, carries **zero** inline Prisma, drops 938→658 LOC. Behavior pinned green by the existing #173/#174 calc characterizations + cost summary/shows/shifts specs (wired through a real repo over the same prisma mock). Sub-PRs still open: **(a)** extract the `calculateShow/ShiftCost` calc module to clear <600 (658 today); **(b)** `studio-performance` repository extraction + decomposition; **(c)** remove `Record<string,any>` metadata casts once WI-11 schemas land.
 
 ### WI-22 · Split `task-orchestration.service.ts` (672 LOC) · T2 · L
 - **Scope:** split into submission / assignment / retrieval / deletion behind a coordinating facade; fix the sequential `bulkApproveTasks` loop (bulk op) and the in-memory `resolveStudioMember` find (repository filter).
