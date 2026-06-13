@@ -10,6 +10,9 @@ import type {
   ShowPerformanceSeriesResponse,
 } from '@eridu/api-types/performance';
 
+import { parseStudioLocalization } from '../studio-localization.schema';
+
+import { parsePerformanceTemplates } from './schemas/show-platform-metadata.schema';
 import { StudioPerformanceRepository } from './studio-performance.repository';
 import { StudioPerformanceCalculatorService } from './studio-performance-calculator.service';
 
@@ -58,7 +61,7 @@ export class StudioPerformanceService {
    * falling back to the platform defaults when either is absent.
    */
   private resolveLocalization(metadata: unknown): { locale: string; currency: string } {
-    const localization = ((metadata as Record<string, any> | null)?.localization ?? {}) as Record<string, any>;
+    const localization = parseStudioLocalization(metadata);
     return {
       locale: localization.locale ?? StudioPerformanceService.DEFAULT_LOCALE,
       currency: localization.currency ?? StudioPerformanceService.DEFAULT_CURRENCY,
@@ -127,8 +130,7 @@ export class StudioPerformanceService {
       const trendData = trendMap.get(dateStr);
 
       for (const sp of show.showPlatforms) {
-        const spMetadata = (sp.metadata as Record<string, any> | null) ?? {};
-        const templates = spMetadata.performance_templates ?? {};
+        const templates = parsePerformanceTemplates(sp.metadata);
         // `viewerCount` is a non-nullable column (defaults to 0), so only count
         // it when a view-count fact was actually recorded — keeping the summary
         // totals/trend consistent with the per-platform list response.

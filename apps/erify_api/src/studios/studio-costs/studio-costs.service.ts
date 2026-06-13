@@ -17,6 +17,8 @@ import {
   parseCostsShowsSort,
 } from '@eridu/api-types/costs';
 
+import { parseStudioLocalization } from '../studio-localization.schema';
+
 import { StudioCostCalculatorService } from './studio-cost-calculator.service';
 import { StudioCostsRepository } from './studio-costs.repository';
 
@@ -53,7 +55,7 @@ export class StudioCostsService {
   }
 
   private resolveLocalization(metadata: unknown): { locale: string; currency: string } {
-    const localization = ((metadata as Record<string, any> | null)?.localization ?? {}) as Record<string, any>;
+    const localization = parseStudioLocalization(metadata);
     return {
       locale: localization.locale ?? StudioCostsService.DEFAULT_LOCALE,
       currency: localization.currency ?? StudioCostsService.DEFAULT_CURRENCY,

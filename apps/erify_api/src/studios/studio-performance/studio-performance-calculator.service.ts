@@ -8,6 +8,7 @@ import type {
   ShowPerformanceResponse,
 } from '@eridu/api-types/performance';
 
+import { parsePerformanceTemplates } from './schemas/show-platform-metadata.schema';
 import type { PerformanceListShow } from './studio-performance.repository';
 
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
@@ -36,8 +37,7 @@ export class StudioPerformanceCalculatorService {
       client_name: show.client?.name ?? null,
       show_type_name: show.showType?.name ?? null,
       platforms: show.showPlatforms.map((sp) => {
-        const metadata = (sp.metadata as Record<string, any> | null) ?? {};
-        const templates = metadata.performance_templates ?? {};
+        const templates = parsePerformanceTemplates(sp.metadata);
         const hasViewCount = templates.show_platform_view_count !== undefined;
 
         return {
@@ -289,7 +289,7 @@ export class StudioPerformanceCalculatorService {
         gmvSum = gmvSum ? gmvSum.add(sp.gmv) : sp.gmv;
       }
 
-      const templates = (sp.metadata as Record<string, any> | null)?.performance_templates ?? {};
+      const templates = parsePerformanceTemplates(sp.metadata);
       if (templates.show_platform_view_count !== undefined) {
         viewsSum = (viewsSum ?? 0) + sp.viewerCount;
       }
