@@ -5,13 +5,14 @@ import type {
   UpdateShowStatusPayload,
 } from './schemas/show-status.schema';
 import { ShowStatusRepository } from './show-status.repository';
+import { SHOW_STATUS_UID_PREFIX } from './show-status-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class ShowStatusService extends BaseModelService {
-  static readonly UID_PREFIX = 'shst';
+  static readonly UID_PREFIX = SHOW_STATUS_UID_PREFIX;
   protected readonly uidPrefix = ShowStatusService.UID_PREFIX;
 
   constructor(

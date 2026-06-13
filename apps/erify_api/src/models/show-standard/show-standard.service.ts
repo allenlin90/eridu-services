@@ -5,13 +5,14 @@ import type {
   UpdateShowStandardPayload,
 } from './schemas/show-standard.schema';
 import { ShowStandardRepository } from './show-standard.repository';
+import { SHOW_STANDARD_UID_PREFIX } from './show-standard-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class ShowStandardService extends BaseModelService {
-  static readonly UID_PREFIX = 'shsd';
+  static readonly UID_PREFIX = SHOW_STANDARD_UID_PREFIX;
   protected readonly uidPrefix = ShowStandardService.UID_PREFIX;
 
   constructor(

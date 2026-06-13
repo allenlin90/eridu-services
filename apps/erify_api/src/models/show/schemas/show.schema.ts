@@ -11,14 +11,14 @@ import {
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
-import { ClientService } from '@/models/client/client.service';
+import { CLIENT_UID_PREFIX } from '@/models/client/client-uid.util';
 import { SCHEDULE_UID_PREFIX } from '@/models/schedule/schedule.constants';
 import { SHOW_UID_PREFIX } from '@/models/show/show-uid.util';
-import { ShowStandardService } from '@/models/show-standard/show-standard.service';
-import { ShowStatusService } from '@/models/show-status/show-status.service';
-import { ShowTypeService } from '@/models/show-type/show-type.service';
-import { StudioService } from '@/models/studio/studio.service';
-import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { SHOW_STANDARD_UID_PREFIX } from '@/models/show-standard/show-standard-uid.util';
+import { SHOW_STATUS_UID_PREFIX } from '@/models/show-status/show-status-uid.util';
+import { SHOW_TYPE_UID_PREFIX } from '@/models/show-type/show-type-uid.util';
+import { STUDIO_UID_PREFIX } from '@/models/studio/studio-uid.util';
+import { STUDIO_ROOM_UID_PREFIX } from '@/models/studio-room/studio-room-uid.util';
 
 // Re-exported Prisma types for service consumption (schemas CAN import Prisma)
 export type ShowInclude = Prisma.ShowInclude;
@@ -53,12 +53,12 @@ export type UpdateShowPayload = {
 };
 
 const showClientRelationSchema = z.object({
-  uid: z.string().startsWith(ClientService.UID_PREFIX),
+  uid: z.string().startsWith(CLIENT_UID_PREFIX),
   name: z.string(),
 });
 
 const showStudioRelationSchema = z.object({
-  uid: z.string().startsWith(StudioService.UID_PREFIX),
+  uid: z.string().startsWith(STUDIO_UID_PREFIX),
   name: z.string(),
 });
 
@@ -68,23 +68,23 @@ const showScheduleRelationSchema = z.object({
 });
 
 const showStudioRoomRelationSchema = z.object({
-  uid: z.string().startsWith(StudioRoomService.UID_PREFIX),
+  uid: z.string().startsWith(STUDIO_ROOM_UID_PREFIX),
   name: z.string(),
 });
 
 const showTypeRelationSchema = z.object({
-  uid: z.string().startsWith(ShowTypeService.UID_PREFIX),
+  uid: z.string().startsWith(SHOW_TYPE_UID_PREFIX),
   name: z.string(),
 });
 
 const showStatusRelationSchema = z.object({
-  uid: z.string().startsWith(ShowStatusService.UID_PREFIX),
+  uid: z.string().startsWith(SHOW_STATUS_UID_PREFIX),
   name: z.string(),
   systemKey: z.string().nullable().optional(),
 });
 
 const showStandardRelationSchema = z.object({
-  uid: z.string().startsWith(ShowStandardService.UID_PREFIX),
+  uid: z.string().startsWith(SHOW_STANDARD_UID_PREFIX),
   name: z.string(),
 });
 
@@ -127,20 +127,20 @@ export const showSchema = z.object({
 
 // Base object schema (no refinements) — export so orchestration schemas can call .partial() on it
 export const createShowObjectSchema = z.object({
-  client_id: z.string().startsWith(ClientService.UID_PREFIX), // UID
+  client_id: z.string().startsWith(CLIENT_UID_PREFIX), // UID
   studio_room_id: z
     .string()
-    .startsWith(StudioRoomService.UID_PREFIX)
+    .startsWith(STUDIO_ROOM_UID_PREFIX)
     .nullable()
     .optional(), // UID
   studio_id: z
     .string()
-    .startsWith(StudioService.UID_PREFIX)
+    .startsWith(STUDIO_UID_PREFIX)
     .nullable()
     .optional(), // UID
-  show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX), // UID
-  show_status_id: z.string().startsWith(ShowStatusService.UID_PREFIX), // UID
-  show_standard_id: z.string().startsWith(ShowStandardService.UID_PREFIX), // UID
+  show_type_id: z.string().startsWith(SHOW_TYPE_UID_PREFIX), // UID
+  show_status_id: z.string().startsWith(SHOW_STATUS_UID_PREFIX), // UID
+  show_standard_id: z.string().startsWith(SHOW_STANDARD_UID_PREFIX), // UID
   name: z.string().min(1, 'Show name is required'),
   start_time: z.iso.datetime(), // ISO 8601 datetime string
   end_time: z.iso.datetime(), // ISO 8601 datetime string
@@ -176,25 +176,25 @@ const transformCreateShowSchema = createShowSchema.transform((data) => ({
 // API update schema (snake_case input, transforms to camelCase)
 export const updateShowSchema = z
   .object({
-    client_id: z.string().startsWith(ClientService.UID_PREFIX).optional(), // UID
+    client_id: z.string().startsWith(CLIENT_UID_PREFIX).optional(), // UID
     studio_room_id: z
       .string()
-      .startsWith(StudioRoomService.UID_PREFIX)
+      .startsWith(STUDIO_ROOM_UID_PREFIX)
       .nullable()
       .optional(), // UID
     studio_id: z
       .string()
-      .startsWith(StudioService.UID_PREFIX)
+      .startsWith(STUDIO_UID_PREFIX)
       .nullable()
       .optional(), // UID
-    show_type_id: z.string().startsWith(ShowTypeService.UID_PREFIX).optional(), // UID
+    show_type_id: z.string().startsWith(SHOW_TYPE_UID_PREFIX).optional(), // UID
     show_status_id: z
       .string()
-      .startsWith(ShowStatusService.UID_PREFIX)
+      .startsWith(SHOW_STATUS_UID_PREFIX)
       .optional(), // UID
     show_standard_id: z
       .string()
-      .startsWith(ShowStandardService.UID_PREFIX)
+      .startsWith(SHOW_STANDARD_UID_PREFIX)
       .optional(), // UID
     name: z.string().min(1, 'Show name is required').optional(),
     start_time: z.iso.datetime().optional(), // ISO 8601 datetime string
@@ -420,11 +420,11 @@ export const listShowsFilterSchema = z.object({
   creator_name: z.string().optional(),
   client_id: z
     .union([
-      z.string().startsWith(ClientService.UID_PREFIX),
-      z.array(z.string().startsWith(ClientService.UID_PREFIX)),
+      z.string().startsWith(CLIENT_UID_PREFIX),
+      z.array(z.string().startsWith(CLIENT_UID_PREFIX)),
     ])
     .optional(),
-  studio_id: z.string().startsWith(StudioService.UID_PREFIX).optional(),
+  studio_id: z.string().startsWith(STUDIO_UID_PREFIX).optional(),
   start_date_from: z.iso.datetime().optional(),
   start_date_to: z.iso.datetime().optional(),
   end_date_from: z.iso.datetime().optional(),
