@@ -3,18 +3,12 @@ import { Transactional } from '@nestjs-cls/transactional';
 import type { Prisma, Show, TaskTemplate, TaskTemplateSnapshot } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
-import { TASK_TYPE } from '@eridu/api-types/task-management';
+import { isTaskType } from '@eridu/api-types/task-management';
 import type { UploadRoutingMetadata } from '@eridu/api-types/uploads';
 
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
-
-const KNOWN_TASK_TYPES = new Set<string>(Object.values(TASK_TYPE));
-
-function isKnownTaskType(value: string): value is TaskType {
-  return KNOWN_TASK_TYPES.has(value);
-}
 
 @Injectable()
 export class TaskGenerationProcessor {
@@ -143,7 +137,7 @@ export class TaskGenerationProcessor {
 
   private resolveTemplateTaskType(schema: unknown): TaskType {
     const taskType = (schema as { metadata?: { task_type?: string } })?.metadata?.task_type;
-    return taskType !== undefined && isKnownTaskType(taskType) ? taskType : TaskType.OTHER;
+    return isTaskType(taskType) ? taskType : TaskType.OTHER;
   }
 
   /**

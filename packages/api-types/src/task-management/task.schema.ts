@@ -40,6 +40,17 @@ export const TASK_TYPE = {
 
 export type TaskType = (typeof TASK_TYPE)[keyof typeof TASK_TYPE];
 
+const TASK_TYPE_VALUES = new Set<string>(Object.values(TASK_TYPE));
+
+/**
+ * Strict membership guard for `TASK_TYPE`. Use instead of
+ * `Object.values(TASK_TYPE).includes(value as any)` when narrowing an untrusted
+ * string (e.g. read from persisted JSON) to a known `TaskType`.
+ */
+export function isTaskType(value: unknown): value is TaskType {
+  return typeof value === 'string' && TASK_TYPE_VALUES.has(value);
+}
+
 /**
  * Task Action enum (action-based workflow API)
  */

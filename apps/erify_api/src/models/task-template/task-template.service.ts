@@ -3,6 +3,7 @@ import type { TaskStatus } from '@prisma/client';
 
 import {
   getSchemaEngine,
+  isTaskType,
   safeParseTemplateSchema,
   type SchemaEngineType,
   type SharedField,
@@ -183,7 +184,7 @@ export class TaskTemplateService extends BaseModelService {
     }
 
     const taskType = (schema as { metadata?: { task_type?: string } })?.metadata?.task_type;
-    if (!taskType || !Object.values(TASK_TYPE).includes(taskType as any)) {
+    if (!isTaskType(taskType)) {
       throw HttpError.badRequest('Template metadata.task_type is required and must be a valid task type');
     }
 
