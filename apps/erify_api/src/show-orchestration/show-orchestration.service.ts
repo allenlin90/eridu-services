@@ -11,12 +11,12 @@ import {
   UpdateShowWithAssignmentsDto,
 } from './schemas/show-orchestration.schema';
 import { decimalLikeToString, isCreatorSnapshotMissing } from './creator-compensation.util';
+import { ShowPlatformAssignmentService } from './show-platform-assignment.service';
 
 import { appendSnapshotAudit, isSnapshotValueEqual, SnapshotChange } from '@/lib/audit/snapshot-audit.helper';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { CreatorRepository } from '@/models/creator/creator.repository';
-import { PlatformRepository } from '@/models/platform/platform.repository';
 import type { ShowInclude, ShowWithPayload } from '@/models/show/schemas/show.schema';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
@@ -83,10 +83,10 @@ export class ShowOrchestrationService {
     private readonly showCreatorRepository: ShowCreatorRepository,
     private readonly creatorRepository: CreatorRepository,
     private readonly showPlatformRepository: ShowPlatformRepository,
-    private readonly platformRepository: PlatformRepository,
     private readonly studioCreatorRepository: StudioCreatorRepository,
     private readonly taskService: TaskService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly showPlatformAssignmentService: ShowPlatformAssignmentService,
   ) {}
 
   async createShowWithAssignments(
@@ -172,7 +172,7 @@ export class ShowOrchestrationService {
 
     // 3. Sync platform assignments if provided
     if (dto.showPlatforms) {
-      await this.syncShowPlatforms(showId, dto.showPlatforms);
+      await this.showPlatformAssignmentService.syncShowPlatforms(showId, dto.showPlatforms);
     }
 
     // 4. Fetch updated show with relations directly via repository
@@ -472,12 +472,7 @@ export class ShowOrchestrationService {
    */
   @Transactional()
   async removePlatformsFromShow(uid: string, platformIds: string[]): Promise<void> {
-    const show = await this.showService.getShowById(uid);
-    const showId = show.id;
-
-    const platforms = await this.platformRepository.findByUids(platformIds);
-    const internalPlatformIds = platforms.map((p) => p.id);
-    await this.showPlatformRepository.softDeleteByPlatformIds(showId, internalPlatformIds);
+    return this.showPlatformAssignmentService.removePlatformsFromShow(uid, platformIds);
   }
 
   @Transactional()
@@ -517,7 +512,6 @@ export class ShowOrchestrationService {
   /**
    * Replaces all platforms for a show (sync: removes removed, adds new, restores previously deleted).
    */
-  @Transactional()
   async replacePlatformsForShow<T extends ShowInclude = Record<string, never>>(
     uid: string,
     platforms: Array<{
@@ -529,12 +523,7 @@ export class ShowOrchestrationService {
     }>,
     include?: T,
   ): Promise<Show | ShowWithPayload<T>> {
-    const defaultInclude = include || this.getDefaultIncludes();
-    const show = await this.showService.getShowById(uid);
-    const showId = show.id;
-
-    await this.syncShowPlatforms(showId, platforms);
-    return this.showRepository.findByUid(uid, defaultInclude) as Promise<Show | ShowWithPayload<T>>;
+    return this.showPlatformAssignmentService.replacePlatformsForShow(uid, platforms, include);
   }
 
   // ---------------------------------------------------------------------------
@@ -777,62 +766,4 @@ export class ShowOrchestrationService {
    * Syncs platform assignments for a show within the active transaction (via CLS).
    * Validates platforms exist, upserts active assignments, soft-deletes removed ones.
    */
-  private async syncShowPlatforms(
-    showId: bigint,
-    platforms: Array<{
-      platformId: string;
-      liveStreamLink?: string | null;
-      platformShowId?: string | null;
-      viewerCount?: number;
-      metadata?: object;
-    }>,
-  ): Promise<void> {
-    const platformUids = platforms.map((p) => p.platformId);
-
-    const foundPlatforms = await this.platformRepository.findByUids(platformUids);
-    if (foundPlatforms.length !== platformUids.length) {
-      const foundUids = foundPlatforms.map((p) => p.uid);
-      const missingUids = platformUids.filter((uid) => !foundUids.includes(uid));
-      throw HttpError.badRequest(`Platforms not found: ${missingUids.join(', ')}`);
-    }
-
-    const platformMap = new Map(foundPlatforms.map((p) => [p.uid, p.id]));
-    const existingAssignments = await this.showPlatformRepository.findMany({ where: { showId } });
-    const processedPlatformIds = new Set<bigint>();
-
-    for (const assignment of platforms) {
-      const internalPlatformId = platformMap.get(assignment.platformId);
-      if (!internalPlatformId)
-        continue;
-
-      processedPlatformIds.add(internalPlatformId);
-      const existing = existingAssignments.find((a) => a.platformId === internalPlatformId);
-
-      if (existing) {
-        await this.showPlatformRepository.restoreAndUpdateAssignment(existing.id, {
-          liveStreamLink: assignment.liveStreamLink ?? existing.liveStreamLink,
-          platformShowId: assignment.platformShowId ?? existing.platformShowId,
-          viewerCount: assignment.viewerCount ?? existing.viewerCount,
-          metadata: assignment.metadata ?? (existing.metadata as object) ?? {},
-        });
-      } else {
-        await this.showPlatformRepository.createAssignment({
-          uid: this.showPlatformService.generateShowPlatformUid(),
-          showId,
-          platformId: internalPlatformId,
-          liveStreamLink: assignment.liveStreamLink ?? null,
-          platformShowId: assignment.platformShowId ?? null,
-          viewerCount: assignment.viewerCount ?? 0,
-          metadata: assignment.metadata ?? {},
-        });
-      }
-    }
-
-    const toDelete = existingAssignments.filter(
-      (a) => !processedPlatformIds.has(a.platformId) && a.deletedAt === null,
-    );
-    for (const assignment of toDelete) {
-      await this.showPlatformRepository.softDelete({ id: assignment.id });
-    }
-  }
 }
