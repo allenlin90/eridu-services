@@ -5,6 +5,7 @@ import type {
   UpdateClientPayload,
 } from './schemas/client.schema';
 import { ClientRepository } from './client.repository';
+import { CLIENT_UID_PREFIX } from './client-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
@@ -14,7 +15,7 @@ import { UtilityService } from '@/utility/utility.service';
  */
 @Injectable()
 export class ClientService extends BaseModelService {
-  static readonly UID_PREFIX = 'client';
+  static readonly UID_PREFIX = CLIENT_UID_PREFIX;
   protected readonly uidPrefix = ClientService.UID_PREFIX;
 
   constructor(

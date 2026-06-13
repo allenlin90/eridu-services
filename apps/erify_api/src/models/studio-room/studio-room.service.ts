@@ -5,13 +5,14 @@ import type {
   UpdateStudioRoomPayload,
 } from './schemas/studio-room.schema';
 import { StudioRoomRepository } from './studio-room.repository';
+import { STUDIO_ROOM_UID_PREFIX } from './studio-room-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class StudioRoomService extends BaseModelService {
-  static readonly UID_PREFIX = 'srm';
+  static readonly UID_PREFIX = STUDIO_ROOM_UID_PREFIX;
   protected readonly uidPrefix = StudioRoomService.UID_PREFIX;
 
   constructor(

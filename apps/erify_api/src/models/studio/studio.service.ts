@@ -10,6 +10,7 @@ import type {
   UpdateStudioPayload,
 } from './schemas/studio.schema';
 import { StudioRepository } from './studio.repository';
+import { STUDIO_UID_PREFIX } from './studio-uid.util';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
@@ -20,7 +21,7 @@ import { UtilityService } from '@/utility/utility.service';
  */
 @Injectable()
 export class StudioService extends BaseModelService {
-  static readonly UID_PREFIX = 'std';
+  static readonly UID_PREFIX = STUDIO_UID_PREFIX;
   protected readonly uidPrefix = StudioService.UID_PREFIX;
 
   constructor(

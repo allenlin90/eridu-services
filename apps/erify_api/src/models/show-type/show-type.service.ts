@@ -5,13 +5,14 @@ import type {
   UpdateShowTypePayload,
 } from './schemas/show-type.schema';
 import { ShowTypeRepository } from './show-type.repository';
+import { SHOW_TYPE_UID_PREFIX } from './show-type-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class ShowTypeService extends BaseModelService {
-  static readonly UID_PREFIX = 'sht';
+  static readonly UID_PREFIX = SHOW_TYPE_UID_PREFIX;
   protected readonly uidPrefix = ShowTypeService.UID_PREFIX;
 
   constructor(
