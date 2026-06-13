@@ -3,6 +3,7 @@ import { Prisma, StudioShiftStatus } from '@prisma/client';
 
 import { costsShiftsQuerySchema, costsShowsQuerySchema } from '@eridu/api-types/costs';
 
+import { StudioCostCalculatorService } from './studio-cost-calculator.service';
 import { StudioCostsRepository } from './studio-costs.repository';
 import { StudioCostsService } from './studio-costs.service';
 
@@ -11,6 +12,7 @@ import type { PrismaService } from '@/prisma/prisma.service';
 describe('studioCostsService', () => {
   let service: StudioCostsService;
   let prisma: jest.Mocked<PrismaService>;
+  const calculator = new StudioCostCalculatorService();
 
   beforeEach(() => {
     prisma = {
@@ -29,7 +31,7 @@ describe('studioCostsService', () => {
     // Wire a real repository over the same prisma mock so the existing
     // `prisma.*.toHaveBeenCalledWith` / `mockResolvedValue` assertions still
     // drive and observe the queries the repository now owns (WI-21).
-    service = new StudioCostsService(new StudioCostsRepository(prisma));
+    service = new StudioCostsService(new StudioCostsRepository(prisma), calculator);
 
     if (prisma.studio && prisma.studio.findUnique) {
       (prisma.studio.findUnique as jest.Mock).mockResolvedValue({
@@ -149,7 +151,7 @@ describe('studioCostsService', () => {
   // line-item summation, and the actuals_source derivation so the extraction can
   // prove the contract unchanged.
   describe('calculateShowCost (direct)', () => {
-    type ShowArg = Parameters<StudioCostsService['calculateShowCost']>[0];
+    type ShowArg = Parameters<StudioCostCalculatorService['calculateShowCost']>[0];
 
     function showWithCreator(
       creatorOverrides: Record<string, unknown>,
@@ -163,7 +165,7 @@ describe('studioCostsService', () => {
     }
 
     it('a FIXED creator resolves to a numeric total (base + creator + show line items)', () => {
-      const result = service.calculateShowCost(mockShow as unknown as ShowArg);
+      const result = calculator.calculateShowCost(mockShow as unknown as ShowArg);
 
       expect(result.base_subtotal.toFixed(2)).toBe('1000.00');
       // creator line item 150 + show line item 50
@@ -182,7 +184,7 @@ describe('studioCostsService', () => {
     });
 
     it('a COMMISSION creator is unresolved (commission_pending_revenue) → total_cost null', () => {
-      const result = service.calculateShowCost(
+      const result = calculator.calculateShowCost(
         showWithCreator({ compensationType: 'COMMISSION', agreedRate: null }),
       );
 
@@ -192,7 +194,7 @@ describe('studioCostsService', () => {
     });
 
     it('a HYBRID creator adds base to the subtotal but stays unresolved on commission → total_cost null', () => {
-      const result = service.calculateShowCost(
+      const result = calculator.calculateShowCost(
         showWithCreator({ compensationType: 'HYBRID' }),
       );
 
@@ -203,7 +205,7 @@ describe('studioCostsService', () => {
     });
 
     it('a FIXED creator with a missing agreedRate snapshot is unresolved (agreement_snapshot_missing)', () => {
-      const result = service.calculateShowCost(
+      const result = calculator.calculateShowCost(
         showWithCreator({ compensationType: 'FIXED', agreedRate: null }),
       );
 
@@ -213,7 +215,7 @@ describe('studioCostsService', () => {
     });
 
     it('null compensationType falls back to agreement_snapshot_missing', () => {
-      const result = service.calculateShowCost(
+      const result = calculator.calculateShowCost(
         showWithCreator({ compensationType: null }),
       );
 
@@ -222,7 +224,7 @@ describe('studioCostsService', () => {
     });
 
     it('derives actuals_source: MANAGER override beats the OPERATOR default', () => {
-      const result = service.calculateShowCost(
+      const result = calculator.calculateShowCost(
         showWithCreator({}, {
           metadata: { actuals_source: { actual_start_time: 'MANAGER' } },
         }),
@@ -232,7 +234,7 @@ describe('studioCostsService', () => {
     });
 
     it('missing actuals fall back to PLANNED with an actuals_missing warning', () => {
-      const result = service.calculateShowCost(
+      const result = calculator.calculateShowCost(
         showWithCreator({}, { actualStartTime: null, actualEndTime: null }),
       );
 
@@ -246,7 +248,7 @@ describe('studioCostsService', () => {
   // (actual vs planned fallback), the hourlyRate * hours base, line-item
   // summation, and the dominant actuals_source precedence.
   describe('calculateShiftCost (direct)', () => {
-    type ShiftArg = Parameters<StudioCostsService['calculateShiftCost']>[0];
+    type ShiftArg = Parameters<StudioCostCalculatorService['calculateShiftCost']>[0];
 
     function withBlock(blockOverrides: Record<string, unknown>): ShiftArg {
       return {
@@ -256,7 +258,7 @@ describe('studioCostsService', () => {
     }
 
     it('computes base from hourlyRate * actual hours and sums block + shift line items', () => {
-      const result = service.calculateShiftCost(mockShift as unknown as ShiftArg);
+      const result = calculator.calculateShiftCost(mockShift as unknown as ShiftArg);
 
       // 200/hr * 4h (10:00–14:00 actual) = 800
       expect(result.base_subtotal.toFixed(2)).toBe('800.00');
@@ -275,7 +277,7 @@ describe('studioCostsService', () => {
     });
 
     it('falls back to planned duration with an actuals_missing warning when block actuals are absent', () => {
-      const result = service.calculateShiftCost(
+      const result = calculator.calculateShiftCost(
         withBlock({ actualStartTime: null, actualEndTime: null }),
       );
 
@@ -288,7 +290,7 @@ describe('studioCostsService', () => {
     });
 
     it('derives the dominant actuals_source: a MANAGER block lifts the shift to MANAGER_OVERRIDE', () => {
-      const result = service.calculateShiftCost(
+      const result = calculator.calculateShiftCost(
         withBlock({ metadata: { actuals_source: { actual_start_time: 'MANAGER' } } }),
       );
 
