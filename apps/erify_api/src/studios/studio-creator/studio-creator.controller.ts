@@ -44,7 +44,7 @@ import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 import { userDto } from '@/models/user/schemas/user.schema';
-import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 
 const STUDIO_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
@@ -61,7 +61,7 @@ const STUDIO_CREATOR_COMPENSATION_ROLES = [
 export class StudioCreatorController extends BaseStudioController {
   constructor(
     private readonly studioCreatorService: StudioCreatorService,
-    private readonly showOrchestrationService: ShowOrchestrationService,
+    private readonly creatorCompensationService: CreatorCompensationService,
   ) {
     super();
   }
@@ -161,7 +161,7 @@ export class StudioCreatorController extends BaseStudioController {
     @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
     @Query() query: StudioCreatorCompensationQueryDto,
   ) {
-    const compensation = await this.showOrchestrationService.getCreatorCompensations(
+    const compensation = await this.creatorCompensationService.getCreatorCompensations(
       studioId,
       creatorId,
       {

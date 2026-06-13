@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import type { Show } from '@prisma/client';
-import { Prisma } from '@prisma/client';
 
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
@@ -11,11 +10,11 @@ import {
   showWithAssignmentsInclude,
   UpdateShowWithAssignmentsDto,
 } from './schemas/show-orchestration.schema';
+import { decimalLikeToString, isCreatorSnapshotMissing } from './creator-compensation.util';
 
 import { appendSnapshotAudit, isSnapshotValueEqual, SnapshotChange } from '@/lib/audit/snapshot-audit.helper';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
-import { CompensationLineItemService } from '@/models/compensation-line-item/compensation-line-item.service';
 import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import type { ShowInclude, ShowWithPayload } from '@/models/show/schemas/show.schema';
@@ -61,28 +60,6 @@ type ShowCreatorListItem = {
   metadata: Record<string, unknown>;
 };
 
-type ShowCreatorCompensationSummaryRow = {
-  showCreatorId: string;
-  creatorId: string;
-  creatorName: string;
-  creatorAliasName: string;
-  compensationType: string | null;
-  agreedRate: string | null;
-  commissionRate: string | null;
-  baseAmount: string | null;
-  adjustmentTotal: string;
-  totalAmount: string | null;
-  unresolvedReason: string | null;
-};
-
-type StudioCreatorCompensationRow = ShowCreatorCompensationSummaryRow & {
-  showId: string;
-  showName: string;
-  showStartTime: Date;
-  showEndTime: Date;
-  note: string | null;
-};
-
 type StudioCreatorSnapshotDefaults = {
   defaultRate: { toString: () => string } | string | number | null;
   defaultRateType: string | null;
@@ -100,7 +77,6 @@ type ResolvedCreatorSnapshot = {
 export class ShowOrchestrationService {
   constructor(
     private readonly showService: ShowService,
-    private readonly compensationLineItemService: CompensationLineItemService,
     private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
     private readonly showRepository: ShowRepository,
@@ -491,145 +467,6 @@ export class ShowOrchestrationService {
     };
   }
 
-  async getCreatorCompensationSummaryForShow(studioUid: string, uid: string) {
-    const show = await this.showService.getShowById(uid, {
-      showCreators: {
-        where: {
-          deletedAt: null,
-          creator: { deletedAt: null },
-        },
-        include: {
-          creator: {
-            select: {
-              uid: true,
-              name: true,
-              aliasName: true,
-            },
-          },
-        },
-      },
-    });
-
-    const showCreators = show.showCreators ?? [];
-    const adjustmentTotals = await this.compensationLineItemService.sumActiveAmountsByShowCreatorUids({
-      studioId: studioUid,
-      showCreatorUids: showCreators.map((showCreator) => showCreator.uid),
-    });
-
-    const creators: ShowCreatorCompensationSummaryRow[] = [];
-    let totalAmount = new Prisma.Decimal(0);
-    let unresolvedCount = 0;
-
-    for (const showCreator of showCreators) {
-      const adjustmentTotal = adjustmentTotals.get(showCreator.uid) ?? new Prisma.Decimal(0);
-      const baseAmount = this.resolveBaseCreatorAmount(
-        showCreator.compensationType,
-        showCreator.agreedRate,
-      );
-      const unresolvedReason = this.resolveCreatorCompensationUnresolvedReason(
-        showCreator.compensationType,
-        showCreator.agreedRate,
-        showCreator.commissionRate,
-      );
-      const rowTotal = unresolvedReason !== null || baseAmount === null
-        ? null
-        : baseAmount.plus(adjustmentTotal);
-
-      if (rowTotal === null) {
-        unresolvedCount += 1;
-      } else {
-        totalAmount = totalAmount.plus(rowTotal);
-      }
-
-      creators.push({
-        showCreatorId: showCreator.uid,
-        creatorId: showCreator.creator.uid,
-        creatorName: showCreator.creator.name,
-        creatorAliasName: showCreator.creator.aliasName,
-        compensationType: showCreator.compensationType,
-        agreedRate: this.decimalLikeToString(showCreator.agreedRate),
-        commissionRate: this.decimalLikeToString(showCreator.commissionRate),
-        baseAmount: baseAmount === null ? null : this.toMoneyString(baseAmount),
-        adjustmentTotal: this.toMoneyString(adjustmentTotal),
-        totalAmount: rowTotal === null ? null : this.toMoneyString(rowTotal),
-        unresolvedReason,
-      });
-    }
-
-    return {
-      showId: uid,
-      creators,
-      totalAmount: this.toMoneyString(totalAmount),
-      unresolvedCount,
-    };
-  }
-
-  async getCreatorCompensations(
-    studioUid: string,
-    creatorUid: string,
-    params: {
-      dateFrom: Date;
-      dateTo: Date;
-    },
-  ) {
-    const rosterEntry = await this.studioCreatorRepository.findByStudioUidAndCreatorUid(
-      studioUid,
-      creatorUid,
-    );
-    if (!rosterEntry) {
-      throw HttpError.notFound('Studio creator', creatorUid);
-    }
-
-    const rows = await this.showCreatorRepository.findCompensationReviewRows({
-      studioUid,
-      creatorUid,
-      dateFrom: params.dateFrom,
-      dateTo: params.dateTo,
-    });
-    const adjustmentTotals = await this.compensationLineItemService.sumActiveAmountsByShowCreatorUids({
-      studioId: studioUid,
-      showCreatorUids: rows.map((row) => row.uid),
-    });
-
-    const shows: StudioCreatorCompensationRow[] = [];
-    let totalAmount = new Prisma.Decimal(0);
-    let unresolvedCount = 0;
-
-    for (const row of rows) {
-      const adjustmentTotal = adjustmentTotals.get(row.uid) ?? new Prisma.Decimal(0);
-      const compensationRow = this.buildCreatorCompensationRow(row, adjustmentTotal);
-      const showTotal = compensationRow.totalAmount === null
-        ? null
-        : new Prisma.Decimal(compensationRow.totalAmount);
-
-      if (showTotal === null) {
-        unresolvedCount += 1;
-      } else {
-        totalAmount = totalAmount.plus(showTotal);
-      }
-
-      shows.push({
-        ...compensationRow,
-        showId: row.show.uid,
-        showName: row.show.name,
-        showStartTime: row.show.startTime,
-        showEndTime: row.show.endTime,
-        note: row.note ?? null,
-      });
-    }
-
-    return {
-      creatorId: rosterEntry.creator.uid,
-      creatorName: rosterEntry.creator.name,
-      creatorAliasName: rosterEntry.creator.aliasName,
-      dateFrom: params.dateFrom,
-      dateTo: params.dateTo,
-      shows,
-      totalAmount: this.toMoneyString(totalAmount),
-      unresolvedCount,
-    };
-  }
-
   /**
    * Removes platforms from a show by soft-deleting the ShowPlatform records.
    */
@@ -855,13 +692,13 @@ export class ShowOrchestrationService {
       : current?.compensationType ?? defaults?.defaultRateType ?? null;
     const agreedRate = assignment.agreedRate !== undefined
       ? assignment.agreedRate
-      : this.decimalLikeToString(current?.agreedRate ?? defaults?.defaultRate ?? null);
+      : decimalLikeToString(current?.agreedRate ?? defaults?.defaultRate ?? null);
     const commissionRate = assignment.commissionRate !== undefined
       ? assignment.commissionRate
-      : this.decimalLikeToString(current?.commissionRate ?? defaults?.defaultCommissionRate ?? null);
+      : decimalLikeToString(current?.commissionRate ?? defaults?.defaultCommissionRate ?? null);
     const resolvedMetadata = this.withAgreementSnapshotFlag(
       this.toMetadataObject(metadata),
-      this.isCreatorSnapshotMissing(compensationType, agreedRate, commissionRate),
+      isCreatorSnapshotMissing(compensationType, agreedRate, commissionRate),
     );
 
     return {
@@ -870,97 +707,6 @@ export class ShowOrchestrationService {
       commissionRate,
       metadata: resolvedMetadata,
     };
-  }
-
-  private resolveBaseCreatorAmount(
-    compensationType: string | null,
-    agreedRate: unknown | null,
-  ): Prisma.Decimal | null {
-    if (
-      compensationType === CREATOR_COMPENSATION_TYPE.FIXED
-      || compensationType === CREATOR_COMPENSATION_TYPE.HYBRID
-    ) {
-      return agreedRate == null ? null : this.toDecimal(agreedRate);
-    }
-
-    return null;
-  }
-
-  private resolveCreatorCompensationUnresolvedReason(
-    compensationType: string | null,
-    agreedRate: unknown | null,
-    commissionRate: unknown | null,
-  ): string | null {
-    if (this.isCreatorSnapshotMissing(
-      compensationType,
-      this.decimalLikeToString(agreedRate),
-      this.decimalLikeToString(commissionRate),
-    )) {
-      return 'AGREEMENT_SNAPSHOT_MISSING';
-    }
-
-    if (
-      compensationType === CREATOR_COMPENSATION_TYPE.COMMISSION
-      || compensationType === CREATOR_COMPENSATION_TYPE.HYBRID
-    ) {
-      return 'COMMISSION_REVENUE_NOT_AVAILABLE';
-    }
-
-    return null;
-  }
-
-  private buildCreatorCompensationRow(
-    showCreator: {
-      uid: string;
-      compensationType: string | null;
-      agreedRate: unknown | null;
-      commissionRate: unknown | null;
-      creator: {
-        uid: string;
-        name: string;
-        aliasName: string;
-      };
-    },
-    adjustmentTotal: Prisma.Decimal,
-  ): ShowCreatorCompensationSummaryRow {
-    const baseAmount = this.resolveBaseCreatorAmount(
-      showCreator.compensationType,
-      showCreator.agreedRate,
-    );
-    const unresolvedReason = this.resolveCreatorCompensationUnresolvedReason(
-      showCreator.compensationType,
-      showCreator.agreedRate,
-      showCreator.commissionRate,
-    );
-    const rowTotal = unresolvedReason !== null || baseAmount === null
-      ? null
-      : baseAmount.plus(adjustmentTotal);
-
-    return {
-      showCreatorId: showCreator.uid,
-      creatorId: showCreator.creator.uid,
-      creatorName: showCreator.creator.name,
-      creatorAliasName: showCreator.creator.aliasName,
-      compensationType: showCreator.compensationType,
-      agreedRate: this.decimalLikeToString(showCreator.agreedRate),
-      commissionRate: this.decimalLikeToString(showCreator.commissionRate),
-      baseAmount: baseAmount === null ? null : this.toMoneyString(baseAmount),
-      adjustmentTotal: this.toMoneyString(adjustmentTotal),
-      totalAmount: rowTotal === null ? null : this.toMoneyString(rowTotal),
-      unresolvedReason,
-    };
-  }
-
-  private toDecimal(value: unknown): Prisma.Decimal {
-    if (value instanceof Prisma.Decimal) {
-      return value;
-    }
-
-    return new Prisma.Decimal(String(value));
-  }
-
-  private toMoneyString(value: Prisma.Decimal): string {
-    return value.toFixed(2);
   }
 
   private buildCreatorSnapshotChanges(
@@ -997,30 +743,6 @@ export class ShowOrchestrationService {
     }
   }
 
-  private isCreatorSnapshotMissing(
-    compensationType: string | null,
-    agreedRate: string | null,
-    commissionRate: string | null,
-  ): boolean {
-    if (!compensationType) {
-      return true;
-    }
-
-    if (
-      (compensationType === CREATOR_COMPENSATION_TYPE.FIXED
-        || compensationType === CREATOR_COMPENSATION_TYPE.HYBRID)
-      && !agreedRate
-    ) {
-      return true;
-    }
-
-    return (
-      (compensationType === CREATOR_COMPENSATION_TYPE.COMMISSION
-        || compensationType === CREATOR_COMPENSATION_TYPE.HYBRID)
-      && !commissionRate
-    );
-  }
-
   private withAgreementSnapshotFlag(
     metadata: Record<string, unknown>,
     isMissing: boolean,
@@ -1049,14 +771,6 @@ export class ShowOrchestrationService {
     return value && typeof value === 'object' && !Array.isArray(value)
       ? value as Record<string, unknown>
       : {};
-  }
-
-  private decimalLikeToString(value: unknown): string | null {
-    if (value === null || value === undefined) {
-      return null;
-    }
-
-    return value.toString();
   }
 
   /**

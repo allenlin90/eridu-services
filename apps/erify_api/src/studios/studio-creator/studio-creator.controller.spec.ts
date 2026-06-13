@@ -17,12 +17,12 @@ import { StudioCreatorController } from './studio-creator.controller';
 
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
-import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 
 describe('studioCreatorController', () => {
   let controller: StudioCreatorController;
   let studioCreatorService: jest.Mocked<StudioCreatorService>;
-  let showOrchestrationService: jest.Mocked<ShowOrchestrationService>;
+  let creatorCompensationService: jest.Mocked<CreatorCompensationService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,7 +42,7 @@ describe('studioCreatorController', () => {
           },
         },
         {
-          provide: ShowOrchestrationService,
+          provide: CreatorCompensationService,
           useValue: {
             getCreatorCompensations: jest.fn(),
           },
@@ -52,7 +52,7 @@ describe('studioCreatorController', () => {
 
     controller = module.get<StudioCreatorController>(StudioCreatorController);
     studioCreatorService = module.get(StudioCreatorService);
-    showOrchestrationService = module.get(ShowOrchestrationService);
+    creatorCompensationService = module.get(CreatorCompensationService);
   });
 
   it('should list available creators by studio and date window', async () => {
@@ -290,7 +290,7 @@ describe('studioCreatorController', () => {
       dateTo: new Date('2026-05-31T23:59:59.999Z'),
     } as StudioCreatorCompensationQueryDto;
 
-    showOrchestrationService.getCreatorCompensations.mockResolvedValue({
+    creatorCompensationService.getCreatorCompensations.mockResolvedValue({
       creatorId,
       creatorName: 'Ann',
       creatorAliasName: 'Ann',
@@ -322,7 +322,7 @@ describe('studioCreatorController', () => {
 
     const result = await controller.listCreatorCompensations(studioId, creatorId, query);
 
-    expect(showOrchestrationService.getCreatorCompensations).toHaveBeenCalledWith(
+    expect(creatorCompensationService.getCreatorCompensations).toHaveBeenCalledWith(
       studioId,
       creatorId,
       {

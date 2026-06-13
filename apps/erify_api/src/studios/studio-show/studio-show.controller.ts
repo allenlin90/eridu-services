@@ -56,6 +56,7 @@ import {
   showWithTaskSummaryDto,
   taskWithRelationsDto,
 } from '@/models/task/schemas/task.schema';
+import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
@@ -137,6 +138,7 @@ export class StudioShowController extends BaseStudioController {
     private readonly taskOrchestrationService: TaskOrchestrationService,
     private readonly showOrchestrationService: ShowOrchestrationService,
     private readonly showRunReviewService: ShowRunReviewService,
+    private readonly creatorCompensationService: CreatorCompensationService,
     private readonly studioShowManagementService: StudioShowManagementService,
   ) {
     super();
@@ -306,7 +308,7 @@ export class StudioShowController extends BaseStudioController {
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
-    const summary = await this.showOrchestrationService.getCreatorCompensationSummaryForShow(studioId, id);
+    const summary = await this.creatorCompensationService.getCreatorCompensationSummaryForShow(studioId, id);
     return showCreatorCompensationSummaryDto.parse(summary);
   }
 
