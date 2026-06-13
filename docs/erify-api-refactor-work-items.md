@@ -109,11 +109,16 @@ Right altitude matters more than coverage count. **A behavior-preserving refacto
 - **Test strategy:** *characterization* — wrap a write in a `@Transactional` test that rolls back and assert the repository write is rolled back too (proves it participates). Add for task-template specifically (today it would silently escape). *regression* — existing repo specs green.
 - **Acceptance:** no repository performs writes off the unbounded `PrismaService`; rollback test passes. **Risk:** medium. **Decision:** **D6** (snapshot soft vs hard delete) informs schedule-snapshot.
 
-### WI-11 · Zod schemas for recurring JSONB shapes · T3 · L
+### WI-11 · Zod schemas for recurring JSONB shapes · T3 · L · 🟡 IN PROGRESS
 - **Files:** new schemas for studio `metadata.localization` / `performance_templates`, task `snapshot.schema`, upload routing; parse at controller/DTO boundary. Consumers: `studio-costs`, `studio-performance`, `task.service.ts:222`, `task-template.service.ts`.
 - **Scope:** define typed shapes, parse at the boundary, pass typed objects inward; remove `Record<string,any>` / `as any` from business logic (keep unsafe casts only at the edge).
 - **Test strategy:** *expectation* — schema rejects malformed metadata at the boundary; *characterization* — well-formed current payloads parse unchanged (snapshot real fixtures from DB-shaped data).
 - **Acceptance:** named types replace `Record<string,any>` in the listed services; boundary parse covered. **Risk:** medium. **Decision:** none (enables T3/T4).
+- **Progress:**
+  - **slice 1 — localization + performance_templates** → ✅ done (this PR). New `studio-localization.schema.ts` (`parseStudioLocalization`, shared by both analytics services) and `studio-performance/schemas/show-platform-metadata.schema.ts` (`parsePerformanceTemplates`). Both are **lenient DB-read parses** (`safeParse` → fallback to `{}`), not request-boundary rejects — a malformed/absent JSONB falls back to defaults instead of 500-ing the dashboard, preserving the prior never-throw read behavior. Replaces the 5 `as Record<string,any>` casts across `studio-costs.service`, `studio-performance.service`, and `studio-performance-calculator.service` (localization ×2 + performance_templates ×3). +2 helper specs (well-formed parses unchanged; null/non-object/malformed → fallback). This **closes the localization + performance_templates half of WI-21(c)** for the analytics services.
+  - **slice 2** — task `snapshot.schema` (the legacy untyped moderator snapshot read defensively in `buildLoopItems`; also the `task.content` casts) — pending; its own PR with characterization on real-shaped fixtures.
+  - **slice 3** — upload routing metadata, plus `task.service.ts:222` / `task-template.service.ts` reads — pending.
+  - *Note:* the `show/block metadata.actuals_source` casts in `studio-cost-calculator.service` are a **different** JSONB shape (provenance), not in WI-11's listed set — track separately if hardening is wanted; they are not part of WI-21(c).
 
 ### WI-12 · Strict `task_type` registry lookup · T3 · S
 - **Files:** `task-orchestration/task-generation-processor.service.ts:140`; related read in `task-template.service.ts`.
