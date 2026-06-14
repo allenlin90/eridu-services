@@ -13,6 +13,10 @@
       "types": "./dist/audits/index.d.ts",
       "default": "./dist/audits/index.js"
     },
+    "./client-mechanics": {
+      "types": "./dist/client-mechanics/index.d.ts",
+      "default": "./dist/client-mechanics/index.js"
+    },
     "./clients": {
       "types": "./dist/clients/index.d.ts",
       "default": "./dist/clients/index.js"
