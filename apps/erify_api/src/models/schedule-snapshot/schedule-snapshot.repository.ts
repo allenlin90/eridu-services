@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, ScheduleSnapshot } from '@prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
@@ -6,17 +8,23 @@ import { PrismaService } from '@/prisma/prisma.service';
 /**
  * Repository for ScheduleSnapshot.
  * Note: Snapshots are immutable - they only support create, read, and hard delete operations.
- * Updates and soft deletes are not supported.
+ * Updates and soft deletes are not supported (the model has no `deletedAt` column,
+ * so this repository intentionally does NOT extend BaseRepository).
  */
 @Injectable()
 export class ScheduleSnapshotRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {}
 
   async create(
     data: Prisma.ScheduleSnapshotCreateInput,
     include?: Prisma.ScheduleSnapshotInclude,
   ): Promise<ScheduleSnapshot> {
-    return this.prisma.scheduleSnapshot.create({
+    // Route writes through txHost.tx so snapshot creation participates in the
+    // ambient publish transaction (rolled back together on failure).
+    return this.txHost.tx.scheduleSnapshot.create({
       data,
       ...(include && { include }),
     });
@@ -55,7 +63,7 @@ export class ScheduleSnapshotRepository {
   async delete(
     where: Prisma.ScheduleSnapshotWhereUniqueInput,
   ): Promise<ScheduleSnapshot> {
-    return this.prisma.scheduleSnapshot.delete({
+    return this.txHost.tx.scheduleSnapshot.delete({
       where,
     });
   }

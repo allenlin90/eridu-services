@@ -1,3 +1,6 @@
+import type { TransactionHost } from '@nestjs-cls/transactional';
+import type { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+
 import { TaskTemplateRepository } from './task-template.repository';
 
 import type { PrismaService } from '@/prisma/prisma.service';
@@ -26,7 +29,10 @@ describe('taskTemplateRepository', () => {
 
   beforeEach(() => {
     prisma = createPrismaServiceMock();
-    repository = new TaskTemplateRepository(prisma as unknown as PrismaService);
+    // Writes route through txHost.tx; point it at the same mock so the existing
+    // delegate assertions hold whether the repo reads via prisma or writes via tx.
+    const txHost = { tx: prisma } as unknown as TransactionHost<TransactionalAdapterPrisma>;
+    repository = new TaskTemplateRepository(prisma as unknown as PrismaService, txHost);
   });
 
   it('keeps admin usage list query lean and resolves task_type without loading full schema blobs', async () => {

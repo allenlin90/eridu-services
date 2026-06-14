@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, TaskStatus, TaskTemplate } from '@prisma/client';
 
 import { TASK_TEMPLATE_KIND, type TaskTemplateKind } from '@eridu/api-types/task-management';
@@ -15,7 +17,10 @@ export class TaskTemplateRepository extends BaseRepository<
   Prisma.TaskTemplateUpdateInput,
   Prisma.TaskTemplateWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
     super(new PrismaModelWrapper(prisma.taskTemplate));
   }
 
@@ -57,7 +62,7 @@ export class TaskTemplateRepository extends BaseRepository<
       ...(studioUid && { studio: { uid: studioUid } }),
     };
 
-    return this.prisma.taskTemplate.update({
+    return this.txHost.tx.taskTemplate.update({
       where: { ...where, deletedAt: null },
       data,
       ...(include && { include }),
@@ -78,7 +83,7 @@ export class TaskTemplateRepository extends BaseRepository<
     };
 
     try {
-      return await this.prisma.taskTemplate.update({
+      return await this.txHost.tx.taskTemplate.update({
         where: { ...where, deletedAt: null },
         data,
         ...(include && { include }),
@@ -210,7 +215,7 @@ export class TaskTemplateRepository extends BaseRepository<
   }
 
   async softDelete(where: Prisma.TaskTemplateWhereUniqueInput): Promise<TaskTemplate> {
-    return this.prisma.taskTemplate.update({
+    return this.txHost.tx.taskTemplate.update({
       where,
       data: { deletedAt: new Date() },
     });
