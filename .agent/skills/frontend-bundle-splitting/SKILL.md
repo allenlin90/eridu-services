@@ -1,0 +1,32 @@
+---
+name: frontend-bundle-splitting
+description: How to split a large eager JS bundle into cacheable vendor chunks with Vite/Rollup manualChunks — when one big entry/vendor chunk dominates first load. Use when reducing bundle size, configuring build.rollupOptions.output.manualChunks, or deciding what to code-split vs vendor-chunk in a Vite + React app. Generic guidance, grounded in the official Vite & Rollup docs.
+---
+
+# Frontend Bundle Splitting (Vite / Rollup `manualChunks`)
+
+Two different mechanisms shrink first load — don't confuse them:
+
+- **Code-splitting (lazy)** — `import()` / `React.lazy` / router auto-splitting. Defers code until a route/interaction needs it. *Reduces bytes downloaded on first paint.*
+- **Vendor chunking (`manualChunks`)** — groups *eagerly-loaded* dependencies into separate files. Mostly a **caching + parallel-download** win (stable vendor files survive app-code deploys); it does **not** by itself defer eager code.
+
+Reach for `manualChunks` when the build emits **one large eager entry/vendor chunk** (the "Some chunks are larger than 500 kB" warning). Reach for lazy `import()` when heavy code is only needed conditionally. See [references/manual-chunks-mechanics.md](references/manual-chunks-mechanics.md) for the official Vite/Rollup docs, how it works internally, and well-known precedent.
+
+## Decision rules
+
+1. **Diagnose before splitting.** Read the build's chunk map first. Identify whether route-splitting is already on (e.g. TanStack/React Router auto-split) and what's *already lazy*. Don't "add lazy loading" to something already split — fix what the map actually shows.
+2. **Only manual-chunk stable, eagerly-loaded vendors.** Grouping `react`/`react-dom`, the router/query runtime, and form/validation libs into named chunks (e.g. `vendor-react`) is a caching win: their hashes don't change when app code does. Volatile app code does not belong in a hand-named vendor chunk.
+3. **Never write a catch-all `return 'vendor'`.** `manualChunks` runs for **every** module, including dynamically-imported ones. A catch-all yanks already-lazy heavy libs (charts, calendars, editors) **into an eager chunk** — silently undoing code-splitting. Return `undefined` for everything you don't explicitly want grouped, so the bundler keeps its default (lazy) chunking. This is a documented footgun (vitejs/vite#12209).
+4. **Group by *load timing*, not by org/namespace prefix.** A scope like `@tanstack/*` mixes startup-eager packages (query, router) with route-scoped ones (table, virtual list). Lumping the whole prefix into one eager chunk makes every page pay for table code. Split the eager subset from the route-scoped subset (or give each its own chunk).
+5. **`manualChunks` can only *isolate* an eager module — it cannot make it lazy.** If a heavy lib is reachable from the startup graph (e.g. a UI barrel re-exports a data-table that pulls it in), excluding it from a manual chunk just relocates it into the entry. Truly deferring it requires breaking the eager import path (lazy `import()` at the call site, or a narrower import) — a separate change. Chunking decides *which* file eager code lives in, not *whether* it's eager.
+6. **Verify by measuring, behavior-preserving.** Compare the chunk map before/after; confirm the eager entry shrank and that previously-lazy chunks are still separate. The app must build and behave identically — `manualChunks` is output-only config. Don't chase the warning into app code speculatively; stop when the remaining entry is app shell, and hand the rest to lazy-loading / component decomposition.
+
+## Keep it generic
+
+Match on path boundaries (`id.includes('/node_modules/<pkg>/')`), not version strings. Group a *small* set of clearly-justified, stable vendors — adding a chunk per package is over-engineering. The pattern is the guidance; the exact package list is a per-app detail that changes as deps change.
+
+## Related
+
+- [frontend-performance](../frontend-performance/SKILL.md) — broader perf rules (memoization, virtual scroll, lazy heavy components).
+- [references/manual-chunks-mechanics.md](references/manual-chunks-mechanics.md) — official docs, mechanics, precedent, and a worked case study.
+- [codebase-hardening-program](../codebase-hardening-program/SKILL.md) — running a behavior-preserving perf/quality pass as one-PR-per-item.
