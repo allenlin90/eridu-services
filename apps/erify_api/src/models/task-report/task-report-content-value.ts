@@ -55,6 +55,12 @@ function normalizeFieldValue(value: unknown, type: FieldType): unknown {
       if (typeof value === 'number') {
         return Number.isFinite(value) ? value : null;
       }
+      // A submitted-but-blank numeric field is "not reported", not 0.
+      // `Number('')` / `Number('   ')` coerce to a finite 0, fabricating a
+      // value, so reject blank/whitespace strings before coercion (D9/WI-34).
+      if (typeof value === 'string' && value.trim().length === 0) {
+        return null;
+      }
       const coerced = Number(value);
       return Number.isFinite(coerced) ? coerced : null;
     }
