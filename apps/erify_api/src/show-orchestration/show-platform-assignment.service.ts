@@ -36,6 +36,7 @@ export class ShowPlatformAssignmentService {
     private readonly showPlatformService: ShowPlatformService,
   ) {}
 
+  @Transactional()
   async removePlatformsFromShow(uid: string, platformIds: string[]): Promise<void> {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;

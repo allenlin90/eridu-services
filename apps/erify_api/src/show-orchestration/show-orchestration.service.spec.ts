@@ -29,6 +29,7 @@ import type {
   UpdateShowWithAssignmentsDto,
 } from '@/show-orchestration/schemas/show-orchestration.schema';
 import { showWithAssignmentsInclude } from '@/show-orchestration/schemas/show-orchestration.schema';
+import { ShowCreatorAssignmentService } from '@/show-orchestration/show-creator-assignment.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { ShowPlatformAssignmentService } from '@/show-orchestration/show-platform-assignment.service';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
@@ -101,6 +102,7 @@ describe('showOrchestrationService', () => {
       providers: [
         ShowOrchestrationService,
         ShowPlatformAssignmentService,
+        ShowCreatorAssignmentService,
         {
           provide: ShowService,
           useValue: {
