@@ -206,6 +206,56 @@ describe('taskReportRunService', () => {
     });
   });
 
+  it('renders a submitted-but-blank numeric field as not-reported (null), not 0 (WI-34/D9)', async () => {
+    const snapshotSchema = TemplateSchemaValidator.parse({
+      items: [
+        {
+          id: 'fi_1',
+          key: 'gmv',
+          type: 'number',
+          standard: true,
+          label: 'GMV',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      showStandardId: 'shsd_1',
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        content: { gmv: '   ' },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([
+      {
+        key: 'gmv',
+        type: 'number',
+        category: 'metric',
+        label: 'GMV',
+        is_active: true,
+      },
+    ]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'gmv', label: 'GMV' }],
+    }));
+
+    expect(result.row_count).toBe(1);
+    expect(result.rows[0].gmv).toBeNull();
+  });
+
   it('emits sidecar explanations and extra input data in an adjacent column when selected', async () => {
     const snapshotSchema = TemplateSchemaValidator.parse({
       items: [
