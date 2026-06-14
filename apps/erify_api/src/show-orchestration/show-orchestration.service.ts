@@ -61,19 +61,6 @@ export class ShowOrchestrationService {
   }
 
   /**
-   * Retrieves shows with all relations (MCs, platforms, clients, etc.).
-   */
-  async getShowsWithRelations<T extends ShowInclude = Record<string, never>>(
-    params: Parameters<ShowService['getActiveShows']>[0],
-    include?: T,
-  ): Promise<Show[] | ShowWithPayload<T>[]> {
-    return this.showService.getActiveShows({
-      ...params,
-      include: include || this.getDefaultIncludes(),
-    });
-  }
-
-  /**
    * Retrieves paginated shows with filtering and full relations.
    */
   async getPaginatedShowsWithRelations(query: ListShowsQueryDto): Promise<{
@@ -120,9 +107,9 @@ export class ShowOrchestrationService {
       { actualStartTime: dto.actualStartTime, actualEndTime: dto.actualEndTime },
     );
 
-    // 1. Update core show attributes directly via repository
-    const updateData = this.showService.buildUpdatePayload(dto);
-    await this.showRepository.update({ uid }, updateData);
+    // 1. Update core show attributes via the show service (repository access
+    //    stays in the model layer).
+    await this.showService.updateShowFromDto(uid, dto);
 
     // 2. Sync creator assignments if provided
     if (dto.showCreators) {

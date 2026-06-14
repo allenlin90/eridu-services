@@ -282,27 +282,6 @@ describe('showOrchestrationService', () => {
     });
   });
 
-  describe('getShowsWithRelations', () => {
-    it('should retrieve shows with all relations', async () => {
-      const params = {
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' as const },
-      };
-
-      const mockShows: Show[] = [mockShow];
-      showService.getActiveShows.mockResolvedValue(mockShows);
-
-      const result = await service.getShowsWithRelations(params);
-
-      expect(showService.getActiveShows).toHaveBeenCalledWith({
-        ...params,
-        include: showWithAssignmentsInclude,
-      });
-      expect(result).toEqual(mockShows);
-    });
-  });
-
   describe('updateShowWithAssignments', () => {
     it('should update a show without assignments', async () => {
       const uid = 'show_test123';
@@ -312,19 +291,14 @@ describe('showOrchestrationService', () => {
         showPlatforms: undefined,
       } as UpdateShowWithAssignmentsDto;
 
-      const updatePayload = { name: 'Updated Show Name' };
       showService.getShowById.mockResolvedValue(mockShow);
-      showService.buildUpdatePayload.mockReturnValue(updatePayload);
-      showRepository.update.mockResolvedValue(mockShow);
+      showService.updateShowFromDto.mockResolvedValue(mockShow);
       showRepository.findByUid.mockResolvedValue(mockShow);
 
       const result = await service.updateShowWithAssignments(uid, dto, 'actor_123');
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(showRepository.update).toHaveBeenCalledWith(
-        { uid },
-        updatePayload,
-      );
+      expect(showService.updateShowFromDto).toHaveBeenCalledWith(uid, dto);
       // Sync methods NOT called since showCreators/showPlatforms are undefined
       expect(creatorRepository.findByUids).not.toHaveBeenCalled();
       expect(platformRepository.findByUids).not.toHaveBeenCalled();
@@ -362,11 +336,9 @@ describe('showOrchestrationService', () => {
 
       const mockMc = { id: BigInt(1), uid: 'creator_test123', deletedAt: null };
       const mockPlatform = { id: BigInt(1), uid: 'plt_test123', deletedAt: null };
-      const updatePayload = { name: 'Updated Show Name' };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      showService.buildUpdatePayload.mockReturnValue(updatePayload);
-      showRepository.update.mockResolvedValue(mockShow);
+      showService.updateShowFromDto.mockResolvedValue(mockShow);
       showRepository.findByUid.mockResolvedValue(mockShow);
       creatorRepository.findByUids.mockResolvedValue([mockMc] as any);
       showCreatorRepository.findMany.mockResolvedValue([]);
@@ -380,10 +352,7 @@ describe('showOrchestrationService', () => {
       const result = await service.updateShowWithAssignments(uid, dto, 'actor_123');
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(showRepository.update).toHaveBeenCalledWith(
-        { uid },
-        updatePayload,
-      );
+      expect(showService.updateShowFromDto).toHaveBeenCalledWith(uid, dto);
       expect(creatorRepository.findByUids).toHaveBeenCalledWith(['creator_test123']);
       expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -420,7 +389,7 @@ describe('showOrchestrationService', () => {
       } as UpdateShowWithAssignmentsDto;
 
       showService.getShowById.mockResolvedValue(mockShow);
-      showService.buildUpdatePayload.mockImplementation(() => {
+      showService.updateShowFromDto.mockImplementation(() => {
         throw new BadRequestException('End time must be after start time');
       });
 
