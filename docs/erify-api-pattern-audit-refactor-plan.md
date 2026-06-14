@@ -4,6 +4,26 @@
 **Scope:** `apps/erify_api/src` — 330 non-test source files, ~40k LOC, plus 128 test files.
 **Goal:** Identify pattern, convention, best-practice, and quality issues, then sequence a refactor program that aligns the backend to its own canonical patterns.
 
+---
+
+## Execution status & alignment (updated 2026-06-14)
+
+This is the **static strategy** (themes T1–T11, decisions D1–D13). Live execution status is the **companion** `erify-api-refactor-work-items.md` (WI-XX tracker). The phase checkboxes below were never ticked as work landed — read the tracker for true status. Baseline grew **130 suites / 1157 tests → 142 / 1254** with every PR green.
+
+**Theme → outcome:** T1 ✅ (WI-10, #199) · T2 ✅ (WI-20 #190–194, WI-21 #180–183, WI-22 #179, WI-23 #176) · T3 ✅ (WI-11 #184–186, WI-12 #187) · **T4 ⛔ deferred (WI-13 — needs a Money-direction call)** · T5 ✅ (WI-03 #167, WI-31 #166) · T6 ✅ (folded into WI-20) · T7 ✅ (WI-30 sweep, #168–171/188/189/196/197) · T8 ✅ (WI-01 #161, WI-02 #162) · **T9 🟦 recommend-skip (WI-32)** · T10 ❌ won't-fix (WI-24 pt2) · T11 ✅ (WI-34 #198).
+
+**Direction changes / sensitive divergences that need attention:**
+1. **D6 / schedule-snapshot — the plan's "still extend `BaseRepository`" was infeasible.** The model has no `deletedAt` column; `BaseRepository` injects `deletedAt: null` filters and would break it. Resolved (WI-10): hard-delete kept, txHost wiring only.
+2. **D8/D12 — flipped from "accept as tech-debt, converge later" to WON'T-FIX.** Actuals are recorded **sequentially by operational phase**, so the concurrent different-key `actuals_source` clobber (C1) isn't reachable. Documented in `docs/tech-debt/actuals-source-jsonb-merge.md`.
+3. **D1 — chose accept-the-race** (not the side table). Removed the spurious-409 `version` guard; documented in tech-debt.
+4. **D3 / WI-20 — one sub-service (`ShowCreatorAssignmentService`, 557 LOC) exceeds the `<400` target**, and `ShowMutationService` was declined. Accepted as a cohesion tradeoff on sign-off (2026-06-14).
+5. **WI-10 scope expanded 3 → 7 repos** (grep-audit found schedule, show-status, show-type, studio-membership writing off the unbounded client). A deeper `BaseRepository`-binds-to-unbounded-client issue remains as a noted follow-up.
+6. **T4 / D4 / WI-13 — the headline open item.** The "three duplicate money formatters" have genuinely different semantics and the public-`Prisma.Decimal` signature conversions *move* rather than *remove* Decimal between two math-doing services — so this needs a real domain-`Money` direction decision, not a behavior-preserving sweep.
+
+**Decisions never turned into WIs (open):** **D7** (Google Sheets service-account identity threading) and **D11** (`studioId`→`studioUid` rename in the compensation slice) were recommended but never ticketed.
+
+---
+
 ## How this audit was produced
 
 - **Fan-out (haiku):** 19 parallel auditors, one per module slice, each loading the relevant `.agent/skills/*/SKILL.md` plus the repo house rules, reading every non-test source file in its slice, and emitting structured findings (130 total).
