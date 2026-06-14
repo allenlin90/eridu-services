@@ -141,8 +141,24 @@ export default defineConfig({
           ) {
             return 'vendor-react';
           }
-          if (id.includes('/node_modules/@tanstack/'))
+          if (id.includes('/node_modules/@tanstack/')) {
+            // Keep the table / virtual-list packages out of the query/router
+            // startup chunk: they're only needed by table screens. They're
+            // given their own cacheable chunk rather than merged into either
+            // `vendor-tanstack` or the entry. (They remain startup-eager today
+            // because @eridu/ui's data-table pulls react-table into the eager
+            // graph — decoupling that is follow-on FE-T2/T3 work; this only
+            // isolates them.)
+            if (
+              id.includes('/node_modules/@tanstack/react-table/')
+              || id.includes('/node_modules/@tanstack/table-core/')
+              || id.includes('/node_modules/@tanstack/react-virtual/')
+              || id.includes('/node_modules/@tanstack/virtual-core/')
+            ) {
+              return 'vendor-table';
+            }
             return 'vendor-tanstack';
+          }
           if (
             id.includes('/node_modules/zod/')
             || id.includes('/node_modules/react-hook-form/')
