@@ -68,16 +68,16 @@ describe('projectTaskReportContentInput', () => {
       expect(valueOf('abc', 'number')).toBeNull();
     });
 
-    // CURRENT BEHAVIOR — known smell (C2 / WI-34 / D9).
-    // A submitted-but-blank numeric field is coerced to 0 (Number('') === 0),
-    // fabricating "0" instead of "not reported". WI-34 will flip these to null.
-    describe('blank string (current behavior — WI-34/D9 will change 0 → null)', () => {
-      it('coerces an empty string to 0', () => {
-        expect(valueOf('', 'number')).toBe(0);
+    // EXPECTATION (WI-34 / D9): a submitted-but-blank numeric field is "not
+    // reported", not 0. `Number('')`/`Number('   ')` would coerce to a finite
+    // 0 and fabricate a value, so blank/whitespace strings map to null.
+    describe('blank string maps to null (WI-34/D9)', () => {
+      it('maps an empty string to null', () => {
+        expect(valueOf('', 'number')).toBeNull();
       });
 
-      it('coerces a whitespace-only string to 0', () => {
-        expect(valueOf('   ', 'number')).toBe(0);
+      it('maps a whitespace-only string to null', () => {
+        expect(valueOf('   ', 'number')).toBeNull();
       });
     });
   });
