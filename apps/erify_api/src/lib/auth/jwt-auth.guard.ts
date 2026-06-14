@@ -49,22 +49,13 @@ export class JwtAuthGuard extends SdkJwtAuthGuard {
     private readonly authService: AuthService,
     private readonly reflector: Reflector,
   ) {
-    // Pass JwtVerifier and custom options to parent class
+    // Pass JwtVerifier and custom options to parent class. User transformation
+    // is the `transformUser` method override below (the SDK reads it via the
+    // protected method), so it is intentionally NOT also passed as an option.
     super(authService.getJwtVerifier(), {
       // Custom error handling using HttpError
       createUnauthorizedError: (message: string) => {
         return HttpError.unauthorized(message);
-      },
-      // Custom user transformation to add ext_id mapping and full payload
-      transformUser: (payload: JwtPayload, userInfo: UserInfo) => {
-        return {
-          ext_id: payload.id, // Map better-auth user.id to ext_id
-          id: payload.id, // Keep id for convenience
-          name: userInfo.name,
-          email: userInfo.email,
-          image: userInfo.image,
-          payload, // Include full payload for advanced use cases
-        };
       },
     });
   }
@@ -85,26 +76,23 @@ export class JwtAuthGuard extends SdkJwtAuthGuard {
   }
 
   /**
-   * Override to add custom logging with ext_id
+   * Maps the better-auth JWT payload to the API's `AuthenticatedUser` shape
+   * (user.id → ext_id, full payload retained) and logs the validated user.
+   * This is the single source of the transform — the SDK's `canActivate` calls
+   * it via this protected override, so it is not duplicated as a constructor
+   * `transformUser` option.
    */
   protected transformUser(
     payload: JwtPayload,
     userInfo: UserInfo,
-  ): {
-      ext_id: string;
-      id: string;
-      name: string;
-      email: string;
-      image?: string;
-      payload: JwtPayload;
-    } {
-    const transformed = super.transformUser(payload, userInfo) as {
-      ext_id: string;
-      id: string;
-      name: string;
-      email: string;
-      image?: string;
-      payload: JwtPayload;
+  ): AuthenticatedUser {
+    const transformed: AuthenticatedUser = {
+      ext_id: payload.id, // Map better-auth user.id to ext_id
+      id: payload.id, // Keep id for convenience
+      name: userInfo.name,
+      email: userInfo.email,
+      image: userInfo.image,
+      payload, // Include full payload for advanced use cases
     };
 
     // Log with ext_id for better debugging
