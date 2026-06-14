@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, Schedule } from '@prisma/client';
 
 import type { ScheduleFindPaginatedParams, ScheduleInclude } from './schemas/schedule.schema';
@@ -13,7 +15,10 @@ export class ScheduleRepository extends BaseRepository<
   Prisma.ScheduleUpdateInput,
   Prisma.ScheduleWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
     super(new PrismaModelWrapper(prisma.schedule));
   }
 
@@ -31,7 +36,7 @@ export class ScheduleRepository extends BaseRepository<
     data: Prisma.ScheduleCreateInput,
     include?: Prisma.ScheduleInclude,
   ): Promise<Schedule> {
-    return this.prisma.schedule.create({
+    return this.txHost.tx.schedule.create({
       data,
       ...(include && { include }),
     });
@@ -42,7 +47,7 @@ export class ScheduleRepository extends BaseRepository<
     data: Prisma.ScheduleUpdateInput,
     include?: Prisma.ScheduleInclude,
   ): Promise<Schedule> {
-    return this.prisma.schedule.update({
+    return this.txHost.tx.schedule.update({
       where,
       data,
       ...(include && { include }),
