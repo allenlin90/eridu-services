@@ -115,9 +115,11 @@ export class StudioLookupController extends BaseStudioController {
       studio_id: studioId,
     });
 
+    // `scheduleDto.planDocument` is optional, so when the caller opts out we
+    // omit the key entirely instead of casting `undefined as any`.
     const data = query.include_plan_document
       ? schedules
-      : schedules.map((schedule) => ({ ...schedule, planDocument: undefined as any }));
+      : schedules.map(({ planDocument: _planDocument, ...rest }) => rest);
 
     return this.createPaginatedResponse(data, total, query);
   }
