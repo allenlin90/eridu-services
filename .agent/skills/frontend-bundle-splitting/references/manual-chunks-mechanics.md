@@ -26,10 +26,17 @@ Reference for [frontend-bundle-splitting](../SKILL.md). Verify the approach agai
 
 Corollary: assigning a module to a manual chunk **cannot make an eager module lazy** — it only chooses the file. If the module is reachable from the startup graph, its chunk loads at startup regardless. To defer it, change the *import* (lazy `import()` / narrower import), not the chunking.
 
-## Well-known precedent / React best practice
+## Existing projects & best-practice guides (confidence)
 
-- **Route-based code-splitting is the first lever** — React's own guidance is `React.lazy` + `Suspense` at route boundaries (<https://react.dev/reference/react/lazy>); routers automate it (e.g. TanStack Router's `autoCodeSplitting`, React Router lazy routes). Confirm this is in place *before* manual vendor chunking.
-- **The `react-vendor` split** — separating `react`/`react-dom`/router into a long-cached vendor chunk, utilities (date-fns/axios) into another, and heavy libs (charts) into their own, is the widely-recommended community pattern for Vite + React (e.g. soledad penadés, *"Use manual chunks with Vite to facilitate dependency caching"*: <https://soledadpenades.com/posts/2025/use-manual-chunks-with-vite-to-facilitate-dependency-caching/>). The win is caching: a vendor chunk's content hash is stable across app-code deploys, so returning users skip re-downloading it.
+This approach is established practice, not invented here. Verify against:
+
+- **bulletproof-react** — the most-referenced React architecture guide. Its performance doc endorses route-level splitting and, crucially, warns against over-splitting: *"Code splitting involves splitting production JavaScript into smaller files to optimize application loading times"* and *"Avoid excessive code splitting, as too many chunks can degrade performance through increased requests."* That directly backs **rule 1** (route-split first) and the "group a *small* set" guidance. <https://github.com/alan2207/bulletproof-react/blob/master/docs/performance.md>
+- **Excalidraw** (a widely-used production React app) — its app build uses the **same function-form, match-by-path, no-catch-all** `manualChunks(id)` we use: it selectively groups `@codemirror/`+`@lezer/` into one chunk and `@excalidraw/mermaid-to-excalidraw` into another, and implicitly returns `undefined` for everything else (no catch-all). Direct real-world precedent for rules 3–4. <https://github.com/excalidraw/excalidraw/blob/master/excalidraw-app/vite.config.mts>
+- **patterns.dev — Bundle Splitting** (Lydia Hallie / Addy Osmani; the popular web-patterns guide): *"A larger bundle leads to an increased amount of loading time, processing time, and execution time."* Establishes the why. <https://www.patterns.dev/vanilla/bundle-splitting>
+- **React core — `React.lazy`**: route-based code-splitting is the first lever, before manual vendor chunking. <https://react.dev/reference/react/lazy>
+- **`sole/manual-chunks`** — a minimal, focused reference repo (by a long-time Mozilla engineer) showing manualChunks purely for dependency caching. <https://github.com/sole/manual-chunks> · write-up: <https://soledadpenades.com/posts/2025/use-manual-chunks-with-vite-to-facilitate-dependency-caching/>
+
+**Synthesis of the consensus:** route-split first (React/bulletproof-react), then *selectively* manual-chunk a *small* set of stable eager vendors for caching (Excalidraw, sole), never a catch-all (vitejs/vite#12209), and don't over-fragment (bulletproof-react). That is exactly the skill's rule set.
 
 ## Worked case study (illustrative — not a spec)
 
