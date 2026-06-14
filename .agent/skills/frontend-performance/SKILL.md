@@ -39,6 +39,7 @@ Use `loading="lazy"` and responsive `srcSet`/`sizes`.
 - Import from direct package paths, not root barrels (Radix UI, Lucide, date-fns)
 - `@eridu/ui` components safe to import by name (pre-composed)
 - `@eridu/api-types` via subpath exports, never root
+- When one large eager entry/vendor chunk dominates first load, split stable vendors with `build.rollupOptions.output.manualChunks` — see [frontend-bundle-splitting](../frontend-bundle-splitting/SKILL.md) (never a catch-all; it breaks code-splitting)
 
 ## Checklist
 

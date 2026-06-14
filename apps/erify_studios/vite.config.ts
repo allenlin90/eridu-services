@@ -123,6 +123,53 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    rollupOptions: {
+      output: {
+        // Split the large, stable, eagerly-loaded vendors into their own
+        // long-cached chunks so app-code deploys don't invalidate them and the
+        // browser can fetch them in parallel. Intentionally NOT a catch-all:
+        // returning `undefined` for everything else lets Rollup keep the
+        // already-lazy heavy libs (recharts, @schedule-x, …) in their own
+        // dynamic-import chunks instead of pulling them back into eager load.
+        manualChunks(id) {
+          if (!id.includes('/node_modules/'))
+            return undefined;
+          if (
+            id.includes('/node_modules/react/')
+            || id.includes('/node_modules/react-dom/')
+            || id.includes('/node_modules/scheduler/')
+          ) {
+            return 'vendor-react';
+          }
+          if (id.includes('/node_modules/@tanstack/')) {
+            // Keep the table / virtual-list packages out of the query/router
+            // startup chunk: they're only needed by table screens. They're
+            // given their own cacheable chunk rather than merged into either
+            // `vendor-tanstack` or the entry. (They remain startup-eager today
+            // because @eridu/ui's data-table pulls react-table into the eager
+            // graph — decoupling that is follow-on FE-T2/T3 work; this only
+            // isolates them.)
+            if (
+              id.includes('/node_modules/@tanstack/react-table/')
+              || id.includes('/node_modules/@tanstack/table-core/')
+              || id.includes('/node_modules/@tanstack/react-virtual/')
+              || id.includes('/node_modules/@tanstack/virtual-core/')
+            ) {
+              return 'vendor-table';
+            }
+            return 'vendor-tanstack';
+          }
+          if (
+            id.includes('/node_modules/zod/')
+            || id.includes('/node_modules/react-hook-form/')
+            || id.includes('/node_modules/@hookform/')
+          ) {
+            return 'vendor-forms';
+          }
+          return undefined;
+        },
+      },
+    },
   },
   optimizeDeps: {
     exclude: ['@eridu/ui', '@eridu/i18n'],
