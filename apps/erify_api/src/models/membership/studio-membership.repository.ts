@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, StudioMembership } from '@prisma/client';
 
 import {
@@ -24,7 +26,10 @@ export class StudioMembershipRepository extends BaseRepository<
   Prisma.StudioMembershipUpdateInput,
   Prisma.StudioMembershipWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
     super(new PrismaModelWrapper(prisma.studioMembership));
   }
 
@@ -34,7 +39,7 @@ export class StudioMembershipRepository extends BaseRepository<
     data: Prisma.StudioMembershipCreateInput,
     include?: T,
   ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    return this.prisma.studioMembership.create({
+    return this.txHost.tx.studioMembership.create({
       data,
       ...(include && { include }),
     }) as Promise<StudioMembership | StudioMembershipWithIncludes<T>>;
@@ -196,7 +201,7 @@ export class StudioMembershipRepository extends BaseRepository<
     data: Prisma.StudioMembershipUpdateInput,
     include?: T,
   ): Promise<StudioMembership | StudioMembershipWithIncludes<T>> {
-    return this.prisma.studioMembership.update({
+    return this.txHost.tx.studioMembership.update({
       where,
       data,
       ...(include && { include }),
@@ -206,13 +211,13 @@ export class StudioMembershipRepository extends BaseRepository<
   async deleteByUnique(
     where: Prisma.StudioMembershipWhereUniqueInput,
   ): Promise<StudioMembership> {
-    return this.prisma.studioMembership.delete({ where });
+    return this.txHost.tx.studioMembership.delete({ where });
   }
 
   async softDeleteByUnique(
     where: Prisma.StudioMembershipWhereUniqueInput,
   ): Promise<StudioMembership> {
-    return this.prisma.studioMembership.update({
+    return this.txHost.tx.studioMembership.update({
       where,
       data: { deletedAt: new Date() },
     });
@@ -221,7 +226,7 @@ export class StudioMembershipRepository extends BaseRepository<
   async restoreByUnique(
     where: Prisma.StudioMembershipWhereUniqueInput,
   ): Promise<StudioMembership> {
-    return this.prisma.studioMembership.update({
+    return this.txHost.tx.studioMembership.update({
       where,
       data: { deletedAt: null },
     });
@@ -243,7 +248,7 @@ export class StudioMembershipRepository extends BaseRepository<
       data.baseHourlyRate = payload.baseHourlyRate;
     }
 
-    return this.prisma.studioMembership.update({
+    return this.txHost.tx.studioMembership.update({
       where: { uid },
       data,
       include: { user: true },

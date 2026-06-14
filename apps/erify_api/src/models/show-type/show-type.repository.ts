@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import type { Prisma, ShowType } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
@@ -11,7 +13,10 @@ export class ShowTypeRepository extends BaseRepository<
   Prisma.ShowTypeUpdateInput,
   Prisma.ShowTypeWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
     super(new PrismaModelWrapper(prisma.showType));
   }
 
@@ -37,7 +42,7 @@ export class ShowTypeRepository extends BaseRepository<
     include?: Prisma.ShowTypeInclude,
   ): Promise<ShowType> {
     const { uid } = params;
-    return this.prisma.showType.update({
+    return this.txHost.tx.showType.update({
       where: { uid, deletedAt: null },
       data,
       ...(include && { include }),
