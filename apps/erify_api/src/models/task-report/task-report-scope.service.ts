@@ -20,6 +20,7 @@ import {
 } from './task-report-scope.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { OPERATIONAL_DAY_START_HOUR } from '@/lib/utils/operational-day.util';
 import { StudioService } from '@/models/studio/studio.service';
 
 const LEGACY_SHARED_KEY_PATTERN = /^([a-z][a-z0-9_]*?)_l\d+$/;
@@ -240,13 +241,17 @@ export class TaskReportScopeService {
   }
 
   /**
-   * Convert an ISO date string to a Date at the start (00:00:00) or end (23:59:59.999) of day.
+   * Convert an ISO date string to a Date at the start (06:00:00) or end (05:59:59.999 of next day)
+   * of the operational day timezone window.
    */
   private parseDateBoundary(dateStr: string, boundary: 'start' | 'end'): Date {
     // Local-tz string (no trailing Z) to match existing show/task filtering behavior.
     const date = new Date(`${dateStr}T00:00:00`);
-    if (boundary === 'end') {
-      date.setHours(23, 59, 59, 999);
+    if (boundary === 'start') {
+      date.setHours(OPERATIONAL_DAY_START_HOUR, 0, 0, 0);
+    } else {
+      date.setDate(date.getDate() + 1);
+      date.setHours(OPERATIONAL_DAY_START_HOUR - 1, 59, 59, 999);
     }
 
     return date;

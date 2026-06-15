@@ -440,11 +440,11 @@ describe('taskReportScopeService', () => {
     expect(callArgs?.dateFrom?.getFullYear()).toBe(2026);
     expect(callArgs?.dateFrom?.getMonth()).toBe(2);
     expect(callArgs?.dateFrom?.getDate()).toBe(10);
-    expect(callArgs?.dateFrom?.getHours()).toBe(0);
+    expect(callArgs?.dateFrom?.getHours()).toBe(6);
     expect(callArgs?.dateTo?.getFullYear()).toBe(2026);
     expect(callArgs?.dateTo?.getMonth()).toBe(2);
-    expect(callArgs?.dateTo?.getDate()).toBe(11);
-    expect(callArgs?.dateTo?.getHours()).toBe(23);
+    expect(callArgs?.dateTo?.getDate()).toBe(12);
+    expect(callArgs?.dateTo?.getHours()).toBe(5);
     expect(callArgs?.dateTo?.getMinutes()).toBe(59);
   });
 
