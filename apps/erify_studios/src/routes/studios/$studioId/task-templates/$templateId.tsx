@@ -3,6 +3,7 @@ import { Suspense, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 import { getSchemaEngine, safeParseTemplateSchema } from '@eridu/api-types/task-management';
+import { LoadingPage } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import {
@@ -220,11 +221,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
         </div>
       )}
       <Suspense
-        fallback={(
-          <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
-            <div className="text-muted-foreground">Loading builder...</div>
-          </div>
-        )}
+        fallback={<LoadingPage label="Loading builder..." className="min-h-[calc(100vh-13rem)]" />}
       >
         <TaskTemplateBuilder
           template={template}

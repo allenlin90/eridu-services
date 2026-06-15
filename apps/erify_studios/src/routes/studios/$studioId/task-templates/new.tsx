@@ -4,6 +4,8 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useDebounceCallback } from 'usehooks-ts';
 
+import { LoadingPage } from '@eridu/ui';
+
 import { PageLayout } from '@/components/layouts/page-layout';
 import {
   buildTemplateSchemaPayload,
@@ -147,11 +149,7 @@ export function TaskTemplateBuilderPage() {
         </div>
       )}
       <Suspense
-        fallback={(
-          <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
-            <div className="text-muted-foreground">Loading builder...</div>
-          </div>
-        )}
+        fallback={<LoadingPage label="Loading builder..." className="min-h-[calc(100vh-13rem)]" />}
       >
         <TaskTemplateBuilder
           template={template}

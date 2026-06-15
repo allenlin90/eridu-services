@@ -29,15 +29,31 @@ export function LoadingSpinner({
   );
 }
 
+type LoadingPageProps = {
+  /** Optional caption rendered under the spinner (e.g. "Loading builder…"). */
+  label?: string;
+  /**
+   * Overrides the default `min-h-screen` height. Pass a content-area height
+   * (e.g. `min-h-[calc(100vh-13rem)]`) when the loader fills a page region
+   * inside a layout rather than the whole viewport — useful as a `Suspense`
+   * fallback for a lazily-loaded section.
+   */
+  className?: string;
+};
+
 /**
  * Loading Page Component
  *
- * A full-page loading indicator, typically used for route-level loading states.
+ * A full-page loading indicator for route-level loading states and `Suspense`
+ * fallbacks. Defaults to filling the viewport; pass `className` to fit a smaller
+ * region and `label` to caption it. The `Spinner` already exposes
+ * `role="status"`/`aria-label="Loading"` for assistive tech.
  */
-export function LoadingPage() {
+export function LoadingPage({ label, className }: LoadingPageProps = {}) {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className={cn('flex min-h-screen flex-col items-center justify-center gap-3', className)}>
       <Spinner className="size-8" />
+      {label ? <p className="text-sm text-muted-foreground">{label}</p> : null}
     </div>
   );
 }
