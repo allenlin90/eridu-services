@@ -108,7 +108,8 @@ This ensures:
 Why this works:
 
 - `TaskTemplateSnapshot.schema` declares its engine. v1 content is keyed by `field.key`; v2 content is keyed by stable `field.id`.
-- `getFieldContentKey()` and `getFieldReportDescriptor()` keep content extraction and report projection aligned with the snapshot engine.
+- `getFieldContentKey()` and `getFieldReportDescriptor()` keep ordinary content extraction and report projection aligned with the snapshot engine.
+- Platform performance fields bound to `show_platform_gmv`, `show_platform_view_count`, `show_platform_ctr`, or `show_platform_cto` project their per-platform hydrated content keys into the selected field column. For the one-row-per-show result, GMV and view count are summed across platforms, while CTR and CTO are averaged across platforms. Input sidecars (`__reason`, `__extra`) are excluded from these aggregates.
 - When a template is updated, a new snapshot is created. Old tasks keep their old snapshot and content shape.
 - Adding a new field in a later version means tasks from older versions have `null` for that column — which is the correct behavior.
 

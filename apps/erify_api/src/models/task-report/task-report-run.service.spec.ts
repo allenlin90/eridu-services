@@ -1,7 +1,11 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { taskReportRunRequestSchema, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import {
+  taskReportRunRequestSchema,
+  TemplateSchemaV2Validator,
+  TemplateSchemaValidator,
+} from '@eridu/api-types/task-management';
 
 import { TaskReportRunService } from './task-report-run.service';
 import { TaskReportScopeRepository } from './task-report-scope.repository';
@@ -949,5 +953,148 @@ describe('taskReportRunService', () => {
     expect(result.rows[0]).toMatchObject({ show_name: 'Show 1', gmv: 500 });
     expect(result.rows[1]).toMatchObject({ show_name: 'Show 2', gmv: 500 });
     expect(result.warnings).toEqual([]);
+  });
+
+  it('projects a platform-hydrated performance field into the report row', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        content: {
+          'fld_gmvmetric01:platform:show_plt_shopee': 20766,
+        },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:field_gmv', label: 'GMV' }],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:field_gmv': 20766,
+    });
+  });
+
+  it('aggregates platform-hydrated performance values with the performance read-model semantics', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+        {
+          id: 'fld_viewmetric1',
+          key: 'field_views',
+          type: 'number',
+          label: 'View',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_view_count',
+        },
+        {
+          id: 'fld_ctrmetric01',
+          key: 'field_ctr',
+          type: 'number',
+          label: 'CTR',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_ctr',
+        },
+        {
+          id: 'fld_ctometric01',
+          key: 'field_cto',
+          type: 'number',
+          label: 'CTO',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_cto',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        content: {
+          'fld_gmvmetric01:platform:show_plt_shopee': 100,
+          'fld_gmvmetric01:platform:show_plt_tiktok': 25,
+          'fld_gmvmetric01:platform:show_plt_shopee__reason': '999',
+          'fld_viewmetric1:platform:show_plt_shopee': 10,
+          'fld_viewmetric1:platform:show_plt_tiktok': 5,
+          'fld_ctrmetric01:platform:show_plt_shopee': 4,
+          'fld_ctrmetric01:platform:show_plt_tiktok': 8,
+          'fld_ctometric01:platform:show_plt_shopee': 2,
+          'fld_ctometric01:platform:show_plt_tiktok': 4,
+        },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [
+        { key: 'ttpl_1:field_gmv', label: 'GMV' },
+        { key: 'ttpl_1:field_views', label: 'View' },
+        { key: 'ttpl_1:field_ctr', label: 'CTR' },
+        { key: 'ttpl_1:field_cto', label: 'CTO' },
+      ],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:field_gmv': 125,
+      'ttpl_1:field_views': 15,
+      'ttpl_1:field_ctr': 6,
+      'ttpl_1:field_cto': 3,
+    });
   });
 });

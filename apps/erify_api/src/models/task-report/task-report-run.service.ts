@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { UID_PREFIXES } from '@eridu/api-types/constants';
 import type {
   SharedFieldCategory,
+  SystemFactKey,
   TaskReportResult,
   TaskReportRunRequest,
   TaskReportSystemColumnKey,
@@ -56,6 +57,7 @@ type CompiledProjectionField = {
   fieldKey: string;
   columnKey: string;
   extraColumnKey: string | null;
+  systemFactKey?: SystemFactKey;
   meta: SelectedKeyMeta;
 };
 type ScopedTask = Awaited<ReturnType<TaskReportScopeRepository['findSubmittedTasksInScope']>>[number];
@@ -232,6 +234,7 @@ export class TaskReportRunService {
           const input = projectTaskReportContentInput(contentRecord, {
             key: projectedField.fieldKey,
             type: projectedField.meta.type,
+            systemFactKey: projectedField.systemFactKey,
           });
 
           if (!(columnKey in row)) {
@@ -291,6 +294,7 @@ export class TaskReportRunService {
         fieldKey: getFieldContentKey(parsedSnapshot.data, field),
         columnKey,
         extraColumnKey: selectedColumn.include_extra ? this.buildInputExtraColumnKey(columnKey) : null,
+        systemFactKey: 'system_fact_key' in field ? field.system_fact_key : undefined,
         meta: {
           type: field.type,
           standard: isStandard || undefined,
