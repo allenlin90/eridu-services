@@ -19,6 +19,7 @@ import { cn } from '@eridu/ui/lib/utils';
 
 import type { MyTaskPageSize, MyTaskSort, TaskViewMode } from '../hooks/use-my-tasks-filters';
 
+import { OVERLAY_MAX_H, VIEWPORT_GUTTER_W } from '@/config/layout';
 import { getTaskTypeOptions } from '@/lib/constants/task-type-labels';
 
 const STATUS_FILTERS: { value: TaskStatus; label: string }[] = [
@@ -141,7 +142,7 @@ export function MyTasksToolbar({
               align="start"
               sideOffset={8}
               collisionPadding={12}
-              className="w-[calc(100vw-2rem)] max-w-72 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain"
+              className={`${VIEWPORT_GUTTER_W} max-w-72 ${OVERLAY_MAX_H} overflow-y-auto overscroll-contain`}
             >
               <DropdownMenuLabel>Task Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -175,7 +176,7 @@ export function MyTasksToolbar({
               align="start"
               sideOffset={8}
               collisionPadding={12}
-              className="w-[calc(100vw-2rem)] max-w-72 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain"
+              className={`${VIEWPORT_GUTTER_W} max-w-72 ${OVERLAY_MAX_H} overflow-y-auto overscroll-contain`}
             >
               <DropdownMenuLabel>Task Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -209,7 +210,7 @@ export function MyTasksToolbar({
               align="start"
               sideOffset={8}
               collisionPadding={12}
-              className="w-[calc(100vw-2rem)] max-w-72 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain"
+              className={`${VIEWPORT_GUTTER_W} max-w-72 ${OVERLAY_MAX_H} overflow-y-auto overscroll-contain`}
             >
               <DropdownMenuLabel>Sort</DropdownMenuLabel>
               <DropdownMenuRadioGroup

@@ -66,6 +66,7 @@ Pattern: route container + `useFeatureViewModel()` hook + presentation component
 - [ ] Ternary for conditional rendering (not `&&`)
 - [ ] Complex logic extracted to custom hooks
 - [ ] Large routes (>200 LOC) decomposed
+- [ ] No scattered magic values — repeated layout offsets, limits, and tunables centralized in named constants (`src/config/layout.ts`, etc.)
 - [ ] Protected routes use `StudioRouteGuard` + shared access policy
 - [ ] Consistent wrapper per route set
 - [ ] Shared views rendered from multiple access tiers gate cross-route links by opt-in prop (default off)

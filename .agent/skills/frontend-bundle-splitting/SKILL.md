@@ -21,6 +21,12 @@ Reach for `manualChunks` when the build emits **one large eager entry/vendor chu
 5. **`manualChunks` can only *isolate* an eager module — it cannot make it lazy.** If a heavy lib is reachable from the startup graph (e.g. a UI barrel re-exports a data-table that pulls it in), excluding it from a manual chunk just relocates it into the entry. Truly deferring it requires breaking the eager import path (lazy `import()` at the call site, or a narrower import) — a separate change. Chunking decides *which* file eager code lives in, not *whether* it's eager.
 6. **Verify by measuring, behavior-preserving.** Compare the chunk map before/after; confirm the eager entry shrank and that previously-lazy chunks are still separate. The app must build and behave identically — `manualChunks` is output-only config. Don't chase the warning into app code speculatively; stop when the remaining entry is app shell, and hand the rest to lazy-loading / component decomposition.
 
+## Split in the consumer, not the shared library
+
+**Lazy-loading is a consumer (app bundling) decision — keep shared packages (`@eridu/ui`, etc.) generic and synchronous.** Don't bake `React.lazy`/`Suspense` into a shared component to defer a heavy sub-dependency (e.g. wrapping `@eridu/ui`'s calendar so `DatePicker` defers react-day-picker): it forces a bundling/UX strategy on *every* consumer and couples the library to one app's perf goals. The library exports plain components (and may expose a heavy part via a **subpath export** so a consumer *can* lazy-import it); each app decides what to code-split.
+
+When a heavy dep (e.g. react-day-picker via `DatePicker`) is eager, fix it **consumer-side**: identify the eager import site and either (a) ensure that route/section is code-split so the dep rides into a route chunk, or (b) lazy-load the component at that site with an app-level wrapper. Don't reach into the dependency.
+
 ## Keep it generic
 
 Match on path boundaries (`id.includes('/node_modules/<pkg>/')`), not version strings. Group a *small* set of clearly-justified, stable vendors — adding a chunk per package is over-engineering. The pattern is the guidance; the exact package list is a per-app detail that changes as deps change.
