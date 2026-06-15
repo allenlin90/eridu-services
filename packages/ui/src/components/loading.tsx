@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { cn } from '../lib/utils';
 
 import { Spinner } from './ui/spinner';
@@ -34,26 +36,33 @@ type LoadingPageProps = {
   label?: string;
   /**
    * Overrides the default `min-h-screen` height. Pass a content-area height
-   * (e.g. `min-h-[calc(100vh-13rem)]`) when the loader fills a page region
-   * inside a layout rather than the whole viewport — useful as a `Suspense`
-   * fallback for a lazily-loaded section.
+   * when the loader fills a page region inside a layout rather than the whole
+   * viewport — useful as a `Suspense` fallback for a lazily-loaded section.
    */
   className?: string;
+  /**
+   * Optional content rendered below the spinner/label (e.g. a progress hint or
+   * a cancel action) so callers can compose richer loading states without a
+   * bespoke component.
+   */
+  children?: ReactNode;
 };
 
 /**
  * Loading Page Component
  *
- * A full-page loading indicator for route-level loading states and `Suspense`
- * fallbacks. Defaults to filling the viewport; pass `className` to fit a smaller
- * region and `label` to caption it. The `Spinner` already exposes
- * `role="status"`/`aria-label="Loading"` for assistive tech.
+ * A composable full-page loading indicator for route-level loading states and
+ * `Suspense` fallbacks. Defaults to filling the viewport; pass `className` to
+ * fit a smaller region, `label` for a caption, and/or `children` to compose
+ * extra content. The `Spinner` already exposes `role="status"`/`aria-label` for
+ * assistive tech.
  */
-export function LoadingPage({ label, className }: LoadingPageProps = {}) {
+export function LoadingPage({ label, className, children }: LoadingPageProps = {}) {
   return (
     <div className={cn('flex min-h-screen flex-col items-center justify-center gap-3', className)}>
       <Spinner className="size-8" />
       {label ? <p className="text-sm text-muted-foreground">{label}</p> : null}
+      {children}
     </div>
   );
 }

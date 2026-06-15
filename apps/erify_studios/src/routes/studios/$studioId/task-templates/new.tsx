@@ -14,6 +14,7 @@ import {
 } from '@/components/task-templates/builder/payload';
 import { type BuilderTemplateSchemaType, safeParseBuilderTemplateSchema } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder.lazy';
+import { CONTENT_AREA_MIN_H } from '@/config/layout';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import { useCreateTaskTemplate } from '@/features/task-templates/hooks/use-create-task-template';
 import { formatZodErrors } from '@/lib/zod-utils';
@@ -125,9 +126,7 @@ export function TaskTemplateBuilderPage() {
           </span>
         )}
       >
-        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
-          <div className="text-muted-foreground">Loading draft...</div>
-        </div>
+        <LoadingPage label="Loading draft..." className={CONTENT_AREA_MIN_H} />
       </PageLayout>
     );
   }
@@ -149,7 +148,7 @@ export function TaskTemplateBuilderPage() {
         </div>
       )}
       <Suspense
-        fallback={<LoadingPage label="Loading builder..." className="min-h-[calc(100vh-13rem)]" />}
+        fallback={<LoadingPage label="Loading builder..." className={CONTENT_AREA_MIN_H} />}
       >
         <TaskTemplateBuilder
           template={template}

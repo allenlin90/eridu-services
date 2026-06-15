@@ -10,6 +10,7 @@ import {
   buildTemplateSchemaPayload,
   hasTemplateSchemaEngineMismatch,
 } from '@/components/task-templates/builder/payload';
+import { CONTENT_AREA_H, CONTENT_AREA_MIN_H } from '@/config/layout';
 import { safeParseBuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder.lazy';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
@@ -40,9 +41,7 @@ function EditTaskTemplatePage() {
           </span>
         )}
       >
-        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
-          <div className="text-muted-foreground">Loading template...</div>
-        </div>
+        <LoadingPage label="Loading template..." className={CONTENT_AREA_MIN_H} />
       </PageLayout>
     );
   }
@@ -57,7 +56,7 @@ function EditTaskTemplatePage() {
           </span>
         )}
       >
-        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
+        <div className={`flex items-center justify-center ${CONTENT_AREA_H}`}>
           <div className="text-destructive">Failed to load template.</div>
         </div>
       </PageLayout>
@@ -94,7 +93,7 @@ function EditTaskTemplatePage() {
           </span>
         )}
       >
-        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
+        <div className={`flex items-center justify-center ${CONTENT_AREA_H}`}>
           <div className="max-w-lg space-y-3 rounded-md border border-destructive/30 bg-destructive/10 p-6 text-sm">
             <div className="font-semibold text-destructive">This template cannot be edited</div>
             <div className="text-destructive/80">{schemaError}</div>
@@ -221,7 +220,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
         </div>
       )}
       <Suspense
-        fallback={<LoadingPage label="Loading builder..." className="min-h-[calc(100vh-13rem)]" />}
+        fallback={<LoadingPage label="Loading builder..." className={CONTENT_AREA_MIN_H} />}
       >
         <TaskTemplateBuilder
           template={template}
