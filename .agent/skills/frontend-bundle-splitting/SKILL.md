@@ -27,6 +27,8 @@ Reach for `manualChunks` when the build emits **one large eager entry/vendor chu
 
 When a heavy dep (e.g. react-day-picker via `DatePicker`) is eager, fix it **consumer-side**: identify the eager import site and either (a) ensure that route/section is code-split so the dep rides into a route chunk, or (b) lazy-load the component at that site with an app-level wrapper. Don't reach into the dependency.
 
+**Concern — sometimes there is no clean consumer-side deferral.** When a heavy dep is pulled by a *widely-shared* library component used across many route chunks (e.g. react-day-picker via `@eridu/ui`'s `DatePicker`, used by 18+ routes; same shape for the `vaul` drawer and `react-table`), the bundler **hoists it to a sync-eager position**. Consumer `manualChunks` can then only **isolate** it (a caching win — the eager entry shrinks but the chunk is still preloaded, so net first-load is ~unchanged), **not defer** it (see rule 5). Truly deferring it needs the *library* to expose a lazy-friendly seam (a subpath export or a slot/render-prop the consumer opts into) — **not** `React.lazy` baked into the component. Until that seam exists, isolate-for-caching at most and move on; don't force a deferral that violates the generic-library principle. (Verified empirically on `erify_studios`: extracting `vendor-daypicker` kept it preloaded.)
+
 ## Keep it generic
 
 Match on path boundaries (`id.includes('/node_modules/<pkg>/')`), not version strings. Group a *small* set of clearly-justified, stable vendors — adding a chunk per package is over-engineering. The pattern is the guidance; the exact package list is a per-app detail that changes as deps change.
