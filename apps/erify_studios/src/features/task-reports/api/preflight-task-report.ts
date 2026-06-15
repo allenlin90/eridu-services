@@ -3,6 +3,8 @@ import type {
   TaskReportScope,
 } from '@eridu/api-types/task-management';
 
+import { withExecutionWindow } from './execution-window';
+
 import { apiClient } from '@/lib/api/client';
 
 export async function preflightTaskReport(
@@ -11,7 +13,7 @@ export async function preflightTaskReport(
 ): Promise<TaskReportPreflightResponse> {
   const response = await apiClient.get<TaskReportPreflightResponse>(
     `/studios/${studioId}/task-reports/preflight`,
-    { params: scope },
+    { params: withExecutionWindow(scope) },
   );
   return response.data;
 }

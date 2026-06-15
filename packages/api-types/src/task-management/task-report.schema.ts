@@ -143,46 +143,57 @@ const showTypeScopeFilterSchema = z
  * This is the server-side filtering layer for report generation.
  * `date_from` and `date_to` are mandatory for execution requests.
  */
-export const taskReportScopeSchema = z
-  .object({
-    date_preset: taskReportDatePresetSchema.optional(),
-    date_from: z.iso.date().optional(),
-    date_to: z.iso.date().optional(),
-    client_id: clientScopeFilterSchema.optional(),
-    show_standard_id: showStandardScopeFilterSchema.optional(),
-    show_type_id: showTypeScopeFilterSchema.optional(),
-    show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).optional(),
-    submitted_statuses: z.array(taskReportSubmittedStatusSchema).default([...submittedStatusesDefault]),
-    source_templates: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).optional(),
-  })
-  .superRefine((scope, ctx) => {
-    // Reporting must be explicitly bounded by date range.
-    if (!scope.date_from) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['date_from'],
-        message: 'date_from and date_to are required',
-      });
-    }
+const taskReportScopeObjectSchema = z.object({
+  date_preset: taskReportDatePresetSchema.optional(),
+  date_from: z.iso.date().optional(),
+  date_to: z.iso.date().optional(),
+  client_id: clientScopeFilterSchema.optional(),
+  show_standard_id: showStandardScopeFilterSchema.optional(),
+  show_type_id: showTypeScopeFilterSchema.optional(),
+  show_ids: z.array(z.string().startsWith(UID_PREFIXES.SHOW)).optional(),
+  submitted_statuses: z.array(taskReportSubmittedStatusSchema).default([...submittedStatusesDefault]),
+  source_templates: z.array(z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE)).optional(),
+});
 
-    if (!scope.date_to) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['date_to'],
-        message: 'date_from and date_to are required',
-      });
-    }
+function enforceScopeDateRange(scope: { date_from?: string; date_to?: string }, ctx: z.RefinementCtx): void {
+  // Reporting must be explicitly bounded by date range.
+  if (!scope.date_from) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['date_from'], message: 'date_from and date_to are required' });
+  }
 
-    if (scope.date_from && scope.date_to && scope.date_from > scope.date_to) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['date_from'],
-        message: 'date_from must be before or equal to date_to',
-      });
-    }
-  });
+  if (!scope.date_to) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['date_to'], message: 'date_from and date_to are required' });
+  }
+
+  if (scope.date_from && scope.date_to && scope.date_from > scope.date_to) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['date_from'], message: 'date_from must be before or equal to date_to' });
+  }
+}
+
+export const taskReportScopeSchema = taskReportScopeObjectSchema.superRefine(enforceScopeDateRange);
 
 export type TaskReportScope = z.infer<typeof taskReportScopeSchema>;
+
+/**
+ * Execution scope = persisted scope + the client-resolved operational-day window.
+ *
+ * The FE computes the operational-day window (06:00 -> 05:59 next day, in the
+ * user's timezone) from `date_from`/`date_to` and sends it as two ISO instants.
+ * The BE filters shows/tasks by `[window_start, window_end]` verbatim — no
+ * server-side timezone math, no parsing of date strings into instants. These
+ * fields are execution-only and intentionally absent from the persisted
+ * `taskReportScopeSchema` (saved definitions store calendar dates and recompute
+ * the window fresh on each run). `date_from`/`date_to` remain for display,
+ * persistence, preset resolution, and validation.
+ */
+export const taskReportExecutionScopeSchema = taskReportScopeObjectSchema
+  .extend({
+    window_start: z.iso.datetime(),
+    window_end: z.iso.datetime(),
+  })
+  .superRefine(enforceScopeDateRange);
+
+export type TaskReportExecutionScope = z.infer<typeof taskReportExecutionScopeSchema>;
 
 /**
  * Field descriptor returned by source discovery for column selection UI.
@@ -234,7 +245,7 @@ export type TaskReportSourcesResponse = z.infer<typeof taskReportSourcesResponse
  * Lightweight count-only request executed before full report generation.
  */
 export const taskReportPreflightRequestSchema = z.object({
-  scope: taskReportScopeSchema,
+  scope: taskReportExecutionScopeSchema,
 });
 
 export type TaskReportPreflightRequest = z.infer<typeof taskReportPreflightRequestSchema>;
@@ -268,7 +279,7 @@ export type TaskReportSelectedColumn = z.infer<typeof taskReportSelectedColumnSc
  * `definition_id` is optional trace metadata when run originates from saved preset.
  */
 export const taskReportRunRequestSchema = z.object({
-  scope: taskReportScopeSchema,
+  scope: taskReportExecutionScopeSchema,
   columns: z.array(taskReportSelectedColumnSchema).min(1).max(50),
   definition_id: z.string().min(1).optional(),
 });
@@ -408,6 +419,9 @@ export const getTaskReportSourcesQuerySchema = z
     show_ids: z.union([z.string(), z.array(z.string())]).optional(),
     submitted_statuses: z.union([z.string(), z.array(z.string())]).optional(),
     source_templates: z.union([z.string(), z.array(z.string())]).optional(),
+    // Client-resolved operational-day window instants (see taskReportExecutionScopeSchema).
+    window_start: z.iso.datetime().optional(),
+    window_end: z.iso.datetime().optional(),
   })
   .superRefine((query, ctx) => {
     if (!query.date_from) {
@@ -419,8 +433,11 @@ export const getTaskReportSourcesQuerySchema = z
     if (query.date_from && query.date_to && query.date_from > query.date_to) {
       ctx.addIssue({ code: 'custom', path: ['date_from'], message: 'date_from must be before or equal to date_to' });
     }
+    if (!query.window_start || !query.window_end) {
+      ctx.addIssue({ code: 'custom', path: ['window_start'], message: 'window_start and window_end are required' });
+    }
   })
-  .transform((query): TaskReportScope => ({
+  .transform((query): TaskReportExecutionScope => ({
     date_preset: query.date_preset,
     date_from: query.date_from!,
     date_to: query.date_to!,
@@ -430,6 +447,8 @@ export const getTaskReportSourcesQuerySchema = z
     show_ids: normalizeStringArray(query.show_ids),
     submitted_statuses: (normalizeStringArray(query.submitted_statuses) ?? [...submittedStatusesDefault]) as TaskReportScope['submitted_statuses'],
     source_templates: normalizeStringArray(query.source_templates),
+    window_start: query.window_start!,
+    window_end: query.window_end!,
   }));
 
 export type GetTaskReportSourcesQuery = z.infer<typeof getTaskReportSourcesQuerySchema>;

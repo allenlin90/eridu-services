@@ -3,7 +3,9 @@ import { Test } from '@nestjs/testing';
 
 import {
   getTaskReportSourcesQuerySchema,
+  taskReportExecutionScopeSchema,
   taskReportPreflightRequestSchema,
+  taskReportScopeSchema,
   TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
 
@@ -17,6 +19,9 @@ describe('taskReportScopeService', () => {
     date_from: '2026-03-01',
     date_to: '2026-03-31',
     show_standard_id: ['shsd_1'],
+    // Client-resolved operational-day window (06:00 -> 05:59 next day).
+    window_start: '2026-03-01T06:00:00.000Z',
+    window_end: '2026-04-01T05:59:59.999Z',
   };
 
   let service: TaskReportScopeService;
@@ -421,9 +426,13 @@ describe('taskReportScopeService', () => {
     expect(callArgs?.clientIds).toEqual(['client_1', 'client_2']);
   });
 
-  it('uses operational-day boundaries (06:00 to 05:59 next day) for explicit date_from/date_to scope', async () => {
+  it('forwards the client-resolved operational-day window verbatim (no server-side tz math)', async () => {
     repository.countShowsInScope.mockResolvedValue(1);
     repository.countSubmittedTasksInScope.mockResolvedValue(2);
+
+    // FE sends the operational-day window (06:00 -> 05:59 next day) as ISO instants.
+    const windowStart = '2026-03-10T06:00:00.000Z';
+    const windowEnd = '2026-03-12T05:59:59.999Z';
 
     await service.preflight(
       'std_123',
@@ -432,25 +441,28 @@ describe('taskReportScopeService', () => {
           date_from: '2026-03-10',
           date_to: '2026-03-11',
           submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+          window_start: windowStart,
+          window_end: windowEnd,
         },
       }),
     );
 
     const callArgs = repository.countShowsInScope.mock.calls[0]?.[1];
-    expect(callArgs?.dateFrom?.getFullYear()).toBe(2026);
-    expect(callArgs?.dateFrom?.getMonth()).toBe(2);
-    expect(callArgs?.dateFrom?.getDate()).toBe(10);
-    expect(callArgs?.dateFrom?.getHours()).toBe(6);
-    expect(callArgs?.dateTo?.getFullYear()).toBe(2026);
-    expect(callArgs?.dateTo?.getMonth()).toBe(2);
-    expect(callArgs?.dateTo?.getDate()).toBe(12);
-    expect(callArgs?.dateTo?.getHours()).toBe(5);
-    expect(callArgs?.dateTo?.getMinutes()).toBe(59);
+    expect(callArgs?.dateFrom?.toISOString()).toBe(windowStart);
+    expect(callArgs?.dateTo?.toISOString()).toBe(windowEnd);
   });
 
-  it('throws when date range is missing in scope resolution', () => {
-    expect(() => service.resolveScopeFilters({
+  it('enforces a bounded date range and a client window at the schema boundary', () => {
+    // Date range is required by the shared scope refinement.
+    expect(() => taskReportScopeSchema.parse({
       submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
-    } as any)).toThrow('date_from and date_to are required');
+    })).toThrow('date_from and date_to are required');
+
+    // Execution additionally requires the client-resolved operational-day window.
+    expect(() => taskReportExecutionScopeSchema.parse({
+      date_from: '2026-03-10',
+      date_to: '2026-03-11',
+      submitted_statuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    })).toThrow('window_start');
   });
 });

@@ -22,6 +22,9 @@ describe('studioTaskReportController', () => {
     date_from: '2026-03-01',
     date_to: '2026-03-31',
     show_standard_id: 'shsd_1',
+    // Client-resolved operational-day window (06:00 -> 05:59 next day).
+    window_start: '2026-03-01T06:00:00.000Z',
+    window_end: '2026-04-01T05:59:59.999Z',
   } as const;
 
   let controller: StudioTaskReportController;
@@ -200,6 +203,8 @@ describe('studioTaskReportController', () => {
       date_from: '2026-03-01',
       date_to: '2026-03-31',
       show_ids: 'show_1',
+      window_start: '2026-03-01T06:00:00.000Z',
+      window_end: '2026-04-01T05:59:59.999Z',
     });
     scopeService.preflight.mockResolvedValue({
       show_count: 12,
