@@ -283,6 +283,13 @@ export class TaskReportRunService {
           if (projectedField.performanceMetric) {
             // The operational fact, sourced from the extracted ShowPlatform
             // rollup — independent of which task surfaced the column.
+            //
+            // Intentional: fact extraction only runs when a task transitions to
+            // COMPLETED (see TaskSubmissionService.submitTaskContent), so a
+            // still-in-REVIEW submission has no extracted column yet and its
+            // performance cell stays blank. Performance columns export approved
+            // operational facts only; unapproved values are deliberately not
+            // surfaced as finalized metrics. This is not a missing-data bug.
             value = this.readShowMetric(showPerformanceByUid.get(showUid), projectedField.performanceMetric);
           } else {
             const input = projectTaskReportContentInput(contentRecord, {
