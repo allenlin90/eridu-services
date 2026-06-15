@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { del, get, set } from 'idb-keyval';
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useDebounceCallback } from 'usehooks-ts';
 
@@ -11,7 +11,7 @@ import {
   shouldUseSavedBuilderDraft,
 } from '@/components/task-templates/builder/payload';
 import { type BuilderTemplateSchemaType, safeParseBuilderTemplateSchema } from '@/components/task-templates/builder/schema';
-import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
+import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder.lazy';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import { useCreateTaskTemplate } from '@/features/task-templates/hooks/use-create-task-template';
 import { formatZodErrors } from '@/lib/zod-utils';
@@ -146,16 +146,24 @@ export function TaskTemplateBuilderPage() {
           <div>Failed to load studio shared fields. Shared-field insertion is temporarily unavailable on this page.</div>
         </div>
       )}
-      <TaskTemplateBuilder
-        template={template}
-        onChange={handleTemplateChange}
-        isSaving={isSaving}
-        onSave={onSave}
-        onCancel={handleCancel}
-        errors={errors}
-        sharedFields={sharedFieldsResponse?.shared_fields ?? []}
-        studioId={studioId}
-      />
+      <Suspense
+        fallback={(
+          <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
+            <div className="text-muted-foreground">Loading builder...</div>
+          </div>
+        )}
+      >
+        <TaskTemplateBuilder
+          template={template}
+          onChange={handleTemplateChange}
+          isSaving={isSaving}
+          onSave={onSave}
+          onCancel={handleCancel}
+          errors={errors}
+          sharedFields={sharedFieldsResponse?.shared_fields ?? []}
+          studioId={studioId}
+        />
+      </Suspense>
     </PageLayout>
   );
 }
