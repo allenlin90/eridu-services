@@ -50,6 +50,19 @@ This document unifies three previously scattered ideation tracks:
 *   **Current Logic:** Monetary values (e.g. GMV on the `/performance` dashboard) render as raw decimal strings with no currency symbol or grouping.
 *   **The Problem:** Surfaced during `/performance` review (PR 21 follow-up [roadmap 21.12](../roadmap/PHASE_4.md)). Money is hard to read without a thousands separator and a currency unit; the operating market is Thailand, so GMV should display in Thai Baht (`฿`/THB) with `th-TH` grouping. The chosen currency and number locale are studio-scoped, so they belong in studio settings (`localization.currency` / `localization.locale`) and flow into a shared formatter used by the dashboard and any other monetary surface. Until the settings model exists, a sensible default (`THB` / `th-TH`) can be applied app-side, but the value must ultimately be configurable per studio.
 
+### 6. Divergent Operational-Day Implementations (Cross-Cutting)
+*   **Current Logic:** With no studio timezone field, every operational-day calculation independently guesses the studio's timezone, and they **do not agree**:
+    | Surface | How it resolves the timezone | Effective day boundary |
+    | --- | --- | --- |
+    | `task-report-scope.service.ts` | server host clock (`new Date(\`${dateStr}T00:00:00\`)` + `setHours`) | 06:00 **server-local** |
+    | `studio-performance` + `studio-costs` (`deriveClientOffsetMs`) | offset recovered from a **client-sent** instant; no DST, fixed offset ("brittle by design" per the util's own doc) | 06:00 **client-local** |
+    | `ShiftAlignmentService` (`OPERATIONAL_DAY_START_HOUR_UTC = 6`, `getUTCHours()`) | none — hardcoded UTC | 06:00 **UTC** |
+*   **The Problem:**
+    1.  **Latent correctness bug:** performance/costs bucket shows at 06:00 local (UTC+7 in practice) while shift-alignment buckets at 06:00 UTC — a 7-hour disagreement on which operational day a show belongs to. Today this is masked because all studios are in `Asia/Bangkok`; it diverges the moment a studio is in any other zone, and is already incorrect for any non-browser caller (scheduled exports, server jobs).
+    2.  **Client-clock dependence:** the `deriveClientOffsetMs` and (proposed) FE-window approaches tie a **studio-intrinsic** window to whoever is *viewing* it. The operational day is a property of the studio's physical location, not the viewer's device — so a traveling manager, a cross-border VA, or any headless caller produces wrong windows.
+*   **Concrete instance — task report metrics (PR #205, June 2026):** midnight shows starting before 06:00 were displayed on the performance dashboard but excluded from task reports, because the report builder clamped to `00:00–23:59` calendar days instead of the `06:00→05:59` operational window. PR #205 aligned the report builder to the operational window as an **interim** fix; it still relies on the server-local-TZ assumption above. This is the canonical example of the same window being computed three different ways across surfaces and drifting.
+*   **Target:** a single `StudioSettings.planning.{timezone, operationalDayStartHour}` consumed by **one** shared BE timezone-boundary utility (proper IANA conversion, not naive `setHours`), retiring `deriveClientOffsetMs`, `ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC`, and `task-report-scope.service.ts`'s host-locale parsing in favor of it.
+
 ---
 
 ## Proposed Unified Solution: Studio Settings Schema
@@ -185,6 +198,7 @@ This consolidated topic should be promoted to a PRD and scheduled for execution 
 1.  **High-severity False Positives:** The false alarms on the task readiness panel (e.g. missing moderation for `"Moderator Workflow"` tasks) cause significant user confusion.
 2.  **Multi-Region Onboarding:** A new studio is onboarded that does not use English text in templates (making `/moderation/i` useless) or requires a different operational day start hour or local timezone.
 3.  **Studio Settings Dashboard Epic:** The product roadmap schedules a general **Studio Settings and Preferences UI** phase.
+4.  **Operational-day drift becomes user-visible:** surfaces disagree on the same window (e.g. PR #205's report-vs-dashboard mismatch), or the performance-vs-shift-alignment boundary disagreement (gap §6) produces a wrong-day bucket in production. Each interim per-surface patch raises the cost of *not* unifying on a studio timezone.
 
 ---
 
