@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import type {
   GetTaskReportSourcesQuery,
+  TaskReportExecutionScope,
   TaskReportPreflightRequest,
   TaskReportPreflightResponse,
-  TaskReportScope,
   TaskReportSourcesResponse,
   UiSchema,
 } from '@eridu/api-types/task-management';
@@ -201,18 +201,20 @@ export class TaskReportScopeService {
   }
 
   /**
-   * Resolves scope input into typed DB filter params with date range enforcement.
+   * Resolves scope input into typed DB filter params.
    * Called by TaskReportRunService and source discovery to avoid duplicating scope parsing logic.
-   * Dates are required.
+   *
+   * The date range is the client-resolved operational-day window (`window_start`
+   * / `window_end`, ISO instants). The FE computes it in the studio's timezone
+   * and the BE filters by it verbatim — no server-side timezone math. `window_*`
+   * presence is guaranteed by `taskReportExecutionScopeSchema`.
    */
   resolveScopeFilters(
-    scope: TaskReportScope,
+    scope: TaskReportExecutionScope,
   ): TaskReportScopeFilters {
-    const { dateFrom, dateTo } = this.parseDatesRequired(scope);
-
     return {
-      dateFrom,
-      dateTo,
+      dateFrom: new Date(scope.window_start),
+      dateTo: new Date(scope.window_end),
       clientIds: scope.client_id,
       showStandardIds: scope.show_standard_id,
       showTypeIds: scope.show_type_id,
@@ -220,36 +222,6 @@ export class TaskReportScopeService {
       sourceTemplateIds: scope.source_templates,
       submittedStatuses: scope.submitted_statuses,
     };
-  }
-
-  /**
-   * Parse and enforce a required date range. Throws 400 if either bound is missing.
-   */
-  private parseDatesRequired(
-    scope: Pick<TaskReportScope, 'date_preset' | 'date_from' | 'date_to'>,
-  ): { dateFrom: Date; dateTo: Date } {
-    if (!scope.date_from || !scope.date_to) {
-      throw HttpError.badRequest('date_from and date_to are required');
-    }
-
-    return {
-      // Keep date boundaries in local timezone to match existing show/task filtering behavior.
-      dateFrom: this.parseDateBoundary(scope.date_from, 'start'),
-      dateTo: this.parseDateBoundary(scope.date_to, 'end'),
-    };
-  }
-
-  /**
-   * Convert an ISO date string to a Date at the start (00:00:00) or end (23:59:59.999) of day.
-   */
-  private parseDateBoundary(dateStr: string, boundary: 'start' | 'end'): Date {
-    // Local-tz string (no trailing Z) to match existing show/task filtering behavior.
-    const date = new Date(`${dateStr}T00:00:00`);
-    if (boundary === 'end') {
-      date.setHours(23, 59, 59, 999);
-    }
-
-    return date;
   }
 
   private readTaskType(metadata: UiSchema['metadata'], fallback = 'OTHER'): string {
