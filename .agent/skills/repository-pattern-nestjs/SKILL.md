@@ -50,6 +50,12 @@ Do NOT implement `findByUidOrThrow` in repositories. Controller calls `ensureRes
 
 Repositories return `null` for not-found. Never throw HTTP exceptions from the data layer.
 
+### 6. Route Writes Through the Transaction Host
+
+🔴 A repository write run inside an `@Transactional` service flow must go through `this.txHost.tx.<model>` (the canonical `task.repository` delegate), **not** the unbounded `PrismaService` — otherwise it escapes the ambient transaction and commits even when the flow rolls back. Inject `TransactionHost<TransactionalAdapterPrisma>` and route `create`/`update`/`delete`/`softDelete` through it; reads may stay on the base client.
+
+⚠️ **Known gap:** `BaseRepository` binds `super(new PrismaModelWrapper(prisma.<model>))` to the *unbounded* client, so its **inherited** methods don't join a transaction. The canonical pattern works around this by overriding the write methods a repo actually uses in transactions; a lazy-delegate `BaseRepository` is the proper fix (deferred — see `docs/tech-debt/erify-api-refactor-residuals.md`).
+
 ## Key Patterns
 
 ### Specialized Find Methods

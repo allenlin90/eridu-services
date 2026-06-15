@@ -45,6 +45,7 @@ Define `UID_PREFIX` (no trailing underscore). Inject `UtilityService`. Use `this
 - **Schema files** MAY use Prisma types to define payload types.
 - **Services** import payload types from schemas, not Prisma.
 - **Pass-through methods** use `Parameters<Repository['method']>` to match repo signatures.
+- **Money / `Prisma.Decimal`:** `Decimal` is a `Prisma.*` type — don't expose it in public service signatures; convert `Decimal` → string at the boundary. Format with the canonical `decimalToString` (`lib/utils`); don't add parallel money formatters with divergent semantics. A shared domain `Money` type is a deferred direction decision (see `docs/tech-debt/erify-api-refactor-residuals.md`).
 
 ### 3. Never Call Zod `.parse()` in Services
 
