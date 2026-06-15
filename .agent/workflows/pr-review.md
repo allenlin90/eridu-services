@@ -117,6 +117,7 @@ Full reference: `.agent/skills/frontend-state-management/SKILL.md`
 - [ ] Nullable prop guards: explicit non-null guard before dereference — no `a?.x === b?.y` then `a.x`.
 - [ ] Route guards and sidebar visibility reference the same access policy source.
 - [ ] i18n strings go through Paraglide — no hardcoded UI copy.
+- [ ] No scattered magic values: repeated viewport/layout offsets (`calc(100vh-Xrem)`, gutters, overlay heights) live in `src/config/layout.ts`; pagination/fetch limits, durations, and similar tunables live in named constants — not duplicated inline. Layout constants hold the **full literal** Tailwind class (JIT-safe). Bespoke single-use composites (e.g. `min(20rem,calc(100vw-2rem))`) may stay inline. See `frontend-code-quality` rules 6–7.
 
 Full reference: `.agent/skills/frontend-ui-components/SKILL.md`, `.agent/skills/frontend-i18n/SKILL.md`
 
