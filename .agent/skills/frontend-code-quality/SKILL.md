@@ -35,6 +35,7 @@ Always use `@/*` imports (configured in `tsconfig.json`), never deep relative pa
 4. **Conditional rendering**: Always use ternary (`condition ? <A /> : null`), not `&&` with numeric/nullable.
 5. **Limit props**: Split components, use composition, or group related props.
 6. **No repeated magic limits**: Centralize pagination/fetch limits in named constants.
+7. **No scattered layout magic numbers**: Shell/chrome offsets like `calc(100vh-13rem)` belong in a named constant (e.g. `src/config/layout.ts` → `CONTENT_AREA_MIN_H`), not duplicated inline across files. Keep the full literal Tailwind class in the constant (the JIT scans `.ts`/`.tsx` via `@source`) — a JS-interpolated rem value won't be detected.
 
 ## Large Route Decomposition
 

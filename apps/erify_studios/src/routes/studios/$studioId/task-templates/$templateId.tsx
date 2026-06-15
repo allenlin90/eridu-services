@@ -1,16 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useState } from 'react';
+import { Suspense, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 import { getSchemaEngine, safeParseTemplateSchema } from '@eridu/api-types/task-management';
+import { LoadingPage } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import {
   buildTemplateSchemaPayload,
   hasTemplateSchemaEngineMismatch,
 } from '@/components/task-templates/builder/payload';
+import { CONTENT_AREA_H, CONTENT_AREA_MIN_H } from '@/config/layout';
 import { safeParseBuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
-import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder';
+import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder.lazy';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import type { GetTaskTemplateResponse } from '@/features/task-templates/api/get-task-template';
 import { useTaskTemplate } from '@/features/task-templates/hooks/use-task-template';
@@ -39,9 +41,7 @@ function EditTaskTemplatePage() {
           </span>
         )}
       >
-        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
-          <div className="text-muted-foreground">Loading template...</div>
-        </div>
+        <LoadingPage label="Loading template..." className={CONTENT_AREA_MIN_H} />
       </PageLayout>
     );
   }
@@ -56,7 +56,7 @@ function EditTaskTemplatePage() {
           </span>
         )}
       >
-        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
+        <div className={`flex items-center justify-center ${CONTENT_AREA_H}`}>
           <div className="text-destructive">Failed to load template.</div>
         </div>
       </PageLayout>
@@ -93,7 +93,7 @@ function EditTaskTemplatePage() {
           </span>
         )}
       >
-        <div className="flex items-center justify-center h-[calc(100vh-13rem)]">
+        <div className={`flex items-center justify-center ${CONTENT_AREA_H}`}>
           <div className="max-w-lg space-y-3 rounded-md border border-destructive/30 bg-destructive/10 p-6 text-sm">
             <div className="font-semibold text-destructive">This template cannot be edited</div>
             <div className="text-destructive/80">{schemaError}</div>
@@ -219,16 +219,20 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
           <div>Failed to load studio shared fields. Shared-field insertion is temporarily unavailable on this page.</div>
         </div>
       )}
-      <TaskTemplateBuilder
-        template={template}
-        onChange={handleTemplateChange}
-        isSaving={isSaving}
-        onSave={onSave}
-        onCancel={handleCancel}
-        errors={errors}
-        sharedFields={sharedFieldsResponse?.shared_fields ?? []}
-        studioId={studioId}
-      />
+      <Suspense
+        fallback={<LoadingPage label="Loading builder..." className={CONTENT_AREA_MIN_H} />}
+      >
+        <TaskTemplateBuilder
+          template={template}
+          onChange={handleTemplateChange}
+          isSaving={isSaving}
+          onSave={onSave}
+          onCancel={handleCancel}
+          errors={errors}
+          sharedFields={sharedFieldsResponse?.shared_fields ?? []}
+          studioId={studioId}
+        />
+      </Suspense>
     </PageLayout>
   );
 }

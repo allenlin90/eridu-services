@@ -30,6 +30,7 @@ import { cn } from '@eridu/ui/lib/utils';
 | Refresh Buttons | Icon-only (`RotateCw`) + `aria-label` + spinning state while fetching |
 | Collapsible Sections | `ChevronUp`/`ChevronDown` toggle, smooth animated transitions |
 | Cross-Field Form Invariants | When BE Zod `superRefine` ties one field's value to another's, build the payload through a `buildXxxPayload(form)` helper that **clears irrelevant fields** (don't trust user residue). Disable the irrelevant inputs. Never submit raw state directly. |
+| Loading / `Suspense` fallback | Use the shared, **composable** `LoadingPage` / `LoadingSpinner` from `@eridu/ui` — don't hand-roll loading divs. `LoadingPage` takes `label` (caption), `className` (fit a region), and `children` (compose extra content); prefer extending it over a bespoke loader. A code-split `Suspense` fallback must stay in the **eager** shell to render during its child's load, so keep it a dependency-free spinner — **don't add Lottie/heavy animation libs to a fallback** (it bloats the bundle the split is shrinking; reserve Lottie for a deliberate branded splash, never a fallback). |
 
 ## Responsive Dialog → Drawer Pattern
 
