@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import type { TaskReportScope } from '@eridu/api-types/task-management';
 
-import { buildOperationalDayRange } from '@/lib/operational-day-range';
-
 import { withExecutionWindow } from '../execution-window';
+
+import { buildOperationalDayRange } from '@/lib/operational-day-range';
 
 describe('withExecutionWindow', () => {
   it('attaches the operational-day window as ISO instants and preserves the calendar scope', () => {
