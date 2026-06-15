@@ -2,21 +2,10 @@ import {
   type FieldItem,
   getTaskContentExtraKey,
   getTaskContentReasonKey,
-  parseHydratedContentKey,
-  type SystemFactKey,
-  TASK_CONTENT_EXTRA_SUFFIX,
-  TASK_CONTENT_REASON_SUFFIX,
 } from '@eridu/api-types/task-management';
 
-type ReportField = Pick<FieldItem, 'key' | 'type'> & {
-  systemFactKey?: SystemFactKey;
-};
+type ReportField = Pick<FieldItem, 'key' | 'type'>;
 type FieldType = FieldItem['type'];
-type PlatformPerformanceFactKey =
-  | 'show_platform_gmv'
-  | 'show_platform_view_count'
-  | 'show_platform_ctr'
-  | 'show_platform_cto';
 
 type ProjectedInput = {
   value: unknown;
@@ -95,74 +84,6 @@ function normalizeFieldValue(value: unknown, type: FieldType): unknown {
   }
 }
 
-function readHydratedFieldValues(
-  contentRecord: Record<string, unknown>,
-  fieldKey: string,
-): unknown[] {
-  return Object.entries(contentRecord).flatMap(([contentKey, value]) => {
-    if (
-      contentKey.endsWith(TASK_CONTENT_REASON_SUFFIX)
-      || contentKey.endsWith(TASK_CONTENT_EXTRA_SUFFIX)
-    ) {
-      return [];
-    }
-    const parsed = parseHydratedContentKey(contentKey);
-    return parsed?.fieldId === fieldKey ? [value] : [];
-  });
-}
-
-function isPlatformPerformanceFactKey(
-  systemFactKey: SystemFactKey | undefined,
-): systemFactKey is PlatformPerformanceFactKey {
-  return systemFactKey === 'show_platform_gmv'
-    || systemFactKey === 'show_platform_view_count'
-    || systemFactKey === 'show_platform_ctr'
-    || systemFactKey === 'show_platform_cto';
-}
-
-function aggregatePerformanceValues(
-  values: unknown[],
-  type: FieldType,
-  systemFactKey: PlatformPerformanceFactKey,
-): unknown {
-  const normalizedValues = values
-    .map((value) => normalizeFieldValue(value, type))
-    .filter((value): value is number => typeof value === 'number');
-
-  if (normalizedValues.length === 0) {
-    return null;
-  }
-  if (normalizedValues.length === 1) {
-    return normalizedValues[0];
-  }
-
-  const total = normalizedValues.reduce((sum, value) => sum + value, 0);
-  switch (systemFactKey) {
-    case 'show_platform_gmv':
-    case 'show_platform_view_count':
-      return total;
-    case 'show_platform_ctr':
-    case 'show_platform_cto':
-      return total / normalizedValues.length;
-    default:
-      return null;
-  }
-}
-
-function resolveFieldValue(
-  contentRecord: Record<string, unknown>,
-  field: ReportField,
-): unknown {
-  if (isPlatformPerformanceFactKey(field.systemFactKey)) {
-    const hydratedValues = readHydratedFieldValues(contentRecord, field.key);
-    if (hydratedValues.length > 0) {
-      return aggregatePerformanceValues(hydratedValues, field.type, field.systemFactKey);
-    }
-  }
-
-  return normalizeFieldValue(contentRecord[field.key], field.type);
-}
-
 function formatInputExtra(contentRecord: Record<string, unknown>, fieldKey: string): string | null {
   const lines: string[] = [];
   const reason = contentRecord[getTaskContentReasonKey(fieldKey)];
@@ -187,7 +108,7 @@ export function projectTaskReportContentInput(
   field: ReportField,
 ): ProjectedInput {
   return {
-    value: resolveFieldValue(contentRecord, field),
+    value: normalizeFieldValue(contentRecord[field.key], field.type),
     extra: formatInputExtra(contentRecord, field.key),
   };
 }

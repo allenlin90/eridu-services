@@ -1,5 +1,6 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 
 import {
   taskReportRunRequestSchema,
@@ -38,8 +39,10 @@ describe('taskReportRunService', () => {
     showStatusName: 'Confirmed',
     showStandardName: 'Standard A',
     showTypeName: 'Type A',
+    showPlatforms: [],
     ...overrides,
   });
+  const viewCountMetadata = { performance_templates: { show_platform_view_count: 'ttpl_1' } };
   const createScopedTask = (overrides: Record<string, unknown> = {}) => ({
     uid: 'task_1',
     updatedAt: new Date('2026-03-17T10:00:00.000Z'),
@@ -955,7 +958,7 @@ describe('taskReportRunService', () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('projects a platform-hydrated performance field into the report row', async () => {
+  it('projects a platform-performance fact from the extracted ShowPlatform column, not task content', async () => {
     const snapshotSchema = TemplateSchemaV2Validator.parse({
       schema_engine: 'task_template_v2',
       schema_version: 2,
@@ -984,13 +987,18 @@ describe('taskReportRunService', () => {
     scopeService.resolveScopeFilters.mockReturnValue({
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
-    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow({
+        showPlatforms: [
+          { gmv: new Prisma.Decimal('20766.00'), viewerCount: 0, ctr: null, cto: null, metadata: {} },
+        ],
+      }),
+    ]);
     scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      // Stale value lingering in content must be ignored — the column is the source of truth.
       createScopedTask({
         snapshotSchema,
-        content: {
-          'fld_gmvmetric01:platform:show_plt_shopee': 20766,
-        },
+        content: { 'fld_gmvmetric01:platform:show_plt_shopee': 999999 },
       }),
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
@@ -1005,7 +1013,7 @@ describe('taskReportRunService', () => {
     });
   });
 
-  it('aggregates platform-hydrated performance values with the performance read-model semantics', async () => {
+  it('aggregates platform-performance columns with the performance read-model semantics', async () => {
     const snapshotSchema = TemplateSchemaV2Validator.parse({
       schema_engine: 'task_template_v2',
       schema_version: 2,
@@ -1061,22 +1069,28 @@ describe('taskReportRunService', () => {
     scopeService.resolveScopeFilters.mockReturnValue({
       submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
     } as any);
-    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
-    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
-      createScopedTask({
-        snapshotSchema,
-        content: {
-          'fld_gmvmetric01:platform:show_plt_shopee': 100,
-          'fld_gmvmetric01:platform:show_plt_tiktok': 25,
-          'fld_gmvmetric01:platform:show_plt_shopee__reason': '999',
-          'fld_viewmetric1:platform:show_plt_shopee': 10,
-          'fld_viewmetric1:platform:show_plt_tiktok': 5,
-          'fld_ctrmetric01:platform:show_plt_shopee': 4,
-          'fld_ctrmetric01:platform:show_plt_tiktok': 8,
-          'fld_ctometric01:platform:show_plt_shopee': 2,
-          'fld_ctometric01:platform:show_plt_tiktok': 4,
-        },
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow({
+        showPlatforms: [
+          {
+            gmv: new Prisma.Decimal('100.00'),
+            viewerCount: 10,
+            ctr: new Prisma.Decimal('4.00'),
+            cto: new Prisma.Decimal('2.00'),
+            metadata: viewCountMetadata,
+          },
+          {
+            gmv: new Prisma.Decimal('25.00'),
+            viewerCount: 5,
+            ctr: new Prisma.Decimal('8.00'),
+            cto: new Prisma.Decimal('4.00'),
+            metadata: viewCountMetadata,
+          },
+        ],
       }),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({ snapshotSchema, content: {} }),
     ]);
     studioService.getSharedFields.mockResolvedValue([]);
 
@@ -1096,5 +1110,49 @@ describe('taskReportRunService', () => {
       'ttpl_1:field_ctr': 6,
       'ttpl_1:field_cto': 3,
     });
+  });
+
+  it('rejects a hydrated fact column that has no per-show projection', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_violation01',
+          key: 'field_violation',
+          type: 'multiselect',
+          label: 'Violation',
+          required: false,
+          default_value: '',
+          options: [{ label: 'Warning', value: 'warning' }],
+          system_fact_key: 'show_platform_violation',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({ snapshotSchema, content: {} }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    await expect(
+      service.run('std_123', taskReportRunRequestSchema.parse({
+        scope: defaultReportScope,
+        columns: [{ key: 'ttpl_1:field_violation', label: 'Violation' }],
+      })),
+    ).rejects.toThrow(/cannot be projected/i);
   });
 });

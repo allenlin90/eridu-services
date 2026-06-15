@@ -20,6 +20,7 @@ import {
 import { parsePerformanceTemplates } from './schemas/show-platform-metadata.schema';
 import type { PerformanceListShow } from './studio-performance.repository';
 
+import { aggregateShowPlatformPerformance } from '@/lib/performance/show-platform-performance';
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 
 /** A primitive sort key: numeric, a Prisma Decimal, or `null` (sorted last). */
@@ -277,32 +278,22 @@ export class StudioPerformanceCalculatorService {
   }
 
   /**
-   * Sums the stored per-platform GMV and view counts for a show. GMV sums every
-   * non-null platform value; views only count platforms with a recorded
-   * view-count fact (mirroring the summary/list semantics — `viewerCount`
-   * defaults to 0, so an unrecorded platform must not inflate the total).
-   * Returns `null` for a metric when no platform carries it.
+   * Sums the stored per-platform GMV and view counts for a show. Delegates to
+   * the canonical {@link aggregateShowPlatformPerformance} rollup so the
+   * studio-performance read model and the task-report export share one set of
+   * semantics; this method just narrows it to the GMV/views string shape the
+   * series response needs.
    */
   sumShowStoredAggregates(
     showPlatforms: Array<{ gmv: Prisma.Decimal | null; viewerCount: number; metadata: unknown }>,
   ): { gmv: string | null; views: number | null } {
-    let gmvSum: Prisma.Decimal | null = null;
-    let viewsSum: number | null = null;
-
-    for (const sp of showPlatforms) {
-      if (sp.gmv !== null) {
-        gmvSum = gmvSum ? gmvSum.add(sp.gmv) : sp.gmv;
-      }
-
-      const templates = parsePerformanceTemplates(sp.metadata);
-      if (templates.show_platform_view_count !== undefined) {
-        viewsSum = (viewsSum ?? 0) + sp.viewerCount;
-      }
-    }
+    const aggregate = aggregateShowPlatformPerformance(
+      showPlatforms.map((sp) => ({ gmv: sp.gmv, viewerCount: sp.viewerCount, ctr: null, cto: null, metadata: sp.metadata })),
+    );
 
     return {
-      gmv: gmvSum !== null ? decimalToString(gmvSum) : null,
-      views: viewsSum,
+      gmv: aggregate.gmv !== null ? decimalToString(aggregate.gmv) : null,
+      views: aggregate.views,
     };
   }
 

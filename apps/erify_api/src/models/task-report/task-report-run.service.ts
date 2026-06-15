@@ -14,6 +14,7 @@ import {
   getFieldContentKey,
   getFieldReportDescriptor,
   getFieldSharedKey,
+  getSystemFactKeyDefinition,
   safeParseTemplateSchema,
   TASK_REPORT_SYSTEM_COLUMN,
   taskReportColumnSchema,
@@ -24,7 +25,29 @@ import { TaskReportScopeRepository } from './task-report-scope.repository';
 import { TaskReportScopeService } from './task-report-scope.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import {
+  aggregateShowPlatformPerformance,
+  type ShowPerformanceAggregate,
+} from '@/lib/performance/show-platform-performance';
 import { StudioService } from '@/models/studio/studio.service';
+
+/**
+ * Platform performance facts are extracted into `ShowPlatform` columns, so the
+ * report sources them from there (the canonical operational fact), NOT from
+ * `task.content` (the operator input). This map is the single routing table:
+ * a selected field bound to one of these `system_fact_key`s projects the
+ * show-level rollup of the matching column. Any other hydrated (creator- or
+ * platform-scoped) fact has no per-show scalar projection and is rejected
+ * rather than silently emitted as null — see `compileProjectionFields`.
+ */
+const PLATFORM_PERFORMANCE_METRIC = {
+  show_platform_gmv: 'gmv',
+  show_platform_view_count: 'views',
+  show_platform_ctr: 'ctr',
+  show_platform_cto: 'cto',
+} as const satisfies Partial<Record<SystemFactKey, keyof ShowPerformanceAggregate>>;
+
+type PlatformPerformanceMetric = (typeof PLATFORM_PERFORMANCE_METRIC)[keyof typeof PLATFORM_PERFORMANCE_METRIC];
 
 type FieldType = z.infer<typeof FieldTypeEnum>;
 type TaskReportColumn = z.infer<typeof taskReportColumnSchema>;
@@ -57,7 +80,12 @@ type CompiledProjectionField = {
   fieldKey: string;
   columnKey: string;
   extraColumnKey: string | null;
-  systemFactKey?: SystemFactKey;
+  // Set when the field binds a platform-performance fact — the value is read
+  // from the show's extracted `ShowPlatform` rollup, not from `task.content`.
+  performanceMetric?: PlatformPerformanceMetric;
+  // Set when the field binds a hydrated fact that has no per-show projection.
+  // Such a column is rejected at run time instead of emitting a silent null.
+  unsupportedFactLabel?: string;
   meta: SelectedKeyMeta;
 };
 type ScopedTask = Awaited<ReturnType<TaskReportScopeRepository['findSubmittedTasksInScope']>>[number];
@@ -173,6 +201,14 @@ export class TaskReportRunService {
     const selectedColumnKeys = new Set(selectedColumnByKey.keys());
     const hasSelectedTaskColumns = Array.from(selectedColumnKeys).some((columnKey) => !this.isSystemColumn(columnKey));
     const rowsByShowUid: RowsByShowUid = new Map(shows.map((show) => [show.uid, {}]));
+    // Canonical per-show rollup of the extracted platform-performance facts.
+    // Platform-performance report columns read from here, never `task.content`.
+    const showPerformanceByUid = new Map<string, ShowPerformanceAggregate>(
+      shows.map((show) => [show.uid, aggregateShowPlatformPerformance(show.showPlatforms)]),
+    );
+    // Hydrated facts that were selected but have no per-show projection. Holds
+    // columnKey -> label so the run can reject them with a clear message.
+    const unsupportedFactColumns = new Map<string, string>();
     const selectedKeyMeta = new Map<string, SelectedKeyMeta>();
     const duplicateSourceCount = new Map<string, number>();
     const viewFilterMetaByShowUid: ViewFilterMetaByShowUid = new Map(
@@ -218,6 +254,11 @@ export class TaskReportRunService {
       if (projectionFields.length === 0) {
         continue;
       }
+      for (const projectedField of projectionFields) {
+        if (projectedField.unsupportedFactLabel) {
+          unsupportedFactColumns.set(projectedField.columnKey, projectedField.unsupportedFactLabel);
+        }
+      }
       const contentRecord = this.readTaskContent(task.content);
 
       for (const showUid of task.targetShowUids) {
@@ -230,19 +271,34 @@ export class TaskReportRunService {
         duplicateSourceCount.set(duplicateKey, (duplicateSourceCount.get(duplicateKey) ?? 0) + 1);
 
         for (const projectedField of projectionFields) {
+          // Hydrated facts with no per-show projection are rejected after the
+          // pass; skip projecting a null cell for them in the meantime.
+          if (projectedField.unsupportedFactLabel) {
+            continue;
+          }
+
           const { columnKey, extraColumnKey } = projectedField;
-          const input = projectTaskReportContentInput(contentRecord, {
-            key: projectedField.fieldKey,
-            type: projectedField.meta.type,
-            systemFactKey: projectedField.systemFactKey,
-          });
+          let value: unknown;
+          let extra: string | null = null;
+          if (projectedField.performanceMetric) {
+            // The operational fact, sourced from the extracted ShowPlatform
+            // rollup — independent of which task surfaced the column.
+            value = this.readShowMetric(showPerformanceByUid.get(showUid), projectedField.performanceMetric);
+          } else {
+            const input = projectTaskReportContentInput(contentRecord, {
+              key: projectedField.fieldKey,
+              type: projectedField.meta.type,
+            });
+            value = input.value;
+            extra = input.extra;
+          }
 
           if (!(columnKey in row)) {
-            row[columnKey] = input.value;
+            row[columnKey] = value;
           }
 
           if (extraColumnKey && !(extraColumnKey in row)) {
-            row[extraColumnKey] = input.extra;
+            row[extraColumnKey] = extra;
           }
 
           if (!selectedKeyMeta.has(columnKey)) {
@@ -258,7 +314,51 @@ export class TaskReportRunService {
       }
     }
 
+    this.assertProjectableFactColumns(unsupportedFactColumns);
+
     return { rowsByShowUid, selectedKeyMeta, duplicateSourceCount, viewFilterMetaByShowUid };
+  }
+
+  /**
+   * Convert a show's performance rollup into the report's numeric cell. GMV /
+   * CTR / CTO aggregate in `Prisma.Decimal` and collapse to a JS number only at
+   * the very end, so the export carries no intermediate float drift.
+   */
+  private readShowMetric(
+    aggregate: ShowPerformanceAggregate | undefined,
+    metric: PlatformPerformanceMetric,
+  ): number | null {
+    if (!aggregate) {
+      return null;
+    }
+    const value = aggregate[metric];
+    if (value === null) {
+      return null;
+    }
+    return typeof value === 'number' ? value : value.toNumber();
+  }
+
+  /**
+   * Reject report columns bound to hydrated facts that have no per-show
+   * projection (e.g. per-platform violation, per-creator attendance times).
+   * Emitting a silent null would read as "not reported" — the same class of bug
+   * that left hydrated values invisible before. Fail loudly instead.
+   */
+  private assertProjectableFactColumns(unsupportedFactColumns: Map<string, string>): void {
+    if (unsupportedFactColumns.size === 0) {
+      return;
+    }
+
+    throw HttpError.badRequestWithDetails(
+      'Selected columns reference per-target operational facts that cannot be projected into a one-row-per-show report',
+      {
+        incompatible_columns: [...unsupportedFactColumns.entries()].map(([key, label]) => ({
+          key,
+          label,
+          reason: 'unsupported_system_fact_column',
+        })),
+      },
+    );
   }
 
   private compileProjectionFields(
@@ -290,11 +390,15 @@ export class TaskReportRunService {
           })())
         : undefined;
 
+      const systemFactKey = 'system_fact_key' in field ? field.system_fact_key : undefined;
+      const factProjection = this.classifyFactProjection(systemFactKey, selectedColumn.label ?? columnKey);
+
       return [{
         fieldKey: getFieldContentKey(parsedSnapshot.data, field),
         columnKey,
         extraColumnKey: selectedColumn.include_extra ? this.buildInputExtraColumnKey(columnKey) : null,
-        systemFactKey: 'system_fact_key' in field ? field.system_fact_key : undefined,
+        performanceMetric: factProjection.performanceMetric,
+        unsupportedFactLabel: factProjection.unsupportedFactLabel,
         meta: {
           type: field.type,
           standard: isStandard || undefined,
@@ -304,6 +408,38 @@ export class TaskReportRunService {
         },
       }];
     });
+  }
+
+  /**
+   * Decide how a selected field's `system_fact_key` (if any) projects into a
+   * per-show report cell:
+   * - no fact key, or a show-scoped fact (value stored at the plain content
+   *   key): ordinary content projection, no special handling here.
+   * - a platform-performance fact: read the show's extracted `ShowPlatform`
+   *   rollup via `performanceMetric`.
+   * - any other hydrated (creator/platform) fact: no defined per-show scalar —
+   *   flag it so the run rejects the column instead of silently nulling it.
+   */
+  private classifyFactProjection(
+    systemFactKey: SystemFactKey | undefined,
+    label: string,
+  ): { performanceMetric?: PlatformPerformanceMetric; unsupportedFactLabel?: string } {
+    if (!systemFactKey) {
+      return {};
+    }
+
+    const performanceMetric = PLATFORM_PERFORMANCE_METRIC[systemFactKey as keyof typeof PLATFORM_PERFORMANCE_METRIC];
+    if (performanceMetric) {
+      return { performanceMetric };
+    }
+
+    // Show-scoped facts live at the plain content key and project like any
+    // ordinary field; only hydrated (per-target) facts lack a per-show rollup.
+    if (getSystemFactKeyDefinition(systemFactKey).target === 'show') {
+      return {};
+    }
+
+    return { unsupportedFactLabel: label };
   }
 
   private assertKnownSelectedColumns(
