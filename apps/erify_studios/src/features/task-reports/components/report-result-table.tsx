@@ -15,6 +15,7 @@ import { buildViewFilterOptions } from '../lib/view-filter-options';
 
 import { ReportViewFilters } from './report-view-filters';
 
+import { TABLE_SCROLL_MAX_H } from '@/config/layout';
 import { triggerBrowserDownload } from '@/lib/file-download';
 
 type ReportResultTableProps = {
@@ -333,7 +334,7 @@ export function ReportResultTable({ result }: ReportResultTableProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div ref={parentRef} className="relative max-h-[calc(100vh-16rem)] overflow-auto">
+          <div ref={parentRef} className={`relative ${TABLE_SCROLL_MAX_H} overflow-auto`}>
             <Table className="whitespace-nowrap">
               <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
                 <TableRow>

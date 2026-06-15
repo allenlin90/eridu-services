@@ -2,6 +2,8 @@ import { Link } from '@tanstack/react-router';
 
 import { Button } from '@eridu/ui';
 
+import { CENTERED_PAGE_MIN_H } from '@/config/layout';
+
 /**
  * Not Found Page Component
  *
@@ -10,7 +12,7 @@ import { Button } from '@eridu/ui';
  */
 export function NotFoundPage() {
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
+    <div className={`flex ${CENTERED_PAGE_MIN_H} items-center justify-center p-4`}>
       <div className="text-center">
         <h1 className="text-6xl font-bold text-gray-900 dark:text-gray-100">
           404
