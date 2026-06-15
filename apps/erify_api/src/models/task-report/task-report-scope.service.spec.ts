@@ -421,7 +421,7 @@ describe('taskReportScopeService', () => {
     expect(callArgs?.clientIds).toEqual(['client_1', 'client_2']);
   });
 
-  it('uses local day boundaries for explicit date_from/date_to scope', async () => {
+  it('uses operational-day boundaries (06:00 to 05:59 next day) for explicit date_from/date_to scope', async () => {
     repository.countShowsInScope.mockResolvedValue(1);
     repository.countSubmittedTasksInScope.mockResolvedValue(2);
 
