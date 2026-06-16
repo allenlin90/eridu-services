@@ -69,6 +69,14 @@ Full reference: `.agent/skills/service-pattern-nestjs/SKILL.md`, `.agent/skills/
 
 Full reference: `.agent/skills/backend-controller-pattern-nestjs/SKILL.md`, `.agent/skills/erify-authorization/SKILL.md`
 
+### Read-model / report projection checks
+
+- [ ] A report/read-model column bound to a `system_fact_key` reads the **extracted fact** (the `ShowPlatform`/`ShowCreator`/`Show` column, or the canonical read-model aggregate) — never re-parses `task.content`. Aggregation reuses the shared helper (`aggregateShowPlatformPerformance`) so report and dashboard can't drift. Reading raw content reintroduces stale-target, source-priority, and `Decimal`-precision divergence.
+- [ ] Hydrated, per-target facts with no defined one-row-per-show scalar (per-platform violation, per-creator attendance/times) are **rejected** at projection (clear error), not emitted as a silent `null`.
+- [ ] A blank fact cell caused by an unextracted (still-`REVIEW`) task is surfaced as a pending warning, not a silent blank — facts only exist after the `COMPLETED` transition.
+
+Full reference: `apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md` § System-fact columns
+
 ---
 
 ## eridu_auth gate
