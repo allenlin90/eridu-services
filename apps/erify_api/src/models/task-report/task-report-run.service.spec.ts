@@ -3,8 +3,8 @@ import { Test } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 
 import {
-  type TaskStatus,
   taskReportRunRequestSchema,
+  type TaskStatus,
   TemplateSchemaV2Validator,
   TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
