@@ -5,13 +5,13 @@ import type { DateRange } from 'react-day-picker';
 
 import { useShiftAlignment } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { getStudioShows } from '@/features/studio-shows/api/get-studio-shows';
-import { toShowScopeDateTimeBounds } from '@/features/studio-shows/utils/show-scope.utils';
 import {
   buildScopeRange,
   getDefaultPlanningRange,
   parseSearchDate,
   toApiDate,
-} from '@/features/studio-shows/utils/task-setup-scope.utils';
+} from '@/features/studio-shows/utils/planning-scope.utils';
+import { toShowScopeDateTimeBounds } from '@/features/studio-shows/utils/show-scope.utils';
 
 const taskSetupRouteApi = getRouteApi('/studios/$studioId/task-setup');
 
