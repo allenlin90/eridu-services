@@ -1,7 +1,8 @@
 /**
- * Pure helpers for the Task Setup planning scope: defaulting, parsing, and
- * formatting the date range that gates both the readiness snapshot and the
- * shows list. No React/query state — see use-task-setup-page-controller.ts.
+ * Pure helpers for a studio planning-scope date window: defaulting, parsing,
+ * and formatting the date range that gates the planning show lists. Shared by
+ * the Task Setup and Creator Mapping routes (both pick shows within a scope).
+ * No React/query state — orchestration lives in each route's controller hook.
  */
 import type { DateRange } from 'react-day-picker';
 

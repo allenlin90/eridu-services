@@ -1,313 +1,50 @@
-import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import { Download, Loader2, RefreshCw, UserRound } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { DateRange } from 'react-day-picker';
-import { toast } from 'sonner';
+import { createFileRoute } from '@tanstack/react-router';
 
 import {
-  adaptColumnFiltersChange,
-  adaptPaginationChange,
   Button,
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
-  DataTable,
-  DataTablePagination,
-  DataTableToolbar,
   DatePickerWithRange,
 } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
-import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
-import { formatDateTime, toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-import { BulkCreatorAssignmentDialog } from '@/features/studio-show-creators/components/bulk-creator-assignment-dialog';
-import { creatorMappingShowColumns } from '@/features/studio-show-creators/components/creator-mapping-show-columns';
-import { SelectedCreatorMappingMobileActions } from '@/features/studio-show-creators/components/selected-creator-mapping-mobile-actions';
-import { useCreatorMappingClientFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-client-filter';
-import { useCreatorMappingCreatorFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-creator-filter';
-import { useCreatorMappingShows } from '@/features/studio-show-creators/hooks/use-creator-mapping-shows';
-import {
-  buildCreatorMappingExportFilename,
-  buildCreatorMappingExportRows,
-  serializeCreatorMappingExportCsv,
-} from '@/features/studio-show-creators/utils/creator-mapping-export.utils';
-import {
-  getAllStudioShowsForExport,
-  SHOW_EXPORT_MAX_RECORDS,
-  ShowExportTooLargeError,
-} from '@/features/studio-shows/api/get-studio-shows';
-import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selected-row-snapshots';
-import {
-  normalizeScopeDate,
-  parseScopeDateAsLocal,
-} from '@/features/studio-shows/utils/show-scope.utils';
-import { useAbortableAction } from '@/hooks/use-abortable-action';
-import { triggerBrowserDownload } from '@/lib/file-download';
+import { CreatorMappingShowsSection } from '@/features/studio-show-creators/components/creator-mapping-shows-section';
+import { useCreatorMappingPageController } from '@/features/studio-show-creators/hooks/use-creator-mapping-page-controller';
+import { formatScopeLabel } from '@/features/studio-shows/utils/planning-scope.utils';
 
-const creatorMappingRouteApi = getRouteApi('/studios/$studioId/creator-mapping');
-
-type ScopeRange = {
-  date_from?: string;
-  date_to?: string;
-};
-
-function getDefaultPlanningRange() {
-  const start = new Date();
-  const end = addDays(start, 7);
-  return {
-    date_from: toLocalDateInputValue(start),
-    date_to: toLocalDateInputValue(end),
-  };
-}
-
-function parseSearchDate(raw?: string): Date | undefined {
-  return parseScopeDateAsLocal(raw);
-}
-
-function toApiDate(raw?: string): string | undefined {
-  return normalizeScopeDate(raw);
-}
-
-function buildScopeRange(range: DateRange | undefined): ScopeRange {
-  const fromDate = range?.from ?? range?.to;
-  const toDate = range?.to ?? range?.from;
-
-  if (!fromDate || !toDate) {
-    return {
-      date_from: undefined,
-      date_to: undefined,
-    };
-  }
-
-  return {
-    date_from: toLocalDateInputValue(fromDate),
-    date_to: toLocalDateInputValue(toDate),
-  };
-}
-
-function formatScopeLabel(dateFrom?: string, dateTo?: string): string {
-  const from = toApiDate(dateFrom);
-  const to = toApiDate(dateTo);
-
-  if (!from || !to) {
-    return 'No date scope selected';
-  }
-
-  if (from === to) {
-    return from;
-  }
-
-  return `${from} to ${to}`;
-}
-
+/**
+ * Creator Mapping page — assign and manage creators across studio shows within
+ * a date scope.
+ *
+ * Composition (decomposed from a single 470-LOC route):
+ *
+ *   CreatorMappingPage (this container — wires scope to presentation)
+ *   │
+ *   ├─ useCreatorMappingPageController()    planning-scope date state + URL
+ *   │  (hooks/…)                            search sync (next-7-days default)
+ *   │
+ *   └─ <CreatorMappingShowsSection/>        paginated shows table + row
+ *      (components/…)                       selection, client/creator filters,
+ *                                           CSV export, bulk assign dialog
+ *
+ * Pure scope/date helpers live in studio-shows/utils/planning-scope.utils.ts
+ * (shared with the Task Setup route).
+ */
 function CreatorMappingPage() {
-  const [isBulkAssignDialogOpen, setIsBulkAssignDialogOpen] = useState(false);
-  const { isRunning: isExporting, run: runExport } = useAbortableAction();
-
-  const { studioId } = creatorMappingRouteApi.useParams();
-  const search = creatorMappingRouteApi.useSearch();
-  const navigate = creatorMappingRouteApi.useNavigate();
-  const [defaultScopeRange] = useState(() => getDefaultPlanningRange());
-
-  const updateSearch = useCallback((
-    updater: (previous: typeof search) => typeof search,
-    options?: { replace?: boolean },
-  ) => {
-    void navigate({
-      to: '/studios/$studioId/creator-mapping',
-      params: { studioId },
-      search: updater,
-      replace: options?.replace ?? true,
-    });
-  }, [navigate, studioId]);
-
-  useEffect(() => {
-    if (search.date_from && search.date_to) {
-      return;
-    }
-
-    updateSearch((previous) => ({
-      ...previous,
-      page: 1,
-      date_from: previous.date_from ?? defaultScopeRange.date_from,
-      date_to: previous.date_to ?? defaultScopeRange.date_to,
-    }), { replace: true });
-  }, [defaultScopeRange.date_from, defaultScopeRange.date_to, search.date_from, search.date_to, updateSearch]);
-
-  const scopeDateRange = useMemo<DateRange | undefined>(() => {
-    if (!search.date_from && !search.date_to) {
-      return undefined;
-    }
-
-    return {
-      from: parseSearchDate(search.date_from),
-      to: parseSearchDate(search.date_to),
-    };
-  }, [search.date_from, search.date_to]);
-  const [isScopeDatePickerOpen, setIsScopeDatePickerOpen] = useState(false);
-  const [draftScopeDateRange, setDraftScopeDateRange] = useState<DateRange | undefined>(scopeDateRange);
-  const pickerScopeDateRange = isScopeDatePickerOpen ? draftScopeDateRange : scopeDateRange;
-
-  const handleScopeDatePickerOpenChange = useCallback((open: boolean) => {
-    if (open) {
-      setDraftScopeDateRange(scopeDateRange);
-      setIsScopeDatePickerOpen(true);
-      return;
-    }
-
-    setIsScopeDatePickerOpen(false);
-    const nextScope = buildScopeRange(draftScopeDateRange);
-    updateSearch((previous) => ({
-      ...previous,
-      page: 1,
-      date_from: nextScope.date_from,
-      date_to: nextScope.date_to,
-    }));
-  }, [draftScopeDateRange, scopeDateRange, updateSearch]);
-
-  const handleResetScope = useCallback(() => {
-    updateSearch((previous) => ({
-      ...previous,
-      page: 1,
-      date_from: defaultScopeRange.date_from,
-      date_to: defaultScopeRange.date_to,
-    }));
-  }, [defaultScopeRange.date_from, defaultScopeRange.date_to, updateSearch]);
-
   const {
-    shows,
-    total,
-    pageCount,
-    isLoading,
-    isFetching,
-    refetch,
-    pagination,
-    onPaginationChange,
-    columnFilters,
-    onColumnFiltersChange,
-    queryParams,
-  } = useCreatorMappingShows({
     studioId,
-    dateFrom: search.date_from,
-    dateTo: search.date_to,
-  });
+    scopeDateFrom,
+    scopeDateTo,
+    pickerScopeDateRange,
+    setDraftScopeDateRange,
+    isScopeDatePickerOpen,
+    onScopeDatePickerOpenChange,
+    onResetScope,
+  } = useCreatorMappingPageController();
 
-  const {
-    rowSelection,
-    selectedItems: selectedShows,
-    onRowSelectionChange: handleRowSelectionChange,
-    clearSelection: clearSelectedShows,
-  } = useSelectedRowSnapshots(shows);
-
-  const { data: showLookups } = useShowLookupsQuery(studioId);
-  const scopeLabel = formatScopeLabel(search.date_from, search.date_to);
-
-  const selectedClientId = useMemo(() => {
-    const filter = columnFilters.find((cf) => cf.id === 'client_id');
-    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
-  }, [columnFilters]);
-
-  const {
-    options: clientOptions,
-    isLoading: isClientFilterLoading,
-    setSearch: setClientFilterSearch,
-  } = useCreatorMappingClientFilter(studioId, selectedClientId);
-  const selectedCreatorName = useMemo(() => {
-    const filter = columnFilters.find((cf) => cf.id === 'creator_name');
-    return typeof filter?.value === 'string' && filter.value ? filter.value : undefined;
-  }, [columnFilters]);
-  const {
-    options: creatorOptions,
-    isLoading: isCreatorFilterLoading,
-    setSearch: setCreatorFilterSearch,
-  } = useCreatorMappingCreatorFilter(studioId, selectedCreatorName);
-
-  const searchableColumns = useMemo(
-    () => [
-      { id: 'name', title: 'Show Name', type: 'text' as const },
-      {
-        id: 'creator_name',
-        title: 'Creator',
-        type: 'combobox' as const,
-        options: creatorOptions,
-        onSearch: setCreatorFilterSearch,
-        isLoading: isCreatorFilterLoading,
-        placeholder: 'Filter by creator',
-      },
-      {
-        id: 'has_creators',
-        title: 'Creator Mapping',
-        type: 'select' as const,
-        options: [
-          { value: 'true', label: 'Mapped' },
-          { value: 'false', label: 'Unmapped' },
-        ],
-      },
-      {
-        id: 'client_id',
-        title: 'Client',
-        type: 'combobox' as const,
-        options: clientOptions,
-        onSearch: setClientFilterSearch,
-        isLoading: isClientFilterLoading,
-        placeholder: 'Filter by client',
-      },
-      {
-        id: 'show_status_name',
-        title: 'Show Status',
-        type: 'select' as const,
-        options: (showLookups?.show_statuses ?? []).map((status) => ({ value: status.name, label: status.name })),
-      },
-    ],
-    [
-      clientOptions,
-      creatorOptions,
-      isClientFilterLoading,
-      isCreatorFilterLoading,
-      setClientFilterSearch,
-      setCreatorFilterSearch,
-      showLookups?.show_statuses,
-    ],
-  );
-  const handleExport = useCallback(async () => {
-    await runExport(async (signal) => {
-      try {
-        const {
-          page: _page,
-          limit: _limit,
-          ...exportParams
-        } = queryParams;
-        const exportShows = await getAllStudioShowsForExport(studioId, exportParams, { signal });
-        if (signal.aborted) {
-          return;
-        }
-
-        const exportResult = buildCreatorMappingExportRows({
-          shows: exportShows,
-          formatDateTime,
-        });
-        triggerBrowserDownload({
-          content: serializeCreatorMappingExportCsv(exportResult),
-          mimeType: 'text/csv;charset=utf-8;',
-          filename: buildCreatorMappingExportFilename({
-            dateFrom: toApiDate(search.date_from),
-            dateTo: toApiDate(search.date_to),
-          }),
-        });
-      } catch (error) {
-        if (signal.aborted) {
-          return;
-        }
-        if (error instanceof ShowExportTooLargeError) {
-          toast.error(`Selection exceeds the ${SHOW_EXPORT_MAX_RECORDS.toLocaleString()}-show export limit (${error.totalRecords.toLocaleString()} matched). Narrow the date range or filters and retry.`);
-          return;
-        }
-        toast.error(error instanceof Error ? error.message : 'Failed to export creator mapping. Please try again.');
-      }
-    });
-  }, [queryParams, runExport, search.date_from, search.date_to, studioId]);
+  const scopeLabel = formatScopeLabel(scopeDateFrom, scopeDateTo);
 
   return (
     <PageLayout
@@ -329,9 +66,9 @@ function CreatorMappingPage() {
                   date={pickerScopeDateRange}
                   setDate={setDraftScopeDateRange}
                   open={isScopeDatePickerOpen}
-                  onOpenChange={handleScopeDatePickerOpenChange}
+                  onOpenChange={onScopeDatePickerOpenChange}
                 />
-                <Button variant="outline" size="sm" onClick={handleResetScope}>
+                <Button variant="outline" size="sm" onClick={onResetScope}>
                   Next 7 Days
                 </Button>
               </div>
@@ -339,126 +76,11 @@ function CreatorMappingPage() {
           </CardHeader>
         </Card>
 
-        <p className="text-xs text-muted-foreground">
-          Showing shows in scope:
-          {' '}
-          {scopeLabel}
-        </p>
-
-        <DataTable
-          data={shows}
-          columns={creatorMappingShowColumns}
-          isLoading={isLoading}
-          isFetching={isFetching}
-          emptyMessage="No shows found for creator mapping."
-          manualPagination
-          manualFiltering
-          pageCount={pageCount}
-          paginationState={{
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
-          }}
-          onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
-          columnFilters={columnFilters}
-          onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
-          enableRowSelection
-          rowSelection={rowSelection}
-          onRowSelectionChange={handleRowSelectionChange}
-          getRowId={(show) => show.id}
-          renderToolbar={(table) => (
-            <DataTableToolbar
-              table={table}
-              searchColumn="name"
-              searchableColumns={searchableColumns}
-              featuredFilterColumns={['has_creators', 'client_id', 'show_status_name', 'creator_name']}
-              searchPlaceholder="Search shows..."
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9"
-                onClick={() => void handleExport()}
-                disabled={isExporting || total === 0}
-                aria-busy={isExporting}
-              >
-                {isExporting
-                  ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  : <Download className="mr-2 h-4 w-4" />}
-                {isExporting ? 'Exporting…' : 'Export CSV'}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
-                onClick={() => refetch()}
-                disabled={isFetching}
-                aria-label="Refresh creator mapping shows"
-              >
-                <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-              </Button>
-            </DataTableToolbar>
-          )}
-          renderFooter={() => (
-            <DataTablePagination
-              pagination={{
-                pageIndex: pagination.pageIndex,
-                pageSize: pagination.pageSize,
-                total,
-                pageCount,
-              }}
-              onPaginationChange={onPaginationChange}
-            />
-          )}
-        />
-
-        {selectedShows.length > 0 && (
-          <>
-            <div className="fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-center justify-between gap-4 rounded-full border bg-slate-900 px-6 py-3 text-slate-50 shadow-lg animate-in slide-in-from-bottom-5 dark:bg-slate-50 dark:text-slate-900 md:flex">
-              <div className="flex items-center gap-2 border-r border-slate-700 pr-4 dark:border-slate-300">
-                <span className="text-sm font-medium">
-                  {selectedShows.length}
-                  {' '}
-                  selected
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="rounded-full"
-                  onClick={() => setIsBulkAssignDialogOpen(true)}
-                >
-                  <UserRound className="mr-2 h-4 w-4" />
-                  Assign Creators
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="ml-2 rounded-full hover:bg-slate-800 hover:text-white dark:hover:bg-slate-200 dark:hover:text-black"
-                  onClick={clearSelectedShows}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-
-            <SelectedCreatorMappingMobileActions
-              selectedCount={selectedShows.length}
-              onAssign={() => setIsBulkAssignDialogOpen(true)}
-              onClear={clearSelectedShows}
-            />
-          </>
-        )}
-
-        <BulkCreatorAssignmentDialog
+        <CreatorMappingShowsSection
           studioId={studioId}
-          shows={selectedShows}
-          open={isBulkAssignDialogOpen}
-          onOpenChange={setIsBulkAssignDialogOpen}
-          onSuccess={() => {
-            clearSelectedShows();
-            void refetch();
-          }}
+          scopeDateFrom={scopeDateFrom}
+          scopeDateTo={scopeDateTo}
+          scopeLabel={scopeLabel}
         />
       </div>
     </PageLayout>

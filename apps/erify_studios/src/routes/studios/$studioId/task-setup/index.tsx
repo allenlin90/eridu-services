@@ -13,7 +13,7 @@ import { PageLayout } from '@/components/layouts/page-layout';
 import { ShowReadinessTriagePanel } from '@/features/studio-shows/components/show-readiness/show-readiness-triage-panel';
 import { TaskSetupShowsSection } from '@/features/studio-shows/components/studio-shows-table/task-setup-shows-section';
 import { useTaskSetupPageController } from '@/features/studio-shows/hooks/use-task-setup-page-controller';
-import { formatScopeLabel } from '@/features/studio-shows/utils/task-setup-scope.utils';
+import { formatScopeLabel } from '@/features/studio-shows/utils/planning-scope.utils';
 
 export const Route = createFileRoute('/studios/$studioId/task-setup/')({
   component: StudioTaskSetupPage,
@@ -36,7 +36,8 @@ export const Route = createFileRoute('/studios/$studioId/task-setup/')({
  *   └─ <TaskSetupShowsSection/>            paginated shows table + row selection,
  *      (components/studio-shows-table/…)   export, and bulk generate/assign dialogs
  *
- * Pure scope/date helpers live in utils/task-setup-scope.utils.ts.
+ * Pure scope/date helpers live in utils/planning-scope.utils.ts (shared with
+ * the Creator Mapping route).
  */
 function StudioTaskSetupPage() {
   const {
