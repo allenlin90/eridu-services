@@ -43,6 +43,12 @@ Always use `@/*` imports (configured in `tsconfig.json`), never deep relative pa
 
 Pattern: route container + `useFeatureViewModel()` hook + presentation components.
 
+**Document the split** — once a route fans out into a controller hook + sibling sections, the wiring is abstract and hard to follow from any single file. Make it legible:
+- At the container (the composition root), add a short **structure-tree comment** showing how the hook and presentation components relate (who owns state, who renders what).
+- Add focused **JSDoc** to each extracted hook and section stating its single responsibility and how it coordinates with siblings (e.g. a shared refresh signal instead of passed-down query handles).
+
+Keep it about responsibilities and data flow, not a line-by-line restatement of the code.
+
 ## Paginated Route Consistency
 
 - `useTableUrlState` owns URL pagination state
@@ -65,7 +71,7 @@ Pattern: route container + `useFeatureViewModel()` hook + presentation component
 - [ ] `pnpm lint` and `pnpm test` pass
 - [ ] Ternary for conditional rendering (not `&&`)
 - [ ] Complex logic extracted to custom hooks
-- [ ] Large routes (>200 LOC) decomposed
+- [ ] Large routes (>200 LOC) decomposed, with a structure-tree comment at the container + JSDoc on extracted hooks/sections
 - [ ] No scattered magic values — repeated layout offsets, limits, and tunables centralized in named constants (`src/config/layout.ts`, etc.)
 - [ ] Protected routes use `StudioRouteGuard` + shared access policy
 - [ ] Consistent wrapper per route set
