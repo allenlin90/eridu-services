@@ -1,3 +1,8 @@
+/**
+ * Pure helpers for the Task Setup planning scope: defaulting, parsing, and
+ * formatting the date range that gates both the readiness snapshot and the
+ * shows list. No React/query state — see use-task-setup-page-controller.ts.
+ */
 import type { DateRange } from 'react-day-picker';
 
 import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';

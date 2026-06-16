@@ -15,6 +15,24 @@ import {
 
 const taskSetupRouteApi = getRouteApi('/studios/$studioId/task-setup');
 
+/**
+ * View-model for the Task Setup route. Owns everything the page coordinates so
+ * the route component stays presentational:
+ *
+ * - **Scope window** — the planning date range, persisted in the URL search.
+ *   Defaults to the next 7 days; a draft range is held while the picker is open
+ *   and committed on close.
+ * - **Readiness snapshot** — shift-alignment + in-scope-show-count queries that
+ *   feed the readiness panel. Both are gated on a complete, valid date range.
+ * - **Refresh signal** — a counter the shows table bumps (`triggerSnapshotRefresh`)
+ *   after mutations so the readiness snapshot re-fetches without prop drilling
+ *   the query handles into the table.
+ * - **Issues filter** — the `needs_attention` URL flag, surfaced as
+ *   `activateIssuesFilter` (panel) and `toggleNeedsAttention` (table toolbar).
+ *
+ * Returns flat, presentation-ready props consumed by `ShowReadinessTriagePanel`
+ * and `TaskSetupShowsSection`.
+ */
 export function useTaskSetupPageController() {
   const { studioId } = taskSetupRouteApi.useParams();
   const search = taskSetupRouteApi.useSearch();

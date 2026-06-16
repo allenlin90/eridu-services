@@ -48,6 +48,18 @@ const FEATURED_FILTER_COLUMNS = ['actuals_state', 'has_tasks', 'client_name', 's
 
 const EMPTY_ATTENTION_SHOW_UIDS: string[] = [];
 
+/**
+ * Shows table section of the Task Setup page. Self-contained: owns its own
+ * `useStudioShows` query (paginated/filtered/sorted via URL state), row
+ * selection, CSV/JSON export, and the bulk **Generate Tasks** / **Assign Tasks**
+ * and per-row **Actuals** dialogs.
+ *
+ * Coordinates with the parent via two props rather than shared query handles:
+ * - `onShowsMutated` — call after any mutation so the page refreshes the
+ *   readiness snapshot (see {@link useTaskSetupPageController}'s refresh signal).
+ * - `attentionShowUids` / `needsAttention` — narrow the list to shows with
+ *   task-readiness issues when the issues-only filter is active.
+ */
 export function TaskSetupShowsSection({
   studioId,
   scopeDateFrom,

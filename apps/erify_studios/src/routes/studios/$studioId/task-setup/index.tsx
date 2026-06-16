@@ -19,6 +19,25 @@ export const Route = createFileRoute('/studios/$studioId/task-setup/')({
   component: StudioTaskSetupPage,
 });
 
+/**
+ * Task Setup page — planning surface for generating, reviewing, and assigning
+ * tasks across studio shows within a date scope.
+ *
+ * Composition (decomposed from a single 753-LOC route):
+ *
+ *   StudioTaskSetupPage (this container — wires state to presentation)
+ *   │
+ *   ├─ useTaskSetupPageController()        scope date state, URL search sync,
+ *   │  (hooks/…)                           readiness-snapshot queries, and the
+ *   │                                      refresh signal shared across sections
+ *   │
+ *   ├─ <ShowReadinessTriagePanel/>         readiness summary for the scope
+ *   │
+ *   └─ <TaskSetupShowsSection/>            paginated shows table + row selection,
+ *      (components/studio-shows-table/…)   export, and bulk generate/assign dialogs
+ *
+ * Pure scope/date helpers live in utils/task-setup-scope.utils.ts.
+ */
 function StudioTaskSetupPage() {
   const {
     studioId,
