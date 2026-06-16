@@ -24,6 +24,14 @@ export type TaskReportSourceSnapshot = {
   taskCount: number;
 };
 
+export type TaskReportScopedShowPlatform = {
+  gmv: Prisma.Decimal | null;
+  viewerCount: number;
+  ctr: Prisma.Decimal | null;
+  cto: Prisma.Decimal | null;
+  metadata: Prisma.JsonValue;
+};
+
 export type TaskReportScopedShow = {
   uid: string;
   name: string;
@@ -40,11 +48,16 @@ export type TaskReportScopedShow = {
   showStatusName: string | null;
   showStandardName: string | null;
   showTypeName: string | null;
+  // Live (non-deleted) platform performance facts. Stale targets are excluded
+  // at the query level so the report's per-show rollup matches the canonical
+  // performance read model — see `aggregateShowPlatformPerformance`.
+  showPlatforms: TaskReportScopedShowPlatform[];
 };
 
 export type TaskReportScopedTask = {
   uid: string;
   updatedAt: Date;
+  status: TaskStatus;
   templateUid: string;
   templateName: string;
   snapshotId: string;
@@ -234,6 +247,16 @@ export class TaskReportScopeRepository {
             name: true,
           },
         },
+        showPlatforms: {
+          where: { deletedAt: null },
+          select: {
+            gmv: true,
+            viewerCount: true,
+            ctr: true,
+            cto: true,
+            metadata: true,
+          },
+        },
       },
       orderBy: [
         { startTime: 'desc' },
@@ -257,6 +280,13 @@ export class TaskReportScopeRepository {
       showStatusName: show.showStatus?.name ?? null,
       showStandardName: show.showStandard?.name ?? null,
       showTypeName: show.showType?.name ?? null,
+      showPlatforms: show.showPlatforms.map((sp) => ({
+        gmv: sp.gmv,
+        viewerCount: sp.viewerCount,
+        ctr: sp.ctr,
+        cto: sp.cto,
+        metadata: sp.metadata,
+      })),
     }));
   }
 
@@ -290,6 +320,7 @@ export class TaskReportScopeRepository {
       select: {
         uid: true,
         updatedAt: true,
+        status: true,
         content: true,
         snapshotId: true,
         template: {
@@ -338,6 +369,7 @@ export class TaskReportScopeRepository {
       return [{
         uid: task.uid,
         updatedAt: task.updatedAt,
+        status: task.status,
         templateUid: task.template.uid,
         templateName: task.template.name,
         snapshotId: task.snapshotId?.toString() ?? '',

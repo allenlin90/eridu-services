@@ -1,7 +1,13 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 
-import { taskReportRunRequestSchema, TemplateSchemaValidator } from '@eridu/api-types/task-management';
+import {
+  taskReportRunRequestSchema,
+  type TaskStatus,
+  TemplateSchemaV2Validator,
+  TemplateSchemaValidator,
+} from '@eridu/api-types/task-management';
 
 import { TaskReportRunService } from './task-report-run.service';
 import { TaskReportScopeRepository } from './task-report-scope.repository';
@@ -34,11 +40,14 @@ describe('taskReportRunService', () => {
     showStatusName: 'Confirmed',
     showStandardName: 'Standard A',
     showTypeName: 'Type A',
+    showPlatforms: [],
     ...overrides,
   });
+  const viewCountMetadata = { performance_templates: { show_platform_view_count: 'ttpl_1' } };
   const createScopedTask = (overrides: Record<string, unknown> = {}) => ({
     uid: 'task_1',
     updatedAt: new Date('2026-03-17T10:00:00.000Z'),
+    status: 'COMPLETED' as TaskStatus,
     templateUid: 'ttpl_1',
     templateName: 'Template 1',
     snapshotId: 'snap_1',
@@ -948,6 +957,303 @@ describe('taskReportRunService', () => {
     expect(result.row_count).toBe(2);
     expect(result.rows[0]).toMatchObject({ show_name: 'Show 1', gmv: 500 });
     expect(result.rows[1]).toMatchObject({ show_name: 'Show 2', gmv: 500 });
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('projects a platform-performance fact from the extracted ShowPlatform column, not task content', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow({
+        showPlatforms: [
+          { gmv: new Prisma.Decimal('20766.00'), viewerCount: 0, ctr: null, cto: null, metadata: {} },
+        ],
+      }),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      // Stale value lingering in content must be ignored — the column is the source of truth.
+      createScopedTask({
+        snapshotSchema,
+        content: { 'fld_gmvmetric01:platform:show_plt_shopee': 999999 },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:field_gmv', label: 'GMV' }],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:field_gmv': 20766,
+    });
+  });
+
+  it('aggregates platform-performance columns with the performance read-model semantics', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+        {
+          id: 'fld_viewmetric1',
+          key: 'field_views',
+          type: 'number',
+          label: 'View',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_view_count',
+        },
+        {
+          id: 'fld_ctrmetric01',
+          key: 'field_ctr',
+          type: 'number',
+          label: 'CTR',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_ctr',
+        },
+        {
+          id: 'fld_ctometric01',
+          key: 'field_cto',
+          type: 'number',
+          label: 'CTO',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_cto',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([
+      createScopedShow({
+        showPlatforms: [
+          {
+            gmv: new Prisma.Decimal('100.00'),
+            viewerCount: 10,
+            ctr: new Prisma.Decimal('4.00'),
+            cto: new Prisma.Decimal('2.00'),
+            metadata: viewCountMetadata,
+          },
+          {
+            gmv: new Prisma.Decimal('25.00'),
+            viewerCount: 5,
+            ctr: new Prisma.Decimal('8.00'),
+            cto: new Prisma.Decimal('4.00'),
+            metadata: viewCountMetadata,
+          },
+        ],
+      }),
+    ]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({ snapshotSchema, content: {} }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [
+        { key: 'ttpl_1:field_gmv', label: 'GMV' },
+        { key: 'ttpl_1:field_views', label: 'View' },
+        { key: 'ttpl_1:field_ctr', label: 'CTR' },
+        { key: 'ttpl_1:field_cto', label: 'CTO' },
+      ],
+    }));
+
+    expect(result.rows[0]).toMatchObject({
+      'ttpl_1:field_gmv': 125,
+      'ttpl_1:field_views': 15,
+      'ttpl_1:field_ctr': 6,
+      'ttpl_1:field_cto': 3,
+    });
+  });
+
+  it('rejects a hydrated fact column that has no per-show projection', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_violation01',
+          key: 'field_violation',
+          type: 'multiselect',
+          label: 'Violation',
+          required: false,
+          default_value: '',
+          options: [{ label: 'Warning', value: 'warning' }],
+          system_fact_key: 'show_platform_violation',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({ snapshotSchema, content: {} }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    await expect(
+      service.run('std_123', taskReportRunRequestSchema.parse({
+        scope: defaultReportScope,
+        columns: [{ key: 'ttpl_1:field_violation', label: 'Violation' }],
+      })),
+    ).rejects.toThrow(/cannot be projected/i);
+  });
+
+  it('warns that a blank performance cell is pending review, not missing', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    // No extracted ShowPlatform facts yet (task still in REVIEW).
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        status: 'REVIEW',
+        content: { 'fld_gmvmetric01:platform:show_plt_shopee': 20766 },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:field_gmv', label: 'GMV' }],
+    }));
+
+    expect(result.rows[0]['ttpl_1:field_gmv']).toBeNull();
+    expect(result.warnings).toContainEqual({
+      code: 'PENDING_REVIEW_METRICS',
+      message: expect.stringContaining('show_1'),
+      show_id: 'show_1',
+      column_key: 'ttpl_1:field_gmv',
+    });
+  });
+
+  it('does not warn when a blank performance cell comes from an approved task', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    // Approved task, but the show genuinely recorded no platform performance.
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({ snapshotSchema, status: 'COMPLETED', content: {} }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:field_gmv', label: 'GMV' }],
+    }));
+
+    expect(result.rows[0]['ttpl_1:field_gmv']).toBeNull();
     expect(result.warnings).toEqual([]);
   });
 });
