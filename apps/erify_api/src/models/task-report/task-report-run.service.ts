@@ -17,6 +17,7 @@ import {
   getSystemFactKeyDefinition,
   safeParseTemplateSchema,
   TASK_REPORT_SYSTEM_COLUMN,
+  TASK_STATUS,
   taskReportColumnSchema,
 } from '@eridu/api-types/task-management';
 
@@ -49,6 +50,12 @@ const PLATFORM_PERFORMANCE_METRIC = {
 
 type PlatformPerformanceMetric = (typeof PLATFORM_PERFORMANCE_METRIC)[keyof typeof PLATFORM_PERFORMANCE_METRIC];
 
+// Fact extraction runs on the COMPLETED transition, so only these statuses have
+// their performance facts written to `ShowPlatform`. A still-in-REVIEW task in
+// scope has none yet — its performance cell is intentionally blank and reported
+// as pending rather than as missing data.
+const EXTRACTED_TASK_STATUSES = new Set<string>([TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED]);
+
 type FieldType = z.infer<typeof FieldTypeEnum>;
 type TaskReportColumn = z.infer<typeof taskReportColumnSchema>;
 type SelectedReportColumn = TaskReportRunRequest['columns'][number];
@@ -70,11 +77,14 @@ type ViewFilterMetaByShowUid = Map<string, {
   assigneeIds: Set<string>;
   assigneeNames: Set<string>;
 }>;
+type PendingReviewColumn = { showUid: string; columnKey: string };
 type RunProjection = {
   rowsByShowUid: RowsByShowUid;
   selectedKeyMeta: Map<string, SelectedKeyMeta>;
   duplicateSourceCount: Map<string, number>;
   viewFilterMetaByShowUid: ViewFilterMetaByShowUid;
+  // (showUid|columnKey) -> the blank performance cell awaiting task approval.
+  pendingReviewColumns: Map<string, PendingReviewColumn>;
 };
 type CompiledProjectionField = {
   fieldKey: string;
@@ -149,7 +159,10 @@ export class TaskReportRunService {
     this.addSystemColumnMeta(selectedColumns, projection.selectedKeyMeta);
     this.assertKnownSelectedColumns(selectedColumns, projection.selectedKeyMeta, sharedFieldByKey);
 
-    const warnings = this.buildWarnings(projection.duplicateSourceCount);
+    const warnings = [
+      ...this.buildWarnings(projection.duplicateSourceCount),
+      ...this.buildPendingReviewWarnings(projection.pendingReviewColumns),
+    ];
     const columns = this.buildColumns(selectedColumns, projection.selectedKeyMeta);
     const rows = this.buildRows(shows, projection, columns);
     const columnMap = this.buildColumnMap(columns);
@@ -209,6 +222,9 @@ export class TaskReportRunService {
     // Hydrated facts that were selected but have no per-show projection. Holds
     // columnKey -> label so the run can reject them with a clear message.
     const unsupportedFactColumns = new Map<string, string>();
+    // Blank performance cells whose only source is a still-in-REVIEW task, so
+    // the result can flag them as pending approval rather than missing data.
+    const pendingReviewColumns = new Map<string, PendingReviewColumn>();
     const selectedKeyMeta = new Map<string, SelectedKeyMeta>();
     const duplicateSourceCount = new Map<string, number>();
     const viewFilterMetaByShowUid: ViewFilterMetaByShowUid = new Map(
@@ -289,8 +305,13 @@ export class TaskReportRunService {
             // still-in-REVIEW submission has no extracted column yet and its
             // performance cell stays blank. Performance columns export approved
             // operational facts only; unapproved values are deliberately not
-            // surfaced as finalized metrics. This is not a missing-data bug.
+            // surfaced as finalized metrics. This is not a missing-data bug —
+            // instead, flag the blank cell as pending approval (below) so the
+            // export reader can tell "awaiting review" from "no data".
             value = this.readShowMetric(showPerformanceByUid.get(showUid), projectedField.performanceMetric);
+            if (value === null && !EXTRACTED_TASK_STATUSES.has(task.status)) {
+              pendingReviewColumns.set(`${showUid}|${columnKey}`, { showUid, columnKey });
+            }
           } else {
             const input = projectTaskReportContentInput(contentRecord, {
               key: projectedField.fieldKey,
@@ -323,7 +344,7 @@ export class TaskReportRunService {
 
     this.assertProjectableFactColumns(unsupportedFactColumns);
 
-    return { rowsByShowUid, selectedKeyMeta, duplicateSourceCount, viewFilterMetaByShowUid };
+    return { rowsByShowUid, selectedKeyMeta, duplicateSourceCount, viewFilterMetaByShowUid, pendingReviewColumns };
   }
 
   /**
@@ -553,6 +574,15 @@ export class TaskReportRunService {
           template_id: templateUid,
         };
       });
+  }
+
+  private buildPendingReviewWarnings(pendingReviewColumns: Map<string, PendingReviewColumn>) {
+    return [...pendingReviewColumns.values()].map(({ showUid, columnKey }) => ({
+      code: 'PENDING_REVIEW_METRICS',
+      message: `Performance value for show ${showUid} is awaiting task review and will export once the task is approved.`,
+      show_id: showUid,
+      column_key: columnKey,
+    }));
   }
 
   private buildColumns(

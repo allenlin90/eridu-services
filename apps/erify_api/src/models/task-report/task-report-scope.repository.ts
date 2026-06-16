@@ -57,6 +57,7 @@ export type TaskReportScopedShow = {
 export type TaskReportScopedTask = {
   uid: string;
   updatedAt: Date;
+  status: TaskStatus;
   templateUid: string;
   templateName: string;
   snapshotId: string;
@@ -319,6 +320,7 @@ export class TaskReportScopeRepository {
       select: {
         uid: true,
         updatedAt: true,
+        status: true,
         content: true,
         snapshotId: true,
         template: {
@@ -367,6 +369,7 @@ export class TaskReportScopeRepository {
       return [{
         uid: task.uid,
         updatedAt: task.updatedAt,
+        status: task.status,
         templateUid: task.template.uid,
         templateName: task.template.name,
         snapshotId: task.snapshotId?.toString() ?? '',

@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 
 import {
+  type TaskStatus,
   taskReportRunRequestSchema,
   TemplateSchemaV2Validator,
   TemplateSchemaValidator,
@@ -46,6 +47,7 @@ describe('taskReportRunService', () => {
   const createScopedTask = (overrides: Record<string, unknown> = {}) => ({
     uid: 'task_1',
     updatedAt: new Date('2026-03-17T10:00:00.000Z'),
+    status: 'COMPLETED' as TaskStatus,
     templateUid: 'ttpl_1',
     templateName: 'Template 1',
     snapshotId: 'snap_1',
@@ -1154,5 +1156,104 @@ describe('taskReportRunService', () => {
         columns: [{ key: 'ttpl_1:field_violation', label: 'Violation' }],
       })),
     ).rejects.toThrow(/cannot be projected/i);
+  });
+
+  it('warns that a blank performance cell is pending review, not missing', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    // No extracted ShowPlatform facts yet (task still in REVIEW).
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({
+        snapshotSchema,
+        status: 'REVIEW',
+        content: { 'fld_gmvmetric01:platform:show_plt_shopee': 20766 },
+      }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:field_gmv', label: 'GMV' }],
+    }));
+
+    expect(result.rows[0]['ttpl_1:field_gmv']).toBeNull();
+    expect(result.warnings).toContainEqual({
+      code: 'PENDING_REVIEW_METRICS',
+      message: expect.stringContaining('show_1'),
+      show_id: 'show_1',
+      column_key: 'ttpl_1:field_gmv',
+    });
+  });
+
+  it('does not warn when a blank performance cell comes from an approved task', async () => {
+    const snapshotSchema = TemplateSchemaV2Validator.parse({
+      schema_engine: 'task_template_v2',
+      schema_version: 2,
+      content_key_strategy: 'field_id',
+      report_projection_strategy: 'descriptor',
+      items: [
+        {
+          id: 'fld_gmvmetric01',
+          key: 'field_gmv',
+          type: 'number',
+          label: 'GMV',
+          required: true,
+          default_value: '',
+          system_fact_key: 'show_platform_gmv',
+        },
+      ],
+      metadata: { task_type: 'CLOSURE' },
+    });
+
+    scopeService.preflight.mockResolvedValue({
+      show_count: 1,
+      task_count: 1,
+      within_limit: true,
+      limit: 10000,
+    });
+    scopeService.resolveScopeFilters.mockReturnValue({
+      submittedStatuses: ['REVIEW', 'COMPLETED', 'CLOSED'],
+    } as any);
+    // Approved task, but the show genuinely recorded no platform performance.
+    scopeRepository.findShowsInScope.mockResolvedValue([createScopedShow()]);
+    scopeRepository.findSubmittedTasksInScope.mockResolvedValue([
+      createScopedTask({ snapshotSchema, status: 'COMPLETED', content: {} }),
+    ]);
+    studioService.getSharedFields.mockResolvedValue([]);
+
+    const result = await service.run('std_123', taskReportRunRequestSchema.parse({
+      scope: defaultReportScope,
+      columns: [{ key: 'ttpl_1:field_gmv', label: 'GMV' }],
+    }));
+
+    expect(result.rows[0]['ttpl_1:field_gmv']).toBeNull();
+    expect(result.warnings).toEqual([]);
   });
 });
