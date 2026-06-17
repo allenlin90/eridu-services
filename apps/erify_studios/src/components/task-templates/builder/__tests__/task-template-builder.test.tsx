@@ -261,7 +261,7 @@ describe('taskTemplateBuilder v2 field ids', () => {
     expect(combobox).toBeDisabled();
   });
 
-  describe('Client Mechanics LoopxMechanic Matrix', () => {
+  describe('client Mechanics LoopxMechanic Matrix', () => {
     const v2MechanicTemplate: BuilderTemplateSchemaType = {
       ...v2LoopTemplate,
       client_id: 'client_abc',

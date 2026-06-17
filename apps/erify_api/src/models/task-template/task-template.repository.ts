@@ -130,7 +130,7 @@ export class TaskTemplateRepository extends BaseRepository<
       }
 
       if (template.snapshots && template.snapshots.length > 0) {
-        const newSnapshot = template.snapshots.find(s => s.version === template.version);
+        const newSnapshot = template.snapshots.find((s) => s.version === template.version);
         if (newSnapshot) {
           await this.syncMechanicRefsForTemplate(template.id, newSnapshot.schema, newSnapshot.id);
         }
@@ -178,11 +178,11 @@ export class TaskTemplateRepository extends BaseRepository<
     const refs: { mechanicUid: string; group: string }[] = [];
     for (const item of schema.items) {
       if (
-        item &&
-        typeof item === 'object' &&
-        item.mechanic_ref &&
-        typeof item.mechanic_ref === 'object' &&
-        item.mechanic_ref.mechanic_id
+        item
+        && typeof item === 'object'
+        && item.mechanic_ref
+        && typeof item.mechanic_ref === 'object'
+        && item.mechanic_ref.mechanic_id
       ) {
         refs.push({
           mechanicUid: item.mechanic_ref.mechanic_id,
@@ -198,18 +198,18 @@ export class TaskTemplateRepository extends BaseRepository<
     // 3. Find database IDs of these mechanics
     const mechanics = await this.txHost.tx.clientMechanic.findMany({
       where: {
-        uid: { in: refs.map(r => r.mechanicUid) },
+        uid: { in: refs.map((r) => r.mechanicUid) },
         deletedAt: null,
       },
       select: { id: true, uid: true },
     });
 
     const mechanicIdMap = new Map<string, bigint>(
-      mechanics.map(m => [m.uid, m.id]),
+      mechanics.map((m) => [m.uid, m.id]),
     );
 
     // 4. Insert new refs
-    const createData = refs.map(ref => {
+    const createData = refs.map((ref) => {
       const mechanicId = mechanicIdMap.get(ref.mechanicUid);
       if (!mechanicId) {
         throw new Error(`ClientMechanic not found for UID: ${ref.mechanicUid}`);
