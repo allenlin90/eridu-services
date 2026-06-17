@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ClientMechanicsPage } from '@/routes/studios/$studioId/client-mechanics';
+import { ClientMechanicsPage } from '@/routes/studios/$studioId/client-mechanics/index';
 
 // --- Mocks ---
 

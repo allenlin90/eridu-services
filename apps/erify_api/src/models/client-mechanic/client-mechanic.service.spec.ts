@@ -36,6 +36,10 @@ describe('clientMechanicService', () => {
       findPaginated: jest.fn(),
       updateWithVersionCheck: jest.fn(),
       softDelete: jest.fn(),
+      findTemplatesByMechanic: jest.fn(),
+      findShowsForCoverage: jest.fn(),
+      findFinalizedLoopTasksForShows: jest.fn(),
+      findTemplateRefsForTemplatesAndSnapshots: jest.fn(),
     });
     utilityMock = createMockUtilityService('cmech_123');
 
@@ -257,6 +261,205 @@ describe('clientMechanicService', () => {
 
       expect(result).toBeNull();
       expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getMechanicCoverage', () => {
+    it('throws not found error when the mechanic is missing', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.getMechanicCoverage('studio_1', 'client_1', 'cmech_404', new Date(), new Date()),
+      ).rejects.toThrow(/Client mechanic not found/);
+    });
+
+    it('returns templates and computes coverage statuses across shows', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic); // contentRevision is 5
+
+      // Mock templates referencing it:
+      // template_1 has it in latest (snapshotId: null) and snapshot_1 (snapshotId: 10)
+      // template_2 has it only in snapshot_2 (snapshotId: 20), but dropped in latest (no null snapshotId row)
+      (repositoryMock.findTemplatesByMechanic as jest.Mock).mockResolvedValue([
+        {
+          templateId: BigInt(1),
+          snapshotId: null,
+          template: { uid: 'ttpl_1', name: 'Template 1' },
+        },
+        {
+          templateId: BigInt(1),
+          snapshotId: BigInt(10),
+          template: { uid: 'ttpl_1', name: 'Template 1' },
+        },
+        {
+          templateId: BigInt(2),
+          snapshotId: BigInt(20),
+          template: { uid: 'ttpl_2', name: 'Template 2' },
+        },
+      ]);
+
+      // Mock date-ranged shows
+      const show1 = { id: BigInt(101), uid: 'show_101', name: 'Show 101', startTime: new Date('2026-06-17T09:00:00Z') };
+      const show2 = { id: BigInt(102), uid: 'show_102', name: 'Show 102', startTime: new Date('2026-06-17T10:00:00Z') };
+      const show3 = { id: BigInt(103), uid: 'show_103', name: 'Show 103', startTime: new Date('2026-06-17T11:00:00Z') };
+      const show4 = { id: BigInt(104), uid: 'show_104', name: 'Show 104', startTime: new Date('2026-06-17T12:00:00Z') };
+      const show5 = { id: BigInt(105), uid: 'show_105', name: 'Show 105', startTime: new Date('2026-06-17T13:00:00Z') };
+      (repositoryMock.findShowsForCoverage as jest.Mock).mockResolvedValue([show1, show2, show3, show4, show5]);
+
+      // Mock finalized tasks for these shows
+      const task1 = {
+        uid: 'task_1',
+        snapshotId: BigInt(10),
+        templateId: BigInt(1),
+        targets: [{ showId: BigInt(101) }],
+        template: { uid: 'ttpl_1', name: 'Template 1' },
+        snapshot: {
+          schema: {
+            items: [
+              {
+                mechanic_ref: {
+                  mechanic_id: 'cmech_123',
+                  content_revision: 5,
+                },
+              },
+            ],
+            metadata: { loops: [] },
+          },
+        },
+      };
+
+      const task2 = {
+        uid: 'task_2',
+        snapshotId: BigInt(11), // different snapshot, referencing old revision
+        templateId: BigInt(1),
+        targets: [{ showId: BigInt(102) }],
+        template: { uid: 'ttpl_1', name: 'Template 1' },
+        snapshot: {
+          schema: {
+            items: [
+              {
+                mechanic_ref: {
+                  mechanic_id: 'cmech_123',
+                  content_revision: 4,
+                },
+              },
+            ],
+            metadata: { loops: [] },
+          },
+        },
+      };
+
+      const task3 = {
+        uid: 'task_3',
+        snapshotId: BigInt(12),
+        templateId: BigInt(1),
+        targets: [{ showId: BigInt(103) }],
+        template: { uid: 'ttpl_1', name: 'Template 1' },
+        snapshot: {
+          schema: {
+            items: [], // no mechanic ref at all
+            metadata: { loops: [] },
+          },
+        },
+      };
+
+      const task4 = {
+        uid: 'task_4',
+        snapshotId: BigInt(20),
+        templateId: BigInt(2),
+        targets: [{ showId: BigInt(104) }],
+        template: { uid: 'ttpl_2', name: 'Template 2' },
+        snapshot: {
+          schema: {
+            items: [
+              {
+                mechanic_ref: {
+                  mechanic_id: 'cmech_123',
+                  content_revision: 5,
+                },
+              },
+            ],
+            metadata: { loops: [] },
+          },
+        },
+      };
+
+      (repositoryMock.findFinalizedLoopTasksForShows as jest.Mock).mockResolvedValue([task1, task2, task3, task4]);
+
+      // Mock template refs query
+      (repositoryMock.findTemplateRefsForTemplatesAndSnapshots as jest.Mock).mockResolvedValue([
+        // latest template_1 references it
+        { templateId: BigInt(1), snapshotId: null, mechanicId: BigInt(1), mechanic: { uid: 'cmech_123', contentRevision: 5 } },
+        // snapshot_1 references it
+        { templateId: BigInt(1), snapshotId: BigInt(10), mechanicId: BigInt(1), mechanic: { uid: 'cmech_123', contentRevision: 5 } },
+        // snapshot_11 references it
+        { templateId: BigInt(1), snapshotId: BigInt(11), mechanicId: BigInt(1), mechanic: { uid: 'cmech_123', contentRevision: 4 } },
+        // snapshot_20 references it
+        { templateId: BigInt(2), snapshotId: BigInt(20), mechanicId: BigInt(1), mechanic: { uid: 'cmech_123', contentRevision: 5 } },
+      ]);
+
+      const result = await service.getMechanicCoverage(
+        'studio_1',
+        'client_1',
+        'cmech_123',
+        new Date('2026-06-17T00:00:00Z'),
+        new Date('2026-06-17T23:59:59Z'),
+      );
+
+      // Verify templates list
+      expect(result.templates).toEqual(
+        expect.arrayContaining([
+          { uid: 'ttpl_1', name: 'Template 1', isLatestCarrying: true },
+          { uid: 'ttpl_2', name: 'Template 2', isLatestCarrying: false },
+        ]),
+      );
+
+      // Verify shows statuses
+      expect(result.shows).toHaveLength(5);
+
+      // Show 101: current
+      expect(result.shows[0]).toMatchObject({
+        uid: 'show_101',
+        status: 'current',
+        task_uid: 'task_1',
+        template_uid: 'ttpl_1',
+        frozen_revision: 5,
+      });
+
+      // Show 102: stale
+      expect(result.shows[1]).toMatchObject({
+        uid: 'show_102',
+        status: 'stale',
+        task_uid: 'task_2',
+        template_uid: 'ttpl_1',
+        frozen_revision: 4,
+      });
+
+      // Show 103: unassigned (latest has it, but task snapshot does not)
+      expect(result.shows[2]).toMatchObject({
+        uid: 'show_103',
+        status: 'unassigned',
+        task_uid: 'task_3',
+        template_uid: 'ttpl_1',
+        frozen_revision: null,
+      });
+
+      // Show 104: dropped (snapshot has it, but latest template does not)
+      expect(result.shows[3]).toMatchObject({
+        uid: 'show_104',
+        status: 'dropped',
+        task_uid: 'task_4',
+        template_uid: 'ttpl_2',
+        frozen_revision: 5,
+      });
+
+      // Show 105: unassigned (no task)
+      expect(result.shows[4]).toMatchObject({
+        uid: 'show_105',
+        status: 'unassigned',
+        task_uid: null,
+        template_uid: null,
+        frozen_revision: null,
+      });
     });
   });
 });

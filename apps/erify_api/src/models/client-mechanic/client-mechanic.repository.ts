@@ -144,4 +144,126 @@ export class ClientMechanicRepository extends BaseRepository<
       throw error;
     }
   }
+
+  async findTemplatesByMechanic(mechanicId: bigint) {
+    return this.prisma.taskTemplateMechanicRef.findMany({
+      where: { mechanicId },
+      select: {
+        templateId: true,
+        snapshotId: true,
+        template: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findShowsForCoverage(clientUid: string, startDate: Date, endDate: Date) {
+    return this.prisma.show.findMany({
+      where: {
+        client: { uid: clientUid },
+        startTime: { gte: startDate, lte: endDate },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        uid: true,
+        name: true,
+        startTime: true,
+      },
+      orderBy: { startTime: 'asc' },
+    });
+  }
+
+  async findFinalizedLoopTasksForShows(showIds: bigint[]) {
+    return this.prisma.task.findMany({
+      where: {
+        targets: { some: { showId: { in: showIds }, deletedAt: null } },
+        status: { in: ['COMPLETED', 'CLOSED'] },
+        deletedAt: null,
+      },
+      include: {
+        snapshot: true,
+        template: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
+        targets: { where: { deletedAt: null }, select: { showId: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  async findTemplateRefsForTemplatesAndSnapshots(templateIds: bigint[], snapshotIds: bigint[]) {
+    return this.prisma.taskTemplateMechanicRef.findMany({
+      where: {
+        OR: [
+          { templateId: { in: templateIds }, snapshotId: null },
+          { snapshotId: { in: snapshotIds } },
+        ],
+      },
+      select: {
+        templateId: true,
+        snapshotId: true,
+        mechanicId: true,
+        mechanic: {
+          select: {
+            uid: true,
+            contentRevision: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findShowForCoverageDetail(studioUid: string, showUid: string) {
+    return this.prisma.show.findFirst({
+      where: {
+        uid: showUid,
+        studio: { uid: studioUid },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        uid: true,
+        name: true,
+        clientId: true,
+        client: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findTemplateRefsForShowCoverage(templateId: bigint, snapshotId: bigint) {
+    return this.prisma.taskTemplateMechanicRef.findMany({
+      where: {
+        OR: [
+          { templateId, snapshotId: null },
+          { snapshotId },
+        ],
+      },
+      include: {
+        mechanic: {
+          select: {
+            id: true,
+            uid: true,
+            title: true,
+            instructionLabel: true,
+            instructionBody: true,
+            status: true,
+            contentRevision: true,
+          },
+        },
+      },
+    });
+  }
 }

@@ -22,9 +22,11 @@ import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { ClientService } from '@/models/client/client.service';
 import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
 import {
+  clientMechanicCoverageResponseSchema,
   clientMechanicDto,
   CreateClientMechanicDto,
   ListClientMechanicsQueryDto,
+  ListMechanicCoverageQueryDto,
   UpdateClientMechanicDto,
 } from '@/models/client-mechanic/schemas/client-mechanic.schema';
 import { ShowService } from '@/models/show/show.service';
@@ -111,6 +113,26 @@ export class StudioClientMechanicController extends BaseStudioController {
     }
 
     return mechanic;
+  }
+
+  @Get(':mechanicId/coverage')
+  @ReadBurstThrottle()
+  @ZodResponse(clientMechanicCoverageResponseSchema)
+  async getCoverage(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
+    @Param('mechanicId', new UidValidationPipe(ClientMechanicService.UID_PREFIX, 'ClientMechanic')) mechanicId: string,
+    @Query() query: ListMechanicCoverageQueryDto,
+  ) {
+    await this.ensureClientExists(clientId);
+
+    return this.clientMechanicService.getMechanicCoverage(
+      studioId,
+      clientId,
+      mechanicId,
+      new Date(query.start_date),
+      new Date(query.end_date),
+    );
   }
 
   @Post()

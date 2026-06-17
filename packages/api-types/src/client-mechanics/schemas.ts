@@ -80,3 +80,85 @@ export type ClientMechanicApiResponse = z.infer<typeof clientMechanicApiResponse
 export type CreateClientMechanicInput = z.infer<typeof createClientMechanicInputSchema>;
 export type UpdateClientMechanicInput = z.infer<typeof updateClientMechanicInputSchema>;
 export type ListClientMechanicsFilter = z.infer<typeof listClientMechanicsFilterSchema>;
+
+/**
+ * Date-range query for mechanic coverage analysis (ISO-8601 absolute datetime strings).
+ */
+export const listMechanicCoverageQuerySchema = z.object({
+  start_date: z.string().datetime(),
+  end_date: z.string().datetime(),
+});
+
+export type ListMechanicCoverageQuery = z.infer<typeof listMechanicCoverageQuerySchema>;
+
+/**
+ * Task template currently referencing a specific client mechanic.
+ */
+export const mechanicCoverageTemplateSchema = z.object({
+  uid: z.string(),
+  name: z.string(),
+  is_latest_carrying: z.boolean(),
+});
+
+export type MechanicCoverageTemplate = z.infer<typeof mechanicCoverageTemplateSchema>;
+
+/**
+ * Coverage status of a specific client mechanic on a target show.
+ */
+export const mechanicCoverageShowSchema = z.object({
+  uid: z.string(),
+  name: z.string(),
+  start_time: z.string(),
+  status: z.enum(['current', 'stale', 'dropped', 'unassigned']),
+  task_uid: z.string().nullable(),
+  template_uid: z.string().nullable(),
+  template_name: z.string().nullable(),
+  frozen_revision: z.number().int().nullable(),
+  catalog_revision: z.number().int(),
+});
+
+export type MechanicCoverageShow = z.infer<typeof mechanicCoverageShowSchema>;
+
+/**
+ * API response detailing a client mechanic's template and show coverage.
+ */
+export const clientMechanicCoverageResponseSchema = z.object({
+  templates: z.array(mechanicCoverageTemplateSchema),
+  shows: z.array(mechanicCoverageShowSchema),
+});
+
+export type ClientMechanicCoverageResponse = z.infer<typeof clientMechanicCoverageResponseSchema>;
+
+/**
+ * Expected client mechanic details and coverage status on a specific show.
+ */
+export const showMechanicExpectedSchema = z.object({
+  uid: z.string(),
+  title: z.string(),
+  instruction_label: z.string(),
+  instruction_body: z.string(),
+  status: z.enum(['current', 'stale', 'missing']),
+  frozen_revision: z.number().int().nullable(),
+  catalog_revision: z.number().int(),
+  catalog_status: mechanicStatusSchema,
+});
+
+export type ShowMechanicExpected = z.infer<typeof showMechanicExpectedSchema>;
+
+/**
+ * API response detailing show-scoped mechanic coverage.
+ */
+export const showMechanicCoverageResponseSchema = z.object({
+  show_uid: z.string(),
+  show_name: z.string(),
+  client_uid: z.string().nullable(),
+  client_name: z.string().nullable(),
+  task_uid: z.string().nullable(),
+  template_uid: z.string().nullable(),
+  template_name: z.string().nullable(),
+  mechanics: z.array(showMechanicExpectedSchema),
+});
+
+export type ShowMechanicCoverageResponse = z.infer<typeof showMechanicCoverageResponseSchema>;
+
+
