@@ -15,7 +15,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, ChevronsUpDown, Plus } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { AlertCircle, ChevronsUpDown, Plus, RefreshCw } from 'lucide-react';
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -31,6 +32,12 @@ import {
   AlertDialogTitle,
   AsyncCombobox,
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Checkbox,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -41,7 +48,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
   Textarea,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from '@eridu/ui';
 
 import { LivePreview } from './live-preview';
@@ -63,6 +80,7 @@ import {
   stripSourceLoopSuffix,
 } from './task-template-builder.utils';
 
+import { useClientMechanicsQuery } from '@/features/client-mechanics/api/get-client-mechanics';
 import { getClients } from '@/features/clients/api/get-clients';
 import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
@@ -111,6 +129,58 @@ export function TaskTemplateBuilder({
     queryFn: ({ signal }) => getClients({ name: clientSearch || undefined, limit: 50 }, studioId ?? '', { signal }),
     enabled: Boolean(studioId),
   });
+
+  const { data: clientMechanicsResponse } = useClientMechanicsQuery(
+    studioId ?? '',
+    template.client_id ?? undefined,
+    { limit: 200 },
+  );
+
+  const clientMechanics = useMemo(() => clientMechanicsResponse?.data ?? [], [clientMechanicsResponse]);
+
+  const activeMechanics = useMemo(() => {
+    return clientMechanics.filter((m) => m.status === 'active');
+  }, [clientMechanics]);
+
+  const hasSupersededRefs = useMemo(() => {
+    return template.items.some((item) => {
+      if (!item.mechanic_ref)
+        return false;
+      const m = clientMechanics.find((mc) => mc.id === item.mechanic_ref?.mechanic_id);
+      return m && m.content_revision > item.mechanic_ref.content_revision;
+    });
+  }, [template.items, clientMechanics]);
+
+  const hasRetiredRefs = useMemo(() => {
+    return template.items.some((item) => {
+      if (!item.mechanic_ref)
+        return false;
+      const m = clientMechanics.find((mc) => mc.id === item.mechanic_ref?.mechanic_id);
+      return m ? m.status === 'retired' : false;
+    });
+  }, [template.items, clientMechanics]);
+
+  const handleUpgradeAllMechanics = useCallback(() => {
+    const upgradedItems = template.items.map((item) => {
+      if (!item.mechanic_ref)
+        return item;
+      const m = clientMechanics.find((mc) => mc.id === item.mechanic_ref?.mechanic_id);
+      if (m && m.content_revision > item.mechanic_ref.content_revision) {
+        return {
+          ...item,
+          label: m.instruction_label,
+          description: m.instruction_body,
+          mechanic_ref: {
+            ...item.mechanic_ref,
+            content_revision: m.content_revision,
+          },
+        };
+      }
+      return item;
+    });
+    onChange({ ...template, items: upgradedItems });
+    toast.success('Successfully upgraded all mechanic references to the latest catalog revision');
+  }, [template, clientMechanics, onChange]);
 
   const selectedClient = useMemo(() => {
     return (lookups?.clients ?? []).find((c) => c.id === template.client_id);
@@ -586,6 +656,166 @@ export function TaskTemplateBuilder({
           {isModerationMode
             ? (
                 <div className="space-y-6 pb-6">
+                  {/* Loop × Mechanic Matrix Grid */}
+                  {template.client_id && clientMechanics.length > 0 && (
+                    <Card className="border shadow-sm bg-gradient-to-br from-white to-zinc-50/50">
+                      <CardHeader className="pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                          <CardTitle className="text-sm font-semibold tracking-tight">
+                            Client Mechanics Matrix
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            Assign client mechanics to loops. Checked mechanics will be added as checkbox inputs.
+                          </CardDescription>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {hasRetiredRefs && (
+                            <div className="flex items-center gap-1.5 text-xs text-amber-600 font-medium bg-amber-50 px-2.5 py-1 rounded border border-amber-200">
+                              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                              Some assigned mechanics are retired. Check cards below.
+                            </div>
+                          )}
+                          {hasSupersededRefs && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-amber-700 border-amber-200 bg-amber-50 hover:bg-amber-100 hover:text-amber-800 flex items-center gap-1 shrink-0 h-8"
+                              onClick={handleUpgradeAllMechanics}
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                              {' '}
+                              Upgrade All References
+                            </Button>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0 border-t">
+                        <div className="overflow-x-auto max-w-full">
+                          <Table className="min-w-full divide-y divide-border table-fixed">
+                            <TableHeader className="bg-zinc-50/75">
+                              <TableRow>
+                                <TableHead className="w-48 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-4">
+                                  Loop
+                                </TableHead>
+                                {activeMechanics.map((mechanic) => (
+                                  <TableHead key={mechanic.id} className="text-center text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-2">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="cursor-help underline decoration-dotted underline-offset-4">
+                                            {mechanic.title}
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs p-2.5">
+                                          <p className="font-semibold text-xs mb-1">{mechanic.instruction_label}</p>
+                                          <p className="text-[11px] text-muted-foreground leading-normal">{mechanic.instruction_body}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody className="bg-white divide-y divide-border">
+                              {moderationLoops.map((loop) => (
+                                <TableRow key={loop.id} className="hover:bg-zinc-50/50">
+                                  <TableCell className="font-medium text-sm text-zinc-900 py-3.5 px-4 truncate">
+                                    {loop.name}
+                                  </TableCell>
+                                  {activeMechanics.map((mechanic) => {
+                                    const assignedField = template.items.find(
+                                      (item) => item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id,
+                                    );
+                                    const isChecked = !!assignedField;
+                                    const isSuperseded = assignedField && mechanic.content_revision > assignedField.mechanic_ref.content_revision;
+
+                                    return (
+                                      <TableCell key={mechanic.id} className="text-center py-3.5 px-2">
+                                        <div className="flex items-center justify-center gap-1.5">
+                                          <Checkbox
+                                            checked={isChecked}
+                                            aria-label={`Toggle ${mechanic.title} for ${loop.name}`}
+                                            onCheckedChange={(checked) => {
+                                              const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                              if (checked) {
+                                                // Add mechanic field
+                                                const newField: FieldItem = {
+                                                  id: createTaskTemplateFieldId(),
+                                                  key: mechanic.id.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+                                                  type: 'checkbox' as any,
+                                                  label: mechanic.instruction_label,
+                                                  description: mechanic.instruction_body,
+                                                  required: true,
+                                                  group: loop.id,
+                                                  mechanic_ref: {
+                                                    client_id: currentTemplate.client_id!,
+                                                    mechanic_id: mechanic.id,
+                                                    content_revision: mechanic.content_revision,
+                                                  },
+                                                };
+                                                const updatedItems = [...currentTemplate.items, newField];
+                                                currentOnChange({ ...currentTemplate, items: updatedItems });
+                                                toast.success(`Assigned mechanic "${mechanic.title}" to ${loop.name}`);
+                                              } else {
+                                                // Remove mechanic field
+                                                const updatedItems = currentTemplate.items.filter(
+                                                  (item) => !(item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id),
+                                                );
+                                                currentOnChange({ ...currentTemplate, items: updatedItems });
+                                                toast.success(`Removed mechanic "${mechanic.title}" from ${loop.name}`);
+                                              }
+                                            }}
+                                          />
+                                          {isSuperseded && (
+                                            <TooltipProvider>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                                                    onClick={() => {
+                                                      const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                                      const updatedItems = currentTemplate.items.map((item) => {
+                                                        if (item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id) {
+                                                          return {
+                                                            ...item,
+                                                            label: mechanic.instruction_label,
+                                                            description: mechanic.instruction_body,
+                                                            mechanic_ref: {
+                                                              ...item.mechanic_ref,
+                                                              content_revision: mechanic.content_revision,
+                                                            },
+                                                          };
+                                                        }
+                                                        return item;
+                                                      });
+                                                      currentOnChange({ ...currentTemplate, items: updatedItems });
+                                                      toast.success(`Upgraded mechanic "${mechanic.title}" reference in ${loop.name}`);
+                                                    }}
+                                                  >
+                                                    <RefreshCw className="h-3.5 w-3.5" />
+                                                  </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent className="p-2 text-xs">
+                                                  Catalog update available. Click to upgrade.
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </TooltipProvider>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                    );
+                                  })}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {moderationLoops.map((loop, loopIndex) => {
                     const loopItems = loopItemsById[loop.id] || emptyLoopItems;
                     const isCollapsed = collapsedLoops[loop.id] ?? false;
@@ -744,6 +974,7 @@ export function TaskTemplateBuilder({
                         onDragEnd={handleDragEnd}
                         onUpdateField={updateField}
                         onRemoveField={removeField}
+                        clientMechanics={clientMechanics}
                       />
                     );
                   })}
@@ -772,6 +1003,7 @@ export function TaskTemplateBuilder({
                         onScrolledToItem={() => {
                           setPendingScrollFieldId(null);
                         }}
+                        clientMechanics={clientMechanics}
                       />
                     </SortableContext>
                   </DndContext>

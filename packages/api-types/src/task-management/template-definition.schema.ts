@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UID_PREFIXES } from '../constants.js';
 
 import { getSchemaEngine, TASK_TEMPLATE_FIELD_ID_PATTERN } from './task-schema-engine.js';
 
@@ -264,10 +265,19 @@ export const TemplateSchemaValidator = z
     });
   });
 
+export const MechanicRefSchema = z.object({
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+  mechanic_id: z.string().startsWith(UID_PREFIXES.CLIENT_MECHANIC),
+  content_revision: z.number().int().positive(),
+});
+
+export type MechanicRef = z.infer<typeof MechanicRefSchema>;
+
 export const FieldItemV2BaseSchema = FieldItemBaseSchema.omit({ standard: true }).extend({
   id: z.string().regex(TASK_TEMPLATE_FIELD_ID_PATTERN, 'Invalid field ID format (must be fld_ + 10+ alphanumeric)'),
   shared_field_key: z.string().optional().describe('Canonical key for shared field mapping'),
   system_fact_key: SystemFactKeyEnum.optional().describe('Closed catalog key for target-scoped operational fact extraction'),
+  mechanic_ref: MechanicRefSchema.optional(),
 });
 
 export const FieldItemV2Schema = FieldItemV2BaseSchema.superRefine((data, ctx) => {
@@ -290,6 +300,7 @@ export const TemplateSchemaV2Validator = z
     // v2 key uniqueness: checks per-loop (key, group) uniqueness instead of global uniqueness
     const seen = new Set<string>();
     const seenSystemFacts = new Set<SystemFactKey>();
+    const seenMechanicsPerLoop = new Set<string>();
     data.items.forEach((item, index) => {
       const groupSegment = item.group ?? 'none';
       const compositeKey = `${groupSegment}:${item.key}`;
@@ -302,6 +313,20 @@ export const TemplateSchemaV2Validator = z
         });
       }
       seen.add(compositeKey);
+
+      // Validate per-loop mechanic_id uniqueness
+      if (item.mechanic_ref) {
+        const mechanicGroupKey = `${groupSegment}:${item.mechanic_ref.mechanic_id}`;
+        if (seenMechanicsPerLoop.has(mechanicGroupKey)) {
+          ctx.issues.push({
+            code: 'custom',
+            message: `Duplicate mechanic "${item.mechanic_ref.mechanic_id}" detected in group "${item.group ?? 'root'}"`,
+            path: ['items', index, 'mechanic_ref', 'mechanic_id'],
+            input: data,
+          });
+        }
+        seenMechanicsPerLoop.add(mechanicGroupKey);
+      }
 
       if (!item.system_fact_key) {
         return;

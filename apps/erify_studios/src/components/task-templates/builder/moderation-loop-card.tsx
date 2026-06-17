@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@eridu/ui';
 
+import type { ClientMechanic } from '@/features/client-mechanics/api/get-client-mechanics';
 import type { FieldItem, LoopMetadata } from './schema';
 import { SortableFieldList } from './sortable-field-list';
 
@@ -49,6 +50,7 @@ export function ModerationLoopCard({
   onDragEnd,
   onUpdateField,
   onRemoveField,
+  clientMechanics,
 }: {
   loop: LoopMetadata;
   loopIndex: number;
@@ -69,6 +71,7 @@ export function ModerationLoopCard({
   onDragEnd: (event: DragEndEvent) => void;
   onUpdateField: (id: string, updates: Partial<FieldItem>) => void;
   onRemoveField: (id: string) => void;
+  clientMechanics?: ClientMechanic[];
 }) {
   return (
     <div
@@ -200,6 +203,7 @@ export function ModerationLoopCard({
                 onUpdate={onUpdateField}
                 onRemove={onRemoveField}
                 errors={errors}
+                clientMechanics={clientMechanics}
               />
             </SortableContext>
           </DndContext>

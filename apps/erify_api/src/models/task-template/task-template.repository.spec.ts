@@ -12,6 +12,14 @@ function createPrismaServiceMock() {
       findMany: jest.fn(),
       count: jest.fn(),
       update: jest.fn(),
+      create: jest.fn(),
+    },
+    taskTemplateMechanicRef: {
+      deleteMany: jest.fn(),
+      createMany: jest.fn(),
+    },
+    clientMechanic: {
+      findMany: jest.fn(),
     },
     task: {
       groupBy: jest.fn(),
@@ -217,5 +225,152 @@ describe('taskTemplateRepository', () => {
         { uid: 'asc' },
       ],
     }));
+  });
+
+  describe('mechanic reference syncing', () => {
+    it('syncs mechanic references on template creation', async () => {
+      const templateData = {
+        id: BigInt(1),
+        uid: 'ttpl_1',
+        name: 'Template 1',
+        currentSchema: {
+          items: [
+            {
+              id: 'fld_1',
+              key: 'test_mech',
+              type: 'checkbox',
+              group: 'l1',
+              mechanic_ref: {
+                client_id: 'client_1',
+                mechanic_id: 'cmech_1',
+                content_revision: 2,
+              },
+            },
+          ],
+        },
+        snapshots: [
+          {
+            id: BigInt(10),
+            version: 1,
+            schema: {
+              items: [
+                {
+                  id: 'fld_1',
+                  key: 'test_mech',
+                  type: 'checkbox',
+                  group: 'l1',
+                  mechanic_ref: {
+                    client_id: 'client_1',
+                    mechanic_id: 'cmech_1',
+                    content_revision: 2,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      prisma.taskTemplate.create.mockResolvedValue(templateData);
+      prisma.clientMechanic.findMany.mockResolvedValue([
+        { id: BigInt(20), uid: 'cmech_1' },
+      ]);
+
+      await repository.create(templateData as any);
+
+      // Verify template creation
+      expect(prisma.taskTemplate.create).toHaveBeenCalled();
+
+      // Verify deletion of old refs (live + snapshot)
+      expect(prisma.taskTemplateMechanicRef.deleteMany).toHaveBeenCalledWith({
+        where: { templateId: BigInt(1), snapshotId: null },
+      });
+      expect(prisma.taskTemplateMechanicRef.deleteMany).toHaveBeenCalledWith({
+        where: { templateId: BigInt(1), snapshotId: BigInt(10) },
+      });
+
+      // Verify bulk insertions (live + snapshot)
+      expect(prisma.taskTemplateMechanicRef.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            templateId: BigInt(1),
+            snapshotId: null,
+            mechanicId: BigInt(20),
+            group: 'l1',
+          },
+        ],
+      });
+      expect(prisma.taskTemplateMechanicRef.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            templateId: BigInt(1),
+            snapshotId: BigInt(10),
+            mechanicId: BigInt(20),
+            group: 'l1',
+          },
+        ],
+      });
+    });
+
+    it('syncs mechanic references on template update', async () => {
+      const templateData = {
+        id: BigInt(1),
+        uid: 'ttpl_1',
+        name: 'Template 1 Updated',
+        currentSchema: {
+          items: [
+            {
+              id: 'fld_1',
+              key: 'test_mech',
+              type: 'checkbox',
+              group: 'l1',
+              mechanic_ref: {
+                client_id: 'client_1',
+                mechanic_id: 'cmech_1',
+                content_revision: 2,
+              },
+            },
+          ],
+        },
+      };
+
+      prisma.taskTemplate.update.mockResolvedValue(templateData);
+      prisma.clientMechanic.findMany.mockResolvedValue([
+        { id: BigInt(20), uid: 'cmech_1' },
+      ]);
+
+      await repository.update({ uid: 'ttpl_1' }, {
+        name: 'Template 1 Updated',
+        currentSchema: {
+          items: [
+            {
+              id: 'fld_1',
+              key: 'test_mech',
+              type: 'checkbox',
+              group: 'l1',
+              mechanic_ref: {
+                client_id: 'client_1',
+                mechanic_id: 'cmech_1',
+                content_revision: 2,
+              },
+            },
+          ],
+        },
+      } as any);
+
+      expect(prisma.taskTemplateMechanicRef.deleteMany).toHaveBeenCalledWith({
+        where: { templateId: BigInt(1), snapshotId: null },
+      });
+      expect(prisma.taskTemplateMechanicRef.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            templateId: BigInt(1),
+            snapshotId: null,
+            mechanicId: BigInt(20),
+            group: 'l1',
+          },
+        ],
+      });
+    });
   });
 });

@@ -58,7 +58,7 @@ export class TaskTemplateService extends BaseModelService {
     const schemaWithTaskType = this.withTaskTypeInSchema(payload.currentSchema, payload.taskType);
     const sharedFieldsByKey = await this.getSharedFieldsByKey(payload.studioId);
 
-    this.validateSchema(schemaWithTaskType, sharedFieldsByKey);
+    this.validateSchema(schemaWithTaskType, sharedFieldsByKey, payload.clientUid);
 
     const data = {
       name: payload.name,
@@ -77,7 +77,7 @@ export class TaskTemplateService extends BaseModelService {
     const schemaWithTaskType = this.withTaskTypeInSchema(payload.currentSchema, payload.taskType);
     const sharedFieldsByKey = await this.getSharedFieldsByKey(payload.studioId);
 
-    this.validateSchema(schemaWithTaskType, sharedFieldsByKey);
+    this.validateSchema(schemaWithTaskType, sharedFieldsByKey, payload.clientUid);
 
     const version = payload.version ?? 1;
     const uid = payload.uid ?? this.generateTaskTemplateUid();
@@ -111,7 +111,7 @@ export class TaskTemplateService extends BaseModelService {
         uid,
         studio: { uid: studioId },
         deletedAt: null,
-      });
+      }, { client: true });
 
       if (!existing) {
         throw HttpError.notFound('Task template not found');
@@ -124,8 +124,12 @@ export class TaskTemplateService extends BaseModelService {
             : null);
       const sharedFieldsByKey = await this.getSharedFieldsByKey(studioId);
 
+      const resolvedClientUid = payload.clientUid !== undefined
+        ? payload.clientUid
+        : (existing as any).client?.uid;
+
       if (nextSchema) {
-        this.validateSchema(nextSchema, sharedFieldsByKey);
+        this.validateSchema(nextSchema, sharedFieldsByKey, resolvedClientUid);
       }
 
       const params = {
@@ -178,6 +182,7 @@ export class TaskTemplateService extends BaseModelService {
   validateSchema(
     schema: CreateTaskTemplatePayload['currentSchema'],
     sharedFieldsByKey: ReadonlyMap<string, SharedField> = new Map(),
+    clientUid?: string | null,
   ): void {
     let engine: SchemaEngineType;
     try {
@@ -194,6 +199,22 @@ export class TaskTemplateService extends BaseModelService {
     const taskType = (schema as { metadata?: { task_type?: string } })?.metadata?.task_type;
     if (!isTaskType(taskType)) {
       throw HttpError.badRequest('Template metadata.task_type is required and must be a valid task type');
+    }
+
+    // Validate mechanic client matching
+    for (const item of result.data.items) {
+      if (item && typeof item === 'object' && 'mechanic_ref' in item && item.mechanic_ref) {
+        if (!clientUid) {
+          throw HttpError.badRequest(
+            `Mechanic-bearing templates require a client to be selected. Field: ${item.key}`,
+          );
+        }
+        if (item.mechanic_ref.client_id !== clientUid) {
+          throw HttpError.badRequest(
+            `Mechanic client "${item.mechanic_ref.client_id}" does not match template client "${clientUid}". Field: ${item.key}`,
+          );
+        }
+      }
     }
 
     const groupedItems = result.data.items.filter((item) => item.group !== undefined);

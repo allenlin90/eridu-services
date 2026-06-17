@@ -497,6 +497,51 @@ describe('taskTemplateService', () => {
         }
       });
     });
+
+    describe('client mechanic validation', () => {
+      const createMechanicSchema = (mechanicClientId: string) => ({
+        schema_version: 2 as const,
+        schema_engine: 'task_template_v2' as const,
+        content_key_strategy: 'field_id' as const,
+        report_projection_strategy: 'descriptor' as const,
+        metadata: {
+          task_type: 'ACTIVE',
+        },
+        items: [
+          {
+            id: 'fld_mechfield1',
+            key: 'test_mechanic',
+            type: 'checkbox' as const,
+            label: 'Test Mechanic',
+            required: true,
+            mechanic_ref: {
+              client_id: mechanicClientId,
+              mechanic_id: 'cmech_123',
+              content_revision: 1,
+            },
+          },
+        ],
+      });
+
+      it('should pass when mechanic client matches the template client', () => {
+        const schema = createMechanicSchema('client_abc123');
+        expect(() => service.validateSchema(schema, new Map(), 'client_abc123')).not.toThrow();
+      });
+
+      it('should throw when no client is selected for a mechanic-bearing template', () => {
+        const schema = createMechanicSchema('client_abc123');
+        expect(() => service.validateSchema(schema, new Map(), null)).toThrow(
+          /Mechanic-bearing templates require a client to be selected/,
+        );
+      });
+
+      it('should throw when mechanic client mismatches the template client', () => {
+        const schema = createMechanicSchema('client_abc123');
+        expect(() => service.validateSchema(schema, new Map(), 'client_xyz789')).toThrow(
+          /does not match template client "client_xyz789"/,
+        );
+      });
+    });
   });
 
   describe('createTemplateWithSnapshot', () => {

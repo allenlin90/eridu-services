@@ -13,6 +13,61 @@ vi.mock('@/lib/hooks/use-studio-access', () => ({
   useStudioAccess: () => ({ hasAccess: () => false }),
 }));
 
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+const mockMechanics = [
+  {
+    id: 'cmech_active',
+    client_id: 'client_abc',
+    title: 'Speaking Rule Active',
+    instruction_label: 'Product Promo Active',
+    instruction_body: 'Talk about product active for 5 minutes.',
+    status: 'active',
+    version: 1,
+    content_revision: 2,
+    metadata: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'cmech_retired',
+    client_id: 'client_abc',
+    title: 'Speaking Rule Retired',
+    instruction_label: 'Product Promo Retired',
+    instruction_body: 'Talk about product retired.',
+    status: 'retired',
+    version: 1,
+    content_revision: 1,
+    metadata: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'cmech_superseded',
+    client_id: 'client_abc',
+    title: 'Speaking Rule Superseded',
+    instruction_label: 'Product Promo Superseded (New)',
+    instruction_body: 'Talk about product superseded (new instructions).',
+    status: 'active',
+    version: 1,
+    content_revision: 3,
+    metadata: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+vi.mock('@/features/client-mechanics/api/get-client-mechanics', () => ({
+  useClientMechanicsQuery: () => ({
+    data: { data: mockMechanics },
+  }),
+}));
+
 const v2LoopTemplate: BuilderTemplateSchemaType = {
   name: 'V2 moderation template',
   description: '',
@@ -204,5 +259,130 @@ describe('taskTemplateBuilder v2 field ids', () => {
 
     const combobox = screen.getByRole('combobox', { name: 'Auto-fill record field' });
     expect(combobox).toBeDisabled();
+  });
+
+  describe('Client Mechanics LoopxMechanic Matrix', () => {
+    const v2MechanicTemplate: BuilderTemplateSchemaType = {
+      ...v2LoopTemplate,
+      client_id: 'client_abc',
+    };
+
+    it('renders the Client Mechanics Matrix when client_id is set', () => {
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
+
+      expect(screen.getByText('Client Mechanics Matrix')).toBeInTheDocument();
+      // active mechanics should be rendered in the table header
+      expect(screen.getByText('Speaking Rule Active')).toBeInTheDocument();
+      expect(screen.getByText('Speaking Rule Superseded')).toBeInTheDocument();
+      // retired mechanics should NOT be rendered in the table header
+      expect(screen.queryByText('Speaking Rule Retired')).toBeNull();
+    });
+
+    it('toggles mechanic checkbox to assign/remove a mechanic-backed field', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={onChange} />);
+
+      const checkbox = screen.getByRole('checkbox', { name: 'Toggle Speaking Rule Active for Loop 1' });
+      await user.click(checkbox);
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            key: 'cmech_active',
+            type: 'checkbox',
+            label: 'Product Promo Active',
+            description: 'Talk about product active for 5 minutes.',
+            group: 'l1',
+            mechanic_ref: expect.objectContaining({
+              client_id: 'client_abc',
+              mechanic_id: 'cmech_active',
+              content_revision: 2,
+            }),
+          }),
+        ],
+      }));
+    });
+
+    it('locks input fields (label, type, description) for mechanic-backed fields', () => {
+      const templateWithMechanic: BuilderTemplateSchemaType = {
+        ...v2MechanicTemplate,
+        items: [
+          {
+            id: 'fld_mech1',
+            key: 'cmech_active',
+            type: 'checkbox',
+            label: 'Product Promo Active',
+            description: 'Talk about product active for 5 minutes.',
+            required: true,
+            group: 'l1',
+            mechanic_ref: {
+              client_id: 'client_abc',
+              mechanic_id: 'cmech_active',
+              content_revision: 2,
+            },
+          },
+        ],
+      };
+
+      render(<TaskTemplateBuilder template={templateWithMechanic} onChange={vi.fn()} />);
+
+      // The label input, type select, and description textarea should be disabled/locked
+      const labelInput = screen.getByLabelText('Label');
+      expect(labelInput).toBeDisabled();
+
+      const typeSelect = screen.getByRole('combobox', { name: 'Type' });
+      expect(typeSelect).toBeDisabled();
+
+      const descriptionTextarea = screen.getByLabelText('Description / Help Text');
+      expect(descriptionTextarea).toBeDisabled();
+    });
+
+    it('renders a warning badge and upgrade action for superseded mechanic references', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const templateWithSuperseded: BuilderTemplateSchemaType = {
+        ...v2MechanicTemplate,
+        items: [
+          {
+            id: 'fld_mech_super',
+            key: 'cmech_superseded',
+            type: 'checkbox',
+            label: 'Product Promo Superseded (Old)',
+            description: 'Old instructions...',
+            required: true,
+            group: 'l1',
+            mechanic_ref: {
+              client_id: 'client_abc',
+              mechanic_id: 'cmech_superseded',
+              content_revision: 1, // older than catalog content_revision: 3
+            },
+          },
+        ],
+      };
+
+      render(<TaskTemplateBuilder template={templateWithSuperseded} onChange={onChange} />);
+
+      // Warning badge / text should exist
+      expect(screen.getAllByText('Catalog Update Available').length).toBeGreaterThan(0);
+
+      // Upgrade button should exist and trigger onChange with updated catalog details
+      const upgradeButton = screen.getAllByRole('button', { name: /Upgrade/i })[0];
+      await user.click(upgradeButton);
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            id: 'fld_mech_super',
+            label: 'Product Promo Superseded (New)',
+            description: 'Talk about product superseded (new instructions).',
+            mechanic_ref: expect.objectContaining({
+              content_revision: 3,
+            }),
+          }),
+        ],
+      }));
+    });
   });
 });

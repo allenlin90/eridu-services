@@ -51,7 +51,31 @@ export class TaskTemplateRepository extends BaseRepository<
     });
   }
 
-  async update(
+  override async create(
+    data: Prisma.TaskTemplateCreateInput,
+    include?: Prisma.TaskTemplateInclude,
+  ): Promise<TaskTemplate> {
+    const template = await this.txHost.tx.taskTemplate.create({
+      data,
+      include: {
+        snapshots: true,
+        ...include,
+      },
+    });
+
+    if (data.currentSchema) {
+      await this.syncMechanicRefsForTemplate(template.id, data.currentSchema);
+    }
+
+    if (template.snapshots && template.snapshots.length > 0) {
+      const snapshot = template.snapshots[0];
+      await this.syncMechanicRefsForTemplate(template.id, snapshot.schema, snapshot.id);
+    }
+
+    return template;
+  }
+
+  override async update(
     params: { uid: string; studioUid?: string },
     data: Prisma.TaskTemplateUpdateInput,
     include?: Prisma.TaskTemplateInclude,
@@ -62,14 +86,23 @@ export class TaskTemplateRepository extends BaseRepository<
       ...(studioUid && { studio: { uid: studioUid } }),
     };
 
-    return this.txHost.tx.taskTemplate.update({
+    const template = await this.txHost.tx.taskTemplate.update({
       where: { ...where, deletedAt: null },
       data,
-      ...(include && { include }),
+      include: {
+        snapshots: true,
+        ...include,
+      },
     });
+
+    if (data.currentSchema) {
+      await this.syncMechanicRefsForTemplate(template.id, data.currentSchema);
+    }
+
+    return template;
   }
 
-  async updateWithVersionCheck(
+  override async updateWithVersionCheck(
     params: { uid: string; studioUid?: string; version?: number },
     data: Prisma.TaskTemplateUpdateInput,
     include?: Prisma.TaskTemplateInclude,
@@ -83,11 +116,27 @@ export class TaskTemplateRepository extends BaseRepository<
     };
 
     try {
-      return await this.txHost.tx.taskTemplate.update({
+      const template = await this.txHost.tx.taskTemplate.update({
         where: { ...where, deletedAt: null },
         data,
-        ...(include && { include }),
+        include: {
+          snapshots: true,
+          ...include,
+        },
       });
+
+      if (data.currentSchema) {
+        await this.syncMechanicRefsForTemplate(template.id, data.currentSchema);
+      }
+
+      if (template.snapshots && template.snapshots.length > 0) {
+        const newSnapshot = template.snapshots.find(s => s.version === template.version);
+        if (newSnapshot) {
+          await this.syncMechanicRefsForTemplate(template.id, newSnapshot.schema, newSnapshot.id);
+        }
+      }
+
+      return template;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === PRISMA_ERROR.RecordNotFound && version) {
@@ -106,6 +155,76 @@ export class TaskTemplateRepository extends BaseRepository<
       }
       throw error;
     }
+  }
+
+  private async syncMechanicRefsForTemplate(
+    templateId: bigint,
+    schema: any,
+    snapshotId?: bigint | null,
+  ): Promise<void> {
+    // 1. Delete existing refs for this target
+    await this.txHost.tx.taskTemplateMechanicRef.deleteMany({
+      where: {
+        templateId,
+        snapshotId: snapshotId ?? null,
+      },
+    });
+
+    // 2. Parse items and find mechanic_refs
+    if (!schema || typeof schema !== 'object' || !Array.isArray(schema.items)) {
+      return;
+    }
+
+    const refs: { mechanicUid: string; group: string }[] = [];
+    for (const item of schema.items) {
+      if (
+        item &&
+        typeof item === 'object' &&
+        item.mechanic_ref &&
+        typeof item.mechanic_ref === 'object' &&
+        item.mechanic_ref.mechanic_id
+      ) {
+        refs.push({
+          mechanicUid: item.mechanic_ref.mechanic_id,
+          group: item.group ?? '',
+        });
+      }
+    }
+
+    if (refs.length === 0) {
+      return;
+    }
+
+    // 3. Find database IDs of these mechanics
+    const mechanics = await this.txHost.tx.clientMechanic.findMany({
+      where: {
+        uid: { in: refs.map(r => r.mechanicUid) },
+        deletedAt: null,
+      },
+      select: { id: true, uid: true },
+    });
+
+    const mechanicIdMap = new Map<string, bigint>(
+      mechanics.map(m => [m.uid, m.id]),
+    );
+
+    // 4. Insert new refs
+    const createData = refs.map(ref => {
+      const mechanicId = mechanicIdMap.get(ref.mechanicUid);
+      if (!mechanicId) {
+        throw new Error(`ClientMechanic not found for UID: ${ref.mechanicUid}`);
+      }
+      return {
+        templateId,
+        snapshotId: snapshotId ?? null,
+        mechanicId,
+        group: ref.group,
+      };
+    });
+
+    await this.txHost.tx.taskTemplateMechanicRef.createMany({
+      data: createData,
+    });
   }
 
   async findPaginated(params: {

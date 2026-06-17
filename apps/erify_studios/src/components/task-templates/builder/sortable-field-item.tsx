@@ -1,7 +1,8 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronUp, GripVertical, RefreshCw, Trash2 } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   Badge,
@@ -16,7 +17,9 @@ import {
 
 import { FieldEditor } from './field-editor';
 import type { FieldItem } from './schema';
-import { isSharedField } from './schema';
+import { isMechanicField, isSharedField } from './schema';
+
+import type { ClientMechanic } from '@/features/client-mechanics/api/get-client-mechanics';
 
 type SortableFieldItemProps = {
   index?: number;
@@ -24,9 +27,10 @@ type SortableFieldItemProps = {
   onUpdate: (id: string, updates: Partial<FieldItem>) => void;
   onRemove: (id: string) => void;
   errors?: Record<string, string[]>;
+  clientMechanics?: ClientMechanic[];
 };
 
-export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors }: SortableFieldItemProps) => {
+export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors, clientMechanics }: SortableFieldItemProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const {
@@ -50,6 +54,11 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
   const handleFieldUpdate = useCallback((updates: Partial<FieldItem>) => {
     onUpdate(item.id, updates);
   }, [item.id, onUpdate]);
+
+  const mechanicRef = (item as any).mechanic_ref;
+  const mechanic = clientMechanics?.find((m) => m.id === mechanicRef?.mechanic_id);
+  const isRetired = mechanic ? mechanic.status === 'retired' : false;
+  const isSuperseded = mechanic ? mechanic.content_revision > mechanicRef?.content_revision : false;
 
   return (
     <div
@@ -89,6 +98,23 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
                       Shared
                     </Badge>
                   )}
+                  {isMechanicField(item) && (
+                    <Badge variant="default" className="text-[10px] h-5 px-1.5 bg-blue-600 hover:bg-blue-700 text-white border-none">
+                      Mechanic
+                    </Badge>
+                  )}
+                  {isRetired && (
+                    <Badge variant="destructive" className="text-[10px] h-5 px-1.5 bg-amber-500 hover:bg-amber-600 text-white border-none">
+                      Retired Mechanic
+                    </Badge>
+                  )}
+                  {isSuperseded && (
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-yellow-50 border-yellow-300 text-yellow-800 flex items-center gap-0.5">
+                      <AlertCircle className="h-3 w-3 shrink-0" />
+                      {' '}
+                      Catalog Update Available
+                    </Badge>
+                  )}
                   <span className={`font-mono text-[10px] ${errors?.key ? 'text-destructive font-bold' : ''}`}>{item.key}</span>
                   {item.required && (
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5 text-zinc-400">
@@ -99,6 +125,30 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
               </div>
 
               <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                {isSuperseded && mechanic && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-yellow-600 border-yellow-300 hover:bg-yellow-50 hover:text-yellow-700 flex items-center gap-1 shrink-0"
+                    title="Upgrade to latest catalog revision"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdate(item.id, {
+                        label: mechanic.instruction_label,
+                        description: mechanic.instruction_body,
+                        mechanic_ref: {
+                          ...mechanicRef,
+                          content_revision: mechanic.content_revision,
+                        },
+                      });
+                      toast.success('Field upgraded to latest mechanic catalog version');
+                    }}
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    {' '}
+                    Upgrade
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -124,6 +174,41 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
 
           <CollapsibleContent>
             <CardContent className="p-4 pt-0 border-t bg-muted/20">
+              {(isRetired || isSuperseded) && mechanic && (
+                <div className="mb-4 p-3 border rounded-md bg-amber-50/50 border-amber-200 text-xs text-amber-800 space-y-2 mt-4">
+                  <div className="font-semibold flex items-center gap-1.5 text-amber-700">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    {isRetired ? 'This mechanic has been retired from the catalog' : 'This mechanic has been updated in the catalog'}
+                  </div>
+                  <div>
+                    {isRetired
+                      ? 'Operator assignments can keep using this template, but you should transition to an active mechanic if possible.'
+                      : `The catalog has a newer revision (v${mechanic.content_revision}) than the one currently used (v${mechanicRef.content_revision}).`}
+                  </div>
+                  {isSuperseded && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1 h-7 text-[11px]"
+                      onClick={() => {
+                        onUpdate(item.id, {
+                          label: mechanic.instruction_label,
+                          description: mechanic.instruction_body,
+                          mechanic_ref: {
+                            ...mechanicRef,
+                            content_revision: mechanic.content_revision,
+                          },
+                        });
+                        toast.success('Field upgraded to latest mechanic catalog version');
+                      }}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      {' '}
+                      Upgrade Reference
+                    </Button>
+                  )}
+                </div>
+              )}
               <FieldEditor
                 item={item}
                 onUpdate={handleFieldUpdate}

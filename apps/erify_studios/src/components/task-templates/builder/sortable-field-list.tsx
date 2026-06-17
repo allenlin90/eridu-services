@@ -3,6 +3,8 @@ import { memo, useEffect, useMemo, useRef } from 'react';
 import type { FieldItem } from './schema';
 import { SortableFieldItem } from './sortable-field-item';
 
+import type { ClientMechanic } from '@/features/client-mechanics/api/get-client-mechanics';
+
 type SortableFieldListProps = {
   items: FieldItem[];
   templateItems?: FieldItem[];
@@ -11,6 +13,7 @@ type SortableFieldListProps = {
   errors?: Record<string, string[]>;
   scrollToItemId?: string | null;
   onScrolledToItem?: () => void;
+  clientMechanics?: ClientMechanic[];
 };
 
 export const SortableFieldList = memo(({
@@ -21,6 +24,7 @@ export const SortableFieldList = memo(({
   errors,
   scrollToItemId,
   onScrolledToItem,
+  clientMechanics,
 }: SortableFieldListProps) => {
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -74,6 +78,7 @@ export const SortableFieldList = memo(({
             onUpdate={onUpdate}
             onRemove={onRemove}
             errors={errorsByItem[absoluteIndex]}
+            clientMechanics={clientMechanics}
           />
         );
       })}
