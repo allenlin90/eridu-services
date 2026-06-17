@@ -9,6 +9,7 @@ import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
+import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
 import type { CreateStudioShowDto, UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
@@ -46,6 +47,10 @@ describe('studioShowController', () => {
     deleteShow: jest.fn(),
   };
 
+  const clientMechanicServiceMock = {
+    getShowMechanicsCoverage: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StudioShowController],
@@ -69,6 +74,10 @@ describe('studioShowController', () => {
         {
           provide: StudioShowManagementService,
           useValue: studioShowManagementServiceMock,
+        },
+        {
+          provide: ClientMechanicService,
+          useValue: clientMechanicServiceMock,
         },
       ],
     }).compile();
@@ -440,6 +449,27 @@ describe('studioShowController', () => {
     it('excludes ACCOUNT_MANAGER, since submitted task content is an unstructured blob that can carry money values', () => {
       const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.tasks);
       expect(roles).not.toContain(STUDIO_ROLE.ACCOUNT_MANAGER);
+    });
+  });
+
+  describe('mechanicsCoverage', () => {
+    it('should delegate to clientMechanicService.getShowMechanicsCoverage', async () => {
+      const studioId = 'std_123';
+      const showId = 'show_123';
+      const expectedResponse = {
+        show_uid: showId,
+        show_name: 'Show A',
+        client_uid: 'client_1',
+        client_name: 'Client 1',
+        mechanics: [],
+      };
+
+      clientMechanicServiceMock.getShowMechanicsCoverage.mockResolvedValue(expectedResponse);
+
+      const result = await controller.mechanicsCoverage(studioId, showId);
+
+      expect(clientMechanicServiceMock.getShowMechanicsCoverage).toHaveBeenCalledWith(studioId, showId);
+      expect(result).toBe(expectedResponse);
     });
   });
 });

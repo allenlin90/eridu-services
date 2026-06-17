@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
+import { ClientMechanicModule } from '@/models/client-mechanic/client-mechanic.module';
 import { PlatformModule } from '@/models/platform/platform.module';
 import { ScheduleModule } from '@/models/schedule/schedule.module';
 import { ShowModule } from '@/models/show/show.module';
@@ -22,6 +23,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     ScheduleModule,
     PlatformModule,
     ShowPlatformModule,
+    ClientMechanicModule,
   ],
   controllers: [StudioShowController],
   providers: [StudioShowManagementService],

@@ -74,6 +74,7 @@ import { Route as StudiosStudioIdMembersMemberIdIndexRouteImport } from './route
 import { Route as StudiosStudioIdCreatorsCreatorIdIndexRouteImport } from './routes/studios/$studioId/creators/$creatorId/index'
 import { Route as StudiosStudioIdShowsShowIdTasksRouteImport } from './routes/studios/$studioId/shows/$showId/tasks'
 import { Route as StudiosStudioIdShowsShowIdPerformanceRouteImport } from './routes/studios/$studioId/shows/$showId/performance'
+import { Route as StudiosStudioIdShowsShowIdMechanicsRouteImport } from './routes/studios/$studioId/shows/$showId/mechanics'
 import { Route as StudiosStudioIdShowsShowIdCompensationRouteImport } from './routes/studios/$studioId/shows/$showId/compensation'
 import { Route as StudiosStudioIdShowsShowIdActualsRouteImport } from './routes/studios/$studioId/shows/$showId/actuals'
 import { Route as StudiosStudioIdShiftsShiftIdCompensationRouteImport } from './routes/studios/$studioId/shifts/$shiftId/compensation'
@@ -446,6 +447,12 @@ const StudiosStudioIdShowsShowIdPerformanceRoute =
     path: '/performance',
     getParentRoute: () => StudiosStudioIdShowsShowIdRouteRoute,
   } as any)
+const StudiosStudioIdShowsShowIdMechanicsRoute =
+  StudiosStudioIdShowsShowIdMechanicsRouteImport.update({
+    id: '/mechanics',
+    path: '/mechanics',
+    getParentRoute: () => StudiosStudioIdShowsShowIdRouteRoute,
+  } as any)
 const StudiosStudioIdShowsShowIdCompensationRoute =
   StudiosStudioIdShowsShowIdCompensationRouteImport.update({
     id: '/compensation',
@@ -547,6 +554,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/shifts/$shiftId/compensation': typeof StudiosStudioIdShiftsShiftIdCompensationRoute
   '/studios/$studioId/shows/$showId/actuals': typeof StudiosStudioIdShowsShowIdActualsRoute
   '/studios/$studioId/shows/$showId/compensation': typeof StudiosStudioIdShowsShowIdCompensationRoute
+  '/studios/$studioId/shows/$showId/mechanics': typeof StudiosStudioIdShowsShowIdMechanicsRoute
   '/studios/$studioId/shows/$showId/performance': typeof StudiosStudioIdShowsShowIdPerformanceRoute
   '/studios/$studioId/shows/$showId/tasks': typeof StudiosStudioIdShowsShowIdTasksRoute
   '/studios/$studioId/creators/$creatorId/': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
@@ -606,6 +614,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/shifts/$shiftId/compensation': typeof StudiosStudioIdShiftsShiftIdCompensationRoute
   '/studios/$studioId/shows/$showId/actuals': typeof StudiosStudioIdShowsShowIdActualsRoute
   '/studios/$studioId/shows/$showId/compensation': typeof StudiosStudioIdShowsShowIdCompensationRoute
+  '/studios/$studioId/shows/$showId/mechanics': typeof StudiosStudioIdShowsShowIdMechanicsRoute
   '/studios/$studioId/shows/$showId/performance': typeof StudiosStudioIdShowsShowIdPerformanceRoute
   '/studios/$studioId/shows/$showId/tasks': typeof StudiosStudioIdShowsShowIdTasksRoute
   '/studios/$studioId/creators/$creatorId': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
@@ -680,6 +689,7 @@ export interface FileRoutesById {
   '/studios/$studioId/shifts/$shiftId/compensation': typeof StudiosStudioIdShiftsShiftIdCompensationRoute
   '/studios/$studioId/shows/$showId/actuals': typeof StudiosStudioIdShowsShowIdActualsRoute
   '/studios/$studioId/shows/$showId/compensation': typeof StudiosStudioIdShowsShowIdCompensationRoute
+  '/studios/$studioId/shows/$showId/mechanics': typeof StudiosStudioIdShowsShowIdMechanicsRoute
   '/studios/$studioId/shows/$showId/performance': typeof StudiosStudioIdShowsShowIdPerformanceRoute
   '/studios/$studioId/shows/$showId/tasks': typeof StudiosStudioIdShowsShowIdTasksRoute
   '/studios/$studioId/creators/$creatorId/': typeof StudiosStudioIdCreatorsCreatorIdIndexRoute
@@ -755,6 +765,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/shifts/$shiftId/compensation'
     | '/studios/$studioId/shows/$showId/actuals'
     | '/studios/$studioId/shows/$showId/compensation'
+    | '/studios/$studioId/shows/$showId/mechanics'
     | '/studios/$studioId/shows/$showId/performance'
     | '/studios/$studioId/shows/$showId/tasks'
     | '/studios/$studioId/creators/$creatorId/'
@@ -814,6 +825,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/shifts/$shiftId/compensation'
     | '/studios/$studioId/shows/$showId/actuals'
     | '/studios/$studioId/shows/$showId/compensation'
+    | '/studios/$studioId/shows/$showId/mechanics'
     | '/studios/$studioId/shows/$showId/performance'
     | '/studios/$studioId/shows/$showId/tasks'
     | '/studios/$studioId/creators/$creatorId'
@@ -887,6 +899,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/shifts/$shiftId/compensation'
     | '/studios/$studioId/shows/$showId/actuals'
     | '/studios/$studioId/shows/$showId/compensation'
+    | '/studios/$studioId/shows/$showId/mechanics'
     | '/studios/$studioId/shows/$showId/performance'
     | '/studios/$studioId/shows/$showId/tasks'
     | '/studios/$studioId/creators/$creatorId/'
@@ -1362,6 +1375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudiosStudioIdShowsShowIdPerformanceRouteImport
       parentRoute: typeof StudiosStudioIdShowsShowIdRouteRoute
     }
+    '/studios/$studioId/shows/$showId/mechanics': {
+      id: '/studios/$studioId/shows/$showId/mechanics'
+      path: '/mechanics'
+      fullPath: '/studios/$studioId/shows/$showId/mechanics'
+      preLoaderRoute: typeof StudiosStudioIdShowsShowIdMechanicsRouteImport
+      parentRoute: typeof StudiosStudioIdShowsShowIdRouteRoute
+    }
     '/studios/$studioId/shows/$showId/compensation': {
       id: '/studios/$studioId/shows/$showId/compensation'
       path: '/compensation'
@@ -1547,6 +1567,7 @@ const StudiosStudioIdShiftsRouteWithChildren =
 interface StudiosStudioIdShowsShowIdRouteRouteChildren {
   StudiosStudioIdShowsShowIdActualsRoute: typeof StudiosStudioIdShowsShowIdActualsRoute
   StudiosStudioIdShowsShowIdCompensationRoute: typeof StudiosStudioIdShowsShowIdCompensationRoute
+  StudiosStudioIdShowsShowIdMechanicsRoute: typeof StudiosStudioIdShowsShowIdMechanicsRoute
   StudiosStudioIdShowsShowIdPerformanceRoute: typeof StudiosStudioIdShowsShowIdPerformanceRoute
   StudiosStudioIdShowsShowIdTasksRoute: typeof StudiosStudioIdShowsShowIdTasksRoute
   StudiosStudioIdShowsShowIdIndexRoute: typeof StudiosStudioIdShowsShowIdIndexRoute
@@ -1558,6 +1579,8 @@ const StudiosStudioIdShowsShowIdRouteRouteChildren: StudiosStudioIdShowsShowIdRo
       StudiosStudioIdShowsShowIdActualsRoute,
     StudiosStudioIdShowsShowIdCompensationRoute:
       StudiosStudioIdShowsShowIdCompensationRoute,
+    StudiosStudioIdShowsShowIdMechanicsRoute:
+      StudiosStudioIdShowsShowIdMechanicsRoute,
     StudiosStudioIdShowsShowIdPerformanceRoute:
       StudiosStudioIdShowsShowIdPerformanceRoute,
     StudiosStudioIdShowsShowIdTasksRoute: StudiosStudioIdShowsShowIdTasksRoute,

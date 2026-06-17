@@ -85,6 +85,16 @@ function StudioShowDetailLayout() {
               Compensation
             </Link>
           )}
+          {(role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER || role === STUDIO_ROLE.ACCOUNT_MANAGER) && (
+            <Link
+              to="/studios/$studioId/shows/$showId/mechanics"
+              params={{ studioId, showId }}
+              className={TAB_LINK_CLASS}
+              activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+            >
+              Client Cues
+            </Link>
+          )}
           {!isAM && (
             <Link
               to="/studios/$studioId/shows/$showId/tasks"
