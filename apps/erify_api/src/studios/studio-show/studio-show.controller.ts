@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
@@ -37,7 +38,7 @@ import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list
 import { UpdateStudioShowCreatorDto } from './schemas/studio-show-creator-update.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
-import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
+import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
@@ -65,6 +66,12 @@ const STUDIO_SHOW_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
   STUDIO_ROLE.TALENT_MANAGER,
+];
+const STUDIO_SHOW_CREATOR_READ_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+  STUDIO_ROLE.TALENT_MANAGER,
+  STUDIO_ROLE.ACCOUNT_MANAGER,
 ];
 const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
@@ -150,8 +157,21 @@ export class StudioShowController extends BaseStudioController {
   async index(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ListStudioShowsQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const { data, total } = await this.taskOrchestrationService.getStudioShowsWithTaskSummary(studioId, query);
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      data.forEach((show) => {
+        if (show.creators) {
+          show.creators.forEach((c) => {
+            c.agreed_rate = null;
+            c.commission_rate = null;
+            c.compensation_type = null;
+          });
+        }
+      });
+    }
     return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
   }
 
@@ -218,8 +238,20 @@ export class StudioShowController extends BaseStudioController {
   async show(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Req() request: AuthenticatedRequest,
   ) {
-    return this.studioShowManagementService.getShowDetail(studioId, id);
+    const detail = await this.studioShowManagementService.getShowDetail(studioId, id);
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      if (detail.platforms) {
+        detail.platforms.forEach((p: any) => {
+          p.gmv = null;
+          p.ctr = null;
+          p.cto = null;
+        });
+      }
+    }
+    return detail;
   }
 
   @Post()
@@ -263,15 +295,25 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/creators')
-  @StudioProtected(STUDIO_SHOW_CREATOR_ACCESS_ROLES)
+  @StudioProtected(STUDIO_SHOW_CREATOR_READ_ROLES)
   @ZodResponse(z.array(studioShowCreatorListItemApiSchema))
   async creators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Req() request: AuthenticatedRequest,
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
     const creators = await this.showOrchestrationService.listCreatorsForShow(id);
-    return creators.map((item) => studioShowCreatorListItemDto.parse(item));
+    const mapped = creators.map((item) => studioShowCreatorListItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      mapped.forEach((c) => {
+        c.agreed_rate = null;
+        c.commission_rate = null;
+        c.compensation_type = null;
+      });
+    }
+    return mapped;
   }
 
   @Post(':id/creators/bulk-assign')

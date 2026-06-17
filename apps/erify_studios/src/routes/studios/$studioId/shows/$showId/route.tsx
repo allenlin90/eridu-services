@@ -1,7 +1,10 @@
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import { ShowDetailHeader } from '@/features/studio-shows/components/show-detail-header';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId')({
   component: StudioShowDetailLayout,
@@ -13,6 +16,7 @@ const TAB_LINK_ACTIVE_CLASS = 'border-primary text-foreground';
 function StudioShowDetailLayout() {
   const { studioId, showId } = Route.useParams();
   const { data: show, isLoading, isError } = useStudioShow({ studioId, showId });
+  const { role } = useStudioAccess(studioId);
 
   if (isLoading) {
     return (
@@ -35,6 +39,8 @@ function StudioShowDetailLayout() {
       </div>
     );
   }
+
+  const isAM = role === STUDIO_ROLE.ACCOUNT_MANAGER;
 
   return (
     <div className="space-y-4">
@@ -59,22 +65,26 @@ function StudioShowDetailLayout() {
           >
             Actuals
           </Link>
-          <Link
-            to="/studios/$studioId/shows/$showId/performance"
-            params={{ studioId, showId }}
-            className={TAB_LINK_CLASS}
-            activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
-          >
-            Performance
-          </Link>
-          <Link
-            to="/studios/$studioId/shows/$showId/compensation"
-            params={{ studioId, showId }}
-            className={TAB_LINK_CLASS}
-            activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
-          >
-            Compensation
-          </Link>
+          {!isAM && (
+            <Link
+              to="/studios/$studioId/shows/$showId/performance"
+              params={{ studioId, showId }}
+              className={TAB_LINK_CLASS}
+              activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+            >
+              Performance
+            </Link>
+          )}
+          {!isAM && (
+            <Link
+              to="/studios/$studioId/shows/$showId/compensation"
+              params={{ studioId, showId }}
+              className={TAB_LINK_CLASS}
+              activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+            >
+              Compensation
+            </Link>
+          )}
           <Link
             to="/studios/$studioId/shows/$showId/tasks"
             params={{ studioId, showId }}

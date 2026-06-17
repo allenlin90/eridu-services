@@ -8,14 +8,17 @@ import { Badge, Checkbox } from '@eridu/ui';
 
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 
-function ShowNameCell({ show }: { show: StudioShow }) {
+function ShowNameCell({ show, isAccountManager }: { show: StudioShow; isAccountManager?: boolean }) {
   const { studioId: routeStudioId } = useParams({ strict: false }) as { studioId?: string };
   const studioId = routeStudioId ?? show.studio_id ?? '';
+  const targetPath = isAccountManager
+    ? '/studios/$studioId/shows/$showId'
+    : '/studios/$studioId/shows/$showId/compensation';
 
   return (
     <div className="flex min-w-0 flex-col gap-1 pr-4">
       <Link
-        to="/studios/$studioId/shows/$showId/compensation"
+        to={targetPath}
         params={{ studioId, showId: show.id }}
         className="flex items-center gap-1 font-medium hover:underline"
       >
@@ -84,71 +87,82 @@ function CreatorMappingCell({ show }: { show: StudioShow }) {
   );
 }
 
-export const creatorMappingShowColumns: ColumnDef<StudioShow>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected()
-          || table.getIsSomePageRowsSelected()
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all shows"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select show"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-    size: 40,
-  },
-  {
-    accessorKey: 'name',
-    header: 'Show',
-    cell: ({ row }) => <ShowNameCell show={row.original} />,
-  },
-  {
-    accessorKey: 'show_status_name',
-    header: 'Status',
-    cell: ({ row }) => <StatusCell show={row.original} />,
-    meta: { className: 'hidden sm:table-cell' },
-  },
-  {
-    accessorKey: 'start_time',
-    header: 'Schedule',
-    cell: ({ row }) => <ScheduleCell show={row.original} />,
-    meta: { className: 'hidden md:table-cell' },
-  },
-  {
-    id: 'creator_mapping_status',
-    header: 'Creator Mapping',
-    cell: ({ row }) => <CreatorMappingCell show={row.original} />,
-  },
-  {
-    id: 'creator_name',
-    accessorFn: (row) => row.creators.map((creator) => creator.creator_name).join(', '),
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-  {
-    id: 'has_creators',
-    accessorFn: (row) => String((row.creators?.length ?? 0) > 0),
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-  {
-    id: 'client_id',
-    accessorFn: (row) => row.client_id ?? '',
-    header: () => null,
-    cell: () => null,
-    meta: { className: 'hidden' },
-  },
-];
+export function getCreatorMappingShowColumns(isAccountManager?: boolean): ColumnDef<StudioShow>[] {
+  const columns: ColumnDef<StudioShow>[] = [];
+
+  if (!isAccountManager) {
+    columns.push({
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+            || table.getIsSomePageRowsSelected()
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all shows"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select show"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 40,
+    });
+  }
+
+  columns.push(
+    {
+      accessorKey: 'name',
+      header: 'Show',
+      cell: ({ row }) => <ShowNameCell show={row.original} isAccountManager={isAccountManager} />,
+    },
+    {
+      accessorKey: 'show_status_name',
+      header: 'Status',
+      cell: ({ row }) => <StatusCell show={row.original} />,
+      meta: { className: 'hidden sm:table-cell' },
+    },
+    {
+      accessorKey: 'start_time',
+      header: 'Schedule',
+      cell: ({ row }) => <ScheduleCell show={row.original} />,
+      meta: { className: 'hidden md:table-cell' },
+    },
+    {
+      id: 'creator_mapping_status',
+      header: 'Creator Mapping',
+      cell: ({ row }) => <CreatorMappingCell show={row.original} />,
+    },
+    {
+      id: 'creator_name',
+      accessorFn: (row) => row.creators.map((creator) => creator.creator_name).join(', '),
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      id: 'has_creators',
+      accessorFn: (row) => String((row.creators?.length ?? 0) > 0),
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      id: 'client_id',
+      accessorFn: (row) => row.client_id ?? '',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+  );
+
+  return columns;
+}
+
+export const creatorMappingShowColumns = getCreatorMappingShowColumns(false);

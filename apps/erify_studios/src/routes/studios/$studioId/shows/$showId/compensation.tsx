@@ -1,10 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { ShowCreatorList } from '@/features/studio-show-creators/components/show-creator-list';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/compensation')({
-  component: StudioShowCompensationTab,
+  component: () => (
+    <StudioRouteGuard routeKey="creatorCompensations">
+      <StudioShowCompensationTab />
+    </StudioRouteGuard>
+  ),
 });
 
 function StudioShowCompensationTab() {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import z from 'zod';
 
@@ -36,6 +36,7 @@ import {
   UpdateStudioCreatorRosterDto,
 } from './schemas/studio-creator-roster-write.schema';
 
+import type { AuthenticatedRequest } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -50,6 +51,7 @@ const STUDIO_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
   STUDIO_ROLE.TALENT_MANAGER,
+  STUDIO_ROLE.ACCOUNT_MANAGER,
 ];
 const STUDIO_CREATOR_COMPENSATION_ROLES = [
   STUDIO_ROLE.ADMIN,
@@ -74,10 +76,20 @@ export class StudioCreatorController extends BaseStudioController {
   async listRoster(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ListStudioCreatorRosterQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const { data, total } = await this.studioCreatorService.listRoster(studioId, query);
+    const parsed = data.map((item) => studioCreatorRosterItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      parsed.forEach((c) => {
+        c.default_rate = null;
+        c.default_rate_type = null;
+        c.default_commission_rate = null;
+      });
+    }
     return this.createPaginatedResponse(
-      data.map((item) => studioCreatorRosterItemDto.parse(item)),
+      parsed,
       total,
       this.toPaginationQuery(query),
     );
@@ -180,9 +192,19 @@ export class StudioCreatorController extends BaseStudioController {
   async availability(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: StudioCreatorAvailabilityQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listAvailable(studioId, query);
-    return creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
+    const parsed = creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      parsed.forEach((c) => {
+        c.default_rate = null;
+        c.default_rate_type = null;
+        c.default_commission_rate = null;
+      });
+    }
+    return parsed;
   }
 
   @ApiOperation({ summary: 'List creators from the global catalog for studio use' })
@@ -193,9 +215,19 @@ export class StudioCreatorController extends BaseStudioController {
   async catalog(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: StudioCreatorCatalogQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listCatalog(studioId, query);
-    return creators.map((item) => studioCreatorCatalogItemDto.parse(item));
+    const parsed = creators.map((item) => studioCreatorCatalogItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      parsed.forEach((c) => {
+        c.default_rate = null;
+        c.default_rate_type = null;
+        c.default_commission_rate = null;
+      });
+    }
+    return parsed;
   }
 
   @ApiOperation({ summary: 'Search users eligible for creator onboarding user link' })
@@ -224,6 +256,7 @@ export class StudioCreatorController extends BaseStudioController {
   async getCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
+    @Req() request: AuthenticatedRequest,
   ) {
     const creator = await this.studioCreatorService.findRosterEntry(studioId, creatorId);
 
@@ -231,6 +264,13 @@ export class StudioCreatorController extends BaseStudioController {
       throw HttpError.notFound('Creator not found in studio roster');
     }
 
-    return studioCreatorRosterItemDto.parse(creator);
+    const parsed = studioCreatorRosterItemDto.parse(creator);
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      parsed.default_rate = null;
+      parsed.default_rate_type = null;
+      parsed.default_commission_rate = null;
+    }
+    return parsed;
   }
 }

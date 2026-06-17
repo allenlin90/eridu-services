@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useDebounceCallback } from 'usehooks-ts';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { LoadingPage } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
@@ -17,6 +18,7 @@ import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-te
 import { CONTENT_AREA_MIN_H } from '@/config/layout';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import { useCreateTaskTemplate } from '@/features/task-templates/hooks/use-create-task-template';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 import { formatZodErrors } from '@/lib/zod-utils';
 
 const DRAFT_KEY = 'task_template_draft';
@@ -28,6 +30,17 @@ export const Route = createFileRoute('/studios/$studioId/task-templates/new')({
 export function TaskTemplateBuilderPage() {
   const { studioId } = Route.useParams();
   const navigate = Route.useNavigate();
+  const { role } = useStudioAccess(studioId);
+
+  useEffect(() => {
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      toast.error('Access Denied', {
+        description: 'Account Managers are not allowed to create task templates.',
+      });
+      navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
+    }
+  }, [role, navigate, studioId]);
+
   const {
     data: sharedFieldsResponse,
     isError: isSharedFieldsError,
@@ -115,6 +128,10 @@ export function TaskTemplateBuilderPage() {
       debouncedSave(template);
     }
   }, [template, debouncedSave, isLoading]);
+
+  if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+    return null;
+  }
 
   if (isLoading) {
     return (

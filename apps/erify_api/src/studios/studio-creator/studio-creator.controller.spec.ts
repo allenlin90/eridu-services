@@ -491,9 +491,49 @@ describe('studioCreatorController', () => {
     await expect(controller.getCreator(studioId, creatorId)).rejects.toThrow('Creator not found in studio roster');
   });
 
-  it('should restrict creator read to admin, manager, and talent manager roles', () => {
+  it('should restrict creator read to admin, manager, talent manager, and account manager roles', () => {
     const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.getCreator);
-    expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER]);
+    expect(roles).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+      STUDIO_ROLE.TALENT_MANAGER,
+      STUDIO_ROLE.ACCOUNT_MANAGER,
+    ]);
+  });
+
+  it('should redact default rate and commission for ACCOUNT_MANAGER role', async () => {
+    const studioId = 'std_00000000000000000001';
+    const creatorId = 'creator_00000000000000000009';
+    const mockAMRequest = {
+      studioMembership: {
+        role: 'account_manager',
+      },
+    } as any;
+
+    const mockCreator = {
+      id: 123n,
+      uid: 'smc_001',
+      defaultRate: '150.00',
+      defaultRateType: 'FIXED',
+      defaultCommissionRate: '10.00',
+      isActive: true,
+      version: 1,
+      metadata: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      creator: {
+        uid: creatorId,
+        name: 'Alice',
+        aliasName: 'Ali',
+      },
+    } as any;
+
+    studioCreatorService.findRosterEntry.mockResolvedValue(mockCreator);
+
+    const result = await controller.getCreator(studioId, creatorId, mockAMRequest);
+    expect(result.default_rate).toBeNull();
+    expect(result.default_rate_type).toBeNull();
+    expect(result.default_commission_rate).toBeNull();
   });
 
   it('should allow admins and managers to edit creator defaults', () => {

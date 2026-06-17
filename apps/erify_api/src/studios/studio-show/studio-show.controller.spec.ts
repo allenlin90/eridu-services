@@ -322,4 +322,84 @@ describe('studioShowController', () => {
       expect(result).toEqual(expectedSummary);
     });
   });
+
+  describe('aCCOUNT_MANAGER money redaction', () => {
+    const studioId = 'std_123';
+    const showId = 'show_123';
+    const mockAMRequest = {
+      studioMembership: {
+        role: 'account_manager',
+      },
+    } as any;
+
+    it('should redact agreed_rate, commission_rate, and compensation_type on creators in index', async () => {
+      taskOrchestrationServiceMock.getStudioShowsWithTaskSummary.mockResolvedValue({
+        data: [
+          {
+            uid: showId,
+            creators: [
+              {
+                show_creator_id: 'sc_1',
+                creator_id: 'cr_1',
+                creator_name: 'Alice',
+                creator_alias_name: 'Ali',
+                compensation_type: 'FIXED',
+                agreed_rate: '150.00',
+                commission_rate: '10.00',
+              },
+            ],
+          },
+        ],
+        total: 1,
+      });
+
+      const response = await controller.index(studioId, { skip: 0, take: 10 } as any, mockAMRequest);
+      expect(response.data[0].creators[0].agreed_rate).toBeNull();
+      expect(response.data[0].creators[0].commission_rate).toBeNull();
+      expect(response.data[0].creators[0].compensation_type).toBeNull();
+    });
+
+    it('should redact gmv, ctr, and cto inside platforms in show detail', async () => {
+      studioShowManagementServiceMock.getShowDetail.mockResolvedValue({
+        uid: showId,
+        platforms: [
+          {
+            id: 'p_1',
+            name: 'Youtube',
+            show_platform_uid: 'sp_1',
+            gmv: '1000.00',
+            ctr: '5.20',
+            cto: '1.50',
+          },
+        ],
+      });
+
+      const response = await controller.show(studioId, showId, mockAMRequest);
+      expect(response.platforms[0].gmv).toBeNull();
+      expect(response.platforms[0].ctr).toBeNull();
+      expect(response.platforms[0].cto).toBeNull();
+    });
+
+    it('should redact agreed_rate, commission_rate, and compensation_type in show creators list', async () => {
+      taskOrchestrationServiceMock.getStudioShow.mockResolvedValue({ uid: showId });
+      showOrchestrationServiceMock.listCreatorsForShow.mockResolvedValue([
+        {
+          id: 'show_mc_1',
+          creatorId: 'creator_1',
+          creatorName: 'Alice',
+          creatorAliasName: 'Ali',
+          note: 'host',
+          agreedRate: '150.00',
+          compensationType: 'FIXED',
+          commissionRate: '10.00',
+          metadata: {},
+        },
+      ]);
+
+      const response = await controller.creators(studioId, showId, mockAMRequest);
+      expect(response[0].agreed_rate).toBeNull();
+      expect(response[0].commission_rate).toBeNull();
+      expect(response[0].compensation_type).toBeNull();
+    });
+  });
 });

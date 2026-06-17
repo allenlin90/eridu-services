@@ -2,6 +2,7 @@ import { Download, Loader2, RefreshCw, UserRound } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -14,7 +15,7 @@ import {
 import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { formatDateTime } from '@/features/studio-shifts/utils/shift-form.utils';
 import { BulkCreatorAssignmentDialog } from '@/features/studio-show-creators/components/bulk-creator-assignment-dialog';
-import { creatorMappingShowColumns } from '@/features/studio-show-creators/components/creator-mapping-show-columns';
+import { getCreatorMappingShowColumns } from '@/features/studio-show-creators/components/creator-mapping-show-columns';
 import { SelectedCreatorMappingMobileActions } from '@/features/studio-show-creators/components/selected-creator-mapping-mobile-actions';
 import { useCreatorMappingClientFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-client-filter';
 import { useCreatorMappingCreatorFilter } from '@/features/studio-show-creators/hooks/use-creator-mapping-creator-filter';
@@ -33,6 +34,7 @@ import { useSelectedRowSnapshots } from '@/features/studio-shows/hooks/use-selec
 import { toApiDate } from '@/features/studio-shows/utils/planning-scope.utils';
 import { useAbortableAction } from '@/hooks/use-abortable-action';
 import { triggerBrowserDownload } from '@/lib/file-download';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 /**
  * Shows table section of the Creator Mapping page. Self-contained: owns its own
@@ -54,6 +56,10 @@ export function CreatorMappingShowsSection({
 }) {
   const [isBulkAssignDialogOpen, setIsBulkAssignDialogOpen] = useState(false);
   const { isRunning: isExporting, run: runExport } = useAbortableAction();
+  const { role } = useStudioAccess(studioId);
+  const isAccountManager = role === STUDIO_ROLE.ACCOUNT_MANAGER;
+
+  const columns = useMemo(() => getCreatorMappingShowColumns(isAccountManager), [isAccountManager]);
 
   const {
     shows,
@@ -197,7 +203,7 @@ export function CreatorMappingShowsSection({
 
       <DataTable
         data={shows}
-        columns={creatorMappingShowColumns}
+        columns={columns}
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage="No shows found for creator mapping."
@@ -211,7 +217,7 @@ export function CreatorMappingShowsSection({
         onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}
         onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
-        enableRowSelection
+        enableRowSelection={!isAccountManager}
         rowSelection={rowSelection}
         onRowSelectionChange={handleRowSelectionChange}
         getRowId={(show) => show.id}

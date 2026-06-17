@@ -151,10 +151,12 @@ function StudioShowsPage() {
             >
               <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
-            <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Show
-            </Button>
+            {role !== STUDIO_ROLE.ACCOUNT_MANAGER && (
+              <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Show
+              </Button>
+            )}
           </DataTableToolbar>
         )}
         renderFooter={() => (
