@@ -345,7 +345,7 @@ export class StudioShowController extends BaseStudioController {
   async creators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
-    @Req() request: AuthenticatedRequest,
+    @Req() request?: AuthenticatedRequest,
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
     const creators = await this.showOrchestrationService.listCreatorsForShow(id);
