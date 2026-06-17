@@ -32,7 +32,7 @@ export class BackdoorTaskTemplateController extends BaseBackdoorController {
     studioId: string,
     @Body() createStudioTaskTemplateDto: CreateStudioTaskTemplateDto,
   ) {
-    const { name, description, task_type, schema } = createStudioTaskTemplateDto;
+    const { name, description, task_type, schema, client_id } = createStudioTaskTemplateDto;
 
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
@@ -40,6 +40,7 @@ export class BackdoorTaskTemplateController extends BaseBackdoorController {
       taskType: task_type,
       currentSchema: schema,
       studioId,
+      clientUid: client_id,
     });
   }
 }

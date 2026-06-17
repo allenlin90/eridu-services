@@ -30,7 +30,7 @@ export class TaskTemplateRepository extends BaseRepository<
   ): Promise<TaskTemplate | null> {
     return this.model.findFirst({
       where: { uid, deletedAt: null },
-      ...(include && { include }),
+      include: { client: true, ...include },
     });
   }
 
@@ -119,6 +119,7 @@ export class TaskTemplateRepository extends BaseRepository<
     includeDeleted?: boolean;
     studioUid?: string;
     sort?: 'updated_at:desc' | 'updated_at:asc' | 'name:asc' | 'name:desc';
+    clientUid?: string | null;
   }): Promise<{ data: TaskTemplate[]; total: number }> {
     const {
       skip,
@@ -131,6 +132,7 @@ export class TaskTemplateRepository extends BaseRepository<
       includeDeleted,
       studioUid,
       sort = 'updated_at:desc',
+      clientUid,
     } = params;
 
     const where: Prisma.TaskTemplateWhereInput = {};
@@ -156,6 +158,12 @@ export class TaskTemplateRepository extends BaseRepository<
 
     if (studioUid) {
       where.studio = { uid: studioUid };
+    }
+
+    if (clientUid === null) {
+      where.clientId = null;
+    } else if (clientUid) {
+      where.client = { uid: clientUid };
     }
 
     if (taskType) {
@@ -207,6 +215,9 @@ export class TaskTemplateRepository extends BaseRepository<
         take,
         where,
         orderBy,
+        include: {
+          client: true,
+        },
       }),
       this.model.count({ where }),
     ]);
@@ -304,6 +315,12 @@ export class TaskTemplateRepository extends BaseRepository<
               name: true,
             },
           },
+          client: {
+            select: {
+              uid: true,
+              name: true,
+            },
+          },
         },
       }),
       this.prisma.taskTemplate.count({ where }),
@@ -371,6 +388,8 @@ export class TaskTemplateRepository extends BaseRepository<
       id: template.uid,
       studio_id: template.studio.uid,
       studio_name: template.studio.name,
+      client_id: template.client?.uid ?? null,
+      client_name: template.client?.name ?? null,
       name: template.name,
       description: template.description,
       task_type: taskTypeMap.get(template.id) ?? 'OTHER',

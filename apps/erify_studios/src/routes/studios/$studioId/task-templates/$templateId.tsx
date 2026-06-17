@@ -190,6 +190,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
       task_type: taskTemplate.task_type,
       items: taskTemplate.current_schema?.items ?? [],
       metadata: taskTemplate.current_schema?.metadata as BuilderTemplateSchemaType['metadata'] | undefined,
+      client_id: taskTemplate.client_id ?? null,
       ...(serverEngine === 'task_template_v2' ? {
         schema_version: 2 as const,
         schema_engine: 'task_template_v2' as const,
@@ -226,6 +227,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
       task_type: data.task_type,
       schema: buildTemplateSchemaPayload(data),
       version: taskTemplate.version,
+      client_id: data.client_id,
     };
 
     updateTemplate(payload);

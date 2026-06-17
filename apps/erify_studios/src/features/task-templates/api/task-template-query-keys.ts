@@ -6,6 +6,7 @@ type TaskTemplateListFilters = {
   page?: number;
   limit?: number;
   sort?: string;
+  clientId?: string;
 };
 
 type TaskTemplatePickerFilters = {

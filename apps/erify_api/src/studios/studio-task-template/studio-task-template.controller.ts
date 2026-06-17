@@ -54,6 +54,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
       isActive: query.isActive,
       studioUid: studioId,
       sort: query.sort,
+      clientUid: query.clientUid,
     });
 
     return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
@@ -85,7 +86,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Body() createStudioTaskTemplateDto: CreateStudioTaskTemplateDto,
   ) {
-    const { name, description, task_type, schema } = createStudioTaskTemplateDto;
+    const { name, description, task_type, schema, client_id } = createStudioTaskTemplateDto;
 
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
@@ -93,6 +94,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
       taskType: task_type,
       currentSchema: schema,
       studioId,
+      clientUid: client_id,
     });
   }
 
@@ -103,7 +105,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
     @Param('id', new UidValidationPipe(TaskTemplateService.UID_PREFIX, 'TaskTemplate')) id: string,
     @Body() updateStudioTaskTemplateDto: UpdateStudioTaskTemplateDto,
   ) {
-    const { name, description, task_type, schema, version } = updateStudioTaskTemplateDto;
+    const { name, description, task_type, schema, version, client_id } = updateStudioTaskTemplateDto;
 
     return this.taskTemplateService.updateTemplateWithSnapshot(
       id,
@@ -114,6 +116,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
         taskType: task_type,
         currentSchema: schema,
         version,
+        clientUid: client_id,
       },
     );
   }

@@ -50,6 +50,10 @@ describe('taskTemplateRepository', () => {
           uid: 'std_123',
           name: 'Main Studio',
         },
+        client: {
+          uid: 'clt_789',
+          name: 'Acme Client',
+        },
       },
     ]);
     prisma.taskTemplate.count.mockResolvedValue(1);
@@ -83,6 +87,12 @@ describe('taskTemplateRepository', () => {
             name: true,
           },
         },
+        client: {
+          select: {
+            uid: true,
+            name: true,
+          },
+        },
       },
     }));
     expect(prisma.taskTemplate.findMany.mock.calls[0]?.[0]?.select).not.toHaveProperty('currentSchema');
@@ -93,6 +103,8 @@ describe('taskTemplateRepository', () => {
           id: 'ttpl_101',
           studio_id: 'std_123',
           studio_name: 'Main Studio',
+          client_id: 'clt_789',
+          client_name: 'Acme Client',
           name: 'Checklist',
           description: 'Lean row',
           task_type: 'ACTIVE',
@@ -164,6 +176,9 @@ describe('taskTemplateRepository', () => {
         { updatedAt: 'desc' },
         { uid: 'asc' },
       ],
+      include: {
+        client: true,
+      },
     });
     expect(prisma.taskTemplate.count).toHaveBeenCalledWith({
       where: expect.objectContaining({

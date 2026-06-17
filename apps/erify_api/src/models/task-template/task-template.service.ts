@@ -67,6 +67,7 @@ export class TaskTemplateService extends BaseModelService {
       studio: { connect: { uid: payload.studioId } },
       uid: payload.uid ?? this.generateTaskTemplateUid(),
       version: payload.version ?? 1,
+      ...(payload.clientUid && { client: { connect: { uid: payload.clientUid } } }),
     };
 
     return this.taskTemplateRepository.create(data);
@@ -94,6 +95,7 @@ export class TaskTemplateService extends BaseModelService {
           schema: schemaWithTaskType ?? {},
         },
       },
+      ...(payload.clientUid && { client: { connect: { uid: payload.clientUid } } }),
     };
 
     return this.taskTemplateRepository.create(data);
@@ -132,6 +134,10 @@ export class TaskTemplateService extends BaseModelService {
         version: payload.version,
       };
 
+      const clientConnection = payload.clientUid !== undefined
+        ? (payload.clientUid ? { connect: { uid: payload.clientUid } } : { disconnect: true })
+        : undefined;
+
       if (nextSchema) {
         // Increment version and create snapshot
         const newVersion = (payload.version ?? 1) + 1;
@@ -146,6 +152,7 @@ export class TaskTemplateService extends BaseModelService {
               schema: nextSchema,
             },
           },
+          ...(clientConnection && { client: clientConnection }),
         };
 
         return await this.taskTemplateRepository.updateWithVersionCheck(params, data);
@@ -154,6 +161,7 @@ export class TaskTemplateService extends BaseModelService {
       const data = {
         ...(payload.name !== undefined && { name: payload.name }),
         ...(payload.description !== undefined && { description: payload.description }),
+        ...(clientConnection && { client: clientConnection }),
       };
 
       return await this.taskTemplateRepository.update(params, data);

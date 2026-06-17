@@ -57,6 +57,7 @@ export type CreateTaskTemplatePayload = {
   studioId: string;
   uid?: string;
   version?: number;
+  clientUid?: string | null;
 };
 
 /**
@@ -68,4 +69,5 @@ export type UpdateTaskTemplatePayload = {
   taskType?: 'SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN' | 'ROUTINE' | 'OTHER';
   currentSchema?: any;
   version?: number;
+  clientUid?: string | null;
 };

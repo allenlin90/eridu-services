@@ -14,6 +14,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, ChevronsUpDown, Plus } from 'lucide-react';
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AsyncCombobox,
   Button,
   Collapsible,
   CollapsibleContent,
@@ -61,6 +63,8 @@ import {
   stripSourceLoopSuffix,
 } from './task-template-builder.utils';
 
+import { getClients } from '@/features/clients/api/get-clients';
+import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -99,6 +103,26 @@ export function TaskTemplateBuilder({
   const [selectedSharedFieldKey, setSelectedSharedFieldKey] = useState<string>('');
   const [selectedSharedFieldLoopId, setSelectedSharedFieldLoopId] = useState<string>('');
   const { hasAccess } = useStudioAccess(studioId ?? '');
+
+  const [clientSearch, setClientSearch] = useState('');
+  const { data: lookups } = useShowLookupsQuery(studioId ?? '');
+  const { data: clientsResponse, isLoading: isClientsLoading } = useQuery({
+    queryKey: ['builder-clients', studioId, clientSearch],
+    queryFn: ({ signal }) => getClients({ name: clientSearch || undefined, limit: 50 }, studioId ?? '', { signal }),
+    enabled: Boolean(studioId),
+  });
+
+  const selectedClient = useMemo(() => {
+    return (lookups?.clients ?? []).find((c) => c.id === template.client_id);
+  }, [lookups?.clients, template.client_id]);
+
+  const clientOptions = useMemo(() => {
+    const fetched = (clientsResponse?.data ?? []).map((c) => ({ value: c.id, label: c.name }));
+    if (selectedClient && !fetched.some((opt) => opt.value === selectedClient.id)) {
+      fetched.unshift({ value: selectedClient.id, label: selectedClient.name });
+    }
+    return fetched;
+  }, [clientsResponse, selectedClient]);
 
   const isModerationMode = template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0;
   const moderationLoops = useMemo(() => {
@@ -482,6 +506,25 @@ export function TaskTemplateBuilder({
                     <SelectItem value="MODERATION">Loop-based moderation</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="client-select">Client Mapping (Optional)</Label>
+                <AsyncCombobox
+                  value={template.client_id || ''}
+                  onChange={(val) => {
+                    startTransition(() => {
+                      const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                      currentOnChange({ ...currentTemplate, client_id: val || null });
+                    });
+                  }}
+                  onSearch={setClientSearch}
+                  options={clientOptions}
+                  isLoading={isClientsLoading}
+                  placeholder="Studio scoped — select client to bind"
+                />
+                <span className="text-[11px] text-muted-foreground">
+                  Binding a template to a client allows restricting the mechanic catalog items and rules for that client.
+                </span>
               </div>
             </CollapsibleContent>
           </Collapsible>

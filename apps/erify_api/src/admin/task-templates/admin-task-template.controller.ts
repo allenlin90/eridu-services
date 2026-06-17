@@ -38,7 +38,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
   @Post()
   @AdminResponse(taskTemplateDto, HttpStatus.CREATED, 'Task template created successfully')
   async createTaskTemplate(@Body() body: CreateAdminTaskTemplateDto) {
-    const { name, description, task_type, schema, studio_id } = body;
+    const { name, description, task_type, schema, studio_id, client_id } = body;
 
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
@@ -46,6 +46,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
       taskType: task_type,
       currentSchema: schema,
       studioId: studio_id,
+      clientUid: client_id,
     });
   }
 
@@ -91,7 +92,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
     ) as ({ studio: { uid: string } } | null);
     this.ensureResourceExists(taskTemplate, 'Task Template', id);
 
-    const { name, description, task_type, schema, version } = body;
+    const { name, description, task_type, schema, version, client_id } = body;
     return this.taskTemplateService.updateTemplateWithSnapshot(
       id,
       taskTemplate.studio.uid,
@@ -101,6 +102,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
         taskType: task_type,
         currentSchema: schema,
         version,
+        clientUid: client_id,
       },
     );
   }

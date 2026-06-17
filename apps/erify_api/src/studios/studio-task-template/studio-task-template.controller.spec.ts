@@ -67,6 +67,7 @@ describe('studioTaskTemplateController', () => {
         templateKind: 'moderation',
         isActive: true,
         includeDeleted: false,
+        clientUid: 'clt_123',
       };
 
       taskTemplateService.getTaskTemplates.mockResolvedValue({ data: [], total: 0 });
@@ -84,6 +85,7 @@ describe('studioTaskTemplateController', () => {
         includeDeleted: false,
         studioUid: studioId,
         sort: 'updated_at:desc',
+        clientUid: 'clt_123',
       });
     });
   });
@@ -114,6 +116,7 @@ describe('studioTaskTemplateController', () => {
         description: 'Updated Description',
         version: 1,
         schema: { type: 'object' },
+        client_id: 'clt_123',
       };
       const result = { uid: id, ...updateDto, version: 2 } as any;
 
@@ -129,6 +132,7 @@ describe('studioTaskTemplateController', () => {
           description: updateDto.description,
           currentSchema: updateDto.schema,
           version: 1,
+          clientUid: 'clt_123',
         },
       );
     });
@@ -154,6 +158,7 @@ describe('studioTaskTemplateController', () => {
           description: undefined,
           currentSchema: undefined,
           version: 1,
+          clientUid: undefined,
         },
       );
     });
