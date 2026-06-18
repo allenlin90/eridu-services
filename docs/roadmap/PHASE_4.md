@@ -11,7 +11,8 @@
 - **Journey traces**: [creator-operations](../workflows/creator-operations.md) · [shift-operations](../workflows/shift-operations.md)
 - **Auth + endpoint matrix**: [`AUTHORIZATION_GUIDE.md`](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)
 - **Analytics feature doc**: [`show-performance-analytics.md`](../features/show-performance-analytics.md) — PR 21 OLAP/read-model topic
-- **Deferred**: [PHASE_5.md](./PHASE_5.md) (PR 7 strict-mode creator availability moved here)
+- **Phase 5**: [PHASE_5.md](./PHASE_5.md) — Show Production Lifecycle Gap Closure (planned)
+- **Phase 6 deferrals**: [PHASE_6.md](./PHASE_6.md) — Tracks A/B/C + Phase 4/5 deferrals (PR 7 strict-mode creator availability moved here)
 
 ## Goal
 
@@ -329,7 +330,9 @@ pnpm --filter erify_studios lint && pnpm --filter erify_studios typecheck && pnp
 
 App-local design docs land alongside the implementation PR only when a PR introduces a novel pattern.
 
-## Phase 5 Deferrals
+## Phase 6 Deferrals
+
+These items are deferred to [Phase 6](./PHASE_6.md) (Tracks A/B/C + Phase 4/5 deferrals).
 
 | Workstream                                                                                       | Reference                                                   | Track |
 | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ----- |

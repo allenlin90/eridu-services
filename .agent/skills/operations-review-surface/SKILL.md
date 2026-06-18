@@ -141,3 +141,4 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [api-performance-optimization](../api-performance-optimization/SKILL.md) — §8 summary/sub-resource split + drift guard rails
 - [frontend-code-quality](../frontend-code-quality/SKILL.md) — Large Route Decomposition (container + hook + presentation)
 - [frontend-ui-components](../frontend-ui-components/SKILL.md) — three-perspective component reuse for entity-scoped widgets
+- [show-production-lifecycle](../show-production-lifecycle/SKILL.md) — owns the show lifecycle states and readiness conditions these surfaces report on; `/show-run-review` issue findings should feed the lifecycle's show-level issue ownership workstream

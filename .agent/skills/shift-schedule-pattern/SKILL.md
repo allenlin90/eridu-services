@@ -22,7 +22,7 @@ Studio Shift Schedule: shift planning, duty-manager coverage, and show-task read
 
 ### Task Readiness
 Each upcoming show checked for: `has_no_tasks`, `unassigned_task_count`, `missing_required_task_types` (SETUP, CLOSURE), `missing_moderation_task` (premium shows require ≥1 active loop-based task template).
-- Under the proposed **Studio Configuration & Settings** architecture, these requirements (e.g. required types for `bau` vs `premium` shows) will be dynamically defined per studio to determine what assignments a show needs to be counted as fully complete.
+- A per-studio configuration system for these requirements (e.g. required types for `bau` vs `premium` shows) is identified as a gap but deferred — Phase 5 scopes show-level readiness checks against today's fixed rules; dynamic per-studio configuration needs separate design (see [show-production-lifecycle](../show-production-lifecycle/SKILL.md)).
 
 ### Studio Shows "Issues" Filter
 - Same datetime scope window (`date_from/date_to`) across shows table, readiness panel, and `needs_attention`
@@ -65,3 +65,4 @@ StudioShiftController   → StudioShiftService                   (CRUD)
 
 - [orchestration-service-nestjs](../orchestration-service-nestjs/SKILL.md) — General orchestration
 - [schedule-continuity-workflow](../schedule-continuity-workflow/SKILL.md) — Schedule publish behavior
+- [show-production-lifecycle](../show-production-lifecycle/SKILL.md) — owns the show-level readiness checklist and state gates that consume this skill's task-readiness signal

@@ -204,7 +204,7 @@ Skills are discovered from `.agent/skills/`. Each `SKILL.md` has a name and desc
 - **Frontend** — tech stack, UI components, API layer, state management, testing, error handling, performance, i18n, code quality, table views, PWA
 - **Docs platform** — SSR auth, Astro/Starlight, doc layering, information architecture, user-facing docs
 - **Architecture** — shared API types, design patterns, SOLID, domain refactoring, data compatibility, environment config, package extraction
-- **Feature-specific** — admin/studio list patterns, task templates, schedule continuity, shift schedules, file uploads, spreadsheets, and more
+- **Feature-specific** — admin/studio list patterns, task templates, schedule continuity, shift schedules, show production lifecycle, file uploads, spreadsheets, and more
 - **Meta and tooling** — agent instruction maintenance, code quality, doc hygiene, engineering best practices, database CLI, Playwright, security, skill creation
 
 ### Standard Task Workflow

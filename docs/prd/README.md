@@ -45,11 +45,11 @@ All other remaining work (2.2 compensation line items, 2.3 economics service, 3.
 - Future P&L revenue workflow is sketched in [`future/pnl-revenue-workflow.md`](./future/pnl-revenue-workflow.md); redraft when revenue planning restarts.
 
 
-### Phase 5 Candidates (PRDs created, implementation deferred)
+### Phase 6 Candidates (PRDs created, implementation deferred)
 
 | PRD                                                   | Workstream                                                                  | Track | Status              |
 | ----------------------------------------------------- | --------------------------------------------------------------------------- | ----- | ------------------- |
-| [Studio Reference Data](./studio-reference-data.md)   | Studio-initiated creation of clients, platforms, types, standards, statuses | C     | Deferred to Phase 5 |
-| [Studio Creator Profile](./studio-creator-profile.md) | Studio-level editing of creator name, alias, metadata                       | C     | Deferred to Phase 5 |
+| [Studio Reference Data](./studio-reference-data.md)   | Studio-initiated creation of clients, platforms, types, standards, statuses | C     | Deferred to Phase 6 |
+| [Studio Creator Profile](./studio-creator-profile.md) | Studio-level editing of creator name, alias, metadata                       | C     | Deferred to Phase 6 |
 
 Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1, incremental rollout).

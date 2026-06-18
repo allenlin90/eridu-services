@@ -60,3 +60,4 @@ Show membership determined by **operational day**: if `startTime` local < 06:00,
 ## Related Skills
 
 - [shift-schedule-pattern](../shift-schedule-pattern/SKILL.md) — Shift CRUD and calendar
+- [show-production-lifecycle](../show-production-lifecycle/SKILL.md) — owns `cancelled_pending_resolution` as a show lifecycle state; this skill's automated transition is the entry point the lifecycle's pending-resolution workflow (manual trigger, resolution owner, disposition) builds on
