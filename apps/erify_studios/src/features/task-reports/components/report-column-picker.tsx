@@ -11,89 +11,63 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, GripVertical, Loader2, Search, X } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import * as React from 'react';
 
-import type {
-  TaskReportScope,
-  TaskReportSelectedColumn,
-  TaskReportSourcesResponse,
-} from '@eridu/api-types/task-management';
-import { TASK_REPORT_SYSTEM_COLUMN } from '@eridu/api-types/task-management';
+import type { TaskReportSelectedColumn } from '@eridu/api-types/task-management';
 import {
   Badge,
   Button,
-  Checkbox,
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
   Input,
-  Label,
 } from '@eridu/ui';
-import { cn } from '@eridu/ui/lib/utils';
 
 import { useTaskReportSources } from '../hooks/use-task-report-sources';
 
-type ReportColumnPickerProps = {
-  studioId: string;
-  scope: TaskReportScope | null;
-  selectedColumns: TaskReportSelectedColumn[];
-  onChange: (columns: TaskReportSelectedColumn[]) => void;
-  sourcesData?: TaskReportSourcesResponse;
-};
+import type {
+  DerivedSharedColumn,
+  ReportColumnPickerProps,
+  SelectedColumnDescriptor,
+  SharedFieldCategoryGroup,
+  TemplatePanel,
+} from './report-column-picker.types';
+import {
+  DEFAULT_EXPANDED_TEMPLATE_COUNT,
+  extractTemplateIdFromColumnKey,
+  isSharedSourceField,
+  LARGE_SCOPE_TEMPLATE_THRESHOLD,
+  MAX_COLUMNS,
+  normalized,
+  SOFT_WARNING_THRESHOLD,
+  SYSTEM_COLUMNS,
+} from './report-column-picker.utils';
+import {
+  ScopeStatsGrid,
+  SharedFieldsSection,
+  SystemFieldsSection,
+  TemplateFieldsSection,
+} from './report-column-sections';
+import { SortableSelectedColumnItem } from './sortable-selected-column-item';
 
-type SelectedColumnDescriptor = TaskReportSelectedColumn & {
-  groupLabel: string;
-  detail: string;
-  canIncludeExtra: boolean;
-};
-
-const MAX_COLUMNS = 50;
-const SOFT_WARNING_THRESHOLD = 30;
-const LARGE_SCOPE_TEMPLATE_THRESHOLD = 10;
-const DEFAULT_EXPANDED_TEMPLATE_COUNT = 3;
-
-const SYSTEM_COLUMNS = [
-  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_ID, label: 'Show ID' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_NAME, label: 'Show Name' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_EXTERNAL_ID, label: 'Show External ID' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.CLIENT_NAME, label: 'Client Name' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.START_TIME, label: 'Start Time' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.END_TIME, label: 'End Time' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.ACTUAL_START_TIME, label: 'Actual Start' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.ACTUAL_END_TIME, label: 'Actual End' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.ACTUALS_STATUS, label: 'Actuals Status' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_STANDARD_NAME, label: 'Show Standard' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.SHOW_TYPE_NAME, label: 'Show Type' },
-  { key: TASK_REPORT_SYSTEM_COLUMN.STUDIO_ROOM_NAME, label: 'Room' },
-];
-
-const SHARED_FIELD_CATEGORY_LABELS = {
-  metric: 'Metrics',
-  evidence: 'Evidence',
-  status: 'Status',
-} as const;
-
-function normalized(value: string | undefined): string {
-  return (value ?? '').trim().toLowerCase();
-}
-
-function extractTemplateIdFromColumnKey(columnKey: string): string | null {
-  const splitIndex = columnKey.indexOf(':');
-  if (splitIndex <= 0) {
-    return null;
-  }
-  return columnKey.slice(0, splitIndex);
-}
-
-function isSharedSourceField(field: { standard?: boolean; shared_field_key?: string }): boolean {
-  return field.standard === true || Boolean(field.shared_field_key);
-}
-
+/**
+ * Column picker for the task-report builder. This component is the composition
+ * root and the single owner of all picker state and derivations; the extracted
+ * pieces are pure presentation that read derived data and delegate mutations:
+ *
+ *   ReportColumnPicker (state + derivations + filtering)
+ *   ├─ useTaskReportSources ............ source/shared-field discovery query
+ *   ├─ ScopeStatsGrid .................. read-only scope summary tiles
+ *   ├─ SortableSelectedColumnItem[] .... ordered selection list (dnd reorder)
+ *   ├─ SystemFieldsSection ............. built-in column checkboxes
+ *   ├─ SharedFieldsSection ............. canonical shared fields → per-loop columns
+ *   └─ TemplateFieldsSection ........... collapsible per-template custom fields
+ *
+ * Selection/order/expansion live here; sections fire `toggleColumn`,
+ * `onChange`, and expansion callbacks back up rather than holding their own
+ * state. Helpers, constants, and shared types live in the sibling
+ * `report-column-picker.utils.ts` / `.types.ts` modules.
+ */
 export function ReportColumnPicker({
   studioId,
   scope,
@@ -244,14 +218,14 @@ export function ReportColumnPicker({
   // non-grouped source field projects directly to it (e.g. an unsuffixed
   // `session_review_feedback` shared field on a non-moderation template).
   const derivedSharedColumnsByKey = React.useMemo(() => {
-    const map = new Map<string, Map<string, { key: string; label: string; type: string; group?: string }>>();
+    const map = new Map<string, Map<string, DerivedSharedColumn>>();
     for (const source of sortedSources) {
       for (const field of source.fields) {
         const sharedKey = field.shared_field_key;
         if (!sharedKey) {
           continue;
         }
-        const inner = map.get(sharedKey) ?? new Map<string, { key: string; label: string; type: string; group?: string }>();
+        const inner = map.get(sharedKey) ?? new Map<string, DerivedSharedColumn>();
         if (!inner.has(field.key)) {
           inner.set(field.key, {
             key: field.key,
@@ -391,7 +365,7 @@ export function ReportColumnPicker({
     return acc;
   }, {});
 
-  const filteredSharedFieldsByCategory = Object.entries(sharedFieldsByCategory)
+  const filteredSharedFieldsByCategory: SharedFieldCategoryGroup[] = Object.entries(sharedFieldsByCategory)
     .map(([category, fields]) => {
       const filteredFields = fields
         .map((field) => {
@@ -419,7 +393,7 @@ export function ReportColumnPicker({
     })
     .filter((group) => group.fields.length > 0);
 
-  const templatePanels = sortedSources
+  const templatePanels: TemplatePanel[] = sortedSources
     .map((source) => {
       const customFields = source.fields.filter((field) => !isSharedSourceField(field));
       const templateMatchesSearch = matchesSearch([source.template_name, source.template_id]);
@@ -475,24 +449,12 @@ export function ReportColumnPicker({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-md border px-3 py-2">
-          <div className="text-xs text-muted-foreground">Templates in scope</div>
-          <div className="text-lg font-semibold">{sortedSources.length}</div>
-        </div>
-        <div className="rounded-md border px-3 py-2">
-          <div className="text-xs text-muted-foreground">Submitted tasks in scope</div>
-          <div className="text-lg font-semibold">{totalSubmittedTaskCount}</div>
-        </div>
-        <div className="rounded-md border px-3 py-2">
-          <div className="text-xs text-muted-foreground">Custom field options</div>
-          <div className="text-lg font-semibold">{totalCustomFieldCount}</div>
-        </div>
-        <div className="rounded-md border px-3 py-2">
-          <div className="text-xs text-muted-foreground">Shared field options</div>
-          <div className="text-lg font-semibold">{sharedFields.length}</div>
-        </div>
-      </div>
+      <ScopeStatsGrid
+        templateCount={sortedSources.length}
+        submittedTaskCount={totalSubmittedTaskCount}
+        customFieldCount={totalCustomFieldCount}
+        sharedFieldCount={sharedFields.length}
+      />
 
       {hasLargeTemplateScope && (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
@@ -617,308 +579,35 @@ export function ReportColumnPicker({
       )}
 
       {filteredSystemColumns.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between border-b pb-1">
-            <div className="text-sm font-medium">System Fields</div>
-            <Badge variant="outline">{filteredSystemColumns.length}</Badge>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredSystemColumns.map((column) => {
-              const selected = isSelected(column.key);
-              return (
-                <div key={column.key} className="flex items-start space-x-2">
-                  <Checkbox
-                    id={`field-sys-${column.key}`}
-                    checked={selected}
-                    disabled={!selected && isAtLimit}
-                    onCheckedChange={(checked) => {
-                      toggleColumn(column.key, column.label, undefined, checked === true);
-                    }}
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <Label htmlFor={`field-sys-${column.key}`}>{column.label}</Label>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <SystemFieldsSection
+          columns={filteredSystemColumns}
+          isSelected={isSelected}
+          isAtLimit={isAtLimit}
+          onToggle={toggleColumn}
+        />
       )}
 
       {filteredSharedFieldsByCategory.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between border-b pb-1">
-            <div className="text-sm font-medium">Shared Fields</div>
-            <Badge variant="outline">
-              {filteredSharedFieldsByCategory.reduce((total, group) => total + group.fields.reduce((acc, field) => acc + field.visibleDerivedColumns.length, 0), 0)}
-            </Badge>
-          </div>
-          <div className="space-y-4">
-            {filteredSharedFieldsByCategory.map((group) => (
-              <div key={group.category} className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {SHARED_FIELD_CATEGORY_LABELS[group.category as keyof typeof SHARED_FIELD_CATEGORY_LABELS] ?? group.category}
-                  </div>
-                  <Badge variant="outline">{group.fields.length}</Badge>
-                </div>
-                <div className="space-y-3">
-                  {group.fields.map((field) => (
-                    <div key={field.key} className="rounded-md border bg-muted/20 p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-0.5">
-                          <div className="text-sm font-medium">{field.label}</div>
-                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            {field.type}
-                            {' · '}
-                            {field.key}
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="text-[10px]">
-                          {field.visibleDerivedColumns.length}
-                          {' '}
-                          column
-                          {field.visibleDerivedColumns.length === 1 ? '' : 's'}
-                        </Badge>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                        {field.visibleDerivedColumns.map((column) => {
-                          const selected = isSelected(column.key);
-                          return (
-                            <div key={column.key} className="flex items-start space-x-2">
-                              <Checkbox
-                                id={`field-shared-${field.key}-${column.key}`}
-                                checked={selected}
-                                disabled={!selected && isAtLimit}
-                                onCheckedChange={(checked) => {
-                                  toggleColumn(column.key, column.label, column.type, checked === true);
-                                }}
-                              />
-                              <div className="grid gap-0.5 leading-none">
-                                <Label htmlFor={`field-shared-${field.key}-${column.key}`}>
-                                  {column.group ? `Loop ${column.group.replace(/^l/, '')}` : column.label}
-                                </Label>
-                                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                                  {column.key}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SharedFieldsSection
+          groups={filteredSharedFieldsByCategory}
+          isSelected={isSelected}
+          isAtLimit={isAtLimit}
+          onToggle={toggleColumn}
+        />
       )}
 
       {templatePanels.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between border-b pb-1">
-            <div className="text-sm font-medium">Template-Specific Fields</div>
-            <Badge variant="outline">{templatePanels.length}</Badge>
-          </div>
-
-          {templatePanels.map((panel) => {
-            const { source, visibleFields, customFieldCount, selectedCustomFieldCount } = panel;
-            const isExpanded = expandedTemplateById[source.template_id] ?? false;
-            return (
-              <Collapsible
-                key={source.template_id}
-                open={isExpanded}
-                onOpenChange={(open) => {
-                  setExpandedTemplateById((prev) => ({ ...prev, [source.template_id]: open }));
-                }}
-                className="rounded-md border"
-              >
-                <CollapsibleTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left"
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <div className="font-medium truncate">{source.template_name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {selectedCustomFieldCount}
-                        {' / '}
-                        {customFieldCount}
-                        {' selected · '}
-                        {source.submitted_task_count}
-                        {' submitted tasks'}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant="outline">{visibleFields.length}</Badge>
-                      {isExpanded
-                        ? <ChevronUp className="h-4 w-4" />
-                        : <ChevronDown className="h-4 w-4" />}
-                    </div>
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="border-t px-3 py-3">
-                  {visibleFields.length > 0
-                    ? (
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                          {visibleFields.map((field) => {
-                            const selected = isSelected(field.key);
-                            return (
-                              <div key={field.key} className="flex items-start space-x-2">
-                                <Checkbox
-                                  id={`field-${source.template_id}-${field.key}`}
-                                  checked={selected}
-                                  disabled={!selected && isAtLimit}
-                                  onCheckedChange={(checked) => {
-                                    toggleColumn(field.key, field.label, field.type, checked === true);
-                                  }}
-                                />
-                                <div className="grid gap-1 leading-none">
-                                  <Label htmlFor={`field-${source.template_id}-${field.key}`}>
-                                    {field.label}
-                                  </Label>
-                                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                                    {field.type}
-                                    {' · '}
-                                    {field.field_key}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )
-                    : (
-                        <div className={cn('text-xs italic text-muted-foreground')}>
-                          No fields match the current search/filter settings.
-                        </div>
-                      )}
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          })}
-        </div>
+        <TemplateFieldsSection
+          panels={templatePanels}
+          expandedTemplateById={expandedTemplateById}
+          onExpandedChange={(templateId, open) => {
+            setExpandedTemplateById((prev) => ({ ...prev, [templateId]: open }));
+          }}
+          isSelected={isSelected}
+          isAtLimit={isAtLimit}
+          onToggle={toggleColumn}
+        />
       )}
-    </div>
-  );
-}
-
-type SortableSelectedColumnItemProps = {
-  column: SelectedColumnDescriptor;
-  index: number;
-  total: number;
-  onMove: (index: number, direction: 'up' | 'down') => void;
-  onIncludeExtraChange: (columnKey: string, includeExtra: boolean) => void;
-  onRemove: () => void;
-};
-
-function SortableSelectedColumnItem({
-  column,
-  index,
-  total,
-  onMove,
-  onIncludeExtraChange,
-  onRemove,
-}: SortableSelectedColumnItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: column.key });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.65 : 1,
-    zIndex: isDragging ? 1 : 0,
-  };
-  const includeExtraId = `include-extra-${column.key.replaceAll(':', '-')}`;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        'flex flex-col gap-3 rounded-md border bg-muted/20 px-3 py-3 md:flex-row md:items-center md:justify-between',
-        isDragging && 'border-primary/50 bg-primary/5',
-      )}
-    >
-      <div className="flex min-w-0 items-start gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="mt-0.5 h-7 w-7 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing"
-          aria-label={`Drag to reorder ${column.label}`}
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-4 w-4" />
-        </Button>
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="text-sm font-medium">{column.label}</div>
-            <Badge variant="outline">{column.groupLabel}</Badge>
-            <Badge variant="secondary">
-              #
-              {index + 1}
-            </Badge>
-          </div>
-          <div className="text-xs text-muted-foreground break-all">{column.detail}</div>
-          {column.canIncludeExtra && (
-            <div className="flex items-center gap-2 pt-1">
-              <Checkbox
-                id={includeExtraId}
-                checked={column.include_extra === true}
-                onCheckedChange={(checked) => onIncludeExtraChange(column.key, checked === true)}
-              />
-              <Label htmlFor={includeExtraId} className="text-xs font-normal text-muted-foreground">
-                Include extra input column for
-                {' '}
-                {column.label}
-              </Label>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => onMove(index, 'up')}
-          disabled={index === 0}
-          aria-label={`Move ${column.label} up`}
-        >
-          <ArrowUp className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => onMove(index, 'down')}
-          disabled={index === total - 1}
-          aria-label={`Move ${column.label} down`}
-        >
-          <ArrowDown className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-destructive"
-          onClick={onRemove}
-          aria-label={`Remove ${column.label}`}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
     </div>
   );
 }
