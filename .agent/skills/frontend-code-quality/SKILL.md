@@ -37,14 +37,19 @@ Always use `@/*` imports (configured in `tsconfig.json`), never deep relative pa
 6. **No repeated magic limits**: Centralize pagination/fetch limits in named constants.
 7. **No scattered layout magic numbers**: Shell/chrome offsets like `calc(100vh-13rem)` belong in a named constant (e.g. `src/config/layout.ts` → `CONTENT_AREA_MIN_H`), not duplicated inline across files. Keep the full literal Tailwind class in the constant (the JIT scans `.ts`/`.tsx` via `@source`) — a JS-interpolated rem value won't be detected.
 
-## Large Route Decomposition
+## Large Route / Component Decomposition
 
-**Trigger**: Route >200 LOC or mixes 3+ concerns → split into container + hooks + presentation.
+**Trigger**: Route >200 LOC, or a feature/UI component that has grown into a giant (≳600 LOC) or mixes 3+ concerns → split into a composition root + hooks/utils + presentation.
 
-Pattern: route container + `useFeatureViewModel()` hook + presentation components.
+Pattern: a thin orchestrator (container) + `useFeatureViewModel()`-style hook(s) + presentation components. Pull pure helpers/constants/types into sibling `*.utils.ts` / `*.types.ts` modules. Keep the public export name stable so external importers and colocated tests don't move.
 
-**Document the split** — once a route fans out into a controller hook + sibling sections, the wiring is abstract and hard to follow from any single file. Make it legible:
-- At the container (the composition root), add a short **structure-tree comment** showing how the hook and presentation components relate (who owns state, who renders what).
+**Behavior-preserving rules**:
+- Identical hook call order + identical JSX tree → identical render. Extracted children are pure presentation; the orchestrator keeps all `useState`/`useMemo`/`useEffect`/`useCallback`.
+- **Keep state-owning handler closures in the orchestrator.** Extract the *UI* of a `.map()`'d block into a component, but leave handlers that close over orchestrator state/`propsRef` in the parent and pass them down as props — moving them would change behavior or force prop-threading churn.
+- **No safety net? Characterize first.** If the giant has no colocated test, add a characterization test that pins its non-obvious behavior and is green against the *original* file BEFORE splitting; re-run it against the split. (See `frontend-testing-patterns`.)
+
+**Document the split** — once a file fans out into a controller hook + sibling sections, the wiring is abstract and hard to follow from any single file. Make it legible:
+- At the composition root, add a short **structure-tree comment** showing how the hook and presentation components relate (who owns state, who renders what).
 - Add focused **JSDoc** to each extracted hook and section stating its single responsibility and how it coordinates with siblings (e.g. a shared refresh signal instead of passed-down query handles).
 
 Keep it about responsibilities and data flow, not a line-by-line restatement of the code.
@@ -71,7 +76,7 @@ Keep it about responsibilities and data flow, not a line-by-line restatement of 
 - [ ] `pnpm lint` and `pnpm test` pass
 - [ ] Ternary for conditional rendering (not `&&`)
 - [ ] Complex logic extracted to custom hooks
-- [ ] Large routes (>200 LOC) decomposed, with a structure-tree comment at the container + JSDoc on extracted hooks/sections
+- [ ] Large routes (>200 LOC) / giant components decomposed, with a structure-tree comment at the composition root + JSDoc on extracted hooks/sections; untested giants get a characterization test before the split
 - [ ] No scattered magic values — repeated layout offsets, limits, and tunables centralized in named constants (`src/config/layout.ts`, etc.)
 - [ ] Protected routes use `StudioRouteGuard` + shared access policy
 - [ ] Consistent wrapper per route set
