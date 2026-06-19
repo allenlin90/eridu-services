@@ -1,10 +1,11 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { studioMemberCompensationResponseSchema } from '@eridu/api-types/memberships';
+import { STUDIO_ROLE, studioMemberCompensationResponseSchema } from '@eridu/api-types/memberships';
 
 import { StudioMembersController } from './studio-members.controller';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { studioMemberDto } from '@/models/membership/schemas/studio-membership.schema';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
@@ -94,6 +95,11 @@ describe('studioMembersController', () => {
   });
 
   describe('addMember', () => {
+    it('restricts member creation — and therefore granting any role including ACCOUNT_MANAGER — to ADMIN only', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioMembersController.prototype.addMember);
+      expect(roles).toEqual([STUDIO_ROLE.ADMIN]);
+    });
+
     it('should add a member to the studio', async () => {
       const studioId = 'std_test123';
       const dto = { email: 'jane@example.com', role: 'manager', base_hourly_rate: '25.00' };
@@ -140,6 +146,11 @@ describe('studioMembersController', () => {
   });
 
   describe('updateMember', () => {
+    it('restricts role/rate updates — and therefore granting ACCOUNT_MANAGER — to ADMIN only', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioMembersController.prototype.updateMember);
+      expect(roles).toEqual([STUDIO_ROLE.ADMIN]);
+    });
+
     it('should update an existing membership', async () => {
       const studioId = 'std_test123';
       const membershipId = 'smb_test123';

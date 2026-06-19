@@ -88,7 +88,7 @@ const showStandardRelationSchema = z.object({
   name: z.string(),
 });
 
-const showPlatformSummaryRelationSchema = z.object({
+export const showPlatformSummaryRelationSchema = z.object({
   uid: z.string(),
   platform: z.object({
     uid: z.string(),

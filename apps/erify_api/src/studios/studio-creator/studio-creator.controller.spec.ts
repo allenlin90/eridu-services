@@ -77,7 +77,7 @@ describe('studioCreatorController', () => {
       },
     ]);
 
-    const result = await controller.availability(studioId, query);
+    const result = await controller.availability(studioId, query, { studioMembership: { role: 'admin' } } as any);
 
     expect(studioCreatorService.listAvailable).toHaveBeenCalledWith(studioId, query);
     expect(result).toEqual([
@@ -110,7 +110,7 @@ describe('studioCreatorController', () => {
       },
     ]);
 
-    const result = await controller.catalog(studioId, query);
+    const result = await controller.catalog(studioId, query, { studioMembership: { role: 'admin' } } as any);
 
     expect(studioCreatorService.listCatalog).toHaveBeenCalledWith(studioId, query);
     expect(result).toEqual([
@@ -161,7 +161,7 @@ describe('studioCreatorController', () => {
       total: 1,
     });
 
-    const result = await controller.listRoster(studioId, query);
+    const result = await controller.listRoster(studioId, query, { studioMembership: { role: 'admin' } } as any);
 
     expect(studioCreatorService.listRoster).toHaveBeenCalledWith(studioId, query);
     expect(result).toEqual({
@@ -470,7 +470,7 @@ describe('studioCreatorController', () => {
       },
     } as any);
 
-    const result = await controller.getCreator(studioId, creatorId);
+    const result = await controller.getCreator(studioId, creatorId, { studioMembership: { role: 'admin' } } as any);
 
     expect(studioCreatorService.findRosterEntry).toHaveBeenCalledWith(studioId, creatorId);
     expect(result).toEqual(expect.objectContaining({
@@ -488,7 +488,7 @@ describe('studioCreatorController', () => {
 
     studioCreatorService.findRosterEntry.mockResolvedValue(null);
 
-    await expect(controller.getCreator(studioId, creatorId)).rejects.toThrow('Creator not found in studio roster');
+    await expect(controller.getCreator(studioId, creatorId, { studioMembership: { role: 'admin' } } as any)).rejects.toThrow('Creator not found in studio roster');
   });
 
   it('should restrict creator read to admin, manager, talent manager, and account manager roles', () => {

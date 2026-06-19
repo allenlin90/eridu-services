@@ -188,7 +188,7 @@ describe('studioShowController', () => {
         },
       ]);
 
-      const result = await controller.creators(studioId, showId);
+      const result = await controller.creators(studioId, showId, { studioMembership: { role: 'admin' } } as any);
 
       expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
       expect(showOrchestrationServiceMock.listCreatorsForShow).toHaveBeenCalledWith(showId);
@@ -359,14 +359,16 @@ describe('studioShowController', () => {
       expect(response.data[0].creators[0].compensation_type).toBeNull();
     });
 
-    it('should redact gmv, ctr, and cto inside platforms in show detail', async () => {
+    it('should redact gmv, ctr, and cto inside showPlatforms in show detail', async () => {
       studioShowManagementServiceMock.getShowDetail.mockResolvedValue({
         uid: showId,
-        platforms: [
+        showPlatforms: [
           {
-            id: 'p_1',
-            name: 'Youtube',
-            show_platform_uid: 'sp_1',
+            uid: 'sp_1',
+            platform: { uid: 'plt_1', name: 'Youtube' },
+            liveStreamLink: 'https://youtube.com/live',
+            platformShowId: 'yt_123',
+            viewerCount: 42,
             gmv: '1000.00',
             ctr: '5.20',
             cto: '1.50',
@@ -375,9 +377,11 @@ describe('studioShowController', () => {
       });
 
       const response = await controller.show(studioId, showId, mockAMRequest);
-      expect(response.platforms[0].gmv).toBeNull();
-      expect(response.platforms[0].ctr).toBeNull();
-      expect(response.platforms[0].cto).toBeNull();
+      expect(response.showPlatforms[0].gmv).toBeNull();
+      expect(response.showPlatforms[0].ctr).toBeNull();
+      expect(response.showPlatforms[0].cto).toBeNull();
+      expect(response.showPlatforms[0].uid).toBe('sp_1');
+      expect(response.showPlatforms[0].viewerCount).toBe(42);
     });
 
     it('should redact agreed_rate, commission_rate, and compensation_type in show creators list', async () => {

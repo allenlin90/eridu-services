@@ -42,6 +42,7 @@ import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { projectAllowList } from '@/lib/utils/allow-list-projection.util';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 import { userDto } from '@/models/user/schemas/user.schema';
@@ -57,6 +58,33 @@ const STUDIO_CREATOR_COMPENSATION_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
+
+// Finance Guardrails S3 — allow-list, not a money-field blacklist. Any roster
+// field NOT in this set is forced to null for ACCOUNT_MANAGER, so a future
+// money field added to the schema is redacted by default instead of leaking.
+export const ROSTER_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'creator_id',
+  'creator_name',
+  'creator_alias_name',
+  'is_active',
+  'version',
+  'metadata',
+  'created_at',
+  'updated_at',
+]);
+export const CATALOG_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'name',
+  'alias_name',
+  'is_rostered',
+  'roster_state',
+]);
+export const AVAILABILITY_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'name',
+  'alias_name',
+]);
 
 @ApiTags('Studio Creators')
 @Controller('studios/:studioId/creators')
@@ -79,14 +107,11 @@ export class StudioCreatorController extends BaseStudioController {
     @Req() request: AuthenticatedRequest,
   ) {
     const { data, total } = await this.studioCreatorService.listRoster(studioId, query);
-    const parsed = data.map((item) => studioCreatorRosterItemDto.parse(item));
+    let parsed = data.map((item) => studioCreatorRosterItemDto.parse(item));
     const role = request?.studioMembership?.role;
     if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
-      parsed.forEach((c) => {
-        c.default_rate = null;
-        c.default_rate_type = null;
-        c.default_commission_rate = null;
-      });
+      parsed = parsed.map((c) =>
+        projectAllowList(studioCreatorRosterItemApiSchema, c, ROSTER_ITEM_ALLOWED_FOR_AM));
     }
     return this.createPaginatedResponse(
       parsed,
@@ -195,14 +220,11 @@ export class StudioCreatorController extends BaseStudioController {
     @Req() request: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listAvailable(studioId, query);
-    const parsed = creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
+    let parsed = creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
     const role = request?.studioMembership?.role;
     if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
-      parsed.forEach((c) => {
-        c.default_rate = null;
-        c.default_rate_type = null;
-        c.default_commission_rate = null;
-      });
+      parsed = parsed.map((c) =>
+        projectAllowList(studioCreatorAvailabilityItemApiSchema, c, AVAILABILITY_ITEM_ALLOWED_FOR_AM));
     }
     return parsed;
   }
@@ -218,14 +240,11 @@ export class StudioCreatorController extends BaseStudioController {
     @Req() request: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listCatalog(studioId, query);
-    const parsed = creators.map((item) => studioCreatorCatalogItemDto.parse(item));
+    let parsed = creators.map((item) => studioCreatorCatalogItemDto.parse(item));
     const role = request?.studioMembership?.role;
     if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
-      parsed.forEach((c) => {
-        c.default_rate = null;
-        c.default_rate_type = null;
-        c.default_commission_rate = null;
-      });
+      parsed = parsed.map((c) =>
+        projectAllowList(studioCreatorCatalogItemApiSchema, c, CATALOG_ITEM_ALLOWED_FOR_AM));
     }
     return parsed;
   }
@@ -267,9 +286,7 @@ export class StudioCreatorController extends BaseStudioController {
     const parsed = studioCreatorRosterItemDto.parse(creator);
     const role = request?.studioMembership?.role;
     if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
-      parsed.default_rate = null;
-      parsed.default_rate_type = null;
-      parsed.default_commission_rate = null;
+      return projectAllowList(studioCreatorRosterItemApiSchema, parsed, ROSTER_ITEM_ALLOWED_FOR_AM);
     }
     return parsed;
   }

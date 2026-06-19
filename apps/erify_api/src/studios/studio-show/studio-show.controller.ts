@@ -25,6 +25,7 @@ import {
   showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
   studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
 } from '@eridu/api-types/studio-creators';
+import { showSummaryCreatorSchema } from '@eridu/api-types/task-management';
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
@@ -43,9 +44,11 @@ import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { projectAllowList } from '@/lib/utils/allow-list-projection.util';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import {
   CreateStudioShowDto,
+  showPlatformSummaryRelationSchema,
   studioShowDetailDto,
   UpdateStudioShowDto,
 } from '@/models/show/schemas/show.schema';
@@ -77,6 +80,31 @@ const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
+
+// Finance Guardrails S3 — allow-list, not a money-field blacklist. Any field
+// NOT in these sets is forced to null for ACCOUNT_MANAGER, so a future money
+// field added to either schema is redacted by default instead of leaking.
+export const SHOW_CREATOR_SUMMARY_ALLOWED_FOR_AM = new Set([
+  'show_creator_id',
+  'creator_id',
+  'creator_name',
+  'creator_alias_name',
+]);
+export const SHOW_CREATOR_LIST_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'creator_id',
+  'creator_name',
+  'creator_alias_name',
+  'note',
+  'metadata',
+]);
+export const SHOW_PLATFORM_SUMMARY_ALLOWED_FOR_AM = new Set([
+  'uid',
+  'platform',
+  'liveStreamLink',
+  'platformShowId',
+  'viewerCount',
+]);
 // Compensation totals are restricted to ADMIN/MANAGER (line-item write surface);
 // TALENT_MANAGER can read the assignment list but not the money totals.
 const STUDIO_SHOW_COMPENSATION_ACCESS_ROLES = [
@@ -164,11 +192,8 @@ export class StudioShowController extends BaseStudioController {
     if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
       data.forEach((show) => {
         if (show.creators) {
-          show.creators.forEach((c) => {
-            c.agreed_rate = null;
-            c.commission_rate = null;
-            c.compensation_type = null;
-          });
+          show.creators = show.creators.map((c) =>
+            projectAllowList(showSummaryCreatorSchema, c, SHOW_CREATOR_SUMMARY_ALLOWED_FOR_AM));
         }
       });
     }
@@ -242,14 +267,9 @@ export class StudioShowController extends BaseStudioController {
   ) {
     const detail = await this.studioShowManagementService.getShowDetail(studioId, id);
     const role = request?.studioMembership?.role;
-    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
-      if (detail.platforms) {
-        detail.platforms.forEach((p: any) => {
-          p.gmv = null;
-          p.ctr = null;
-          p.cto = null;
-        });
-      }
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER && detail.showPlatforms) {
+      detail.showPlatforms = detail.showPlatforms.map((p) =>
+        projectAllowList(showPlatformSummaryRelationSchema, p, SHOW_PLATFORM_SUMMARY_ALLOWED_FOR_AM));
     }
     return detail;
   }
@@ -304,14 +324,11 @@ export class StudioShowController extends BaseStudioController {
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
     const creators = await this.showOrchestrationService.listCreatorsForShow(id);
-    const mapped = creators.map((item) => studioShowCreatorListItemDto.parse(item));
+    let mapped = creators.map((item) => studioShowCreatorListItemDto.parse(item));
     const role = request?.studioMembership?.role;
     if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
-      mapped.forEach((c) => {
-        c.agreed_rate = null;
-        c.commission_rate = null;
-        c.compensation_type = null;
-      });
+      mapped = mapped.map((c) =>
+        projectAllowList(studioShowCreatorListItemApiSchema, c, SHOW_CREATOR_LIST_ITEM_ALLOWED_FOR_AM));
     }
     return mapped;
   }
