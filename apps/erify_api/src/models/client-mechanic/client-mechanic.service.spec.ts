@@ -222,19 +222,32 @@ describe('clientMechanicService', () => {
   });
 
   describe('deleteMechanic', () => {
-    it('calls softDelete on the repository and returns the row', async () => {
+    it('soft-deletes via the version-guarded update and returns the row', async () => {
       (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
-      (repositoryMock.softDelete as jest.Mock).mockResolvedValue({
+      const deletedAt = new Date();
+      (repositoryMock.updateWithVersionCheck as jest.Mock).mockResolvedValue({
         ...baseMechanic,
-        deletedAt: new Date(),
+        deletedAt,
       });
 
       const result = await service.deleteMechanic({ mechanicUid: 'cmech_123', clientUid: 'client_1' });
 
-      expect(repositoryMock.softDelete).toHaveBeenCalledWith({
-        uid: 'cmech_123',
-      });
+      expect(repositoryMock.updateWithVersionCheck).toHaveBeenCalledWith(
+        { uid: 'cmech_123', clientUid: 'client_1', version: 3 },
+        { deletedAt: expect.any(Date), version: 4 },
+      );
       expect(result!.deletedAt).toBeDefined();
+    });
+
+    it('maps a concurrent edit racing the delete to a 409 conflict', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
+      (repositoryMock.updateWithVersionCheck as jest.Mock).mockRejectedValue(
+        new VersionConflictError('stale', 3, 4),
+      );
+
+      await expect(
+        service.deleteMechanic({ mechanicUid: 'cmech_123', clientUid: 'client_1' }),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
 
     it('returns null when the mechanic is not found under the client', async () => {
@@ -243,7 +256,7 @@ describe('clientMechanicService', () => {
       const result = await service.deleteMechanic({ mechanicUid: 'cmech_404', clientUid: 'client_1' });
 
       expect(result).toBeNull();
-      expect(repositoryMock.softDelete).not.toHaveBeenCalled();
+      expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
     });
   });
 });

@@ -181,8 +181,16 @@ export class ClientMechanicService extends BaseModelService {
   }
 
   /**
-   * Soft-deletes a client mechanic (sets deletedAt to current timestamp).
-   * Returns null when the mechanic does not exist or is not under the client.
+   * Soft-deletes a client mechanic. Returns `null` when the mechanic does not
+   * exist or is not under the client; throws 409 when a concurrent edit raced
+   * the delete (same race window as `retireMechanic`, since DELETE also
+   * carries no client version).
+   *
+   * Reference guard: `TaskTemplateMechanicRef` (PR 20.5) does not exist yet at
+   * this point in the rollout, so there is nothing a mechanic can be referenced
+   * by — a hard-delete is safe today. PR 20.5 must add a referenced-mechanic
+   * check here once that link table lands, mirroring the retire-instead
+   * intent for any mechanic actually assigned into a template.
    */
   async deleteMechanic(scope: MechanicScope) {
     const existing = await this.clientMechanicRepository.findByUidForClient({
@@ -194,9 +202,18 @@ export class ClientMechanicService extends BaseModelService {
       return null;
     }
 
-    return this.clientMechanicRepository.softDelete({
-      uid: scope.mechanicUid,
-    });
+    try {
+      return await this.clientMechanicRepository.updateWithVersionCheck(
+        { uid: scope.mechanicUid, clientUid: scope.clientUid, version: existing.version },
+        { deletedAt: new Date(), version: existing.version + 1 },
+      );
+    } catch (error) {
+      if (error instanceof VersionConflictError) {
+        throw HttpError.conflict(
+          'Client mechanic record is out of date. Please refresh your record and try again.',
+        );
+      }
+      throw error;
+    }
   }
 }
-
