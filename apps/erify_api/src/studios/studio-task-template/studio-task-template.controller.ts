@@ -19,6 +19,7 @@ import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import {
   CreateStudioTaskTemplateDto,
@@ -31,8 +32,27 @@ import { TaskTemplateService } from '@/models/task-template/task-template.servic
 @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
 @Controller('studios/:studioId/task-templates')
 export class StudioTaskTemplateController extends BaseStudioController {
-  constructor(private readonly taskTemplateService: TaskTemplateService) {
+  constructor(
+    private readonly taskTemplateService: TaskTemplateService,
+    private readonly showService: ShowService,
+  ) {
     super();
+  }
+
+  // Mirrors StudioClientMechanicController.ensureStudioClientLinkage (PR 20.3):
+  // a mechanic-bearing template binds to one client, so the studio must have
+  // at least one active show for that client before the binding is allowed —
+  // otherwise the template's clientId could scope a catalog the studio has
+  // no actual relationship with.
+  private async ensureStudioClientLinkage(studioId: string, clientId: string): Promise<void> {
+    const count = await this.showService.countShows({
+      studio: { uid: studioId },
+      client: { uid: clientId },
+      deletedAt: null,
+    });
+    if (count === 0) {
+      throw HttpError.forbidden('Studio not linked to client');
+    }
   }
 
   @Get()
@@ -88,6 +108,10 @@ export class StudioTaskTemplateController extends BaseStudioController {
   ) {
     const { name, description, task_type, schema, client_id } = createStudioTaskTemplateDto;
 
+    if (client_id) {
+      await this.ensureStudioClientLinkage(studioId, client_id);
+    }
+
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
       description,
@@ -106,6 +130,10 @@ export class StudioTaskTemplateController extends BaseStudioController {
     @Body() updateStudioTaskTemplateDto: UpdateStudioTaskTemplateDto,
   ) {
     const { name, description, task_type, schema, version, client_id } = updateStudioTaskTemplateDto;
+
+    if (client_id) {
+      await this.ensureStudioClientLinkage(studioId, client_id);
+    }
 
     return this.taskTemplateService.updateTemplateWithSnapshot(
       id,
