@@ -4,7 +4,6 @@ import { ClientMechanicRepository } from './client-mechanic.repository';
 import { ClientMechanicService } from './client-mechanic.service';
 
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
-import { UserService } from '@/models/user/user.service';
 import {
   createMockRepository,
   createMockUtilityService,
@@ -29,7 +28,6 @@ const baseMechanic = {
 describe('clientMechanicService', () => {
   let service: ClientMechanicService;
   let repositoryMock: Partial<jest.Mocked<ClientMechanicRepository>>;
-  let userServiceMock: { getUserByExtId: jest.Mock };
   let utilityMock: Partial<jest.Mocked<UtilityService>>;
 
   beforeEach(async () => {
@@ -38,7 +36,6 @@ describe('clientMechanicService', () => {
       findPaginated: jest.fn(),
       updateWithVersionCheck: jest.fn(),
     });
-    userServiceMock = { getUserByExtId: jest.fn() };
     utilityMock = createMockUtilityService('cmech_123');
 
     const module = await createModelServiceTestModule({
@@ -46,7 +43,6 @@ describe('clientMechanicService', () => {
       repositoryClass: ClientMechanicRepository,
       repositoryMock,
       utilityMock,
-      additionalProviders: [{ provide: UserService, useValue: userServiceMock }],
     });
 
     service = module.get(ClientMechanicService);
@@ -57,15 +53,10 @@ describe('clientMechanicService', () => {
   });
 
   describe('createMechanic', () => {
-    it('generates a UID, connects the client, and records the author', async () => {
-      userServiceMock.getUserByExtId.mockResolvedValue({ id: BigInt(7) });
+    it('generates a UID and connects the client', async () => {
       (repositoryMock.create as jest.Mock).mockResolvedValue(baseMechanic);
 
-      await service.createMechanic(
-        'client_1',
-        { title: 'T', instructionLabel: 'L', instructionBody: 'B' },
-        'ext_42',
-      );
+      await service.createMechanic('client_1', { title: 'T', instructionLabel: 'L', instructionBody: 'B' });
 
       expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('cmech', undefined);
       const [data] = (repositoryMock.create as jest.Mock).mock.calls[0];
@@ -75,21 +66,7 @@ describe('clientMechanicService', () => {
         instructionLabel: 'L',
         instructionBody: 'B',
         client: { connect: { uid: 'client_1' } },
-        createdByUser: { connect: { id: BigInt(7) } },
       });
-    });
-
-    it('omits createdByUser when the actor cannot be resolved', async () => {
-      userServiceMock.getUserByExtId.mockResolvedValue(null);
-      (repositoryMock.create as jest.Mock).mockResolvedValue(baseMechanic);
-
-      await service.createMechanic(
-        'client_1',
-        { title: 'T', instructionLabel: 'L', instructionBody: 'B' },
-        'ext_unknown',
-      );
-
-      const [data] = (repositoryMock.create as jest.Mock).mock.calls[0];
       expect(data.createdByUser).toBeUndefined();
     });
   });

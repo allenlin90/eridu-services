@@ -71,7 +71,7 @@ The stable identity for a reusable moderation instruction (product cue, promotio
 - `version` — optimistic-lock integer (row concurrency, **not** content history)
 - `content_revision` — monotonic integer, bumped whenever `instruction_label`/`instruction_body` change (S1)
 - `metadata`
-- `created_by`, `created_at`, `updated_at`
+- `created_at`, `updated_at` (actor history is not denormalized on the row; trace via the `Audit` model if a future flow needs it)
 
 Identity comes from the UID; the label may be generic. Editing content bumps `content_revision` and propagates to every linked loop's resolved field; it does **not** mutate already-frozen template snapshots.
 

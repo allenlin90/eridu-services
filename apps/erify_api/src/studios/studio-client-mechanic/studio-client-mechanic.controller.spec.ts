@@ -17,7 +17,6 @@ describe('studioClientMechanicController', () => {
 
   const studioId = 'std_1';
   const clientId = 'client_1';
-  const actor = { ext_id: 'ext_42' } as any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -96,15 +95,15 @@ describe('studioClientMechanicController', () => {
   });
 
   describe('create', () => {
-    it('validates the client then creates with the current user', async () => {
+    it('validates the client then creates the mechanic', async () => {
       clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       const created = { uid: 'cmech_1' } as any;
       mechanicService.createMechanic.mockResolvedValue(created);
 
       const body = { title: 'T', instructionLabel: 'L', instructionBody: 'B' } as any;
-      const result = await controller.create(studioId, clientId, body, actor);
+      const result = await controller.create(studioId, clientId, body);
 
-      expect(mechanicService.createMechanic).toHaveBeenCalledWith(clientId, body, 'ext_42');
+      expect(mechanicService.createMechanic).toHaveBeenCalledWith(clientId, body);
       expect(result).toBe(created);
     });
   });

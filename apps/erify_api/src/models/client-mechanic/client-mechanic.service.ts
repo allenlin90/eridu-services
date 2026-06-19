@@ -12,7 +12,6 @@ import {
 import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
 type MechanicScope = {
@@ -31,7 +30,6 @@ export class ClientMechanicService extends BaseModelService {
 
   constructor(
     private readonly clientMechanicRepository: ClientMechanicRepository,
-    private readonly userService: UserService,
     protected readonly utilityService: UtilityService,
   ) {
     super(utilityService);
@@ -39,15 +37,13 @@ export class ClientMechanicService extends BaseModelService {
 
   /**
    * Creates a mechanic for a client. The owning client is assumed validated by
-   * the controller; `actorExtId` records the authoring user.
+   * the controller. Authorship history is not denormalized on the row; trace
+   * it via the Audit model if a future flow needs it.
    */
   async createMechanic(
     clientUid: string,
     payload: CreateClientMechanicPayload,
-    actorExtId: string,
   ): ReturnType<ClientMechanicRepository['create']> {
-    const actor = await this.userService.getUserByExtId(actorExtId);
-
     return this.clientMechanicRepository.create(
       {
         uid: this.generateUid(),
@@ -56,7 +52,6 @@ export class ClientMechanicService extends BaseModelService {
         instructionBody: payload.instructionBody,
         metadata: payload.metadata ?? {},
         client: { connect: { uid: clientUid } },
-        ...(actor && { createdByUser: { connect: { id: actor.id } } }),
       },
       clientMechanicDefaultInclude,
     );

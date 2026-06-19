@@ -11,11 +11,9 @@ import {
 } from '@nestjs/common';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
 
-import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -103,11 +101,10 @@ export class StudioClientMechanicController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Body() body: CreateClientMechanicDto,
-    @CurrentUser() user: AuthenticatedUser,
   ) {
     await this.ensureClientExists(clientId);
 
-    return this.clientMechanicService.createMechanic(clientId, body, user.ext_id);
+    return this.clientMechanicService.createMechanic(clientId, body);
   }
 
   @Patch(':mechanicId')
