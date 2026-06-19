@@ -18,9 +18,10 @@ import {
   SelectValue,
 } from '@eridu/ui';
 
-import type { ClientMechanic } from '@/features/client-mechanics/api/get-client-mechanics';
 import type { FieldItem, LoopMetadata } from './schema';
 import { SortableFieldList } from './sortable-field-list';
+
+import type { ClientMechanic } from '@/features/client-mechanics/api/get-client-mechanics';
 
 /**
  * One moderation loop card: header controls (collapse / clone / remove), the

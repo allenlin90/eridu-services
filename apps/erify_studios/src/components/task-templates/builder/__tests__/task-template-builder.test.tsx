@@ -13,6 +13,11 @@ vi.mock('@/lib/hooks/use-studio-access', () => ({
   useStudioAccess: () => ({ hasAccess: () => false }),
 }));
 
+const mockUseIsMobile = vi.fn(() => false);
+vi.mock('@eridu/ui/hooks/use-is-mobile', () => ({
+  useIsMobile: () => mockUseIsMobile(),
+}));
+
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
@@ -276,6 +281,17 @@ describe('taskTemplateBuilder v2 field ids', () => {
       expect(screen.getByText('Speaking Rule Superseded')).toBeInTheDocument();
       // retired mechanics should NOT be rendered in the table header
       expect(screen.queryByText('Speaking Rule Retired')).toBeNull();
+    });
+
+    it('forces Cards (hides the matrix grid) on mobile viewports', () => {
+      mockUseIsMobile.mockReturnValue(true);
+
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
+
+      expect(screen.queryByText('Client Mechanics Matrix')).toBeNull();
+      expect(screen.getByText(/larger screen/i)).toBeInTheDocument();
+
+      mockUseIsMobile.mockReturnValue(false);
     });
 
     it('toggles mechanic checkbox to assign/remove a mechanic-backed field', async () => {

@@ -102,7 +102,7 @@ export class TaskTemplateRepository extends BaseRepository<
     return template;
   }
 
-  override async updateWithVersionCheck(
+  async updateWithVersionCheck(
     params: { uid: string; studioUid?: string; version?: number },
     data: Prisma.TaskTemplateUpdateInput,
     include?: Prisma.TaskTemplateInclude,

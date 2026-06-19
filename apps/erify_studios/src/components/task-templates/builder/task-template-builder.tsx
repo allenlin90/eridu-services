@@ -15,7 +15,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { AlertCircle, ChevronsUpDown, Plus, RefreshCw } from 'lucide-react';
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -60,6 +59,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@eridu/ui';
+import { useIsMobile } from '@eridu/ui/hooks/use-is-mobile';
 
 import { LivePreview } from './live-preview';
 import { ModerationLoopCard } from './moderation-loop-card';
@@ -121,6 +121,7 @@ export function TaskTemplateBuilder({
   const [selectedSharedFieldKey, setSelectedSharedFieldKey] = useState<string>('');
   const [selectedSharedFieldLoopId, setSelectedSharedFieldLoopId] = useState<string>('');
   const { hasAccess } = useStudioAccess(studioId ?? '');
+  const isMobile = useIsMobile();
 
   const [clientSearch, setClientSearch] = useState('');
   const { data: lookups } = useShowLookupsQuery(studioId ?? '');
@@ -656,8 +657,16 @@ export function TaskTemplateBuilder({
           {isModerationMode
             ? (
                 <div className="space-y-6 pb-6">
-                  {/* Loop × Mechanic Matrix Grid */}
-                  {template.client_id && clientMechanics.length > 0 && (
+                  {/* Loop × Mechanic Matrix Grid — the grid is wide and not usable on small
+                      viewports, so mobile always falls back to Cards (mechanic fields still
+                      render there, read-only, via field-editor's isMechanicField gate). */}
+                  {template.client_id && clientMechanics.length > 0 && isMobile && (
+                    <p className="text-xs text-muted-foreground bg-muted/50 border rounded px-3 py-2">
+                      Assigning mechanics to loops requires a larger screen. Switch to a tablet or
+                      desktop to use the Client Mechanics Matrix.
+                    </p>
+                  )}
+                  {template.client_id && clientMechanics.length > 0 && !isMobile && (
                     <Card className="border shadow-sm bg-gradient-to-br from-white to-zinc-50/50">
                       <CardHeader className="pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>

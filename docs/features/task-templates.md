@@ -198,6 +198,26 @@ When changing a schema attribute or adding a new one, walk this list before merg
 - **Shared-field projection is descriptor-based.** v2 shared loop fields use `(shared_field_key, group)` for report columns, so `gmv` in loop `l8` projects to `gmv_l8` across templates.
 - **`metadata.loops[]` order, not item order, defines loop sequence.** Reordering items within a loop is reorder-only; reassigning loops happens by editing `group`.
 
+## Mechanic References (PR 20.5)
+
+A **mechanic** is a client-owned reusable moderation instruction (`ClientMechanic` — see [`CLIENT_MECHANICS_MANAGEMENT_DESIGN.md`](../../apps/erify_studios/docs/design/CLIENT_MECHANICS_MANAGEMENT_DESIGN.md)). Once a template is bound to a client (`TaskTemplate.clientId`, PR 20.4), the builder's **Loop × Mechanic matrix** lets an author check a cell to link that mechanic into a loop — this checks a mechanic into a v2 field via `mechanic_ref`:
+
+```jsonc
+// FieldItemV2.mechanic_ref
+{
+  "client_id": "client_abc123",
+  "mechanic_id": "cmech_def456",
+  "content_revision": 5   // frozen at check/upgrade time, never live-resolved
+}
+```
+
+- **`content_revision` is frozen, not live.** It's set when the matrix cell is checked (or explicitly upgraded later) and copied verbatim into `currentSchema` / the template snapshot. Coverage (PR 20.6/20.7) compares this frozen value against the catalog's current `contentRevision` to detect staleness — it never re-resolves the mechanic's content at read time.
+- **One mechanic, one field per loop, shared identity.** Checking the same mechanic in multiple loops creates one field per loop, each carrying the same `mechanic_id` — editing the mechanic once in the catalog and upgrading propagates to every loop that references it.
+- **Per-loop `(mechanic_id, group)` uniqueness**, enforced in `TemplateSchemaV2Validator` alongside the existing `(key, group)` rule: checking an already-assigned mechanic in the same loop is a no-op, not a duplicate field.
+- **Mechanic fields are catalog-owned in Cards.** Cards view stays canonical for structural fields; mechanic fields interleave and reorder there, but their label/description are read-only (edit in the mechanic catalog, then upgrade the field to pull the new revision).
+- **`TaskTemplateMechanicRef`** is a denormalized link table (`template_id` / `snapshot_id` ↔ `mechanic_id` + `group`), written on template save. Coverage resolvers (PR 20.6/20.7) query this table directly — never a JSONB scan of `currentSchema`.
+- **Matrix view forces Cards on mobile.** The Loop × Mechanic matrix is a wide grid; small viewports render Cards only.
+
 ## Downstream Consumers
 
 | Consumer                            | What it reads                                                      | Reference                                                                                                                                    |
