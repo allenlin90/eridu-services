@@ -59,7 +59,7 @@ Items deferred from Phase 5 lifecycle gap closure that require broader RBAC/modu
 
 Potential scope:
 - **Granular role and module access** — decompose MANAGER into offset/onset/account/talent/moderation scopes with proper RBAC.
-- **ACCOUNT_MANAGER money-field redaction and client scope** — accepted PR #149 known issues; PR #215 (20.3) resolved the client-mechanic studio-client linkage gate and money-field redaction on task templates, shows, show creators/platforms, and submitted-task content (allow-list `projectAllowList()` projection + per-route gating). One gap remains: `StudioShiftController`'s GET routes still expose `hourlyRate` to any studio member. Fix with the same route-permission/allow-list pattern, not a new mechanism. See [tech-debt note](../tech-debt/account-manager-granular-rbac-redaction.md).
+- **ACCOUNT_MANAGER money-field redaction and client scope** — accepted PR #149 known issues; resolved by PR #215 (20.3): client-mechanic studio-client linkage gate on every route (reads included), money-field redaction on task templates/shows/show creators/platforms/submitted-task content (`projectAllowList()` + per-route gating), and `StudioShiftController` GET routes gated to exclude `ACCOUNT_MANAGER`.
 - **Client operations portal** — dedicated client identity, access model, and portal foundation.
 - **Account manager show-quality review** — AM review workflow for creator mapping and mechanics quality.
 - **Client mechanics review** — client-facing mechanics submission, review, and approval.
@@ -70,7 +70,6 @@ These are explicitly out of Phase 4 scope and candidates for Phase 6:
 
 | Item                                                                                    | Source                                                                                                                                                         | Candidate Track |
 | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `ACCOUNT_MANAGER` `StudioShiftController` `hourlyRate` exposure to all members (rest resolved by PR #215) | Accepted PR #149 known issues; see [tech-debt note](../tech-debt/account-manager-granular-rbac-redaction.md)                                                  | D               |
 | Advanced compensation **rule engine** (automated OT, tiered commission, bonus formulas) | Phase 4 ships the data model + manual CRUD; Phase 6 adds the computation engine                                                                                | A               |
 | Creator HR & operations (HRMS, fixed cost tracking)                                     | Phase 4 out-of-scope, ideation                                                                                                                                 | A               |
 | Full-text search & admin UX searchability                                               | Phase 4 out-of-scope, ideation                                                                                                                                 | C (or either)   |

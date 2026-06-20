@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import { PageLayout } from '@/components/layouts/page-layout';
 import {
   DashboardDutyCoverageCards,
@@ -52,8 +54,9 @@ function StudioDashboardPage() {
   const selectedDate = search.date ?? todayDate;
   const isSelectedToday = selectedDate === todayDate;
 
-  const { hasAccess } = useStudioAccess(studioId);
+  const { hasAccess, role } = useStudioAccess(studioId);
   const isStudioAdmin = hasAccess('shifts');
+  const isAccountManager = role === STUDIO_ROLE.ACCOUNT_MANAGER;
 
   const { dayStart, dayStartIso, dayEndIso } = useMemo(
     // Local-runtime operational day window for dashboard UX; API receives ISO instants.
@@ -131,13 +134,15 @@ function StudioDashboardPage() {
             totalShows={pagination.total}
             isLoading={isTodayShowsLoading}
           />
-          <DashboardDutyCoverageCards
-            studioId={studioId}
-            selectedDate={selectedDate}
-            previewUntil={previewUntil}
-            isSelectedToday={isSelectedToday}
-            dutyReferenceTime={dutyReferenceTime}
-          />
+          {!isAccountManager && (
+            <DashboardDutyCoverageCards
+              studioId={studioId}
+              selectedDate={selectedDate}
+              previewUntil={previewUntil}
+              isSelectedToday={isSelectedToday}
+              dutyReferenceTime={dutyReferenceTime}
+            />
+          )}
         </div>
         <OperationalDayShowListCard
           studioId={studioId}

@@ -74,6 +74,16 @@ describe('studioClientMechanicController', () => {
       expect(mechanicService.listMechanics).not.toHaveBeenCalled();
     });
 
+    it('throws ForbiddenException when studio has no active shows for client, even on a read', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(
+        controller.index(studioId, clientId, { skip: 0, take: 10, sort: 'desc' } as any),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(mechanicService.listMechanics).not.toHaveBeenCalled();
+    });
+
     it('lists client-scoped mechanics with filters', async () => {
       clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       mechanicService.listMechanics.mockResolvedValue({ data: [], total: 0 });
@@ -96,7 +106,27 @@ describe('studioClientMechanicController', () => {
   });
 
   describe('show', () => {
+    it('404s when the client does not exist', async () => {
+      clientService.getClientByUid.mockResolvedValue(null);
+
+      await expect(controller.show(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mechanicService.getMechanic).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when studio has no active shows for client, even on a read', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(controller.show(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(mechanicService.getMechanic).not.toHaveBeenCalled();
+    });
+
     it('404s when the mechanic is not under the client', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       mechanicService.getMechanic.mockResolvedValue(null);
 
       await expect(controller.show(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(

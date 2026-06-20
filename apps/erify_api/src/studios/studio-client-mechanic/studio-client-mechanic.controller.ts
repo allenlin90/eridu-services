@@ -36,7 +36,8 @@ import { StudioService } from '@/models/studio/studio.service';
  * Routes are studio-scoped (the StudioGuard enforces membership + role on
  * `:studioId`) but the catalog itself belongs to the global `Client`, so edits
  * propagate cross-studio (B2). The shows-based studio↔client linkage gate is
- * enforced on writes; this controller validates that the studio has active shows for the client.
+ * enforced on every route, reads included — a studio that knows another
+ * client's UID must not be able to read or write that client's catalog.
  */
 @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ACCOUNT_MANAGER])
 @Controller('studios/:studioId/clients/:clientId/mechanics')
@@ -71,11 +72,12 @@ export class StudioClientMechanicController extends BaseStudioController {
   @ReadBurstThrottle()
   @ZodPaginatedResponse(clientMechanicDto)
   async index(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Query() query: ListClientMechanicsQueryDto,
   ) {
     await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
 
     const { data, total } = await this.clientMechanicService.listMechanics({
       clientUid: clientId,
@@ -92,10 +94,13 @@ export class StudioClientMechanicController extends BaseStudioController {
   @Get(':mechanicId')
   @ZodResponse(clientMechanicDto)
   async show(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Param('mechanicId', new UidValidationPipe(ClientMechanicService.UID_PREFIX, 'ClientMechanic')) mechanicId: string,
   ) {
+    await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
+
     const mechanic = await this.clientMechanicService.getMechanic({
       mechanicUid: mechanicId,
       clientUid: clientId,
