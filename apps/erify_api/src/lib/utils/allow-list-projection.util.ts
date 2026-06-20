@@ -24,3 +24,26 @@ export function projectAllowList<Shape extends z.ZodRawShape, T extends Record<s
   }
   return result;
 }
+
+/**
+ * Drops the legacy `audit` sidecar (`metadata.audit.snapshot_overrides[]`,
+ * see `legacy-snapshot-merger.ts`) from a metadata blob. Use this alongside
+ * `projectAllowList` when `metadata` itself stays allow-listed (e.g. because
+ * the field isn't `.nullable()` and can't be forced to `null`) but the
+ * record can carry an audit trail of historical money values — the override
+ * entries themselves are not a fixed field name `projectAllowList` can
+ * allow-list against.
+ */
+export function stripLegacyAuditSidecar<T extends Record<string, unknown>>(metadata: T): T;
+export function stripLegacyAuditSidecar<T extends Record<string, unknown>>(
+  metadata: T | null | undefined,
+): T | null | undefined;
+export function stripLegacyAuditSidecar<T extends Record<string, unknown>>(
+  metadata: T | null | undefined,
+): T | null | undefined {
+  if (!metadata || typeof metadata !== 'object' || !('audit' in metadata)) {
+    return metadata;
+  }
+  const { audit: _audit, ...rest } = metadata;
+  return rest as T;
+}

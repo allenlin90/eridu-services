@@ -44,7 +44,7 @@ import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
-import { projectAllowList } from '@/lib/utils/allow-list-projection.util';
+import { projectAllowList, stripLegacyAuditSidecar } from '@/lib/utils/allow-list-projection.util';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import {
   CreateStudioShowDto,
@@ -340,8 +340,14 @@ export class StudioShowController extends BaseStudioController {
     let mapped = creators.map((item) => studioShowCreatorListItemDto.parse(item));
     const role = request?.studioMembership?.role;
     if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
-      mapped = mapped.map((c) =>
-        projectAllowList(studioShowCreatorListItemApiSchema, c, SHOW_CREATOR_LIST_ITEM_ALLOWED_FOR_AM));
+      mapped = mapped.map((c) => ({
+        ...projectAllowList(studioShowCreatorListItemApiSchema, c, SHOW_CREATOR_LIST_ITEM_ALLOWED_FOR_AM),
+        // `metadata` stays allow-listed (it's not `.nullable()` on the public
+        // schema), but it can carry `audit.snapshot_overrides[]` — a sidecar
+        // of historical agreed_rate/commission_rate/compensation_type values
+        // (see legacy-snapshot-merger.ts) — so strip that key specifically.
+        metadata: stripLegacyAuditSidecar(c.metadata),
+      }));
     }
     return mapped;
   }

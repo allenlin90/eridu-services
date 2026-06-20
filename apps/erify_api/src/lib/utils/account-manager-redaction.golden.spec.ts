@@ -25,6 +25,17 @@ import {
  * allow-list. This scans `schema.shape` directly rather than a hardcoded
  * field list, so it catches a new money field the moment it's added to the
  * schema — even before anyone remembers to update the controller.
+ *
+ * Blind spot: this only catches money hiding behind a money-pattern field
+ * name*. A `metadata: z.record(...)` field can carry money values under
+ * generic keys — e.g. `metadata.audit.snapshot_overrides[]`'s
+ * `old_value`/`new_value` for `agreed_rate`/`commission_rate` (see
+ * `legacy-snapshot-merger.ts`) — and this scan can't see inside it. If an
+ * allow-list permits `metadata` because the field isn't `.nullable()`, the
+ * call site must independently strip that sidecar with
+ * `stripLegacyAuditSidecar()` (see `studio-show.controller.ts`'s `creators()`
+ * for the reference call site, locked by a spec test asserting the sidecar
+ * is gone — not by this file).
  */
 const MONEY_FIELD_PATTERN = /rate|commission|compensation|gmv|ctr|cto/i;
 

@@ -407,6 +407,33 @@ describe('studioShowController', () => {
       expect(response[0].commission_rate).toBeNull();
       expect(response[0].compensation_type).toBeNull();
     });
+
+    it('should strip the legacy audit sidecar from metadata in show creators list, since it carries historical rate values', async () => {
+      taskOrchestrationServiceMock.getStudioShow.mockResolvedValue({ uid: showId });
+      showOrchestrationServiceMock.listCreatorsForShow.mockResolvedValue([
+        {
+          id: 'show_mc_1',
+          creatorId: 'creator_1',
+          creatorName: 'Alice',
+          creatorAliasName: 'Ali',
+          note: 'host',
+          agreedRate: '150.00',
+          compensationType: 'FIXED',
+          commissionRate: '10.00',
+          metadata: {
+            tags: ['vip'],
+            audit: {
+              snapshot_overrides: [
+                { field: 'agreed_rate', old_value: '100.00', new_value: '150.00' },
+              ],
+            },
+          },
+        },
+      ]);
+
+      const response = await controller.creators(studioId, showId, mockAMRequest);
+      expect(response[0].metadata).toEqual({ tags: ['vip'] });
+    });
   });
 
   describe('tasks', () => {
