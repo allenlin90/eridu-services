@@ -26,7 +26,7 @@ The prior revision specified a four-entity catalog (`ClientMechanic`, `ClientMec
 | --- | --- |
 | Model | Keep the client-owned catalog (drop PR#86's template-local metadata storage; reuse its Loop×Mechanic matrix UX). Ship **one mutable `ClientMechanic` per client**. |
 | B1 | **Mechanic-bearing templates are client-bound.** `TaskTemplate` is studio-scoped today; add an optional `clientId` so one client's cues never leak onto another client's shows. |
-| B2 | **Catalog scope: client-global, studio-authorized writes.** `ClientMechanic` is owned by the global `Client` (single truth across studios); writes are authorized only to studio members linked to that client. Cross-studio propagation is intended. |
+| B2 | **Catalog scope: client-global, studio-authorized writes.** `ClientMechanic` is owned by the global `Client` (single truth across studios); writes are authorized only to studio members linked to that client. Cross-studio propagation is intended. **Deferral:** the shows-based studio↔client linkage gate is *not* in 20.1 (which scopes writes by client-existence only); it lands in **20.3** and **must precede 20.5** (live mechanic assignment), since a mechanic assigned into a bound template becomes cross-studio-writable moderator content. |
 | B3 | **`ACCOUNT_MANAGER` edits the catalog, read-only on operations** (task templates, shows, creator mapping) with money fields redacted. ADMIN/MANAGER retain catalog write. |
 | S1 | **Staleness without versioning:** a monotonic `contentRevision` int on `ClientMechanic`, bumped on content edit, is frozen into each template snapshot's `mechanic_ref`. Coverage compares frozen-vs-current revision exactly — no version history needed. |
 | S2 | **Coverage is queryable:** a denormalized `TaskTemplateMechanicRef` link table (template/snapshot ↔ mechanic + loop), written on template save, backs both coverage directions — never a JSONB scan. |
@@ -71,7 +71,7 @@ The stable identity for a reusable moderation instruction (product cue, promotio
 - `version` — optimistic-lock integer (row concurrency, **not** content history)
 - `content_revision` — monotonic integer, bumped whenever `instruction_label`/`instruction_body` change (S1)
 - `metadata`
-- `created_by`, `created_at`, `updated_at`
+- `created_at`, `updated_at` (actor history is not denormalized on the row; trace via the `Audit` model if a future flow needs it)
 
 Identity comes from the UID; the label may be generic. Editing content bumps `content_revision` and propagates to every linked loop's resolved field; it does **not** mutate already-frozen template snapshots.
 
@@ -127,7 +127,7 @@ Additive, validated in `@eridu/api-types/task-management`; the exact key is fina
 
 A studio role for client service / account-management users (B3).
 
-- **Writes**: client mechanics (create / edit / retire), authorized to studio members linked to that client (B2).
+- **Writes**: client mechanics (create / edit / retire). The studio↔client linkage authorization (B2) is **deferred to 20.3**; 20.1 scopes writes by client existence only.
 - **Reads (money-redacted)**: task templates, shows / show context, creator mapping. Reads use an **allow-list projection** that strips rate / commission / compensation fields (S3).
 - **No access**: members, shifts, compensation, economics; no operational mutations (shows, shifts, creator assignments, tasks, task templates, members, creators).
 
@@ -164,7 +164,7 @@ Dedicated tables for the catalog and the coverage link; no JSON metadata for cor
 - `TaskTemplateMechanicRef` — denormalized link written on template save: `(template_id, snapshot_id?, mechanic_id, group/loop_id)` with indexes for both coverage directions (S2).
 - `TaskTemplate` gains an optional `clientId` + relation (B1).
 
-Routes follow the existing shallow studio-scoped style while respecting global client ownership; external IDs are UID-based:
+Routes are studio-scoped for membership/RBAC but **nest under the owning `:clientId`** because the global `Client` — not the studio — is the catalog's ownership and (eventually, B2) authorization boundary. This is an intentional exception to the usual single-segment studio collection style: the `:clientId` segment is load-bearing, scoping every lookup to the owning client. External IDs are UID-based:
 
 ```text
 GET    /studios/:studioId/clients/:clientId/mechanics

@@ -25,4 +25,5 @@ export const UID_PREFIXES = {
   STUDIO_SHIFT: 'ssh',
   STUDIO_SHIFT_BLOCK: 'ssb',
   AUDIT: 'aud',
+  CLIENT_MECHANIC: 'cmech',
 } as const;

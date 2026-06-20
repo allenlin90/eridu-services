@@ -95,6 +95,8 @@ When in doubt, default to Audit. Migrating a critical signal *out* of `metadata`
 
 New migrations from official tooling only (`prisma migrate dev`, `drizzle generate`). Custom SQL in generated files with `-- CUSTOM SQL START/END` comments. Never rewrite deployed migrations.
 
+**Name migrations by purpose, not by plan.** The `--name` describes the schema change in domain terms (`client_mechanic_foundation`, `add_performance_metrics_to_show_platform`). Do NOT bake PR numbers, roadmap rows, ticket IDs, phase labels, or implementation/plan specifics into the name (`pr_20_1_*`, `phase4_*`, `JIRA_123_*`) — that noise outlives the plan and means nothing once merged. The folder name is permanent and shared; keep it a stable, purpose-only description.
+
 > 📖 For data-only backfills: choose migration SQL OR operational script, not both.
 
 ## 13. Seed Compatibility Gate

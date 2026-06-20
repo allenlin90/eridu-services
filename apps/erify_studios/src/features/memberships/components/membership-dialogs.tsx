@@ -91,11 +91,14 @@ export function MembershipCreateDialog({
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(STUDIO_ROLE).map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </SelectItem>
-                ))}
+                {Object.values(STUDIO_ROLE)
+                  // ACCOUNT_MANAGER assignment ships with the AM roster work (20.3); hide it here until then.
+                  .filter((role) => role !== STUDIO_ROLE.ACCOUNT_MANAGER)
+                  .map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           ),
@@ -181,11 +184,14 @@ export function MembershipUpdateDialog({
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(STUDIO_ROLE).map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </SelectItem>
-                ))}
+                {Object.values(STUDIO_ROLE)
+                  // ACCOUNT_MANAGER assignment ships with the AM roster work (20.3); hide it here until then.
+                  .filter((role) => role !== STUDIO_ROLE.ACCOUNT_MANAGER)
+                  .map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           ),
