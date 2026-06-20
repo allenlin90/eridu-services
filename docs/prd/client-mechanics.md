@@ -53,7 +53,7 @@ The domain object is the **mechanic**: a reusable, client-owned moderation instr
 
 ### Manage mechanics
 - *As an account manager, I can browse a client's mechanics, create/edit/retire them, and search/filter by active/retired.*
-  - **AC**: create, edit (bumps `contentRevision`), and retire are available to `ACCOUNT_MANAGER` (and ADMIN/MANAGER) for clients they're linked to; retire preserves history; hard-delete is rejected while referenced.
+  - **AC**: create, edit (bumps `contentRevision`), and retire are available to `ACCOUNT_MANAGER` (and ADMIN/MANAGER) for clients they're linked to; retire preserves history and is reversible. Hard-delete is a separate, stricter action (20.2) restricted to `ADMIN` only — not part of the AM/MANAGER catalog-write mandate; its referenced-mechanic guard is deferred to 20.5 (the link table that makes "referenced" checkable doesn't exist before then).
 
 ### Assign mechanics across loops
 - *As a manager, I bind a moderation template to a client and assign the client's mechanics into loops via a Loop×Mechanic matrix, reusing one mechanic across multiple loops.*
