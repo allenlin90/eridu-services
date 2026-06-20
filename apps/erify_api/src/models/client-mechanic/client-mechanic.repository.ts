@@ -46,7 +46,11 @@ export class ClientMechanicRepository extends BaseRepository<
     clientUid: string;
   }): Promise<Prisma.ClientMechanicGetPayload<{ include: typeof clientMechanicDefaultInclude }> | null> {
     return this.model.findFirst({
-      where: { uid: params.uid, client: { uid: params.clientUid }, deletedAt: null },
+      where: {
+        uid: params.uid,
+        client: { uid: params.clientUid, deletedAt: null },
+        deletedAt: null,
+      },
       include: clientMechanicDefaultInclude,
     }) as Promise<Prisma.ClientMechanicGetPayload<{ include: typeof clientMechanicDefaultInclude }> | null>;
   }
@@ -114,7 +118,12 @@ export class ClientMechanicRepository extends BaseRepository<
 
     try {
       return await this.prisma.clientMechanic.update({
-        where: { uid, version, client: { uid: clientUid }, deletedAt: null },
+        where: {
+          uid,
+          version,
+          client: { uid: clientUid, deletedAt: null },
+          deletedAt: null,
+        },
         data,
         include: clientMechanicDefaultInclude,
       });
