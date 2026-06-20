@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 
 import type { ClientMechanicApiResponse } from '@eridu/api-types/client-mechanics';
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
@@ -34,6 +35,7 @@ import {
 } from '@/features/client-mechanics/config/mechanic-columns';
 import { useClientMechanics } from '@/features/client-mechanics/hooks/use-client-mechanics';
 import { getClients } from '@/features/clients/api/get-clients';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 const clientMechanicsRouteApi = getRouteApi('/studios/$studioId/client-mechanics');
 
@@ -51,6 +53,8 @@ export function ClientMechanicsPage() {
   const { studioId } = clientMechanicsRouteApi.useParams();
   const search = clientMechanicsRouteApi.useSearch();
   const navigate = clientMechanicsRouteApi.useNavigate();
+  const { role } = useStudioAccess(studioId);
+  const canDelete = role === STUDIO_ROLE.ADMIN;
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingMechanic, setEditingMechanic] = useState<Mechanic | null>(null);
@@ -163,8 +167,9 @@ export function ClientMechanicsPage() {
       onReactivate: handleReactivate,
       onDelete: (mech) => setDeletingMechanic(mech),
       isActionPending: createMutation.isPending || updateMutation.isPending || deleteMutation.isPending,
+      canDelete,
     });
-  }, [createMutation.isPending, updateMutation.isPending, deleteMutation.isPending, handleReactivate]);
+  }, [createMutation.isPending, updateMutation.isPending, deleteMutation.isPending, handleReactivate, canDelete]);
 
   return (
     <PageLayout

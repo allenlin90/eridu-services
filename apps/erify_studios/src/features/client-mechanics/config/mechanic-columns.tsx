@@ -12,6 +12,11 @@ type GetMechanicColumnsProps = {
   onReactivate: (mechanic: Mechanic) => void;
   onDelete: (mechanic: Mechanic) => void;
   isActionPending?: boolean;
+  /**
+   * Hard-delete is ADMIN-only on the backend; hide the action for everyone else
+   * rather than showing a button that always 403s.
+   */
+  canDelete?: boolean;
 };
 
 export function getMechanicColumns({
@@ -20,6 +25,7 @@ export function getMechanicColumns({
   onReactivate,
   onDelete,
   isActionPending = false,
+  canDelete = false,
 }: GetMechanicColumnsProps): ColumnDef<Mechanic>[] {
   return [
     {
@@ -139,16 +145,18 @@ export function getMechanicColumns({
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              onClick={() => onDelete(mechanic)}
-              disabled={isActionPending}
-              title="Delete Mechanic"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={() => onDelete(mechanic)}
+                disabled={isActionPending}
+                title="Delete Mechanic"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         );
       },

@@ -13,6 +13,11 @@ vi.mock('sonner', () => ({
   },
 }));
 
+const mockUseStudioAccess = vi.fn(() => ({ role: 'admin', hasAccess: () => true }));
+vi.mock('@/lib/hooks/use-studio-access', () => ({
+  useStudioAccess: () => mockUseStudioAccess(),
+}));
+
 const mockNavigate = vi.fn();
 const mockParams = { studioId: 'studio_123' };
 const mockSearch = { client_id: 'client_abc' };
@@ -229,6 +234,16 @@ describe('clientMechanicsPage', () => {
         version: 1,
       },
     });
+  });
+
+  it('hides the delete action for non-admin roles since the backend rejects it', async () => {
+    mockUseStudioAccess.mockReturnValueOnce({ role: 'account_manager', hasAccess: () => true });
+
+    render(<ClientMechanicsPage />);
+
+    expect(screen.queryByTitle('Delete Mechanic')).not.toBeInTheDocument();
+    // Retire/edit/reactivate stay available — only hard-delete is ADMIN-only.
+    expect(screen.getAllByTitle('Edit Mechanic').length).toBeGreaterThan(0);
   });
 
   it('opens delete dialog on trash action and confirms', async () => {
