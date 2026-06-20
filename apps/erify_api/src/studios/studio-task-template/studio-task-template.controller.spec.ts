@@ -114,7 +114,7 @@ describe('studioTaskTemplateController', () => {
         uid: id,
         studio: { uid: studioId },
         deletedAt: null,
-      });
+      }, { client: true });
     });
   });
 

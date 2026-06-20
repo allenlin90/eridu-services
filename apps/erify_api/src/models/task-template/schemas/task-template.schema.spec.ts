@@ -1,3 +1,5 @@
+import { updateStudioTaskTemplateSchema } from '@eridu/api-types/task-management';
+
 import { listTaskTemplatesQuerySchema } from './task-template.schema';
 
 describe('taskTemplateQuerySchema', () => {
@@ -37,5 +39,33 @@ describe('taskTemplateQuerySchema', () => {
       includeDeleted: false,
       sort: 'name:asc',
     });
+  });
+});
+
+describe('updateStudioTaskTemplateSchema', () => {
+  it('accepts a binding-only update (client_id set, no other field)', () => {
+    const result = updateStudioTaskTemplateSchema.safeParse({
+      version: 1,
+      client_id: 'client_123',
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts an unbinding-only update (client_id explicitly null, no other field)', () => {
+    const result = updateStudioTaskTemplateSchema.safeParse({
+      version: 1,
+      client_id: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('still rejects an update with no real change at all', () => {
+    const result = updateStudioTaskTemplateSchema.safeParse({
+      version: 1,
+    });
+
+    expect(result.success).toBe(false);
   });
 });

@@ -100,8 +100,8 @@ export const updateStudioTaskTemplateSchema = createTaskTemplateSchema
     version: z.number().int(),
   })
   .refine(
-    (data) => data.name || data.description || data.task_type || data.schema,
-    'At least one field (name, description, task_type, or schema) must be provided',
+    (data) => data.name || data.description || data.task_type || data.schema || data.client_id !== undefined,
+    'At least one field (name, description, task_type, schema, or client_id) must be provided',
   );
 
 export type CreateStudioTaskTemplateInput = z.infer<typeof createStudioTaskTemplateSchema>;
@@ -257,8 +257,8 @@ export const updateAdminTaskTemplateSchema = createTaskTemplateSchema
     version: z.number().int(),
   })
   .refine(
-    (data) => data.name || data.description || data.task_type || data.schema,
-    'At least one field (name, description, task_type, or schema) must be provided',
+    (data) => data.name || data.description || data.task_type || data.schema || data.client_id !== undefined,
+    'At least one field (name, description, task_type, schema, or client_id) must be provided',
   );
 
 export type UpdateAdminTaskTemplateInput = z.infer<typeof updateAdminTaskTemplateSchema>;

@@ -98,7 +98,7 @@ export class TaskTemplateService extends BaseModelService {
       ...(payload.clientUid && { client: { connect: { uid: payload.clientUid } } }),
     };
 
-    return this.taskTemplateRepository.create(data);
+    return this.taskTemplateRepository.create(data, { client: true });
   }
 
   async updateTemplateWithSnapshot(
@@ -155,7 +155,7 @@ export class TaskTemplateService extends BaseModelService {
           ...(clientConnection && { client: clientConnection }),
         };
 
-        return await this.taskTemplateRepository.updateWithVersionCheck(params, data);
+        return await this.taskTemplateRepository.updateWithVersionCheck(params, data, { client: true });
       }
 
       const data = {
@@ -164,7 +164,7 @@ export class TaskTemplateService extends BaseModelService {
         ...(clientConnection && { client: clientConnection }),
       };
 
-      return await this.taskTemplateRepository.update(params, data);
+      return await this.taskTemplateRepository.update(params, data, { client: true });
     } catch (error) {
       if (error instanceof VersionConflictError) {
         throw HttpError.conflict(

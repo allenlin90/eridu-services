@@ -74,7 +74,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
     @Param('id', new UidValidationPipe(TaskTemplateService.UID_PREFIX, 'Task Template'))
     id: string,
   ) {
-    const taskTemplate = await this.taskTemplateService.findOne({ uid: id });
+    const taskTemplate = await this.taskTemplateService.findOne({ uid: id }, { client: true });
     this.ensureResourceExists(taskTemplate, 'Task Template', id);
     return taskTemplate;
   }

@@ -91,7 +91,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
       uid: id,
       studio: { uid: studioId },
       deletedAt: null,
-    });
+    }, { client: true });
 
     if (!taskTemplate) {
       throw HttpError.notFound('Task template not found');
