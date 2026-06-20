@@ -83,6 +83,8 @@ export type ModelServiceTestConfig<TService, TRepository> = {
   utilityMock?: Partial<jest.Mocked<UtilityService>>;
   /** Additional providers to include in the test module */
   additionalProviders?: any[];
+  /** Additional module imports (e.g. ClsModule.forRoot(...) for @Transactional() service methods) */
+  imports?: any[];
 };
 
 /**
@@ -94,6 +96,7 @@ export type ModelServiceTestConfig<TService, TRepository> = {
  * @param config.repositoryMock - Mock instance for the repository
  * @param config.utilityMock - Optional mock for UtilityService
  * @param config.additionalProviders - Additional providers for the test module
+ * @param config.imports - Additional module imports (e.g. ClsModule.forRoot(...) for @Transactional() service methods)
  * @returns A compiled TestingModule
  *
  * @example
@@ -112,6 +115,7 @@ export async function createModelServiceTestModule<TService, TRepository>({
   repositoryMock,
   utilityMock = createMockUtilityService(),
   additionalProviders = [],
+  imports = [],
 }: ModelServiceTestConfig<TService, TRepository>): Promise<TestingModule> {
   const providers: any[] = [
     serviceClass,
@@ -128,6 +132,7 @@ export async function createModelServiceTestModule<TService, TRepository>({
   ];
 
   return Test.createTestingModule({
+    imports,
     providers,
   }).compile();
 }

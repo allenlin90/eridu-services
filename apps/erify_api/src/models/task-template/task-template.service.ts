@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import type { TaskStatus } from '@prisma/client';
 
 import {
@@ -73,6 +74,7 @@ export class TaskTemplateService extends BaseModelService {
     return this.taskTemplateRepository.create(data);
   }
 
+  @Transactional()
   async createTemplateWithSnapshot(payload: CreateTaskTemplatePayload): ReturnType<TaskTemplateRepository['create']> {
     const schemaWithTaskType = this.withTaskTypeInSchema(payload.currentSchema, payload.taskType);
     const sharedFieldsByKey = await this.getSharedFieldsByKey(payload.studioId);
@@ -101,6 +103,7 @@ export class TaskTemplateService extends BaseModelService {
     return this.taskTemplateRepository.create(data, { client: true });
   }
 
+  @Transactional()
   async updateTemplateWithSnapshot(
     uid: string,
     studioId: string,

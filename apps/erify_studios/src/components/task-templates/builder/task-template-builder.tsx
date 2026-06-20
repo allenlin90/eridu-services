@@ -747,10 +747,19 @@ export function TaskTemplateBuilder({
                                             onCheckedChange={(checked) => {
                                               const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
                                               if (checked) {
-                                                // Add mechanic field
+                                                // Add mechanic field. v1 requires globally-unique
+                                                // keys, so the same mechanic checked into a second
+                                                // loop needs a loop-scoped key; v2 identity is via
+                                                // `id`, so the canonical key can repeat across loops
+                                                // (mirrors the shared-field insertion handler above).
+                                                const engine = getSchemaEngine(currentTemplate);
+                                                const isV2 = engine === 'task_template_v2';
+                                                const baseKey = mechanic.id.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                                                const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
+                                                const itemKey = isV2 ? baseKey : createUniqueSharedFieldKey(baseKey, usedKeys, loop.id);
                                                 const newField: FieldItem = {
                                                   id: createTaskTemplateFieldId(),
-                                                  key: mechanic.id.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+                                                  key: itemKey,
                                                   type: 'checkbox' as any,
                                                   label: mechanic.instruction_label,
                                                   description: mechanic.instruction_body,

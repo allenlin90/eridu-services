@@ -233,6 +233,7 @@ describe('taskTemplateRepository', () => {
         id: BigInt(1),
         uid: 'ttpl_1',
         name: 'Template 1',
+        clientId: BigInt(5),
         currentSchema: {
           items: [
             {
@@ -281,6 +282,14 @@ describe('taskTemplateRepository', () => {
       // Verify template creation
       expect(prisma.taskTemplate.create).toHaveBeenCalled();
 
+      // Verify mechanics are resolved scoped to the template's own client,
+      // not just by UID -- a cross-client mechanic_id must not resolve.
+      expect(prisma.clientMechanic.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ clientId: BigInt(5) }),
+        }),
+      );
+
       // Verify deletion of old refs (live + snapshot)
       expect(prisma.taskTemplateMechanicRef.deleteMany).toHaveBeenCalledWith({
         where: { templateId: BigInt(1), snapshotId: null },
@@ -317,6 +326,7 @@ describe('taskTemplateRepository', () => {
         id: BigInt(1),
         uid: 'ttpl_1',
         name: 'Template 1 Updated',
+        clientId: BigInt(5),
         currentSchema: {
           items: [
             {
@@ -371,6 +381,69 @@ describe('taskTemplateRepository', () => {
           },
         ],
       });
+    });
+
+    it('rejects a mechanic_id that does not resolve under the template\'s own client, even if mechanic_ref.client_id in the JSON claims otherwise', async () => {
+      const templateData = {
+        id: BigInt(1),
+        uid: 'ttpl_1',
+        name: 'Template 1',
+        clientId: BigInt(5),
+        currentSchema: {
+          items: [
+            {
+              id: 'fld_1',
+              key: 'test_mech',
+              type: 'checkbox',
+              group: 'l1',
+              mechanic_ref: {
+                client_id: 'client_1',
+                mechanic_id: 'cmech_other_client',
+                content_revision: 2,
+              },
+            },
+          ],
+        },
+      };
+
+      prisma.taskTemplate.update.mockResolvedValue(templateData);
+      // The mechanic exists, but under a different client -- the query
+      // scoped to clientId: BigInt(5) finds nothing for it.
+      prisma.clientMechanic.findMany.mockResolvedValue([]);
+
+      await expect(
+        repository.update({ uid: 'ttpl_1' }, { currentSchema: templateData.currentSchema } as any),
+      ).rejects.toThrow('ClientMechanic not found for UID: cmech_other_client');
+    });
+
+    it('rejects mechanic refs on a template with no client binding', async () => {
+      const templateData = {
+        id: BigInt(1),
+        uid: 'ttpl_1',
+        name: 'Template 1',
+        clientId: null,
+        currentSchema: {
+          items: [
+            {
+              id: 'fld_1',
+              key: 'test_mech',
+              type: 'checkbox',
+              group: 'l1',
+              mechanic_ref: {
+                client_id: 'client_1',
+                mechanic_id: 'cmech_1',
+                content_revision: 2,
+              },
+            },
+          ],
+        },
+      };
+
+      prisma.taskTemplate.update.mockResolvedValue(templateData);
+
+      await expect(
+        repository.update({ uid: 'ttpl_1' }, { currentSchema: templateData.currentSchema } as any),
+      ).rejects.toThrow('Cannot link mechanic refs: template has no client binding');
     });
   });
 });

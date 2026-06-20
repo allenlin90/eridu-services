@@ -1,7 +1,13 @@
+import { Module } from '@nestjs/common';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { ClsModule } from 'nestjs-cls';
+
 import { TaskTemplateRepository } from './task-template.repository';
 import { TaskTemplateService } from './task-template.service';
 
 import { StudioService } from '@/models/studio/studio.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import {
   createMockRepository,
   createMockUtilityService,
@@ -10,6 +16,16 @@ import {
 import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
+
+const mockPrismaForCls = {
+  $transaction: jest.fn(async (callback: any) => await callback({})),
+};
+
+@Module({
+  providers: [{ provide: PrismaService, useValue: mockPrismaForCls }],
+  exports: [PrismaService],
+})
+class MockPrismaModule {}
 
 describe('taskTemplateService', () => {
   let service: TaskTemplateService;
@@ -29,6 +45,20 @@ describe('taskTemplateService', () => {
       repositoryClass: TaskTemplateRepository,
       repositoryMock,
       utilityMock,
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       additionalProviders: [
         {
           provide: StudioService,

@@ -64,12 +64,12 @@ export class TaskTemplateRepository extends BaseRepository<
     });
 
     if (data.currentSchema) {
-      await this.syncMechanicRefsForTemplate(template.id, data.currentSchema);
+      await this.syncMechanicRefsForTemplate(template.id, data.currentSchema, null, template.clientId);
     }
 
     if (template.snapshots && template.snapshots.length > 0) {
       const snapshot = template.snapshots[0];
-      await this.syncMechanicRefsForTemplate(template.id, snapshot.schema, snapshot.id);
+      await this.syncMechanicRefsForTemplate(template.id, snapshot.schema, snapshot.id, template.clientId);
     }
 
     return template;
@@ -96,7 +96,7 @@ export class TaskTemplateRepository extends BaseRepository<
     });
 
     if (data.currentSchema) {
-      await this.syncMechanicRefsForTemplate(template.id, data.currentSchema);
+      await this.syncMechanicRefsForTemplate(template.id, data.currentSchema, null, template.clientId);
     }
 
     return template;
@@ -126,13 +126,13 @@ export class TaskTemplateRepository extends BaseRepository<
       });
 
       if (data.currentSchema) {
-        await this.syncMechanicRefsForTemplate(template.id, data.currentSchema);
+        await this.syncMechanicRefsForTemplate(template.id, data.currentSchema, null, template.clientId);
       }
 
       if (template.snapshots && template.snapshots.length > 0) {
         const newSnapshot = template.snapshots.find((s) => s.version === template.version);
         if (newSnapshot) {
-          await this.syncMechanicRefsForTemplate(template.id, newSnapshot.schema, newSnapshot.id);
+          await this.syncMechanicRefsForTemplate(template.id, newSnapshot.schema, newSnapshot.id, template.clientId);
         }
       }
 
@@ -161,6 +161,7 @@ export class TaskTemplateRepository extends BaseRepository<
     templateId: bigint,
     schema: any,
     snapshotId?: bigint | null,
+    templateClientId?: bigint | null,
   ): Promise<void> {
     // 1. Delete existing refs for this target
     await this.txHost.tx.taskTemplateMechanicRef.deleteMany({
@@ -195,10 +196,19 @@ export class TaskTemplateRepository extends BaseRepository<
       return;
     }
 
-    // 3. Find database IDs of these mechanics
+    if (!templateClientId) {
+      throw new Error('Cannot link mechanic refs: template has no client binding');
+    }
+
+    // 3. Find database IDs of these mechanics, scoped to the template's own
+    // client -- the submitted JSON's mechanic_ref.client_id is untrusted (a
+    // crafted/stale payload could claim a mechanic that actually belongs to
+    // a different client); resolving by clientId here makes a cross-client
+    // mechanic_id simply fail to resolve instead of silently linking it.
     const mechanics = await this.txHost.tx.clientMechanic.findMany({
       where: {
         uid: { in: refs.map((r) => r.mechanicUid) },
+        clientId: templateClientId,
         deletedAt: null,
       },
       select: { id: true, uid: true },

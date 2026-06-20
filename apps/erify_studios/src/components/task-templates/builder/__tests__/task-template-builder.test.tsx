@@ -400,5 +400,50 @@ describe('taskTemplateBuilder v2 field ids', () => {
         ],
       }));
     });
+
+    it('generates a loop-scoped key for v1 templates when the same mechanic is checked into a second loop', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const v1TwoLoopTemplate: BuilderTemplateSchemaType = {
+        name: 'V1 moderation template',
+        description: '',
+        task_type: 'ACTIVE',
+        client_id: 'client_abc',
+        metadata: {
+          loops: [
+            { id: 'l1', name: 'Loop 1', durationMin: 15 },
+            { id: 'l2', name: 'Loop 2', durationMin: 15 },
+          ],
+        },
+        items: [
+          {
+            id: 'item_1',
+            key: 'cmech_active',
+            type: 'checkbox',
+            label: 'Product Promo Active',
+            description: 'Talk about product active for 5 minutes.',
+            required: true,
+            group: 'l1',
+            mechanic_ref: {
+              client_id: 'client_abc',
+              mechanic_id: 'cmech_active',
+              content_revision: 2,
+            },
+          },
+        ],
+      };
+
+      render(<TaskTemplateBuilder template={v1TwoLoopTemplate} onChange={onChange} />);
+
+      const checkbox = screen.getByRole('checkbox', { name: 'Toggle Speaking Rule Active for Loop 2' });
+      await user.click(checkbox);
+
+      const updatedTemplate = onChange.mock.calls[0][0];
+      const keys = updatedTemplate.items.map((item: { key: string }) => item.key);
+      // Both fields reference the same mechanic but must have distinct keys --
+      // v1 requires globally-unique item keys within a template.
+      expect(keys).toEqual(['cmech_active', 'cmech_active_l2']);
+      expect(new Set(keys).size).toBe(keys.length);
+    });
   });
 });
