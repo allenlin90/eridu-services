@@ -18,6 +18,8 @@ export type StudioTaskTemplateListRow = {
   version: number;
   updated_at: string;
   template: TaskTemplateDto;
+  client_id: string | null;
+  client_name: string | null;
 };
 
 function readUiSchema(template: TaskTemplateDto): Partial<UiSchema> {
@@ -49,5 +51,7 @@ export function toStudioTaskTemplateListRow(template: TaskTemplateDto): StudioTa
     version: template.version,
     updated_at: template.updated_at,
     template,
+    client_id: template.client_id ?? null,
+    client_name: template.client_name ?? null,
   };
 }

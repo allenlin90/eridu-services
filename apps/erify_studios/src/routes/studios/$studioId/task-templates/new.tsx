@@ -93,6 +93,7 @@ export function TaskTemplateBuilderPage() {
       description: data.description,
       task_type: data.task_type,
       schema: buildTemplateSchemaPayload(data),
+      client_id: data.client_id,
     };
 
     createTemplate(payload);

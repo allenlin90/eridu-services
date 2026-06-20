@@ -38,6 +38,7 @@ export const TemplateSchema = z.object({
   task_type: z.nativeEnum(TASK_TYPE),
   items: z.array(FieldItemSchema).min(1, 'At least one field is required'),
   metadata: TemplateMetadataSchema.optional(),
+  client_id: z.string().optional().nullable(),
 }).superRefine((data, ctx) => {
   const keys = new Set<string>();
   data.items.forEach((item, index) => {
@@ -66,6 +67,7 @@ export const TemplateSchemaV2 = z.object({
   task_type: z.nativeEnum(TASK_TYPE),
   items: z.array(FieldItemV2Schema).min(1, 'At least one field is required'),
   metadata: TemplateMetadataV2Schema.optional(),
+  client_id: z.string().optional().nullable(),
   schema_version: z.literal(2),
   schema_engine: z.literal('task_template_v2'),
   content_key_strategy: z.literal('field_id').optional(),

@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { StudioTaskTemplateController } from './studio-task-template.controller';
 
 import { READ_BURST_THROTTLE_KEY } from '@/lib/guards/read-burst-throttle.decorator';
+import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import type { ListTaskTemplatesQueryDto } from '@/models/task-template/schemas/task-template.schema';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
@@ -16,6 +17,7 @@ const THROTTLER_SKIP_DEFAULT_KEY = 'THROTTLER:SKIPdefault';
 describe('studioTaskTemplateController', () => {
   let controller: StudioTaskTemplateController;
   let taskTemplateService: jest.Mocked<TaskTemplateService>;
+  let showService: jest.Mocked<ShowService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -26,6 +28,7 @@ describe('studioTaskTemplateController', () => {
           useValue: {
             getTaskTemplates: jest.fn(),
             findOne: jest.fn(),
+            createTemplateWithSnapshot: jest.fn(),
             updateTemplateWithSnapshot: jest.fn(),
             softDelete: jest.fn(),
           },
@@ -34,11 +37,19 @@ describe('studioTaskTemplateController', () => {
           provide: StudioService,
           useValue: {},
         },
+        {
+          provide: ShowService,
+          useValue: { countShows: jest.fn() },
+        },
       ],
     }).compile();
 
     controller = module.get<StudioTaskTemplateController>(StudioTaskTemplateController);
     taskTemplateService = module.get(TaskTemplateService);
+    showService = module.get(ShowService);
+
+    // Default: studio is linked to client (has active shows)
+    showService.countShows.mockResolvedValue(1);
   });
 
   it('should be defined', () => {
@@ -67,6 +78,7 @@ describe('studioTaskTemplateController', () => {
         templateKind: 'moderation',
         isActive: true,
         includeDeleted: false,
+        clientUid: 'clt_123',
       };
 
       taskTemplateService.getTaskTemplates.mockResolvedValue({ data: [], total: 0 });
@@ -84,6 +96,7 @@ describe('studioTaskTemplateController', () => {
         includeDeleted: false,
         studioUid: studioId,
         sort: 'updated_at:desc',
+        clientUid: 'clt_123',
       });
     });
   });
@@ -101,11 +114,78 @@ describe('studioTaskTemplateController', () => {
         uid: id,
         studio: { uid: studioId },
         deletedAt: null,
+      }, { client: true });
+    });
+  });
+
+  describe('create', () => {
+    it('creates a template without a client binding (no linkage check)', async () => {
+      const studioId = 'studio_123';
+      const createDto = {
+        name: 'New Template',
+        task_type: 'ACTIVE',
+        schema: { type: 'object' },
+      } as any;
+      const result = { uid: 'ttpl_new' } as any;
+
+      taskTemplateService.createTemplateWithSnapshot.mockResolvedValue(result);
+
+      expect(await controller.create(studioId, createDto)).toBe(result);
+      expect(showService.countShows).not.toHaveBeenCalled();
+    });
+
+    it('validates studio-client linkage before binding a client to a new template', async () => {
+      const studioId = 'studio_123';
+      const createDto = {
+        name: 'New Template',
+        task_type: 'ACTIVE',
+        schema: { type: 'object' },
+        client_id: 'clt_123',
+      } as any;
+      const result = { uid: 'ttpl_new', client_id: 'clt_123' } as any;
+
+      taskTemplateService.createTemplateWithSnapshot.mockResolvedValue(result);
+
+      expect(await controller.create(studioId, createDto)).toBe(result);
+      expect(showService.countShows).toHaveBeenCalledWith({
+        studio: { uid: studioId },
+        client: { uid: 'clt_123' },
+        deletedAt: null,
       });
+    });
+
+    it('throws ForbiddenException when the studio has no active shows for the client', async () => {
+      const studioId = 'studio_123';
+      const createDto = {
+        name: 'New Template',
+        task_type: 'ACTIVE',
+        schema: { type: 'object' },
+        client_id: 'clt_123',
+      } as any;
+
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(controller.create(studioId, createDto)).rejects.toThrow('Studio not linked to client');
+      expect(taskTemplateService.createTemplateWithSnapshot).not.toHaveBeenCalled();
     });
   });
 
   describe('update', () => {
+    it('throws ForbiddenException when binding a client the studio has no active shows for', async () => {
+      const studioId = 'studio_123';
+      const id = 'ttpl_123';
+      const updateDto = {
+        name: 'Updated Name',
+        version: 1,
+        client_id: 'clt_123',
+      } as any;
+
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(controller.update(studioId, id, updateDto)).rejects.toThrow('Studio not linked to client');
+      expect(taskTemplateService.updateTemplateWithSnapshot).not.toHaveBeenCalled();
+    });
+
     it('should call updateTemplateWithSnapshot with correct data', async () => {
       const studioId = 'studio_123';
       const id = 'ttpl_123';
@@ -114,6 +194,7 @@ describe('studioTaskTemplateController', () => {
         description: 'Updated Description',
         version: 1,
         schema: { type: 'object' },
+        client_id: 'clt_123',
       };
       const result = { uid: id, ...updateDto, version: 2 } as any;
 
@@ -129,6 +210,7 @@ describe('studioTaskTemplateController', () => {
           description: updateDto.description,
           currentSchema: updateDto.schema,
           version: 1,
+          clientUid: 'clt_123',
         },
       );
     });
@@ -154,6 +236,7 @@ describe('studioTaskTemplateController', () => {
           description: undefined,
           currentSchema: undefined,
           version: 1,
+          clientUid: undefined,
         },
       );
     });

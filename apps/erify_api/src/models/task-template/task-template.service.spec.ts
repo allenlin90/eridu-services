@@ -13,7 +13,7 @@ jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('taskTemplateService', () => {
   let service: TaskTemplateService;
-  let _repository: TaskTemplateRepository;
+  let repository: jest.Mocked<TaskTemplateRepository>;
   let _utilityService: UtilityService;
   let studioService: jest.Mocked<StudioService>;
 
@@ -38,7 +38,7 @@ describe('taskTemplateService', () => {
     });
 
     service = module.get<TaskTemplateService>(TaskTemplateService);
-    _repository = module.get<TaskTemplateRepository>(TaskTemplateRepository);
+    repository = module.get<TaskTemplateRepository>(TaskTemplateRepository) as jest.Mocked<TaskTemplateRepository>;
     _utilityService = module.get<UtilityService>(UtilityService);
     studioService = module.get(StudioService);
   });
@@ -496,6 +496,64 @@ describe('taskTemplateService', () => {
           expect(JSON.stringify(response.details)).toMatch(/show_actual_start_time/);
         }
       });
+    });
+  });
+
+  describe('createTemplateWithSnapshot', () => {
+    it('includes the client relation so the response reflects a binding made at create time', async () => {
+      repository.create.mockResolvedValue({ uid: 'ttpl_1' } as any);
+
+      await service.createTemplateWithSnapshot({
+        name: 'Template',
+        taskType: 'SETUP',
+        currentSchema: {
+          metadata: { task_type: 'SETUP' },
+          items: [
+            { id: 'item_1', key: 'simple_check', type: 'checkbox', label: 'Simple Check', required: true },
+          ],
+        },
+        studioId: 'std_1',
+        clientUid: 'client_1',
+      });
+
+      expect(repository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ client: { connect: { uid: 'client_1' } } }),
+        { client: true },
+      );
+    });
+  });
+
+  describe('updateTemplateWithSnapshot', () => {
+    it('includes the client relation so a binding-only update (no schema change) reflects in the response', async () => {
+      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: { items: [] } } as any);
+      repository.update.mockResolvedValue({ uid: 'ttpl_1' } as any);
+
+      await service.updateTemplateWithSnapshot('ttpl_1', 'std_1', {
+        version: 1,
+        clientUid: 'client_1',
+      });
+
+      expect(repository.update).toHaveBeenCalledWith(
+        expect.objectContaining({ uid: 'ttpl_1' }),
+        expect.objectContaining({ client: { connect: { uid: 'client_1' } } }),
+        { client: true },
+      );
+    });
+
+    it('disconnects the client and still includes the relation when explicitly unbinding', async () => {
+      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: { items: [] } } as any);
+      repository.update.mockResolvedValue({ uid: 'ttpl_1' } as any);
+
+      await service.updateTemplateWithSnapshot('ttpl_1', 'std_1', {
+        version: 1,
+        clientUid: null,
+      });
+
+      expect(repository.update).toHaveBeenCalledWith(
+        expect.objectContaining({ uid: 'ttpl_1' }),
+        expect.objectContaining({ client: { disconnect: true } }),
+        { client: true },
+      );
     });
   });
 });

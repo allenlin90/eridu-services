@@ -17,6 +17,7 @@ export type GetTaskTemplatesParams = Pick<
   | 'template_kind'
   | 'is_active'
   | 'sort'
+  | 'client_id'
 >;
 
 type GetTaskTemplatesOptions = {
@@ -39,6 +40,7 @@ export async function getTaskTemplates(
         template_kind: query.template_kind,
         is_active: query.is_active,
         sort: query.sort,
+        client_id: query.client_id,
       },
       signal: options?.signal,
     },

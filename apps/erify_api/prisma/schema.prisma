@@ -82,6 +82,7 @@ model Client {
   shows         Show[]
   schedules     Schedule[]
   mechanics     ClientMechanic[]
+  taskTemplates TaskTemplate[]
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
   deletedAt     DateTime?  @map("deleted_at")
@@ -632,6 +633,7 @@ model TaskTemplate {
   id            BigInt                 @id @default(autoincrement())
   uid           String                 @unique
   studioId      BigInt                 @map("studio_id")
+  clientId      BigInt?                @map("client_id")
   name          String
   description   String?
   isActive      Boolean                @default(true) @map("is_active")
@@ -640,6 +642,7 @@ model TaskTemplate {
   version       Int                    @default(1)
   // Relations
   studio        Studio                 @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  client        Client?                @relation(fields: [clientId], references: [id], onDelete: SetNull)
   snapshots     TaskTemplateSnapshot[]
   tasks         Task[]
   createdAt     DateTime               @default(now()) @map("created_at")
@@ -648,6 +651,7 @@ model TaskTemplate {
 
   @@index([uid])
   @@index([studioId])
+  @@index([clientId])
   @@index([isActive])
   @@index([studioId, updatedAt]) // Optimization for template listing
   @@map("task_templates")

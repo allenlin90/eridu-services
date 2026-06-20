@@ -24,8 +24,18 @@ vi.mock('sonner', () => ({
   },
 }));
 
+// Mock useStudioAccess hook
 vi.mock('@/lib/hooks/use-studio-access', () => ({
   useStudioAccess: () => ({ role: 'admin', hasAccess: () => true }),
+}));
+
+// Mock useStudioSharedFields hook
+vi.mock('@/features/studio-shared-fields/hooks/use-studio-shared-fields', () => ({
+  useStudioSharedFields: () => ({
+    data: { shared_fields: [] },
+    isLoading: false,
+    isError: false,
+  }),
 }));
 
 // Mock react-router

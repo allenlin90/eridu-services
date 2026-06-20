@@ -53,6 +53,21 @@ export function getStudioTaskTemplateColumns(
       ),
     },
     {
+      accessorKey: 'client_name',
+      header: 'Client',
+      cell: ({ row }) => (
+        row.original.client_name
+          ? (
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800 text-[10px] font-semibold max-w-[120px] truncate">
+                {row.original.client_name}
+              </Badge>
+            )
+          : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )
+      ),
+    },
+    {
       accessorKey: 'loop_count',
       header: 'Loops',
       cell: ({ row }) => row.original.loop_count,

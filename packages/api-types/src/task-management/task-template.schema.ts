@@ -16,6 +16,7 @@ export const taskTemplateSchema = z.object({
   id: z.bigint(),
   uid: z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE),
   studioId: z.bigint(),
+  clientId: z.bigint().nullable().optional(),
   name: z.string(),
   description: z.string().nullable(),
   isActive: z.boolean(),
@@ -24,6 +25,13 @@ export const taskTemplateSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
+  client: z
+    .object({
+      uid: z.string().startsWith(UID_PREFIXES.CLIENT),
+      name: z.string(),
+    })
+    .nullable()
+    .optional(),
 });
 
 /**
@@ -53,6 +61,7 @@ export const createTaskTemplateSchema = z.object({
   description: z.string().optional(),
   task_type: z.nativeEnum(TASK_TYPE),
   schema: z.record(z.string(), z.any()),
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional().nullable(),
 });
 
 /**
@@ -72,6 +81,8 @@ export const taskTemplateDto = taskTemplateSchema.transform((obj) => ({
   is_active: obj.isActive,
   current_schema: obj.currentSchema,
   version: obj.version,
+  client_id: obj.client?.uid ?? null,
+  client_name: obj.client?.name ?? null,
   created_at: obj.createdAt.toISOString(),
   updated_at: obj.updatedAt.toISOString(),
 }));
@@ -89,8 +100,8 @@ export const updateStudioTaskTemplateSchema = createTaskTemplateSchema
     version: z.number().int(),
   })
   .refine(
-    (data) => data.name || data.description || data.task_type || data.schema,
-    'At least one field (name, description, task_type, or schema) must be provided',
+    (data) => data.name || data.description || data.task_type || data.schema || data.client_id !== undefined,
+    'At least one field (name, description, task_type, schema, or client_id) must be provided',
   );
 
 export type CreateStudioTaskTemplateInput = z.infer<typeof createStudioTaskTemplateSchema>;
@@ -113,6 +124,7 @@ export const listTaskTemplatesFilterSchema = z.object({
   id: z.string().optional(),
   task_type: z.nativeEnum(TASK_TYPE).optional(),
   template_kind: taskTemplateKindSchema.optional(),
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional().nullable(),
   is_active: z
     .union([z.boolean(), z.enum(['true', 'false'])])
     .transform((value) => (typeof value === 'string' ? value === 'true' : value))
@@ -140,13 +152,14 @@ export const listTaskTemplatesQuerySchemaBase = taskTemplatePaginationQuerySchem
   .and(listTaskTemplatesFilterSchema);
 
 export const listTaskTemplatesQuerySchema = listTaskTemplatesQuerySchemaBase
-  .transform(({ include_deleted, id, is_active, task_type, template_kind, ...rest }: z.infer<typeof listTaskTemplatesQuerySchemaBase>) => ({
+  .transform(({ include_deleted, id, is_active, task_type, template_kind, client_id, ...rest }: z.infer<typeof listTaskTemplatesQuerySchemaBase>) => ({
     ...rest,
     includeDeleted: include_deleted,
     uid: id,
     isActive: is_active,
     taskType: task_type,
     templateKind: template_kind,
+    clientUid: client_id,
   }));
 
 /**
@@ -212,6 +225,8 @@ export const adminTaskTemplateDto = z.object({
   id: z.string().startsWith(UID_PREFIXES.TASK_TEMPLATE),
   studio_id: z.string().startsWith(UID_PREFIXES.STUDIO),
   studio_name: z.string(),
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT).nullable().optional(),
+  client_name: z.string().nullable().optional(),
   name: z.string(),
   description: z.string().nullable(),
   task_type: z.nativeEnum(TASK_TYPE),
@@ -242,8 +257,8 @@ export const updateAdminTaskTemplateSchema = createTaskTemplateSchema
     version: z.number().int(),
   })
   .refine(
-    (data) => data.name || data.description || data.task_type || data.schema,
-    'At least one field (name, description, task_type, or schema) must be provided',
+    (data) => data.name || data.description || data.task_type || data.schema || data.client_id !== undefined,
+    'At least one field (name, description, task_type, schema, or client_id) must be provided',
   );
 
 export type UpdateAdminTaskTemplateInput = z.infer<typeof updateAdminTaskTemplateSchema>;

@@ -34,6 +34,7 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps) {
   const taskTypeValue = columnFilters.find((filter) => filter.id === 'task_type')?.value as string | undefined;
   const templateKindValue = columnFilters.find((filter) => filter.id === 'template_kind')?.value as string | undefined;
   const isActiveValue = columnFilters.find((filter) => filter.id === 'is_active')?.value as string | undefined;
+  const clientIdValue = columnFilters.find((filter) => filter.id === 'client_id')?.value as string | undefined;
 
   const taskType = taskTypeValue && VALID_TASK_TYPES.has(taskTypeValue as TaskType)
     ? taskTypeValue as TaskType
@@ -56,8 +57,9 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps) {
       template_kind: templateKind,
       is_active: isActive,
       sort: 'updated_at:desc' as const,
+      client_id: clientIdValue,
     }),
-    [isActive, pagination.pageIndex, pagination.pageSize, search, taskType, templateKind],
+    [isActive, pagination.pageIndex, pagination.pageSize, search, taskType, templateKind, clientIdValue],
   );
 
   const { data, isLoading, isFetching } = useQuery({
@@ -69,6 +71,7 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps) {
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       sort: 'updated_at:desc',
+      clientId: clientIdValue,
     }),
     queryFn: ({ signal }) => getTaskTemplates(studioId, queryParams, { signal }),
     placeholderData: keepPreviousData,
