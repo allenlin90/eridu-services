@@ -157,8 +157,9 @@ describe('clientMechanicsPage', () => {
     const createBtn = screen.getByRole('button', { name: /create mechanic/i });
     await user.click(createBtn);
 
-    // Dialog is visible
-    expect(screen.getByText('Create Client Mechanic')).toBeInTheDocument();
+    // Dialog is visible, with the active client named in the title so it
+    // can't be created against the wrong client without noticing
+    expect(screen.getByText('Create Client Mechanic for Client ABC')).toBeInTheDocument();
 
     // Enter values
     const titleInput = screen.getByLabelText(/^title/i);
@@ -188,8 +189,8 @@ describe('clientMechanicsPage', () => {
     const editBtns = screen.getAllByTitle('Edit Mechanic');
     await user.click(editBtns[0]);
 
-    // Dialog is visible
-    expect(screen.getByText('Edit Client Mechanic')).toBeInTheDocument();
+    // Dialog is visible, with the active client named in the title
+    expect(screen.getByText('Edit Client Mechanic for Client ABC')).toBeInTheDocument();
 
     // Prepopulated values
     const titleInput = screen.getByLabelText(/^title/i);

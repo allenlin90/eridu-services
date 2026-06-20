@@ -131,7 +131,7 @@ export function TaskTemplateBuilder({
     enabled: Boolean(studioId),
   });
 
-  const { data: clientMechanicsResponse } = useClientMechanicsQuery(
+  const { data: clientMechanicsResponse, isLoading: isClientMechanicsLoading } = useClientMechanicsQuery(
     studioId ?? '',
     template.client_id ?? undefined,
     { limit: 200 },
@@ -660,13 +660,20 @@ export function TaskTemplateBuilder({
                   {/* Loop × Mechanic Matrix Grid — the grid is wide and not usable on small
                       viewports, so mobile always falls back to Cards (mechanic fields still
                       render there, read-only, via field-editor's isMechanicField gate). */}
-                  {template.client_id && clientMechanics.length > 0 && isMobile && (
+                  {template.client_id && !isClientMechanicsLoading && activeMechanics.length === 0 && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                      {clientMechanics.length === 0
+                        ? 'This client has no mechanics in the catalog yet. Create at least one active mechanic under Client Mechanics for this client to assign it here.'
+                        : 'This client\'s mechanics are all retired. Reactivate or create one under Client Mechanics for this client to assign it here.'}
+                    </p>
+                  )}
+                  {template.client_id && activeMechanics.length > 0 && isMobile && (
                     <p className="text-xs text-muted-foreground bg-muted/50 border rounded px-3 py-2">
                       Assigning mechanics to loops requires a larger screen. Switch to a tablet or
                       desktop to use the Client Mechanics Matrix.
                     </p>
                   )}
-                  {template.client_id && clientMechanics.length > 0 && !isMobile && (
+                  {template.client_id && activeMechanics.length > 0 && !isMobile && (
                     <Card className="border shadow-sm bg-gradient-to-br from-white to-zinc-50/50">
                       <CardHeader className="pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>

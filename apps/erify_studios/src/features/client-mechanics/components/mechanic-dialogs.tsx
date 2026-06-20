@@ -27,6 +27,7 @@ type MechanicCreateDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateFormData) => Promise<void>;
   isLoading: boolean;
+  clientName?: string;
 };
 
 export function MechanicCreateDialog({
@@ -34,12 +35,13 @@ export function MechanicCreateDialog({
   onOpenChange,
   onSubmit,
   isLoading,
+  clientName,
 }: MechanicCreateDialogProps) {
   return (
     <AdminFormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Create Client Mechanic"
+      title={clientName ? `Create Client Mechanic for ${clientName}` : 'Create Client Mechanic'}
       description="Add a new reusable moderation instruction for this client"
       schema={createClientMechanicInputSchema}
       onSubmit={onSubmit}
@@ -71,6 +73,7 @@ type MechanicUpdateDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: UpdateFormData) => Promise<void>;
   isLoading: boolean;
+  clientName?: string;
 };
 
 export function MechanicUpdateDialog({
@@ -78,6 +81,7 @@ export function MechanicUpdateDialog({
   onOpenChange,
   onSubmit,
   isLoading,
+  clientName,
 }: MechanicUpdateDialogProps) {
   // Ensure the version is included in default values so it validates update input schema.
   const defaultValues = mechanic
@@ -93,7 +97,7 @@ export function MechanicUpdateDialog({
     <AdminFormDialog
       open={!!mechanic}
       onOpenChange={onOpenChange}
-      title="Edit Client Mechanic"
+      title={clientName ? `Edit Client Mechanic for ${clientName}` : 'Edit Client Mechanic'}
       description="Update the details of this client mechanic. Moderator-facing changes will bump the content revision."
       schema={updateClientMechanicInputSchema}
       defaultValues={defaultValues}

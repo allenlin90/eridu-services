@@ -67,10 +67,12 @@ const mockMechanics = [
   },
 ];
 
+const mockUseClientMechanicsQuery = vi.fn(() => ({
+  data: { data: mockMechanics },
+  isLoading: false,
+}));
 vi.mock('@/features/client-mechanics/api/get-client-mechanics', () => ({
-  useClientMechanicsQuery: () => ({
-    data: { data: mockMechanics },
-  }),
+  useClientMechanicsQuery: () => mockUseClientMechanicsQuery(),
 }));
 
 const v2LoopTemplate: BuilderTemplateSchemaType = {
@@ -292,6 +294,35 @@ describe('taskTemplateBuilder v2 field ids', () => {
       expect(screen.getByText(/larger screen/i)).toBeInTheDocument();
 
       mockUseIsMobile.mockReturnValue(false);
+    });
+
+    it('hints that the client has no mechanics yet, instead of silently hiding the matrix', () => {
+      mockUseClientMechanicsQuery.mockReturnValueOnce({ data: { data: [] }, isLoading: false });
+
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
+
+      expect(screen.queryByText('Client Mechanics Matrix')).toBeNull();
+      expect(screen.getByText(/no mechanics in the catalog yet/i)).toBeInTheDocument();
+    });
+
+    it('hints that the client\'s mechanics are all retired, instead of silently hiding the matrix', () => {
+      mockUseClientMechanicsQuery.mockReturnValueOnce({
+        data: { data: mockMechanics.filter((m) => m.status === 'retired') },
+        isLoading: false,
+      });
+
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
+
+      expect(screen.queryByText('Client Mechanics Matrix')).toBeNull();
+      expect(screen.getByText(/are all retired/i)).toBeInTheDocument();
+    });
+
+    it('does not show the no-mechanics hint while the catalog is still loading', () => {
+      mockUseClientMechanicsQuery.mockReturnValueOnce({ data: { data: [] }, isLoading: true });
+
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
+
+      expect(screen.queryByText(/no mechanics in the catalog yet/i)).toBeNull();
     });
 
     it('toggles mechanic checkbox to assign/remove a mechanic-backed field', async () => {

@@ -272,6 +272,7 @@ export function ClientMechanicsPage() {
         onOpenChange={setIsCreateOpen}
         onSubmit={handleCreate}
         isLoading={createMutation.isPending}
+        clientName={selectedClient?.name}
       />
 
       <MechanicUpdateDialog
@@ -279,6 +280,7 @@ export function ClientMechanicsPage() {
         onOpenChange={(open) => !open && setEditingMechanic(null)}
         onSubmit={handleUpdate}
         isLoading={updateMutation.isPending}
+        clientName={selectedClient?.name}
       />
 
       <MechanicRetireDialog
