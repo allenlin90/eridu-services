@@ -207,7 +207,7 @@ function getStudioOperationsItems(
 ): SidebarNavItem['items'] {
   const operationsItems: SidebarNavItem['items'] = [];
 
-  if (hasStudioRouteAccess(role as StudioRole, 'shows')) {
+  if (hasStudioRouteAccess(role as StudioRole, 'taskSetup')) {
     operationsItems.push({
       title: 'Task Setup',
       url: `/studios/${studioId}/task-setup`,

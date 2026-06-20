@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import z from 'zod';
 
@@ -36,11 +36,13 @@ import {
   UpdateStudioCreatorRosterDto,
 } from './schemas/studio-creator-roster-write.schema';
 
+import type { AuthenticatedRequest } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { projectAllowList } from '@/lib/utils/allow-list-projection.util';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 import { userDto } from '@/models/user/schemas/user.schema';
@@ -50,11 +52,39 @@ const STUDIO_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
   STUDIO_ROLE.TALENT_MANAGER,
+  STUDIO_ROLE.ACCOUNT_MANAGER,
 ];
 const STUDIO_CREATOR_COMPENSATION_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
+
+// Finance Guardrails S3 — allow-list, not a money-field blacklist. Any roster
+// field NOT in this set is forced to null for ACCOUNT_MANAGER, so a future
+// money field added to the schema is redacted by default instead of leaking.
+export const ROSTER_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'creator_id',
+  'creator_name',
+  'creator_alias_name',
+  'is_active',
+  'version',
+  'metadata',
+  'created_at',
+  'updated_at',
+]);
+export const CATALOG_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'name',
+  'alias_name',
+  'is_rostered',
+  'roster_state',
+]);
+export const AVAILABILITY_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'name',
+  'alias_name',
+]);
 
 @ApiTags('Studio Creators')
 @Controller('studios/:studioId/creators')
@@ -74,10 +104,17 @@ export class StudioCreatorController extends BaseStudioController {
   async listRoster(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ListStudioCreatorRosterQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const { data, total } = await this.studioCreatorService.listRoster(studioId, query);
+    let parsed = data.map((item) => studioCreatorRosterItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      parsed = parsed.map((c) =>
+        projectAllowList(studioCreatorRosterItemApiSchema, c, ROSTER_ITEM_ALLOWED_FOR_AM));
+    }
     return this.createPaginatedResponse(
-      data.map((item) => studioCreatorRosterItemDto.parse(item)),
+      parsed,
       total,
       this.toPaginationQuery(query),
     );
@@ -180,9 +217,16 @@ export class StudioCreatorController extends BaseStudioController {
   async availability(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: StudioCreatorAvailabilityQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listAvailable(studioId, query);
-    return creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
+    let parsed = creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      parsed = parsed.map((c) =>
+        projectAllowList(studioCreatorAvailabilityItemApiSchema, c, AVAILABILITY_ITEM_ALLOWED_FOR_AM));
+    }
+    return parsed;
   }
 
   @ApiOperation({ summary: 'List creators from the global catalog for studio use' })
@@ -193,9 +237,16 @@ export class StudioCreatorController extends BaseStudioController {
   async catalog(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: StudioCreatorCatalogQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listCatalog(studioId, query);
-    return creators.map((item) => studioCreatorCatalogItemDto.parse(item));
+    let parsed = creators.map((item) => studioCreatorCatalogItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      parsed = parsed.map((c) =>
+        projectAllowList(studioCreatorCatalogItemApiSchema, c, CATALOG_ITEM_ALLOWED_FOR_AM));
+    }
+    return parsed;
   }
 
   @ApiOperation({ summary: 'Search users eligible for creator onboarding user link' })
@@ -224,6 +275,7 @@ export class StudioCreatorController extends BaseStudioController {
   async getCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
+    @Req() request: AuthenticatedRequest,
   ) {
     const creator = await this.studioCreatorService.findRosterEntry(studioId, creatorId);
 
@@ -231,6 +283,11 @@ export class StudioCreatorController extends BaseStudioController {
       throw HttpError.notFound('Creator not found in studio roster');
     }
 
-    return studioCreatorRosterItemDto.parse(creator);
+    const parsed = studioCreatorRosterItemDto.parse(creator);
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      return projectAllowList(studioCreatorRosterItemApiSchema, parsed, ROSTER_ITEM_ALLOWED_FOR_AM);
+    }
+    return parsed;
   }
 }

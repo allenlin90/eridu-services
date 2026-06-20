@@ -5,18 +5,22 @@ import { toast } from 'sonner';
 import { getSchemaEngine, safeParseTemplateSchema } from '@eridu/api-types/task-management';
 import { LoadingPage } from '@eridu/ui';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import { PageLayout } from '@/components/layouts/page-layout';
 import {
   buildTemplateSchemaPayload,
   hasTemplateSchemaEngineMismatch,
 } from '@/components/task-templates/builder/payload';
-import { CONTENT_AREA_H, CONTENT_AREA_MIN_H } from '@/config/layout';
+import { TaskTemplatePreview } from '@/components/task-templates/builder/task-template-preview';
 import { safeParseBuilderTemplateSchema, type BuilderTemplateSchemaType } from '@/components/task-templates/builder/schema';
 import { TaskTemplateBuilder } from '@/components/task-templates/builder/task-template-builder.lazy';
+import { CONTENT_AREA_H, CONTENT_AREA_MIN_H } from '@/config/layout';
 import { useStudioSharedFields } from '@/features/studio-shared-fields/hooks/use-studio-shared-fields';
 import type { GetTaskTemplateResponse } from '@/features/task-templates/api/get-task-template';
 import { useTaskTemplate } from '@/features/task-templates/hooks/use-task-template';
 import { useUpdateTaskTemplate } from '@/features/task-templates/hooks/use-update-task-template';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 import { formatZodErrors } from '@/lib/zod-utils';
 
 export const Route = createFileRoute('/studios/$studioId/task-templates/$templateId')({
@@ -30,6 +34,9 @@ function EditTaskTemplatePage() {
     studioId,
     templateId,
   });
+
+  const { role } = useStudioAccess(studioId);
+  const isAccountManager = role === STUDIO_ROLE.ACCOUNT_MANAGER;
 
   if (isFetching) {
     return (
@@ -59,6 +66,36 @@ function EditTaskTemplatePage() {
         <div className={`flex items-center justify-center ${CONTENT_AREA_H}`}>
           <div className="text-destructive">Failed to load template.</div>
         </div>
+      </PageLayout>
+    );
+  }
+
+  if (isAccountManager) {
+    const serverEngine = getSchemaEngine(taskTemplate.current_schema);
+    const template: BuilderTemplateSchemaType = {
+      name: taskTemplate.name,
+      description: taskTemplate.description ?? '',
+      task_type: taskTemplate.task_type,
+      items: taskTemplate.current_schema?.items ?? [],
+      metadata: taskTemplate.current_schema?.metadata as BuilderTemplateSchemaType['metadata'] | undefined,
+      ...(serverEngine === 'task_template_v2' ? {
+        schema_version: 2 as const,
+        schema_engine: 'task_template_v2' as const,
+        content_key_strategy: 'field_id' as const,
+        report_projection_strategy: 'descriptor' as const,
+      } : {}),
+    };
+
+    return (
+      <PageLayout
+        title="View Template"
+        breadcrumbs={(
+          <span className="text-sm text-muted-foreground">
+            {`Studios / ${studioId} / Task Templates / ${taskTemplate.name}`}
+          </span>
+        )}
+      >
+        <TaskTemplatePreview template={template} studioId={studioId} />
       </PageLayout>
     );
   }

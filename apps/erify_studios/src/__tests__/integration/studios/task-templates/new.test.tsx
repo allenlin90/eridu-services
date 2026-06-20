@@ -24,6 +24,10 @@ vi.mock('sonner', () => ({
   },
 }));
 
+vi.mock('@/lib/hooks/use-studio-access', () => ({
+  useStudioAccess: () => ({ role: 'admin', hasAccess: () => true }),
+}));
+
 // Mock react-router
 const mockNavigate = vi.fn();
 const mockParams = { studioId: 'test-studio-id' };

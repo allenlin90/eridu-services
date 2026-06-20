@@ -4,14 +4,24 @@ import { BarChart3, ExternalLink, Eye, Globe, Percent, TrendingUp } from 'lucide
 
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui';
 
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { usePerformanceLoopsQuery } from '@/features/studio-performance/api/get-performance-loops';
 import { ShowPerformanceLoopsGraph } from '@/features/studio-performance/components/show-performance-loops-graph';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/performance')({
-  component: StudioShowPerformanceTab,
+  component: ShowPerformanceRouteComponent,
 });
+
+function ShowPerformanceRouteComponent() {
+  const { studioId } = Route.useParams();
+  return (
+    <StudioRouteGuard studioId={studioId} routeKey="performance">
+      <StudioShowPerformanceTab />
+    </StudioRouteGuard>
+  );
+}
 
 function StudioShowPerformanceTab() {
   const { studioId, showId } = Route.useParams();

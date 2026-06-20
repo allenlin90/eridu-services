@@ -7,6 +7,7 @@ export const ROLE_LABELS: Record<string, string> = {
   [STUDIO_ROLE.DESIGNER]: 'Designer',
   [STUDIO_ROLE.MODERATION_MANAGER]: 'Moderation Manager',
   [STUDIO_ROLE.MEMBER]: 'Member',
+  [STUDIO_ROLE.ACCOUNT_MANAGER]: 'Account Manager',
 };
 
 export const ROLE_OPTIONS = [
@@ -16,4 +17,5 @@ export const ROLE_OPTIONS = [
   { value: STUDIO_ROLE.DESIGNER, label: 'Designer' },
   { value: STUDIO_ROLE.MODERATION_MANAGER, label: 'Moderation Manager' },
   { value: STUDIO_ROLE.MEMBER, label: 'Member' },
+  { value: STUDIO_ROLE.ACCOUNT_MANAGER, label: 'Account Manager' },
 ] as const;

@@ -27,6 +27,7 @@ import {
   ListClientMechanicsQueryDto,
   UpdateClientMechanicDto,
 } from '@/models/client-mechanic/schemas/client-mechanic.schema';
+import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 
 /**
@@ -35,7 +36,8 @@ import { StudioService } from '@/models/studio/studio.service';
  * Routes are studio-scoped (the StudioGuard enforces membership + role on
  * `:studioId`) but the catalog itself belongs to the global `Client`, so edits
  * propagate cross-studio (B2). The shows-based studio↔client linkage gate is
- * deferred to a later PR; this foundation only validates that the client exists.
+ * enforced on every route, reads included — a studio that knows another
+ * client's UID must not be able to read or write that client's catalog.
  */
 @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ACCOUNT_MANAGER])
 @Controller('studios/:studioId/clients/:clientId/mechanics')
@@ -43,6 +45,7 @@ export class StudioClientMechanicController extends BaseStudioController {
   constructor(
     private readonly clientMechanicService: ClientMechanicService,
     private readonly clientService: ClientService,
+    private readonly showService: ShowService,
   ) {
     super();
   }
@@ -54,15 +57,27 @@ export class StudioClientMechanicController extends BaseStudioController {
     }
   }
 
+  private async ensureStudioClientLinkage(studioId: string, clientId: string): Promise<void> {
+    const count = await this.showService.countShows({
+      studio: { uid: studioId },
+      client: { uid: clientId },
+      deletedAt: null,
+    });
+    if (count === 0) {
+      throw HttpError.forbidden('Studio not linked to client');
+    }
+  }
+
   @Get()
   @ReadBurstThrottle()
   @ZodPaginatedResponse(clientMechanicDto)
   async index(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Query() query: ListClientMechanicsQueryDto,
   ) {
     await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
 
     const { data, total } = await this.clientMechanicService.listMechanics({
       clientUid: clientId,
@@ -79,10 +94,13 @@ export class StudioClientMechanicController extends BaseStudioController {
   @Get(':mechanicId')
   @ZodResponse(clientMechanicDto)
   async show(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Param('mechanicId', new UidValidationPipe(ClientMechanicService.UID_PREFIX, 'ClientMechanic')) mechanicId: string,
   ) {
+    await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
+
     const mechanic = await this.clientMechanicService.getMechanic({
       mechanicUid: mechanicId,
       clientUid: clientId,
@@ -98,11 +116,12 @@ export class StudioClientMechanicController extends BaseStudioController {
   @Post()
   @ZodResponse(clientMechanicDto, HttpStatus.CREATED)
   async create(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Body() body: CreateClientMechanicDto,
   ) {
     await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
 
     return this.clientMechanicService.createMechanic(clientId, body);
   }
@@ -110,11 +129,14 @@ export class StudioClientMechanicController extends BaseStudioController {
   @Patch(':mechanicId')
   @ZodResponse(clientMechanicDto)
   async update(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Param('mechanicId', new UidValidationPipe(ClientMechanicService.UID_PREFIX, 'ClientMechanic')) mechanicId: string,
     @Body() body: UpdateClientMechanicDto,
   ) {
+    await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
+
     const mechanic = await this.clientMechanicService.updateMechanic(
       { mechanicUid: mechanicId, clientUid: clientId },
       body,
@@ -135,10 +157,13 @@ export class StudioClientMechanicController extends BaseStudioController {
   @StudioProtected([STUDIO_ROLE.ADMIN])
   @ZodResponse(clientMechanicDto)
   async remove(
-    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('clientId', new UidValidationPipe(ClientService.UID_PREFIX, 'Client')) clientId: string,
     @Param('mechanicId', new UidValidationPipe(ClientMechanicService.UID_PREFIX, 'ClientMechanic')) mechanicId: string,
   ) {
+    await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
+
     const mechanic = await this.clientMechanicService.deleteMechanic({
       mechanicUid: mechanicId,
       clientUid: clientId,

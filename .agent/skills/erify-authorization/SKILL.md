@@ -26,7 +26,7 @@ Current authorization implementation patterns for erify_api.
 
 ## Studio Role Model
 
-`StudioMembership.role` currently has 6 values:
+`StudioMembership.role` currently has 7 values:
 
 | Role | Scope | Can manage memberships |
 |---|---|---|
@@ -36,10 +36,14 @@ Current authorization implementation patterns for erify_api.
 | `DESIGNER` | Dashboard, own tasks, own shifts | ❌ |
 | `MODERATION_MANAGER` | Dashboard, own tasks, own shifts | ❌ |
 | `MEMBER` | Dashboard, own tasks, own shifts | ❌ |
+| `ACCOUNT_MANAGER` | Client mechanic catalog (write, client-linked only); read-only on task templates, shows, creator mapping with money redacted | ❌ (only `ADMIN` can grant it) |
 
-`ACCOUNT_MANAGER` is planned for client mechanics work but is not exported from
-`STUDIO_ROLE` yet. Do not use it in guards, schemas, or frontend route access
-until the shared membership contract adds it.
+### `ACCOUNT_MANAGER`: read-only-with-money-redacted, not a smaller `MANAGER`
+
+`ACCOUNT_MANAGER` is not "MANAGER minus some routes" — it's read-only everywhere except the client mechanic catalog, and money fields must never reach it even on routes it's otherwise allowed to read. Two failure modes recur when adding it to an existing route, both caught by review rather than by type errors:
+
+1. **Sharing a frontend access key with a narrower-scoped page.** `STUDIO_ROUTE_ACCESS` keys gate entire route subtrees; adding `ACCOUNT_MANAGER` to a key also grants every other page that happens to reuse that key (e.g. adding it to `shows` silently granted Task Setup, a mutation surface, because `task-setup.tsx` reused `routeKey="shows"`). Before adding a role to an access key, grep for every route/nav-item consumer of that key, not just the one route you're changing.
+2. **A money field that can't be allow-list-redacted because it isn't `.nullable()`.** `projectAllowList()` (`apps/erify_api/src/lib/utils/allow-list-projection.util.ts`, Finance Guardrails §10) forces non-allow-listed fields to `null` — which throws if the schema doesn't accept `null` for that field (e.g. `studioShiftDto.hourly_rate: z.string()`), or if the money lives inside an unstructured `metadata`/`content` blob with no fixed field name to allow-list against. In both cases, gate the whole route/field via `@StudioProtected(...)` excluding `ACCOUNT_MANAGER` instead of attempting redaction — see `StudioShiftController`'s GET routes and `StudioShowController.tasks()` for reference call sites, each with a comment explaining why gating was chosen over redaction.
 
 ## Endpoint Role Conventions
 

@@ -36,6 +36,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
   }
 
   @Get()
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ACCOUNT_MANAGER])
   @ReadBurstThrottle()
   @ZodPaginatedResponse(taskTemplateDto)
   async index(
@@ -59,6 +60,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
   }
 
   @Get(':id')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ACCOUNT_MANAGER])
   @ZodResponse(taskTemplateDto)
   async show(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

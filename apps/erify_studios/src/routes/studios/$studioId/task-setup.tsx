@@ -32,7 +32,7 @@ function TaskSetupRoute() {
   return (
     <StudioRouteGuard
       studioId={studioId}
-      routeKey="shows"
+      routeKey="taskSetup"
       deniedTitle="Task Setup Access Required"
       deniedDescription="Only studio admins and managers can access task setup."
     >

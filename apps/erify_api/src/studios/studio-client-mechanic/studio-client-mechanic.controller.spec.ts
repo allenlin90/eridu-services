@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
@@ -9,11 +9,13 @@ import { StudioClientMechanicController } from './studio-client-mechanic.control
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { ClientService } from '@/models/client/client.service';
 import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
+import { ShowService } from '@/models/show/show.service';
 
 describe('studioClientMechanicController', () => {
   let controller: StudioClientMechanicController;
   let mechanicService: jest.Mocked<ClientMechanicService>;
   let clientService: jest.Mocked<ClientService>;
+  let showService: jest.Mocked<ShowService>;
 
   const studioId = 'std_1';
   const clientId = 'client_1';
@@ -37,12 +39,20 @@ describe('studioClientMechanicController', () => {
           provide: ClientService,
           useValue: { getClientByUid: jest.fn() },
         },
+        {
+          provide: ShowService,
+          useValue: { countShows: jest.fn() },
+        },
       ],
     }).compile();
 
     controller = module.get(StudioClientMechanicController);
     mechanicService = module.get(ClientMechanicService);
     clientService = module.get(ClientService);
+    showService = module.get(ShowService);
+
+    // Default: studio is linked to client (has active shows)
+    showService.countShows.mockResolvedValue(1);
   });
 
   it('grants catalog access to ADMIN, MANAGER and ACCOUNT_MANAGER only', () => {
@@ -61,6 +71,16 @@ describe('studioClientMechanicController', () => {
       await expect(
         controller.index(studioId, clientId, { skip: 0, take: 10, sort: 'desc' } as any),
       ).rejects.toBeInstanceOf(NotFoundException);
+      expect(mechanicService.listMechanics).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when studio has no active shows for client, even on a read', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(
+        controller.index(studioId, clientId, { skip: 0, take: 10, sort: 'desc' } as any),
+      ).rejects.toBeInstanceOf(ForbiddenException);
       expect(mechanicService.listMechanics).not.toHaveBeenCalled();
     });
 
@@ -86,7 +106,27 @@ describe('studioClientMechanicController', () => {
   });
 
   describe('show', () => {
+    it('404s when the client does not exist', async () => {
+      clientService.getClientByUid.mockResolvedValue(null);
+
+      await expect(controller.show(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mechanicService.getMechanic).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when studio has no active shows for client, even on a read', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(controller.show(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(mechanicService.getMechanic).not.toHaveBeenCalled();
+    });
+
     it('404s when the mechanic is not under the client', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       mechanicService.getMechanic.mockResolvedValue(null);
 
       await expect(controller.show(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
@@ -96,6 +136,17 @@ describe('studioClientMechanicController', () => {
   });
 
   describe('create', () => {
+    it('throws ForbiddenException when studio has no active shows for client', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      const body = { title: 'T', instructionLabel: 'L', instructionBody: 'B' } as any;
+      await expect(controller.create(studioId, clientId, body)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(mechanicService.createMechanic).not.toHaveBeenCalled();
+    });
+
     it('validates the client then creates the mechanic', async () => {
       clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       const created = { uid: 'cmech_1' } as any;
@@ -110,7 +161,18 @@ describe('studioClientMechanicController', () => {
   });
 
   describe('update', () => {
+    it('throws ForbiddenException when studio has no active shows for client', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(
+        controller.update(studioId, clientId, 'cmech_x', { title: 'T', version: 1 } as any),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(mechanicService.updateMechanic).not.toHaveBeenCalled();
+    });
+
     it('404s when the service reports not-found', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       mechanicService.updateMechanic.mockResolvedValue(null);
 
       await expect(
@@ -125,7 +187,18 @@ describe('studioClientMechanicController', () => {
       expect(roles).toEqual([STUDIO_ROLE.ADMIN]);
     });
 
+    it('throws ForbiddenException when studio has no active shows for client', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(controller.remove(studioId, clientId, 'cmech_1')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(mechanicService.deleteMechanic).not.toHaveBeenCalled();
+    });
+
     it('delegates to deleteMechanic and returns the row', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       const deleted = { uid: 'cmech_1', deletedAt: new Date() } as any;
       mechanicService.deleteMechanic.mockResolvedValue(deleted);
 
@@ -139,6 +212,7 @@ describe('studioClientMechanicController', () => {
     });
 
     it('404s when the mechanic is not found', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
       mechanicService.deleteMechanic.mockResolvedValue(null);
 
       await expect(controller.remove(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(

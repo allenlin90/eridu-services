@@ -8,6 +8,7 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.TALENT_MANAGER,
     STUDIO_ROLE.ADMIN,
+    STUDIO_ROLE.ACCOUNT_MANAGER,
   ],
   myTasks: [
     STUDIO_ROLE.MEMBER,
@@ -48,9 +49,26 @@ export const STUDIO_ROUTE_ACCESS = {
   shows: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
+    STUDIO_ROLE.ACCOUNT_MANAGER,
+  ],
+  // Distinct from `shows`: task setup is an operational mutation surface
+  // (Generate Tasks, Assign Tasks, Record Actuals), not the read-only show
+  // detail pages — ACCOUNT_MANAGER must not get it just because it shares
+  // the shows section.
+  taskSetup: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
   ],
   performance: [
     STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  showTasks: [
+    STUDIO_ROLE.MEMBER,
+    STUDIO_ROLE.DESIGNER,
+    STUDIO_ROLE.MODERATION_MANAGER,
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.TALENT_MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
   costs: [
@@ -60,6 +78,7 @@ export const STUDIO_ROUTE_ACCESS = {
   taskTemplates: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
+    STUDIO_ROLE.ACCOUNT_MANAGER,
   ],
   clientMechanics: [
     STUDIO_ROLE.ADMIN,
@@ -87,6 +106,7 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.TALENT_MANAGER,
     STUDIO_ROLE.ADMIN,
+    STUDIO_ROLE.ACCOUNT_MANAGER,
   ],
   members: [
     STUDIO_ROLE.ADMIN,

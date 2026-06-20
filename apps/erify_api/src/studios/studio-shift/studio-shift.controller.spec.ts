@@ -1,8 +1,11 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import { StudioShiftController } from './studio-shift.controller';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 
 describe('studioShiftController', () => {
@@ -198,5 +201,14 @@ describe('studioShiftController', () => {
     await expect(
       controller.assignDutyManager('std_1', 'ssh_missing', { is_duty_manager: true }),
     ).rejects.toThrow('Studio shift not found with id ssh_missing');
+  });
+
+  describe('aCCOUNT_MANAGER exclusion', () => {
+    it('excludes ACCOUNT_MANAGER from shift reads, since hourlyRate/plannedCost/actualCost are non-nullable and can\'t be allow-list redacted', () => {
+      for (const method of ['index', 'getDutyManager', 'show'] as const) {
+        const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShiftController.prototype[method]);
+        expect(roles).not.toContain(STUDIO_ROLE.ACCOUNT_MANAGER);
+      }
+    });
   });
 });

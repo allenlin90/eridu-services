@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
@@ -24,6 +25,7 @@ import {
   showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
   studioShowCreatorListItemSchema as studioShowCreatorListItemApiSchema,
 } from '@eridu/api-types/studio-creators';
+import { showSummaryCreatorSchema } from '@eridu/api-types/task-management';
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
@@ -37,14 +39,16 @@ import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list
 import { UpdateStudioShowCreatorDto } from './schemas/studio-show-creator-update.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
-import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
+import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
+import { projectAllowList, stripLegacyAuditSidecar } from '@/lib/utils/allow-list-projection.util';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import {
   CreateStudioShowDto,
+  showPlatformSummaryRelationSchema,
   studioShowDetailDto,
   UpdateStudioShowDto,
 } from '@/models/show/schemas/show.schema';
@@ -66,10 +70,41 @@ const STUDIO_SHOW_CREATOR_ACCESS_ROLES = [
   STUDIO_ROLE.MANAGER,
   STUDIO_ROLE.TALENT_MANAGER,
 ];
+const STUDIO_SHOW_CREATOR_READ_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+  STUDIO_ROLE.TALENT_MANAGER,
+  STUDIO_ROLE.ACCOUNT_MANAGER,
+];
 const STUDIO_SHOW_WRITE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
+
+// Finance Guardrails S3 — allow-list, not a money-field blacklist. Any field
+// NOT in these sets is forced to null for ACCOUNT_MANAGER, so a future money
+// field added to either schema is redacted by default instead of leaking.
+export const SHOW_CREATOR_SUMMARY_ALLOWED_FOR_AM = new Set([
+  'show_creator_id',
+  'creator_id',
+  'creator_name',
+  'creator_alias_name',
+]);
+export const SHOW_CREATOR_LIST_ITEM_ALLOWED_FOR_AM = new Set([
+  'id',
+  'creator_id',
+  'creator_name',
+  'creator_alias_name',
+  'note',
+  'metadata',
+]);
+export const SHOW_PLATFORM_SUMMARY_ALLOWED_FOR_AM = new Set([
+  'uid',
+  'platform',
+  'liveStreamLink',
+  'platformShowId',
+  'viewerCount',
+]);
 // Compensation totals are restricted to ADMIN/MANAGER (line-item write surface);
 // TALENT_MANAGER can read the assignment list but not the money totals.
 const STUDIO_SHOW_COMPENSATION_ACCESS_ROLES = [
@@ -78,6 +113,18 @@ const STUDIO_SHOW_COMPENSATION_ACCESS_ROLES = [
 ];
 const STUDIO_SHOW_DELETE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
+];
+// Submitted task content is an unstructured per-template JSON blob (no fixed
+// money-field shape to allow-list against), so it's gated rather than
+// redacted: ACCOUNT_MANAGER doesn't need submitted task results for any of
+// its PRD stories (mechanic/template review, not task instances).
+const STUDIO_SHOW_TASKS_READ_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+  STUDIO_ROLE.TALENT_MANAGER,
+  STUDIO_ROLE.MEMBER,
+  STUDIO_ROLE.DESIGNER,
+  STUDIO_ROLE.MODERATION_MANAGER,
 ];
 
 const isoDateTimeSchema = z.string().refine(
@@ -150,8 +197,18 @@ export class StudioShowController extends BaseStudioController {
   async index(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ListStudioShowsQueryDto,
+    @Req() request: AuthenticatedRequest,
   ) {
     const { data, total } = await this.taskOrchestrationService.getStudioShowsWithTaskSummary(studioId, query);
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      data.forEach((show) => {
+        if (show.creators) {
+          show.creators = show.creators.map((c) =>
+            projectAllowList(showSummaryCreatorSchema, c, SHOW_CREATOR_SUMMARY_ALLOWED_FOR_AM));
+        }
+      });
+    }
     return this.createPaginatedResponse(data, total, this.toPaginationQuery(query));
   }
 
@@ -218,8 +275,15 @@ export class StudioShowController extends BaseStudioController {
   async show(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Req() request: AuthenticatedRequest,
   ) {
-    return this.studioShowManagementService.getShowDetail(studioId, id);
+    const detail = await this.studioShowManagementService.getShowDetail(studioId, id);
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER && detail.showPlatforms) {
+      detail.showPlatforms = detail.showPlatforms.map((p) =>
+        projectAllowList(showPlatformSummaryRelationSchema, p, SHOW_PLATFORM_SUMMARY_ALLOWED_FOR_AM));
+    }
+    return detail;
   }
 
   @Post()
@@ -254,6 +318,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/tasks')
+  @StudioProtected(STUDIO_SHOW_TASKS_READ_ROLES)
   @ZodResponse(z.array(taskWithRelationsDto))
   async tasks(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -263,15 +328,28 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/creators')
-  @StudioProtected(STUDIO_SHOW_CREATOR_ACCESS_ROLES)
+  @StudioProtected(STUDIO_SHOW_CREATOR_READ_ROLES)
   @ZodResponse(z.array(studioShowCreatorListItemApiSchema))
   async creators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Req() request: AuthenticatedRequest,
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
     const creators = await this.showOrchestrationService.listCreatorsForShow(id);
-    return creators.map((item) => studioShowCreatorListItemDto.parse(item));
+    let mapped = creators.map((item) => studioShowCreatorListItemDto.parse(item));
+    const role = request?.studioMembership?.role;
+    if (role === STUDIO_ROLE.ACCOUNT_MANAGER) {
+      mapped = mapped.map((c) => ({
+        ...projectAllowList(studioShowCreatorListItemApiSchema, c, SHOW_CREATOR_LIST_ITEM_ALLOWED_FOR_AM),
+        // `metadata` stays allow-listed (it's not `.nullable()` on the public
+        // schema), but it can carry `audit.snapshot_overrides[]` — a sidecar
+        // of historical agreed_rate/commission_rate/compensation_type values
+        // (see legacy-snapshot-merger.ts) — so strip that key specifically.
+        metadata: stripLegacyAuditSidecar(c.metadata),
+      }));
+    }
+    return mapped;
   }
 
   @Post(':id/creators/bulk-assign')

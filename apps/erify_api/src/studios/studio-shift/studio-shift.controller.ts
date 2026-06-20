@@ -33,6 +33,19 @@ import {
 } from '@/models/studio-shift/schemas/studio-shift.schema';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 
+// studioShiftDto carries hourlyRate/plannedCost/actualCost as non-nullable
+// fields (can't allow-list-project them to null without breaking the
+// response schema), so ACCOUNT_MANAGER is gated out of shift reads entirely
+// rather than redacted — it has no PRD story that needs shift visibility.
+const STUDIO_SHIFT_READ_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+  STUDIO_ROLE.TALENT_MANAGER,
+  STUDIO_ROLE.MEMBER,
+  STUDIO_ROLE.DESIGNER,
+  STUDIO_ROLE.MODERATION_MANAGER,
+];
+
 @StudioProtected()
 @Controller('studios/:studioId/shifts')
 export class StudioShiftController extends BaseStudioController {
@@ -41,6 +54,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Get()
+  @StudioProtected(STUDIO_SHIFT_READ_ROLES)
   @ReadBurstThrottle()
   @ZodPaginatedResponse(studioShiftDto)
   async index(
@@ -52,6 +66,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Get('duty-manager')
+  @StudioProtected(STUDIO_SHIFT_READ_ROLES)
   @ZodResponse(z.union([studioShiftDto, z.null()]))
   async getDutyManager(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -62,6 +77,7 @@ export class StudioShiftController extends BaseStudioController {
   }
 
   @Get(':id')
+  @StudioProtected(STUDIO_SHIFT_READ_ROLES)
   @ZodResponse(studioShiftDto)
   async show(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,

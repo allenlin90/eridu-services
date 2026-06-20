@@ -10,8 +10,11 @@ import type { StudioTaskTemplateListRow } from '../lib/studio-task-template-list
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
-export function getStudioTaskTemplateColumns(studioId: string): ColumnDef<StudioTaskTemplateListRow>[] {
-  return [
+export function getStudioTaskTemplateColumns(
+  studioId: string,
+  options?: { isReadOnly?: boolean },
+): ColumnDef<StudioTaskTemplateListRow>[] {
+  const columns: ColumnDef<StudioTaskTemplateListRow>[] = [
     {
       accessorKey: 'name',
       header: 'Name',
@@ -90,6 +93,12 @@ export function getStudioTaskTemplateColumns(studioId: string): ColumnDef<Studio
       meta: { className: 'hidden' },
     },
   ];
+
+  if (options?.isReadOnly) {
+    return columns.filter((col) => col.id !== 'actions');
+  }
+
+  return columns;
 }
 
 export const studioTaskTemplateSearchableColumns = [

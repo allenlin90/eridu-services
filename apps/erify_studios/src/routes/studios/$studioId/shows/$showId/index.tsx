@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
 import { useUpdateStudioShow } from '@/features/studio-shows/api/update-studio-show';
 import type { StudioShowFormValues } from '@/features/studio-shows/components/studio-show-management-form';
 import { StudioShowManagementForm } from '@/features/studio-shows/components/studio-show-management-form';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/')({
   component: StudioShowDetailsTab,
@@ -15,10 +18,13 @@ function StudioShowDetailsTab() {
   const { studioId, showId } = Route.useParams();
   const { data: show } = useStudioShow({ studioId, showId });
   const [resetNonce, setResetNonce] = useState(0);
+  const { role } = useStudioAccess(studioId);
 
   if (!show) {
     return null;
   }
+
+  const isReadOnly = role === STUDIO_ROLE.ACCOUNT_MANAGER;
 
   return (
     <div className="rounded-md border bg-background p-3 sm:p-4">
@@ -26,6 +32,7 @@ function StudioShowDetailsTab() {
         key={`${show.id}:${show.updated_at}:${resetNonce}`}
         studioId={studioId}
         show={show}
+        isReadOnly={isReadOnly}
         onCancel={() => setResetNonce((nonce) => nonce + 1)}
       />
     </div>
@@ -35,10 +42,12 @@ function StudioShowDetailsTab() {
 function StudioShowDetailsForm({
   studioId,
   show,
+  isReadOnly,
   onCancel,
 }: {
   studioId: string;
   show: StudioShowDetail;
+  isReadOnly: boolean;
   onCancel: () => void;
 }) {
   const updateShow = useUpdateStudioShow(studioId);
@@ -59,6 +68,7 @@ function StudioShowDetailsForm({
       studioId={studioId}
       show={show}
       isSubmitting={updateShow.isPending}
+      isReadOnly={isReadOnly}
       onSubmit={handleSubmit}
       onCancel={onCancel}
     />

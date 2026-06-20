@@ -1,5 +1,6 @@
 import { createFileRoute, useLocation } from '@tanstack/react-router';
 
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { getStudioMembers, studioMemberKeys } from '@/features/studio-members/api/members';
 import { getShowTasks, showTasksKeys } from '@/features/studio-shows/api/get-show-tasks';
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
@@ -10,7 +11,7 @@ import { TasksToolbarActions } from '@/features/tasks/components/studio-show-tas
 import { useStudioShowTasksPageController } from '@/features/tasks/hooks/use-studio-show-tasks-page-controller';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
-  component: StudioShowTasksTab,
+  component: ShowTasksRouteComponent,
   loader: ({ context: { queryClient }, params: { studioId, showId } }) => {
     void queryClient.prefetchQuery({
       queryKey: showTasksKeys.list(studioId, showId),
@@ -28,6 +29,15 @@ export const Route = createFileRoute('/studios/$studioId/shows/$showId/tasks')({
     });
   },
 });
+
+function ShowTasksRouteComponent() {
+  const { studioId } = Route.useParams();
+  return (
+    <StudioRouteGuard studioId={studioId} routeKey="showTasks">
+      <StudioShowTasksTab />
+    </StudioRouteGuard>
+  );
+}
 
 function StudioShowTasksTab() {
   const { studioId, showId } = Route.useParams();

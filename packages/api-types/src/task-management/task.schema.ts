@@ -336,7 +336,7 @@ export type BulkDeleteTasksResponse = z.infer<typeof bulkDeleteTasksResponseSche
 /**
  * Show data with task completion summary
  */
-const showSummaryCreatorSchema = z.object({
+export const showSummaryCreatorSchema = z.object({
   show_creator_id: z.string(),
   creator_id: z.string(),
   creator_name: z.string(),

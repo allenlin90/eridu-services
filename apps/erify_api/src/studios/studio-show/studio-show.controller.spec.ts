@@ -1,12 +1,14 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { showCreatorCompensationSummarySchema } from '@eridu/api-types/studio-creators';
 
 import type { BulkAssignStudioShowCreatorsDto } from './schemas/studio-show-creator-assignment.schema';
 import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import type { CreateStudioShowDto, UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
@@ -188,7 +190,7 @@ describe('studioShowController', () => {
         },
       ]);
 
-      const result = await controller.creators(studioId, showId);
+      const result = await controller.creators(studioId, showId, { studioMembership: { role: 'admin' } } as any);
 
       expect(taskOrchestrationServiceMock.getStudioShow).toHaveBeenCalledWith(studioId, showId);
       expect(showOrchestrationServiceMock.listCreatorsForShow).toHaveBeenCalledWith(showId);
@@ -320,6 +322,124 @@ describe('studioShowController', () => {
 
       expect(showRunReviewServiceMock.getShowRunReviewSummary).toHaveBeenCalledWith(studioId, query);
       expect(result).toEqual(expectedSummary);
+    });
+  });
+
+  describe('aCCOUNT_MANAGER money redaction', () => {
+    const studioId = 'std_123';
+    const showId = 'show_123';
+    const mockAMRequest = {
+      studioMembership: {
+        role: 'account_manager',
+      },
+    } as any;
+
+    it('should redact agreed_rate, commission_rate, and compensation_type on creators in index', async () => {
+      taskOrchestrationServiceMock.getStudioShowsWithTaskSummary.mockResolvedValue({
+        data: [
+          {
+            uid: showId,
+            creators: [
+              {
+                show_creator_id: 'sc_1',
+                creator_id: 'cr_1',
+                creator_name: 'Alice',
+                creator_alias_name: 'Ali',
+                compensation_type: 'FIXED',
+                agreed_rate: '150.00',
+                commission_rate: '10.00',
+              },
+            ],
+          },
+        ],
+        total: 1,
+      });
+
+      const response = await controller.index(studioId, { skip: 0, take: 10 } as any, mockAMRequest);
+      expect(response.data[0].creators[0].agreed_rate).toBeNull();
+      expect(response.data[0].creators[0].commission_rate).toBeNull();
+      expect(response.data[0].creators[0].compensation_type).toBeNull();
+    });
+
+    it('should redact gmv, ctr, and cto inside showPlatforms in show detail', async () => {
+      studioShowManagementServiceMock.getShowDetail.mockResolvedValue({
+        uid: showId,
+        showPlatforms: [
+          {
+            uid: 'sp_1',
+            platform: { uid: 'plt_1', name: 'Youtube' },
+            liveStreamLink: 'https://youtube.com/live',
+            platformShowId: 'yt_123',
+            viewerCount: 42,
+            gmv: '1000.00',
+            ctr: '5.20',
+            cto: '1.50',
+          },
+        ],
+      });
+
+      const response = await controller.show(studioId, showId, mockAMRequest);
+      expect(response.showPlatforms[0].gmv).toBeNull();
+      expect(response.showPlatforms[0].ctr).toBeNull();
+      expect(response.showPlatforms[0].cto).toBeNull();
+      expect(response.showPlatforms[0].uid).toBe('sp_1');
+      expect(response.showPlatforms[0].viewerCount).toBe(42);
+    });
+
+    it('should redact agreed_rate, commission_rate, and compensation_type in show creators list', async () => {
+      taskOrchestrationServiceMock.getStudioShow.mockResolvedValue({ uid: showId });
+      showOrchestrationServiceMock.listCreatorsForShow.mockResolvedValue([
+        {
+          id: 'show_mc_1',
+          creatorId: 'creator_1',
+          creatorName: 'Alice',
+          creatorAliasName: 'Ali',
+          note: 'host',
+          agreedRate: '150.00',
+          compensationType: 'FIXED',
+          commissionRate: '10.00',
+          metadata: {},
+        },
+      ]);
+
+      const response = await controller.creators(studioId, showId, mockAMRequest);
+      expect(response[0].agreed_rate).toBeNull();
+      expect(response[0].commission_rate).toBeNull();
+      expect(response[0].compensation_type).toBeNull();
+    });
+
+    it('should strip the legacy audit sidecar from metadata in show creators list, since it carries historical rate values', async () => {
+      taskOrchestrationServiceMock.getStudioShow.mockResolvedValue({ uid: showId });
+      showOrchestrationServiceMock.listCreatorsForShow.mockResolvedValue([
+        {
+          id: 'show_mc_1',
+          creatorId: 'creator_1',
+          creatorName: 'Alice',
+          creatorAliasName: 'Ali',
+          note: 'host',
+          agreedRate: '150.00',
+          compensationType: 'FIXED',
+          commissionRate: '10.00',
+          metadata: {
+            tags: ['vip'],
+            audit: {
+              snapshot_overrides: [
+                { field: 'agreed_rate', old_value: '100.00', new_value: '150.00' },
+              ],
+            },
+          },
+        },
+      ]);
+
+      const response = await controller.creators(studioId, showId, mockAMRequest);
+      expect(response[0].metadata).toEqual({ tags: ['vip'] });
+    });
+  });
+
+  describe('tasks', () => {
+    it('excludes ACCOUNT_MANAGER, since submitted task content is an unstructured blob that can carry money values', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.tasks);
+      expect(roles).not.toContain(STUDIO_ROLE.ACCOUNT_MANAGER);
     });
   });
 });

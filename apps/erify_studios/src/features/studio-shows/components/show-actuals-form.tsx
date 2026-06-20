@@ -24,12 +24,14 @@ type ShowActualsFormProps = {
   studioId: string;
   show: ShowActualsTarget;
   onSaved?: () => void;
+  isReadOnly?: boolean;
 };
 
 export function ShowActualsForm({
   studioId,
   show,
   onSaved,
+  isReadOnly = false,
 }: ShowActualsFormProps) {
   const [actualStartTime, setActualStartTime] = useState(show.actual_start_time ?? '');
   const [actualEndTime, setActualEndTime] = useState(show.actual_end_time ?? '');
@@ -53,22 +55,24 @@ export function ShowActualsForm({
   };
 
   return (
-    <div className="space-y-4">
+    <fieldset disabled={isReadOnly} className="space-y-4 border-0 p-0 m-0">
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor={`${show.id}-actual-start`}>Actual Start</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setActualStartTime('')}
-              disabled={updateShow.isPending}
-              aria-label="Clear show actual start"
-            >
-              Clear
-            </Button>
+            {!isReadOnly && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setActualStartTime('')}
+                disabled={updateShow.isPending}
+                aria-label="Clear show actual start"
+              >
+                Clear
+              </Button>
+            )}
           </div>
           <ResponsiveDateTimePicker
             value={actualStartTime}
@@ -80,17 +84,19 @@ export function ShowActualsForm({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor={`${show.id}-actual-end`}>Actual End</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setActualEndTime('')}
-              disabled={updateShow.isPending}
-              aria-label="Clear show actual end"
-            >
-              Clear
-            </Button>
+            {!isReadOnly && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setActualEndTime('')}
+                disabled={updateShow.isPending}
+                aria-label="Clear show actual end"
+              >
+                Clear
+              </Button>
+            )}
           </div>
           <ResponsiveDateTimePicker
             value={actualEndTime}
@@ -107,26 +113,28 @@ export function ShowActualsForm({
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setActualStartTime('');
-            setActualEndTime('');
-          }}
-          disabled={updateShow.isPending}
-        >
-          Clear actuals
-        </Button>
-        <Button
-          type="button"
-          onClick={() => void handleSubmit()}
-          disabled={updateShow.isPending || hasInvertedRange}
-        >
-          Save actuals
-        </Button>
-      </div>
-    </div>
+      {!isReadOnly && (
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setActualStartTime('');
+              setActualEndTime('');
+            }}
+            disabled={updateShow.isPending}
+          >
+            Clear actuals
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={updateShow.isPending || hasInvertedRange}
+          >
+            Save actuals
+          </Button>
+        </div>
+      )}
+    </fieldset>
   );
 }

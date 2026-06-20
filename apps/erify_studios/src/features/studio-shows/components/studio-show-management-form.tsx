@@ -83,6 +83,7 @@ type StudioShowManagementFormProps = {
   studioId: string;
   show?: StudioShowDetail | null;
   isSubmitting?: boolean;
+  isReadOnly?: boolean;
   onSubmit: (values: StudioShowFormValues) => void;
   onCancel: () => void;
 };
@@ -91,6 +92,7 @@ export function StudioShowManagementForm({
   studioId,
   show,
   isSubmitting = false,
+  isReadOnly = false,
   onSubmit,
   onCancel,
 }: StudioShowManagementFormProps) {
@@ -126,7 +128,7 @@ export function StudioShowManagementForm({
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid gap-4 md:grid-cols-2">
+        <fieldset disabled={isReadOnly} className="grid gap-4 md:grid-cols-2 border-0 p-0 m-0">
           {/* external_id is create-only; omitted on edit per Design Decision #9 */}
           {!show && <StudioShowExternalIdField control={form.control} />}
 
@@ -143,15 +145,25 @@ export function StudioShowManagementForm({
           <StudioShowStatusField control={form.control} show={show} studioId={studioId} />
           <StudioShowStandardField control={form.control} show={show} studioId={studioId} />
           <StudioShowPlatformsField control={form.control} show={show} studioId={studioId} />
-        </div>
+        </fieldset>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </Button>
+          {isReadOnly
+            ? (
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Close
+                </Button>
+              )
+            : (
+                <>
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save'}
+                  </Button>
+                </>
+              )}
         </DialogFooter>
       </form>
     </Form>
