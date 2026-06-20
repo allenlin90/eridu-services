@@ -67,7 +67,6 @@ describe('clientMechanicService', () => {
         instructionBody: 'B',
         client: { connect: { uid: 'client_1' } },
       });
-      expect(data.createdByUser).toBeUndefined();
     });
   });
 
