@@ -52,6 +52,14 @@ When the schema gains a new top-level engine field, audit every transform helper
 - `creator_attendance_missing` should use `validation.require_reason = 'on-true'` for the explanation instead of a separate reason binding field.
 - Save-time validation must reject mismatched field type ↔ fact key pairs and duplicate fact-key bindings in the same template through the shared Zod schema.
 
+### 8. Mechanic References (PR 20.5) — `mechanic_ref` lives on the base schema, not v2-only
+
+Unlike `system_fact_key`/`shared_field_key`, `mechanic_ref` is **not** v2-exclusive — it's defined on `FieldItemBaseSchema` itself (`MechanicRefSchema`, with `{ client_id, mechanic_id, content_revision }`), the same level as `group` (the loop concept), because mechanic assignment is meant to work identically regardless of schema engine version. Before adding a new optional field to only `FieldItemV2BaseSchema`'s `.extend({...})`, check whether the feature is genuinely v2-only (like fact extraction) or schema-version-agnostic (like loops/mechanics) — putting a version-agnostic field on only one union arm of `FieldItem = FieldItemBaseSchema | FieldItemV2Schema` makes every `item.<field>` access on the unioned type a typecheck error, since the other arm has no such key at all (not even optional `undefined`). This shipped broken once already because `pnpm typecheck` is a no-op (`docs/tech-debt/erify-studios-typecheck-noop.md`); verify with `tsc -b tsconfig.app.json --noEmit` directly.
+
+- `mechanic_ref.client_id` must match the template's own `client_id` (B1: a mechanic can only be assigned into a template bound to its client) — enforced in `TemplateSchemaV2Validator`'s refinement.
+- Per-loop `(mechanic_id, group)` uniqueness is enforced at the same validation layer, not as a DB constraint — `TaskTemplateMechanicRef` is a denormalized, write-on-save link table (S2) for coverage queries, not the source of truth (that's the JSON `mechanic_ref` inside `currentSchema.items[]`).
+- The repository syncs `TaskTemplateMechanicRef` with a transactional delete-then-recreate per `(templateId, snapshotId)` on every create/update — see `TaskTemplateRepository.syncMechanicRefsForTemplate`.
+
 ## Checklist
 
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`

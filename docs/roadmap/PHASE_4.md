@@ -1,6 +1,6 @@
 # Phase 4: P&L Visibility & Creator Operations
 
-> **Last updated**: 2026-06-20 · **Status**: 🚧 Active · **Remaining**: 2 PRs · **Next**: 20.6 Mechanic coverage read model + mechanic→shows view
+> **Last updated**: 2026-06-21 · **Status**: 🚧 Active · **Remaining**: 2 PRs · **Next**: 20.6 Mechanic coverage read model + mechanic→shows view
 
 **Quick links**
 
