@@ -102,19 +102,48 @@ describe('clientMechanicService', () => {
 
     it('does NOT bump contentRevision when the body is re-submitted unchanged', async () => {
       (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
-      (repositoryMock.updateWithVersionCheck as jest.Mock).mockResolvedValue(baseMechanic);
 
-      await service.updateMechanic(
+      const result = await service.updateMechanic(
         { mechanicUid: 'cmech_123', clientUid: 'client_1' },
         { instructionBody: baseMechanic.instructionBody, version: 3 },
       );
 
-      const [, data] = (repositoryMock.updateWithVersionCheck as jest.Mock).mock.calls[0];
-      expect(data.contentRevision).toBeUndefined();
+      expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
+      expect(result).toBe(baseMechanic);
     });
   });
 
   describe('updateMechanic — scoping & locking', () => {
+    it('does not write or bump version for an empty patch', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
+
+      const result = await service.updateMechanic(
+        { mechanicUid: 'cmech_123', clientUid: 'client_1' },
+        { version: 3 },
+      );
+
+      expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
+      expect(result).toBe(baseMechanic);
+    });
+
+    it('does not write or bump version when all submitted fields are unchanged', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
+
+      const result = await service.updateMechanic(
+        { mechanicUid: 'cmech_123', clientUid: 'client_1' },
+        {
+          title: baseMechanic.title,
+          instructionLabel: baseMechanic.instructionLabel,
+          instructionBody: baseMechanic.instructionBody,
+          status: baseMechanic.status as 'active',
+          version: 3,
+        },
+      );
+
+      expect(repositoryMock.updateWithVersionCheck).not.toHaveBeenCalled();
+      expect(result).toBe(baseMechanic);
+    });
+
     it('returns null for a mechanic not under the client', async () => {
       (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(null);
 

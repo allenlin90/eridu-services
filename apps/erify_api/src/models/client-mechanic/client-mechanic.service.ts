@@ -19,6 +19,14 @@ type MechanicScope = {
   clientUid: string;
 };
 
+function metadataMatches(
+  payloadMetadata: Record<string, any> | undefined,
+  existingMetadata: unknown,
+) {
+  return payloadMetadata === undefined
+    || JSON.stringify(payloadMetadata) === JSON.stringify(existingMetadata ?? {});
+}
+
 /**
  * Service for managing ClientMechanic entities — client-owned reusable
  * moderation instructions assignable into task-template loops.
@@ -93,16 +101,25 @@ export class ClientMechanicService extends BaseModelService {
       return null;
     }
 
-    const contentChanged
-      = (payload.instructionLabel !== undefined && payload.instructionLabel !== existing.instructionLabel)
-      || (payload.instructionBody !== undefined && payload.instructionBody !== existing.instructionBody);
-
     const data = {
-      ...(payload.title !== undefined && { title: payload.title }),
-      ...(payload.instructionLabel !== undefined && { instructionLabel: payload.instructionLabel }),
-      ...(payload.instructionBody !== undefined && { instructionBody: payload.instructionBody }),
-      ...(payload.status !== undefined && { status: payload.status }),
-      ...(payload.metadata !== undefined && { metadata: payload.metadata }),
+      ...(payload.title !== undefined && payload.title !== existing.title && { title: payload.title }),
+      ...(payload.instructionLabel !== undefined
+        && payload.instructionLabel !== existing.instructionLabel
+        && { instructionLabel: payload.instructionLabel }),
+      ...(payload.instructionBody !== undefined
+        && payload.instructionBody !== existing.instructionBody
+        && { instructionBody: payload.instructionBody }),
+      ...(payload.status !== undefined && payload.status !== existing.status && { status: payload.status }),
+      ...(!metadataMatches(payload.metadata, existing.metadata) && { metadata: payload.metadata }),
+    };
+
+    if (Object.keys(data).length === 0) {
+      return existing;
+    }
+
+    const contentChanged = data.instructionLabel !== undefined || data.instructionBody !== undefined;
+    const updateData = {
+      ...data,
       version: existing.version + 1,
       ...(contentChanged && { contentRevision: existing.contentRevision + 1 }),
     };
@@ -110,7 +127,7 @@ export class ClientMechanicService extends BaseModelService {
     try {
       return await this.clientMechanicRepository.updateWithVersionCheck(
         { uid: scope.mechanicUid, clientUid: scope.clientUid, version: payload.version },
-        data,
+        updateData,
       );
     } catch (error) {
       if (error instanceof VersionConflictError) {
