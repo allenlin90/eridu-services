@@ -26,7 +26,7 @@ The prior revision specified a four-entity catalog (`ClientMechanic`, `ClientMec
 | --- | --- |
 | Model | Keep the client-owned catalog (drop PR#86's template-local metadata storage; reuse its Loop×Mechanic matrix UX). Ship **one mutable `ClientMechanic` per client**. |
 | B1 | **Mechanic-bearing templates are client-bound.** `TaskTemplate` is studio-scoped today; add an optional `clientId` so one client's cues never leak onto another client's shows. |
-| B2 | **Catalog scope: client-global, studio-authorized writes.** `ClientMechanic` is owned by the global `Client` (single truth across studios); writes are authorized only to studio members linked to that client. Cross-studio propagation is intended. **Deferral:** the shows-based studio↔client linkage gate is *not* in 20.1 (which scopes writes by client-existence only); it lands in **20.3** and **must precede 20.5** (live mechanic assignment), since a mechanic assigned into a bound template becomes cross-studio-writable moderator content. |
+| B2 | **Catalog scope: client-global, studio-authorized writes.** `ClientMechanic` is owned by the global `Client` (single truth across studios); writes are authorized only to studio members linked to that client. Cross-studio propagation is intended. The shows-based studio↔client linkage gate (20.1 scoped writes by client-existence only) **shipped in 20.3**, ahead of 20.5 (live mechanic assignment), since a mechanic assigned into a bound template becomes cross-studio-writable moderator content. |
 | B3 | **`ACCOUNT_MANAGER` edits the catalog, read-only on operations** (task templates, shows, creator mapping) with money fields redacted. ADMIN/MANAGER retain catalog write. |
 | S1 | **Staleness without versioning:** a monotonic `contentRevision` int on `ClientMechanic`, bumped on content edit, is frozen into each template snapshot's `mechanic_ref`. Coverage compares frozen-vs-current revision exactly — no version history needed. |
 | S2 | **Coverage is queryable:** a denormalized `TaskTemplateMechanicRef` link table (template/snapshot ↔ mechanic + loop), written on template save, backs both coverage directions — never a JSONB scan. |
@@ -127,7 +127,7 @@ Additive, validated in `@eridu/api-types/task-management`; the exact key is fina
 
 A studio role for client service / account-management users (B3).
 
-- **Writes**: client mechanics (create / edit / retire). The studio↔client linkage authorization (B2) is **deferred to 20.3**; 20.1 scopes writes by client existence only.
+- **Writes**: client mechanics (create / edit / retire). The studio↔client linkage authorization (B2) **shipped in 20.3** (`ensureStudioClientLinkage`, gating create/update/remove on the studio having an active show for that client).
 - **Reads (money-redacted)**: task templates, shows / show context, creator mapping. Reads use an **allow-list projection** that strips rate / commission / compensation fields (S3).
 - **No access**: members, shifts, compensation, economics; no operational mutations (shows, shifts, creator assignments, tasks, task templates, members, creators).
 

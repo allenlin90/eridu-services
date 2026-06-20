@@ -51,3 +51,9 @@ Snapshot-on-write fields (`ShowCreator.{agreedRate, compensationType, commission
 - the UI surface that exposes the edit to the right role.
 
 A snapshot without an edit path produces data managers cannot correct without admin intervention and must be flagged as a planning bug.
+
+## 10. Role-based money redaction uses an allow-list projection, never a field blacklist
+
+When a role (e.g. `ACCOUNT_MANAGER`) may read an operational record but not its money fields, redact via `projectAllowList()` (`apps/erify_api/src/lib/utils/allow-list-projection.util.ts`): pass the response schema and an explicit `Set` of the field names that ARE allowed through. Any field on the schema not in that set is forced to `null` — including a money field added to the schema later, before anyone remembers to update the redaction code. Hand-rolled `c.field = null` blacklists (nulling out the *known* money fields) fail closed in the wrong direction: a forgotten field leaks instead of being redacted.
+
+Every allow-list site ships with a negative golden test (pattern: `apps/erify_api/src/lib/utils/account-manager-redaction.golden.spec.ts`) that scans the schema for money-pattern field names (`rate`/`commission`/`compensation`/`gmv`/`ctr`/`cto`) and asserts none of them are in the allow-list — so a new money field fails the test the moment it's added, not silently at runtime.

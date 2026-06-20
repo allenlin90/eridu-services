@@ -41,7 +41,7 @@ The domain object is the **mechanic**: a reusable, client-owned moderation instr
 
 ## Product Rules
 
-1. **Client-owned, single truth (B2).** A mechanic belongs to a global `Client`; its catalog is shared by every studio that runs that client's shows. Edits propagate cross-studio. Write access is limited to studio members linked to that client. *(The studio↔client write-linkage gate is **deferred to PR 20.3** and must land before PR 20.5; PR 20.1 ships catalog writes scoped by client existence only.)*
+1. **Client-owned, single truth (B2).** A mechanic belongs to a global `Client`; its catalog is shared by every studio that runs that client's shows. Edits propagate cross-studio. Write access is limited to studio members linked to that client. *(The studio↔client write-linkage gate shipped in PR 20.3, ahead of PR 20.5; PR 20.1 had shipped catalog writes scoped by client existence only.)*
 2. **Client-bound templates (B1).** A template that uses mechanics is bound to one client; a mechanic can only be assigned into a template bound to its client.
 3. **Assign-once per loop.** A mechanic appears at most once per loop; the same mechanic across different loops is intended reuse, not duplication.
 4. **Edit-once-propagates.** Editing a mechanic's label/description updates every loop's resolved field for future renders and bumps a monotonic `contentRevision`. It does not alter already-frozen task snapshots.
