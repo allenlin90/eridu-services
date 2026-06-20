@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import { Loader2, Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 
@@ -8,6 +8,7 @@ import type { ClientMechanicApiResponse } from '@eridu/api-types/client-mechanic
 import {
   adaptColumnFiltersChange,
   adaptPaginationChange,
+  AsyncCombobox,
   Button,
   Card,
   CardContent,
@@ -17,11 +18,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableToolbar,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@eridu/ui';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
@@ -37,7 +33,7 @@ import {
   mechanicSearchableColumns,
 } from '@/features/client-mechanics/config/mechanic-columns';
 import { useClientMechanics } from '@/features/client-mechanics/hooks/use-client-mechanics';
-import { getStudioClients } from '@/features/task-reports/api/get-studio-clients';
+import { getClients } from '@/features/clients/api/get-clients';
 
 const clientMechanicsRouteApi = getRouteApi('/studios/$studioId/client-mechanics');
 
@@ -61,13 +57,27 @@ export function ClientMechanicsPage() {
   const [retiringMechanic, setRetiringMechanic] = useState<Mechanic | null>(null);
   const [deletingMechanic, setDeletingMechanic] = useState<Mechanic | null>(null);
 
+  const [clientSearch, setClientSearch] = useState('');
   const clientsQuery = useQuery({
-    queryKey: ['studio-clients', studioId],
-    queryFn: ({ signal }) => getStudioClients(studioId, { limit: 100 }, { signal }),
+    queryKey: ['studio-clients', studioId, clientSearch],
+    queryFn: ({ signal }) => getClients({ name: clientSearch || undefined, limit: 50 }, studioId, { signal }),
     enabled: Boolean(studioId),
   });
 
   const clients = useMemo(() => clientsQuery.data?.data ?? [], [clientsQuery.data]);
+
+  const selectedClient = useMemo(
+    () => clients.find((c) => c.id === search.client_id),
+    [clients, search.client_id],
+  );
+
+  const clientOptions = useMemo(() => {
+    const fetched = clients.map((c) => ({ value: c.id, label: c.name }));
+    if (selectedClient && !fetched.some((opt) => opt.value === selectedClient.id)) {
+      fetched.unshift({ value: selectedClient.id, label: selectedClient.name });
+    }
+    return fetched;
+  }, [clients, selectedClient]);
 
   // Default to the first client if none is selected in URL state.
   useEffect(() => {
@@ -171,30 +181,21 @@ export function ClientMechanicsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <Select
+              <AsyncCombobox
+                className="w-[300px]"
                 value={search.client_id || ''}
-                onValueChange={(val) => {
+                onChange={(val) => {
                   void navigate({
                     to: '/studios/$studioId/client-mechanics',
                     params: { studioId },
-                    search: (prev) => ({ ...prev, client_id: val, page: 1 }),
+                    search: (prev) => ({ ...prev, client_id: val || undefined, page: 1 }),
                   });
                 }}
-              >
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Choose a client..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {clientsQuery.isLoading && (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              )}
+                onSearch={setClientSearch}
+                options={clientOptions}
+                isLoading={clientsQuery.isLoading}
+                placeholder="Choose a client..."
+              />
             </div>
           </CardContent>
         </Card>

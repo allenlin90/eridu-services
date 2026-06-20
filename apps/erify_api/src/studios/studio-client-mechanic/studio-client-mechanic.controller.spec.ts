@@ -120,6 +120,11 @@ describe('studioClientMechanicController', () => {
   });
 
   describe('remove', () => {
+    it('restricts hard-delete to ADMIN only, unlike the broader catalog-write guard', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioClientMechanicController.prototype.remove);
+      expect(roles).toEqual([STUDIO_ROLE.ADMIN]);
+    });
+
     it('delegates to deleteMechanic and returns the row', async () => {
       const deleted = { uid: 'cmech_1', deletedAt: new Date() } as any;
       mechanicService.deleteMechanic.mockResolvedValue(deleted);

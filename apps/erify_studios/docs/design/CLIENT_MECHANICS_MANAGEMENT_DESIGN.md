@@ -169,8 +169,8 @@ Routes are studio-scoped for membership/RBAC but **nest under the owning `:clien
 ```text
 GET    /studios/:studioId/clients/:clientId/mechanics
 POST   /studios/:studioId/clients/:clientId/mechanics
-PATCH  /studios/:studioId/clients/:clientId/mechanics/:mechanicId
-DELETE /studios/:studioId/clients/:clientId/mechanics/:mechanicId   # retire; hard-delete blocked while referenced
+PATCH  /studios/:studioId/clients/:clientId/mechanics/:mechanicId   # status: 'retired' is the reversible lifecycle action — ADMIN/MANAGER/ACCOUNT_MANAGER
+DELETE /studios/:studioId/clients/:clientId/mechanics/:mechanicId   # hard soft-delete; ADMIN only (20.2); referenced-mechanic guard deferred to 20.5
 ```
 
 Coverage endpoints (read-only) are finalized with backend implementation (20.6/20.7).

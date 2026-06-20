@@ -33,6 +33,7 @@ Controller-layer patterns for `apps/erify_api`. Controllers validate/translate H
 - Semantic action endpoints (`POST .../resolve-cancellation`) over generic `PATCH`
 - Services must not accept HTTP DTOs, request/response objects, or Nest exceptions
 - Admin mutations use domain write paths, not nested Prisma creates
+- `@Delete` routes default to `ADMIN`-only via an explicit per-route `@StudioProtected([STUDIO_ROLE.ADMIN])` override — never inherit a broader class-level guard meant for reads/writes (e.g. `StudioMembersController.removeMember`). A role broadly authorized to edit a resource (e.g. `ACCOUNT_MANAGER` on a catalog) isn't automatically authorized to hard-delete it; that needs its own explicit decision.
 
 ## Checklists
 

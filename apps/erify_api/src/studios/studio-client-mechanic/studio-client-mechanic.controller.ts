@@ -127,7 +127,12 @@ export class StudioClientMechanicController extends BaseStudioController {
     return mechanic;
   }
 
+  // PR 20.2's brief authorizes ADMIN/MANAGER/ACCOUNT_MANAGER for create/edit/
+  // retire only; hard-delete is a stricter, less-reversible action and isn't
+  // in that brief — restrict it to ADMIN, mirroring the project's other
+  // delete endpoints (e.g. StudioMembersController.removeMember).
   @Delete(':mechanicId')
+  @StudioProtected([STUDIO_ROLE.ADMIN])
   @ZodResponse(clientMechanicDto)
   async remove(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) _studioId: string,
