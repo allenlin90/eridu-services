@@ -34,6 +34,7 @@ Controller-layer patterns for `apps/erify_api`. Controllers validate/translate H
 - Services must not accept HTTP DTOs, request/response objects, or Nest exceptions
 - Admin mutations use domain write paths, not nested Prisma creates
 - `@Delete` routes default to `ADMIN`-only via an explicit per-route `@StudioProtected([STUDIO_ROLE.ADMIN])` override — never inherit a broader class-level guard meant for reads/writes (e.g. `StudioMembersController.removeMember`). A role broadly authorized to edit a resource (e.g. `ACCOUNT_MANAGER` on a catalog) isn't automatically authorized to hard-delete it; that needs its own explicit decision.
+- When checking whether a route exists, account for NestJS's prefix + method-path composition — `@Controller('studios/:studioId')` plus `@Get('clients')` on a method composes to `GET /studios/:studioId/clients`. Grepping for the full combined path as one literal `@Controller(...)` string misses this and produces a false "route doesn't exist" (caught a codex review false-positive this way on PR 20.4 — `StudioLookupController`'s `clients` lookup route was real, just not findable by that search).
 
 ## Checklists
 

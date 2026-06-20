@@ -73,6 +73,9 @@ Implement `updateWithVersionCheck()` for versioned entities. Throw `VersionConfl
 ### Raw SQL (`$executeRaw` / `$queryRaw`)
 Prisma applies **no** name mapping to raw queries — `Prisma.sql` strings hit the database verbatim. Always reference the `@@map`-ed table name and `@map`-ed column names (`"show_platforms"`, not the `ShowPlatform` model name). A model-name table reference compiles fine and only fails at runtime, where a swallowed extractor/approval error can hide it (silent no-op, nothing persisted). When a repository hand-writes raw SQL, add a regression test that asserts the literal table name in the generated SQL (e.g. `expect(sql.strings.join('')).toContain('UPDATE "show_platforms"')`).
 
+### A New Relation Needs `include` at Every Call Site That Serializes It
+When a DTO transform derives an API field from a relation (e.g. `client_id: obj.client?.uid ?? null`), every `findOne`/`create`/`update` call whose result reaches that DTO must pass `{ include: { client: true } }` (or equivalent) — Prisma silently omits relations that weren't included, so the field always serializes as the "absent" value instead of erroring. This is easy to miss because each call site compiles fine and only fails at runtime, and worse, a write path (e.g. `update()`) silently nulling a field the request just bound can look like the binding itself didn't persist. Grep every call site that produces the DTO's input when adding a relation-derived field, not just the one you're actively touching. See `task-template.repository.ts` / `task-template.service.ts` for the reference fix (PR 20.4 codex review).
+
 ## Checklist
 
 - [ ] 🔴 Extends `BaseRepository` with `PrismaModelWrapper` for soft-deletable CRUD models
@@ -80,6 +83,7 @@ Prisma applies **no** name mapping to raw queries — `Prisma.sql` strings hit t
 - [ ] 🔴 No `findByUidOrThrow` — controller handles 404
 - [ ] 🔴 Always filter `deletedAt: null`
 - [ ] 🔴 Never throw HTTP exceptions
+- [ ] 🔴 A relation-derived DTO field is `include`d at every call site that serializes it (create/update/findOne), not just the one you're touching
 - [ ] Accept domain-level parameters (not Prisma types) in public methods
 - [ ] `Promise.all` for pagination (count + data)
 - [ ] `VersionConflictError` for version conflicts
