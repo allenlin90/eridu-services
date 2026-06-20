@@ -5,12 +5,17 @@ import { ShowCreatorList } from '@/features/studio-show-creators/components/show
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/compensation')({
-  component: () => (
-    <StudioRouteGuard routeKey="creatorCompensations">
+  component: ShowCompensationRouteComponent,
+});
+
+function ShowCompensationRouteComponent() {
+  const { studioId } = Route.useParams();
+  return (
+    <StudioRouteGuard studioId={studioId} routeKey="creatorCompensations">
       <StudioShowCompensationTab />
     </StudioRouteGuard>
-  ),
-});
+  );
+}
 
 function StudioShowCompensationTab() {
   const { studioId, showId } = Route.useParams();

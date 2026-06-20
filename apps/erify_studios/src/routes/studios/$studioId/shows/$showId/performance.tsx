@@ -11,12 +11,17 @@ import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/performance')({
-  component: () => (
-    <StudioRouteGuard routeKey="performance">
+  component: ShowPerformanceRouteComponent,
+});
+
+function ShowPerformanceRouteComponent() {
+  const { studioId } = Route.useParams();
+  return (
+    <StudioRouteGuard studioId={studioId} routeKey="performance">
       <StudioShowPerformanceTab />
     </StudioRouteGuard>
-  ),
-});
+  );
+}
 
 function StudioShowPerformanceTab() {
   const { studioId, showId } = Route.useParams();

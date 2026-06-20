@@ -85,14 +85,16 @@ function StudioShowDetailLayout() {
               Compensation
             </Link>
           )}
-          <Link
-            to="/studios/$studioId/shows/$showId/tasks"
-            params={{ studioId, showId }}
-            className={TAB_LINK_CLASS}
-            activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
-          >
-            Submitted Tasks
-          </Link>
+          {!isAM && (
+            <Link
+              to="/studios/$studioId/shows/$showId/tasks"
+              params={{ studioId, showId }}
+              className={TAB_LINK_CLASS}
+              activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+            >
+              Submitted Tasks
+            </Link>
+          )}
         </nav>
 
         <Outlet />

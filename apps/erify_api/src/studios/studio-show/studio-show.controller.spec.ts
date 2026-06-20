@@ -1,12 +1,14 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { showCreatorCompensationSummarySchema } from '@eridu/api-types/studio-creators';
 
 import type { BulkAssignStudioShowCreatorsDto } from './schemas/studio-show-creator-assignment.schema';
 import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import type { CreateStudioShowDto, UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
@@ -404,6 +406,13 @@ describe('studioShowController', () => {
       expect(response[0].agreed_rate).toBeNull();
       expect(response[0].commission_rate).toBeNull();
       expect(response[0].compensation_type).toBeNull();
+    });
+  });
+
+  describe('tasks', () => {
+    it('excludes ACCOUNT_MANAGER, since submitted task content is an unstructured blob that can carry money values', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.tasks);
+      expect(roles).not.toContain(STUDIO_ROLE.ACCOUNT_MANAGER);
     });
   });
 });

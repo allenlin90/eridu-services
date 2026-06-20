@@ -114,6 +114,18 @@ const STUDIO_SHOW_COMPENSATION_ACCESS_ROLES = [
 const STUDIO_SHOW_DELETE_ACCESS_ROLES = [
   STUDIO_ROLE.ADMIN,
 ];
+// Submitted task content is an unstructured per-template JSON blob (no fixed
+// money-field shape to allow-list against), so it's gated rather than
+// redacted: ACCOUNT_MANAGER doesn't need submitted task results for any of
+// its PRD stories (mechanic/template review, not task instances).
+const STUDIO_SHOW_TASKS_READ_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+  STUDIO_ROLE.TALENT_MANAGER,
+  STUDIO_ROLE.MEMBER,
+  STUDIO_ROLE.DESIGNER,
+  STUDIO_ROLE.MODERATION_MANAGER,
+];
 
 const isoDateTimeSchema = z.string().refine(
   (val) => {
@@ -306,6 +318,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/tasks')
+  @StudioProtected(STUDIO_SHOW_TASKS_READ_ROLES)
   @ZodResponse(z.array(taskWithRelationsDto))
   async tasks(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
