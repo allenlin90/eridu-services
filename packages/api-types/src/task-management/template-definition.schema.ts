@@ -161,6 +161,12 @@ export function validateSystemFactKeyCompatibility(data: SystemFactKeyCompatible
   }
 }
 
+export const MechanicRefSchema = z.object({
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+  mechanic_id: z.string().startsWith(UID_PREFIXES.CLIENT_MECHANIC),
+  content_revision: z.number().int().positive(),
+});
+
 export const FieldItemBaseSchema = z
   .object({
     id: z.string().describe('Stable unique ID for each field item'),
@@ -179,6 +185,7 @@ export const FieldItemBaseSchema = z
     label: z.string().min(1).max(200).describe('User-facing label text'),
     description: z.string().max(500).optional(),
     group: z.string().optional().describe('Loop / visual grouping identifier'),
+    mechanic_ref: MechanicRefSchema.optional().describe('Frozen reference to the catalog mechanic this field was assigned from'),
     required: z.boolean().optional().default(true),
     options: z
       .array(
@@ -266,19 +273,12 @@ export const TemplateSchemaValidator = z
     });
   });
 
-export const MechanicRefSchema = z.object({
-  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
-  mechanic_id: z.string().startsWith(UID_PREFIXES.CLIENT_MECHANIC),
-  content_revision: z.number().int().positive(),
-});
-
 export type MechanicRef = z.infer<typeof MechanicRefSchema>;
 
 export const FieldItemV2BaseSchema = FieldItemBaseSchema.omit({ standard: true }).extend({
   id: z.string().regex(TASK_TEMPLATE_FIELD_ID_PATTERN, 'Invalid field ID format (must be fld_ + 10+ alphanumeric)'),
   shared_field_key: z.string().optional().describe('Canonical key for shared field mapping'),
   system_fact_key: SystemFactKeyEnum.optional().describe('Closed catalog key for target-scoped operational fact extraction'),
-  mechanic_ref: MechanicRefSchema.optional(),
 });
 
 export const FieldItemV2Schema = FieldItemV2BaseSchema.superRefine((data, ctx) => {

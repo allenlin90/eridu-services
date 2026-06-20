@@ -736,7 +736,7 @@ export function TaskTemplateBuilder({
                                       (item) => item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id,
                                     );
                                     const isChecked = !!assignedField;
-                                    const isSuperseded = assignedField && mechanic.content_revision > assignedField.mechanic_ref.content_revision;
+                                    const isSuperseded = assignedField && mechanic.content_revision > (assignedField.mechanic_ref?.content_revision ?? 0);
 
                                     return (
                                       <TableCell key={mechanic.id} className="text-center py-3.5 px-2">
