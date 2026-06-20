@@ -51,6 +51,14 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.ADMIN,
     STUDIO_ROLE.ACCOUNT_MANAGER,
   ],
+  // Distinct from `shows`: task setup is an operational mutation surface
+  // (Generate Tasks, Assign Tasks, Record Actuals), not the read-only show
+  // detail pages — ACCOUNT_MANAGER must not get it just because it shares
+  // the shows section.
+  taskSetup: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
   performance: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
