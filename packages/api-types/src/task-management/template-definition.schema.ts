@@ -260,6 +260,7 @@ export const TemplateSchemaValidator = z
   .strict()
   .superRefine((data, ctx) => {
     const keys = new Set<string>();
+    const seenMechanicsPerLoop = new Set<string>();
     data.items.forEach((item, index) => {
       if (keys.has(item.key)) {
         ctx.issues.push({
@@ -270,6 +271,23 @@ export const TemplateSchemaValidator = z
         });
       }
       keys.add(item.key);
+
+      // mechanic_ref lives on the base schema (not v2-only), so v1 templates
+      // can carry mechanic references too -- apply the same per-loop
+      // (group, mechanic_id) uniqueness check as TemplateSchemaV2Validator.
+      if (item.mechanic_ref) {
+        const groupSegment = item.group ?? 'none';
+        const mechanicGroupKey = `${groupSegment}:${item.mechanic_ref.mechanic_id}`;
+        if (seenMechanicsPerLoop.has(mechanicGroupKey)) {
+          ctx.issues.push({
+            code: 'custom',
+            message: `Duplicate mechanic "${item.mechanic_ref.mechanic_id}" detected in group "${item.group ?? 'root'}"`,
+            path: ['items', index, 'mechanic_ref', 'mechanic_id'],
+            input: data,
+          });
+        }
+        seenMechanicsPerLoop.add(mechanicGroupKey);
+      }
     });
   });
 

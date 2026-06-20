@@ -133,6 +133,15 @@ export class TaskTemplateService extends BaseModelService {
 
       if (nextSchema) {
         this.validateSchema(nextSchema, sharedFieldsByKey, resolvedClientUid);
+      } else if (payload.clientUid !== undefined) {
+        // No new schema submitted, but the client binding is changing (rebind
+        // or unbind). The existing schema's mechanic_ref entries were
+        // validated against the *old* client and are never re-checked
+        // otherwise, since repository.update only re-syncs mechanic refs when
+        // currentSchema is present in the write -- silently leaving stale
+        // mechanic_ref.client_id values (and TaskTemplateMechanicRef rows)
+        // pointing at a client this template is no longer bound to.
+        this.validateSchema(existing.currentSchema, sharedFieldsByKey, resolvedClientUid);
       }
 
       const params = {
