@@ -13,6 +13,8 @@ describe('studioTaskTemplateListRow', () => {
       task_type: 'ACTIVE',
       is_active: true,
       version: 2,
+      client_id: null,
+      client_name: null,
       created_at: '2026-03-24T00:00:00.000Z',
       updated_at: '2026-03-25T00:00:00.000Z',
       current_schema: {
@@ -43,6 +45,8 @@ describe('studioTaskTemplateListRow', () => {
       task_type: 'SETUP',
       is_active: true,
       version: 1,
+      client_id: null,
+      client_name: null,
       created_at: '2026-03-24T00:00:00.000Z',
       updated_at: '2026-03-25T00:00:00.000Z',
       current_schema: {

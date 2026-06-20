@@ -18,6 +18,8 @@ function buildTemplate(id: string) {
     is_active: true,
     current_schema: { items: [] },
     version: 1,
+    client_id: null,
+    client_name: null,
     created_at: '2026-03-14T00:00:00.000Z',
     updated_at: '2026-03-14T00:00:00.000Z',
   } as const;
