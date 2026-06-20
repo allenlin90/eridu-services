@@ -6,6 +6,7 @@ import type {
   PerformanceShowsQuery,
 } from '@eridu/api-types/performance';
 
+import { FINALIZED_LOOP_TASK_STATUSES } from '@/models/task/task-finalized-loop.constants';
 import { PrismaService } from '@/prisma/prisma.service';
 
 /** Show row shape returned by the performance-shows list query. */
@@ -49,8 +50,11 @@ export class StudioPerformanceRepository {
    * from the same finalized states — otherwise loop totals would diverge from
    * the show-level figures shown elsewhere on the dashboard. In-progress
    * statuses (incl. REVIEW) are intentionally excluded.
+   *
+   * Shared with `ClientMechanicRepository` via `FINALIZED_LOOP_TASK_STATUSES`
+   * so "latest finalized task with a loop schema wins" stays one rule.
    */
-  private static readonly LOOP_METRIC_TASK_STATUSES = ['COMPLETED', 'CLOSED'] as const;
+  private static readonly LOOP_METRIC_TASK_STATUSES = FINALIZED_LOOP_TASK_STATUSES;
 
   /**
    * Predicate matching a single `ShowPlatform` row that carries at least one

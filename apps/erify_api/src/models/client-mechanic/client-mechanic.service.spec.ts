@@ -40,6 +40,8 @@ describe('clientMechanicService', () => {
       findShowsForCoverage: jest.fn(),
       findFinalizedLoopTasksForShows: jest.fn(),
       findTemplateRefsForTemplatesAndSnapshots: jest.fn(),
+      findShowForCoverageDetail: jest.fn(),
+      findTemplateRefsForShowCoverage: jest.fn(),
     });
     utilityMock = createMockUtilityService('cmech_123');
 
@@ -460,6 +462,167 @@ describe('clientMechanicService', () => {
         template_uid: null,
         frozen_revision: null,
       });
+    });
+
+    it('scopes the shows query to the requesting studio, not every studio running the client', async () => {
+      (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic);
+      (repositoryMock.findTemplatesByMechanic as jest.Mock).mockResolvedValue([]);
+      (repositoryMock.findShowsForCoverage as jest.Mock).mockResolvedValue([]);
+
+      await service.getMechanicCoverage(
+        'studio_1',
+        'client_1',
+        'cmech_123',
+        new Date('2026-06-17T00:00:00Z'),
+        new Date('2026-06-17T23:59:59Z'),
+      );
+
+      expect(repositoryMock.findShowsForCoverage).toHaveBeenCalledWith(
+        'studio_1',
+        'client_1',
+        new Date('2026-06-17T00:00:00Z'),
+        new Date('2026-06-17T23:59:59Z'),
+      );
+    });
+  });
+
+  describe('getShowMechanicsCoverage', () => {
+    it('throws not found when the show is outside the requesting studio', async () => {
+      (repositoryMock.findShowForCoverageDetail as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.getShowMechanicsCoverage('studio_1', 'show_missing'),
+      ).rejects.toThrow(/Show not found/);
+      expect(repositoryMock.findShowForCoverageDetail).toHaveBeenCalledWith('studio_1', 'show_missing');
+    });
+
+    it('returns an empty mechanics list when the show has no finalized loop-bearing task', async () => {
+      (repositoryMock.findShowForCoverageDetail as jest.Mock).mockResolvedValue({
+        id: BigInt(101),
+        uid: 'show_101',
+        name: 'Show 101',
+        client: { uid: 'client_1', name: 'Acme' },
+      });
+      (repositoryMock.findFinalizedLoopTasksForShows as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getShowMechanicsCoverage('studio_1', 'show_101');
+
+      expect(result).toEqual({
+        show_uid: 'show_101',
+        show_name: 'Show 101',
+        client_uid: 'client_1',
+        client_name: 'Acme',
+        mechanics: [],
+      });
+      expect(repositoryMock.findTemplateRefsForShowCoverage).not.toHaveBeenCalled();
+    });
+
+    it('computes current/stale/missing status per mechanic on the authoritative task', async () => {
+      (repositoryMock.findShowForCoverageDetail as jest.Mock).mockResolvedValue({
+        id: BigInt(101),
+        uid: 'show_101',
+        name: 'Show 101',
+        client: { uid: 'client_1', name: 'Acme' },
+      });
+
+      const task = {
+        uid: 'task_1',
+        snapshotId: BigInt(10),
+        templateId: BigInt(1),
+        targets: [{ showId: BigInt(101) }],
+        template: { uid: 'ttpl_1', name: 'Template 1' },
+        snapshot: {
+          schema: {
+            items: [
+              { mechanic_ref: { mechanic_id: 'cmech_current', content_revision: 5 } },
+            ],
+            metadata: { loops: [] },
+          },
+        },
+      };
+      (repositoryMock.findFinalizedLoopTasksForShows as jest.Mock).mockResolvedValue([task]);
+
+      (repositoryMock.findTemplateRefsForShowCoverage as jest.Mock).mockResolvedValue([
+        // current: frozen revision matches catalog revision
+        {
+          snapshotId: BigInt(10),
+          mechanic: {
+            uid: 'cmech_current',
+            title: 'Current',
+            instructionLabel: 'L',
+            instructionBody: 'B',
+            status: 'active',
+            contentRevision: 5,
+          },
+        },
+        // stale: latest-template ref only (no snapshot ref) -> missing on this task's frozen snapshot
+        {
+          snapshotId: null,
+          mechanic: {
+            uid: 'cmech_missing',
+            title: 'Missing',
+            instructionLabel: 'L',
+            instructionBody: 'B',
+            status: 'active',
+            contentRevision: 1,
+          },
+        },
+      ]);
+
+      const result = await service.getShowMechanicsCoverage('studio_1', 'show_101');
+
+      expect(result.task_uid).toBe('task_1');
+      expect(result.template_uid).toBe('ttpl_1');
+      expect(result.mechanics).toEqual(expect.arrayContaining([
+        expect.objectContaining({ uid: 'cmech_current', status: 'current', frozen_revision: 5, catalog_status: 'active' }),
+        expect.objectContaining({ uid: 'cmech_missing', status: 'missing', frozen_revision: null, catalog_status: 'active' }),
+      ]));
+    });
+
+    it('surfaces a retired mechanic via catalog_status', async () => {
+      (repositoryMock.findShowForCoverageDetail as jest.Mock).mockResolvedValue({
+        id: BigInt(101),
+        uid: 'show_101',
+        name: 'Show 101',
+        client: { uid: 'client_1', name: 'Acme' },
+      });
+
+      const task = {
+        uid: 'task_1',
+        snapshotId: BigInt(10),
+        templateId: BigInt(1),
+        targets: [{ showId: BigInt(101) }],
+        template: { uid: 'ttpl_1', name: 'Template 1' },
+        snapshot: {
+          schema: {
+            items: [
+              { mechanic_ref: { mechanic_id: 'cmech_retired', content_revision: 2 } },
+            ],
+            metadata: { loops: [] },
+          },
+        },
+      };
+      (repositoryMock.findFinalizedLoopTasksForShows as jest.Mock).mockResolvedValue([task]);
+
+      (repositoryMock.findTemplateRefsForShowCoverage as jest.Mock).mockResolvedValue([
+        {
+          snapshotId: BigInt(10),
+          mechanic: {
+            uid: 'cmech_retired',
+            title: 'Retired',
+            instructionLabel: 'L',
+            instructionBody: 'B',
+            status: 'retired',
+            contentRevision: 2,
+          },
+        },
+      ]);
+
+      const result = await service.getShowMechanicsCoverage('studio_1', 'show_101');
+
+      expect(result.mechanics).toEqual([
+        expect.objectContaining({ uid: 'cmech_retired', status: 'current', catalog_status: 'retired' }),
+      ]);
     });
   });
 });

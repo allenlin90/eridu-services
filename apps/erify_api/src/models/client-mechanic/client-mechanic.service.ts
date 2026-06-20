@@ -258,8 +258,8 @@ export class ClientMechanicService extends BaseModelService {
     }
     const templates = Array.from(templateMap.values());
 
-    // 2. Find shows for the client in the date range
-    const shows = await this.clientMechanicRepository.findShowsForCoverage(clientUid, startDate, endDate);
+    // 2. Find shows for the client in the date range, scoped to this studio
+    const shows = await this.clientMechanicRepository.findShowsForCoverage(studioUid, clientUid, startDate, endDate);
     if (shows.length === 0) {
       return { templates, shows: [] };
     }

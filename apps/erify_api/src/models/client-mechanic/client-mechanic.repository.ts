@@ -4,6 +4,7 @@ import { ClientMechanic, Prisma } from '@prisma/client';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
+import { FINALIZED_LOOP_TASK_STATUSES } from '@/models/task/task-finalized-loop.constants';
 import { PrismaService } from '@/prisma/prisma.service';
 
 type ListClientMechanicsParams = {
@@ -161,9 +162,13 @@ export class ClientMechanicRepository extends BaseRepository<
     });
   }
 
-  async findShowsForCoverage(clientUid: string, startDate: Date, endDate: Date) {
+  // Coverage answers "is this mechanic reaching MY target shows" (per the
+  // design doc) — scoped to the requesting studio's own shows, not every show
+  // the client runs across other studios.
+  async findShowsForCoverage(studioUid: string, clientUid: string, startDate: Date, endDate: Date) {
     return this.prisma.show.findMany({
       where: {
+        studio: { uid: studioUid },
         client: { uid: clientUid },
         startTime: { gte: startDate, lte: endDate },
         deletedAt: null,
@@ -178,11 +183,14 @@ export class ClientMechanicRepository extends BaseRepository<
     });
   }
 
+  // Reuses PR 22.1's "latest finalized task with a loop schema wins" selection
+  // rule (FINALIZED_LOOP_TASK_STATUSES) — coverage also needs the template
+  // relation StudioPerformanceRepository doesn't load, hence a separate query.
   async findFinalizedLoopTasksForShows(showIds: bigint[]) {
     return this.prisma.task.findMany({
       where: {
         targets: { some: { showId: { in: showIds }, deletedAt: null } },
-        status: { in: ['COMPLETED', 'CLOSED'] },
+        status: { in: [...FINALIZED_LOOP_TASK_STATUSES] },
         deletedAt: null,
       },
       include: {
