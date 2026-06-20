@@ -453,6 +453,15 @@ describe('studioShowController', () => {
   });
 
   describe('mechanicsCoverage', () => {
+    it('restricts mechanics-coverage to ADMIN, MANAGER and ACCOUNT_MANAGER only', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.mechanicsCoverage);
+      expect(roles).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+        STUDIO_ROLE.ACCOUNT_MANAGER,
+      ]);
+    });
+
     it('should delegate to clientMechanicService.getShowMechanicsCoverage', async () => {
       const studioId = 'std_123';
       const showId = 'show_123';

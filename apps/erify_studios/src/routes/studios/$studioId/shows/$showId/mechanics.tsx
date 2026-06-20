@@ -57,49 +57,63 @@ function ShowMechanicsTab() {
         accessorKey: 'status',
         header: 'Status',
         cell: ({ row }: any) => {
-          const { status, frozen_revision, catalog_revision } = row.original;
+          const { status, frozen_revision, catalog_revision, catalog_status } = row.original;
 
-          switch (status) {
-            case 'current':
-              return (
-                <div className="flex items-center gap-2">
-                  <Badge variant="success">Current</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    v
-                    {frozen_revision}
-                  </span>
-                </div>
-              );
-            case 'stale':
-              return (
-                <div className="flex items-center gap-2">
-                  <Badge variant="warning">Stale</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    v
-                    {frozen_revision}
-                    {' '}
-                    vs latest v
-                    {catalog_revision}
-                  </span>
-                </div>
-              );
-            case 'missing':
-            default:
-              return (
-                <div className="flex items-center gap-2">
-                  <Badge variant="destructive">Missing</Badge>
-                  <span className="text-xs text-muted-foreground">Not in task snapshot</span>
-                </div>
-              );
-          }
+          const statusBadge = (() => {
+            switch (status) {
+              case 'current':
+                return (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="success">Current</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      v
+                      {frozen_revision}
+                    </span>
+                  </div>
+                );
+              case 'stale':
+                return (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="warning">Stale</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      v
+                      {frozen_revision}
+                      {' '}
+                      vs latest v
+                      {catalog_revision}
+                    </span>
+                  </div>
+                );
+              case 'missing':
+              default:
+                return (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="destructive">Missing</Badge>
+                    <span className="text-xs text-muted-foreground">Not in task snapshot</span>
+                  </div>
+                );
+            }
+          })();
+
+          return (
+            <div className="flex items-center gap-2">
+              {statusBadge}
+              {catalog_status === 'retired' && (
+                <Badge variant="destructive" className="gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Retired in catalog
+                </Badge>
+              )}
+            </div>
+          );
         },
       },
       {
         id: 'flag',
         header: 'Actions',
         cell: ({ row }: any) => {
-          const { status, title } = row.original;
-          if (status === 'current')
+          const { status, title, catalog_status } = row.original;
+          if (status === 'current' && catalog_status !== 'retired')
             return null;
 
           return (
@@ -121,7 +135,7 @@ function ShowMechanicsTab() {
   const hasIssues = useMemo(() => {
     if (!data?.mechanics)
       return false;
-    return data.mechanics.some((m) => m.status !== 'current');
+    return data.mechanics.some((m) => m.status !== 'current' || m.catalog_status === 'retired');
   }, [data]);
 
   if (isLoading) {

@@ -331,6 +331,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/mechanics-coverage')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ACCOUNT_MANAGER])
   @ZodResponse(showMechanicCoverageResponseSchema)
   async mechanicsCoverage(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
