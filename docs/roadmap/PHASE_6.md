@@ -59,7 +59,7 @@ Items deferred from Phase 5 lifecycle gap closure that require broader RBAC/modu
 
 Potential scope:
 - **Granular role and module access** — decompose MANAGER into offset/onset/account/talent/moderation scopes with proper RBAC.
-- **ACCOUNT_MANAGER money-field redaction** — accepted PR #149 known issue: `account_manager` can pass existing broad member routes before granular RBAC exists, including some responses with cost/rate fields. Fix with route permissions and role-aware projections in the granular RBAC slice. See [tech-debt note](../tech-debt/account-manager-granular-rbac-redaction.md).
+- **ACCOUNT_MANAGER money-field redaction and client scope** — accepted PR #149 known issues: `account_manager` can pass existing broad member routes before granular RBAC exists, including some responses with cost/rate fields, and client-mechanic catalog routes validate only client existence before the studio-client linkage gate exists. Fix with route permissions, role-aware projections, and client-scope authorization in the granular RBAC slice. See [tech-debt note](../tech-debt/account-manager-granular-rbac-redaction.md).
 - **Client operations portal** — dedicated client identity, access model, and portal foundation.
 - **Account manager show-quality review** — AM review workflow for creator mapping and mechanics quality.
 - **Client mechanics review** — client-facing mechanics submission, review, and approval.
@@ -70,7 +70,7 @@ These are explicitly out of Phase 4 scope and candidates for Phase 6:
 
 | Item                                                                                    | Source                                                                                                                                                         | Candidate Track |
 | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `ACCOUNT_MANAGER` broad-member route money exposure                                     | Accepted PR #149 known issue; see [tech-debt note](../tech-debt/account-manager-granular-rbac-redaction.md)                                                     | D               |
+| `ACCOUNT_MANAGER` broad-member route money exposure and client-mechanic cross-client access | Accepted PR #149 known issues; see [tech-debt note](../tech-debt/account-manager-granular-rbac-redaction.md)                                                  | D               |
 | Advanced compensation **rule engine** (automated OT, tiered commission, bonus formulas) | Phase 4 ships the data model + manual CRUD; Phase 6 adds the computation engine                                                                                | A               |
 | Creator HR & operations (HRMS, fixed cost tracking)                                     | Phase 4 out-of-scope, ideation                                                                                                                                 | A               |
 | Full-text search & admin UX searchability                                               | Phase 4 out-of-scope, ideation                                                                                                                                 | C (or either)   |
