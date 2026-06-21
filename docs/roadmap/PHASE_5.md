@@ -95,6 +95,8 @@ Allow managers to directly correct missing or inaccurate performance metrics (GM
 
 Define a narrow show-level issue record (or task-like workflow) that traces blockers: missing creator, equipment dysfunction, utility outage, platform violations, and post-production follow-up. Each issue has an owner, due date, severity, evidence, status, escalation path, and resolution record. In this pickup phase, issues are operational records for review and later export; they do not drive state transitions until the state machine is unblocked.
 
+**Issue sourcing must include automated/audit-detected anomalies, not just manually filed ones.** Today the fact-extraction pipeline already writes `ShowPlatformViolation[]` rows, `attendanceMissing`/`attendanceReason`, and missing-performance-fact gaps across every lifecycle phase (pre-production through post-production) — but these land as silent data with no connection to an issue record; a manager only sees them by actively opening `/task-review` or `/show-run-review`. This item's issue record should be the landing point for those extraction-detected anomalies (in addition to manually opened issues), so "audit flagged a problem" and "someone filed a problem" produce the same kind of trackable record. Notification on open/severity-change is item 14's scope, not this item's — but the record this item defines is what item 14 fires off of.
+
 ### 6. Schedule-change task reconciliation
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1
@@ -148,6 +150,8 @@ Doc-only fix. Update the `show_status` enum (add `cancelled_pending_resolution`)
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
 
 **Blocked** — promote only after state machine, issue severity model, stakeholder list, channels, recipients, and timing rules are defined. Draft changes should remain quiet, confirmed-show changes should notify stakeholders, and near/on-air changes may need escalation based on issue severity and reason.
+
+**Two distinct trigger families, not one** — (a) **state-transition** notifications (the description above: quiet in draft, notify on confirm, escalate near/on-air) which genuinely need the state machine (item 10) to know what state a show is in; and (b) **issue-event** notifications (an issue opens, or an extraction-detected anomaly lands as one per item 5 — a platform violation, missing attendance, missing performance fact, at any lifecycle phase) which only need item 5's issue record to exist, not the full state machine. (b) could plausibly ship once item 5 lands, ahead of the state machine — worth revisiting the `10, 5` dependency split when item 5 is picked up, rather than leaving issue-driven notification blocked on item 10 by default. Build on the general event → notification module boundary already sketched in [`show-change-notification-audit-ledger.md`](../ideation/show-change-notification-audit-ledger.md) (designed for reuse across auditable domains, not just show CRUD) rather than a bespoke pipeline for issue events.
 
 ### 15. Operational record export
 
