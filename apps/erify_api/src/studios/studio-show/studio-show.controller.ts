@@ -45,6 +45,8 @@ import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { projectAllowList, stripLegacyAuditSidecar } from '@/lib/utils/allow-list-projection.util';
+import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
+import { showMechanicCoverageResponseSchema } from '@/models/client-mechanic/schemas/client-mechanic.schema';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import {
   CreateStudioShowDto,
@@ -187,6 +189,7 @@ export class StudioShowController extends BaseStudioController {
     private readonly showRunReviewService: ShowRunReviewService,
     private readonly creatorCompensationService: CreatorCompensationService,
     private readonly studioShowManagementService: StudioShowManagementService,
+    private readonly clientMechanicService: ClientMechanicService,
   ) {
     super();
   }
@@ -327,13 +330,23 @@ export class StudioShowController extends BaseStudioController {
     return this.taskOrchestrationService.getShowTasks(studioId, id);
   }
 
+  @Get(':id/mechanics-coverage')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ACCOUNT_MANAGER])
+  @ZodResponse(showMechanicCoverageResponseSchema)
+  async mechanicsCoverage(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    return this.clientMechanicService.getShowMechanicsCoverage(studioId, id);
+  }
+
   @Get(':id/creators')
   @StudioProtected(STUDIO_SHOW_CREATOR_READ_ROLES)
   @ZodResponse(z.array(studioShowCreatorListItemApiSchema))
   async creators(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
-    @Req() request: AuthenticatedRequest,
+    @Req() request?: AuthenticatedRequest,
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
     const creators = await this.showOrchestrationService.listCreatorsForShow(id);

@@ -104,7 +104,7 @@ export class StudioCreatorController extends BaseStudioController {
   async listRoster(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: ListStudioCreatorRosterQueryDto,
-    @Req() request: AuthenticatedRequest,
+    @Req() request?: AuthenticatedRequest,
   ) {
     const { data, total } = await this.studioCreatorService.listRoster(studioId, query);
     let parsed = data.map((item) => studioCreatorRosterItemDto.parse(item));
@@ -217,7 +217,7 @@ export class StudioCreatorController extends BaseStudioController {
   async availability(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: StudioCreatorAvailabilityQueryDto,
-    @Req() request: AuthenticatedRequest,
+    @Req() request?: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listAvailable(studioId, query);
     let parsed = creators.map((item) => studioCreatorAvailabilityItemDto.parse(item));
@@ -237,7 +237,7 @@ export class StudioCreatorController extends BaseStudioController {
   async catalog(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Query() query: StudioCreatorCatalogQueryDto,
-    @Req() request: AuthenticatedRequest,
+    @Req() request?: AuthenticatedRequest,
   ) {
     const creators = await this.studioCreatorService.listCatalog(studioId, query);
     let parsed = creators.map((item) => studioCreatorCatalogItemDto.parse(item));
@@ -275,7 +275,7 @@ export class StudioCreatorController extends BaseStudioController {
   async getCreator(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('creatorId', new UidValidationPipe('creator', 'Creator')) creatorId: string,
-    @Req() request: AuthenticatedRequest,
+    @Req() request?: AuthenticatedRequest,
   ) {
     const creator = await this.studioCreatorService.findRosterEntry(studioId, creatorId);
 
