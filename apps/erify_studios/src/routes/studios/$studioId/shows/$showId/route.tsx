@@ -89,6 +89,7 @@ function StudioShowDetailLayout() {
             <Link
               to="/studios/$studioId/shows/$showId/mechanics"
               params={{ studioId, showId }}
+              search={{ page: 1, limit: 10 }}
               className={TAB_LINK_CLASS}
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >

@@ -64,7 +64,7 @@ function ShowMechanicsTab() {
               case 'current':
                 return (
                   <div className="flex items-center gap-2">
-                    <Badge variant="success">Current</Badge>
+                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Current</Badge>
                     <span className="text-xs text-muted-foreground">
                       v
                       {frozen_revision}
@@ -74,7 +74,7 @@ function ShowMechanicsTab() {
               case 'stale':
                 return (
                   <div className="flex items-center gap-2">
-                    <Badge variant="warning">Stale</Badge>
+                    <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Stale</Badge>
                     <span className="text-xs text-muted-foreground">
                       v
                       {frozen_revision}
