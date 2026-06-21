@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Archive, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, Eye, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 
 import type { ClientMechanicApiResponse } from '@eridu/api-types/client-mechanics';
 import { Badge, Button, CopyableText, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@eridu/ui';
@@ -11,6 +11,7 @@ type GetMechanicColumnsProps = {
   onRetire: (mechanic: Mechanic) => void;
   onReactivate: (mechanic: Mechanic) => void;
   onDelete: (mechanic: Mechanic) => void;
+  onViewCoverage?: (mechanic: Mechanic) => void;
   isActionPending?: boolean;
   /**
    * Hard-delete is ADMIN-only on the backend; hide the action for everyone else
@@ -24,6 +25,7 @@ export function getMechanicColumns({
   onRetire,
   onReactivate,
   onDelete,
+  onViewCoverage,
   isActionPending = false,
   canDelete = false,
 }: GetMechanicColumnsProps): ColumnDef<Mechanic>[] {
@@ -110,6 +112,18 @@ export function getMechanicColumns({
 
         return (
           <div className="flex items-center gap-2">
+            {onViewCoverage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => onViewCoverage(mechanic)}
+                disabled={isActionPending}
+                title="View Coverage"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -160,7 +174,7 @@ export function getMechanicColumns({
           </div>
         );
       },
-      size: 120,
+      size: 160,
       enableHiding: false,
     },
   ];

@@ -12,6 +12,7 @@ import {
 import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { parseModeratorSnapshot } from '@/studios/studio-performance/schemas/moderator-snapshot.schema';
 import { UtilityService } from '@/utility/utility.service';
 
 type MechanicScope = {
@@ -215,5 +216,294 @@ export class ClientMechanicService extends BaseModelService {
       }
       throw error;
     }
+  }
+
+  async getMechanicCoverage(
+    studioUid: string,
+    clientUid: string,
+    mechanicUid: string,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const mechanic = await this.clientMechanicRepository.findByUidForClient({
+      uid: mechanicUid,
+      clientUid,
+    });
+    if (!mechanic) {
+      throw HttpError.notFound('Client mechanic');
+    }
+
+    // 1. Find all templates referencing this mechanic
+    const refs = await this.clientMechanicRepository.findTemplatesByMechanic(mechanic.id);
+
+    // Group by template UID to construct the templates array
+    const templateMap = new Map<string, { uid: string; name: string; is_latest_carrying: boolean }>();
+    for (const ref of refs) {
+      if (!ref.template) {
+        continue;
+      }
+      const existing = templateMap.get(ref.template.uid);
+      const isLatest = ref.snapshotId === null;
+      if (existing) {
+        if (isLatest) {
+          existing.is_latest_carrying = true;
+        }
+      } else {
+        templateMap.set(ref.template.uid, {
+          uid: ref.template.uid,
+          name: ref.template.name,
+          is_latest_carrying: isLatest,
+        });
+      }
+    }
+    const templates = Array.from(templateMap.values());
+
+    // 2. Find shows for the client in the date range, scoped to this studio
+    const shows = await this.clientMechanicRepository.findShowsForCoverage(studioUid, clientUid, startDate, endDate);
+    if (shows.length === 0) {
+      return { templates, shows: [] };
+    }
+
+    // 3. Batch query finalized loop-bearing tasks for these shows
+    const showIds = shows.map((s) => s.id);
+    const tasks = await this.clientMechanicRepository.findFinalizedLoopTasksForShows(showIds);
+
+    // Group tasks by show ID
+    const tasksByShowId = new Map<string, typeof tasks>();
+    for (const task of tasks) {
+      for (const target of task.targets) {
+        if (target.showId === null) {
+          continue;
+        }
+        const key = target.showId.toString();
+        let list = tasksByShowId.get(key);
+        if (!list) {
+          list = [];
+          tasksByShowId.set(key, list);
+        }
+        list.push(task);
+      }
+    }
+
+    // 4. Batch query TaskTemplateMechanicRef for these templates and snapshots
+    const templateIds = Array.from(new Set(refs.map((r) => r.templateId)));
+    const snapshotIds = Array.from(new Set(tasks.map((t) => t.snapshotId).filter((id): id is bigint => id !== null)));
+
+    const refRows = await this.clientMechanicRepository.findTemplateRefsForTemplatesAndSnapshots(
+      templateIds,
+      snapshotIds,
+    );
+
+    // Build helper sets/maps for fast lookup:
+    // templateId -> set of mechanicIds (for latest version)
+    const latestTemplateRefs = new Map<string, Set<string>>();
+    // snapshotId -> set of mechanicIds
+    const snapshotRefs = new Map<string, Set<string>>();
+
+    for (const row of refRows) {
+      const mechanicUidStr = row.mechanic.uid;
+      if (row.snapshotId === null) {
+        const key = row.templateId.toString();
+        let set = latestTemplateRefs.get(key);
+        if (!set) {
+          set = new Set();
+          latestTemplateRefs.set(key, set);
+        }
+        set.add(mechanicUidStr);
+      } else {
+        const key = row.snapshotId.toString();
+        let set = snapshotRefs.get(key);
+        if (!set) {
+          set = new Set();
+          snapshotRefs.set(key, set);
+        }
+        set.add(mechanicUidStr);
+      }
+    }
+
+    // 5. Compute coverage status for each show
+    const coverageShows = shows.map((show) => {
+      const showTasks = tasksByShowId.get(show.id.toString()) ?? [];
+
+      // Find the latest finalized loop-bearing task
+      let authoritativeTask: typeof showTasks[0] | null = null;
+      for (const t of showTasks) {
+        const { loops } = parseModeratorSnapshot(t.snapshot?.schema);
+        if (loops !== null) {
+          authoritativeTask = t;
+          break;
+        }
+      }
+
+      if (!authoritativeTask || !authoritativeTask.snapshotId || !authoritativeTask.templateId) {
+        return {
+          uid: show.uid,
+          name: show.name,
+          start_time: show.startTime.toISOString(),
+          status: 'unassigned' as const,
+          task_uid: null,
+          template_uid: null,
+          template_name: null,
+          frozen_revision: null,
+          catalog_revision: mechanic.contentRevision,
+        };
+      }
+
+      const snapshotIdKey = authoritativeTask.snapshotId.toString();
+      const templateIdKey = authoritativeTask.templateId.toString();
+
+      const hasSnapshotRef = snapshotRefs.get(snapshotIdKey)?.has(mechanic.uid) ?? false;
+      const hasLatestRef = latestTemplateRefs.get(templateIdKey)?.has(mechanic.uid) ?? false;
+
+      let status: 'current' | 'stale' | 'dropped' | 'unassigned' = 'unassigned';
+      let frozenRevision: number | null = null;
+
+      if (hasSnapshotRef) {
+        // Extract frozen revision from snapshot schema
+        const { items } = parseModeratorSnapshot(authoritativeTask.snapshot?.schema);
+        const item = items.find(
+          (it: any) =>
+            it.mechanic_ref
+            && it.mechanic_ref.mechanic_id === mechanic.uid,
+        );
+        frozenRevision = (item?.mechanic_ref as any)?.content_revision ?? null;
+
+        if (hasLatestRef) {
+          if (frozenRevision === mechanic.contentRevision) {
+            status = 'current';
+          } else {
+            status = 'stale';
+          }
+        } else {
+          status = 'dropped';
+        }
+      } else {
+        status = 'unassigned';
+      }
+
+      const templateName = authoritativeTask.template?.name ?? null;
+      const templateUid = authoritativeTask.template?.uid ?? null;
+
+      return {
+        uid: show.uid,
+        name: show.name,
+        start_time: show.startTime.toISOString(),
+        status,
+        task_uid: authoritativeTask.uid,
+        template_uid: templateUid,
+        template_name: templateName,
+        frozen_revision: frozenRevision,
+        catalog_revision: mechanic.contentRevision,
+      };
+    });
+
+    return { templates, shows: coverageShows };
+  }
+
+  async getShowMechanicsCoverage(studioUid: string, showUid: string) {
+    // 1. Find the show
+    const show = await this.clientMechanicRepository.findShowForCoverageDetail(studioUid, showUid);
+
+    if (!show) {
+      throw HttpError.notFound('Show');
+    }
+
+    // 2. Find finalized tasks for the show
+    const tasks = await this.clientMechanicRepository.findFinalizedLoopTasksForShows([show.id]);
+
+    // Find the latest finalized loop-bearing task
+    let authoritativeTask: typeof tasks[0] | null = null;
+    for (const t of tasks) {
+      const { loops } = parseModeratorSnapshot(t.snapshot?.schema);
+      if (loops !== null) {
+        authoritativeTask = t;
+        break;
+      }
+    }
+
+    if (!authoritativeTask || !authoritativeTask.snapshotId || !authoritativeTask.templateId) {
+      return {
+        show_uid: show.uid,
+        show_name: show.name,
+        client_uid: show.client?.uid ?? null,
+        client_name: show.client?.name ?? null,
+        task_uid: null,
+        template_uid: null,
+        template_name: null,
+        mechanics: [],
+      };
+    }
+
+    // 3. Query all TaskTemplateMechanicRef for this templateId and snapshotId
+    const refs = await this.clientMechanicRepository.findTemplateRefsForShowCoverage(
+      authoritativeTask.templateId,
+      authoritativeTask.snapshotId,
+    );
+
+    // Build unique list of mechanics involved
+    const mechanicMap = new Map<string, typeof refs[0]['mechanic']>();
+    const latestTemplateRefs = new Set<string>();
+    const snapshotRefs = new Set<string>();
+
+    for (const ref of refs) {
+      const mech = ref.mechanic;
+      mechanicMap.set(mech.uid, mech);
+
+      if (ref.snapshotId === null) {
+        latestTemplateRefs.add(mech.uid);
+      } else {
+        snapshotRefs.add(mech.uid);
+      }
+    }
+
+    // 4. Compute status for each mechanic
+    const { items } = parseModeratorSnapshot(authoritativeTask.snapshot?.schema);
+
+    const mechanicsCoverage = Array.from(mechanicMap.values()).map((mechanic) => {
+      const hasSnapshotRef = snapshotRefs.has(mechanic.uid);
+
+      let status: 'current' | 'stale' | 'missing' = 'missing';
+      let frozenRevision: number | null = null;
+
+      if (hasSnapshotRef) {
+        // Find frozen revision in snapshot schema
+        const item = items.find(
+          (it: any) =>
+            it.mechanic_ref
+            && it.mechanic_ref.mechanic_id === mechanic.uid,
+        );
+        frozenRevision = (item?.mechanic_ref as any)?.content_revision ?? null;
+
+        if (frozenRevision === mechanic.contentRevision) {
+          status = 'current';
+        } else {
+          status = 'stale';
+        }
+      } else {
+        status = 'missing';
+      }
+
+      return {
+        uid: mechanic.uid,
+        title: mechanic.title,
+        instruction_label: mechanic.instructionLabel,
+        instruction_body: mechanic.instructionBody,
+        status,
+        frozen_revision: frozenRevision,
+        catalog_revision: mechanic.contentRevision,
+        catalog_status: mechanic.status,
+      };
+    });
+
+    return {
+      show_uid: show.uid,
+      show_name: show.name,
+      client_uid: show.client?.uid ?? null,
+      client_name: show.client?.name ?? null,
+      task_uid: authoritativeTask.uid,
+      template_uid: authoritativeTask.template?.uid ?? null,
+      template_name: authoritativeTask.template?.name ?? null,
+      mechanics: mechanicsCoverage,
+    };
   }
 }

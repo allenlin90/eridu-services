@@ -76,6 +76,9 @@ Prisma applies **no** name mapping to raw queries — `Prisma.sql` strings hit t
 ### A New Relation Needs `include` at Every Call Site That Serializes It
 When a DTO transform derives an API field from a relation (e.g. `client_id: obj.client?.uid ?? null`), every `findOne`/`create`/`update` call whose result reaches that DTO must pass `{ include: { client: true } }` (or equivalent) — Prisma silently omits relations that weren't included, so the field always serializes as the "absent" value instead of erroring. This is easy to miss because each call site compiles fine and only fails at runtime, and worse, a write path (e.g. `update()`) silently nulling a field the request just bound can look like the binding itself didn't persist. Grep every call site that produces the DTO's input when adding a relation-derived field, not just the one you're actively touching. See `task-template.repository.ts` / `task-template.service.ts` for the reference fix (PR 20.4 codex review).
 
+### A Selection Rule Used by Two Repositories Belongs in a Shared Constant
+When a business rule like "which task statuses count as finalized" needs the same filter in two different repositories (e.g. a performance aggregate and a coverage read-model both need "latest finalized task with a loop schema wins"), extract the literal array/predicate into a named constant in a shared location (e.g. `task-finalized-loop.constants.ts`) and import it from both repositories — don't let each repository re-type the same status list. Independently re-derived copies of the same rule drift silently when one gets updated and the other doesn't; each repository can still keep its own bespoke `include`/`select` shape, since only the filter predicate needs to be shared. See `client-mechanic.repository.ts` / `studio-performance.repository.ts` (PR 20.6).
+
 ## Checklist
 
 - [ ] 🔴 Extends `BaseRepository` with `PrismaModelWrapper` for soft-deletable CRUD models

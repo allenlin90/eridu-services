@@ -93,7 +93,7 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`.
 
-**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking.
+**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 5 and 14.
 
 ### 3. Post-Production (live → completed)
 

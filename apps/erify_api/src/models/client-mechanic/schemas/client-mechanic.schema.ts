@@ -9,9 +9,12 @@ import z from 'zod';
 
 import {
   clientMechanicApiResponseSchema,
+  clientMechanicCoverageResponseSchema,
   createClientMechanicInputSchema,
   listClientMechanicsFilterSchema,
+  listMechanicCoverageQuerySchema,
   MECHANIC_STATUS,
+  showMechanicCoverageResponseSchema,
   updateClientMechanicInputSchema,
 } from '@eridu/api-types/client-mechanics';
 
@@ -74,6 +77,17 @@ export const clientMechanicDto = clientMechanicSchema
 export class CreateClientMechanicDto extends createZodDto(createClientMechanicSchema) {}
 export class UpdateClientMechanicDto extends createZodDto(updateClientMechanicSchema) {}
 export class ClientMechanicDto extends createZodDto(clientMechanicDto) {}
+
+export class ListMechanicCoverageQueryDto extends createZodDto(listMechanicCoverageQuerySchema) {
+  declare start_date: string;
+  declare end_date: string;
+}
+
+export class ClientMechanicCoverageResponseDto extends createZodDto(clientMechanicCoverageResponseSchema) {}
+
+export class ShowMechanicCoverageResponseDto extends createZodDto(showMechanicCoverageResponseSchema) {}
+
+export { clientMechanicCoverageResponseSchema, showMechanicCoverageResponseSchema };
 
 // List query schema (pagination + status/search filter).
 export const listClientMechanicsQuerySchema = paginationQuerySchema
