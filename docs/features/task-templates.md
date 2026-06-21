@@ -200,7 +200,7 @@ When changing a schema attribute or adding a new one, walk this list before merg
 
 ## Mechanic References (PR 20.5)
 
-A **mechanic** is a client-owned reusable moderation instruction (`ClientMechanic` — see [`CLIENT_MECHANICS_MANAGEMENT_DESIGN.md`](../../apps/erify_studios/docs/design/CLIENT_MECHANICS_MANAGEMENT_DESIGN.md)). Once a template is bound to a client (`TaskTemplate.clientId`, PR 20.4), the builder's **Loop × Mechanic matrix** lets an author check a cell to link that mechanic into a loop — this checks a mechanic into a v2 field via `mechanic_ref`:
+A **mechanic** is a client-owned reusable moderation instruction (`ClientMechanic` — see [`CLIENT_MECHANICS_MANAGEMENT.md`](../../apps/erify_studios/docs/CLIENT_MECHANICS_MANAGEMENT.md)). Once a template is bound to a client (`TaskTemplate.clientId`, PR 20.4), the builder's **Loop × Mechanic matrix** lets an author check a cell to link that mechanic into a loop — this checks a mechanic into a v2 field via `mechanic_ref`:
 
 ```jsonc
 // FieldItemV2.mechanic_ref
