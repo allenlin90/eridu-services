@@ -1,5 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 
+import { clientMechanicCoverageResponseSchema, showMechanicCoverageResponseSchema } from '@eridu/api-types/client-mechanics';
+
 import { ClientMechanicRepository } from './client-mechanic.repository';
 import { ClientMechanicService } from './client-mechanic.service';
 
@@ -410,10 +412,15 @@ describe('clientMechanicService', () => {
       // Verify templates list
       expect(result.templates).toEqual(
         expect.arrayContaining([
-          { uid: 'ttpl_1', name: 'Template 1', isLatestCarrying: true },
-          { uid: 'ttpl_2', name: 'Template 2', isLatestCarrying: false },
+          { uid: 'ttpl_1', name: 'Template 1', is_latest_carrying: true },
+          { uid: 'ttpl_2', name: 'Template 2', is_latest_carrying: false },
         ]),
       );
+
+      // Regression: result must validate against the wire response schema,
+      // not just match these field-level assertions -- codex review caught
+      // `isLatestCarrying` shipping where `is_latest_carrying` was required.
+      expect(() => clientMechanicCoverageResponseSchema.parse(result)).not.toThrow();
 
       // Verify shows statuses
       expect(result.shows).toHaveLength(5);
@@ -512,9 +519,17 @@ describe('clientMechanicService', () => {
         show_name: 'Show 101',
         client_uid: 'client_1',
         client_name: 'Acme',
+        task_uid: null,
+        template_uid: null,
+        template_name: null,
         mechanics: [],
       });
       expect(repositoryMock.findTemplateRefsForShowCoverage).not.toHaveBeenCalled();
+
+      // Regression: the no-finalized-task branch must still satisfy the
+      // required-nullable `task_uid`/`template_uid`/`template_name` fields --
+      // codex review caught this branch omitting them entirely.
+      expect(() => showMechanicCoverageResponseSchema.parse(result)).not.toThrow();
     });
 
     it('computes current/stale/missing status per mechanic on the authoritative task', async () => {
@@ -577,6 +592,7 @@ describe('clientMechanicService', () => {
         expect.objectContaining({ uid: 'cmech_current', status: 'current', frozen_revision: 5, catalog_status: 'active' }),
         expect.objectContaining({ uid: 'cmech_missing', status: 'missing', frozen_revision: null, catalog_status: 'active' }),
       ]));
+      expect(() => showMechanicCoverageResponseSchema.parse(result)).not.toThrow();
     });
 
     it('surfaces a retired mechanic via catalog_status', async () => {

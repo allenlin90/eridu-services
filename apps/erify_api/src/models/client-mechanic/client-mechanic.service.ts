@@ -237,7 +237,7 @@ export class ClientMechanicService extends BaseModelService {
     const refs = await this.clientMechanicRepository.findTemplatesByMechanic(mechanic.id);
 
     // Group by template UID to construct the templates array
-    const templateMap = new Map<string, { uid: string; name: string; isLatestCarrying: boolean }>();
+    const templateMap = new Map<string, { uid: string; name: string; is_latest_carrying: boolean }>();
     for (const ref of refs) {
       if (!ref.template) {
         continue;
@@ -246,13 +246,13 @@ export class ClientMechanicService extends BaseModelService {
       const isLatest = ref.snapshotId === null;
       if (existing) {
         if (isLatest) {
-          existing.isLatestCarrying = true;
+          existing.is_latest_carrying = true;
         }
       } else {
         templateMap.set(ref.template.uid, {
           uid: ref.template.uid,
           name: ref.template.name,
-          isLatestCarrying: isLatest,
+          is_latest_carrying: isLatest,
         });
       }
     }
@@ -427,6 +427,9 @@ export class ClientMechanicService extends BaseModelService {
         show_name: show.name,
         client_uid: show.client?.uid ?? null,
         client_name: show.client?.name ?? null,
+        task_uid: null,
+        template_uid: null,
+        template_name: null,
         mechanics: [],
       };
     }
