@@ -1,5 +1,5 @@
 import { createFileRoute, getRouteApi, Link } from '@tanstack/react-router';
-import { ArrowLeft, Calendar, Flag, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Flag } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
@@ -140,6 +140,7 @@ export function MechanicCoveragePage() {
             <Link
               to="/studios/$studioId/task-templates/$templateId"
               params={{ studioId, templateId: template_uid || '' }}
+              search={{ page: 1, limit: 10 }}
               className="text-primary hover:underline"
             >
               {template_name}
@@ -157,14 +158,14 @@ export function MechanicCoveragePage() {
             case 'current':
               return (
                 <div className="flex items-center gap-2">
-                  <Badge variant="success">Current</Badge>
+                  <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Current</Badge>
                   <span className="text-xs text-muted-foreground">v{frozen_revision}</span>
                 </div>
               );
             case 'stale':
               return (
                 <div className="flex items-center gap-2">
-                  <Badge variant="warning">Stale</Badge>
+                  <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Stale</Badge>
                   <span className="text-xs text-muted-foreground">
                     v{frozen_revision} vs latest v{catalog_revision}
                   </span>
@@ -223,7 +224,7 @@ export function MechanicCoveragePage() {
             <Link
               to="/studios/$studioId/client-mechanics"
               params={{ studioId }}
-              search={{ client_id: search.client_id }}
+              search={{ page: 1, limit: 10, client_id: search.client_id }}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Catalog
@@ -250,7 +251,10 @@ export function MechanicCoveragePage() {
                       Label: <span className="font-semibold text-foreground">{mechanic.instruction_label}</span> · Revision v{mechanic.content_revision}
                     </CardDescription>
                   </div>
-                  <Badge variant={mechanic.status === 'active' ? 'success' : 'secondary'}>
+                  <Badge
+                    variant={mechanic.status === 'active' ? 'outline' : 'secondary'}
+                    className={mechanic.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}
+                  >
                     {mechanic.status}
                   </Badge>
                 </div>
@@ -286,16 +290,17 @@ export function MechanicCoveragePage() {
                         <Link
                           to="/studios/$studioId/task-templates/$templateId"
                           params={{ studioId, templateId: tpl.uid }}
+                          search={{ page: 1, limit: 10 }}
                           className="font-medium text-primary hover:underline truncate max-w-[180px]"
                         >
                           {tpl.name}
                         </Link>
                         {tpl.is_latest_carrying ? (
-                          <Badge variant="success" className="text-[10px] py-0">
+                          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] py-0">
                             Active
                           </Badge>
                         ) : (
-                          <Badge variant="warning" className="text-[10px] py-0">
+                          <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-[10px] py-0">
                             Dropped
                           </Badge>
                         )}
