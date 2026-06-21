@@ -120,6 +120,11 @@ vi.mock('@/features/client-mechanics/hooks/use-client-mechanics', () => ({
   }),
 }));
 
+async function openRowMenu(user: ReturnType<typeof userEvent.setup>, rowIndex: number) {
+  const triggers = screen.getAllByRole('button', { name: /open menu/i });
+  await user.click(triggers[rowIndex]);
+}
+
 describe('clientMechanicsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -186,8 +191,8 @@ describe('clientMechanicsPage', () => {
     render(<ClientMechanicsPage />);
 
     // Edit action on row 1
-    const editBtns = screen.getAllByTitle('Edit Mechanic');
-    await user.click(editBtns[0]);
+    await openRowMenu(user, 0);
+    await user.click(screen.getByRole('menuitem', { name: /edit/i }));
 
     // Dialog is visible, with the active client named in the title
     expect(screen.getByText('Edit Client Mechanic for Client ABC')).toBeInTheDocument();
@@ -219,8 +224,8 @@ describe('clientMechanicsPage', () => {
     render(<ClientMechanicsPage />);
 
     // Retire active row
-    const retireBtn = screen.getByTitle('Retire Mechanic');
-    await user.click(retireBtn);
+    await openRowMenu(user, 0);
+    await user.click(screen.getByRole('menuitem', { name: /retire/i }));
 
     expect(screen.getByText('Retire Client Mechanic')).toBeInTheDocument();
     expect(screen.getByText(/Are you sure you want to retire "Speaking Rule 1"/i)).toBeInTheDocument();
@@ -239,12 +244,14 @@ describe('clientMechanicsPage', () => {
 
   it('hides the delete action for non-admin roles since the backend rejects it', async () => {
     mockUseStudioAccess.mockReturnValueOnce({ role: 'account_manager', hasAccess: () => true });
+    const user = userEvent.setup();
 
     render(<ClientMechanicsPage />);
+    await openRowMenu(user, 0);
 
-    expect(screen.queryByTitle('Delete Mechanic')).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /delete/i })).not.toBeInTheDocument();
     // Retire/edit/reactivate stay available — only hard-delete is ADMIN-only.
-    expect(screen.getAllByTitle('Edit Mechanic').length).toBeGreaterThan(0);
+    expect(screen.getByRole('menuitem', { name: /edit/i })).toBeInTheDocument();
   });
 
   it('opens delete dialog on trash action and confirms', async () => {
@@ -252,8 +259,8 @@ describe('clientMechanicsPage', () => {
     render(<ClientMechanicsPage />);
 
     // Delete row
-    const deleteBtns = screen.getAllByTitle('Delete Mechanic');
-    await user.click(deleteBtns[0]);
+    await openRowMenu(user, 0);
+    await user.click(screen.getByRole('menuitem', { name: /delete/i }));
 
     expect(screen.getByText('Delete Client Mechanic')).toBeInTheDocument();
     expect(screen.getByText(/Are you sure you want to delete "Speaking Rule 1"/i)).toBeInTheDocument();
@@ -268,9 +275,9 @@ describe('clientMechanicsPage', () => {
     const user = userEvent.setup();
     render(<ClientMechanicsPage />);
 
-    // Reactivate retired row
-    const reactivateBtn = screen.getByTitle('Reactivate Mechanic');
-    await user.click(reactivateBtn);
+    // Reactivate retired row (row 1 is the retired mechanic)
+    await openRowMenu(user, 1);
+    await user.click(screen.getByRole('menuitem', { name: /reactivate/i }));
 
     expect(mockUpdateMutate).toHaveBeenCalledWith({
       mechanicId: 'cmech_2',
