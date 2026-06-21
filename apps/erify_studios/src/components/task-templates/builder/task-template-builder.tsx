@@ -120,6 +120,7 @@ export function TaskTemplateBuilder({
   const [collapsedLoops, setCollapsedLoops] = useState<Record<string, boolean>>({});
   const [selectedSharedFieldKey, setSelectedSharedFieldKey] = useState<string>('');
   const [selectedSharedFieldLoopId, setSelectedSharedFieldLoopId] = useState<string>('');
+  const [mechanicMatrixSearch, setMechanicMatrixSearch] = useState('');
   const { hasAccess } = useStudioAccess(studioId ?? '');
   const isMobile = useIsMobile();
 
@@ -142,6 +143,15 @@ export function TaskTemplateBuilder({
   const activeMechanics = useMemo(() => {
     return clientMechanics.filter((m) => m.status === 'active');
   }, [clientMechanics]);
+
+  const visibleMatrixMechanics = useMemo(() => {
+    const query = mechanicMatrixSearch.trim().toLowerCase();
+    if (!query)
+      return activeMechanics;
+    return activeMechanics.filter(
+      (m) => m.title.toLowerCase().includes(query) || m.instruction_label.toLowerCase().includes(query),
+    );
+  }, [activeMechanics, mechanicMatrixSearch]);
 
   const hasSupersededRefs = useMemo(() => {
     return template.items.some((item) => {
@@ -705,138 +715,161 @@ export function TaskTemplateBuilder({
                           )}
                         </div>
                       </CardHeader>
+                      {/* Mechanics (rows, can run into the dozens once a client's catalog
+                          grows) and loops (columns, a handful per template) are deliberately
+                          NOT transposed the "obvious" way: a wide grid with one column per
+                          mechanic overlaps and becomes illegible past a handful of mechanics.
+                          Rows scroll naturally and stay searchable; columns don't. */}
+                      <div className="px-4 pb-3 border-t pt-3">
+                        <Input
+                          value={mechanicMatrixSearch}
+                          onChange={(e) => setMechanicMatrixSearch(e.target.value)}
+                          placeholder={`Search ${activeMechanics.length} mechanic${activeMechanics.length === 1 ? '' : 's'} by title or label...`}
+                          className="h-8 max-w-sm text-sm"
+                        />
+                      </div>
                       <CardContent className="p-0 border-t">
-                        <div className="overflow-x-auto max-w-full">
-                          <Table className="min-w-full divide-y divide-border table-fixed">
-                            <TableHeader className="bg-zinc-50/75">
-                              <TableRow>
-                                <TableHead className="w-48 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-4">
-                                  Loop
-                                </TableHead>
-                                {activeMechanics.map((mechanic) => (
-                                  <TableHead key={mechanic.id} className="text-center text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-2">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="cursor-help underline decoration-dotted underline-offset-4">
-                                            {mechanic.title}
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs p-2.5">
-                                          <p className="font-semibold text-xs mb-1">{mechanic.instruction_label}</p>
-                                          <p className="text-[11px] text-muted-foreground leading-normal">{mechanic.instruction_body}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </TableHead>
-                                ))}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody className="bg-white divide-y divide-border">
-                              {moderationLoops.map((loop) => (
-                                <TableRow key={loop.id} className="hover:bg-zinc-50/50">
-                                  <TableCell className="font-medium text-sm text-zinc-900 py-3.5 px-4 truncate">
-                                    {loop.name}
-                                  </TableCell>
-                                  {activeMechanics.map((mechanic) => {
-                                    const assignedField = template.items.find(
-                                      (item) => item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id,
-                                    );
-                                    const isChecked = !!assignedField;
-                                    const isSuperseded = assignedField && mechanic.content_revision > (assignedField.mechanic_ref?.content_revision ?? 0);
+                        {visibleMatrixMechanics.length === 0
+                          ? (
+                              <p className="text-sm text-muted-foreground text-center py-8">
+                                No mechanics match "
+                                {mechanicMatrixSearch}
+                                ".
+                              </p>
+                            )
+                          : (
+                              <div className="overflow-auto max-w-full max-h-112">
+                                <Table className="min-w-full divide-y divide-border">
+                                  <TableHeader className="sticky top-0 z-10 bg-zinc-50/95 backdrop-blur-sm">
+                                    <TableRow>
+                                      <TableHead className="w-56 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-4">
+                                        Mechanic
+                                      </TableHead>
+                                      {moderationLoops.map((loop) => (
+                                        <TableHead key={loop.id} className="min-w-24 text-center text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-2 truncate">
+                                          {loop.name}
+                                        </TableHead>
+                                      ))}
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody className="bg-white divide-y divide-border">
+                                    {visibleMatrixMechanics.map((mechanic) => (
+                                      <TableRow key={mechanic.id} className="hover:bg-zinc-50/50">
+                                        <TableCell className="font-medium text-sm text-zinc-900 py-3 px-4 max-w-56">
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span className="block truncate cursor-help underline decoration-dotted underline-offset-4">
+                                                  {mechanic.title}
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent className="max-w-xs p-2.5">
+                                                <p className="font-semibold text-xs mb-1">{mechanic.instruction_label}</p>
+                                                <p className="text-[11px] text-muted-foreground leading-normal">{mechanic.instruction_body}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        </TableCell>
+                                        {moderationLoops.map((loop) => {
+                                          const assignedField = template.items.find(
+                                            (item) => item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id,
+                                          );
+                                          const isChecked = !!assignedField;
+                                          const isSuperseded = assignedField && mechanic.content_revision > (assignedField.mechanic_ref?.content_revision ?? 0);
 
-                                    return (
-                                      <TableCell key={mechanic.id} className="text-center py-3.5 px-2">
-                                        <div className="flex items-center justify-center gap-1.5">
-                                          <Checkbox
-                                            checked={isChecked}
-                                            aria-label={`Toggle ${mechanic.title} for ${loop.name}`}
-                                            onCheckedChange={(checked) => {
-                                              const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                              if (checked) {
-                                                // Add mechanic field. v1 requires globally-unique
-                                                // keys, so the same mechanic checked into a second
-                                                // loop needs a loop-scoped key; v2 identity is via
-                                                // `id`, so the canonical key can repeat across loops
-                                                // (mirrors the shared-field insertion handler above).
-                                                const engine = getSchemaEngine(currentTemplate);
-                                                const isV2 = engine === 'task_template_v2';
-                                                const baseKey = mechanic.id.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-                                                const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
-                                                const itemKey = isV2 ? baseKey : createUniqueSharedFieldKey(baseKey, usedKeys, loop.id);
-                                                const newField: FieldItem = {
-                                                  id: createTaskTemplateFieldId(),
-                                                  key: itemKey,
-                                                  type: 'checkbox' as any,
-                                                  label: mechanic.instruction_label,
-                                                  description: mechanic.instruction_body,
-                                                  required: true,
-                                                  group: loop.id,
-                                                  mechanic_ref: {
-                                                    client_id: currentTemplate.client_id!,
-                                                    mechanic_id: mechanic.id,
-                                                    content_revision: mechanic.content_revision,
-                                                  },
-                                                };
-                                                const updatedItems = [...currentTemplate.items, newField];
-                                                currentOnChange({ ...currentTemplate, items: updatedItems });
-                                                toast.success(`Assigned mechanic "${mechanic.title}" to ${loop.name}`);
-                                              } else {
-                                                // Remove mechanic field
-                                                const updatedItems = currentTemplate.items.filter(
-                                                  (item) => !(item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id),
-                                                );
-                                                currentOnChange({ ...currentTemplate, items: updatedItems });
-                                                toast.success(`Removed mechanic "${mechanic.title}" from ${loop.name}`);
-                                              }
-                                            }}
-                                          />
-                                          {isSuperseded && (
-                                            <TooltipProvider>
-                                              <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                                                    onClick={() => {
-                                                      const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
-                                                      const updatedItems = currentTemplate.items.map((item) => {
-                                                        if (item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id) {
-                                                          return {
-                                                            ...item,
-                                                            label: mechanic.instruction_label,
-                                                            description: mechanic.instruction_body,
-                                                            mechanic_ref: {
-                                                              ...item.mechanic_ref,
-                                                              content_revision: mechanic.content_revision,
-                                                            },
-                                                          };
-                                                        }
-                                                        return item;
-                                                      });
+                                          return (
+                                            <TableCell key={loop.id} className="text-center py-3 px-2">
+                                              <div className="flex items-center justify-center gap-1.5">
+                                                <Checkbox
+                                                  checked={isChecked}
+                                                  aria-label={`Toggle ${mechanic.title} for ${loop.name}`}
+                                                  onCheckedChange={(checked) => {
+                                                    const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                                    if (checked) {
+                                                      // Add mechanic field. v1 requires globally-unique
+                                                      // keys, so the same mechanic checked into a second
+                                                      // loop needs a loop-scoped key; v2 identity is via
+                                                      // `id`, so the canonical key can repeat across loops
+                                                      // (mirrors the shared-field insertion handler above).
+                                                      const engine = getSchemaEngine(currentTemplate);
+                                                      const isV2 = engine === 'task_template_v2';
+                                                      const baseKey = mechanic.id.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                                                      const usedKeys = new Set(currentTemplate.items.map((item) => item.key));
+                                                      const itemKey = isV2 ? baseKey : createUniqueSharedFieldKey(baseKey, usedKeys, loop.id);
+                                                      const newField: FieldItem = {
+                                                        id: createTaskTemplateFieldId(),
+                                                        key: itemKey,
+                                                        type: 'checkbox' as any,
+                                                        label: mechanic.instruction_label,
+                                                        description: mechanic.instruction_body,
+                                                        required: true,
+                                                        group: loop.id,
+                                                        mechanic_ref: {
+                                                          client_id: currentTemplate.client_id!,
+                                                          mechanic_id: mechanic.id,
+                                                          content_revision: mechanic.content_revision,
+                                                        },
+                                                      };
+                                                      const updatedItems = [...currentTemplate.items, newField];
                                                       currentOnChange({ ...currentTemplate, items: updatedItems });
-                                                      toast.success(`Upgraded mechanic "${mechanic.title}" reference in ${loop.name}`);
-                                                    }}
-                                                  >
-                                                    <RefreshCw className="h-3.5 w-3.5" />
-                                                  </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent className="p-2 text-xs">
-                                                  Catalog update available. Click to upgrade.
-                                                </TooltipContent>
-                                              </Tooltip>
-                                            </TooltipProvider>
-                                          )}
-                                        </div>
-                                      </TableCell>
-                                    );
-                                  })}
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
+                                                      toast.success(`Assigned mechanic "${mechanic.title}" to ${loop.name}`);
+                                                    } else {
+                                                      // Remove mechanic field
+                                                      const updatedItems = currentTemplate.items.filter(
+                                                        (item) => !(item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id),
+                                                      );
+                                                      currentOnChange({ ...currentTemplate, items: updatedItems });
+                                                      toast.success(`Removed mechanic "${mechanic.title}" from ${loop.name}`);
+                                                    }
+                                                  }}
+                                                />
+                                                {isSuperseded && (
+                                                  <TooltipProvider>
+                                                    <Tooltip>
+                                                      <TooltipTrigger asChild>
+                                                        <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                                                          onClick={() => {
+                                                            const { template: currentTemplate, onChange: currentOnChange } = propsRef.current;
+                                                            const updatedItems = currentTemplate.items.map((item) => {
+                                                              if (item.group === loop.id && item.mechanic_ref?.mechanic_id === mechanic.id) {
+                                                                return {
+                                                                  ...item,
+                                                                  label: mechanic.instruction_label,
+                                                                  description: mechanic.instruction_body,
+                                                                  mechanic_ref: {
+                                                                    ...item.mechanic_ref,
+                                                                    content_revision: mechanic.content_revision,
+                                                                  },
+                                                                };
+                                                              }
+                                                              return item;
+                                                            });
+                                                            currentOnChange({ ...currentTemplate, items: updatedItems });
+                                                            toast.success(`Upgraded mechanic "${mechanic.title}" reference in ${loop.name}`);
+                                                          }}
+                                                        >
+                                                          <RefreshCw className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                      </TooltipTrigger>
+                                                      <TooltipContent className="p-2 text-xs">
+                                                        Catalog update available. Click to upgrade.
+                                                      </TooltipContent>
+                                                    </Tooltip>
+                                                  </TooltipProvider>
+                                                )}
+                                              </div>
+                                            </TableCell>
+                                          );
+                                        })}
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            )}
                       </CardContent>
                     </Card>
                   )}

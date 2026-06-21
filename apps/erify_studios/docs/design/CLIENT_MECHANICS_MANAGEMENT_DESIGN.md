@@ -83,7 +83,7 @@ Builder flow:
 
 1. The template is bound to a client (`TaskTemplate.clientId`, B1); the builder shows a client selector that establishes/reads this binding.
 2. The builder loads that client's **active** mechanics.
-3. A **Loop × Mechanic matrix** renders loops (rows) by mechanics (columns); each cell is a checkbox.
+3. A **Loop × Mechanic matrix** renders mechanics (rows, searchable — a real client's catalog can run into the dozens after the 20.8 backfill) by loops (columns, a handful per template); each cell is a checkbox. Mechanics-as-columns was the original shape but breaks down past a handful of mechanics (illegible/overlapping columns); rows scroll and filter naturally, columns don't.
 4. Checking a cell links a checkbox field into that loop's `group`, carrying the mechanic's resolved label/description. The **same mechanic checked down multiple loops** creates one field per loop, all sharing one `mechanic_id` identity (edit-once-in-catalog propagates).
 5. Cards view stays canonical for structural fields; mechanic fields interleave and reorder there, but their label/description are catalog-owned (read-only in Cards).
 6. Saving writes a `TaskTemplateMechanicRef` row per reference (S2) and freezes resolved content + `content_revision` into the template snapshot.
