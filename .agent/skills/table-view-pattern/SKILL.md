@@ -39,6 +39,7 @@ Standard patterns for large tabular views in `erify_studios`, `erify_creators`, 
 - **Route**: `createFileRoute(...)({ validateSearch, component })` — focused on composition
 - **Feature hook**: Owns `useTableUrlState`, maps to API params, executes queries, handles refresh/invalidation, feeds `setPageCount`
 - **Columns**: In feature config files, pure render logic, stable column ids, action columns via `useMemo`
+- **Row actions**: 2+ row actions go behind a single `MoreHorizontal` dropdown trigger, not a row of individual icon buttons. Extract a `<feature>-actions-cell.tsx` component (e.g. `studio-member-actions-cell.tsx`, `studio-creator-actions-cell.tsx`) that composes the shared `DataTableActions` primitive (`@eridu/ui`) — pass `onEdit`/`onDelete` as named props, everything else via `renderExtraActions` (toggle-style actions like retire/reactivate, navigation links, custom mutations). The actions column's `cell` in the `*-columns.tsx` file just renders that component. A row of standalone icon `Button`s for 2+ actions is the anti-pattern this replaces — it doesn't scale past 2-3 actions and is inconsistent with every other table in the app. See `mechanic-actions-cell.tsx` for a reference conversion (PR 20.8).
 - **Toolbar**: Use `DataTableToolbar` — primary search maps to URL-backed filter, debounced, manual refresh with icon-only button + `aria-label`. If the view requires custom filters (like clients, show types, platforms) alongside search, integrate the responsive Popover/Sheet triggers directly as children of `DataTableToolbar` (sizing buttons down to `h-8` to align with the search input) to provide a consistent, integrated toolbar UX.
 - **Pagination**: Use `DataTablePagination` — `useTableUrlState` owns `page`/`pageSize`, `placeholderData: keepPreviousData`, never clamp against fallback during loading
 
@@ -125,6 +126,7 @@ See [references/table-view-details.md](references/table-view-details.md) for ref
 - [ ] Mutation invalidation scoped correctly
 - [ ] Stable row ids for selection/editing
 - [ ] Row-selection eligibility uses hard blockers, not every issue badge or advisory warning
+- [ ] 2+ row actions use a `DataTableActions` dropdown actions-cell, not standalone icon buttons
 - [ ] Current-view export (if present) uses shared params + `AbortSignal` + shared CSV/download helpers + concurrency cap (no `Promise.all` fan-out) + spinner on trigger
 - [ ] Route decomposition clean and maintainable
 - [ ] Layout compared against nearest canonical table

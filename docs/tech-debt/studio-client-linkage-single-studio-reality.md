@@ -11,7 +11,7 @@ Two distinct timing gaps follow from deriving "linked" from `Show` existence ins
 
 ## Why It Matters
 
-The check derives "is this studio linked to this client" from existing show data instead of a dedicated relationship table — the right call to avoid modeling a relationship with no second side to validate it against (see [CLIENT_MECHANICS_MANAGEMENT_DESIGN.md](../../apps/erify_studios/docs/design/CLIENT_MECHANICS_MANAGEMENT_DESIGN.md) B2). But "derived from existing data" carries two implicit assumptions that have never been tested:
+The check derives "is this studio linked to this client" from existing show data instead of a dedicated relationship table — the right call to avoid modeling a relationship with no second side to validate it against (see [CLIENT_MECHANICS_MANAGEMENT.md](../../apps/erify_studios/docs/CLIENT_MECHANICS_MANAGEMENT.md) B2). But "derived from existing data" carries two implicit assumptions that have never been tested:
 
 - A studio always has at least one `Show` row for a client *before* it needs catalog/template access for that client (the onboarding-sequencing gap).
 - A studio that was once linked to a client should *stay* linked to it indefinitely, even after the relationship ends (the ratchet gap).
@@ -34,6 +34,6 @@ Revisit when a second studio is onboarded — before that studio's account manag
 
 ## Related Context
 
-- [CLIENT_MECHANICS_MANAGEMENT_DESIGN.md](../../apps/erify_studios/docs/design/CLIENT_MECHANICS_MANAGEMENT_DESIGN.md) — B2 decision
+- [CLIENT_MECHANICS_MANAGEMENT.md](../../apps/erify_studios/docs/CLIENT_MECHANICS_MANAGEMENT.md) — B2 decision
 - `studio-client-mechanic.controller.ts` / `studio-task-template.controller.ts` — `ensureStudioClientLinkage`
 - [PHASE_6.md](../roadmap/PHASE_6.md) Track D — Client operations portal (likely owns the real studio-client relationship model if/when it's needed)

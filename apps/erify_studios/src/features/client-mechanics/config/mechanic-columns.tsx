@@ -1,8 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Archive, Eye, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 
 import type { ClientMechanicApiResponse } from '@eridu/api-types/client-mechanics';
-import { Badge, Button, CopyableText, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@eridu/ui';
+import { Badge, CopyableText, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@eridu/ui';
+
+import { MechanicActionsCell } from '@/features/client-mechanics/components/mechanic-actions-cell';
 
 type Mechanic = ClientMechanicApiResponse;
 
@@ -78,7 +79,7 @@ export function getMechanicColumns({
         const status = row.original.status;
         return status === 'active'
           ? (
-              <Badge variant="success" className="capitalize">Active</Badge>
+              <Badge variant="outline" className="capitalize border-emerald-200 bg-emerald-50 text-emerald-700">Active</Badge>
             )
           : (
               <Badge variant="secondary" className="capitalize bg-muted text-muted-foreground border-muted">Retired</Badge>
@@ -106,75 +107,18 @@ export function getMechanicColumns({
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }) => {
-        const mechanic = row.original;
-        const isActive = mechanic.status === 'active';
-
-        return (
-          <div className="flex items-center gap-2">
-            {onViewCoverage && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => onViewCoverage(mechanic)}
-                disabled={isActionPending}
-                title="View Coverage"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={() => onEdit(mechanic)}
-              disabled={isActionPending}
-              title="Edit Mechanic"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            {isActive
-              ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => onRetire(mechanic)}
-                    disabled={isActionPending}
-                    title="Retire Mechanic"
-                  >
-                    <Archive className="h-4 w-4" />
-                  </Button>
-                )
-              : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-success"
-                    onClick={() => onReactivate(mechanic)}
-                    disabled={isActionPending}
-                    title="Reactivate Mechanic"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                )}
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={() => onDelete(mechanic)}
-                disabled={isActionPending}
-                title="Delete Mechanic"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        );
-      },
-      size: 160,
+      cell: ({ row }) => (
+        <MechanicActionsCell
+          mechanic={row.original}
+          onEdit={onEdit}
+          onRetire={onRetire}
+          onReactivate={onReactivate}
+          onDelete={onDelete}
+          onViewCoverage={onViewCoverage}
+          isActionPending={isActionPending}
+          canDelete={canDelete}
+        />
+      ),
       enableHiding: false,
     },
   ];

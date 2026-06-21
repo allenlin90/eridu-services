@@ -26,6 +26,7 @@ import { cn } from '@eridu/ui/lib/utils';
 | Date/Time Pickers | Use `ResponsiveDateTimePicker` (or `DatePicker`/`DateTimePicker`) from `@eridu/ui`, not native `<input type="date">` |
 | Mobile-visible Dialogs | Render as `Drawer` (vaul) below `md`; share body with the desktop `Dialog`. Default to `ResponsiveDateTimePicker` and the responsive dialog pattern for any new dialog reachable on mobile |
 | Async Lookup Fields | 2+ `AsyncCombobox` in same form → extract each into `memo()` field component |
+| Select vs. Combobox | A select-style field backed by more than ~5 options (entities like clients, creators, templates, mechanics — anything that can grow) must use `AsyncCombobox` (search-as-you-type, server-paginated), not the native `Select`. A flat `<Select>` rendering every option client-side doesn't scale once a studio has dozens of clients and forces an unbounded fetch to populate it. Reserve plain `Select` for genuinely small, fixed enums (status, role, a handful of literal choices). See `task-template-builder.tsx`'s client-binding combobox (search state + `useQuery` + `AsyncCombobox`) as the canonical pattern — reuse it rather than re-deriving it per page. |
 | Searchable Inputs | `onSearch` must update query state — never leave as no-op |
 | Refresh Buttons | Icon-only (`RotateCw`) + `aria-label` + spinning state while fetching |
 | Collapsible Sections | `ChevronUp`/`ChevronDown` toggle, smooth animated transitions |

@@ -278,11 +278,33 @@ describe('taskTemplateBuilder v2 field ids', () => {
       render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
 
       expect(screen.getByText('Client Mechanics Matrix')).toBeInTheDocument();
-      // active mechanics should be rendered in the table header
+      // active mechanics are rows (loops are columns -- mechanics can run
+      // into the dozens, loops stay few, so mechanics scroll, loops don't)
       expect(screen.getByText('Speaking Rule Active')).toBeInTheDocument();
       expect(screen.getByText('Speaking Rule Superseded')).toBeInTheDocument();
-      // retired mechanics should NOT be rendered in the table header
+      // retired mechanics should NOT be rendered as rows
       expect(screen.queryByText('Speaking Rule Retired')).toBeNull();
+    });
+
+    it('filters matrix rows by mechanic title or instruction label', async () => {
+      const user = userEvent.setup();
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
+
+      const search = screen.getByPlaceholderText(/Search \d+ mechanics?/i);
+      await user.type(search, 'Superseded');
+
+      expect(screen.getByText('Speaking Rule Superseded')).toBeInTheDocument();
+      expect(screen.queryByText('Speaking Rule Active')).toBeNull();
+    });
+
+    it('shows an empty state when the search matches no mechanics', async () => {
+      const user = userEvent.setup();
+      render(<TaskTemplateBuilder template={v2MechanicTemplate} onChange={vi.fn()} />);
+
+      const search = screen.getByPlaceholderText(/Search \d+ mechanics?/i);
+      await user.type(search, 'no-such-mechanic');
+
+      expect(screen.getByText(/No mechanics match/i)).toBeInTheDocument();
     });
 
     it('forces Cards (hides the matrix grid) on mobile viewports', () => {
