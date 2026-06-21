@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { UID_PREFIXES } from '../constants.js';
+
 import { getSchemaEngine, TASK_TEMPLATE_FIELD_ID_PATTERN } from './task-schema-engine.js';
 
 export const RequireReasonCriterion = z.object({
@@ -159,6 +161,12 @@ export function validateSystemFactKeyCompatibility(data: SystemFactKeyCompatible
   }
 }
 
+export const MechanicRefSchema = z.object({
+  client_id: z.string().startsWith(UID_PREFIXES.CLIENT),
+  mechanic_id: z.string().startsWith(UID_PREFIXES.CLIENT_MECHANIC),
+  content_revision: z.number().int().positive(),
+});
+
 export const FieldItemBaseSchema = z
   .object({
     id: z.string().describe('Stable unique ID for each field item'),
@@ -177,6 +185,7 @@ export const FieldItemBaseSchema = z
     label: z.string().min(1).max(200).describe('User-facing label text'),
     description: z.string().max(500).optional(),
     group: z.string().optional().describe('Loop / visual grouping identifier'),
+    mechanic_ref: MechanicRefSchema.optional().describe('Frozen reference to the catalog mechanic this field was assigned from'),
     required: z.boolean().optional().default(true),
     options: z
       .array(
@@ -251,6 +260,7 @@ export const TemplateSchemaValidator = z
   .strict()
   .superRefine((data, ctx) => {
     const keys = new Set<string>();
+    const seenMechanicsPerLoop = new Set<string>();
     data.items.forEach((item, index) => {
       if (keys.has(item.key)) {
         ctx.issues.push({
@@ -261,8 +271,27 @@ export const TemplateSchemaValidator = z
         });
       }
       keys.add(item.key);
+
+      // mechanic_ref lives on the base schema (not v2-only), so v1 templates
+      // can carry mechanic references too -- apply the same per-loop
+      // (group, mechanic_id) uniqueness check as TemplateSchemaV2Validator.
+      if (item.mechanic_ref) {
+        const groupSegment = item.group ?? 'none';
+        const mechanicGroupKey = `${groupSegment}:${item.mechanic_ref.mechanic_id}`;
+        if (seenMechanicsPerLoop.has(mechanicGroupKey)) {
+          ctx.issues.push({
+            code: 'custom',
+            message: `Duplicate mechanic "${item.mechanic_ref.mechanic_id}" detected in group "${item.group ?? 'root'}"`,
+            path: ['items', index, 'mechanic_ref', 'mechanic_id'],
+            input: data,
+          });
+        }
+        seenMechanicsPerLoop.add(mechanicGroupKey);
+      }
     });
   });
+
+export type MechanicRef = z.infer<typeof MechanicRefSchema>;
 
 export const FieldItemV2BaseSchema = FieldItemBaseSchema.omit({ standard: true }).extend({
   id: z.string().regex(TASK_TEMPLATE_FIELD_ID_PATTERN, 'Invalid field ID format (must be fld_ + 10+ alphanumeric)'),
@@ -290,6 +319,7 @@ export const TemplateSchemaV2Validator = z
     // v2 key uniqueness: checks per-loop (key, group) uniqueness instead of global uniqueness
     const seen = new Set<string>();
     const seenSystemFacts = new Set<SystemFactKey>();
+    const seenMechanicsPerLoop = new Set<string>();
     data.items.forEach((item, index) => {
       const groupSegment = item.group ?? 'none';
       const compositeKey = `${groupSegment}:${item.key}`;
@@ -302,6 +332,20 @@ export const TemplateSchemaV2Validator = z
         });
       }
       seen.add(compositeKey);
+
+      // Validate per-loop mechanic_id uniqueness
+      if (item.mechanic_ref) {
+        const mechanicGroupKey = `${groupSegment}:${item.mechanic_ref.mechanic_id}`;
+        if (seenMechanicsPerLoop.has(mechanicGroupKey)) {
+          ctx.issues.push({
+            code: 'custom',
+            message: `Duplicate mechanic "${item.mechanic_ref.mechanic_id}" detected in group "${item.group ?? 'root'}"`,
+            path: ['items', index, 'mechanic_ref', 'mechanic_id'],
+            input: data,
+          });
+        }
+        seenMechanicsPerLoop.add(mechanicGroupKey);
+      }
 
       if (!item.system_fact_key) {
         return;

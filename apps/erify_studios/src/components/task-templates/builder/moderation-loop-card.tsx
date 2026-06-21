@@ -21,6 +21,8 @@ import {
 import type { FieldItem, LoopMetadata } from './schema';
 import { SortableFieldList } from './sortable-field-list';
 
+import type { ClientMechanic } from '@/features/client-mechanics/api/get-client-mechanics';
+
 /**
  * One moderation loop card: header controls (collapse / clone / remove), the
  * loop's name / duration / position editors, and — when expanded — the loop's
@@ -49,6 +51,7 @@ export function ModerationLoopCard({
   onDragEnd,
   onUpdateField,
   onRemoveField,
+  clientMechanics,
 }: {
   loop: LoopMetadata;
   loopIndex: number;
@@ -69,6 +72,7 @@ export function ModerationLoopCard({
   onDragEnd: (event: DragEndEvent) => void;
   onUpdateField: (id: string, updates: Partial<FieldItem>) => void;
   onRemoveField: (id: string) => void;
+  clientMechanics?: ClientMechanic[];
 }) {
   return (
     <div
@@ -200,6 +204,7 @@ export function ModerationLoopCard({
                 onUpdate={onUpdateField}
                 onRemove={onRemoveField}
                 errors={errors}
+                clientMechanics={clientMechanics}
               />
             </SortableContext>
           </DndContext>

@@ -1,7 +1,13 @@
+import { Module } from '@nestjs/common';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { ClsModule } from 'nestjs-cls';
+
 import { TaskTemplateRepository } from './task-template.repository';
 import { TaskTemplateService } from './task-template.service';
 
 import { StudioService } from '@/models/studio/studio.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import {
   createMockRepository,
   createMockUtilityService,
@@ -10,6 +16,16 @@ import {
 import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
+
+const mockPrismaForCls = {
+  $transaction: jest.fn(async (callback: any) => await callback({})),
+};
+
+@Module({
+  providers: [{ provide: PrismaService, useValue: mockPrismaForCls }],
+  exports: [PrismaService],
+})
+class MockPrismaModule {}
 
 describe('taskTemplateService', () => {
   let service: TaskTemplateService;
@@ -29,6 +45,20 @@ describe('taskTemplateService', () => {
       repositoryClass: TaskTemplateRepository,
       repositoryMock,
       utilityMock,
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       additionalProviders: [
         {
           provide: StudioService,
@@ -497,6 +527,100 @@ describe('taskTemplateService', () => {
         }
       });
     });
+
+    describe('client mechanic validation', () => {
+      const createMechanicSchema = (mechanicClientId: string) => ({
+        schema_version: 2 as const,
+        schema_engine: 'task_template_v2' as const,
+        content_key_strategy: 'field_id' as const,
+        report_projection_strategy: 'descriptor' as const,
+        metadata: {
+          task_type: 'ACTIVE',
+        },
+        items: [
+          {
+            id: 'fld_mechfield1',
+            key: 'test_mechanic',
+            type: 'checkbox' as const,
+            label: 'Test Mechanic',
+            required: true,
+            mechanic_ref: {
+              client_id: mechanicClientId,
+              mechanic_id: 'cmech_123',
+              content_revision: 1,
+            },
+          },
+        ],
+      });
+
+      it('should pass when mechanic client matches the template client', () => {
+        const schema = createMechanicSchema('client_abc123');
+        expect(() => service.validateSchema(schema, new Map(), 'client_abc123')).not.toThrow();
+      });
+
+      it('should throw when no client is selected for a mechanic-bearing template', () => {
+        const schema = createMechanicSchema('client_abc123');
+        expect(() => service.validateSchema(schema, new Map(), null)).toThrow(
+          /Mechanic-bearing templates require a client to be selected/,
+        );
+      });
+
+      it('should throw when mechanic client mismatches the template client', () => {
+        const schema = createMechanicSchema('client_abc123');
+        expect(() => service.validateSchema(schema, new Map(), 'client_xyz789')).toThrow(
+          /does not match template client "client_xyz789"/,
+        );
+      });
+
+      it('should throw when a v1 template duplicates the same mechanic in the same loop', () => {
+        // mechanic_ref lives on the base schema, not v2-only -- v1 (no
+        // schema_engine marker) must enforce the same per-loop dedup as v2.
+        const schema = {
+          metadata: {
+            task_type: 'ACTIVE',
+            loops: [{ id: 'l1', name: 'Loop 1', durationMin: 15 }],
+          },
+          items: [
+            {
+              id: 'item_1',
+              key: 'test_mechanic_a',
+              type: 'checkbox' as const,
+              label: 'Mechanic A',
+              required: true,
+              group: 'l1',
+              mechanic_ref: {
+                client_id: 'client_abc123',
+                mechanic_id: 'cmech_123',
+                content_revision: 1,
+              },
+            },
+            {
+              id: 'item_2',
+              key: 'test_mechanic_b',
+              type: 'checkbox' as const,
+              label: 'Mechanic B',
+              required: true,
+              group: 'l1',
+              mechanic_ref: {
+                client_id: 'client_abc123',
+                mechanic_id: 'cmech_123',
+                content_revision: 1,
+              },
+            },
+          ],
+        };
+
+        try {
+          service.validateSchema(schema, new Map(), 'client_abc123');
+          expect(true).toBe(false);
+        } catch (error: any) {
+          expect(error.message).toBe('Invalid template schema');
+          const response = error.getResponse();
+          expect(JSON.stringify(response.details)).toMatch(/Duplicate mechanic/);
+          expect(JSON.stringify(response.details)).toMatch(/cmech_123/);
+        }
+      });
+    });
   });
 
   describe('createTemplateWithSnapshot', () => {
@@ -524,8 +648,15 @@ describe('taskTemplateService', () => {
   });
 
   describe('updateTemplateWithSnapshot', () => {
+    const plainExistingSchema = {
+      metadata: { task_type: 'ACTIVE' },
+      items: [
+        { id: 'item_1', key: 'existing_field', type: 'text' as const, label: 'Existing Field', required: true },
+      ],
+    };
+
     it('includes the client relation so a binding-only update (no schema change) reflects in the response', async () => {
-      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: { items: [] } } as any);
+      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: plainExistingSchema } as any);
       repository.update.mockResolvedValue({ uid: 'ttpl_1' } as any);
 
       await service.updateTemplateWithSnapshot('ttpl_1', 'std_1', {
@@ -541,7 +672,7 @@ describe('taskTemplateService', () => {
     });
 
     it('disconnects the client and still includes the relation when explicitly unbinding', async () => {
-      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: { items: [] } } as any);
+      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: plainExistingSchema } as any);
       repository.update.mockResolvedValue({ uid: 'ttpl_1' } as any);
 
       await service.updateTemplateWithSnapshot('ttpl_1', 'std_1', {
@@ -554,6 +685,64 @@ describe('taskTemplateService', () => {
         expect.objectContaining({ client: { disconnect: true } }),
         { client: true },
       );
+    });
+
+    it('rejects a client-only rebind that would orphan an existing mechanic_ref pointed at the old client', async () => {
+      const existingWithMechanic = {
+        metadata: { task_type: 'ACTIVE' },
+        items: [
+          {
+            id: 'item_1',
+            key: 'test_mechanic',
+            type: 'checkbox' as const,
+            label: 'Test Mechanic',
+            required: true,
+            mechanic_ref: {
+              client_id: 'client_old',
+              mechanic_id: 'cmech_123',
+              content_revision: 1,
+            },
+          },
+        ],
+      };
+      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: existingWithMechanic } as any);
+
+      await expect(
+        service.updateTemplateWithSnapshot('ttpl_1', 'std_1', {
+          version: 1,
+          clientUid: 'client_new',
+        }),
+      ).rejects.toThrow(/does not match template client "client_new"/);
+      expect(repository.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects unbinding a client entirely while an existing mechanic_ref still requires one', async () => {
+      const existingWithMechanic = {
+        metadata: { task_type: 'ACTIVE' },
+        items: [
+          {
+            id: 'item_1',
+            key: 'test_mechanic',
+            type: 'checkbox' as const,
+            label: 'Test Mechanic',
+            required: true,
+            mechanic_ref: {
+              client_id: 'client_old',
+              mechanic_id: 'cmech_123',
+              content_revision: 1,
+            },
+          },
+        ],
+      };
+      repository.findOne.mockResolvedValue({ uid: 'ttpl_1', currentSchema: existingWithMechanic } as any);
+
+      await expect(
+        service.updateTemplateWithSnapshot('ttpl_1', 'std_1', {
+          version: 1,
+          clientUid: null,
+        }),
+      ).rejects.toThrow(/Mechanic-bearing templates require a client to be selected/);
+      expect(repository.update).not.toHaveBeenCalled();
     });
   });
 });

@@ -73,19 +73,19 @@ model Creator {
 }
 
 model Client {
-  id            BigInt     @id @default(autoincrement())
-  uid           String     @unique
-  name          String     @unique
-  contactPerson String     @map("contact_person")
-  contactEmail  String     @map("contact_email")
-  metadata      Json       @default("{}")
+  id            BigInt           @id @default(autoincrement())
+  uid           String           @unique
+  name          String           @unique
+  contactPerson String           @map("contact_person")
+  contactEmail  String           @map("contact_email")
+  metadata      Json             @default("{}")
   shows         Show[]
   schedules     Schedule[]
   mechanics     ClientMechanic[]
   taskTemplates TaskTemplate[]
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
-  deletedAt     DateTime?  @map("deleted_at")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  deletedAt     DateTime?        @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -102,20 +102,21 @@ model Client {
 // optimistic-lock token. `status` (active|retired) is a reversible lifecycle,
 // distinct from soft-delete (`deletedAt`).
 model ClientMechanic {
-  id               BigInt    @id @default(autoincrement())
-  uid              String    @unique
-  clientId         BigInt    @map("client_id")
-  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id               BigInt                    @id @default(autoincrement())
+  uid              String                    @unique
+  clientId         BigInt                    @map("client_id")
+  client           Client                    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   title            String
-  instructionLabel String    @map("instruction_label")
-  instructionBody  String    @map("instruction_body")
-  status           String    @default("active") // active | retired
-  version          Int       @default(1)
-  contentRevision  Int       @default(1) @map("content_revision")
-  metadata         Json      @default("{}")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  instructionLabel String                    @map("instruction_label")
+  instructionBody  String                    @map("instruction_body")
+  status           String                    @default("active") // active | retired
+  version          Int                       @default(1)
+  contentRevision  Int                       @default(1) @map("content_revision")
+  metadata         Json                      @default("{}")
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime                  @updatedAt @map("updated_at")
+  deletedAt        DateTime?                 @map("deleted_at")
+  templateRefs     TaskTemplateMechanicRef[]
 
   // uid is already indexed by @unique; clientId/status are served by the
   // composite indexes below — no standalone duplicates needed.
@@ -630,24 +631,25 @@ model ScheduleSnapshot {
 // ============================================
 
 model TaskTemplate {
-  id            BigInt                 @id @default(autoincrement())
-  uid           String                 @unique
-  studioId      BigInt                 @map("studio_id")
-  clientId      BigInt?                @map("client_id")
+  id            BigInt                    @id @default(autoincrement())
+  uid           String                    @unique
+  studioId      BigInt                    @map("studio_id")
+  clientId      BigInt?                   @map("client_id")
   name          String
   description   String?
-  isActive      Boolean                @default(true) @map("is_active")
+  isActive      Boolean                   @default(true) @map("is_active")
   // Current version (denormalized for convenience)
-  currentSchema Json                   @map("current_schema")
-  version       Int                    @default(1)
+  currentSchema Json                      @map("current_schema")
+  version       Int                       @default(1)
   // Relations
-  studio        Studio                 @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  client        Client?                @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  studio        Studio                    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  client        Client?                   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   snapshots     TaskTemplateSnapshot[]
   tasks         Task[]
-  createdAt     DateTime               @default(now()) @map("created_at")
-  updatedAt     DateTime               @updatedAt @map("updated_at")
-  deletedAt     DateTime?              @map("deleted_at")
+  mechanicRefs  TaskTemplateMechanicRef[]
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+  deletedAt     DateTime?                 @map("deleted_at")
 
   @@index([uid])
   @@index([studioId])
@@ -658,18 +660,36 @@ model TaskTemplate {
 }
 
 model TaskTemplateSnapshot {
-  id         BigInt       @id @default(autoincrement())
-  templateId BigInt       @map("template_id")
-  template   TaskTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  version    Int // 1, 2, 3, etc.
-  schema     Json // Immutable schema at this version
-  metadata   Json         @default("{}") // Change notes, author, etc.
-  tasks      Task[]
-  createdAt  DateTime     @default(now()) @map("created_at")
+  id           BigInt                    @id @default(autoincrement())
+  templateId   BigInt                    @map("template_id")
+  template     TaskTemplate              @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  version      Int // 1, 2, 3, etc.
+  schema       Json // Immutable schema at this version
+  metadata     Json                      @default("{}") // Change notes, author, etc.
+  tasks        Task[]
+  mechanicRefs TaskTemplateMechanicRef[]
+  createdAt    DateTime                  @default(now()) @map("created_at")
 
   @@unique([templateId, version])
   @@index([templateId, version])
   @@map("task_template_snapshots")
+}
+
+model TaskTemplateMechanicRef {
+  id         BigInt                @id @default(autoincrement())
+  templateId BigInt                @map("template_id")
+  template   TaskTemplate          @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  snapshotId BigInt?               @map("snapshot_id")
+  snapshot   TaskTemplateSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  mechanicId BigInt                @map("mechanic_id")
+  mechanic   ClientMechanic        @relation(fields: [mechanicId], references: [id], onDelete: Cascade)
+  group      String                @map("group")
+  createdAt  DateTime              @default(now()) @map("created_at")
+
+  @@index([templateId])
+  @@index([snapshotId])
+  @@index([mechanicId])
+  @@map("task_template_mechanic_refs")
 }
 
 model TaskReportDefinition {

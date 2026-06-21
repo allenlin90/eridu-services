@@ -154,3 +154,7 @@ export const defaultField: FieldItem = {
 export function isSharedField(item: { standard?: boolean; shared_field_key?: string }): boolean {
   return item.standard === true || Boolean(item.shared_field_key);
 }
+
+export function isMechanicField(item: { mechanic_ref?: unknown }): boolean {
+  return Boolean(item.mechanic_ref);
+}

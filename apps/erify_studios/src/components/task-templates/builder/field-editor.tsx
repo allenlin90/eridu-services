@@ -25,7 +25,7 @@ import {
 } from './field-editor.utils';
 import { OptionsEditor } from './options-editor';
 import type { FieldItem, FieldType, SystemFactKey } from './schema';
-import { FieldTypeEnum, isSharedField, SYSTEM_FACT_KEY_DEFINITIONS } from './schema';
+import { FieldTypeEnum, isMechanicField, isSharedField, SYSTEM_FACT_KEY_DEFINITIONS } from './schema';
 import { SystemFactCombobox } from './system-fact-combobox';
 import { ValidationRulesEditor } from './validation-rules-editor';
 
@@ -52,14 +52,18 @@ type FieldEditorProps = {
  * helpers live in `field-editor.utils.ts`.
  */
 export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
-  const handleChange = useCallback((field: keyof FieldItem, value: any) => {
-    onUpdate({ [field]: value });
-  }, [onUpdate]);
-
   const fieldIsShared = isSharedField(item);
+  const fieldIsMechanic = isMechanicField(item);
+
+  const handleChange = useCallback((field: keyof FieldItem, value: any) => {
+    if (fieldIsMechanic && ['label', 'description', 'type'].includes(field)) {
+      return;
+    }
+    onUpdate({ [field]: value });
+  }, [onUpdate, fieldIsMechanic]);
 
   const handleTypeChange = useCallback((newType: string) => {
-    if (fieldIsShared) {
+    if (fieldIsShared || fieldIsMechanic) {
       return;
     }
 
@@ -91,10 +95,10 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       updates.system_fact_key = undefined;
     }
     onUpdate(updates);
-  }, [fieldIsShared, item, onUpdate]);
+  }, [fieldIsShared, fieldIsMechanic, item, onUpdate]);
 
   const handleSystemFactChange = useCallback((value: string) => {
-    if (fieldIsShared) {
+    if (fieldIsShared || fieldIsMechanic) {
       return;
     }
 
@@ -120,7 +124,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       default_value: '',
       validation,
     });
-  }, [fieldIsShared, item.validation, onUpdate]);
+  }, [fieldIsShared, fieldIsMechanic, item.validation, onUpdate]);
 
   const handleDefaultValueChange = useCallback((val: any) => {
     handleChange('default_value', val);
@@ -145,14 +149,20 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
             const val = e.target.value;
             handleChange('label', val);
           }}
+          disabled={fieldIsMechanic}
           placeholder="Question or instruction"
         />
+        {fieldIsMechanic && (
+          <p className="text-xs text-muted-foreground">
+            Mechanic label is locked by the client catalog.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={`type-${item.id}`}>Type</Label>
-          <Select value={item.type} onValueChange={handleTypeChange} disabled={fieldIsShared}>
+          <Select value={item.type} onValueChange={handleTypeChange} disabled={fieldIsShared || fieldIsMechanic}>
             <SelectTrigger id={`type-${item.id}`}>
               <SelectValue />
             </SelectTrigger>
@@ -167,6 +177,11 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
           {fieldIsShared && (
             <p className="text-xs text-muted-foreground">
               Shared-field type is locked by studio settings.
+            </p>
+          )}
+          {fieldIsMechanic && (
+            <p className="text-xs text-muted-foreground">
+              Mechanic type is locked by the client catalog.
             </p>
           )}
         </div>
@@ -194,14 +209,19 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
             id={`system-fact-${item.id}`}
             value={getSystemFactKey(item)}
             onChange={handleSystemFactChange}
-            disabled={fieldIsShared}
+            disabled={fieldIsShared || fieldIsMechanic}
           />
           {fieldIsShared && (
             <p className="text-xs text-muted-foreground">
               Shared fields cannot be bound to a record field; the type is locked by studio settings.
             </p>
           )}
-          {!fieldIsShared && getSystemFactKey(item) && (
+          {fieldIsMechanic && (
+            <p className="text-xs text-muted-foreground">
+              Mechanic fields cannot be bound to auto-fill record fields.
+            </p>
+          )}
+          {!fieldIsShared && !fieldIsMechanic && getSystemFactKey(item) && (
             <p className="text-xs text-muted-foreground">
               This answer will update the matching show, creator, or platform value later.
             </p>
@@ -230,9 +250,15 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
             const val = e.target.value;
             handleChange('description', val);
           }}
+          disabled={fieldIsMechanic}
           placeholder="Detailed instructions for the operator..."
           className="h-20"
         />
+        {fieldIsMechanic && (
+          <p className="text-xs text-muted-foreground">
+            Mechanic description is locked by the client catalog.
+          </p>
+        )}
       </div>
 
       {item.type !== 'file' && (
