@@ -33,6 +33,7 @@ describe('studioClientMechanicController', () => {
             updateMechanic: jest.fn(),
             retireMechanic: jest.fn(),
             deleteMechanic: jest.fn(),
+            getMechanicCoverage: jest.fn(),
           },
         },
         {
@@ -132,6 +133,46 @@ describe('studioClientMechanicController', () => {
       await expect(controller.show(studioId, clientId, 'cmech_x')).rejects.toBeInstanceOf(
         NotFoundException,
       );
+    });
+  });
+
+  describe('getCoverage', () => {
+    const query = { start_date: '2026-01-01T00:00:00.000Z', end_date: '2026-01-31T00:00:00.000Z' } as any;
+
+    it('404s when the client does not exist', async () => {
+      clientService.getClientByUid.mockResolvedValue(null);
+
+      await expect(
+        controller.getCoverage(studioId, clientId, 'cmech_x', query),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(mechanicService.getMechanicCoverage).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when studio has no active shows for client, even on a read', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      showService.countShows.mockResolvedValue(0);
+
+      await expect(
+        controller.getCoverage(studioId, clientId, 'cmech_x', query),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(mechanicService.getMechanicCoverage).not.toHaveBeenCalled();
+    });
+
+    it('delegates to getMechanicCoverage scoped to the studio', async () => {
+      clientService.getClientByUid.mockResolvedValue({ uid: clientId } as any);
+      const coverage = { templates: [], shows: [] } as any;
+      mechanicService.getMechanicCoverage.mockResolvedValue(coverage);
+
+      const result = await controller.getCoverage(studioId, clientId, 'cmech_1', query);
+
+      expect(mechanicService.getMechanicCoverage).toHaveBeenCalledWith(
+        studioId,
+        clientId,
+        'cmech_1',
+        new Date(query.start_date),
+        new Date(query.end_date),
+      );
+      expect(result).toBe(coverage);
     });
   });
 

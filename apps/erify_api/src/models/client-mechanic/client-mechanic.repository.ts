@@ -146,6 +146,9 @@ export class ClientMechanicRepository extends BaseRepository<
     }
   }
 
+  // Engineering decision: services may not build Prisma queries directly
+  // (no `this.prisma.*` in service files) — this scopes by mechanicId with
+  // the template `select` shape `getMechanicCoverage` needs, reused as-is.
   async findTemplatesByMechanic(mechanicId: bigint) {
     return this.prisma.taskTemplateMechanicRef.findMany({
       where: { mechanicId },
@@ -162,9 +165,9 @@ export class ClientMechanicRepository extends BaseRepository<
     });
   }
 
-  // Coverage answers "is this mechanic reaching MY target shows" (per the
-  // design doc) — scoped to the requesting studio's own shows, not every show
-  // the client runs across other studios.
+  // Engineering decision: coverage answers "is this mechanic reaching MY
+  // target shows" (per the design doc) — scoped to the requesting studio's
+  // own shows, not every show the client runs across other studios.
   async findShowsForCoverage(studioUid: string, clientUid: string, startDate: Date, endDate: Date) {
     return this.prisma.show.findMany({
       where: {
@@ -183,9 +186,10 @@ export class ClientMechanicRepository extends BaseRepository<
     });
   }
 
-  // Reuses PR 22.1's "latest finalized task with a loop schema wins" selection
-  // rule (FINALIZED_LOOP_TASK_STATUSES) — coverage also needs the template
-  // relation StudioPerformanceRepository doesn't load, hence a separate query.
+  // Engineering decision: reuses PR 22.1's "latest finalized task with a loop
+  // schema wins" selection rule (FINALIZED_LOOP_TASK_STATUSES) — coverage also
+  // needs the template relation StudioPerformanceRepository doesn't load,
+  // hence a separate query rather than sharing the repository method itself.
   async findFinalizedLoopTasksForShows(showIds: bigint[]) {
     return this.prisma.task.findMany({
       where: {
@@ -207,6 +211,10 @@ export class ClientMechanicRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: batches the "latest" (snapshotId: null) and
+  // "frozen" (specific snapshotId) ref rows for many templates/snapshots in
+  // one query so `getMechanicCoverage` can resolve every show's coverage
+  // status without an N+1 per show.
   async findTemplateRefsForTemplatesAndSnapshots(templateIds: bigint[], snapshotIds: bigint[]) {
     return this.prisma.taskTemplateMechanicRef.findMany({
       where: {
@@ -229,6 +237,9 @@ export class ClientMechanicRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: studio-scoped show lookup with the client `select`
+  // shape `getShowMechanicsCoverage` needs to answer "who is this show's
+  // client" without a second round-trip.
   async findShowForCoverageDetail(studioUid: string, showUid: string) {
     return this.prisma.show.findFirst({
       where: {
@@ -251,6 +262,10 @@ export class ClientMechanicRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: single-template/snapshot counterpart to
+  // `findTemplateRefsForTemplatesAndSnapshots` for the show-first coverage
+  // view (`getShowMechanicsCoverage`) — includes the full mechanic row since
+  // that view renders mechanic details directly, not just a uid set.
   async findTemplateRefsForShowCoverage(templateId: bigint, snapshotId: bigint) {
     return this.prisma.taskTemplateMechanicRef.findMany({
       where: {

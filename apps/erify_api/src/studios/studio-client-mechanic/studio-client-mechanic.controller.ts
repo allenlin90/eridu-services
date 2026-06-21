@@ -125,6 +125,7 @@ export class StudioClientMechanicController extends BaseStudioController {
     @Query() query: ListMechanicCoverageQueryDto,
   ) {
     await this.ensureClientExists(clientId);
+    await this.ensureStudioClientLinkage(studioId, clientId);
 
     return this.clientMechanicService.getMechanicCoverage(
       studioId,

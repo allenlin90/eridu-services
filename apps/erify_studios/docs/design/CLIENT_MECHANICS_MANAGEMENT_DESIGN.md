@@ -155,6 +155,7 @@ Workflow assembly: client selector, Loop × Mechanic matrix sourced from the bou
 - **Mechanic→shows**: for a mechanic, which templates reference it and whether its latest version still carries it; for each target show (date-ranged), current / stale / dropped / unassigned status.
 - **Show→mechanics**: for a show (or set of target shows), which mechanics are current / stale / missing.
 - Read-only for `ACCOUNT_MANAGER`; problem rows offer a **Flag to manager** hand-off. The actual fix (regenerate the task from the latest snapshot) stays an ADMIN/MANAGER action.
+- Coverage resolution (20.6) batches show/task/ref lookups per mechanic or per show rather than per-show queries, to avoid N+1 across a date-ranged show list; it reuses PR 22.1's "latest finalized task with a loop schema wins" selection rule (`FINALIZED_LOOP_TASK_STATUSES`) so the two read models can't independently drift. See `ClientMechanicRepository`'s `// Engineering decision:` comments for the per-method rationale.
 
 ## Data Model Direction
 

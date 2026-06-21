@@ -160,5 +160,3 @@ export const showMechanicCoverageResponseSchema = z.object({
 });
 
 export type ShowMechanicCoverageResponse = z.infer<typeof showMechanicCoverageResponseSchema>;
-
-
