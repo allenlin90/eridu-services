@@ -7,8 +7,8 @@ This folder is the source of truth for phase planning across the monorepo.
 1. [Phase 1](./PHASE_1.md) — Closed foundation phase
 2. [Phase 2](./PHASE_2.md) — Closed task-management foundation phase
 3. [Phase 3](./PHASE_3.md) — Closure summary of delivered work after scope reset
-4. [Phase 4](./PHASE_4.md) — P&L Visibility & Creator Operations (🚧 active; PR 20 client mechanics is the current critical path)
-5. [Phase 5](./PHASE_5.md) — Show Production Lifecycle Gap Closure (🔲 planned)
+4. [Phase 4](./PHASE_4.md) — P&L Visibility & Creator Operations (✅ complete)
+5. [Phase 5](./PHASE_5.md) — Show Production Lifecycle Gap Closure (🔲 planned; next up)
 6. [Phase 6](./PHASE_6.md) — TBD (placeholder — former Phase 5 Tracks A/B/C + Phase 4/5 deferrals)
 
 ## Rules

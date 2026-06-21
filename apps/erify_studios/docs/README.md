@@ -5,8 +5,8 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 ## Cross-App Roadmap
 
 1. [Phase 3 Closure Summary](../../../docs/roadmap/PHASE_3.md)
-2. [Phase 4 Planning](../../../docs/roadmap/PHASE_4.md)
-3. [Phase 5 Deferred Features](../../../docs/roadmap/PHASE_5.md)
+2. [Phase 4 — Complete](../../../docs/roadmap/PHASE_4.md)
+3. [Phase 5 — Show Production Lifecycle Gap Closure (planned, next up)](../../../docs/roadmap/PHASE_5.md)
 
 ## Canonical Docs
 

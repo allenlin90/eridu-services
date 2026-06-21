@@ -719,8 +719,8 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | [Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md)       | Core foundation that is fully implemented                      |
 | [Phase 2 Roadmap](../../docs/roadmap/PHASE_2.md)       | Task-management foundation and remaining follow-up context     |
 | [Phase 3 Roadmap](../../docs/roadmap/PHASE_3.md)             | Current cross-app closure summary for Phase 3                  |
-| [Phase 4 Roadmap](../../docs/roadmap/PHASE_4.md)             | Active P&L and studio-autonomy tracker, including deferred economics baseline merge |
-| [Phase 5 Roadmap](../../docs/roadmap/PHASE_5.md)             | Candidate track for materials, analytics, and broader deferred operations work |
+| [Phase 4 Roadmap](../../docs/roadmap/PHASE_4.md)             | Closed P&L and studio-autonomy tracker |
+| [Phase 5 Roadmap](../../docs/roadmap/PHASE_5.md)             | Planned, next up — Show Production Lifecycle Gap Closure |
 | [Manual Testing Guide](manual-test/README.md)          | Running E2E workflows: `pnpm -F erify_api manual:schedule:all` |
 
 ## 🔧 Configuration

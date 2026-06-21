@@ -53,8 +53,8 @@ Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.
 | [Phase 1 Overall](../../../docs/roadmap/PHASE_1.md) | ✅      | Closed foundation phase                                         |
 | [Phase 2 Overall](../../../docs/roadmap/PHASE_2.md) | ✅      | Closed task-management foundation phase                         |
 | [Phase 3 Overall](../../../docs/roadmap/PHASE_3.md) | ✅      | Closed summary after scope reset                                |
-| [Phase 4 Overall](../../../docs/roadmap/PHASE_4.md) | ⏳      | P&L implementation on top of completed creator cutover baseline |
-| [Phase 5 Overall](../../../docs/roadmap/PHASE_5.md) | 🗓️      | Deferred / parking lot features                                 |
+| [Phase 4 Overall](../../../docs/roadmap/PHASE_4.md) | ✅      | P&L implementation on top of completed creator cutover baseline — closed |
+| [Phase 5 Overall](../../../docs/roadmap/PHASE_5.md) | 🔲      | Show Production Lifecycle Gap Closure — planned, next up        |
 
 ## Quick Start
 

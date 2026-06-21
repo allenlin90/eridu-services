@@ -38,9 +38,11 @@ PRDs are **phase-scoped and transient**:
 
 ## Phase 4
 
-Phase 4 has **one active PRD**: [Client Mechanics & Account-Manager Review](./client-mechanics.md) — the novel client-owned mechanics domain + `ACCOUNT_MANAGER` role + mechanic↔show coverage (PR 20.1–20.7). The task-input fact binding PRD was promoted to [shipped feature docs](../features/task-fact-binding.md).
+✅ **Closed** (see [`PHASE_4.md`](../roadmap/PHASE_4.md)) — every PRD promoted or retired. The client-owned mechanics domain + `ACCOUNT_MANAGER` role + mechanic↔show coverage PRD (PR 20.1–20.8) was promoted to [`client-mechanics.md`](../features/client-mechanics.md). The task-input fact binding PRD was promoted to [shipped feature docs](../features/task-fact-binding.md). No active Phase 4 PRDs remain.
 
-All other remaining work (2.2 compensation line items, 2.3 economics service, 3.1 economics review surface, 3.2 page-local exports, 3.3 creator availability hardening) is tracked PR-by-PR in [`PHASE_4.md`](../roadmap/PHASE_4.md) as 15 user-flow-first entries.
+## Phase 5
+
+Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) has no PRDs of its own yet — pickup items are scoped directly as workstream briefs in the phase tracker rather than separate PRDs.
 - Studio schedule management was deferred (revisit with the Client Portal workstream); retained at [`future/studio-schedule-management.md`](./future/studio-schedule-management.md).
 - Future P&L revenue workflow is sketched in [`future/pnl-revenue-workflow.md`](./future/pnl-revenue-workflow.md); redraft when revenue planning restarts.
 
