@@ -57,6 +57,7 @@ Controller-layer patterns for `apps/erify_api`. Controllers validate/translate H
 - [ ] High-frequency reads use `@ReadBurstThrottle()`
 - [ ] No Prisma queries in controller
 - [ ] `@ZodResponse(...)` schema matches handler return shape — pass the transformer DTO when the handler returns the raw aggregate, or the public response schema (`@eridu/api-types`) when the handler already called `xxxDto.parse(...)`. Lock with a `Reflect.getMetadata('ZOD_SERIALIZER_DTO_OPTIONS', Controller.prototype.method)` assertion in the spec. See [controller-rules.md §`@ZodResponse(...)` must match the controller's return shape](references/controller-rules.md#zodresponse-must-match-the-controllers-return-shape).
+- [ ] A per-resource authorization gate documented as applying to "every route, including reads" (e.g. a manual studio↔client linkage check beyond the role guard) actually has the call in every handler on the controller — when a new read-only route (e.g. a coverage/detail endpoint) is added later, it's easy to copy the happy-path body from a sibling handler and forget the gate call, since the class-level doc comment doesn't enforce it at compile time. Grep the controller for the gate-check method name and diff it against the handler list. See `studio-client-mechanic.controller.ts`'s `getCoverage` (PR 20.6 review) for a caught instance.
 
 ## Open References
 
