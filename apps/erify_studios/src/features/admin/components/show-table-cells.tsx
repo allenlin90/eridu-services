@@ -89,18 +89,21 @@ export function DateCell({ date }: { date: string | Date }) {
 }
 
 const statusColorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  'live': 'destructive',
-  'draft': 'secondary',
-  'confirmed': 'default',
-  'completed': 'outline',
-  'cancelled': 'destructive',
-  'cancelled_pending_resolution': 'secondary',
+  live: 'destructive',
+  draft: 'secondary',
+  confirmed: 'default',
+  completed: 'outline',
+  cancelled: 'destructive',
   'cancelled pending resolution': 'secondary',
 };
 
+const statusLabelMap: Record<string, string> = {
+  'cancelled pending resolution': 'Pending Resolution',
+};
+
 export function ShowStatusBadge({ status }: { status: string }) {
-  const normalizedStatus = status?.toLowerCase() || 'unknown';
-  const displayStatus = status ? status.replace(/_/g, ' ') : 'unknown';
+  const normalizedStatus = status?.toLowerCase().replace(/_/g, ' ') || 'unknown';
+  const displayLabel = statusLabelMap[normalizedStatus] || normalizedStatus;
 
   if (normalizedStatus === 'live') {
     return (
@@ -108,18 +111,18 @@ export function ShowStatusBadge({ status }: { status: string }) {
         variant="outline"
         className="capitalize bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700"
       >
-        {displayStatus}
+        {displayLabel}
       </Badge>
     );
   }
 
-  if (normalizedStatus === 'cancelled_pending_resolution' || normalizedStatus === 'cancelled pending resolution') {
+  if (normalizedStatus === 'cancelled pending resolution') {
     return (
       <Badge
         variant="outline"
         className="capitalize bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 hover:text-amber-700"
       >
-        {displayStatus}
+        {displayLabel}
       </Badge>
     );
   }
@@ -128,7 +131,7 @@ export function ShowStatusBadge({ status }: { status: string }) {
 
   return (
     <Badge variant={variant} className="capitalize">
-      {displayStatus}
+      {displayLabel}
     </Badge>
   );
 }

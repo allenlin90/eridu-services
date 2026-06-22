@@ -168,11 +168,11 @@ describe('showStatusBadge', () => {
     expect(badge).toHaveClass('bg-red-100');
   });
 
-  it('renders "cancelled_pending_resolution" status with warning amber styling and replaces underscores', () => {
+  it('renders "cancelled_pending_resolution" status with warning amber styling and clean mapped label', () => {
     render(<ShowStatusBadge status="cancelled_pending_resolution" />);
 
     const badge = screen.getByTestId('badge');
-    expect(badge).toHaveTextContent('cancelled pending resolution');
+    expect(badge).toHaveTextContent('Pending Resolution');
     expect(badge).toHaveClass('bg-amber-100', 'text-amber-700', 'border-amber-200');
     expect(badge).toHaveAttribute('data-variant', 'outline');
   });
