@@ -116,10 +116,8 @@ export function AddStudioCreatorDialog({
 
   const selectedCreator = actionableCreators.find((creator) => creator.id === selectedCreatorId) ?? null;
 
-  const resetState = () => {
-    setMode('search');
+  const resetCreatorFields = () => {
     setSelectedCreatorId('');
-    setSearch('');
     setCreatorName('');
     setCreatorAliasName('');
     setCreatorType(CREATOR_TYPE.STANDARD);
@@ -132,6 +130,12 @@ export function AddStudioCreatorDialog({
     onboardMutation.reset();
   };
 
+  const resetState = () => {
+    setMode('search');
+    setSearch('');
+    resetCreatorFields();
+  };
+
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       resetState();
@@ -141,10 +145,16 @@ export function AddStudioCreatorDialog({
 
   const handleStartCreate = () => {
     const searchedName = search.trim();
+    resetCreatorFields();
     if (searchedName.length > 0) {
       setCreatorName(searchedName);
     }
     setMode('create');
+  };
+
+  const handleBackToSearch = () => {
+    resetCreatorFields();
+    setMode('search');
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -295,7 +305,7 @@ export function AddStudioCreatorDialog({
                 type="button"
                 variant="ghost"
                 className="px-0"
-                onClick={() => setMode('search')}
+                onClick={handleBackToSearch}
                 disabled={isPending}
               >
                 Back to search
