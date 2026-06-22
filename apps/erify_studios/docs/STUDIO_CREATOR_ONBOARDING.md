@@ -27,7 +27,6 @@ Access rules:
 
 - `src/routes/studios/$studioId/creators.tsx`
 - `src/features/studio-creator-roster/components/add-studio-creator-dialog.tsx`
-- `src/features/studio-creator-roster/components/onboard-creator-dialog.tsx`
 - `src/features/studio-creator-roster/api/studio-creator-roster.ts`
 - `src/features/studio-show-creators/components/add-creator-dialog.tsx`
 - `src/features/studio-show-creators/lib/creator-roster-guidance.ts`

@@ -16,7 +16,6 @@ import {
 } from '../config/studio-creator-roster-columns';
 
 import { AddStudioCreatorDialog } from './add-studio-creator-dialog';
-import { OnboardCreatorDialog } from './onboard-creator-dialog';
 
 type StudioCreatorRosterTableProps = {
   studioId: string;
@@ -46,7 +45,6 @@ export function StudioCreatorRosterTable({
   onRefresh,
 }: StudioCreatorRosterTableProps) {
   const [addOpen, setAddOpen] = useState(false);
-  const [onboardOpen, setOnboardOpen] = useState(false);
 
   const columns = getStudioCreatorRosterColumns({ studioId, isAdmin, canManageCompensation });
 
@@ -85,16 +83,10 @@ export function StudioCreatorRosterTable({
               <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
             {isAdmin && (
-              <>
-                <Button size="sm" variant="outline" onClick={() => setOnboardOpen(true)}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Onboard Creator
-                </Button>
-                <Button size="sm" onClick={() => setAddOpen(true)}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Add Creator
-                </Button>
-              </>
+              <Button size="sm" onClick={() => setAddOpen(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add Creator
+              </Button>
             )}
           </DataTableToolbar>
         )}
@@ -119,11 +111,6 @@ export function StudioCreatorRosterTable({
             studioId={studioId}
             open={addOpen}
             onOpenChange={setAddOpen}
-          />
-          <OnboardCreatorDialog
-            studioId={studioId}
-            open={onboardOpen}
-            onOpenChange={setOnboardOpen}
           />
         </>
       )}
