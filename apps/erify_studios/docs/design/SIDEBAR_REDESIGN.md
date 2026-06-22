@@ -128,7 +128,7 @@ Update `apps/erify_studios/src/lib/constants/studio-route-access.ts`:
 | Key | Roles | Notes |
 | --- | --- | --- |
 | `members` | `[ADMIN, MANAGER]` | Shipped; MANAGER read-only gating handled in page component |
-| `creatorRoster` | `[ADMIN, MANAGER, TALENT_MANAGER]` | Shipped; write operations (ADMIN only) gated in component |
+| `creatorRoster` | `[ADMIN, MANAGER, TALENT_MANAGER]` | Shipped; roster/default writes are gated in component |
 | `compensation` | `[ADMIN, MANAGER]` | Planned; Finance group entry for line-item management |
 | `economics` | `[ADMIN]` | Planned; Finance group, hidden until economics UI ships |
 | `showPlanningExport` | `[ADMIN, MANAGER]` | Planned; Planning group export affordance |

@@ -14,15 +14,15 @@ Studio operators could map creators to shows, but they could not maintain the st
 | Role | Need |
 | --- | --- |
 | Studio Admin | Add creators to the studio roster, maintain default compensation, activate/deactivate roster entries |
-| Studio Manager | Roster visibility plus per-show creator compensation review and assignment-term edits |
-| Studio Talent Manager | Read-only roster visibility for creator assignment planning |
+| Studio Manager | Roster/default management plus per-show creator compensation review and assignment-term edits |
+| Studio Talent Manager | Creator roster/default management and creator assignment planning |
 
 ## What Was Delivered
 
 - Canonical roster API cut over to `GET /studios/:studioId/creators` with matching `POST` and `PATCH` write routes.
 - Studio roster page at `/studios/$studioId/creators` under the **People** sidebar group.
-- Read access for `ADMIN`, `MANAGER`, and `TALENT_MANAGER`; write actions restricted to `ADMIN`.
-- Catalog-based **Add Creator** intake with roster-state awareness: existing global creators can be added, inactive entries can be reactivated, brand-new creators can be created into the global catalog plus studio roster, and active duplicates are shown as non-actionable matches.
+- Roster/default write access for `ADMIN`, `MANAGER`, and `TALENT_MANAGER`; compensation review remains `ADMIN` and `MANAGER`.
+- Catalog-based **Add Creator** intake with roster-state awareness: existing global creators can be added, inactive entries can be reactivated, brand-new creators can be created into the global catalog plus studio roster, and active roster duplicates are excluded from add results.
 - Studio-scoped default compensation management on `StudioCreator` with non-negative `default_rate`, compensation-type validation, and optimistic concurrency via `version`.
 - Active/inactive roster management with inactive creators excluded from creator-availability discovery and rejected by bulk assignment writes.
 - Compatibility-preserving creator catalog contract with both `is_rostered` and `roster_state`.
@@ -40,14 +40,14 @@ Studio operators could map creators to shows, but they could not maintain the st
 ## Acceptance Record
 
 - [x] List endpoint returns creator identity, active status, `default_rate`, `default_rate_type`, `default_commission_rate`, and `version`.
-- [x] Admin can add a creator from the system catalog; unknown creators return `CREATOR_NOT_FOUND`.
-- [x] Admin can reactivate an inactive creator without creating a duplicate roster row.
-- [x] Admin can create a brand-new creator from the same search-first Add Creator flow after checking the catalog.
-- [x] Admin can update default compensation fields with non-negative rate validation and cross-field compensation rules.
-- [x] Admin can activate or deactivate a creator from the roster surface.
+- [x] Admin, Manager, and Talent Manager can add a creator from the system catalog; unknown creators return `CREATOR_NOT_FOUND`.
+- [x] Admin, Manager, and Talent Manager can reactivate an inactive creator without creating a duplicate roster row.
+- [x] Admin, Manager, and Talent Manager can create a brand-new creator from the same search-first Add Creator flow after checking the catalog.
+- [x] Active rostered creators are filtered out of Add Creator catalog results; inactive roster rows remain available for reactivation.
+- [x] Admin, Manager, and Talent Manager can update default compensation fields with non-negative rate validation and cross-field compensation rules.
+- [x] Admin, Manager, and Talent Manager can activate or deactivate a creator from the roster surface.
 - [x] Inactive roster creators are excluded from availability discovery and rejected by bulk assignment writes.
 - [x] Creator catalog exposes `roster_state` while retaining `is_rostered` for compatibility.
-- [x] Manager and Talent Manager remain read-only on the roster surface.
 - [x] Admin and Manager can review a creator's show compensation over a date range and edit the selected `ShowCreator` terms.
 - [x] The frontend handles `409 VERSION_CONFLICT` by refetching and prompting user review instead of silently overwriting.
 

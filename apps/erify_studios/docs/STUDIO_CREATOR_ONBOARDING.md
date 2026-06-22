@@ -14,13 +14,13 @@ Technical reference for the shipped studio-owned creator intake flow, including 
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/studios/$studioId/creators` | Creator roster page with Add Creator intake dialog | `ADMIN` write, `MANAGER` + `TALENT_MANAGER` read |
+| `/studios/$studioId/creators` | Creator roster page with Add Creator intake dialog | `ADMIN` + `MANAGER` + `TALENT_MANAGER` roster/default write |
 | `/studios/$studioId/creator-mapping` | Assignment guidance and roster-error recovery path | `ADMIN`, `MANAGER`, `TALENT_MANAGER` |
 
 Access rules:
 
-- only `ADMIN` can open the Add Creator intake action from the roster page
-- managers and talent managers do not get write access, but they do see actionable roster guidance in creator-mapping flows
+- `ADMIN`, `MANAGER`, and `TALENT_MANAGER` can open the Add Creator intake action from the roster page
+- `TALENT_MANAGER` can create a creator identity, add/reactivate an existing creator, and set roster compensation defaults; user linking can be skipped and completed later when the creator needs account access
 - route access stays on the shared `creatorRoster` and `creatorMapping` policy keys
 
 ## Key Frontend Modules
@@ -47,8 +47,8 @@ Access rules:
 
 - the roster add flow always starts from the single **Add Creator** action in search mode
 - catalog search remains the first step before a create path is shown
+- the catalog query excludes active rostered creators so existing active roster rows do not appear in Add Creator results
 - selectable catalog results are labeled by outcome: add an existing creator or reactivate an inactive creator
-- active roster matches are rendered as non-actionable helpers rather than selectable options
 - the current search term is preserved when switching between search and create modes
 
 ### Create new creator and add to studio mode
@@ -67,8 +67,8 @@ Access rules:
 - the UI maps backend roster failures into readable guidance:
   - `CREATOR_NOT_IN_ROSTER`
   - `CREATOR_INACTIVE_IN_ROSTER`
-- admins get a CTA back to `/studios/$studioId/creators`
-- managers and talent managers get an "ask a studio admin" message instead of a write affordance
+- roster managers get a CTA back to `/studios/$studioId/creators`
+- read-only roles get an "ask a studio admin or talent manager" message instead of a write affordance
 - bulk assignment stays open when actionable failures remain
 
 ## UX Rules

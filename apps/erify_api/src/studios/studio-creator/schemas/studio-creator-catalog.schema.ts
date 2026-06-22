@@ -35,10 +35,12 @@ export class StudioCreatorCatalogQueryDto extends createZodDto(
   studioCreatorCatalogQuerySchema.transform((data) => ({
     search: data.search,
     includeRostered: data.include_rostered,
+    excludeActiveRostered: data.exclude_active_rostered,
     limit: data.limit,
   })),
 ) {
   declare search: string | undefined;
   declare includeRostered: boolean;
+  declare excludeActiveRostered: boolean;
   declare limit: number;
 }

@@ -100,12 +100,13 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 
 **Source**: [`studio-creator-onboarding.md`](../features/studio-creator-onboarding.md), [`studio-creator-roster.md`](../features/studio-creator-roster.md), [`creator-mapping.md`](../features/creator-mapping.md)
 
-**Completion result**: PR [#225](https://github.com/allenlin90/eridu-services/pull/225) keeps `/studios/:studioId/creators` as the studio-owned creator intake surface and makes **Add Creator** the single entry point. The dialog remains search-first, then exposes explicit outcomes: add an existing global creator to the studio roster, reactivate an inactive roster row, or create a new global creator and add it to this studio roster.
+**Completion result**: PR [#225](https://github.com/allenlin90/eridu-services/pull/225) keeps `/studios/:studioId/creators` as the studio-owned creator intake surface and makes **Add Creator** the single entry point for Admin, Manager, and Talent Manager roster managers. The dialog remains search-first, then exposes explicit outcomes: add an existing global creator to the studio roster, reactivate an inactive roster row, or create a new global creator and add it to this studio roster.
 
 **Acceptance closure**:
 
 - Brand-new creator onboarding is preserved through the create mode; the flow still creates a global `Creator` plus an active `StudioCreator` row.
-- Existing creator and inactive roster outcomes are labeled directly in the picker, so admins can distinguish add vs. reactivate before submitting.
+- Existing creator and inactive roster outcomes are labeled directly in the picker, so roster managers can distinguish add vs. reactivate before submitting.
+- Active rostered creators are filtered out of Add Creator catalog results, while inactive roster rows remain available for reactivation.
 - The create-new action is available only after catalog search, preserving duplicate-prevention intent without hiding the create path.
 - Creator mapping remains the show-assignment surface and continues to direct missing-roster cases back to `/creators`.
 

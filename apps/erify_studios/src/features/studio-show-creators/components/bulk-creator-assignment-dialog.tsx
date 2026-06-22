@@ -51,7 +51,9 @@ export function BulkCreatorAssignmentDialog({
   const [creatorSearch, setCreatorSearch] = useState('');
   const [assignmentSummary, setAssignmentSummary] = useState<BulkShowCreatorAssignmentResponse | null>(null);
   const { role } = useStudioAccess(studioId);
-  const isAdmin = role === STUDIO_ROLE.ADMIN;
+  const canManageRoster = role === STUDIO_ROLE.ADMIN
+    || role === STUDIO_ROLE.MANAGER
+    || role === STUDIO_ROLE.TALENT_MANAGER;
 
   const { data: creators = [], isLoading: isLoadingCreators } = useCreatorCatalogQuery(
     studioId,
@@ -173,9 +175,9 @@ export function BulkCreatorAssignmentDialog({
               disabled={isAssigning}
             />
             <p className="text-xs text-muted-foreground">
-              {getMissingCreatorGuidance(isAdmin)}
+              {getMissingCreatorGuidance(canManageRoster)}
             </p>
-            {isAdmin && (
+            {canManageRoster && (
               <Link
                 to="/studios/$studioId/creators"
                 params={{ studioId }}
@@ -209,7 +211,7 @@ export function BulkCreatorAssignmentDialog({
                 {assignmentSummary.errors.slice(0, MAX_ERRORS_DISPLAYED).map((error) => {
                   const showName = showNameById.get(error.show_id) ?? error.show_id;
                   const creatorName = creatorNameById.get(error.creator_id) ?? error.creator_id;
-                  const reason = getRosterAssignmentFailureMessage(error.reason, isAdmin);
+                  const reason = getRosterAssignmentFailureMessage(error.reason, canManageRoster);
 
                   return (
                     <li key={`${error.show_id}-${error.creator_id}-${error.reason}`}>
@@ -235,7 +237,7 @@ export function BulkCreatorAssignmentDialog({
                 )}
               </ul>
               {assignmentSummary.errors.some((error) => error.reason === STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_IN_ROSTER)
-              && isAdmin && (
+              && canManageRoster && (
                 <Link
                   to="/studios/$studioId/creators"
                   params={{ studioId }}

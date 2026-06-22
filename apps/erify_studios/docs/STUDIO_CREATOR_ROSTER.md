@@ -8,16 +8,16 @@
 
 ## Purpose
 
-Technical reference for the shipped studio creator roster page, including route access, URL-backed table state, query invalidation, admin/manager mutations, and 409 conflict handling.
+Technical reference for the shipped studio creator roster page, including route access, URL-backed table state, query invalidation, roster/default mutations, and 409 conflict handling.
 
-> **PR 14a update**: per-creator editing moved from the `edit-studio-creator-dialog` modal to the dedicated **creator detail route** `/studios/$studioId/creators/$creatorId` (Defaults + Compensation tabs). Editing creator defaults is now allowed for **`ADMIN` and `MANAGER`** (previously admin-only). See [`ENTITY_DETAIL_ROUTES.md`](./ENTITY_DETAIL_ROUTES.md).
+> **PR 14a update**: per-creator editing moved from the `edit-studio-creator-dialog` modal to the dedicated **creator detail route** `/studios/$studioId/creators/$creatorId` (Profile + Compensation tabs). Editing creator roster defaults is allowed for **`ADMIN`, `MANAGER`, and `TALENT_MANAGER`**. See [`ENTITY_DETAIL_ROUTES.md`](./ENTITY_DETAIL_ROUTES.md).
 
 ## Route And Access
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/studios/$studioId/creators` | Creator roster list surface | `ADMIN` + `MANAGER` roster write, `ADMIN` + `MANAGER` + `TALENT_MANAGER` read |
-| `/studios/$studioId/creators/$creatorId` | Creator detail layout — **Defaults** tab (edit roster defaults) | edit `ADMIN` + `MANAGER`; read-only `TALENT_MANAGER` |
+| `/studios/$studioId/creators` | Creator roster list surface | `ADMIN` + `MANAGER` + `TALENT_MANAGER` roster/default write |
+| `/studios/$studioId/creators/$creatorId` | Creator detail layout — **Profile** tab (edit roster defaults) | edit `ADMIN` + `MANAGER` + `TALENT_MANAGER` |
 | `/studios/$studioId/creators/$creatorId/compensations` | **Compensation** tab — per-creator date-range review with per-show edit dialog | `ADMIN` + `MANAGER` |
 
 Route guard requirements:
@@ -25,8 +25,8 @@ Route guard requirements:
 - add `creatorRoster` to `src/lib/constants/studio-route-access.ts`
 - roles: `[ADMIN, MANAGER, TALENT_MANAGER]`
 - add sidebar item under the **People** group beside **Members**
-- hide roster write actions and add button for non-admin roles, but keep compensation data visible
-- expose a "Review Compensation" action that navigates to `/studios/$studioId/creators/$creatorId/compensations` for `ADMIN` and `MANAGER`; `TALENT_MANAGER` remains read-only
+- show roster write actions and Add Creator for `ADMIN`, `MANAGER`, and `TALENT_MANAGER`
+- expose a "Review Compensation" action that navigates to `/studios/$studioId/creators/$creatorId/compensations` for `ADMIN` and `MANAGER`; `TALENT_MANAGER` manages roster defaults but does not get the separate compensation review tab
 - the compensation route has its own `creatorCompensations` route-access key restricted to `ADMIN` and `MANAGER`
 
 ## File Structure
@@ -70,7 +70,7 @@ Columns:
 - compensation type
 - commission rate
 - active badge
-- actions (`ADMIN` + `MANAGER` Edit → navigates to the creator detail route's Defaults tab; `ADMIN` + `MANAGER` "Review Compensation" → Compensation tab)
+- actions (`ADMIN` + `MANAGER` + `TALENT_MANAGER` Edit → navigates to the creator detail route's Profile tab; `ADMIN` + `MANAGER` "Review Compensation" → Compensation tab)
 
 ## Data And Query Model
 
@@ -90,7 +90,7 @@ Columns:
 
 ### Add dialog
 
-- uses `GET /studios/:studioId/creators/catalog?include_rostered=true`
+- uses `GET /studios/:studioId/creators/catalog?include_rostered=true&exclude_active_rostered=true`
 - shows only `roster_state === 'NONE' || roster_state === 'INACTIVE'`
 - labels `INACTIVE` results as reactivation candidates
 - form fields:
@@ -104,7 +104,7 @@ Columns:
 
 - `CreatorDefaultsForm` on `/studios/$studioId/creators/$creatorId` (index tab); reached
   from the actions cell **Edit** action (navigation, not a modal)
-- editable for `ADMIN` + `MANAGER`; renders read-only for `TALENT_MANAGER`
+- editable for `ADMIN` + `MANAGER` + `TALENT_MANAGER`
 - edits:
   - `default_rate`
   - `default_rate_type`
@@ -129,7 +129,7 @@ Columns:
 
 ## UX Rules
 
-- hide roster write actions for non-admin roles, but keep compensation fields visible
+- show roster write actions for `ADMIN`, `MANAGER`, and `TALENT_MANAGER`
 - keep manager compensation actions scoped to per-show assignment snapshots and line items
 - keep creator-first naming and identifiers in UI copy
 - do not expose raw `StudioCreator` bigint IDs; wire contract stays on UIDs only
@@ -142,4 +142,4 @@ Columns:
 - `pnpm --filter erify_studios typecheck`
 - `pnpm --filter erify_studios build`
 - `pnpm --filter erify_studios test`
-- Manual smoke: add, restore inactive, update defaults, version conflict, manager/talent-manager read-only behavior, inactive creator removed from assignment discovery
+- Manual smoke: add, restore inactive, update defaults, version conflict, talent-manager roster/default write behavior, inactive creator removed from assignment discovery

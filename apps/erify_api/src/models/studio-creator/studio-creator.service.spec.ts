@@ -158,6 +158,25 @@ describe('studioCreatorService', () => {
     });
   });
 
+  it('passes active-rostered exclusion into catalog discovery', async () => {
+    creatorRepository.findCatalogForStudio.mockResolvedValue([]);
+
+    await service.listCatalog('std_1', {
+      search: 'ann',
+      includeRostered: true,
+      excludeActiveRostered: true,
+      limit: 25,
+    });
+
+    expect(creatorRepository.findCatalogForStudio).toHaveBeenCalledWith({
+      studioUid: 'std_1',
+      search: 'ann',
+      includeRostered: true,
+      excludeActiveRostered: true,
+      limit: 25,
+    });
+  });
+
   it('creates a new roster entry for a catalog creator', async () => {
     creatorRepository.findByUid.mockResolvedValue({ uid: 'creator_1' } as any);
     studioCreatorRepository.findByStudioUidAndCreatorUid.mockResolvedValue(null);

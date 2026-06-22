@@ -70,7 +70,7 @@ describe('addCreatorDialog', () => {
         open
         onOpenChange={vi.fn()}
         studioId="std_1"
-        isAdmin
+        canManageRoster
         showStartTime="2026-03-20T10:00:00.000Z"
         showEndTime="2026-03-20T12:00:00.000Z"
         isSubmitting={false}

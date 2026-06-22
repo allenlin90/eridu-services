@@ -17,7 +17,7 @@ Studio-owned creator onboarding without `/system/*` dependency:
 
 Creates a new global `Creator` and a new active `StudioCreator` roster row in one transaction.
 
-**Guard**: `@StudioProtected([STUDIO_ROLE.ADMIN])`
+**Guard**: `@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])`
 
 **Request**
 
@@ -52,7 +52,7 @@ Creates a new global `Creator` and a new active `StudioCreator` roster row in on
 
 Studio-scoped user lookup for optional creator-to-user linking during onboarding.
 
-**Guard**: `@StudioProtected([STUDIO_ROLE.ADMIN])`
+**Guard**: `@StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER])`
 
 **Query**: `?search=alice&limit=20` — `search` required (min 1 char), `limit` optional (default 20, max 50)
 
@@ -65,7 +65,7 @@ Studio-scoped user lookup for optional creator-to-user linking during onboarding
 - Include users whose only creator link is soft-deleted
 - Order: `name asc`, then `email asc`
 
-This endpoint exists because `/admin/users` is not valid for studio-admin-owned flows.
+This endpoint exists because `/admin/users` is not valid for studio-owned roster intake flows.
 
 ### Assignment Enforcement Fix
 

@@ -173,6 +173,7 @@ export const studioCreatorCatalogItemSchema = z.object({
 export const studioCreatorCatalogQuerySchema = z.object({
   search: z.string().optional(),
   include_rostered: z.coerce.boolean().default(false),
+  exclude_active_rostered: z.coerce.boolean().default(false),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 

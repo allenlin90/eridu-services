@@ -32,7 +32,6 @@ type AddStudioCreatorDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const MAX_ACTIVE_CREATORS_DISPLAY = 5;
 const ADD_CREATOR_FORM_ID = 'studio-creator-roster-add-form';
 const ONBOARD_CREATOR_FORM_ID = 'studio-creator-roster-onboard-form';
 
@@ -66,6 +65,7 @@ export function AddStudioCreatorDialog({
     {
       search: search.trim().length > 0 ? search : undefined,
       include_rostered: true,
+      exclude_active_rostered: true,
       limit: 50,
     },
     open,
@@ -85,10 +85,6 @@ export function AddStudioCreatorDialog({
         creator.roster_state === STUDIO_CREATOR_ROSTER_STATE.NONE
         || creator.roster_state === STUDIO_CREATOR_ROSTER_STATE.INACTIVE,
       ),
-    [creators],
-  );
-  const activeCreators = useMemo(
-    () => creators.filter((creator) => creator.roster_state === STUDIO_CREATOR_ROSTER_STATE.ACTIVE),
     [creators],
   );
   const hasSearchedCatalog = search.trim().length > 0;
@@ -264,27 +260,6 @@ export function AddStudioCreatorDialog({
                   </p>
                 )}
               </div>
-
-              {hasSearchedCatalog && activeCreators.length > 0 && (
-                <div className="rounded-md border bg-muted/30 p-2.5">
-                  <p className="text-xs font-medium text-muted-foreground">Already active in this studio</p>
-                  <ul className="mt-1 space-y-1">
-                    {activeCreators.slice(0, MAX_ACTIVE_CREATORS_DISPLAY).map((creator) => (
-                      <li key={creator.id} className="text-xs">
-                        {formatCreatorOptionName(creator)}
-                      </li>
-                    ))}
-                    {activeCreators.length > MAX_ACTIVE_CREATORS_DISPLAY && (
-                      <li className="text-xs text-muted-foreground">
-                        +
-                        {activeCreators.length - MAX_ACTIVE_CREATORS_DISPLAY}
-                        {' '}
-                        more
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              )}
 
               {hasSearchedCatalog && (
                 <Button

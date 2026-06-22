@@ -28,8 +28,10 @@ function StudioCreatorRosterPage() {
     handleRefresh,
   } = useStudioCreatorRoster({ studioId });
 
-  const isAdmin = role === STUDIO_ROLE.ADMIN;
-  const canManageCompensation = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
+  const canManageRoster = role === STUDIO_ROLE.ADMIN
+    || role === STUDIO_ROLE.MANAGER
+    || role === STUDIO_ROLE.TALENT_MANAGER;
+  const canReviewCompensation = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
 
   return (
     <PageLayout
@@ -41,8 +43,8 @@ function StudioCreatorRosterPage() {
         creators={creators}
         isLoading={isLoading}
         isFetching={isFetching}
-        isAdmin={isAdmin}
-        canManageCompensation={canManageCompensation}
+        canManageRoster={canManageRoster}
+        canReviewCompensation={canReviewCompensation}
         pagination={pagination}
         onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
         columnFilters={columnFilters}

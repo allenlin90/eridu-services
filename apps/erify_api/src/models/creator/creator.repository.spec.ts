@@ -125,4 +125,36 @@ describe('creatorRepository', () => {
       data: { type: 'OTHER' },
     });
   });
+
+  it('excludes active rostered creators from catalog while keeping inactive rows available', async () => {
+    txCreatorDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findCatalogForStudio({
+      studioUid: 'std_00000000000000000001',
+      search: 'ann',
+      includeRostered: true,
+      excludeActiveRostered: true,
+      limit: 25,
+    });
+
+    expect(txCreatorDelegate.findMany).toHaveBeenCalledTimes(1);
+    const args = txCreatorDelegate.findMany.mock.calls[0][0] as {
+      where: Record<string, any>;
+      take: number;
+    };
+
+    expect(args.take).toBe(25);
+    expect(args.where.NOT).toEqual({
+      studioCreators: {
+        some: {
+          deletedAt: null,
+          isActive: true,
+          studio: {
+            uid: 'std_00000000000000000001',
+            deletedAt: null,
+          },
+        },
+      },
+    });
+  });
 });

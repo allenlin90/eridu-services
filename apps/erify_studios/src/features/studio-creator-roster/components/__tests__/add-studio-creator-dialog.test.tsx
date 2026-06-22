@@ -148,6 +148,25 @@ describe('addStudioCreatorDialog', () => {
     expect(screen.getByText('Search first to reuse an existing creator identity when possible.')).toBeInTheDocument();
   });
 
+  it('queries the catalog with active rostered creators excluded', () => {
+    render(
+      <AddStudioCreatorDialog
+        studioId="std_1"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    expect(mockUseCreatorCatalogQuery).toHaveBeenCalledWith(
+      'std_1',
+      expect.objectContaining({
+        include_rostered: true,
+        exclude_active_rostered: true,
+      }),
+      true,
+    );
+  });
+
   it('does not render creator name or alias fields', () => {
     render(
       <AddStudioCreatorDialog
@@ -209,7 +228,7 @@ describe('addStudioCreatorDialog', () => {
     expect(screen.getByRole('button', { name: 'Back to search' })).toBeInTheDocument();
   });
 
-  it('keeps active roster matches visible but outside actionable options', async () => {
+  it('filters active roster matches out of add creator results', async () => {
     const user = userEvent.setup();
 
     mockUseCreatorCatalogQuery.mockReturnValue({
@@ -240,8 +259,8 @@ describe('addStudioCreatorDialog', () => {
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'a');
 
-    expect(screen.getByText('Already active in this studio')).toBeInTheDocument();
-    expect(screen.getByText('Alice (Ali)')).toBeInTheDocument();
+    expect(screen.queryByText('Already active in this studio')).not.toBeInTheDocument();
+    expect(screen.queryByText('Alice (Ali)')).not.toBeInTheDocument();
 
     const creatorOptions = screen.getByTestId('creator-options');
     expect(within(creatorOptions).getByText('Add existing creator: Bob (B)')).toBeInTheDocument();

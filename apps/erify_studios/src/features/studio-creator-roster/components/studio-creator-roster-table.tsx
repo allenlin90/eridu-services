@@ -22,8 +22,8 @@ type StudioCreatorRosterTableProps = {
   creators: StudioCreatorRosterItem[];
   isLoading: boolean;
   isFetching: boolean;
-  isAdmin: boolean;
-  canManageCompensation: boolean;
+  canManageRoster: boolean;
+  canReviewCompensation: boolean;
   pagination: PaginationState & { total?: number; pageCount?: number };
   onPaginationChange: OnChangeFn<PaginationState>;
   columnFilters: ColumnFiltersState;
@@ -36,8 +36,8 @@ export function StudioCreatorRosterTable({
   creators,
   isLoading,
   isFetching,
-  isAdmin,
-  canManageCompensation,
+  canManageRoster,
+  canReviewCompensation,
   pagination,
   onPaginationChange,
   columnFilters,
@@ -46,7 +46,7 @@ export function StudioCreatorRosterTable({
 }: StudioCreatorRosterTableProps) {
   const [addOpen, setAddOpen] = useState(false);
 
-  const columns = getStudioCreatorRosterColumns({ studioId, isAdmin, canManageCompensation });
+  const columns = getStudioCreatorRosterColumns({ studioId, canManageRoster, canReviewCompensation });
 
   return (
     <>
@@ -82,7 +82,7 @@ export function StudioCreatorRosterTable({
             >
               <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
-            {isAdmin && (
+            {canManageRoster && (
               <Button size="sm" onClick={() => setAddOpen(true)}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add Creator
@@ -105,7 +105,7 @@ export function StudioCreatorRosterTable({
         )}
       />
 
-      {isAdmin && (
+      {canManageRoster && (
         <>
           <AddStudioCreatorDialog
             studioId={studioId}

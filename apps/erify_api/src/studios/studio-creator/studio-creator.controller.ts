@@ -58,6 +58,11 @@ const STUDIO_CREATOR_COMPENSATION_ROLES = [
   STUDIO_ROLE.ADMIN,
   STUDIO_ROLE.MANAGER,
 ];
+const STUDIO_CREATOR_ROSTER_MANAGER_ROLES = [
+  STUDIO_ROLE.ADMIN,
+  STUDIO_ROLE.MANAGER,
+  STUDIO_ROLE.TALENT_MANAGER,
+];
 
 // Finance Guardrails S3 — allow-list, not a money-field blacklist. Any roster
 // field NOT in this set is forced to null for ACCOUNT_MANAGER, so a future
@@ -121,7 +126,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Add or reactivate a creator in the studio roster' })
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected(STUDIO_CREATOR_ROSTER_MANAGER_ROLES)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ZodResponse(studioCreatorRosterItemApiSchema, HttpStatus.CREATED)
@@ -141,7 +146,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Create and onboard a brand-new creator into studio roster' })
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected(STUDIO_CREATOR_ROSTER_MANAGER_ROLES)
   @Post('onboard')
   @HttpCode(HttpStatus.CREATED)
   @ZodResponse(studioCreatorRosterItemApiSchema, HttpStatus.CREATED)
@@ -168,7 +173,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Update studio creator defaults or active state' })
-  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @StudioProtected(STUDIO_CREATOR_ROSTER_MANAGER_ROLES)
   @Patch(':creatorId')
   @ZodResponse(studioCreatorRosterItemApiSchema)
   async updateCreator(
@@ -250,7 +255,7 @@ export class StudioCreatorController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Search users eligible for creator onboarding user link' })
-  @StudioProtected([STUDIO_ROLE.ADMIN])
+  @StudioProtected(STUDIO_CREATOR_ROSTER_MANAGER_ROLES)
   @Get('onboarding-users')
   @ReadBurstThrottle()
   @ZodResponse(z.array(userApiResponseSchema))
