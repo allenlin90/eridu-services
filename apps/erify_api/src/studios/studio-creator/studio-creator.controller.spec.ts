@@ -363,6 +363,11 @@ describe('studioCreatorController', () => {
     }));
   });
 
+  it('should allow talent managers to read creator compensations they can also write', () => {
+    const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.listCreatorCompensations);
+    expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER]);
+  });
+
   it('should onboard a brand-new creator into roster', async () => {
     const studioId = 'std_00000000000000000001';
     const dto = {
