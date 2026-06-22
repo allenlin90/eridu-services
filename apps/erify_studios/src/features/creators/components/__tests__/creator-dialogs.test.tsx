@@ -69,6 +69,7 @@ describe('creatorUpdateDialog', () => {
       alias_name: 'TestAlias',
       user_id: 'user-123',
       is_banned: false,
+      type: 'STANDARD',
       metadata: {},
       created_at: '2024-01-01',
       updated_at: '2024-01-01',

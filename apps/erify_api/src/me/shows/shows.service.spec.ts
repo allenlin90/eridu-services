@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
-import type { Creator, Show } from '@prisma/client';
+import { type Creator, CreatorType, type Show } from '@prisma/client';
 
 import { ShowsService } from './shows.service';
 
@@ -35,6 +35,7 @@ describe('showsService', () => {
     name: 'Test Creator',
     aliasName: 'Test Creator Alias',
     isBanned: false,
+    type: CreatorType.STANDARD,
     defaultRate: null,
     defaultRateType: null,
     defaultCommissionRate: null,

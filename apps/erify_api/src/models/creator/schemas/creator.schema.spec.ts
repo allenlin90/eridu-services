@@ -56,6 +56,41 @@ describe('createCreatorSchema', () => {
 
     expect(result.success).toBe(true);
   });
+
+  it('passes through an explicit type', () => {
+    const result = createCreatorSchema.safeParse({
+      name: 'Creator',
+      alias_name: 'creator',
+      type: 'FLEXIBLE',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.type).toBe('FLEXIBLE');
+    }
+  });
+
+  it('rejects an unknown type', () => {
+    const result = createCreatorSchema.safeParse({
+      name: 'Creator',
+      alias_name: 'creator',
+      type: 'BOGUS',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('leaves type undefined when omitted', () => {
+    const result = createCreatorSchema.safeParse({
+      name: 'Creator',
+      alias_name: 'creator',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.type).toBeUndefined();
+    }
+  });
 });
 
 describe('updateCreatorSchema', () => {
@@ -99,5 +134,14 @@ describe('updateCreatorSchema', () => {
     const result = updateCreatorSchema.safeParse({ default_rate: 600 });
 
     expect(result.success).toBe(false);
+  });
+
+  it('passes through an explicit type change', () => {
+    const result = updateCreatorSchema.safeParse({ type: 'OTHER' });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.type).toBe('OTHER');
+    }
   });
 });

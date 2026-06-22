@@ -24,6 +24,7 @@ export const creatorSchema = z.object({
   name: z.string(),
   aliasName: z.string(),
   isBanned: z.boolean(),
+  type: z.string(),
   defaultRate: z.unknown().nullable(),
   defaultRateType: z.string().nullable(),
   defaultCommissionRate: z.unknown().nullable(),
@@ -38,6 +39,7 @@ export const createCreatorSchema = createCreatorInputSchema.transform((data) => 
   userId: data.user_id ?? null,
   name: data.name,
   aliasName: data.alias_name,
+  type: data.type,
   defaultRate: data.default_rate,
   defaultRateType: data.default_rate_type,
   defaultCommissionRate: data.default_commission_rate,
@@ -50,6 +52,7 @@ export const updateCreatorSchema = updateCreatorInputSchema.transform((data) => 
   name: data.name,
   aliasName: data.alias_name,
   isBanned: data.is_banned,
+  type: data.type,
   defaultRate: data.default_rate,
   defaultRateType: data.default_rate_type,
   defaultCommissionRate: data.default_commission_rate,
@@ -63,6 +66,7 @@ export const creatorDto = creatorSchema
     name: obj.name,
     alias_name: obj.aliasName,
     is_banned: obj.isBanned,
+    type: obj.type,
     default_rate: decimalToString(obj.defaultRate),
     default_rate_type: obj.defaultRateType,
     default_commission_rate: decimalToString(obj.defaultCommissionRate),
@@ -80,6 +84,7 @@ export const creatorWithUserSchema = z.object({
   name: z.string(),
   aliasName: z.string(),
   isBanned: z.boolean(),
+  type: z.string(),
   defaultRate: z.unknown().nullable(),
   defaultRateType: z.string().nullable(),
   defaultCommissionRate: z.unknown().nullable(),
@@ -100,6 +105,7 @@ export const creatorWithUserDto = creatorWithUserSchema
       name: obj.name,
       alias_name: obj.aliasName,
       is_banned: obj.isBanned,
+      type: obj.type,
       default_rate: decimalToString(obj.defaultRate),
       default_rate_type: obj.defaultRateType,
       default_commission_rate: decimalToString(obj.defaultCommissionRate),
@@ -167,6 +173,7 @@ export class ListCreatorsQueryDto extends createZodDto(listCreatorsQuerySchema) 
 export type CreateCreatorPayload = {
   name: string;
   aliasName: string;
+  type?: string;
   defaultRate?: string;
   defaultRateType?: string;
   defaultCommissionRate?: string;
@@ -181,6 +188,7 @@ export type UpdateCreatorPayload = {
   name?: string;
   aliasName?: string;
   isBanned?: boolean;
+  type?: string;
   defaultRate?: string | null;
   defaultRateType?: string | null;
   defaultCommissionRate?: string | null;

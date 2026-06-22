@@ -54,6 +54,7 @@ model Creator {
   defaultRateType       String?         @map("default_rate_type")
   // Commission percent (0-100) used by COMMISSION and HYBRID compensation.
   defaultCommissionRate Decimal?        @map("default_commission_rate") @db.Decimal(10, 2)
+  type                  CreatorType     @default(STANDARD)
   metadata              Json            @default("{}")
   showCreators          ShowCreator[]
   studioCreators        StudioCreator[]
@@ -899,4 +900,10 @@ model AuditTarget {
   @@index([showPlatformId])
   @@index([studioShiftId])
   @@map("audit_targets")
+}
+
+enum CreatorType {
+  STANDARD
+  FLEXIBLE
+  OTHER
 }
