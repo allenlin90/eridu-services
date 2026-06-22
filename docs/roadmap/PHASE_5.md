@@ -1,7 +1,7 @@
 # Phase 5: Show Production Lifecycle Gap Closure
 
-> **Status**: 🔲 Planned — lifecycle alignment and state-independent operational fixes first
-> **Planning stance**: Fill operational gaps in the existing show production lifecycle before expanding into larger new domains. Operational record export waits until current features, lifecycle state enforcement, and post-production review semantics are stable. The lifecycle model, entity map, and state-gate detail live in the [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill.
+> **Status**: 🔲 Planned — lifecycle surface scope reconciled; state-independent operational fixes first
+> **Planning stance**: Fill operational gaps in the existing show production lifecycle before expanding into larger new domains. Operational record export waits until import, correction, issue ownership, and post-production completion review records are stable. The lifecycle model, entity map, and state-gate detail live in the [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill.
 
 **Quick links**
 
@@ -12,54 +12,56 @@
 
 ## Goal
 
-Build a clear show lifecycle contract that explains what must be ready, who owns each step, what can be flexible by studio policy, and what happens when a show cannot continue normally. Phase 5 starts with **current feature lifecycle alignment, cancellation resolution, import/correction records, issue ownership, and scheduling consistency**. Lifecycle state enforcement follows once creator mapping is complete as an operational flow and current feature surfaces fit the lifecycle model. Broader operational record export is deferred until the lifecycle and post-production review landscape is stable.
+Build a clear show lifecycle contract that explains what must be ready, who owns each step, what can be flexible by studio policy, and what happens when a show cannot continue normally. Phase 5 starts with **status vocabulary alignment, cancellation resolution, scheduling consistency, import/correction records, issue ownership, and advisory readiness/completion review**. Lifecycle state enforcement follows once current feature surfaces fit the lifecycle model and the advisory readiness/completion contracts are stable. Broader operational record export is deferred until the imported/corrected/issue-backed operational record is stable enough to export without immediate rework.
 
 ## Workstream Items
 
 Each row is one workstream or deliverable. Rows are ordered top-to-bottom as execution order; rows with `—` in **Depends on** can ship in parallel. Items marked **Candidate** are promoted into active scope only if they become blocking during Phase 5 implementation.
 
-### Ready Pickup (State-Independent)
+### Ready Pickup (State-Independent / Advisory)
 
-| #   | Workstream                                                                                                                                                             | Depends on | Status    |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------- |
-| 1   | [Current feature lifecycle alignment](#1-current-feature-lifecycle-alignment) — per surface, decide extend-existing vs. new-feature vs. retire to close lifecycle gaps | —          | 🔲 Planned |
-| 2   | [Cancel show with resolution state](#2-cancel-show-with-resolution-state) — allow cancellation into resolution workflow from non-draft, non-pending shows              | —          | 🔲 Planned |
-| 3   | [Import platform performance data](#3-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                         | —          | 🔲 Planned |
-| 4   | [Show performance correction](#4-show-performance-correction) — managers can correct missing/inaccurate metrics with audit reason                                      | 3          | 🔲 Planned |
-| 5   | [Show-level issue ownership](#5-show-level-issue-ownership) — narrow issue record for show blockers without state-gate enforcement                                     | —          | 🔲 Planned |
-| 6   | [Schedule-change task reconciliation](#6-schedule-change-task-reconciliation) — update generated task due dates when show timing changes                               | —          | 🔲 Planned |
-| 7   | [Update BUSINESS.md enum/roles](#7-update-businessmd-enumroles) — align `show_status` enum and supported roles                                                         | —          | 🔲 Planned |
+| #   | Workstream                                                                                                                                                                         | Depends on | Status    |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------- |
+| 1   | [Current feature lifecycle alignment](#1-current-feature-lifecycle-alignment) — scope gate that locks the Phase 5 surface decisions and refined workstream list                    | —          | ✅ Done    |
+| 2   | [Show status vocabulary alignment](#2-show-status-vocabulary-alignment) — align lifecycle status records, seed data, docs, and role vocabulary                                     | —          | 🔲 Planned |
+| 3   | [Cancel show with resolution workflow](#3-cancel-show-with-resolution-workflow) — guided cancellation into resolution workflow from non-draft, non-pending shows                   | 2          | 🔲 Planned |
+| 4   | [Schedule-change task reconciliation](#4-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | 🔲 Planned |
+| 5   | [Import platform performance data](#5-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                                     | —          | 🔲 Planned |
+| 6   | [Show performance correction](#6-show-performance-correction) — managers can correct missing/inaccurate imported or extracted metrics with audit reason                            | 5          | 🔲 Planned |
+| 7   | [Show-level issue ownership](#7-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement               | —          | 🔲 Planned |
+| 8   | [Advisory planning readiness checklist](#8-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition             | 1          | 🔲 Planned |
+| 9   | [Post-production completion review checklist](#9-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records | 5, 6, 7    | 🔲 Planned |
 
 ### Operational Efficiency (Candidates)
 
-| #   | Workstream                                                                                                                          | Depends on | Status      |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- |
-| 8   | [Bulk show detail editing](#8-bulk-show-detail-editing) — bulk edit planning fields from studio show list after lifecycle alignment | 1          | 🔲 Candidate |
-| 9   | [Bulk room assignment](#9-bulk-room-assignment) — dedicated bulk room assignment flow                                               | 1          | 🔲 Candidate |
+| #   | Workstream                                                                                                                                         | Depends on | Status      |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- |
+| 10  | [Bulk show detail editing](#10-bulk-show-detail-editing) — bulk edit planning fields from studio show list after readiness fields settle           | 8          | 🔲 Candidate |
+| 11  | [Bulk room assignment](#11-bulk-room-assignment) — dedicated bulk room assignment flow                                                             | 8          | 🔲 Candidate |
+| 12  | [Issue-event notifications](#12-issue-event-notifications) — notifications for issue open/severity-change events, independent of state transitions | 7          | 🔲 Candidate |
 
 ### Blocked State / Lifecycle Enforcement
 
-| #   | Workstream                                                                                                                                                                          | Depends on                          | Status    |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | --------- |
-| 10  | [Show lifecycle state machine](#10-show-lifecycle-state-machine) — enforce `draft → confirmed → live → completed` and cancellation transitions with validation                      | Creator mapping operational flow, 1 | ⏸ Blocked |
-| 11  | [Show-level planning readiness checklist](#11-show-level-planning-readiness-checklist) — aggregate readiness conditions into one show-level view for `draft → confirmed`            | 10                                  | ⏸ Blocked |
-| 12  | [Post-production completion gate](#12-post-production-completion-gate) — show-level `completed` checklist confirming required closure records and facts                             | 10, 3, 4, 5                         | ⏸ Blocked |
-| 13  | [Readiness and live control dashboard](#13-readiness-and-live-control-dashboard) — unified manager view for planning readiness, live readiness, live-state transition, and blockers | 11, 12                              | ⏸ Blocked |
-| 14  | [State-based operational change notifications](#14-state-based-operational-change-notifications) — notification rules tied to show state, stakeholder role, and issue severity      | 10, 5                               | ⏸ Blocked |
+| #   | Workstream                                                                                                                                                                          | Depends on | Status    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------- |
+| 13  | [Show lifecycle state machine](#13-show-lifecycle-state-machine) — manager-driven `draft → confirmed → live → completed` and cancellation transitions with server validation        | 2, 8, 9    | ⏸ Blocked |
+| 14  | [Lifecycle state-gate enforcement](#14-lifecycle-state-gate-enforcement) — apply readiness/completion checks as warning/block transition rules                                      | 13         | ⏸ Blocked |
+| 15  | [Readiness and live control dashboard](#15-readiness-and-live-control-dashboard) — unified manager view for planning readiness, live readiness, live-state transition, and blockers | 7, 13, 14  | ⏸ Blocked |
+| 16  | [State-transition notifications](#16-state-transition-notifications) — notification rules tied to show state, stakeholder role, and issue severity                                  | 7, 13      | ⏸ Blocked |
 
 ### Deferred Review / Export
 
-| #   | Workstream                                                                                                                                                              | Depends on | Status     |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
-| 15  | [Operational record export](#15-operational-record-export) — broaden task-submission export into a post-production operational record export across reviewed show facts | 1, 10-14   | ⏭ Deferred |
+| #   | Workstream                                                                                                                                                   | Depends on | Status     |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ---------- |
+| 17  | [Operational record export](#17-operational-record-export) — extend task reports into a post-production operational record export across reviewed show facts | 5, 6, 7, 9 | ⏭ Deferred |
 
 ### How to use this list
 
 - **Pick up**: write a 1-3 sentence brief in the section below; flip status to `🚧 In progress`.
 - **Wrap up (before merge)**: flip status to `✅`, replace the brief with the PR link, and update any other docs the PR's outcome affects. Land docs atomically with the code; prefer squash-merge.
 - **Promote candidate**: move from `🔲 Candidate` to `🔲 Planned` when the item becomes blocking.
-- **Unblock state work**: move from `⏸ Blocked` only after creator mapping is complete as an operational flow, lifecycle-alignment decisions are reflected in the active surfaces, and the workstream's state dependency is still valid.
-- **Promote deferred export**: move from `⏭ Deferred` only after state-machine and post-production review semantics are stable enough that the export contract will not need immediate rework.
+- **Unblock state work**: move from `⏸ Blocked` only after advisory readiness/completion contracts are implemented, status vocabulary is aligned, and the workstream's state dependency is still valid.
+- **Promote deferred export**: move from `⏭ Deferred` only after import, correction, issue, and completion-review records are stable enough that the export contract will not need immediate rework.
 
 ---
 
@@ -69,126 +71,130 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases; [`doc-hygiene`](../../.agent/skills/doc-hygiene/SKILL.md) skill
 
-**Purpose**: for every active lifecycle-phase surface, make an explicit **extend-existing / new-feature / retire** call — not a generic "review and update" pass. A gap should first be checked against the closest existing feature for that lifecycle phase before a new surface is proposed; reorganizing or widening an existing feature's scope counts as closing the gap.
+**Completion result**: Phase 5 scope is locked around lifecycle gap closure in the current show production implementation. Existing surfaces are extended where they already own the workflow; new workstreams are reserved for missing operational records, advisory checklists, and eventual state enforcement.
 
-**Worked example — exports are not one thing.** `task-reports` (`apps/erify_studios/src/features/task-reports/`, backed by `models/task-report/*`) is already a generic report builder: column picker, scope/view filters, saved definitions, run/export. Today its source catalog is scoped to task-submission content only. Item 15 (deferred operational record export) currently reads as a brand-new export surface — but it should instead be evaluated as "does the existing report-builder's source catalog extend to cover show/creator/platform/violation facts," since the builder mechanics (definition, scope, filter, run) already exist and don't need reinventing. The decision belongs to item 1, before item 15 is ever picked up.
+**Scope rule**: every lifecycle-phase gap first checks the closest existing feature for that phase. Reorganizing, widening, or adding columns/sources to an existing feature counts as closing the gap when the feature already owns the user workflow.
 
-This generalizes: **per-stage data has different purpose and meaning, so exports (and other per-stage capabilities) should not be collapsed into one mega-feature.** Each lifecycle-phase surface keeps its own export/capability scoped to that phase's purpose (e.g. creator-mapping's roster/compensation export is not the same content or audience as show-run-review's exception-tracking export), but within a phase, a new ask should extend that phase's existing surface rather than spawning a parallel one.
+**Lifecycle surface gap matrix**
 
-**Surfaces to walk through** (each gets an extend / new / retire / no-change call, recorded in this brief before status flips to ✅):
-- Show planning & task setup (`/shows`, `/task-setup`) — readiness signals, `studio-shows-export.utils.ts`
-- Creator mapping (`/creator-mapping`) — `creator-mapping-export.utils.ts`
-- Task review (`/task-review`) — approval/exception surfacing
-- Show run review (`/show-run-review`) — per-tab CSV export (`show-run-review-csv.ts`)
-- Task reports (`/task-reports`) — the generic report builder; candidate extension point for item 15
-- Performance (`/performance`) and Costs (`/costs`) — no export today; decide if either needs one or stays read-only
-- Shifts (`/shifts`) — `studio-shifts-export.utils.ts`
+| Surface                                              | Current implementation signal                                                                                                                                      | Phase 5 call                                                                                                                                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Show planning & task setup (`/shows`, `/task-setup`) | Studio show CRUD, task generation/assignment, needs-attention filtering, and current-view show export exist.                                                       | Extend existing: add status vocabulary alignment, advisory planning readiness, schedule-change task reconciliation, and local export columns in place.                         |
+| Creator mapping (`/creator-mapping`)                 | Bulk creator assignment, roster gating, per-show compensation context, and creator-mapping export exist.                                                           | Extend existing: keep creator assignment as its own operational flow and readiness input; do not create a parallel mapping surface.                                            |
+| Task review (`/task-review`)                         | Submitted task approval and exception surfacing write structured facts through extraction.                                                                         | Extend existing: keep approval/rejection review here; connect anomalies into issue ownership instead of creating a second task-review workflow.                                |
+| Show run review (`/show-run-review`)                 | Daily exception review, active platform violations, attendance gaps, phase checks, and per-tab CSV exports exist.                                                  | Extend existing: add import/correction/issue context to review tabs as those records land.                                                                                     |
+| Task reports (`/task-reports`)                       | Report builder, saved definitions, source discovery, run, view filters, and CSV export exist; platform performance aggregates already project from `ShowPlatform`. | Extend existing for item 17: widen the source catalog to show/creator/platform/violation/correction/import/issue facts instead of building a separate generic export pipeline. |
+| Performance (`/performance`)                         | Read-only analytics over `ShowPlatform` metrics and show detail loop metrics exist.                                                                                | Extend existing for imports/corrections; keep finance semantics out.                                                                                                           |
+| Costs (`/costs`)                                     | Read-only cost reference dashboard over show/shift cost calculators exists.                                                                                        | No Phase 5 expansion beyond reading lifecycle actuals; revenue/commission semantics stay Phase 6.                                                                              |
+| Shifts (`/shifts`)                                   | Shift CRUD, duty-manager flag, shift detail routes, compensation, and shift export exist.                                                                          | Keep as the staffing record and readiness input; do not merge staffing export into the show operational record export.                                                         |
 
-This work records, per surface: which stay as-is, which extend in place (and what new scope/columns/sources that adds), and which are retired or revised — before state-machine work (items 10-14) or the deferred export (item 15) starts.
+**Ideation disposition**
 
-**Cross-check `docs/ideation/README.md`'s Active Topics as part of this pass** (per the [`ideation-lifecycle`](../../.agent/workflows/ideation-lifecycle.md) workflow's phase-planning trigger). The README's **Type** column tags each topic Extension (of a named existing feature/module) or Standalone (new domain/module) — that tag is the same extend-vs-new signal this item produces for lifecycle surfaces, so use it to weigh which ideation topics are cheap wins worth pulling forward into this phase versus which need a fresh bar-setting discussion. Four topics already have a direct **Phase 5 link** noted in that table and preserved design context that should be read before implementing the matching item, not re-derived: `late-material-edit-audit-policy.md` (items 4, 5), `schedule-publish-task-due-date-reconciliation.md` (item 6), `show-change-notification-audit-ledger.md` (item 14), and `studio-config-settings.md` (item 10's enforcement-level config). Check the rest of the Active Topics table for any other extension-tagged topic that overlaps a lifecycle-phase surface from the list above — if one is found, link it the same way instead of leaving it to be rediscovered later.
+- Promoted into the active Phase 5 list: `schedule-publish-task-due-date-reconciliation.md` (item 4), `late-material-edit-audit-policy.md` where it informs correction/issue reason capture (items 6 and 7), and the issue-event boundary from `show-change-notification-audit-ledger.md` as a candidate (item 12).
+- Kept as dependency context rather than active work: `studio-config-settings.md` for state-gate enforcement levels and studio-timezone configuration; it remains out of scope until state enforcement or studio settings becomes a selected workstream.
+- Kept deferred: task report batching/analytics summaries, performance re-backfill, shift optimistic versioning, lookup bundle scalability, show-platform batch restore, and broad collaboration topics. These are useful adjacent extensions but do not close the core Phase 5 lifecycle gaps.
 
-### 2. Cancel show with resolution state
+### 2. Show status vocabulary alignment
 
-**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §4
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine, Operating Roles
+
+Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, and studio-facing docs so `DRAFT`, `CONFIRMED`, `LIVE`, `COMPLETED`, `CANCELLED`, and `CANCELLED_PENDING_RESOLUTION` are all first-class lifecycle statuses. Keep role scope aligned to the actual `STUDIO_ROLE` enum; do not introduce granular planning/onset roles as platform roles in Phase 5.
+
+### 3. Cancel show with resolution workflow
+
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §4; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
 
 Allow managers to cancel a show into `cancelled_pending_resolution` without requiring the full lifecycle state machine. This action is available for non-draft shows that are not already pending resolution, so production, post-production, or other active downstream consequences can be captured for follow-up. Capture reason category, resolution owner, follow-up fields, and final disposition (`cancelled` or `completed`) as operational records for review and later export; do not hard-code a broader transition graph in this workstream.
 
-### 3. Import platform performance data
+### 4. Schedule-change task reconciliation
+
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1; [`schedule-publish-task-due-date-reconciliation.md`](../ideation/schedule-publish-task-due-date-reconciliation.md)
+
+When show timing changes through schedule publish or manager edit, generated task due dates should be reconciled to reflect the new timing. The first version applies to generated, non-terminal show-linked tasks whose due date still matches the old derived formula, so manual due-date overrides are preserved.
+
+### 5. Import platform performance data
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3
 
 Start with a controlled manual export/upload flow (CSV or spreadsheet) for importing platform-source performance data (GMV, views, CTR, CTO) before considering platform API integration. Keep financial revenue semantics separate (deferred to Phase 6). Imported platform data supports business comparison against operator-submitted facts and later post-production review.
 
-### 4. Show performance correction
+### 6. Show performance correction
 
-**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
 
 Allow managers to directly correct missing or inaccurate performance metrics (GMV, views, CTR, CTO) with a business reason. Corrections should create audit records and follow the existing `MANAGER` priority level in the extraction pipeline's priority resolver. Corrections can feed review surfaces and later export without requiring lifecycle-state enforcement.
 
-**Ideation link**: [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md) has preserved reason-capture policy (scales with timing sensitivity — none before a late-change window, optional inside it, required after `actual_start_time`) directly applicable to this item's correction-reason capture. Read it before designing the reason-required rule from scratch.
+### 7. Show-level issue ownership
 
-### 5. Show-level issue ownership
-
-**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
 
 Define a narrow show-level issue record (or task-like workflow) that traces blockers: missing creator, equipment dysfunction, utility outage, platform violations, and post-production follow-up. Each issue has an owner, due date, severity, evidence, status, escalation path, and resolution record. In this pickup phase, issues are operational records for review and later export; they do not drive state transitions until the state machine is unblocked.
 
-**Issue sourcing must include automated/audit-detected anomalies, not just manually filed ones.** Today the fact-extraction pipeline already writes `ShowPlatformViolation[]` rows, `attendanceMissing`/`attendanceReason`, and missing-performance-fact gaps across every lifecycle phase (pre-production through post-production) — but these land as silent data with no connection to an issue record; a manager only sees them by actively opening `/task-review` or `/show-run-review`. This item's issue record should be the landing point for those extraction-detected anomalies (in addition to manually opened issues), so "audit flagged a problem" and "someone filed a problem" produce the same kind of trackable record. Notification on open/severity-change is item 14's scope, not this item's — but the record this item defines is what item 14 fires off of.
+**Issue sourcing must include automated/audit-detected anomalies, not just manually filed ones.** Today the fact-extraction pipeline already writes `ShowPlatformViolation[]` rows, `attendanceMissing`/`attendanceReason`, and missing-performance-fact gaps across every lifecycle phase (pre-production through post-production) — but these land as silent data with no connection to an issue record; a manager only sees them by actively opening `/task-review` or `/show-run-review`. This item's issue record should be the landing point for those extraction-detected anomalies (in addition to manually opened issues), so "audit flagged a problem" and "someone filed a problem" produce the same kind of trackable record. Notification on open/severity-change is item 12's scope, not this item's — but the record this item defines is what item 12 fires off of.
 
-**Ideation link**: [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md) extends the existing `Audit`/`AuditTarget` model (PR 12.0.1) and is a reasonable backing store for this issue record rather than a new model — check it before adding a parallel audit mechanism.
+### 8. Advisory planning readiness checklist
 
-### 6. Schedule-change task reconciliation
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1, Readiness Conditions; [`references/state-gates.md`](../../.agent/skills/show-production-lifecycle/references/state-gates.md)
 
-**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1
+Aggregate existing planning signals into one advisory checklist for the current planning surfaces: room assigned, creators assigned, platforms assigned, required task stages generated, and required tasks assigned to operators. This extends `/task-setup` and show detail/list readiness; it does not create a transition gate or new data model.
 
-When show timing changes through schedule publish or manager edit, generated task due dates should be reconciled to reflect the new timing. This can ship without state enforcement because it keeps task execution aligned with the operational record rather than gating a status transition.
+### 9. Post-production completion review checklist
 
-**Ideation link**: [`schedule-publish-task-due-date-reconciliation.md`](../ideation/schedule-publish-task-due-date-reconciliation.md) is this item's preserved design context — current due-date derivation formulas (`SETUP`/`ACTIVE`/`CLOSURE` offsets), the safe-first scope (generated + non-terminal tasks only, skip due dates already manually overridden), and open decision points are already written up there. Read and resolve those decision points as part of this item's brief instead of re-deriving them.
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3; [`operations-review-surface`](../../.agent/skills/operations-review-surface/SKILL.md) skill
 
-### 7. Update BUSINESS.md enum/roles
+Define a show-level post-production checklist for review, reporting, and later export: closure tasks submitted/approved, actual end present, creator attendance finalized, platform performance facts present, correction/import review status, and unresolved issue status. This is a read-only completion review until item 13 and item 14 unblock lifecycle state enforcement.
 
-**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine, Operating Roles
-
-Doc-only fix. Update the `show_status` enum (add `cancelled_pending_resolution`) and supported roles list in `BUSINESS.md` to match the actual `STUDIO_ROLE` enum in code.
-
-### 8. Bulk show detail editing
+### 10. Bulk show detail editing
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1
 
-**Candidate** — promote after item 1 identifies which planning fields remain valid lifecycle inputs. Allow managers to bulk edit planning fields from the studio show list, similar to how task setup handles bulk task generation. Status changes stay out of scope until state-machine work is unblocked.
+**Candidate** — promote after item 8 identifies which planning fields remain valid lifecycle inputs. Allow managers to bulk edit planning fields from the studio show list, similar to how task setup handles bulk task generation. Status changes stay out of scope until state-machine work is unblocked.
 
-### 9. Bulk room assignment
+### 11. Bulk room assignment
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1
 
 **Candidate** — promote if room assignment remains a repeated planning bottleneck after lifecycle alignment. Provide a bulk flow for room assignment similar to task generation or creator mapping.
 
-### 10. Show lifecycle state machine
+### 12. Issue-event notifications
+
+**Source**: [`show-change-notification-audit-ledger.md`](../ideation/show-change-notification-audit-ledger.md); [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
+
+**Candidate** — promote after item 7 lands if issue opens, extraction-detected anomalies, or issue severity changes need stakeholder notification before the full lifecycle state machine exists. This work uses the issue record as its trigger source and stays separate from state-transition notifications.
+
+### 13. Show lifecycle state machine
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine
 
-**Blocked** — do not implement until creator mapping is complete as an operational flow and current feature surfaces are aligned to the lifecycle model. Implement the state machine (`draft → confirmed → live → completed`, plus `cancelled` and `cancelled_pending_resolution` paths) with server-side transition validation. State gates should support configurable enforcement levels (off / warning / block) to avoid disrupting existing studio workflows.
+**Blocked** — implement after the status vocabulary, advisory planning readiness, and advisory completion review contracts are stable. This work adds manager-driven lifecycle transition APIs and server-side transition validation for `draft → confirmed → live → completed`, plus `cancelled` and `cancelled_pending_resolution` paths. State gates remain separate in item 14.
 
-**Ideation link**: [`studio-config-settings.md`](../ideation/studio-config-settings.md) is the natural home for per-studio enforcement-level configuration (it already carries the mechanic-requirement enforcement precedent from PR 20.6) — extend it rather than building a separate config mechanism for state-gate enforcement levels.
+### 14. Lifecycle state-gate enforcement
 
-### 11. Show-level planning readiness checklist
+**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine; [`studio-config-settings.md`](../ideation/studio-config-settings.md)
 
-**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1, Readiness Conditions
+**Blocked** — depends on item 13. Apply planning readiness and post-production completion checks to lifecycle transitions using enforcement levels (`off`, `warning`, `block`). Keep the broader studio settings system deferred unless this workstream explicitly needs configurable enforcement in the first delivery.
 
-**Blocked** — depends on item 10. Aggregate existing readiness signals (room assigned, creators assigned, platforms assigned, required task stages generated, task stages assigned to operators) into one show-level checklist for the `draft → confirmed` transition. The checklist reads existing records — it does not create new data models. Readiness conditions are identified in [`references/state-gates.md`](../../.agent/skills/show-production-lifecycle/references/state-gates.md).
-
-### 12. Post-production completion gate
-
-**Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3
-
-**Blocked** — depends on item 10. Define a show-level `completed` checklist confirming that required closure records and facts are present: submitted/approved closure tasks, actual end/completion signal, creator attendance outcome, platform performance facts, correction/review status, and unresolved issue status. This gates `live → completed` using the same enforcement-level model as item 10.
-
-### 13. Readiness and live control dashboard
+### 15. Readiness and live control dashboard
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
 
-**Blocked** — depends on state-backed readiness and completion flows. Unified manager view that consolidates planning readiness, live readiness, live-state transition controls, and production blockers. Decide whether this is one dashboard or separate planning/on-air views backed by the same lifecycle conditions. The existing `/studios/:studioId/dashboard` route should be cited as the extension point.
+**Blocked** — depends on state-backed readiness and completion flows. Unified manager view that consolidates planning readiness, live readiness, live-state transition controls, and production blockers. Decide whether this is one dashboard or separate planning/on-air views backed by the same lifecycle conditions. The existing `/studios/:studioId/dashboard` route is the extension point.
 
-### 14. State-based operational change notifications
+### 16. State-transition notifications
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
 
 **Blocked** — promote only after state machine, issue severity model, stakeholder list, channels, recipients, and timing rules are defined. Draft changes should remain quiet, confirmed-show changes should notify stakeholders, and near/on-air changes may need escalation based on issue severity and reason.
 
-**Two distinct trigger families, not one** — (a) **state-transition** notifications (the description above: quiet in draft, notify on confirm, escalate near/on-air) which genuinely need the state machine (item 10) to know what state a show is in; and (b) **issue-event** notifications (an issue opens, or an extraction-detected anomaly lands as one per item 5 — a platform violation, missing attendance, missing performance fact, at any lifecycle phase) which only need item 5's issue record to exist, not the full state machine. (b) could plausibly ship once item 5 lands, ahead of the state machine — worth revisiting the `10, 5` dependency split when item 5 is picked up, rather than leaving issue-driven notification blocked on item 10 by default. Build on the general event → notification module boundary already sketched in [`show-change-notification-audit-ledger.md`](../ideation/show-change-notification-audit-ledger.md) (designed for reuse across auditable domains, not just show CRUD) rather than a bespoke pipeline for issue events.
+**Boundary**: issue-event notifications are item 12. This item is only for lifecycle state transitions.
 
-**Ideation link**: `show-change-notification-audit-ledger.md` is this item's preserved design context — it already names item 5/14 as a second concrete reuse case for its event → notification boundary (mutation journal first, in-app inbox second, push third) and lists the unresolved product-policy questions (which mutations are material, who are default stakeholders, one event schema or several). Resolve those as part of this item rather than designing a parallel notification model.
-
-### 15. Operational record export
+### 17. Operational record export
 
 **Source**: [`operations-review-surface`](../../.agent/skills/operations-review-surface/SKILL.md) skill — Per-tab export; [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3
 
-**Deferred** — promote after lifecycle state enforcement, completion semantics, issue ownership, imports, and correction flows settle. The export should cover the reviewed operational record for a show, operational day, or date range: task submissions, review status, extracted show/creator/platform facts, attendance outcomes, platform metrics, platform violations, manager corrections, import provenance, and issue/resolution context where available. This is a read-only post-production review output, not a lifecycle gate and not a financial revenue export.
+**Deferred** — promote after import, correction, issue ownership, and completion review records settle. This extends the existing `task-reports` builder/source catalog rather than creating a new generic report pipeline. The export should cover the reviewed operational record for a show, operational day, or date range: task submissions, review status, extracted show/creator/platform facts, attendance outcomes, platform metrics, platform violations, manager corrections, import provenance, and issue/resolution context where available.
 
-**Build-vs-extend is settled by item 1, not re-litigated here.** Item 1 decides whether this widens `task-reports`' existing source catalog (adding show/creator/platform/violation/issue sources to the existing definition/scope/filter/run builder) or stands alone. Do not propose a new export pipeline without first checking that decision.
-
-Feature-specific exports remain focused: planning, task setup, creator mapping, and other mapping surfaces can keep their own current-view CSV exports for their local workflow. Operational record export is the broader post-production review package that sits downstream of task-submission review and should not be locked before the lifecycle surface is stable.
+Feature-specific exports remain focused: planning, task setup, creator mapping, shifts, and show-run-review tabs keep their own current-view exports for local workflow. Operational record export is the broader post-production review package and is not a lifecycle gate or financial revenue export.
 
 ---
 
@@ -202,7 +208,7 @@ Items explicitly deferred from Phase 5 lifecycle gap closure. See [PHASE_6.md](.
 | Client operations portal                                | New domain foundation; not required by show lifecycle                                    |
 | Revenue P&L, commission resolution, contribution margin | Financial revenue semantics; lifecycle produces operational facts, not financial figures |
 | Inventory and material management                       | New domain models; not required by show lifecycle                                        |
-| Full collaboration (comments, @mentions)                | Show-level issue ownership (item 5) is the smaller Phase 5 slice                         |
+| Full collaboration (comments, @mentions)                | Show-level issue ownership (item 7) is the smaller Phase 5 slice                         |
 | Creator/member availability management                  | Managers handle availability outside the system for Phase 5                              |
 | Studio operating rules configuration system             | Phase 5 identifies rule conditions; enforcement toggles need separate design             |
 | Monthly operations close workflow                       | Defer unless show-level completion gates cannot support monthly close                    |
@@ -220,4 +226,4 @@ pnpm --filter erify_api    lint && pnpm --filter erify_api    typecheck && pnpm 
 pnpm --filter erify_studios lint && pnpm --filter erify_studios typecheck && pnpm --filter erify_studios test && pnpm --filter erify_studios build
 ```
 
-Doc-only item 7 requires no code verification — validate cross-references and content accuracy manually.
+Doc-only status or business-reference work requires no code verification — validate cross-references and content accuracy manually.
