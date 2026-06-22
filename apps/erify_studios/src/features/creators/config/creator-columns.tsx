@@ -23,6 +23,10 @@ export const creatorColumns: ColumnDef<CreatorApiResponse>[] = [
     cell: ({ row }) => (row.original.is_banned ? 'Banned' : 'Active'),
   },
   {
+    accessorKey: 'type',
+    header: 'Type',
+  },
+  {
     accessorKey: 'created_at',
     header: 'Created At',
     cell: ({ row }) => new Date(row.original.created_at).toLocaleString(),

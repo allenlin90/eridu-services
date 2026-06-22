@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import {
   createCreatorInputSchema,
+  CREATOR_TYPE,
   updateCreatorInputSchema,
 } from '@eridu/api-types/creators';
 import {
@@ -21,6 +22,29 @@ import {
 type Creator = CreatorApiResponse;
 type CreatorFormData = z.infer<typeof createCreatorInputSchema>;
 type UpdateCreatorFormData = z.infer<typeof updateCreatorInputSchema>;
+
+function CreatorTypeSelect({
+  value,
+  onChange,
+  isLoading,
+}: {
+  value: string | undefined;
+  onChange: (value: string) => void;
+  isLoading: boolean;
+}) {
+  return (
+    <Select value={value ?? CREATOR_TYPE.STANDARD} onValueChange={onChange} disabled={isLoading}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select type" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={CREATOR_TYPE.STANDARD}>Standard</SelectItem>
+        <SelectItem value={CREATOR_TYPE.FLEXIBLE}>Flexible</SelectItem>
+        <SelectItem value={CREATOR_TYPE.OTHER}>Other</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
 
 type CreatorCreateDialogProps = {
   open: boolean;
@@ -60,6 +84,17 @@ export function CreatorCreateDialog({
           label: 'User ID',
           placeholder: 'Enter User ID (optional)',
         },
+        {
+          name: 'type',
+          label: 'Type',
+          render: (field) => (
+            <CreatorTypeSelect
+              value={field.value as string | undefined}
+              onChange={field.onChange}
+              isLoading={isLoading}
+            />
+          ),
+        },
       ]}
     />
   );
@@ -92,6 +127,7 @@ export function CreatorUpdateDialog({
               alias_name: creator.alias_name,
               user_id: creator.user_id || undefined,
               is_banned: creator.is_banned,
+              type: creator.type,
             }
           : undefined
       }
@@ -149,6 +185,17 @@ export function CreatorUpdateDialog({
                 <SelectItem value="banned">Banned</SelectItem>
               </SelectContent>
             </Select>
+          ),
+        },
+        {
+          name: 'type',
+          label: 'Type',
+          render: (field) => (
+            <CreatorTypeSelect
+              value={field.value as string | undefined}
+              onChange={field.onChange}
+              isLoading={isLoading}
+            />
           ),
         },
       ]}
