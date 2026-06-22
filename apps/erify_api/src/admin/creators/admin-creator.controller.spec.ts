@@ -58,6 +58,25 @@ describe('adminCreatorController', () => {
       expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith('creator_123');
       expect(result).toEqual(creatorWithUser);
     });
+
+    it('forwards an explicit type to the service', async () => {
+      const createDto: CreateCreatorDto = {
+        name: 'Test Creator',
+        userId: 'user_123',
+        metadata: {},
+        type: 'FLEXIBLE',
+      } as CreateCreatorDto;
+      const createdCreator = { uid: 'creator_123', ...createDto };
+
+      mockCreatorService.createCreator.mockResolvedValue(createdCreator as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue(createdCreator as any);
+
+      await controller.createCreator(createDto);
+
+      expect(mockCreatorService.createCreator).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'FLEXIBLE' }),
+      );
+    });
   });
 
   describe('getCreators', () => {
@@ -168,6 +187,23 @@ describe('adminCreatorController', () => {
       });
       expect(mockCreatorService.getCreatorByIdWithUser).toHaveBeenCalledWith(creatorId);
       expect(result).toEqual(creatorWithUser);
+    });
+
+    it('forwards an explicit type change to the service', async () => {
+      const creatorId = 'creator_123';
+      const updateDto: UpdateCreatorDto = { type: 'OTHER' } as UpdateCreatorDto;
+      const existingCreator = { uid: creatorId, type: 'STANDARD' };
+
+      mockCreatorService.getCreatorById.mockResolvedValue(existingCreator as any);
+      mockCreatorService.updateCreator.mockResolvedValue({ ...existingCreator, ...updateDto } as any);
+      mockCreatorService.getCreatorByIdWithUser.mockResolvedValue({ ...existingCreator, ...updateDto } as any);
+
+      await controller.updateCreator(creatorId, updateDto);
+
+      expect(mockCreatorService.updateCreator).toHaveBeenCalledWith(
+        creatorId,
+        expect.objectContaining({ type: 'OTHER' }),
+      );
     });
   });
 

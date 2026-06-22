@@ -3,7 +3,6 @@
 // ============================================================================
 // NOTE: These types CAN use Prisma types to define the payload shape.
 // Services import these payload types, NOT Prisma types directly.
-import type { CreatorType } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -174,7 +173,7 @@ export class ListCreatorsQueryDto extends createZodDto(listCreatorsQuerySchema) 
 export type CreateCreatorPayload = {
   name: string;
   aliasName: string;
-  type?: CreatorType;
+  type?: string;
   defaultRate?: string;
   defaultRateType?: string;
   defaultCommissionRate?: string;
@@ -189,7 +188,7 @@ export type UpdateCreatorPayload = {
   name?: string;
   aliasName?: string;
   isBanned?: boolean;
-  type?: CreatorType;
+  type?: string;
   defaultRate?: string | null;
   defaultRateType?: string | null;
   defaultCommissionRate?: string | null;
