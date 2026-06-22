@@ -106,7 +106,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 
 - Brand-new creator onboarding is preserved through the create mode; the flow collects name, alias, creator type (`STANDARD`, `FLEXIBLE`, or `OTHER`), optional user link, and studio compensation defaults, then creates a global `Creator` plus an active `StudioCreator` row.
 - Existing creator and inactive roster outcomes are labeled directly in the picker, so roster managers can distinguish add vs. reactivate before submitting.
-- Active rostered creators are filtered out of Add Creator catalog results, while inactive roster rows remain available for reactivation.
+- Active rostered creators surface as a non-actionable "Already active in this studio" match in Add Creator instead of being filtered out of catalog results, while inactive roster rows remain available for reactivation.
 - The create-new action is available immediately from the dialog while catalog search remains the default first view for duplicate-prevention intent.
 - Creator mapping remains the show-assignment surface and continues to direct missing-roster cases back to `/creators`.
 

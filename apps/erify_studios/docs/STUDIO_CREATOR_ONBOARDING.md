@@ -47,9 +47,9 @@ Access rules:
 
 - the roster add flow always starts from the single **Add Creator** action in search mode
 - catalog search remains the default first view, but **Create new creator and add to this studio** is available immediately for confirmed new identities
-- the catalog query excludes active rostered creators so existing active roster rows do not appear in Add Creator results
+- the catalog query includes rostered creators; matches already active in this studio render as a non-actionable "Already active in this studio" list once a search term is entered, instead of being dropped from results — this keeps a duplicate-creator identity from being created when the searched-for creator already exists in the roster
 - selectable catalog results are labeled by outcome: add an existing creator or reactivate an inactive creator
-- the current search term is preserved when switching between search and create modes
+- the current search term is preserved when switching between search and create modes; creator identity, user-link, and compensation default fields reset on every search↔create mode switch (not just on dialog close) so stale values from one creator can't leak into a submission for another
 
 ### Create new creator and add to studio mode
 

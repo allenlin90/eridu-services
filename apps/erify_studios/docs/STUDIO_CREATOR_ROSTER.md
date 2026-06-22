@@ -90,8 +90,9 @@ Columns:
 
 ### Add dialog
 
-- uses `GET /studios/:studioId/creators/catalog?include_rostered=true&exclude_active_rostered=true`
-- shows only `roster_state === 'NONE' || roster_state === 'INACTIVE'`
+- uses `GET /studios/:studioId/creators/catalog?include_rostered=true`
+- selectable combobox options are limited to `roster_state === 'NONE' || roster_state === 'INACTIVE'`
+- `roster_state === 'ACTIVE'` matches render separately as a non-actionable "Already active in this studio" list (once a search term is entered) instead of being dropped from the response, so a search for an already-active creator doesn't fall through to the empty state and nudge the user toward creating a duplicate identity
 - labels `INACTIVE` results as reactivation candidates
 - form fields:
   - creator
