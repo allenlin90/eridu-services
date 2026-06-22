@@ -301,7 +301,7 @@ Features:
 Business Rules:
 
 - Shows require studio room and time slot reservations
-- Status progression: draft → confirmed → live → completed
+- Status progression: draft → confirmed → live → completed (plus cancelled, cancelled_pending_resolution)
 - Cancelled shows preserve data for analysis
 - **Show Naming & Duration**: Show names and durations can overlap for different packages, events, and campaigns - there are no unique constraints on (name, clientId, startTime) combinations. Idempotency handling (Phase 2) prevents duplicate show creation from retries or concurrent requests.
 - **Client-Scoped Queries**: Shows are primarily read-only (especially for MCs) and can be queried by client ID and date range for calendar views and Google Sheets integration
@@ -686,7 +686,7 @@ erDiagram
     show_status {
       int id PK
       string uid
-      string name "draft, confirmed, live, completed, cancelled"
+      string name "draft, confirmed, live, completed, cancelled, cancelled_pending_resolution"
       jsonb metadata
       datetime created_at
       datetime updated_at

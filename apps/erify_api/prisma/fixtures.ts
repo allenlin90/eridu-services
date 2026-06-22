@@ -16,6 +16,7 @@ export const fixtures = {
     live: 'shst_00000000000000000003',
     completed: 'shst_00000000000000000004',
     cancelled: 'shst_00000000000000000005',
+    cancelled_pending_resolution: 'shst_00000000000000000006',
   },
   showStandards: {
     standard: 'shsd_00000000000000000001',

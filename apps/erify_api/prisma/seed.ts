@@ -693,7 +693,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
 
     // Check if we have all expected records
     const hasAllShowTypes = showTypes.length === 3;
-    const hasAllShowStatuses = showStatuses.length === 5;
+    const hasAllShowStatuses = showStatuses.length === 6;
     const hasAllShowStandards = showStandards.length === 2;
     const hasAllPlatforms = platforms.length === 3;
     const hasAllClients = clients >= 50;
@@ -751,7 +751,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
         `  - ShowTypes: ${showTypes.length}/3 (${hasAllShowTypes ? '✅' : '❌'})`,
       );
       console.log(
-        `  - ShowStatuses: ${showStatuses.length}/5 (${hasAllShowStatuses ? '✅' : '❌'})`,
+        `  - ShowStatuses: ${showStatuses.length}/6 (${hasAllShowStatuses ? '✅' : '❌'})`,
       );
       console.log(
         `  - ShowStandards: ${showStandards.length}/2 (${hasAllShowStandards ? '✅' : '❌'})`,
@@ -906,6 +906,11 @@ async function main() {
           name: 'cancelled',
           systemKey: 'CANCELLED',
           metadata: { description: 'Show was cancelled', order: 5 },
+        },
+        {
+          name: 'cancelled_pending_resolution',
+          systemKey: 'CANCELLED_PENDING_RESOLUTION',
+          metadata: { description: 'Cancelled pending resolution', order: 6 },
         },
       ];
 
