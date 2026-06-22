@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
+import {
+  CREATOR_COMPENSATION_TYPE,
+  CREATOR_TYPE,
+} from '@eridu/api-types/creators';
 
 import {
   buildCreateStudioCreatorRosterPayload,
@@ -72,6 +75,7 @@ describe('studio creator compensation payload builders', () => {
     const payload = buildOnboardStudioCreatorPayload({
       name: 'Alice Example',
       aliasName: 'Alice',
+      type: CREATOR_TYPE.FLEXIBLE,
       userId: 'user_123',
       defaultRate: '500.25',
       defaultRateType: CREATOR_COMPENSATION_TYPE.FIXED,
@@ -82,6 +86,7 @@ describe('studio creator compensation payload builders', () => {
       creator: {
         name: 'Alice Example',
         alias_name: 'Alice',
+        type: CREATOR_TYPE.FLEXIBLE,
         user_id: 'user_123',
         metadata: undefined,
       },

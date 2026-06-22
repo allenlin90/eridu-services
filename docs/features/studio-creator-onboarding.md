@@ -16,25 +16,27 @@ Additionally, the assignment write path only blocked *inactive* roster rows — 
 | Role | Need |
 | --- | --- |
 | Studio Admin | Onboard brand-new creators from the studio workspace; reactivate roster rows; maintain defaults |
-| Studio Manager | Assign only active roster creators; understand why a creator cannot be assigned |
-| Studio Talent Manager | Same as Manager for assignment; clear handoff when a creator is missing from the roster |
+| Studio Manager | Onboard or reactivate creators from the studio workspace; maintain roster defaults; assign only active roster creators |
+| Studio Talent Manager | Onboard or reactivate creators from the studio workspace; maintain roster defaults; assign only active roster creators |
 
 ## What Was Delivered
 
 ### Studio-owned onboarding endpoint
 
 - `POST /studios/:studioId/creators/onboard` — creates a global `Creator` and an active `StudioCreator` row in one atomic transaction
-- `ADMIN`-only; no change to `/system/creators` or broader role permissions
+- Studio roster manager roles (`ADMIN`, `MANAGER`, `TALENT_MANAGER`) can use the endpoint; no change to `/system/creators` or broader role permissions
 - Optional `user_id` links a creator to a platform user account; looked up through a studio-safe endpoint, not `/admin/users`
 - `GET /studios/:studioId/creators/onboarding-users?search=&limit=` — studio-guarded user search that excludes soft-deleted users and users linked to active creators, while keeping users linked only to soft-deleted creators eligible
 
-### Search-first onboarding dialog
+### Add Creator intake dialog
 
 - The **Add Creator** dialog on `/studios/$studioId/creators` now has two modes: `search` (default) and `create`
-- Search mode queries the existing creator catalog; active matches are shown as non-actionable helpers to prevent duplicates
-- **Create and onboard new creator** becomes available after any catalog search — not only on zero results
-- Create mode collects name, alias, optional user link, and studio compensation defaults
-- Switching back to search preserves the current search term
+- Search mode queries the existing creator catalog; selectable options are limited to `roster_state === 'NONE' || 'INACTIVE'`
+- Selectable catalog matches are labeled as **Add existing creator** or **Reactivate inactive creator** so roster managers can see the outcome before submitting
+- Active rostered creators are shown as a non-actionable "Already active in this studio" list (once a search term is entered) rather than being dropped from results, so the duplicate-prevention search-first flow has a real signal instead of nudging toward "create a new creator" on a false-empty result
+- **Create new creator and add to this studio** is directly available from the dialog so talent managers can create a creator identity without system-admin help
+- Create mode collects name, alias, creator type (`STANDARD`, `FLEXIBLE`, or `OTHER`), optional user link, and studio compensation defaults
+- Switching between search and create modes preserves the current search term but resets creator identity, user-link, and compensation default fields so stale values from one creator can't leak into a submission for another
 
 ### Roster-first assignment enforcement fix
 
@@ -48,7 +50,7 @@ Additionally, the assignment write path only blocked *inactive* roster rows — 
 
 - Single-show assignment dialog shows persistent helper text explaining what to do when a creator is missing
 - Write-time `CREATOR_NOT_IN_ROSTER` and `CREATOR_INACTIVE_IN_ROSTER` failures surface readable copy instead of raw error codes
-- **Admin** sees a direct CTA to `/studios/$studioId/creators`; **Manager / Talent Manager** sees "ask a studio admin"
+- Roster managers see a direct CTA to `/studios/$studioId/creators`; read-only roles see "ask a studio admin or talent manager"
 - Bulk assignment dialog stays open when errors remain that require user action; closes only on full success or skip-only outcomes
 
 ## User Flow
@@ -61,7 +63,7 @@ flowchart TD
     D --> E{Roster state}
     E -- NONE --> F[Add creator to studio roster]
     E -- INACTIVE --> G[Reactivate existing StudioCreator row]
-    C -- No or not the right identity --> H[Create and onboard new creator]
+    C -- No or not the right identity --> H[Create new creator and add to this studio]
     H --> I[Enter name, alias, optional user link, and defaults]
     I --> J[Create global Creator plus active StudioCreator row]
     F --> K[Creator is active in studio roster]
@@ -73,7 +75,7 @@ flowchart TD
 ## Key Product Decisions
 
 - **Creator identity remains global** — `Creator` is not studio-scoped, but studio-owned intake no longer requires `/system/*`.
-- **Search first, create second** — catalog search is mandatory before the create path appears; reduces duplicate identity risk.
+- **Search first by default, create when needed** — the dialog opens on catalog search to reduce duplicate identity risk, while the create path remains directly available for confirmed new identities.
 - **Loose discovery, strict writes** — creator-mapping search remains broad until availability hardening ships; assignment writes are the authoritative roster gate.
 - **No silent auto-create from mapping** — onboarding is explicit through the roster flow so defaults and audit intent are captured at the right moment.
 - **Studio-safe user linking** — optional `user_id` uses a dedicated studio-guarded endpoint, not the admin user list.
@@ -81,9 +83,11 @@ flowchart TD
 
 ## Acceptance Record
 
-- [x] Studio admin can onboard a brand-new creator from `/studios/$studioId/creators` without using `/system/*`.
-- [x] Onboarding flow always begins with catalog search before showing create-new.
-- [x] Create-new path remains available after catalog search even when returned matches are visible but not suitable.
+- [x] Studio admin, manager, and talent manager can onboard a brand-new creator from `/studios/$studioId/creators` without using `/system/*`.
+- [x] Onboarding flow opens on catalog search and keeps create-new directly available from the same dialog.
+- [x] Create-new path collects creator type and studio roster compensation defaults before creating the active roster row.
+- [x] Existing and inactive catalog matches are labeled with the exact add/reactivate outcome before submit.
+- [x] Active rostered creators are shown as a non-actionable "Already active in this studio" match instead of being filtered out of the Add Creator catalog results, so duplicate identities aren't created against a false-empty search.
 - [x] Creating a new creator from the studio flow creates both the global `Creator` and the active `StudioCreator` row atomically.
 - [x] Existing catalog creators can still be added or reactivated from the same surface.
 - [x] Optional user linking is completed from the studio onboarding flow without depending on `/admin/users`.

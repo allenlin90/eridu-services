@@ -17,12 +17,17 @@ vi.mock('@eridu/ui', () => ({
 }));
 
 vi.mock('@/features/admin/components', () => ({
-  AdminFormDialog: ({ title, description, open }: any) => (
+  AdminFormDialog: ({ title, description, open, fields }: any) => (
     open
       ? (
           <div data-testid="admin-form-dialog">
             <h1>{title}</h1>
             <p>{description}</p>
+            <ul>
+              {fields?.map((field: any) => (
+                <li key={field.name ?? field.id}>{field.label}</li>
+              ))}
+            </ul>
           </div>
         )
       : null
@@ -52,6 +57,18 @@ describe('creatorCreateDialog', () => {
 
     expect(screen.getByTestId('admin-form-dialog')).toBeInTheDocument();
     expect(screen.getByText('Create Creator')).toBeInTheDocument();
+  });
+
+  it('should expose aligned creator identity and default compensation fields', () => {
+    render(<CreatorCreateDialog {...mockProps} />);
+
+    expect(screen.getByText('Name')).toBeInTheDocument();
+    expect(screen.getByText('Alias Name')).toBeInTheDocument();
+    expect(screen.getByText('Type')).toBeInTheDocument();
+    expect(screen.getByText('Default Rate')).toBeInTheDocument();
+    expect(screen.getByText('Compensation Type')).toBeInTheDocument();
+    expect(screen.getByText('Default Commission Rate (%)')).toBeInTheDocument();
+    expect(screen.getByText('User ID')).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {

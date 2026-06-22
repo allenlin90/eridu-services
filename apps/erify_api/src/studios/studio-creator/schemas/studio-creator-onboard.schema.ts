@@ -7,6 +7,7 @@ export class OnboardStudioCreatorDto extends createZodDto(
     creator: {
       name: data.creator.name,
       aliasName: data.creator.alias_name,
+      type: data.creator.type,
       userId: data.creator.user_id,
       metadata: data.creator.metadata,
     },
@@ -21,6 +22,7 @@ export class OnboardStudioCreatorDto extends createZodDto(
   declare creator: {
     name: string;
     aliasName: string;
+    type: string | undefined;
     userId: string | null | undefined;
     metadata: Record<string, unknown> | undefined;
   };

@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api/client';
 export type CreatorCatalogQuery = {
   search?: string;
   include_rostered?: boolean;
+  exclude_active_rostered?: boolean;
   limit?: number;
 };
 

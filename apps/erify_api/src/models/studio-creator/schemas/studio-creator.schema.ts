@@ -32,6 +32,7 @@ export type OnboardCreatorPayload = {
   creator: {
     name: string;
     aliasName: string;
+    type?: string;
     userId?: string | null;
     metadata?: object;
   };

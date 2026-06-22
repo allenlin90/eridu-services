@@ -19,7 +19,9 @@ function StudioCreatorProfileTab() {
     return null;
   }
 
-  const canEdit = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
+  const canEdit = role === STUDIO_ROLE.ADMIN
+    || role === STUDIO_ROLE.MANAGER
+    || role === STUDIO_ROLE.TALENT_MANAGER;
 
   return (
     <CreatorProfileForm

@@ -70,13 +70,13 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 **Planning records that must exist or be reviewed**:
 - Show shell: name, timing, client, type, standard, status, studio.
 - Room assignment (`studioRoomId`).
-- Creator assignments (`ShowCreator[]` via creator mapping).
+- Creator assignments (`ShowCreator[]` via creator mapping after roster intake).
 - Platform assignments (`ShowPlatform[]`).
 - Generated tasks from stage-specific templates (setup, live, closure stages).
 - Task assignees (operators assigned to generated tasks).
 - Shift/staffing coverage (time-overlap with `StudioShift`).
 
-**Current surfaces**: `/studios/:studioId/shows` (show list + CRUD), `/studios/:studioId/task-setup` (task generation, assignment, readiness), `/studios/:studioId/creator-mapping` (bulk creator assignment).
+**Current surfaces**: `/studios/:studioId/shows` (show list + CRUD), `/studios/:studioId/creators` (creator roster intake), `/studios/:studioId/task-setup` (task generation, assignment, readiness), `/studios/:studioId/creator-mapping` (bulk creator assignment).
 
 **Gap (Phase 5)**: No unified planning readiness checklist for `draft → confirmed`.
 
@@ -93,7 +93,7 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`.
 
-**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 5 and 14.
+**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 8 and 16.
 
 ### 3. Post-Production (live → completed)
 

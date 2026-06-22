@@ -75,7 +75,7 @@ The list response stays based on the existing studio-creator roster item and may
 ## Controller
 
 - Read route uses `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`.
-- Write routes use `@StudioProtected([ADMIN])`.
+- Roster/default write routes use `@StudioProtected([ADMIN, MANAGER, TALENT_MANAGER])`.
 - Use shared Zod DTOs plus `UidValidationPipe` for `studioId` and `creatorId`.
 - `GET /creators` returns paginated roster results using the existing list query DTO (`search`, `is_active`, `default_rate_type`, pagination).
 - `POST /creators` accepts the shared add payload, then returns the roster item DTO for the created or reactivated row.

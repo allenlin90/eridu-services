@@ -93,7 +93,8 @@ describe('studioCreatorController', () => {
     const studioId = 'std_00000000000000000001';
     const query = {
       search: 'ann',
-      includeRostered: false,
+      includeRostered: true,
+      excludeActiveRostered: true,
       limit: 10,
     } as StudioCreatorCatalogQueryDto;
 
@@ -231,6 +232,24 @@ describe('studioCreatorController', () => {
     }));
   });
 
+  it('should allow talent managers to manage creator roster intake routes', () => {
+    expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.addCreator)).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+      STUDIO_ROLE.TALENT_MANAGER,
+    ]);
+    expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.onboardCreator)).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+      STUDIO_ROLE.TALENT_MANAGER,
+    ]);
+    expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.onboardingUsers)).toEqual([
+      STUDIO_ROLE.ADMIN,
+      STUDIO_ROLE.MANAGER,
+      STUDIO_ROLE.TALENT_MANAGER,
+    ]);
+  });
+
   it('should update a creator roster entry', async () => {
     const studioId = 'std_00000000000000000001';
     const creatorId = 'creator_00000000000000000001';
@@ -344,12 +363,18 @@ describe('studioCreatorController', () => {
     }));
   });
 
+  it('should keep talent managers out of per-show compensation totals', () => {
+    const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.listCreatorCompensations);
+    expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER]);
+  });
+
   it('should onboard a brand-new creator into roster', async () => {
     const studioId = 'std_00000000000000000001';
     const dto = {
       creator: {
         name: 'Alice Example',
         aliasName: 'Alice',
+        type: 'FLEXIBLE',
         userId: 'user_00000000000000000001',
         metadata: { source: 'onboard' },
       },
@@ -388,6 +413,7 @@ describe('studioCreatorController', () => {
       creator: {
         name: 'Alice Example',
         aliasName: 'Alice',
+        type: 'FLEXIBLE',
         userId: 'user_00000000000000000001',
         metadata: { source: 'onboard' },
       },
@@ -536,8 +562,8 @@ describe('studioCreatorController', () => {
     expect(result.default_commission_rate).toBeNull();
   });
 
-  it('should allow admins and managers to edit creator defaults', () => {
+  it('should allow admins, managers, and talent managers to edit creator defaults', () => {
     const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioCreatorController.prototype.updateCreator);
-    expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER]);
+    expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.TALENT_MANAGER]);
   });
 });

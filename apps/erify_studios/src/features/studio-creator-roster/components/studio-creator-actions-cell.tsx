@@ -8,12 +8,14 @@ type StudioCreatorActionsCellProps = {
   creator: StudioCreatorRosterItem;
   studioId: string;
   canEditRoster: boolean;
+  canReviewCompensation: boolean;
 };
 
 export function StudioCreatorActionsCell({
   creator,
   studioId,
   canEditRoster,
+  canReviewCompensation,
 }: StudioCreatorActionsCellProps) {
   const navigate = useNavigate();
 
@@ -26,17 +28,20 @@ export function StudioCreatorActionsCell({
             params: { studioId, creatorId: creator.creator_id },
           })
         : undefined}
-      renderExtraActions={() => (
-        <DropdownMenuItem asChild>
-          <Link
-            to="/studios/$studioId/creators/$creatorId/compensations"
-            params={{ studioId, creatorId: creator.creator_id }}
-          >
-            <ReceiptText className="mr-2 h-4 w-4" />
-            Review Compensation
-          </Link>
-        </DropdownMenuItem>
-      )}
+      renderExtraActions={() =>
+        canReviewCompensation
+          ? (
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/studios/$studioId/creators/$creatorId/compensations"
+                  params={{ studioId, creatorId: creator.creator_id }}
+                >
+                  <ReceiptText className="mr-2 h-4 w-4" />
+                  Review Compensation
+                </Link>
+              </DropdownMenuItem>
+            )
+          : null}
     />
   );
 }

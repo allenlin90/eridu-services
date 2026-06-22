@@ -172,8 +172,8 @@ Define what each studio role can see and do across all studio-scoped routes.
 | -------- | ----- | ------- | -------------- |
 | Access creator roster route | Yes | Yes | Yes |
 | View roster and compensation defaults | Yes | Yes | Yes |
-| Add/reactivate creator | Yes | No | No |
-| Update defaults / active state | Yes | No | No |
+| Add/reactivate/create creator | Yes | Yes | Yes |
+| Update defaults / active state | Yes | Yes | Yes |
 
 ## Creator Mapping View (`/creator-mapping`, ADMIN + MANAGER + TALENT_MANAGER)
 
@@ -218,7 +218,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 5. `DELETE /studios/:studioId/shows/:showId/creators/:creatorId` — remove one mapping
 6. `GET /studios/:studioId/creators/catalog` — searchable creator picker (includes roster defaults since PR #64)
 7. `GET /studios/:studioId/creators` — studio creator roster
-8. `POST /studios/:studioId/creators` / `PATCH /studios/:studioId/creators/:creatorId` — roster management for admin users
+8. `POST /studios/:studioId/creators`, `POST /studios/:studioId/creators/onboard`, and `PATCH /studios/:studioId/creators/:creatorId` — roster/default management for `ADMIN`, `MANAGER`, and `TALENT_MANAGER`
 9. `POST|PATCH|DELETE /studios/:studioId/compensation-line-items` with `target_type=SHOW_CREATOR` and `target_id=<ShowCreator assignment uid>` — supplemental per-assignment adjustments (`ADMIN`/`MANAGER` only)
 
 ## Change Control

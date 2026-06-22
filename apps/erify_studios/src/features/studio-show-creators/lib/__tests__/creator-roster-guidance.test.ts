@@ -10,7 +10,7 @@ import {
 describe('creator roster guidance', () => {
   it('returns role-aware missing creator guidance', () => {
     expect(getMissingCreatorGuidance(true)).toContain('Add them to the studio roster first');
-    expect(getMissingCreatorGuidance(false)).toContain('Ask a studio admin');
+    expect(getMissingCreatorGuidance(false)).toContain('Ask a studio admin or talent manager');
   });
 
   it('maps roster-not-in-studio errors to readable admin/operator copy', () => {
@@ -20,7 +20,7 @@ describe('creator roster guidance', () => {
 
     expect(
       getRosterAssignmentFailureMessage(STUDIO_CREATOR_ROSTER_ERROR.CREATOR_NOT_IN_ROSTER, false),
-    ).toContain('Ask a studio admin');
+    ).toContain('Ask a studio admin or talent manager');
   });
 
   it('maps inactive-roster errors to readable admin/operator copy', () => {
@@ -30,6 +30,6 @@ describe('creator roster guidance', () => {
 
     expect(
       getRosterAssignmentFailureMessage(STUDIO_CREATOR_ROSTER_ERROR.CREATOR_INACTIVE_IN_ROSTER, false),
-    ).toContain('Ask a studio admin');
+    ).toContain('Ask a studio admin or talent manager');
   });
 });

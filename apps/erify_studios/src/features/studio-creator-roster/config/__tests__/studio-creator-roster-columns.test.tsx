@@ -27,30 +27,36 @@ describe('getStudioCreatorRosterColumns', () => {
   it('shows the actions column for compensation managers', () => {
     const adminColumns = getStudioCreatorRosterColumns({
       studioId: 'std_1',
-      isAdmin: true,
-      canManageCompensation: true,
+      canManageRoster: true,
+      canReviewCompensation: true,
     });
     const managerColumns = getStudioCreatorRosterColumns({
       studioId: 'std_1',
-      isAdmin: false,
-      canManageCompensation: true,
+      canManageRoster: false,
+      canReviewCompensation: true,
+    });
+    const talentManagerColumns = getStudioCreatorRosterColumns({
+      studioId: 'std_1',
+      canManageRoster: true,
+      canReviewCompensation: false,
     });
     const readOnlyColumns = getStudioCreatorRosterColumns({
       studioId: 'std_1',
-      isAdmin: false,
-      canManageCompensation: false,
+      canManageRoster: false,
+      canReviewCompensation: false,
     });
 
     expect(adminColumns.some((column) => column.id === 'actions')).toBe(true);
     expect(managerColumns.some((column) => column.id === 'actions')).toBe(true);
+    expect(talentManagerColumns.some((column) => column.id === 'actions')).toBe(true);
     expect(readOnlyColumns.some((column) => column.id === 'actions')).toBe(false);
   });
 
   it('formats default rate and commission without JS number precision loss', () => {
     const columns = getStudioCreatorRosterColumns({
       studioId: 'std_1',
-      isAdmin: false,
-      canManageCompensation: false,
+      canManageRoster: false,
+      canReviewCompensation: false,
     });
     const creator = createCreator({
       default_rate: '9007199254740993.01',

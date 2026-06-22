@@ -79,8 +79,8 @@ Rules every conversion follows:
     de-chromed (header now provided by the layout). Search params `date_from` /
     `date_to` preserved.
 - **Backend**: `GET /studios/:studioId/creators/:creatorId` (read: ADMIN / MANAGER /
-  TALENT_MANAGER). The `PATCH :creatorId` guard was **loosened** from ADMIN-only to
-  **ADMIN + MANAGER** — managers can now edit creator roster defaults.
+  TALENT_MANAGER). The `PATCH :creatorId` guard allows **ADMIN + MANAGER +
+  TALENT_MANAGER** so roster managers can edit creator roster defaults.
 - **Entry points**: the roster row **Edit** action navigates to the Profile tab;
   **Review Compensation** deep-links to the Compensation tab. The edit dialog is removed.
 
@@ -90,7 +90,7 @@ Rules every conversion follows:
 | -------------------------------- | :---: | :-----: | :------------: |
 | Reach `/creators/:creatorId`     |  ✅   |   ✅    |       ✅       |
 | `GET :creatorId` (read profile) |  ✅   |   ✅    |       ✅       |
-| Edit profile (Save)             |  ✅   |   ✅    |       ❌ (read-only) |
+| Edit profile (Save)             |  ✅   |   ✅    |       ✅       |
 | See / open Compensation tab      |  ✅   |   ✅    |       ❌       |
 
 ## Follow-ups

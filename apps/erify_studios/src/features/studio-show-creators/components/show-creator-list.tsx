@@ -130,7 +130,9 @@ export function ShowCreatorList({
   const [compensationCreator, setCompensationCreator] = useState<StudioShowCreatorListItem | null>(null);
   const [search, setSearch] = useState('');
   const { role } = useStudioAccess(studioId);
-  const isAdmin = role === STUDIO_ROLE.ADMIN;
+  const canManageRoster = role === STUDIO_ROLE.ADMIN
+    || role === STUDIO_ROLE.MANAGER
+    || role === STUDIO_ROLE.TALENT_MANAGER;
   const canManageCreatorCompensation = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
 
   const {
@@ -164,7 +166,7 @@ export function ShowCreatorList({
           if (result.failed.length > 0) {
             const firstFailure = result.failed[0];
             const failureReason = firstFailure?.reason ?? 'Unknown error';
-            toast.error(`Add failed: ${getRosterAssignmentFailureMessage(failureReason, isAdmin)}`);
+            toast.error(`Add failed: ${getRosterAssignmentFailureMessage(failureReason, canManageRoster)}`);
             return;
           }
           if (result.skipped > 0 && result.assigned === 0) {
@@ -177,7 +179,7 @@ export function ShowCreatorList({
         },
       },
     );
-  }, [bulkAssignCreators, isAdmin]);
+  }, [bulkAssignCreators, canManageRoster]);
 
   const handleRemoveCreator = useCallback((creatorId: string) => {
     removeCreator(creatorId, {
@@ -305,7 +307,7 @@ export function ShowCreatorList({
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         studioId={studioId}
-        isAdmin={isAdmin}
+        canManageRoster={canManageRoster}
         showStartTime={showStartTime}
         showEndTime={showEndTime}
         isSubmitting={isAssigning}

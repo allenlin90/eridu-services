@@ -20,7 +20,7 @@ type AddCreatorDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   studioId: string;
-  isAdmin: boolean;
+  canManageRoster: boolean;
   showStartTime: string;
   showEndTime: string;
   isSubmitting: boolean;
@@ -31,7 +31,7 @@ export function AddCreatorDialog({
   open,
   onOpenChange,
   studioId,
-  isAdmin,
+  canManageRoster,
   showStartTime,
   showEndTime,
   isSubmitting,
@@ -102,9 +102,9 @@ export function AddCreatorDialog({
             emptyMessage="No creators found."
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            {getMissingCreatorGuidance(isAdmin)}
+            {getMissingCreatorGuidance(canManageRoster)}
           </p>
-          {isAdmin && (
+          {canManageRoster && (
             <Link
               to="/studios/$studioId/creators"
               params={{ studioId }}

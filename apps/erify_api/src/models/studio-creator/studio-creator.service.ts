@@ -56,6 +56,7 @@ export class StudioCreatorService extends BaseModelService {
     params: {
       search?: string;
       includeRostered?: boolean;
+      excludeActiveRostered?: boolean;
       limit?: number;
     },
   ): Promise<StudioCreatorCatalogItemPayload[]> {
@@ -63,6 +64,7 @@ export class StudioCreatorService extends BaseModelService {
       studioUid,
       search: params.search,
       includeRostered: params.includeRostered,
+      excludeActiveRostered: params.excludeActiveRostered,
       limit: params.limit,
     });
   }
@@ -158,6 +160,7 @@ export class StudioCreatorService extends BaseModelService {
     const creator = await this.creatorService.createCreator({
       name: payload.creator.name,
       aliasName: payload.creator.aliasName,
+      ...(payload.creator.type !== undefined && { type: payload.creator.type }),
       userId,
       metadata: payload.creator.metadata as Record<string, unknown> | undefined,
     });
@@ -174,7 +177,7 @@ export class StudioCreatorService extends BaseModelService {
   }
 
   // studioUid is unused here because authorization is enforced at the controller layer via
-  // @StudioProtected([STUDIO_ROLE.ADMIN]). The global user search is intentionally scoped
+  // @StudioProtected([...creator roster managers]). The global user search is intentionally scoped
   // only by the studio-guarded endpoint, not by a per-studio user filter.
   searchOnboardingUsers(
     _studioUid: string,

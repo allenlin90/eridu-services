@@ -177,6 +177,7 @@ export class CreatorRepository extends BaseRepository<
     studioUid: string;
     search?: string;
     includeRostered?: boolean;
+    excludeActiveRostered?: boolean;
     limit?: number;
   }): Promise<Array<{
       uid: string;
@@ -207,6 +208,20 @@ export class CreatorRepository extends BaseRepository<
             studio: {
               uid: params.studioUid,
               deletedAt: null,
+            },
+          },
+        },
+      }),
+      ...(params.excludeActiveRostered && {
+        NOT: {
+          studioCreators: {
+            some: {
+              deletedAt: null,
+              isActive: true,
+              studio: {
+                uid: params.studioUid,
+                deletedAt: null,
+              },
             },
           },
         },
