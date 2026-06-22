@@ -76,6 +76,7 @@ export class CreatorRepository extends BaseRepository<
       uid: payload.uid,
       name: payload.name,
       aliasName: payload.aliasName,
+      ...(payload.type !== undefined && { type: payload.type }),
       ...(payload.defaultRate !== undefined && { defaultRate: payload.defaultRate }),
       ...(payload.defaultRateType !== undefined && { defaultRateType: payload.defaultRateType }),
       ...(payload.defaultCommissionRate !== undefined && { defaultCommissionRate: payload.defaultCommissionRate }),
@@ -99,6 +100,8 @@ export class CreatorRepository extends BaseRepository<
       data.aliasName = payload.aliasName;
     if (payload.isBanned !== undefined)
       data.isBanned = payload.isBanned;
+    if (payload.type !== undefined)
+      data.type = payload.type;
     if (payload.defaultRate !== undefined)
       data.defaultRate = payload.defaultRate;
     if (payload.defaultRateType !== undefined)

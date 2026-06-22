@@ -8,6 +8,16 @@ export const CREATOR_COMPENSATION_TYPE = {
 
 export type CreatorCompensationType = (typeof CREATOR_COMPENSATION_TYPE)[keyof typeof CREATOR_COMPENSATION_TYPE];
 
+export const CREATOR_TYPE = {
+  STANDARD: 'STANDARD',
+  FLEXIBLE: 'FLEXIBLE',
+  OTHER: 'OTHER',
+} as const;
+
+export type CreatorType = (typeof CREATOR_TYPE)[keyof typeof CREATOR_TYPE];
+
+const creatorTypeSchema = z.enum(Object.values(CREATOR_TYPE) as [string, ...string[]]);
+
 /**
  * Creator API Response Schema (snake_case - matches backend API output)
  */
@@ -16,6 +26,7 @@ export const creatorApiResponseSchema = z.object({
   name: z.string(),
   alias_name: z.string(),
   is_banned: z.boolean(),
+  type: creatorTypeSchema,
   user_id: z.string().nullable(),
   default_rate: z.string().nullable(),
   default_rate_type: z.string().nullable(),
@@ -56,6 +67,7 @@ const defaultCommissionRateInputSchema = decimalStringSchema.refine(isAtMostOneH
 export const createCreatorInputSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   alias_name: z.string().min(1, 'Alias name is required'),
+  type: creatorTypeSchema.optional(),
   user_id: z.string().optional(),
   default_rate: defaultRateInputSchema.optional(),
   default_rate_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).optional(),
@@ -67,6 +79,7 @@ export const updateCreatorInputSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   alias_name: z.string().min(1, 'Alias name is required').optional(),
   is_banned: z.boolean().optional(),
+  type: creatorTypeSchema.optional(),
   user_id: z.string().optional(),
   default_rate: defaultRateInputSchema.nullable().optional(),
   default_rate_type: z.enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]]).nullable().optional(),

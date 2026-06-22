@@ -19,7 +19,10 @@ describe('creatorRepository', () => {
   let repository: CreatorRepository;
   const prismaCreatorDelegate = createPrismaCreatorDelegateMock();
   const txCreatorDelegate = {
+    create: jest.fn(),
+    findFirst: jest.fn(),
     findMany: jest.fn(),
+    update: jest.fn(),
   };
 
   beforeEach(() => {
@@ -81,5 +84,45 @@ describe('creatorRepository', () => {
         { aliasName: { contains: 'ann', mode: 'insensitive' } },
       ]),
     );
+  });
+
+  it('creates a creator with an explicit type', async () => {
+    txCreatorDelegate.create.mockResolvedValue({});
+
+    await repository.createCreator({
+      uid: 'creator_00000000000000000001',
+      name: 'Ann',
+      aliasName: 'Ann',
+      type: 'FLEXIBLE' as any,
+    });
+
+    expect(txCreatorDelegate.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ type: 'FLEXIBLE' }),
+    });
+  });
+
+  it('creates a creator without setting type when omitted', async () => {
+    txCreatorDelegate.create.mockResolvedValue({});
+
+    await repository.createCreator({
+      uid: 'creator_00000000000000000001',
+      name: 'Ann',
+      aliasName: 'Ann',
+    });
+
+    const data = txCreatorDelegate.create.mock.calls[0][0].data;
+    expect(data.type).toBeUndefined();
+  });
+
+  it('updates a creator type by uid', async () => {
+    txCreatorDelegate.findFirst.mockResolvedValue({ uid: 'creator_00000000000000000001' });
+    txCreatorDelegate.update.mockResolvedValue({});
+
+    await repository.updateByUid('creator_00000000000000000001', { type: 'OTHER' as any });
+
+    expect(txCreatorDelegate.update).toHaveBeenCalledWith({
+      where: { uid: 'creator_00000000000000000001', deletedAt: null },
+      data: { type: 'OTHER' },
+    });
   });
 });
