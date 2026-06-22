@@ -94,16 +94,16 @@ const statusColorMap: Record<string, 'default' | 'secondary' | 'destructive' | '
   confirmed: 'default',
   completed: 'outline',
   cancelled: 'destructive',
-  'cancelled pending resolution': 'secondary',
+  cancelled_pending_resolution: 'secondary',
 };
 
 const statusLabelMap: Record<string, string> = {
-  'cancelled pending resolution': 'Pending Resolution',
+  cancelled_pending_resolution: 'Pending Resolution',
 };
 
 export function ShowStatusBadge({ status }: { status: string }) {
-  const normalizedStatus = status?.toLowerCase().replace(/_/g, ' ') || 'unknown';
-  const displayLabel = statusLabelMap[normalizedStatus] || normalizedStatus;
+  const normalizedStatus = status?.toLowerCase() || 'unknown';
+  const displayLabel = statusLabelMap[normalizedStatus] || normalizedStatus.replace(/_/g, ' ');
 
   if (normalizedStatus === 'live') {
     return (
@@ -116,7 +116,7 @@ export function ShowStatusBadge({ status }: { status: string }) {
     );
   }
 
-  if (normalizedStatus === 'cancelled pending resolution') {
+  if (normalizedStatus === 'cancelled_pending_resolution') {
     return (
       <Badge
         variant="outline"
