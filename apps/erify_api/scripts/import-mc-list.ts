@@ -51,11 +51,13 @@ function parseArgs(): Args {
   return { apply, allowProduction, csvPath, authDbUrl, apiDbUrl };
 }
 
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+
 function ensureLocalDatabase(url: string | undefined, allowProd: boolean, label: string): void {
   if (!url) {
     throw new Error(`Database URL for ${label} is not defined`);
   }
-  const isLocal = /(localhost|127\.0\.0\.1|::1)/.test(url);
+  const isLocal = LOCAL_HOSTS.has(new URL(url).hostname);
   if (!isLocal && !allowProd) {
     throw new Error(
       `Database URL for ${label} ("${url}") does not look like a local database. Run with --allow-production to bypass this safety guard.`
@@ -281,6 +283,7 @@ async function main() {
             needsUpdate = true;
           }
           if (existingApiUser.deletedAt !== null) {
+            console.log(`  - Warning: API user ${email} is soft-deleted (deletedAt: ${existingApiUser.deletedAt.toISOString()}). Will revive it.`);
             updateData.deletedAt = null;
             needsUpdate = true;
           }
@@ -320,6 +323,10 @@ async function main() {
           console.log(`  - Duplicate email in CSV ("${email}"). Creator will have no user linkage.`);
         }
       }
+
+      // In dry-run mode apiUserId stays null for a not-yet-created user; track the planned
+      // linkage outcome separately so preview logging matches what --apply will actually do.
+      const willLinkUser = isUniqueEmail;
 
       // Handle Creator Match / Creation
       let matchedCreator: any = null;
@@ -371,8 +378,8 @@ async function main() {
         console.log(`    - Alias: "${aliasName}"`);
         console.log(`    - Type: ${creatorType}`);
         console.log(`    - Rate: ${defaultRate}`);
-        console.log(`    - User ID Link: ${apiUserId ? apiUserId.toString() : 'null'}`);
-        
+        console.log(`    - User ID Link: ${apiUserId ? apiUserId.toString() : willLinkUser ? '[pending - new user, dry-run]' : 'null'}`);
+
         if (apply) {
           await prisma.creator.update({
             where: { id: matchedCreator.id },
@@ -398,7 +405,7 @@ async function main() {
         console.log(`    - Alias: "${aliasName}"`);
         console.log(`    - Type: ${creatorType}`);
         console.log(`    - Rate: ${defaultRate}`);
-        console.log(`    - User ID Link: ${apiUserId ? apiUserId.toString() : 'null'}`);
+        console.log(`    - User ID Link: ${apiUserId ? apiUserId.toString() : willLinkUser ? '[pending - new user, dry-run]' : 'null'}`);
 
         if (apply) {
           await prisma.creator.create({
@@ -425,6 +432,7 @@ async function main() {
 
   } catch (error) {
     console.error('An error occurred during import execution:', error);
+    process.exitCode = 1;
   } finally {
     await prisma.$disconnect();
     await apiPool.end();
