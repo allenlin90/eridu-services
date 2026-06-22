@@ -167,7 +167,7 @@ describe('addStudioCreatorDialog', () => {
     );
   });
 
-  it('does not render creator name or alias fields', () => {
+  it('does not render creator name or alias fields while searching existing creators', () => {
     render(
       <AddStudioCreatorDialog
         studioId="std_1"
@@ -180,7 +180,7 @@ describe('addStudioCreatorDialog', () => {
     expect(screen.queryByLabelText('Alias')).not.toBeInTheDocument();
   });
 
-  it('does not render create CTA before catalog search', () => {
+  it('renders create CTA before catalog search', () => {
     render(
       <AddStudioCreatorDialog
         studioId="std_1"
@@ -189,7 +189,7 @@ describe('addStudioCreatorDialog', () => {
       />,
     );
 
-    expect(screen.queryByRole('button', { name: 'Create new creator and add to this studio' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create new creator and add to this studio' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back to search' })).not.toBeInTheDocument();
   });
 
@@ -353,8 +353,8 @@ describe('addStudioCreatorDialog', () => {
       />,
     );
 
-    await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'Test Creator');
     await user.click(screen.getByRole('button', { name: 'Create new creator and add to this studio' }));
+    await user.type(screen.getByLabelText('Name'), 'Test Creator');
     await user.type(screen.getByLabelText('Alias'), 'TC');
     await user.click(screen.getByRole('button', { name: 'Create creator and add to studio' }));
 
@@ -362,6 +362,7 @@ describe('addStudioCreatorDialog', () => {
       creator: {
         name: 'Test Creator',
         alias_name: 'TC',
+        type: 'STANDARD',
         user_id: undefined,
         metadata: undefined,
       },

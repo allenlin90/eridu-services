@@ -42,7 +42,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 - [x] List endpoint returns creator identity, active status, `default_rate`, `default_rate_type`, `default_commission_rate`, and `version`.
 - [x] Admin, Manager, and Talent Manager can add a creator from the system catalog; unknown creators return `CREATOR_NOT_FOUND`.
 - [x] Admin, Manager, and Talent Manager can reactivate an inactive creator without creating a duplicate roster row.
-- [x] Admin, Manager, and Talent Manager can create a brand-new creator from the same search-first Add Creator flow after checking the catalog.
+- [x] Admin, Manager, and Talent Manager can create a brand-new creator from the same Add Creator dialog with name, alias, creator type, optional user link, and studio default compensation fields.
 - [x] Active rostered creators are filtered out of Add Creator catalog results; inactive roster rows remain available for reactivation.
 - [x] Admin, Manager, and Talent Manager can update default compensation fields with non-negative rate validation and cross-field compensation rules.
 - [x] Admin, Manager, and Talent Manager can activate or deactivate a creator from the roster surface.

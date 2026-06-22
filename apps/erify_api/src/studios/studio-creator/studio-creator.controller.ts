@@ -158,6 +158,7 @@ export class StudioCreatorController extends BaseStudioController {
       creator: {
         name: dto.creator.name,
         aliasName: dto.creator.aliasName,
+        type: dto.creator.type,
         userId: dto.creator.userId,
         metadata: dto.creator.metadata,
       },

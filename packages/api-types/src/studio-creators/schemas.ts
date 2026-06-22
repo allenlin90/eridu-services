@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
-import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
+import {
+  CREATOR_COMPENSATION_TYPE,
+  CREATOR_TYPE,
+} from '../creators/schemas.js';
 import { createPaginatedResponseSchema } from '../pagination/schemas.js';
 
 export const STUDIO_CREATOR_ROSTER_ERROR = {
@@ -35,6 +38,7 @@ const showUidSchema = z.string().startsWith(`${UID_PREFIXES.SHOW}_`);
 const creatorCompensationTypeSchema = z.enum(
   Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]],
 );
+const creatorTypeSchema = z.enum(Object.values(CREATOR_TYPE) as [string, ...string[]]);
 
 /**
  * Backing columns are `Decimal(10, 2)` (see `apps/erify_api/prisma/schema.prisma`):
@@ -248,6 +252,7 @@ export const onboardCreatorInputSchema = z.object({
   creator: z.object({
     name: z.string().trim().min(1, 'name is required'),
     alias_name: z.string().trim().min(1, 'alias_name is required'),
+    type: creatorTypeSchema.optional(),
     user_id: userUidSchema.nullable().optional(),
     metadata: z.record(z.string(), z.any()).optional(),
   }),

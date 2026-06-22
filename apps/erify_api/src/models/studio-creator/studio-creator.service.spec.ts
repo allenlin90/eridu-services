@@ -289,6 +289,7 @@ describe('studioCreatorService', () => {
       creator: {
         name: 'Alice Example',
         aliasName: 'Alice',
+        type: 'FLEXIBLE',
         userId: 'user_1',
         metadata: { source: 'onboard' },
       },
@@ -304,6 +305,7 @@ describe('studioCreatorService', () => {
     expect(creatorService.createCreator).toHaveBeenCalledWith({
       name: 'Alice Example',
       aliasName: 'Alice',
+      type: 'FLEXIBLE',
       userId: 'user_1',
       metadata: { source: 'onboard' },
     });

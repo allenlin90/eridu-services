@@ -160,6 +160,7 @@ export class StudioCreatorService extends BaseModelService {
     const creator = await this.creatorService.createCreator({
       name: payload.creator.name,
       aliasName: payload.creator.aliasName,
+      ...(payload.creator.type !== undefined && { type: payload.creator.type }),
       userId,
       metadata: payload.creator.metadata as Record<string, unknown> | undefined,
     });

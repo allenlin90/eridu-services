@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type { CreatorApiResponse } from '@eridu/api-types/creators';
 import {
   createCreatorInputSchema,
+  CREATOR_COMPENSATION_TYPE,
   CREATOR_TYPE,
   updateCreatorInputSchema,
 } from '@eridu/api-types/creators';
@@ -14,6 +15,8 @@ import {
   SelectValue,
 } from '@eridu/ui';
 
+import { CreatorTypeSelect } from './creator-type-select';
+
 import {
   AdminFormDialog,
   DeleteConfirmDialog,
@@ -23,24 +26,24 @@ type Creator = CreatorApiResponse;
 type CreatorFormData = z.infer<typeof createCreatorInputSchema>;
 type UpdateCreatorFormData = z.infer<typeof updateCreatorInputSchema>;
 
-function CreatorTypeSelect({
+function CreatorCompensationTypeSelect({
   value,
   onChange,
-  isLoading,
+  disabled,
 }: {
-  value: string | undefined;
+  value: string | null | undefined;
   onChange: (value: string) => void;
-  isLoading: boolean;
+  disabled: boolean;
 }) {
   return (
-    <Select value={value ?? CREATOR_TYPE.STANDARD} onValueChange={onChange} disabled={isLoading}>
+    <Select value={value ?? undefined} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger>
-        <SelectValue placeholder="Select type" />
+        <SelectValue placeholder="Select compensation type" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={CREATOR_TYPE.STANDARD}>Standard</SelectItem>
-        <SelectItem value={CREATOR_TYPE.FLEXIBLE}>Flexible</SelectItem>
-        <SelectItem value={CREATOR_TYPE.OTHER}>Other</SelectItem>
+        <SelectItem value={CREATOR_COMPENSATION_TYPE.FIXED}>Fixed</SelectItem>
+        <SelectItem value={CREATOR_COMPENSATION_TYPE.COMMISSION}>Commission</SelectItem>
+        <SelectItem value={CREATOR_COMPENSATION_TYPE.HYBRID}>Hybrid</SelectItem>
       </SelectContent>
     </Select>
   );
@@ -66,6 +69,9 @@ export function CreatorCreateDialog({
       title="Create Creator"
       description="Add a new creator to the system"
       schema={createCreatorInputSchema}
+      defaultValues={{
+        type: CREATOR_TYPE.STANDARD,
+      }}
       onSubmit={onSubmit}
       isLoading={isLoading}
       fields={[
@@ -89,11 +95,34 @@ export function CreatorCreateDialog({
           label: 'Type',
           render: (field) => (
             <CreatorTypeSelect
-              value={field.value as string | undefined}
+              value={field.value}
               onChange={field.onChange}
-              isLoading={isLoading}
+              disabled={isLoading}
             />
           ),
+        },
+        {
+          name: 'default_rate',
+          label: 'Default Rate',
+          placeholder: '0.00',
+          type: 'number',
+        },
+        {
+          name: 'default_rate_type',
+          label: 'Compensation Type',
+          render: (field) => (
+            <CreatorCompensationTypeSelect
+              value={field.value}
+              onChange={field.onChange}
+              disabled={isLoading}
+            />
+          ),
+        },
+        {
+          name: 'default_commission_rate',
+          label: 'Default Commission Rate (%)',
+          placeholder: '0.00',
+          type: 'number',
         },
       ]}
     />
@@ -128,6 +157,9 @@ export function CreatorUpdateDialog({
               user_id: creator.user_id || undefined,
               is_banned: creator.is_banned,
               type: creator.type,
+              default_rate: creator.default_rate ?? null,
+              default_rate_type: creator.default_rate_type ?? null,
+              default_commission_rate: creator.default_commission_rate ?? null,
             }
           : undefined
       }
@@ -192,11 +224,34 @@ export function CreatorUpdateDialog({
           label: 'Type',
           render: (field) => (
             <CreatorTypeSelect
-              value={field.value as string | undefined}
+              value={field.value}
               onChange={field.onChange}
-              isLoading={isLoading}
+              disabled={isLoading}
             />
           ),
+        },
+        {
+          name: 'default_rate',
+          label: 'Default Rate',
+          placeholder: '0.00',
+          type: 'number',
+        },
+        {
+          name: 'default_rate_type',
+          label: 'Compensation Type',
+          render: (field) => (
+            <CreatorCompensationTypeSelect
+              value={field.value}
+              onChange={field.onChange}
+              disabled={isLoading}
+            />
+          ),
+        },
+        {
+          name: 'default_commission_rate',
+          label: 'Default Commission Rate (%)',
+          placeholder: '0.00',
+          type: 'number',
         },
       ]}
     />

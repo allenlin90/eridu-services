@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Technical reference for the shipped studio-owned creator intake flow, including the search-first roster dialog, the studio-safe user-link lookup, and the roster-enforcement guidance shown from creator-mapping surfaces.
+Technical reference for the shipped studio-owned creator intake flow, including the roster dialog's search/add/create paths, the studio-safe user-link lookup, and the roster-enforcement guidance shown from creator-mapping surfaces.
 
 ## Route And Access
 
@@ -46,7 +46,7 @@ Access rules:
 ### Search-first entry
 
 - the roster add flow always starts from the single **Add Creator** action in search mode
-- catalog search remains the first step before a create path is shown
+- catalog search remains the default first view, but **Create new creator and add to this studio** is available immediately for confirmed new identities
 - the catalog query excludes active rostered creators so existing active roster rows do not appear in Add Creator results
 - selectable catalog results are labeled by outcome: add an existing creator or reactivate an inactive creator
 - the current search term is preserved when switching between search and create modes
@@ -56,6 +56,7 @@ Access rules:
 - create mode collects:
   - `name`
   - `alias`
+  - creator `type` (`STANDARD`, `FLEXIBLE`, or `OTHER`)
   - optional `user_id`
   - compensation defaults
 - compensation validation stays aligned with the roster defaults rules already used elsewhere in the roster feature

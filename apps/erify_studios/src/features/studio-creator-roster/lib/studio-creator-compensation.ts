@@ -1,4 +1,8 @@
-import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
+import {
+  CREATOR_COMPENSATION_TYPE,
+  CREATOR_TYPE,
+  type CreatorType,
+} from '@eridu/api-types/creators';
 import type {
   CreateStudioCreatorRosterInput,
   OnboardCreatorInput,
@@ -127,6 +131,7 @@ export function buildUpdateStudioCreatorRosterPayload(params: {
 export function buildOnboardStudioCreatorPayload(params: {
   name: string;
   aliasName: string;
+  type?: CreatorType;
   userId?: string;
   creatorMetadata?: Record<string, unknown>;
   defaultRate: string;
@@ -152,6 +157,7 @@ export function buildOnboardStudioCreatorPayload(params: {
     creator: {
       name,
       alias_name: aliasName,
+      type: params.type ?? CREATOR_TYPE.STANDARD,
       user_id: params.userId?.trim() || undefined,
       metadata: params.creatorMetadata,
     },

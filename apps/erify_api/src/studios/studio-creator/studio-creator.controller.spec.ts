@@ -374,6 +374,7 @@ describe('studioCreatorController', () => {
       creator: {
         name: 'Alice Example',
         aliasName: 'Alice',
+        type: 'FLEXIBLE',
         userId: 'user_00000000000000000001',
         metadata: { source: 'onboard' },
       },
@@ -412,6 +413,7 @@ describe('studioCreatorController', () => {
       creator: {
         name: 'Alice Example',
         aliasName: 'Alice',
+        type: 'FLEXIBLE',
         userId: 'user_00000000000000000001',
         metadata: { source: 'onboard' },
       },

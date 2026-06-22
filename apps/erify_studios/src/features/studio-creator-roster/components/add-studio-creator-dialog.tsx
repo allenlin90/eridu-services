@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  CREATOR_TYPE,
+  type CreatorType,
+} from '@eridu/api-types/creators';
 import { STUDIO_CREATOR_ROSTER_STATE } from '@eridu/api-types/studio-creators';
 import {
   AsyncCombobox,
@@ -24,6 +28,7 @@ import {
 import { CreatorCompensationFields } from './creator-compensation-fields';
 
 import { ResponsiveDialog } from '@/components/responsive-dialog';
+import { CreatorTypeSelect } from '@/features/creators/components/creator-type-select';
 import { useCreatorCatalogQuery } from '@/features/studio-show-creators/api/get-creator-catalog';
 
 type AddStudioCreatorDialogProps = {
@@ -51,6 +56,7 @@ export function AddStudioCreatorDialog({
   const [search, setSearch] = useState('');
   const [creatorName, setCreatorName] = useState('');
   const [creatorAliasName, setCreatorAliasName] = useState('');
+  const [creatorType, setCreatorType] = useState<CreatorType>(CREATOR_TYPE.STANDARD);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [userSearch, setUserSearch] = useState('');
   const [defaultRate, setDefaultRate] = useState('');
@@ -87,7 +93,6 @@ export function AddStudioCreatorDialog({
       ),
     [creators],
   );
-  const hasSearchedCatalog = search.trim().length > 0;
   const isPending = addMutation.isPending || onboardMutation.isPending;
 
   const creatorOptions = useMemo(
@@ -117,6 +122,7 @@ export function AddStudioCreatorDialog({
     setSearch('');
     setCreatorName('');
     setCreatorAliasName('');
+    setCreatorType(CREATOR_TYPE.STANDARD);
     setSelectedUserId('');
     setUserSearch('');
     setDefaultRate('');
@@ -184,6 +190,7 @@ export function AddStudioCreatorDialog({
       payload = buildOnboardStudioCreatorPayload({
         name: creatorName,
         aliasName: creatorAliasName,
+        type: creatorType,
         userId: selectedUserId || undefined,
         defaultRate,
         defaultRateType,
@@ -261,17 +268,15 @@ export function AddStudioCreatorDialog({
                 )}
               </div>
 
-              {hasSearchedCatalog && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-center"
-                  onClick={handleStartCreate}
-                  disabled={isPending}
-                >
-                  Create new creator and add to this studio
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-center"
+                onClick={handleStartCreate}
+                disabled={isPending}
+              >
+                Create new creator and add to this studio
+              </Button>
 
               <CreatorCompensationFields
                 defaultRate={defaultRate}
@@ -312,6 +317,14 @@ export function AddStudioCreatorDialog({
                   placeholder="Display or stage name"
                   value={creatorAliasName}
                   onChange={(event) => setCreatorAliasName(event.target.value)}
+                  disabled={isPending}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="onboard-creator-type">Type</Label>
+                <CreatorTypeSelect
+                  value={creatorType}
+                  onChange={setCreatorType}
                   disabled={isPending}
                 />
               </div>

@@ -9,6 +9,7 @@ describe('onboardCreatorInputSchema', () => {
       creator: {
         name: 'Alice Example',
         alias_name: 'Alice',
+        type: 'FLEXIBLE',
         user_id: 'user_00000000000000000001',
         metadata: {},
       },
@@ -21,6 +22,22 @@ describe('onboardCreatorInputSchema', () => {
     });
 
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.creator.type).toBe('FLEXIBLE');
+    }
+  });
+
+  it('rejects invalid creator types', () => {
+    const result = onboardCreatorInputSchema.safeParse({
+      creator: {
+        name: 'Alice Example',
+        alias_name: 'Alice',
+        type: 'BOGUS',
+      },
+      roster: {},
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it('rejects invalid fixed compensation combinations', () => {
