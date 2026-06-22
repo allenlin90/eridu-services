@@ -170,7 +170,7 @@ describe('addStudioCreatorDialog', () => {
       />,
     );
 
-    expect(screen.queryByRole('button', { name: 'Create and onboard new creator' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create new creator and add to this studio' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back to search' })).not.toBeInTheDocument();
   });
 
@@ -187,7 +187,7 @@ describe('addStudioCreatorDialog', () => {
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'new creator');
 
-    expect(screen.getByRole('button', { name: 'Create and onboard new creator' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create new creator and add to this studio' })).toBeInTheDocument();
   });
 
   it('switches to create mode from catalog search and preserves the searched name', async () => {
@@ -202,9 +202,10 @@ describe('addStudioCreatorDialog', () => {
     );
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'New Creator');
-    await user.click(screen.getByRole('button', { name: 'Create and onboard new creator' }));
+    await user.click(screen.getByRole('button', { name: 'Create new creator and add to this studio' }));
 
     expect(screen.getByLabelText('Name')).toHaveValue('New Creator');
+    expect(screen.getByText('Create a global creator identity and add it to this studio roster.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to search' })).toBeInTheDocument();
   });
 
@@ -243,7 +244,7 @@ describe('addStudioCreatorDialog', () => {
     expect(screen.getByText('Alice (Ali)')).toBeInTheDocument();
 
     const creatorOptions = screen.getByTestId('creator-options');
-    expect(within(creatorOptions).getByText('Bob (B)')).toBeInTheDocument();
+    expect(within(creatorOptions).getByText('Add existing creator: Bob (B)')).toBeInTheDocument();
     expect(within(creatorOptions).queryByText('Alice (Ali)')).not.toBeInTheDocument();
   });
 
@@ -271,7 +272,7 @@ describe('addStudioCreatorDialog', () => {
     );
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'carol');
-    await user.click(screen.getByRole('button', { name: 'Carol • Reactivate' }));
+    await user.click(screen.getByRole('button', { name: 'Reactivate inactive creator: Carol' }));
 
     expect(
       screen.getByText('This creator already has an inactive studio roster row and will be reactivated.'),
@@ -309,8 +310,8 @@ describe('addStudioCreatorDialog', () => {
     );
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'bob');
-    await user.click(screen.getByRole('button', { name: 'Bob (B)' }));
-    await user.click(screen.getByRole('button', { name: 'Add Creator' }));
+    await user.click(screen.getByRole('button', { name: 'Add existing creator: Bob (B)' }));
+    await user.click(screen.getByRole('button', { name: 'Add selected creator to roster' }));
 
     expect(mutateAsync).toHaveBeenCalledWith({ creator_id: 'creator_2' });
   });
@@ -334,9 +335,9 @@ describe('addStudioCreatorDialog', () => {
     );
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'Test Creator');
-    await user.click(screen.getByRole('button', { name: 'Create and onboard new creator' }));
+    await user.click(screen.getByRole('button', { name: 'Create new creator and add to this studio' }));
     await user.type(screen.getByLabelText('Alias'), 'TC');
-    await user.click(screen.getByRole('button', { name: 'Create & Onboard' }));
+    await user.click(screen.getByRole('button', { name: 'Create creator and add to studio' }));
 
     expect(mutateAsync).toHaveBeenCalledWith({
       creator: {

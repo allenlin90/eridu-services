@@ -38,6 +38,10 @@ const ONBOARD_CREATOR_FORM_ID = 'studio-creator-roster-onboard-form';
 
 type DialogMode = 'search' | 'create';
 
+function formatCreatorOptionName(creator: { name: string; alias_name?: string | null }) {
+  return creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name;
+}
+
 export function AddStudioCreatorDialog({
   studioId,
   open,
@@ -95,10 +99,8 @@ export function AddStudioCreatorDialog({
       actionableCreators.map((creator) => ({
         value: creator.id,
         label: creator.roster_state === STUDIO_CREATOR_ROSTER_STATE.INACTIVE
-          ? `${creator.name}${creator.alias_name ? ` (${creator.alias_name})` : ''} • Reactivate`
-          : creator.alias_name
-            ? `${creator.name} (${creator.alias_name})`
-            : creator.name,
+          ? `Reactivate inactive creator: ${formatCreatorOptionName(creator)}`
+          : `Add existing creator: ${formatCreatorOptionName(creator)}`,
       })),
     [actionableCreators],
   );
@@ -225,7 +227,7 @@ export function AddStudioCreatorDialog({
         form={mode === 'search' ? ADD_CREATOR_FORM_ID : ONBOARD_CREATOR_FORM_ID}
         disabled={submitDisabled}
       >
-        {isPending ? 'Saving...' : mode === 'search' ? 'Add Creator' : 'Create & Onboard'}
+        {isPending ? 'Saving...' : mode === 'search' ? 'Add selected creator to roster' : 'Create creator and add to studio'}
       </Button>
     </>
   );
@@ -237,7 +239,7 @@ export function AddStudioCreatorDialog({
       title={mode === 'search' ? 'Add Creator to Roster' : 'Create New Creator'}
       description={mode === 'search'
         ? 'Search first to reuse an existing creator identity when possible.'
-        : 'Create a new shared creator identity only after checking the catalog.'}
+        : 'Create a global creator identity and add it to this studio roster.'}
       contentClassName="sm:max-w-[480px]"
       footer={footer}
     >
@@ -269,7 +271,7 @@ export function AddStudioCreatorDialog({
                   <ul className="mt-1 space-y-1">
                     {activeCreators.slice(0, MAX_ACTIVE_CREATORS_DISPLAY).map((creator) => (
                       <li key={creator.id} className="text-xs">
-                        {creator.alias_name ? `${creator.name} (${creator.alias_name})` : creator.name}
+                        {formatCreatorOptionName(creator)}
                       </li>
                     ))}
                     {activeCreators.length > MAX_ACTIVE_CREATORS_DISPLAY && (
@@ -292,7 +294,7 @@ export function AddStudioCreatorDialog({
                   onClick={handleStartCreate}
                   disabled={isPending}
                 >
-                  Create and onboard new creator
+                  Create new creator and add to this studio
                 </Button>
               )}
 

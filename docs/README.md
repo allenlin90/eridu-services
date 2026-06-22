@@ -45,4 +45,4 @@ App-local docs (`apps/*/docs/`) own **shipped behavior** and **technical design*
 
 - Phase 1–3: ✅ Closed. Summarized in [Phase 3](./roadmap/PHASE_3.md).
 - Phase 4: ✅ Complete. Wave 1 (rosters, onboarding, show management, docs platform), Wave 2 (cost model, compensation line items, task-input fact binding ingestion, performance analytics, and creator-rate wire-type migrations), PR 19 (Costs Dashboard), PR 20 (Client Mechanics), and PRs 21–22 (performance analytics + dashboard enhancements) are fully shipped. See [Phase 4](./roadmap/PHASE_4.md).
-- Phase 5: 🔲 Planned, next up. Show Production Lifecycle Gap Closure — lifecycle alignment and state-independent operational fixes first; the state-machine workstream is blocked until creator roster intake and creator mapping are complete as operational flows. See [Phase 5](./roadmap/PHASE_5.md).
+- Phase 5: 🚧 In progress. Show Production Lifecycle Gap Closure — lifecycle alignment and state-independent operational fixes first; creator roster intake is clarified, and state-machine work remains blocked until readiness and completion review contracts are stable. See [Phase 5](./roadmap/PHASE_5.md).

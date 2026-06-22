@@ -28,11 +28,12 @@ Additionally, the assignment write path only blocked *inactive* roster rows — 
 - Optional `user_id` links a creator to a platform user account; looked up through a studio-safe endpoint, not `/admin/users`
 - `GET /studios/:studioId/creators/onboarding-users?search=&limit=` — studio-guarded user search that excludes soft-deleted users and users linked to active creators, while keeping users linked only to soft-deleted creators eligible
 
-### Search-first onboarding dialog
+### Search-first Add Creator intake dialog
 
 - The **Add Creator** dialog on `/studios/$studioId/creators` now has two modes: `search` (default) and `create`
 - Search mode queries the existing creator catalog; active matches are shown as non-actionable helpers to prevent duplicates
-- **Create and onboard new creator** becomes available after any catalog search — not only on zero results
+- Selectable catalog matches are labeled as **Add existing creator** or **Reactivate inactive creator** so admins can see the outcome before submitting
+- **Create new creator and add to this studio** becomes available after any catalog search — not only on zero results
 - Create mode collects name, alias, optional user link, and studio compensation defaults
 - Switching back to search preserves the current search term
 
@@ -61,7 +62,7 @@ flowchart TD
     D --> E{Roster state}
     E -- NONE --> F[Add creator to studio roster]
     E -- INACTIVE --> G[Reactivate existing StudioCreator row]
-    C -- No or not the right identity --> H[Create and onboard new creator]
+    C -- No or not the right identity --> H[Create new creator and add to this studio]
     H --> I[Enter name, alias, optional user link, and defaults]
     I --> J[Create global Creator plus active StudioCreator row]
     F --> K[Creator is active in studio roster]
@@ -84,6 +85,7 @@ flowchart TD
 - [x] Studio admin can onboard a brand-new creator from `/studios/$studioId/creators` without using `/system/*`.
 - [x] Onboarding flow always begins with catalog search before showing create-new.
 - [x] Create-new path remains available after catalog search even when returned matches are visible but not suitable.
+- [x] Existing and inactive catalog matches are labeled with the exact add/reactivate outcome before submit.
 - [x] Creating a new creator from the studio flow creates both the global `Creator` and the active `StudioCreator` row atomically.
 - [x] Existing catalog creators can still be added or reactivated from the same surface.
 - [x] Optional user linking is completed from the studio onboarding flow without depending on `/admin/users`.

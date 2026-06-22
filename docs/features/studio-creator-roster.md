@@ -22,7 +22,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 - Canonical roster API cut over to `GET /studios/:studioId/creators` with matching `POST` and `PATCH` write routes.
 - Studio roster page at `/studios/$studioId/creators` under the **People** sidebar group.
 - Read access for `ADMIN`, `MANAGER`, and `TALENT_MANAGER`; write actions restricted to `ADMIN`.
-- Catalog-based add flow with roster-state awareness: new creators can be added, inactive entries can be reactivated, and active duplicates are rejected.
+- Catalog-based **Add Creator** intake with roster-state awareness: existing global creators can be added, inactive entries can be reactivated, brand-new creators can be created into the global catalog plus studio roster, and active duplicates are shown as non-actionable matches.
 - Studio-scoped default compensation management on `StudioCreator` with non-negative `default_rate`, compensation-type validation, and optimistic concurrency via `version`.
 - Active/inactive roster management with inactive creators excluded from creator-availability discovery and rejected by bulk assignment writes.
 - Compatibility-preserving creator catalog contract with both `is_rostered` and `roster_state`.
@@ -42,6 +42,7 @@ Studio operators could map creators to shows, but they could not maintain the st
 - [x] List endpoint returns creator identity, active status, `default_rate`, `default_rate_type`, `default_commission_rate`, and `version`.
 - [x] Admin can add a creator from the system catalog; unknown creators return `CREATOR_NOT_FOUND`.
 - [x] Admin can reactivate an inactive creator without creating a duplicate roster row.
+- [x] Admin can create a brand-new creator from the same search-first Add Creator flow after checking the catalog.
 - [x] Admin can update default compensation fields with non-negative rate validation and cross-field compensation rules.
 - [x] Admin can activate or deactivate a creator from the roster surface.
 - [x] Inactive roster creators are excluded from availability discovery and rejected by bulk assignment writes.

@@ -1,6 +1,6 @@
 # Phase 5: Show Production Lifecycle Gap Closure
 
-> **Status**: 🔲 Planned — lifecycle surface scope reconciled; state-independent operational fixes first
+> **Status**: 🚧 In progress — lifecycle surface scope reconciled; state-independent operational fixes first
 > **Planning stance**: Fill operational gaps in the existing show production lifecycle before expanding into larger new domains. Operational record export waits until import, correction, issue ownership, and post-production completion review records are stable. The lifecycle model, entity map, and state-gate detail live in the [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill.
 
 **Quick links**
@@ -23,7 +23,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | #   | Workstream                                                                                                                                                                         | Depends on | Status    |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------- |
 | 1   | [Current feature lifecycle alignment](#1-current-feature-lifecycle-alignment) — scope gate that locks the Phase 5 surface decisions and refined workstream list                    | —          | ✅ Done       |
-| 2   | [Creator roster onboarding and intake clarification](#2-creator-roster-onboarding-and-intake-clarification) — clarify `/creators` intake for add, reactivate, and create-and-onboard | —          | 🚧 In progress |
+| 2   | [Creator roster onboarding and intake clarification](#2-creator-roster-onboarding-and-intake-clarification) — clarify `/creators` intake for add, reactivate, and create-new-to-roster | —          | ✅ Done       |
 | 3   | [Show status vocabulary alignment](#3-show-status-vocabulary-alignment) — align lifecycle status records, seed data, docs, and role vocabulary                                     | —          | 🔲 Planned    |
 | 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation into resolution workflow from non-draft, non-pending shows                   | 3          | 🔲 Planned    |
 | 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | 🔲 Planned    |
@@ -81,7 +81,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | Surface                                              | Current implementation signal                                                                                                                                      | Phase 5 call                                                                                                                                                                   |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Show planning & task setup (`/shows`, `/task-setup`) | Studio show CRUD, task generation/assignment, needs-attention filtering, and current-view show export exist.                                                       | Extend existing: add status vocabulary alignment, advisory planning readiness, schedule-change task reconciliation, and local export columns in place.                         |
-| Creator roster (`/creators`)                         | Studio roster management, reactivation, default compensation, and brand-new creator onboarding exist, but the intake path needs clearer operational wording and sequence. | Extend existing: preserve create-and-onboard-to-studio-scope, clarify add/reactivate/create choices, and keep duplicate prevention explicit before readiness depends on creator assignment. |
+| Creator roster (`/creators`)                         | Studio roster management, reactivation, default compensation, and brand-new creator onboarding exist, but the intake path needs clearer operational wording and sequence. | Extend existing: preserve brand-new creator creation into studio roster scope, clarify add/reactivate/create choices, and keep duplicate prevention explicit before readiness depends on creator assignment. |
 | Creator mapping (`/creator-mapping`)                 | Bulk creator assignment, roster gating, per-show compensation context, and creator-mapping export exist.                                                           | Extend existing: keep creator assignment as its own operational flow and readiness input; do not create a parallel mapping surface. Creator mapping relies on the roster intake path being understandable. |
 | Task review (`/task-review`)                         | Submitted task approval and exception surfacing write structured facts through extraction.                                                                         | Extend existing: keep approval/rejection review here; connect anomalies into issue ownership instead of creating a second task-review workflow.                                |
 | Show run review (`/show-run-review`)                 | Daily exception review, active platform violations, attendance gaps, phase checks, and per-tab CSV exports exist.                                                  | Extend existing: add import/correction/issue context to review tabs as those records land.                                                                                     |
@@ -100,9 +100,14 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 
 **Source**: [`studio-creator-onboarding.md`](../features/studio-creator-onboarding.md), [`studio-creator-roster.md`](../features/studio-creator-roster.md), [`creator-mapping.md`](../features/creator-mapping.md)
 
-Clarify the `/studios/:studioId/creators` intake workflow so studio admins can add an existing global creator to the studio roster, reactivate an inactive roster row, or create and onboard a brand-new creator into studio scope without ambiguity. The workstream must preserve the create-and-onboard capability; it should refine entry labels, copy, button hierarchy, and duplicate-prevention sequence so the UI reads as an operational intake flow rather than two unexplained backend operations. Creator mapping continues to assign rostered creators to shows and should direct missing-roster cases back to this intake flow.
+**Completion result**: PR [#225](https://github.com/allenlin90/eridu-services/pull/225) keeps `/studios/:studioId/creators` as the studio-owned creator intake surface and makes **Add Creator** the single entry point. The dialog remains search-first, then exposes explicit outcomes: add an existing global creator to the studio roster, reactivate an inactive roster row, or create a new global creator and add it to this studio roster.
 
-**Discussion boundary**: decide whether create-and-onboard remains a mode inside a search-first add flow, a clearly labeled sibling action, or a short guided stepper. Any shape is acceptable only if admins can intentionally create a new global creator plus active `StudioCreator` row, and the UI still encourages checking the existing catalog before creating a duplicate identity.
+**Acceptance closure**:
+
+- Brand-new creator onboarding is preserved through the create mode; the flow still creates a global `Creator` plus an active `StudioCreator` row.
+- Existing creator and inactive roster outcomes are labeled directly in the picker, so admins can distinguish add vs. reactivate before submitting.
+- The create-new action is available only after catalog search, preserving duplicate-prevention intent without hiding the create path.
+- Creator mapping remains the show-assignment surface and continues to direct missing-roster cases back to `/creators`.
 
 ### 3. Show status vocabulary alignment
 

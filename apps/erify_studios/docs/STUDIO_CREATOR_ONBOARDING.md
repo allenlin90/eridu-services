@@ -8,18 +8,18 @@
 
 ## Purpose
 
-Technical reference for the shipped studio-owned creator onboarding flow, including the search-first roster dialog, the studio-safe user-link lookup, and the roster-enforcement guidance shown from creator-mapping surfaces.
+Technical reference for the shipped studio-owned creator intake flow, including the search-first roster dialog, the studio-safe user-link lookup, and the roster-enforcement guidance shown from creator-mapping surfaces.
 
 ## Route And Access
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/studios/$studioId/creators` | Creator roster page with onboarding dialog | `ADMIN` write, `MANAGER` + `TALENT_MANAGER` read |
+| `/studios/$studioId/creators` | Creator roster page with Add Creator intake dialog | `ADMIN` write, `MANAGER` + `TALENT_MANAGER` read |
 | `/studios/$studioId/creator-mapping` | Assignment guidance and roster-error recovery path | `ADMIN`, `MANAGER`, `TALENT_MANAGER` |
 
 Access rules:
 
-- only `ADMIN` can open the create/onboard action from the roster page
+- only `ADMIN` can open the Add Creator intake action from the roster page
 - managers and talent managers do not get write access, but they do see actionable roster guidance in creator-mapping flows
 - route access stays on the shared `creatorRoster` and `creatorMapping` policy keys
 
@@ -45,12 +45,13 @@ Access rules:
 
 ### Search-first entry
 
-- the roster add flow always starts in search mode
+- the roster add flow always starts from the single **Add Creator** action in search mode
 - catalog search remains the first step before a create path is shown
+- selectable catalog results are labeled by outcome: add an existing creator or reactivate an inactive creator
 - active roster matches are rendered as non-actionable helpers rather than selectable options
 - the current search term is preserved when switching between search and create modes
 
-### Create-and-onboard mode
+### Create new creator and add to studio mode
 
 - create mode collects:
   - `name`
