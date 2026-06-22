@@ -148,7 +148,7 @@ describe('addStudioCreatorDialog', () => {
     expect(screen.getByText('Search first to reuse an existing creator identity when possible.')).toBeInTheDocument();
   });
 
-  it('queries the catalog with active rostered creators excluded', () => {
+  it('queries the catalog including rostered creators', () => {
     render(
       <AddStudioCreatorDialog
         studioId="std_1"
@@ -161,7 +161,6 @@ describe('addStudioCreatorDialog', () => {
       'std_1',
       expect.objectContaining({
         include_rostered: true,
-        exclude_active_rostered: true,
       }),
       true,
     );
@@ -228,7 +227,7 @@ describe('addStudioCreatorDialog', () => {
     expect(screen.getByRole('button', { name: 'Back to search' })).toBeInTheDocument();
   });
 
-  it('filters active roster matches out of add creator results', async () => {
+  it('shows active roster matches as non-actionable guidance instead of dropping them', async () => {
     const user = userEvent.setup();
 
     mockUseCreatorCatalogQuery.mockReturnValue({
@@ -259,12 +258,36 @@ describe('addStudioCreatorDialog', () => {
 
     await user.type(screen.getByPlaceholderText('Search creators by name or alias...'), 'a');
 
-    expect(screen.queryByText('Already active in this studio')).not.toBeInTheDocument();
-    expect(screen.queryByText('Alice (Ali)')).not.toBeInTheDocument();
+    expect(screen.getByText('Already active in this studio')).toBeInTheDocument();
+    expect(screen.getByText('Alice (Ali)')).toBeInTheDocument();
 
     const creatorOptions = screen.getByTestId('creator-options');
     expect(within(creatorOptions).getByText('Add existing creator: Bob (B)')).toBeInTheDocument();
     expect(within(creatorOptions).queryByText('Alice (Ali)')).not.toBeInTheDocument();
+  });
+
+  it('does not show the active-roster guidance before a search term is entered', () => {
+    mockUseCreatorCatalogQuery.mockReturnValue({
+      data: [
+        {
+          id: 'creator_1',
+          name: 'Alice',
+          alias_name: 'Ali',
+          roster_state: STUDIO_CREATOR_ROSTER_STATE.ACTIVE,
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(
+      <AddStudioCreatorDialog
+        studioId="std_1"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Already active in this studio')).not.toBeInTheDocument();
   });
 
   it('shows reactivation hint when an inactive creator is selected', async () => {
