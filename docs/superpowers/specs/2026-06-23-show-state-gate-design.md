@@ -37,7 +37,7 @@ No new Prisma model. Reuses `Task` + `TaskTarget`.
   { "gate_kind": "show_cancellation", "from_status": "live", "pending_status": "cancelled_pending_resolution" }
   ```
   `gate_kind` is a free string, not an enum.
-- `Task.content` carries gate-kind-specific data. For `show_cancellation`: `reason_category`, `reason_note`, `follow_up_notes`, and (once resolved) `resolution_notes`.
+- `Task.content` carries gate-kind-specific data. For `show_cancellation`: `reason_category`, `reason_note`, `follow_up_notes`, and (once resolved) `resolution_notes`. Every gate kind also carries a `history` array (see **Ownership, Handover, and Traceability** below) — `Array<{ event: 'opened' | 'claimed' | 'reassigned' | 'resolved'; actor_id: string | null; at: string; note?: string }>`, appended to on every gate lifecycle action.
 - `Task.assigneeId` is the resolution owner. Plain `User`, not `StudioMembership` — role/membership scoping on who *can* be assigned is deferred; it only matters at creation/assignment time, and can be layered on later (e.g. validate the chosen user has an active membership in the studio) without a schema change.
 - Linked to the `Show` via the existing `TaskTarget` join (`showId` FK already indexed there) — identical to how any other task targets a show.
 - `Task.snapshotId`/`templateId` stay `null` — no template needed for code-defined gate content.
@@ -55,13 +55,13 @@ const GATE_CONFIG = {
     allowedOutcomes: ['CANCELLED', 'COMPLETED'],
     reasonOptions: ['CREATOR_UNAVAILABLE', 'ROOM_UNAVAILABLE', 'EQUIPMENT_FAILURE',
                      'UTILITY_OUTAGE', 'PLATFORM_ISSUE', 'CLIENT_REQUEST', 'OTHER'],
-    requiresOwner: true,
+    requiresOwner: true, // owner is picked by the manager at cancel time, so it's never unassigned
   },
   schedule_publish_removal: {
     pendingStatus: 'CANCELLED_PENDING_RESOLUTION',
     allowedOutcomes: ['CANCELLED', 'RESTORE_PREVIOUS'], // confirm the removal, or undo it without waiting for another publish
     reasonOptions: ['REMOVED_FROM_REPUBLISHED_SCHEDULE'], // system-generated, not manager-chosen
-    requiresOwner: false, // created unassigned; any studio manager can claim/resolve it
+    requiresOwner: false, // created unassigned (no human in the loop at publish time); a manager must claim it before resolving — see Ownership section
   },
   // future gate kinds added here, not as new tables/enum values
 } as const;
@@ -71,14 +71,30 @@ Adding a new gate kind (e.g. `creator_no_show`, `platform_escalation`) means add
 
 ## Generic Service Primitives
 
-Two methods, kind-agnostic, intended to be reused by every future gate:
+Three methods, kind-agnostic, intended to be reused by every future gate:
 
-- `openGate(showId, gateKind, { ownerId, dueDate, content })` — looks up `GATE_CONFIG[gateKind]`, creates the `STATE_GATE` Task + `TaskTarget` (`assigneeId: ownerId ?? null` — `ownerId` is optional precisely because `schedule_publish_removal` has no human present at creation time), moves `Show.status` to `gateConfig.pendingStatus`, writes the existing `Audit` row shape (`field: 'show_status'`, old/new value, `gate_task_uid` in metadata — unchanged from PR #229's audit calls).
-- `resolveGate(taskUid, outcomeStatusKey, notes)` — validates `outcomeStatusKey ∈ GATE_CONFIG[gate_kind].allowedOutcomes`, marks the `Task` `COMPLETED` with `completedAt` and appended `resolution_notes`, writes the `Audit` row. For the target status: if `outcomeStatusKey` is the literal sentinel `'RESTORE_PREVIOUS'`, `Show.status` reverts to `Task.metadata.from_status` (the value `openGate` captured at creation) instead of a fixed mapped status. Any concrete status key (`CANCELLED`, `COMPLETED`) maps directly as before. The sentinel is generic — any future gate kind can offer "undo, go back to whatever it was" as an outcome without bespoke plumbing, not just `schedule_publish_removal`.
+- `openGate(showId, gateKind, { ownerId, dueDate, content })` — looks up `GATE_CONFIG[gateKind]`, creates the `STATE_GATE` Task + `TaskTarget` (`assigneeId: ownerId ?? null` — `ownerId` is optional precisely because `schedule_publish_removal` has no human present at creation time), moves `Show.status` to `gateConfig.pendingStatus`, writes the existing `Audit` row shape (`field: 'show_status'`, old/new value, `gate_task_uid` in metadata — unchanged from PR #229's audit calls), and appends `{ event: 'opened', actor_id: ownerId ?? createdById ?? null, at: now, note: content.reason_note }` to `Task.content.history`.
+- `claimGate(taskUid, userId)` — sets `Task.assigneeId = userId` **only if currently `null`**; throws if the gate already has an owner (use reassignment/handover for that case, not claim). Appends `{ event: 'claimed', actor_id: userId, at: now }` to `Task.content.history`.
+- `resolveGate(taskUid, outcomeStatusKey, notes)` — **requires `Task.assigneeId` to be non-null** (throws `GATE_NOT_CLAIMED` otherwise) — this is what reconciles "created unassigned" (`schedule_publish_removal`) with "must have a clear owner": ownership becomes a precondition for resolving, not a requirement at creation. Validates `outcomeStatusKey ∈ GATE_CONFIG[gate_kind].allowedOutcomes`, marks the `Task` `COMPLETED` with `completedAt` and appended `resolution_notes`, writes the `Audit` row, and appends `{ event: 'resolved', actor_id, at: now, note: notes }` to `Task.content.history`. For the target status: if `outcomeStatusKey` is the literal sentinel `'RESTORE_PREVIOUS'`, `Show.status` reverts to `Task.metadata.from_status` (the value `openGate` captured at creation) instead of a fixed mapped status. Any concrete status key (`CANCELLED`, `COMPLETED`) maps directly as before. The sentinel is generic — any future gate kind can offer "undo, go back to whatever it was" as an outcome without bespoke plumbing, not just `schedule_publish_removal`.
 
 These live alongside (or as a small addition to) the existing task-orchestration layer — they are generic over `gateKind`, not cancellation-specific.
 
 **Resolve UI reads `allowedOutcomes` from config, not a hardcoded list.** The show-detail "Resolve" dialog's disposition picker must render whatever `GATE_CONFIG[gate_kind].allowedOutcomes` contains for the open gate task it's resolving. `RESTORE_PREVIOUS` renders as a labeled action (e.g. "Resume Show") rather than a generic status option, since it isn't a fixed disposition the manager is choosing among — it's "undo this." This was implicitly hardcoded to `CANCELLED`/`COMPLETED` in PR #229's frontend and needs to become gate-kind-aware.
+
+## Ownership, Handover, and Traceability
+
+Two problems this design didn't originally address: (1) a gate can be created with no owner (`schedule_publish_removal`) or get picked up by a different manager than whoever opened it, and (2) when that happens, the next person touching it has no record of what already happened — today's generic Task reassignment (`PATCH /studios/:studioId/tasks/:id/assign`) is a bare `assigneeId` swap with no reason captured and no Audit row.
+
+**Claim, don't just create-assigned-or-unassigned.** `claimGate` (above) lets any manager who sees an unowned gate in `task-review` take it, rather than requiring the schedule-publish path to guess at an owner it has no basis for picking. `resolveGate`'s new precondition means an unclaimed gate literally cannot be resolved — there's always exactly one accountable owner by the time it's closed, for every gate kind, not just the ones that pick an owner at creation.
+
+**Handover carries a note.** Reassigning a `STATE_GATE` task (existing `PATCH /studios/:studioId/tasks/:id/assign` flow) gains an optional `note` field on the request, used to append `{ event: 'reassigned', actor_id: fromUserId, at: now, note }` (recording both the outgoing and incoming assignee) to `Task.content.history`. This is a small extension to the existing reassignment DTO/flow, not a new endpoint — for non-gate task types the field can simply be ignored/unused.
+
+**Tracing the process.** `Task.content.history` is the full timeline: opened (with the system or manager's reason), claimed, reassigned (with handover notes), resolved (with outcome and resolution note). It's rendered as a read-only chronological list:
+
+- In the show-detail "Resolve" dialog (a "Gate History" section above or below the resolve action), so whoever is about to resolve it can see everything that led here.
+- In `task-review`'s row detail/expand for `STATE_GATE` tasks, so a manager scanning the queue can check context without opening the full resolve dialog.
+
+This stays scoped to gate tasks specifically — it is not a general-purpose comment thread on `Task`, and it doesn't support free-standing notes unrelated to an ownership or resolution event. If that broader need (open-ended commentary on any task, not just gates) comes up later, it's a separate feature, not an extension of this history array.
 
 ## First Caller: Manual Cancellation (`show_cancellation`)
 
@@ -122,7 +138,7 @@ Resolution: a manager opens the gate from `task-review` (filtered to `Task Type 
 
 No new screens. `STATE_GATE` tasks surface in the existing task surfaces:
 
-- `/studios/$studioId/task-review/` — any manager/admin in the studio filters `Task Type = State Gate` to see every open gate for the studio (not just their own), with existing assignee/due-date/status filtering. `schedule_publish_removal` gates show up here unassigned (existing "unassigned" filter), so any manager can claim and resolve them.
+- `/studios/$studioId/task-review/` — any manager/admin in the studio filters `Task Type = State Gate` to see every open gate for the studio (not just their own), with existing assignee/due-date/status filtering. `schedule_publish_removal` gates show up here unassigned (existing "unassigned" filter); unassigned `STATE_GATE` rows get a **Claim** action (calls `claimGate`) distinct from the existing reassign-to-someone-else action, since claiming is "I'll take this" rather than "give it to a specific person."
 - `/studios/$studioId/my-tasks` — the assigned owner sees it in their personal queue with existing overdue flagging and due-date sort.
 - `/studios/$studioId/shows/$showId/tasks` — still visible from the show detail page like any other task targeting that show.
 
@@ -136,7 +152,7 @@ Each gate kind encodes critical, easy-to-get-wrong business logic (who can own i
 
 1. `.agent/skills/show-production-lifecycle/references/state-gates.md` — update the `any → cancelled_pending_resolution` and `cancelled_pending_resolution → cancelled or completed` rows to reference `Task` (`STATE_GATE` type) instead of `ShowCancellationResolution`, and close the "No task/issue linkage yet" gap note.
 2. `.agent/skills/show-production-lifecycle/SKILL.md` §4 (Cancellation and Resolution) — update the prose description of `cancel-with-resolution`/`resolve-cancellation` to describe the `Task`-backed gate instead of the dropped model.
-3. Add a short **State Gate pattern** subsection to `show-production-lifecycle/SKILL.md` documenting: what a gate is, the `GATE_CONFIG` lookup, `openGate`/`resolveGate`, and an explicit instruction that any future "entity needs an owner + deadline + chosen outcome before continuing" requirement should add a `GATE_CONFIG` entry and call the existing primitives rather than building a new table or service. This subsection also states the Tier 2 rule below, so anyone adding a gate kind knows to also add its skill.
+3. Add a short **State Gate pattern** subsection to `show-production-lifecycle/SKILL.md` documenting: what a gate is, the `GATE_CONFIG` lookup, `openGate`/`claimGate`/`resolveGate`, the ownership precondition (`resolveGate` requires a claimed/assigned owner regardless of `requiresOwner`), the `content.history` traceability log and what events append to it, and an explicit instruction that any future "entity needs an owner + deadline + chosen outcome before continuing" requirement should add a `GATE_CONFIG` entry and call the existing primitives rather than building a new table, service, or one-off history mechanism. This subsection also states the Tier 2 rule below, so anyone adding a gate kind knows to also add its skill.
 
 **Tier 2 — one dedicated skill per gate kind**, starting with this one:
 
@@ -148,10 +164,11 @@ Each gate kind encodes critical, easy-to-get-wrong business logic (who can own i
 
 ## Testing
 
-- Unit: `openGate`/`resolveGate` — invalid `gateKind`, outcome not in `allowedOutcomes`, show not in expected starting status, `ownerId: null` accepted for kinds with `requiresOwner: false`.
+- Unit: `openGate`/`resolveGate`/`claimGate` — invalid `gateKind`, outcome not in `allowedOutcomes`, show not in expected starting status, `ownerId: null` accepted for kinds with `requiresOwner: false`, `resolveGate` rejects an unclaimed (`assigneeId: null`) task with `GATE_NOT_CLAIMED`, `claimGate` rejects claiming an already-assigned task, every primitive appends the expected `history` entry shape.
+- Unit: reassignment with a `note` appends a `reassigned` history entry with both outgoing/incoming assignee; reassignment without a note still works (note stays optional) and the history entry omits it.
 - Integration (existing `studio-show-management.service.spec.ts` cases from PR #229, adapted): cancel → pending resolution → resolve to `CANCELLED`; cancel → pending resolution → resolve to `COMPLETED`; resolve attempted on a show not currently pending; cancel attempted on an ineligible status (`DRAFT`, already `CANCELLED`, etc.).
 - Integration (`publishing.service.ts` remove-flow, new): show with no active tasks removed from republish → straight to `CANCELLED`, no gate task created; show with active tasks removed → `CANCELLED_PENDING_RESOLUTION` + unassigned `STATE_GATE` task created with `gate_kind: schedule_publish_removal` and `metadata.from_status` set to the show's actual prior status; resolving to `CANCELLED` completes the task and finalizes the show status; resolving to `RESTORE_PREVIOUS` reverts `Show.status` to the captured `from_status` (covering both `draft` and `confirmed` as prior states) and sets the `schedule_resume_notice` metadata hint; a subsequent publish where the show is present (not removed) clears that hint; republish-restore (show reappears in a later sync without going through manual resolve) still un-cancels and resumes tasks unchanged.
-- Frontend: `task-review` shows both gate kinds under `Task Type = State Gate`, `schedule_publish_removal` tasks appear unassigned/claimable; generic complete action is absent/disabled for `STATE_GATE` tasks; show-detail Resolve dialog renders outcome choices from `allowedOutcomes` (two-option picker for `show_cancellation`; `Confirm Cancellation`/`Resume Show` for `schedule_publish_removal`); resumed shows render the planner-notice banner on show detail and schedule-continuity views until the notice clears.
+- Frontend: `task-review` shows both gate kinds under `Task Type = State Gate`, `schedule_publish_removal` tasks appear unassigned/claimable with a **Claim** action; generic complete action is absent/disabled for `STATE_GATE` tasks; the Resolve action/dialog is disabled with an explanatory message until the gate is claimed; show-detail Resolve dialog renders outcome choices from `allowedOutcomes` (two-option picker for `show_cancellation`; `Confirm Cancellation`/`Resume Show` for `schedule_publish_removal`) and a read-only **Gate History** section rendering `content.history` in order; resumed shows render the planner-notice banner on show detail and schedule-continuity views until the notice clears; reassigning a `STATE_GATE` task offers an optional handover note that shows up in the next viewer's Gate History.
 
 ## Migration Note
 
