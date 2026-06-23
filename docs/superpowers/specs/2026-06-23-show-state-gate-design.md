@@ -2,6 +2,8 @@
 
 Status: Approved, not yet implemented (supersedes the `ShowCancellationResolution` model added in PR #229).
 
+Related ideation: [Task as a Generic Workflow Primitive](../../ideation/task-generic-workflow-primitive.md) tracks the broader generalization questions this design intentionally does *not* answer yet (entity-agnostic gate primitive beyond Show, a formal "system-generated task kind" convention). Check it before extending this pattern to a second gate kind or a second entity.
+
 ## Problem
 
 A show in production can be interrupted (creator no-show, room unavailable, equipment failure, platform issue, etc.) and needs to sit in a middle status — "cannot proceed yet, needs someone to resolve it" — before its lifecycle can close. PR #229 implemented this for cancellation specifically: a new `ShowCancellationResolution` table holding an owner, a due date, free-text notes, and a final disposition.
