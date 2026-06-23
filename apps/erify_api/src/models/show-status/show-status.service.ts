@@ -37,8 +37,8 @@ export class ShowStatusService extends BaseModelService {
 
   async getShowStatusBySystemKey(
     systemKey: string,
-  ): ReturnType<ShowStatusRepository['findBySystemKey']> {
-    return this.showStatusRepository.findBySystemKey(systemKey);
+  ): ReturnType<ShowStatusRepository['findOne']> {
+    return this.showStatusRepository.findOne({ systemKey });
   }
 
   async getShowStatuses(

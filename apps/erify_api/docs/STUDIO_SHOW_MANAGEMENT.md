@@ -66,6 +66,8 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 17. **Cancellation resolution is not generic status editing**. `cancel-with-resolution` and `resolve-cancellation` are semantic action endpoints. They update `Show.showStatus`, create or resolve a `ShowCancellationResolution` operational record, and write a show-targeted `Audit` row in one transaction. This closes the Phase 5 manual resolution gap without introducing the full lifecycle transition graph.
 
+18. **Cancellation-resolution repository methods are transaction-bound exceptions**. `ShowCancellationResolutionRepository.createPending`, `findPendingForShow`, and `resolvePending` are retained as named methods because cancellation actions need CLS transaction delegates, a canonical latest-unresolved lookup, and consistent owner includes in returned records. Generic base repository calls would either bypass the active transaction or move Prisma query semantics into the service layer.
+
 ## Key Business Rules
 
 ### Delete Rule

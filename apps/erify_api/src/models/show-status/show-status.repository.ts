@@ -36,12 +36,6 @@ export class ShowStatusRepository extends BaseRepository<
     });
   }
 
-  async findBySystemKey(systemKey: string): Promise<ShowStatus | null> {
-    return this.model.findFirst({
-      where: { systemKey, deletedAt: null },
-    });
-  }
-
   async update(
     params: { uid: string },
     data: Prisma.ShowStatusUpdateInput,
