@@ -43,6 +43,23 @@ export class TaskTargetRepository extends BaseRepository<
     });
   }
 
+  // Canonical "active task" definition, shared by publishing.service.ts's
+  // schedule-republish remove-flow and ShowStateGateService.resolveGate's
+  // active-task guard. Both callers must use this method, not reimplement
+  // the filter, so the definition of "active" cannot drift between them.
+  async countActiveByShowId(showId: bigint): Promise<number> {
+    return this.delegate.count({
+      where: {
+        showId,
+        deletedAt: null,
+        task: {
+          deletedAt: null,
+          status: { notIn: ['COMPLETED', 'CLOSED'] },
+        },
+      },
+    });
+  }
+
   async undeleteByTaskId(taskId: bigint): Promise<Prisma.BatchPayload> {
     return this.delegate.updateMany({
       where: { taskId },

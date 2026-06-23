@@ -20,6 +20,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
@@ -35,6 +36,7 @@ export class PublishingService {
     private readonly relationSyncService: PublishingRelationSyncService,
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
+    private readonly taskTargetService: TaskTargetService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -405,18 +407,8 @@ export class PublishingService {
     }
 
     for (const removed of toRemove) {
-      const hasActiveTaskTarget = await tx.taskTarget.findFirst({
-        where: {
-          showId: removed.id,
-          deletedAt: null,
-          task: {
-            deletedAt: null,
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
+      const activeTaskCount = await this.taskTargetService.countActiveByShowId(removed.id);
+      const hasActiveTaskTarget = activeTaskCount > 0;
 
       const targetStatusId = hasActiveTaskTarget
         ? statusIds.cancelledPendingResolution

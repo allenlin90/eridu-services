@@ -46,6 +46,12 @@ export class TaskTargetService extends BaseModelService {
     return this.taskTargetRepository.findMany({ where: { taskId: { in: taskIds }, deletedAt: null } });
   }
 
+  async countActiveByShowId(
+    ...args: Parameters<TaskTargetRepository['countActiveByShowId']>
+  ): ReturnType<TaskTargetRepository['countActiveByShowId']> {
+    return this.taskTargetRepository.countActiveByShowId(...args);
+  }
+
   async undeleteByTaskId(...args: Parameters<TaskTargetRepository['undeleteByTaskId']>): ReturnType<TaskTargetRepository['undeleteByTaskId']> {
     return this.taskTargetRepository.undeleteByTaskId(...args);
   }

@@ -17,6 +17,8 @@ import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-sna
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { TaskTargetRepository } from '@/models/task-target/task-target.repository';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -26,7 +28,7 @@ let mockTransactionClient: {
   show: { createMany: jest.Mock; findMany: jest.Mock; update: jest.Mock };
   showCreator: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
   showPlatform: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
-  taskTarget: { findFirst: jest.Mock; findMany: jest.Mock; updateMany: jest.Mock };
+  taskTarget: { count: jest.Mock; findMany: jest.Mock; updateMany: jest.Mock };
   task: { updateMany: jest.Mock };
   schedule: { update: jest.Mock };
   client: { findMany: jest.Mock };
@@ -193,7 +195,7 @@ describe('publishingService', () => {
         updateMany: jest.fn(),
       },
       taskTarget: {
-        findFirst: jest.fn(),
+        count: jest.fn(),
         findMany: jest.fn(),
         updateMany: jest.fn(),
       },
@@ -290,6 +292,9 @@ describe('publishingService', () => {
             generateBrandedId: jest.fn().mockReturnValue('shst_generated'),
           },
         },
+        { provide: PrismaService, useValue: mockPrismaForCls },
+        TaskTargetRepository,
+        TaskTargetService,
       ],
     }).compile();
 
@@ -341,7 +346,7 @@ describe('publishingService', () => {
         ]);
       mockTransactionClient.showCreator.findMany.mockResolvedValue([]);
       mockTransactionClient.showPlatform.findMany.mockResolvedValue([]);
-      mockTransactionClient.taskTarget.findFirst.mockResolvedValue(null);
+      mockTransactionClient.taskTarget.count.mockResolvedValue(0);
       mockTransactionClient.taskTarget.findMany.mockResolvedValue([]);
       mockTransactionClient.taskTarget.updateMany.mockResolvedValue({ count: 0 });
       mockTransactionClient.task.updateMany.mockResolvedValue({ count: 0 });
@@ -899,6 +904,55 @@ describe('publishingService', () => {
       ).not.toHaveBeenCalled();
       expect(result.publishSummary.shows_created).toBe(0);
       expect(result.publishSummary.shows_cancelled).toBe(0);
+    });
+
+    it('cancels straight to CANCELLED when no active tasks remain on a removed show', async () => {
+      const removedShow = {
+        id: BigInt(77),
+        uid: 'show_removed',
+        externalId: 'show_removed_external',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Removed Show',
+        startTime: new Date('2024-01-03T10:00:00Z'),
+        endTime: new Date('2024-01-03T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: { systemKey: 'CONFIRMED' },
+      };
+      getScheduleByIdMock.mockResolvedValue({
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [],
+        },
+      });
+      mockTransactionClient.show.findMany.mockReset().mockResolvedValueOnce([removedShow]);
+      mockTransactionClient.taskTarget.count.mockResolvedValue(0);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.taskTarget.count).toHaveBeenCalledWith({
+        where: {
+          showId: removedShow.id,
+          deletedAt: null,
+          task: {
+            deletedAt: null,
+            status: { notIn: ['COMPLETED', 'CLOSED'] },
+          },
+        },
+      });
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: removedShow.id },
+        data: { showStatusId: BigInt(9001) },
+      });
+      expect(result.publishSummary.shows_cancelled).toBe(1);
+      expect(result.publishSummary.shows_pending_resolution).toBe(0);
     });
 
     it('should reject malformed plan payload before publish', async () => {
