@@ -374,7 +374,7 @@ model ShowStatus {
   id        BigInt    @id @default(autoincrement())
   uid       String    @unique
   systemKey String?   @unique @map("system_key")
-  name      String    @unique // draft, confirmed, live, completed, cancelled
+  name      String    @unique // draft, confirmed, live, completed, cancelled, cancelled_pending_resolution
   metadata  Json      @default("{}")
   shows     Show[]
   createdAt DateTime  @default(now()) @map("created_at")

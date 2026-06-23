@@ -61,6 +61,48 @@ const SUBMITTED_TASK_STATUSES: TaskStatus[] = [
   TaskStatus.CLOSED,
 ];
 
+const SHOW_STATUS_SEEDS = [
+  {
+    name: 'draft',
+    systemKey: 'DRAFT',
+    metadata: {
+      description: 'Show is in draft state, not yet confirmed',
+      order: 1,
+    },
+  },
+  {
+    name: 'confirmed',
+    systemKey: 'CONFIRMED',
+    metadata: {
+      description: 'Show is confirmed and ready to go live',
+      order: 2,
+    },
+  },
+  {
+    name: 'live',
+    systemKey: 'LIVE',
+    metadata: {
+      description: 'Show is currently live/streaming',
+      order: 3,
+    },
+  },
+  {
+    name: 'completed',
+    systemKey: 'COMPLETED',
+    metadata: { description: 'Show has finished successfully', order: 4 },
+  },
+  {
+    name: 'cancelled',
+    systemKey: 'CANCELLED',
+    metadata: { description: 'Show was cancelled', order: 5 },
+  },
+  {
+    name: 'cancelled_pending_resolution',
+    systemKey: 'CANCELLED_PENDING_RESOLUTION',
+    metadata: { description: 'Cancelled pending resolution', order: 6 },
+  },
+];
+
 type SeedSharedField = {
   key: string;
   type: 'number' | 'url';
@@ -586,7 +628,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
       prisma.showStatus.findMany({
         where: {
           name: {
-            in: ['draft', 'confirmed', 'live', 'completed', 'cancelled'],
+            in: SHOW_STATUS_SEEDS.map((status) => status.name),
           },
         },
       }),
@@ -693,7 +735,13 @@ async function isDatabaseSeeded(): Promise<boolean> {
 
     // Check if we have all expected records
     const hasAllShowTypes = showTypes.length === 3;
-    const hasAllShowStatuses = showStatuses.length === 5;
+    const showStatusIdentitySet = new Set(
+      showStatuses.map((status) => `${status.name}:${status.systemKey ?? ''}`),
+    );
+    const showStatusMatchCount = SHOW_STATUS_SEEDS.filter((status) =>
+      showStatusIdentitySet.has(`${status.name}:${status.systemKey}`)
+    ).length;
+    const hasAllShowStatuses = showStatusMatchCount === SHOW_STATUS_SEEDS.length;
     const hasAllShowStandards = showStandards.length === 2;
     const hasAllPlatforms = platforms.length === 3;
     const hasAllClients = clients >= 50;
@@ -751,7 +799,7 @@ async function isDatabaseSeeded(): Promise<boolean> {
         `  - ShowTypes: ${showTypes.length}/3 (${hasAllShowTypes ? '✅' : '❌'})`,
       );
       console.log(
-        `  - ShowStatuses: ${showStatuses.length}/5 (${hasAllShowStatuses ? '✅' : '❌'})`,
+        `  - ShowStatuses: ${showStatusMatchCount}/${SHOW_STATUS_SEEDS.length} canonical (${hasAllShowStatuses ? '✅' : '❌'})`,
       );
       console.log(
         `  - ShowStandards: ${showStandards.length}/2 (${hasAllShowStandards ? '✅' : '❌'})`,
@@ -872,44 +920,7 @@ async function main() {
 
       // Seed ShowStatus data
       console.log('📊 Seeding ShowStatus data...');
-      const showStatuses = [
-        {
-          name: 'draft',
-          systemKey: 'DRAFT',
-          metadata: {
-            description: 'Show is in draft state, not yet confirmed',
-            order: 1,
-          },
-        },
-        {
-          name: 'confirmed',
-          systemKey: 'CONFIRMED',
-          metadata: {
-            description: 'Show is confirmed and ready to go live',
-            order: 2,
-          },
-        },
-        {
-          name: 'live',
-          systemKey: 'LIVE',
-          metadata: {
-            description: 'Show is currently live/streaming',
-            order: 3,
-          },
-        },
-        {
-          name: 'completed',
-          systemKey: 'COMPLETED',
-          metadata: { description: 'Show has finished successfully', order: 4 },
-        },
-        {
-          name: 'cancelled',
-          systemKey: 'CANCELLED',
-          metadata: { description: 'Show was cancelled', order: 5 },
-        },
-      ];
-
-      for (const showStatus of showStatuses) {
+      for (const showStatus of SHOW_STATUS_SEEDS) {
         const uidKey = showStatus.name as keyof typeof fixtures.showStatuses;
         await tx.showStatus.upsert({
           where: { name: showStatus.name },
