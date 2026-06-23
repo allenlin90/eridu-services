@@ -22,6 +22,6 @@ import { UtilityModule } from '@/utility/utility.module';
     MembershipModule,
   ],
   providers: [TaskService, TaskValidationService, TaskRepository],
-  exports: [TaskService, TaskValidationService],
+  exports: [TaskService, TaskValidationService, TaskRepository],
 })
 export class TaskModule {}

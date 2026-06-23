@@ -17,6 +17,7 @@ import { TaskRetrievalService } from './task-retrieval.service';
 import { TaskSubmissionService } from './task-submission.service';
 
 import type { UpdateTaskPayload } from '@/models/task/schemas/task.schema';
+import { ShowStateGateService } from '@/show-orchestration/show-state-gate.service';
 
 // Public types preserved for callers that imported them from this module.
 export type {
@@ -40,6 +41,7 @@ export class TaskOrchestrationService {
     private readonly assignment: TaskAssignmentService,
     private readonly retrieval: TaskRetrievalService,
     private readonly deletion: TaskDeletionService,
+    private readonly showStateGateService: ShowStateGateService,
   ) {}
 
   submitTaskContent(
@@ -72,8 +74,18 @@ export class TaskOrchestrationService {
     return this.assignment.assignShowsToUser(studioUid, showUids, assigneeUid);
   }
 
-  reassignTask(studioUid: string, taskUid: string, assigneeUid: string | null) {
-    return this.assignment.reassignTask(studioUid, taskUid, assigneeUid);
+  reassignTask(
+    studioUid: string,
+    taskUid: string,
+    assigneeUid: string | null,
+    actorExtId = '',
+    note?: string,
+  ) {
+    return this.assignment.reassignTask(studioUid, taskUid, assigneeUid, actorExtId, note);
+  }
+
+  claimTask(taskUid: string, claimant: { id: bigint; uid: string }) {
+    return this.showStateGateService.claimGate(taskUid, claimant);
   }
 
   getShowTasks(studioUid: string, showUid: string) {

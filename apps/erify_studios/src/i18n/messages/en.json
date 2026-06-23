@@ -13,5 +13,6 @@
   "task_type_closure": "Post-production",
   "task_type_admin": "Admin",
   "task_type_routine": "Routine",
+  "task_type_state_gate": "State Gate",
   "task_type_other": "Other"
 }

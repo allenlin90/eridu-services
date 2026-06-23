@@ -303,6 +303,7 @@ export type AssignShowsResponse = z.infer<typeof assignShowsResponseSchema>;
  */
 export const reassignTaskRequestSchema = z.object({
   assignee_uid: z.string().nullable(),
+  note: z.string().max(1000).optional(),
 });
 
 export type ReassignTaskRequest = z.infer<typeof reassignTaskRequestSchema>;

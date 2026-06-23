@@ -16,11 +16,14 @@ import { showDtoListInclude } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { showWithTaskSummaryDto } from '@/models/task/schemas/task.schema';
+import { TaskRepository } from '@/models/task/task.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
+import { UserService } from '@/models/user/user.service';
 import { FactExtractionService } from '@/orchestration/fact-extraction/fact-extraction.service';
 import { ShiftAlignmentService } from '@/orchestration/shift-alignment/shift-alignment.service';
+import { ShowStateGateService } from '@/show-orchestration/show-state-gate.service';
 
 describe('taskOrchestrationService', () => {
   let service: TaskOrchestrationService;
@@ -60,6 +63,12 @@ describe('taskOrchestrationService', () => {
             setAssignee: jest.fn(),
             updateTaskContentAndStatus: jest.fn(),
             updateTaskContentAndStatusAsAdmin: jest.fn(),
+          },
+        },
+        {
+          provide: TaskRepository,
+          useValue: {
+            updateWithVersionCheck: jest.fn(),
           },
         },
         {
@@ -110,6 +119,18 @@ describe('taskOrchestrationService', () => {
           provide: FactExtractionService,
           useValue: {
             extractFromTask: jest.fn(),
+          },
+        },
+        {
+          provide: UserService,
+          useValue: {
+            getUserByExtId: jest.fn(),
+          },
+        },
+        {
+          provide: ShowStateGateService,
+          useValue: {
+            claimGate: jest.fn(),
           },
         },
       ],

@@ -73,8 +73,8 @@ Show cannot proceed but has operational consequences that need resolution.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| Reason category | Not captured | Not enforced | Candidate reasons: client conflict, creator missing, room unavailable, production failure |
-| Resolution owner assigned | Not captured | Not enforced | Phase 5 gap: no owner queue |
+| Reason category | `Task.content.reason_category` on the `STATE_GATE` task (`gate_kind: show_cancellation` or `schedule_publish_removal`) | Required by action schema for manual cancellation; system-generated for schedule-publish removal | See `GATE_CONFIG` in `show-state-gate.config.ts` for the per-gate-kind reason taxonomy |
+| Resolution owner assigned | `Task.assigneeId` | Required at open time for `show_cancellation`; for `schedule_publish_removal` the gate opens unassigned and a manager must claim it (`claimGate`) before it can be resolved | Stored as a plain `User`, not a studio membership |
 | Affected records identified | Not tracked | Not enforced | Which tasks, creators, shifts are affected |
 
 ## Transition: cancelled_pending_resolution → cancelled or completed
@@ -83,8 +83,8 @@ Final disposition after resolution.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| All follow-up actions resolved | No follow-up model | Not enforced | Phase 5 gap |
-| Final disposition chosen | Manual status update | Not enforced | cancelled = no production credit, completed = partial production counts |
+| All follow-up actions resolved | `Task.content.history` on the `STATE_GATE` task | Enforced via `ShowStateGateService.resolveGate`'s guard chain (Show/Task consistency, ownership, outcome validity, active-task count, LIVE safeguard) | No longer advisory - closes the gap this row used to flag |
+| Final disposition chosen | `resolveGate` writes the final outcome and Show.status | Required by action schema | `CANCELLED`/`COMPLETED` map directly to a `ShowStatus.systemKey`; `RESTORE_PREVIOUS` reverts to `Task.metadata.from_status` instead |
 
 ## Fact Extraction as Implicit State Signal
 

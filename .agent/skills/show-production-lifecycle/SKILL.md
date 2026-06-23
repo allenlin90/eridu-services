@@ -115,9 +115,19 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 - `cancelled_pending_resolution → cancelled`: Resolution complete, no production.
 - `cancelled_pending_resolution → completed`: Resolution complete, partial production counts.
 
-**Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Manual cancellation via show update.
+**Current behavior**: Both manual and automatic cancellation-into-pending-resolution are backed by a `Task` with `type: STATE_GATE` (see the **State Gate pattern** subsection below) - not a dedicated table. Studio Admins and Managers use `POST /studios/:studioId/shows/:showId/cancel-with-resolution` to move eligible non-draft, non-cancelled shows into pending resolution with an owner, reason, and optional follow-up due date. Schedule republish auto-opens the same kind of gate (unassigned) when a removed show still has active tasks attached. Either kind resolves through `POST /studios/:studioId/shows/:showId/resolve-cancellation` to `cancelled`, `completed`, or (schedule-publish removals only) back to its prior status (`RESTORE_PREVIOUS`). All transitions write show-targeted Audit rows.
 
-**Gap (Phase 5)**: No reason categories, no owner queue, no follow-up fields, no resolution workflow.
+**Remaining gap (Phase 5)**: cancellation resolution does not enforce the broader lifecycle state machine, affected-record identification, or readiness/completion gates. Those remain item 14/15 scope.
+
+### State Gate pattern
+
+A **State Gate** is the reusable primitive backing any "this entity needs an owner + (optionally) a deadline + a chosen outcome before it can leave a middle status" requirement - built for show cancellation, designed to be reused for the next one without a new table or service.
+
+- **Where it lives**: `apps/erify_api/src/show-orchestration/show-state-gate.config.ts` (the `GATE_CONFIG` lookup - pending status, allowed outcomes, which outcomes require zero active tasks, reason taxonomy, whether an owner is required at open time) and `show-state-gate.service.ts` (`openGate`, `claimGate`, `resolveGate`).
+- **No new Prisma model for a new gate kind.** A gate is a `Task` with `type: STATE_GATE` and `metadata.gate_kind` set to a free string. Adding a gate kind means adding a `GATE_CONFIG` entry plus the calling code for that transition.
+- **Ownership is a precondition for resolving, not necessarily for opening.** `resolveGate` rejects an unclaimed gate regardless of `GATE_CONFIG[kind].requiresOwner` - a gate opened unassigned (no human present, e.g. a schedule-publish trigger) must still be claimed before anyone can close it.
+- **Every gate action is traced.** `Task.content.history` accumulates `{event, actor_id, at, note?}` entries for `opened`/`claimed`/`reassigned`/`resolved` - rendered as a read-only timeline, not a general comment thread.
+- **If you're adding a new gate kind**, also add a dedicated Tier 2 skill for it (see `show-cancellation-resolution` and `schedule-publish-removal-resolution` as the template) and register it in `AGENTS.md`'s Skill Routing map - a gate kind's business rules need to surface to unrelated future feature work via skill routing, not just to someone already reading this skill.
 
 ## Readiness Conditions
 

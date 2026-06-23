@@ -5,6 +5,8 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 import type { StudioShowDetail } from '@/features/studio-shows/api/get-studio-show';
 import { useUpdateStudioShow } from '@/features/studio-shows/api/update-studio-show';
+import { ScheduleResumeNoticeBanner } from '@/features/studio-shows/components/schedule-resume-notice-banner';
+import { ShowCancellationResolutionPanel } from '@/features/studio-shows/components/show-cancellation-resolution-panel';
 import type { StudioShowFormValues } from '@/features/studio-shows/components/studio-show-management-form';
 import { StudioShowManagementForm } from '@/features/studio-shows/components/studio-show-management-form';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
@@ -27,14 +29,18 @@ function StudioShowDetailsTab() {
   const isReadOnly = role === STUDIO_ROLE.ACCOUNT_MANAGER;
 
   return (
-    <div className="rounded-md border bg-background p-3 sm:p-4">
-      <StudioShowDetailsForm
-        key={`${show.id}:${show.updated_at}:${resetNonce}`}
-        studioId={studioId}
-        show={show}
-        isReadOnly={isReadOnly}
-        onCancel={() => setResetNonce((nonce) => nonce + 1)}
-      />
+    <div className="space-y-4">
+      <div className="rounded-md border bg-background p-3 sm:p-4">
+        <StudioShowDetailsForm
+          key={`${show.id}:${show.updated_at}:${resetNonce}`}
+          studioId={studioId}
+          show={show}
+          isReadOnly={isReadOnly}
+          onCancel={() => setResetNonce((nonce) => nonce + 1)}
+        />
+      </div>
+      <ScheduleResumeNoticeBanner show={show} />
+      <ShowCancellationResolutionPanel studioId={studioId} show={show} isReadOnly={isReadOnly} />
     </div>
   );
 }

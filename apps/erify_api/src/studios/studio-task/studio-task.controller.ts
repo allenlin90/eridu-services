@@ -20,12 +20,14 @@ import {
   type TaskAction,
   type TaskStatus,
 } from '@eridu/api-types/task-management';
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
 
-import type { AuthenticatedRequest } from '@/lib/auth/jwt-auth.guard';
+import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
 import { ZodPaginatedResponse, ZodResponse } from '@/lib/decorators/zod-response.decorator';
+import { HttpError } from '@/lib/errors/http-error.util';
 import { ReadBurstThrottle } from '@/lib/guards/read-burst-throttle.decorator';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
@@ -48,6 +50,7 @@ import {
   type UpdateTaskPayload,
 } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
+import { UserService } from '@/models/user/user.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
 @ApiTags('Studio Tasks')
@@ -57,6 +60,7 @@ export class StudioTaskController extends BaseStudioController {
   constructor(
     private readonly taskOrchestrationService: TaskOrchestrationService,
     private readonly taskService: TaskService,
+    private readonly userService: UserService,
   ) {
     super();
   }
@@ -95,8 +99,33 @@ export class StudioTaskController extends BaseStudioController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
     @Body() dto: ReassignTaskDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.taskOrchestrationService.reassignTask(studioId, id, dto.assignee_uid);
+    return this.taskOrchestrationService.reassignTask(
+      studioId,
+      id,
+      dto.assignee_uid,
+      user.ext_id,
+      dto.note,
+    );
+  }
+
+  @ApiOperation({ summary: 'Claim an unowned state-gate task' })
+  @Patch(':id/claim')
+  @ZodResponse(taskDto)
+  async claim(
+    @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const actor = await this.userService.getUserByExtId(user.ext_id);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    return this.taskOrchestrationService.claimTask(id, {
+      id: actor.id,
+      uid: actor.uid,
+    });
   }
 
   @ApiOperation({ summary: 'Get studio tasks review statistics' })

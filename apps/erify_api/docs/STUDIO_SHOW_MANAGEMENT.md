@@ -23,6 +23,9 @@ Studio-owned show lifecycle management without reusing `/admin/shows`:
 | `GET /studios/:studioId/shows`            | Shared show list/read model with schedule, task, creator, platform, and actuals-state filtering | All studio members |
 | `POST /studios/:studioId/shows`           | Create a studio-scoped show                                       | `ADMIN`, `MANAGER` |
 | `PATCH /studios/:studioId/shows/:showId`  | Update show metadata, platform assignments, and show actuals       | `ADMIN`, `MANAGER` |
+| `GET /studios/:studioId/shows/:showId/state-gate` | Return the current open `STATE_GATE` task for a show, or `null` | `ADMIN`, `MANAGER` |
+| `POST /studios/:studioId/shows/:showId/cancel-with-resolution` | Open a manager-owned show-cancellation State Gate and move the show to pending resolution | `ADMIN`, `MANAGER` |
+| `POST /studios/:studioId/shows/:showId/resolve-cancellation` | Resolve the open State Gate to `CANCELLED`, `COMPLETED`, or `RESTORE_PREVIOUS` when allowed | `ADMIN`, `MANAGER` |
 | `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show and remove disposable workflow state | `ADMIN`            |
 
 Note: the backend does not split CRUD and operations into separate endpoint families. FE may present separate pages, but both pages reuse the same studio show read APIs and cache families.
@@ -60,6 +63,12 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 15. **`ShowRepository.findPaginatedWithTaskSummary` is a named method, not an inlined where clause**. The list query composes AND-joined multi-field filters, OR conditions for actuals-state and task filters, AND filters for creator matching, and include joins for task summaries. These semantics cannot be expressed as a flat where clause passed from the service layer without coupling the service to Prisma query structures. The method is intentionally retained as a named repository method.
 
 16. **`ShowRepository.findByClientUidAndExternalId` is a named method, not an inlined where clause**. The restore-on-create lookup requires a client-relation where clause (`client: { uid }`) combined with an explicit `includeDeleted` opt-in that inverts the default `deletedAt: null` guard. Neither can be expressed as a caller-supplied flat where clause without leaking relation semantics into the service layer.
+
+17. **Cancellation pending resolution is Task-backed**. Manual cancellation and schedule-publish removals that need follow-up use `Task.type = STATE_GATE` plus a `TaskTarget` pointing at the show. `ShowStateGateService` owns `openGate`, `claimGate`, and `resolveGate`; new gate kinds should add `GATE_CONFIG` entries instead of new resolution tables.
+
+18. **Schedule-publish removal gates may be unassigned**. Publish-time removal has no human actor, so `schedule_publish_removal` gates open without an assignee. A studio admin/manager must claim the gate before resolving it.
+
+19. **`RESTORE_PREVIOUS` is a gate outcome, not a show status**. It restores `Show.status` from the gate task's captured `metadata.from_status`. Resolving a schedule-publish removal this way writes `metadata.schedule_resume_notice` as a display-only planner hint until the source schedule is fixed and republished.
 
 ## Key Business Rules
 

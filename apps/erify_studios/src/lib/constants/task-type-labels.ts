@@ -19,6 +19,9 @@ export function getTaskTypeLabel(taskType: TaskType): string {
   if (taskType === TASK_TYPE.ROUTINE) {
     return m.task_type_routine();
   }
+  if (taskType === TASK_TYPE.STATE_GATE) {
+    return m.task_type_state_gate();
+  }
   return m.task_type_other();
 }
 

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 
 import type { MembershipWithUser } from './task-orchestration.types';
 
@@ -6,8 +7,11 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
+import { TaskRepository } from '@/models/task/task.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { UserService } from '@/models/user/user.service';
+import type { GateHistoryEntry } from '@/show-orchestration/show-state-gate.config';
 
 /** Task assignment: bulk show→user assignment and single-task reassignment. */
 @Injectable()
@@ -18,6 +22,8 @@ export class TaskAssignmentService {
     private readonly studioService: StudioService,
     private readonly studioMembershipService: StudioMembershipService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly taskRepository: TaskRepository,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -103,7 +109,13 @@ export class TaskAssignmentService {
   /**
    * Reassigns a single task to a user or unassigns it.
    */
-  async reassignTask(studioUid: string, taskUid: string, assigneeUid: string | null) {
+  async reassignTask(
+    studioUid: string,
+    taskUid: string,
+    assigneeUid: string | null,
+    actorExtId: string,
+    note?: string,
+  ) {
     const task = await this.taskService.findByUid(taskUid);
     if (!task) {
       throw HttpError.notFound('Task', taskUid);
@@ -116,12 +128,50 @@ export class TaskAssignmentService {
     }
 
     let assigneeUserId: bigint | null = null;
+    let assigneeUserUid: string | null = null;
 
     if (assigneeUid) {
       const assigneeMembership = await this.resolveStudioMember(studioUid, assigneeUid);
       assigneeUserId = assigneeMembership.userId;
+      assigneeUserUid = assigneeMembership.user.uid;
     }
 
-    return this.taskService.setAssignee(taskUid, assigneeUserId, { assignee: true, template: true });
+    if (task.type !== 'STATE_GATE') {
+      return this.taskService.setAssignee(taskUid, assigneeUserId, {
+        assignee: true,
+        template: true,
+      });
+    }
+
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    const content
+      = task.content != null
+      && typeof task.content === 'object'
+      && !Array.isArray(task.content)
+        ? (task.content as Record<string, unknown>)
+        : {};
+    const history = Array.isArray(content.history)
+      ? (content.history as GateHistoryEntry[])
+      : [];
+    const fromAssignee = task.assigneeId != null ? 'previous owner' : 'unassigned';
+    const toAssignee = assigneeUserUid ?? 'unassigned';
+    const reassignedEntry: GateHistoryEntry = {
+      event: 'reassigned',
+      actor_id: actor?.uid ?? null,
+      at: new Date().toISOString(),
+      note: `Reassigned from ${fromAssignee} to ${toAssignee}${note ? ` - ${note}` : ''}`,
+    };
+
+    return this.taskRepository.updateWithVersionCheck(
+      { uid: taskUid, version: task.version },
+      {
+        assigneeId: assigneeUserId,
+        version: { increment: 1 },
+        content: {
+          ...content,
+          history: [...history, reassignedEntry],
+        } as Prisma.InputJsonValue,
+      } as unknown as Prisma.TaskUpdateInput,
+    );
   }
 }

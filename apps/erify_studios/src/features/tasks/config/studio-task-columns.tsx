@@ -8,6 +8,7 @@ import { useState } from 'react';
 import {
   TASK_ACTION,
   TASK_STATUS,
+  TASK_TYPE,
   type TaskAction,
   type TaskStatus,
   type TaskWithRelationsDto,
@@ -76,13 +77,42 @@ function getActionLabel(action: TaskAction): string {
 function ActionCell({
   task,
   onRunAction,
+  onClaimTask,
   processingTaskId,
+  claimingTaskId,
 }: {
   task: TaskWithRelationsDto;
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void;
+  onClaimTask: (task: TaskWithRelationsDto) => void;
   processingTaskId: string | null;
+  claimingTaskId: string | null;
 }) {
   const [selectedAction, setSelectedAction] = useState('');
+  const isStateGate = task.type === TASK_TYPE.STATE_GATE;
+  const isUnassignedStateGate = isStateGate && !task.assignee;
+
+  if (isStateGate) {
+    return (
+      <div className="flex items-center gap-2">
+        {isUnassignedStateGate
+          ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={() => onClaimTask(task)}
+                disabled={claimingTaskId === task.id}
+              >
+                {claimingTaskId === task.id ? 'Claiming...' : 'Claim'}
+              </Button>
+            )
+          : (
+              <span className="text-xs text-muted-foreground">Resolve from show</span>
+            )}
+      </div>
+    );
+  }
 
   const options = (STUDIO_REVIEW_ACTIONS[task.status] ?? []).map((action) => ({
     value: action,
@@ -215,7 +245,9 @@ export function getTaskPhase(type: string): 'pre-production' | 'on-air' | 'post-
 export function getStudioTaskColumns(
   studioId: string,
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void,
+  onClaimTask: (task: TaskWithRelationsDto) => void,
   processingTaskId: string | null,
+  claimingTaskId: string | null,
   onEditDueDate: (task: TaskWithRelationsDto) => void,
 ): ColumnDef<TaskWithRelationsDto>[] {
   return [
@@ -355,7 +387,9 @@ export function getStudioTaskColumns(
         <ActionCell
           task={row.original}
           onRunAction={onRunAction}
+          onClaimTask={onClaimTask}
           processingTaskId={processingTaskId}
+          claimingTaskId={claimingTaskId}
         />
       ),
     },
@@ -451,6 +485,7 @@ export const studioTaskSearchableColumns = [
       { value: 'CLOSURE', label: getTaskTypeLabel('CLOSURE') },
       { value: 'ADMIN', label: getTaskTypeLabel('ADMIN') },
       { value: 'ROUTINE', label: getTaskTypeLabel('ROUTINE') },
+      { value: 'STATE_GATE', label: getTaskTypeLabel('STATE_GATE') },
       { value: 'OTHER', label: getTaskTypeLabel('OTHER') },
     ],
   },

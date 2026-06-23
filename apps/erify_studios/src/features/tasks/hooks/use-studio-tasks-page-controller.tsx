@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { TaskAction, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
 import { getStudioTaskColumns } from '@/features/tasks/config/studio-task-columns';
+import { useClaimTask } from '@/features/tasks/hooks/use-claim-task';
 import { useStudioTasks } from '@/features/tasks/hooks/use-studio-tasks';
 import { useUpdateStudioTask } from '@/features/tasks/hooks/use-update-studio-task';
 import { useUpdateStudioTaskStatus } from '@/features/tasks/hooks/use-update-studio-task-status';
@@ -43,7 +44,13 @@ export function useStudioTasksPageController({ studioId, reviewTab }: UseStudioT
     variables: updateStatusVariables,
   } = useUpdateStudioTaskStatus({ studioId });
   const { mutate: updateTask, isPending: isUpdatingTask } = useUpdateStudioTask({ studioId });
+  const {
+    mutate: claimTask,
+    isPending: isClaimingTask,
+    variables: claimTaskVariables,
+  } = useClaimTask({ studioId });
   const processingTaskId = updateStatusVariables?.taskId ?? null;
+  const claimingTaskId = claimTaskVariables?.taskId ?? null;
 
   const openDueDateEditor = useCallback((task: TaskWithRelationsDto) => {
     setDueDateTask(task);
@@ -62,6 +69,9 @@ export function useStudioTasksPageController({ studioId, reviewTab }: UseStudioT
       },
     });
   }, [updateTaskStatus]);
+  const handleClaimTask = useCallback((task: TaskWithRelationsDto) => {
+    claimTask({ taskId: task.id });
+  }, [claimTask]);
   const handleSubmitAction = useCallback((
     task: TaskWithRelationsDto,
     action: TaskAction,
@@ -116,10 +126,21 @@ export function useStudioTasksPageController({ studioId, reviewTab }: UseStudioT
     () => getStudioTaskColumns(
       studioId,
       handleRunAction,
+      handleClaimTask,
       isUpdatingStatus ? processingTaskId : null,
+      isClaimingTask ? claimingTaskId : null,
       openDueDateEditor,
     ),
-    [studioId, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
+    [
+      studioId,
+      handleRunAction,
+      handleClaimTask,
+      isUpdatingStatus,
+      processingTaskId,
+      isClaimingTask,
+      claimingTaskId,
+      openDueDateEditor,
+    ],
   );
 
   const tablePagination = data?.meta

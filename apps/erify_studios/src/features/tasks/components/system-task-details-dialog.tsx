@@ -15,6 +15,7 @@ import {
 } from '@eridu/ui';
 
 import { ResponsiveDialog } from '@/components/responsive-dialog';
+import { GateHistory } from '@/features/tasks/components/gate-history';
 import { computeSuggestedDueDate } from '@/features/tasks/lib/task-due-date';
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
 
@@ -23,9 +24,11 @@ type SystemTaskDetailsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAssign: (taskId: string, assigneeUid: string | null) => Promise<void>;
+  onClaim?: (taskId: string) => Promise<void>;
   onReassignShow: (taskId: string, showUid: string) => Promise<void>;
   onUpdateDueDate: (taskId: string, dueDate: string | null, version: number) => Promise<void>;
   isAssigning?: boolean;
+  isClaiming?: boolean;
   isReassigningShow?: boolean;
   isUpdatingDueDate?: boolean;
 };
@@ -35,9 +38,11 @@ export function SystemTaskDetailsDialog({
   open,
   onOpenChange,
   onAssign,
+  onClaim,
   onReassignShow,
   onUpdateDueDate,
   isAssigning,
+  isClaiming,
   isReassigningShow,
   isUpdatingDueDate,
 }: SystemTaskDetailsDialogProps) {
@@ -53,6 +58,9 @@ export function SystemTaskDetailsDialog({
   const handleAssign = async () => {
     const value = assigneeUid.trim();
     await onAssign(task.id, value || null);
+  };
+  const handleClaim = async () => {
+    await onClaim?.(task.id);
   };
 
   const handleReassignShow = async () => {
@@ -168,6 +176,27 @@ export function SystemTaskDetailsDialog({
           Requires studio membership.
         </div>
       </div>
+
+      {task.type === 'STATE_GATE' && (
+        <div className="rounded-md border p-3 space-y-2">
+          <Label>State Gate</Label>
+          {task.assignee
+            ? (
+                <div className="text-xs text-muted-foreground">
+                  Owned by
+                  {task.assignee.name}
+                </div>
+              )
+            : onClaim
+              ? (
+                  <Button type="button" size="sm" onClick={handleClaim} disabled={isClaiming}>
+                    {isClaiming ? 'Claiming...' : 'Claim'}
+                  </Button>
+                )
+              : <div className="text-xs text-muted-foreground">Unassigned</div>}
+          <GateHistory history={Array.isArray(task.content?.history) ? task.content.history : []} />
+        </div>
+      )}
 
       <div className="rounded-md border p-3 space-y-2">
         <Label htmlFor="show_id">Move to Show</Label>

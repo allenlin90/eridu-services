@@ -14,9 +14,11 @@ import { StudioModule } from '@/models/studio/studio.module';
 import { TaskModule } from '@/models/task/task.module';
 import { TaskTargetModule } from '@/models/task-target/task-target.module';
 import { TaskTemplateModule } from '@/models/task-template/task-template.module';
+import { UserModule } from '@/models/user/user.module';
 import { FactExtractionModule } from '@/orchestration/fact-extraction/fact-extraction.module';
 import { ShiftAlignmentModule } from '@/orchestration/shift-alignment/shift-alignment.module';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { ShowOrchestrationModule } from '@/show-orchestration/show-orchestration.module';
 import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
@@ -29,8 +31,10 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowModule,
     MembershipModule,
     StudioModule,
+    UserModule,
     ShiftAlignmentModule,
     FactExtractionModule,
+    ShowOrchestrationModule,
   ],
   providers: [
     TaskOrchestrationService,

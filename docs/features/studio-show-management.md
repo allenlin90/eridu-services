@@ -24,6 +24,9 @@ Studios could assign creators to shows and read show details, but could not cont
 
 - `POST /studios/:studioId/shows` — studio-scoped show creation (ADMIN, MANAGER)
 - `PATCH /studios/:studioId/shows/:showId` — update show metadata and platform assignments (ADMIN, MANAGER)
+- `GET /studios/:studioId/shows/:showId/state-gate` — read the current open State Gate for cancellation follow-up (ADMIN, MANAGER)
+- `POST /studios/:studioId/shows/:showId/cancel-with-resolution` — move a show into pending cancellation resolution with a reason, owner, and optional follow-up due date (ADMIN, MANAGER)
+- `POST /studios/:studioId/shows/:showId/resolve-cancellation` — resolve the open cancellation State Gate to cancelled, completed, or restored-to-previous when allowed (ADMIN, MANAGER)
 - `DELETE /studios/:studioId/shows/:showId` — soft-delete a pre-start show (ADMIN only)
 - `GET /studios/:studioId/shows/:showId` — enriched show detail including platform assignments and schedule summary for the edit form
 - `GET /studios/:studioId/shows` — shared list with schedule-name filtering plus orphan discovery via the `orphans` keyword shortcut
@@ -33,6 +36,7 @@ Studios could assign creators to shows and read show details, but could not cont
 - Restore-on-create: if create includes an `external_id` matching a soft-deleted show, that record is restored and updated from the latest payload without reviving old workflow state
 - Pre-start delete clears disposable task workflow records so restore behaves like a new lifecycle
 - Schedule linkage validated for same-studio and same-client consistency
+- Cancellation resolution is backed by `Task.type = STATE_GATE`, including manual show cancellation and schedule-publish removals with active tasks.
 
 ## Key Product Decisions
 
@@ -49,6 +53,7 @@ Studios could assign creators to shows and read show details, but could not cont
 - **Show actuals stay on the show resource** — operations managers record the Phase 4 show actual window on `Show.actualStartTime` / `Show.actualEndTime` through the normal studio show update route. The UI does not introduce creator-specific or platform-specific actual inputs in Phase 4.
 - **Current-view export mirrors server filters** — task-setup export downloads every row matching the active date range, table filters, issues filter, and actuals queue filter, not only the visible page.
 - **No show transfer** — shows belong to one studio; cross-studio movement is a governance action for system admins only.
+- **State Gates for pending cancellation** — shows that need cancellation follow-up use the generic Task-backed State Gate primitive. Manual cancellation opens an assigned `show_cancellation` gate; schedule-publish removal with active tasks opens an unassigned `schedule_publish_removal` gate that a manager must claim before resolving.
 
 ## Acceptance Record
 
