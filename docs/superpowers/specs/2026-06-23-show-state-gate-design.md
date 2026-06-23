@@ -88,12 +88,20 @@ No new screens. `STATE_GATE` tasks surface in the existing task surfaces:
 
 ## Documentation Requirements (do not skip)
 
-This design introduces a primitive other features are expected to reuse, so the knowledge needs to be discoverable independent of this spec:
+Each gate kind encodes critical, easy-to-get-wrong business logic (who can own it, what outcomes are valid, what it implies for compensation/reporting/credit). That knowledge needs to be discoverable by *any* future feature that touches the gate's domain — not only by someone already inside the show-production-lifecycle skill. Two tiers of documentation, both mandatory:
+
+**Tier 1 — the generic primitive** (where the plumbing lives, updated in place):
 
 1. `.agent/skills/show-production-lifecycle/references/state-gates.md` — update the `any → cancelled_pending_resolution` and `cancelled_pending_resolution → cancelled or completed` rows to reference `Task` (`STATE_GATE` type) instead of `ShowCancellationResolution`, and close the "No task/issue linkage yet" gap note.
 2. `.agent/skills/show-production-lifecycle/SKILL.md` §4 (Cancellation and Resolution) — update the prose description of `cancel-with-resolution`/`resolve-cancellation` to describe the `Task`-backed gate instead of the dropped model.
-3. Add a short **State Gate pattern** subsection (in the show-production-lifecycle skill, or wherever backend pattern skills like `service-pattern-nestjs` live — whichever the implementer judges more discoverable) documenting: what a gate is, the `GATE_CONFIG` lookup, `openGate`/`resolveGate`, and an explicit instruction that any future "entity needs an owner + deadline + chosen outcome before continuing" requirement should add a `GATE_CONFIG` entry and call the existing primitives rather than building a new table or service.
-4. Run `.agent/workflows/knowledge-sync.md` as part of the implementation PR (per `AGENTS.md`'s Knowledge and Doc Lifecycle rule) so these updates land in the same PR as the code, not a follow-up.
+3. Add a short **State Gate pattern** subsection to `show-production-lifecycle/SKILL.md` documenting: what a gate is, the `GATE_CONFIG` lookup, `openGate`/`resolveGate`, and an explicit instruction that any future "entity needs an owner + deadline + chosen outcome before continuing" requirement should add a `GATE_CONFIG` entry and call the existing primitives rather than building a new table or service. This subsection also states the Tier 2 rule below, so anyone adding a gate kind knows to also add its skill.
+
+**Tier 2 — one dedicated skill per gate kind**, starting with this one:
+
+4. Create `.agent/skills/show-cancellation-resolution/SKILL.md` — a standalone skill (not a reference file) covering the *business* rules for this specific gate kind: the reason taxonomy and what each category implies operationally, who is eligible as resolution owner, the allowed outcomes (`CANCELLED` vs `COMPLETED`) and what each means downstream (e.g. `completed` counts partial production credit, `cancelled` does not — confirm exact compensation/reporting implications with the team that owns those numbers before finalizing this skill's content), the audit trail shape, and — most importantly — an explicit **"read this before changing"** list: any feature touching show-status transitions, task completion/orchestration, compensation/credit calculation for cancelled shows, or cancellation reporting must consult and, if behavior changes, update this skill in the same PR.
+5. Add `show-cancellation-resolution` to the Skill Routing map in `AGENTS.md` (Feature-specific category) so it surfaces via the existing "Skill-First Development" rule, not just by accident.
+6. Treat this as the template for future gate kinds: when a new `GATE_CONFIG` entry is added (e.g. `creator_no_show`), it gets its own dedicated skill following this same shape, not a shared catch-all. The State Gate pattern subsection (item 3) should say this explicitly so it isn't lost.
+7. Run `.agent/workflows/knowledge-sync.md` as part of the implementation PR (per `AGENTS.md`'s Knowledge and Doc Lifecycle rule) so all of the above lands in the same PR as the code, not a follow-up. Per `AGENTS.md`'s `pr-review.md` gate, any *future* PR whose diff touches show-status transitions, task orchestration for `STATE_GATE` tasks, or cancelled-show compensation/reporting should be checked against whether it required reading/updating the relevant gate skill — this is a reviewable, not just a suggested, step.
 
 ## Testing
 
