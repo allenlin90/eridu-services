@@ -8,6 +8,17 @@ import {
 
 import { TASK_STATUS, TASK_TYPE } from './task.schema.js';
 
+export const TASK_TEMPLATE_TYPE = {
+  SETUP: TASK_TYPE.SETUP,
+  ACTIVE: TASK_TYPE.ACTIVE,
+  CLOSURE: TASK_TYPE.CLOSURE,
+  ADMIN: TASK_TYPE.ADMIN,
+  ROUTINE: TASK_TYPE.ROUTINE,
+  OTHER: TASK_TYPE.OTHER,
+} as const;
+
+export type TaskTemplateType = (typeof TASK_TEMPLATE_TYPE)[keyof typeof TASK_TEMPLATE_TYPE];
+
 /**
  * Task Template entity schema
  * Represents a template for creating tasks within a studio
@@ -59,7 +70,7 @@ export type TaskTemplate = z.infer<typeof taskTemplateSchema>;
 export const createTaskTemplateSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  task_type: z.nativeEnum(TASK_TYPE),
+  task_type: z.nativeEnum(TASK_TEMPLATE_TYPE),
   schema: z.record(z.string(), z.any()),
   client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional().nullable(),
 });
@@ -77,7 +88,7 @@ export const taskTemplateDto = taskTemplateSchema.transform((obj) => ({
   id: obj.uid,
   name: obj.name,
   description: obj.description,
-  task_type: (obj.currentSchema as { metadata?: { task_type?: keyof typeof TASK_TYPE } })?.metadata?.task_type ?? TASK_TYPE.OTHER,
+  task_type: (obj.currentSchema as { metadata?: { task_type?: keyof typeof TASK_TEMPLATE_TYPE } })?.metadata?.task_type ?? TASK_TEMPLATE_TYPE.OTHER,
   is_active: obj.isActive,
   current_schema: obj.currentSchema,
   version: obj.version,
@@ -122,7 +133,7 @@ export type TaskTemplateKind = z.infer<typeof taskTemplateKindSchema>;
 export const listTaskTemplatesFilterSchema = z.object({
   name: z.string().optional(),
   id: z.string().optional(),
-  task_type: z.nativeEnum(TASK_TYPE).optional(),
+  task_type: z.nativeEnum(TASK_TEMPLATE_TYPE).optional(),
   template_kind: taskTemplateKindSchema.optional(),
   client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional().nullable(),
   is_active: z
@@ -193,7 +204,7 @@ export const listAdminTaskTemplatesQuerySchema = paginationBaseSchema
     search: z.string().trim().min(1).optional(),
     studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).optional(),
     studio_name: z.string().trim().min(1).optional(),
-    task_type: z.nativeEnum(TASK_TYPE).optional(),
+    task_type: z.nativeEnum(TASK_TEMPLATE_TYPE).optional(),
     is_active: z
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((value) => (typeof value === 'string' ? value === 'true' : value))
@@ -229,7 +240,7 @@ export const adminTaskTemplateDto = z.object({
   client_name: z.string().nullable().optional(),
   name: z.string(),
   description: z.string().nullable(),
-  task_type: z.nativeEnum(TASK_TYPE),
+  task_type: z.nativeEnum(TASK_TEMPLATE_TYPE),
   is_active: z.boolean(),
   version: z.number().int(),
   created_at: z.iso.datetime(),

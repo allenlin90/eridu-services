@@ -35,6 +35,12 @@ export class ShowStatusService extends BaseModelService {
     return this.showStatusRepository.findByUid(...params);
   }
 
+  async getShowStatusBySystemKey(
+    ...params: Parameters<ShowStatusRepository['findBySystemKey']>
+  ): ReturnType<ShowStatusRepository['findBySystemKey']> {
+    return this.showStatusRepository.findBySystemKey(...params);
+  }
+
   async getShowStatuses(
     ...params: Parameters<ShowStatusRepository['findPaginated']>
   ): ReturnType<ShowStatusRepository['findPaginated']> {

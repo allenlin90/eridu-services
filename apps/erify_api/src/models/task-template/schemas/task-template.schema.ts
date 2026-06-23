@@ -1,5 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
 
+import type { TaskTemplateType } from '@eridu/api-types/task-management';
 import {
   adminTaskTemplateBindingDto,
   adminTaskTemplateDto,
@@ -52,7 +53,7 @@ export class ListAdminTaskTemplateBindingsQueryDto extends createZodDto(listAdmi
 export type CreateTaskTemplatePayload = {
   name: string;
   description?: string | null;
-  taskType: 'SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN' | 'ROUTINE' | 'OTHER';
+  taskType: TaskTemplateType;
   currentSchema: any;
   studioId: string;
   uid?: string;
@@ -66,7 +67,7 @@ export type CreateTaskTemplatePayload = {
 export type UpdateTaskTemplatePayload = {
   name?: string;
   description?: string | null;
-  taskType?: 'SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN' | 'ROUTINE' | 'OTHER';
+  taskType?: TaskTemplateType;
   currentSchema?: any;
   version?: number;
   clientUid?: string | null;

@@ -42,7 +42,7 @@ export class TaskRetrievalService {
       template: true,
     });
 
-    // Custom sort: SETUP → ACTIVE → CLOSURE → ADMIN → ROUTINE → OTHER
+    // Custom sort: SETUP → ACTIVE → CLOSURE → ADMIN → ROUTINE → OTHER → STATE_GATE
     const typeOrder: Record<TaskType, number> = {
       [TaskType.SETUP]: 1,
       [TaskType.ACTIVE]: 2,
@@ -50,6 +50,7 @@ export class TaskRetrievalService {
       [TaskType.ADMIN]: 4,
       [TaskType.ROUTINE]: 5,
       [TaskType.OTHER]: 6,
+      [TaskType.STATE_GATE]: 7,
     };
 
     return tasks.sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);

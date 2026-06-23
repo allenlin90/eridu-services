@@ -18,6 +18,7 @@ describe('showStatusService', () => {
 
   beforeEach(async () => {
     const showStatusRepositoryMock = createMockRepository<ShowStatusRepository>({
+      findBySystemKey: jest.fn(),
       findPaginated: jest.fn(),
     });
     const utilityMock = createMockUtilityService('shst_test123');
@@ -121,6 +122,46 @@ describe('showStatusService', () => {
       const result = await service.getShowStatusById(uid);
 
       expect(showStatusRepository.findByUid).toHaveBeenCalledWith(uid);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getShowStatusBySystemKey', () => {
+    it('should return show status when found', async () => {
+      const systemKey = 'CANCELLED_PENDING_RESOLUTION';
+      const expectedResult = {
+        id: 1n,
+        uid: 'shst_pending_resolution',
+        systemKey,
+        name: 'Cancelled Pending Resolution',
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      jest
+        .spyOn(showStatusRepository, 'findBySystemKey')
+        .mockResolvedValue(expectedResult);
+
+      const result = await service.getShowStatusBySystemKey(systemKey);
+
+      expect(showStatusRepository.findBySystemKey).toHaveBeenCalledWith(
+        systemKey,
+      );
+      expect(result).toEqual(expectedResult);
+    });
+
+    it('should return null when not found', async () => {
+      jest
+        .spyOn(showStatusRepository, 'findBySystemKey')
+        .mockResolvedValue(null);
+
+      const result = await service.getShowStatusBySystemKey('NOT_A_REAL_KEY');
+
+      expect(showStatusRepository.findBySystemKey).toHaveBeenCalledWith(
+        'NOT_A_REAL_KEY',
+      );
       expect(result).toBeNull();
     });
   });

@@ -7,6 +7,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import type { TaskTemplateType } from '@eridu/api-types/task-management';
+
 import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
@@ -37,7 +39,7 @@ export class BackdoorTaskTemplateController extends BaseBackdoorController {
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
       description,
-      taskType: task_type,
+      taskType: task_type as TaskTemplateType,
       currentSchema: schema,
       studioId,
       clientUid: client_id,
