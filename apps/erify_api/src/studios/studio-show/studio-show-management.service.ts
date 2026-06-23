@@ -2,20 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { AuditService } from '@/models/audit/audit.service';
+import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
 import {
+  CancelStudioShowDto,
   CreateStudioShowDto,
+  ResolveStudioShowCancellationDto,
   studioShowDetailInclude,
   UpdateStudioShowDto,
 } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
+import { ShowCancellationResolutionService } from '@/models/show-cancellation-resolution/show-cancellation-resolution.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { UserService } from '@/models/user/user.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
@@ -29,6 +36,11 @@ export class StudioShowManagementService {
     private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
     private readonly showRepository: ShowRepository,
+    private readonly showCancellationResolutionService: ShowCancellationResolutionService,
+    private readonly showStatusService: ShowStatusService,
+    private readonly studioMembershipService: StudioMembershipService,
+    private readonly auditService: AuditService,
+    private readonly userService: UserService,
     private readonly platformRepository: PlatformRepository,
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly showPlatformService: ShowPlatformService,
@@ -127,6 +139,122 @@ export class StudioShowManagementService {
   }
 
   @Transactional()
+  async cancelShowWithResolution(
+    studioUid: string,
+    showUid: string,
+    dto: CancelStudioShowDto,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const currentStatus = this.getShowStatusSystemKey(show);
+    if (
+      currentStatus === 'DRAFT'
+      || currentStatus === 'CANCELLED_PENDING_RESOLUTION'
+      || currentStatus === 'CANCELLED'
+      || currentStatus === null
+    ) {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_ALLOWED');
+    }
+
+    const [pendingStatus, ownerMembership, actor] = await Promise.all([
+      this.getRequiredShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION'),
+      this.studioMembershipService.findStudioMemberByUidAndStudio(
+        dto.resolutionOwnerMembershipId,
+        studioUid,
+      ),
+      this.userService.getUserByExtId(actorExtId),
+    ]);
+
+    if (!ownerMembership) {
+      throw HttpError.badRequest('RESOLUTION_OWNER_NOT_FOUND');
+    }
+
+    await this.showRepository.update(
+      { uid: showUid },
+      { showStatus: { connect: { uid: pendingStatus.uid } } },
+    );
+
+    const resolution = await this.showCancellationResolutionService.createPendingResolution({
+      showId: show.id,
+      reasonCategory: dto.reasonCategory,
+      reasonNote: dto.reasonNote,
+      resolutionOwnerMembershipId: ownerMembership.id,
+      followUpDueAt: dto.followUpDueAt,
+      followUpNotes: dto.followUpNotes,
+      createdById: actor?.id ?? null,
+    });
+
+    await this.auditService.create({
+      action: 'OVERRIDE',
+      actorId: actor?.id ?? null,
+      reason: dto.reasonNote,
+      metadata: {
+        field: 'show_status',
+        old_value: currentStatus,
+        new_value: 'CANCELLED_PENDING_RESOLUTION',
+        cancellation_resolution_uid: resolution.uid,
+        reason_category: dto.reasonCategory,
+      },
+      targets: [{ targetType: 'SHOW', targetId: show.id }],
+    });
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  @Transactional()
+  async resolveShowCancellation(
+    studioUid: string,
+    showUid: string,
+    dto: ResolveStudioShowCancellationDto,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const currentStatus = this.getShowStatusSystemKey(show);
+    if (currentStatus !== 'CANCELLED_PENDING_RESOLUTION') {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_PENDING');
+    }
+
+    const [targetStatus, pendingResolution, actor] = await Promise.all([
+      this.getRequiredShowStatusBySystemKey(dto.finalDisposition),
+      this.showCancellationResolutionService.findPendingResolutionForShow(show.id),
+      this.userService.getUserByExtId(actorExtId),
+    ]);
+
+    if (!pendingResolution) {
+      throw HttpError.badRequest('SHOW_CANCELLATION_RESOLUTION_NOT_FOUND');
+    }
+
+    await this.showRepository.update(
+      { uid: showUid },
+      { showStatus: { connect: { uid: targetStatus.uid } } },
+    );
+
+    const resolvedResolution = await this.showCancellationResolutionService.resolvePendingResolution(
+      pendingResolution.uid,
+      {
+        finalDisposition: dto.finalDisposition,
+        resolutionNotes: dto.resolutionNotes,
+        resolvedById: actor?.id ?? null,
+      },
+    );
+
+    await this.auditService.create({
+      action: 'OVERRIDE',
+      actorId: actor?.id ?? null,
+      reason: dto.resolutionNotes,
+      metadata: {
+        field: 'show_status',
+        old_value: currentStatus,
+        new_value: dto.finalDisposition,
+        cancellation_resolution_uid: resolvedResolution.uid,
+      },
+      targets: [{ targetType: 'SHOW', targetId: show.id }],
+    });
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  @Transactional()
   async deleteShow(studioUid: string, showUid: string): Promise<void> {
     const show = await this.findStudioShowOrThrow(studioUid, showUid);
 
@@ -152,6 +280,20 @@ export class StudioShowManagementService {
     }
 
     return show;
+  }
+
+  private getShowStatusSystemKey(
+    show: ShowWithPayload<typeof studioShowDetailInclude>,
+  ): string | null {
+    return show.showStatus?.systemKey ?? show.showStatus?.name?.toUpperCase() ?? null;
+  }
+
+  private async getRequiredShowStatusBySystemKey(systemKey: string) {
+    const status = await this.showStatusService.getShowStatusBySystemKey(systemKey);
+    if (!status) {
+      throw HttpError.badRequest(`SHOW_STATUS_NOT_CONFIGURED:${systemKey}`);
+    }
+    return status;
   }
 
   private async ensureStudioRoomBelongsToStudio(

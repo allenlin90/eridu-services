@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Technical reference for the shipped studio show-management UI, including the dedicated CRUD route, dialog-based create/edit/delete flows, studio-safe searchable lookups, and the operations page for task readiness, show actuals, and current-view export.
+Technical reference for the shipped studio show-management UI, including the dedicated CRUD route, dialog-based create/edit/delete flows, cancellation resolution actions, studio-safe searchable lookups, and the operations page for task readiness, show actuals, and current-view export.
 
 ## Route And Access
 
@@ -21,6 +21,7 @@ Access rules:
 
 - both routes use the shared `shows` policy key
 - `ADMIN` and `MANAGER` can create and update shows
+- `ADMIN` and `MANAGER` can cancel eligible shows into pending resolution and resolve pending cancellation
 - delete affordance is shown to `ADMIN` only
 - `MEMBER`, `DESIGNER`, `MODERATION_MANAGER`, and `TALENT_MANAGER` remain outside the CRUD route
 
@@ -34,6 +35,8 @@ Access rules:
 - `src/features/studio-shows/components/studio-show-management-form.tsx`
 - `src/features/studio-shows/api/get-studio-show.ts`
 - `src/features/studio-shows/api/get-studio-shows.ts`
+- `src/features/studio-shows/api/cancel-studio-show.ts`
+- `src/features/studio-shows/components/show-cancellation-resolution-panel.tsx`
 
 ## Data And Query Model
 
@@ -47,6 +50,7 @@ Access rules:
 - current-view export calls `getAllStudioShowsForExport()`, which pages through every result matching the current server-side filters, caps exports at 5000 rows, batches concurrent page fetches at 4 at a time (no `Promise.all` fan-out so a single click cannot burst dozens of requests), forwards `AbortSignal` and bails between batches when aborted, and serializes CSV/JSON through the shared `csv` and `file-download` primitives. The trigger button renders a `Loader2` spinner with "Exporting…" while pagination runs.
 - shared `show-lookups` stays lightweight for list/filter surfaces; searchable schedule and room inputs use dedicated studio endpoints instead
 - successful create/update/delete invalidates the shared studio show list family and task-related dependent queries via `invalidate-studio-task-queries.ts`
+- cancellation/resolve mutations share the same invalidation path, update the show detail cache, and leave task queries fresh for downstream status-sensitive views
 
 ## CRUD Page Behavior
 
@@ -59,6 +63,10 @@ Access rules:
   - studio-safe searchable lookups for client, schedule, room, show type, status, standard, and platforms
 - edit mode can still repair legacy orphan shows by clearing or reassigning `schedule_id`
 - delete uses an admin-only confirm dialog; backend remains the source of truth for the pre-start rule
+- the show detail Details tab renders the cancellation-resolution panel for `ADMIN` and `MANAGER`
+- non-draft, non-cancelled, non-pending shows expose **Cancel for Resolution**, which captures reason category, reason note, owner membership, optional follow-up due time, and follow-up notes
+- `cancelled_pending_resolution` shows expose **Resolve**, which requires final disposition (`CANCELLED` or `COMPLETED`) and resolution notes
+- resolution owner search uses the existing `/studios/:studioId/members` endpoint and stores the selected studio membership UID in the API payload
 
 ## UX Rules
 
@@ -67,3 +75,4 @@ Access rules:
 - keep route guard and sidebar visibility aligned through the shared access-policy source
 - keep schedule search remote and documented; no dead local-only search affordances
 - keep show-level actuals scoped to `Show.actual_start_time` / `Show.actual_end_time`; creator participation actuals, platform stream/performance facts, and platform violation records are separate task-input workstream concerns and must not be folded into the show update payload
+- keep cancellation workflow actions on semantic endpoints (`cancel-with-resolution`, `resolve-cancellation`); do not encode owner/reason/final disposition through generic `PATCH /shows/:showId`

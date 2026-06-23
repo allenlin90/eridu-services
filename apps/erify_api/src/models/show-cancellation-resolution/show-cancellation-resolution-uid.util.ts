@@ -1,0 +1,1 @@
+export const SHOW_CANCELLATION_RESOLUTION_UID_PREFIX = 'scr';

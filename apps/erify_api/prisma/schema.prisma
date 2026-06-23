@@ -9,28 +9,30 @@ datasource db {
 }
 
 model User {
-  id                           BigInt                 @id @default(autoincrement())
-  uid                          String                 @unique
-  extId                        String?                @unique @map("ext_id") // For SSO integration
-  email                        String                 @unique
-  name                         String
-  isBanned                     Boolean                @default(false) @map("is_banned")
-  isSystemAdmin                Boolean                @default(false) @map("is_system_admin") // System-level admin flag
-  profileUrl                   String?                @map("profile_url")
-  metadata                     Json                   @default("{}")
-  creator                      Creator? // Optional creator profile linkage
-  studioMemberships            StudioMembership[]
-  studioShifts                 StudioShift[]
-  schedules                    Schedule[]             @relation("ScheduleCreator")
-  publishedSchedules           Schedule[]             @relation("SchedulePublisher")
-  scheduleSnapshots            ScheduleSnapshot[]
-  assignedTasks                Task[]
-  createdTaskReportDefinitions TaskReportDefinition[] @relation("TaskReportDefinitionCreatedBy")
-  createdCompensationLineItems CompensationLineItem[] @relation("CompensationLineItemCreatedBy")
-  audits                       Audit[]
-  createdAt                    DateTime               @default(now()) @map("created_at")
-  updatedAt                    DateTime               @updatedAt @map("updated_at")
-  deletedAt                    DateTime?              @map("deleted_at")
+  id                              BigInt                       @id @default(autoincrement())
+  uid                             String                       @unique
+  extId                           String?                      @unique @map("ext_id") // For SSO integration
+  email                           String                       @unique
+  name                            String
+  isBanned                        Boolean                      @default(false) @map("is_banned")
+  isSystemAdmin                   Boolean                      @default(false) @map("is_system_admin") // System-level admin flag
+  profileUrl                      String?                      @map("profile_url")
+  metadata                        Json                         @default("{}")
+  creator                         Creator? // Optional creator profile linkage
+  studioMemberships               StudioMembership[]
+  studioShifts                    StudioShift[]
+  schedules                       Schedule[]                   @relation("ScheduleCreator")
+  publishedSchedules              Schedule[]                   @relation("SchedulePublisher")
+  scheduleSnapshots               ScheduleSnapshot[]
+  assignedTasks                   Task[]
+  createdTaskReportDefinitions    TaskReportDefinition[]       @relation("TaskReportDefinitionCreatedBy")
+  createdCompensationLineItems    CompensationLineItem[]       @relation("CompensationLineItemCreatedBy")
+  createdCancellationResolutions  ShowCancellationResolution[] @relation("ShowCancellationResolutionCreatedBy")
+  resolvedCancellationResolutions ShowCancellationResolution[] @relation("ShowCancellationResolutionResolvedBy")
+  audits                          Audit[]
+  createdAt                       DateTime                     @default(now()) @map("created_at")
+  updatedAt                       DateTime                     @updatedAt @map("updated_at")
+  deletedAt                       DateTime?                    @map("deleted_at")
 
   @@index([uid])
   @@index([email])
@@ -171,6 +173,7 @@ model Show {
   Schedule                    Schedule?                    @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   showCreators                ShowCreator[]
   showPlatforms               ShowPlatform[]
+  cancellationResolutions     ShowCancellationResolution[]
   taskTargets                 TaskTarget[]
   compensationLineItemTargets CompensationLineItemTarget[]
   auditTargets                AuditTarget[]
@@ -402,18 +405,19 @@ model ShowStandard {
 }
 
 model StudioMembership {
-  id             BigInt    @id @default(autoincrement())
-  uid            String    @unique
-  role           String // admin, manager, member, talent_manager, designer, moderation_manager
-  baseHourlyRate Decimal?  @map("base_hourly_rate") @db.Decimal(10, 2)
-  metadata       Json      @default("{}")
-  userId         BigInt    @map("user_id")
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studioId       BigInt    @map("studio_id")
-  studio         Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
+  id                               BigInt                       @id @default(autoincrement())
+  uid                              String                       @unique
+  role                             String // admin, manager, member, talent_manager, designer, moderation_manager
+  baseHourlyRate                   Decimal?                     @map("base_hourly_rate") @db.Decimal(10, 2)
+  metadata                         Json                         @default("{}")
+  userId                           BigInt                       @map("user_id")
+  user                             User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studioId                         BigInt                       @map("studio_id")
+  studio                           Studio                       @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  ownedShowCancellationResolutions ShowCancellationResolution[] @relation("ShowCancellationResolutionOwner")
+  createdAt                        DateTime                     @default(now()) @map("created_at")
+  updatedAt                        DateTime                     @updatedAt @map("updated_at")
+  deletedAt                        DateTime?                    @map("deleted_at")
 
   @@unique([userId, studioId])
   @@index([uid])
@@ -426,6 +430,40 @@ model StudioMembership {
   @@index([studioId, deletedAt])
   @@index([userId, role, deletedAt]) // Authorization checks
   @@map("studio_memberships")
+}
+
+model ShowCancellationResolution {
+  id                          BigInt            @id @default(autoincrement())
+  uid                         String            @unique
+  showId                      BigInt            @map("show_id")
+  show                        Show              @relation(fields: [showId], references: [id], onDelete: Cascade)
+  reasonCategory              String            @map("reason_category")
+  reasonNote                  String?           @map("reason_note")
+  resolutionOwnerMembershipId BigInt?           @map("resolution_owner_membership_id")
+  resolutionOwnerMembership   StudioMembership? @relation("ShowCancellationResolutionOwner", fields: [resolutionOwnerMembershipId], references: [id], onDelete: SetNull)
+  followUpDueAt               DateTime?         @map("follow_up_due_at")
+  followUpNotes               String?           @map("follow_up_notes")
+  finalDisposition            String?           @map("final_disposition")
+  resolutionNotes             String?           @map("resolution_notes")
+  createdById                 BigInt?           @map("created_by_id")
+  createdBy                   User?             @relation("ShowCancellationResolutionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  resolvedById                BigInt?           @map("resolved_by_id")
+  resolvedBy                  User?             @relation("ShowCancellationResolutionResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt                  DateTime?         @map("resolved_at")
+  createdAt                   DateTime          @default(now()) @map("created_at")
+  updatedAt                   DateTime          @updatedAt @map("updated_at")
+  deletedAt                   DateTime?         @map("deleted_at")
+
+  @@index([uid])
+  @@index([showId])
+  @@index([resolutionOwnerMembershipId])
+  @@index([createdById])
+  @@index([resolvedById])
+  @@index([finalDisposition])
+  @@index([resolvedAt])
+  @@index([deletedAt])
+  @@index([showId, resolvedAt, deletedAt])
+  @@map("show_cancellation_resolutions")
 }
 
 enum StudioShiftStatus {

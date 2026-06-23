@@ -73,8 +73,40 @@ export const studioShowPlatformSummarySchema = showListPlatformSummarySchema.ext
   cto: z.string().nullable().optional(),
 });
 
+export const showCancellationReasonCategorySchema = z.enum([
+  'CREATOR_UNAVAILABLE',
+  'ROOM_UNAVAILABLE',
+  'EQUIPMENT_FAILURE',
+  'UTILITY_OUTAGE',
+  'PLATFORM_ISSUE',
+  'CLIENT_REQUEST',
+  'OTHER',
+]);
+
+export const showCancellationFinalDispositionSchema = z.enum([
+  'CANCELLED',
+  'COMPLETED',
+]);
+
+export const studioShowCancellationResolutionSchema = z.object({
+  id: z.string().startsWith(UID_PREFIXES.SHOW_CANCELLATION_RESOLUTION),
+  reason_category: showCancellationReasonCategorySchema,
+  reason_note: z.string().nullable(),
+  resolution_owner_membership_id: z.string().startsWith(UID_PREFIXES.STUDIO_MEMBERSHIP).nullable(),
+  resolution_owner_user_id: z.string().startsWith(UID_PREFIXES.USER).nullable(),
+  resolution_owner_name: z.string().nullable(),
+  follow_up_due_at: z.string().nullable(),
+  follow_up_notes: z.string().nullable(),
+  final_disposition: showCancellationFinalDispositionSchema.nullable(),
+  resolution_notes: z.string().nullable(),
+  resolved_at: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
 export const studioShowDetailSchema = showApiResponseSchema.extend({
   platforms: z.array(studioShowPlatformSummarySchema).default([]),
+  cancellation_resolution: studioShowCancellationResolutionSchema.nullable().optional(),
 });
 
 /**
@@ -260,6 +292,19 @@ export const updateStudioShowInputSchema = z
       path: ['end_time'],
     },
   );
+
+export const cancelStudioShowInputSchema = z.object({
+  reason_category: showCancellationReasonCategorySchema,
+  reason_note: z.string().trim().min(1).max(1000),
+  resolution_owner_membership_id: z.string().startsWith(UID_PREFIXES.STUDIO_MEMBERSHIP),
+  follow_up_due_at: z.iso.datetime().nullable().optional(),
+  follow_up_notes: z.string().trim().max(1000).nullable().optional(),
+});
+
+export const resolveStudioShowCancellationInputSchema = z.object({
+  final_disposition: showCancellationFinalDispositionSchema,
+  resolution_notes: z.string().trim().min(1).max(1000),
+});
 
 /**
  * Show Run Review Summary Response Schema (PR 12.4.4)

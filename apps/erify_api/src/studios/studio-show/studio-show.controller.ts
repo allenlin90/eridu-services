@@ -49,7 +49,9 @@ import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.
 import { showMechanicCoverageResponseSchema } from '@/models/client-mechanic/schemas/client-mechanic.schema';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
 import {
+  CancelStudioShowDto,
   CreateStudioShowDto,
+  ResolveStudioShowCancellationDto,
   showPlatformSummaryRelationSchema,
   studioShowDetailDto,
   UpdateStudioShowDto,
@@ -308,6 +310,40 @@ export class StudioShowController extends BaseStudioController {
     @Body() body: UpdateStudioShowDto,
   ) {
     return this.studioShowManagementService.updateShow(studioId, id, body);
+  }
+
+  @Post(':id/cancel-with-resolution')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(studioShowDetailDto)
+  async cancelShowWithResolution(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: CancelStudioShowDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studioShowManagementService.cancelShowWithResolution(
+      studioId,
+      id,
+      body,
+      user.ext_id,
+    );
+  }
+
+  @Post(':id/resolve-cancellation')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(studioShowDetailDto)
+  async resolveShowCancellation(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: ResolveStudioShowCancellationDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studioShowManagementService.resolveShowCancellation(
+      studioId,
+      id,
+      body,
+      user.ext_id,
+    );
   }
 
   @Delete(':id')

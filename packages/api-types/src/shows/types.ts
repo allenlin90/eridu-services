@@ -1,12 +1,15 @@
 import type { z } from 'zod';
 
 import type {
+  cancelStudioShowInputSchema,
   createShowInputSchema,
   createStudioShowInputSchema,
   listShowsQuerySchema,
+  resolveStudioShowCancellationInputSchema,
   showApiResponseSchema,
   showListResponseSchema,
   showRunReviewSummarySchema,
+  studioShowCancellationResolutionSchema,
   studioShowDetailSchema,
   studioShowPlatformSummarySchema,
   updateShowInputSchema,
@@ -28,6 +31,7 @@ export type ShowApiResponse = z.infer<typeof showApiResponseSchema>;
  */
 export type ShowListResponse = z.infer<typeof showListResponseSchema>;
 export type StudioShowPlatformSummary = z.infer<typeof studioShowPlatformSummarySchema>;
+export type StudioShowCancellationResolution = z.infer<typeof studioShowCancellationResolutionSchema>;
 export type StudioShowDetail = z.infer<typeof studioShowDetailSchema>;
 export type ShowRunReviewSummary = z.infer<typeof showRunReviewSummarySchema>;
 
@@ -41,6 +45,8 @@ export type ListShowsQuery = z.infer<typeof listShowsQuerySchema>;
  */
 export type CreateShowInput = z.infer<typeof createShowInputSchema>;
 export type CreateStudioShowInput = z.infer<typeof createStudioShowInputSchema>;
+export type CancelStudioShowInput = z.infer<typeof cancelStudioShowInputSchema>;
+export type ResolveStudioShowCancellationInput = z.infer<typeof resolveStudioShowCancellationInputSchema>;
 
 /**
  * Update Show Input Type (snake_case - matches API input)

@@ -3,7 +3,9 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import {
+  cancelStudioShowInputSchema,
   createStudioShowInputSchema,
+  resolveStudioShowCancellationInputSchema,
   showApiResponseSchema,
   studioShowDetailSchema,
   updateStudioShowInputSchema,
@@ -14,6 +16,11 @@ import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import { CLIENT_UID_PREFIX } from '@/models/client/client-uid.util';
 import { SCHEDULE_UID_PREFIX } from '@/models/schedule/schedule.constants';
 import { SHOW_UID_PREFIX } from '@/models/show/show-uid.util';
+import {
+  showCancellationResolutionDto,
+  showCancellationResolutionOwnerInclude,
+  showCancellationResolutionWithOwnerSchema,
+} from '@/models/show-cancellation-resolution/schemas/show-cancellation-resolution.schema';
 import { SHOW_STANDARD_UID_PREFIX } from '@/models/show-standard/show-standard-uid.util';
 import { SHOW_STATUS_UID_PREFIX } from '@/models/show-status/show-status-uid.util';
 import { SHOW_TYPE_UID_PREFIX } from '@/models/show-type/show-type-uid.util';
@@ -353,6 +360,12 @@ export const studioShowDetailInclude = {
       },
     },
   },
+  cancellationResolutions: {
+    where: { deletedAt: null },
+    orderBy: { createdAt: 'desc' },
+    take: 1,
+    include: showCancellationResolutionOwnerInclude,
+  },
 } as const satisfies Prisma.ShowInclude;
 
 // Shared transform: DB entity with relations → snake_case API fields
@@ -394,6 +407,7 @@ export const showDto = showWithRelationsSchema
 export const studioShowDetailDto = showWithRelationsSchema
   .extend({
     showPlatforms: z.array(showPlatformSummaryRelationSchema).optional(),
+    cancellationResolutions: z.array(showCancellationResolutionWithOwnerSchema).optional(),
   })
   .transform((obj) => {
     const base = transformShowToApi(obj);
@@ -408,7 +422,10 @@ export const studioShowDetailDto = showWithRelationsSchema
       ctr: decimalToString(item.ctr),
       cto: decimalToString(item.cto),
     }));
-    return { ...base, platforms };
+    const cancellationResolution = obj.cancellationResolutions?.[0]
+      ? showCancellationResolutionDto.parse(obj.cancellationResolutions[0])
+      : null;
+    return { ...base, platforms, cancellation_resolution: cancellationResolution };
   })
   // Zod 4 .extend() schemas lose pipe-compatibility due to internal branded types.
   // The transform output is structurally validated by studioShowDetailSchema at runtime.
@@ -538,4 +555,28 @@ export class UpdateStudioShowDto extends createZodDto(updateStudioShowTransformS
   declare actualStartTime: Date | null | undefined;
   declare actualEndTime: Date | null | undefined;
   declare platformIds: string[] | undefined;
+}
+
+const cancelStudioShowTransformSchema = cancelStudioShowInputSchema.transform((data) => ({
+  reasonCategory: data.reason_category,
+  reasonNote: data.reason_note,
+  resolutionOwnerMembershipId: data.resolution_owner_membership_id,
+  followUpDueAt: data.follow_up_due_at ? new Date(data.follow_up_due_at) : null,
+  followUpNotes: data.follow_up_notes ?? null,
+}));
+export class CancelStudioShowDto extends createZodDto(cancelStudioShowTransformSchema) {
+  declare reasonCategory: z.infer<typeof cancelStudioShowInputSchema>['reason_category'];
+  declare reasonNote: string;
+  declare resolutionOwnerMembershipId: string;
+  declare followUpDueAt: Date | null;
+  declare followUpNotes: string | null;
+}
+
+const resolveStudioShowCancellationTransformSchema = resolveStudioShowCancellationInputSchema.transform((data) => ({
+  finalDisposition: data.final_disposition,
+  resolutionNotes: data.resolution_notes,
+}));
+export class ResolveStudioShowCancellationDto extends createZodDto(resolveStudioShowCancellationTransformSchema) {
+  declare finalDisposition: z.infer<typeof resolveStudioShowCancellationInputSchema>['final_disposition'];
+  declare resolutionNotes: string;
 }

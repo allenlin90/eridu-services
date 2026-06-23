@@ -10,7 +10,12 @@ import { StudioShowManagementService } from './studio-show-management.service';
 
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
-import type { CreateStudioShowDto, UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
+import type {
+  CancelStudioShowDto,
+  CreateStudioShowDto,
+  ResolveStudioShowCancellationDto,
+  UpdateStudioShowDto,
+} from '@/models/show/schemas/show.schema';
 import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
@@ -45,6 +50,8 @@ describe('studioShowController', () => {
     createShow: jest.fn(),
     updateShow: jest.fn(),
     deleteShow: jest.fn(),
+    cancelShowWithResolution: jest.fn(),
+    resolveShowCancellation: jest.fn(),
   };
 
   const clientMechanicServiceMock = {
@@ -176,6 +183,68 @@ describe('studioShowController', () => {
       await controller.delete(studioId, showId);
 
       expect(studioShowManagementServiceMock.deleteShow).toHaveBeenCalledWith(studioId, showId);
+    });
+  });
+
+  describe('cancelShowWithResolution', () => {
+    it('delegates cancellation to the semantic management workflow with the actor', async () => {
+      const studioId = 'std_123';
+      const showId = 'show_123';
+      const dto: CancelStudioShowDto = {
+        reasonCategory: 'CREATOR_UNAVAILABLE',
+        reasonNote: 'Host called out during final prep',
+        resolutionOwnerMembershipId: 'smb_owner',
+        followUpDueAt: new Date('2026-04-02T13:00:00.000Z'),
+        followUpNotes: 'Confirm replacement creator or close as cancelled',
+      };
+      const actor = { ext_id: 'actor_ext' } as any;
+
+      studioShowManagementServiceMock.cancelShowWithResolution.mockResolvedValue({
+        id: showId,
+        show_status_system_key: 'CANCELLED_PENDING_RESOLUTION',
+      });
+
+      const result = await controller.cancelShowWithResolution(studioId, showId, dto, actor);
+
+      expect(studioShowManagementServiceMock.cancelShowWithResolution)
+        .toHaveBeenCalledWith(studioId, showId, dto, 'actor_ext');
+      expect(result).toEqual({
+        id: showId,
+        show_status_system_key: 'CANCELLED_PENDING_RESOLUTION',
+      });
+    });
+
+    it('restricts cancellation and resolution to studio admins and managers', () => {
+      expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.cancelShowWithResolution))
+        .toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER]);
+      expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.resolveShowCancellation))
+        .toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER]);
+    });
+  });
+
+  describe('resolveShowCancellation', () => {
+    it('delegates pending cancellation resolution to the management workflow with the actor', async () => {
+      const studioId = 'std_123';
+      const showId = 'show_123';
+      const dto: ResolveStudioShowCancellationDto = {
+        finalDisposition: 'COMPLETED',
+        resolutionNotes: 'Partial production accepted for reporting',
+      };
+      const actor = { ext_id: 'actor_ext' } as any;
+
+      studioShowManagementServiceMock.resolveShowCancellation.mockResolvedValue({
+        id: showId,
+        show_status_system_key: 'COMPLETED',
+      });
+
+      const result = await controller.resolveShowCancellation(studioId, showId, dto, actor);
+
+      expect(studioShowManagementServiceMock.resolveShowCancellation)
+        .toHaveBeenCalledWith(studioId, showId, dto, 'actor_ext');
+      expect(result).toEqual({
+        id: showId,
+        show_status_system_key: 'COMPLETED',
+      });
     });
   });
 

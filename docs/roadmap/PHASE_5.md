@@ -25,7 +25,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | 1   | [Current feature lifecycle alignment](#1-current-feature-lifecycle-alignment) — scope gate that locks the Phase 5 surface decisions and refined workstream list                    | —          | ✅ Done       |
 | 2   | [Creator roster onboarding and intake clarification](#2-creator-roster-onboarding-and-intake-clarification) — clarify `/creators` intake for add, reactivate, and create-new-to-roster | —          | ✅ Done       |
 | 3   | [Show status vocabulary alignment](#3-show-status-vocabulary-alignment) — align lifecycle status records, seed data, docs, and role vocabulary                                     | —          | ✅ Done       |
-| 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation into resolution workflow from non-draft, non-pending shows                   | 3          | 🔲 Planned    |
+| 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation into resolution workflow from non-draft, non-pending shows                   | 3          | ✅ Done       |
 | 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | 🔲 Planned    |
 | 6   | [Import platform performance data](#6-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                                     | —          | 🔲 Planned    |
 | 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate imported or extracted metrics with audit reason                            | 6          | 🔲 Planned    |
@@ -120,7 +120,15 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 
 **Source**: [`show-production-lifecycle`](../../.agent/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §4; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
 
-Allow managers to cancel a show into `cancelled_pending_resolution` without requiring the full lifecycle state machine. This action is available for non-draft shows that are not already pending resolution, so production, post-production, or other active downstream consequences can be captured for follow-up. Capture reason category, resolution owner, follow-up fields, and final disposition (`cancelled` or `completed`) as operational records for review and later export; do not hard-code a broader transition graph in this workstream.
+**Completion result**: Studio Admins and Managers can move eligible shows from the show detail page into `cancelled_pending_resolution` through a semantic cancellation workflow. The workflow stores a `show_cancellation_resolutions` operational record with reason category, reason note, resolution owner membership, follow-up due/notes, and later final disposition; each status move writes a show-targeted Audit row. Pending resolution can close to `cancelled` or `completed` without introducing the broader lifecycle state machine or readiness gates.
+
+**Acceptance closure**:
+
+- `POST /studios/:studioId/shows/:showId/cancel-with-resolution` is available to `ADMIN` and `MANAGER` for non-draft shows that are not already pending or cancelled.
+- `POST /studios/:studioId/shows/:showId/resolve-cancellation` closes a pending-resolution show to `CANCELLED` or `COMPLETED`.
+- `GET /studios/:studioId/shows/:showId` includes the latest cancellation-resolution record for the detail page.
+- Cancellation reason, owner, follow-up fields, final disposition, and resolution notes are stored as first-class operational records instead of `Show.metadata`.
+- The implementation does not add lifecycle state-machine enforcement; item 14 remains the broader transition-graph workstream.
 
 ### 5. Schedule-change task reconciliation
 

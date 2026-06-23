@@ -8,15 +8,24 @@ import { ClsModule } from 'nestjs-cls';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { AuditService } from '@/models/audit/audit.service';
+import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
-import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
+import type {
+  CancelStudioShowDto,
+  ResolveStudioShowCancellationDto,
+  UpdateStudioShowDto,
+} from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
+import { ShowCancellationResolutionService } from '@/models/show-cancellation-resolution/show-cancellation-resolution.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
@@ -68,6 +77,23 @@ describe('studioShowManagementService', () => {
     findByUidAndStudioUid: jest.fn(),
     update: jest.fn(),
   };
+  const showCancellationResolutionServiceMock = {
+    createPendingResolution: jest.fn(),
+    findPendingResolutionForShow: jest.fn(),
+    resolvePendingResolution: jest.fn(),
+  };
+  const showStatusServiceMock = {
+    getShowStatusBySystemKey: jest.fn(),
+  };
+  const studioMembershipServiceMock = {
+    findStudioMemberByUidAndStudio: jest.fn(),
+  };
+  const auditServiceMock = {
+    create: jest.fn(),
+  };
+  const userServiceMock = {
+    getUserByExtId: jest.fn(),
+  };
   const platformRepositoryMock = {
     findByUids: jest.fn(),
   };
@@ -109,6 +135,11 @@ describe('studioShowManagementService', () => {
         { provide: ScheduleService, useValue: scheduleServiceMock },
         { provide: ShowService, useValue: showServiceMock },
         { provide: ShowRepository, useValue: showRepositoryMock },
+        { provide: ShowCancellationResolutionService, useValue: showCancellationResolutionServiceMock },
+        { provide: ShowStatusService, useValue: showStatusServiceMock },
+        { provide: StudioMembershipService, useValue: studioMembershipServiceMock },
+        { provide: AuditService, useValue: auditServiceMock },
+        { provide: UserService, useValue: userServiceMock },
         { provide: PlatformRepository, useValue: platformRepositoryMock },
         { provide: ShowPlatformRepository, useValue: showPlatformRepositoryMock },
         { provide: ShowPlatformService, useValue: showPlatformServiceMock },
@@ -140,9 +171,36 @@ describe('studioShowManagementService', () => {
       uid: 'show_123',
       studioId: BigInt(10),
       client: { uid: 'cli_1' },
+      showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
       startTime: new Date('2026-04-02T10:00:00.000Z'),
       endTime: new Date('2026-04-02T12:00:00.000Z'),
     });
+    showStatusServiceMock.getShowStatusBySystemKey.mockImplementation(async (systemKey: string) => ({
+      id: systemKey === 'CANCELLED_PENDING_RESOLUTION' ? BigInt(201) : BigInt(202),
+      uid: systemKey === 'CANCELLED_PENDING_RESOLUTION' ? 'shst_pending' : 'shst_final',
+      name: systemKey === 'CANCELLED_PENDING_RESOLUTION' ? 'cancelled_pending_resolution' : systemKey.toLowerCase(),
+      systemKey,
+    }));
+    studioMembershipServiceMock.findStudioMemberByUidAndStudio.mockResolvedValue({
+      id: BigInt(77),
+      uid: 'smb_owner',
+      user: { uid: 'user_owner', name: 'Owner', email: 'owner@example.com' },
+    });
+    userServiceMock.getUserByExtId.mockResolvedValue({ id: BigInt(88), uid: 'user_actor' });
+    showServiceMock.getShowById.mockResolvedValue({ id: 'show_123', show_status_system_key: 'CANCELLED_PENDING_RESOLUTION' });
+    showCancellationResolutionServiceMock.createPendingResolution.mockResolvedValue({
+      uid: 'scr_pending',
+    });
+    showCancellationResolutionServiceMock.findPendingResolutionForShow.mockResolvedValue({
+      id: BigInt(901),
+      uid: 'scr_pending',
+      showId: BigInt(100),
+    });
+    showCancellationResolutionServiceMock.resolvePendingResolution.mockResolvedValue({
+      uid: 'scr_pending',
+      finalDisposition: 'CANCELLED',
+    });
+    auditServiceMock.create.mockResolvedValue({ uid: 'aud_cancel' });
   });
 
   it('creates a new show and syncs platform memberships', async () => {
@@ -520,5 +578,122 @@ describe('studioShowManagementService', () => {
       }),
     });
     expect(showOrchestrationServiceMock.deleteShow).not.toHaveBeenCalled();
+  });
+
+  it('cancels a confirmed show into pending resolution with an owner and audit trail', async () => {
+    const dto: CancelStudioShowDto = {
+      reasonCategory: 'CREATOR_UNAVAILABLE',
+      reasonNote: 'Host called out during final prep',
+      resolutionOwnerMembershipId: 'smb_owner',
+      followUpDueAt: new Date('2026-04-02T13:00:00.000Z'),
+      followUpNotes: 'Confirm replacement creator or close as cancelled',
+    };
+
+    const result = await service.cancelShowWithResolution('std_123', 'show_123', dto, 'actor_ext');
+
+    expect(studioMembershipServiceMock.findStudioMemberByUidAndStudio)
+      .toHaveBeenCalledWith('smb_owner', 'std_123');
+    expect(showStatusServiceMock.getShowStatusBySystemKey)
+      .toHaveBeenCalledWith('CANCELLED_PENDING_RESOLUTION');
+    expect(showRepositoryMock.update).toHaveBeenCalledWith(
+      { uid: 'show_123' },
+      { showStatus: { connect: { uid: 'shst_pending' } } },
+    );
+    expect(showCancellationResolutionServiceMock.createPendingResolution)
+      .toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(100),
+        reasonCategory: 'CREATOR_UNAVAILABLE',
+        reasonNote: 'Host called out during final prep',
+        resolutionOwnerMembershipId: BigInt(77),
+        followUpDueAt: new Date('2026-04-02T13:00:00.000Z'),
+        followUpNotes: 'Confirm replacement creator or close as cancelled',
+        createdById: BigInt(88),
+      }));
+    expect(auditServiceMock.create).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'OVERRIDE',
+      actorId: BigInt(88),
+      reason: 'Host called out during final prep',
+      metadata: expect.objectContaining({
+        field: 'show_status',
+        old_value: 'CONFIRMED',
+        new_value: 'CANCELLED_PENDING_RESOLUTION',
+        cancellation_resolution_uid: 'scr_pending',
+      }),
+      targets: [{ targetType: 'SHOW', targetId: BigInt(100) }],
+    }));
+    expect(result).toEqual({ id: 'show_123', show_status_system_key: 'CANCELLED_PENDING_RESOLUTION' });
+  });
+
+  it('rejects cancellation from draft or already pending/cancelled shows', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      client: { uid: 'cli_1' },
+      showStatus: { uid: 'shst_draft', name: 'draft', systemKey: 'DRAFT' },
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+    });
+
+    await expect(service.cancelShowWithResolution('std_123', 'show_123', {
+      reasonCategory: 'CREATOR_UNAVAILABLE',
+      reasonNote: 'No creator',
+      resolutionOwnerMembershipId: 'smb_owner',
+    } as CancelStudioShowDto, 'actor_ext')).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'SHOW_CANCELLATION_NOT_ALLOWED',
+      }),
+    });
+    expect(showRepositoryMock.update).not.toHaveBeenCalled();
+  });
+
+  it('resolves pending cancellation to cancelled with final notes and audit trail', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      client: { uid: 'cli_1' },
+      showStatus: {
+        uid: 'shst_pending',
+        name: 'cancelled_pending_resolution',
+        systemKey: 'CANCELLED_PENDING_RESOLUTION',
+      },
+      startTime: new Date('2026-04-02T10:00:00.000Z'),
+      endTime: new Date('2026-04-02T12:00:00.000Z'),
+    });
+    showServiceMock.getShowById.mockResolvedValue({ id: 'show_123', show_status_system_key: 'CANCELLED' });
+    const dto: ResolveStudioShowCancellationDto = {
+      finalDisposition: 'CANCELLED',
+      resolutionNotes: 'No replacement creator was available',
+    };
+
+    const result = await service.resolveShowCancellation('std_123', 'show_123', dto, 'actor_ext');
+
+    expect(showStatusServiceMock.getShowStatusBySystemKey).toHaveBeenCalledWith('CANCELLED');
+    expect(showCancellationResolutionServiceMock.findPendingResolutionForShow)
+      .toHaveBeenCalledWith(BigInt(100));
+    expect(showCancellationResolutionServiceMock.resolvePendingResolution)
+      .toHaveBeenCalledWith('scr_pending', expect.objectContaining({
+        finalDisposition: 'CANCELLED',
+        resolutionNotes: 'No replacement creator was available',
+        resolvedById: BigInt(88),
+      }));
+    expect(showRepositoryMock.update).toHaveBeenCalledWith(
+      { uid: 'show_123' },
+      { showStatus: { connect: { uid: 'shst_final' } } },
+    );
+    expect(auditServiceMock.create).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'OVERRIDE',
+      actorId: BigInt(88),
+      reason: 'No replacement creator was available',
+      metadata: expect.objectContaining({
+        field: 'show_status',
+        old_value: 'CANCELLED_PENDING_RESOLUTION',
+        new_value: 'CANCELLED',
+        cancellation_resolution_uid: 'scr_pending',
+      }),
+      targets: [{ targetType: 'SHOW', targetId: BigInt(100) }],
+    }));
+    expect(result).toEqual({ id: 'show_123', show_status_system_key: 'CANCELLED' });
   });
 });

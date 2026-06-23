@@ -64,7 +64,7 @@ Direct cancellation for shows that will not proceed.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| Cancellation reason provided | Not captured | Not enforced | Phase 5 candidate |
+| Cancellation reason provided | `cancel-with-resolution` captures reason category + note for pending-resolution cancellations | Required by action schema | Direct `cancelled` paths outside the pending-resolution workflow still do not have a separate reason record |
 | No active downstream work | Schedule publish checks this automatically | Automatic (publish only) | If active tasks exist, publish sets `cancelled_pending_resolution` instead |
 
 ## Transition: any → cancelled_pending_resolution
@@ -73,8 +73,8 @@ Show cannot proceed but has operational consequences that need resolution.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| Reason category | Not captured | Not enforced | Candidate reasons: client conflict, creator missing, room unavailable, production failure |
-| Resolution owner assigned | Not captured | Not enforced | Phase 5 gap: no owner queue |
+| Reason category | `ShowCancellationResolution.reasonCategory` | Required by action schema | Categories: creator unavailable, room unavailable, equipment failure, utility outage, platform issue, client request, other |
+| Resolution owner assigned | `ShowCancellationResolution.resolutionOwnerMembershipId` | Required by action schema; owner must be same-studio active member | Stored as studio membership, not raw user ID |
 | Affected records identified | Not tracked | Not enforced | Which tasks, creators, shifts are affected |
 
 ## Transition: cancelled_pending_resolution → cancelled or completed
@@ -83,8 +83,8 @@ Final disposition after resolution.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| All follow-up actions resolved | No follow-up model | Not enforced | Phase 5 gap |
-| Final disposition chosen | Manual status update | Not enforced | cancelled = no production credit, completed = partial production counts |
+| All follow-up actions resolved | `ShowCancellationResolution.followUpDueAt` / `followUpNotes` and resolution notes | Advisory only | No task/issue linkage yet |
+| Final disposition chosen | `resolve-cancellation` writes final disposition and status | Required by action schema | cancelled = no production credit, completed = partial production counts |
 
 ## Fact Extraction as Implicit State Signal
 

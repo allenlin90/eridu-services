@@ -115,9 +115,9 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 - `cancelled_pending_resolution → cancelled`: Resolution complete, no production.
 - `cancelled_pending_resolution → completed`: Resolution complete, partial production counts.
 
-**Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Manual cancellation via show update.
+**Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Studio Admins and Managers can also use `POST /studios/:studioId/shows/:showId/cancel-with-resolution` to move eligible non-draft, non-cancelled shows into pending resolution with a `ShowCancellationResolution` record. Pending resolution closes through `POST /studios/:studioId/shows/:showId/resolve-cancellation` to `cancelled` or `completed`. Both manual status moves write show-targeted Audit rows.
 
-**Gap (Phase 5)**: No reason categories, no owner queue, no follow-up fields, no resolution workflow.
+**Remaining gap (Phase 5)**: cancellation resolution does not enforce the broader lifecycle state machine, affected-record identification, or readiness/completion gates. Those remain item 14/15 scope.
 
 ## Readiness Conditions
 
@@ -134,8 +134,8 @@ These conditions are identified for lifecycle gates. Current enforcement is advi
 | Post-production tasks submitted/approved | live → completed | Task review exists, not enforced as gate |
 | Required performance facts present | live → completed | Fact extraction exists, not enforced |
 | No unresolved show-level blockers | live → completed | No issue model yet |
-| Cancellation reason provided | any → cancelled | Not captured |
-| Pending-resolution owner assigned | any → cancelled_pending_resolution | Not captured |
+| Cancellation reason provided | any → cancelled | Captured for manual pending-resolution flow |
+| Pending-resolution owner assigned | any → cancelled_pending_resolution | Captured as studio membership on `ShowCancellationResolution` |
 
 For the full condition inventory and enforcement-level design, see [references/state-gates.md](references/state-gates.md).
 

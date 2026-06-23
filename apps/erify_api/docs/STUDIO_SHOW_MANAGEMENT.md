@@ -11,6 +11,7 @@ Studio-owned show lifecycle management without reusing `/admin/shows`:
 - Update show metadata, schedule association, and platform assignments inside the same studio boundary
 - Soft-delete shows before start time under a hard time gate
 - Restore soft-deleted shows as new operational lifecycles without reviving old workflow state
+- Move eligible shows into pending cancellation resolution and close them to cancelled or completed
 
 ## API Surface
 
@@ -23,6 +24,8 @@ Studio-owned show lifecycle management without reusing `/admin/shows`:
 | `GET /studios/:studioId/shows`            | Shared show list/read model with schedule, task, creator, platform, and actuals-state filtering | All studio members |
 | `POST /studios/:studioId/shows`           | Create a studio-scoped show                                       | `ADMIN`, `MANAGER` |
 | `PATCH /studios/:studioId/shows/:showId`  | Update show metadata, platform assignments, and show actuals       | `ADMIN`, `MANAGER` |
+| `POST /studios/:studioId/shows/:showId/cancel-with-resolution` | Start cancellation resolution with reason, owner, and follow-up fields | `ADMIN`, `MANAGER` |
+| `POST /studios/:studioId/shows/:showId/resolve-cancellation` | Resolve pending cancellation to cancelled or completed             | `ADMIN`, `MANAGER` |
 | `DELETE /studios/:studioId/shows/:showId` | Soft-delete a pre-start show and remove disposable workflow state | `ADMIN`            |
 
 Note: the backend does not split CRUD and operations into separate endpoint families. FE may present separate pages, but both pages reuse the same studio show read APIs and cache families.
@@ -60,6 +63,8 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 15. **`ShowRepository.findPaginatedWithTaskSummary` is a named method, not an inlined where clause**. The list query composes AND-joined multi-field filters, OR conditions for actuals-state and task filters, AND filters for creator matching, and include joins for task summaries. These semantics cannot be expressed as a flat where clause passed from the service layer without coupling the service to Prisma query structures. The method is intentionally retained as a named repository method.
 
 16. **`ShowRepository.findByClientUidAndExternalId` is a named method, not an inlined where clause**. The restore-on-create lookup requires a client-relation where clause (`client: { uid }`) combined with an explicit `includeDeleted` opt-in that inverts the default `deletedAt: null` guard. Neither can be expressed as a caller-supplied flat where clause without leaking relation semantics into the service layer.
+
+17. **Cancellation resolution is not generic status editing**. `cancel-with-resolution` and `resolve-cancellation` are semantic action endpoints. They update `Show.showStatus`, create or resolve a `ShowCancellationResolution` operational record, and write a show-targeted `Audit` row in one transaction. This closes the Phase 5 manual resolution gap without introducing the full lifecycle transition graph.
 
 ## Key Business Rules
 
@@ -109,9 +114,32 @@ The platform-replacement path is shared across admin and studio flows:
 - soft-delete removed assignments
 - create new assignments with empty metadata and null link fields
 
+### Cancellation Resolution Rule
+
+```text
+cancelShowWithResolution(studioUid, showUid, payload, actorExtId)
+1. load the studio-scoped show with status
+2. reject draft, cancelled, or already-pending shows
+3. resolve CANCELLED_PENDING_RESOLUTION by ShowStatus.systemKey
+4. validate the resolution owner is an active member of the same studio
+5. update show status, create ShowCancellationResolution, and write Audit
+```
+
+```text
+resolveShowCancellation(studioUid, showUid, payload, actorExtId)
+1. load the studio-scoped show with status
+2. require current status CANCELLED_PENDING_RESOLUTION
+3. require an active pending ShowCancellationResolution record
+4. resolve target status by final disposition: CANCELLED or COMPLETED
+5. update show status, resolve the record, and write Audit
+```
+
+The record lives in `show_cancellation_resolutions` and stores reason category, reason note, owner membership, follow-up due/notes, final disposition, resolution notes, actor references, and timestamps. It is included on `GET /studios/:studioId/shows/:showId` as `cancellation_resolution`.
+
 ## Follow-Ups
 
 - Studio show updates intentionally use last-write-wins. If manual studio editing becomes common enough to create real overwrite pain, revisit with a dedicated concurrency token strategy.
 - Nullable `scheduleId` is a deliberate backend flexibility point. FE should treat shows without schedules as exceptional and surface a repair workflow.
 - Studio room and schedule lookups now have dedicated studio-scoped search endpoints for the create/edit modal, and shared show lookups should stay lightweight for non-modal pages. Keep review pressure on lookup parity so future searchable fields do not regress into dead local-only search.
 - `actuals_state=missing` means either show-level actual timestamp is absent; `actuals_state=complete` means both show-level timestamps are recorded. This powers the Phase 4 missing-actuals queue without adding settlement or payment approval semantics. Creator/platform-specific operational facts and platform violations are separate scoped records rather than aliases of `Show.actualStartTime` / `Show.actualEndTime`.
+- Cancellation resolution records are operational workflow records, not state-machine enforcement. The broader lifecycle transition graph and readiness gates remain deferred to Phase 5 item 14/15.
