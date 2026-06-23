@@ -106,4 +106,43 @@ export class ShowStateGateService {
 
     return task;
   }
+
+  @Transactional()
+  async claimGate(taskUid: string, claimant: GateActor): Promise<Task> {
+    const task = await this.taskRepository.findByUid(taskUid);
+    if (!task) {
+      throw HttpError.notFound('Task', taskUid);
+    }
+
+    if (task.assigneeId != null) {
+      throw HttpError.badRequest(`GATE_ALREADY_CLAIMED:${taskUid}`);
+    }
+
+    const content
+      = task.content != null
+      && typeof task.content === 'object'
+      && !Array.isArray(task.content)
+        ? (task.content as Record<string, unknown>)
+        : {};
+    const existingHistory = Array.isArray(content.history)
+      ? content.history
+      : [];
+    const claimedEntry: GateHistoryEntry = {
+      event: 'claimed',
+      actor_id: claimant.uid,
+      at: new Date().toISOString(),
+    };
+
+    return this.taskRepository.updateWithVersionCheck(
+      { uid: taskUid, version: task.version },
+      {
+        assignee: { connect: { id: claimant.id } },
+        version: { increment: 1 },
+        content: {
+          ...content,
+          history: [...existingHistory, claimedEntry],
+        } as Prisma.InputJsonValue,
+      },
+    );
+  }
 }

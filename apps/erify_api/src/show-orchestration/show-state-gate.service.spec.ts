@@ -189,3 +189,115 @@ describe('showStateGateService.openGate', () => {
     ).rejects.toThrow('SHOW_STATUS_NOT_CONFIGURED:CANCELLED_PENDING_RESOLUTION');
   });
 });
+
+describe('showStateGateService.claimGate', () => {
+  let service: ShowStateGateService;
+  let taskRepository: jest.Mocked<TaskRepository>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
+      providers: [
+        ShowStateGateService,
+        {
+          provide: TaskService,
+          useValue: { generateTaskUid: jest.fn(), create: jest.fn() },
+        },
+        {
+          provide: TaskRepository,
+          useValue: { findByUid: jest.fn(), updateWithVersionCheck: jest.fn() },
+        },
+        {
+          provide: TaskTargetService,
+          useValue: { countActiveByShowId: jest.fn() },
+        },
+        {
+          provide: ShowRepository,
+          useValue: { update: jest.fn(), findByUid: jest.fn() },
+        },
+        {
+          provide: ShowStatusService,
+          useValue: { getShowStatusBySystemKey: jest.fn() },
+        },
+        { provide: AuditService, useValue: { create: jest.fn() } },
+      ],
+    }).compile();
+
+    service = module.get(ShowStateGateService);
+    taskRepository = module.get(TaskRepository);
+  });
+
+  const claimant = { id: 9n, uid: 'user_claimant' };
+
+  it('sets assigneeId and appends a claimed history entry when the gate is unowned', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      id: 3n,
+      uid: 'task_xyz',
+      version: 1,
+      assigneeId: null,
+      content: {
+        history: [
+          { event: 'opened', actor_id: null, at: '2026-06-23T00:00:00.000Z' },
+        ],
+      },
+    } as any);
+    taskRepository.updateWithVersionCheck.mockResolvedValue({
+      id: 3n,
+      uid: 'task_xyz',
+      assigneeId: 9n,
+    } as any);
+
+    await service.claimGate('task_xyz', claimant);
+
+    expect(taskRepository.updateWithVersionCheck).toHaveBeenCalledWith(
+      { uid: 'task_xyz', version: 1 },
+      expect.objectContaining({
+        assignee: { connect: { id: 9n } },
+        version: { increment: 1 },
+        content: expect.objectContaining({
+          history: [
+            expect.objectContaining({ event: 'opened' }),
+            expect.objectContaining({
+              event: 'claimed',
+              actor_id: 'user_claimant',
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it('throws GATE_ALREADY_CLAIMED when the gate already has an owner', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      id: 3n,
+      uid: 'task_xyz',
+      version: 1,
+      assigneeId: 5n,
+      content: { history: [] },
+    } as any);
+
+    await expect(service.claimGate('task_xyz', claimant)).rejects.toThrow(
+      'GATE_ALREADY_CLAIMED:task_xyz',
+    );
+    expect(taskRepository.updateWithVersionCheck).not.toHaveBeenCalled();
+  });
+
+  it('throws NOT_FOUND when the task does not exist', async () => {
+    taskRepository.findByUid.mockResolvedValue(null);
+
+    await expect(service.claimGate('task_missing', claimant)).rejects.toThrow();
+  });
+});
