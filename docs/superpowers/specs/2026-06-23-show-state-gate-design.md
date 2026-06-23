@@ -1,0 +1,106 @@
+# Show State Gate — Design
+
+Status: Approved, not yet implemented (supersedes the `ShowCancellationResolution` model added in PR #229).
+
+## Problem
+
+A show in production can be interrupted (creator no-show, room unavailable, equipment failure, platform issue, etc.) and needs to sit in a middle status — "cannot proceed yet, needs someone to resolve it" — before its lifecycle can close. PR #229 implemented this for cancellation specifically: a new `ShowCancellationResolution` table holding an owner, a due date, free-text notes, and a final disposition.
+
+Two problems with that approach:
+
+1. **Duplication.** Every field on `ShowCancellationResolution` (assignee, due date, notes, completion outcome) already exists on the `Task` model, which is this codebase's canonical reference pattern for exactly this shape of work (assign someone, give them a due date, let them close it out with notes). `Task` already has `TaskTarget` for linking to a `Show`, and `finalDisposition` on the resolution row was itself redundant — it's the same value that ends up driving `Show.status`, just stored twice.
+2. **No reuse path.** `live → cancelled_pending_resolution → cancelled|completed` is one instance of a more general shape that shows up across fast-moving livestream/e-commerce operations: *a status transition that needs a person, a deadline, and a chosen outcome before it can complete.* A bespoke table per case (new model, repository, service, migration each time) doesn't scale as more of these appear; `state-gates.md` already names this exact gap ("All follow-up actions resolved... Advisory only. No task/issue linkage yet").
+
+## Goal
+
+Build cancellation follow-up on top of `Task`, and shape that work as a generic, reusable primitive — a **State Gate** — so the next middle-status-with-an-owner requirement (for shows, and potentially other entities later) is a config addition, not a new subsystem.
+
+## Non-goals (this iteration)
+
+- Cross-studio/ops dashboard for gates (deferred — `/system/tasks/` already gives ops a cross-studio task view filterable by type; revisit only if a dedicated gate-level rollup is requested).
+- Active notifications (email/in-app) on gate creation or overdue (deferred — no notification channel exists for tasks today; revisit if/when one does).
+- A `TaskTemplate`/snapshot for gate content (deferred — gate content shapes are code-defined per `gate_kind`, not manager-authored forms).
+- A second-level UI filter on `gate_kind` (deferred — single gate kind today, ~20 gates/studio/month; revisit if a second kind ships and the task-review list gets noisy).
+- Enforcing the broader readiness/completion gate matrix in `state-gates.md` (explicitly out of scope per the existing Phase 5 gap note — this design only closes the cancellation-resolution row of that table).
+
+## Data Model
+
+No new Prisma model. Reuses `Task` + `TaskTarget`.
+
+- Add one new `TaskType` enum value: `STATE_GATE`. This is the *only* schema change. It is reused by every future gate kind — adding a new kind never requires a migration.
+- `Task.metadata` carries the gate envelope:
+  ```json
+  { "gate_kind": "show_cancellation", "from_status": "live", "pending_status": "cancelled_pending_resolution" }
+  ```
+  `gate_kind` is a free string, not an enum.
+- `Task.content` carries gate-kind-specific data. For `show_cancellation`: `reason_category`, `reason_note`, `follow_up_notes`, and (once resolved) `resolution_notes`.
+- `Task.assigneeId` is the resolution owner. Plain `User`, not `StudioMembership` — role/membership scoping on who *can* be assigned is deferred; it only matters at creation/assignment time, and can be layered on later (e.g. validate the chosen user has an active membership in the studio) without a schema change.
+- Linked to the `Show` via the existing `TaskTarget` join (`showId` FK already indexed there) — identical to how any other task targets a show.
+- `Task.snapshotId`/`templateId` stay `null` — no template needed for code-defined gate content.
+
+`ShowCancellationResolution` (model, repository, service, migration) is dropped entirely from PR #229's scope.
+
+## Gate Config (code, not data)
+
+A small lookup table is the single source of truth for what a gate kind means and what it allows:
+
+```ts
+const GATE_CONFIG = {
+  show_cancellation: {
+    pendingStatus: 'CANCELLED_PENDING_RESOLUTION',
+    allowedOutcomes: ['CANCELLED', 'COMPLETED'],
+    reasonOptions: ['CREATOR_UNAVAILABLE', 'ROOM_UNAVAILABLE', 'EQUIPMENT_FAILURE',
+                     'UTILITY_OUTAGE', 'PLATFORM_ISSUE', 'CLIENT_REQUEST', 'OTHER'],
+  },
+  // future gate kinds added here, not as new tables/enum values
+} as const;
+```
+
+Adding a new gate kind (e.g. `creator_no_show`, `platform_escalation`) means adding an entry here plus the calling code for that transition — no new model, repository, or migration.
+
+## Generic Service Primitives
+
+Two methods, kind-agnostic, intended to be reused by every future gate:
+
+- `openGate(showId, gateKind, { ownerId, dueDate, content })` — looks up `GATE_CONFIG[gateKind]`, creates the `STATE_GATE` Task + `TaskTarget`, moves `Show.status` to `gateConfig.pendingStatus`, writes the existing `Audit` row shape (`field: 'show_status'`, old/new value, `gate_task_uid` in metadata — unchanged from PR #229's audit calls).
+- `resolveGate(taskUid, outcomeStatusKey, notes)` — validates `outcomeStatusKey ∈ GATE_CONFIG[gate_kind].allowedOutcomes`, marks the `Task` `COMPLETED` with `completedAt` and appended `resolution_notes`, moves `Show.status` to the outcome, writes the `Audit` row.
+
+These live alongside (or as a small addition to) the existing task-orchestration layer — they are generic over `gateKind`, not cancellation-specific.
+
+## Cancellation as First Caller
+
+`StudioShowManagementService.cancelShowWithResolution` and `.resolveShowCancellation` (PR #229) become thin wrappers:
+
+- `cancelShowWithResolution` validates the show's current status is eligible (unchanged guard logic), resolves the chosen owner membership to a `User`, then calls `openGate(show.id, 'show_cancellation', { ownerId, dueDate: dto.followUpDueAt, content: { reason_category: dto.reasonCategory, reason_note: dto.reasonNote, follow_up_notes: dto.followUpNotes } })`.
+- `resolveShowCancellation` validates the show is currently `CANCELLED_PENDING_RESOLUTION` (unchanged guard logic), finds the open `STATE_GATE` task for the show, then calls `resolveGate(task.uid, dto.finalDisposition, dto.resolutionNotes)`.
+
+All cancellation-specific UI copy, reason taxonomy, and the show-detail dialogs are unchanged from PR #229's frontend — only the backend persistence and the generic primitives change.
+
+## Discovery / UX
+
+No new screens. `STATE_GATE` tasks surface in the existing task surfaces:
+
+- `/studios/$studioId/task-review/` — any manager/admin in the studio filters `Task Type = State Gate` to see every open gate for the studio (not just their own), with existing assignee/due-date/status filtering.
+- `/studios/$studioId/my-tasks` — the assigned owner sees it in their personal queue with existing overdue flagging and due-date sort.
+- `/studios/$studioId/shows/$showId/tasks` — still visible from the show detail page like any other task targeting that show.
+
+**Resolve path stays single-entry.** The generic "mark complete" action in `my-tasks`/`task-review` is disabled/hidden for `STATE_GATE` tasks, because completing one always requires picking a valid outcome from `allowedOutcomes` and moving the parent `Show` together — a bare "complete" click can't do that safely. Resolution only happens through the show-detail "Resolve" dialog, which calls `resolveGate` and updates `Show.status` in the same transaction.
+
+## Documentation Requirements (do not skip)
+
+This design introduces a primitive other features are expected to reuse, so the knowledge needs to be discoverable independent of this spec:
+
+1. `.agent/skills/show-production-lifecycle/references/state-gates.md` — update the `any → cancelled_pending_resolution` and `cancelled_pending_resolution → cancelled or completed` rows to reference `Task` (`STATE_GATE` type) instead of `ShowCancellationResolution`, and close the "No task/issue linkage yet" gap note.
+2. `.agent/skills/show-production-lifecycle/SKILL.md` §4 (Cancellation and Resolution) — update the prose description of `cancel-with-resolution`/`resolve-cancellation` to describe the `Task`-backed gate instead of the dropped model.
+3. Add a short **State Gate pattern** subsection (in the show-production-lifecycle skill, or wherever backend pattern skills like `service-pattern-nestjs` live — whichever the implementer judges more discoverable) documenting: what a gate is, the `GATE_CONFIG` lookup, `openGate`/`resolveGate`, and an explicit instruction that any future "entity needs an owner + deadline + chosen outcome before continuing" requirement should add a `GATE_CONFIG` entry and call the existing primitives rather than building a new table or service.
+4. Run `.agent/workflows/knowledge-sync.md` as part of the implementation PR (per `AGENTS.md`'s Knowledge and Doc Lifecycle rule) so these updates land in the same PR as the code, not a follow-up.
+
+## Testing
+
+- Unit: `openGate`/`resolveGate` — invalid `gateKind`, outcome not in `allowedOutcomes`, show not in expected starting status.
+- Integration (existing `studio-show-management.service.spec.ts` cases from PR #229, adapted): cancel → pending resolution → resolve to `CANCELLED`; cancel → pending resolution → resolve to `COMPLETED`; resolve attempted on a show not currently pending; cancel attempted on an ineligible status (`DRAFT`, already `CANCELLED`, etc.).
+- Frontend: `task-review` shows the gate task under `Task Type = State Gate`; generic complete action is absent/disabled for it; show-detail Resolve dialog still drives both Task completion and Show status in one round trip.
+
+## Migration Note
+
+PR #229's migration (`20260623120000_show_cancellation_resolution`) and the `ShowCancellationResolution`/`ShowCancellationResolutionOwner` relations it added to `User`/`StudioMembership`/`Show` are reverted as part of implementing this design, replaced by the single `TaskType.STATE_GATE` enum addition.
