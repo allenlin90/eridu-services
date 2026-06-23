@@ -8,6 +8,7 @@ import { ClsModule } from 'nestjs-cls';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
@@ -17,8 +18,11 @@ import { ShowPlatformRepository } from '@/models/show-platform/show-platform.rep
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { TaskService } from '@/models/task/task.service';
+import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { ShowStateGateService } from '@/show-orchestration/show-state-gate.service';
 
 const mockPrismaForCls = {
   $transaction: jest.fn(async (callback: any) => await callback({})),
@@ -85,6 +89,19 @@ describe('studioShowManagementService', () => {
   const showOrchestrationServiceMock = {
     deleteShow: jest.fn(),
   };
+  const showStateGateServiceMock = {
+    openGate: jest.fn(),
+    resolveGate: jest.fn(),
+  };
+  const taskServiceMock = {
+    findOpenStateGateForShow: jest.fn(),
+  };
+  const studioMembershipServiceMock = {
+    findStudioMemberByUidAndStudio: jest.fn(),
+  };
+  const userServiceMock = {
+    getUserByExtId: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -113,6 +130,10 @@ describe('studioShowManagementService', () => {
         { provide: ShowPlatformRepository, useValue: showPlatformRepositoryMock },
         { provide: ShowPlatformService, useValue: showPlatformServiceMock },
         { provide: ShowOrchestrationService, useValue: showOrchestrationServiceMock },
+        { provide: ShowStateGateService, useValue: showStateGateServiceMock },
+        { provide: TaskService, useValue: taskServiceMock },
+        { provide: StudioMembershipService, useValue: studioMembershipServiceMock },
+        { provide: UserService, useValue: userServiceMock },
       ],
     }).compile();
 
@@ -520,5 +541,139 @@ describe('studioShowManagementService', () => {
       }),
     });
     expect(showOrchestrationServiceMock.deleteShow).not.toHaveBeenCalled();
+  });
+
+  describe('cancelShowWithResolution', () => {
+    it('resolves the owner membership to a User, opens a show_cancellation gate, and returns the updated show', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+        studioId: 100n,
+        showStatus: { systemKey: 'LIVE' },
+      });
+      studioMembershipServiceMock.findStudioMemberByUidAndStudio.mockResolvedValue({
+        userId: 5n,
+        user: { uid: 'user_owner', name: 'Jane' },
+      });
+      userServiceMock.getUserByExtId.mockResolvedValue({
+        id: 1n,
+        uid: 'user_caller',
+      });
+      showStateGateServiceMock.openGate.mockResolvedValue({ uid: 'task_gate1' });
+      showServiceMock.getShowById.mockResolvedValue({ id: 10n, uid: 'show_abc' });
+
+      await service.cancelShowWithResolution(
+        'studio_1',
+        'show_abc',
+        {
+          reasonCategory: 'ROOM_UNAVAILABLE',
+          reasonNote: 'Flooding',
+          resolutionOwnerMembershipId: 'stdmem_1',
+          followUpDueAt: null,
+          followUpNotes: null,
+        } as any,
+        'ext_caller_1',
+      );
+
+      expect(showStateGateServiceMock.openGate).toHaveBeenCalledWith(
+        10n,
+        'show_cancellation',
+        {
+          owner: { id: 5n, uid: 'user_owner' },
+          fromStatusSystemKey: 'LIVE',
+          dueDate: null,
+          content: {
+            reason_category: 'ROOM_UNAVAILABLE',
+            reason_note: 'Flooding',
+            follow_up_notes: null,
+          },
+          createdBy: { id: 1n, uid: 'user_caller' },
+          studioId: 100n,
+        },
+      );
+    });
+
+    it('throws SHOW_CANCELLATION_NOT_ALLOWED for a DRAFT show', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        showStatus: { systemKey: 'DRAFT' },
+      });
+
+      await expect(
+        service.cancelShowWithResolution(
+          'studio_1',
+          'show_abc',
+          {} as any,
+          'ext_caller_1',
+        ),
+      ).rejects.toThrow('SHOW_CANCELLATION_NOT_ALLOWED');
+      expect(showStateGateServiceMock.openGate).not.toHaveBeenCalled();
+    });
+
+    it('throws RESOLUTION_OWNER_NOT_FOUND when the membership does not resolve', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        showStatus: { systemKey: 'LIVE' },
+      });
+      studioMembershipServiceMock.findStudioMemberByUidAndStudio.mockResolvedValue(null);
+
+      await expect(
+        service.cancelShowWithResolution(
+          'studio_1',
+          'show_abc',
+          { resolutionOwnerMembershipId: 'stdmem_missing' } as any,
+          'ext_caller_1',
+        ),
+      ).rejects.toThrow('RESOLUTION_OWNER_NOT_FOUND');
+    });
+  });
+
+  describe('resolveShowCancellation', () => {
+    it('finds the open gate task and calls resolveGate with the actor', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      });
+      userServiceMock.getUserByExtId.mockResolvedValue({
+        id: 1n,
+        uid: 'user_caller',
+      });
+      taskServiceMock.findOpenStateGateForShow.mockResolvedValue({
+        uid: 'task_gate1',
+      });
+      showStateGateServiceMock.resolveGate.mockResolvedValue({ uid: 'task_gate1' });
+      showServiceMock.getShowById.mockResolvedValue({ id: 10n, uid: 'show_abc' });
+
+      await service.resolveShowCancellation(
+        'studio_1',
+        'show_abc',
+        { outcome: 'CANCELLED', resolutionNotes: 'Confirmed' } as any,
+        'ext_caller_1',
+      );
+
+      expect(showStateGateServiceMock.resolveGate).toHaveBeenCalledWith(
+        'task_gate1',
+        'CANCELLED',
+        'Confirmed',
+        { id: 1n, uid: 'user_caller' },
+      );
+    });
+
+    it('throws SHOW_CANCELLATION_NOT_PENDING when the show is not currently pending resolution', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        showStatus: { systemKey: 'LIVE' },
+      });
+
+      await expect(
+        service.resolveShowCancellation(
+          'studio_1',
+          'show_abc',
+          {} as any,
+          'ext_caller_1',
+        ),
+      ).rejects.toThrow('SHOW_CANCELLATION_NOT_PENDING');
+    });
   });
 });

@@ -27,6 +27,10 @@ import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
+export type OpenStateGateTask = Prisma.TaskGetPayload<{
+  include: { assignee: { select: { uid: true; name: true } } };
+}>;
+
 @Injectable()
 export class TaskRepository extends BaseRepository<
   Task,
@@ -56,6 +60,23 @@ export class TaskRepository extends BaseRepository<
     return this.delegate.findFirst({
       where: { uid, deletedAt: null },
       ...(include && { include }),
+    });
+  }
+
+  async findOpenStateGateForShow(
+    showId: bigint,
+  ): Promise<OpenStateGateTask | null> {
+    return this.delegate.findFirst({
+      where: {
+        type: TaskType.STATE_GATE,
+        status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CLOSED] },
+        deletedAt: null,
+        targets: {
+          some: { showId, deletedAt: null },
+        },
+      },
+      include: { assignee: { select: { uid: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

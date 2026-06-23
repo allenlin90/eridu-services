@@ -20,6 +20,7 @@ import {
   showRunReviewShowsRangeRowSchema,
   showRunReviewSummarySchema,
   showRunReviewViolationSchema,
+  studioShowStateGateSchema,
 } from '@eridu/api-types/shows';
 import {
   showCreatorCompensationSummarySchema as showCreatorCompensationSummaryApiSchema,
@@ -30,6 +31,10 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 
 import { BaseStudioController } from '../base-studio.controller';
 
+import {
+  CancelStudioShowDto,
+  ResolveStudioShowCancellationDto,
+} from './schemas/studio-show-cancellation.schema';
 import {
   BulkAssignStudioShowCreatorsDto,
   bulkAssignStudioShowCreatorsResultSchema,
@@ -273,6 +278,16 @@ export class StudioShowController extends BaseStudioController {
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 
+  @Get(':id/state-gate')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(studioShowStateGateSchema)
+  async getStateGate(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    return this.studioShowManagementService.getOpenStateGateForShow(studioId, id);
+  }
+
   @Get(':id')
   @ZodResponse(studioShowDetailDto)
   async show(
@@ -318,6 +333,40 @@ export class StudioShowController extends BaseStudioController {
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
   ) {
     await this.studioShowManagementService.deleteShow(studioId, id);
+  }
+
+  @Post(':id/cancel-with-resolution')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(studioShowDetailDto)
+  async cancelWithResolution(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: CancelStudioShowDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studioShowManagementService.cancelShowWithResolution(
+      studioId,
+      id,
+      body,
+      user.ext_id,
+    );
+  }
+
+  @Post(':id/resolve-cancellation')
+  @StudioProtected(STUDIO_SHOW_WRITE_ACCESS_ROLES)
+  @ZodResponse(studioShowDetailDto)
+  async resolveCancellation(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: ResolveStudioShowCancellationDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studioShowManagementService.resolveShowCancellation(
+      studioId,
+      id,
+      body,
+      user.ext_id,
+    );
   }
 
   @Get(':id/tasks')

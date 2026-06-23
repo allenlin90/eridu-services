@@ -45,6 +45,9 @@ describe('studioShowController', () => {
     createShow: jest.fn(),
     updateShow: jest.fn(),
     deleteShow: jest.fn(),
+    cancelShowWithResolution: jest.fn(),
+    resolveShowCancellation: jest.fn(),
+    getOpenStateGateForShow: jest.fn(),
   };
 
   const clientMechanicServiceMock = {
@@ -176,6 +179,43 @@ describe('studioShowController', () => {
       await controller.delete(studioId, showId);
 
       expect(studioShowManagementServiceMock.deleteShow).toHaveBeenCalledWith(studioId, showId);
+    });
+  });
+
+  describe('cancelWithResolution', () => {
+    it('delegates to the service with the caller ext_id', async () => {
+      const dto = {
+        reasonCategory: 'OTHER',
+        reasonNote: 'x',
+        resolutionOwnerMembershipId: 'stdmem_1',
+      } as any;
+      const user = { ext_id: 'ext_1' } as any;
+
+      await controller.cancelWithResolution('studio_1', 'show_1', dto, user);
+
+      expect(studioShowManagementServiceMock.cancelShowWithResolution)
+        .toHaveBeenCalledWith('studio_1', 'show_1', dto, 'ext_1');
+    });
+  });
+
+  describe('resolveCancellation', () => {
+    it('delegates to the service with the caller ext_id', async () => {
+      const dto = { outcome: 'CANCELLED', resolutionNotes: 'x' } as any;
+      const user = { ext_id: 'ext_1' } as any;
+
+      await controller.resolveCancellation('studio_1', 'show_1', dto, user);
+
+      expect(studioShowManagementServiceMock.resolveShowCancellation)
+        .toHaveBeenCalledWith('studio_1', 'show_1', dto, 'ext_1');
+    });
+  });
+
+  describe('getStateGate', () => {
+    it('delegates to the service', async () => {
+      await controller.getStateGate('studio_1', 'show_1');
+
+      expect(studioShowManagementServiceMock.getOpenStateGateForShow)
+        .toHaveBeenCalledWith('studio_1', 'show_1');
     });
   });
 

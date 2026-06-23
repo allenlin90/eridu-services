@@ -72,6 +72,13 @@ export class TaskService extends BaseModelService {
   }
 
   /** @internal */
+  async findOpenStateGateForShow(
+    ...args: Parameters<TaskRepository['findOpenStateGateForShow']>
+  ): ReturnType<TaskRepository['findOpenStateGateForShow']> {
+    return this.taskRepository.findOpenStateGateForShow(...args);
+  }
+
+  /** @internal */
   async findByUidWithSnapshot(...args: Parameters<TaskRepository['findByUidWithSnapshot']>): ReturnType<TaskRepository['findByUidWithSnapshot']> {
     return this.taskRepository.findByUidWithSnapshot(...args);
   }

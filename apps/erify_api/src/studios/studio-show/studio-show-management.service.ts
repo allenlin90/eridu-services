@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 
+import {
+  CancelStudioShowDto,
+  ResolveStudioShowCancellationDto,
+  toStudioShowStateGateDto,
+} from './schemas/studio-show-cancellation.schema';
+
 import { HttpError } from '@/lib/errors/http-error.util';
+import { StudioMembershipService } from '@/models/membership/studio-membership.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
@@ -16,7 +23,11 @@ import { ShowPlatformRepository } from '@/models/show-platform/show-platform.rep
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { TaskService } from '@/models/task/task.service';
+import { UserService } from '@/models/user/user.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { type GateKind, getGateConfig } from '@/show-orchestration/show-state-gate.config';
+import { ShowStateGateService } from '@/show-orchestration/show-state-gate.service';
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
 type ShowUpdateData = Parameters<ShowRepository['update']>[1];
@@ -33,6 +44,10 @@ export class StudioShowManagementService {
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly showPlatformService: ShowPlatformService,
     private readonly showOrchestrationService: ShowOrchestrationService,
+    private readonly showStateGateService: ShowStateGateService,
+    private readonly taskService: TaskService,
+    private readonly studioMembershipService: StudioMembershipService,
+    private readonly userService: UserService,
   ) {}
 
   @Transactional()
@@ -124,6 +139,97 @@ export class StudioShowManagementService {
 
   async getShowDetail(studioUid: string, showUid: string) {
     return this.findStudioShowOrThrow(studioUid, showUid);
+  }
+
+  @Transactional()
+  async cancelShowWithResolution(
+    studioUid: string,
+    showUid: string,
+    dto: CancelStudioShowDto,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const currentStatus = show.showStatus?.systemKey ?? null;
+    if (
+      currentStatus === null
+      || ['DRAFT', 'CANCELLED_PENDING_RESOLUTION', 'CANCELLED'].includes(
+        currentStatus,
+      )
+    ) {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_ALLOWED');
+    }
+
+    const [ownerMembership, actor] = await Promise.all([
+      this.studioMembershipService.findStudioMemberByUidAndStudio(
+        dto.resolutionOwnerMembershipId,
+        studioUid,
+      ),
+      this.userService.getUserByExtId(actorExtId),
+    ]);
+    if (!ownerMembership) {
+      throw HttpError.badRequest('RESOLUTION_OWNER_NOT_FOUND');
+    }
+
+    await this.showStateGateService.openGate(show.id, 'show_cancellation', {
+      owner: {
+        id: ownerMembership.userId,
+        uid: ownerMembership.user.uid,
+      },
+      fromStatusSystemKey: currentStatus,
+      dueDate: dto.followUpDueAt ? new Date(dto.followUpDueAt) : null,
+      content: {
+        reason_category: dto.reasonCategory,
+        reason_note: dto.reasonNote,
+        follow_up_notes: dto.followUpNotes ?? null,
+      },
+      createdBy: actor ? { id: actor.id, uid: actor.uid } : null,
+      studioId: show.studioId ?? null,
+    });
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  @Transactional()
+  async resolveShowCancellation(
+    studioUid: string,
+    showUid: string,
+    dto: ResolveStudioShowCancellationDto,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    if (show.showStatus?.systemKey !== 'CANCELLED_PENDING_RESOLUTION') {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_PENDING');
+    }
+
+    const [gateTask, actor] = await Promise.all([
+      this.taskService.findOpenStateGateForShow(show.id),
+      this.userService.getUserByExtId(actorExtId),
+    ]);
+    if (!gateTask) {
+      throw HttpError.notFound('ShowStateGate', showUid);
+    }
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    await this.showStateGateService.resolveGate(
+      gateTask.uid,
+      dto.outcome,
+      dto.resolutionNotes,
+      { id: actor.id, uid: actor.uid },
+    );
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  async getOpenStateGateForShow(studioUid: string, showUid: string) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const gateTask = await this.taskService.findOpenStateGateForShow(show.id);
+    const gateKind = (gateTask?.metadata as Record<string, unknown> | undefined)
+      ?.gate_kind as GateKind | undefined;
+    const allowedOutcomes = gateKind ? getGateConfig(gateKind).allowedOutcomes : [];
+
+    return toStudioShowStateGateDto(gateTask, allowedOutcomes);
   }
 
   @Transactional()
