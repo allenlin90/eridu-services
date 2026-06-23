@@ -27,7 +27,7 @@ import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
-import { type GateKind, getGateConfig } from '@/show-orchestration/show-state-gate.config';
+import { getGateConfig, isGateKind } from '@/show-orchestration/show-state-gate.config';
 import { ShowStateGateService } from '@/show-orchestration/show-state-gate.service';
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
@@ -170,6 +170,9 @@ export class StudioShowManagementService {
     if (!ownerMembership) {
       throw HttpError.badRequest('RESOLUTION_OWNER_NOT_FOUND');
     }
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
 
     await this.showStateGateService.openGate(show.id, 'show_cancellation', {
       owner: {
@@ -183,7 +186,7 @@ export class StudioShowManagementService {
         reason_note: dto.reasonNote,
         follow_up_notes: dto.followUpNotes ?? null,
       },
-      createdBy: actor ? { id: actor.id, uid: actor.uid } : null,
+      createdBy: { id: actor.id, uid: actor.uid },
       studioId: show.studioId ?? null,
     });
 
@@ -247,9 +250,11 @@ export class StudioShowManagementService {
   async getOpenStateGateForShow(studioUid: string, showUid: string) {
     const show = await this.findStudioShowOrThrow(studioUid, showUid);
     const gateTask = await this.taskService.findOpenStateGateForShow(show.id);
-    const gateKind = (gateTask?.metadata as Record<string, unknown> | undefined)
-      ?.gate_kind as GateKind | undefined;
-    const allowedOutcomes = gateKind ? getGateConfig(gateKind).allowedOutcomes : [];
+    const rawGateKind = (gateTask?.metadata as Record<string, unknown> | undefined)
+      ?.gate_kind;
+    const allowedOutcomes = isGateKind(rawGateKind)
+      ? getGateConfig(rawGateKind).allowedOutcomes
+      : [];
 
     return toStudioShowStateGateDto(gateTask, allowedOutcomes);
   }

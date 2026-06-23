@@ -232,7 +232,7 @@ describe('taskOrchestrationService', () => {
       } as any);
       taskService.setAssignee.mockResolvedValue({ uid: 'task_1', assigneeId: BigInt(2) } as any);
 
-      const result = await service.reassignTask(studioUid, taskUid, assigneeUid);
+      const result = await service.reassignTask(studioUid, taskUid, assigneeUid, 'ext_caller_1');
 
       expect(taskService.setAssignee).toHaveBeenCalledWith('task_1', BigInt(2), expect.any(Object));
       expect(result.uid).toBe('task_1');
@@ -241,7 +241,7 @@ describe('taskOrchestrationService', () => {
     it('should throw forbidden if task does not belong to studio', async () => {
       taskService.findByUid.mockResolvedValue({ uid: 'task_1', studioId: BigInt(2) } as any);
       studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
-      await expect(service.reassignTask('std_1', 'task_1', 'usr_1')).rejects.toThrow(ForbiddenException);
+      await expect(service.reassignTask('std_1', 'task_1', 'usr_1', 'ext_caller_1')).rejects.toThrow(ForbiddenException);
     });
   });
 

@@ -10,6 +10,7 @@ import { ShowStateGateService } from './show-state-gate.service';
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { StudioService } from '@/models/studio/studio.service';
 import { TaskRepository } from '@/models/task/task.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
@@ -52,7 +53,11 @@ describe('showStateGateService.openGate', () => {
         ShowStateGateService,
         {
           provide: TaskService,
-          useValue: { generateTaskUid: jest.fn(), create: jest.fn() },
+          useValue: {
+            generateTaskUid: jest.fn(),
+            create: jest.fn(),
+            findOpenStateGateForShow: jest.fn(),
+          },
         },
         {
           provide: TaskRepository,
@@ -71,6 +76,7 @@ describe('showStateGateService.openGate', () => {
           useValue: { getShowStatusBySystemKey: jest.fn() },
         },
         { provide: AuditService, useValue: { create: jest.fn() } },
+        { provide: StudioService, useValue: { findByUid: jest.fn() } },
       ],
     }).compile();
 
@@ -79,6 +85,8 @@ describe('showStateGateService.openGate', () => {
     showRepository = module.get(ShowRepository);
     showStatusService = module.get(ShowStatusService);
     auditService = module.get(AuditService);
+
+    taskService.findOpenStateGateForShow.mockResolvedValue(null);
   });
 
   const owner = { id: 7n, uid: 'user_owner' };
@@ -188,11 +196,26 @@ describe('showStateGateService.openGate', () => {
       }),
     ).rejects.toThrow('SHOW_STATUS_NOT_CONFIGURED:CANCELLED_PENDING_RESOLUTION');
   });
+
+  it('throws GATE_ALREADY_OPEN when the show already has an open gate task', async () => {
+    taskService.findOpenStateGateForShow.mockResolvedValue({ uid: 'task_existing' } as any);
+
+    await expect(
+      service.openGate(55n, 'show_cancellation', {
+        owner,
+        fromStatusSystemKey: 'LIVE',
+        content: { reason_category: 'OTHER' },
+      }),
+    ).rejects.toThrow('GATE_ALREADY_OPEN:task_existing');
+    expect(showRepository.update).not.toHaveBeenCalled();
+    expect(taskService.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('showStateGateService.claimGate', () => {
   let service: ShowStateGateService;
   let taskRepository: jest.Mocked<TaskRepository>;
+  let studioService: jest.Mocked<StudioService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -233,11 +256,15 @@ describe('showStateGateService.claimGate', () => {
           useValue: { getShowStatusBySystemKey: jest.fn() },
         },
         { provide: AuditService, useValue: { create: jest.fn() } },
+        { provide: StudioService, useValue: { findByUid: jest.fn() } },
       ],
     }).compile();
 
     service = module.get(ShowStateGateService);
     taskRepository = module.get(TaskRepository);
+    studioService = module.get(StudioService);
+
+    studioService.findByUid.mockResolvedValue({ id: 1n } as any);
   });
 
   const claimant = { id: 9n, uid: 'user_claimant' };
@@ -246,6 +273,7 @@ describe('showStateGateService.claimGate', () => {
     taskRepository.findByUid.mockResolvedValue({
       id: 3n,
       uid: 'task_xyz',
+      studioId: 1n,
       version: 1,
       assigneeId: null,
       content: {
@@ -260,7 +288,7 @@ describe('showStateGateService.claimGate', () => {
       assigneeId: 9n,
     } as any);
 
-    await service.claimGate('task_xyz', claimant);
+    await service.claimGate('studio_1', 'task_xyz', claimant);
 
     expect(taskRepository.updateWithVersionCheck).toHaveBeenCalledWith(
       { uid: 'task_xyz', version: 1 },
@@ -280,16 +308,33 @@ describe('showStateGateService.claimGate', () => {
     );
   });
 
+  it('throws forbidden when the task does not belong to the studio', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      id: 3n,
+      uid: 'task_xyz',
+      studioId: 2n,
+      version: 1,
+      assigneeId: null,
+      content: { history: [] },
+    } as any);
+
+    await expect(service.claimGate('studio_1', 'task_xyz', claimant)).rejects.toThrow(
+      'Task does not belong to this studio',
+    );
+    expect(taskRepository.updateWithVersionCheck).not.toHaveBeenCalled();
+  });
+
   it('throws GATE_ALREADY_CLAIMED when the gate already has an owner', async () => {
     taskRepository.findByUid.mockResolvedValue({
       id: 3n,
       uid: 'task_xyz',
+      studioId: 1n,
       version: 1,
       assigneeId: 5n,
       content: { history: [] },
     } as any);
 
-    await expect(service.claimGate('task_xyz', claimant)).rejects.toThrow(
+    await expect(service.claimGate('studio_1', 'task_xyz', claimant)).rejects.toThrow(
       'GATE_ALREADY_CLAIMED:task_xyz',
     );
     expect(taskRepository.updateWithVersionCheck).not.toHaveBeenCalled();
@@ -298,7 +343,7 @@ describe('showStateGateService.claimGate', () => {
   it('throws NOT_FOUND when the task does not exist', async () => {
     taskRepository.findByUid.mockResolvedValue(null);
 
-    await expect(service.claimGate('task_missing', claimant)).rejects.toThrow();
+    await expect(service.claimGate('studio_1', 'task_missing', claimant)).rejects.toThrow();
   });
 });
 
@@ -378,6 +423,7 @@ describe('showStateGateService.resolveGate', () => {
           useValue: { getShowStatusBySystemKey: jest.fn() },
         },
         { provide: AuditService, useValue: { create: jest.fn() } },
+        { provide: StudioService, useValue: { findByUid: jest.fn() } },
       ],
     }).compile();
 

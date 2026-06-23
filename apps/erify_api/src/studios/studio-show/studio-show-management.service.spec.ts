@@ -626,6 +626,36 @@ describe('studioShowManagementService', () => {
         ),
       ).rejects.toThrow('RESOLUTION_OWNER_NOT_FOUND');
     });
+
+    it('throws ACTOR_NOT_FOUND when the caller cannot be resolved, instead of misattributing the action', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+        studioId: 100n,
+        showStatus: { systemKey: 'LIVE' },
+      });
+      studioMembershipServiceMock.findStudioMemberByUidAndStudio.mockResolvedValue({
+        userId: 5n,
+        user: { uid: 'user_owner', name: 'Jane' },
+      });
+      userServiceMock.getUserByExtId.mockResolvedValue(null);
+
+      await expect(
+        service.cancelShowWithResolution(
+          'studio_1',
+          'show_abc',
+          {
+            reasonCategory: 'ROOM_UNAVAILABLE',
+            reasonNote: 'Flooding',
+            resolutionOwnerMembershipId: 'stdmem_1',
+            followUpDueAt: null,
+            followUpNotes: null,
+          } as any,
+          'ext_unresolvable',
+        ),
+      ).rejects.toThrow('ACTOR_NOT_FOUND');
+      expect(showStateGateServiceMock.openGate).not.toHaveBeenCalled();
+    });
   });
 
   describe('resolveShowCancellation', () => {
@@ -743,6 +773,56 @@ describe('studioShowManagementService', () => {
       );
 
       expect(showRepositoryMock.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getOpenStateGateForShow', () => {
+    it('returns allowedOutcomes for a known gate_kind', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+      });
+      taskServiceMock.findOpenStateGateForShow.mockResolvedValue({
+        uid: 'task_gate1',
+        metadata: { gate_kind: 'show_cancellation', from_status: 'LIVE' },
+        content: {},
+        createdAt: new Date('2026-06-23T00:00:00.000Z'),
+        updatedAt: new Date('2026-06-23T00:00:00.000Z'),
+      });
+
+      const result = await service.getOpenStateGateForShow('studio_1', 'show_abc');
+
+      expect(result?.allowed_outcomes).toEqual(['CANCELLED', 'COMPLETED']);
+    });
+
+    it('degrades gracefully (empty allowedOutcomes) for an unrecognized gate_kind instead of throwing', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+      });
+      taskServiceMock.findOpenStateGateForShow.mockResolvedValue({
+        uid: 'task_gate1',
+        metadata: { gate_kind: 'a_kind_removed_from_config', from_status: 'LIVE' },
+        content: {},
+        createdAt: new Date('2026-06-23T00:00:00.000Z'),
+        updatedAt: new Date('2026-06-23T00:00:00.000Z'),
+      });
+
+      const result = await service.getOpenStateGateForShow('studio_1', 'show_abc');
+
+      expect(result?.allowed_outcomes).toEqual([]);
+    });
+
+    it('returns null when there is no open gate for the show', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+      });
+      taskServiceMock.findOpenStateGateForShow.mockResolvedValue(null);
+
+      const result = await service.getOpenStateGateForShow('studio_1', 'show_abc');
+
+      expect(result).toBeNull();
     });
   });
 });

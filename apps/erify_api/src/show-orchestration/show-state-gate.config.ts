@@ -56,9 +56,34 @@ export const GATE_CONFIG = {
 export type GateKind = keyof typeof GATE_CONFIG;
 
 export function getGateConfig(gateKind: GateKind): GateConfigEntry {
-  const config = GATE_CONFIG[gateKind];
-  if (!config) {
+  if (!isGateKind(gateKind)) {
     throw HttpError.badRequest(`UNKNOWN_GATE_KIND:${gateKind}`);
   }
-  return config;
+  return GATE_CONFIG[gateKind];
+}
+
+/**
+ * Narrows an untrusted string (e.g. read from persisted Task.metadata JSON)
+ * to a known GateKind. Use this before getGateConfig on read paths where an
+ * unrecognized/legacy gate_kind should degrade gracefully rather than throw.
+ */
+export function isGateKind(value: unknown): value is GateKind {
+  return typeof value === 'string' && Object.hasOwn(GATE_CONFIG, value);
+}
+
+/**
+ * Coerces a Task.content/metadata JsonValue into a plain object, defaulting
+ * to {} for null, primitives, and arrays. Shared by every gate primitive
+ * (openGate/claimGate/resolveGate) and the gate-aware reassignment path so
+ * the JSON-shape contract never drifts between call sites.
+ */
+export function asGateContentObject(value: unknown): Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+/** Extracts the `history` array from a gate content object, defaulting to []. */
+export function getGateHistory(content: Record<string, unknown>): GateHistoryEntry[] {
+  return Array.isArray(content.history) ? (content.history as GateHistoryEntry[]) : [];
 }

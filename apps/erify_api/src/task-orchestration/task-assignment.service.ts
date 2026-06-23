@@ -11,7 +11,11 @@ import { TaskRepository } from '@/models/task/task.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UserService } from '@/models/user/user.service';
-import type { GateHistoryEntry } from '@/show-orchestration/show-state-gate.config';
+import {
+  asGateContentObject,
+  type GateHistoryEntry,
+  getGateHistory,
+} from '@/show-orchestration/show-state-gate.config';
 
 /** Task assignment: bulk show→user assignment and single-task reassignment. */
 @Injectable()
@@ -116,7 +120,9 @@ export class TaskAssignmentService {
     actorExtId: string,
     note?: string,
   ) {
-    const task = await this.taskService.findByUid(taskUid);
+    const task = await this.taskService.findByUid(taskUid, {
+      assignee: { select: { uid: true } },
+    }) as Prisma.TaskGetPayload<{ include: { assignee: { select: { uid: true } } } }> | null;
     if (!task) {
       throw HttpError.notFound('Task', taskUid);
     }
@@ -144,16 +150,9 @@ export class TaskAssignmentService {
     }
 
     const actor = await this.userService.getUserByExtId(actorExtId);
-    const content
-      = task.content != null
-      && typeof task.content === 'object'
-      && !Array.isArray(task.content)
-        ? (task.content as Record<string, unknown>)
-        : {};
-    const history = Array.isArray(content.history)
-      ? (content.history as GateHistoryEntry[])
-      : [];
-    const fromAssignee = task.assigneeId != null ? 'previous owner' : 'unassigned';
+    const content = asGateContentObject(task.content);
+    const history = getGateHistory(content);
+    const fromAssignee = task.assignee?.uid ?? 'unassigned';
     const toAssignee = assigneeUserUid ?? 'unassigned';
     const reassignedEntry: GateHistoryEntry = {
       event: 'reassigned',
@@ -165,13 +164,15 @@ export class TaskAssignmentService {
     return this.taskRepository.updateWithVersionCheck(
       { uid: taskUid, version: task.version },
       {
-        assigneeId: assigneeUserId,
+        assignee: assigneeUserId != null
+          ? { connect: { id: assigneeUserId } }
+          : { disconnect: true },
         version: { increment: 1 },
         content: {
           ...content,
           history: [...history, reassignedEntry],
         } as Prisma.InputJsonValue,
-      } as unknown as Prisma.TaskUpdateInput,
+      },
     );
   }
 }

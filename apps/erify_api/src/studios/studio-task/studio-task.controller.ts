@@ -114,6 +114,7 @@ export class StudioTaskController extends BaseStudioController {
   @Patch(':id/claim')
   @ZodResponse(taskDto)
   async claim(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('id', new UidValidationPipe(TaskService.UID_PREFIX, 'Task')) id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
@@ -122,7 +123,7 @@ export class StudioTaskController extends BaseStudioController {
       throw HttpError.unauthorized('ACTOR_NOT_FOUND');
     }
 
-    return this.taskOrchestrationService.claimTask(id, {
+    return this.taskOrchestrationService.claimTask(studioId, id, {
       id: actor.id,
       uid: actor.uid,
     });

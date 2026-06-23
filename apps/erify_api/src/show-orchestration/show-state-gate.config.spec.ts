@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 
-import { GATE_CONFIG, getGateConfig } from './show-state-gate.config';
+import { GATE_CONFIG, getGateConfig, isGateKind } from './show-state-gate.config';
 
 describe('show-state-gate.config', () => {
   it('exposes show_cancellation with CANCELLED and COMPLETED outcomes', () => {
@@ -36,6 +36,20 @@ describe('show-state-gate.config', () => {
       expect(() => getGateConfig('not_a_real_kind' as any)).toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe('isGateKind', () => {
+    it('returns true for known gate kinds', () => {
+      expect(isGateKind('show_cancellation')).toBe(true);
+      expect(isGateKind('schedule_publish_removal')).toBe(true);
+    });
+
+    it('returns false for unknown strings, non-strings, and null/undefined', () => {
+      expect(isGateKind('not_a_real_kind')).toBe(false);
+      expect(isGateKind(undefined)).toBe(false);
+      expect(isGateKind(null)).toBe(false);
+      expect(isGateKind(42)).toBe(false);
     });
   });
 });

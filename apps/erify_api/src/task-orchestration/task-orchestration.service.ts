@@ -78,14 +78,14 @@ export class TaskOrchestrationService {
     studioUid: string,
     taskUid: string,
     assigneeUid: string | null,
-    actorExtId = '',
+    actorExtId: string,
     note?: string,
   ) {
     return this.assignment.reassignTask(studioUid, taskUid, assigneeUid, actorExtId, note);
   }
 
-  claimTask(taskUid: string, claimant: { id: bigint; uid: string }) {
-    return this.showStateGateService.claimGate(taskUid, claimant);
+  claimTask(studioUid: string, taskUid: string, claimant: { id: bigint; uid: string }) {
+    return this.showStateGateService.claimGate(studioUid, taskUid, claimant);
   }
 
   getShowTasks(studioUid: string, showUid: string) {

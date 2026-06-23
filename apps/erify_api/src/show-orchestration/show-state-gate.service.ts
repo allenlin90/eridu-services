@@ -4,12 +4,18 @@ import type { Prisma, Task } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import type { GateHistoryEntry, GateKind, GateOutcome } from './show-state-gate.config';
-import { getGateConfig, RESTORE_PREVIOUS_OUTCOME } from './show-state-gate.config';
+import {
+  asGateContentObject,
+  getGateConfig,
+  getGateHistory,
+  RESTORE_PREVIOUS_OUTCOME,
+} from './show-state-gate.config';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { StudioService } from '@/models/studio/studio.service';
 import { TaskRepository } from '@/models/task/task.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
@@ -34,6 +40,7 @@ export class ShowStateGateService {
     private readonly showRepository: ShowRepository,
     private readonly showStatusService: ShowStatusService,
     private readonly auditService: AuditService,
+    private readonly studioService: StudioService,
   ) {}
 
   @Transactional()
@@ -45,6 +52,11 @@ export class ShowStateGateService {
     const config = getGateConfig(gateKind);
     if (config.requiresOwner && params.owner == null) {
       throw HttpError.badRequest(`GATE_OWNER_REQUIRED:${gateKind}`);
+    }
+
+    const existingGate = await this.taskService.findOpenStateGateForShow(showId);
+    if (existingGate) {
+      throw HttpError.conflict(`GATE_ALREADY_OPEN:${existingGate.uid}`);
     }
 
     const pendingStatus = await this.showStatusService.getShowStatusBySystemKey(
@@ -108,25 +120,27 @@ export class ShowStateGateService {
   }
 
   @Transactional()
-  async claimGate(taskUid: string, claimant: GateActor): Promise<Task> {
+  async claimGate(
+    studioUid: string,
+    taskUid: string,
+    claimant: GateActor,
+  ): Promise<Task> {
     const task = await this.taskRepository.findByUid(taskUid);
     if (!task) {
       throw HttpError.notFound('Task', taskUid);
+    }
+
+    const studio = await this.studioService.findByUid(studioUid);
+    if (!studio || task.studioId !== studio.id) {
+      throw HttpError.forbidden('Task does not belong to this studio');
     }
 
     if (task.assigneeId != null) {
       throw HttpError.badRequest(`GATE_ALREADY_CLAIMED:${taskUid}`);
     }
 
-    const content
-      = task.content != null
-      && typeof task.content === 'object'
-      && !Array.isArray(task.content)
-        ? (task.content as Record<string, unknown>)
-        : {};
-    const existingHistory = Array.isArray(content.history)
-      ? content.history
-      : [];
+    const content = asGateContentObject(task.content);
+    const existingHistory = getGateHistory(content);
     const claimedEntry: GateHistoryEntry = {
       event: 'claimed',
       actor_id: claimant.uid,
@@ -158,7 +172,7 @@ export class ShowStateGateService {
       throw HttpError.notFound('Task', taskUid);
     }
 
-    const metadata = this.asObject(task.metadata) as {
+    const metadata = asGateContentObject(task.metadata) as {
       gate_kind?: GateKind;
       from_status?: string;
       pending_status?: string;
@@ -226,8 +240,8 @@ export class ShowStateGateService {
       { showStatus: { connect: { id: targetStatus.id } } },
     );
 
-    const content = this.asObject(task.content);
-    const history = Array.isArray(content.history) ? content.history : [];
+    const content = asGateContentObject(task.content);
+    const history = getGateHistory(content);
     const resolvedEntry: GateHistoryEntry = {
       event: 'resolved',
       actor_id: actor.uid,
@@ -264,11 +278,5 @@ export class ShowStateGateService {
     });
 
     return resolvedTask;
-  }
-
-  private asObject(value: Prisma.JsonValue): Record<string, unknown> {
-    return value != null && typeof value === 'object' && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : {};
   }
 }

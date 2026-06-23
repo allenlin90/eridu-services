@@ -59,6 +59,7 @@ describe('taskAssignmentService', () => {
         studioId: 1n,
         type: 'STATE_GATE',
         assigneeId: 5n,
+        assignee: { uid: 'user_previous_owner' },
         version: 2,
         content: {
           history: [
@@ -85,10 +86,13 @@ describe('taskAssignmentService', () => {
         'heads up, handing this off',
       );
 
+      expect(taskService.findByUid).toHaveBeenCalledWith('task_gate1', {
+        assignee: { select: { uid: true } },
+      });
       expect(taskRepository.updateWithVersionCheck).toHaveBeenCalledWith(
         { uid: 'task_gate1', version: 2 },
         expect.objectContaining({
-          assigneeId: 9n,
+          assignee: { connect: { id: 9n } },
           version: { increment: 1 },
           content: expect.objectContaining({
             history: [
@@ -96,7 +100,39 @@ describe('taskAssignmentService', () => {
               expect.objectContaining({
                 event: 'reassigned',
                 actor_id: 'user_caller',
-                note: expect.stringContaining('heads up, handing this off'),
+                note: 'Reassigned from user_previous_owner to user_new_owner - heads up, handing this off',
+              }),
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('records "unassigned" on both sides when claiming from no owner to no owner', async () => {
+      taskService.findByUid.mockResolvedValue({
+        id: 4n,
+        uid: 'task_gate1',
+        studioId: 1n,
+        type: 'STATE_GATE',
+        assigneeId: null,
+        assignee: null,
+        version: 2,
+        content: { history: [] },
+      } as any);
+      studioService.findByUid.mockResolvedValue({ id: 1n } as any);
+      userService.getUserByExtId.mockResolvedValue({ uid: 'user_caller' } as any);
+
+      await service.reassignTask('studio_1', 'task_gate1', null, 'ext_caller_1');
+
+      expect(taskRepository.updateWithVersionCheck).toHaveBeenCalledWith(
+        { uid: 'task_gate1', version: 2 },
+        expect.objectContaining({
+          assignee: { disconnect: true },
+          content: expect.objectContaining({
+            history: [
+              expect.objectContaining({
+                event: 'reassigned',
+                note: 'Reassigned from unassigned to unassigned',
               }),
             ],
           }),

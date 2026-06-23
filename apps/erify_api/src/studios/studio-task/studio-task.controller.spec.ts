@@ -116,9 +116,9 @@ describe('studioTaskController', () => {
         uid: 'user_caller',
       } as any);
 
-      await controller.claim('task_gate1', { ext_id: 'ext_1' } as any);
+      await controller.claim('studio_1', 'task_gate1', { ext_id: 'ext_1' } as any);
 
-      expect(service.claimTask).toHaveBeenCalledWith('task_gate1', {
+      expect(service.claimTask).toHaveBeenCalledWith('studio_1', 'task_gate1', {
         id: 1n,
         uid: 'user_caller',
       });
