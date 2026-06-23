@@ -20,6 +20,7 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { TaskTargetRepository } from '@/models/task-target/task-target.repository';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ShowStateGateService } from '@/show-orchestration/show-state-gate.service';
 import { UtilityService } from '@/utility/utility.service';
 
 // File-scope mock transaction client (reassigned per test in beforeEach)
@@ -69,6 +70,7 @@ describe('publishingService', () => {
   let generateShowUidMock: jest.Mock;
   let generateShowCreatorUidMock: jest.Mock;
   let generateShowPlatformUidMock: jest.Mock;
+  let showStateGateService: jest.Mocked<ShowStateGateService>;
   // mockTransactionClient is declared at file scope (above) — reassigned per test in beforeEach
 
   const mockPlanDocument: PlanDocument = {
@@ -292,6 +294,12 @@ describe('publishingService', () => {
             generateBrandedId: jest.fn().mockReturnValue('shst_generated'),
           },
         },
+        {
+          provide: ShowStateGateService,
+          useValue: {
+            openGate: jest.fn(),
+          },
+        },
         { provide: PrismaService, useValue: mockPrismaForCls },
         TaskTargetRepository,
         TaskTargetService,
@@ -305,6 +313,7 @@ describe('publishingService', () => {
     showCreatorService = module.get(ShowCreatorService);
     showPlatformService = module.get(ShowPlatformService);
     validationService = module.get(ValidationService);
+    showStateGateService = module.get(ShowStateGateService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -953,6 +962,90 @@ describe('publishingService', () => {
       });
       expect(result.publishSummary.shows_cancelled).toBe(1);
       expect(result.publishSummary.shows_pending_resolution).toBe(0);
+    });
+
+    it('opens an unassigned state gate when a removed show still has active tasks', async () => {
+      const removedShow = {
+        id: BigInt(77),
+        uid: 'show_removed',
+        externalId: 'show_removed_external',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: BigInt(100),
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Removed Show',
+        startTime: new Date('2024-01-03T10:00:00Z'),
+        endTime: new Date('2024-01-03T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: { systemKey: 'CONFIRMED' },
+      };
+      getScheduleByIdMock.mockResolvedValue({
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [],
+        },
+      });
+      mockTransactionClient.show.findMany.mockReset().mockResolvedValueOnce([removedShow]);
+      mockTransactionClient.taskTarget.count.mockResolvedValue(2);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(showStateGateService.openGate).toHaveBeenCalledWith(
+        removedShow.id,
+        'schedule_publish_removal',
+        expect.objectContaining({
+          owner: null,
+          fromStatusSystemKey: 'CONFIRMED',
+          studioId: BigInt(100),
+          content: {
+            reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+            reason_note: 'Removed from republished schedule; 2 active task(s) still attached',
+          },
+        }),
+      );
+      expect(result.publishSummary.shows_cancelled).toBe(0);
+      expect(result.publishSummary.shows_pending_resolution).toBe(1);
+    });
+
+    it('does not re-open a gate for a show already in CANCELLED_PENDING_RESOLUTION', async () => {
+      const removedShow = {
+        id: BigInt(77),
+        uid: 'show_removed',
+        externalId: 'show_removed_external',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: BigInt(100),
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(9002),
+        showStandardId: BigInt(1),
+        name: 'Removed Show',
+        startTime: new Date('2024-01-03T10:00:00Z'),
+        endTime: new Date('2024-01-03T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      };
+      getScheduleByIdMock.mockResolvedValue({
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [],
+        },
+      });
+      mockTransactionClient.show.findMany.mockReset().mockResolvedValueOnce([removedShow]);
+      mockTransactionClient.taskTarget.count.mockResolvedValue(2);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(showStateGateService.openGate).not.toHaveBeenCalled();
+      expect(result.publishSummary.shows_cancelled).toBe(0);
+      expect(result.publishSummary.shows_pending_resolution).toBe(1);
     });
 
     it('should reject malformed plan payload before publish', async () => {

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
+import type { Prisma } from '@prisma/client';
 
 import {
   CancelStudioShowDto,
@@ -218,6 +219,27 @@ export class StudioShowManagementService {
       dto.resolutionNotes,
       { id: actor.id, uid: actor.uid },
     );
+
+    const gateMetadata
+      = (gateTask.metadata as Record<string, unknown> | null) ?? {};
+    if (
+      gateMetadata.gate_kind === 'schedule_publish_removal'
+      && dto.outcome === 'RESTORE_PREVIOUS'
+    ) {
+      await this.showRepository.update(
+        { id: show.id },
+        {
+          metadata: {
+            ...((show.metadata as Record<string, unknown> | null) ?? {}),
+            schedule_resume_notice: {
+              resumed_by: actor.uid,
+              resumed_at: new Date().toISOString(),
+              gate_task_uid: gateTask.uid,
+            },
+          } as Prisma.InputJsonValue,
+        },
+      );
+    }
 
     return this.showService.getShowById(showUid, studioShowDetailInclude);
   }

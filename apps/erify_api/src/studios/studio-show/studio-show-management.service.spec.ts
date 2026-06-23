@@ -675,5 +675,74 @@ describe('studioShowManagementService', () => {
         ),
       ).rejects.toThrow('SHOW_CANCELLATION_NOT_PENDING');
     });
+
+    it('sets schedule_resume_notice when resolving a schedule_publish_removal gate to RESTORE_PREVIOUS', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+        metadata: {},
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      });
+      userServiceMock.getUserByExtId.mockResolvedValue({
+        id: 1n,
+        uid: 'user_caller',
+      });
+      taskServiceMock.findOpenStateGateForShow.mockResolvedValue({
+        uid: 'task_gate2',
+        metadata: { gate_kind: 'schedule_publish_removal' },
+      });
+      showStateGateServiceMock.resolveGate.mockResolvedValue({ uid: 'task_gate2' });
+      showServiceMock.getShowById.mockResolvedValue({ id: 10n, uid: 'show_abc' });
+
+      await service.resolveShowCancellation(
+        'studio_1',
+        'show_abc',
+        {
+          outcome: 'RESTORE_PREVIOUS',
+          resolutionNotes: 'Schedule sync was wrong',
+        } as any,
+        'ext_caller_1',
+      );
+
+      expect(showRepositoryMock.update).toHaveBeenCalledWith(
+        { id: 10n },
+        {
+          metadata: expect.objectContaining({
+            schedule_resume_notice: expect.objectContaining({
+              resumed_by: 'user_caller',
+              gate_task_uid: 'task_gate2',
+            }),
+          }),
+        },
+      );
+    });
+
+    it('does not set schedule_resume_notice for a show_cancellation gate resolved to CANCELLED', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        uid: 'show_abc',
+        metadata: {},
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      });
+      userServiceMock.getUserByExtId.mockResolvedValue({
+        id: 1n,
+        uid: 'user_caller',
+      });
+      taskServiceMock.findOpenStateGateForShow.mockResolvedValue({
+        uid: 'task_gate1',
+        metadata: { gate_kind: 'show_cancellation' },
+      });
+      showStateGateServiceMock.resolveGate.mockResolvedValue({ uid: 'task_gate1' });
+      showServiceMock.getShowById.mockResolvedValue({ id: 10n, uid: 'show_abc' });
+
+      await service.resolveShowCancellation(
+        'studio_1',
+        'show_abc',
+        { outcome: 'CANCELLED', resolutionNotes: 'Confirmed' } as any,
+        'ext_caller_1',
+      );
+
+      expect(showRepositoryMock.update).not.toHaveBeenCalled();
+    });
   });
 });

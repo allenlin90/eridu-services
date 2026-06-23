@@ -13,6 +13,7 @@ import { ShowCreatorModule } from '@/models/show-creator/show-creator.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
 import { TaskTargetModule } from '@/models/task-target/task-target.module';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { ShowOrchestrationModule } from '@/show-orchestration/show-orchestration.module';
 import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowCreatorModule,
     ShowPlatformModule,
     TaskTargetModule,
+    ShowOrchestrationModule,
     UtilityModule,
   ],
   providers: [

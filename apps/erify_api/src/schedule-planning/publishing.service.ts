@@ -21,6 +21,7 @@ import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { ShowStateGateService } from '@/show-orchestration/show-state-gate.service';
 import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
@@ -37,6 +38,7 @@ export class PublishingService {
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly showStateGateService: ShowStateGateService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -373,8 +375,10 @@ export class PublishingService {
         updateData.showStandardId = incoming.showStandardId;
       }
 
-      const incomingMetadata = incoming.source.metadata || {};
-      if (JSON.stringify(existing.metadata || {}) !== JSON.stringify(incomingMetadata)) {
+      const existingMetadata = (existing.metadata as Record<string, unknown>) || {};
+      const incomingMetadata = { ...(incoming.source.metadata || {}) };
+      const hadResumeNotice = 'schedule_resume_notice' in existingMetadata;
+      if (hadResumeNotice || JSON.stringify(existingMetadata) !== JSON.stringify(incomingMetadata)) {
         updateData.metadata = incomingMetadata;
       }
 
@@ -408,24 +412,33 @@ export class PublishingService {
 
     for (const removed of toRemove) {
       const activeTaskCount = await this.taskTargetService.countActiveByShowId(removed.id);
-      const hasActiveTaskTarget = activeTaskCount > 0;
 
-      const targetStatusId = hasActiveTaskTarget
-        ? statusIds.cancelledPendingResolution
-        : statusIds.cancelled;
-
-      if (removed.showStatusId !== targetStatusId) {
-        await tx.show.update({
-          where: { id: removed.id },
-          data: {
-            showStatusId: targetStatusId,
-          },
-        });
-      }
-
-      if (hasActiveTaskTarget) {
+      if (activeTaskCount > 0) {
+        if (removed.showStatusId !== statusIds.cancelledPendingResolution) {
+          await this.showStateGateService.openGate(
+            removed.id,
+            'schedule_publish_removal',
+            {
+              owner: null,
+              fromStatusSystemKey: removed.showStatus.systemKey ?? 'CONFIRMED',
+              content: {
+                reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+                reason_note: `Removed from republished schedule; ${activeTaskCount} active task(s) still attached`,
+              },
+              studioId: removed.studioId ?? null,
+            },
+          );
+        }
         publishSummary.shows_pending_resolution += 1;
       } else {
+        if (removed.showStatusId !== statusIds.cancelled) {
+          await tx.show.update({
+            where: { id: removed.id },
+            data: {
+              showStatusId: statusIds.cancelled,
+            },
+          });
+        }
         publishSummary.shows_cancelled += 1;
       }
     }
