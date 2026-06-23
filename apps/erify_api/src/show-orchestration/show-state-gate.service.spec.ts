@@ -301,3 +301,244 @@ describe('showStateGateService.claimGate', () => {
     await expect(service.claimGate('task_missing', claimant)).rejects.toThrow();
   });
 });
+
+describe('showStateGateService.resolveGate', () => {
+  let service: ShowStateGateService;
+  let taskRepository: jest.Mocked<TaskRepository>;
+  let taskTargetService: jest.Mocked<TaskTargetService>;
+  let showRepository: jest.Mocked<ShowRepository>;
+  let showStatusService: jest.Mocked<ShowStatusService>;
+  let auditService: jest.Mocked<AuditService>;
+
+  const actor = { id: 11n, uid: 'user_resolver' };
+  const baseTask = {
+    id: 4n,
+    uid: 'task_gate1',
+    version: 2,
+    assigneeId: 11n,
+    metadata: {
+      gate_kind: 'show_cancellation',
+      from_status: 'CONFIRMED',
+      pending_status: 'CANCELLED_PENDING_RESOLUTION',
+    },
+    content: {
+      history: [
+        { event: 'opened', actor_id: 'user_owner', at: '2026-06-23T00:00:00.000Z' },
+      ],
+    },
+  };
+  const showTarget = {
+    id: 1n,
+    taskId: 4n,
+    targetType: 'SHOW',
+    targetId: 200n,
+    showId: 200n,
+  };
+  const pendingShow = {
+    id: 200n,
+    showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ClsModule.forRoot({
+          global: true,
+          middleware: { mount: false },
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [MockPrismaModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
+      providers: [
+        ShowStateGateService,
+        {
+          provide: TaskService,
+          useValue: { generateTaskUid: jest.fn(), create: jest.fn() },
+        },
+        {
+          provide: TaskRepository,
+          useValue: { findByUid: jest.fn(), updateWithVersionCheck: jest.fn() },
+        },
+        {
+          provide: TaskTargetService,
+          useValue: { findByTaskId: jest.fn(), countActiveByShowId: jest.fn() },
+        },
+        {
+          provide: ShowRepository,
+          useValue: { update: jest.fn(), findById: jest.fn(), findByUid: jest.fn() },
+        },
+        {
+          provide: ShowStatusService,
+          useValue: { getShowStatusBySystemKey: jest.fn() },
+        },
+        { provide: AuditService, useValue: { create: jest.fn() } },
+      ],
+    }).compile();
+
+    service = module.get(ShowStateGateService);
+    taskRepository = module.get(TaskRepository);
+    taskTargetService = module.get(TaskTargetService);
+    showRepository = module.get(ShowRepository);
+    showStatusService = module.get(ShowStatusService);
+    auditService = module.get(AuditService);
+
+    taskRepository.findByUid.mockResolvedValue(baseTask as any);
+    taskTargetService.findByTaskId.mockResolvedValue([showTarget] as any);
+    showRepository.findById.mockResolvedValue(pendingShow as any);
+    taskTargetService.countActiveByShowId.mockResolvedValue(0);
+    showStatusService.getShowStatusBySystemKey.mockResolvedValue({
+      id: 50n,
+      systemKey: 'CANCELLED',
+    } as any);
+    taskRepository.updateWithVersionCheck.mockResolvedValue({
+      ...baseTask,
+      status: 'COMPLETED',
+    } as any);
+  });
+
+  it('resolves to a concrete outcome: updates Show.status, completes the Task, appends resolved history, writes Audit', async () => {
+    await service.resolveGate('task_gate1', 'CANCELLED', 'Confirmed cancellation', actor);
+
+    expect(taskTargetService.countActiveByShowId).toHaveBeenCalledWith(200n, {
+      excludeTaskId: 4n,
+    });
+    expect(showRepository.update).toHaveBeenCalledWith(
+      { id: 200n },
+      { showStatus: { connect: { id: 50n } } },
+    );
+    expect(taskRepository.updateWithVersionCheck).toHaveBeenCalledWith(
+      { uid: 'task_gate1', version: 2 },
+      expect.objectContaining({
+        status: 'COMPLETED',
+        version: { increment: 1 },
+        content: expect.objectContaining({
+          resolution_notes: 'Confirmed cancellation',
+          history: [
+            expect.objectContaining({ event: 'opened' }),
+            expect.objectContaining({
+              event: 'resolved',
+              actor_id: 'user_resolver',
+              note: 'Confirmed cancellation',
+            }),
+          ],
+        }),
+      }),
+    );
+    expect(auditService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'OVERRIDE',
+        actorId: 11n,
+        reason: 'Confirmed cancellation',
+        metadata: expect.objectContaining({
+          field: 'show_status',
+          old_value: 'CANCELLED_PENDING_RESOLUTION',
+          new_value: 'CANCELLED',
+          gate_task_uid: 'task_gate1',
+          gate_kind: 'show_cancellation',
+        }),
+        targets: [{ targetType: 'SHOW', targetId: 200n }],
+      }),
+    );
+  });
+
+  it('resolves RESTORE_PREVIOUS by reverting Show.status to metadata.from_status', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      ...baseTask,
+      metadata: {
+        ...baseTask.metadata,
+        gate_kind: 'schedule_publish_removal',
+      },
+    } as any);
+    showStatusService.getShowStatusBySystemKey.mockResolvedValue({
+      id: 60n,
+      systemKey: 'CONFIRMED',
+    } as any);
+
+    await service.resolveGate(
+      'task_gate1',
+      'RESTORE_PREVIOUS',
+      'Schedule sync was wrong',
+      actor,
+    );
+
+    expect(showStatusService.getShowStatusBySystemKey).toHaveBeenCalledWith(
+      'CONFIRMED',
+    );
+    expect(showRepository.update).toHaveBeenCalledWith(
+      { id: 200n },
+      { showStatus: { connect: { id: 60n } } },
+    );
+  });
+
+  it('throws GATE_STATE_STALE when Show.status no longer matches the gate pendingStatus', async () => {
+    showRepository.findById.mockResolvedValue({
+      id: 200n,
+      showStatus: { systemKey: 'CANCELLED' },
+    } as any);
+
+    await expect(
+      service.resolveGate('task_gate1', 'CANCELLED', 'note', actor),
+    ).rejects.toThrow('GATE_STATE_STALE:task_gate1');
+    expect(taskRepository.updateWithVersionCheck).not.toHaveBeenCalled();
+  });
+
+  it('throws GATE_NOT_CLAIMED when the task has no assignee', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      ...baseTask,
+      assigneeId: null,
+    } as any);
+
+    await expect(
+      service.resolveGate('task_gate1', 'CANCELLED', 'note', actor),
+    ).rejects.toThrow('GATE_NOT_CLAIMED:task_gate1');
+  });
+
+  it('throws GATE_OUTCOME_NOT_ALLOWED for an outcome not in allowedOutcomes', async () => {
+    await expect(
+      service.resolveGate('task_gate1', 'BOGUS' as any, 'note', actor),
+    ).rejects.toThrow('GATE_OUTCOME_NOT_ALLOWED:BOGUS');
+  });
+
+  it('throws ACTIVE_TASKS_REMAIN with the count when CANCELLED is requested while active tasks exist', async () => {
+    taskTargetService.countActiveByShowId.mockResolvedValue(3);
+
+    await expect(
+      service.resolveGate('task_gate1', 'CANCELLED', 'note', actor),
+    ).rejects.toThrow('ACTIVE_TASKS_REMAIN:task_gate1');
+  });
+
+  it('throws LIVE_CANCELLATION_REQUIRES_OVERRIDE when from_status is LIVE and outcome is CANCELLED', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      ...baseTask,
+      metadata: { ...baseTask.metadata, from_status: 'LIVE' },
+    } as any);
+
+    await expect(
+      service.resolveGate('task_gate1', 'CANCELLED', 'note', actor),
+    ).rejects.toThrow('LIVE_CANCELLATION_REQUIRES_OVERRIDE:task_gate1');
+  });
+
+  it('does NOT apply the LIVE safeguard to COMPLETED', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      ...baseTask,
+      metadata: { ...baseTask.metadata, from_status: 'LIVE' },
+    } as any);
+    showStatusService.getShowStatusBySystemKey.mockResolvedValue({
+      id: 70n,
+      systemKey: 'COMPLETED',
+    } as any);
+
+    await service.resolveGate('task_gate1', 'COMPLETED', 'Show partially ran', actor);
+
+    expect(showRepository.update).toHaveBeenCalledWith(
+      { id: 200n },
+      { showStatus: { connect: { id: 70n } } },
+    );
+  });
+});

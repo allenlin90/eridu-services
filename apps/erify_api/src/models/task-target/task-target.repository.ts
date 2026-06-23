@@ -47,10 +47,16 @@ export class TaskTargetRepository extends BaseRepository<
   // schedule-republish remove-flow and ShowStateGateService.resolveGate's
   // active-task guard. Both callers must use this method, not reimplement
   // the filter, so the definition of "active" cannot drift between them.
-  async countActiveByShowId(showId: bigint): Promise<number> {
+  async countActiveByShowId(
+    showId: bigint,
+    options: { excludeTaskId?: bigint } = {},
+  ): Promise<number> {
     return this.delegate.count({
       where: {
         showId,
+        ...(options.excludeTaskId != null && {
+          taskId: { not: options.excludeTaskId },
+        }),
         deletedAt: null,
         task: {
           deletedAt: null,

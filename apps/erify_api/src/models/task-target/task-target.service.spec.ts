@@ -34,5 +34,15 @@ describe('taskTargetService', () => {
       expect(taskTargetRepository.countActiveByShowId).toHaveBeenCalledWith(42n);
       expect(result).toBe(3);
     });
+
+    it('passes through an excluded task id when provided', async () => {
+      jest.spyOn(taskTargetRepository, 'countActiveByShowId').mockResolvedValue(0);
+
+      await service.countActiveByShowId(42n, { excludeTaskId: 9n });
+
+      expect(taskTargetRepository.countActiveByShowId).toHaveBeenCalledWith(42n, {
+        excludeTaskId: 9n,
+      });
+    });
   });
 });

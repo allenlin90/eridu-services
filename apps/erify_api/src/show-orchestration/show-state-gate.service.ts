@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import type { Prisma, Task } from '@prisma/client';
-import { TaskType } from '@prisma/client';
+import { TaskStatus, TaskType } from '@prisma/client';
 
-import type { GateHistoryEntry, GateKind } from './show-state-gate.config';
-import { getGateConfig } from './show-state-gate.config';
+import type { GateHistoryEntry, GateKind, GateOutcome } from './show-state-gate.config';
+import { getGateConfig, RESTORE_PREVIOUS_OUTCOME } from './show-state-gate.config';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
@@ -144,5 +144,131 @@ export class ShowStateGateService {
         } as Prisma.InputJsonValue,
       },
     );
+  }
+
+  @Transactional()
+  async resolveGate(
+    taskUid: string,
+    outcome: GateOutcome,
+    notes: string,
+    actor: GateActor,
+  ): Promise<Task> {
+    const task = await this.taskRepository.findByUid(taskUid);
+    if (!task) {
+      throw HttpError.notFound('Task', taskUid);
+    }
+
+    const metadata = this.asObject(task.metadata) as {
+      gate_kind?: GateKind;
+      from_status?: string;
+      pending_status?: string;
+    };
+    const gateKind = metadata.gate_kind;
+    if (!gateKind) {
+      throw HttpError.badRequest(`NOT_A_GATE_TASK:${taskUid}`);
+    }
+    const config = getGateConfig(gateKind);
+
+    const targets = await this.taskTargetService.findByTaskId(task.id);
+    const showTarget = targets.find((target) => target.showId != null);
+    if (!showTarget?.showId) {
+      throw HttpError.badRequest(`GATE_HAS_NO_SHOW_TARGET:${taskUid}`);
+    }
+
+    const show = await this.showRepository.findById(showTarget.showId, {
+      showStatus: true,
+    });
+    if (!show || show.showStatus?.systemKey !== config.pendingStatus) {
+      throw HttpError.conflict(`GATE_STATE_STALE:${taskUid}`);
+    }
+
+    if (task.assigneeId == null) {
+      throw HttpError.badRequest(`GATE_NOT_CLAIMED:${taskUid}`);
+    }
+
+    if (!(config.allowedOutcomes as readonly string[]).includes(outcome)) {
+      throw HttpError.badRequest(`GATE_OUTCOME_NOT_ALLOWED:${outcome}`);
+    }
+
+    if ((config.outcomesRequiringNoActiveTasks as readonly string[]).includes(outcome)) {
+      const activeTaskCount = await this.taskTargetService.countActiveByShowId(
+        showTarget.showId,
+        { excludeTaskId: task.id },
+      );
+      if (activeTaskCount > 0) {
+        throw HttpError.badRequestWithDetails(`ACTIVE_TASKS_REMAIN:${taskUid}`, {
+          activeTaskCount,
+        });
+      }
+    }
+
+    if (outcome === 'CANCELLED' && metadata.from_status === 'LIVE') {
+      throw HttpError.badRequest(`LIVE_CANCELLATION_REQUIRES_OVERRIDE:${taskUid}`);
+    }
+
+    const targetStatusSystemKey
+      = outcome === RESTORE_PREVIOUS_OUTCOME ? metadata.from_status : outcome;
+    if (!targetStatusSystemKey) {
+      throw HttpError.badRequest(`GATE_FROM_STATUS_MISSING:${taskUid}`);
+    }
+
+    const targetStatus = await this.showStatusService.getShowStatusBySystemKey(
+      targetStatusSystemKey,
+    );
+    if (!targetStatus) {
+      throw HttpError.badRequest(
+        `SHOW_STATUS_NOT_CONFIGURED:${targetStatusSystemKey}`,
+      );
+    }
+
+    await this.showRepository.update(
+      { id: showTarget.showId },
+      { showStatus: { connect: { id: targetStatus.id } } },
+    );
+
+    const content = this.asObject(task.content);
+    const history = Array.isArray(content.history) ? content.history : [];
+    const resolvedEntry: GateHistoryEntry = {
+      event: 'resolved',
+      actor_id: actor.uid,
+      at: new Date().toISOString(),
+      ...(notes && { note: notes }),
+    };
+
+    const resolvedTask = await this.taskRepository.updateWithVersionCheck(
+      { uid: taskUid, version: task.version },
+      {
+        status: TaskStatus.COMPLETED,
+        completedAt: new Date(),
+        version: { increment: 1 },
+        content: {
+          ...content,
+          resolution_notes: notes,
+          history: [...history, resolvedEntry],
+        } as Prisma.InputJsonValue,
+      },
+    );
+
+    await this.auditService.create({
+      action: 'OVERRIDE',
+      actorId: actor.id,
+      reason: notes,
+      metadata: {
+        field: 'show_status',
+        old_value: config.pendingStatus,
+        new_value: targetStatusSystemKey,
+        gate_task_uid: taskUid,
+        gate_kind: gateKind,
+      },
+      targets: [{ targetType: 'SHOW', targetId: showTarget.showId }],
+    });
+
+    return resolvedTask;
+  }
+
+  private asObject(value: Prisma.JsonValue): Record<string, unknown> {
+    return value != null && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
   }
 }

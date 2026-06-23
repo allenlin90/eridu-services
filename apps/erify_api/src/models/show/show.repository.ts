@@ -46,6 +46,16 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
+  async findById<T extends Prisma.ShowInclude = Record<string, never>>(
+    id: bigint,
+    include?: T,
+  ): Promise<Prisma.ShowGetPayload<{ include: T }> | null> {
+    return this.delegate.findFirst({
+      where: { id, deletedAt: null },
+      ...(include && { include }),
+    }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
+  }
+
   // Engineering decision: compound studio-scoped lookup with optional generic include
   // cannot be expressed as a caller-supplied flat where+include pair without leaking the
   // relation-join semantics (studio: { uid }). Used in management service for all
