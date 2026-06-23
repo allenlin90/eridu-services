@@ -36,6 +36,7 @@ export const TASK_TYPE = {
   ADMIN: 'ADMIN',
   ROUTINE: 'ROUTINE',
   OTHER: 'OTHER',
+  STATE_GATE: 'STATE_GATE',
 } as const;
 
 export type TaskType = (typeof TASK_TYPE)[keyof typeof TASK_TYPE];

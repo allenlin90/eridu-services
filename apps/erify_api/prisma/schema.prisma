@@ -734,6 +734,7 @@ enum TaskType {
   ADMIN // Administrative
   ROUTINE // Regular maintenance
   OTHER
+  STATE_GATE // System/manager-driven lifecycle gate
 }
 
 model Task {
