@@ -120,9 +120,9 @@ Append-only violation log for platform-level infractions during a show.
 |---|---|---|
 | id / uid | BigInt / String | PK + external ID |
 | systemKey | String? (unique) | Programmatic key for code references |
-| name | String (unique) | Human-readable: draft, confirmed, live, completed, cancelled |
+| name | String (unique) | Human-readable: draft, confirmed, live, completed, cancelled, cancelled_pending_resolution |
 
-**Seeded values**: draft, confirmed, live, completed, cancelled. The `cancelled_pending_resolution` state is referenced in the Phase 5 gap summary but may be a metadata-driven state or a pending addition.
+**Seeded values**: draft, confirmed, live, completed, cancelled, cancelled_pending_resolution.
 
 ---
 
