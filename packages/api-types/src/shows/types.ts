@@ -1,14 +1,18 @@
 import type { z } from 'zod';
 
 import type {
+  cancelStudioShowRequestSchema,
   createShowInputSchema,
   createStudioShowInputSchema,
+  gateOutcomeSchema,
   listShowsQuerySchema,
+  resolveStudioShowCancellationRequestSchema,
   showApiResponseSchema,
   showListResponseSchema,
   showRunReviewSummarySchema,
   studioShowDetailSchema,
   studioShowPlatformSummarySchema,
+  studioShowStateGateSchema,
   updateShowInputSchema,
   updateStudioShowInputSchema,
 } from './schemas.js';
@@ -41,6 +45,12 @@ export type ListShowsQuery = z.infer<typeof listShowsQuerySchema>;
  */
 export type CreateShowInput = z.infer<typeof createShowInputSchema>;
 export type CreateStudioShowInput = z.infer<typeof createStudioShowInputSchema>;
+export type CancelStudioShowInput = z.infer<typeof cancelStudioShowRequestSchema>;
+export type ResolveStudioShowCancellationInput = z.infer<
+  typeof resolveStudioShowCancellationRequestSchema
+>;
+export type StudioShowStateGate = z.infer<typeof studioShowStateGateSchema>;
+export type GateOutcome = z.infer<typeof gateOutcomeSchema>;
 
 /**
  * Update Show Input Type (snake_case - matches API input)

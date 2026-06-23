@@ -261,6 +261,64 @@ export const updateStudioShowInputSchema = z
     },
   );
 
+export const showCancellationReasonCategorySchema = z.enum([
+  'CREATOR_UNAVAILABLE',
+  'ROOM_UNAVAILABLE',
+  'EQUIPMENT_FAILURE',
+  'UTILITY_OUTAGE',
+  'PLATFORM_ISSUE',
+  'CLIENT_REQUEST',
+  'OTHER',
+]);
+
+export const scheduleRemovalReasonCategorySchema = z.literal(
+  'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+);
+
+export const gateOutcomeSchema = z.enum([
+  'CANCELLED',
+  'COMPLETED',
+  'RESTORE_PREVIOUS',
+]);
+
+export const cancelStudioShowRequestSchema = z.object({
+  reason_category: showCancellationReasonCategorySchema,
+  reason_note: z.string().min(1).max(1000),
+  resolution_owner_membership_id: z.string(),
+  follow_up_due_at: z.iso.datetime().nullable().optional(),
+  follow_up_notes: z.string().max(1000).nullable().optional(),
+});
+
+export const resolveStudioShowCancellationRequestSchema = z.object({
+  outcome: gateOutcomeSchema,
+  resolution_notes: z.string().min(1).max(1000),
+});
+
+export const gateHistoryEntrySchema = z.object({
+  event: z.enum(['opened', 'claimed', 'reassigned', 'resolved']),
+  actor_id: z.string().nullable(),
+  at: z.iso.datetime(),
+  note: z.string().optional(),
+});
+
+export const studioShowStateGateSchema = z
+  .object({
+    id: z.string(),
+    gate_kind: z.string(),
+    reason_category: z.string().nullable(),
+    reason_note: z.string().nullable(),
+    follow_up_notes: z.string().nullable(),
+    resolution_notes: z.string().nullable(),
+    assignee_id: z.string().nullable(),
+    assignee_name: z.string().nullable(),
+    from_status: z.string(),
+    allowed_outcomes: z.array(gateOutcomeSchema),
+    history: z.array(gateHistoryEntrySchema),
+    created_at: z.iso.datetime(),
+    updated_at: z.iso.datetime(),
+  })
+  .nullable();
+
 /**
  * Show Run Review Summary Response Schema (PR 12.4.4)
  */
