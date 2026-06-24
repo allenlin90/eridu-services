@@ -14,6 +14,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import { TaskRepository } from '@/models/task/task.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
 const mockPrismaForCls = {
@@ -77,6 +78,7 @@ describe('showStateGateService.openGate', () => {
         },
         { provide: AuditService, useValue: { create: jest.fn() } },
         { provide: StudioService, useValue: { findByUid: jest.fn() } },
+        { provide: UserService, useValue: { getUserByExtId: jest.fn() } },
       ],
     }).compile();
 
@@ -216,6 +218,7 @@ describe('showStateGateService.claimGate', () => {
   let service: ShowStateGateService;
   let taskRepository: jest.Mocked<TaskRepository>;
   let studioService: jest.Mocked<StudioService>;
+  let userService: jest.Mocked<UserService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -257,17 +260,18 @@ describe('showStateGateService.claimGate', () => {
         },
         { provide: AuditService, useValue: { create: jest.fn() } },
         { provide: StudioService, useValue: { findByUid: jest.fn() } },
+        { provide: UserService, useValue: { getUserByExtId: jest.fn() } },
       ],
     }).compile();
 
     service = module.get(ShowStateGateService);
     taskRepository = module.get(TaskRepository);
     studioService = module.get(StudioService);
+    userService = module.get(UserService);
 
     studioService.findByUid.mockResolvedValue({ id: 1n } as any);
+    userService.getUserByExtId.mockResolvedValue({ id: 9n, uid: 'user_claimant' } as any);
   });
-
-  const claimant = { id: 9n, uid: 'user_claimant' };
 
   it('sets assigneeId and appends a claimed history entry when the gate is unowned', async () => {
     taskRepository.findByUid.mockResolvedValue({
@@ -288,7 +292,7 @@ describe('showStateGateService.claimGate', () => {
       assigneeId: 9n,
     } as any);
 
-    await service.claimGate('studio_1', 'task_xyz', claimant);
+    await service.claimGate('studio_1', 'task_xyz', 'ext_claimant_1');
 
     expect(taskRepository.updateWithVersionCheck).toHaveBeenCalledWith(
       { uid: 'task_xyz', version: 1 },
@@ -318,7 +322,7 @@ describe('showStateGateService.claimGate', () => {
       content: { history: [] },
     } as any);
 
-    await expect(service.claimGate('studio_1', 'task_xyz', claimant)).rejects.toThrow(
+    await expect(service.claimGate('studio_1', 'task_xyz', 'ext_claimant_1')).rejects.toThrow(
       'Task does not belong to this studio',
     );
     expect(taskRepository.updateWithVersionCheck).not.toHaveBeenCalled();
@@ -334,8 +338,25 @@ describe('showStateGateService.claimGate', () => {
       content: { history: [] },
     } as any);
 
-    await expect(service.claimGate('studio_1', 'task_xyz', claimant)).rejects.toThrow(
+    await expect(service.claimGate('studio_1', 'task_xyz', 'ext_claimant_1')).rejects.toThrow(
       'GATE_ALREADY_CLAIMED:task_xyz',
+    );
+    expect(taskRepository.updateWithVersionCheck).not.toHaveBeenCalled();
+  });
+
+  it('throws ACTOR_NOT_FOUND when the claimant cannot be resolved', async () => {
+    taskRepository.findByUid.mockResolvedValue({
+      id: 3n,
+      uid: 'task_xyz',
+      studioId: 1n,
+      version: 1,
+      assigneeId: null,
+      content: { history: [] },
+    } as any);
+    userService.getUserByExtId.mockResolvedValue(null);
+
+    await expect(service.claimGate('studio_1', 'task_xyz', 'ext_unresolvable')).rejects.toThrow(
+      'ACTOR_NOT_FOUND',
     );
     expect(taskRepository.updateWithVersionCheck).not.toHaveBeenCalled();
   });
@@ -343,7 +364,7 @@ describe('showStateGateService.claimGate', () => {
   it('throws NOT_FOUND when the task does not exist', async () => {
     taskRepository.findByUid.mockResolvedValue(null);
 
-    await expect(service.claimGate('studio_1', 'task_missing', claimant)).rejects.toThrow();
+    await expect(service.claimGate('studio_1', 'task_missing', 'ext_claimant_1')).rejects.toThrow();
   });
 });
 
@@ -424,6 +445,7 @@ describe('showStateGateService.resolveGate', () => {
         },
         { provide: AuditService, useValue: { create: jest.fn() } },
         { provide: StudioService, useValue: { findByUid: jest.fn() } },
+        { provide: UserService, useValue: { getUserByExtId: jest.fn() } },
       ],
     }).compile();
 

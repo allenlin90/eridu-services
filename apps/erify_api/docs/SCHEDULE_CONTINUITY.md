@@ -222,4 +222,4 @@ sequenceDiagram
 
 - [Schedule Planning](./SCHEDULE_PLANNING.md) — API design, data model, workflow
 - [Task Management](./TASK_MANAGEMENT_SUMMARY.md) — Task lifecycle and API
-- [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Planned studio-scoped resolution follow-up
+- [Pending-Resolution Discovery & Observability](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Studio-scoped resolution backend shipped (Show State Gate); remaining gap is FE discovery/observability

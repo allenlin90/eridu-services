@@ -701,7 +701,7 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | Document                                                                                               | Status | Description                                                                    |
 | ------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](docs/design/AUTHORIZATION_GUIDE.md)                                              | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
-| [Pending-Resolution MVP](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)           | 📐      | Planned studio-scoped resolution follow-up for cancelled shows                 |
+| [Pending-Resolution Discovery & Observability](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) | 📐 | Backend resolve workflow shipped (Show State Gate); remaining gap is FE discovery queue + observability |
 | [Ad-hoc Task Ticketing](docs/design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
 | [Material Management](docs/design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for operations expansion                            |
 | [Data Warehouse Design](docs/design/DATA_WAREHOUSE_DESIGN.md)                                         | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |

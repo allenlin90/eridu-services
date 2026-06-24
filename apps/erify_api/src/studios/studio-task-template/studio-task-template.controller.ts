@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import type { TaskTemplateType } from '@eridu/api-types/task-management';
 
 import { BaseStudioController } from '../base-studio.controller';
 
@@ -116,7 +115,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
       description,
-      taskType: task_type as TaskTemplateType,
+      taskType: task_type,
       currentSchema: schema,
       studioId,
       clientUid: client_id,
@@ -142,7 +141,7 @@ export class StudioTaskTemplateController extends BaseStudioController {
       {
         name,
         description,
-        taskType: task_type as TaskTemplateType | undefined,
+        taskType: task_type,
         currentSchema: schema,
         version,
         clientUid: client_id,

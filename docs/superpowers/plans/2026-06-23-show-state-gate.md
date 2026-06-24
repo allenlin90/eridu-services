@@ -10,6 +10,8 @@
 
 **Source spec:** `docs/superpowers/specs/2026-06-23-show-state-gate-design.md` — read it before starting; this plan implements it task-by-task and does not repeat its rationale.
 
+**Status:** Implemented in PR #230, with one known gap against Task 12 Step 3's guard-rendering requirement — see [tech-debt entry](../../tech-debt/state-gate-resolve-dialog-active-task-static-message.md). Not yet retired per `doc-lifecycle.md`'s Superpowers Spec/Plan Retirement procedure.
+
 ## Global Constraints
 
 - No new Prisma model. The only schema change across this entire plan is adding `STATE_GATE` to the `TaskType` enum.

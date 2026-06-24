@@ -70,6 +70,10 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 19. **`RESTORE_PREVIOUS` is a gate outcome, not a show status**. It restores `Show.status` from the gate task's captured `metadata.from_status`. Resolving a schedule-publish removal this way writes `metadata.schedule_resume_notice` as a display-only planner hint until the source schedule is fixed and republished.
 
+20. **`TaskTargetRepository.countActiveByShowId` is a named method, not an inlined where clause**. "Active task" is a cross-model join filter (`task.deletedAt: null`, `task.status NOT IN (COMPLETED, CLOSED)`) that must produce the same answer for `publishing.service.ts`'s remove-flow and `ShowStateGateService.resolveGate`'s active-task guard — a flat where clause supplied separately by each caller would let the definition of "active" drift between them.
+
+21. **`TaskRepository.findOpenStateGateForShow` is a named method, not an inlined where clause**. "The open `STATE_GATE` task for this show" joins through the polymorphic `TaskTarget` relation, filters by type and a non-terminal status set, and needs a deterministic `orderBy` plus the assignee include every caller requires — neither `StudioShowManagementService.getOpenStateGateForShow` nor `resolveShowCancellation` can express this as a flat where clause without re-deriving the join.
+
 ## Key Business Rules
 
 ### Delete Rule

@@ -6,14 +6,12 @@ import { StudioTaskController } from './studio-task.controller';
 
 import type { AssignShowsDto, GenerateTasksDto, ReassignTaskDto } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
-import { UserService } from '@/models/user/user.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
 describe('studioTaskController', () => {
   let controller: StudioTaskController;
   let service: jest.Mocked<TaskOrchestrationService>;
   let taskService: jest.Mocked<TaskService>;
-  let userService: jest.Mocked<UserService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -35,19 +33,12 @@ describe('studioTaskController', () => {
             findOne: jest.fn(),
           },
         },
-        {
-          provide: UserService,
-          useValue: {
-            getUserByExtId: jest.fn(),
-          },
-        },
       ],
     }).compile();
 
     controller = module.get<StudioTaskController>(StudioTaskController);
     service = module.get(TaskOrchestrationService);
     taskService = module.get(TaskService);
-    userService = module.get(UserService);
   });
 
   describe('generate', () => {
@@ -110,18 +101,10 @@ describe('studioTaskController', () => {
   });
 
   describe('claim', () => {
-    it('resolves the actor and delegates to taskOrchestrationService.claimTask', async () => {
-      userService.getUserByExtId.mockResolvedValue({
-        id: 1n,
-        uid: 'user_caller',
-      } as any);
-
+    it('delegates to taskOrchestrationService.claimTask with the caller ext_id', async () => {
       await controller.claim('studio_1', 'task_gate1', { ext_id: 'ext_1' } as any);
 
-      expect(service.claimTask).toHaveBeenCalledWith('studio_1', 'task_gate1', {
-        id: 1n,
-        uid: 'user_caller',
-      });
+      expect(service.claimTask).toHaveBeenCalledWith('studio_1', 'task_gate1', 'ext_1');
     });
   });
 

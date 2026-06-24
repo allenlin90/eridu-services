@@ -1,6 +1,6 @@
 # Ideation: Task as a Generic Workflow Primitive
 
-> **Status**: Active — first instance shipping now; further generalization deferred
+> **Status**: Active — first instance shipped in PR #230; further generalization deferred
 > **Origin**: Show State Gate design review, June 2026
 > **Related**: [Show State Gate design](../superpowers/specs/2026-06-23-show-state-gate-design.md), [Task Template Purpose Separation](./task-template-purpose-separation.md)
 

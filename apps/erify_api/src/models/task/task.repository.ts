@@ -63,6 +63,14 @@ export class TaskRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: "the open STATE_GATE task for this show" cannot be
+  // expressed as a caller-supplied flat where clause — it joins through the
+  // polymorphic TaskTarget relation (targets.some), filters by both type and
+  // a non-terminal status set, and needs a deterministic orderBy + the
+  // assignee include every caller (manual cancellation, schedule-publish
+  // removal) requires. Centralizing it here is what lets ShowStateGateService
+  // and StudioShowManagementService.getOpenStateGateForShow share one
+  // definition of "the gate" instead of each re-deriving it.
   async findOpenStateGateForShow(
     showId: bigint,
   ): Promise<OpenStateGateTask | null> {

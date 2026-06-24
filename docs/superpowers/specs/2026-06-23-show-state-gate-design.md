@@ -1,6 +1,6 @@
 # Show State Gate — Design
 
-Status: Approved, not yet implemented (supersedes the `ShowCancellationResolution` model added in PR #229).
+Status: Implemented in PR #230, with one known gap — see [tech-debt entry](../../tech-debt/state-gate-resolve-dialog-active-task-static-message.md) (resolve-dialog active-task guard renders a static message instead of count+nav-link). Per `doc-lifecycle.md`'s Superpowers Spec/Plan Retirement procedure, this spec (and its [implementation plan](../plans/2026-06-23-show-state-gate.md)) stay in place until that gap closes, rather than being retired as fully shipped. (Supersedes the `ShowCancellationResolution` model added in PR #229.)
 
 Related ideation: [Task as a Generic Workflow Primitive](../../ideation/task-generic-workflow-primitive.md) tracks the broader generalization questions this design intentionally does *not* answer yet (entity-agnostic gate primitive beyond Show, a formal "system-generated task kind" convention). Check it before extending this pattern to a third gate kind or a second entity.
 

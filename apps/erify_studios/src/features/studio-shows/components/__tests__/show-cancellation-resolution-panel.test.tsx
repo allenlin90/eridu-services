@@ -32,8 +32,7 @@ vi.mock('@/components/responsive-dialog', () => ({
       : null,
 }));
 
-vi.mock('@eridu/ui', async () => {
-  const React = await import('react');
+vi.mock('@eridu/ui', () => {
   return {
     AsyncCombobox: ({ placeholder }: any) => <button type="button">{placeholder}</button>,
     Badge: ({ children }: any) => <span>{children}</span>,

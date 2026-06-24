@@ -19,6 +19,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import { TaskRepository } from '@/models/task/task.repository';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { UserService } from '@/models/user/user.service';
 
 export type GateActor = { id: bigint; uid: string };
 
@@ -41,6 +42,7 @@ export class ShowStateGateService {
     private readonly showStatusService: ShowStatusService,
     private readonly auditService: AuditService,
     private readonly studioService: StudioService,
+    private readonly userService: UserService,
   ) {}
 
   @Transactional()
@@ -123,7 +125,7 @@ export class ShowStateGateService {
   async claimGate(
     studioUid: string,
     taskUid: string,
-    claimant: GateActor,
+    actorExtId: string,
   ): Promise<Task> {
     const task = await this.taskRepository.findByUid(taskUid);
     if (!task) {
@@ -137,6 +139,11 @@ export class ShowStateGateService {
 
     if (task.assigneeId != null) {
       throw HttpError.badRequest(`GATE_ALREADY_CLAIMED:${taskUid}`);
+    }
+
+    const claimant = await this.userService.getUserByExtId(actorExtId);
+    if (!claimant) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
     }
 
     const content = asGateContentObject(task.content);

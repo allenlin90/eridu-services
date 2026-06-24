@@ -19,6 +19,7 @@ import { StudioModule } from '@/models/studio/studio.module';
 import { StudioCreatorModelModule } from '@/models/studio-creator/studio-creator.module';
 import { TaskModule } from '@/models/task/task.module';
 import { TaskTargetModule } from '@/models/task-target/task-target.module';
+import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
@@ -36,6 +37,7 @@ import { PrismaModule } from '@/prisma/prisma.module';
     TaskTargetModule,
     AuditModule,
     ShowStatusModule,
+    UserModule,
   ],
   providers: [
     ShowOrchestrationService,

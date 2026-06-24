@@ -11,8 +11,6 @@ import {
 } from '@nestjs/common';
 import type { TaskStatus } from '@prisma/client';
 
-import type { TaskTemplateType } from '@eridu/api-types/task-management';
-
 import { BaseAdminController } from '@/admin/base-admin.controller';
 import {
   AdminPaginatedResponse,
@@ -45,7 +43,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
     return this.taskTemplateService.createTemplateWithSnapshot({
       name,
       description,
-      taskType: task_type as TaskTemplateType,
+      taskType: task_type,
       currentSchema: schema,
       studioId: studio_id,
       clientUid: client_id,
@@ -101,7 +99,7 @@ export class AdminTaskTemplateController extends BaseAdminController {
       {
         name,
         description,
-        taskType: task_type as TaskTemplateType | undefined,
+        taskType: task_type,
         currentSchema: schema,
         version,
         clientUid: client_id,
