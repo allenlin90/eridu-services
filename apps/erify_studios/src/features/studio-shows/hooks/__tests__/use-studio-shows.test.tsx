@@ -80,6 +80,26 @@ describe('useStudioShows', () => {
     });
   });
 
+  it('reads task-setup table filters from the validated parent route search', () => {
+    mockUseQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    renderHook(() => useStudioShows({
+      studioId: 'std_1',
+      dateFrom: '2026-04-10',
+      dateTo: '2026-04-10',
+    }));
+
+    expect(mockUseTableUrlState).toHaveBeenCalledWith(expect.objectContaining({
+      from: '/studios/$studioId/task-setup',
+    }));
+  });
+
   it('falls back to url pagination state before metadata exists', () => {
     mockUseQuery.mockReturnValue({
       data: undefined,

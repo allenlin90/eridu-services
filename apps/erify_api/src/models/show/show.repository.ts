@@ -239,6 +239,7 @@ export class ShowRepository extends BaseRepository<
     if (query.platform_name) {
       where.showPlatforms = {
         some: {
+          deletedAt: null,
           platform: {
             name: {
               contains: query.platform_name,
@@ -479,6 +480,7 @@ export class ShowRepository extends BaseRepository<
     if (query.platform_name) {
       where.showPlatforms = {
         some: {
+          deletedAt: null,
           platform: {
             name: { contains: query.platform_name, mode: 'insensitive' },
           },

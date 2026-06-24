@@ -79,6 +79,9 @@ When a DTO transform derives an API field from a relation (e.g. `client_id: obj.
 ### A Selection Rule Used by Two Repositories Belongs in a Shared Constant
 When a business rule like "which task statuses count as finalized" needs the same filter in two different repositories (e.g. a performance aggregate and a coverage read-model both need "latest finalized task with a loop schema wins"), extract the literal array/predicate into a named constant in a shared location (e.g. `task-finalized-loop.constants.ts`) and import it from both repositories — don't let each repository re-type the same status list. Independently re-derived copies of the same rule drift silently when one gets updated and the other doesn't; each repository can still keep its own bespoke `include`/`select` shape, since only the filter predicate needs to be shared. See `client-mechanic.repository.ts` / `studio-performance.repository.ts` (PR 20.6).
 
+### Relation Filters Must Respect Soft-Deleted Join Rows
+When filtering through a soft-deletable join table, put `deletedAt: null` on the join relation filter itself, not only on the included relation or nested target. Example: a show `platform_name` filter must use `showPlatforms: { some: { deletedAt: null, platform: { ... } } }`; otherwise a soft-deleted Shopee assignment can make a TikTok-only active show match a Shopee filter while the response include correctly hides the deleted assignment.
+
 ## Checklist
 
 - [ ] 🔴 Extends `BaseRepository` with `PrismaModelWrapper` for soft-deletable CRUD models

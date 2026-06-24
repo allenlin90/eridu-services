@@ -286,6 +286,29 @@ describe('showRepository', () => {
     }));
   });
 
+  it('maps platform_name to active studio task-summary platform assignments only', async () => {
+    txShowDelegate.count.mockResolvedValue(0);
+    txShowDelegate.findMany.mockResolvedValue([]);
+
+    await repository.findPaginatedWithTaskSummary(BigInt(1), {
+      platform_name: 'shopee',
+      skip: 0,
+      take: 10,
+    });
+
+    expect(txShowDelegate.count).toHaveBeenCalledTimes(1);
+    const where = txShowDelegate.count.mock.calls[0][0].where as {
+      showPlatforms?: {
+        some?: {
+          deletedAt?: null;
+          platform?: { name?: { contains?: string } };
+        };
+      };
+    };
+    expect(where.showPlatforms?.some?.deletedAt).toBeNull();
+    expect(where.showPlatforms?.some?.platform?.name?.contains).toBe('shopee');
+  });
+
   it('maps actuals_state=missing to shows with absent or incomplete actuals', async () => {
     txShowDelegate.count.mockResolvedValue(0);
     txShowDelegate.findMany.mockResolvedValue([]);
