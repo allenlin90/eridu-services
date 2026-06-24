@@ -76,7 +76,7 @@ export const taskSchema = z.object({
   uid: z.string().startsWith(UID_PREFIXES.TASK),
   studioId: z.bigint(),
   templateId: z.bigint().nullable(),
-  snapshotId: z.bigint(),
+  snapshotId: z.bigint().nullable(),
   assigneeId: z.bigint().nullable(),
   description: z.string(),
   status: z.nativeEnum(TASK_STATUS),

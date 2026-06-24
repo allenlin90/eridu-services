@@ -610,6 +610,23 @@ describe('studioShowManagementService', () => {
       expect(showStateGateServiceMock.openGate).not.toHaveBeenCalled();
     });
 
+    it('throws SHOW_CANCELLATION_NOT_ALLOWED for a COMPLETED show', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: 10n,
+        showStatus: { systemKey: 'COMPLETED' },
+      });
+
+      await expect(
+        service.cancelShowWithResolution(
+          'studio_1',
+          'show_abc',
+          {} as any,
+          'ext_caller_1',
+        ),
+      ).rejects.toThrow('SHOW_CANCELLATION_NOT_ALLOWED');
+      expect(showStateGateServiceMock.openGate).not.toHaveBeenCalled();
+    });
+
     it('throws RESOLUTION_OWNER_NOT_FOUND when the membership does not resolve', async () => {
       showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
         id: 10n,

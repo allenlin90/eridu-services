@@ -108,6 +108,7 @@ export class StudioTaskController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Claim an unowned state-gate task' })
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @Patch(':id/claim')
   @ZodResponse(taskDto)
   async claim(

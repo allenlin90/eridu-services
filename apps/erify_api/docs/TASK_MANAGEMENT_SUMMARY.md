@@ -17,12 +17,12 @@ A show with 3 task types → 3 DB records instead of 60.
 | ---------------------- | ------------------------------------------------------------------------ |
 | `TaskTemplate`         | Blueprint defining form structure (JSON schema), scoped to a Studio      |
 | `TaskTemplateSnapshot` | Immutable version of a template's schema                                 |
-| `Task`                 | Instance with user-entered data (`content` JSONB), references a snapshot |
+| `Task`                 | Instance with user-entered data (`content` JSONB), normally references a snapshot |
 | `TaskTarget`           | Polymorphic link (task → Show, Studio, or future entity)                 |
 
 ### Key Design Decisions
 
-1. **Snapshot Table** for schema versioning — tasks reference immutable snapshots, not templates
+1. **Snapshot Table** for schema versioning — form tasks reference immutable snapshots, not templates. System `STATE_GATE` tasks are not form submissions and may have `templateId = null` and `snapshotId = null`.
 2. **Schema Engine Routing** — v1 snapshots use `field.key` content keys; v2 templates use stable `fld_...` field ids and descriptor-based reporting
 3. **System Fact Bindings** — v2 fields can set `system_fact_key` from the closed `@eridu/api-types/task-management` catalog; shared Zod validation enforces field-type compatibility and one binding per fact key before save. Creator attendance explanations use the existing `require_reason` sidecar instead of a separate reason binding. Platform violation bindings use `show_platform_violation` on a `multiselect` field and replace only `ShowPlatformViolation` rows from the same hydrated task field when a submitted task is confirmed
 4. **Polymorphic `TaskTarget`** — generic `targetType` + `targetId` with optional FKs for referential integrity
@@ -36,11 +36,11 @@ A show with 3 task types → 3 DB records instead of 60.
 ```
 TaskTemplate:   id, uid, studioId, name, taskType, currentSchema (JSONB), version, isActive
 Snapshot:       id, templateId, version, schema (JSONB, immutable)
-Task:           id, uid, status, type, dueDate, snapshotId, templateId, studioId, assigneeId, content (JSONB), metadata (JSONB), version
+Task:           id, uid, status, type, dueDate, snapshotId?, templateId?, studioId, assigneeId, content (JSONB), metadata (JSONB), version
 TaskTarget:     id, taskId, targetType, targetId, showId?, studioId?
 ```
 
-**Enums**: `TaskStatus` (PENDING → IN_PROGRESS → REVIEW → COMPLETED / BLOCKED / CLOSED), `TaskType` (SETUP, ACTIVE, CLOSURE, ADMIN, ROUTINE, OTHER). Submitted operator tasks stop in `REVIEW`; manager confirmation into `COMPLETED` is the extraction gate for operational facts.
+**Enums**: `TaskStatus` (PENDING → IN_PROGRESS → REVIEW → COMPLETED / BLOCKED / CLOSED), `TaskType` (SETUP, ACTIVE, CLOSURE, ADMIN, ROUTINE, OTHER, STATE_GATE). Submitted operator tasks stop in `REVIEW`; manager confirmation into `COMPLETED` is the extraction gate for operational facts.
 
 ---
 

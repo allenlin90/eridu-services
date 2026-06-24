@@ -153,7 +153,7 @@ export class StudioShowManagementService {
     const currentStatus = show.showStatus?.systemKey ?? null;
     if (
       currentStatus === null
-      || ['DRAFT', 'CANCELLED_PENDING_RESOLUTION', 'CANCELLED'].includes(
+      || ['DRAFT', 'CANCELLED_PENDING_RESOLUTION', 'CANCELLED', 'COMPLETED'].includes(
         currentStatus,
       )
     ) {

@@ -2,9 +2,14 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { TaskStatus } from '@prisma/client';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { TASK_STATUS, TASK_TYPE } from '@eridu/api-types/task-management';
+
 import { StudioTaskController } from './studio-task.controller';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import type { AssignShowsDto, GenerateTasksDto, ReassignTaskDto } from '@/models/task/schemas/task.schema';
+import { taskDto, taskWithRelationsDto } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
@@ -105,6 +110,44 @@ describe('studioTaskController', () => {
       await controller.claim('studio_1', 'task_gate1', { ext_id: 'ext_1' } as any);
 
       expect(service.claimTask).toHaveBeenCalledWith('studio_1', 'task_gate1', 'ext_1');
+    });
+
+    it('allows managers to claim unowned state-gate tasks', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioTaskController.prototype.claim);
+
+      expect(roles).toEqual([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER]);
+    });
+
+    it('serializes state-gate tasks without a template snapshot', () => {
+      const rawTask = {
+        id: 1n,
+        uid: 'task_gate1',
+        studioId: 10n,
+        templateId: null,
+        snapshotId: null,
+        assigneeId: null,
+        description: 'Show lifecycle gate: show_cancellation',
+        status: TASK_STATUS.PENDING,
+        type: TASK_TYPE.STATE_GATE,
+        dueDate: null,
+        completedAt: null,
+        content: { history: [] },
+        metadata: { gate_kind: 'show_cancellation' },
+        version: 1,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        deletedAt: null,
+      };
+
+      expect(taskDto.parse(rawTask)).toMatchObject({
+        id: 'task_gate1',
+        type: TASK_TYPE.STATE_GATE,
+      });
+      expect(taskWithRelationsDto.parse({ ...rawTask, snapshot: null })).toMatchObject({
+        id: 'task_gate1',
+        snapshot: null,
+        type: TASK_TYPE.STATE_GATE,
+      });
     });
   });
 

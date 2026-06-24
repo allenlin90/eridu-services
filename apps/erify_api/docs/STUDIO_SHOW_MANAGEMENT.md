@@ -64,7 +64,7 @@ Note: the backend does not split CRUD and operations into separate endpoint fami
 
 16. **`ShowRepository.findByClientUidAndExternalId` is a named method, not an inlined where clause**. The restore-on-create lookup requires a client-relation where clause (`client: { uid }`) combined with an explicit `includeDeleted` opt-in that inverts the default `deletedAt: null` guard. Neither can be expressed as a caller-supplied flat where clause without leaking relation semantics into the service layer.
 
-17. **Cancellation pending resolution is Task-backed**. Manual cancellation and schedule-publish removals that need follow-up use `Task.type = STATE_GATE` plus a `TaskTarget` pointing at the show. `ShowStateGateService` owns `openGate`, `claimGate`, and `resolveGate`; new gate kinds should add `GATE_CONFIG` entries instead of new resolution tables.
+17. **Cancellation pending resolution is Task-backed**. Manual cancellation and schedule-publish removals that need follow-up use `Task.type = STATE_GATE` plus a `TaskTarget` pointing at the show. State-gate tasks are system workflow records, not template-backed form submissions, so their `templateId` and `snapshotId` may be `null`. `ShowStateGateService` owns `openGate`, `claimGate`, and `resolveGate`; new gate kinds should add `GATE_CONFIG` entries instead of new resolution tables.
 
 18. **Schedule-publish removal gates may be unassigned**. Publish-time removal has no human actor, so `schedule_publish_removal` gates open without an assignee. A studio admin/manager must claim the gate before resolving it.
 
