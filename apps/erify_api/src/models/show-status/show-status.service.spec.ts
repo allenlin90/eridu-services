@@ -18,7 +18,6 @@ describe('showStatusService', () => {
 
   beforeEach(async () => {
     const showStatusRepositoryMock = createMockRepository<ShowStatusRepository>({
-      findBySystemKey: jest.fn(),
       findPaginated: jest.fn(),
     });
     const utilityMock = createMockUtilityService('shst_test123');
@@ -141,27 +140,23 @@ describe('showStatusService', () => {
       };
 
       jest
-        .spyOn(showStatusRepository, 'findBySystemKey')
+        .spyOn(showStatusRepository, 'findOne')
         .mockResolvedValue(expectedResult);
 
       const result = await service.getShowStatusBySystemKey(systemKey);
 
-      expect(showStatusRepository.findBySystemKey).toHaveBeenCalledWith(
-        systemKey,
-      );
+      expect(showStatusRepository.findOne).toHaveBeenCalledWith({ systemKey });
       expect(result).toEqual(expectedResult);
     });
 
     it('should return null when not found', async () => {
-      jest
-        .spyOn(showStatusRepository, 'findBySystemKey')
-        .mockResolvedValue(null);
+      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(null);
 
       const result = await service.getShowStatusBySystemKey('NOT_A_REAL_KEY');
 
-      expect(showStatusRepository.findBySystemKey).toHaveBeenCalledWith(
-        'NOT_A_REAL_KEY',
-      );
+      expect(showStatusRepository.findOne).toHaveBeenCalledWith({
+        systemKey: 'NOT_A_REAL_KEY',
+      });
       expect(result).toBeNull();
     });
   });
