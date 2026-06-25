@@ -9,7 +9,7 @@ PR #230 built the `STATE_GATE` primitive around a single-owner assignment model:
 1. **The assignment is theater.** There's no notification system, so an assigned owner has no signal that they own anything — they'd have to remember to check the show or stumble onto it in task-review. `resolveGate` never actually enforced "only the assignee can resolve" either (any Manager/Admin could resolve regardless of who was assigned), so the assignment carried no authorization weight — it was bookkeeping nobody could act on and nobody was forced to honor.
 2. **The gate is bypassable.** The generic `PATCH /studios/:studioId/shows/:id` endpoint accepts `show_status_id` directly and applies it with zero awareness that a `STATE_GATE` task is open. Confirmed against real data: a show was driven through `cancel-with-resolution` into `CANCELLED_PENDING_RESOLUTION` (audited), then its status was edited straight back to `CONFIRMED` via the regular show-edit form — no audit entry, no gate-task closure, the `STATE_GATE` task left permanently `PENDING`. The safeguard the whole feature exists to provide can be silently skipped by the same form used for routine show edits.
 
-Both problems trace back to the same root cause: the design borrowed a generic "assign a task" pattern for something that isn't actually delegated work — it's an authorization-and-audit checkpoint on a status transition. v2 treats it as that directly.
+Both problems trace back to the same root cause: the design borrowed a generic "assign a task" pattern for something that isn't actually delegated work — it's an authorization-and-audit checkpoint on a status transition. v2 treats it as that directly, which also means dropping the `Task` entity for this feature entirely (see "No Task at all" below) — once there's no owner and no delegated work, a `STATE_GATE` `Task` row has no remaining purpose: `Audit` already records every transition, and the gate's "is one open" state is just `Show.status`.
 
 ## Two actor tiers, not an assignee
 
@@ -22,70 +22,78 @@ If a person holds both (a Manager who happens to be on shift as duty manager tod
 
 The `cancel-with-resolution` endpoint's `@StudioProtected` widens to admit any studio member; the service performs the actual tier check, mirroring how `cancelShowWithResolution` already does bespoke validation today rather than relying solely on the declarative guard.
 
-## Two paths from one dialog
+## No Task at all
 
-The cancellation dialog is the same component for both tiers; the fields and what happens on submit differ by which tier authorized the request:
+`Show.status` *is* the gate state — `CANCELLED_PENDING_RESOLUTION` means open, anything else means resolved. Nothing else needs to model "is a gate open."
 
-- **Manager tier — atomic resolution.** Dialog collects reason (category + note) *and* final outcome (`CANCELLED` / `COMPLETED`) in one submission. `openGate` and `resolveGate` run back-to-back inside one transaction. The show's `status` transitions directly to the chosen outcome — it is never observably `CANCELLED_PENDING_RESOLUTION`. A `Task` row is still created and immediately marked `COMPLETED`, preserving the audit/history trail (`opened` then `resolved` entries) without ever leaving anything open.
-- **Duty Manager tier — flag and defer.** Dialog collects reason only — no outcome picker, because this tier doesn't decide the disposition. `openGate` runs alone; `Show.status → CANCELLED_PENDING_RESOLUTION`. Any Manager/Admin can resolve it later from the same Resolve dialog PR #230 already built (active-task guard and LIVE safeguard both carry over unchanged — those are real safety checks, independent of ownership). First Manager/Admin to act resolves it; there is no claim step and no "this one's mine" state.
+- **`Show.metadata.pending_resolution`** holds the live, mutable snapshot needed while a gate is open: `{ gate_kind, from_status, reason_category, reason_note, opened_by, opened_at }`. It exists only while `status === CANCELLED_PENDING_RESOLUTION` and is cleared (set to `null`) on resolve.
+- **`Audit`** is the trail — already wired, already used by `openGate`/`resolveGate` today (confirmed against real data: the existing audit row already carries `reason`, `action`, and a `metadata` blob with `field`/`old_value`/`new_value`/`gate_kind`). Every transition (open, note update, resolve) writes one `Audit` row via the existing `AuditService.create`, targeted at `{ targetType: 'SHOW', targetId: show.id }`. The "Gate History" UI reads `AuditService.findForTargets([{ targetType: 'SHOW', targetId: show.id }])` (this method already exists, confirmed in `audit.service.ts`) filtered to gate-related actions, ordered by `created_at` — no JSONB history array, no race risk on it.
+- **Amending the pending note.** While `status === CANCELLED_PENDING_RESOLUTION`, any current Duty Manager (tier-2 check, same as opening) can update `reason_note` via a small dedicated action — overwrites `Show.metadata.pending_resolution.reason_note` and writes its own `Audit` row (`action: 'OVERRIDE'`, distinguishable from the opening row by metadata), so the live note can be corrected/expanded without losing the original wording from Audit history.
+- No `TaskType.STATE_GATE` enum value, no migration at all — `CANCELLED_PENDING_RESOLUTION` is already a seeded `ShowStatus` row on `master` today (the pre-existing `publishing.service.ts` auto-cancel logic already uses it), so this entire redesign needs zero schema changes.
 
-`schedule_publish_removal` (the other gate kind, opened by the schedule-publish pipeline with no human present) gets the same simplification: it was already ownerless at creation under PR #230; v2 just removes the claim step that PR #230 required before resolving it. Any Manager/Admin resolves it directly.
+This also kills the original justification for modeling gates as `Task` in the first place ("Task already has TaskTarget for linking to a Show, assignee, due date...") — that justification was about delegated, closeable work, which never applied once there's no owner.
 
-## How a Manager finds and signs off a Duty-Manager-flagged gate
+## Manager and Duty Manager paths
 
-Without an assignee, there's no personal queue pointing a Manager at the gate — so discovery has to happen through surfaces a Manager already checks, not a notification (none exists; see below):
+Same cancellation dialog for both tiers; what's collected and what happens on submit differs by which tier authorized the request:
 
-1. **Task Review, filtered to `Task Type = State Gate`.** This already lists every open gate task for the studio regardless of assignment (PR #230 built this filter for "unassigned" gates; v2 just makes it the *only* discovery path, since nothing is ever assigned). A `PENDING` row here is, by construction, either a Duty-Manager-flagged `show_cancellation` gate or an open `schedule_publish_removal` gate — Manager-tier gates never appear here because they resolve atomically and are created already `COMPLETED`.
-2. **The show's detail page directly**, if the Manager already knows which show was flagged (e.g. word-of-mouth, or following up on something from a shift handover). The existing Cancellation Resolution card shows the open gate's reason, category, and (now owner-less) history — "opened by [Duty Manager name] at [time], reason: [note]."
+- **Manager tier — atomic resolution.** Dialog collects reason (category + note) *and* final outcome (`CANCELLED` / `COMPLETED`) together. One service call: validate guards (active-task count, LIVE safeguard), set `Show.status` directly to the outcome, write one `Audit` row. The show is never observably `CANCELLED_PENDING_RESOLUTION` — no `pending_resolution` metadata is ever written.
+- **Duty Manager tier — flag and defer.** Dialog collects reason only. `Show.status → CANCELLED_PENDING_RESOLUTION`, `Show.metadata.pending_resolution` is set, one `Audit` row. Any Manager/Admin signs off later — see below.
+- **Sign-off** is a second, plain call: validate the same guards (active-task count, LIVE safeguard) against the *original* `from_status` captured in `pending_resolution`, set `Show.status` to the chosen outcome, clear `Show.metadata.pending_resolution`, write a second `Audit` row. There is no separate "sign-off" endpoint, status, or concept beyond "resolve a pending-resolution show" — it is the same operation whether the original flag came from a Duty Manager or from `schedule_publish_removal`.
+- If a Duty Manager doesn't act in time, nothing forces them to — a Manager can always cancel the show directly through the Manager-tier path regardless of shift state. No timeout, no escalation logic; the fallback is just "a Manager has standing authority to act on any eligible show at any time."
 
-Either path leads to the same action: the Manager opens the **Resolve** dialog (unchanged from PR #230 — active-task guard and LIVE safeguard both still apply) and picks the outcome. The sign-off *is* calling `resolveGate` — there's no separate "sign-off" endpoint or status; resolving a Duty-Manager-opened gate and resolving a system-opened `schedule_publish_removal` gate are the same operation.
+`schedule_publish_removal` (system-generated, no human present) writes the same `Show.metadata.pending_resolution` shape (with `reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE'`) and an `Audit` row directly from `publishing.service.ts`'s remove-flow — no Task, same as the manual path.
 
-This means Task Review's State Gate filter is now the primary surface for this workflow, not an edge case — worth confirming with whoever owns that UI that a `PENDING` State Gate row is visually distinct enough (e.g. an "awaiting sign-off" badge) to not get lost among regular tasks, since there's no other signal pointing a Manager at it.
+## How a Manager finds a pending-resolution show
+
+No Task Review involvement at all. The Shows list already supports filtering by `show_status_name` (confirmed in `get-studio-shows.ts`) — a Manager filters to `Cancelled Pending Resolution` to see every show awaiting sign-off across the studio. The show's own detail page shows the live `pending_resolution` snapshot (reason, category, who flagged it, when) for anyone who already knows which show.
+
+Either surface leads to the same Resolve action. Worth a follow-up check once this ships: confirm the existing status-badge styling on the Shows list makes a `Cancelled Pending Resolution` row visually distinct enough without a notification pointing anyone at it — flagging this, not deciding it now.
 
 ## Notification seam (placeholder only)
 
-No notification system exists yet (confirmed: no `EventEmitter2`/domain-event pattern anywhere in `erify_api`), so v2 does not build one. It adds a single seam so future work has a clear, narrow point to plug into instead of having to thread new logic through `ShowStateGateService` itself:
+No notification system exists yet (confirmed: no `EventEmitter2`/domain-event pattern anywhere in `erify_api`), so v2 does not build one. It adds a single seam so future work has a clear, narrow point to plug into instead of threading new logic through `ShowStateGateService` itself:
 
 ```ts
 @Injectable()
 export class GateNotificationService {
-  notifyGateOpened(task: Task, show: Show, gateKind: GateKind): void {
+  notifyGateOpened(show: Show, gateKind: GateKind, reason: { category: string; note: string }): void {
     // no-op today — structured log only
   }
-  notifyGateResolved(task: Task, show: Show, gateKind: GateKind, outcome: string): void {
+  notifyGateResolved(show: Show, gateKind: GateKind, outcome: string): void {
     // no-op today — structured log only
   }
 }
 ```
 
-`openGate` calls `notifyGateOpened` after creating the gate task; `resolveGate` calls `notifyGateResolved` after completing it. For the Manager atomic path, both fire in sequence within the same request — downstream notification logic (when it exists) doesn't need to special-case "this one skipped the pending interval." This is intentionally the entire scope of the notification work in this iteration; wiring it to an actual stakeholder/client/creator notification channel is future work, tracked as a non-goal below.
+Called at the same two points as before (open, resolve) — just without a `Task` argument, since there isn't one. For the Manager atomic path, both fire in sequence within the same request. Wiring this to a real channel is future work, tracked as a non-goal below.
 
 ## The bypass fix
 
-`StudioShowManagementService.updateShow` rejects any request whose body changes `show_status_id` while the show currently has an open (`status: 'PENDING'`) `STATE_GATE` task targeting it — regardless of gate kind, regardless of what status is requested. The only paths that may transition a gated show's status are `cancelShowWithResolution` (open, or open+resolve for Manager tier) and `resolveShowCancellation`. This closes the exact gap found in manual QA.
+`StudioShowManagementService.updateShow` rejects any request whose body changes `show_status_id` while `existingShow.showStatus.systemKey === 'CANCELLED_PENDING_RESOLUTION'` — a single field comparison now, no join, no Task lookup. The only paths that may move a pending-resolution show are the Manager-tier resolve call and the sign-off call. This closes the exact gap found in manual QA.
 
 ## Data model changes from PR #230
 
-- Drop `claimGate` from `ShowStateGateService`, `claimTask` from `TaskOrchestrationService` (confirmed it's a pure passthrough added by PR #230 for this feature, not pre-existing generic task functionality), the `PATCH /studios/:studioId/tasks/:id/claim` controller endpoint, and the frontend `use-claim-task.ts` hook + "Claim" action in task-review.
-- `Task.content.history` event union shrinks from `opened | claimed | reassigned | resolved` to `opened | resolved`.
-- `resolveGate` drops the `GATE_NOT_CLAIMED` precondition (nothing to claim against). Active-task guard and LIVE safeguard are unchanged.
-- `CancelStudioShowDto` drops `resolution_owner_membership_id` and `follow_up_due_at` (both were owner-scoped); gains a conditionally-required `outcome` field, required only when the caller resolves at the Manager tier.
-- The generic task reassignment-with-note capability (`PATCH .../tasks/:id/assign`, extended by PR #230 with an optional handover `note`) is left as-is. It's general task functionality now, independent of gate ownership; reverting it would be unrelated scope creep for this redesign.
+- No `TaskType.STATE_GATE`, no `Task`/`TaskTarget` usage for either gate kind, no migration. `ShowStateGateService.openGate`/`resolveGate`/`claimGate` and `TaskOrchestrationService.claimTask` are all deleted (the latter confirmed to be a pure passthrough added by PR #230 for this feature, not pre-existing generic task functionality), along with the `PATCH /studios/:studioId/tasks/:id/claim` endpoint and the frontend `use-claim-task.ts` hook + "Claim" action.
+- `findOpenStateGateForShow` is deleted — replaced by checking `show.showStatus.systemKey === 'CANCELLED_PENDING_RESOLUTION'` directly.
+- `CancelStudioShowDto` drops `resolution_owner_membership_id` and `follow_up_due_at` (both owner-scoped); gains a conditionally-required `outcome` field (required only at Manager tier) and a separate small DTO for the Duty-Manager note-amendment action.
+- The generic task reassignment-with-note capability (`PATCH .../tasks/:id/assign`, extended by PR #230 with an optional handover `note`) is unrelated to this redesign now that gates aren't tasks — left as-is, out of scope to revert.
 
 ## Non-goals (this iteration)
 
 - Building an actual notification system or wiring `GateNotificationService` to a real channel (email, in-app, Slack) — no channel exists yet; this is explicitly future work once one does.
 - A dedicated `STUDIO_ROLE.DUTY_MANAGER` permission tier — duty-manager authority is purely the existing time-windowed shift flag, not a new static role.
-- Multi-person notification/escalation lists, or letting a Manager opt into the deferred (pending) path instead of atomic resolution — confirmed out of scope; Manager tier is always atomic.
+- Multi-person notification/escalation lists, letting a Manager opt into the deferred path instead of atomic resolution, or any timeout/escalation logic for an unresolved pending show — confirmed out of scope.
 - Cross-studio dashboards, second-level `gate_kind` filtering, and the other PR #230 non-goals — unchanged, still out of scope.
 
 ## Testing
 
-- Unit: tier resolution — Manager/Admin role takes the atomic path even while also flagged duty manager; a plain member flagged duty manager right now takes the deferred path; a plain member with no duty-manager flag is rejected (403); a duty-manager flag outside the active shift window is rejected.
-- Unit: Manager-tier `cancelShowWithResolution` resolves atomically — show status lands directly on the chosen outcome, `STATE_GATE` task is created already `COMPLETED`, history has both `opened` and `resolved` entries, no intermediate observable `CANCELLED_PENDING_RESOLUTION` state from a second query in between (same transaction).
-- Unit: Duty-Manager-tier `cancelShowWithResolution` only opens the gate — no `outcome` field accepted/required, show lands on `CANCELLED_PENDING_RESOLUTION`, task stays `PENDING`.
-- Unit: `resolveGate` no longer checks ownership — succeeds against a `PENDING` gate task regardless of `assigneeId` (which is always null now).
-- Unit: `updateShow` rejects a `show_status_id` change when an open `STATE_GATE` task exists for the show, for both gate kinds, regardless of the requested target status; succeeds once the gate task is `COMPLETED`.
-- Unit: `GateNotificationService.notifyGateOpened`/`notifyGateResolved` are called from `openGate`/`resolveGate` with the expected arguments (verifying the seam is wired, not its no-op behavior).
-- Integration: schedule-publish removal still opens an ownerless gate; any Manager/Admin resolves it directly without a claim step.
-- Frontend: cancellation dialog renders the outcome picker only when the resolved tier is Manager; Duty-Manager-tier submission shows a "pending manager sign-off" confirmation instead of a final-state toast; the Resolve dialog and Gate History rendering carry over from PR #230 unchanged except for dropping owner/claim references.
+- Unit: tier resolution — Manager/Admin takes the atomic path even while also flagged duty manager; a plain member flagged duty manager right now takes the deferred path; a plain member with no duty-manager flag is rejected (403); a duty-manager flag outside the active shift window is rejected.
+- Unit: Manager-tier cancel resolves atomically — `Show.status` lands directly on the chosen outcome, exactly one `Audit` row is written, `Show.metadata.pending_resolution` is never set.
+- Unit: Duty-Manager-tier cancel only opens — no `outcome` accepted/required, `Show.status → CANCELLED_PENDING_RESOLUTION`, `pending_resolution` snapshot set, one `Audit` row.
+- Unit: note-amendment — only a current Duty Manager can amend `pending_resolution.reason_note` while pending; rejected once resolved; writes its own `Audit` row without altering the original opening row.
+- Unit: sign-off re-validates active-task count and LIVE safeguard against the captured `from_status`; clears `pending_resolution`; writes a second `Audit` row.
+- Unit: `updateShow` rejects a `show_status_id` change whenever `showStatus.systemKey === 'CANCELLED_PENDING_RESOLUTION'`, for both gate kinds; succeeds once resolved.
+- Unit: `GateNotificationService.notifyGateOpened`/`notifyGateResolved` are called with the expected arguments at both transition points (verifying the seam is wired, not its no-op behavior).
+- Integration: schedule-publish removal writes the same `pending_resolution` shape and an `Audit` row; a Manager resolves it through the same sign-off path as a manual flag.
+- Frontend: cancellation dialog renders the outcome picker only when the resolved tier is Manager; Duty-Manager-tier submission shows a "flagged, pending sign-off" confirmation instead of a final-state toast; Shows-list filtering by `Cancelled Pending Resolution` surfaces both gate kinds; Gate History renders from `Audit`, not `Task.content.history`.
