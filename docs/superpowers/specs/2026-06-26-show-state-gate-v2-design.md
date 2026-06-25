@@ -31,6 +31,17 @@ The cancellation dialog is the same component for both tiers; the fields and wha
 
 `schedule_publish_removal` (the other gate kind, opened by the schedule-publish pipeline with no human present) gets the same simplification: it was already ownerless at creation under PR #230; v2 just removes the claim step that PR #230 required before resolving it. Any Manager/Admin resolves it directly.
 
+## How a Manager finds and signs off a Duty-Manager-flagged gate
+
+Without an assignee, there's no personal queue pointing a Manager at the gate — so discovery has to happen through surfaces a Manager already checks, not a notification (none exists; see below):
+
+1. **Task Review, filtered to `Task Type = State Gate`.** This already lists every open gate task for the studio regardless of assignment (PR #230 built this filter for "unassigned" gates; v2 just makes it the *only* discovery path, since nothing is ever assigned). A `PENDING` row here is, by construction, either a Duty-Manager-flagged `show_cancellation` gate or an open `schedule_publish_removal` gate — Manager-tier gates never appear here because they resolve atomically and are created already `COMPLETED`.
+2. **The show's detail page directly**, if the Manager already knows which show was flagged (e.g. word-of-mouth, or following up on something from a shift handover). The existing Cancellation Resolution card shows the open gate's reason, category, and (now owner-less) history — "opened by [Duty Manager name] at [time], reason: [note]."
+
+Either path leads to the same action: the Manager opens the **Resolve** dialog (unchanged from PR #230 — active-task guard and LIVE safeguard both still apply) and picks the outcome. The sign-off *is* calling `resolveGate` — there's no separate "sign-off" endpoint or status; resolving a Duty-Manager-opened gate and resolving a system-opened `schedule_publish_removal` gate are the same operation.
+
+This means Task Review's State Gate filter is now the primary surface for this workflow, not an edge case — worth confirming with whoever owns that UI that a `PENDING` State Gate row is visually distinct enough (e.g. an "awaiting sign-off" badge) to not get lost among regular tasks, since there's no other signal pointing a Manager at it.
+
 ## Notification seam (placeholder only)
 
 No notification system exists yet (confirmed: no `EventEmitter2`/domain-event pattern anywhere in `erify_api`), so v2 does not build one. It adds a single seam so future work has a clear, narrow point to plug into instead of having to thread new logic through `ShowStateGateService` itself:
