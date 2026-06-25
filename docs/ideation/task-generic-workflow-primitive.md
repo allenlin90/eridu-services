@@ -2,7 +2,7 @@
 
 > **Status**: Active — first instance shipped in PR #230; further generalization deferred
 > **Origin**: Show State Gate design review, June 2026
-> **Related**: [Show State Gate design](../superpowers/specs/2026-06-23-show-state-gate-design.md), [Task Template Purpose Separation](./task-template-purpose-separation.md)
+> **Related**: [Studio Show Management](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md), [Task Template Purpose Separation](./task-template-purpose-separation.md)
 
 ## What
 
@@ -31,6 +31,6 @@ Promote to a PRD (formalizing `Task` as a general workflow primitive) when **any
 
 ## Implementation Notes (Preserved Context)
 
-- First concrete instance: `docs/superpowers/specs/2026-06-23-show-state-gate-design.md` — `TaskType.STATE_GATE`, `GATE_CONFIG` lookup keyed by `gate_kind`, `openGate`/`resolveGate` primitives, Show-scoped only.
+- First concrete instance: PR #230 — `TaskType.STATE_GATE`, `GATE_CONFIG` lookup keyed by `gate_kind`, `openGate`/`resolveGate` primitives, Show-scoped only.
 - If/when entity-agnostic generalization happens, the natural seam is wherever `openGate`/`resolveGate` currently reach into `ShowRepository`/`ShowStatusService` directly — that's the Show-specific coupling that would need to become a passed-in strategy/adapter per target entity type.
 - Cross-check this doc per `.agent/workflows/ideation-lifecycle.md` whenever a future design proposes a second "owner + due date + outcome" workflow for any entity, or a second template-less `Task.type` — don't let a second instance get built ad hoc without revisiting gate 1/2 above.

@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 import type {
@@ -24,6 +25,46 @@ const CANCELLATION_ERROR_MESSAGES: Record<string, string> = {
   ACTIVE_TASKS_REMAIN: 'This show still has active tasks. Close or reassign them before confirming cancellation.',
   LIVE_CANCELLATION_REQUIRES_OVERRIDE: 'This show was live when interrupted. Resume it or mark it completed instead of cancelling outright.',
 };
+
+type GateErrorDetails = {
+  activeTaskCount?: unknown;
+};
+
+type GateErrorBody = {
+  message?: unknown;
+  details?: GateErrorDetails;
+};
+
+export function getCancellationErrorCode(error: unknown): string | null {
+  if (!axios.isAxiosError(error)) {
+    return null;
+  }
+
+  const message = (error.response?.data as GateErrorBody | undefined)?.message;
+  if (typeof message !== 'string' || message.trim().length === 0) {
+    return null;
+  }
+
+  return message.split(':')[0] ?? null;
+}
+
+export function getCancellationActiveTaskCount(error: unknown): number | null {
+  if (!axios.isAxiosError(error)) {
+    return null;
+  }
+
+  const activeTaskCount = (error.response?.data as GateErrorBody | undefined)?.details?.activeTaskCount;
+  return typeof activeTaskCount === 'number' ? activeTaskCount : null;
+}
+
+function getCancellationMutationErrorMessage(error: unknown, fallback: string): string {
+  const code = getCancellationErrorCode(error);
+  if (code && CANCELLATION_ERROR_MESSAGES[code]) {
+    return CANCELLATION_ERROR_MESSAGES[code];
+  }
+
+  return getMutationErrorMessage(error, fallback, CANCELLATION_ERROR_MESSAGES);
+}
 
 export async function cancelStudioShowWithResolution(
   studioId: string,
@@ -75,7 +116,7 @@ export function useCancelStudioShowWithResolution(studioId: string) {
       toast.success('Show moved to pending resolution');
     },
     onError: (error) => {
-      toast.error(getMutationErrorMessage(error, 'Failed to cancel show', CANCELLATION_ERROR_MESSAGES));
+      toast.error(getCancellationMutationErrorMessage(error, 'Failed to cancel show'));
     },
   });
 }
@@ -91,7 +132,7 @@ export function useResolveStudioShowCancellation(studioId: string) {
       toast.success('Cancellation resolved');
     },
     onError: (error) => {
-      toast.error(getMutationErrorMessage(error, 'Failed to resolve cancellation', CANCELLATION_ERROR_MESSAGES));
+      toast.error(getCancellationMutationErrorMessage(error, 'Failed to resolve cancellation'));
     },
   });
 }

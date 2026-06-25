@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { Ban, CheckCircle2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -22,6 +23,8 @@ import {
 } from '@eridu/ui';
 
 import {
+  getCancellationActiveTaskCount,
+  getCancellationErrorCode,
   useCancelStudioShowWithResolution,
   useResolveStudioShowCancellation,
 } from '../api/cancel-studio-show';
@@ -261,6 +264,7 @@ function ResolveCancellationDialog({
   const [open, setOpen] = useState(false);
   const [outcome, setOutcome] = useState<GateOutcome>(initialOutcome);
   const [resolutionNotes, setResolutionNotes] = useState('');
+  const [activeTaskBlockerCount, setActiveTaskBlockerCount] = useState<number | null>(null);
   const resolveMutation = useResolveStudioShowCancellation(studioId);
   const isClaimed = stateGate.assignee_id !== null;
 
@@ -268,6 +272,7 @@ function ResolveCancellationDialog({
     if (!nextOpen) {
       setOutcome(initialOutcome);
       setResolutionNotes('');
+      setActiveTaskBlockerCount(null);
     }
     setOpen(nextOpen);
   };
@@ -282,10 +287,18 @@ function ResolveCancellationDialog({
         type="button"
         disabled={!isClaimed || resolutionNotes.trim().length === 0 || resolveMutation.isPending}
         onClick={() => {
+          setActiveTaskBlockerCount(null);
           resolveMutation.mutate({
             showId: show.id,
             data: { outcome, resolution_notes: resolutionNotes.trim() },
-          }, { onSuccess: () => handleOpenChange(false) });
+          }, {
+            onSuccess: () => handleOpenChange(false),
+            onError: (error) => {
+              if (getCancellationErrorCode(error) === 'ACTIVE_TASKS_REMAIN') {
+                setActiveTaskBlockerCount(getCancellationActiveTaskCount(error));
+              }
+            },
+          });
         }}
       >
         {resolveMutation.isPending ? 'Saving...' : (OUTCOME_LABEL[outcome] ?? 'Resolve')}
@@ -313,6 +326,33 @@ function ResolveCancellationDialog({
                 <p className="rounded-md bg-amber-50 p-2 text-sm text-amber-800">
                   Claim this gate from the task list before resolving it.
                 </p>
+              )
+            : null}
+          {activeTaskBlockerCount !== null
+            ? (
+                <div className="space-y-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800">
+                  <p>
+                    {activeTaskBlockerCount}
+                    {' '}
+                    active
+                    {' '}
+                    {activeTaskBlockerCount === 1 ? 'task is' : 'tasks are'}
+                    {' '}
+                    still attached to this show. Close or reassign
+                    {' '}
+                    {activeTaskBlockerCount === 1 ? 'it' : 'them'}
+                    {' '}
+                    before confirming cancellation.
+                  </p>
+                  <Link
+                    to="/studios/$studioId/shows/$showId/tasks"
+                    params={{ studioId, showId: show.id }}
+                    search={{ page: 1, limit: 10 }}
+                    className="font-medium underline underline-offset-2"
+                  >
+                    View show tasks
+                  </Link>
+                </div>
               )
             : null}
           {isLiveFromStatus(stateGate.from_status) && stateGate.allowed_outcomes.includes('CANCELLED')

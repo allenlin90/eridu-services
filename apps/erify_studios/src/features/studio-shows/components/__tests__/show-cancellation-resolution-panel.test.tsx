@@ -1,4 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AxiosError, AxiosHeaders } from 'axios';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StudioShowDetail, StudioShowStateGate } from '@eridu/api-types/shows';
@@ -6,18 +9,36 @@ import type { StudioShowDetail, StudioShowStateGate } from '@eridu/api-types/sho
 import { ShowCancellationResolutionPanel } from '../show-cancellation-resolution-panel';
 
 const useStudioShowStateGateMock = vi.hoisted(() => vi.fn(() => ({ data: null })));
+const resolveMutateMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../api/get-studio-show-state-gate', () => ({
   useStudioShowStateGate: useStudioShowStateGateMock,
 }));
 
 vi.mock('../../api/cancel-studio-show', () => ({
+  getCancellationActiveTaskCount: (error: AxiosError) =>
+    (error.response?.data as { details?: { activeTaskCount?: number } } | undefined)?.details?.activeTaskCount ?? null,
+  getCancellationErrorCode: (error: AxiosError) => {
+    const message = (error.response?.data as { message?: string } | undefined)?.message;
+    return message?.split(':')[0] ?? null;
+  },
   useCancelStudioShowWithResolution: () => ({ mutate: vi.fn(), isPending: false }),
-  useResolveStudioShowCancellation: () => ({ mutate: vi.fn(), isPending: false }),
+  useResolveStudioShowCancellation: () => ({ mutate: resolveMutateMock, isPending: false }),
 }));
 
 vi.mock('@/features/studio-members/api/members', () => ({
   useStudioMembers: () => ({ data: { data: [] }, isLoading: false }),
+}));
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, to, params: _params, search: _search, ...props }: {
+    children?: ReactNode;
+    params?: unknown;
+    search?: unknown;
+    to?: string;
+  }) => (
+    <a href={to} {...props}>{children}</a>
+  ),
 }));
 
 vi.mock('@/components/responsive-dialog', () => ({
@@ -85,9 +106,22 @@ function makeShow(overrides: Partial<StudioShowDetail> = {}): StudioShowDetail {
   };
 }
 
+function axiosErrorWith(data: unknown): AxiosError {
+  const error = new AxiosError('Request failed');
+  error.response = {
+    data,
+    status: 400,
+    statusText: 'Bad Request',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  };
+  return error;
+}
+
 describe('showCancellationResolutionPanel', () => {
   beforeEach(() => {
     useStudioShowStateGateMock.mockReturnValue({ data: null });
+    resolveMutateMock.mockReset();
   });
 
   it('renders the cancel action for a cancellable show', () => {
@@ -152,5 +186,50 @@ describe('showCancellationResolutionPanel', () => {
     expect(screen.getAllByText('Removed from republished schedule')).toHaveLength(2);
     expect(screen.getByText('Gate History')).toBeInTheDocument();
     expect(screen.getByText('Opened')).toBeInTheDocument();
+  });
+
+  it('renders active-task blocker details with a link to the show task list', async () => {
+    const user = userEvent.setup();
+    useStudioShowStateGateMock.mockReturnValue({
+      data: {
+        id: 'task_gate1',
+        gate_kind: 'show_cancellation',
+        reason_category: 'ROOM_UNAVAILABLE',
+        reason_note: 'Flooding',
+        follow_up_notes: null,
+        resolution_notes: null,
+        assignee_id: 'user_owner',
+        assignee_name: 'Owner User',
+        from_status: 'CONFIRMED',
+        allowed_outcomes: ['CANCELLED', 'COMPLETED'],
+        history: [],
+        created_at: '2026-04-01T00:00:00.000Z',
+        updated_at: '2026-04-01T00:00:00.000Z',
+      } satisfies NonNullable<StudioShowStateGate>,
+    } as any);
+    resolveMutateMock.mockImplementation((_input, options) => {
+      options?.onError?.(axiosErrorWith({
+        statusCode: 400,
+        message: 'ACTIVE_TASKS_REMAIN:task_gate1',
+        details: { activeTaskCount: 3 },
+      }));
+    });
+
+    render(
+      <ShowCancellationResolutionPanel
+        studioId="studio_1"
+        show={makeShow({ show_status_system_key: 'CANCELLED_PENDING_RESOLUTION' })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /resolve/i }));
+    await user.type(screen.getByRole('textbox'), 'Cannot cancel yet');
+    await user.click(screen.getByRole('button', { name: /confirm cancellation/i }));
+
+    expect(screen.getByText(/3 active tasks are still attached to this show/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view show tasks/i })).toHaveAttribute(
+      'href',
+      '/studios/$studioId/shows/$showId/tasks',
+    );
   });
 });

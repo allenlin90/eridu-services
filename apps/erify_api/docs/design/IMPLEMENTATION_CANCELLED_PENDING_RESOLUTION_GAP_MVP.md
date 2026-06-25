@@ -1,6 +1,6 @@
 # Remaining Gap: Schedule-Publish Pending-Resolution Discovery & Observability
 
-> **TLDR**: The studio-scoped resolution backend this doc originally proposed (`POST /studios/:studioId/shows/:showId/resolve-cancellation`, active-task policy, LIVE safeguard, audit trail) **shipped in PR #230**, but via a different, more reusable mechanism than originally specified here — see [Show State Gate design](../../../../docs/superpowers/specs/2026-06-23-show-state-gate-design.md) and `STUDIO_SHOW_MANAGEMENT.md` decisions 17–19. The metadata-contract approach in the original §3.5/§4.3.1 below was **not** what shipped; it is superseded, not implemented. What remains open is frontend discovery/observability scope, listed under "Remaining Gap" below.
+> **TLDR**: The studio-scoped resolution backend this doc originally proposed (`POST /studios/:studioId/shows/:showId/resolve-cancellation`, active-task policy, LIVE safeguard, audit trail) **shipped in PR #230**, but via a different, more reusable mechanism than originally specified here — see `STUDIO_SHOW_MANAGEMENT.md` decisions 17–19. The metadata-contract approach in the original §3.5/§4.3.1 below was **not** what shipped; it is superseded, not implemented. What remains open is frontend discovery/observability scope, listed under "Remaining Gap" below.
 
 > [!NOTE]
 > **Status: 📐 Narrowed — backend shipped via Task/STATE_GATE, frontend discovery/observability gap remains.**
@@ -21,15 +21,12 @@ These items from the original MVP scope were not delivered by PR #230 and remain
 1. **No dedicated pending-resolution queue route** (was §5.1). Discovery today is via `task-review` filtered to `Task Type = State Gate` — workable, but not a purpose-built "shows stuck in pending resolution" queue with show-list context (client, schedule, room).
 2. **No member-facing task-page indicator** (was §5.2/§5.4) — a task whose linked show is `CANCELLED_PENDING_RESOLUTION` does not surface a distinct banner/chip on the assignee's own task views.
 3. **No structured observability** (was §4.4) — no counters/structured logs for resolve success/rejection rates beyond the pre-existing `publishSummary.shows_pending_resolution`/`shows_cancelled` publish-time tallies.
-4. **Resolve-dialog active-task guard is a static message, not the count+nav-link sub-workflow** (was §5.3.1) — `ACTIVE_TASKS_REMAIN` renders a fixed guidance string (`cancel-studio-show.ts`); it does not show the live active-task count or link to the show's task list. Acceptable at current volume (~20 gates/studio/month); revisit if that assumption breaks.
-
 ## Decision Gates for Revisiting
 
 Pick this back up when any of:
 
-- A studio reports difficulty finding pending-resolution shows via the `task-review` filter (signal: support requests, or the gate kind list grows enough that `Task Type = State Gate` stops being precise — see the second-level `gate_kind` filter trade-off in the [Show State Gate design](../../../../docs/superpowers/specs/2026-06-23-show-state-gate-design.md)).
+- A studio reports difficulty finding pending-resolution shows via the `task-review` filter (signal: support requests, or the gate kind list grows enough that `Task Type = State Gate` stops being precise).
 - Resolve rejection rates need monitoring (no current visibility into how often `ACTIVE_TASKS_REMAIN`/`LIVE_CANCELLATION_REQUIRES_OVERRIDE` block a resolve attempt).
-- A studio's active-task count per blocked resolve attempt is large enough that the static guidance message is insufficient and the count+nav-link sub-workflow becomes worth building.
 
 ## Superseded Sections (preserved for context, not current contract)
 

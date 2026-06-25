@@ -1,7 +1,10 @@
+import { AxiosError, AxiosHeaders } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   cancelStudioShowWithResolution,
+  getCancellationActiveTaskCount,
+  getCancellationErrorCode,
   resolveStudioShowCancellation,
 } from '../cancel-studio-show';
 
@@ -12,6 +15,18 @@ vi.mock('@/lib/api/client', () => ({
     post: vi.fn(),
   },
 }));
+
+function axiosErrorWith(data: unknown): AxiosError {
+  const error = new AxiosError('Request failed');
+  error.response = {
+    data,
+    status: 400,
+    statusText: 'Bad Request',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  };
+  return error;
+}
 
 describe('studio show cancellation gate API', () => {
   const mockedPost = vi.mocked(apiClient.post);
@@ -52,5 +67,15 @@ describe('studio show cancellation gate API', () => {
       '/studios/studio_1/shows/show_1/resolve-cancellation',
       payload,
     );
+  });
+
+  it('extracts prefixed gate error codes and active task counts', () => {
+    const error = axiosErrorWith({
+      message: 'ACTIVE_TASKS_REMAIN:task_gate1',
+      details: { activeTaskCount: 3 },
+    });
+
+    expect(getCancellationErrorCode(error)).toBe('ACTIVE_TASKS_REMAIN');
+    expect(getCancellationActiveTaskCount(error)).toBe(3);
   });
 });
