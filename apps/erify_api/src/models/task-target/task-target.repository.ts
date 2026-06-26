@@ -43,6 +43,25 @@ export class TaskTargetRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: "active" excludes terminal task statuses (COMPLETED,
+  // CLOSED) in addition to the soft-delete filters findByShowIds already
+  // applies — a completed task must not block a cancellation outcome that
+  // requires "no active tasks." This is the canonical filter for that policy;
+  // every caller (manual cancellation, schedule-publish removal) uses this
+  // method instead of re-deriving the status list.
+  async countActiveByShowId(showId: bigint): Promise<number> {
+    return this.delegate.count({
+      where: {
+        showId,
+        deletedAt: null,
+        task: {
+          deletedAt: null,
+          status: { notIn: ['COMPLETED', 'CLOSED'] },
+        },
+      },
+    });
+  }
+
   async undeleteByTaskId(taskId: bigint): Promise<Prisma.BatchPayload> {
     return this.delegate.updateMany({
       where: { taskId },
