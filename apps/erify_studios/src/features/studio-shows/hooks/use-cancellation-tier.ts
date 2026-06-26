@@ -17,7 +17,7 @@ export function useCancellationTier(studioId: string): { tier: CancellationTier;
     return { tier: 'manager', isLoading };
   }
 
-  if (profile?.id && dutyManager?.user_id === profile.id) {
+  if (profile?.uid && dutyManager?.user_id === profile.uid) {
     return { tier: 'duty_manager', isLoading };
   }
 

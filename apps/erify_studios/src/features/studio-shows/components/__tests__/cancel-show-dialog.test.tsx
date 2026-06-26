@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { AxiosError, AxiosHeaders } from 'axios';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StudioShowDetail } from '@eridu/api-types/shows';
@@ -14,6 +16,15 @@ vi.mock('../../hooks/use-cancellation-tier', () => ({
 }));
 vi.mock('../../api/cancel-studio-show', () => ({
   useCancelShowWithResolution: () => ({ mutate: mutateMock, isPending: false }),
+  getGateErrorCode: (error: AxiosError) => {
+    const message = (error.response?.data as { message?: string } | undefined)?.message;
+    return message?.split(':')[0] ?? null;
+  },
+  getGateActiveTaskCount: (error: AxiosError) =>
+    (error.response?.data as { details?: { activeTaskCount?: number } } | undefined)?.details?.activeTaskCount ?? null,
+}));
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, to }: { children?: ReactNode; to?: string }) => <a href={to}>{children}</a>,
 }));
 vi.mock('@/components/responsive-dialog', () => ({
   ResponsiveDialog: ({ open, title, children, footer }: any) =>
@@ -42,6 +53,12 @@ vi.mock('@eridu/ui', async () => {
     SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
   };
 });
+
+function axiosErrorWith(data: unknown): AxiosError {
+  const error = new AxiosError('Request failed');
+  error.response = { data, status: 400, statusText: 'Bad Request', headers: {}, config: { headers: new AxiosHeaders() } };
+  return error;
+}
 
 function makeShow(): StudioShowDetail {
   return {
@@ -98,5 +115,26 @@ describe('cancelShowDialog', () => {
       showId: 'show_1',
       data: { reason_category: 'EQUIPMENT_FAILURE', reason_note: 'Camera failed mid-show' },
     }, expect.anything());
+  });
+
+  it('renders the active-task count and a link to the show task list on ACTIVE_TASKS_REMAIN', async () => {
+    useCancellationTierMock.mockReturnValue({ tier: 'manager', isLoading: false });
+    const user = userEvent.setup();
+    mutateMock.mockImplementation((_input, options) => {
+      options?.onError?.(axiosErrorWith({ message: 'ACTIVE_TASKS_REMAIN:show_1', details: { activeTaskCount: 3 } }));
+    });
+
+    render(<CancelShowDialog studioId="studio_1" show={makeShow()} />);
+    await user.click(screen.getByRole('button', { name: /cancel show/i }));
+    await user.selectOptions(screen.getByLabelText(/reason category/i), 'EQUIPMENT_FAILURE');
+    await user.type(screen.getByLabelText(/^reason$/i), 'Camera failed mid-show');
+    await user.selectOptions(screen.getByLabelText(/^outcome$/i), 'CANCELLED');
+    await user.click(screen.getByRole('button', { name: /submit/i }));
+
+    expect(screen.getByText(/3 active tasks? are still attached/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view show tasks/i })).toHaveAttribute(
+      'href',
+      '/studios/$studioId/shows/$showId/tasks',
+    );
   });
 });

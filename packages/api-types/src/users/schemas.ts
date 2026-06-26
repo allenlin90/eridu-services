@@ -13,6 +13,7 @@ export const profileResponseSchema = z.object({
     .string()
     .describe('User ID from better-auth (maps to User.ext_id in database)'),
   id: z.string().describe('Same as ext_id for convenience'),
+  uid: z.string().describe('The eridu User.uid — the public external identifier for this user, distinct from ext_id (the better-auth/SSO id)'),
   name: z.string(),
   email: z.email(),
   image: z.string().nullable(),

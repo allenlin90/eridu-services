@@ -19,7 +19,7 @@ vi.mock('@/features/studio-shifts/hooks/use-studio-shifts', () => ({
 describe('useCancellationTier', () => {
   it('returns manager when the role is ADMIN or MANAGER, without needing the duty-manager query', () => {
     vi.mocked(useStudioAccess).mockReturnValue({ role: 'admin', isLoading: false } as any);
-    vi.mocked(useUserProfile).mockReturnValue({ data: { id: 'user_self' }, isLoading: false } as any);
+    vi.mocked(useUserProfile).mockReturnValue({ data: { uid: 'user_self_uid', ext_id: 'ext_self_id', id: 'ext_self_id' }, isLoading: false } as any);
     vi.mocked(useDutyManager).mockReturnValue({ data: null, isLoading: false } as any);
 
     const result = useCancellationTier('studio_1');
@@ -29,8 +29,8 @@ describe('useCancellationTier', () => {
 
   it('returns duty_manager when the current user matches the active duty manager', () => {
     vi.mocked(useStudioAccess).mockReturnValue({ role: 'member', isLoading: false } as any);
-    vi.mocked(useUserProfile).mockReturnValue({ data: { id: 'user_self' }, isLoading: false } as any);
-    vi.mocked(useDutyManager).mockReturnValue({ data: { user_id: 'user_self' }, isLoading: false } as any);
+    vi.mocked(useUserProfile).mockReturnValue({ data: { uid: 'user_self_uid', ext_id: 'ext_self_id', id: 'ext_self_id' }, isLoading: false } as any);
+    vi.mocked(useDutyManager).mockReturnValue({ data: { user_id: 'user_self_uid' }, isLoading: false } as any);
 
     const result = useCancellationTier('studio_1');
 
@@ -39,8 +39,8 @@ describe('useCancellationTier', () => {
 
   it('returns null when the user is neither a manager nor the active duty manager', () => {
     vi.mocked(useStudioAccess).mockReturnValue({ role: 'member', isLoading: false } as any);
-    vi.mocked(useUserProfile).mockReturnValue({ data: { id: 'user_self' }, isLoading: false } as any);
-    vi.mocked(useDutyManager).mockReturnValue({ data: { user_id: 'user_other' }, isLoading: false } as any);
+    vi.mocked(useUserProfile).mockReturnValue({ data: { uid: 'user_self_uid', ext_id: 'ext_self_id', id: 'ext_self_id' }, isLoading: false } as any);
+    vi.mocked(useDutyManager).mockReturnValue({ data: { user_id: 'user_other_uid' }, isLoading: false } as any);
 
     const result = useCancellationTier('studio_1');
 

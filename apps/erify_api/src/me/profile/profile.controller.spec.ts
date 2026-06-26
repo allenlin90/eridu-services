@@ -69,6 +69,7 @@ describe('profileController', () => {
 
   const mockDbUser = {
     id: BigInt(1),
+    uid: 'user_abc123',
     extId: 'HHHFNPNWDbKmElNBF2Y1yCfo0kqtbB7B',
     isSystemAdmin: false,
     studioMemberships: [],
@@ -101,6 +102,7 @@ describe('profileController', () => {
       expect(result).toBeDefined();
       expect(result.ext_id).toBe(mockAuthenticatedUser.ext_id);
       expect(result.id).toBe(mockAuthenticatedUser.id);
+      expect(result.uid).toBe(mockDbUser.uid);
       expect(result.name).toBe(mockAuthenticatedUser.name);
       expect(result.email).toBe(mockAuthenticatedUser.email);
       expect(result.image).toBeNull();
@@ -176,6 +178,7 @@ describe('profileController', () => {
 
       expect(result).toHaveProperty('ext_id');
       expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('uid');
       expect(result).toHaveProperty('name');
       expect(result).toHaveProperty('email');
       expect(result).toHaveProperty('image');
@@ -184,6 +187,7 @@ describe('profileController', () => {
 
       expect(typeof result.ext_id).toBe('string');
       expect(typeof result.id).toBe('string');
+      expect(typeof result.uid).toBe('string');
       expect(typeof result.name).toBe('string');
       expect(typeof result.email).toBe('string');
       expect(result.image === null || typeof result.image === 'string').toBe(

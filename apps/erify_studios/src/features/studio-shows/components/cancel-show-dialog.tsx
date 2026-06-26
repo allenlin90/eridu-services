@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import type { GateOutcome, StudioShowDetail } from '@eridu/api-types/shows';
@@ -13,7 +14,7 @@ import {
   Textarea,
 } from '@eridu/ui';
 
-import { useCancelShowWithResolution } from '../api/cancel-studio-show';
+import { getGateActiveTaskCount, getGateErrorCode, useCancelShowWithResolution } from '../api/cancel-studio-show';
 import { useCancellationTier } from '../hooks/use-cancellation-tier';
 
 import { ResponsiveDialog } from '@/components/responsive-dialog';
@@ -32,6 +33,7 @@ export function CancelShowDialog({ studioId, show }: CancelShowDialogProps) {
   const [reasonCategory, setReasonCategory] = useState('');
   const [reasonNote, setReasonNote] = useState('');
   const [outcome, setOutcome] = useState<GateOutcome | ''>('');
+  const [activeTaskBlockerCount, setActiveTaskBlockerCount] = useState<number | null>(null);
   const cancelMutation = useCancelShowWithResolution(studioId);
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -39,6 +41,7 @@ export function CancelShowDialog({ studioId, show }: CancelShowDialogProps) {
       setReasonCategory('');
       setReasonNote('');
       setOutcome('');
+      setActiveTaskBlockerCount(null);
     }
     setOpen(nextOpen);
   };
@@ -61,6 +64,7 @@ export function CancelShowDialog({ studioId, show }: CancelShowDialogProps) {
             type="button"
             disabled={!canSubmit || cancelMutation.isPending}
             onClick={() => {
+              setActiveTaskBlockerCount(null);
               cancelMutation.mutate({
                 showId: show.id,
                 data: {
@@ -68,7 +72,14 @@ export function CancelShowDialog({ studioId, show }: CancelShowDialogProps) {
                   reason_note: reasonNote.trim(),
                   ...(tier === 'manager' && outcome !== '' && { outcome }),
                 },
-              }, { onSuccess: () => handleOpenChange(false) });
+              }, {
+                onSuccess: () => handleOpenChange(false),
+                onError: (error: unknown) => {
+                  if (getGateErrorCode(error) === 'ACTIVE_TASKS_REMAIN') {
+                    setActiveTaskBlockerCount(getGateActiveTaskCount(error));
+                  }
+                },
+              });
             }}
           >
             {cancelMutation.isPending ? 'Submitting...' : 'Submit'}
@@ -119,6 +130,33 @@ export function CancelShowDialog({ studioId, show }: CancelShowDialogProps) {
                   As Duty Manager, you flag this for a Manager to sign off — you don't choose the final outcome.
                 </p>
               )}
+          {activeTaskBlockerCount !== null
+            ? (
+                <div className="space-y-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800">
+                  <p>
+                    {activeTaskBlockerCount}
+                    {' '}
+                    active
+                    {' '}
+                    {activeTaskBlockerCount === 1 ? 'task is' : 'tasks are'}
+                    {' '}
+                    still attached to this show. Close or reassign
+                    {' '}
+                    {activeTaskBlockerCount === 1 ? 'it' : 'them'}
+                    {' '}
+                    before confirming.
+                  </p>
+                  <Link
+                    to="/studios/$studioId/shows/$showId/tasks"
+                    params={{ studioId, showId: show.id }}
+                    search={{ page: 1, limit: 10 }}
+                    className="font-medium underline underline-offset-2"
+                  >
+                    View show tasks
+                  </Link>
+                </div>
+              )
+            : null}
         </div>
       </ResponsiveDialog>
     </>
