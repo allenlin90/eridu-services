@@ -50,6 +50,10 @@ export const envSchema = z.object({
   // Backdoor IP whitelist (comma-separated) - future enhancement
   BACKDOOR_ALLOWED_IPS: z.string().optional(),
 
+  // MCP server entrypoint (private Railway service in phase 1)
+  // Empty means every studio is allowed; production should configure a narrow allowlist.
+  MCP_ALLOWED_STUDIO_IDS: z.string().optional(),
+
   // Authentication & Authorization (JWT/JWKS)
   // Base URL of the eridu_auth service (e.g., http://localhost:3000 or https://auth.example.com)
   ERIDU_AUTH_URL: z.url({ message: 'ERIDU_AUTH_URL must be a valid URL' }),

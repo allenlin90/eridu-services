@@ -39,6 +39,11 @@
   /schedule-planning - Schedule generation
 ```
 
+### MCP Entrypoint
+- `apps/erify_api/src/main.mcp.ts` runs a separate NestJS MCP process using Streamable HTTP at `POST /mcp`.
+- Phase-1 MCP is private/in-cluster first and intentionally exposes only narrow read-only lookup tools (`erify_get_show`, `erify_get_task`).
+- `apps/erify_api/docs/MCP_SERVER.md` is the canonical technical reference for runtime shape, access policy, and extension rules.
+
 ---
 
 ## eridu_auth (Better Auth Service)
