@@ -181,6 +181,33 @@ describe('showCancellationGateService', () => {
       expect(result.history[0].event).toBe('opened');
       expect(result.history[1].event).toBe('note_updated');
     });
+
+    it('returns openedBy: null and history actor: null for a system-opened (no actor_uid) audit row', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          action: 'OVERRIDE',
+          reason: 'Removed from republished schedule; 2 active task(s) still attached',
+          actorId: null,
+          createdAt: new Date('2026-06-25T16:14:30.201Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'opened',
+            gate_kind: 'schedule_publish_removal',
+            old_value: 'CONFIRMED',
+            new_value: 'CANCELLED_PENDING_RESOLUTION',
+            reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+          },
+        },
+      ]);
+
+      const result = await service.getCancellationStatus({
+        id: 1n,
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      });
+
+      expect(result.openedBy).toBeNull();
+      expect(result.history[0].actor).toBeNull();
+    });
   });
 
   describe('openPending', () => {
@@ -253,6 +280,40 @@ describe('showCancellationGateService', () => {
         }),
       ).rejects.toThrow(/SHOW_STATUS_CHANGED/);
       expect(auditServiceMock.create).not.toHaveBeenCalled();
+    });
+
+    it('writes a system-actor audit row (actorId null, no actor_uid/actor_name) when actor is null', async () => {
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.openPending({
+        show,
+        gateKind: 'schedule_publish_removal',
+        fromStatusSystemKey: 'CONFIRMED',
+        reasonCategory: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+        reasonNote: 'Removed from republished schedule; 2 active task(s) still attached',
+        actor: null,
+      });
+
+      expect(auditServiceMock.create).toHaveBeenCalledWith({
+        action: 'OVERRIDE',
+        actorId: null,
+        reason: 'Removed from republished schedule; 2 active task(s) still attached',
+        metadata: {
+          field: 'show_status',
+          event: 'opened',
+          gate_kind: 'schedule_publish_removal',
+          old_value: 'CONFIRMED',
+          new_value: 'CANCELLED_PENDING_RESOLUTION',
+          reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+        },
+        targets: [{ targetType: 'SHOW', targetId: 1n }],
+      });
+      expect(gateNotificationServiceMock.notifyGateOpened).toHaveBeenCalledWith(
+        show,
+        'schedule_publish_removal',
+        { category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE', note: 'Removed from republished schedule; 2 active task(s) still attached' },
+        null,
+      );
     });
   });
 

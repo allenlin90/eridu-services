@@ -27,4 +27,10 @@ describe('gateNotificationService', () => {
       service.notifyGateResolved(show, 'show_cancellation', 'CANCELLED', actor),
     ).not.toThrow();
   });
+
+  it('notifyGateOpened accepts a null actor for system-generated gates', () => {
+    expect(() =>
+      service.notifyGateOpened(show, 'schedule_publish_removal', { category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE', note: 'note' }, null),
+    ).not.toThrow();
+  });
 });

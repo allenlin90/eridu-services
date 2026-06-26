@@ -22,8 +22,8 @@ export type GateAuditMetadata = {
   old_value: string | null;
   new_value: string | null;
   reason_category?: string;
-  actor_uid: string;
-  actor_name: string;
+  actor_uid?: string;
+  actor_name?: string;
 };
 
 export type CancellationHistoryEntryResult = {
@@ -137,7 +137,7 @@ export class ShowCancellationGateService {
       fromStatus: opened.meta.old_value,
       reasonCategory: opened.meta.reason_category ?? null,
       reasonNote: latestNote.audit.reason,
-      openedBy: { uid: opened.meta.actor_uid, name: opened.meta.actor_name },
+      openedBy: opened.meta.actor_uid ? { uid: opened.meta.actor_uid, name: opened.meta.actor_name! } : null,
       openedAt: opened.audit.createdAt,
       allowedOutcomes: [...config.allowedOutcomes],
       history: gateEntries
@@ -145,7 +145,7 @@ export class ShowCancellationGateService {
         .reverse() // chronological (oldest first) for display
         .map((e) => ({
           event: e.meta.event,
-          actor: { uid: e.meta.actor_uid, name: e.meta.actor_name },
+          actor: e.meta.actor_uid ? { uid: e.meta.actor_uid, name: e.meta.actor_name! } : null,
           at: e.audit.createdAt,
           note: e.audit.reason,
           outcome: e.meta.event === 'resolved' ? e.meta.new_value : null,
@@ -159,7 +159,7 @@ export class ShowCancellationGateService {
     fromStatusSystemKey: string;
     reasonCategory: string;
     reasonNote: string;
-    actor: { id: bigint; uid: string; name: string };
+    actor: { id: bigint; uid: string; name: string } | null;
   }): Promise<void> {
     const { show, gateKind, fromStatusSystemKey, reasonCategory, reasonNote, actor } = params;
     this.assertReasonCategoryAllowed(gateKind, reasonCategory);
@@ -325,11 +325,11 @@ export class ShowCancellationGateService {
     newValue: string | null;
     reasonCategory?: string;
     note: string;
-    actor: { id: bigint; uid: string; name: string };
+    actor: { id: bigint; uid: string; name: string } | null;
   }): Promise<void> {
     await this.auditService.create({
       action: 'OVERRIDE',
-      actorId: params.actor.id,
+      actorId: params.actor?.id ?? null,
       reason: params.note,
       metadata: {
         field: 'show_status',
@@ -338,8 +338,7 @@ export class ShowCancellationGateService {
         old_value: params.oldValue,
         new_value: params.newValue,
         ...(params.reasonCategory !== undefined && { reason_category: params.reasonCategory }),
-        actor_uid: params.actor.uid,
-        actor_name: params.actor.name,
+        ...(params.actor !== null && { actor_uid: params.actor.uid, actor_name: params.actor.name }),
       },
       targets: [{ targetType: 'SHOW', targetId: params.showId }],
     });

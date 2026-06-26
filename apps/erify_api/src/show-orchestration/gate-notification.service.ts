@@ -18,10 +18,10 @@ export class GateNotificationService {
     show: Show,
     gateKind: GateKind,
     reason: { category: string; note: string },
-    actor: { uid: string; name: string },
+    actor: { uid: string; name: string } | null,
   ): void {
     this.logger.debug(
-      `Gate opened for show ${show.uid} (${gateKind}) by ${actor.name} — ${reason.category}: ${reason.note}`,
+      `Gate opened for show ${show.uid} (${gateKind}) by ${actor?.name ?? 'system'} — ${reason.category}: ${reason.note}`,
     );
   }
 
@@ -29,10 +29,10 @@ export class GateNotificationService {
     show: Show,
     gateKind: GateKind,
     outcome: string,
-    actor: { uid: string; name: string },
+    actor: { uid: string; name: string } | null,
   ): void {
     this.logger.debug(
-      `Gate resolved for show ${show.uid} (${gateKind}) by ${actor.name} — outcome: ${outcome}`,
+      `Gate resolved for show ${show.uid} (${gateKind}) by ${actor?.name ?? 'system'} — outcome: ${outcome}`,
     );
   }
 }
