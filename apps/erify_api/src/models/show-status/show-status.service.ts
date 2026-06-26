@@ -7,6 +7,8 @@ import type {
 import { ShowStatusRepository } from './show-status.repository';
 import { SHOW_STATUS_UID_PREFIX } from './show-status-uid.util';
 
+import type { ShowStatus } from '@prisma/client';
+
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -33,6 +35,10 @@ export class ShowStatusService extends BaseModelService {
     ...params: Parameters<ShowStatusRepository['findByUid']>
   ): ReturnType<ShowStatusRepository['findByUid']> {
     return this.showStatusRepository.findByUid(...params);
+  }
+
+  async getShowStatusBySystemKey(systemKey: string): Promise<ShowStatus | null> {
+    return this.showStatusRepository.findOne({ systemKey });
   }
 
   async getShowStatuses(

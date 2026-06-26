@@ -253,4 +253,26 @@ describe('showStatusService', () => {
       expect(result).toEqual(expectedCount);
     });
   });
+
+  describe('getShowStatusBySystemKey', () => {
+    it('delegates to repository.findOne with the system key', async () => {
+      const expected = { id: 6n, systemKey: 'CANCELLED_PENDING_RESOLUTION' };
+      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(expected);
+
+      const result = await service.getShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION');
+
+      expect(showStatusRepository.findOne).toHaveBeenCalledWith({
+        systemKey: 'CANCELLED_PENDING_RESOLUTION',
+      });
+      expect(result).toEqual(expected);
+    });
+
+    it('returns null when not found', async () => {
+      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(null);
+
+      const result = await service.getShowStatusBySystemKey('NOT_A_REAL_KEY');
+
+      expect(result).toBeNull();
+    });
+  });
 });
