@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import type { Show } from '@prisma/client';
 
-import { CANCELLATION_GATE_CONFIG, type GateKind } from '@eridu/api-types/shows';
+import { CANCELLATION_GATE_CONFIG, type GateKind, type GateOutcome } from '@eridu/api-types/shows';
 
+import { GateNotificationService } from './gate-notification.service';
+
+import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import type { AuditWithTargets } from '@/models/audit/schemas/audit.schema';
+import { ShowRepository } from '@/models/show/show.repository';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 
 export type ActorTier = 'manager' | 'duty_manager';
 
@@ -76,6 +83,10 @@ export class ShowCancellationGateService {
   constructor(
     private readonly studioShiftService: StudioShiftService,
     private readonly auditService: AuditService,
+    private readonly showRepository: ShowRepository,
+    private readonly showStatusService: ShowStatusService,
+    private readonly taskTargetService: TaskTargetService,
+    private readonly gateNotificationService: GateNotificationService,
   ) {}
 
   async resolveActorTier(
@@ -140,5 +151,197 @@ export class ShowCancellationGateService {
           outcome: e.meta.event === 'resolved' ? e.meta.new_value : null,
         })),
     };
+  }
+
+  async openPending(params: {
+    show: Show;
+    gateKind: GateKind;
+    fromStatusSystemKey: string;
+    reasonCategory: string;
+    reasonNote: string;
+    actor: { id: bigint; uid: string; name: string };
+  }): Promise<void> {
+    const { show, gateKind, fromStatusSystemKey, reasonCategory, reasonNote, actor } = params;
+    this.assertReasonCategoryAllowed(gateKind, reasonCategory);
+
+    const [fromStatus, pendingStatus] = await Promise.all([
+      this.requireShowStatusBySystemKey(fromStatusSystemKey),
+      this.requireShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION'),
+    ]);
+
+    const updated = await this.showRepository.updateStatusIfPending(show.id, fromStatus.id, {
+      showStatus: { connect: { id: pendingStatus.id } },
+    });
+    if (!updated) {
+      throw HttpError.conflict('SHOW_STATUS_CHANGED');
+    }
+
+    await this.writeGateAudit({
+      showId: show.id,
+      gateKind,
+      event: 'opened',
+      oldValue: fromStatusSystemKey,
+      newValue: 'CANCELLED_PENDING_RESOLUTION',
+      reasonCategory,
+      note: reasonNote,
+      actor,
+    });
+    this.gateNotificationService.notifyGateOpened(show, gateKind, { category: reasonCategory, note: reasonNote }, actor);
+  }
+
+  async resolveAtomic(params: {
+    show: Show;
+    gateKind: GateKind;
+    fromStatusSystemKey: string;
+    outcome: GateOutcome;
+    reasonCategory: string;
+    reasonNote: string;
+    actor: { id: bigint; uid: string; name: string };
+  }): Promise<void> {
+    const { show, gateKind, fromStatusSystemKey, outcome, reasonCategory, reasonNote, actor } = params;
+    this.assertOutcomeAllowed(gateKind, outcome, fromStatusSystemKey);
+    await this.assertActiveTaskGuard(gateKind, outcome, show.id);
+
+    const [fromStatus, targetStatus] = await Promise.all([
+      this.requireShowStatusBySystemKey(fromStatusSystemKey),
+      this.requireShowStatusBySystemKey(outcome),
+    ]);
+
+    const updated = await this.showRepository.updateStatusIfPending(show.id, fromStatus.id, {
+      showStatus: { connect: { id: targetStatus.id } },
+    });
+    if (!updated) {
+      throw HttpError.conflict('SHOW_STATUS_CHANGED');
+    }
+
+    await this.writeGateAudit({
+      showId: show.id,
+      gateKind,
+      event: 'resolved',
+      oldValue: fromStatusSystemKey,
+      newValue: outcome,
+      reasonCategory,
+      note: reasonNote,
+      actor,
+    });
+    this.gateNotificationService.notifyGateResolved(show, gateKind, outcome, actor);
+  }
+
+  async amendPendingNote(params: {
+    showId: bigint;
+    gateKind: GateKind;
+    reasonNote: string;
+    actor: { id: bigint; uid: string; name: string };
+  }): Promise<void> {
+    await this.writeGateAudit({
+      showId: params.showId,
+      gateKind: params.gateKind,
+      event: 'note_updated',
+      oldValue: null,
+      newValue: null,
+      note: params.reasonNote,
+      actor: params.actor,
+    });
+  }
+
+  async resolvePending(params: {
+    show: Show;
+    gateKind: GateKind;
+    fromStatusSystemKey: string;
+    outcome: string;
+    resolutionNotes: string;
+    actor: { id: bigint; uid: string; name: string };
+  }): Promise<void> {
+    const { show, gateKind, fromStatusSystemKey, outcome, resolutionNotes, actor } = params;
+    this.assertOutcomeAllowed(gateKind, outcome, fromStatusSystemKey);
+    await this.assertActiveTaskGuard(gateKind, outcome, show.id);
+
+    const targetSystemKey = outcome === 'RESTORE_PREVIOUS' ? fromStatusSystemKey : outcome;
+    const [pendingStatus, targetStatus] = await Promise.all([
+      this.requireShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION'),
+      this.requireShowStatusBySystemKey(targetSystemKey),
+    ]);
+
+    const updated = await this.showRepository.updateStatusIfPending(show.id, pendingStatus.id, {
+      showStatus: { connect: { id: targetStatus.id } },
+    });
+    if (!updated) {
+      throw HttpError.conflict('SHOW_ALREADY_RESOLVED');
+    }
+
+    await this.writeGateAudit({
+      showId: show.id,
+      gateKind,
+      event: 'resolved',
+      oldValue: 'CANCELLED_PENDING_RESOLUTION',
+      newValue: targetSystemKey,
+      note: resolutionNotes,
+      actor,
+    });
+    this.gateNotificationService.notifyGateResolved(show, gateKind, outcome, actor);
+  }
+
+  private assertReasonCategoryAllowed(gateKind: GateKind, reasonCategory: string): void {
+    const config = CANCELLATION_GATE_CONFIG[gateKind];
+    if (!(config.reasonOptions as readonly string[]).includes(reasonCategory)) {
+      throw HttpError.badRequest(`REASON_CATEGORY_NOT_ALLOWED:${reasonCategory}`);
+    }
+  }
+
+  private assertOutcomeAllowed(gateKind: GateKind, outcome: string, fromStatusSystemKey: string): void {
+    const config = CANCELLATION_GATE_CONFIG[gateKind];
+    if (!(config.allowedOutcomes as readonly string[]).includes(outcome)) {
+      throw HttpError.badRequest(`OUTCOME_NOT_ALLOWED:${outcome}`);
+    }
+    if (outcome === 'CANCELLED' && fromStatusSystemKey === 'LIVE') {
+      throw HttpError.badRequest('LIVE_CANCELLATION_REQUIRES_OVERRIDE');
+    }
+  }
+
+  private async assertActiveTaskGuard(gateKind: GateKind, outcome: string, showId: bigint): Promise<void> {
+    const config = CANCELLATION_GATE_CONFIG[gateKind];
+    if (!(config.outcomesRequiringNoActiveTasks as readonly string[]).includes(outcome)) {
+      return;
+    }
+    const activeTaskCount = await this.taskTargetService.countActiveByShowId(showId);
+    if (activeTaskCount > 0) {
+      throw HttpError.badRequestWithDetails(`ACTIVE_TASKS_REMAIN:${showId}`, { activeTaskCount });
+    }
+  }
+
+  private async requireShowStatusBySystemKey(systemKey: string): Promise<{ id: bigint }> {
+    const status = await this.showStatusService.getShowStatusBySystemKey(systemKey);
+    if (!status) {
+      throw HttpError.notFound('ShowStatus', systemKey);
+    }
+    return status;
+  }
+
+  private async writeGateAudit(params: {
+    showId: bigint;
+    gateKind: GateKind;
+    event: GateAuditMetadata['event'];
+    oldValue: string | null;
+    newValue: string | null;
+    reasonCategory?: string;
+    note: string;
+    actor: { id: bigint; uid: string; name: string };
+  }): Promise<void> {
+    await this.auditService.create({
+      action: 'OVERRIDE',
+      actorId: params.actor.id,
+      reason: params.note,
+      metadata: {
+        field: 'show_status',
+        event: params.event,
+        gate_kind: params.gateKind,
+        old_value: params.oldValue,
+        new_value: params.newValue,
+        ...(params.reasonCategory !== undefined && { reason_category: params.reasonCategory }),
+        actor_uid: params.actor.uid,
+        actor_name: params.actor.name,
+      },
+      targets: [{ targetType: 'SHOW', targetId: params.showId }],
+    });
   }
 }
