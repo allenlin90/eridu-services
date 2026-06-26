@@ -20,10 +20,11 @@ The show is the central operational record in eridu-services. Every schedule, cr
 ```
 [*] → draft → confirmed → live → completed
                 draft → cancelled
-            confirmed → cancelled
-                 live → cancelled_pending_resolution
+       confirmed/live → cancelled (Manager/Admin, atomic)
+       confirmed/live → cancelled_pending_resolution (Duty Manager, or schedule_publish_removal)
                         cancelled_pending_resolution → cancelled
                         cancelled_pending_resolution → completed
+                        cancelled_pending_resolution → confirmed/live (RESTORE_PREVIOUS, schedule_publish_removal only)
 ```
 
 | State | Business meaning | Operational owner |
@@ -33,7 +34,7 @@ The show is the central operational record in eridu-services. Every schedule, cr
 | `live` | Show is actively running; onset production owns execution. | Production Manager (MANAGER access) |
 | `completed` | Required production and post-production records are complete for review/reporting. | Production Manager + Post-production review |
 | `cancelled` | Closed without production; no further resolution required. | Either manager role |
-| `cancelled_pending_resolution` | Cannot proceed or interrupted; operational consequences need resolution. | Resolution owner (assigned) |
+| `cancelled_pending_resolution` | Cannot proceed or interrupted; needs a Manager/Admin to sign off. | No assignee — any Manager/Admin (see [Show Cancellation Gate](../../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md)) |
 
 ### Key state rules
 
@@ -109,15 +110,18 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 ### 4. Cancellation and Resolution
 
+Implemented via the **Show Cancellation Gate** primitive — see `apps/erify_api/docs/SHOW_CANCELLATION_GATE.md`. No assignee/owner queue: authorization is two-tiered instead (Manager/Admin vs. the studio's currently active shift-flagged Duty Manager), resolved server-side on every request.
+
 **Cancellation paths**:
-- `draft → cancelled` or `confirmed → cancelled`: Direct cancellation.
-- `live → cancelled_pending_resolution`: Show interrupted during production.
+- `confirmed → cancelled` / `live → cancelled`: **Manager/Admin** cancels atomically in one call (reason + final outcome together) — never observably left pending.
+- `confirmed/live → cancelled_pending_resolution`: **Duty Manager** flags with a reason only (no outcome) — left for a Manager to sign off later. Also set automatically by schedule publish (`schedule_publish_removal` gate kind) when active tasks exist on a removed show.
 - `cancelled_pending_resolution → cancelled`: Resolution complete, no production.
 - `cancelled_pending_resolution → completed`: Resolution complete, partial production counts.
+- `cancelled_pending_resolution → confirmed/live` (`RESTORE_PREVIOUS`, `schedule_publish_removal` only): Undo — reverts to whatever the show actually was before removal.
 
-**Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Manual cancellation via show update.
+**Current behavior**: Reason category, the live-task guard (excludes `COMPLETED`/`CLOSED` tasks), and the LIVE safeguard (blocks resolving `CANCELLED` if the show was actually live) are all enforced server-side. Every transition writes an `Audit` row — no `Task`, no `Show.metadata`. The generic show-edit endpoint cannot move a show into or out of a pending gate (closes a real bypass found in manual QA).
 
-**Gap (Phase 5)**: No reason categories, no owner queue, no follow-up fields, no resolution workflow.
+**Gap (Phase 5)**: No dedicated discovery queue, status badges, or member-facing pending indicator (discovery today is the Shows-list status filter). No structured observability (resolve success/rejection counters).
 
 ## Readiness Conditions
 
@@ -134,8 +138,8 @@ These conditions are identified for lifecycle gates. Current enforcement is advi
 | Post-production tasks submitted/approved | live → completed | Task review exists, not enforced as gate |
 | Required performance facts present | live → completed | Fact extraction exists, not enforced |
 | No unresolved show-level blockers | live → completed | No issue model yet |
-| Cancellation reason provided | any → cancelled | Not captured |
-| Pending-resolution owner assigned | any → cancelled_pending_resolution | Not captured |
+| Cancellation reason provided | any → cancelled | Enforced — reason category + note required |
+| Manager/Duty-Manager tier resolved | any → cancelled_pending_resolution | Enforced server-side per request, not an owner assignment |
 
 For the full condition inventory and enforcement-level design, see [references/state-gates.md](references/state-gates.md).
 
