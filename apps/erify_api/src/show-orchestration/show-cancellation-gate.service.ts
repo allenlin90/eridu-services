@@ -169,9 +169,7 @@ export class ShowCancellationGateService {
       this.requireShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION'),
     ]);
 
-    const updated = await this.showRepository.updateStatusIfPending(show.id, fromStatus.id, {
-      showStatus: { connect: { id: pendingStatus.id } },
-    });
+    const updated = await this.showRepository.updateStatusIfPending(show.id, fromStatus.id, pendingStatus.id);
     if (!updated) {
       throw HttpError.conflict('SHOW_STATUS_CHANGED');
     }
@@ -207,9 +205,7 @@ export class ShowCancellationGateService {
       this.requireShowStatusBySystemKey(outcome),
     ]);
 
-    const updated = await this.showRepository.updateStatusIfPending(show.id, fromStatus.id, {
-      showStatus: { connect: { id: targetStatus.id } },
-    });
+    const updated = await this.showRepository.updateStatusIfPending(show.id, fromStatus.id, targetStatus.id);
     if (!updated) {
       throw HttpError.conflict('SHOW_STATUS_CHANGED');
     }
@@ -262,9 +258,7 @@ export class ShowCancellationGateService {
       this.requireShowStatusBySystemKey(targetSystemKey),
     ]);
 
-    const updated = await this.showRepository.updateStatusIfPending(show.id, pendingStatus.id, {
-      showStatus: { connect: { id: targetStatus.id } },
-    });
+    const updated = await this.showRepository.updateStatusIfPending(show.id, pendingStatus.id, targetStatus.id);
     if (!updated) {
       throw HttpError.conflict('SHOW_ALREADY_RESOLVED');
     }

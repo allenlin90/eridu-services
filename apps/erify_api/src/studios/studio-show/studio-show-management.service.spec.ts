@@ -15,6 +15,7 @@ import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { UserService } from '@/models/user/user.service';
@@ -98,6 +99,9 @@ describe('studioShowManagementService', () => {
     resolvePending: jest.fn(),
     getCancellationStatus: jest.fn(),
   };
+  const showStatusServiceMock = {
+    getShowStatusById: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -128,6 +132,7 @@ describe('studioShowManagementService', () => {
         { provide: ShowOrchestrationService, useValue: showOrchestrationServiceMock },
         { provide: UserService, useValue: userServiceMock },
         { provide: ShowCancellationGateService, useValue: showCancellationGateServiceMock },
+        { provide: ShowStatusService, useValue: showStatusServiceMock },
       ],
     }).compile();
 
@@ -538,7 +543,7 @@ describe('studioShowManagementService', () => {
     expect(showRepositoryMock.update).not.toHaveBeenCalled();
   });
 
-  it('allows updateShow to change show_status_id when no gate is pending', async () => {
+  it('allows updateShow to change show_status_id when no gate is pending and the target is not the pending status', async () => {
     showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
       id: BigInt(100),
       uid: 'show_123',
@@ -547,12 +552,36 @@ describe('studioShowManagementService', () => {
       endTime: new Date('2026-01-01T01:00:00.000Z'),
       showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
     });
+    showStatusServiceMock.getShowStatusById.mockResolvedValue({ uid: 'shst_cancelled', systemKey: 'CANCELLED' });
     showRepositoryMock.update.mockResolvedValue({ uid: 'show_123' });
     showServiceMock.getShowById.mockResolvedValue({ uid: 'show_123' });
 
     await service.updateShow('std_123', 'show_123', { showStatusId: 'shst_cancelled' } as UpdateStudioShowDto);
 
+    expect(showStatusServiceMock.getShowStatusById).toHaveBeenCalledWith('shst_cancelled');
     expect(showRepositoryMock.update).toHaveBeenCalled();
+  });
+
+  it('rejects updateShow when the target show_status_id is the pending-resolution status, even from a non-pending current status', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      startTime: new Date('2026-01-01T00:00:00.000Z'),
+      endTime: new Date('2026-01-01T01:00:00.000Z'),
+      showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
+    });
+    showStatusServiceMock.getShowStatusById.mockResolvedValue({
+      uid: 'shst_pending',
+      systemKey: 'CANCELLED_PENDING_RESOLUTION',
+    });
+
+    await expect(
+      service.updateShow('std_123', 'show_123', { showStatusId: 'shst_pending' } as UpdateStudioShowDto),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ message: 'SHOW_STATUS_PENDING_RESOLUTION_REQUIRES_GATE' }),
+    });
+    expect(showRepositoryMock.update).not.toHaveBeenCalled();
   });
 
   it('rejects delete after the show start time', async () => {

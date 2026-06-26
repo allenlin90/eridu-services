@@ -8,6 +8,7 @@ import { PlatformModule } from '@/models/platform/platform.module';
 import { ScheduleModule } from '@/models/schedule/schedule.module';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
+import { ShowStatusModule } from '@/models/show-status/show-status.module';
 import { StudioModule } from '@/models/studio/studio.module';
 import { StudioRoomModule } from '@/models/studio-room/studio-room.module';
 import { UserModule } from '@/models/user/user.module';
@@ -19,6 +20,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     TaskOrchestrationModule,
     ShowModule,
     ShowOrchestrationModule,
+    ShowStatusModule,
     StudioModule,
     StudioRoomModule,
     ScheduleModule,

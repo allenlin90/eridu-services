@@ -53,14 +53,24 @@ export class ShowRepository extends BaseRepository<
   // This conditional updateMany is the guard: the WHERE clause re-checks the
   // expected pending status atomically with the write, so only the first
   // caller's update actually matches a row.
+  //
+  // The third parameter is a scalar bigint, not a Prisma.ShowUpdateInput —
+  // deliberately. Prisma's `updateMany` data type (ShowUpdateManyMutationInput /
+  // ShowUncheckedUpdateManyInput) does not support relation writes like
+  // `showStatus: { connect: { id } } }`; only `Model.update()` (singular) does.
+  // Accepting a wider update-input type here type-checks fine (it's a superset,
+  // and TS doesn't excess-property-check a variable reference inside a nested
+  // object literal) but fails at the database at runtime — invisible to mocked
+  // unit tests, which never touch a real Prisma engine. Keeping this scalar-only
+  // makes that whole bug class unrepresentable.
   async updateStatusIfPending(
     showId: bigint,
     pendingShowStatusId: bigint,
-    data: Prisma.ShowUpdateInput,
+    targetShowStatusId: bigint,
   ): Promise<boolean> {
     const result = await this.delegate.updateMany({
       where: { id: showId, showStatusId: pendingShowStatusId },
-      data,
+      data: { showStatusId: targetShowStatusId },
     });
     return result.count > 0;
   }

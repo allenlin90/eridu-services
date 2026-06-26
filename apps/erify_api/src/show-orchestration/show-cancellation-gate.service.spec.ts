@@ -237,11 +237,7 @@ describe('showCancellationGateService', () => {
         actor,
       });
 
-      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(
-        1n,
-        2n,
-        { showStatus: { connect: { id: 6n } } },
-      );
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 2n, 6n);
       expect(auditServiceMock.create).toHaveBeenCalledWith({
         action: 'OVERRIDE',
         actorId: 5n,
@@ -383,11 +379,7 @@ describe('showCancellationGateService', () => {
         actor,
       });
 
-      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(
-        1n,
-        2n,
-        { showStatus: { connect: { id: 5n } } },
-      );
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 2n, 5n);
       expect(auditServiceMock.create).toHaveBeenCalledTimes(1);
       expect(auditServiceMock.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -451,11 +443,7 @@ describe('showCancellationGateService', () => {
         actor,
       });
 
-      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(
-        1n,
-        6n,
-        { showStatus: { connect: { id: 2n } } },
-      );
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 6n, 2n);
       expect(auditServiceMock.create).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: expect.objectContaining({ event: 'resolved', old_value: 'CANCELLED_PENDING_RESOLUTION', new_value: 'CONFIRMED' }),

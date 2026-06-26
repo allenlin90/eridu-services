@@ -20,6 +20,7 @@ import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { UserService } from '@/models/user/user.service';
@@ -43,6 +44,7 @@ export class StudioShowManagementService {
     private readonly showOrchestrationService: ShowOrchestrationService,
     private readonly userService: UserService,
     private readonly showCancellationGateService: ShowCancellationGateService,
+    private readonly showStatusService: ShowStatusService,
   ) {}
 
   @Transactional()
@@ -101,8 +103,19 @@ export class StudioShowManagementService {
   @Transactional()
   async updateShow(studioUid: string, showUid: string, dto: UpdateStudioShowDto) {
     const existingShow = await this.findStudioShowOrThrow(studioUid, showUid);
-    if (dto.showStatusId !== undefined && existingShow.showStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
-      throw HttpError.badRequest('SHOW_STATUS_LOCKED_BY_PENDING_CANCELLATION');
+    if (dto.showStatusId !== undefined) {
+      if (existingShow.showStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
+        throw HttpError.badRequest('SHOW_STATUS_LOCKED_BY_PENDING_CANCELLATION');
+      }
+      // Block entering the pending-resolution state through the generic edit
+      // form too — not just leaving it. Setting show_status_id to the pending
+      // status directly here would put the show in CANCELLED_PENDING_RESOLUTION
+      // with no opening Audit row, so a later resolve attempt fails with
+      // ShowCancellationGate not found. Only cancelShowWithResolution may open one.
+      const targetStatus = await this.showStatusService.getShowStatusById(dto.showStatusId);
+      if (targetStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
+        throw HttpError.badRequest('SHOW_STATUS_PENDING_RESOLUTION_REQUIRES_GATE');
+      }
     }
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
     // When clientId changes but scheduleId is not explicitly provided, validate the
