@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import type { Show } from '@prisma/client';
 
 import {
   PlanDocument,
@@ -20,6 +21,8 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
+import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
@@ -35,6 +38,8 @@ export class PublishingService {
     private readonly relationSyncService: PublishingRelationSyncService,
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
+    private readonly taskTargetService: TaskTargetService,
+    private readonly showCancellationGateService: ShowCancellationGateService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -405,35 +410,27 @@ export class PublishingService {
     }
 
     for (const removed of toRemove) {
-      const hasActiveTaskTarget = await tx.taskTarget.findFirst({
-        where: {
-          showId: removed.id,
-          deletedAt: null,
-          task: {
-            deletedAt: null,
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
+      const activeTaskCount = await this.taskTargetService.countActiveByShowId(removed.id);
 
-      const targetStatusId = hasActiveTaskTarget
-        ? statusIds.cancelledPendingResolution
-        : statusIds.cancelled;
-
-      if (removed.showStatusId !== targetStatusId) {
-        await tx.show.update({
-          where: { id: removed.id },
-          data: {
-            showStatusId: targetStatusId,
-          },
-        });
-      }
-
-      if (hasActiveTaskTarget) {
+      if (activeTaskCount > 0) {
+        if (removed.showStatusId !== statusIds.cancelledPendingResolution) {
+          await this.showCancellationGateService.openPending({
+            show: { id: removed.id, uid: removed.uid } as Show,
+            gateKind: 'schedule_publish_removal',
+            fromStatusSystemKey: removed.showStatus.systemKey ?? 'CONFIRMED',
+            reasonCategory: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+            reasonNote: `Removed from republished schedule; ${activeTaskCount} active task(s) still attached`,
+            actor: null,
+          });
+        }
         publishSummary.shows_pending_resolution += 1;
       } else {
+        if (removed.showStatusId !== statusIds.cancelled) {
+          await tx.show.update({
+            where: { id: removed.id },
+            data: { showStatusId: statusIds.cancelled },
+          });
+        }
         publishSummary.shows_cancelled += 1;
       }
     }
