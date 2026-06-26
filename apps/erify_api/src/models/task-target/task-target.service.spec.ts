@@ -1,8 +1,9 @@
-import { Test } from '@nestjs/testing';
 import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
-import { TaskTargetService } from './task-target.service';
 import { TaskTargetRepository } from './task-target.repository';
+import { TaskTargetService } from './task-target.service';
+
 import { UtilityService } from '@/utility/utility.service';
 
 describe('taskTargetService', () => {

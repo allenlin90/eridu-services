@@ -8,8 +8,8 @@ import type {
   CancellationStatusResponse,
   CancelShowWithResolutionInput,
   ResolveShowCancellationInput,
+  StudioShowDetail,
 } from '@eridu/api-types/shows';
-import type { StudioShowDetail } from '@eridu/api-types/shows';
 
 import { studioShowKeys } from './get-studio-show';
 import { studioShowsKeys } from './get-studio-shows';

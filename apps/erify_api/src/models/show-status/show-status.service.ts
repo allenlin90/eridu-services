@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { ShowStatus } from '@prisma/client';
 
 import type {
   CreateShowStatusPayload,
@@ -6,8 +7,6 @@ import type {
 } from './schemas/show-status.schema';
 import { ShowStatusRepository } from './show-status.repository';
 import { SHOW_STATUS_UID_PREFIX } from './show-status-uid.util';
-
-import type { ShowStatus } from '@prisma/client';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UtilityService } from '@/utility/utility.service';

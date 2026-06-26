@@ -2,12 +2,12 @@ import { AxiosError, AxiosHeaders } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  amendCancellationNote,
   cancelShowWithResolution,
+  getCancellationStatus,
   getGateActiveTaskCount,
   getGateErrorCode,
-  getCancellationStatus,
   resolveShowCancellation,
-  amendCancellationNote,
 } from '../cancel-studio-show';
 
 import { apiClient } from '@/lib/api/client';
