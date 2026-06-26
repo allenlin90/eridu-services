@@ -10,6 +10,7 @@ import { ShowModule } from '@/models/show/show.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
 import { StudioModule } from '@/models/studio/studio.module';
 import { StudioRoomModule } from '@/models/studio-room/studio-room.module';
+import { UserModule } from '@/models/user/user.module';
 import { ShowOrchestrationModule } from '@/show-orchestration/show-orchestration.module';
 import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration.module';
 
@@ -24,6 +25,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     PlatformModule,
     ShowPlatformModule,
     ClientMechanicModule,
+    UserModule,
   ],
   controllers: [StudioShowController],
   providers: [StudioShowManagementService],

@@ -17,7 +17,9 @@ import { ShowPlatformRepository } from '@/models/show-platform/show-platform.rep
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
 const mockPrismaForCls = {
@@ -85,6 +87,17 @@ describe('studioShowManagementService', () => {
   const showOrchestrationServiceMock = {
     deleteShow: jest.fn(),
   };
+  const userServiceMock = {
+    getUserByExtId: jest.fn(),
+  };
+  const showCancellationGateServiceMock = {
+    resolveActorTier: jest.fn(),
+    openPending: jest.fn(),
+    resolveAtomic: jest.fn(),
+    amendPendingNote: jest.fn(),
+    resolvePending: jest.fn(),
+    getCancellationStatus: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -113,6 +126,8 @@ describe('studioShowManagementService', () => {
         { provide: ShowPlatformRepository, useValue: showPlatformRepositoryMock },
         { provide: ShowPlatformService, useValue: showPlatformServiceMock },
         { provide: ShowOrchestrationService, useValue: showOrchestrationServiceMock },
+        { provide: UserService, useValue: userServiceMock },
+        { provide: ShowCancellationGateService, useValue: showCancellationGateServiceMock },
       ],
     }).compile();
 
@@ -505,6 +520,41 @@ describe('studioShowManagementService', () => {
     });
   });
 
+  it('rejects updateShow when changing show_status_id while a cancellation gate is pending', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      startTime: new Date('2026-01-01T00:00:00.000Z'),
+      endTime: new Date('2026-01-01T01:00:00.000Z'),
+      showStatus: { uid: 'shst_pending', name: 'cancelled_pending_resolution', systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+    });
+
+    await expect(
+      service.updateShow('std_123', 'show_123', { showStatusId: 'shst_cancelled' } as UpdateStudioShowDto),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ message: 'SHOW_STATUS_LOCKED_BY_PENDING_CANCELLATION' }),
+    });
+    expect(showRepositoryMock.update).not.toHaveBeenCalled();
+  });
+
+  it('allows updateShow to change show_status_id when no gate is pending', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      startTime: new Date('2026-01-01T00:00:00.000Z'),
+      endTime: new Date('2026-01-01T01:00:00.000Z'),
+      showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
+    });
+    showRepositoryMock.update.mockResolvedValue({ uid: 'show_123' });
+    showServiceMock.getShowById.mockResolvedValue({ uid: 'show_123' });
+
+    await service.updateShow('std_123', 'show_123', { showStatusId: 'shst_cancelled' } as UpdateStudioShowDto);
+
+    expect(showRepositoryMock.update).toHaveBeenCalled();
+  });
+
   it('rejects delete after the show start time', async () => {
     showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
       id: BigInt(100),
@@ -520,5 +570,240 @@ describe('studioShowManagementService', () => {
       }),
     });
     expect(showOrchestrationServiceMock.deleteShow).not.toHaveBeenCalled();
+  });
+
+  describe('cancelShowWithResolution', () => {
+    const pendingEligibleShow = {
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
+    };
+    const actorUser = { id: BigInt(5), uid: 'user_abc123', extId: 'ext_5', name: 'Jane Duty' };
+
+    beforeEach(() => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue(pendingEligibleShow);
+      userServiceMock.getUserByExtId.mockResolvedValue(actorUser);
+      showServiceMock.getShowById.mockResolvedValue({ uid: 'show_123' });
+    });
+
+    it('rejects when the show status is not eligible for cancellation', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        ...pendingEligibleShow,
+        showStatus: { uid: 'shst_draft', name: 'draft', systemKey: 'DRAFT' },
+      });
+
+      await expect(
+        service.cancelShowWithResolution('std_123', 'show_123', {
+          reason_category: 'EQUIPMENT_FAILURE',
+          reason_note: 'note',
+        }, 'manager', 'ext_5'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'SHOW_CANCELLATION_NOT_ALLOWED' }),
+      });
+    });
+
+    it('rejects when the actor resolves to no tier', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue(null);
+
+      await expect(
+        service.cancelShowWithResolution('std_123', 'show_123', {
+          reason_category: 'EQUIPMENT_FAILURE',
+          reason_note: 'note',
+        }, 'member', 'ext_5'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'CANCELLATION_NOT_AUTHORIZED' }),
+      });
+    });
+
+    it('manager tier requires outcome', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('manager');
+
+      await expect(
+        service.cancelShowWithResolution('std_123', 'show_123', {
+          reason_category: 'EQUIPMENT_FAILURE',
+          reason_note: 'note',
+        }, 'manager', 'ext_5'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'OUTCOME_REQUIRED' }),
+      });
+      expect(showCancellationGateServiceMock.resolveAtomic).not.toHaveBeenCalled();
+    });
+
+    it('manager tier with outcome calls resolveAtomic', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('manager');
+
+      await service.cancelShowWithResolution('std_123', 'show_123', {
+        reason_category: 'EQUIPMENT_FAILURE',
+        reason_note: 'Camera failed mid-show',
+        outcome: 'CANCELLED',
+      }, 'manager', 'ext_5');
+
+      expect(showCancellationGateServiceMock.resolveAtomic).toHaveBeenCalledWith({
+        show: pendingEligibleShow,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'CONFIRMED',
+        outcome: 'CANCELLED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed mid-show',
+        actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Duty' },
+      });
+      expect(showCancellationGateServiceMock.openPending).not.toHaveBeenCalled();
+    });
+
+    it('duty Manager tier rejects an outcome field', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('duty_manager');
+
+      await expect(
+        service.cancelShowWithResolution('std_123', 'show_123', {
+          reason_category: 'EQUIPMENT_FAILURE',
+          reason_note: 'note',
+          outcome: 'CANCELLED',
+        }, 'member', 'ext_5'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'OUTCOME_NOT_ALLOWED_FOR_DUTY_MANAGER' }),
+      });
+      expect(showCancellationGateServiceMock.openPending).not.toHaveBeenCalled();
+    });
+
+    it('duty Manager tier without outcome calls openPending', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('duty_manager');
+
+      await service.cancelShowWithResolution('std_123', 'show_123', {
+        reason_category: 'EQUIPMENT_FAILURE',
+        reason_note: 'Camera failed mid-show',
+      }, 'member', 'ext_5');
+
+      expect(showCancellationGateServiceMock.openPending).toHaveBeenCalledWith({
+        show: pendingEligibleShow,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'CONFIRMED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed mid-show',
+        actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Duty' },
+      });
+    });
+  });
+
+  describe('resolveShowCancellation', () => {
+    const pendingShow = {
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      showStatus: { uid: 'shst_pending', name: 'cancelled_pending_resolution', systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+    };
+    const actorUser = { id: BigInt(5), uid: 'user_abc123', extId: 'ext_5', name: 'Jane Manager' };
+
+    beforeEach(() => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue(pendingShow);
+      userServiceMock.getUserByExtId.mockResolvedValue(actorUser);
+      showServiceMock.getShowById.mockResolvedValue({ uid: 'show_123' });
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('manager');
+      showCancellationGateServiceMock.getCancellationStatus.mockResolvedValue({
+        isPending: true,
+        gateKind: 'show_cancellation',
+        fromStatus: 'CONFIRMED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed',
+        openedBy: { uid: 'user_other', name: 'Duty Bob' },
+        openedAt: new Date(),
+        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
+        history: [],
+      });
+    });
+
+    it('rejects when the show is not currently pending', async () => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        ...pendingShow,
+        showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
+      });
+
+      await expect(
+        service.resolveShowCancellation('std_123', 'show_123', {
+          outcome: 'CANCELLED',
+          resolution_notes: 'note',
+        }, 'manager', 'ext_5'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'SHOW_CANCELLATION_NOT_PENDING' }),
+      });
+    });
+
+    it('rejects sign-off from a Duty Manager tier', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('duty_manager');
+
+      await expect(
+        service.resolveShowCancellation('std_123', 'show_123', {
+          outcome: 'CANCELLED',
+          resolution_notes: 'note',
+        }, 'member', 'ext_5'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'SIGN_OFF_REQUIRES_MANAGER' }),
+      });
+    });
+
+    it('calls resolvePending with the derived from_status and gate kind', async () => {
+      await service.resolveShowCancellation('std_123', 'show_123', {
+        outcome: 'CANCELLED',
+        resolution_notes: 'Confirmed no production happened',
+      }, 'manager', 'ext_5');
+
+      expect(showCancellationGateServiceMock.resolvePending).toHaveBeenCalledWith({
+        show: pendingShow,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'CONFIRMED',
+        outcome: 'CANCELLED',
+        resolutionNotes: 'Confirmed no production happened',
+        actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
+      });
+    });
+  });
+
+  describe('amendCancellationNote', () => {
+    const pendingShow = {
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      showStatus: { uid: 'shst_pending', name: 'cancelled_pending_resolution', systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+    };
+    const actorUser = { id: BigInt(7), uid: 'user_def456', extId: 'ext_7', name: 'Bob Duty' };
+
+    beforeEach(() => {
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue(pendingShow);
+      userServiceMock.getUserByExtId.mockResolvedValue(actorUser);
+      showCancellationGateServiceMock.getCancellationStatus.mockResolvedValue({
+        isPending: true,
+        gateKind: 'show_cancellation',
+        fromStatus: 'CONFIRMED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed',
+        openedBy: { uid: 'user_other', name: 'Duty Bob' },
+        openedAt: new Date(),
+        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
+        history: [],
+      });
+    });
+
+    it('rejects amendment from a Manager tier (Duty Manager only)', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('manager');
+
+      await expect(
+        service.amendCancellationNote('std_123', 'show_123', { reason_note: 'Updated' }, 'admin', 'ext_7'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'NOTE_AMEND_REQUIRES_DUTY_MANAGER' }),
+      });
+    });
+
+    it('calls amendPendingNote for a Duty Manager tier', async () => {
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('duty_manager');
+
+      await service.amendCancellationNote('std_123', 'show_123', { reason_note: 'Actually two cameras failed' }, 'member', 'ext_7');
+
+      expect(showCancellationGateServiceMock.amendPendingNote).toHaveBeenCalledWith({
+        showId: BigInt(100),
+        gateKind: 'show_cancellation',
+        reasonNote: 'Actually two cameras failed',
+        actor: { id: BigInt(7), uid: 'user_def456', name: 'Bob Duty' },
+      });
+    });
   });
 });
