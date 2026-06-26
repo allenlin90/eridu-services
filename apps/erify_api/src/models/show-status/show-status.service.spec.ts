@@ -256,7 +256,16 @@ describe('showStatusService', () => {
 
   describe('getShowStatusBySystemKey', () => {
     it('delegates to repository.findOne with the system key', async () => {
-      const expected = { id: 6n, systemKey: 'CANCELLED_PENDING_RESOLUTION' };
+      const expected = {
+        id: 6n,
+        uid: 'shst_test123',
+        name: 'cancelled_pending_resolution',
+        systemKey: 'CANCELLED_PENDING_RESOLUTION',
+        metadata: {},
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        deletedAt: null,
+      };
       jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(expected);
 
       const result = await service.getShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION');
