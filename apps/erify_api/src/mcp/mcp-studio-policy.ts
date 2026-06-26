@@ -22,6 +22,8 @@ export class McpStudioPolicy {
       throw HttpError.badRequest('studio_id must be a Studio UID');
     }
 
+    // TODO(mcp-auth): Replace this foundation allowlist with internal app-to-app
+    // auth and, for external clients, eridu_auth Better Auth API keys plus RBAC.
     if (
       this.allowedStudioIds.size > 0
       && !this.allowedStudioIds.has(studioId)

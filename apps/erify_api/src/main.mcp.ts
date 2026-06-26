@@ -46,6 +46,8 @@ async function bootstrap() {
     });
   });
 
+  // TODO(mcp-auth): Keep this route private for the OpenWebUI Railway integration.
+  // Future public/partner MCP access should use a separate authenticated surface.
   expressApp.post('/mcp', async (req: Request, res: Response) => {
     const mcpServer = serverFactory.createServer();
     const transport = new StreamableHTTPServerTransport({

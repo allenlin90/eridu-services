@@ -10,6 +10,8 @@
 
 This is not a replacement for the public REST API. It is an internal integration path for consumers such as OpenWebUI and LiteLLM running in the same Railway cluster.
 
+The first concrete target is OpenWebUI as an internal Railway service. Do not create a public production endpoint for that rollout. A public URL is only expected for local development or explicit integration testing.
+
 ## Runtime Shape
 
 | Concern | Decision |
@@ -22,6 +24,14 @@ This is not a replacement for the public REST API. It is an internal integration
 | Initial auth boundary | Studio allowlist via `MCP_ALLOWED_STUDIO_IDS` |
 
 Run locally with `pnpm --filter erify_api dev:mcp`. Production uses `pnpm --filter erify_api start:prod:mcp` after the normal app build.
+
+## Rollout Targets
+
+| Phase | Target | Endpoint posture | Auth posture |
+| --- | --- | --- | --- |
+| 1 | OpenWebUI inside the same Railway cluster | Private service only; no public production endpoint | Internal network boundary plus `MCP_ALLOWED_STUDIO_IDS` |
+| 1 follow-up | LiteLLM inside the same Railway cluster | Private service only | Internal app-to-app auth to be designed |
+| Later | Partners or client systems | Separate public MCP surface or separate service | `eridu_auth` / Better Auth API keys with rate limits and RBAC |
 
 ## Tools
 
@@ -41,12 +51,24 @@ Do not add broad list, report, mutation, or cross-studio tools without a new des
 - Empty `MCP_ALLOWED_STUDIO_IDS` means every Studio UID is allowed. Use this only for local development or tightly private environments.
 - Production Railway deployments should configure a narrow comma-separated allowlist until the MCP server is connected to `eridu_auth`.
 - Future external access should move to `eridu_auth`/Better Auth API keys with rate limits rather than expanding this allowlist gate.
+- Future internal app-to-app access should authenticate OpenWebUI/LiteLLM as trusted internal clients instead of relying on network reachability alone.
+
+## Deferred TODOs
+
+These items are intentionally deferred from the foundation PR and should be designed before widening access:
+
+- Internal app-to-app auth for OpenWebUI and LiteLLM calling the private MCP service in Railway.
+- RBAC for tool access, including studio scope, role scope, and tool-level permissions.
+- A private/public MCP split, either by separate Railway services, separate route prefixes, or separate tool registries, so internal operational tools do not leak into partner/client integrations.
+- `eridu_auth` integration for partner/client access using Better Auth API keys, rate limits, key ownership, revocation, and audit attribution.
+- Public endpoint hardening for any future external MCP surface, including rate limiting, request logging, abuse handling, and a clear tenant/studio binding model.
 
 ## Extension Rules
 
 - Keep business logic in existing services or framework-free extracted core modules; the MCP layer should remain a transport adapter.
 - Reuse existing Nest modules directly when the logic already lives in `erify_api`.
 - Keep new tools read-only unless auth, audit, idempotency, and rate-limit behavior are explicitly designed.
+- Keep private-only tools out of any future public MCP registry unless they pass an explicit RBAC and partner-scope review.
 - Return UID-based records only; never expose internal database IDs in MCP-specific response shaping.
 - Add focused unit tests for each new tool and policy branch under `apps/erify_api/src/mcp/`.
 
