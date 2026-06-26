@@ -31,6 +31,12 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 import { BaseStudioController } from '../base-studio.controller';
 
 import {
+  AmendCancellationNoteDto,
+  cancellationStatusResponseDto,
+  CancelShowWithResolutionDto,
+  ResolveShowCancellationDto,
+} from './schemas/studio-show-cancellation.schema';
+import {
   BulkAssignStudioShowCreatorsDto,
   bulkAssignStudioShowCreatorsResultSchema,
 } from './schemas/studio-show-creator-assignment.schema';
@@ -63,6 +69,7 @@ import {
   taskWithRelationsDto,
 } from '@/models/task/schemas/task.schema';
 import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
+import type { CancellationStatusResult } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
@@ -179,6 +186,30 @@ const paginatedShowRunReviewQuerySchema = showRunReviewQuerySchema.extend({
 });
 
 export class PaginatedShowRunReviewQueryDto extends createZodDto(paginatedShowRunReviewQuerySchema) {}
+
+// `cancellationStatusResponseSchema` is snake_case with ISO date-time strings;
+// `ShowCancellationGateService.getCancellationStatus` returns camelCase with
+// `Date` objects. Map by hand here, the same way `show.schema.ts`'s
+// `transformShowToApi` hand-maps `Show` instead of relying on Zod coercion.
+function toCancellationStatusApiResponse(status: CancellationStatusResult) {
+  return {
+    is_pending: status.isPending,
+    gate_kind: status.gateKind,
+    from_status: status.fromStatus,
+    reason_category: status.reasonCategory,
+    reason_note: status.reasonNote,
+    opened_by: status.openedBy,
+    opened_at: status.openedAt?.toISOString() ?? null,
+    allowed_outcomes: status.allowedOutcomes,
+    history: status.history.map((entry) => ({
+      event: entry.event,
+      actor: entry.actor,
+      at: entry.at.toISOString(),
+      note: entry.note,
+      outcome: entry.outcome,
+    })),
+  };
+}
 
 @StudioProtected() // All studio members can view
 @Controller('studios/:studioId/shows')
@@ -328,6 +359,75 @@ export class StudioShowController extends BaseStudioController {
     @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
   ) {
     return this.taskOrchestrationService.getShowTasks(studioId, id);
+  }
+
+  @Post(':id/cancel-with-resolution')
+  @StudioProtected() // any studio member — the service enforces Manager/Duty-Manager tier
+  @ZodResponse(studioShowDetailDto)
+  async cancelWithResolution(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: CancelShowWithResolutionDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.studioShowManagementService.cancelShowWithResolution(
+      studioId,
+      id,
+      body,
+      request?.studioMembership?.role,
+      user.ext_id,
+    );
+  }
+
+  @Post(':id/resolve-cancellation')
+  @StudioProtected() // any studio member — the service enforces Manager tier
+  @ZodResponse(studioShowDetailDto)
+  async resolveCancellation(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: ResolveShowCancellationDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.studioShowManagementService.resolveShowCancellation(
+      studioId,
+      id,
+      body,
+      request?.studioMembership?.role,
+      user.ext_id,
+    );
+  }
+
+  @Patch(':id/cancellation-note')
+  @StudioProtected() // any studio member — the service enforces Duty Manager tier
+  @ZodResponse(cancellationStatusResponseDto)
+  async amendCancellationNote(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: AmendCancellationNoteDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const status = await this.studioShowManagementService.amendCancellationNote(
+      studioId,
+      id,
+      body,
+      request?.studioMembership?.role,
+      user.ext_id,
+    );
+    return toCancellationStatusApiResponse(status);
+  }
+
+  @Get(':id/cancellation-status')
+  @StudioProtected()
+  @ZodResponse(cancellationStatusResponseDto)
+  async cancellationStatus(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    const status = await this.studioShowManagementService.getCancellationStatus(studioId, id);
+    return toCancellationStatusApiResponse(status);
   }
 
   @Get(':id/mechanics-coverage')
