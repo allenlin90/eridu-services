@@ -1,7 +1,7 @@
 import type { ColumnDef, ColumnFiltersState, OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { format, parseISO } from 'date-fns';
-import { AlertTriangle, ChevronDown, ChevronsUpDown, ChevronUp, Filter, RotateCcw } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, ChevronDown, Filter, RotateCcw } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { ShiftCostResponse } from '@eridu/api-types/costs';
 import {
@@ -23,13 +23,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
+import { SortableHeader } from '@/features/studio-costs/components/sortable-header';
+import { WarningTooltip } from '@/features/studio-costs/components/warning-tooltip';
 import { SHIFT_ROLE_FILTER_OPTIONS } from '@/features/studio-costs/lib/shift-role-filter';
 import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
@@ -58,103 +56,6 @@ type ShiftCostsTableProps = {
   locale?: string;
   currency?: string;
 };
-
-type SortRule = { id: string; desc: boolean };
-
-type SortableHeaderProps = {
-  columnId: string;
-  label: string;
-  sortRules: SortRule[];
-  onSort: (columnId: string) => void;
-};
-
-function SortableHeader({ columnId, label, sortRules, onSort }: SortableHeaderProps) {
-  const ruleIndex = sortRules.findIndex((r) => r.id === columnId);
-  const isSorted = ruleIndex !== -1;
-  const rule = isSorted ? sortRules[ruleIndex] : null;
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="-ml-3 h-8 gap-1 font-medium hover:bg-muted/50 text-xs"
-      onClick={() => onSort(columnId)}
-    >
-      <span>{label}</span>
-      {isSorted
-        ? (
-            <div className="flex items-center gap-1">
-              {rule?.desc
-                ? (
-                    <ChevronDown className="h-3.5 w-3.5 text-primary" />
-                  )
-                : (
-                    <ChevronUp className="h-3.5 w-3.5 text-primary" />
-                  )}
-              <Badge
-                variant="secondary"
-                className="h-4 min-w-4 p-0 px-1 text-[10px] flex items-center justify-center font-bold bg-primary/10 text-primary border-none"
-              >
-                {ruleIndex + 1}
-              </Badge>
-            </div>
-          )
-        : (
-            <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-          )}
-    </Button>
-  );
-}
-
-function WarningTooltip({
-  trigger,
-  title,
-  items,
-}: {
-  trigger: React.ReactNode;
-  title: string;
-  items: string[];
-}) {
-  const [open, setOpen] = useState(false);
-  const lastOpenTime = useRef(0);
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      lastOpenTime.current = Date.now();
-    }
-    setOpen(nextOpen);
-  };
-
-  return (
-    <TooltipProvider>
-      <Tooltip open={open} onOpenChange={handleOpenChange}>
-        <TooltipTrigger
-          asChild
-          onClick={(e) => {
-            e.stopPropagation();
-            if (Date.now() - lastOpenTime.current < 100) {
-              return;
-            }
-            setOpen((prev) => !prev);
-          }}
-        >
-          {trigger}
-        </TooltipTrigger>
-        <TooltipContent
-          className="max-w-xs p-3 text-xs space-y-1 bg-foreground text-background break-words"
-          align="end"
-        >
-          <p className="font-semibold">{title}</p>
-          <ul className="list-disc pl-4 space-y-0.5">
-            {items.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 export function ShiftCostsTable({
   data,
