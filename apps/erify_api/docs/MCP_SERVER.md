@@ -20,10 +20,37 @@ The first concrete target is OpenWebUI as an internal Railway service. Do not cr
 | Transport | MCP Streamable HTTP at `POST /mcp` |
 | Session mode | Stateless per request |
 | Health checks | `GET /health` and `GET /health/ready` |
-| Initial network boundary | Private Railway service / in-cluster traffic |
+| Initial network boundary | Private Railway service / in-cluster traffic only |
 | Initial auth boundary | Studio allowlist via `MCP_ALLOWED_STUDIO_IDS` |
 
 Run locally with `pnpm --filter erify_api dev:mcp`. Production uses `pnpm --filter erify_api start:prod:mcp` after the normal app build.
+
+## Railway Private-Only Deployment
+
+Use `.railway/erify_api_mcp.json` for the MCP Railway service. This deploys the same `erify_api` package with the MCP entrypoint instead of the REST API entrypoint.
+
+For the OpenWebUI rollout:
+
+1. Create a separate Railway service for MCP using `.railway/erify_api_mcp.json`.
+2. Keep the MCP service in the same Railway project and environment as OpenWebUI.
+3. Do not attach a Railway public domain or custom public domain to the MCP service.
+4. Configure OpenWebUI to call the MCP service through Railway private DNS:
+
+```text
+http://<mcp-service-name>.railway.internal:${PORT}/mcp
+```
+
+For example, if the Railway service is named `erify-api-mcp` and `PORT=3000`:
+
+```text
+http://erify-api-mcp.railway.internal:3000/mcp
+```
+
+Railway private networking keeps service-to-service traffic inside the project environment. Railway's private DNS uses the `<service-name>.railway.internal` pattern, and internal HTTP traffic should use `http://` because Railway encrypts the private network with WireGuard.
+
+The MCP entrypoint already listens on `::`, which is compatible with Railway private networking, including IPv6-only legacy environments.
+
+If a public domain is later attached to this service, the endpoint is no longer private-only and must get token/API-key auth before production use.
 
 ## Rollout Targets
 

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "npx turbo run build --filter=erify_api",
+    "watchPatterns": [
+      "/apps/erify_api/src/**",
+      "/apps/erify_api/package.json",
+      "/packages/api-types/**",
+      "/packages/auth-sdk/**"
+    ]
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter erify_api start:prod:mcp",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
