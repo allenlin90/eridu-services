@@ -1,7 +1,7 @@
 import type { ColumnDef, ColumnFiltersState, OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { format, parseISO } from 'date-fns';
 import { AlertTriangle, ChevronDown, ChevronsUpDown, ChevronUp, Filter, RotateCcw } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { ShiftCostResponse } from '@eridu/api-types/costs';
 import {
@@ -103,6 +103,56 @@ function SortableHeader({ columnId, label, sortRules, onSort }: SortableHeaderPr
             <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
           )}
     </Button>
+  );
+}
+
+function WarningTooltip({
+  trigger,
+  title,
+  items,
+}: {
+  trigger: React.ReactNode;
+  title: string;
+  items: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const lastOpenTime = useRef(0);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      lastOpenTime.current = Date.now();
+    }
+    setOpen(nextOpen);
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip open={open} onOpenChange={handleOpenChange}>
+        <TooltipTrigger
+          asChild
+          onClick={(e) => {
+            e.stopPropagation();
+            if (Date.now() - lastOpenTime.current < 100) {
+              return;
+            }
+            setOpen((prev) => !prev);
+          }}
+        >
+          {trigger}
+        </TooltipTrigger>
+        <TooltipContent
+          className="max-w-xs p-3 text-xs space-y-1 bg-foreground text-background break-words"
+          align="end"
+        >
+          <p className="font-semibold">{title}</p>
+          <ul className="list-disc pl-4 space-y-0.5">
+            {items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -301,19 +351,11 @@ export function ShiftCostsTable({
                   </div>
                   <div className="text-muted-foreground text-[10px] space-y-0.5">
                     <div>
-                      Planned:
-                      {formatTime(b.start_time)}
-                      {' '}
-                      -
-                      {formatTime(b.end_time)}
+                      {`Planned: ${formatTime(b.start_time)} - ${formatTime(b.end_time)}`}
                     </div>
                     {b.actual_start_time && (
                       <div className="text-primary-600 font-medium">
-                        Actual:
-                        {formatTime(b.actual_start_time)}
-                        {' '}
-                        -
-                        {formatTime(b.actual_end_time!)}
+                        {`Actual: ${formatTime(b.actual_start_time)} - ${formatTime(b.actual_end_time!)}`}
                       </div>
                     )}
                   </div>
@@ -325,24 +367,16 @@ export function ShiftCostsTable({
                     <span className="font-semibold text-foreground">{formatCurrency(b.total_cost)}</span>
                   </div>
                   {b.calculation_warnings.length > 0 && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="text-[9px] text-amber-500 flex items-center gap-1 cursor-pointer hover:underline mt-0.5">
-                            <AlertTriangle className="h-3 w-3" />
-                            Warning
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-xs space-y-1">
-                          <p className="font-semibold">Block Warning(s):</p>
-                          <ul className="list-disc pl-4 space-y-0.5">
-                            {b.calculation_warnings.map((w) => (
-                              <li key={w}>{w}</li>
-                            ))}
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <WarningTooltip
+                      trigger={(
+                        <div className="text-[9px] text-amber-500 flex items-center gap-1 cursor-pointer hover:underline mt-0.5">
+                          <AlertTriangle className="h-3 w-3" />
+                          Warning
+                        </div>
+                      )}
+                      title="Block Warning(s):"
+                      items={b.calculation_warnings}
+                    />
                   )}
                 </div>
               ))}
@@ -364,24 +398,16 @@ export function ShiftCostsTable({
             <div className="flex flex-col gap-1 items-start">
               {isUnresolved
                 ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-500 gap-1 text-[11px] font-semibold cursor-pointer">
-                            <AlertTriangle className="h-3 w-3" />
-                            Unresolved
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-xs space-y-1">
-                          <p className="font-semibold">Unresolved billing issues:</p>
-                          <ul className="list-disc pl-4 space-y-0.5">
-                            {row.original.unresolved_reasons.map((r) => (
-                              <li key={r}>{r}</li>
-                            ))}
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <WarningTooltip
+                      trigger={(
+                        <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-500 gap-1 text-[11px] font-semibold cursor-pointer">
+                          <AlertTriangle className="h-3 w-3" />
+                          Unresolved
+                        </Badge>
+                      )}
+                      title="Unresolved billing issues:"
+                      items={row.original.unresolved_reasons}
+                    />
                   )
                 : (
                     <span className="text-sm font-bold text-foreground">
@@ -389,24 +415,16 @@ export function ShiftCostsTable({
                     </span>
                   )}
               {row.original.calculation_warnings.length > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-[10px] text-amber-600 dark:text-amber-500 flex items-center gap-1 cursor-pointer hover:underline">
-                        <AlertTriangle className="h-3 w-3" />
-                        Warnings
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-xs space-y-1">
-                      <p className="font-semibold">Calculation warning(s):</p>
-                      <ul className="list-disc pl-4 space-y-0.5">
-                        {row.original.calculation_warnings.map((w) => (
-                          <li key={w}>{w}</li>
-                        ))}
-                      </ul>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <WarningTooltip
+                  trigger={(
+                    <span className="text-[10px] text-amber-600 dark:text-amber-500 flex items-center gap-1 cursor-pointer hover:underline">
+                      <AlertTriangle className="h-3 w-3" />
+                      Warnings
+                    </span>
+                  )}
+                  title="Calculation warning(s):"
+                  items={row.original.calculation_warnings}
+                />
               )}
             </div>
           );
