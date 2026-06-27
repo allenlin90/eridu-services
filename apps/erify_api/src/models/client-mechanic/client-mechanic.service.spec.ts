@@ -277,7 +277,7 @@ describe('clientMechanicService', () => {
       ).rejects.toThrow(/Client mechanic not found/);
     });
 
-    it('returns templates and computes coverage statuses across shows', async () => {
+    it('returns templates and computes is_current across shows', async () => {
       (repositoryMock.findByUidForClient as jest.Mock).mockResolvedValue(baseMechanic); // contentRevision is 5
 
       // Mock templates referencing it:
@@ -427,26 +427,23 @@ describe('clientMechanicService', () => {
 
       expect(result.shows[0]).toMatchObject({
         uid: 'show_101',
-        status: 'current',
+        is_current: true, // frozen revision (5) matches catalog (5), template still carries it
         task_uid: 'task_1',
         template_uid: 'ttpl_1',
-        frozen_revision: 5,
       });
 
       expect(result.shows[1]).toMatchObject({
         uid: 'show_102',
-        status: 'stale',
+        is_current: false, // frozen revision (4) behind catalog (5) -- formerly "stale"
         task_uid: 'task_2',
         template_uid: 'ttpl_1',
-        frozen_revision: 4,
       });
 
       expect(result.shows[2]).toMatchObject({
         uid: 'show_104',
-        status: 'dropped',
+        is_current: false, // template_2's latest version no longer carries the mechanic -- formerly "dropped"
         task_uid: 'task_4',
         template_uid: 'ttpl_2',
-        frozen_revision: 5,
       });
 
       expect(result.shows.map((show) => show.uid)).not.toContain('show_103');

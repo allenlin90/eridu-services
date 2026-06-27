@@ -325,12 +325,15 @@ export class ClientMechanicService extends BaseModelService {
     const coverageShows = shows.flatMap((show) => {
       const showTasks = tasksByShowId.get(show.id.toString()) ?? [];
 
-      // Find the latest finalized loop-bearing task
+      // Find the latest finalized loop-bearing task, capturing its parsed
+      // snapshot so we don't re-parse the same JSON below.
       let authoritativeTask: typeof showTasks[0] | null = null;
+      let authoritativeItems: ReturnType<typeof parseModeratorSnapshot>['items'] = [];
       for (const t of showTasks) {
-        const { loops } = parseModeratorSnapshot(t.snapshot?.schema);
-        if (loops !== null) {
+        const parsed = parseModeratorSnapshot(t.snapshot?.schema);
+        if (parsed.loops !== null) {
           authoritativeTask = t;
+          authoritativeItems = parsed.items;
           break;
         }
       }
@@ -343,33 +346,20 @@ export class ClientMechanicService extends BaseModelService {
       const templateIdKey = authoritativeTask.templateId.toString();
 
       const hasSnapshotRef = snapshotRefs.get(snapshotIdKey)?.has(mechanic.uid) ?? false;
-      const hasLatestRef = latestTemplateRefs.get(templateIdKey)?.has(mechanic.uid) ?? false;
-
-      let status: 'current' | 'stale' | 'dropped' = 'dropped';
-      let frozenRevision: number | null = null;
-
-      if (hasSnapshotRef) {
-        // Extract frozen revision from snapshot schema
-        const { items } = parseModeratorSnapshot(authoritativeTask.snapshot?.schema);
-        const item = items.find(
-          (it: any) =>
-            it.mechanic_ref
-            && it.mechanic_ref.mechanic_id === mechanic.uid,
-        );
-        frozenRevision = (item?.mechanic_ref as any)?.content_revision ?? null;
-
-        if (hasLatestRef) {
-          if (frozenRevision === mechanic.contentRevision) {
-            status = 'current';
-          } else {
-            status = 'stale';
-          }
-        } else {
-          status = 'dropped';
-        }
-      } else {
+      if (!hasSnapshotRef) {
         return [];
       }
+
+      const hasLatestRef = latestTemplateRefs.get(templateIdKey)?.has(mechanic.uid) ?? false;
+
+      const item = authoritativeItems.find(
+        (it: any) =>
+          it.mechanic_ref
+          && it.mechanic_ref.mechanic_id === mechanic.uid,
+      );
+      const frozenRevision = (item?.mechanic_ref as any)?.content_revision ?? null;
+
+      const isCurrent = hasLatestRef && frozenRevision === mechanic.contentRevision;
 
       const templateName = authoritativeTask.template?.name ?? null;
       const templateUid = authoritativeTask.template?.uid ?? null;
@@ -378,12 +368,10 @@ export class ClientMechanicService extends BaseModelService {
         uid: show.uid,
         name: show.name,
         start_time: show.startTime.toISOString(),
-        status,
         task_uid: authoritativeTask.uid,
         template_uid: templateUid,
         template_name: templateName,
-        frozen_revision: frozenRevision,
-        catalog_revision: mechanic.contentRevision,
+        is_current: isCurrent,
       }];
     });
 
