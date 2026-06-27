@@ -169,6 +169,16 @@ export function MechanicCoveragePage() {
             : <span className="text-muted-foreground">—</span>;
         },
       },
+      {
+        accessorKey: 'is_current',
+        header: 'Status',
+        cell: ({ row }: any) => {
+          const { is_current } = row.original;
+          return is_current
+            ? <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Up to Date</Badge>
+            : <Badge variant="secondary" className="border-amber-200 bg-amber-50 text-amber-700">Needs Update</Badge>;
+        },
+      },
     ];
   }, [studioId]);
 
