@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { CalendarDays } from 'lucide-react';
+import { Ban, CalendarDays } from 'lucide-react';
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTablePagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTableActions, DataTablePagination, DropdownMenuItem, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
 
 import { TaskSummaryInline } from './dashboard-coverage-cards';
 
@@ -10,7 +10,7 @@ import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
 import { CancelShowDialog } from '@/features/studio-shows/components/cancel-show-dialog';
 import { getCreatorNames } from '@/lib/creator-utils';
 
-const CANCELLABLE_SHOW_STATUS_NAMES = new Set(['confirmed', 'live']);
+const CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS = new Set(['CONFIRMED', 'LIVE']);
 
 type OperationalDayShowsSummaryCardProps = {
   dateLabel: string;
@@ -188,8 +188,24 @@ export function OperationalDayShowListCard({
                               <ShowStatusBadge status={show.show_status_name ?? 'unknown'} />
                             </TableCell>
                             <TableCell>
-                              {CANCELLABLE_SHOW_STATUS_NAMES.has(show.show_status_name ?? '')
-                                ? <CancelShowDialog studioId={studioId} show={{ id: show.id }} triggerSize="sm" />
+                              {CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS.has(show.show_status_system_key ?? '')
+                                ? (
+                                    <CancelShowDialog
+                                      studioId={studioId}
+                                      show={{ id: show.id }}
+                                      renderTrigger={({ disabled, onClick }) => (
+                                        <DataTableActions
+                                          row={show}
+                                          renderExtraActions={() => (
+                                            <DropdownMenuItem disabled={disabled} onClick={onClick}>
+                                              <Ban className="mr-2 h-4 w-4" />
+                                              Cancel Show
+                                            </DropdownMenuItem>
+                                          )}
+                                        />
+                                      )}
+                                    />
+                                  )
                                 : '-'}
                             </TableCell>
                           </TableRow>

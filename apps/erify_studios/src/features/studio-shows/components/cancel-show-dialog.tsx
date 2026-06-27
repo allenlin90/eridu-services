@@ -25,10 +25,10 @@ const OUTCOME_OPTIONS = CANCELLATION_GATE_CONFIG.show_cancellation.allowedOutcom
 type CancelShowDialogProps = {
   studioId: string;
   show: Pick<StudioShowDetail, 'id'>;
-  triggerSize?: 'default' | 'sm';
+  renderTrigger?: (props: { disabled: boolean; onClick: () => void }) => React.ReactNode;
 };
 
-export function CancelShowDialog({ studioId, show, triggerSize = 'default' }: CancelShowDialogProps) {
+export function CancelShowDialog({ studioId, show, renderTrigger }: CancelShowDialogProps) {
   const { tier } = useCancellationTier(studioId);
   const [open, setOpen] = useState(false);
   const [reasonCategory, setReasonCategory] = useState('');
@@ -53,9 +53,13 @@ export function CancelShowDialog({ studioId, show, triggerSize = 'default' }: Ca
 
   return (
     <>
-      <Button type="button" size={triggerSize} disabled={!tier} onClick={() => handleOpenChange(true)}>
-        Cancel Show
-      </Button>
+      {renderTrigger
+        ? renderTrigger({ disabled: !tier, onClick: () => handleOpenChange(true) })
+        : (
+            <Button type="button" disabled={!tier} onClick={() => handleOpenChange(true)}>
+              Cancel Show
+            </Button>
+          )}
       <ResponsiveDialog
         open={open}
         onOpenChange={handleOpenChange}
