@@ -197,6 +197,7 @@ export class ShowCancellationGateService {
     actor: { id: bigint; uid: string; name: string };
   }): Promise<void> {
     const { show, gateKind, fromStatusSystemKey, outcome, reasonCategory, reasonNote, actor } = params;
+    this.assertReasonCategoryAllowed(gateKind, reasonCategory);
     this.assertOutcomeAllowed(gateKind, outcome);
     await this.assertActiveTaskGuard(gateKind, outcome, show.id);
 
@@ -246,7 +247,7 @@ export class ShowCancellationGateService {
     fromStatusSystemKey: string;
     outcome: string;
     resolutionNotes: string;
-    actor: { id: bigint; uid: string; name: string };
+    actor: { id: bigint; uid: string; name: string } | null;
   }): Promise<void> {
     const { show, gateKind, fromStatusSystemKey, outcome, resolutionNotes, actor } = params;
     this.assertOutcomeAllowed(gateKind, outcome);

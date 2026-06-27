@@ -315,6 +315,22 @@ describe('showCancellationGateService', () => {
   });
 
   describe('resolveAtomic', () => {
+    it('rejects a reason category not in the gate config, before checking outcome or active tasks', async () => {
+      await expect(
+        service.resolveAtomic({
+          show,
+          gateKind: 'show_cancellation',
+          fromStatusSystemKey: 'CONFIRMED',
+          outcome: 'CANCELLED',
+          reasonCategory: 'NOT_A_REAL_CATEGORY',
+          reasonNote: 'note',
+          actor,
+        }),
+      ).rejects.toThrow(/REASON_CATEGORY_NOT_ALLOWED/);
+      expect(taskTargetServiceMock.countActiveByShowId).not.toHaveBeenCalled();
+      expect(showRepositoryMock.updateStatusIfPending).not.toHaveBeenCalled();
+    });
+
     it('allows CANCELLED from LIVE when no active tasks remain — same rule as any other from_status', async () => {
       taskTargetServiceMock.countActiveByShowId.mockResolvedValue(0);
       showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);

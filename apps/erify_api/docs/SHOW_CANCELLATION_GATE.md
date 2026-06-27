@@ -50,7 +50,7 @@ Resolving to `CANCELLED` is blocked with `ACTIVE_TASKS_REMAIN` (and the live cou
 
 ### Sign-off is the same operation regardless of origin
 
-There is no separate "sign-off" status or endpoint distinct from "resolve a pending-resolution show" — a Duty-Manager-flagged gate and a system-generated `schedule_publish_removal` gate are resolved through the identical `resolvePending` path.
+There is no separate "sign-off" status or endpoint distinct from "resolve a pending-resolution show" — a Duty-Manager-flagged gate and a system-generated `schedule_publish_removal` gate are resolved through the identical `resolvePending` path. This includes schedule publish itself: if a republish finds a show already parked `CANCELLED_PENDING_RESOLUTION` and its active-task count has since dropped to zero, publish calls `resolvePending` (with a null actor) rather than writing `show_status_id` directly — a raw status write would skip the closing `Audit` row the same way the studio show-edit bypass would have.
 
 ### Discovery has no dedicated screen
 

@@ -300,7 +300,7 @@ describe('publishingService', () => {
         },
         {
           provide: ShowCancellationGateService,
-          useValue: { openPending: jest.fn() },
+          useValue: { openPending: jest.fn(), getCancellationStatus: jest.fn(), resolvePending: jest.fn() },
         },
       ],
     }).compile();
@@ -1029,6 +1029,65 @@ describe('publishingService', () => {
       });
       expect(result.publishSummary.shows_pending_resolution).toBe(1);
       expect(result.publishSummary.shows_cancelled).toBe(0);
+    });
+
+    it('resolves an already-pending gate through resolvePending when active tasks have since cleared, instead of a raw status update', async () => {
+      const removedShow = {
+        id: BigInt(99),
+        uid: 'show_old',
+        externalId: 'show_temp_OLD',
+        clientId: BigInt(1),
+        scheduleId: BigInt(1),
+        studioId: BigInt(1),
+        studioRoomId: null,
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(9002), // already CANCELLED_PENDING_RESOLUTION
+        showStandardId: BigInt(1),
+        name: 'Old Show',
+        startTime: new Date('2024-01-01T08:00:00Z'),
+        endTime: new Date('2024-01-01T09:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      };
+
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([removedShow])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
+          { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
+        ]);
+      taskTargetService.countActiveByShowId.mockResolvedValue(0);
+      showCancellationGateService.getCancellationStatus.mockResolvedValue({
+        isPending: true,
+        gateKind: 'schedule_publish_removal',
+        fromStatus: 'CONFIRMED',
+        reasonCategory: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+        reasonNote: 'note',
+        openedBy: null,
+        openedAt: new Date('2024-01-01T08:00:00Z'),
+        allowedOutcomes: ['CANCELLED', 'RESTORE_PREVIOUS'],
+        history: [],
+      });
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(showCancellationGateService.resolvePending).toHaveBeenCalledWith({
+        show: removedShow,
+        gateKind: 'schedule_publish_removal',
+        fromStatusSystemKey: 'CONFIRMED',
+        outcome: 'CANCELLED',
+        resolutionNotes: 'Active tasks cleared since this show was parked pending resolution',
+        actor: null,
+      });
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith({
+        where: { id: BigInt(99) },
+        data: { showStatusId: BigInt(9001) },
+      });
+      expect(result.publishSummary.shows_cancelled).toBe(1);
+      expect(result.publishSummary.shows_pending_resolution).toBe(0);
     });
   });
 });

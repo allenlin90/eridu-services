@@ -424,6 +424,23 @@ export class PublishingService {
           });
         }
         publishSummary.shows_pending_resolution += 1;
+      } else if (removed.showStatusId === statusIds.cancelledPendingResolution) {
+        // The show is already parked pending resolution from an earlier
+        // publish; a generic status update here would bypass the gate the
+        // same way the studio show-edit endpoint is blocked from doing —
+        // resolve it through the gate so the audit trail stays unbroken.
+        const status = await this.showCancellationGateService.getCancellationStatus(removed);
+        if (status.isPending && status.gateKind && status.fromStatus) {
+          await this.showCancellationGateService.resolvePending({
+            show: removed as unknown as Show,
+            gateKind: status.gateKind,
+            fromStatusSystemKey: status.fromStatus,
+            outcome: 'CANCELLED',
+            resolutionNotes: 'Active tasks cleared since this show was parked pending resolution',
+            actor: null,
+          });
+        }
+        publishSummary.shows_cancelled += 1;
       } else {
         if (removed.showStatusId !== statusIds.cancelled) {
           await tx.show.update({
