@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { format, parseISO } from 'date-fns';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +9,10 @@ import { ShowCostsTable } from '../show-costs-table';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children?: ReactNode }) => <a href="#">{children}</a>,
+}));
+
+vi.mock('@eridu/ui/hooks/use-is-mobile', () => ({
+  useIsMobile: () => true,
 }));
 
 vi.mock('@/features/shows/api/get-show-lookups', () => ({
@@ -80,5 +85,91 @@ describe('showCostsTable', () => {
     expect(screen.getByText('Special Promotion Live')).toBeInTheDocument();
     expect(screen.getByText('Alice Creator')).toBeInTheDocument();
     expect(screen.getByText('฿1,700.00')).toBeInTheDocument();
+  });
+
+  it('renders timezone-aware schedule times and handles same-day show format', () => {
+    const startLocal = new Date(2026, 5, 7, 8, 0, 0);
+    const endLocal = new Date(2026, 5, 7, 10, 0, 0);
+    const sameDayCost = {
+      ...mockShowCost,
+      start_time: startLocal.toISOString(),
+      end_time: endLocal.toISOString(),
+    };
+
+    render(
+      <ShowCostsTable
+        {...baseProps}
+        data={[sameDayCost]}
+        locale="th-TH"
+        currency="THB"
+      />,
+    );
+
+    const start = parseISO(sameDayCost.start_time);
+    const end = parseISO(sameDayCost.end_time);
+    const expectedStartStr = format(start, 'MMM d, yyyy HH:mm');
+    const expectedEndStr = format(end, 'HH:mm');
+
+    expect(screen.getByText(expectedStartStr)).toBeInTheDocument();
+    expect(screen.getByText(`to ${expectedEndStr}`)).toBeInTheDocument();
+  });
+
+  it('renders timezone-aware schedule times and handles multi-day show format', () => {
+    const startLocal = new Date(2026, 5, 7, 8, 0, 0);
+    const endLocal = new Date(2026, 5, 8, 10, 0, 0);
+    const multiDayShowCost = {
+      ...mockShowCost,
+      start_time: startLocal.toISOString(),
+      end_time: endLocal.toISOString(),
+    };
+
+    render(
+      <ShowCostsTable
+        {...baseProps}
+        data={[multiDayShowCost]}
+        locale="th-TH"
+        currency="THB"
+      />,
+    );
+
+    const start = parseISO(multiDayShowCost.start_time);
+    const end = parseISO(multiDayShowCost.end_time);
+    const expectedStartStr = format(start, 'MMM d, yyyy HH:mm');
+    const expectedEndStr = format(end, 'MMM d, yyyy HH:mm');
+
+    expect(screen.getByText(expectedStartStr)).toBeInTheDocument();
+    expect(screen.getByText(`to ${expectedEndStr}`)).toBeInTheDocument();
+  });
+
+  it('toggles warning tooltip popover when clicked/tapped', async () => {
+    const showCostWithWarnings = {
+      ...mockShowCost,
+      total_cost: null,
+      unresolved_reasons: ['Missing creator rate info'],
+      calculation_warnings: ['Rate discrepancy detected'],
+    };
+
+    render(
+      <ShowCostsTable
+        {...baseProps}
+        data={[showCostWithWarnings]}
+        locale="th-TH"
+        currency="THB"
+      />,
+    );
+
+    const unresolvedBadge = screen.getByText('Unresolved');
+    expect(unresolvedBadge).toBeInTheDocument();
+
+    fireEvent.click(unresolvedBadge);
+    expect(screen.getAllByText('Unresolved billing issues:')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Missing creator rate info')[0]).toBeInTheDocument();
+
+    const warningsTrigger = screen.getByText('Warnings');
+    expect(warningsTrigger).toBeInTheDocument();
+
+    fireEvent.click(warningsTrigger);
+    expect(screen.getAllByText('Calculation warning(s):')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Rate discrepancy detected')[0]).toBeInTheDocument();
   });
 });

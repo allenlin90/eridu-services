@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef, ColumnFiltersState, OnChangeFn, PaginationState } from '@tanstack/react-table';
-import { AlertTriangle, ChevronDown, ChevronsUpDown, ChevronUp, Filter, RotateCcw } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { AlertTriangle, ChevronDown, Filter, RotateCcw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import type { ShowCostResponse } from '@eridu/api-types/costs';
@@ -25,15 +26,13 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
 import { getClients } from '@/features/clients/api/get-clients';
 import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
+import { SortableHeader } from '@/features/studio-costs/components/sortable-header';
+import { WarningTooltip } from '@/features/studio-costs/components/warning-tooltip';
 import { toCurrencyDisplayString } from '@/lib/decimal-format';
 
 type CostsShowsSearch = {
@@ -68,53 +67,6 @@ function toArrayParam(val: string | string[] | undefined): string[] | undefined 
   if (!val)
     return undefined;
   return Array.isArray(val) ? val : [val];
-}
-
-type SortRule = { id: string; desc: boolean };
-
-type SortableHeaderProps = {
-  columnId: string;
-  label: string;
-  sortRules: SortRule[];
-  onSort: (columnId: string) => void;
-};
-
-function SortableHeader({ columnId, label, sortRules, onSort }: SortableHeaderProps) {
-  const ruleIndex = sortRules.findIndex((r) => r.id === columnId);
-  const isSorted = ruleIndex !== -1;
-  const rule = isSorted ? sortRules[ruleIndex] : null;
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="-ml-3 h-8 gap-1 font-medium hover:bg-muted/50 text-xs"
-      onClick={() => onSort(columnId)}
-    >
-      <span>{label}</span>
-      {isSorted
-        ? (
-            <div className="flex items-center gap-1">
-              {rule?.desc
-                ? (
-                    <ChevronDown className="h-3.5 w-3.5 text-primary" />
-                  )
-                : (
-                    <ChevronUp className="h-3.5 w-3.5 text-primary" />
-                  )}
-              <Badge
-                variant="secondary"
-                className="h-4 min-w-4 p-0 px-1 text-[10px] flex items-center justify-center font-bold bg-primary/10 text-primary border-none"
-              >
-                {ruleIndex + 1}
-              </Badge>
-            </div>
-          )
-        : (
-            <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-          )}
-    </Button>
-  );
 }
 
 export function ShowCostsTable({
@@ -288,14 +240,6 @@ export function ShowCostsTable({
     }
   }, [resolvedCurrency, resolvedLocale]);
 
-  const formatDateTime = (val: string) => {
-    try {
-      return format(parseISO(val), 'MMM d, yyyy HH:mm');
-    } catch {
-      return val;
-    }
-  };
-
   const columns = useMemo<ColumnDef<ShowCostResponse>[]>(
     () => [
       {
@@ -327,15 +271,32 @@ export function ShowCostsTable({
       {
         accessorKey: 'start_time',
         header: () => <SortableHeader columnId="start_time" label="Schedule" sortRules={sortRules} onSort={handleSort} />,
-        cell: ({ row }) => (
-          <div className="flex flex-col gap-0.5 text-xs text-muted-foreground whitespace-nowrap">
-            <span>{formatDateTime(row.original.start_time)}</span>
-            <span>
-              to
-              {formatDateTime(row.original.end_time).split(' ').slice(-1)[0]}
-            </span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          try {
+            const start = parseISO(row.original.start_time);
+            const end = parseISO(row.original.end_time);
+            const startStr = format(start, 'MMM d, yyyy HH:mm');
+            const isSameDay = start.getFullYear() === end.getFullYear()
+              && start.getMonth() === end.getMonth()
+              && start.getDate() === end.getDate();
+            const endStr = isSameDay
+              ? format(end, 'HH:mm')
+              : format(end, 'MMM d, yyyy HH:mm');
+            return (
+              <div className="flex flex-col gap-0.5 text-xs text-muted-foreground whitespace-nowrap">
+                <span>{startStr}</span>
+                <span>{`to ${endStr}`}</span>
+              </div>
+            );
+          } catch {
+            return (
+              <div className="flex flex-col gap-0.5 text-xs text-muted-foreground whitespace-nowrap">
+                <span>{row.original.start_time}</span>
+                <span>{`to ${row.original.end_time}`}</span>
+              </div>
+            );
+          }
+        },
       },
       {
         id: 'creators',
@@ -401,24 +362,16 @@ export function ShowCostsTable({
             <div className="flex flex-col gap-1 items-start">
               {isUnresolved
                 ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-500 gap-1 text-[11px] font-semibold cursor-pointer">
-                            <AlertTriangle className="h-3 w-3" />
-                            Unresolved
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-xs space-y-1">
-                          <p className="font-semibold">Unresolved billing issues:</p>
-                          <ul className="list-disc pl-4 space-y-0.5">
-                            {row.original.unresolved_reasons.map((r) => (
-                              <li key={r}>{r}</li>
-                            ))}
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <WarningTooltip
+                      trigger={(
+                        <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-500 gap-1 text-[11px] font-semibold cursor-pointer">
+                          <AlertTriangle className="h-3 w-3" />
+                          Unresolved
+                        </Badge>
+                      )}
+                      title="Unresolved billing issues:"
+                      items={row.original.unresolved_reasons}
+                    />
                   )
                 : (
                     <span className="text-sm font-bold text-foreground">
@@ -426,24 +379,16 @@ export function ShowCostsTable({
                     </span>
                   )}
               {row.original.calculation_warnings.length > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-[10px] text-amber-600 dark:text-amber-500 flex items-center gap-1 cursor-pointer hover:underline">
-                        <AlertTriangle className="h-3 w-3" />
-                        Warnings
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-xs space-y-1">
-                      <p className="font-semibold">Calculation warning(s):</p>
-                      <ul className="list-disc pl-4 space-y-0.5">
-                        {row.original.calculation_warnings.map((w) => (
-                          <li key={w}>{w}</li>
-                        ))}
-                      </ul>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <WarningTooltip
+                  trigger={(
+                    <span className="text-[10px] text-amber-600 dark:text-amber-500 flex items-center gap-1 cursor-pointer hover:underline">
+                      <AlertTriangle className="h-3 w-3" />
+                      Warnings
+                    </span>
+                  )}
+                  title="Calculation warning(s):"
+                  items={row.original.calculation_warnings}
+                />
               )}
             </div>
           );
