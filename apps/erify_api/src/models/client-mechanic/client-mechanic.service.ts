@@ -345,7 +345,7 @@ export class ClientMechanicService extends BaseModelService {
       const hasSnapshotRef = snapshotRefs.get(snapshotIdKey)?.has(mechanic.uid) ?? false;
       const hasLatestRef = latestTemplateRefs.get(templateIdKey)?.has(mechanic.uid) ?? false;
 
-      let status: 'current' | 'stale' | 'dropped' | 'unassigned' = 'unassigned';
+      let status: 'current' | 'stale' | 'dropped' = 'dropped';
       let frozenRevision: number | null = null;
 
       if (hasSnapshotRef) {

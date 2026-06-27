@@ -109,7 +109,7 @@ export const mechanicCoverageShowSchema = z.object({
   uid: z.string(),
   name: z.string(),
   start_time: z.string(),
-  status: z.enum(['current', 'stale', 'dropped', 'unassigned']),
+  status: z.enum(['current', 'stale', 'dropped']),
   task_uid: z.string().nullable(),
   template_uid: z.string().nullable(),
   template_name: z.string().nullable(),
