@@ -5,7 +5,7 @@
 > **Context**: Follow-up to PR #235 ("Simplify client mechanic show coverage"), which removed the `unassigned` status and the Flag-to-Manager action from the UI but left the backend computing a `current`/`stale`/`dropped` status that no longer has a UI consumer and that the feature owner found confusing (specifically, "dropped" — a row stays in the list even when "dropped").
 
 ## Problem
-
+Shows Using This Mechanic
 The current `current`/`stale`/`dropped` status conflated two different drift signals (instruction content edited vs. mechanic removed from template) into a 3-way enum, while the underlying purpose of this view is simpler: list which shows have a moderation task that actually references this mechanic. The "dropped" label specifically read as if the row should be excluded, when in fact it meant "this task referenced the mechanic, but the live template definition has since dropped it" — a forward-looking signal, not an inclusion criterion. The frontend column for any of this was also removed in PR #235, leaving the backend computing a value with no consumer.
 
 ## What stays the same
