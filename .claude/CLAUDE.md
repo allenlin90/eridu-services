@@ -2,7 +2,7 @@
 
 This file exists because Claude Code auto-loads `.claude/CLAUDE.md`.
 
-`../AGENTS.md` is the canonical shared instruction file for this repository. It is auto-imported below so its guidance — including the skill routing map for `../.agent/skills/` — is always in context. Follow it as the source of truth for shared behavioral and project-specific guidance.
+`../AGENTS.md` is the canonical shared instruction file for this repository. It is auto-imported below so its guidance — including the skill routing map for `../.agents/skills/` — is always in context. Follow it as the source of truth for shared behavioral and project-specific guidance.
 
 @../AGENTS.md
 
@@ -15,13 +15,13 @@ This file exists because Claude Code auto-loads `.claude/CLAUDE.md`.
 | Artifact | Location | Notes |
 | --- | --- | --- |
 | Shared repo instructions | `../AGENTS.md` | Canonical source of truth |
-| Skills | `../.agent/skills/` | Read skills directly from here |
-| Workflows | `../.agent/workflows/` | Read workflows directly from here |
-| Rules | `../.agent/rules/` | Supplemental house rules |
+| Skills | `../.agents/skills/` | Read skills directly from here |
+| Workflows | `../.agents/workflows/` | Read workflows directly from here |
+| Rules | `../.agents/rules/` | Supplemental house rules |
 | Memory | `./memory/` | Supplementary deep-dive references |
 | Subagents | `./agents/` | Claude-specific subagents |
 
 ## Suggested Claude Startup Flow
 1. Read `../AGENTS.md`.
-2. Load the relevant skill from `../.agent/skills/`.
+2. Load the relevant skill from `../.agents/skills/`.
 3. Use `./memory/` only when you need extra reference depth after reading the canonical guidance.

@@ -5,11 +5,11 @@ argument-hint: "[PR number or branch — optional, defaults to current branch vs
 
 # PR Readiness Verdict
 
-Determine whether this PR is ready to merge by running `.agent/workflows/pr-review.md` to completion. Target: `$ARGUMENTS` (if empty, review the current branch against `origin/master`).
+Determine whether this PR is ready to merge by running `.agents/workflows/pr-review.md` to completion. Target: `$ARGUMENTS` (if empty, review the current branch against `origin/master`).
 
 Follow the workflow exactly — do not summarize it from memory:
 
-1. **Read the workflow.** Open `.agent/workflows/pr-review.md` and follow it top to bottom.
+1. **Read the workflow.** Open `.agents/workflows/pr-review.md` and follow it top to bottom.
 2. **Scope.** Run `git diff --name-only origin/master...HEAD` (or the given PR's diff) and run only the gates that match the changed layers.
 3. **Run every applicable gate** (erify_api / eridu_auth / frontend / shared package / documentation) and the **Verification gate** (`lint` · `typecheck` · `test` · `build` for each affected workspace). Report actual command output — never assert a check passed without running it.
 4. **Run the Wrap-up step** — this is part of the verdict, not optional:

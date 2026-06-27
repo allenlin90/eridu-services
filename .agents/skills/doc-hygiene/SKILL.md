@@ -77,7 +77,7 @@ When the assistant is mid-conversation and about to add reasoning artifacts (e.g
 ## Related
 
 - `AGENTS.md` — Knowledge and Doc Lifecycle.
-- `.agent/workflows/ideation-lifecycle.md` — when an ideation doc transitions toward PRD or feature doc status.
-- `.agent/workflows/doc-lifecycle.md` — phase-boundary doc reorganization.
-- `.agent/workflows/knowledge-sync.md` — keeping docs in sync after feature delivery or refactors.
-- `.agent/workflows/feature-version-cutover.md` — version cutover is the right place to surface audit history; the doc body still reads as current truth.
+- `.agents/workflows/ideation-lifecycle.md` — when an ideation doc transitions toward PRD or feature doc status.
+- `.agents/workflows/doc-lifecycle.md` — phase-boundary doc reorganization.
+- `.agents/workflows/knowledge-sync.md` — keeping docs in sync after feature delivery or refactors.
+- `.agents/workflows/feature-version-cutover.md` — version cutover is the right place to surface audit history; the doc body still reads as current truth.

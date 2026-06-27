@@ -58,7 +58,7 @@ For each PRD in `docs/prd/` (excluding `README.md`):
 
 3. Delete the PRD from `docs/prd/`.
 
-4. **Generate user-facing docs** — run the `user-facing-docs` skill (`.agent/skills/user-facing-docs/SKILL.md`) to produce role-scoped user guides, SOPs, and FAQ entries in `apps/eridu_docs/src/content/docs/`. Cross-link the feature doc to the generated user guides and vice versa.
+4. **Generate user-facing docs** — run the `user-facing-docs` skill (`.agents/skills/user-facing-docs/SKILL.md`) to produce role-scoped user guides, SOPs, and FAQ entries in `apps/eridu_docs/src/content/docs/`. Cross-link the feature doc to the generated user guides and vice versa.
 
 **Deferred PRDs → clean up, record deferral**
 
@@ -135,7 +135,7 @@ After handling PRDs, check `docs/ideation/` for related topics:
 3. **Phase close → audit ideation staleness**: Review active ideation docs. Any topic sitting for 2+ phases without promotion should be refreshed or dropped.
 4. Update `docs/ideation/README.md` tables to reflect any changes.
 
-See `.agent/workflows/ideation-lifecycle.md` for the full cross-check workflow.
+See `.agents/workflows/ideation-lifecycle.md` for the full cross-check workflow.
 
 ### 7. Verify cross-references
 

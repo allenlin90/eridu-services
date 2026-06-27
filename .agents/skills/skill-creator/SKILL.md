@@ -95,6 +95,6 @@ Use `references/` for long examples or domain detail. Use `scripts/` for determi
 
 ## Repo-Specific Notes
 
-- Skills in this repo live under `.agent/skills/`.
+- Skills in this repo live under `.agents/skills/`.
 - If the skill governs documentation placement or roadmap ownership, align it with [monorepo-doc-layering](../monorepo-doc-layering/SKILL.md).
 - Prefer repo-local examples over invented examples when refining an existing skill.

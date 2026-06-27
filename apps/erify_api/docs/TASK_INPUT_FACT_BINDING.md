@@ -416,7 +416,7 @@ The same indexed columns and audit history feed every consumer. PR 12 stabilizes
 
 ## 6. Three-Perspective UI Consumption Map
 
-Every entity-scoped feature in PR 12 ships across the three perspectives canonized in [`.agent/skills/frontend-ui-components/SKILL.md`](../../../../.agent/skills/frontend-ui-components/SKILL.md). Shared widgets pass an entity scope + filter into the same renderer; data and audit history come from the read shapes in §5.
+Every entity-scoped feature in PR 12 ships across the three perspectives canonized in [`.agents/skills/frontend-ui-components/SKILL.md`](../../../../.agents/skills/frontend-ui-components/SKILL.md). Shared widgets pass an entity scope + filter into the same renderer; data and audit history come from the read shapes in §5.
 
 ```mermaid
 flowchart TB

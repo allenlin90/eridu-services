@@ -1,13 +1,13 @@
 # Skills Integration Guide
 
-This document clarifies how `.agent/skills/` project skills relate to Claude Code memory files.
+This document clarifies how `.agents/skills/` project skills relate to Claude Code memory files.
 
-> **Canonical skill location**: `.agent/skills/`. Claude Code reads skills directly from this path via the `Read` tool — there is no `.claude/skills/` copy.
+> **Canonical skill location**: `.agents/skills/`. Claude Code reads skills directly from this path via the `Read` tool — there is no `.claude/skills/` copy.
 
 ## Authority Hierarchy
 
 ```
-1. .agent/skills/           ← PRIMARY (single source of truth)
+1. .agents/skills/           ← PRIMARY (single source of truth)
 2. .claude/memory/*.md      ← SECONDARY (quick reference, known issues)
 3. Codebase examples        ← VALIDATION (task.service.ts, etc.)
 ```
@@ -16,8 +16,8 @@ This document clarifies how `.agent/skills/` project skills relate to Claude Cod
 
 For feature delivery, behavior changes, and refactors, run:
 
-1. `.agent/workflows/verification.md`
-2. `.agent/workflows/knowledge-sync.md`
+1. `.agents/workflows/verification.md`
+2. `.agents/workflows/knowledge-sync.md`
 
 This keeps docs, skills, workflows/rules, and memory references aligned with shipped behavior.
 
@@ -32,15 +32,15 @@ For large frontend route components (roughly >200 LOC or mixed concerns), the st
 5. Preserve route-state behavior parity (`page`, `limit`, `date`, filters) and verify with tests.
 
 Source of truth:
-- `.agent/skills/frontend-code-quality/SKILL.md`
-- `.agent/skills/frontend-tech-stack/SKILL.md`
-- `.agent/skills/frontend-testing-patterns/SKILL.md`
-- `.agent/rules/01-general-agent-guidelines.mdc`
-- `.agent/workflows/verification.md`
+- `.agents/skills/frontend-code-quality/SKILL.md`
+- `.agents/skills/frontend-tech-stack/SKILL.md`
+- `.agents/skills/frontend-testing-patterns/SKILL.md`
+- `.agents/rules/01-general-agent-guidelines.mdc`
+- `.agents/workflows/verification.md`
 
 ## Backend Large-File Refactor Pattern (2026-04-25)
 
-For oversized `apps/erify_api` NestJS files, use `.agent/skills/backend-large-file-refactor/SKILL.md`.
+For oversized `apps/erify_api` NestJS files, use `.agents/skills/backend-large-file-refactor/SKILL.md`.
 
 Overlap boundary:
 - this is a development principle and decomposition decision guide, not a replacement for `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `code-quality`, or `engineering-best-practices-enforcer`
@@ -63,14 +63,14 @@ Current examples:
 - `apps/erify_api/src/models/schedule/schedule-upload-progress.ts`
 
 Additional frontend guidance (2026-03-06):
-- `.agent/skills/frontend-api-layer/SKILL.md` now requires no FE-side required-data joins across endpoints with mismatched auth scopes.
-- `.agent/skills/frontend-state-management/SKILL.md` now requires scoping timer-driven state updates to the smallest subtree.
-- `.agent/skills/shift-schedule-pattern/SKILL.md` now requires shared operational-day boundary utilities instead of route-local duplicated math.
-- `.agent/skills/shift-schedule-pattern/SKILL.md` and `.agent/skills/frontend-ui-components/SKILL.md` now codify date/time timezone contracts:
+- `.agents/skills/frontend-api-layer/SKILL.md` now requires no FE-side required-data joins across endpoints with mismatched auth scopes.
+- `.agents/skills/frontend-state-management/SKILL.md` now requires scoping timer-driven state updates to the smallest subtree.
+- `.agents/skills/shift-schedule-pattern/SKILL.md` now requires shared operational-day boundary utilities instead of route-local duplicated math.
+- `.agents/skills/shift-schedule-pattern/SKILL.md` and `.agents/skills/frontend-ui-components/SKILL.md` now codify date/time timezone contracts:
   - parse `YYYY-MM-DD` as local calendar dates,
   - round-trip `datetime-local` via runtime local wall time -> ISO persistence,
   - avoid ISO string chopping (`split('T')`, stripping `Z`) for UI conversion.
-- `.agent/skills/shift-schedule-pattern/SKILL.md` now also codifies Schedule-X rendering/fetch contracts:
+- `.agents/skills/shift-schedule-pattern/SKILL.md` now also codifies Schedule-X rendering/fetch contracts:
   - explicitly set calendar timezone in config,
   - split cross-midnight timed blocks into per-day timeline segments,
   - derive query `limit` from view/range bucket (`day`/`week`/`month`) instead of static over-fetch ceilings.
@@ -317,7 +317,7 @@ See `AGENTS.md` § Skill Routing for the authoritative, complete list of all ski
 
 ## Key Takeaways
 
-1. **Skills are authoritative** - Trust `.agent/skills/` over memory files
+1. **Skills are authoritative** - Trust `.agents/skills/` over memory files
 2. **Schemas CAN use Prisma** - To define payload types (abstraction layer)
 3. **Services CANNOT use Prisma** - In method signatures or logic
 4. **Use Parameters<>** - For repository pass-through methods

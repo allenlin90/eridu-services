@@ -1,9 +1,9 @@
 export const meta = {
   name: 'doc-skill-sync-audit',
-  description: 'Audit .agent skills/workflows/rules and docs/PRDs against current code; fix drift, generalize implementation details, retire shipped specs',
+  description: 'Audit .agents skills/workflows/rules and docs/PRDs against current code; fix drift, generalize implementation details, retire shipped specs',
   phases: [
     { title: 'Skills Audit', detail: 'Haiku review + Sonnet fix across 71 skills in 10 batches' },
-    { title: 'Workflows & Rules Audit', detail: 'Haiku review + Sonnet fix for .agent/workflows and .agent/rules' },
+    { title: 'Workflows & Rules Audit', detail: 'Haiku review + Sonnet fix for .agents/workflows and .agents/rules' },
     { title: 'Misc Docs Audit', detail: 'Haiku review + Sonnet fix for engineering/workflow docs and READMEs; retire shipped superpowers spec' },
     { title: 'PRD & Roadmap Sync', detail: 'Verify and fix doc-drift items identified in the implementation audit' },
   ],
@@ -44,10 +44,10 @@ const FIX_SCHEMA = {
 }
 
 const CONVENTIONS = `Project conventions (from AGENTS.md — apply these, don't restate them):
-- Skills live in .agent/skills/<name>/SKILL.md (+ optional references/ subfolder). They must stay generic; avoid recording implementation details (specific file paths, line numbers, function/class names, LOC counts, inlined code snapshots) unless the reference is a stable, foundational convention AGENTS.md itself establishes (e.g. "use task.service.ts as the reference implementation").
+- Skills live in .agents/skills/<name>/SKILL.md (+ optional references/ subfolder). They must stay generic; avoid recording implementation details (specific file paths, line numbers, function/class names, LOC counts, inlined code snapshots) unless the reference is a stable, foundational convention AGENTS.md itself establishes (e.g. "use task.service.ts as the reference implementation").
 - A common failure mode: a skill describes a pattern that was aspirational/planned, and the code has since implemented it differently — or the code evolved and the skill's snapshot is now stale.
-- docs/ holds product docs: domain/, engineering/, features/, prd/ (incl. prd/future/), roadmap/ (PHASE_1..5.md), ideation/, tech-debt/, workflows/, superpowers/specs (transient design specs, retired once shipped per .agent/workflows/doc-lifecycle.md).
-- This is a documentation-only audit: never edit application/source code, only files under .agent/ and docs/ (markdown/.mdc).`
+- docs/ holds product docs: domain/, engineering/, features/, prd/ (incl. prd/future/), roadmap/ (PHASE_1..5.md), ideation/, tech-debt/, workflows/, superpowers/specs (transient design specs, retired once shipped per .agents/workflows/doc-lifecycle.md).
+- This is a documentation-only audit: never edit application/source code, only files under .agents/ and docs/ (markdown/.mdc).`
 
 function reviewPrompt(files, codeHints, extraNote) {
   return `You are auditing eridu-services markdown files (skills/workflows/rules/docs) for drift against the current codebase. The repo root is the current working directory.
@@ -56,7 +56,7 @@ ${CONVENTIONS}
 
 Read these files in full:
 ${files.map((f) => `- ${f}`).join('\n')}
-If any of these is a skill file (.agent/skills/<name>/SKILL.md), also check for a sibling references/ subfolder (run \`find .agent/skills/<name>/references -type f\`) and read any files found there.
+If any of these is a skill file (.agents/skills/<name>/SKILL.md), also check for a sibling references/ subfolder (run \`find .agents/skills/<name>/references -type f\`) and read any files found there.
 
 Relevant code/doc areas to cross-check against: ${codeHints}
 ${extraNote ? '\n' + extraNote + '\n' : ''}
@@ -64,7 +64,7 @@ For every file, identify:
 1. "implementation-detail" — passages pinned to a specific file path, line number, exact function/class/variable name, LOC count, or an inlined code snippet mirroring a current implementation snapshot that will go stale. Flag for generalization (this applies to skills/workflows/rules — docs/ content describing actual shipped behavior is expected to be specific and should NOT be flagged for this).
 2. "stale-fact" / "outdated-pattern" — a statement that no longer matches the current code or current doc/roadmap state (renamed, removed, restructured, status changed since the doc was written).
 3. "broken-reference" — a path to another file (skill, doc, or code) that no longer exists.
-4. "retire-candidate" — a design spec/PRD whose described work has fully shipped and, per .agent/workflows/doc-lifecycle.md, should be retired.
+4. "retire-candidate" — a design spec/PRD whose described work has fully shipped and, per .agents/workflows/doc-lifecycle.md, should be retired.
 
 Do not flag accurate content, stylistic choices, or stable cross-references between skills/AGENTS.md/docs. For every finding, give exact evidence: quote the passage and cite the current code/doc file:line (or state the referenced path doesn't exist). If something seems missing but isn't a misstatement, add a one-line note to "suggestions" — do not draft the content. List every reviewed file that has zero issues in "clean_files".`
 }
@@ -94,10 +94,10 @@ ${JSON.stringify(review.findings, null, 2)}
 For each finding:
 - "stale-fact" / "outdated-pattern" / "broken-reference": re-verify against current code/docs (grep/read), then correct the text in the named file to match reality.
 - "implementation-detail": rewrite the flagged passage to describe the pattern/convention generically, dropping the brittle specific (path/line/snippet/LOC count) — unless that would make the guidance meaningless, in which case keep only the minimum needed.
-- "retire-candidate": read .agent/workflows/doc-lifecycle.md and follow its retirement procedure for that artifact type (e.g. Superpowers Spec/Plan Retirement, Design Doc Promotion). Capture any still-useful durable decision in its proper home BEFORE deleting, per that procedure — but do not invent new sections elsewhere; only fold in content the spec/PRD itself already states.
+- "retire-candidate": read .agents/workflows/doc-lifecycle.md and follow its retirement procedure for that artifact type (e.g. Superpowers Spec/Plan Retirement, Design Doc Promotion). Capture any still-useful durable decision in its proper home BEFORE deleting, per that procedure — but do not invent new sections elsewhere; only fold in content the spec/PRD itself already states.
 
 Hard constraints:
-- Only touch files under .agent/ or docs/ (markdown/.mdc). Never edit application/source code, configs, or anything else.
+- Only touch files under .agents/ or docs/ (markdown/.mdc). Never edit application/source code, configs, or anything else.
 - Surgical edits only: correct/remove/generalize/retire EXISTING text. Do NOT add new sections or substantial new content. If a finding implies new content is genuinely needed, skip the edit and add a one-line note to "suggestions" instead.
 - Match each file's existing tone, structure, and formatting conventions.
 - If, on closer inspection, a finding turns out to be incorrect or already fixed, skip it and explain why in "skipped".
@@ -109,131 +109,131 @@ const SKILL_BATCHES = [
   {
     name: 'backend-core',
     files: [
-      '.agent/skills/service-pattern-nestjs/SKILL.md',
-      '.agent/skills/repository-pattern-nestjs/SKILL.md',
-      '.agent/skills/backend-controller-pattern-nestjs/SKILL.md',
-      '.agent/skills/orchestration-service-nestjs/SKILL.md',
-      '.agent/skills/authentication-authorization-nestjs/SKILL.md',
-      '.agent/skills/erify-authorization/SKILL.md',
-      '.agent/skills/backend-large-file-refactor/SKILL.md',
+      '.agents/skills/service-pattern-nestjs/SKILL.md',
+      '.agents/skills/repository-pattern-nestjs/SKILL.md',
+      '.agents/skills/backend-controller-pattern-nestjs/SKILL.md',
+      '.agents/skills/orchestration-service-nestjs/SKILL.md',
+      '.agents/skills/authentication-authorization-nestjs/SKILL.md',
+      '.agents/skills/erify-authorization/SKILL.md',
+      '.agents/skills/backend-large-file-refactor/SKILL.md',
     ],
     codeHints: 'apps/erify_api/src/modules/tasks/ (task.service.ts, task-orchestration.service.ts as the canonical reference per AGENTS.md), apps/erify_api/src/modules/studio-membership/, apps/erify_api/src/common/guards/ and decorators (StudioProtected, AdminProtected, JwtAuth ordering), apps/erify_api/src/common/.',
   },
   {
     name: 'backend-data-infra',
     files: [
-      '.agent/skills/database-patterns/SKILL.md',
-      '.agent/skills/soft-delete-restore/SKILL.md',
-      '.agent/skills/data-validation/SKILL.md',
-      '.agent/skills/environment-configuration-zod/SKILL.md',
-      '.agent/skills/jsonb-analytics-snapshot/SKILL.md',
-      '.agent/skills/local-database-cli/SKILL.md',
-      '.agent/skills/data-compatibility-migration/SKILL.md',
+      '.agents/skills/database-patterns/SKILL.md',
+      '.agents/skills/soft-delete-restore/SKILL.md',
+      '.agents/skills/data-validation/SKILL.md',
+      '.agents/skills/environment-configuration-zod/SKILL.md',
+      '.agents/skills/jsonb-analytics-snapshot/SKILL.md',
+      '.agents/skills/local-database-cli/SKILL.md',
+      '.agents/skills/data-compatibility-migration/SKILL.md',
     ],
     codeHints: 'apps/erify_api/prisma/schema.prisma and prisma/migrations/, repository implementations under apps/erify_api/src/modules/*/*.repository.ts (soft-delete, transactions, bulk ops, optimistic locking), apps/erify_api/src/config/ (Zod env validation), apps/eridu_auth equivalents where referenced.',
   },
   {
     name: 'backend-specialized',
     files: [
-      '.agent/skills/api-performance-optimization/SKILL.md',
-      '.agent/skills/backend-testing-patterns/SKILL.md',
-      '.agent/skills/observability-logging/SKILL.md',
-      '.agent/skills/fact-extraction-pipeline/SKILL.md',
-      '.agent/skills/template-system-fact-migration/SKILL.md',
-      '.agent/skills/file-upload-presign/SKILL.md',
+      '.agents/skills/api-performance-optimization/SKILL.md',
+      '.agents/skills/backend-testing-patterns/SKILL.md',
+      '.agents/skills/observability-logging/SKILL.md',
+      '.agents/skills/fact-extraction-pipeline/SKILL.md',
+      '.agents/skills/template-system-fact-migration/SKILL.md',
+      '.agents/skills/file-upload-presign/SKILL.md',
     ],
     codeHints: 'apps/erify_api/src/modules/fact-extraction/ (fact-extraction.service.ts), apps/erify_api/src/modules/task-templates/, apps/erify_api/src/**/*.spec.ts for testing patterns, apps/erify_api/src/common/ for logging/interceptors, the file-upload/presign module under apps/erify_api/src/modules/.',
   },
   {
     name: 'frontend-core',
     files: [
-      '.agent/skills/frontend-tech-stack/SKILL.md',
-      '.agent/skills/frontend-api-layer/SKILL.md',
-      '.agent/skills/frontend-state-management/SKILL.md',
-      '.agent/skills/frontend-error-handling/SKILL.md',
-      '.agent/skills/frontend-code-quality/SKILL.md',
-      '.agent/skills/frontend-testing-patterns/SKILL.md',
-      '.agent/skills/frontend-performance/SKILL.md',
+      '.agents/skills/frontend-tech-stack/SKILL.md',
+      '.agents/skills/frontend-api-layer/SKILL.md',
+      '.agents/skills/frontend-state-management/SKILL.md',
+      '.agents/skills/frontend-error-handling/SKILL.md',
+      '.agents/skills/frontend-code-quality/SKILL.md',
+      '.agents/skills/frontend-testing-patterns/SKILL.md',
+      '.agents/skills/frontend-performance/SKILL.md',
     ],
     codeHints: 'apps/erify_studios/src/ and apps/erify_creators/src/ — API/service layer, TanStack Query hooks and query-key factories, error boundaries, vitest configs and *.test.tsx files, vite config, package.json scripts.',
   },
   {
     name: 'frontend-ui-feature',
     files: [
-      '.agent/skills/frontend-ui-components/SKILL.md',
-      '.agent/skills/frontend-i18n/SKILL.md',
-      '.agent/skills/pwa-best-practices/SKILL.md',
-      '.agent/skills/table-view-pattern/SKILL.md',
-      '.agent/skills/admin-list-pattern/SKILL.md',
-      '.agent/skills/studio-list-pattern/SKILL.md',
+      '.agents/skills/frontend-ui-components/SKILL.md',
+      '.agents/skills/frontend-i18n/SKILL.md',
+      '.agents/skills/pwa-best-practices/SKILL.md',
+      '.agents/skills/table-view-pattern/SKILL.md',
+      '.agents/skills/admin-list-pattern/SKILL.md',
+      '.agents/skills/studio-list-pattern/SKILL.md',
     ],
     codeHints: 'packages/ui/src/, packages/i18n/, apps/erify_studios/src/features/ list/table view components, PWA manifest/service-worker config in apps/erify_studios and apps/erify_creators.',
   },
   {
     name: 'domain-feature-workflows',
     files: [
-      '.agent/skills/schedule-continuity-workflow/SKILL.md',
-      '.agent/skills/shift-schedule-pattern/SKILL.md',
-      '.agent/skills/task-template-builder/SKILL.md',
-      '.agent/skills/spreadsheet/SKILL.md',
-      '.agent/skills/operations-review-surface/SKILL.md',
+      '.agents/skills/schedule-continuity-workflow/SKILL.md',
+      '.agents/skills/shift-schedule-pattern/SKILL.md',
+      '.agents/skills/task-template-builder/SKILL.md',
+      '.agents/skills/spreadsheet/SKILL.md',
+      '.agents/skills/operations-review-surface/SKILL.md',
     ],
     codeHints: 'apps/erify_api/src/modules/schedules/, apps/erify_api/src/modules/studio-shifts/, apps/erify_api/src/modules/task-templates/ (template builder/versioning), apps/erify_studios/src/features/task-templates, task-review, show-run-review.',
   },
   {
     name: 'architecture',
     files: [
-      '.agent/skills/shared-api-types/SKILL.md',
-      '.agent/skills/design-patterns/SKILL.md',
-      '.agent/skills/solid-principles/SKILL.md',
-      '.agent/skills/domain-refactor-cutover-strategy/SKILL.md',
-      '.agent/skills/package-extraction-strategy/SKILL.md',
-      '.agent/skills/improve-codebase-architecture/SKILL.md',
+      '.agents/skills/shared-api-types/SKILL.md',
+      '.agents/skills/design-patterns/SKILL.md',
+      '.agents/skills/solid-principles/SKILL.md',
+      '.agents/skills/domain-refactor-cutover-strategy/SKILL.md',
+      '.agents/skills/package-extraction-strategy/SKILL.md',
+      '.agents/skills/improve-codebase-architecture/SKILL.md',
     ],
     codeHints: 'packages/api-types/src/, package.json export maps across packages/* (per AGENTS.md monorepo package rules), overall apps/ and packages/ structure.',
   },
   {
     name: 'docs-platform',
     files: [
-      '.agent/skills/astro-starlight-best-practices/SKILL.md',
-      '.agent/skills/eridu-docs-information-architecture/SKILL.md',
-      '.agent/skills/monorepo-doc-layering/SKILL.md',
-      '.agent/skills/ssr-auth-integration/SKILL.md',
-      '.agent/skills/user-facing-docs/SKILL.md',
-      '.agent/skills/doc-hygiene/SKILL.md',
+      '.agents/skills/astro-starlight-best-practices/SKILL.md',
+      '.agents/skills/eridu-docs-information-architecture/SKILL.md',
+      '.agents/skills/monorepo-doc-layering/SKILL.md',
+      '.agents/skills/ssr-auth-integration/SKILL.md',
+      '.agents/skills/user-facing-docs/SKILL.md',
+      '.agents/skills/doc-hygiene/SKILL.md',
     ],
     codeHints: 'apps/eridu_docs/ (astro.config, src/content/, middleware for SSR auth), the docs/ directory structure and existing doc layering described in monorepo-doc-layering.',
   },
   {
     name: 'security-quality-process',
     files: [
-      '.agent/skills/secure-coding-practices/SKILL.md',
-      '.agent/skills/security-threat-model/SKILL.md',
-      '.agent/skills/code-quality/SKILL.md',
-      '.agent/skills/engineering-best-practices-enforcer/SKILL.md',
-      '.agent/skills/agent-instruction-maintenance/SKILL.md',
-      '.agent/skills/plan-workflow-completeness/SKILL.md',
-      '.agent/skills/skill-creator/SKILL.md',
-      '.agent/skills/write-a-skill/SKILL.md',
+      '.agents/skills/secure-coding-practices/SKILL.md',
+      '.agents/skills/security-threat-model/SKILL.md',
+      '.agents/skills/code-quality/SKILL.md',
+      '.agents/skills/engineering-best-practices-enforcer/SKILL.md',
+      '.agents/skills/agent-instruction-maintenance/SKILL.md',
+      '.agents/skills/plan-workflow-completeness/SKILL.md',
+      '.agents/skills/skill-creator/SKILL.md',
+      '.agents/skills/write-a-skill/SKILL.md',
     ],
-    codeHints: 'these are largely process/methodology skills — only check for eridu-specific implementation claims (paths under .agent/, apps/, packages/, AGENTS.md references, skill counts) that have drifted; otherwise confirm clean.',
+    codeHints: 'these are largely process/methodology skills — only check for eridu-specific implementation claims (paths under .agents/, apps/, packages/, AGENTS.md references, skill counts) that have drifted; otherwise confirm clean.',
   },
   {
     name: 'generic-tooling',
     files: [
-      '.agent/skills/tdd/SKILL.md',
-      '.agent/skills/caveman/SKILL.md',
-      '.agent/skills/diagnose/SKILL.md',
-      '.agent/skills/grill-me/SKILL.md',
-      '.agent/skills/grill-with-docs/SKILL.md',
-      '.agent/skills/playwright/SKILL.md',
-      '.agent/skills/prod-data-sync/SKILL.md',
-      '.agent/skills/prototype/SKILL.md',
-      '.agent/skills/to-issues/SKILL.md',
-      '.agent/skills/to-prd/SKILL.md',
-      '.agent/skills/triage/SKILL.md',
-      '.agent/skills/zoom-out/SKILL.md',
-      '.agent/skills/setup-matt-pocock-skills/SKILL.md',
+      '.agents/skills/tdd/SKILL.md',
+      '.agents/skills/caveman/SKILL.md',
+      '.agents/skills/diagnose/SKILL.md',
+      '.agents/skills/grill-me/SKILL.md',
+      '.agents/skills/grill-with-docs/SKILL.md',
+      '.agents/skills/playwright/SKILL.md',
+      '.agents/skills/prod-data-sync/SKILL.md',
+      '.agents/skills/prototype/SKILL.md',
+      '.agents/skills/to-issues/SKILL.md',
+      '.agents/skills/to-prd/SKILL.md',
+      '.agents/skills/triage/SKILL.md',
+      '.agents/skills/zoom-out/SKILL.md',
+      '.agents/skills/setup-matt-pocock-skills/SKILL.md',
     ],
     codeHints: 'mostly generic/methodology skills — check only for eridu-specific implementation claims (paths, tool names, prod-data-sync scripts under apps/erify_api or scripts/, Playwright config) that have drifted; otherwise confirm clean.',
   },
@@ -243,28 +243,28 @@ const WORKFLOW_RULE_BATCHES = [
   {
     name: 'workflows-a',
     files: [
-      '.agent/workflows/doc-lifecycle.md',
-      '.agent/workflows/feature-version-cutover.md',
-      '.agent/workflows/ideation-lifecycle.md',
-      '.agent/workflows/knowledge-sync.md',
-      '.agent/workflows/plan-completeness-audit.md',
-      '.agent/workflows/pr-review.md',
-      '.agent/workflows/prod-data-sync.md',
+      '.agents/workflows/doc-lifecycle.md',
+      '.agents/workflows/feature-version-cutover.md',
+      '.agents/workflows/ideation-lifecycle.md',
+      '.agents/workflows/knowledge-sync.md',
+      '.agents/workflows/plan-completeness-audit.md',
+      '.agents/workflows/pr-review.md',
+      '.agents/workflows/prod-data-sync.md',
     ],
-    codeHints: 'verify any referenced .agent/skills/<name> directories exist, any referenced docs/ paths exist (docs/roadmap/PHASE_4.md, PHASE_5.md, docs/domain/, docs/prd/, docs/superpowers/specs/), and that examples cited (e.g. the "Phase 4 consolidation 2026-05-16" / economics-cost-model.md promotion example) still match the current state of those files.',
+    codeHints: 'verify any referenced .agents/skills/<name> directories exist, any referenced docs/ paths exist (docs/roadmap/PHASE_4.md, PHASE_5.md, docs/domain/, docs/prd/, docs/superpowers/specs/), and that examples cited (e.g. the "Phase 4 consolidation 2026-05-16" / economics-cost-model.md promotion example) still match the current state of those files.',
   },
   {
     name: 'workflows-b-and-rules',
     files: [
-      '.agent/workflows/pwa-migration.md',
-      '.agent/workflows/ui-ux-pro-max.md',
-      '.agent/workflows/verification.md',
-      '.agent/rules/01-general-agent-guidelines.mdc',
-      '.agent/rules/02-erify-api-guide.mdc',
-      '.agent/rules/03-monorepo-packages.mdc',
-      '.agent/rules/documentation.md',
+      '.agents/workflows/pwa-migration.md',
+      '.agents/workflows/ui-ux-pro-max.md',
+      '.agents/workflows/verification.md',
+      '.agents/rules/01-general-agent-guidelines.mdc',
+      '.agents/rules/02-erify-api-guide.mdc',
+      '.agents/rules/03-monorepo-packages.mdc',
+      '.agents/rules/documentation.md',
     ],
-    codeHints: 'verify referenced .agent/skills/<name> directories exist, referenced apps/* paths and package.json conventions in packages/* still hold, and that verification commands (lint/typecheck/test/build) match what package.json scripts in apps/erify_api, apps/eridu_auth, apps/erify_studios, apps/erify_creators actually define.',
+    codeHints: 'verify referenced .agents/skills/<name> directories exist, referenced apps/* paths and package.json conventions in packages/* still hold, and that verification commands (lint/typecheck/test/build) match what package.json scripts in apps/erify_api, apps/eridu_auth, apps/erify_studios, apps/erify_creators actually define.',
   },
 ]
 
@@ -306,7 +306,7 @@ const MISC_DOC_BATCHES = [
       'docs/ideation/README.md',
     ],
     codeHints: 'apps/erify_api/src/modules/studio-costs/, compensation-line-items, and apps/erify_studios/src/features/me (me-show-compensations, me-shift-compensations) to verify whether "Wave 2" cost-stack work described as "in progress" is actually shipped and routed; and the actual docs/features, docs/prd, docs/roadmap, docs/tech-debt, docs/ideation directory listings for each README\'s index accuracy.',
-    extraNote: `Special context: .agent/workflows/doc-lifecycle.md states that during the "Phase 4 consolidation (2026-05-16)" example, economics-cost-model.md was "promoted to docs/domain/". Check whether docs/domain/economics-cost-model.md and docs/domain/BUSINESS.md still describe the cost-stack/compensation work (line items, economics service, costs dashboard, /me compensation self-views) as "Wave 2 in progress" even though it is implemented and routed in code — if so this is a stale-fact / retire-candidate (status header should reflect shipped state per doc-lifecycle's promotion conventions).`,
+    extraNote: `Special context: .agents/workflows/doc-lifecycle.md states that during the "Phase 4 consolidation (2026-05-16)" example, economics-cost-model.md was "promoted to docs/domain/". Check whether docs/domain/economics-cost-model.md and docs/domain/BUSINESS.md still describe the cost-stack/compensation work (line items, economics service, costs dashboard, /me compensation self-views) as "Wave 2 in progress" even though it is implemented and routed in code — if so this is a stale-fact / retire-candidate (status header should reflect shipped state per doc-lifecycle's promotion conventions).`,
   },
 ]
 

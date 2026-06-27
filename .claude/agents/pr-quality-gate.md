@@ -246,7 +246,7 @@ Structure your review as follows:
 ## Reference Hierarchy
 
 When evaluating correctness, use this priority order:
-1. `.agent/skills/` — project skills are primary authority (read via `Read` tool)
+1. `.agents/skills/` — project skills are primary authority (read via `Read` tool)
 2. `task.service.ts` — best model service example
 3. `task-orchestration.service.ts` — best orchestration example
 4. `.claude/memory/ideal-pattern.md` — complete reference implementation

@@ -68,7 +68,7 @@ When a migration contains manual SQL:
 
 - Update this doc with the rationale/pattern if it introduces reusable guidance.
 - Update relevant feature docs if behavior or operations are impacted.
-- Update `.agent/skills/database-patterns/SKILL.md` if the pattern should guide future implementations.
+- Update `.agents/skills/database-patterns/SKILL.md` if the pattern should guide future implementations.
 
 ## Deployment Safety
 

@@ -4,7 +4,7 @@
 
 - **Structure and lifecycle:** `docs/README.md`
 - **Doc layering and placement:** `monorepo-doc-layering` skill
-- **Promotion and phase-boundary workflow:** `.agent/workflows/doc-lifecycle.md`
+- **Promotion and phase-boundary workflow:** `.agents/workflows/doc-lifecycle.md`
 - **Doc hygiene (reasoning artifacts, current-truth):** `doc-hygiene` skill
 
 ## Link Hygiene

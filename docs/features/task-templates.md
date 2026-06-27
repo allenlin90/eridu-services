@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Shipped — foundational; predates the PRD-promotion process
 > **Workstream**: Task Management
-> **Canonical docs**: [BE summary](../../apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md), [FE summary](../../apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md), [Moderation loop workflow](../../apps/erify_studios/docs/MODERATION_WORKFLOW.md), [Builder skill](../../.agent/skills/task-template-builder/SKILL.md)
+> **Canonical docs**: [BE summary](../../apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md), [FE summary](../../apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md), [Moderation loop workflow](../../apps/erify_studios/docs/MODERATION_WORKFLOW.md), [Builder skill](../../.agents/skills/task-template-builder/SKILL.md)
 > **Downstream**: [Task Submission Reporting](./task-submission-reporting.md) — consumes snapshots and task content produced by this feature
 
 ## Problem
@@ -185,7 +185,7 @@ When changing a schema attribute or adding a new one, walk this list before merg
 4. Does the **review sheet** display it without loop filtering? (If no: reviewer blind spot.)
 5. Does the **content validator** in `@eridu/api-types/task-management` enforce it at submit time? (If no: bad data accepted.)
 6. Does the **report projection** still produce correct column keys and values? (If no: downstream report breakage.)
-7. If the attribute affects storage shape: is the change additive, or does it require [feature-version-cutover.md](../../.agent/workflows/feature-version-cutover.md)?
+7. If the attribute affects storage shape: is the change additive, or does it require [feature-version-cutover.md](../../.agents/workflows/feature-version-cutover.md)?
 
 ## Key Product Decisions
 
@@ -263,7 +263,7 @@ Stop the rollout unless all of these are true:
 
 Task Templates is a multi-layer feature. Any change to schema, snapshot semantics, content storage, or canonical-metric link affects all five layers and several downstream consumers. **When refactoring or redesigning any layer, the artifacts below must be updated in the same PR**, not in a follow-up.
 
-Run [.agent/workflows/knowledge-sync.md](../../.agent/workflows/knowledge-sync.md) for the general mechanism. **For schema redesigns specifically** (e.g., major version updates), trigger [.agent/workflows/feature-version-cutover.md](../../.agent/workflows/feature-version-cutover.md) instead — that workflow decides whether this doc updates in place or splits into a versioned folder (`task-templates/README.md` for v2, `task-templates/v1.md` archived).
+Run [.agents/workflows/knowledge-sync.md](../../.agents/workflows/knowledge-sync.md) for the general mechanism. **For schema redesigns specifically** (e.g., major version updates), trigger [.agents/workflows/feature-version-cutover.md](../../.agents/workflows/feature-version-cutover.md) instead — that workflow decides whether this doc updates in place or splits into a versioned folder (`task-templates/README.md` for v2, `task-templates/v1.md` archived).
 
 Feature-specific artifact list:
 
@@ -276,8 +276,8 @@ Feature-specific artifact list:
 | Frontend canonical reference | [apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md](../../apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md)                                     | UI screens, workflows, or task-card contract change                           |
 | Moderation loop reference    | [apps/erify_studios/docs/MODERATION_WORKFLOW.md](../../apps/erify_studios/docs/MODERATION_WORKFLOW.md)                                             | Loop schema, `metadata.loops[]`, or content storage shape changes             |
 | Upload flow reference        | [apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](../../apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)                   | File-field resolution or content-key strategy changes                         |
-| Builder skill                | [.agent/skills/task-template-builder/SKILL.md](../../.agent/skills/task-template-builder/SKILL.md)                                                 | Builder UX, draft, validation, or shared-field insertion patterns change      |
-| Shared schema skill          | [.agent/skills/shared-api-types/SKILL.md](../../.agent/skills/shared-api-types/SKILL.md)                                                           | `template-definition.schema.ts` or task-management exports change             |
+| Builder skill                | [.agents/skills/task-template-builder/SKILL.md](../../.agents/skills/task-template-builder/SKILL.md)                                                 | Builder UX, draft, validation, or shared-field insertion patterns change      |
+| Shared schema skill          | [.agents/skills/shared-api-types/SKILL.md](../../.agents/skills/shared-api-types/SKILL.md)                                                           | `template-definition.schema.ts` or task-management exports change             |
 | Shared schema source         | [packages/api-types/src/task-management/template-definition.schema.ts](../../packages/api-types/src/task-management/template-definition.schema.ts) | Field item shape, validation, or schema engine envelope changes               |
 | Seed                         | [apps/erify_api/prisma/seed.ts](../../apps/erify_api/prisma/seed.ts)                                                                               | New canonical patterns; deprecation of old patterns (e.g., `_l2` workarounds) |
 

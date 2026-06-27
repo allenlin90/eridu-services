@@ -74,7 +74,7 @@ export type PairedShowCreatorActualsResult = PairedShowActualsResult;
  *
  * Extracted into its own service because `@Transactional()` is wired via the
  * NestJS DI proxy and cannot intercept a `this.method()` call within the
- * same class. See `.agent/skills/orchestration-service-nestjs/SKILL.md` —
+ * same class. See `.agents/skills/orchestration-service-nestjs/SKILL.md` —
  * "Why a Separate Processor Service?".
  */
 @Injectable()

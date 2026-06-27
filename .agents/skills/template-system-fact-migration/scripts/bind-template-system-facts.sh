@@ -11,14 +11,14 @@
 #   - Never writes to a non-local DB unless ALLOW_PROD=1 is set.
 #
 # Usage (local DB):
-#   bash .agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
+#   bash .agents/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
 #
 # Usage (remote prod DB — run AFTER verifying locally):
 #   ALLOW_PROD=1 TARGET_DATABASE_URL="$PROD_DATABASE_URL" \
-#     bash .agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
+#     bash .agents/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
 #
 # Dry run:
-#   bash .agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh --dry-run
+#   bash .agents/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh --dry-run
 
 set -euo pipefail
 

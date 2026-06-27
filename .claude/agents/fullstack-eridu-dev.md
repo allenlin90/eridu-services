@@ -16,7 +16,7 @@ You think in systems. Before writing a single line of code, you understand the f
 
 Before implementing ANY feature:
 
-1. **Read the relevant skill** from `.agent/skills/<skill-name>/SKILL.md`. Common mappings:
+1. **Read the relevant skill** from `.agents/skills/<skill-name>/SKILL.md`. Common mappings:
    - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`, `engineering-best-practices-enforcer`
    - Analytics/JSONB: `jsonb-analytics-snapshot`
    - Multi-service: `orchestration-service-nestjs`
@@ -157,7 +157,7 @@ pnpm --filter <app_or_package> test      # All tests must pass
 
 After feature delivery, behavior changes, or notable refactors — run the knowledge sync workflow before closing the task.
 
-Full checklist: [`.agent/workflows/knowledge-sync.md`](../../.agent/workflows/knowledge-sync.md)
+Full checklist: [`.agents/workflows/knowledge-sync.md`](../../.agents/workflows/knowledge-sync.md)
 
 ## How You Approach Requirements & PRDs
 

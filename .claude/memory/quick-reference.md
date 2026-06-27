@@ -86,7 +86,7 @@ For backend performance refactors on existing endpoints:
 Canonical references:
 
 - `apps/erify_api/docs/READ_PATH_OPTIMIZATION.md`
-- `.agent/skills/api-performance-optimization/SKILL.md`
+- `.agents/skills/api-performance-optimization/SKILL.md`
 - `apps/erify_api/src/models/show/schemas/show.schema.ts`
 - `apps/erify_api/src/models/task-template/task-template.repository.ts`
 
@@ -188,7 +188,7 @@ Rules:
 Canonical references:
 - `packages/ui/src/components/date-picker.tsx` — `ResponsiveDateTimePicker`
 - `apps/erify_studios/src/features/studio-shows/components/show-actuals-dialog.tsx`
-- `.agent/skills/frontend-ui-components/SKILL.md` § Responsive Dialog → Drawer Pattern
+- `.agents/skills/frontend-ui-components/SKILL.md` § Responsive Dialog → Drawer Pattern
 
 ---
 
@@ -207,7 +207,7 @@ Canonical implementation references:
 
 - `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts` — concurrency-capped batched pagination
 - `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts` — older fan-out form (legacy)
-- `.agent/skills/table-view-pattern/SKILL.md`
+- `.agents/skills/table-view-pattern/SKILL.md`
 
 ---
 
@@ -715,4 +715,4 @@ packages/
 - For screenshot-sized image uploads, prefer a long-edge ladder `[1440, 1280, 1080, 960]` from the original image instead of one generic max-dimension clamp.
 - `prepareImageForUpload()` in `packages/browser-upload/src/index.ts` now supports explicit `maxLongEdges` and retries the quality ladder at each step.
 - Canonical doc: `apps/erify_api/docs/FILE_UPLOAD.md`
-- Reusable agent guidance: `.agent/skills/file-upload-presign/SKILL.md`
+- Reusable agent guidance: `.agents/skills/file-upload-presign/SKILL.md`

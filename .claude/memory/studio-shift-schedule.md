@@ -3,7 +3,7 @@
 > **Status**: Fully implemented on `feat/studio-shift-schedule`. All backend and frontend features complete.
 
 ## Canonical docs
-- **Skill**: `.agent/skills/shift-schedule-pattern/SKILL.md` — authoritative guide for future work
+- **Skill**: `.agents/skills/shift-schedule-pattern/SKILL.md` — authoritative guide for future work
 - **FE features/workflows**: `apps/erify_studios/docs/STUDIO_SHIFT_SCHEDULE_FEATURES_AND_WORKFLOWS.md`
 - **Backend design**: `apps/erify_api/docs/design/STUDIO_SHIFT_SCHEDULE_DESIGN.md`
 - **Business rules**: `apps/erify_api/docs/BUSINESS.md` — "Studio shift planning and control"

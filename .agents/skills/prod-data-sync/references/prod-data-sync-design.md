@@ -36,8 +36,8 @@ Three artifacts, each with one focused job.
 | Artifact    | Path                                    | Purpose                                                                                                                                       |
 | ----------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Sync script | `scripts/sync-prod-to-local.sh`         | Mechanical work: read prod URLs from env, `pg_dump | psql` per DB, print `prisma migrate status` after. |
-| Skill       | `.agent/skills/prod-data-sync/SKILL.md` | Agent-facing: when to use, when not to, how to invoke, how to add an excluded table, the read-only invariant, the governance-upgrade roadmap. |
-| Workflow    | `.agent/workflows/prod-data-sync.md`    | Step-by-step operational recipe: pre-flight checks, sync, migrate, run feature-specific data jobs, verify, revert.                            |
+| Skill       | `.agents/skills/prod-data-sync/SKILL.md` | Agent-facing: when to use, when not to, how to invoke, how to add an excluded table, the read-only invariant, the governance-upgrade roadmap. |
+| Workflow    | `.agents/workflows/prod-data-sync.md`    | Step-by-step operational recipe: pre-flight checks, sync, migrate, run feature-specific data jobs, verify, revert.                            |
 
 Plus minor edits:
 
@@ -102,7 +102,7 @@ After a sync, the existing tech stack must run against the synced DB and basic f
 
 For feature-specific consumers (e.g., task-template-redesign), the workflow doc instructs the consumer to run their feature's data job (e.g., `normalize-task-template-schemas.ts --dry-run`) and confirm row counts make sense. That verification belongs to the consumer, not to the sync script.
 
-## Skill Contents (`.agent/skills/prod-data-sync/SKILL.md`)
+## Skill Contents (`.agents/skills/prod-data-sync/SKILL.md`)
 
 The skill must teach an agent:
 
@@ -117,7 +117,7 @@ The skill must teach an agent:
    - Non-prod-trusted devs / external contributors → add PII sanitization (column-level scrubbing).
    - Sync becomes painfully slow → grow the exclude list (large blob/audit tables).
 
-## Workflow Contents (`.agent/workflows/prod-data-sync.md`)
+## Workflow Contents (`.agents/workflows/prod-data-sync.md`)
 
 The workflow must walk the operator through:
 

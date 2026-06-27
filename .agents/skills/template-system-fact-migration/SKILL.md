@@ -149,7 +149,7 @@ The shell script ([`scripts/bind-template-system-facts.sh`](./scripts/bind-templ
 Run locally first, then prod:
 
 ```bash
-SCRIPT=.agent/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
+SCRIPT=.agents/skills/template-system-fact-migration/scripts/bind-template-system-facts.sh
 
 # Local
 bash "$SCRIPT"

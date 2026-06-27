@@ -11,7 +11,7 @@ Staged code quality reviews and refactors aligned with monorepo architecture.
 
 ## Priority Model
 
-1. Repo context and established patterns (`AGENTS.md`, `.agent/rules/*`, local conventions)
+1. Repo context and established patterns (`AGENTS.md`, `.agents/rules/*`, local conventions)
 2. Official framework/library guidance
 3. Design principles (SOLID, clean code)
 
@@ -20,7 +20,7 @@ Staged code quality reviews and refactors aligned with monorepo architecture.
 1. Identify scope (`single feature`, `workspace`, `cross-workspace`)
 2. Load relevant skills for affected layers
 3. Read local patterns before proposing changes
-4. Run quality scanner: `bash .agent/skills/engineering-best-practices-enforcer/scripts/scan-quality-signals.sh`
+4. Run quality scanner: `bash .agents/skills/engineering-best-practices-enforcer/scripts/scan-quality-signals.sh`
 5. Perform impact and risk assessment (classify: behavior-preserving / adjacent / changing; risk: low / medium / high)
 6. Produce severity-ordered findings with file references
 7. Execute small safe batches, verify each workspace

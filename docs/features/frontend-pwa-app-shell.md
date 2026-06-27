@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Implemented — `erify_studios`
 > **Workstream**: Frontend platform
-> **Canonical docs**: [`PWA_SHELL_RUNBOOK.md`](../../apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md), [`pwa-best-practices` skill](../../.agent/skills/pwa-best-practices/SKILL.md)
+> **Canonical docs**: [`PWA_SHELL_RUNBOOK.md`](../../apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md), [`pwa-best-practices` skill](../../.agents/skills/pwa-best-practices/SKILL.md)
 > **Related ideation**: [Creator PWA parity and push notifications](../ideation/pwa-push-notifications.md)
 
 ## Problem

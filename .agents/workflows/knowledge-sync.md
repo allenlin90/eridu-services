@@ -36,7 +36,7 @@ Run when any of these are true:
    - Update each app/package `docs/README.md` status/index entries and any roadmap/feature-doc references that still point at the old design path.
 
 3. **Update skills**
-   - Update the most relevant skill(s) in `.agent/skills/*/SKILL.md`.
+   - Update the most relevant skill(s) in `.agents/skills/*/SKILL.md`.
    - Capture only stable/reusable guidance (avoid one-off task logs).
    - Keep paths/references accurate.
    - When frontend access control/navigation behavior changes, document the shared policy location and guard usage so route guard + sidebar visibility remain aligned.
@@ -45,8 +45,8 @@ Run when any of these are true:
    - When route-shell consistency changes, document parent layout boundary + leaf wrapper convention (for example `/system/*` + `AdminLayout`, `studios/$studioId/*` + `PageLayout`).
 
 4. **Update workflows/rules when process changed**
-   - If this change introduces a repeatable process, update/create `.agent/workflows/*.md`.
-   - If it should be mandatory, update `.agent/rules/*.md` and `AGENTS.md`.
+   - If this change introduces a repeatable process, update/create `.agents/workflows/*.md`.
+   - If it should be mandatory, update `.agents/rules/*.md` and `AGENTS.md`.
    - For pagination consistency mandates, update both implementation guidance and review gates so the shared stack is checked during coding, code review, and PR review.
 
 5. **Update memory references**

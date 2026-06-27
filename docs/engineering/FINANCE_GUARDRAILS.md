@@ -40,7 +40,7 @@ Coverage includes the actuals priority cascade resolution, null-bubbling cases a
 
 ## 8. Symmetry by default across parallel entities
 
-When two entities share an architectural pattern (e.g., `ShowCreator` and `StudioShift` both use snapshot + line items + actuals + audit), they share a UX pattern by default. Asymmetry is a deliberate, documented decision with a written reason. New plans must run the symmetry diff in [`.agent/skills/plan-workflow-completeness/`](../../.agent/skills/plan-workflow-completeness/SKILL.md) before sign-off.
+When two entities share an architectural pattern (e.g., `ShowCreator` and `StudioShift` both use snapshot + line items + actuals + audit), they share a UX pattern by default. Asymmetry is a deliberate, documented decision with a written reason. New plans must run the symmetry diff in [`.agents/skills/plan-workflow-completeness/`](../../.agents/skills/plan-workflow-completeness/SKILL.md) before sign-off.
 
 ## 9. Every snapshot field has a documented post-creation edit path with audit
 

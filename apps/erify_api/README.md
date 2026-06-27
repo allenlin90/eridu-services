@@ -110,8 +110,8 @@ bash ../../scripts/sync-prod-to-local.sh
 **Read-only on prod:** the script uses `pg_dump` only against `PROD_*` URLs; `psql` is invoked exclusively against your local DBs. Pre-flight aborts unless local URL hosts are `localhost` / `127.0.0.1` / `::1`.
 
 **See:**
-- [Skill](../../.agent/skills/prod-data-sync/SKILL.md) — when to use, governance roadmap.
-- [Workflow](../../.agent/workflows/prod-data-sync.md) — full operational recipe (pre-flight → sync → migrate → verify → revert).
+- [Skill](../../.agents/skills/prod-data-sync/SKILL.md) — when to use, governance roadmap.
+- [Workflow](../../.agents/workflows/prod-data-sync.md) — full operational recipe (pre-flight → sync → migrate → verify → revert).
 
 > ⚠️ Solo-dev tooling. **Never** run in CI. Tightening required as the team grows (secret manager, SELECT-only role, PII sanitization — see skill).
 

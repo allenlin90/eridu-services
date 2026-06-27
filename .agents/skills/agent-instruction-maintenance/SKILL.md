@@ -1,6 +1,6 @@
 ---
 name: agent-instruction-maintenance
-description: Maintain and update agent instruction files (AGENTS.md, .claude/CLAUDE.md, .agent/ skills and workflows). Use when adding rules to AGENTS.md, updating agent behavioral guidelines, reorganizing agent instruction ownership, auditing CLAUDE.md parity, or integrating new skills/workflows into the canonical routing map.
+description: Maintain and update agent instruction files (AGENTS.md, .claude/CLAUDE.md, .agents/ skills and workflows). Use when adding rules to AGENTS.md, updating agent behavioral guidelines, reorganizing agent instruction ownership, auditing CLAUDE.md parity, or integrating new skills/workflows into the canonical routing map.
 ---
 
 # Agent Instruction Maintenance
@@ -13,9 +13,9 @@ Keep agent instruction files accurate, non-duplicated, and correctly layered.
 |---|---|---|
 | `AGENTS.md` | All shared agent guidance | Any rule/pattern/convention changes |
 | `.claude/CLAUDE.md` | Claude Code redirect only (≤30 lines) | Claude-specific paths change |
-| `.agent/skills/*/SKILL.md` | Domain implementation patterns | Feature/architecture changes |
-| `.agent/workflows/*.md` | Repeatable process definitions | Process steps change |
-| `.agent/rules/*.md` | Mandatory house rules | New cross-cutting constraints |
+| `.agents/skills/*/SKILL.md` | Domain implementation patterns | Feature/architecture changes |
+| `.agents/workflows/*.md` | Repeatable process definitions | Process steps change |
+| `.agents/rules/*.md` | Mandatory house rules | New cross-cutting constraints |
 | `.claude/memory/*.md` | Tool-specific supplementary refs | Durable knowledge changes |
 
 ## Architecture Rules
@@ -39,7 +39,7 @@ New/renamed skill → update `AGENTS.md` § Skill Routing (alphabetical within c
 Verify: `.claude/CLAUDE.md` doesn't duplicate, memory files don't contradict, no verbatim copies in other skills.
 
 ### 5. Verify Parity
-Every skill in `.agent/skills/` has a routing entry. Every workspace listed. Dev commands current.
+Every skill in `.agents/skills/` has a routing entry. Every workspace listed. Dev commands current.
 
 ## Content Quality Rules
 

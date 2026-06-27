@@ -2,7 +2,7 @@
 
 > **Status**: Active ideation with initial implementation slice shipped in March 2026
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [api-performance-optimization skill](../../.agent/skills/api-performance-optimization/SKILL.md), [Read-Path Optimization](../../apps/erify_api/docs/READ_PATH_OPTIMIZATION.md), [Studios Internal Read Traffic Hardening](../../apps/erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md)
+> **Related**: [api-performance-optimization skill](../../.agents/skills/api-performance-optimization/SKILL.md), [Read-Path Optimization](../../apps/erify_api/docs/READ_PATH_OPTIMIZATION.md), [Studios Internal Read Traffic Hardening](../../apps/erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md)
 
 ## What
 
@@ -67,7 +67,7 @@ Promote to a PRD when **any** of these are true:
 
 ### Skill reference
 
-The `.agent/skills/api-performance-optimization/SKILL.md` covers: lean select/include, N+1 audit methodology, aggregation strategy, bulk write guards, pagination caps, and query logging. Use this as the implementation checklist when promoted.
+The `.agents/skills/api-performance-optimization/SKILL.md` covers: lean select/include, N+1 audit methodology, aggregation strategy, bulk write guards, pagination caps, and query logging. Use this as the implementation checklist when promoted.
 
 ### Companion frontend work
 

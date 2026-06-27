@@ -6,9 +6,9 @@ Operational guide for coding agents in `eridu-services`.
 - This file applies to the entire monorepo.
 - `AGENTS.md` is the canonical shared instruction file for this repo.
 - Claude Code auto-loads `.claude/CLAUDE.md`; that file should remain a thin adapter that points back to this file instead of duplicating shared guidance.
-- Canonical agent skill location: `.agent/skills/`. Skills are discovered dynamically from this directory.
-- House rules: `.agent/rules/`.
-- Workflows: `.agent/workflows/`.
+- Canonical agent skill location: `.agents/skills/`. Skills are discovered dynamically from this directory.
+- House rules: `.agents/rules/`.
+- Workflows: `.agents/workflows/`.
 
 ## Shared Behavioral Guidelines
 
@@ -79,7 +79,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## Tool-Specific Notes
 
 - **Claude Code**: see `.claude/CLAUDE.md` for loading behavior, paths, and adapter rules.
-- **OpenCode**: `opencode.json` loads this file. Skills are routed from `.agent/skills/` via `.opencode/skills` symlink.
+- **OpenCode**: `opencode.json` loads this file. Skills are routed from `.agents/skills/` via `.opencode/skills` symlink.
 
 ## Project-Specific Guidelines
 
@@ -104,7 +104,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ### Workflow Rules
 
 #### Skill-First Development
-- Before implementing any feature, load the relevant skill from `.agent/skills/<skill-name>/SKILL.md`.
+- Before implementing any feature, load the relevant skill from `.agents/skills/<skill-name>/SKILL.md`.
 - Prefer the routing map in this file for quick lookup, but treat the skill directory itself as authoritative.
 
 #### Dependency Changes
@@ -119,12 +119,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - If another workspace shares the dependency, align versions and verify those dependents too.
 
 #### Knowledge And Doc Lifecycle
-- After feature delivery, behavior changes, or refactors, run `.agent/workflows/knowledge-sync.md`.
-- When a phase closes, PRDs ship, or docs are reorganized, run `.agent/workflows/doc-lifecycle.md`.
-- When a backwards-incompatible schema redesign lands for a shipped feature, run `.agent/workflows/feature-version-cutover.md` (manual trigger). It decides whether to update docs in place or promote the feature doc to a versioned folder (`v1.md` archived, `README.md` describing v2), and enforces same-PR updates across all related docs and skills.
+- After feature delivery, behavior changes, or refactors, run `.agents/workflows/knowledge-sync.md`.
+- When a phase closes, PRDs ship, or docs are reorganized, run `.agents/workflows/doc-lifecycle.md`.
+- When a backwards-incompatible schema redesign lands for a shipped feature, run `.agents/workflows/feature-version-cutover.md` (manual trigger). It decides whether to update docs in place or promote the feature doc to a versioned folder (`v1.md` archived, `README.md` describing v2), and enforces same-PR updates across all related docs and skills.
 - Use `docs/tech-debt/` for accepted implementation gaps and cleanup issues that should be fixed later; use `docs/ideation/` for deferred product or architecture ideas that need future discovery or PRD promotion.
-- Before merging a PR, run `.agent/workflows/pr-review.md` — or invoke the `/pr-ready` command, which runs that workflow end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and `doc-lifecycle.md` so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
-- During design review, optimization investigations, or phase planning, cross-check `.agent/workflows/ideation-lifecycle.md`.
+- Before merging a PR, run `.agents/workflows/pr-review.md` — or invoke the `/pr-ready` command, which runs that workflow end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and `doc-lifecycle.md` so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
+- During design review, optimization investigations, or phase planning, cross-check `.agents/workflows/ideation-lifecycle.md`.
 
 ### Core Engineering Rules
 - Never expose DB internal IDs from API responses. Use UID-based external IDs.
@@ -199,7 +199,7 @@ method(@StudioParam() studioUid: string) {
 
 ### Skill Routing (Use Before Editing)
 
-Skills are discovered from `.agent/skills/`. Each `SKILL.md` has a name and description in its frontmatter. Skills cover these categories:
+Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and description in its frontmatter. Skills cover these categories:
 
 - **Backend API** — service, repository, controller, orchestration, authorization, database, testing, performance, logging, security patterns
 - **Frontend** — tech stack, UI components, API layer, state management, testing, error handling, performance, i18n, code quality, table views, PWA
@@ -210,11 +210,11 @@ Skills are discovered from `.agent/skills/`. Each `SKILL.md` has a name and desc
 
 ### Standard Task Workflow
 1. Identify impacted workspace(s).
-2. Load relevant skill(s) from `.agent/skills/<skill>/SKILL.md`.
+2. Load relevant skill(s) from `.agents/skills/<skill>/SKILL.md`.
 3. Read local patterns in the target module before changing code.
 4. Implement the minimal change set first; avoid broad refactors unless requested.
-5. For PWA work in frontend apps, follow `.agent/workflows/pwa-migration.md` in addition to feature-specific skills.
-6. For UI or UX redesign and route layout quality passes, follow `.agent/workflows/ui-ux-pro-max.md`.
+5. For PWA work in frontend apps, follow `.agents/workflows/pwa-migration.md` in addition to feature-specific skills.
+6. For UI or UX redesign and route layout quality passes, follow `.agents/workflows/ui-ux-pro-max.md`.
 7. Verify each impacted workspace with the checklist below.
 8. For feature, refactor, or behavior changes, run knowledge sync.
 9. For doc or phase-boundary work, run the appropriate lifecycle workflow.

@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from feat/eridu-docs (eridu_docs scaffold + JWKS auth)
 > **Origin**: PR #31 review, eridu_docs sign-out implementation, March 2026
-> **Related**: [ssr-auth-integration skill](../../.agent/skills/ssr-auth-integration/SKILL.md), [eridu_docs AUTH_DESIGN](../../apps/eridu_docs/docs/AUTH_DESIGN.md)
+> **Related**: [ssr-auth-integration skill](../../.agents/skills/ssr-auth-integration/SKILL.md), [eridu_docs AUTH_DESIGN](../../apps/eridu_docs/docs/AUTH_DESIGN.md)
 
 ## What
 

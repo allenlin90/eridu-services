@@ -288,5 +288,5 @@ GET    /studios/:studioId/schedules/overview/monthly
 - Backend design: create with implementation PR under `apps/erify_api/docs/design/STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md`
 - Frontend design: create with implementation PR under `apps/erify_studios/docs/design/STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md`
 - Related admin controller: `apps/erify_api/src/admin/schedules/admin-schedule.controller.ts`
-- Shift schedule pattern: `.agent/skills/shift-schedule-pattern/SKILL.md`
-- Schedule continuity workflow: `.agent/skills/schedule-continuity-workflow/SKILL.md`
+- Shift schedule pattern: `.agents/skills/shift-schedule-pattern/SKILL.md`
+- Schedule continuity workflow: `.agents/skills/schedule-continuity-workflow/SKILL.md`

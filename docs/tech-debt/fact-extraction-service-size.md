@@ -8,7 +8,7 @@ The size is concentrated in three near-identical paired-routing helpers — `try
 
 ## Why It Matters
 
-The file is the single home for the per-fact routing order that the [`fact-extraction-pipeline`](../../.agent/skills/fact-extraction-pipeline/SKILL.md) skill depends on, so it is read often. Each new hydrated scope (e.g. the PR 14.x client-mechanic facts) adds another paired-routing helper, and the third copy already shows the duplication is load-bearing rather than incidental.
+The file is the single home for the per-fact routing order that the [`fact-extraction-pipeline`](../../.agents/skills/fact-extraction-pipeline/SKILL.md) skill depends on, so it is read often. Each new hydrated scope (e.g. the PR 14.x client-mechanic facts) adds another paired-routing helper, and the third copy already shows the duplication is load-bearing rather than incidental.
 
 ## Desired Direction
 

@@ -423,7 +423,7 @@ If role-scoped template visibility becomes necessary, add a `template_type` filt
 - [ ] `erify_studios/src/lib/constants/studio-route-access.ts` — add a `taskReports` key
 - [ ] `erify_studios/docs/STUDIO_ROLE_USE_CASES_AND_VIEWS.md` — update MODERATION_MANAGER row
 - [ ] `erify_studios` sidebar/nav — show the Task Reports link for `MODERATION_MANAGER`
-- [ ] `.agent/skills/erify-authorization/SKILL.md` — update MODERATION_MANAGER scope description
+- [ ] `.agents/skills/erify-authorization/SKILL.md` — update MODERATION_MANAGER scope description
 - [ ] BE tests — cover `MODERATION_MANAGER` access on all reporting endpoints
 
 ### 4.11 Synchronous generation

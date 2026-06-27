@@ -124,7 +124,7 @@ block-beta
 
 ## Skills Reference
 
-For detailed implementation patterns, see `.agent/skills/`:
+For detailed implementation patterns, see `.agents/skills/`:
 
 | Skill                                 | Covers                                                     |
 | ------------------------------------- | ---------------------------------------------------------- |

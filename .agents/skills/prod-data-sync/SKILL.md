@@ -7,7 +7,7 @@ description: Sync production Postgres data into local databases for high-fidelit
 
 One-command bash script (`scripts/sync-prod-to-local.sh`) replaces both local Postgres databases with current prod data via `pg_dump | psql`.
 
-**Workflow**: `.agent/workflows/prod-data-sync.md`
+**Workflow**: `.agents/workflows/prod-data-sync.md`
 **Design Spec**: `references/prod-data-sync-design.md`
 
 ## When to Use / Not Use

@@ -54,4 +54,4 @@ Immutable mechanic version history, campaign sets + items, cross-studio copies, 
 
 - Studio↔client linkage gaps: [studio-client-linkage-single-studio-reality.md](../tech-debt/studio-client-linkage-single-studio-reality.md)
 - Future mechanic-requirement enforcement: [studio-config-settings.md § 7](../ideation/studio-config-settings.md#7-mechanic-requirement-enforcement-future)
-- Row-actions dropdown convention: [table-view-pattern skill](../../.agent/skills/table-view-pattern/SKILL.md)
+- Row-actions dropdown convention: [table-view-pattern skill](../../.agents/skills/table-view-pattern/SKILL.md)

@@ -8,10 +8,10 @@ Canonical guidance lives in `AGENTS.md` at the repo root. Read that file first i
 
 ## Workflow
 
-- **Skills:** before implementing any feature, discover and load the relevant skill from `.agent/skills/<skill-name>/SKILL.md`. Each `SKILL.md` has a name and description in its frontmatter.
-- **Verification:** run `.agent/workflows/verification.md` after every code change.
-- **Knowledge sync:** run `.agent/workflows/knowledge-sync.md` after feature delivery or refactors.
-- **PWA changes:** follow `.agent/workflows/pwa-migration.md` + `pwa-best-practices` skill.
+- **Skills:** before implementing any feature, discover and load the relevant skill from `.agents/skills/<skill-name>/SKILL.md`. Each `SKILL.md` has a name and description in its frontmatter.
+- **Verification:** run `.agents/workflows/verification.md` after every code change.
+- **Knowledge sync:** run `.agents/workflows/knowledge-sync.md` after feature delivery or refactors.
+- **PWA changes:** follow `.agents/workflows/pwa-migration.md` + `pwa-best-practices` skill.
 
 ## Core Engineering Rules
 

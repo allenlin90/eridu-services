@@ -2,7 +2,7 @@
 
 > **Status**: Known bug, active investigation (2026-04-01)
 > **Origin**: Post-implementation validation of `eridu_docs` SSR auth/logout flow (2026-04-01)
-> **Related**: [AUTH_DESIGN](../../apps/eridu_docs/docs/AUTH_DESIGN.md), [ssr-auth-integration skill](../../.agent/skills/ssr-auth-integration/SKILL.md), [auth-sdk Server-Side Auth Client](./auth-sdk-ssr-server-client.md)
+> **Related**: [AUTH_DESIGN](../../apps/eridu_docs/docs/AUTH_DESIGN.md), [ssr-auth-integration skill](../../.agents/skills/ssr-auth-integration/SKILL.md), [auth-sdk Server-Side Auth Client](./auth-sdk-ssr-server-client.md)
 
 ## Known Bug
 

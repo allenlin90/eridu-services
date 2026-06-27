@@ -144,4 +144,4 @@ sequenceDiagram
 | [Task Submission Reporting](../features/task-submission-reporting.md) | Summarize and export show runs and loop datasets |
 | [TASK_MANAGEMENT_SUMMARY (BE)](../../apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md) | Technical reference of task endpoints and schemas |
 | [TASK_MANAGEMENT_SUMMARY (FE)](../../apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md) | Technical reference of review controllers, tabs, and query pools |
-| [table-view-pattern skill](../../.agent/skills/table-view-pattern/SKILL.md) | Mandates for tabular pagination, URL state, and selection checks |
+| [table-view-pattern skill](../../.agents/skills/table-view-pattern/SKILL.md) | Mandates for tabular pagination, URL state, and selection checks |

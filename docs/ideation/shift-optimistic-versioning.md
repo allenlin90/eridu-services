@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from `feat/studio-shift-schedule` PR review, March 2026
 > **Origin**: `feat/studio-shift-schedule` PR review, March 2026
-> **Related**: [shift-schedule-pattern skill](../../.agent/skills/shift-schedule-pattern/SKILL.md)
+> **Related**: [shift-schedule-pattern skill](../../.agents/skills/shift-schedule-pattern/SKILL.md)
 
 ## What
 

@@ -39,7 +39,7 @@ Rules for this and any future upload-bookkeeping data:
 - **Treat this counter as non-critical bookkeeping.** It is read only by `reserveMaterialAssetUploadVersion` itself. If a concurrent snapshot transition overwrites it, the worst case is the next R2 key starts back at 1 — no business workflow breaks.
 - **If upload history ever becomes business-critical** (e.g. compliance, dispute resolution, "who uploaded what when"), record it in the **Audit model**, not in `task.metadata`. Do not retrofit raw SQL JSONB merges or advisory locks around `task.metadata` to make non-critical bookkeeping race-safe.
 
-> Decision framework: `.agent/skills/database-patterns/references/05-optimistic-locking.md` — "Race Tolerance: Decide Before Designing the Lock"
+> Decision framework: `.agents/skills/database-patterns/references/05-optimistic-locking.md` — "Race Tolerance: Decide Before Designing the Lock"
 
 ## Use Cases & Limits
 

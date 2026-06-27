@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from initial frontend rollout
 > **Origin**: i18n Tech Debt Audit (2026-03-17)
-> **Related**: [frontend-i18n skill](../../.agent/skills/frontend-i18n/SKILL.md), [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs)
+> **Related**: [frontend-i18n skill](../../.agents/skills/frontend-i18n/SKILL.md), [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs)
 
 ## What
 

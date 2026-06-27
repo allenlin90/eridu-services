@@ -71,4 +71,4 @@ Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.
 
 ## Implementation Patterns
 
-For code patterns, see `.agent/skills/` — the **canonical references** for how to write code in this codebase.
+For code patterns, see `.agents/skills/` — the **canonical references** for how to write code in this codebase.

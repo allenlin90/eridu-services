@@ -6,7 +6,7 @@ description: Run lint, typecheck, and tests to verify code changes before markin
 
 Run this workflow after making code changes to ensure quality before marking work complete.
 
-> For feature/refactor work, run **Knowledge Sync Workflow** (`.agent/workflows/knowledge-sync.md`) after verification so docs/skills/rules/memory stay current.
+> For feature/refactor work, run **Knowledge Sync Workflow** (`.agents/workflows/knowledge-sync.md`) after verification so docs/skills/rules/memory stay current.
 
 ## Steps
 

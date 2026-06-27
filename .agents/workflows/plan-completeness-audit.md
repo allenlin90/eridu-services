@@ -1,12 +1,12 @@
 ---
-description: Audit a multi-PR implementation plan for workflow gaps before sign-off, before starting each task, and after discovering a gap in a shipped task. Pairs with `.agent/skills/plan-workflow-completeness/`.
+description: Audit a multi-PR implementation plan for workflow gaps before sign-off, before starting each task, and after discovering a gap in a shipped task. Pairs with `.agents/skills/plan-workflow-completeness/`.
 ---
 
 # Plan Completeness Audit Workflow
 
 Run this whenever a plan is being written, revised, signed off, or when an unexpected gap is discovered in implementation. Produces a structured gap report and a list of edits to apply to the plan before code is touched.
 
-> **Companion**: read `.agent/skills/plan-workflow-completeness/SKILL.md` for the five invariants the audit checks.
+> **Companion**: read `.agents/skills/plan-workflow-completeness/SKILL.md` for the five invariants the audit checks.
 
 ---
 

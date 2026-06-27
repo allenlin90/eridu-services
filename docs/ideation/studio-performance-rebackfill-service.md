@@ -69,7 +69,7 @@ The current local seed cannot exercise this path: 0 tasks carry v2 hydrated `:pl
 
 ## Prerequisite: getting performance data flowing at all (investigated 2026-06-07)
 
-> **Status: ✅ Shipped to prod (PR #137, 2026-06-07).** Both tracks below are done — the admin-triggered re-backfill *service* (top of this doc) remains the deferred topic. Track A used the [template-system-fact-migration skill](../../.agent/skills/template-system-fact-migration/SKILL.md); Track B is `scripts/backfill-performance-from-submissions.ts`.
+> **Status: ✅ Shipped to prod (PR #137, 2026-06-07).** Both tracks below are done — the admin-triggered re-backfill *service* (top of this doc) remains the deferred topic. Track A used the [template-system-fact-migration skill](../../.agents/skills/template-system-fact-migration/SKILL.md); Track B is `scripts/backfill-performance-from-submissions.ts`.
 
 The re-backfill *service* above was moot until performance data actually lands on `ShowPlatform`. A DB investigation showed it did not, and the PR 21.9 hydrated-key script alone could not help, because real submissions are **show-scoped**, not the per-platform `<fieldId>:platform:<uid>` hydrated keys that script expects.
 
@@ -87,7 +87,7 @@ The core mismatch: capture is per-show / per-loop, but the model + extractor are
 
 ### Track A — Template binding (going forward) — ✅ SHIPPED
 
-Bound **Post_production_check only**: its `GMV/View/CTR/CTO` → `show_platform_gmv / _view_count / _ctr / _cto` with **`platform` scope**. The form hydrates one input per platform → operator enters per-platform → the existing extractor writes the authoritative (protected) value on approval. Resolves 1- and 2-platform shows with zero ambiguity (attribution happens at entry). Moderator loop-8 fields are intentionally left unbound (8 loops × 4 metrics don't map to one platform fact). Applied via the [template-system-fact-migration skill](../../.agent/skills/template-system-fact-migration/SKILL.md)'s `bind_template_fact` SQL (idempotent, version-bumps + snapshots). Templates are immutable snapshots, so this affects only tasks generated from the new version.
+Bound **Post_production_check only**: its `GMV/View/CTR/CTO` → `show_platform_gmv / _view_count / _ctr / _cto` with **`platform` scope**. The form hydrates one input per platform → operator enters per-platform → the existing extractor writes the authoritative (protected) value on approval. Resolves 1- and 2-platform shows with zero ambiguity (attribution happens at entry). Moderator loop-8 fields are intentionally left unbound (8 loops × 4 metrics don't map to one platform fact). Applied via the [template-system-fact-migration skill](../../.agents/skills/template-system-fact-migration/SKILL.md)'s `bind_template_fact` SQL (idempotent, version-bumps + snapshots). Templates are immutable snapshots, so this affects only tasks generated from the new version.
 
 ### Track B — Backfill existing shows (derivation-aware; a DIFFERENT job from the 21.9 script) — ✅ SHIPPED
 

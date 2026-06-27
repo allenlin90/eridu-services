@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4 feature branch merge
 > **Origin**: Phase 4 feature branch merge gap (`feat/phase-4-p-and-l`), March 2026
-> **Related**: [PHASE_4.md](../roadmap/PHASE_4.md), [domain-refactor-cutover-strategy skill](../../.agent/skills/domain-refactor-cutover-strategy/SKILL.md), [data-compatibility-migration skill](../../.agent/skills/data-compatibility-migration/SKILL.md)
+> **Related**: [PHASE_4.md](../roadmap/PHASE_4.md), [domain-refactor-cutover-strategy skill](../../.agents/skills/domain-refactor-cutover-strategy/SKILL.md), [data-compatibility-migration skill](../../.agents/skills/data-compatibility-migration/SKILL.md)
 
 ## What
 
@@ -41,7 +41,7 @@ Promote to a PRD when **any** of these are true:
 
 ### Cutover approach
 
-Follow the `.agent/skills/domain-refactor-cutover-strategy/SKILL.md` multi-phase playbook:
+Follow the `.agents/skills/domain-refactor-cutover-strategy/SKILL.md` multi-phase playbook:
 1. Scope isolation: identify all `mc` references by layer (schema, API types, service, routes, docs).
 2. Contract-first ordering: update `@eridu/api-types` first, then consuming apps.
 3. Alias → direct cutover: introduce creator-first names as primary, keep `mc` as deprecated alias until removal gate.
@@ -49,4 +49,4 @@ Follow the `.agent/skills/domain-refactor-cutover-strategy/SKILL.md` multi-phase
 
 ### Frontend dual-field fallback
 
-During the transition, apply the `.agent/skills/data-compatibility-migration/SKILL.md` dual-field fallback helpers in the frontend so pages work correctly against both old and new API field names during the cutover window.
+During the transition, apply the `.agents/skills/data-compatibility-migration/SKILL.md` dual-field fallback helpers in the frontend so pages work correctly against both old and new API field names during the cutover window.

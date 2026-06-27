@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [soft-delete-restore skill](../../.agent/skills/soft-delete-restore/SKILL.md), [shift-optimistic-versioning.md](./shift-optimistic-versioning.md)
+> **Related**: [soft-delete-restore skill](../../.agents/skills/soft-delete-restore/SKILL.md), [shift-optimistic-versioning.md](./shift-optimistic-versioning.md)
 
 ## What
 
@@ -51,4 +51,4 @@ Promote to a PRD when **any** of these are true:
 
 ### Skill reference
 
-The `.agent/skills/soft-delete-restore/SKILL.md` covers the restore workflow pattern for soft-deleted records, including version behavior, dependency checks, repository, service, and controller patterns. Use this as the implementation guide when promoted.
+The `.agents/skills/soft-delete-restore/SKILL.md` covers the restore workflow pattern for soft-deleted records, including version behavior, dependency checks, repository, service, and controller patterns. Use this as the implementation guide when promoted.

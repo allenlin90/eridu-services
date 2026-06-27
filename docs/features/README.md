@@ -39,7 +39,7 @@ Rules:
 - Single-version features stay as flat `<feature>.md` files. Don't preemptively promote to a folder.
 - The trigger for promotion is "schema redesign with incompatible storage/projection semantics," not "any non-trivial edit."
 
-Run [.agent/workflows/feature-version-cutover.md](../../.agent/workflows/feature-version-cutover.md) when a redesign reaches the cutover point. That workflow decides whether to update in place (compatible change) or split into v1/v2 (incompatible change), and ensures cross-checks across all related docs and skills.
+Run [.agents/workflows/feature-version-cutover.md](../../.agents/workflows/feature-version-cutover.md) when a redesign reaches the cutover point. That workflow decides whether to update in place (compatible change) or split into v1/v2 (incompatible change), and ensures cross-checks across all related docs and skills.
 
 ## Shipped Features
 
@@ -54,7 +54,7 @@ Run [.agent/workflows/feature-version-cutover.md](../../.agent/workflows/feature
 | [Studio Creator Onboarding](./studio-creator-onboarding.md)              | Phase 4      | [BE canonical](../../apps/erify_api/docs/STUDIO_CREATOR_ONBOARDING.md), [FE canonical](../../apps/erify_studios/docs/STUDIO_CREATOR_ONBOARDING.md)                                                                                                |
 | [Studio Show Management](./studio-show-management.md)                    | Phase 4      | [BE canonical](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md), [FE canonical](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md)                                                                                                      |
 | [Internal Knowledge Base (`eridu_docs`)](./eridu-docs-knowledge-base.md) | Phase 4      | [Auth design](../../apps/eridu_docs/docs/AUTH_DESIGN.md)                                                                                                                                                                                          |
-| [Frontend PWA App Shell](./frontend-pwa-app-shell.md)                    | Frontend platform | [erify_studios PWA runbook](../../apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md), [pwa-best-practices skill](../../.agent/skills/pwa-best-practices/SKILL.md)                                                                                  |
+| [Frontend PWA App Shell](./frontend-pwa-app-shell.md)                    | Frontend platform | [erify_studios PWA runbook](../../apps/erify_studios/docs/PWA_SHELL_RUNBOOK.md), [pwa-best-practices skill](../../.agents/skills/pwa-best-practices/SKILL.md)                                                                                  |
 | [Creator Portal & Personal Compensations](./creator-portal.md)          | Phase 4      | [Creator Portal Foundation](../../apps/erify_creators/docs/CREATOR_PORTAL_FOUNDATION.md), [PWA Shell Runbook](../../apps/erify_creators/docs/PWA_SHELL_RUNBOOK.md)                                                                             |
 | [Show Performance Analytics](./show-performance-analytics.md)            | Phase 4      | [BE controller](../../apps/erify_api/src/studios/studio-performance/studio-performance.controller.ts), [FE performance route](../../apps/erify_studios/src/routes/studios/$studioId/performance.tsx) |
 | [Task-Input Fact Binding](./task-fact-binding.md)                        | Phase 4      | [Backend reference](../../apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md) |

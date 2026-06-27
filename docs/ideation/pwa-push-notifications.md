@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [Frontend PWA App Shell](../features/frontend-pwa-app-shell.md), [pwa-best-practices skill](../../.agent/skills/pwa-best-practices/SKILL.md), [collaboration-communication.md](./collaboration-communication.md), [creator-app-expansion.md](./creator-app-expansion.md)
+> **Related**: [Frontend PWA App Shell](../features/frontend-pwa-app-shell.md), [pwa-best-practices skill](../../.agents/skills/pwa-best-practices/SKILL.md), [collaboration-communication.md](./collaboration-communication.md), [creator-app-expansion.md](./creator-app-expansion.md)
 
 ## What
 
@@ -45,6 +45,6 @@ Promote to a PRD when **any** of these are true:
 ### PWA rollout sequencing
 
 1. First: use the `erify_studios` app shell as the reference implementation.
-2. Second: roll out PWA shell to `erify_creators` following the same conventions from `.agent/skills/pwa-best-practices/SKILL.md`.
+2. Second: roll out PWA shell to `erify_creators` following the same conventions from `.agents/skills/pwa-best-practices/SKILL.md`.
 3. Third: design and implement push notification subscription lifecycle.
 4. Fourth: build server-side push delivery and deep-link routing.

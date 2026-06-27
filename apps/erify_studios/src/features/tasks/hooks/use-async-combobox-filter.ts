@@ -28,7 +28,7 @@ type UseAsyncComboboxFilterParams<TItem> = {
 /**
  * Shared async combobox filter: server-queries a collection as the user types and
  * keeps the active selection's label visible even when it falls outside the first
- * page of results. See `.agent/skills/table-view-pattern` (Async Combobox Filters).
+ * page of results. See `.agents/skills/table-view-pattern` (Async Combobox Filters).
  */
 export function useAsyncComboboxFilter<TItem>({
   queryKeyBase,
