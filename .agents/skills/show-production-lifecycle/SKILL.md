@@ -110,7 +110,7 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 ### 4. Cancellation and Resolution
 
-Implemented via the **Show Cancellation Gate** primitive — see `apps/erify_api/docs/SHOW_CANCELLATION_GATE.md`. No assignee/owner queue: authorization is two-tiered instead (Manager/Admin vs. the studio's currently active shift-flagged Duty Manager), resolved server-side on every request.
+Implemented via the **Show Cancellation Gate** primitive — see `apps/erify_api/docs/SHOW_CANCELLATION_GATE.md`. No assignee/owner queue: authorization is two-tiered instead (Manager/Admin vs. the studio's currently active shift-flagged Duty Manager), resolved server-side on every request. **Manager/Admin role always wins** — it's checked first and short-circuits the tier resolution, so an account holding Admin/Manager role gets the atomic Manager flow even while also flagged as the active duty manager on a shift. There is no way for a Manager/Admin account to exercise the Duty Manager-only (flag-and-defer) flow; testing it requires an account with no Manager/Admin role.
 
 **Cancellation paths**:
 - `confirmed → cancelled` / `live → cancelled`: **Manager/Admin** cancels atomically in one call (reason + final outcome together) — never observably left pending.
@@ -119,7 +119,9 @@ Implemented via the **Show Cancellation Gate** primitive — see `apps/erify_api
 - `cancelled_pending_resolution → completed`: Resolution complete, partial production counts.
 - `cancelled_pending_resolution → confirmed/live` (`RESTORE_PREVIOUS`, `schedule_publish_removal` only): Undo — reverts to whatever the show actually was before removal.
 
-**Current behavior**: Reason category, the live-task guard (excludes `COMPLETED`/`CLOSED` tasks), and the LIVE safeguard (blocks resolving `CANCELLED` if the show was actually live) are all enforced server-side. Every transition writes an `Audit` row — no `Task`, no `Show.metadata`. The generic show-edit endpoint cannot move a show into or out of a pending gate (closes a real bypass found in manual QA).
+**Current behavior**: Reason category and the active-task guard (excludes `COMPLETED`/`CLOSED` tasks) are enforced server-side identically regardless of `from_status` — there is no separate LIVE-specific safeguard; a live show cancels under the same rule as a confirmed one. Every transition writes an `Audit` row — no `Task`, no `Show.metadata`. The generic show-edit endpoint cannot move a show into or out of a pending gate (closes a real bypass found in manual QA).
+
+**Schedule publish is an input signal, not the source of truth**: a republish (Google Sheet/API, a bulk process) reappearing-show restore unconditionally returns a previously cancelled show to the plan, regardless of whether the cancellation was Manager-driven or system-driven — there's no notification system, so requiring a human to re-resolve every bulk-publish reappearance is impractical. This system's `Show.status` + `Audit` trail remains authoritative; the Sheet is expected to be confirmed/cleared before publishing, not defensively second-guessed. The restore itself is correct; it currently writes status with no audit row — see `docs/tech-debt/schedule-publish-restore-no-audit.md`.
 
 **Gap (Phase 5)**: No dedicated discovery queue, status badges, or member-facing pending indicator (discovery today is the Shows-list status filter). No structured observability (resolve success/rejection counters).
 
