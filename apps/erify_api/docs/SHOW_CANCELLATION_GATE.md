@@ -44,9 +44,9 @@ A show may only be cancelled from `CONFIRMED` or `LIVE`. `DRAFT`, `CANCELLED_PEN
 
 Resolving to `CANCELLED` is blocked with `ACTIVE_TASKS_REMAIN` (and the live count) while any non-deleted, non-terminal (`COMPLETED`/`CLOSED` excluded) task is still attached to the show. `COMPLETED` does not require this check — partial production already happened.
 
-### LIVE safeguard
+### No special case for LIVE
 
-If the captured `from_status` was `LIVE`, resolving to `CANCELLED` is blocked with `LIVE_CANCELLATION_REQUIRES_OVERRIDE` — a show that was actually live did not have "zero production." `RESTORE_PREVIOUS` (for `schedule_publish_removal`) and `COMPLETED` remain available.
+`CANCELLED` is gated the same way regardless of whether `from_status` was `CONFIRMED` or `LIVE` — only the active-task guard applies. An earlier draft hard-blocked `CANCELLED` from `LIVE` (`LIVE_CANCELLATION_REQUIRES_OVERRIDE`, forcing `COMPLETED`/`RESTORE_PREVIOUS` instead) on the assumption that a live show always has nonzero production to credit. Manual QA found this didn't hold for the common case — a client cancelling a show mid-stream for reasons unrelated to production (the `CLIENT_REQUEST` reason category exists for exactly this) — so the safeguard was removed in favor of the uniform active-task rule every other `from_status` already used.
 
 ### Sign-off is the same operation regardless of origin
 

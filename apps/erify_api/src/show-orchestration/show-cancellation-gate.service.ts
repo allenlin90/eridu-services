@@ -197,7 +197,7 @@ export class ShowCancellationGateService {
     actor: { id: bigint; uid: string; name: string };
   }): Promise<void> {
     const { show, gateKind, fromStatusSystemKey, outcome, reasonCategory, reasonNote, actor } = params;
-    this.assertOutcomeAllowed(gateKind, outcome, fromStatusSystemKey);
+    this.assertOutcomeAllowed(gateKind, outcome);
     await this.assertActiveTaskGuard(gateKind, outcome, show.id);
 
     const [fromStatus, targetStatus] = await Promise.all([
@@ -249,7 +249,7 @@ export class ShowCancellationGateService {
     actor: { id: bigint; uid: string; name: string };
   }): Promise<void> {
     const { show, gateKind, fromStatusSystemKey, outcome, resolutionNotes, actor } = params;
-    this.assertOutcomeAllowed(gateKind, outcome, fromStatusSystemKey);
+    this.assertOutcomeAllowed(gateKind, outcome);
     await this.assertActiveTaskGuard(gateKind, outcome, show.id);
 
     const targetSystemKey = outcome === 'RESTORE_PREVIOUS' ? fromStatusSystemKey : outcome;
@@ -282,13 +282,10 @@ export class ShowCancellationGateService {
     }
   }
 
-  private assertOutcomeAllowed(gateKind: GateKind, outcome: string, fromStatusSystemKey: string): void {
+  private assertOutcomeAllowed(gateKind: GateKind, outcome: string): void {
     const config = CANCELLATION_GATE_CONFIG[gateKind];
     if (!(config.allowedOutcomes as readonly string[]).includes(outcome)) {
       throw HttpError.badRequest(`OUTCOME_NOT_ALLOWED:${outcome}`);
-    }
-    if (outcome === 'CANCELLED' && fromStatusSystemKey === 'LIVE') {
-      throw HttpError.badRequest('LIVE_CANCELLATION_REQUIRES_OVERRIDE');
     }
   }
 

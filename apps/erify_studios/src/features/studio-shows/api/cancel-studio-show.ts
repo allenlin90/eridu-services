@@ -31,7 +31,6 @@ const CANCELLATION_ERROR_MESSAGES: Record<string, string> = {
   SHOW_CANCELLATION_NOT_PENDING: 'This show is not currently pending resolution.',
   SIGN_OFF_REQUIRES_MANAGER: 'Only a Manager/Admin can sign off a pending resolution.',
   NOTE_AMEND_REQUIRES_DUTY_MANAGER: 'Only the current Duty Manager can update this note.',
-  LIVE_CANCELLATION_REQUIRES_OVERRIDE: 'This show was live when interrupted. Resume it or mark it completed instead of cancelling outright.',
 };
 
 type GateErrorDetails = { activeTaskCount?: unknown };

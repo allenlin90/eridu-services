@@ -89,6 +89,10 @@ describe('studioLookupController', () => {
       includeDeleted: false,
       studioUid: 'std_1',
     });
+    expect(showStatusService.getShowStatuses).toHaveBeenCalledWith({
+      take: 200,
+      where: { systemKey: { notIn: ['CANCELLED', 'CANCELLED_PENDING_RESOLUTION'] } },
+    });
     expect(scheduleService.listSchedulesByStudioUid).not.toHaveBeenCalled();
   });
 
@@ -157,6 +161,7 @@ describe('studioLookupController', () => {
     expect(showStatusService.getShowStatuses).toHaveBeenCalledWith({
       skip: 0,
       take: 100,
+      where: { systemKey: { notIn: ['CANCELLED', 'CANCELLED_PENDING_RESOLUTION'] } },
     });
   });
 

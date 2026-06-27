@@ -24,6 +24,7 @@ describe('showCancellationGateService', () => {
   const show = { id: 1n, uid: 'show_xyz' } as Show;
   const statusByKey: Record<string, { id: bigint }> = {
     CONFIRMED: { id: 2n },
+    LIVE: { id: 3n },
     CANCELLED_PENDING_RESOLUTION: { id: 6n },
     CANCELLED: { id: 5n },
     COMPLETED: { id: 4n },
@@ -314,18 +315,21 @@ describe('showCancellationGateService', () => {
   });
 
   describe('resolveAtomic', () => {
-    it('rejects CANCELLED when from_status is LIVE', async () => {
-      await expect(
-        service.resolveAtomic({
-          show,
-          gateKind: 'show_cancellation',
-          fromStatusSystemKey: 'LIVE',
-          outcome: 'CANCELLED',
-          reasonCategory: 'EQUIPMENT_FAILURE',
-          reasonNote: 'note',
-          actor,
-        }),
-      ).rejects.toThrow(/LIVE_CANCELLATION_REQUIRES_OVERRIDE/);
+    it('allows CANCELLED from LIVE when no active tasks remain — same rule as any other from_status', async () => {
+      taskTargetServiceMock.countActiveByShowId.mockResolvedValue(0);
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.resolveAtomic({
+        show,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'LIVE',
+        outcome: 'CANCELLED',
+        reasonCategory: 'CLIENT_REQUEST',
+        reasonNote: 'note',
+        actor,
+      });
+
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 3n, 5n);
     });
 
     it('rejects CANCELLED when active tasks remain, with the count in details', async () => {

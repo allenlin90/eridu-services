@@ -7,7 +7,10 @@ import { TaskSummaryInline } from './dashboard-coverage-cards';
 
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { CancelShowDialog } from '@/features/studio-shows/components/cancel-show-dialog';
 import { getCreatorNames } from '@/lib/creator-utils';
+
+const CANCELLABLE_SHOW_STATUS_NAMES = new Set(['confirmed', 'live']);
 
 type OperationalDayShowsSummaryCardProps = {
   dateLabel: string;
@@ -138,6 +141,7 @@ export function OperationalDayShowListCard({
                         <TableHead>Time</TableHead>
                         <TableHead>Task Summary</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -182,6 +186,11 @@ export function OperationalDayShowListCard({
                             </TableCell>
                             <TableCell>
                               <ShowStatusBadge status={show.show_status_name ?? 'unknown'} />
+                            </TableCell>
+                            <TableCell>
+                              {CANCELLABLE_SHOW_STATUS_NAMES.has(show.show_status_name ?? '')
+                                ? <CancelShowDialog studioId={studioId} show={{ id: show.id }} triggerSize="sm" />
+                                : '-'}
                             </TableCell>
                           </TableRow>
                         );

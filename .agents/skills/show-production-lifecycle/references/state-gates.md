@@ -65,8 +65,7 @@ Manager/Admin cancels atomically — reason and final outcome chosen in the same
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
 | Cancellation reason provided | `cancel-with-resolution` request body | Enforced (required) | `reason_category` + `reason_note`, written to an `Audit` row |
-| No active downstream work | `TaskTargetRepository.countActiveByShowId` | Enforced (blocks `CANCELLED` outcome) | Excludes `COMPLETED`/`CLOSED` tasks; rejects with `ACTIVE_TASKS_REMAIN` + live count |
-| Not cancelling a live show outright | `from_status === 'LIVE'` check | Enforced | Rejects with `LIVE_CANCELLATION_REQUIRES_OVERRIDE`; only `RESTORE_PREVIOUS`/`COMPLETED` available |
+| No active downstream work | `TaskTargetRepository.countActiveByShowId` | Enforced (blocks `CANCELLED` outcome) | Excludes `COMPLETED`/`CLOSED` tasks; rejects with `ACTIVE_TASKS_REMAIN` + live count; same rule whether `from_status` was `CONFIRMED` or `LIVE` — no separate LIVE safeguard |
 
 ## Transition: confirmed/live → cancelled_pending_resolution (Duty Manager tier, or schedule_publish_removal)
 

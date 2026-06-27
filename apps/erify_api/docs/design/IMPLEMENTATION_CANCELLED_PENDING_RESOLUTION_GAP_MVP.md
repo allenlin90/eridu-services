@@ -18,7 +18,7 @@ These items from the original MVP scope were not delivered and remain open:
 Pick this back up when any of:
 
 - A studio reports difficulty finding pending-resolution shows via the Shows-list filter.
-- Resolve rejection rates need monitoring (no current visibility into how often `ACTIVE_TASKS_REMAIN`/`LIVE_CANCELLATION_REQUIRES_OVERRIDE` block a resolve attempt).
+- Resolve rejection rates need monitoring (no current visibility into how often `ACTIVE_TASKS_REMAIN` blocks a resolve attempt).
 
 ## Superseded Sections (preserved for context, not current contract)
 
