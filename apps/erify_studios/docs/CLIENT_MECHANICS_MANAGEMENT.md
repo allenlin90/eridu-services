@@ -101,8 +101,9 @@ Additive, validated in `@eridu/api-types/task-management`, riding the existing v
 - `ClientMechanic` rows are mutable; editing content bumps `content_revision`.
 - Task-template saves reference a mechanic by `mechanic_id` and freeze resolved label/description + `content_revision` into the snapshot.
 - Generated tasks read the task-template snapshot, not the live catalog.
-- A show's task is **stale** for a mechanic when its frozen `content_revision` is behind the catalog's current `content_revision`. **Dropped** when the template's latest version no longer carries the mechanic. **Unassigned** when no relevant task carries it. Otherwise **current**.
-- "Latest finalized task with a loop schema wins" per show (reuses the PR 22.1 selection rule, `FINALIZED_LOOP_TASK_STATUSES`); a planned show with no task reads as unassigned.
+- Coverage only lists shows whose authoritative moderation task includes the mechanic in its snapshot. Shows with no relevant task (or whose task snapshot does not reference the mechanic) are excluded.
+- A listed show carries `is_current: true` when its frozen `content_revision` matches the catalog's current `content_revision` **and** the template's latest version still carries the mechanic; `is_current: false` otherwise (covers both "content changed since" and "mechanic removed from template since" — both point to the same remediation: regenerate the task).
+- "Latest finalized task with a loop schema wins" per show (reuses the PR 22.1 selection rule, `FINALIZED_LOOP_TASK_STATUSES`).
 
 ## UI Surfaces
 
@@ -135,9 +136,9 @@ Workflow assembly: client selector, Loop × Mechanic matrix sourced from the bou
 
 ### Coverage & Verification (bidirectional)
 
-- **Mechanic→shows**: for a mechanic, which templates reference it and whether its latest version still carries it; for each target show (date-ranged), current / stale / dropped / unassigned status.
+- **Mechanic→shows**: for a mechanic, which templates reference it and whether its latest version still carries it; for each target show (date-ranged) whose authoritative task carries the mechanic, an `is_current` up-to-date/needs-update signal.
 - **Show→mechanics**: for a show (or set of target shows), which mechanics are current / stale / missing.
-- Read-only for `ACCOUNT_MANAGER`; problem rows offer a **Flag to manager** hand-off. The actual fix (regenerate the task from the latest snapshot) stays an ADMIN/MANAGER action.
+- Read-only for `ACCOUNT_MANAGER`. The actual fix for a show flagged `is_current: false` (regenerate the task from the latest snapshot) is an ADMIN/MANAGER action.
 - **Observational only, never a gate.** Coverage reports against whatever a template author already assigned into the matrix — there is no concept of "required mechanics for this show" anywhere in the system, and neither coverage view is wired into task-completion, show-lifecycle, or task-orchestration code. A show reaching `COMPLETED` is entirely unaffected by what coverage reports. A future per-studio enforcement toggle + requirements config is tracked as a separate idea, not built here: [`studio-config-settings.md` § Mechanic Requirement Enforcement](../../../docs/ideation/studio-config-settings.md#7-mechanic-requirement-enforcement-future).
 - Coverage resolution batches show/task/ref lookups per mechanic or per show rather than per-show queries, to avoid N+1 across a date-ranged show list; it reuses PR 22.1's "latest finalized task with a loop schema wins" selection rule (`FINALIZED_LOOP_TASK_STATUSES`) so the two read models can't independently drift. See `ClientMechanicRepository`'s `// Engineering decision:` comments for the per-method rationale.
 

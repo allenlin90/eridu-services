@@ -109,12 +109,10 @@ export const mechanicCoverageShowSchema = z.object({
   uid: z.string(),
   name: z.string(),
   start_time: z.string(),
-  status: z.enum(['current', 'stale', 'dropped', 'unassigned']),
-  task_uid: z.string().nullable(),
+  task_uid: z.string(),
   template_uid: z.string().nullable(),
   template_name: z.string().nullable(),
-  frozen_revision: z.number().int().nullable(),
-  catalog_revision: z.number().int(),
+  is_current: z.boolean(),
 });
 
 export type MechanicCoverageShow = z.infer<typeof mechanicCoverageShowSchema>;

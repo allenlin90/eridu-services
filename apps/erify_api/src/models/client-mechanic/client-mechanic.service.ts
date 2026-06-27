@@ -321,80 +321,58 @@ export class ClientMechanicService extends BaseModelService {
       }
     }
 
-    // 5. Compute coverage status for each show
-    const coverageShows = shows.map((show) => {
+    // 5. List only shows whose authoritative moderation task includes this mechanic.
+    const coverageShows = shows.flatMap((show) => {
       const showTasks = tasksByShowId.get(show.id.toString()) ?? [];
 
-      // Find the latest finalized loop-bearing task
+      // Find the latest finalized loop-bearing task, capturing its parsed
+      // snapshot so we don't re-parse the same JSON below.
       let authoritativeTask: typeof showTasks[0] | null = null;
+      let authoritativeItems: ReturnType<typeof parseModeratorSnapshot>['items'] = [];
       for (const t of showTasks) {
-        const { loops } = parseModeratorSnapshot(t.snapshot?.schema);
-        if (loops !== null) {
+        const parsed = parseModeratorSnapshot(t.snapshot?.schema);
+        if (parsed.loops !== null) {
           authoritativeTask = t;
+          authoritativeItems = parsed.items;
           break;
         }
       }
 
       if (!authoritativeTask || !authoritativeTask.snapshotId || !authoritativeTask.templateId) {
-        return {
-          uid: show.uid,
-          name: show.name,
-          start_time: show.startTime.toISOString(),
-          status: 'unassigned' as const,
-          task_uid: null,
-          template_uid: null,
-          template_name: null,
-          frozen_revision: null,
-          catalog_revision: mechanic.contentRevision,
-        };
+        return [];
       }
 
       const snapshotIdKey = authoritativeTask.snapshotId.toString();
       const templateIdKey = authoritativeTask.templateId.toString();
 
       const hasSnapshotRef = snapshotRefs.get(snapshotIdKey)?.has(mechanic.uid) ?? false;
+      if (!hasSnapshotRef) {
+        return [];
+      }
+
       const hasLatestRef = latestTemplateRefs.get(templateIdKey)?.has(mechanic.uid) ?? false;
 
-      let status: 'current' | 'stale' | 'dropped' | 'unassigned' = 'unassigned';
-      let frozenRevision: number | null = null;
+      const item = authoritativeItems.find(
+        (it: any) =>
+          it.mechanic_ref
+          && it.mechanic_ref.mechanic_id === mechanic.uid,
+      );
+      const frozenRevision = (item?.mechanic_ref as any)?.content_revision ?? null;
 
-      if (hasSnapshotRef) {
-        // Extract frozen revision from snapshot schema
-        const { items } = parseModeratorSnapshot(authoritativeTask.snapshot?.schema);
-        const item = items.find(
-          (it: any) =>
-            it.mechanic_ref
-            && it.mechanic_ref.mechanic_id === mechanic.uid,
-        );
-        frozenRevision = (item?.mechanic_ref as any)?.content_revision ?? null;
-
-        if (hasLatestRef) {
-          if (frozenRevision === mechanic.contentRevision) {
-            status = 'current';
-          } else {
-            status = 'stale';
-          }
-        } else {
-          status = 'dropped';
-        }
-      } else {
-        status = 'unassigned';
-      }
+      const isCurrent = hasLatestRef && frozenRevision === mechanic.contentRevision;
 
       const templateName = authoritativeTask.template?.name ?? null;
       const templateUid = authoritativeTask.template?.uid ?? null;
 
-      return {
+      return [{
         uid: show.uid,
         name: show.name,
         start_time: show.startTime.toISOString(),
-        status,
         task_uid: authoritativeTask.uid,
         template_uid: templateUid,
         template_name: templateName,
-        frozen_revision: frozenRevision,
-        catalog_revision: mechanic.contentRevision,
-      };
+        is_current: isCurrent,
+      }];
     });
 
     return { templates, shows: coverageShows };
