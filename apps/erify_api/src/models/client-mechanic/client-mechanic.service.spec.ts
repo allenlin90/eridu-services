@@ -422,10 +422,9 @@ describe('clientMechanicService', () => {
       // `isLatestCarrying` shipping where `is_latest_carrying` was required.
       expect(() => clientMechanicCoverageResponseSchema.parse(result)).not.toThrow();
 
-      // Verify shows statuses
-      expect(result.shows).toHaveLength(5);
+      // Verify only shows whose authoritative moderation task includes the mechanic are listed.
+      expect(result.shows).toHaveLength(3);
 
-      // Show 101: current
       expect(result.shows[0]).toMatchObject({
         uid: 'show_101',
         status: 'current',
@@ -434,7 +433,6 @@ describe('clientMechanicService', () => {
         frozen_revision: 5,
       });
 
-      // Show 102: stale
       expect(result.shows[1]).toMatchObject({
         uid: 'show_102',
         status: 'stale',
@@ -443,17 +441,7 @@ describe('clientMechanicService', () => {
         frozen_revision: 4,
       });
 
-      // Show 103: unassigned (latest has it, but task snapshot does not)
       expect(result.shows[2]).toMatchObject({
-        uid: 'show_103',
-        status: 'unassigned',
-        task_uid: 'task_3',
-        template_uid: 'ttpl_1',
-        frozen_revision: null,
-      });
-
-      // Show 104: dropped (snapshot has it, but latest template does not)
-      expect(result.shows[3]).toMatchObject({
         uid: 'show_104',
         status: 'dropped',
         task_uid: 'task_4',
@@ -461,14 +449,8 @@ describe('clientMechanicService', () => {
         frozen_revision: 5,
       });
 
-      // Show 105: unassigned (no task)
-      expect(result.shows[4]).toMatchObject({
-        uid: 'show_105',
-        status: 'unassigned',
-        task_uid: null,
-        template_uid: null,
-        frozen_revision: null,
-      });
+      expect(result.shows.map((show) => show.uid)).not.toContain('show_103');
+      expect(result.shows.map((show) => show.uid)).not.toContain('show_105');
     });
 
     it('scopes the shows query to the requesting studio, not every studio running the client', async () => {

@@ -321,8 +321,8 @@ export class ClientMechanicService extends BaseModelService {
       }
     }
 
-    // 5. Compute coverage status for each show
-    const coverageShows = shows.map((show) => {
+    // 5. List only shows whose authoritative moderation task includes this mechanic.
+    const coverageShows = shows.flatMap((show) => {
       const showTasks = tasksByShowId.get(show.id.toString()) ?? [];
 
       // Find the latest finalized loop-bearing task
@@ -336,17 +336,7 @@ export class ClientMechanicService extends BaseModelService {
       }
 
       if (!authoritativeTask || !authoritativeTask.snapshotId || !authoritativeTask.templateId) {
-        return {
-          uid: show.uid,
-          name: show.name,
-          start_time: show.startTime.toISOString(),
-          status: 'unassigned' as const,
-          task_uid: null,
-          template_uid: null,
-          template_name: null,
-          frozen_revision: null,
-          catalog_revision: mechanic.contentRevision,
-        };
+        return [];
       }
 
       const snapshotIdKey = authoritativeTask.snapshotId.toString();
@@ -378,13 +368,13 @@ export class ClientMechanicService extends BaseModelService {
           status = 'dropped';
         }
       } else {
-        status = 'unassigned';
+        return [];
       }
 
       const templateName = authoritativeTask.template?.name ?? null;
       const templateUid = authoritativeTask.template?.uid ?? null;
 
-      return {
+      return [{
         uid: show.uid,
         name: show.name,
         start_time: show.startTime.toISOString(),
@@ -394,7 +384,7 @@ export class ClientMechanicService extends BaseModelService {
         template_name: templateName,
         frozen_revision: frozenRevision,
         catalog_revision: mechanic.contentRevision,
-      };
+      }];
     });
 
     return { templates, shows: coverageShows };

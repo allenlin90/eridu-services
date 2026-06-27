@@ -1,6 +1,6 @@
 import { createFileRoute, getRouteApi, Link } from '@tanstack/react-router';
-import { ArrowLeft, Flag } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
@@ -15,7 +15,6 @@ import {
   DataTable,
   DatePickerWithRange,
 } from '@eridu/ui';
-import { toast } from 'sonner';
 
 import { PageLayout } from '@/components/layouts/page-layout';
 import { useClientMechanicQuery } from '@/features/client-mechanics/api/get-client-mechanic';
@@ -43,6 +42,7 @@ export function MechanicCoveragePage() {
   const search = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
   const { activeStudio } = useActiveStudio();
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const updateSearch = useCallback(
     (nextSearch: Partial<MechanicCoverageSearch>) => {
@@ -87,14 +87,31 @@ export function MechanicCoveragePage() {
     };
   }, [dateRange.dateFrom, dateRange.dateTo]);
 
+  const [draftPickerRange, setDraftPickerRange] = useState<DateRange | undefined>(selectedPickerRange);
+  const pickerRange = isDatePickerOpen ? draftPickerRange : selectedPickerRange;
+
   const handleDateRangeChange = useCallback(
     (nextRange: DateRange | undefined) => {
+      setDraftPickerRange(nextRange);
+    },
+    [],
+  );
+
+  const handleDatePickerOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        setDraftPickerRange(selectedPickerRange);
+        setIsDatePickerOpen(true);
+        return;
+      }
+
+      setIsDatePickerOpen(false);
       updateSearch({
-        date_from: nextRange?.from ? toOperationalDateInputValue(nextRange.from) : undefined,
-        date_to: nextRange?.to ? toOperationalDateInputValue(nextRange.to) : undefined,
+        date_from: draftPickerRange?.from ? toOperationalDateInputValue(draftPickerRange.from) : undefined,
+        date_to: draftPickerRange?.to ? toOperationalDateInputValue(draftPickerRange.to) : undefined,
       });
     },
-    [updateSearch],
+    [draftPickerRange, selectedPickerRange, updateSearch],
   );
 
   const sharedApiParams = useMemo(() => {
@@ -109,12 +126,6 @@ export function MechanicCoveragePage() {
 
   const mechanic = mechanicQuery.data;
   const coverageData = coverageQuery.data;
-
-  const handleFlagToManager = useCallback((showName: string) => {
-    toast.success(`Flagged ${showName} coverage discrepancy to manager.`, {
-      description: 'An operational alert has been raised.',
-    });
-  }, []);
 
   const columns = useMemo(() => {
     return [
@@ -132,7 +143,7 @@ export function MechanicCoveragePage() {
       },
       {
         accessorKey: 'template_name',
-        header: 'Expected Template',
+        header: 'Task Template',
         cell: ({ row }: any) => {
           const { template_name, template_uid } = row.original;
           if (!template_name) return <span className="text-muted-foreground">—</span>;
@@ -149,74 +160,24 @@ export function MechanicCoveragePage() {
         },
       },
       {
-        accessorKey: 'status',
-        header: 'Status',
+        accessorKey: 'task_uid',
+        header: 'Task',
         cell: ({ row }: any) => {
-          const { status, frozen_revision, catalog_revision } = row.original;
-
-          switch (status) {
-            case 'current':
-              return (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Current</Badge>
-                  <span className="text-xs text-muted-foreground">v{frozen_revision}</span>
-                </div>
-              );
-            case 'stale':
-              return (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Stale</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    v{frozen_revision} vs latest v{catalog_revision}
-                  </span>
-                </div>
-              );
-            case 'dropped':
-              return (
-                <div className="flex items-center gap-2">
-                  <Badge variant="destructive">Dropped</Badge>
-                  <span className="text-xs text-muted-foreground">Removed from template</span>
-                </div>
-              );
-            case 'unassigned':
-            default:
-              return (
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">Unassigned</Badge>
-                </div>
-              );
-          }
-        },
-      },
-      {
-        id: 'flag',
-        header: 'Actions',
-        cell: ({ row }: any) => {
-          const { status, name } = row.original;
-          if (status === 'current') return null;
-
-          return (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={() => handleFlagToManager(name)}
-            >
-              <Flag className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-              Flag to Manager
-            </Button>
-          );
+          const { task_uid } = row.original;
+          return task_uid
+            ? <span className="font-mono text-xs text-muted-foreground">{task_uid}</span>
+            : <span className="text-muted-foreground">—</span>;
         },
       },
     ];
-  }, [studioId, handleFlagToManager]);
+  }, [studioId]);
 
   const isLoading = mechanicQuery.isLoading || coverageQuery.isLoading;
 
   return (
     <PageLayout
-      title="Mechanic Coverage"
-      description="Track task-template and show assignment alignment for reusable moderation cues."
+      title="Shows Using Mechanic"
+      description="Shows with moderation tasks that include this client mechanic."
     >
       <div className="space-y-6">
         <div>
@@ -297,11 +258,11 @@ export function MechanicCoveragePage() {
                         </Link>
                         {tpl.is_latest_carrying ? (
                           <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] py-0">
-                            Active
+                            Current template
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-[10px] py-0">
-                            Dropped
+                            Historical
                           </Badge>
                         )}
                       </div>
@@ -317,14 +278,16 @@ export function MechanicCoveragePage() {
               <Card className="md:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                   <div>
-                    <CardTitle className="text-base">Shows Target Coverage</CardTitle>
+                    <CardTitle className="text-base">Shows Using This Mechanic</CardTitle>
                     <CardDescription>
-                      Alignment status across shows of the client.
+                      Shows in the selected range with moderation tasks that include this mechanic.
                     </CardDescription>
                   </div>
                   <DatePickerWithRange
-                    date={selectedPickerRange}
+                    date={pickerRange}
                     setDate={handleDateRangeChange}
+                    open={isDatePickerOpen}
+                    onOpenChange={handleDatePickerOpenChange}
                   />
                 </CardHeader>
                 <CardContent>
@@ -332,7 +295,7 @@ export function MechanicCoveragePage() {
                     columns={columns as any}
                     data={coverageData?.shows ?? []}
                     isLoading={coverageQuery.isLoading}
-                    emptyMessage="No shows found in the chosen date range."
+                    emptyMessage="No shows in this date range have moderation tasks using this mechanic."
                   />
                 </CardContent>
               </Card>
