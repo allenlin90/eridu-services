@@ -1,4 +1,3 @@
-import { useIsMobile } from '@eridu/ui/hooks/use-is-mobile';
 import {
   Popover,
   PopoverContent,
@@ -8,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@eridu/ui';
+import { useIsMobile } from '@eridu/ui/hooks/use-is-mobile';
 
 export function WarningTooltip({
   trigger,
