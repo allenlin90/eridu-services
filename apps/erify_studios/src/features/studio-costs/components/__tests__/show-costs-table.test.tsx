@@ -11,6 +11,10 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children?: ReactNode }) => <a href="#">{children}</a>,
 }));
 
+vi.mock('@eridu/ui/hooks/use-is-mobile', () => ({
+  useIsMobile: () => true,
+}));
+
 vi.mock('@/features/shows/api/get-show-lookups', () => ({
   useShowLookupsQuery: () => ({
     data: {

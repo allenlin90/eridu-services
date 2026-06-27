@@ -11,6 +11,10 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children?: ReactNode }) => <a href="#">{children}</a>,
 }));
 
+vi.mock('@eridu/ui/hooks/use-is-mobile', () => ({
+  useIsMobile: () => true,
+}));
+
 const mockShiftCost: ShiftCostResponse = {
   id: 'shift_sft123',
   date: '2026-06-07',

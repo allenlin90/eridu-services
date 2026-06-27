@@ -1,6 +1,8 @@
-import { useRef, useState } from 'react';
-
+import { useIsMobile } from '@eridu/ui/hooks/use-is-mobile';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -16,34 +18,44 @@ export function WarningTooltip({
   title: string;
   items: string[];
 }) {
-  const [open, setOpen] = useState(false);
-  const lastOpenTime = useRef(0);
+  const isMobile = useIsMobile();
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      lastOpenTime.current = Date.now();
-    }
-    setOpen(nextOpen);
-  };
+  if (isMobile) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          {trigger}
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[min(calc(100vw-32px),320px)] p-3 text-xs space-y-1 bg-foreground text-background border-none break-words shadow-lg rounded-md"
+          align="end"
+          side="top"
+          sideOffset={4}
+          collisionPadding={16}
+        >
+          <p className="font-semibold">{title}</p>
+          <ul className="list-disc pl-4 space-y-0.5">
+            {items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </PopoverContent>
+      </Popover>
+    );
+  }
 
   return (
     <TooltipProvider>
-      <Tooltip open={open} onOpenChange={handleOpenChange}>
-        <TooltipTrigger
-          asChild
-          onClick={(e) => {
-            e.stopPropagation();
-            if (Date.now() - lastOpenTime.current < 100) {
-              return;
-            }
-            setOpen((prev) => !prev);
-          }}
-        >
+      <Tooltip>
+        <TooltipTrigger asChild>
           {trigger}
         </TooltipTrigger>
         <TooltipContent
           className="max-w-xs p-3 text-xs space-y-1 bg-foreground text-background break-words"
           align="end"
+          side="top"
+          sideOffset={4}
+          collisionPadding={16}
         >
           <p className="font-semibold">{title}</p>
           <ul className="list-disc pl-4 space-y-0.5">
