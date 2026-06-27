@@ -7,6 +7,7 @@ import type {
   AmendCancellationNoteInput,
   CancellationStatusResponse,
   CancelShowWithResolutionInput,
+  RequestCancellationResolutionInput,
   ResolveShowCancellationInput,
   StudioShowDetail,
 } from '@eridu/api-types/shows';
@@ -31,6 +32,7 @@ const CANCELLATION_ERROR_MESSAGES: Record<string, string> = {
   SHOW_CANCELLATION_NOT_PENDING: 'This show is not currently pending resolution.',
   SIGN_OFF_REQUIRES_MANAGER: 'Only a Manager/Admin can sign off a pending resolution.',
   NOTE_AMEND_REQUIRES_DUTY_MANAGER: 'Only the current Duty Manager can update this note.',
+  DIRECT_CANCELLATION_REQUIRES_MANAGER: 'Only a Manager/Admin can cancel directly from show details.',
 };
 
 type GateErrorDetails = { activeTaskCount?: unknown };
@@ -82,6 +84,18 @@ export async function resolveShowCancellation(
 ): Promise<StudioShowDetail> {
   const response = await apiClient.post<StudioShowDetail>(
     `/studios/${studioId}/shows/${showId}/resolve-cancellation`,
+    data,
+  );
+  return response.data;
+}
+
+export async function requestCancellationResolution(
+  studioId: string,
+  showId: string,
+  data: RequestCancellationResolutionInput,
+): Promise<StudioShowDetail> {
+  const response = await apiClient.post<StudioShowDetail>(
+    `/studios/${studioId}/shows/${showId}/request-cancellation-resolution`,
     data,
   );
   return response.data;
@@ -147,6 +161,23 @@ export function useResolveShowCancellation(studioId: string) {
     },
     onError: (error) => {
       toast.error(gateMutationErrorMessage(error, 'Failed to resolve cancellation'));
+    },
+  });
+}
+
+export function useRequestCancellationResolution(studioId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ showId, data }: { showId: string; data: RequestCancellationResolutionInput }) =>
+      requestCancellationResolution(studioId, showId, data),
+    onSuccess: async (show) => {
+      queryClient.setQueryData(studioShowKeys.detail(studioId, show.id), show);
+      await invalidateAfterGateTransition(queryClient, studioId, show.id);
+      toast.success('Cancellation submitted for resolution');
+    },
+    onError: (error) => {
+      toast.error(gateMutationErrorMessage(error, 'Failed to request cancellation resolution'));
     },
   });
 }

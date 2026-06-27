@@ -8,6 +8,7 @@ import type {
   createShowInputSchema,
   createStudioShowInputSchema,
   listShowsQuerySchema,
+  requestCancellationResolutionSchema,
   resolveShowCancellationSchema,
   showApiResponseSchema,
   showListResponseSchema,
@@ -138,6 +139,7 @@ export function showToCreateShowInput(show: Partial<Show>): Partial<CreateShowIn
 }
 
 export type CancelShowWithResolutionInput = z.infer<typeof cancelShowWithResolutionSchema>;
+export type RequestCancellationResolutionInput = z.infer<typeof requestCancellationResolutionSchema>;
 export type ResolveShowCancellationInput = z.infer<typeof resolveShowCancellationSchema>;
 export type AmendCancellationNoteInput = z.infer<typeof amendCancellationNoteSchema>;
 export type CancellationHistoryEntry = z.infer<typeof cancellationHistoryEntrySchema>;

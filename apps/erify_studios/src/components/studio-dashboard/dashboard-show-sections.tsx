@@ -1,13 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { Ban, CalendarDays } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTableActions, DataTablePagination, DropdownMenuItem, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTableActions, DataTablePagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
 
 import { TaskSummaryInline } from './dashboard-coverage-cards';
 
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
-import { CancelShowDialog } from '@/features/studio-shows/components/cancel-show-dialog';
+import { DashboardCancellationActions } from '@/features/studio-shows/components/dashboard-cancellation-actions';
 import { getCreatorNames } from '@/lib/creator-utils';
 
 const CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS = new Set(['CONFIRMED', 'LIVE']);
@@ -188,25 +188,22 @@ export function OperationalDayShowListCard({
                               <ShowStatusBadge status={show.show_status_name ?? 'unknown'} />
                             </TableCell>
                             <TableCell>
-                              {CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS.has(show.show_status_system_key ?? '')
-                                ? (
-                                    <CancelShowDialog
-                                      studioId={studioId}
-                                      show={{ id: show.id }}
-                                      renderTrigger={({ disabled, onClick }) => (
-                                        <DataTableActions
-                                          row={show}
-                                          renderExtraActions={() => (
-                                            <DropdownMenuItem disabled={disabled} onClick={onClick}>
-                                              <Ban className="mr-2 h-4 w-4" />
-                                              Cancel Show
-                                            </DropdownMenuItem>
-                                          )}
-                                        />
-                                      )}
-                                    />
-                                  )
-                                : '-'}
+                              <DashboardCancellationActions
+                                studioId={studioId}
+                                showId={show.id}
+                                canRequestCancellation={CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS.has(show.show_status_system_key ?? '')}
+                                renderTrigger={({ requestItem, historyItem }) => (
+                                  <DataTableActions
+                                    row={show}
+                                    renderExtraActions={() => (
+                                      <>
+                                        {requestItem}
+                                        {historyItem}
+                                      </>
+                                    )}
+                                  />
+                                )}
+                              />
                             </TableCell>
                           </TableRow>
                         );

@@ -34,6 +34,7 @@ import {
   AmendCancellationNoteDto,
   cancellationStatusResponseDto,
   CancelShowWithResolutionDto,
+  RequestCancellationResolutionDto,
   ResolveShowCancellationDto,
 } from './schemas/studio-show-cancellation.schema';
 import {
@@ -362,7 +363,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Post(':id/cancel-with-resolution')
-  @StudioProtected() // any studio member — the service enforces Manager/Duty-Manager tier
+  @StudioProtected() // any studio member — the service enforces Manager tier
   @ZodResponse(studioShowDetailDto)
   async cancelWithResolution(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
@@ -376,6 +377,23 @@ export class StudioShowController extends BaseStudioController {
       id,
       body,
       request?.studioMembership?.role,
+      user.ext_id,
+    );
+  }
+
+  @Post(':id/request-cancellation-resolution')
+  @StudioProtected() // any studio member — the service enforces current active Duty Manager
+  @ZodResponse(studioShowDetailDto)
+  async requestCancellationResolution(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: RequestCancellationResolutionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studioShowManagementService.requestCancellationResolution(
+      studioId,
+      id,
+      body,
       user.ext_id,
     );
   }

@@ -126,6 +126,11 @@ export const cancelShowWithResolutionSchema = z.object({
   outcome: z.enum(['CANCELLED', 'COMPLETED']).optional(),
 });
 
+export const requestCancellationResolutionSchema = z.object({
+  reason_category: z.string().min(1),
+  reason_note: z.string().min(1),
+});
+
 export const resolveShowCancellationSchema = z.object({
   outcome: z.enum(['CANCELLED', 'COMPLETED', 'RESTORE_PREVIOUS']),
   resolution_notes: z.string().min(1),

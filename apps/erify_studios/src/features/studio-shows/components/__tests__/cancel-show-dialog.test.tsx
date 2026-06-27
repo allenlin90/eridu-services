@@ -73,14 +73,12 @@ describe('cancelShowDialog', () => {
     mutateMock.mockReset();
   });
 
-  it('renders only the reason fields for a Duty Manager tier (no outcome picker)', async () => {
+  it('disables the show-detail trigger for a Duty Manager tier', () => {
     useCancellationTierMock.mockReturnValue({ tier: 'duty_manager', isLoading: false });
-    const user = userEvent.setup();
 
     render(<CancelShowDialog studioId="studio_1" show={makeShow()} />);
-    await user.click(screen.getByRole('button', { name: /cancel show/i }));
 
-    expect(screen.queryByLabelText(/^outcome$/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel show/i })).toBeDisabled();
   });
 
   it('renders the outcome picker for a Manager tier', async () => {
@@ -101,19 +99,20 @@ describe('cancelShowDialog', () => {
     expect(screen.getByRole('button', { name: /cancel show/i })).toBeDisabled();
   });
 
-  it('submits without an outcome field for Duty Manager tier', async () => {
-    useCancellationTierMock.mockReturnValue({ tier: 'duty_manager', isLoading: false });
+  it('submits with an outcome field for Manager tier', async () => {
+    useCancellationTierMock.mockReturnValue({ tier: 'manager', isLoading: false });
     const user = userEvent.setup();
 
     render(<CancelShowDialog studioId="studio_1" show={makeShow()} />);
     await user.click(screen.getByRole('button', { name: /cancel show/i }));
     await user.selectOptions(screen.getByLabelText(/reason category/i), 'EQUIPMENT_FAILURE');
     await user.type(screen.getByLabelText(/^reason$/i), 'Camera failed mid-show');
+    await user.selectOptions(screen.getByLabelText(/^outcome$/i), 'CANCELLED');
     await user.click(screen.getByRole('button', { name: /submit/i }));
 
     expect(mutateMock).toHaveBeenCalledWith({
       showId: 'show_1',
-      data: { reason_category: 'EQUIPMENT_FAILURE', reason_note: 'Camera failed mid-show' },
+      data: { reason_category: 'EQUIPMENT_FAILURE', reason_note: 'Camera failed mid-show', outcome: 'CANCELLED' },
     }, expect.anything());
   });
 

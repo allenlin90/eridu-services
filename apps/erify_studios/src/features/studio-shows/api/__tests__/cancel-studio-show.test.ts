@@ -7,6 +7,7 @@ import {
   getCancellationStatus,
   getGateActiveTaskCount,
   getGateErrorCode,
+  requestCancellationResolution,
   resolveShowCancellation,
 } from '../cancel-studio-show';
 
@@ -63,6 +64,18 @@ describe('studio show cancellation gate API', () => {
 
     expect(mockedPost).toHaveBeenCalledWith(
       '/studios/studio_1/shows/show_1/resolve-cancellation',
+      payload,
+    );
+  });
+
+  it('requestCancellationResolution posts to the deferred dashboard endpoint', async () => {
+    const payload = { reason_category: 'EQUIPMENT_FAILURE', reason_note: 'Camera failed' };
+    mockedPost.mockResolvedValue({ data: { id: 'show_1' } });
+
+    await requestCancellationResolution('studio_1', 'show_1', payload);
+
+    expect(mockedPost).toHaveBeenCalledWith(
+      '/studios/studio_1/shows/show_1/request-cancellation-resolution',
       payload,
     );
   });

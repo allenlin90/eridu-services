@@ -81,11 +81,82 @@ describe('showCancellationGateService', () => {
     });
   });
 
+  describe('isActiveDutyManager', () => {
+    it('returns true when the actor is the active duty manager, regardless of static role', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 5n } });
+
+      await expect(service.isActiveDutyManager('studio_1', { id: 5n })).resolves.toBe(true);
+    });
+
+    it('returns false when there is no active duty manager shift for the actor', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 99n } });
+
+      await expect(service.isActiveDutyManager('studio_1', { id: 5n })).resolves.toBe(false);
+    });
+  });
+
   describe('getCancellationStatus', () => {
-    it('returns not-pending when the show status is not CANCELLED_PENDING_RESOLUTION', async () => {
+    it('returns not-pending with empty history when no gate audits exist', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([]);
+
       const result = await service.getCancellationStatus({ id: 1n, showStatus: { systemKey: 'CONFIRMED' } });
+
       expect(result.isPending).toBe(false);
-      expect(auditServiceMock.findForTargets).not.toHaveBeenCalled();
+      expect(result.history).toEqual([]);
+      expect(auditServiceMock.findForTargets).toHaveBeenCalledWith([{ targetType: 'SHOW', targetId: 1n }]);
+    });
+
+    it('returns history after the show has left pending status', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          action: 'OVERRIDE',
+          reason: 'Manager confirmed no production happened',
+          actorId: 6n,
+          createdAt: new Date('2026-06-25T17:00:00.000Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'resolved',
+            gate_kind: 'show_cancellation',
+            old_value: 'CANCELLED_PENDING_RESOLUTION',
+            new_value: 'CANCELLED',
+            actor_uid: 'user_manager',
+            actor_name: 'Jane Manager',
+          },
+        },
+        {
+          action: 'OVERRIDE',
+          reason: 'Camera failed mid-show',
+          actorId: 5n,
+          createdAt: new Date('2026-06-25T16:14:30.201Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'opened',
+            gate_kind: 'show_cancellation',
+            old_value: 'CONFIRMED',
+            new_value: 'CANCELLED_PENDING_RESOLUTION',
+            reason_category: 'EQUIPMENT_FAILURE',
+            actor_uid: 'user_duty',
+            actor_name: 'Bob Duty',
+          },
+        },
+      ]);
+
+      const result = await service.getCancellationStatus({ id: 1n, showStatus: { systemKey: 'CANCELLED' } });
+
+      expect(result).toMatchObject({
+        isPending: false,
+        gateKind: null,
+        fromStatus: null,
+        reasonCategory: null,
+        reasonNote: null,
+        openedBy: null,
+        openedAt: null,
+        allowedOutcomes: [],
+      });
+      expect(result.history).toEqual([
+        expect.objectContaining({ event: 'opened', note: 'Camera failed mid-show', outcome: null }),
+        expect.objectContaining({ event: 'resolved', note: 'Manager confirmed no production happened', outcome: 'CANCELLED' }),
+      ]);
     });
 
     it('derives the snapshot from the most recent opened audit row', async () => {

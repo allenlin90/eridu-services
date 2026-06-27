@@ -125,9 +125,21 @@ describe('resolveCancellationDialog', () => {
     const user = userEvent.setup();
 
     render(<ResolveCancellationDialog studioId="studio_1" show={show} status={pendingStatus} />);
-    await user.click(screen.getByRole('button', { name: /resolve/i }));
+    await user.click(screen.getByRole('button', { name: /view/i }));
 
     expect(screen.getByLabelText(/update note/i)).toBeInTheDocument();
+  });
+
+  it('does not render final sign-off controls for a Duty Manager tier', async () => {
+    useCancellationTierMock.mockReturnValue({ tier: 'duty_manager' });
+    const user = userEvent.setup();
+
+    render(<ResolveCancellationDialog studioId="studio_1" show={show} status={pendingStatus} />);
+    await user.click(screen.getByRole('button', { name: /view/i }));
+
+    expect(screen.queryByLabelText(/^outcome$/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/resolution notes/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /confirm/i })).not.toBeInTheDocument();
   });
 
   it('renders the active-task count and a link to the show task list on ACTIVE_TASKS_REMAIN', async () => {

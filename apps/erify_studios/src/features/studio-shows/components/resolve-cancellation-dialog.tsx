@@ -44,6 +44,8 @@ export function ResolveCancellationDialog({ studioId, show, status }: ResolveCan
   const [activeTaskBlockerCount, setActiveTaskBlockerCount] = useState<number | null>(null);
   const resolveMutation = useResolveShowCancellation(studioId);
   const amendMutation = useAmendCancellationNote(studioId);
+  const canResolve = tier === 'manager';
+  const canAmendNote = tier === 'duty_manager';
 
   if (!status.is_pending) {
     return null;
@@ -61,33 +63,35 @@ export function ResolveCancellationDialog({ studioId, show, status }: ResolveCan
 
   return (
     <>
-      <Button type="button" onClick={() => handleOpenChange(true)}>Resolve</Button>
+      <Button type="button" onClick={() => handleOpenChange(true)}>{canResolve ? 'Resolve' : 'View'}</Button>
       <ResponsiveDialog
         open={open}
         onOpenChange={handleOpenChange}
         title="Resolve Cancellation"
-        footer={(
-          <Button
-            type="button"
-            disabled={!outcome || resolutionNotes.trim().length === 0 || resolveMutation.isPending}
-            onClick={() => {
-              setActiveTaskBlockerCount(null);
-              resolveMutation.mutate({
-                showId: show.id,
-                data: { outcome: outcome as any, resolution_notes: resolutionNotes.trim() },
-              }, {
-                onSuccess: () => handleOpenChange(false),
-                onError: (error: unknown) => {
-                  if (getGateErrorCode(error) === 'ACTIVE_TASKS_REMAIN') {
-                    setActiveTaskBlockerCount(getGateActiveTaskCount(error));
-                  }
-                },
-              });
-            }}
-          >
-            {resolveMutation.isPending ? 'Saving...' : 'Confirm'}
-          </Button>
-        )}
+        footer={canResolve
+          ? (
+              <Button
+                type="button"
+                disabled={!outcome || resolutionNotes.trim().length === 0 || resolveMutation.isPending}
+                onClick={() => {
+                  setActiveTaskBlockerCount(null);
+                  resolveMutation.mutate({
+                    showId: show.id,
+                    data: { outcome: outcome as any, resolution_notes: resolutionNotes.trim() },
+                  }, {
+                    onSuccess: () => handleOpenChange(false),
+                    onError: (error: unknown) => {
+                      if (getGateErrorCode(error) === 'ACTIVE_TASKS_REMAIN') {
+                        setActiveTaskBlockerCount(getGateActiveTaskCount(error));
+                      }
+                    },
+                  });
+                }}
+              >
+                {resolveMutation.isPending ? 'Saving...' : 'Confirm'}
+              </Button>
+            )
+          : undefined}
       >
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
@@ -99,7 +103,7 @@ export function ResolveCancellationDialog({ studioId, show, status }: ResolveCan
             {': '}
             {status.reason_note}
           </p>
-          {tier === 'duty_manager'
+          {canAmendNote
             ? (
                 <div className="space-y-1">
                   <Label htmlFor="update-note">Update note</Label>
@@ -115,28 +119,34 @@ export function ResolveCancellationDialog({ studioId, show, status }: ResolveCan
                 </div>
               )
             : null}
-          <div className="space-y-1">
-            <Label htmlFor="outcome">Outcome</Label>
-            <Select value={outcome} onValueChange={setOutcome} aria-label="Outcome">
-              <SelectTrigger id="outcome" aria-label="Outcome">
-                <SelectValue placeholder="Select an outcome" />
-              </SelectTrigger>
-              <SelectContent>
-                {status.allowed_outcomes.map((value) => (
-                  <SelectItem key={value} value={value}>{OUTCOME_LABEL[value] ?? value}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="resolution-notes">Resolution notes</Label>
-            <Textarea
-              id="resolution-notes"
-              aria-label="Resolution notes"
-              value={resolutionNotes}
-              onChange={(e) => setResolutionNotes(e.target.value)}
-            />
-          </div>
+          {canResolve
+            ? (
+                <>
+                  <div className="space-y-1">
+                    <Label htmlFor="outcome">Outcome</Label>
+                    <Select value={outcome} onValueChange={setOutcome} aria-label="Outcome">
+                      <SelectTrigger id="outcome" aria-label="Outcome">
+                        <SelectValue placeholder="Select an outcome" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {status.allowed_outcomes.map((value) => (
+                          <SelectItem key={value} value={value}>{OUTCOME_LABEL[value] ?? value}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="resolution-notes">Resolution notes</Label>
+                    <Textarea
+                      id="resolution-notes"
+                      aria-label="Resolution notes"
+                      value={resolutionNotes}
+                      onChange={(e) => setResolutionNotes(e.target.value)}
+                    />
+                  </div>
+                </>
+              )
+            : null}
           {activeTaskBlockerCount !== null
             ? (
                 <div className="space-y-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800">

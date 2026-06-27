@@ -6,6 +6,16 @@ import { useUserProfile } from '@/lib/hooks/use-user';
 
 export type CancellationTier = 'manager' | 'duty_manager' | null;
 
+export function useActiveDutyManagerEligibility(studioId: string): { isActiveDutyManager: boolean; isLoading: boolean } {
+  const { data: profile, isLoading: isProfileLoading } = useUserProfile();
+  const { data: dutyManager, isLoading: isDutyManagerLoading } = useDutyManager(studioId);
+
+  return {
+    isActiveDutyManager: Boolean(profile?.uid && dutyManager?.user_id === profile.uid),
+    isLoading: isProfileLoading || isDutyManagerLoading,
+  };
+}
+
 export function useCancellationTier(studioId: string): { tier: CancellationTier; isLoading: boolean } {
   const { role, isLoading: isRoleLoading } = useStudioAccess(studioId);
   const { data: profile, isLoading: isProfileLoading } = useUserProfile();

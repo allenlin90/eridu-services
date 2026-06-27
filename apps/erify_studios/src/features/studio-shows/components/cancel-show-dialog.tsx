@@ -49,14 +49,15 @@ export function CancelShowDialog({ studioId, show, renderTrigger }: CancelShowDi
 
   const canSubmit = reasonCategory.length > 0
     && reasonNote.trim().length > 0
-    && (tier === 'duty_manager' || (tier === 'manager' && outcome !== ''));
+    && tier === 'manager'
+    && outcome !== '';
 
   return (
     <>
       {renderTrigger
-        ? renderTrigger({ disabled: !tier, onClick: () => handleOpenChange(true) })
+        ? renderTrigger({ disabled: tier !== 'manager', onClick: () => handleOpenChange(true) })
         : (
-            <Button type="button" disabled={!tier} onClick={() => handleOpenChange(true)}>
+            <Button type="button" disabled={tier !== 'manager'} onClick={() => handleOpenChange(true)}>
               Cancel Show
             </Button>
           )}
@@ -75,7 +76,7 @@ export function CancelShowDialog({ studioId, show, renderTrigger }: CancelShowDi
                 data: {
                   reason_category: reasonCategory,
                   reason_note: reasonNote.trim(),
-                  ...(tier === 'manager' && outcome !== '' && { outcome }),
+                  outcome: outcome as GateOutcome,
                 },
               }, {
                 onSuccess: () => handleOpenChange(false),
@@ -114,27 +115,19 @@ export function CancelShowDialog({ studioId, show, renderTrigger }: CancelShowDi
               onChange={(e) => setReasonNote(e.target.value)}
             />
           </div>
-          {tier === 'manager'
-            ? (
-                <div className="space-y-1">
-                  <Label htmlFor="outcome">Outcome</Label>
-                  <Select value={outcome} onValueChange={(value) => setOutcome(value as GateOutcome)} aria-label="Outcome">
-                    <SelectTrigger id="outcome" aria-label="Outcome">
-                      <SelectValue placeholder="Select an outcome" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {OUTCOME_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )
-            : (
-                <p className="rounded-md bg-muted p-2 text-sm text-muted-foreground">
-                  As Duty Manager, you flag this for a Manager to sign off — you don't choose the final outcome.
-                </p>
-              )}
+          <div className="space-y-1">
+            <Label htmlFor="outcome">Outcome</Label>
+            <Select value={outcome} onValueChange={(value) => setOutcome(value as GateOutcome)} aria-label="Outcome">
+              <SelectTrigger id="outcome" aria-label="Outcome">
+                <SelectValue placeholder="Select an outcome" />
+              </SelectTrigger>
+              <SelectContent>
+                {OUTCOME_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {activeTaskBlockerCount !== null
             ? (
                 <div className="space-y-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800">

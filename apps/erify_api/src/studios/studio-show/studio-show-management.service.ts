@@ -4,6 +4,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 import type {
   AmendCancellationNoteInput,
   CancelShowWithResolutionInput,
+  RequestCancellationResolutionInput,
   ResolveShowCancellationInput,
 } from '@eridu/api-types/shows';
 
@@ -199,18 +200,43 @@ export class StudioShowManagementService {
         actor: actorRef,
       });
     } else {
-      if (dto.outcome) {
-        throw HttpError.badRequest('OUTCOME_NOT_ALLOWED_FOR_DUTY_MANAGER');
-      }
-      await this.showCancellationGateService.openPending({
-        show,
-        gateKind: 'show_cancellation',
-        fromStatusSystemKey: currentStatus,
-        reasonCategory: dto.reason_category,
-        reasonNote: dto.reason_note,
-        actor: actorRef,
-      });
+      throw HttpError.forbidden('DIRECT_CANCELLATION_REQUIRES_MANAGER');
     }
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  @Transactional()
+  async requestCancellationResolution(
+    studioUid: string,
+    showUid: string,
+    dto: RequestCancellationResolutionInput,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const currentStatus = show.showStatus?.systemKey ?? null;
+    if (currentStatus === null || StudioShowManagementService.CANCELLATION_INELIGIBLE_STATUSES.includes(currentStatus)) {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_ALLOWED');
+    }
+
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    const isActiveDutyManager = await this.showCancellationGateService.isActiveDutyManager(studioUid, { id: actor.id });
+    if (!isActiveDutyManager) {
+      throw HttpError.forbidden('CANCELLATION_NOT_AUTHORIZED');
+    }
+
+    await this.showCancellationGateService.openPending({
+      show,
+      gateKind: 'show_cancellation',
+      fromStatusSystemKey: currentStatus,
+      reasonCategory: dto.reason_category,
+      reasonNote: dto.reason_note,
+      actor: { id: actor.id, uid: actor.uid, name: actor.name },
+    });
 
     return this.showService.getShowById(showUid, studioShowDetailInclude);
   }

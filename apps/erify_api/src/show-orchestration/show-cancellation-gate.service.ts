@@ -106,17 +106,35 @@ export class ShowCancellationGateService {
     return null;
   }
 
+  async isActiveDutyManager(
+    studioUid: string,
+    actor: { id: bigint },
+  ): Promise<boolean> {
+    const dutyManagerShift = await this.studioShiftService.findActiveDutyManager(studioUid, new Date());
+    return Boolean(dutyManagerShift && dutyManagerShift.user.id === actor.id);
+  }
+
   async getCancellationStatus(
     show: { id: bigint; showStatus: { systemKey: string | null } | null },
   ): Promise<CancellationStatusResult> {
-    if (show.showStatus?.systemKey !== 'CANCELLED_PENDING_RESOLUTION') {
-      return NOT_PENDING_RESULT;
-    }
-
     const audits = await this.auditService.findForTargets([{ targetType: 'SHOW', targetId: show.id }]);
     const gateEntries = audits
       .map((audit) => ({ audit, meta: getGateMetadata(audit) }))
       .filter((entry): entry is { audit: AuditWithTargets; meta: GateAuditMetadata } => entry.meta !== null);
+    const history = gateEntries
+      .slice()
+      .reverse() // chronological (oldest first) for display
+      .map((e) => ({
+        event: e.meta.event,
+        actor: e.meta.actor_uid ? { uid: e.meta.actor_uid, name: e.meta.actor_name! } : null,
+        at: e.audit.createdAt,
+        note: e.audit.reason,
+        outcome: e.meta.event === 'resolved' ? e.meta.new_value : null,
+      }));
+
+    if (show.showStatus?.systemKey !== 'CANCELLED_PENDING_RESOLUTION') {
+      return { ...NOT_PENDING_RESULT, history };
+    }
 
     // findForTargets orders createdAt desc; at most one unresolved "opened"
     // cycle can exist while Show.status is pending (re-opening is blocked
@@ -125,7 +143,7 @@ export class ShowCancellationGateService {
     const latestNote = gateEntries.find((e) => e.meta.event === 'opened' || e.meta.event === 'note_updated');
 
     if (!opened || !latestNote) {
-      return { ...NOT_PENDING_RESULT, isPending: true };
+      return { ...NOT_PENDING_RESULT, isPending: true, history };
     }
 
     const gateKind = opened.meta.gate_kind;
@@ -140,16 +158,7 @@ export class ShowCancellationGateService {
       openedBy: opened.meta.actor_uid ? { uid: opened.meta.actor_uid, name: opened.meta.actor_name! } : null,
       openedAt: opened.audit.createdAt,
       allowedOutcomes: [...config.allowedOutcomes],
-      history: gateEntries
-        .slice()
-        .reverse() // chronological (oldest first) for display
-        .map((e) => ({
-          event: e.meta.event,
-          actor: e.meta.actor_uid ? { uid: e.meta.actor_uid, name: e.meta.actor_name! } : null,
-          at: e.audit.createdAt,
-          note: e.audit.reason,
-          outcome: e.meta.event === 'resolved' ? e.meta.new_value : null,
-        })),
+      history,
     };
   }
 

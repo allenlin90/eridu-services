@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { useCancellationTier } from '../use-cancellation-tier';
+import { useActiveDutyManagerEligibility, useCancellationTier } from '../use-cancellation-tier';
 
 import { useDutyManager } from '@/features/studio-shifts/hooks/use-studio-shifts';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
@@ -55,5 +55,26 @@ describe('useCancellationTier', () => {
     const result = useCancellationTier('studio_1');
 
     expect(result.isLoading).toBe(true);
+  });
+});
+
+describe('useActiveDutyManagerEligibility', () => {
+  it('returns true when the current user matches the active duty manager regardless of role', () => {
+    vi.mocked(useStudioAccess).mockReturnValue({ role: 'admin', isLoading: false } as any);
+    vi.mocked(useUserProfile).mockReturnValue({ data: { uid: 'user_self_uid', ext_id: 'ext_self_id', id: 'ext_self_id' }, isLoading: false } as any);
+    vi.mocked(useDutyManager).mockReturnValue({ data: { user_id: 'user_self_uid' }, isLoading: false } as any);
+
+    const result = useActiveDutyManagerEligibility('studio_1');
+
+    expect(result.isActiveDutyManager).toBe(true);
+  });
+
+  it('returns false when the current user is not the active duty manager', () => {
+    vi.mocked(useUserProfile).mockReturnValue({ data: { uid: 'user_self_uid', ext_id: 'ext_self_id', id: 'ext_self_id' }, isLoading: false } as any);
+    vi.mocked(useDutyManager).mockReturnValue({ data: { user_id: 'user_other_uid' }, isLoading: false } as any);
+
+    const result = useActiveDutyManagerEligibility('studio_1');
+
+    expect(result.isActiveDutyManager).toBe(false);
   });
 });
