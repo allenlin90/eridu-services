@@ -2,14 +2,14 @@
 
 > **Status**: Deferred from MVP
 > **Origin**: Task submission reporting & export design review (2026-03-15)
-> **Related**: [BE design §4.11](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md)
+> **Related**: [BE design §4.11](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md), [Backend Runtime Boundaries](./backend-runtime-boundaries.md)
 
 ## What
 
-Replace synchronous inline report generation (`POST /task-reports/run` → full result in response) with an asynchronous BullMQ worker pattern:
+Replace synchronous inline report generation (`POST /task-reports/run` → full result in response) with an asynchronous BullMQ worker runtime:
 
 1. `POST /task-reports/run` → enqueue job → return `202 Accepted` with a job token
-2. BullMQ worker picks up the job, generates the result, stores it server-side (add `TaskReportResult` model)
+2. A private BullMQ worker runtime picks up the job, generates the result, stores it server-side (add `TaskReportResult` model)
 3. FE polls `GET /task-report-results/:token` until status transitions to `READY`, then fetches full result
 
 ## Why It Was Considered
@@ -42,6 +42,7 @@ Promote to a PRD when **any** of these are true:
 
 - Redis instance (new dependency — not currently in the codebase).
 - BullMQ package (`bullmq`) added to `erify_api`.
+- Dedicated worker entrypoint (`src/main.worker.ts`) and `WorkerAppModule`; workers should not boot the public REST `AppModule`.
 - Queue: `task-report-generation` with configurable concurrency.
 - New `TaskReportResult` model (PostgreSQL JSONB) to hold generated results server-side.
 
@@ -50,9 +51,13 @@ Promote to a PRD when **any** of these are true:
 - Add `TaskReportResult` model with status field: `GENERATING` | `READY` | `FAILED`.
 - `POST /task-reports/run` returns `202 Accepted` with `{ job_token, status: 'GENERATING' }`.
 - Add `GET /task-report-results/:token` for polling + full result retrieval.
-- BullMQ worker calls the same `TaskReportQueryService.generateResult()` method — the generation logic is unchanged.
+- BullMQ worker calls the same report generation service/use-case — the generation logic is shared with REST but not owned by the controller.
 - Job retry: 1 retry with exponential backoff. On final failure, set status to `FAILED` with error metadata.
 - Progress tracking: optional — update progress metadata during batch iterations for FE progress display.
+
+### Runtime boundary
+
+REST endpoints enqueue jobs and return job tokens. Worker processors execute jobs and update result state. Both surfaces depend on shared services/use-cases; neither surface calls the other transport directly.
 
 ### FE changes
 

@@ -25,6 +25,18 @@ The first concrete target is OpenWebUI as an internal Railway service. Do not cr
 
 Run locally with `pnpm --filter erify_api dev:mcp`. Production uses `pnpm --filter erify_api start:prod:mcp` after the normal app build.
 
+## Backend Runtime Boundary
+
+The MCP server is a separate runtime entrypoint, not another REST controller group. It reuses the same NestJS package and service layer as `erify_api`, but it should keep its module graph narrow and transport-specific.
+
+```text
+REST Controller ┐
+MCP Tool        ├─> Use Case / Service ─> Repository ─> Database
+BullMQ Worker   ┘
+```
+
+The foundation implementation may reuse existing Nest modules directly. As the MCP surface grows, move shared read/use-case logic behind narrower services and keep MCP handlers as adapters. Do not let MCP tools import broad REST orchestration modules merely for convenience.
+
 ## Railway Private-Only Deployment
 
 Use `.railway/erify_api_mcp.json` for the MCP Railway service. This deploys the same `erify_api` package with the MCP entrypoint instead of the REST API entrypoint.
