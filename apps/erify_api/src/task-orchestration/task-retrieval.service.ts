@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
@@ -10,6 +10,7 @@ import { decimalToString } from '@/lib/utils/decimal-to-string.util';
 import {
   showDto,
   showDtoListInclude,
+  type ShowWithPayload,
 } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { StudioService } from '@/models/studio/studio.service';
@@ -26,16 +27,52 @@ export class TaskRetrievalService {
     private readonly shiftAlignmentService: ShiftAlignmentService,
   ) {}
 
-  /**
-   * Gets all tasks for a specific show, ordered by type.
-   */
-  async getShowTasks(studioUid: string, showUid: string) {
-    const show = await this.showService.getShowById(showUid);
+  private async resolveStudioShow(studioUid: string, showIdOrName: string) {
+    let show: ShowWithPayload<typeof showDtoListInclude> | null = null;
+    if (showIdOrName.startsWith(ShowService.UID_PREFIX)) {
+      try {
+        show = await this.showService.getShowById(showIdOrName, showDtoListInclude);
+      } catch (err) {
+        if (err instanceof NotFoundException) {
+          show = null;
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    if (!show) {
+      const studio = await this.studioService.findByUid(studioUid);
+      if (studio) {
+        const shows = await this.showService.findMany({
+          where: {
+            name: showIdOrName,
+            studioId: studio.id,
+            deletedAt: null,
+          },
+          include: showDtoListInclude,
+        });
+        show = (shows[0] as ShowWithPayload<typeof showDtoListInclude> | undefined) ?? null;
+      }
+    }
+
+    if (!show) {
+      throw HttpError.notFound('Show', showIdOrName);
+    }
 
     const studio = await this.studioService.findByUid(studioUid);
     if (!studio || show.studioId !== studio.id) {
       throw HttpError.forbidden('Show does not belong to this studio');
     }
+
+    return show;
+  }
+
+  /**
+   * Gets all tasks for a specific show, ordered by type.
+   */
+  async getShowTasks(studioUid: string, showIdOrName: string) {
+    const show = await this.resolveStudioShow(studioUid, showIdOrName);
 
     const tasks = await this.taskService.findTasksByShowIds([show.id], {
       assignee: true,
@@ -58,15 +95,8 @@ export class TaskRetrievalService {
   /**
    * Gets studio-scoped show details for task pages.
    */
-  async getStudioShow(studioUid: string, showUid: string) {
-    const show = await this.showService.getShowById(showUid, showDtoListInclude);
-
-    const studio = await this.studioService.findByUid(studioUid);
-    if (!studio || show.studioId !== studio.id) {
-      throw HttpError.forbidden('Show does not belong to this studio');
-    }
-
-    return show;
+  async getStudioShow(studioUid: string, showIdOrName: string) {
+    return this.resolveStudioShow(studioUid, showIdOrName);
   }
 
   /**

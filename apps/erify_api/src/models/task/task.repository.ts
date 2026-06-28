@@ -590,4 +590,63 @@ export class TaskRepository extends BaseRepository<
       keys.map((key, index) => [key, counts[index]]),
     ) as Record<ReviewStatsTab, number>;
   }
+
+  // Engineering decision: This method is necessary because it assembles a multi-filter `where` clause
+  // (completedAt range, dueDate range, status set, type set) plus a fixed reverse-chronological orderBy
+  // for the MCP query tool. Building that `where` clause in the service would violate the no-Prisma-
+  // query-building-in-services rule; a simple findMany pass-through cannot express the conditional
+  // range/array filters without duplicating this logic at the call site.
+  async findTasksForMcp(
+    studioUid: string,
+    filters: {
+      completedAtFrom?: Date;
+      completedAtTo?: Date;
+      dueDateFrom?: Date;
+      dueDateTo?: Date;
+      status?: TaskStatus[];
+      type?: TaskType[];
+      skip?: number;
+      take?: number;
+    },
+  ): Promise<Task[]> {
+    const { completedAtFrom, completedAtTo, dueDateFrom, dueDateTo, status, type, skip, take } = filters;
+    const where: Prisma.TaskWhereInput = {
+      studio: { uid: studioUid },
+      deletedAt: null,
+    };
+
+    if (completedAtFrom || completedAtTo) {
+      where.completedAt = {
+        ...(completedAtFrom && { gte: completedAtFrom }),
+        ...(completedAtTo && { lte: completedAtTo }),
+      };
+    }
+
+    if (dueDateFrom || dueDateTo) {
+      where.dueDate = {
+        ...(dueDateFrom && { gte: dueDateFrom }),
+        ...(dueDateTo && { lte: dueDateTo }),
+      };
+    }
+
+    if (status && status.length > 0) {
+      where.status = { in: status };
+    }
+
+    if (type && type.length > 0) {
+      where.type = { in: type };
+    }
+
+    return this.delegate.findMany({
+      where,
+      orderBy: [
+        { completedAt: 'desc' },
+        { dueDate: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      skip,
+      take,
+      include: taskRelationInclude,
+    }) as Promise<Task[]>;
+  }
 }

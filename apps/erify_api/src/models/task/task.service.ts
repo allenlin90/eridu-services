@@ -373,4 +373,11 @@ export class TaskService extends BaseModelService {
     }
     return currentDueDate;
   }
+
+  async findTasksForMcp(
+    studioUid: string,
+    filters: Parameters<TaskRepository['findTasksForMcp']>[1],
+  ): Promise<Task[]> {
+    return this.taskRepository.findTasksForMcp(studioUid, filters);
+  }
 }

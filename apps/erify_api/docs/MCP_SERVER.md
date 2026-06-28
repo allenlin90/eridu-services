@@ -74,16 +74,20 @@ If a public domain is later attached to this service, the endpoint is no longer 
 
 ## Tools
 
-The phase-1 registry exposes only read-only record lookup tools:
+The registry exposes read-only record lookup and studio-scoped query tools:
 
 | Tool | Purpose | Service reuse | Response DTO |
 | --- | --- | --- | --- |
 | `erify_get_show` | Load a studio-scoped show by UID | `TaskOrchestrationService.getStudioShow` | `showDto` |
 | `erify_get_task` | Load a studio-scoped task by UID after confirming studio ownership | `TaskService.findOne`, then `TaskService.findByUidWithRelationsAdmin` | `taskWithRelationsDto` |
+| `erify_query_shows` | Paginated, studio-scoped show list with date-range, search, status, creator, and "needs attention" filters; reverse-chronological by default | `TaskOrchestrationService.getStudioShowsWithTaskSummary` | Already UID-shaped — see note below |
+| `erify_query_tasks` | Paginated, studio-scoped task/submission list filtered by `completedAt`/`dueDate` ranges, status, and/or type; reverse-chronological by default | `TaskService.findTasksForMcp` | `taskWithRelationsDto` |
 
-Both tools parse the raw service result through the same Zod DTO used by the REST API before returning it to the MCP client — this strips internal `BigInt` database ids/foreign keys (which `JSON.stringify` cannot serialize) and maps the row to the public UID-based response shape.
+`erify_get_show`, `erify_get_task`, and `erify_query_tasks` parse the raw service result through the same Zod DTO used by the REST API before returning it to the MCP client — this strips internal `BigInt` database ids/foreign keys (which `JSON.stringify` cannot serialize) and maps the row to the public UID-based response shape. `erify_query_shows` does not re-parse through a DTO at the tool layer because `TaskOrchestrationService.getStudioShowsWithTaskSummary` already maps each row through `showDto` and UID-based fields internally before returning — the result reaching the MCP client is already clean.
 
-Do not add broad list, report, mutation, or cross-studio tools without a new design review. The current foundation is deliberately small while OpenWebUI/LiteLLM integration details and auth hardening are still being discussed.
+**Design-review note (this PR):** `erify_query_shows` and `erify_query_tasks` are the first list-shaped, studio-wide tools added past the original single-record lookup foundation. They were reviewed against the constraint below before merge: both stay read-only, both remain studio-scoped behind `McpStudioPolicy`, both are paginated and capped (default/explicit `limit`), and neither introduces a new auth boundary — they reuse the same allowlist gate as the existing tools. Mutation tools and any change to the auth boundary still require a separate design review before being added.
+
+Do not add report, mutation, or cross-studio tools without a new design review. The current foundation is deliberately small while OpenWebUI/LiteLLM integration details and auth hardening are still being discussed.
 
 ## Access Policy
 
@@ -131,3 +135,5 @@ The MCP foundation is covered by focused unit tests:
 
 - `apps/erify_api/src/mcp/mcp-studio-policy.spec.ts`
 - `apps/erify_api/src/mcp/mcp-tool.service.spec.ts`
+- `apps/erify_api/src/models/task/task.repository.spec.ts` — covers `TaskRepository.findTasksForMcp` filter assembly (see the `// Engineering decision:` comment on that method for why it's a named repository method rather than an inlined `findMany`).
+- `apps/erify_api/src/task-orchestration/task-orchestration.service.spec.ts` — covers the show-by-UID-or-name fallback used by `erify_get_show`/`erify_query_shows`/`erify_query_tasks`.
