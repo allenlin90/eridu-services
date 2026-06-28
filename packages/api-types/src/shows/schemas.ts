@@ -91,6 +91,11 @@ export const CANCELLATION_GATE_CONFIG = {
       'OTHER',
     ] as const,
   },
+  schedule_publish_removal: {
+    allowedOutcomes: ['CANCELLED', 'RESTORE_PREVIOUS'] as const,
+    outcomesRequiringNoActiveTasks: ['CANCELLED'] as const,
+    reasonOptions: ['REMOVED_FROM_REPUBLISHED_SCHEDULE'] as const,
+  },
 } as const;
 
 export type GateKind = keyof typeof CANCELLATION_GATE_CONFIG;
@@ -122,13 +127,13 @@ export const requestCancellationResolutionSchema = z.object({
 });
 
 export const resolveShowCancellationSchema = z.object({
-  outcome: z.enum(['CANCELLED', 'COMPLETED']),
+  outcome: z.enum(['CANCELLED', 'COMPLETED', 'RESTORE_PREVIOUS']),
   resolution_notes: z.string().min(1),
 });
 
 export const cancellationStatusResponseSchema = z.object({
   is_pending: z.boolean(),
-  gate_kind: z.enum(['show_cancellation']).nullable(),
+  gate_kind: z.enum(['show_cancellation', 'schedule_publish_removal']).nullable(),
   from_status: z.string().nullable(),
   reason_category: z.string().nullable(),
   reason_note: z.string().nullable(),

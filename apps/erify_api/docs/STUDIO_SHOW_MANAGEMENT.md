@@ -100,6 +100,8 @@ publishSchedule(scheduleUid, payload)
 6. if adoption would violate conflict rules, fail validation rather than creating a duplicate
 ```
 
+**Source-of-truth principle (confirmed product decision, 2026-06-27)**: the schedule/Google Sheet republish is a bulk **input signal**, not the authoritative record — this system's own `Show.status` and `Audit` trail are the source of truth. A show that reappears in a republish after being cancelled (regardless of whether it was cancelled by a Manager's business decision or by an earlier removal) is restored unconditionally — there is no notification system, so requiring a human to notice and re-resolve every reappearance at bulk-publish scale is impractical. The expected operational discipline is to confirm and clear the Sheet content before triggering the publish, not for this system to defensively second-guess a confirmed bulk upload. The one open gap: this restore currently writes `show_status_id` directly with no `Audit` row — see `docs/tech-debt/schedule-publish-restore-no-audit.md`.
+
 ### Platform Sync Semantics
 
 The platform-replacement path is shared across admin and studio flows:

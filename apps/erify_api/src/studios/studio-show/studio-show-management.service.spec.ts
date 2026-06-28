@@ -862,7 +862,7 @@ describe('studioShowManagementService', () => {
       });
     });
 
-    it('calls resolvePending with the derived gate kind', async () => {
+    it('calls resolvePending with the derived from_status and gate kind', async () => {
       await service.resolveShowCancellation('std_123', 'show_123', {
         outcome: 'CANCELLED',
         resolution_notes: 'Confirmed no production happened',
@@ -871,13 +871,14 @@ describe('studioShowManagementService', () => {
       expect(showCancellationGateServiceMock.resolvePending).toHaveBeenCalledWith({
         show: pendingShow,
         gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'CONFIRMED',
         outcome: 'CANCELLED',
         resolutionNotes: 'Confirmed no production happened',
         actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
       });
     });
 
-    it('defaults to the show_cancellation gate kind for a pending show with no opening Audit row (e.g. set by schedule-publish)', async () => {
+    it('rejects with ShowCancellationGate not-found when the gate snapshot is missing gateKind or fromStatus', async () => {
       showCancellationGateServiceMock.getCancellationStatus.mockResolvedValue({
         isPending: true,
         gateKind: null,
@@ -890,18 +891,15 @@ describe('studioShowManagementService', () => {
         history: [],
       });
 
-      await service.resolveShowCancellation('std_123', 'show_123', {
-        outcome: 'CANCELLED',
-        resolution_notes: 'Confirmed no production happened',
-      }, 'manager', 'ext_5');
-
-      expect(showCancellationGateServiceMock.resolvePending).toHaveBeenCalledWith({
-        show: pendingShow,
-        gateKind: 'show_cancellation',
-        outcome: 'CANCELLED',
-        resolutionNotes: 'Confirmed no production happened',
-        actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
+      await expect(
+        service.resolveShowCancellation('std_123', 'show_123', {
+          outcome: 'CANCELLED',
+          resolution_notes: 'Confirmed no production happened',
+        }, 'manager', 'ext_5'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: expect.stringContaining('ShowCancellationGate') }),
       });
+      expect(showCancellationGateServiceMock.resolvePending).not.toHaveBeenCalled();
     });
   });
 });
