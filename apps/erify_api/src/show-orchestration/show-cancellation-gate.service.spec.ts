@@ -2,6 +2,7 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import type { Show } from '@prisma/client';
 
+import { GateNotificationService } from './gate-notification.service';
 import { ShowCancellationGateService } from './show-cancellation-gate.service';
 
 import { AuditService } from '@/models/audit/audit.service';
@@ -17,6 +18,7 @@ describe('showCancellationGateService', () => {
   const showRepositoryMock = { updateStatusIfPending: jest.fn() };
   const showStatusServiceMock = { getShowStatusBySystemKey: jest.fn() };
   const taskTargetServiceMock = { countActiveByShowId: jest.fn() };
+  const gateNotificationServiceMock = { notifyGateOpened: jest.fn(), notifyGateResolved: jest.fn() };
 
   const actor = { id: 5n, uid: 'user_abc123', name: 'Jane Duty' };
   const show = { id: 1n, uid: 'show_xyz' } as Show;
@@ -38,6 +40,7 @@ describe('showCancellationGateService', () => {
         { provide: ShowRepository, useValue: showRepositoryMock },
         { provide: ShowStatusService, useValue: showStatusServiceMock },
         { provide: TaskTargetService, useValue: taskTargetServiceMock },
+        { provide: GateNotificationService, useValue: gateNotificationServiceMock },
       ],
     }).compile();
     service = module.get(ShowCancellationGateService);
@@ -273,6 +276,12 @@ describe('showCancellationGateService', () => {
         },
         targets: [{ targetType: 'SHOW', targetId: 1n }],
       });
+      expect(gateNotificationServiceMock.notifyGateOpened).toHaveBeenCalledWith(
+        show,
+        'show_cancellation',
+        { category: 'EQUIPMENT_FAILURE', note: 'Camera failed mid-show' },
+        actor,
+      );
     });
 
     it('throws SHOW_STATUS_CHANGED when the guarded write matches no rows', async () => {
@@ -317,6 +326,12 @@ describe('showCancellationGateService', () => {
         },
         targets: [{ targetType: 'SHOW', targetId: 1n }],
       });
+      expect(gateNotificationServiceMock.notifyGateOpened).toHaveBeenCalledWith(
+        show,
+        'schedule_publish_removal',
+        { category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE', note: 'Removed from republished schedule; 2 active task(s) still attached' },
+        null,
+      );
     });
   });
 
@@ -412,6 +427,7 @@ describe('showCancellationGateService', () => {
           metadata: expect.objectContaining({ event: 'resolved', old_value: 'CONFIRMED', new_value: 'CANCELLED' }),
         }),
       );
+      expect(gateNotificationServiceMock.notifyGateResolved).toHaveBeenCalledWith(show, 'show_cancellation', 'CANCELLED', actor);
     });
   });
 

@@ -3,6 +3,8 @@ import type { Show } from '@prisma/client';
 
 import { CANCELLATION_GATE_CONFIG, type GateKind, type GateOutcome } from '@eridu/api-types/shows';
 
+import { GateNotificationService } from './gate-notification.service';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import type { AuditWithTargets } from '@/models/audit/schemas/audit.schema';
@@ -81,6 +83,7 @@ export class ShowCancellationGateService {
     private readonly showRepository: ShowRepository,
     private readonly showStatusService: ShowStatusService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly gateNotificationService: GateNotificationService,
   ) {}
 
   async resolveActorTier(
@@ -187,6 +190,7 @@ export class ShowCancellationGateService {
       note: reasonNote,
       actor,
     });
+    this.gateNotificationService.notifyGateOpened(show, gateKind, { category: reasonCategory, note: reasonNote }, actor);
   }
 
   async resolveAtomic(params: {
@@ -223,6 +227,7 @@ export class ShowCancellationGateService {
       note: reasonNote,
       actor,
     });
+    this.gateNotificationService.notifyGateResolved(show, gateKind, outcome, actor);
   }
 
   async resolvePending(params: {
@@ -257,6 +262,7 @@ export class ShowCancellationGateService {
       note: resolutionNotes,
       actor,
     });
+    this.gateNotificationService.notifyGateResolved(show, gateKind, outcome, actor);
   }
 
   private assertReasonCategoryAllowed(gateKind: GateKind, reasonCategory: string): void {
