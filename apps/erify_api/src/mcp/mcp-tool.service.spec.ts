@@ -1,4 +1,5 @@
 import { HttpException } from '@nestjs/common';
+import { ZodError } from 'zod';
 
 import { TASK_STATUS, TASK_TYPE } from '@eridu/api-types/task-management';
 
@@ -178,7 +179,12 @@ describe('mcpToolService', () => {
     await expect(createService().queryTasks({
       studio_id: 'std_123',
       completed_at_from: 'invalid-date',
-    })).rejects.toBeInstanceOf(HttpException);
+    })).rejects.toBeInstanceOf(ZodError);
+
+    await expect(createService().queryShows({
+      studio_id: 'std_123',
+      date_from: 'invalid-date',
+    })).rejects.toBeInstanceOf(ZodError);
   });
 
   it('uses default page=1 and limit=20 in queryShows and queryTasks', async () => {

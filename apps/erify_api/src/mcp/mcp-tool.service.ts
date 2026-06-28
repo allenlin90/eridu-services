@@ -22,8 +22,8 @@ const taskScopedSchema = z.object({
 
 const queryShowsSchema = z.object({
   studio_id: z.string().min(1),
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
+  date_from: z.iso.datetime().optional(),
+  date_to: z.iso.datetime().optional(),
   search: z.string().optional(),
   needs_attention: z.boolean().optional(),
   show_status_name: z.string().optional(),
@@ -34,10 +34,10 @@ const queryShowsSchema = z.object({
 
 const queryTasksSchema = z.object({
   studio_id: z.string().min(1),
-  completed_at_from: z.string().optional(),
-  completed_at_to: z.string().optional(),
-  due_date_from: z.string().optional(),
-  due_date_to: z.string().optional(),
+  completed_at_from: z.iso.datetime().optional(),
+  completed_at_to: z.iso.datetime().optional(),
+  due_date_from: z.iso.datetime().optional(),
+  due_date_to: z.iso.datetime().optional(),
   status: z
     .union([z.nativeEnum(TaskStatus), z.array(z.nativeEnum(TaskStatus))])
     .transform((val) => (Array.isArray(val) ? val : [val]))
@@ -96,7 +96,7 @@ export class McpToolService {
     const studioUid = this.studioPolicy.assertStudioAllowed(parsed.studio_id);
 
     const page = parsed.page ?? 1;
-    const limit = parsed.limit ?? 50;
+    const limit = parsed.limit ?? 20;
 
     const transformedQuery = {
       page,
@@ -127,21 +127,8 @@ export class McpToolService {
     const dueDateFrom = parsed.due_date_from ? new Date(parsed.due_date_from) : undefined;
     const dueDateTo = parsed.due_date_to ? new Date(parsed.due_date_to) : undefined;
 
-    if (completedAtFrom && Number.isNaN(completedAtFrom.getTime())) {
-      throw HttpError.badRequest('completed_at_from is not a valid date');
-    }
-    if (completedAtTo && Number.isNaN(completedAtTo.getTime())) {
-      throw HttpError.badRequest('completed_at_to is not a valid date');
-    }
-    if (dueDateFrom && Number.isNaN(dueDateFrom.getTime())) {
-      throw HttpError.badRequest('due_date_from is not a valid date');
-    }
-    if (dueDateTo && Number.isNaN(dueDateTo.getTime())) {
-      throw HttpError.badRequest('due_date_to is not a valid date');
-    }
-
     const page = parsed.page ?? 1;
-    const limit = parsed.limit ?? 50;
+    const limit = parsed.limit ?? 20;
     const skip = (page - 1) * limit;
 
     const tasks = await this.taskService.findTasksForMcp(studioUid, {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 import type { ListStudioShowsQueryTransformed } from '@eridu/api-types/task-management';
@@ -30,7 +30,15 @@ export class TaskRetrievalService {
   private async resolveStudioShow(studioUid: string, showIdOrName: string) {
     let show: ShowWithPayload<typeof showDtoListInclude> | null = null;
     if (showIdOrName.startsWith(ShowService.UID_PREFIX)) {
-      show = await this.showService.getShowById(showIdOrName, showDtoListInclude).catch(() => null);
+      try {
+        show = await this.showService.getShowById(showIdOrName, showDtoListInclude);
+      } catch (err) {
+        if (err instanceof NotFoundException) {
+          show = null;
+        } else {
+          throw err;
+        }
+      }
     }
 
     if (!show) {

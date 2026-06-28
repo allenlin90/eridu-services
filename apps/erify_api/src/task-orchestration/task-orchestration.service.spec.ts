@@ -270,6 +270,34 @@ describe('taskOrchestrationService', () => {
       });
       expect(result).toBe(show);
     });
+
+    it('falls back to lookup by name when UID lookup throws NotFoundException', async () => {
+      const show = { uid: 'show_123', name: 'show_not_found_but_exists_as_name', studioId: BigInt(1) };
+      showService.getShowById.mockRejectedValue(new NotFoundException('not found'));
+      showService.findMany.mockResolvedValue([show as any]);
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+
+      const result = await service.getStudioShow('std_1', 'show_not_found_but_exists_as_name');
+
+      expect(showService.findMany).toHaveBeenCalledWith({
+        where: {
+          name: 'show_not_found_but_exists_as_name',
+          studioId: BigInt(1),
+          deletedAt: null,
+        },
+        include: showDtoListInclude,
+      });
+      expect(result).toBe(show);
+    });
+
+    it('rethrows database/other errors when UID lookup throws non-NotFoundException', async () => {
+      showService.getShowById.mockRejectedValue(new Error('Database connection failed'));
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+
+      await expect(service.getStudioShow('std_1', 'show_database_failure'))
+        .rejects
+        .toThrow('Database connection failed');
+    });
   });
 
   describe('getStudioShowsWithTaskSummary', () => {
