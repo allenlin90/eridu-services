@@ -251,6 +251,25 @@ describe('taskOrchestrationService', () => {
       expect(showService.getShowById).toHaveBeenCalledWith('show_1', showDtoListInclude);
       expect(result).toBe(show);
     });
+
+    it('falls back to lookup by name when showUid is not a UID', async () => {
+      const show = { uid: 'show_123', name: 'My Show Name', studioId: BigInt(1) };
+      showService.getShowById.mockRejectedValue(new Error('not found'));
+      showService.findMany.mockResolvedValue([show as any]);
+      studioService.findByUid.mockResolvedValue({ id: BigInt(1) } as any);
+
+      const result = await service.getStudioShow('std_1', 'My Show Name');
+
+      expect(showService.findMany).toHaveBeenCalledWith({
+        where: {
+          name: 'My Show Name',
+          studioId: BigInt(1),
+          deletedAt: null,
+        },
+        include: showDtoListInclude,
+      });
+      expect(result).toBe(show);
+    });
   });
 
   describe('getStudioShowsWithTaskSummary', () => {
