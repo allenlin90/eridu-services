@@ -27,7 +27,6 @@ const CANCELLATION_ERROR_MESSAGES: Record<string, string> = {
   SHOW_CANCELLATION_NOT_ALLOWED: 'This show cannot be cancelled from its current status.',
   CANCELLATION_NOT_AUTHORIZED: 'You are not authorized to cancel this show. Only Managers/Admins or the current Duty Manager can.',
   OUTCOME_REQUIRED: 'Choose an outcome before submitting.',
-  OUTCOME_NOT_ALLOWED_FOR_DUTY_MANAGER: 'Only a Manager can choose the final outcome.',
   SHOW_CANCELLATION_NOT_PENDING: 'This show is not currently pending resolution.',
   SIGN_OFF_REQUIRES_MANAGER: 'Only a Manager/Admin can sign off a pending resolution.',
   DIRECT_CANCELLATION_REQUIRES_MANAGER: 'Only a Manager/Admin can cancel directly from show details.',

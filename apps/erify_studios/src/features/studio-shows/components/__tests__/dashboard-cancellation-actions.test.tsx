@@ -48,12 +48,13 @@ vi.mock('@eridu/ui', async () => {
   };
 });
 
-function renderActions(canRequestCancellation = true) {
+function renderActions(canRequestCancellation = true, mayHaveCancellationHistory = true) {
   return render(
     <DashboardCancellationActions
       studioId="studio_1"
       showId="show_1"
       canRequestCancellation={canRequestCancellation}
+      mayHaveCancellationHistory={mayHaveCancellationHistory}
       renderTrigger={({ requestItem, historyItem }) => (
         <div>
           {requestItem}

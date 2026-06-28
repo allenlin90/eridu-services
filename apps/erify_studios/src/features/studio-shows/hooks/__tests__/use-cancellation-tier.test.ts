@@ -27,6 +27,16 @@ describe('useCancellationTier', () => {
     expect(result.tier).toBe('manager');
   });
 
+  it('returns duty_manager when the current user is the active duty manager even though they also hold a static ADMIN/MANAGER role', () => {
+    vi.mocked(useStudioAccess).mockReturnValue({ role: 'admin', isLoading: false } as any);
+    vi.mocked(useUserProfile).mockReturnValue({ data: { uid: 'user_self_uid', ext_id: 'ext_self_id', id: 'ext_self_id' }, isLoading: false } as any);
+    vi.mocked(useDutyManager).mockReturnValue({ data: { user_id: 'user_self_uid' }, isLoading: false } as any);
+
+    const result = useCancellationTier('studio_1');
+
+    expect(result.tier).toBe('duty_manager');
+  });
+
   it('returns duty_manager when the current user matches the active duty manager', () => {
     vi.mocked(useStudioAccess).mockReturnValue({ role: 'member', isLoading: false } as any);
     vi.mocked(useUserProfile).mockReturnValue({ data: { uid: 'user_self_uid', ext_id: 'ext_self_id', id: 'ext_self_id' }, isLoading: false } as any);

@@ -543,7 +543,26 @@ describe('studioShowManagementService', () => {
     expect(showRepositoryMock.update).not.toHaveBeenCalled();
   });
 
-  it('allows updateShow to change show_status_id when no gate is pending and the target is not the pending status', async () => {
+  it('allows updateShow to change show_status_id when no gate is pending and the target is not a gate-owned status', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      startTime: new Date('2026-01-01T00:00:00.000Z'),
+      endTime: new Date('2026-01-01T01:00:00.000Z'),
+      showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
+    });
+    showStatusServiceMock.getShowStatusById.mockResolvedValue({ uid: 'shst_live', systemKey: 'LIVE' });
+    showRepositoryMock.update.mockResolvedValue({ uid: 'show_123' });
+    showServiceMock.getShowById.mockResolvedValue({ uid: 'show_123' });
+
+    await service.updateShow('std_123', 'show_123', { showStatusId: 'shst_live' } as UpdateStudioShowDto);
+
+    expect(showStatusServiceMock.getShowStatusById).toHaveBeenCalledWith('shst_live');
+    expect(showRepositoryMock.update).toHaveBeenCalled();
+  });
+
+  it('rejects updateShow when the target show_status_id is CANCELLED, even from a non-pending current status', async () => {
     showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
       id: BigInt(100),
       uid: 'show_123',
@@ -553,13 +572,13 @@ describe('studioShowManagementService', () => {
       showStatus: { uid: 'shst_confirmed', name: 'confirmed', systemKey: 'CONFIRMED' },
     });
     showStatusServiceMock.getShowStatusById.mockResolvedValue({ uid: 'shst_cancelled', systemKey: 'CANCELLED' });
-    showRepositoryMock.update.mockResolvedValue({ uid: 'show_123' });
-    showServiceMock.getShowById.mockResolvedValue({ uid: 'show_123' });
 
-    await service.updateShow('std_123', 'show_123', { showStatusId: 'shst_cancelled' } as UpdateStudioShowDto);
-
-    expect(showStatusServiceMock.getShowStatusById).toHaveBeenCalledWith('shst_cancelled');
-    expect(showRepositoryMock.update).toHaveBeenCalled();
+    await expect(
+      service.updateShow('std_123', 'show_123', { showStatusId: 'shst_cancelled' } as UpdateStudioShowDto),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ message: 'SHOW_STATUS_CANCELLATION_REQUIRES_GATE' }),
+    });
+    expect(showRepositoryMock.update).not.toHaveBeenCalled();
   });
 
   it('rejects updateShow when the target show_status_id is the pending-resolution status, even from a non-pending current status', async () => {

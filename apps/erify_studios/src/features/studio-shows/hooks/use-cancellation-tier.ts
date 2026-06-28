@@ -23,12 +23,12 @@ export function useCancellationTier(studioId: string): { tier: CancellationTier;
 
   const isLoading = isRoleLoading || isProfileLoading || isDutyManagerLoading;
 
-  if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
-    return { tier: 'manager', isLoading };
-  }
-
   if (profile?.uid && dutyManager?.user_id === profile.uid) {
     return { tier: 'duty_manager', isLoading };
+  }
+
+  if (role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER) {
+    return { tier: 'manager', isLoading };
   }
 
   return { tier: null, isLoading };

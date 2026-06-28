@@ -48,10 +48,9 @@ describe('showCancellationGateService', () => {
   });
 
   describe('resolveActorTier', () => {
-    it('returns manager for ADMIN role without checking duty-manager shift', async () => {
+    it('returns manager for ADMIN role when the actor is not the active duty manager', async () => {
       const tier = await service.resolveActorTier('studio_1', 'admin', { id: 5n });
       expect(tier).toBe('manager');
-      expect(studioShiftServiceMock.findActiveDutyManager).not.toHaveBeenCalled();
     });
 
     it('returns manager for MANAGER role', async () => {
@@ -62,6 +61,12 @@ describe('showCancellationGateService', () => {
     it('returns duty_manager when the actor is the active duty manager and holds no manager role', async () => {
       studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 5n } });
       const tier = await service.resolveActorTier('studio_1', 'member', { id: 5n });
+      expect(tier).toBe('duty_manager');
+    });
+
+    it('returns duty_manager when the actor is the active duty manager even though they also hold a static ADMIN/MANAGER role', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 5n } });
+      const tier = await service.resolveActorTier('studio_1', 'manager', { id: 5n });
       expect(tier).toBe('duty_manager');
     });
 

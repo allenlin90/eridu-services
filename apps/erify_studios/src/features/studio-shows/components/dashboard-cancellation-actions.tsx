@@ -32,6 +32,7 @@ type DashboardCancellationActionsProps = {
   studioId: string;
   showId: string;
   canRequestCancellation: boolean;
+  mayHaveCancellationHistory: boolean;
   renderTrigger: (props: {
     requestItem: ReactNode | null;
     historyItem: ReactNode | null;
@@ -67,10 +68,13 @@ export function DashboardCancellationActions({
   studioId,
   showId,
   canRequestCancellation,
+  mayHaveCancellationHistory,
   renderTrigger,
 }: DashboardCancellationActionsProps) {
   const { isActiveDutyManager } = useActiveDutyManagerEligibility(studioId);
-  const { data: status } = useCancellationStatus(studioId, showId);
+  const { data: status } = useCancellationStatus(studioId, showId, {
+    enabled: canRequestCancellation || mayHaveCancellationHistory,
+  });
   const requestMutation = useRequestCancellationResolution(studioId);
   const [requestOpen, setRequestOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);

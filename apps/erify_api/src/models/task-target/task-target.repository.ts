@@ -4,6 +4,7 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma, TaskTarget } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
+import { FINALIZED_LOOP_TASK_STATUSES } from '@/models/task/task-finalized-loop.constants';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
@@ -43,12 +44,12 @@ export class TaskTargetRepository extends BaseRepository<
     });
   }
 
-  // Engineering decision: "active" excludes terminal task statuses (COMPLETED,
-  // CLOSED) in addition to the soft-delete filters findByShowIds already
-  // applies — a completed task must not block a cancellation outcome that
-  // requires "no active tasks." This is the canonical filter for that policy;
-  // every caller (manual cancellation, schedule-publish removal) uses this
-  // method instead of re-deriving the status list.
+  // Engineering decision: "active" excludes terminal task statuses in
+  // addition to the soft-delete filters findByShowIds already applies — a
+  // finalized task must not block a cancellation outcome that requires "no
+  // active tasks." Reuses FINALIZED_LOOP_TASK_STATUSES so the terminal-status
+  // list stays one type-checked source instead of another independently
+  // maintained copy.
   async countActiveByShowId(showId: bigint): Promise<number> {
     return this.delegate.count({
       where: {
@@ -56,7 +57,7 @@ export class TaskTargetRepository extends BaseRepository<
         deletedAt: null,
         task: {
           deletedAt: null,
-          status: { notIn: ['COMPLETED', 'CLOSED'] },
+          status: { notIn: [...FINALIZED_LOOP_TASK_STATUSES] },
         },
       },
     });

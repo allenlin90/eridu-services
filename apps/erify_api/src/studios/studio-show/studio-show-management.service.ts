@@ -107,14 +107,18 @@ export class StudioShowManagementService {
       if (existingShow.showStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
         throw HttpError.badRequest('SHOW_STATUS_LOCKED_BY_PENDING_CANCELLATION');
       }
-      // Block entering the pending-resolution state through the generic edit
-      // form too — not just leaving it. Setting show_status_id to the pending
-      // status directly here would put the show in CANCELLED_PENDING_RESOLUTION
-      // with no opening Audit row, so a later resolve attempt fails with
-      // ShowCancellationGate not found. Only cancelShowWithResolution may open one.
+      // Block entering the pending-resolution or cancelled state through the
+      // generic edit form too — not just leaving it. Setting show_status_id
+      // directly here would skip the gate's active-task guard and Audit
+      // trail entirely. Only the cancellation gate (cancelShowWithResolution
+      // / requestCancellationResolution / resolveShowCancellation) may move
+      // a show into either state.
       const targetStatus = await this.showStatusService.getShowStatusById(dto.showStatusId);
       if (targetStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
         throw HttpError.badRequest('SHOW_STATUS_PENDING_RESOLUTION_REQUIRES_GATE');
+      }
+      if (targetStatus?.systemKey === 'CANCELLED') {
+        throw HttpError.badRequest('SHOW_STATUS_CANCELLATION_REQUIRES_GATE');
       }
     }
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);

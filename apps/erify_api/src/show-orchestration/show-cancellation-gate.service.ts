@@ -87,13 +87,13 @@ export class ShowCancellationGateService {
     studioRole: string | undefined,
     actor: { id: bigint },
   ): Promise<ActorTier | null> {
-    if (studioRole === 'admin' || studioRole === 'manager') {
-      return 'manager';
-    }
-
     const dutyManagerShift = await this.studioShiftService.findActiveDutyManager(studioUid, new Date());
     if (dutyManagerShift && dutyManagerShift.user.id === actor.id) {
       return 'duty_manager';
+    }
+
+    if (studioRole === 'admin' || studioRole === 'manager') {
+      return 'manager';
     }
 
     return null;
