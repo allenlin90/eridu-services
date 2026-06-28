@@ -287,8 +287,11 @@ pnpm sherif
 | Use repository for all DB access | Build Prisma queries in service         |
 | Follow task model as reference   | Copy patterns from unverified models    |
 
-### Supplementary References
-- Tool-specific supplementary reference files (e.g. `.claude/memory/`) are maintained per-tool and are not replacements for skills, workflows, or this file.
+### Agent Memory & Supplementary References
+- **Shared Agent Memory (`.agents/memory/`):** Contains tool-agnostic refactoring logs, migration history, and architectural overrides (e.g. `data-table-extraction.md`).
+  * **Read Guidelines:** During the planning/research phase of a task, check `.agents/memory/` for historical context on the affected codebase areas.
+  * **Write Guidelines:** When executing a major component refactoring, file relocation, or architectural cutover, document it in a new `.agents/memory/<topic>.md` file as part of the `knowledge-sync.md` workflow.
+- **Tool-Specific Memory (`.claude/memory/`):** Deep-dive reference documents maintained per-tool. Consult them when you need additional reference depth after reading canonical files.
 
 ### Change Safety
 - Do not revert unrelated local changes.
@@ -299,3 +302,24 @@ pnpm sherif
 - Include a short summary of what changed and why.
 - Call out risks, assumptions, and follow-up items.
 - Report verification commands run and outcomes.
+
+## Tool-Specific Optimizations
+
+### RTK (Rust Token Killer) Rules
+- Always prefix shell commands with `rtk` to minimize token consumption when executing commands via agents.
+- **Availability Check & Fallback:** Before using `rtk` for the first time in a session or environment, verify if it is available (e.g., run `which rtk` or check command existence). If `rtk` is not installed or available, fall back to running the native command directly without the `rtk` prefix.
+- Examples:
+  * `rtk git status` (fallback: `git status`)
+  * `rtk pnpm test` (fallback: `pnpm test`)
+  * `rtk pnpm lint` (fallback: `pnpm lint`)
+  * `rtk grep "pattern" src/` (fallback: `grep "pattern" src/`)
+  * `rtk find "*.ts" .` (fallback: `find "*.ts" .`)
+- Do not use `rtk` for commands that require interactive prompts or streaming outputs.
+
+### Documentation & Link Hygiene
+- Markdown links in repository documentation (e.g., `docs/`, `apps/README.md`) must use **relative paths** from the current document.
+- Never use absolute filesystem paths (such as `/Users/...`) in Markdown links.
+- Never use `file://` URLs in repository documentation. (Note: This is separate from the agent's communication style in chat/artifacts, which must use `file://` links).
+- Prefer markdown links to canonical docs rather than pasting raw path text when the target should be navigable.
+- After editing docs, validate the touched doc tree for broken relative links before finishing.
+
