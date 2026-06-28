@@ -210,25 +210,80 @@ describe('showCancellationGateService', () => {
       });
     });
 
-    it('defaults to the show_cancellation gate kind when pending with no opening Audit row (e.g. set by schedule-publish)', async () => {
-      auditServiceMock.findForTargets.mockResolvedValue([]);
+    it('uses the latest note_updated row for reasonNote but the original opened row for category/fromStatus/openedBy', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          action: 'OVERRIDE',
+          reason: 'Actually two cameras failed',
+          actorId: 6n,
+          createdAt: new Date('2026-06-25T17:00:00.000Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'note_updated',
+            gate_kind: 'show_cancellation',
+            old_value: null,
+            new_value: null,
+            actor_uid: 'user_def456',
+            actor_name: 'Bob Duty',
+          },
+        },
+        {
+          action: 'OVERRIDE',
+          reason: 'Camera failed mid-show',
+          actorId: 5n,
+          createdAt: new Date('2026-06-25T16:14:30.201Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'opened',
+            gate_kind: 'show_cancellation',
+            old_value: 'CONFIRMED',
+            new_value: 'CANCELLED_PENDING_RESOLUTION',
+            reason_category: 'EQUIPMENT_FAILURE',
+            actor_uid: 'user_abc123',
+            actor_name: 'Jane Duty',
+          },
+        },
+      ]);
 
       const result = await service.getCancellationStatus({
         id: 1n,
         showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
       });
 
-      expect(result).toEqual({
-        isPending: true,
-        gateKind: 'show_cancellation',
-        fromStatus: null,
-        reasonCategory: null,
-        reasonNote: null,
-        openedBy: null,
-        openedAt: null,
-        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
-        history: [],
+      expect(result.reasonNote).toBe('Actually two cameras failed');
+      expect(result.reasonCategory).toBe('EQUIPMENT_FAILURE');
+      expect(result.fromStatus).toBe('CONFIRMED');
+      expect(result.openedBy).toEqual({ uid: 'user_abc123', name: 'Jane Duty' });
+      expect(result.history).toHaveLength(2);
+      expect(result.history[0].event).toBe('opened');
+      expect(result.history[1].event).toBe('note_updated');
+    });
+
+    it('returns openedBy: null and history actor: null for a system-opened (no actor_uid) audit row', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          action: 'OVERRIDE',
+          reason: 'Removed from republished schedule; 2 active task(s) still attached',
+          actorId: null,
+          createdAt: new Date('2026-06-25T16:14:30.201Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'opened',
+            gate_kind: 'schedule_publish_removal',
+            old_value: 'CONFIRMED',
+            new_value: 'CANCELLED_PENDING_RESOLUTION',
+            reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+          },
+        },
+      ]);
+
+      const result = await service.getCancellationStatus({
+        id: 1n,
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
       });
+
+      expect(result.openedBy).toBeNull();
+      expect(result.history[0].actor).toBeNull();
     });
   });
 
@@ -428,6 +483,33 @@ describe('showCancellationGateService', () => {
         }),
       );
       expect(gateNotificationServiceMock.notifyGateResolved).toHaveBeenCalledWith(show, 'show_cancellation', 'CANCELLED', actor);
+    });
+  });
+
+  describe('amendPendingNote', () => {
+    it('writes a note_updated audit row without old/new values', async () => {
+      await service.amendPendingNote({
+        showId: 1n,
+        gateKind: 'show_cancellation',
+        reasonNote: 'Actually two cameras failed',
+        actor,
+      });
+
+      expect(auditServiceMock.create).toHaveBeenCalledWith({
+        action: 'OVERRIDE',
+        actorId: 5n,
+        reason: 'Actually two cameras failed',
+        metadata: {
+          field: 'show_status',
+          event: 'note_updated',
+          gate_kind: 'show_cancellation',
+          old_value: null,
+          new_value: null,
+          actor_uid: 'user_abc123',
+          actor_name: 'Jane Duty',
+        },
+        targets: [{ targetType: 'SHOW', targetId: 1n }],
+      });
     });
   });
 

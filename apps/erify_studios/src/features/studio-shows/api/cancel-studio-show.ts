@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 import type {
+  AmendCancellationNoteInput,
   CancellationStatusResponse,
   CancelShowWithResolutionInput,
   RequestCancellationResolutionInput,
@@ -29,6 +30,7 @@ const CANCELLATION_ERROR_MESSAGES: Record<string, string> = {
   OUTCOME_REQUIRED: 'Choose an outcome before submitting.',
   SHOW_CANCELLATION_NOT_PENDING: 'This show is not currently pending resolution.',
   SIGN_OFF_REQUIRES_MANAGER: 'Only a Manager/Admin can sign off a pending resolution.',
+  NOTE_AMEND_REQUIRES_DUTY_MANAGER: 'Only the current Duty Manager can update this note.',
   DIRECT_CANCELLATION_REQUIRES_MANAGER: 'Only a Manager/Admin can cancel directly from show details.',
 };
 
@@ -93,6 +95,18 @@ export async function requestCancellationResolution(
 ): Promise<StudioShowDetail> {
   const response = await apiClient.post<StudioShowDetail>(
     `/studios/${studioId}/shows/${showId}/request-cancellation-resolution`,
+    data,
+  );
+  return response.data;
+}
+
+export async function amendCancellationNote(
+  studioId: string,
+  showId: string,
+  data: AmendCancellationNoteInput,
+): Promise<CancellationStatusResponse> {
+  const response = await apiClient.patch<CancellationStatusResponse>(
+    `/studios/${studioId}/shows/${showId}/cancellation-note`,
     data,
   );
   return response.data;
@@ -163,6 +177,22 @@ export function useRequestCancellationResolution(studioId: string) {
     },
     onError: (error) => {
       toast.error(gateMutationErrorMessage(error, 'Failed to request cancellation resolution'));
+    },
+  });
+}
+
+export function useAmendCancellationNote(studioId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ showId, data }: { showId: string; data: AmendCancellationNoteInput }) =>
+      amendCancellationNote(studioId, showId, data),
+    onSuccess: async (_status, { showId }) => {
+      queryClient.invalidateQueries({ queryKey: cancellationStatusKeys.detail(studioId, showId) });
+      toast.success('Note updated');
+    },
+    onError: (error) => {
+      toast.error(gateMutationErrorMessage(error, 'Failed to update note'));
     },
   });
 }

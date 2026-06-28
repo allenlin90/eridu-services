@@ -16,6 +16,7 @@ import {
 import {
   getGateActiveTaskCount,
   getGateErrorCode,
+  useAmendCancellationNote,
   useResolveShowCancellation,
 } from '../api/cancel-studio-show';
 import { useCancellationTier } from '../hooks/use-cancellation-tier';
@@ -39,9 +40,12 @@ export function ResolveCancellationDialog({ studioId, show, status }: ResolveCan
   const [open, setOpen] = useState(false);
   const [outcome, setOutcome] = useState('');
   const [resolutionNotes, setResolutionNotes] = useState('');
+  const [updatedNote, setUpdatedNote] = useState('');
   const [activeTaskBlockerCount, setActiveTaskBlockerCount] = useState<number | null>(null);
   const resolveMutation = useResolveShowCancellation(studioId);
+  const amendMutation = useAmendCancellationNote(studioId);
   const canResolve = tier === 'manager';
+  const canAmendNote = tier === 'duty_manager';
 
   if (!status.is_pending) {
     return null;
@@ -51,6 +55,7 @@ export function ResolveCancellationDialog({ studioId, show, status }: ResolveCan
     if (!nextOpen) {
       setOutcome('');
       setResolutionNotes('');
+      setUpdatedNote('');
       setActiveTaskBlockerCount(null);
     }
     setOpen(nextOpen);
@@ -98,6 +103,22 @@ export function ResolveCancellationDialog({ studioId, show, status }: ResolveCan
             {': '}
             {status.reason_note}
           </p>
+          {canAmendNote
+            ? (
+                <div className="space-y-1">
+                  <Label htmlFor="update-note">Update note</Label>
+                  <Textarea id="update-note" aria-label="Update note" value={updatedNote} onChange={(e) => setUpdatedNote(e.target.value)} />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={updatedNote.trim().length === 0 || amendMutation.isPending}
+                    onClick={() => amendMutation.mutate({ showId: show.id, data: { reason_note: updatedNote.trim() } })}
+                  >
+                    Update note
+                  </Button>
+                </div>
+              )
+            : null}
           {canResolve
             ? (
                 <>

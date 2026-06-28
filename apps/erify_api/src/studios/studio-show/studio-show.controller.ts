@@ -31,6 +31,7 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 import { BaseStudioController } from '../base-studio.controller';
 
 import {
+  AmendCancellationNoteDto,
   cancellationStatusResponseDto,
   CancelShowWithResolutionDto,
   RequestCancellationResolutionDto,
@@ -414,6 +415,26 @@ export class StudioShowController extends BaseStudioController {
       request?.studioMembership?.role,
       user.ext_id,
     );
+  }
+
+  @Patch(':id/cancellation-note')
+  @StudioProtected() // any studio member — the service enforces Duty Manager tier
+  @ZodResponse(cancellationStatusResponseDto)
+  async amendCancellationNote(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Body() body: AmendCancellationNoteDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const status = await this.studioShowManagementService.amendCancellationNote(
+      studioId,
+      id,
+      body,
+      request?.studioMembership?.role,
+      user.ext_id,
+    );
+    return toCancellationStatusApiResponse(status);
   }
 
   @Get(':id/cancellation-status')

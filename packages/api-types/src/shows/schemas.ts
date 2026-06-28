@@ -108,7 +108,7 @@ const gateActorSchema = z.object({
 });
 
 export const cancellationHistoryEntrySchema = z.object({
-  event: z.enum(['opened', 'resolved']),
+  event: z.enum(['opened', 'note_updated', 'resolved']),
   actor: gateActorSchema.nullable(),
   at: z.iso.datetime(),
   note: z.string().nullable(),
@@ -129,6 +129,10 @@ export const requestCancellationResolutionSchema = z.object({
 export const resolveShowCancellationSchema = z.object({
   outcome: z.enum(['CANCELLED', 'COMPLETED', 'RESTORE_PREVIOUS']),
   resolution_notes: z.string().min(1),
+});
+
+export const amendCancellationNoteSchema = z.object({
+  reason_note: z.string().min(1),
 });
 
 export const cancellationStatusResponseSchema = z.object({

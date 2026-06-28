@@ -17,7 +17,7 @@ export type ActorTier = 'manager' | 'duty_manager';
 
 export type GateAuditMetadata = {
   field: 'show_status';
-  event: 'opened' | 'resolved';
+  event: 'opened' | 'note_updated' | 'resolved';
   gate_kind: GateKind;
   old_value: string | null;
   new_value: string | null;
@@ -27,7 +27,7 @@ export type GateAuditMetadata = {
 };
 
 export type CancellationHistoryEntryResult = {
-  event: 'opened' | 'resolved';
+  event: 'opened' | 'note_updated' | 'resolved';
   actor: { uid: string; name: string } | null;
   at: Date;
   note: string | null;
@@ -71,9 +71,12 @@ function getGateMetadata(audit: AuditWithTargets): GateAuditMetadata | null {
 }
 
 /**
- * Owns the manual show cancellation gate. Show.status is the gate state,
- * Audit is the persistence/history source. `actor: null` is for
- * system-generated gates (schedule-publish) where no human is present.
+ * Owns the show cancellation gate: who may act (Manager tier is always
+ * static-role; Duty Manager tier is the time-windowed shift flag, checked
+ * only when Manager tier doesn't apply) and what the "live" pending snapshot
+ * is. No Task/TaskTarget usage anywhere — Show.status is the gate state,
+ * Audit is the only persistence. `actor: null` is for system-generated gates
+ * (schedule-publish) where no human is present.
  */
 @Injectable()
 export class ShowCancellationGateService {
@@ -137,23 +140,23 @@ export class ShowCancellationGateService {
     // cycle can exist while Show.status is pending (re-opening is blocked
     // elsewhere), so the topmost "opened" row is the current cycle's origin.
     const opened = gateEntries.find((e) => e.meta.event === 'opened');
+    const latestNote = gateEntries.find((e) => e.meta.event === 'opened' || e.meta.event === 'note_updated');
 
-    // A show can be pending with no opening Audit row at all — schedule-publish
-    // (and any other pre-gate write) sets CANCELLED_PENDING_RESOLUTION directly
-    // without going through openPending. 'show_cancellation' is the only
-    // GateKind today, so default to it instead of reporting an empty,
-    // unresolvable gate (no allowed outcomes) for these shows.
-    const gateKind = opened?.meta.gate_kind ?? 'show_cancellation';
+    if (!opened || !latestNote) {
+      return { ...NOT_PENDING_RESULT, isPending: true, history };
+    }
+
+    const gateKind = opened.meta.gate_kind;
     const config = CANCELLATION_GATE_CONFIG[gateKind];
 
     return {
       isPending: true,
       gateKind,
-      fromStatus: opened?.meta.old_value ?? null,
-      reasonCategory: opened?.meta.reason_category ?? null,
-      reasonNote: opened?.audit.reason ?? null,
-      openedBy: opened?.meta.actor_uid ? { uid: opened.meta.actor_uid, name: opened.meta.actor_name! } : null,
-      openedAt: opened?.audit.createdAt ?? null,
+      fromStatus: opened.meta.old_value,
+      reasonCategory: opened.meta.reason_category ?? null,
+      reasonNote: latestNote.audit.reason,
+      openedBy: opened.meta.actor_uid ? { uid: opened.meta.actor_uid, name: opened.meta.actor_name! } : null,
+      openedAt: opened.audit.createdAt,
       allowedOutcomes: [...config.allowedOutcomes],
       history,
     };
@@ -228,6 +231,23 @@ export class ShowCancellationGateService {
       actor,
     });
     this.gateNotificationService.notifyGateResolved(show, gateKind, outcome, actor);
+  }
+
+  async amendPendingNote(params: {
+    showId: bigint;
+    gateKind: GateKind;
+    reasonNote: string;
+    actor: { id: bigint; uid: string; name: string };
+  }): Promise<void> {
+    await this.writeGateAudit({
+      showId: params.showId,
+      gateKind: params.gateKind,
+      event: 'note_updated',
+      oldValue: null,
+      newValue: null,
+      note: params.reasonNote,
+      actor: params.actor,
+    });
   }
 
   async resolvePending(params: {
