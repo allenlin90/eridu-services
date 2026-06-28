@@ -130,6 +130,11 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 - Legacy shows already in `cancelled_pending_resolution` without a gate-opening audit row remain resolvable through the same `show_cancellation` gate.
 - Broader follow-up ownership, notifications, comments, and full lifecycle transition enforcement remain outside this item.
 
+**Deferred follow-up (June 2026)**: a follow-up PR (#236, split into #237–#240) built and reviewed three extensions on top of this gate — unifying schedule publish onto the gate primitive, a notification seam, and Duty Manager note amendment. All three were closed without merging: they reach into correctness-sensitive code (or speculate on architecture) ahead of the state-machine/mechanism design in items 14/15, for value that can wait. The audit-trail gaps they would have closed are recorded as tech debt; the designs are preserved as ideation docs to revisit alongside items 14/15 rather than landing piecemeal:
+
+- [`schedule-publish-removal-no-audit.md`](../tech-debt/schedule-publish-removal-no-audit.md), [`schedule-publish-restore-no-audit.md`](../tech-debt/schedule-publish-restore-no-audit.md), [`schedule-publish-active-task-check-mismatch.md`](../tech-debt/schedule-publish-active-task-check-mismatch.md) — tech debt
+- [`schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md), [`gate-notification-seam.md`](../ideation/gate-notification-seam.md), [`cancellation-gate-note-amendment.md`](../ideation/cancellation-gate-note-amendment.md) — ideation
+
 ### 5. Schedule-change task reconciliation
 
 **Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1; [`schedule-publish-task-due-date-reconciliation.md`](../ideation/schedule-publish-task-due-date-reconciliation.md)
