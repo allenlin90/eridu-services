@@ -93,7 +93,7 @@ The registry exposes read-only record lookup and studio-scoped query tools:
 `erify_query_shows` supports two date modes:
 
 - Explicit ISO range: pass `date_from` and/or `date_to` when the caller already has exact boundaries.
-- Operational date: pass `date_preset` (`today`, `yesterday`, `tomorrow`) or `operational_date` (`YYYY-MM-DD`) for agent-facing natural language requests. The MCP server resolves the local operational day using `timezone_offset_minutes` (default `420`, GMT+7) and `operational_day_start_hour` (default `6`). For example, `operational_date=2026-06-28` resolves to `2026-06-27T23:00:00.000Z` through `2026-06-28T22:59:59.999Z`.
+- Operational date: pass `date_preset` (`today`, `yesterday`, `tomorrow`) or `operational_date` (`YYYY-MM-DD`) for agent-facing natural language requests. The MCP server resolves the local operational day using `timezone_offset_minutes` (default `420`, GMT+7) and `operational_day_start_hour` (default `6`). For example, `operational_date=2026-06-28` resolves to `2026-06-27T23:00:00.000Z` through `2026-06-28T22:59:59.999Z`. `date_preset` resolves relative to the *currently-running* operational day, not the calendar date — a call made at 01:00 local (before the 06:00 cutover) treats `today` as the operational day that started the previous calendar day at 06:00, not the one starting later that morning.
 
 Do not combine explicit ISO range fields with operational date fields in the same tool call.
 

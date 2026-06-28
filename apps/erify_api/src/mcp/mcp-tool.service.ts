@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { TaskStatus, TaskType } from '@prisma/client';
 import { z } from 'zod';
 
-import { resolveMcpOperationalDateRange } from './mcp-operational-date-range.util';
+import {
+  DEFAULT_MCP_OPERATIONAL_DAY_START_HOUR,
+  DEFAULT_MCP_TIMEZONE_OFFSET_MINUTES,
+  resolveMcpOperationalDateRange,
+} from './mcp-operational-date-range.util';
 import { McpStudioPolicy } from './mcp-studio-policy';
 
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -21,22 +25,29 @@ const taskScopedSchema = z.object({
   task_id: z.string().min(1),
 });
 
+// Shared with mcp-server.factory.ts's `erify_query_shows` tool registration so
+// the MCP SDK's protocol-level argument validation and this service's
+// queryShowsSchema can never drift on field types/constraints. The MCP SDK's
+// registerTool only accepts a raw ZodRawShape (not a refined ZodObject), so
+// the cross-field rules below stay service-side only.
+export const queryShowsShape = {
+  studio_id: z.string().min(1).describe('The Studio UID (e.g., std_abc123).'),
+  date_from: z.iso.datetime().optional().describe('Explicit ISO-8601 date-time lower bound for show start_time. Use together with date_to only when the user provides exact boundaries. Do not combine with date_preset or operational_date.'),
+  date_to: z.iso.datetime().optional().describe('Explicit ISO-8601 date-time upper bound for show start_time. Use together with date_from only when the user provides exact boundaries. Do not combine with date_preset or operational_date.'),
+  operational_date: z.iso.date().optional().describe('YYYY-MM-DD local operational date. The server resolves it to 06:00 on this date through 05:59:59.999 the next day using timezone_offset_minutes, default GMT+7. Use this for requests like "shows on June 28".'),
+  date_preset: z.enum(['today', 'yesterday', 'tomorrow']).optional().describe('Relative operational date. Prefer this for user requests like "shows today". The server resolves the date using timezone_offset_minutes, default GMT+7, then applies the 06:00 operational-day boundary.'),
+  timezone_offset_minutes: z.number().int().min(-12 * 60).max(14 * 60).optional().default(DEFAULT_MCP_TIMEZONE_OFFSET_MINUTES).describe('User timezone offset from UTC in minutes. Default is 420 for GMT+7 / Asia/Bangkok. Example: 420 means UTC+07:00.'),
+  operational_day_start_hour: z.number().int().min(0).max(23).optional().default(DEFAULT_MCP_OPERATIONAL_DAY_START_HOUR).describe('Local hour when the operational day starts. Default is 6, meaning 06:00 local time.'),
+  search: z.string().optional().describe('Optional search term to filter shows by name.'),
+  needs_attention: z.boolean().optional().describe('Filter shows that need attention (e.g., has scheduling warnings).'),
+  show_status_name: z.string().optional().describe('Filter shows by status name (e.g., Scheduled, Live, Ended).'),
+  creator_name: z.string().optional().describe('Filter shows by creator name.'),
+  page: z.number().int().min(1).optional().default(1).describe('Page number for pagination (starts at 1).'),
+  limit: z.number().int().min(1).optional().default(20).describe('Maximum number of shows to return (default 20).'),
+};
+
 const queryShowsSchema = z
-  .object({
-    studio_id: z.string().min(1),
-    date_from: z.iso.datetime().optional(),
-    date_to: z.iso.datetime().optional(),
-    operational_date: z.iso.date().optional(),
-    date_preset: z.enum(['today', 'yesterday', 'tomorrow']).optional(),
-    timezone_offset_minutes: z.number().int().min(-12 * 60).max(14 * 60).optional().default(7 * 60),
-    operational_day_start_hour: z.number().int().min(0).max(23).optional().default(6),
-    search: z.string().optional(),
-    needs_attention: z.boolean().optional(),
-    show_status_name: z.string().optional(),
-    creator_name: z.string().optional(),
-    page: z.number().int().min(1).optional().default(1),
-    limit: z.number().int().min(1).optional().default(20),
-  })
+  .object(queryShowsShape)
   .superRefine((data, ctx) => {
     const hasExplicitRange = Boolean(data.date_from || data.date_to);
     const hasOperationalRange = Boolean(data.operational_date || data.date_preset);
