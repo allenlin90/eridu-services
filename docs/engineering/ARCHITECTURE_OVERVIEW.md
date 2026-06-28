@@ -91,6 +91,28 @@ block-beta
 
 </details>
 
+## Runtime Boundaries
+
+`erify_api` is a modular NestJS backend that can expose multiple runtime entrypoints over the same service/repository layer. Each runtime imports the modules needed for its transport and audience rather than booting every route surface.
+
+| Runtime | Entrypoint | Audience | Transport | Boundary |
+| ------- | ---------- | -------- | --------- | -------- |
+| REST | `apps/erify_api/src/main.ts` | Admin, studio, user, and integration clients | HTTP routes | Public/API-key guarded depending on route |
+| MCP | `apps/erify_api/src/main.mcp.ts` | OpenWebUI first, LiteLLM/partners later | Streamable HTTP MCP | Private Railway service in Phase 1 |
+| Worker | Future `apps/erify_api/src/main.worker.ts` | Async jobs such as notifications and reports | BullMQ processors | Private worker process |
+
+Public partner/client MCP access is a separate API posture from the private OpenWebUI rollout. It needs an explicit authn/authz, rate-limit, and audit model before a public domain or external ingress is attached; see [Public MCP Access Control](../ideation/public-mcp-access-control.md).
+
+Runtime adapters stay thin:
+
+```text
+REST Controller ┐
+MCP Tool        ├─> Use Case / Service ─> Repository ─> Database
+BullMQ Worker   ┘
+```
+
+Controllers, MCP tools, and BullMQ processors translate transport-specific input/output. Business rules live in services/use-cases and repositories remain the data-access boundary.
+
 ## Controller Scopes
 
 | Scope       | Route Prefix          | Auth                                             | Base Class               |
