@@ -267,13 +267,16 @@ export class StudioShowManagementService {
     }
 
     const status = await this.showCancellationGateService.getCancellationStatus(show);
-    if (!status.isPending || !status.gateKind || !status.fromStatus) {
-      throw HttpError.notFound('ShowCancellationGate', showUid);
-    }
+    // Shows parked in CANCELLED_PENDING_RESOLUTION by schedule-publish (or any
+    // other pre-gate write) have no opening Audit row, so gateKind comes back
+    // null even though the show is genuinely pending. 'show_cancellation' is
+    // the only GateKind today — default to it instead of leaving these shows
+    // permanently stuck with no sign-off path.
+    const gateKind = status.gateKind ?? 'show_cancellation';
 
     await this.showCancellationGateService.resolvePending({
       show,
-      gateKind: status.gateKind,
+      gateKind,
       outcome: dto.outcome,
       resolutionNotes: dto.resolution_notes,
       actor: { id: actor.id, uid: actor.uid, name: actor.name },

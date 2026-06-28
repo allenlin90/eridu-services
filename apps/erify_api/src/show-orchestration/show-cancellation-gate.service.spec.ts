@@ -206,6 +206,27 @@ describe('showCancellationGateService', () => {
         ],
       });
     });
+
+    it('defaults to the show_cancellation gate kind when pending with no opening Audit row (e.g. set by schedule-publish)', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([]);
+
+      const result = await service.getCancellationStatus({
+        id: 1n,
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      });
+
+      expect(result).toEqual({
+        isPending: true,
+        gateKind: 'show_cancellation',
+        fromStatus: null,
+        reasonCategory: null,
+        reasonNote: null,
+        openedBy: null,
+        openedAt: null,
+        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
+        history: [],
+      });
+    });
   });
 
   describe('openPending', () => {

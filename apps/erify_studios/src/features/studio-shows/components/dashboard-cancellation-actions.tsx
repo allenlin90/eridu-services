@@ -72,8 +72,13 @@ export function DashboardCancellationActions({
   renderTrigger,
 }: DashboardCancellationActionsProps) {
   const { isActiveDutyManager } = useActiveDutyManagerEligibility(studioId);
+  // Only the history menu item needs `status` — the request-cancellation item
+  // is gated by `canRequestCancellation`/`isActiveDutyManager` alone. Keying
+  // `enabled` off `canRequestCancellation` too would re-fetch for every
+  // CONFIRMED/LIVE row, which is the common case and defeats the point of
+  // gating this query at all.
   const { data: status } = useCancellationStatus(studioId, showId, {
-    enabled: canRequestCancellation || mayHaveCancellationHistory,
+    enabled: mayHaveCancellationHistory,
   });
   const requestMutation = useRequestCancellationResolution(studioId);
   const [requestOpen, setRequestOpen] = useState(false);

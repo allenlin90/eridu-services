@@ -876,5 +876,32 @@ describe('studioShowManagementService', () => {
         actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
       });
     });
+
+    it('defaults to the show_cancellation gate kind for a pending show with no opening Audit row (e.g. set by schedule-publish)', async () => {
+      showCancellationGateServiceMock.getCancellationStatus.mockResolvedValue({
+        isPending: true,
+        gateKind: null,
+        fromStatus: null,
+        reasonCategory: null,
+        reasonNote: null,
+        openedBy: null,
+        openedAt: null,
+        allowedOutcomes: [],
+        history: [],
+      });
+
+      await service.resolveShowCancellation('std_123', 'show_123', {
+        outcome: 'CANCELLED',
+        resolution_notes: 'Confirmed no production happened',
+      }, 'manager', 'ext_5');
+
+      expect(showCancellationGateServiceMock.resolvePending).toHaveBeenCalledWith({
+        show: pendingShow,
+        gateKind: 'show_cancellation',
+        outcome: 'CANCELLED',
+        resolutionNotes: 'Confirmed no production happened',
+        actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
+      });
+    });
   });
 });

@@ -133,23 +133,23 @@ export class ShowCancellationGateService {
     // cycle can exist while Show.status is pending (re-opening is blocked
     // elsewhere), so the topmost "opened" row is the current cycle's origin.
     const opened = gateEntries.find((e) => e.meta.event === 'opened');
-    const latestNote = opened;
 
-    if (!opened || !latestNote) {
-      return { ...NOT_PENDING_RESULT, isPending: true, history };
-    }
-
-    const gateKind = opened.meta.gate_kind;
+    // A show can be pending with no opening Audit row at all — schedule-publish
+    // (and any other pre-gate write) sets CANCELLED_PENDING_RESOLUTION directly
+    // without going through openPending. 'show_cancellation' is the only
+    // GateKind today, so default to it instead of reporting an empty,
+    // unresolvable gate (no allowed outcomes) for these shows.
+    const gateKind = opened?.meta.gate_kind ?? 'show_cancellation';
     const config = CANCELLATION_GATE_CONFIG[gateKind];
 
     return {
       isPending: true,
       gateKind,
-      fromStatus: opened.meta.old_value,
-      reasonCategory: opened.meta.reason_category ?? null,
-      reasonNote: latestNote.audit.reason,
-      openedBy: opened.meta.actor_uid ? { uid: opened.meta.actor_uid, name: opened.meta.actor_name! } : null,
-      openedAt: opened.audit.createdAt,
+      fromStatus: opened?.meta.old_value ?? null,
+      reasonCategory: opened?.meta.reason_category ?? null,
+      reasonNote: opened?.audit.reason ?? null,
+      openedBy: opened?.meta.actor_uid ? { uid: opened.meta.actor_uid, name: opened.meta.actor_name! } : null,
+      openedAt: opened?.audit.createdAt ?? null,
       allowedOutcomes: [...config.allowedOutcomes],
       history,
     };
