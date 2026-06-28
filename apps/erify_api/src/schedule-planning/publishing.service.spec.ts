@@ -62,6 +62,7 @@ describe('publishingService', () => {
   let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let validationService: jest.Mocked<ValidationService>;
+  let taskService: jest.Mocked<TaskService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
@@ -307,6 +308,7 @@ describe('publishingService', () => {
     showCreatorService = module.get(ShowCreatorService);
     showPlatformService = module.get(ShowPlatformService);
     validationService = module.get(ValidationService);
+    taskService = module.get(TaskService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -550,6 +552,65 @@ describe('publishingService', () => {
       );
       expect(mockTransactionClient.show.createMany).not.toHaveBeenCalled();
       expect(mockTransactionClient.show.update).not.toHaveBeenCalled();
+    });
+
+    it('should resume soft-deleted tasks before reconciling due dates for a cancelled show that is republished with a new time', async () => {
+      const cancelledShow = {
+        id: BigInt(77),
+        uid: 'show_cancelled',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: null,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(9001),
+        showStandardId: BigInt(1),
+        name: 'Test Show 1',
+        startTime: new Date('2024-01-01T08:00:00Z'),
+        endTime: new Date('2024-01-01T09:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: 'CANCELLED',
+        },
+      };
+
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([cancelledShow]);
+      mockTransactionClient.taskTarget.findMany.mockResolvedValue([
+        { taskId: BigInt(500) },
+      ]);
+
+      const callOrder: string[] = [];
+      mockTransactionClient.taskTarget.updateMany.mockImplementation(async () => {
+        callOrder.push('resume');
+        return { count: 1 };
+      });
+      (taskService.reconcileTaskDueDates as jest.Mock).mockImplementation(async () => {
+        callOrder.push('reconcile');
+        return 0;
+      });
+
+      await service.publish(scheduleUid, version, userId);
+
+      expect(callOrder).toEqual(['resume', 'reconcile']);
+      expect(taskService.reconcileTaskDueDates).toHaveBeenCalledWith(
+        BigInt(77),
+        { startTime: cancelledShow.startTime, endTime: cancelledShow.endTime },
+        { startTime: new Date('2024-01-01T10:00:00Z'), endTime: new Date('2024-01-01T12:00:00Z') },
+      );
     });
 
     it('should create shows with MCs and Platforms', async () => {

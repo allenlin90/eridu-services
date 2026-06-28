@@ -377,27 +377,30 @@ export class TaskService extends BaseModelService {
       },
     });
 
-    let count = 0;
     const oldStart = oldTimes.startTime.getTime();
     const oldEnd = oldTimes.endTime.getTime();
 
-    for (const task of tasks) {
-      if (!task.dueDate) {
-        continue;
-      }
+    const reconciled = await Promise.all(
+      tasks.map(async (task) => {
+        if (!task.dueDate) {
+          return false;
+        }
 
-      let expectedTime: number;
-      if (task.type === TaskType.SETUP) {
-        expectedTime = oldStart - 60 * 60 * 1000;
-      } else if (task.type === TaskType.ACTIVE) {
-        expectedTime = oldEnd + 60 * 60 * 1000;
-      } else if (task.type === TaskType.CLOSURE) {
-        expectedTime = oldEnd + 6 * 60 * 60 * 1000;
-      } else {
-        expectedTime = oldStart;
-      }
+        let expectedTime: number;
+        if (task.type === TaskType.SETUP) {
+          expectedTime = oldStart - 60 * 60 * 1000;
+        } else if (task.type === TaskType.ACTIVE) {
+          expectedTime = oldEnd + 60 * 60 * 1000;
+        } else if (task.type === TaskType.CLOSURE) {
+          expectedTime = oldEnd + 6 * 60 * 60 * 1000;
+        } else {
+          expectedTime = oldStart;
+        }
 
-      if (task.dueDate.getTime() === expectedTime) {
+        if (task.dueDate.getTime() !== expectedTime) {
+          return false;
+        }
+
         let newDueDate: Date;
         if (task.type === TaskType.SETUP) {
           newDueDate = new Date(newTimes.startTime.getTime() - 60 * 60 * 1000);
@@ -409,15 +412,24 @@ export class TaskService extends BaseModelService {
           newDueDate = newTimes.startTime;
         }
 
-        await this.taskRepository.update(
-          { id: task.id },
-          { dueDate: newDueDate },
-        );
-        count++;
-      }
-    }
+        try {
+          await this.taskRepository.updateWithVersionCheck(
+            { id: task.id, version: task.version },
+            { dueDate: newDueDate, version: task.version + 1 },
+          );
+          return true;
+        } catch (error) {
+          // A concurrent user-visible edit changed the version since we read this
+          // task — skip rather than clobber it with a stale reconciliation write.
+          if (error instanceof VersionConflictError) {
+            return false;
+          }
+          throw error;
+        }
+      }),
+    );
 
-    return count;
+    return reconciled.filter(Boolean).length;
   }
 
   private resolveDueDateForShowTaskType(

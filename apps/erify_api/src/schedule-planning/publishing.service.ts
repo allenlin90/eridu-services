@@ -397,15 +397,6 @@ export class PublishingService {
         publishSummary.shows_updated += 1;
       }
 
-      if (timeChanged) {
-        const count = await this.taskService.reconcileTaskDueDates(
-          existing.id,
-          { startTime: existing.startTime, endTime: existing.endTime },
-          { startTime: incomingStart, endTime: incomingEnd },
-        );
-        publishSummary.tasks_reconciled = (publishSummary.tasks_reconciled || 0) + count;
-      }
-
       if (wasDeleted || wasCancelled) {
         publishSummary.shows_restored += 1;
       }
@@ -413,8 +404,19 @@ export class PublishingService {
       // wasCancelled: show was soft-cancelled via status — tasks are soft-deleted and can be resumed.
       // wasDeleted: show was manually deleted (pre-start) via studio CRUD — deleteShow hard-purges
       // tasks, so there is nothing to resume; the incoming payload starts a new lifecycle.
+      // This must run before reconciliation below: reconcileTaskDueDates only considers
+      // tasks/targets with deletedAt: null, so a still-cancelled task would be invisible to it.
       if (wasCancelled) {
         await this.resumeSoftDeletedTasksAndTargets(existing.id);
+      }
+
+      if (timeChanged) {
+        const count = await this.taskService.reconcileTaskDueDates(
+          existing.id,
+          { startTime: existing.startTime, endTime: existing.endTime },
+          { startTime: incomingStart, endTime: incomingEnd },
+        );
+        publishSummary.tasks_reconciled = (publishSummary.tasks_reconciled || 0) + count;
       }
     }
 

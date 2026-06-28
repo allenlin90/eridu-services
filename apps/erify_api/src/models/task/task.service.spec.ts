@@ -8,6 +8,7 @@ import { TaskRepository } from './task.repository';
 import { TaskService } from './task.service';
 import { TaskValidationService } from './task-validation.service';
 
+import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { ShowService } from '@/models/show/show.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
@@ -31,7 +32,9 @@ describe('taskService', () => {
   let repository: jest.Mocked<TaskRepository>;
 
   beforeEach(async () => {
-    const repositoryMock = createMockRepository<TaskRepository>();
+    const repositoryMock = createMockRepository<TaskRepository>({
+      updateWithVersionCheck: jest.fn(),
+    });
     const utilityMock = createMockUtilityService('task_test123');
     const taskValidationServiceMock = {};
     const showServiceMock = {};
@@ -90,6 +93,7 @@ describe('taskService', () => {
           type: TaskType.SETUP,
           templateId: BigInt(100),
           status: TaskStatus.PENDING,
+          version: 1,
           dueDate: new Date(oldTimes.startTime.getTime() - 60 * 60 * 1000),
         },
         {
@@ -98,6 +102,7 @@ describe('taskService', () => {
           type: TaskType.ACTIVE,
           templateId: BigInt(101),
           status: TaskStatus.IN_PROGRESS,
+          version: 1,
           dueDate: new Date(oldTimes.endTime.getTime() + 60 * 60 * 1000),
         },
         {
@@ -106,6 +111,7 @@ describe('taskService', () => {
           type: TaskType.CLOSURE,
           templateId: BigInt(102),
           status: TaskStatus.REVIEW,
+          version: 2,
           dueDate: new Date(oldTimes.endTime.getTime() + 6 * 60 * 60 * 1000),
         },
         {
@@ -114,12 +120,13 @@ describe('taskService', () => {
           type: TaskType.OTHER,
           templateId: BigInt(103),
           status: TaskStatus.PENDING,
+          version: 1,
           dueDate: new Date(oldTimes.startTime.getTime()),
         },
       ];
 
       repository.findMany.mockResolvedValue(mockTasks as any);
-      repository.update.mockResolvedValue({} as any);
+      repository.updateWithVersionCheck.mockResolvedValue({} as any);
 
       const count = await service.reconcileTaskDueDates(showId, oldTimes, newTimes);
 
@@ -138,21 +145,21 @@ describe('taskService', () => {
         },
       });
 
-      expect(repository.update).toHaveBeenCalledWith(
-        { id: BigInt(10) },
-        { dueDate: new Date(newTimes.startTime.getTime() - 60 * 60 * 1000) },
+      expect(repository.updateWithVersionCheck).toHaveBeenCalledWith(
+        { id: BigInt(10), version: 1 },
+        { dueDate: new Date(newTimes.startTime.getTime() - 60 * 60 * 1000), version: 2 },
       );
-      expect(repository.update).toHaveBeenCalledWith(
-        { id: BigInt(11) },
-        { dueDate: new Date(newTimes.endTime.getTime() + 60 * 60 * 1000) },
+      expect(repository.updateWithVersionCheck).toHaveBeenCalledWith(
+        { id: BigInt(11), version: 1 },
+        { dueDate: new Date(newTimes.endTime.getTime() + 60 * 60 * 1000), version: 2 },
       );
-      expect(repository.update).toHaveBeenCalledWith(
-        { id: BigInt(12) },
-        { dueDate: new Date(newTimes.endTime.getTime() + 6 * 60 * 60 * 1000) },
+      expect(repository.updateWithVersionCheck).toHaveBeenCalledWith(
+        { id: BigInt(12), version: 2 },
+        { dueDate: new Date(newTimes.endTime.getTime() + 6 * 60 * 60 * 1000), version: 3 },
       );
-      expect(repository.update).toHaveBeenCalledWith(
-        { id: BigInt(13) },
-        { dueDate: new Date(newTimes.startTime.getTime()) },
+      expect(repository.updateWithVersionCheck).toHaveBeenCalledWith(
+        { id: BigInt(13), version: 1 },
+        { dueDate: new Date(newTimes.startTime.getTime()), version: 2 },
       );
     });
 
@@ -160,7 +167,7 @@ describe('taskService', () => {
       repository.findMany.mockResolvedValue([]);
       const count = await service.reconcileTaskDueDates(showId, oldTimes, newTimes);
       expect(count).toBe(0);
-      expect(repository.update).not.toHaveBeenCalled();
+      expect(repository.updateWithVersionCheck).not.toHaveBeenCalled();
     });
 
     it('should preserve manual due date overrides', async () => {
@@ -171,6 +178,7 @@ describe('taskService', () => {
           type: TaskType.SETUP,
           templateId: BigInt(100),
           status: TaskStatus.PENDING,
+          version: 1,
           dueDate: new Date(oldTimes.startTime.getTime() - 30 * 60 * 1000),
         },
       ];
@@ -179,12 +187,35 @@ describe('taskService', () => {
       const count = await service.reconcileTaskDueDates(showId, oldTimes, newTimes);
 
       expect(count).toBe(0);
-      expect(repository.update).not.toHaveBeenCalled();
+      expect(repository.updateWithVersionCheck).not.toHaveBeenCalled();
     });
 
     it('should ignore manually created tasks (no templateId)', async () => {
       repository.findMany.mockResolvedValue([]);
       const count = await service.reconcileTaskDueDates(showId, oldTimes, newTimes);
+      expect(count).toBe(0);
+    });
+
+    it('should skip a task whose version changed concurrently instead of clobbering it', async () => {
+      const mockTasks = [
+        {
+          id: BigInt(30),
+          uid: 'task_concurrent',
+          type: TaskType.SETUP,
+          templateId: BigInt(100),
+          status: TaskStatus.PENDING,
+          version: 1,
+          dueDate: new Date(oldTimes.startTime.getTime() - 60 * 60 * 1000),
+        },
+      ];
+
+      repository.findMany.mockResolvedValue(mockTasks as any);
+      repository.updateWithVersionCheck.mockRejectedValueOnce(
+        new VersionConflictError('Task version is outdated', 1, 2),
+      );
+
+      const count = await service.reconcileTaskDueDates(showId, oldTimes, newTimes);
+
       expect(count).toBe(0);
     });
   });
