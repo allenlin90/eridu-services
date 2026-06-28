@@ -253,4 +253,35 @@ describe('showStatusService', () => {
       expect(result).toEqual(expectedCount);
     });
   });
+
+  describe('getShowStatusBySystemKey', () => {
+    it('delegates to repository.findOne with the system key', async () => {
+      const expected = {
+        id: 6n,
+        uid: 'shst_test123',
+        name: 'cancelled_pending_resolution',
+        systemKey: 'CANCELLED_PENDING_RESOLUTION',
+        metadata: {},
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        deletedAt: null,
+      };
+      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(expected);
+
+      const result = await service.getShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION');
+
+      expect(showStatusRepository.findOne).toHaveBeenCalledWith({
+        systemKey: 'CANCELLED_PENDING_RESOLUTION',
+      });
+      expect(result).toEqual(expected);
+    });
+
+    it('returns null when not found', async () => {
+      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(null);
+
+      const result = await service.getShowStatusBySystemKey('NOT_A_REAL_KEY');
+
+      expect(result).toBeNull();
+    });
+  });
 });

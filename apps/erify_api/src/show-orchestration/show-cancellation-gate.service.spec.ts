@@ -1,0 +1,417 @@
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import type { Show } from '@prisma/client';
+
+import { ShowCancellationGateService } from './show-cancellation-gate.service';
+
+import { AuditService } from '@/models/audit/audit.service';
+import { ShowRepository } from '@/models/show/show.repository';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
+
+describe('showCancellationGateService', () => {
+  let service: ShowCancellationGateService;
+  const studioShiftServiceMock = { findActiveDutyManager: jest.fn() };
+  const auditServiceMock = { findForTargets: jest.fn(), create: jest.fn() };
+  const showRepositoryMock = { updateStatusIfPending: jest.fn() };
+  const showStatusServiceMock = { getShowStatusBySystemKey: jest.fn() };
+  const taskTargetServiceMock = { countActiveByShowId: jest.fn() };
+
+  const actor = { id: 5n, uid: 'user_abc123', name: 'Jane Duty' };
+  const show = { id: 1n, uid: 'show_xyz' } as Show;
+  const statusByKey: Record<string, { id: bigint }> = {
+    CONFIRMED: { id: 2n },
+    LIVE: { id: 3n },
+    CANCELLED_PENDING_RESOLUTION: { id: 6n },
+    CANCELLED: { id: 5n },
+    COMPLETED: { id: 4n },
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ShowCancellationGateService,
+        { provide: StudioShiftService, useValue: studioShiftServiceMock },
+        { provide: AuditService, useValue: auditServiceMock },
+        { provide: ShowRepository, useValue: showRepositoryMock },
+        { provide: ShowStatusService, useValue: showStatusServiceMock },
+        { provide: TaskTargetService, useValue: taskTargetServiceMock },
+      ],
+    }).compile();
+    service = module.get(ShowCancellationGateService);
+
+    showStatusServiceMock.getShowStatusBySystemKey.mockImplementation(
+      async (key: string) => statusByKey[key] ?? null,
+    );
+  });
+
+  describe('resolveActorTier', () => {
+    it('returns manager for ADMIN role when the actor is not the active duty manager', async () => {
+      const tier = await service.resolveActorTier('studio_1', 'admin', { id: 5n });
+      expect(tier).toBe('manager');
+    });
+
+    it('returns manager for MANAGER role', async () => {
+      const tier = await service.resolveActorTier('studio_1', 'manager', { id: 5n });
+      expect(tier).toBe('manager');
+    });
+
+    it('returns duty_manager when the actor is the active duty manager and holds no manager role', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 5n } });
+      const tier = await service.resolveActorTier('studio_1', 'member', { id: 5n });
+      expect(tier).toBe('duty_manager');
+    });
+
+    it('returns duty_manager when the actor is the active duty manager even though they also hold a static ADMIN/MANAGER role', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 5n } });
+      const tier = await service.resolveActorTier('studio_1', 'manager', { id: 5n });
+      expect(tier).toBe('duty_manager');
+    });
+
+    it('returns null when the actor is neither a manager nor the active duty manager', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue(null);
+      const tier = await service.resolveActorTier('studio_1', 'member', { id: 5n });
+      expect(tier).toBeNull();
+    });
+
+    it('returns null when a different user is the active duty manager', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 99n } });
+      const tier = await service.resolveActorTier('studio_1', 'member', { id: 5n });
+      expect(tier).toBeNull();
+    });
+  });
+
+  describe('isActiveDutyManager', () => {
+    it('returns true when the actor is the active duty manager, regardless of static role', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 5n } });
+
+      await expect(service.isActiveDutyManager('studio_1', { id: 5n })).resolves.toBe(true);
+    });
+
+    it('returns false when there is no active duty manager shift for the actor', async () => {
+      studioShiftServiceMock.findActiveDutyManager.mockResolvedValue({ user: { id: 99n } });
+
+      await expect(service.isActiveDutyManager('studio_1', { id: 5n })).resolves.toBe(false);
+    });
+  });
+
+  describe('getCancellationStatus', () => {
+    it('returns not-pending with empty history when no gate audits exist', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([]);
+
+      const result = await service.getCancellationStatus({ id: 1n, showStatus: { systemKey: 'CONFIRMED' } });
+
+      expect(result.isPending).toBe(false);
+      expect(result.history).toEqual([]);
+      expect(auditServiceMock.findForTargets).toHaveBeenCalledWith([{ targetType: 'SHOW', targetId: 1n }]);
+    });
+
+    it('returns history after the show has left pending status', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          action: 'OVERRIDE',
+          reason: 'Manager confirmed no production happened',
+          actorId: 6n,
+          createdAt: new Date('2026-06-25T17:00:00.000Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'resolved',
+            gate_kind: 'show_cancellation',
+            old_value: 'CANCELLED_PENDING_RESOLUTION',
+            new_value: 'CANCELLED',
+            actor_uid: 'user_manager',
+            actor_name: 'Jane Manager',
+          },
+        },
+        {
+          action: 'OVERRIDE',
+          reason: 'Camera failed mid-show',
+          actorId: 5n,
+          createdAt: new Date('2026-06-25T16:14:30.201Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'opened',
+            gate_kind: 'show_cancellation',
+            old_value: 'CONFIRMED',
+            new_value: 'CANCELLED_PENDING_RESOLUTION',
+            reason_category: 'EQUIPMENT_FAILURE',
+            actor_uid: 'user_duty',
+            actor_name: 'Bob Duty',
+          },
+        },
+      ]);
+
+      const result = await service.getCancellationStatus({ id: 1n, showStatus: { systemKey: 'CANCELLED' } });
+
+      expect(result).toMatchObject({
+        isPending: false,
+        gateKind: null,
+        fromStatus: null,
+        reasonCategory: null,
+        reasonNote: null,
+        openedBy: null,
+        openedAt: null,
+        allowedOutcomes: [],
+      });
+      expect(result.history).toEqual([
+        expect.objectContaining({ event: 'opened', note: 'Camera failed mid-show', outcome: null }),
+        expect.objectContaining({ event: 'resolved', note: 'Manager confirmed no production happened', outcome: 'CANCELLED' }),
+      ]);
+    });
+
+    it('derives the snapshot from the most recent opened audit row', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          action: 'OVERRIDE',
+          reason: 'Camera failed mid-show',
+          actorId: 5n,
+          createdAt: new Date('2026-06-25T16:14:30.201Z'),
+          metadata: {
+            field: 'show_status',
+            event: 'opened',
+            gate_kind: 'show_cancellation',
+            old_value: 'CONFIRMED',
+            new_value: 'CANCELLED_PENDING_RESOLUTION',
+            reason_category: 'EQUIPMENT_FAILURE',
+            actor_uid: 'user_abc123',
+            actor_name: 'Jane Duty',
+          },
+        },
+      ]);
+
+      const result = await service.getCancellationStatus({
+        id: 1n,
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      });
+
+      expect(result).toEqual({
+        isPending: true,
+        gateKind: 'show_cancellation',
+        fromStatus: 'CONFIRMED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed mid-show',
+        openedBy: { uid: 'user_abc123', name: 'Jane Duty' },
+        openedAt: new Date('2026-06-25T16:14:30.201Z'),
+        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
+        history: [
+          {
+            event: 'opened',
+            actor: { uid: 'user_abc123', name: 'Jane Duty' },
+            at: new Date('2026-06-25T16:14:30.201Z'),
+            note: 'Camera failed mid-show',
+            outcome: null,
+          },
+        ],
+      });
+    });
+
+    it('defaults to the show_cancellation gate kind when pending with no opening Audit row (e.g. set by schedule-publish)', async () => {
+      auditServiceMock.findForTargets.mockResolvedValue([]);
+
+      const result = await service.getCancellationStatus({
+        id: 1n,
+        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
+      });
+
+      expect(result).toEqual({
+        isPending: true,
+        gateKind: 'show_cancellation',
+        fromStatus: null,
+        reasonCategory: null,
+        reasonNote: null,
+        openedBy: null,
+        openedAt: null,
+        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
+        history: [],
+      });
+    });
+  });
+
+  describe('openPending', () => {
+    it('rejects a reason category not in the gate config', async () => {
+      await expect(
+        service.openPending({
+          show,
+          gateKind: 'show_cancellation',
+          fromStatusSystemKey: 'CONFIRMED',
+          reasonCategory: 'NOT_A_REAL_CATEGORY',
+          reasonNote: 'note',
+          actor,
+        }),
+      ).rejects.toThrow(/REASON_CATEGORY_NOT_ALLOWED/);
+      expect(showRepositoryMock.updateStatusIfPending).not.toHaveBeenCalled();
+    });
+
+    it('writes an opened audit row and moves the show to pending', async () => {
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.openPending({
+        show,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'CONFIRMED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed mid-show',
+        actor,
+      });
+
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 2n, 6n);
+      expect(auditServiceMock.create).toHaveBeenCalledWith({
+        action: 'OVERRIDE',
+        actorId: 5n,
+        reason: 'Camera failed mid-show',
+        metadata: {
+          field: 'show_status',
+          event: 'opened',
+          gate_kind: 'show_cancellation',
+          old_value: 'CONFIRMED',
+          new_value: 'CANCELLED_PENDING_RESOLUTION',
+          reason_category: 'EQUIPMENT_FAILURE',
+          actor_uid: 'user_abc123',
+          actor_name: 'Jane Duty',
+        },
+        targets: [{ targetType: 'SHOW', targetId: 1n }],
+      });
+    });
+
+    it('throws SHOW_STATUS_CHANGED when the guarded write matches no rows', async () => {
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(false);
+
+      await expect(
+        service.openPending({
+          show,
+          gateKind: 'show_cancellation',
+          fromStatusSystemKey: 'CONFIRMED',
+          reasonCategory: 'EQUIPMENT_FAILURE',
+          reasonNote: 'note',
+          actor,
+        }),
+      ).rejects.toThrow(/SHOW_STATUS_CHANGED/);
+      expect(auditServiceMock.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveAtomic', () => {
+    it('rejects a reason category not in the gate config, before checking outcome or active tasks', async () => {
+      await expect(
+        service.resolveAtomic({
+          show,
+          gateKind: 'show_cancellation',
+          fromStatusSystemKey: 'CONFIRMED',
+          outcome: 'CANCELLED',
+          reasonCategory: 'NOT_A_REAL_CATEGORY',
+          reasonNote: 'note',
+          actor,
+        }),
+      ).rejects.toThrow(/REASON_CATEGORY_NOT_ALLOWED/);
+      expect(taskTargetServiceMock.countActiveByShowId).not.toHaveBeenCalled();
+      expect(showRepositoryMock.updateStatusIfPending).not.toHaveBeenCalled();
+    });
+
+    it('allows CANCELLED from LIVE when no active tasks remain — same rule as any other from_status', async () => {
+      taskTargetServiceMock.countActiveByShowId.mockResolvedValue(0);
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.resolveAtomic({
+        show,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'LIVE',
+        outcome: 'CANCELLED',
+        reasonCategory: 'CLIENT_REQUEST',
+        reasonNote: 'note',
+        actor,
+      });
+
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 3n, 5n);
+    });
+
+    it('rejects CANCELLED when active tasks remain, with the count in details', async () => {
+      taskTargetServiceMock.countActiveByShowId.mockResolvedValue(3);
+
+      await expect(
+        service.resolveAtomic({
+          show,
+          gateKind: 'show_cancellation',
+          fromStatusSystemKey: 'CONFIRMED',
+          outcome: 'CANCELLED',
+          reasonCategory: 'EQUIPMENT_FAILURE',
+          reasonNote: 'note',
+          actor,
+        }),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          message: 'ACTIVE_TASKS_REMAIN',
+          details: { activeTaskCount: 3 },
+        }),
+      });
+    });
+
+    it('does not check active tasks for COMPLETED (not in outcomesRequiringNoActiveTasks)', async () => {
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.resolveAtomic({
+        show,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'CONFIRMED',
+        outcome: 'COMPLETED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Ran most of the show',
+        actor,
+      });
+
+      expect(taskTargetServiceMock.countActiveByShowId).not.toHaveBeenCalled();
+    });
+
+    it('moves the show directly to the outcome and writes one resolved audit row', async () => {
+      taskTargetServiceMock.countActiveByShowId.mockResolvedValue(0);
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.resolveAtomic({
+        show,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'CONFIRMED',
+        outcome: 'CANCELLED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed mid-show',
+        actor,
+      });
+
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 2n, 5n);
+      expect(auditServiceMock.create).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ event: 'resolved', old_value: 'CONFIRMED', new_value: 'CANCELLED' }),
+        }),
+      );
+    });
+  });
+
+  describe('resolvePending', () => {
+    it('rejects an outcome not allowed for the gate kind', async () => {
+      await expect(
+        service.resolvePending({
+          show,
+          gateKind: 'show_cancellation',
+          outcome: 'RESTORE_PREVIOUS',
+          resolutionNotes: 'note',
+          actor,
+        }),
+      ).rejects.toThrow(/OUTCOME_NOT_ALLOWED/);
+    });
+
+    it('throws SHOW_ALREADY_RESOLVED when the guarded write matches no rows', async () => {
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(false);
+
+      await expect(
+        service.resolvePending({
+          show,
+          gateKind: 'show_cancellation',
+          outcome: 'CANCELLED',
+          resolutionNotes: 'note',
+          actor,
+        }),
+      ).rejects.toThrow(/SHOW_ALREADY_RESOLVED/);
+    });
+  });
+});

@@ -22,6 +22,7 @@ describe('showRepository', () => {
   const txShowDelegate = {
     findMany: jest.fn(),
     count: jest.fn(),
+    updateMany: jest.fn(),
   };
 
   beforeEach(() => {
@@ -349,5 +350,27 @@ describe('showRepository', () => {
     };
     expect(where.actualStartTime).toEqual({ not: null });
     expect(where.actualEndTime).toEqual({ not: null });
+  });
+
+  describe('updateStatusIfPending', () => {
+    it('returns true when exactly one row matched the pending status', async () => {
+      txShowDelegate.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await repository.updateStatusIfPending(10n, 6n, 5n);
+
+      expect(txShowDelegate.updateMany).toHaveBeenCalledWith({
+        where: { id: 10n, showStatusId: 6n },
+        data: { showStatusId: 5n },
+      });
+      expect(result).toBe(true);
+    });
+
+    it('returns false when the show was already resolved by another caller', async () => {
+      txShowDelegate.updateMany.mockResolvedValue({ count: 0 });
+
+      const result = await repository.updateStatusIfPending(10n, 6n, 5n);
+
+      expect(result).toBe(false);
+    });
   });
 });

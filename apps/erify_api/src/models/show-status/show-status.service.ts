@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { ShowStatus } from '@prisma/client';
 
 import type {
   CreateShowStatusPayload,
@@ -33,6 +34,10 @@ export class ShowStatusService extends BaseModelService {
     ...params: Parameters<ShowStatusRepository['findByUid']>
   ): ReturnType<ShowStatusRepository['findByUid']> {
     return this.showStatusRepository.findByUid(...params);
+  }
+
+  async getShowStatusBySystemKey(systemKey: string): Promise<ShowStatus | null> {
+    return this.showStatusRepository.findOne({ systemKey });
   }
 
   async getShowStatuses(

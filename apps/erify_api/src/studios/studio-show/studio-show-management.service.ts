@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 
+import type {
+  CancelShowWithResolutionInput,
+  RequestCancellationResolutionInput,
+  ResolveShowCancellationInput,
+} from '@eridu/api-types/shows';
+
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
@@ -14,8 +20,11 @@ import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { UserService } from '@/models/user/user.service';
+import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
@@ -33,6 +42,9 @@ export class StudioShowManagementService {
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly showPlatformService: ShowPlatformService,
     private readonly showOrchestrationService: ShowOrchestrationService,
+    private readonly userService: UserService,
+    private readonly showCancellationGateService: ShowCancellationGateService,
+    private readonly showStatusService: ShowStatusService,
   ) {}
 
   @Transactional()
@@ -91,6 +103,24 @@ export class StudioShowManagementService {
   @Transactional()
   async updateShow(studioUid: string, showUid: string, dto: UpdateStudioShowDto) {
     const existingShow = await this.findStudioShowOrThrow(studioUid, showUid);
+    if (dto.showStatusId !== undefined) {
+      if (existingShow.showStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
+        throw HttpError.badRequest('SHOW_STATUS_LOCKED_BY_PENDING_CANCELLATION');
+      }
+      // Block entering the pending-resolution or cancelled state through the
+      // generic edit form too — not just leaving it. Setting show_status_id
+      // directly here would skip the gate's active-task guard and Audit
+      // trail entirely. Only the cancellation gate (cancelShowWithResolution
+      // / requestCancellationResolution / resolveShowCancellation) may move
+      // a show into either state.
+      const targetStatus = await this.showStatusService.getShowStatusById(dto.showStatusId);
+      if (targetStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
+        throw HttpError.badRequest('SHOW_STATUS_PENDING_RESOLUTION_REQUIRES_GATE');
+      }
+      if (targetStatus?.systemKey === 'CANCELLED') {
+        throw HttpError.badRequest('SHOW_STATUS_CANCELLATION_REQUIRES_GATE');
+      }
+    }
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
     // When clientId changes but scheduleId is not explicitly provided, validate the
     // existing schedule against the new clientId to prevent cross-client schedule assignments.
@@ -124,6 +154,140 @@ export class StudioShowManagementService {
 
   async getShowDetail(studioUid: string, showUid: string) {
     return this.findStudioShowOrThrow(studioUid, showUid);
+  }
+
+  private static readonly CANCELLATION_INELIGIBLE_STATUSES = [
+    'CANCELLED_PENDING_RESOLUTION',
+    'CANCELLED',
+    'COMPLETED',
+  ];
+
+  @Transactional()
+  async cancelShowWithResolution(
+    studioUid: string,
+    showUid: string,
+    dto: CancelShowWithResolutionInput,
+    studioRole: string | undefined,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const currentStatus = show.showStatus?.systemKey ?? null;
+    if (currentStatus === null || StudioShowManagementService.CANCELLATION_INELIGIBLE_STATUSES.includes(currentStatus)) {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_ALLOWED');
+    }
+
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    const tier = await this.showCancellationGateService.resolveActorTier(studioUid, studioRole, { id: actor.id });
+    if (!tier) {
+      throw HttpError.forbidden('CANCELLATION_NOT_AUTHORIZED');
+    }
+
+    const actorRef = { id: actor.id, uid: actor.uid, name: actor.name };
+
+    if (tier === 'manager') {
+      if (!dto.outcome) {
+        throw HttpError.badRequest('OUTCOME_REQUIRED');
+      }
+      await this.showCancellationGateService.resolveAtomic({
+        show,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: currentStatus,
+        outcome: dto.outcome,
+        reasonCategory: dto.reason_category,
+        reasonNote: dto.reason_note,
+        actor: actorRef,
+      });
+    } else {
+      throw HttpError.forbidden('DIRECT_CANCELLATION_REQUIRES_MANAGER');
+    }
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  @Transactional()
+  async requestCancellationResolution(
+    studioUid: string,
+    showUid: string,
+    dto: RequestCancellationResolutionInput,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const currentStatus = show.showStatus?.systemKey ?? null;
+    if (currentStatus === null || StudioShowManagementService.CANCELLATION_INELIGIBLE_STATUSES.includes(currentStatus)) {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_ALLOWED');
+    }
+
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    const isActiveDutyManager = await this.showCancellationGateService.isActiveDutyManager(studioUid, { id: actor.id });
+    if (!isActiveDutyManager) {
+      throw HttpError.forbidden('CANCELLATION_NOT_AUTHORIZED');
+    }
+
+    await this.showCancellationGateService.openPending({
+      show,
+      gateKind: 'show_cancellation',
+      fromStatusSystemKey: currentStatus,
+      reasonCategory: dto.reason_category,
+      reasonNote: dto.reason_note,
+      actor: { id: actor.id, uid: actor.uid, name: actor.name },
+    });
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  @Transactional()
+  async resolveShowCancellation(
+    studioUid: string,
+    showUid: string,
+    dto: ResolveShowCancellationInput,
+    studioRole: string | undefined,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    if (show.showStatus?.systemKey !== 'CANCELLED_PENDING_RESOLUTION') {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_PENDING');
+    }
+
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    const tier = await this.showCancellationGateService.resolveActorTier(studioUid, studioRole, { id: actor.id });
+    if (tier !== 'manager') {
+      throw HttpError.forbidden('SIGN_OFF_REQUIRES_MANAGER');
+    }
+
+    const status = await this.showCancellationGateService.getCancellationStatus(show);
+    // Shows parked in CANCELLED_PENDING_RESOLUTION by schedule-publish (or any
+    // other pre-gate write) have no opening Audit row, so gateKind comes back
+    // null even though the show is genuinely pending. 'show_cancellation' is
+    // the only GateKind today — default to it instead of leaving these shows
+    // permanently stuck with no sign-off path.
+    const gateKind = status.gateKind ?? 'show_cancellation';
+
+    await this.showCancellationGateService.resolvePending({
+      show,
+      gateKind,
+      outcome: dto.outcome,
+      resolutionNotes: dto.resolution_notes,
+      actor: { id: actor.id, uid: actor.uid, name: actor.name },
+    });
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  async getCancellationStatus(studioUid: string, showUid: string) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    return this.showCancellationGateService.getCancellationStatus(show);
   }
 
   @Transactional()

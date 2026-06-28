@@ -77,6 +77,67 @@ export const studioShowDetailSchema = showApiResponseSchema.extend({
   platforms: z.array(studioShowPlatformSummarySchema).default([]),
 });
 
+export const CANCELLATION_GATE_CONFIG = {
+  show_cancellation: {
+    allowedOutcomes: ['CANCELLED', 'COMPLETED'] as const,
+    outcomesRequiringNoActiveTasks: ['CANCELLED'] as const,
+    reasonOptions: [
+      'CREATOR_UNAVAILABLE',
+      'ROOM_UNAVAILABLE',
+      'EQUIPMENT_FAILURE',
+      'UTILITY_OUTAGE',
+      'PLATFORM_ISSUE',
+      'CLIENT_REQUEST',
+      'OTHER',
+    ] as const,
+  },
+} as const;
+
+export type GateKind = keyof typeof CANCELLATION_GATE_CONFIG;
+export type GateOutcome =
+  (typeof CANCELLATION_GATE_CONFIG)[GateKind]['allowedOutcomes'][number];
+
+const gateActorSchema = z.object({
+  uid: z.string().startsWith(UID_PREFIXES.USER),
+  name: z.string(),
+});
+
+export const cancellationHistoryEntrySchema = z.object({
+  event: z.enum(['opened', 'resolved']),
+  actor: gateActorSchema.nullable(),
+  at: z.iso.datetime(),
+  note: z.string().nullable(),
+  outcome: z.string().nullable(),
+});
+
+export const cancelShowWithResolutionSchema = z.object({
+  reason_category: z.string().min(1),
+  reason_note: z.string().min(1),
+  outcome: z.enum(['CANCELLED', 'COMPLETED']).optional(),
+});
+
+export const requestCancellationResolutionSchema = z.object({
+  reason_category: z.string().min(1),
+  reason_note: z.string().min(1),
+});
+
+export const resolveShowCancellationSchema = z.object({
+  outcome: z.enum(['CANCELLED', 'COMPLETED']),
+  resolution_notes: z.string().min(1),
+});
+
+export const cancellationStatusResponseSchema = z.object({
+  is_pending: z.boolean(),
+  gate_kind: z.enum(['show_cancellation']).nullable(),
+  from_status: z.string().nullable(),
+  reason_category: z.string().nullable(),
+  reason_note: z.string().nullable(),
+  opened_by: gateActorSchema.nullable(),
+  opened_at: z.iso.datetime().nullable(),
+  allowed_outcomes: z.array(z.string()),
+  history: z.array(cancellationHistoryEntrySchema),
+});
+
 /**
  * Show List Query Parameters Schema
  */

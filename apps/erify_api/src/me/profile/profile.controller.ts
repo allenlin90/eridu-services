@@ -49,6 +49,7 @@ export class ProfileController {
     return {
       ext_id: user.ext_id,
       id: user.id,
+      uid: fullUser.uid,
       name: user.name,
       email: user.email,
       image: user.image ?? null,

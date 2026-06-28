@@ -46,6 +46,35 @@ export class ShowRepository extends BaseRepository<
     }) as Promise<Prisma.ShowGetPayload<{ include: T }> | null>;
   }
 
+  // Engineering decision: Show has no `version` column for optimistic locking
+  // (unlike Task/TaskTemplate/StudioCreator). Resolving a pending-resolution
+  // show must not be a plain read-then-write — two Managers racing to resolve
+  // the same show could otherwise both succeed and write conflicting outcomes.
+  // This conditional updateMany is the guard: the WHERE clause re-checks the
+  // expected pending status atomically with the write, so only the first
+  // caller's update actually matches a row.
+  //
+  // The third parameter is a scalar bigint, not a Prisma.ShowUpdateInput —
+  // deliberately. Prisma's `updateMany` data type (ShowUpdateManyMutationInput /
+  // ShowUncheckedUpdateManyInput) does not support relation writes like
+  // `showStatus: { connect: { id } } }`; only `Model.update()` (singular) does.
+  // Accepting a wider update-input type here type-checks fine (it's a superset,
+  // and TS doesn't excess-property-check a variable reference inside a nested
+  // object literal) but fails at the database at runtime — invisible to mocked
+  // unit tests, which never touch a real Prisma engine. Keeping this scalar-only
+  // makes that whole bug class unrepresentable.
+  async updateStatusIfPending(
+    showId: bigint,
+    pendingShowStatusId: bigint,
+    targetShowStatusId: bigint,
+  ): Promise<boolean> {
+    const result = await this.delegate.updateMany({
+      where: { id: showId, showStatusId: pendingShowStatusId },
+      data: { showStatusId: targetShowStatusId },
+    });
+    return result.count > 0;
+  }
+
   // Engineering decision: compound studio-scoped lookup with optional generic include
   // cannot be expressed as a caller-supplied flat where+include pair without leaking the
   // relation-join semantics (studio: { uid }). Used in management service for all

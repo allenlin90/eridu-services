@@ -45,6 +45,10 @@ describe('studioShowController', () => {
     createShow: jest.fn(),
     updateShow: jest.fn(),
     deleteShow: jest.fn(),
+    cancelShowWithResolution: jest.fn(),
+    requestCancellationResolution: jest.fn(),
+    resolveShowCancellation: jest.fn(),
+    getCancellationStatus: jest.fn(),
   };
 
   const clientMechanicServiceMock = {
@@ -449,6 +453,122 @@ describe('studioShowController', () => {
     it('excludes ACCOUNT_MANAGER, since submitted task content is an unstructured blob that can carry money values', () => {
       const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.tasks);
       expect(roles).not.toContain(STUDIO_ROLE.ACCOUNT_MANAGER);
+    });
+  });
+
+  describe('cancelWithResolution', () => {
+    it('passes studioMembership.role and the actor ext_id through to the service', async () => {
+      const request = { studioMembership: { role: STUDIO_ROLE.MANAGER } } as any;
+      const user = { ext_id: 'ext_5' } as any;
+      const body = { reason_category: 'EQUIPMENT_FAILURE', reason_note: 'note', outcome: 'CANCELLED' } as any;
+      studioShowManagementServiceMock.cancelShowWithResolution.mockResolvedValue({ uid: 'show_123' });
+
+      await controller.cancelWithResolution('std_123', 'show_123', body, user, request);
+
+      expect(studioShowManagementServiceMock.cancelShowWithResolution).toHaveBeenCalledWith(
+        'std_123',
+        'show_123',
+        body,
+        STUDIO_ROLE.MANAGER,
+        'ext_5',
+      );
+    });
+
+    it('is open to any studio member at the decorator level (service enforces the actual tier)', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.cancelWithResolution);
+      expect(roles).toEqual([]);
+    });
+  });
+
+  describe('resolveCancellation', () => {
+    it('passes studioMembership.role and the actor ext_id through to the service', async () => {
+      const request = { studioMembership: { role: STUDIO_ROLE.MANAGER } } as any;
+      const user = { ext_id: 'ext_5' } as any;
+      const body = { outcome: 'CANCELLED', resolution_notes: 'note' } as any;
+      studioShowManagementServiceMock.resolveShowCancellation.mockResolvedValue({ uid: 'show_123' });
+
+      await controller.resolveCancellation('std_123', 'show_123', body, user, request);
+
+      expect(studioShowManagementServiceMock.resolveShowCancellation).toHaveBeenCalledWith(
+        'std_123',
+        'show_123',
+        body,
+        STUDIO_ROLE.MANAGER,
+        'ext_5',
+      );
+    });
+  });
+
+  describe('requestCancellationResolution', () => {
+    it('passes the actor ext_id through to the service', async () => {
+      const user = { ext_id: 'ext_5' } as any;
+      const body = { reason_category: 'EQUIPMENT_FAILURE', reason_note: 'note' } as any;
+      studioShowManagementServiceMock.requestCancellationResolution.mockResolvedValue({ uid: 'show_123' });
+
+      await controller.requestCancellationResolution('std_123', 'show_123', body, user);
+
+      expect(studioShowManagementServiceMock.requestCancellationResolution).toHaveBeenCalledWith(
+        'std_123',
+        'show_123',
+        body,
+        'ext_5',
+      );
+    });
+
+    it('is open to any studio member at the decorator level (service enforces active Duty Manager)', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.requestCancellationResolution);
+      expect(roles).toEqual([]);
+    });
+  });
+
+  describe('cancellationStatus', () => {
+    it('delegates to the service and maps the result to snake_case API shape', async () => {
+      studioShowManagementServiceMock.getCancellationStatus.mockResolvedValue({
+        isPending: false,
+        gateKind: null,
+        fromStatus: null,
+        reasonCategory: null,
+        reasonNote: null,
+        openedBy: null,
+        openedAt: null,
+        allowedOutcomes: [],
+        history: [],
+      });
+
+      const result = await controller.cancellationStatus('std_123', 'show_123');
+
+      expect(studioShowManagementServiceMock.getCancellationStatus).toHaveBeenCalledWith('std_123', 'show_123');
+      expect(result).toEqual({
+        is_pending: false,
+        gate_kind: null,
+        from_status: null,
+        reason_category: null,
+        reason_note: null,
+        opened_by: null,
+        opened_at: null,
+        allowed_outcomes: [],
+        history: [],
+      });
+    });
+
+    it('converts Date fields to ISO strings for a pending result with history', async () => {
+      const openedAt = new Date('2026-06-25T16:14:30.201Z');
+      studioShowManagementServiceMock.getCancellationStatus.mockResolvedValue({
+        isPending: true,
+        gateKind: 'show_cancellation',
+        fromStatus: 'CONFIRMED',
+        reasonCategory: 'EQUIPMENT_FAILURE',
+        reasonNote: 'Camera failed',
+        openedBy: { uid: 'user_abc123', name: 'Jane Duty' },
+        openedAt,
+        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
+        history: [{ event: 'opened', actor: { uid: 'user_abc123', name: 'Jane Duty' }, at: openedAt, note: 'Camera failed', outcome: null }],
+      });
+
+      const result = await controller.cancellationStatus('std_123', 'show_123');
+
+      expect(result.opened_at).toBe('2026-06-25T16:14:30.201Z');
+      expect(result.history[0].at).toBe('2026-06-25T16:14:30.201Z');
     });
   });
 

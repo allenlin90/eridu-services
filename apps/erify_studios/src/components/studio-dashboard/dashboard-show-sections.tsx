@@ -1,13 +1,17 @@
 import { Link } from '@tanstack/react-router';
 import { CalendarDays } from 'lucide-react';
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTablePagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTableActions, DataTablePagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
 
 import { TaskSummaryInline } from './dashboard-coverage-cards';
+import { mayHaveCancellationHistory } from './dashboard-show-cancellation';
 
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { DashboardCancellationActions } from '@/features/studio-shows/components/dashboard-cancellation-actions';
 import { getCreatorNames } from '@/lib/creator-utils';
+
+const CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS = new Set(['CONFIRMED', 'LIVE']);
 
 type OperationalDayShowsSummaryCardProps = {
   dateLabel: string;
@@ -138,6 +142,7 @@ export function OperationalDayShowListCard({
                         <TableHead>Time</TableHead>
                         <TableHead>Task Summary</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -182,6 +187,25 @@ export function OperationalDayShowListCard({
                             </TableCell>
                             <TableCell>
                               <ShowStatusBadge status={show.show_status_name ?? 'unknown'} />
+                            </TableCell>
+                            <TableCell>
+                              <DashboardCancellationActions
+                                studioId={studioId}
+                                showId={show.id}
+                                canRequestCancellation={CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS.has(show.show_status_system_key ?? '')}
+                                mayHaveCancellationHistory={mayHaveCancellationHistory(show.show_status_system_key)}
+                                renderTrigger={({ requestItem, historyItem }) => (
+                                  <DataTableActions
+                                    row={show}
+                                    renderExtraActions={() => (
+                                      <>
+                                        {requestItem}
+                                        {historyItem}
+                                      </>
+                                    )}
+                                  />
+                                )}
+                              />
                             </TableCell>
                           </TableRow>
                         );
