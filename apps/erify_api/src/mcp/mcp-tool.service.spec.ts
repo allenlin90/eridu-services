@@ -180,4 +180,24 @@ describe('mcpToolService', () => {
       completed_at_from: 'invalid-date',
     })).rejects.toBeInstanceOf(HttpException);
   });
+
+  it('uses default page=1 and limit=20 in queryShows and queryTasks', async () => {
+    taskOrchestrationService.getStudioShowsWithTaskSummary.mockResolvedValue({ data: [], total: 0 });
+    taskService.findTasksForMcp.mockResolvedValue([]);
+
+    await createService().queryShows({ studio_id: 'std_123' });
+    await createService().queryTasks({ studio_id: 'std_123' });
+
+    expect(taskOrchestrationService.getStudioShowsWithTaskSummary).toHaveBeenCalledWith('std_123', expect.objectContaining({
+      page: 1,
+      limit: 20,
+      take: 20,
+      skip: 0,
+    }));
+
+    expect(taskService.findTasksForMcp).toHaveBeenCalledWith('std_123', expect.objectContaining({
+      take: 20,
+      skip: 0,
+    }));
+  });
 });

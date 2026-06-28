@@ -29,7 +29,7 @@ const queryShowsSchema = z.object({
   show_status_name: z.string().optional(),
   creator_name: z.string().optional(),
   page: z.number().int().min(1).optional().default(1),
-  limit: z.number().int().min(1).optional().default(50),
+  limit: z.number().int().min(1).optional().default(20),
 });
 
 const queryTasksSchema = z.object({
@@ -47,7 +47,7 @@ const queryTasksSchema = z.object({
     .transform((val) => (Array.isArray(val) ? val : [val]))
     .optional(),
   page: z.number().int().min(1).optional().default(1),
-  limit: z.number().int().min(1).optional().default(50),
+  limit: z.number().int().min(1).optional().default(20),
 });
 
 type ShowScopedInput = z.input<typeof showScopedSchema>;
