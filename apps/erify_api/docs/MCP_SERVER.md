@@ -76,10 +76,12 @@ If a public domain is later attached to this service, the endpoint is no longer 
 
 The phase-1 registry exposes only read-only record lookup tools:
 
-| Tool | Purpose | Service reuse |
-| --- | --- | --- |
-| `erify_get_show` | Load a studio-scoped show by UID | `TaskOrchestrationService.getStudioShow` |
-| `erify_get_task` | Load a studio-scoped task by UID after confirming studio ownership | `TaskService.findOne`, then `TaskService.findByUidWithRelationsAdmin` |
+| Tool | Purpose | Service reuse | Response DTO |
+| --- | --- | --- | --- |
+| `erify_get_show` | Load a studio-scoped show by UID | `TaskOrchestrationService.getStudioShow` | `showDto` |
+| `erify_get_task` | Load a studio-scoped task by UID after confirming studio ownership | `TaskService.findOne`, then `TaskService.findByUidWithRelationsAdmin` | `taskWithRelationsDto` |
+
+Both tools parse the raw service result through the same Zod DTO used by the REST API before returning it to the MCP client — this strips internal `BigInt` database ids/foreign keys (which `JSON.stringify` cannot serialize) and maps the row to the public UID-based response shape.
 
 Do not add broad list, report, mutation, or cross-studio tools without a new design review. The current foundation is deliberately small while OpenWebUI/LiteLLM integration details and auth hardening are still being discussed.
 

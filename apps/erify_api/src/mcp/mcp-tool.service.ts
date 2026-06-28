@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { McpStudioPolicy } from './mcp-studio-policy';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { showDto } from '@/models/show/schemas/show.schema';
+import { taskWithRelationsDto } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
@@ -31,7 +33,8 @@ export class McpToolService {
   async getShow(input: ShowScopedInput): Promise<unknown> {
     const parsed = showScopedSchema.parse(input);
     const studioId = this.studioPolicy.assertStudioAllowed(parsed.studio_id);
-    return this.taskOrchestrationService.getStudioShow(studioId, parsed.show_id);
+    const show = await this.taskOrchestrationService.getStudioShow(studioId, parsed.show_id);
+    return showDto.parse(show);
   }
 
   async getTask(input: TaskScopedInput): Promise<unknown> {
@@ -52,6 +55,6 @@ export class McpToolService {
       throw HttpError.notFound('Task', parsed.task_id);
     }
 
-    return task;
+    return taskWithRelationsDto.parse(task);
   }
 }
