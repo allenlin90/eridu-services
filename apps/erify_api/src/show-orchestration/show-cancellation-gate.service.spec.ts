@@ -2,7 +2,6 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import type { Show } from '@prisma/client';
 
-import { GateNotificationService } from './gate-notification.service';
 import { ShowCancellationGateService } from './show-cancellation-gate.service';
 
 import { AuditService } from '@/models/audit/audit.service';
@@ -18,7 +17,6 @@ describe('showCancellationGateService', () => {
   const showRepositoryMock = { updateStatusIfPending: jest.fn() };
   const showStatusServiceMock = { getShowStatusBySystemKey: jest.fn() };
   const taskTargetServiceMock = { countActiveByShowId: jest.fn() };
-  const gateNotificationServiceMock = { notifyGateOpened: jest.fn(), notifyGateResolved: jest.fn() };
 
   const actor = { id: 5n, uid: 'user_abc123', name: 'Jane Duty' };
   const show = { id: 1n, uid: 'show_xyz' } as Show;
@@ -40,7 +38,6 @@ describe('showCancellationGateService', () => {
         { provide: ShowRepository, useValue: showRepositoryMock },
         { provide: ShowStatusService, useValue: showStatusServiceMock },
         { provide: TaskTargetService, useValue: taskTargetServiceMock },
-        { provide: GateNotificationService, useValue: gateNotificationServiceMock },
       ],
     }).compile();
     service = module.get(ShowCancellationGateService);
@@ -204,82 +201,6 @@ describe('showCancellationGateService', () => {
         ],
       });
     });
-
-    it('uses the latest note_updated row for reasonNote but the original opened row for category/fromStatus/openedBy', async () => {
-      auditServiceMock.findForTargets.mockResolvedValue([
-        {
-          action: 'OVERRIDE',
-          reason: 'Actually two cameras failed',
-          actorId: 6n,
-          createdAt: new Date('2026-06-25T17:00:00.000Z'),
-          metadata: {
-            field: 'show_status',
-            event: 'note_updated',
-            gate_kind: 'show_cancellation',
-            old_value: null,
-            new_value: null,
-            actor_uid: 'user_def456',
-            actor_name: 'Bob Duty',
-          },
-        },
-        {
-          action: 'OVERRIDE',
-          reason: 'Camera failed mid-show',
-          actorId: 5n,
-          createdAt: new Date('2026-06-25T16:14:30.201Z'),
-          metadata: {
-            field: 'show_status',
-            event: 'opened',
-            gate_kind: 'show_cancellation',
-            old_value: 'CONFIRMED',
-            new_value: 'CANCELLED_PENDING_RESOLUTION',
-            reason_category: 'EQUIPMENT_FAILURE',
-            actor_uid: 'user_abc123',
-            actor_name: 'Jane Duty',
-          },
-        },
-      ]);
-
-      const result = await service.getCancellationStatus({
-        id: 1n,
-        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
-      });
-
-      expect(result.reasonNote).toBe('Actually two cameras failed');
-      expect(result.reasonCategory).toBe('EQUIPMENT_FAILURE');
-      expect(result.fromStatus).toBe('CONFIRMED');
-      expect(result.openedBy).toEqual({ uid: 'user_abc123', name: 'Jane Duty' });
-      expect(result.history).toHaveLength(2);
-      expect(result.history[0].event).toBe('opened');
-      expect(result.history[1].event).toBe('note_updated');
-    });
-
-    it('returns openedBy: null and history actor: null for a system-opened (no actor_uid) audit row', async () => {
-      auditServiceMock.findForTargets.mockResolvedValue([
-        {
-          action: 'OVERRIDE',
-          reason: 'Removed from republished schedule; 2 active task(s) still attached',
-          actorId: null,
-          createdAt: new Date('2026-06-25T16:14:30.201Z'),
-          metadata: {
-            field: 'show_status',
-            event: 'opened',
-            gate_kind: 'schedule_publish_removal',
-            old_value: 'CONFIRMED',
-            new_value: 'CANCELLED_PENDING_RESOLUTION',
-            reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
-          },
-        },
-      ]);
-
-      const result = await service.getCancellationStatus({
-        id: 1n,
-        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
-      });
-
-      expect(result.openedBy).toBeNull();
-      expect(result.history[0].actor).toBeNull();
-    });
   });
 
   describe('openPending', () => {
@@ -326,12 +247,6 @@ describe('showCancellationGateService', () => {
         },
         targets: [{ targetType: 'SHOW', targetId: 1n }],
       });
-      expect(gateNotificationServiceMock.notifyGateOpened).toHaveBeenCalledWith(
-        show,
-        'show_cancellation',
-        { category: 'EQUIPMENT_FAILURE', note: 'Camera failed mid-show' },
-        actor,
-      );
     });
 
     it('throws SHOW_STATUS_CHANGED when the guarded write matches no rows', async () => {
@@ -348,40 +263,6 @@ describe('showCancellationGateService', () => {
         }),
       ).rejects.toThrow(/SHOW_STATUS_CHANGED/);
       expect(auditServiceMock.create).not.toHaveBeenCalled();
-    });
-
-    it('writes a system-actor audit row (actorId null, no actor_uid/actor_name) when actor is null', async () => {
-      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
-
-      await service.openPending({
-        show,
-        gateKind: 'schedule_publish_removal',
-        fromStatusSystemKey: 'CONFIRMED',
-        reasonCategory: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
-        reasonNote: 'Removed from republished schedule; 2 active task(s) still attached',
-        actor: null,
-      });
-
-      expect(auditServiceMock.create).toHaveBeenCalledWith({
-        action: 'OVERRIDE',
-        actorId: null,
-        reason: 'Removed from republished schedule; 2 active task(s) still attached',
-        metadata: {
-          field: 'show_status',
-          event: 'opened',
-          gate_kind: 'schedule_publish_removal',
-          old_value: 'CONFIRMED',
-          new_value: 'CANCELLED_PENDING_RESOLUTION',
-          reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
-        },
-        targets: [{ targetType: 'SHOW', targetId: 1n }],
-      });
-      expect(gateNotificationServiceMock.notifyGateOpened).toHaveBeenCalledWith(
-        show,
-        'schedule_publish_removal',
-        { category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE', note: 'Removed from republished schedule; 2 active task(s) still attached' },
-        null,
-      );
     });
   });
 
@@ -477,34 +358,6 @@ describe('showCancellationGateService', () => {
           metadata: expect.objectContaining({ event: 'resolved', old_value: 'CONFIRMED', new_value: 'CANCELLED' }),
         }),
       );
-      expect(gateNotificationServiceMock.notifyGateResolved).toHaveBeenCalledWith(show, 'show_cancellation', 'CANCELLED', actor);
-    });
-  });
-
-  describe('amendPendingNote', () => {
-    it('writes a note_updated audit row without old/new values', async () => {
-      await service.amendPendingNote({
-        showId: 1n,
-        gateKind: 'show_cancellation',
-        reasonNote: 'Actually two cameras failed',
-        actor,
-      });
-
-      expect(auditServiceMock.create).toHaveBeenCalledWith({
-        action: 'OVERRIDE',
-        actorId: 5n,
-        reason: 'Actually two cameras failed',
-        metadata: {
-          field: 'show_status',
-          event: 'note_updated',
-          gate_kind: 'show_cancellation',
-          old_value: null,
-          new_value: null,
-          actor_uid: 'user_abc123',
-          actor_name: 'Jane Duty',
-        },
-        targets: [{ targetType: 'SHOW', targetId: 1n }],
-      });
     });
   });
 
@@ -514,32 +367,11 @@ describe('showCancellationGateService', () => {
         service.resolvePending({
           show,
           gateKind: 'show_cancellation',
-          fromStatusSystemKey: 'CONFIRMED',
           outcome: 'RESTORE_PREVIOUS',
           resolutionNotes: 'note',
           actor,
         }),
       ).rejects.toThrow(/OUTCOME_NOT_ALLOWED/);
-    });
-
-    it('resolves RESTORE_PREVIOUS by reverting to the captured from_status', async () => {
-      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
-
-      await service.resolvePending({
-        show,
-        gateKind: 'schedule_publish_removal',
-        fromStatusSystemKey: 'CONFIRMED',
-        outcome: 'RESTORE_PREVIOUS',
-        resolutionNotes: 'Schedule sync error, resuming.',
-        actor,
-      });
-
-      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 6n, 2n);
-      expect(auditServiceMock.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          metadata: expect.objectContaining({ event: 'resolved', old_value: 'CANCELLED_PENDING_RESOLUTION', new_value: 'CONFIRMED' }),
-        }),
-      );
     });
 
     it('throws SHOW_ALREADY_RESOLVED when the guarded write matches no rows', async () => {
@@ -549,7 +381,6 @@ describe('showCancellationGateService', () => {
         service.resolvePending({
           show,
           gateKind: 'show_cancellation',
-          fromStatusSystemKey: 'CONFIRMED',
           outcome: 'CANCELLED',
           resolutionNotes: 'note',
           actor,

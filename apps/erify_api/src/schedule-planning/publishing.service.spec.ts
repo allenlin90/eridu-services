@@ -17,9 +17,7 @@ import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-sna
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
-import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { UtilityService } from '@/utility/utility.service';
 
 // File-scope mock transaction client (reassigned per test in beforeEach)
@@ -63,8 +61,6 @@ describe('publishingService', () => {
   let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let validationService: jest.Mocked<ValidationService>;
-  let taskTargetService: jest.Mocked<TaskTargetService>;
-  let showCancellationGateService: jest.Mocked<ShowCancellationGateService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
@@ -294,14 +290,6 @@ describe('publishingService', () => {
             generateBrandedId: jest.fn().mockReturnValue('shst_generated'),
           },
         },
-        {
-          provide: TaskTargetService,
-          useValue: { countActiveByShowId: jest.fn() },
-        },
-        {
-          provide: ShowCancellationGateService,
-          useValue: { openPending: jest.fn(), getCancellationStatus: jest.fn(), resolvePending: jest.fn() },
-        },
       ],
     }).compile();
 
@@ -312,8 +300,6 @@ describe('publishingService', () => {
     showCreatorService = module.get(ShowCreatorService);
     showPlatformService = module.get(ShowPlatformService);
     validationService = module.get(ValidationService);
-    taskTargetService = module.get(TaskTargetService);
-    showCancellationGateService = module.get(ShowCancellationGateService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -355,7 +341,7 @@ describe('publishingService', () => {
         ]);
       mockTransactionClient.showCreator.findMany.mockResolvedValue([]);
       mockTransactionClient.showPlatform.findMany.mockResolvedValue([]);
-      taskTargetService.countActiveByShowId.mockResolvedValue(0);
+      mockTransactionClient.taskTarget.findFirst.mockResolvedValue(null);
       mockTransactionClient.taskTarget.findMany.mockResolvedValue([]);
       mockTransactionClient.taskTarget.updateMany.mockResolvedValue({ count: 0 });
       mockTransactionClient.task.updateMany.mockResolvedValue({ count: 0 });
@@ -939,155 +925,6 @@ describe('publishingService', () => {
         service.publish(scheduleUid, version, userId),
       ).rejects.toThrow('Invalid plan document structure');
       expect(validateScheduleMock).not.toHaveBeenCalled();
-    });
-
-    it('cancels a removed show directly when it has no active tasks', async () => {
-      const removedShow = {
-        id: BigInt(99),
-        uid: 'show_old',
-        externalId: 'show_temp_OLD',
-        clientId: BigInt(1),
-        scheduleId: BigInt(1),
-        studioId: BigInt(1),
-        studioRoomId: null,
-        showTypeId: BigInt(1),
-        showStatusId: BigInt(1),
-        showStandardId: BigInt(1),
-        name: 'Old Show',
-        startTime: new Date('2024-01-01T08:00:00Z'),
-        endTime: new Date('2024-01-01T09:00:00Z'),
-        metadata: {},
-        deletedAt: null,
-        showStatus: { systemKey: 'CONFIRMED' },
-      };
-
-      mockTransactionClient.show.findMany
-        .mockReset()
-        .mockResolvedValueOnce([removedShow]) // current schedule shows
-        .mockResolvedValueOnce([]) // matching shows by external identity
-        .mockResolvedValueOnce([
-          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
-          { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
-        ]);
-      taskTargetService.countActiveByShowId.mockResolvedValue(0);
-
-      const result = await service.publish(scheduleUid, version, userId);
-
-      expect(taskTargetService.countActiveByShowId).toHaveBeenCalledWith(BigInt(99));
-      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
-        where: { id: BigInt(99) },
-        data: { showStatusId: BigInt(9001) },
-      });
-      expect(showCancellationGateService.openPending).not.toHaveBeenCalled();
-      expect(result.publishSummary.shows_cancelled).toBe(1);
-      expect(result.publishSummary.shows_pending_resolution).toBe(0);
-    });
-
-    it('opens a pending-resolution gate (no human actor) when a removed show has active tasks', async () => {
-      const removedShow = {
-        id: BigInt(99),
-        uid: 'show_old',
-        externalId: 'show_temp_OLD',
-        clientId: BigInt(1),
-        scheduleId: BigInt(1),
-        studioId: BigInt(1),
-        studioRoomId: null,
-        showTypeId: BigInt(1),
-        showStatusId: BigInt(1),
-        showStandardId: BigInt(1),
-        name: 'Old Show',
-        startTime: new Date('2024-01-01T08:00:00Z'),
-        endTime: new Date('2024-01-01T09:00:00Z'),
-        metadata: {},
-        deletedAt: null,
-        showStatus: { systemKey: 'CONFIRMED' },
-      };
-
-      mockTransactionClient.show.findMany
-        .mockReset()
-        .mockResolvedValueOnce([removedShow])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
-          { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
-        ]);
-      taskTargetService.countActiveByShowId.mockResolvedValue(2);
-
-      const result = await service.publish(scheduleUid, version, userId);
-
-      expect(showCancellationGateService.openPending).toHaveBeenCalledWith({
-        show: { id: BigInt(99), uid: 'show_old' },
-        gateKind: 'schedule_publish_removal',
-        fromStatusSystemKey: 'CONFIRMED',
-        reasonCategory: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
-        reasonNote: 'Removed from republished schedule; 2 active task(s) still attached',
-        actor: null,
-      });
-      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith({
-        where: { id: BigInt(99) },
-        data: { showStatusId: BigInt(9001) },
-      });
-      expect(result.publishSummary.shows_pending_resolution).toBe(1);
-      expect(result.publishSummary.shows_cancelled).toBe(0);
-    });
-
-    it('resolves an already-pending gate through resolvePending when active tasks have since cleared, instead of a raw status update', async () => {
-      const removedShow = {
-        id: BigInt(99),
-        uid: 'show_old',
-        externalId: 'show_temp_OLD',
-        clientId: BigInt(1),
-        scheduleId: BigInt(1),
-        studioId: BigInt(1),
-        studioRoomId: null,
-        showTypeId: BigInt(1),
-        showStatusId: BigInt(9002), // already CANCELLED_PENDING_RESOLUTION
-        showStandardId: BigInt(1),
-        name: 'Old Show',
-        startTime: new Date('2024-01-01T08:00:00Z'),
-        endTime: new Date('2024-01-01T09:00:00Z'),
-        metadata: {},
-        deletedAt: null,
-        showStatus: { systemKey: 'CANCELLED_PENDING_RESOLUTION' },
-      };
-
-      mockTransactionClient.show.findMany
-        .mockReset()
-        .mockResolvedValueOnce([removedShow])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
-          { id: BigInt(2), clientId: BigInt(1), externalId: 'show_temp_2' },
-        ]);
-      taskTargetService.countActiveByShowId.mockResolvedValue(0);
-      showCancellationGateService.getCancellationStatus.mockResolvedValue({
-        isPending: true,
-        gateKind: 'schedule_publish_removal',
-        fromStatus: 'CONFIRMED',
-        reasonCategory: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
-        reasonNote: 'note',
-        openedBy: null,
-        openedAt: new Date('2024-01-01T08:00:00Z'),
-        allowedOutcomes: ['CANCELLED', 'RESTORE_PREVIOUS'],
-        history: [],
-      });
-
-      const result = await service.publish(scheduleUid, version, userId);
-
-      expect(showCancellationGateService.resolvePending).toHaveBeenCalledWith({
-        show: removedShow,
-        gateKind: 'schedule_publish_removal',
-        fromStatusSystemKey: 'CONFIRMED',
-        outcome: 'CANCELLED',
-        resolutionNotes: 'Active tasks cleared since this show was parked pending resolution',
-        actor: null,
-      });
-      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith({
-        where: { id: BigInt(99) },
-        data: { showStatusId: BigInt(9001) },
-      });
-      expect(result.publishSummary.shows_cancelled).toBe(1);
-      expect(result.publishSummary.shows_pending_resolution).toBe(0);
     });
   });
 });

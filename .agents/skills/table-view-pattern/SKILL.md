@@ -30,8 +30,6 @@ Standard patterns for large tabular views in `erify_studios`, `erify_creators`, 
 
 ## Decision Order
 
-Table-specific instance of `frontend-ui-components`'s general Decision Priority (requirement → project convention → framework best practice → preference):
-
 1. **Choose primitive**: Default `DataTable` → virtualized only if measurably slow → card grids only if not tabular
 2. **Choose ownership**: Route owns composition, feature hook owns query, column config owns renders, shared package owns primitives
 3. **Decide explorer features**: Only add saved views, inline editing, column visibility, virtualization when product actually needs it
@@ -42,7 +40,7 @@ Table-specific instance of `frontend-ui-components`'s general Decision Priority 
 - **Feature hook**: Owns `useTableUrlState`, maps to API params, executes queries, handles refresh/invalidation, feeds `setPageCount`
 - **Nested routes**: When a table renders in an index child but the search schema lives on the parent route, pass the parent route id to `useTableUrlState.from` so validated URL filters (for example `platform_name`) are read and preserved.
 - **Columns**: In feature config files, pure render logic, stable column ids, action columns via `useMemo`
-- **Row actions**: any row action column — including a single action — goes behind a `MoreHorizontal` dropdown trigger, not a standalone `Button` in the cell. Extract a `<feature>-actions-cell.tsx` component (e.g. `studio-member-actions-cell.tsx`, `studio-creator-actions-cell.tsx`) that composes the shared `DataTableActions` primitive (`@eridu/ui`) — pass `onEdit`/`onDelete` as named props, everything else via `renderExtraActions` (toggle-style actions like retire/reactivate, navigation links, custom mutations). The actions column's `cell` in the `*-columns.tsx` file just renders that component. Don't start with a bare `Button` "because there's only one action today" — a second action getting added later is the common case, and starting with `DataTableActions` costs nothing over a plain `Button`. This applies to hand-rolled `<Table>` markup too, not just `DataTable`-column-config tables — e.g. a dashboard's manually-built table adding its first row action should still reach for `DataTableActions`, matching every other table in the app, rather than rendering a bare trigger because that file predates the primitive. See `mechanic-actions-cell.tsx` for a reference conversion (PR 20.8).
+- **Row actions**: 2+ row actions go behind a single `MoreHorizontal` dropdown trigger, not a row of individual icon buttons. Extract a `<feature>-actions-cell.tsx` component (e.g. `studio-member-actions-cell.tsx`, `studio-creator-actions-cell.tsx`) that composes the shared `DataTableActions` primitive (`@eridu/ui`) — pass `onEdit`/`onDelete` as named props, everything else via `renderExtraActions` (toggle-style actions like retire/reactivate, navigation links, custom mutations). The actions column's `cell` in the `*-columns.tsx` file just renders that component. A row of standalone icon `Button`s for 2+ actions is the anti-pattern this replaces — it doesn't scale past 2-3 actions and is inconsistent with every other table in the app. See `mechanic-actions-cell.tsx` for a reference conversion (PR 20.8).
 - **Toolbar**: Use `DataTableToolbar` — primary search maps to URL-backed filter, debounced, manual refresh with icon-only button + `aria-label`. If the view requires custom filters (like clients, show types, platforms) alongside search, integrate the responsive Popover/Sheet triggers directly as children of `DataTableToolbar` (sizing buttons down to `h-8` to align with the search input) to provide a consistent, integrated toolbar UX.
 - **Pagination**: Use `DataTablePagination` — `useTableUrlState` owns `page`/`pageSize`, `placeholderData: keepPreviousData`, never clamp against fallback during loading
 
@@ -129,7 +127,7 @@ See [references/table-view-details.md](references/table-view-details.md) for ref
 - [ ] Mutation invalidation scoped correctly
 - [ ] Stable row ids for selection/editing
 - [ ] Row-selection eligibility uses hard blockers, not every issue badge or advisory warning
-- [ ] Any row action column (including a single action) uses a `DataTableActions` dropdown actions-cell, not a standalone icon/text button — applies to hand-rolled `<Table>` markup too
+- [ ] 2+ row actions use a `DataTableActions` dropdown actions-cell, not standalone icon buttons
 - [ ] Current-view export (if present) uses shared params + `AbortSignal` + shared CSV/download helpers + concurrency cap (no `Promise.all` fan-out) + spinner on trigger
 - [ ] Route decomposition clean and maintainable
 - [ ] Layout compared against nearest canonical table

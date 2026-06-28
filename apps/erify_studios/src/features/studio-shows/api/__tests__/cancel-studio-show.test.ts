@@ -2,7 +2,6 @@ import { AxiosError, AxiosHeaders } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  amendCancellationNote,
   cancelShowWithResolution,
   getCancellationStatus,
   getGateActiveTaskCount,
@@ -16,7 +15,6 @@ import { apiClient } from '@/lib/api/client';
 vi.mock('@/lib/api/client', () => ({
   apiClient: {
     post: vi.fn(),
-    patch: vi.fn(),
     get: vi.fn(),
   },
 }));
@@ -35,12 +33,10 @@ function axiosErrorWith(data: unknown): AxiosError {
 
 describe('studio show cancellation gate API', () => {
   const mockedPost = vi.mocked(apiClient.post);
-  const mockedPatch = vi.mocked(apiClient.patch);
   const mockedGet = vi.mocked(apiClient.get);
 
   beforeEach(() => {
     mockedPost.mockReset();
-    mockedPatch.mockReset();
     mockedGet.mockReset();
   });
 
@@ -76,18 +72,6 @@ describe('studio show cancellation gate API', () => {
 
     expect(mockedPost).toHaveBeenCalledWith(
       '/studios/studio_1/shows/show_1/request-cancellation-resolution',
-      payload,
-    );
-  });
-
-  it('amendCancellationNote patches the cancellation-note endpoint', async () => {
-    const payload = { reason_note: 'Updated note' };
-    mockedPatch.mockResolvedValue({ data: { is_pending: true } });
-
-    await amendCancellationNote('studio_1', 'show_1', payload);
-
-    expect(mockedPatch).toHaveBeenCalledWith(
-      '/studios/studio_1/shows/show_1/cancellation-note',
       payload,
     );
   });

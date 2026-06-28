@@ -222,5 +222,4 @@ sequenceDiagram
 
 - [Schedule Planning](./SCHEDULE_PLANNING.md) — API design, data model, workflow
 - [Task Management](./TASK_MANAGEMENT_SUMMARY.md) — Task lifecycle and API
-- [Show Cancellation Gate](./SHOW_CANCELLATION_GATE.md) — Resolution workflow for shows parked in `cancelled_pending_resolution`
-- [Pending-Resolution Discovery & Observability](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Remaining FE discovery/observability gap
+- [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Planned studio-scoped resolution follow-up

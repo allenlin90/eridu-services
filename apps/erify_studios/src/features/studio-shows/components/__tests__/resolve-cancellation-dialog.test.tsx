@@ -10,14 +10,12 @@ import { ResolveCancellationDialog } from '../resolve-cancellation-dialog';
 
 const useCancellationTierMock = vi.hoisted(() => vi.fn());
 const resolveMutateMock = vi.hoisted(() => vi.fn());
-const amendMutateMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../hooks/use-cancellation-tier', () => ({
   useCancellationTier: useCancellationTierMock,
 }));
 vi.mock('../../api/cancel-studio-show', () => ({
   useResolveShowCancellation: () => ({ mutate: resolveMutateMock, isPending: false }),
-  useAmendCancellationNote: () => ({ mutate: amendMutateMock, isPending: false }),
   getGateErrorCode: (error: AxiosError) => {
     const message = (error.response?.data as { message?: string } | undefined)?.message;
     return message?.split(':')[0] ?? null;
@@ -80,7 +78,6 @@ const pendingStatus: CancellationStatusResponse = {
 describe('resolveCancellationDialog', () => {
   beforeEach(() => {
     resolveMutateMock.mockReset();
-    amendMutateMock.mockReset();
   });
 
   it('renders nothing when status.is_pending is false', () => {
@@ -91,43 +88,18 @@ describe('resolveCancellationDialog', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders an outcome option per status.allowed_outcomes, with RESTORE_PREVIOUS labeled "Resume Show"', async () => {
+  it('renders an outcome option per status.allowed_outcomes', async () => {
     useCancellationTierMock.mockReturnValue({ tier: 'manager' });
     const user = userEvent.setup();
 
-    render(
-      <ResolveCancellationDialog
-        studioId="studio_1"
-        show={show}
-        status={{ ...pendingStatus, allowed_outcomes: ['CANCELLED', 'RESTORE_PREVIOUS'] }}
-      />,
-    );
+    render(<ResolveCancellationDialog studioId="studio_1" show={show} status={pendingStatus} />);
     await user.click(screen.getByRole('button', { name: /resolve/i }));
 
     const outcomeSelect = screen.getByLabelText(/^outcome$/i);
-    expect(screen.getByText('Resume Show')).toBeInTheDocument();
-    await user.selectOptions(outcomeSelect, 'RESTORE_PREVIOUS');
-    expect((outcomeSelect as HTMLSelectElement).value).toBe('RESTORE_PREVIOUS');
-  });
-
-  it('does not render the note-amendment field for a Manager tier', async () => {
-    useCancellationTierMock.mockReturnValue({ tier: 'manager' });
-    const user = userEvent.setup();
-
-    render(<ResolveCancellationDialog studioId="studio_1" show={show} status={pendingStatus} />);
-    await user.click(screen.getByRole('button', { name: /resolve/i }));
-
-    expect(screen.queryByLabelText(/update note/i)).not.toBeInTheDocument();
-  });
-
-  it('renders the note-amendment field for a Duty Manager tier', async () => {
-    useCancellationTierMock.mockReturnValue({ tier: 'duty_manager' });
-    const user = userEvent.setup();
-
-    render(<ResolveCancellationDialog studioId="studio_1" show={show} status={pendingStatus} />);
-    await user.click(screen.getByRole('button', { name: /view/i }));
-
-    expect(screen.getByLabelText(/update note/i)).toBeInTheDocument();
+    expect(screen.getByText('Cancelled')).toBeInTheDocument();
+    expect(screen.getByText('Completed')).toBeInTheDocument();
+    await user.selectOptions(outcomeSelect, 'COMPLETED');
+    expect((outcomeSelect as HTMLSelectElement).value).toBe('COMPLETED');
   });
 
   it('does not render final sign-off controls for a Duty Manager tier', async () => {

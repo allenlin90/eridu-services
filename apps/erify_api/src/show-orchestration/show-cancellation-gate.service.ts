@@ -3,8 +3,6 @@ import type { Show } from '@prisma/client';
 
 import { CANCELLATION_GATE_CONFIG, type GateKind, type GateOutcome } from '@eridu/api-types/shows';
 
-import { GateNotificationService } from './gate-notification.service';
-
 import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import type { AuditWithTargets } from '@/models/audit/schemas/audit.schema';
@@ -17,7 +15,7 @@ export type ActorTier = 'manager' | 'duty_manager';
 
 export type GateAuditMetadata = {
   field: 'show_status';
-  event: 'opened' | 'note_updated' | 'resolved';
+  event: 'opened' | 'resolved';
   gate_kind: GateKind;
   old_value: string | null;
   new_value: string | null;
@@ -27,7 +25,7 @@ export type GateAuditMetadata = {
 };
 
 export type CancellationHistoryEntryResult = {
-  event: 'opened' | 'note_updated' | 'resolved';
+  event: 'opened' | 'resolved';
   actor: { uid: string; name: string } | null;
   at: Date;
   note: string | null;
@@ -71,12 +69,8 @@ function getGateMetadata(audit: AuditWithTargets): GateAuditMetadata | null {
 }
 
 /**
- * Owns the show cancellation gate: who may act (Manager tier is always
- * static-role; Duty Manager tier is the time-windowed shift flag, checked
- * only when Manager tier doesn't apply) and what the "live" pending snapshot
- * is. No Task/TaskTarget usage anywhere — Show.status is the gate state,
- * Audit is the only persistence. See
- * docs/superpowers/specs/2026-06-26-show-state-gate-v2-design.md.
+ * Owns the manual show cancellation gate. Show.status is the gate state,
+ * Audit is the persistence/history source.
  */
 @Injectable()
 export class ShowCancellationGateService {
@@ -86,7 +80,6 @@ export class ShowCancellationGateService {
     private readonly showRepository: ShowRepository,
     private readonly showStatusService: ShowStatusService,
     private readonly taskTargetService: TaskTargetService,
-    private readonly gateNotificationService: GateNotificationService,
   ) {}
 
   async resolveActorTier(
@@ -140,7 +133,7 @@ export class ShowCancellationGateService {
     // cycle can exist while Show.status is pending (re-opening is blocked
     // elsewhere), so the topmost "opened" row is the current cycle's origin.
     const opened = gateEntries.find((e) => e.meta.event === 'opened');
-    const latestNote = gateEntries.find((e) => e.meta.event === 'opened' || e.meta.event === 'note_updated');
+    const latestNote = opened;
 
     if (!opened || !latestNote) {
       return { ...NOT_PENDING_RESULT, isPending: true, history };
@@ -168,7 +161,7 @@ export class ShowCancellationGateService {
     fromStatusSystemKey: string;
     reasonCategory: string;
     reasonNote: string;
-    actor: { id: bigint; uid: string; name: string } | null;
+    actor: { id: bigint; uid: string; name: string };
   }): Promise<void> {
     const { show, gateKind, fromStatusSystemKey, reasonCategory, reasonNote, actor } = params;
     this.assertReasonCategoryAllowed(gateKind, reasonCategory);
@@ -193,7 +186,6 @@ export class ShowCancellationGateService {
       note: reasonNote,
       actor,
     });
-    this.gateNotificationService.notifyGateOpened(show, gateKind, { category: reasonCategory, note: reasonNote }, actor);
   }
 
   async resolveAtomic(params: {
@@ -230,42 +222,22 @@ export class ShowCancellationGateService {
       note: reasonNote,
       actor,
     });
-    this.gateNotificationService.notifyGateResolved(show, gateKind, outcome, actor);
-  }
-
-  async amendPendingNote(params: {
-    showId: bigint;
-    gateKind: GateKind;
-    reasonNote: string;
-    actor: { id: bigint; uid: string; name: string };
-  }): Promise<void> {
-    await this.writeGateAudit({
-      showId: params.showId,
-      gateKind: params.gateKind,
-      event: 'note_updated',
-      oldValue: null,
-      newValue: null,
-      note: params.reasonNote,
-      actor: params.actor,
-    });
   }
 
   async resolvePending(params: {
     show: Show;
     gateKind: GateKind;
-    fromStatusSystemKey: string;
     outcome: string;
     resolutionNotes: string;
-    actor: { id: bigint; uid: string; name: string } | null;
+    actor: { id: bigint; uid: string; name: string };
   }): Promise<void> {
-    const { show, gateKind, fromStatusSystemKey, outcome, resolutionNotes, actor } = params;
+    const { show, gateKind, outcome, resolutionNotes, actor } = params;
     this.assertOutcomeAllowed(gateKind, outcome);
     await this.assertActiveTaskGuard(gateKind, outcome, show.id);
 
-    const targetSystemKey = outcome === 'RESTORE_PREVIOUS' ? fromStatusSystemKey : outcome;
     const [pendingStatus, targetStatus] = await Promise.all([
       this.requireShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION'),
-      this.requireShowStatusBySystemKey(targetSystemKey),
+      this.requireShowStatusBySystemKey(outcome),
     ]);
 
     const updated = await this.showRepository.updateStatusIfPending(show.id, pendingStatus.id, targetStatus.id);
@@ -278,11 +250,10 @@ export class ShowCancellationGateService {
       gateKind,
       event: 'resolved',
       oldValue: 'CANCELLED_PENDING_RESOLUTION',
-      newValue: targetSystemKey,
+      newValue: outcome,
       note: resolutionNotes,
       actor,
     });
-    this.gateNotificationService.notifyGateResolved(show, gateKind, outcome, actor);
   }
 
   private assertReasonCategoryAllowed(gateKind: GateKind, reasonCategory: string): void {
@@ -326,11 +297,11 @@ export class ShowCancellationGateService {
     newValue: string | null;
     reasonCategory?: string;
     note: string;
-    actor: { id: bigint; uid: string; name: string } | null;
+    actor: { id: bigint; uid: string; name: string };
   }): Promise<void> {
     await this.auditService.create({
       action: 'OVERRIDE',
-      actorId: params.actor?.id ?? null,
+      actorId: params.actor.id,
       reason: params.note,
       metadata: {
         field: 'show_status',
@@ -339,7 +310,8 @@ export class ShowCancellationGateService {
         old_value: params.oldValue,
         new_value: params.newValue,
         ...(params.reasonCategory !== undefined && { reason_category: params.reasonCategory }),
-        ...(params.actor !== null && { actor_uid: params.actor.uid, actor_name: params.actor.name }),
+        actor_uid: params.actor.uid,
+        actor_name: params.actor.name,
       },
       targets: [{ targetType: 'SHOW', targetId: params.showId }],
     });

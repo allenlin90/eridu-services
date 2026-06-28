@@ -77,11 +77,6 @@ export const studioShowDetailSchema = showApiResponseSchema.extend({
   platforms: z.array(studioShowPlatformSummarySchema).default([]),
 });
 
-/**
- * Show State Gate v2 — cancellation gate config (code, not data). Two gate
- * kinds today: manual cancellation and schedule-publish-triggered removal.
- * No ownership/assignee concept — see docs/superpowers/specs/2026-06-26-show-state-gate-v2-design.md.
- */
 export const CANCELLATION_GATE_CONFIG = {
   show_cancellation: {
     allowedOutcomes: ['CANCELLED', 'COMPLETED'] as const,
@@ -96,11 +91,6 @@ export const CANCELLATION_GATE_CONFIG = {
       'OTHER',
     ] as const,
   },
-  schedule_publish_removal: {
-    allowedOutcomes: ['CANCELLED', 'RESTORE_PREVIOUS'] as const,
-    outcomesRequiringNoActiveTasks: ['CANCELLED'] as const,
-    reasonOptions: ['REMOVED_FROM_REPUBLISHED_SCHEDULE'] as const,
-  },
 } as const;
 
 export type GateKind = keyof typeof CANCELLATION_GATE_CONFIG;
@@ -113,7 +103,7 @@ const gateActorSchema = z.object({
 });
 
 export const cancellationHistoryEntrySchema = z.object({
-  event: z.enum(['opened', 'note_updated', 'resolved']),
+  event: z.enum(['opened', 'resolved']),
   actor: gateActorSchema.nullable(),
   at: z.iso.datetime(),
   note: z.string().nullable(),
@@ -132,17 +122,13 @@ export const requestCancellationResolutionSchema = z.object({
 });
 
 export const resolveShowCancellationSchema = z.object({
-  outcome: z.enum(['CANCELLED', 'COMPLETED', 'RESTORE_PREVIOUS']),
+  outcome: z.enum(['CANCELLED', 'COMPLETED']),
   resolution_notes: z.string().min(1),
-});
-
-export const amendCancellationNoteSchema = z.object({
-  reason_note: z.string().min(1),
 });
 
 export const cancellationStatusResponseSchema = z.object({
   is_pending: z.boolean(),
-  gate_kind: z.enum(['show_cancellation', 'schedule_publish_removal']).nullable(),
+  gate_kind: z.enum(['show_cancellation']).nullable(),
   from_status: z.string().nullable(),
   reason_category: z.string().nullable(),
   reason_note: z.string().nullable(),

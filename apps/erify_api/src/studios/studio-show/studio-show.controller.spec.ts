@@ -48,7 +48,6 @@ describe('studioShowController', () => {
     cancelShowWithResolution: jest.fn(),
     requestCancellationResolution: jest.fn(),
     resolveShowCancellation: jest.fn(),
-    amendCancellationNote: jest.fn(),
     getCancellationStatus: jest.fn(),
   };
 
@@ -519,35 +518,6 @@ describe('studioShowController', () => {
     it('is open to any studio member at the decorator level (service enforces active Duty Manager)', () => {
       const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.requestCancellationResolution);
       expect(roles).toEqual([]);
-    });
-  });
-
-  describe('amendCancellationNote', () => {
-    it('passes studioMembership.role and the actor ext_id through to the service', async () => {
-      const request = { studioMembership: { role: STUDIO_ROLE.MEMBER } } as any;
-      const user = { ext_id: 'ext_7' } as any;
-      const body = { reason_note: 'Updated' } as any;
-      studioShowManagementServiceMock.amendCancellationNote.mockResolvedValue({
-        isPending: true,
-        gateKind: 'show_cancellation',
-        fromStatus: 'CONFIRMED',
-        reasonCategory: 'EQUIPMENT_FAILURE',
-        reasonNote: 'Updated',
-        openedBy: { uid: 'user_abc123', name: 'Jane Duty' },
-        openedAt: new Date('2026-06-25T16:14:30.201Z'),
-        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
-        history: [],
-      });
-
-      await controller.amendCancellationNote('std_123', 'show_123', body, user, request);
-
-      expect(studioShowManagementServiceMock.amendCancellationNote).toHaveBeenCalledWith(
-        'std_123',
-        'show_123',
-        body,
-        STUDIO_ROLE.MEMBER,
-        'ext_7',
-      );
     });
   });
 

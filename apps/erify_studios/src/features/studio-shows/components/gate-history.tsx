@@ -2,7 +2,6 @@ import type { CancellationHistoryEntry } from '@eridu/api-types/shows';
 
 const EVENT_LABEL: Record<CancellationHistoryEntry['event'], string> = {
   opened: 'Opened',
-  note_updated: 'Note updated',
   resolved: 'Resolved',
 };
 
@@ -17,8 +16,11 @@ export function GateHistory({ history }: GateHistoryProps) {
 
   return (
     <ul className="space-y-2 text-sm">
-      {history.map((entry, index) => (
-        <li key={`${entry.event}-${entry.at}-${index}`} className="border-l-2 pl-2">
+      {history.map((entry) => (
+        <li
+          key={`${entry.event}-${entry.at}-${entry.actor?.uid ?? 'system'}-${entry.outcome ?? 'pending'}`}
+          className="border-l-2 pl-2"
+        >
           <p className="font-medium">
             <span>{EVENT_LABEL[entry.event]}</span>
             {entry.outcome ? <span>{` — ${entry.outcome}`}</span> : null}

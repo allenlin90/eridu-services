@@ -19,17 +19,6 @@ import { Input } from '@eridu/ui/components/input';
 import { cn } from '@eridu/ui/lib/utils';
 ```
 
-## Decision Priority
-
-When a UI/UX implementation choice isn't dictated by an explicit instruction, resolve it in this order — each tier only breaks ties the tier above it left open:
-
-1. **Fulfill the requirement and feature** — the user-facing behavior actually requested must work. Don't let pattern-matching produce a component that looks right but doesn't do the job (e.g. a disabled-looking button that's actually wired to the wrong field).
-2. **Project conventions and already-implemented patterns** — match the nearest existing equivalent in this codebase (table row actions, dialog shells, async lookups, three-perspective layout) over inventing a new variant, even a "cleaner" one. Consistency with what's already shipped beats a locally-better idea. See `table-view-pattern` for the table-specific instance of this rule.
-3. **Framework/stack best practice** — React SPA idioms (controlled components, colocated state, composition over inheritance) only when tiers 1–2 don't already settle it.
-4. **Personal preference** — lowest priority; defer to the above three before a stylistic preference.
-
-This codebase already has hand-rolled, non-componentized tables predating the `DataTableActions`/`DataTablePagination` primitives (e.g. some dashboard cards) — when extending one of those, prefer adopting the shared primitive over extending the hand-rolled markup, even though the page wasn't already using it. "Nearest existing pattern" means the dominant convention across the app, not whichever local file happens to be open.
-
 ## Key Component Rules
 
 | Component | Rule |

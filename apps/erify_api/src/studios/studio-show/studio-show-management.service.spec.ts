@@ -96,7 +96,6 @@ describe('studioShowManagementService', () => {
     isActiveDutyManager: jest.fn(),
     openPending: jest.fn(),
     resolveAtomic: jest.fn(),
-    amendPendingNote: jest.fn(),
     resolvePending: jest.fn(),
     getCancellationStatus: jest.fn(),
   };
@@ -819,7 +818,7 @@ describe('studioShowManagementService', () => {
       });
     });
 
-    it('calls resolvePending with the derived from_status and gate kind', async () => {
+    it('calls resolvePending with the derived gate kind', async () => {
       await service.resolveShowCancellation('std_123', 'show_123', {
         outcome: 'CANCELLED',
         resolution_notes: 'Confirmed no production happened',
@@ -828,59 +827,9 @@ describe('studioShowManagementService', () => {
       expect(showCancellationGateServiceMock.resolvePending).toHaveBeenCalledWith({
         show: pendingShow,
         gateKind: 'show_cancellation',
-        fromStatusSystemKey: 'CONFIRMED',
         outcome: 'CANCELLED',
         resolutionNotes: 'Confirmed no production happened',
         actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
-      });
-    });
-  });
-
-  describe('amendCancellationNote', () => {
-    const pendingShow = {
-      id: BigInt(100),
-      uid: 'show_123',
-      studioId: BigInt(10),
-      showStatus: { uid: 'shst_pending', name: 'cancelled_pending_resolution', systemKey: 'CANCELLED_PENDING_RESOLUTION' },
-    };
-    const actorUser = { id: BigInt(7), uid: 'user_def456', extId: 'ext_7', name: 'Bob Duty' };
-
-    beforeEach(() => {
-      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue(pendingShow);
-      userServiceMock.getUserByExtId.mockResolvedValue(actorUser);
-      showCancellationGateServiceMock.getCancellationStatus.mockResolvedValue({
-        isPending: true,
-        gateKind: 'show_cancellation',
-        fromStatus: 'CONFIRMED',
-        reasonCategory: 'EQUIPMENT_FAILURE',
-        reasonNote: 'Camera failed',
-        openedBy: { uid: 'user_other', name: 'Duty Bob' },
-        openedAt: new Date(),
-        allowedOutcomes: ['CANCELLED', 'COMPLETED'],
-        history: [],
-      });
-    });
-
-    it('rejects amendment from a Manager tier (Duty Manager only)', async () => {
-      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('manager');
-
-      await expect(
-        service.amendCancellationNote('std_123', 'show_123', { reason_note: 'Updated' }, 'admin', 'ext_7'),
-      ).rejects.toMatchObject({
-        response: expect.objectContaining({ message: 'NOTE_AMEND_REQUIRES_DUTY_MANAGER' }),
-      });
-    });
-
-    it('calls amendPendingNote for a Duty Manager tier', async () => {
-      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('duty_manager');
-
-      await service.amendCancellationNote('std_123', 'show_123', { reason_note: 'Actually two cameras failed' }, 'member', 'ext_7');
-
-      expect(showCancellationGateServiceMock.amendPendingNote).toHaveBeenCalledWith({
-        showId: BigInt(100),
-        gateKind: 'show_cancellation',
-        reasonNote: 'Actually two cameras failed',
-        actor: { id: BigInt(7), uid: 'user_def456', name: 'Bob Duty' },
       });
     });
   });

@@ -11,9 +11,7 @@ import { ScheduleSnapshotModule } from '@/models/schedule-snapshot/schedule-snap
 import { ShowModule } from '@/models/show/show.module';
 import { ShowCreatorModule } from '@/models/show-creator/show-creator.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
-import { TaskTargetModule } from '@/models/task-target/task-target.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { ShowOrchestrationModule } from '@/show-orchestration/show-orchestration.module';
 import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
@@ -24,8 +22,6 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowModule,
     ShowCreatorModule,
     ShowPlatformModule,
-    TaskTargetModule,
-    ShowOrchestrationModule,
     UtilityModule,
   ],
   providers: [

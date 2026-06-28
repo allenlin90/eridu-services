@@ -1,7 +1,6 @@
 import type { z } from 'zod';
 
 import type {
-  amendCancellationNoteSchema,
   cancellationHistoryEntrySchema,
   cancellationStatusResponseSchema,
   cancelShowWithResolutionSchema,
@@ -141,6 +140,5 @@ export function showToCreateShowInput(show: Partial<Show>): Partial<CreateShowIn
 export type CancelShowWithResolutionInput = z.infer<typeof cancelShowWithResolutionSchema>;
 export type RequestCancellationResolutionInput = z.infer<typeof requestCancellationResolutionSchema>;
 export type ResolveShowCancellationInput = z.infer<typeof resolveShowCancellationSchema>;
-export type AmendCancellationNoteInput = z.infer<typeof amendCancellationNoteSchema>;
 export type CancellationHistoryEntry = z.infer<typeof cancellationHistoryEntrySchema>;
 export type CancellationStatusResponse = z.infer<typeof cancellationStatusResponseSchema>;
