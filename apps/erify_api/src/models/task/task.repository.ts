@@ -49,6 +49,18 @@ export class TaskRepository extends BaseRepository<
     return this.delegate.create({ data, ...(include && { include }) });
   }
 
+  async update(
+    where: Prisma.TaskWhereUniqueInput,
+    data: Prisma.TaskUpdateInput,
+    include?: Prisma.TaskInclude,
+  ): Promise<Task> {
+    return this.delegate.update({
+      where: { ...where, deletedAt: null },
+      data,
+      ...(include && { include }),
+    });
+  }
+
   async findByUid(
     uid: string,
     include?: Prisma.TaskInclude,

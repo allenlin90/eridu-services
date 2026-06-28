@@ -20,16 +20,13 @@ function createPrismaTaskDelegateMock() {
 
 describe('taskRepository', () => {
   let repository: TaskRepository;
-  const prismaTaskDelegate = createPrismaTaskDelegateMock();
-  const txTaskDelegate = {
-    findFirst: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-    count: jest.fn(),
-  };
+  let prismaTaskDelegate: ReturnType<typeof createPrismaTaskDelegateMock>;
+  let txTaskDelegate: ReturnType<typeof createPrismaTaskDelegateMock>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    prismaTaskDelegate = createPrismaTaskDelegateMock();
+    txTaskDelegate = createPrismaTaskDelegateMock();
 
     const prisma = {
       task: prismaTaskDelegate,
@@ -42,6 +39,26 @@ describe('taskRepository', () => {
     } as unknown as TransactionHost<any>;
 
     repository = new TaskRepository(prisma, txHost);
+  });
+
+  describe('update', () => {
+    it('routes writes through the transactional client', async () => {
+      txTaskDelegate.update.mockResolvedValueOnce({
+        id: BigInt(1000),
+        dueDate: new Date('2026-03-01T00:00:00.000Z'),
+      });
+
+      await repository.update(
+        { id: BigInt(1000) },
+        { dueDate: new Date('2026-03-01T00:00:00.000Z') },
+      );
+
+      expect(txTaskDelegate.update).toHaveBeenCalledWith({
+        where: { id: BigInt(1000), deletedAt: null },
+        data: { dueDate: new Date('2026-03-01T00:00:00.000Z') },
+      });
+      expect(prismaTaskDelegate.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('updateActiveTaskSnapshot', () => {
