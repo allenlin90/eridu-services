@@ -23,6 +23,7 @@ describe('taskRepository', () => {
   const prismaTaskDelegate = createPrismaTaskDelegateMock();
   const txTaskDelegate = {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
     update: jest.fn(),
     count: jest.fn(),
   };
@@ -303,6 +304,45 @@ describe('taskRepository', () => {
           }),
         );
       }
+    });
+  });
+
+  describe('findTasksForMcp', () => {
+    it('queries tasks by studioUid and applies filters correctly', async () => {
+      txTaskDelegate.findMany.mockResolvedValue([]);
+
+      const completedAtFrom = new Date('2026-06-01T00:00:00Z');
+      const completedAtTo = new Date('2026-06-30T00:00:00Z');
+
+      await repository.findTasksForMcp('std_123', {
+        completedAtFrom,
+        completedAtTo,
+        status: ['COMPLETED'],
+        type: [TaskType.SETUP],
+        skip: 0,
+        take: 10,
+      });
+
+      expect(txTaskDelegate.findMany).toHaveBeenCalledWith({
+        where: {
+          studio: { uid: 'std_123' },
+          deletedAt: null,
+          completedAt: {
+            gte: completedAtFrom,
+            lte: completedAtTo,
+          },
+          status: { in: ['COMPLETED'] },
+          type: { in: [TaskType.SETUP] },
+        },
+        orderBy: [
+          { completedAt: 'desc' },
+          { dueDate: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        skip: 0,
+        take: 10,
+        include: expect.any(Object),
+      });
     });
   });
 });

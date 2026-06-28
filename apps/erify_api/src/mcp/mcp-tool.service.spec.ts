@@ -10,10 +10,12 @@ describe('mcpToolService', () => {
   };
   const taskOrchestrationService = {
     getStudioShow: jest.fn(),
+    getStudioShowsWithTaskSummary: jest.fn(),
   };
   const taskService = {
     findOne: jest.fn(),
     findByUidWithRelationsAdmin: jest.fn(),
+    findTasksForMcp: jest.fn(),
   };
 
   beforeEach(() => {
@@ -117,5 +119,65 @@ describe('mcpToolService', () => {
     })).rejects.toBeInstanceOf(HttpException);
 
     expect(taskService.findByUidWithRelationsAdmin).not.toHaveBeenCalled();
+  });
+
+  it('queries shows for a studio by date range and applies pagination', async () => {
+    taskOrchestrationService.getStudioShowsWithTaskSummary.mockResolvedValue({ data: [rawShow()], total: 1 });
+
+    const result = await createService().queryShows({
+      studio_id: 'std_123',
+      date_from: '2026-06-01T00:00:00Z',
+      date_to: '2026-06-30T00:00:00Z',
+      page: 2,
+      limit: 10,
+    }) as any;
+
+    expect(policy.assertStudioAllowed).toHaveBeenCalledWith('std_123');
+    expect(taskOrchestrationService.getStudioShowsWithTaskSummary).toHaveBeenCalledWith('std_123', {
+      page: 2,
+      limit: 10,
+      take: 10,
+      skip: 10,
+      sort: 'desc',
+      date_from: '2026-06-01T00:00:00Z',
+      date_to: '2026-06-30T00:00:00Z',
+    });
+    expect(result.data).toHaveLength(1);
+    expect(result.total).toBe(1);
+  });
+
+  it('queries tasks for a studio by completedAt/dueDate range and maps to taskWithRelationsDto', async () => {
+    taskService.findTasksForMcp.mockResolvedValue([rawTask()]);
+
+    const result = await createService().queryTasks({
+      studio_id: 'std_123',
+      completed_at_from: '2026-06-01T00:00:00Z',
+      completed_at_to: '2026-06-30T00:00:00Z',
+      status: 'COMPLETED',
+      type: ['SETUP'],
+      page: 1,
+      limit: 5,
+    }) as any[];
+
+    expect(policy.assertStudioAllowed).toHaveBeenCalledWith('std_123');
+    expect(taskService.findTasksForMcp).toHaveBeenCalledWith('std_123', {
+      completedAtFrom: new Date('2026-06-01T00:00:00Z'),
+      completedAtTo: new Date('2026-06-30T00:00:00Z'),
+      dueDateFrom: undefined,
+      dueDateTo: undefined,
+      status: ['COMPLETED'],
+      type: ['SETUP'],
+      skip: 0,
+      take: 5,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('task_123');
+  });
+
+  it('throws bad request when date strings are invalid', async () => {
+    await expect(createService().queryTasks({
+      studio_id: 'std_123',
+      completed_at_from: 'invalid-date',
+    })).rejects.toBeInstanceOf(HttpException);
   });
 });

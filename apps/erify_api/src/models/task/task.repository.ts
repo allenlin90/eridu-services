@@ -590,4 +590,58 @@ export class TaskRepository extends BaseRepository<
       keys.map((key, index) => [key, counts[index]]),
     ) as Record<ReviewStatsTab, number>;
   }
+
+  async findTasksForMcp(
+    studioUid: string,
+    filters: {
+      completedAtFrom?: Date;
+      completedAtTo?: Date;
+      dueDateFrom?: Date;
+      dueDateTo?: Date;
+      status?: TaskStatus[];
+      type?: TaskType[];
+      skip?: number;
+      take?: number;
+    },
+  ): Promise<Task[]> {
+    const { completedAtFrom, completedAtTo, dueDateFrom, dueDateTo, status, type, skip, take } = filters;
+    const where: Prisma.TaskWhereInput = {
+      studio: { uid: studioUid },
+      deletedAt: null,
+    };
+
+    if (completedAtFrom || completedAtTo) {
+      where.completedAt = {
+        ...(completedAtFrom && { gte: completedAtFrom }),
+        ...(completedAtTo && { lte: completedAtTo }),
+      };
+    }
+
+    if (dueDateFrom || dueDateTo) {
+      where.dueDate = {
+        ...(dueDateFrom && { gte: dueDateFrom }),
+        ...(dueDateTo && { lte: dueDateTo }),
+      };
+    }
+
+    if (status && status.length > 0) {
+      where.status = { in: status };
+    }
+
+    if (type && type.length > 0) {
+      where.type = { in: type };
+    }
+
+    return this.delegate.findMany({
+      where,
+      orderBy: [
+        { completedAt: 'desc' },
+        { dueDate: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      skip,
+      take,
+      include: taskRelationInclude,
+    }) as Promise<Task[]>;
+  }
 }
