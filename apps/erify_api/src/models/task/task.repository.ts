@@ -591,6 +591,11 @@ export class TaskRepository extends BaseRepository<
     ) as Record<ReviewStatsTab, number>;
   }
 
+  // Engineering decision: This method is necessary because it assembles a multi-filter `where` clause
+  // (completedAt range, dueDate range, status set, type set) plus a fixed reverse-chronological orderBy
+  // for the MCP query tool. Building that `where` clause in the service would violate the no-Prisma-
+  // query-building-in-services rule; a simple findMany pass-through cannot express the conditional
+  // range/array filters without duplicating this logic at the call site.
   async findTasksForMcp(
     studioUid: string,
     filters: {
