@@ -277,7 +277,7 @@ export class ShowCancellationGateService {
     }
     const activeTaskCount = await this.taskTargetService.countActiveByShowId(showId);
     if (activeTaskCount > 0) {
-      throw HttpError.badRequestWithDetails(`ACTIVE_TASKS_REMAIN:${showId}`, { activeTaskCount });
+      throw HttpError.badRequestWithDetails('ACTIVE_TASKS_REMAIN', { activeTaskCount });
     }
   }
 

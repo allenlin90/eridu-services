@@ -320,7 +320,7 @@ describe('showCancellationGateService', () => {
         }),
       ).rejects.toMatchObject({
         response: expect.objectContaining({
-          message: 'ACTIVE_TASKS_REMAIN:1',
+          message: 'ACTIVE_TASKS_REMAIN',
           details: { activeTaskCount: 3 },
         }),
       });
