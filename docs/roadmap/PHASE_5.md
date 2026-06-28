@@ -137,9 +137,9 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 
 ### 5. Schedule-change task reconciliation
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1; [`schedule-publish-task-due-date-reconciliation.md`](../ideation/schedule-publish-task-due-date-reconciliation.md)
+**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1; `schedule-publish-task-due-date-reconciliation.md` (retired)
 
-When show timing changes through schedule publish or manager edit, generated task due dates should be reconciled to reflect the new timing. The first version applies to generated, non-terminal show-linked tasks whose due date still matches the old derived formula, so manual due-date overrides are preserved.
+**Completion result**: PR [#243](https://github.com/allenlin90/eridu-services/pull/243) automatically recalculates and shifts the due dates of eligible, generated, non-terminal show-linked tasks when a show's start or end time changes. Manual due-date overrides are preserved.
 
 ### 6. Import platform performance data
 
