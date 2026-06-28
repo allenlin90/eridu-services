@@ -5,7 +5,7 @@ import { TaskStatus, TaskType } from '@prisma/client';
 import { z } from 'zod';
 
 import { toErrorToolResult, toJsonToolResult } from './mcp-result.util';
-import { McpToolService } from './mcp-tool.service';
+import { McpToolService, queryShowsShape } from './mcp-tool.service';
 
 @Injectable()
 export class McpServerFactory {
@@ -62,18 +62,8 @@ export class McpServerFactory {
       'erify_query_shows',
       {
         title: 'Query Studio Shows',
-        description: 'Query shows for a studio. ALWAYS prioritize providing a start/end date range to narrow down the query. Returns latest records first (reverse chronological order) by default.',
-        inputSchema: {
-          studio_id: z.string().describe('The Studio UID (e.g., std_abc123).'),
-          date_from: z.string().optional().describe('ISO-8601 date-time string (e.g., 2026-06-28T00:00:00+07:00). When user asks for relative dates (e.g., "today"), look at the user current time/timezone in their system prompt context (e.g., UTC+7), and calculate the start boundary of that day to convert to an ISO string before querying.'),
-          date_to: z.string().optional().describe('ISO-8601 date-time string. Calculate the end boundary of the target relative day (e.g., 2026-06-28T23:59:59+07:00) using the user local timezone before querying.'),
-          search: z.string().optional().describe('Optional search term to filter shows by name.'),
-          needs_attention: z.boolean().optional().describe('Filter shows that need attention (e.g., has scheduling warnings).'),
-          show_status_name: z.string().optional().describe('Filter shows by status name (e.g., Scheduled, Live, Ended).'),
-          creator_name: z.string().optional().describe('Filter shows by creator name.'),
-          page: z.number().optional().describe('Page number for pagination (starts at 1).'),
-          limit: z.number().optional().describe('Maximum number of shows to return (default 20).'),
-        },
+        description: 'Query shows for a studio. For natural language dates like "today", prefer date_preset or operational_date so the server applies the studio operational day (default GMT+7, 06:00 to 05:59:59.999 next day). Use explicit ISO date_from/date_to only when the user provides exact boundaries. Returns latest records first (reverse chronological order) by default.',
+        inputSchema: queryShowsShape,
         annotations: {
           readOnlyHint: true,
           openWorldHint: false,

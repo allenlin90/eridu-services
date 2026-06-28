@@ -46,6 +46,7 @@ For **every new named repository method** (beyond `findOne`/`findByUid`):
 - [ ] No `findByUidOrThrow` — return `null`, let the controller call `ensureResourceExists()`.
 - [ ] No Prisma query-building in services — `where` clauses belong in repositories.
 - [ ] Raw SQL (`$executeRaw` / `$queryRaw`) references `@@map`/`@map` names, not model/field names — Prisma does not map raw queries. New raw-SQL methods carry a regression test asserting the literal table name.
+- [ ] Any new "operational day" / relative-date (`today`, `yesterday`, business-day) resolution reuses `OPERATIONAL_DAY_START_HOUR`/`toOperationalDayKey` from `apps/erify_api/src/lib/utils/operational-day.util.ts` — no independent reimplementation of the cutover-hour shift. See `.agents/skills/operations-review-surface/SKILL.md` § Operational-day bucketing.
 
 Full reference: `.agents/skills/repository-pattern-nestjs/SKILL.md`
 
