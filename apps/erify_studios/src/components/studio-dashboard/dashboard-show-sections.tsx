@@ -4,6 +4,7 @@ import { CalendarDays } from 'lucide-react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTableActions, DataTablePagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@eridu/ui';
 
 import { TaskSummaryInline } from './dashboard-coverage-cards';
+import { mayHaveCancellationHistory } from './dashboard-show-cancellation';
 
 import { ShowStandardBadge, ShowStatusBadge } from '@/features/admin/components/show-table-cells';
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
@@ -11,7 +12,6 @@ import { DashboardCancellationActions } from '@/features/studio-shows/components
 import { getCreatorNames } from '@/lib/creator-utils';
 
 const CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS = new Set(['CONFIRMED', 'LIVE']);
-const CANCELLATION_HISTORY_SHOW_STATUS_SYSTEM_KEYS = new Set(['CANCELLED', 'CANCELLED_PENDING_RESOLUTION']);
 
 type OperationalDayShowsSummaryCardProps = {
   dateLabel: string;
@@ -193,7 +193,7 @@ export function OperationalDayShowListCard({
                                 studioId={studioId}
                                 showId={show.id}
                                 canRequestCancellation={CANCELLABLE_SHOW_STATUS_SYSTEM_KEYS.has(show.show_status_system_key ?? '')}
-                                mayHaveCancellationHistory={CANCELLATION_HISTORY_SHOW_STATUS_SYSTEM_KEYS.has(show.show_status_system_key ?? '')}
+                                mayHaveCancellationHistory={mayHaveCancellationHistory(show.show_status_system_key)}
                                 renderTrigger={({ requestItem, historyItem }) => (
                                   <DataTableActions
                                     row={show}

@@ -157,7 +157,6 @@ export class StudioShowManagementService {
   }
 
   private static readonly CANCELLATION_INELIGIBLE_STATUSES = [
-    'DRAFT',
     'CANCELLED_PENDING_RESOLUTION',
     'CANCELLED',
     'COMPLETED',

@@ -638,7 +638,7 @@ describe('studioShowManagementService', () => {
     it('rejects when the show status is not eligible for cancellation', async () => {
       showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
         ...pendingEligibleShow,
-        showStatus: { uid: 'shst_draft', name: 'draft', systemKey: 'DRAFT' },
+        showStatus: { uid: 'shst_completed', name: 'completed', systemKey: 'COMPLETED' },
       });
 
       await expect(
@@ -648,6 +648,31 @@ describe('studioShowManagementService', () => {
         }, 'manager', 'ext_5'),
       ).rejects.toMatchObject({
         response: expect.objectContaining({ message: 'SHOW_CANCELLATION_NOT_ALLOWED' }),
+      });
+    });
+
+    it('allows draft shows to be cancelled through the manager gate', async () => {
+      const draftShow = {
+        ...pendingEligibleShow,
+        showStatus: { uid: 'shst_draft', name: 'draft', systemKey: 'DRAFT' },
+      };
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue(draftShow);
+      showCancellationGateServiceMock.resolveActorTier.mockResolvedValue('manager');
+
+      await service.cancelShowWithResolution('std_123', 'show_123', {
+        reason_category: 'CLIENT_REQUEST',
+        reason_note: 'Client cancelled before planning',
+        outcome: 'CANCELLED',
+      }, 'manager', 'ext_5');
+
+      expect(showCancellationGateServiceMock.resolveAtomic).toHaveBeenCalledWith({
+        show: draftShow,
+        gateKind: 'show_cancellation',
+        fromStatusSystemKey: 'DRAFT',
+        outcome: 'CANCELLED',
+        reasonCategory: 'CLIENT_REQUEST',
+        reasonNote: 'Client cancelled before planning',
+        actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Duty' },
       });
     });
 
