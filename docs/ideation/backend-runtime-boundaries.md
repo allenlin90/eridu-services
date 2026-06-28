@@ -2,7 +2,7 @@
 
 > **Status**: Active ideation
 > **Origin**: MCP foundation architecture review
-> **Related**: [System Architecture Overview](../engineering/ARCHITECTURE_OVERVIEW.md), [MCP Server](../../apps/erify_api/docs/MCP_SERVER.md), [BullMQ Async Processing](./bullmq-async-processing.md)
+> **Related**: [System Architecture Overview](../engineering/ARCHITECTURE_OVERVIEW.md), [MCP Server](../../apps/erify_api/docs/MCP_SERVER.md), [Public MCP Access Control](./public-mcp-access-control.md), [BullMQ Async Processing](./bullmq-async-processing.md)
 
 ## What
 
@@ -13,7 +13,7 @@ Target runtime surfaces:
 | Runtime | Audience | Transport | Exposure |
 | --- | --- | --- | --- |
 | REST | Studio operators, creators, system admins, integrations | HTTP routes | Public or API-key guarded, depending on route |
-| MCP | OpenWebUI first; LiteLLM and partners later | Streamable HTTP MCP | Private Railway service in Phase 1 |
+| MCP | OpenWebUI first; LiteLLM and partners later | Streamable HTTP MCP | Private Railway service in Phase 1; public access requires a separate access-control design |
 | Worker | Async jobs such as notifications and report generation | BullMQ processors | Private worker process, no public HTTP API |
 
 REST itself can remain one runtime initially, but the route groups should stay semantically separated:
@@ -80,6 +80,7 @@ Promote to a PRD or implementation design when any of these are true:
 - Keep `main.mcp.ts` as a separate Railway service.
 - Slim `McpAppModule` so it imports narrow read/use-case modules instead of broad REST orchestration modules.
 - Keep private-only tools out of future public MCP registries unless they pass explicit RBAC and partner-scope review.
+- Use [Public MCP Access Control](./public-mcp-access-control.md) before attaching a public domain or accepting partner/client MCP traffic.
 
 ### Worker runtime shape
 

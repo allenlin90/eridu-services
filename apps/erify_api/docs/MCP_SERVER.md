@@ -62,7 +62,7 @@ Railway private networking keeps service-to-service traffic inside the project e
 
 The MCP entrypoint already listens on `::`, which is compatible with Railway private networking, including IPv6-only legacy environments.
 
-If a public domain is later attached to this service, the endpoint is no longer private-only and must get token/API-key auth before production use.
+If a public domain is later attached to this service, the endpoint is no longer private-only and must get token/API-key auth before production use. Public MCP access should follow the [Public MCP Access Control](../../../docs/ideation/public-mcp-access-control.md) plan before it is exposed to partners, clients, or other internet callers.
 
 ## Rollout Targets
 
@@ -92,6 +92,18 @@ Do not add broad list, report, mutation, or cross-studio tools without a new des
 - Future external access should move to `eridu_auth`/Better Auth API keys with rate limits rather than expanding this allowlist gate.
 - Future internal app-to-app access should authenticate OpenWebUI/LiteLLM as trusted internal clients instead of relying on network reachability alone.
 
+## Public Access Gate
+
+Do not use `MCP_ALLOWED_STUDIO_IDS` as a public security boundary. Before attaching a public Railway domain, custom domain, or external ingress to MCP, define and implement:
+
+- `eridu_auth` API-key authentication for service callers.
+- Studio/tenant binding for each key and request.
+- Tool-level RBAC or scopes for the public registry.
+- Per-key, per-studio, and global rate limits.
+- Request logging, audit attribution, revocation, and abuse handling.
+
+Track the design in [Public MCP Access Control](../../../docs/ideation/public-mcp-access-control.md).
+
 ## Deferred TODOs
 
 These items are intentionally deferred from the foundation PR and should be designed before widening access:
@@ -99,7 +111,7 @@ These items are intentionally deferred from the foundation PR and should be desi
 - Internal app-to-app auth for OpenWebUI and LiteLLM calling the private MCP service in Railway.
 - RBAC for tool access, including studio scope, role scope, and tool-level permissions.
 - A private/public MCP split, either by separate Railway services, separate route prefixes, or separate tool registries, so internal operational tools do not leak into partner/client integrations.
-- `eridu_auth` integration for partner/client access using Better Auth API keys, rate limits, key ownership, revocation, and audit attribution.
+- `eridu_auth` integration for partner/client access using Better Auth API keys, rate limits, key ownership, revocation, and audit attribution, as scoped in [Public MCP Access Control](../../../docs/ideation/public-mcp-access-control.md).
 - Public endpoint hardening for any future external MCP surface, including rate limiting, request logging, abuse handling, and a clear tenant/studio binding model.
 
 ## Extension Rules
