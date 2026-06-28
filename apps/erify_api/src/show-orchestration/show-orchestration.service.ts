@@ -109,7 +109,18 @@ export class ShowOrchestrationService {
 
     // 1. Update core show attributes via the show service (repository access
     //    stays in the model layer).
-    await this.showService.updateShowFromDto(uid, dto);
+    const updatedShow = await this.showService.updateShowFromDto(uid, dto);
+
+    if (
+      existingShow.startTime.getTime() !== updatedShow.startTime.getTime()
+      || existingShow.endTime.getTime() !== updatedShow.endTime.getTime()
+    ) {
+      await this.taskService.reconcileTaskDueDates(
+        showId,
+        { startTime: existingShow.startTime, endTime: existingShow.endTime },
+        { startTime: updatedShow.startTime, endTime: updatedShow.endTime },
+      );
+    }
 
     // 2. Sync creator assignments if provided
     if (dto.showCreators) {

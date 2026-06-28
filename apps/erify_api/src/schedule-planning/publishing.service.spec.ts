@@ -17,6 +17,7 @@ import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-sna
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { TaskService } from '@/models/task/task.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -288,6 +289,12 @@ describe('publishingService', () => {
           provide: UtilityService,
           useValue: {
             generateBrandedId: jest.fn().mockReturnValue('shst_generated'),
+          },
+        },
+        {
+          provide: TaskService,
+          useValue: {
+            reconcileTaskDueDates: jest.fn().mockResolvedValue(0),
           },
         },
       ],

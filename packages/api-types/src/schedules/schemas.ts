@@ -50,6 +50,7 @@ export const schedulePublishSummarySchema = z
     platform_links_added: z.number().int().nonnegative(),
     platform_links_updated: z.number().int().nonnegative(),
     platform_links_removed: z.number().int().nonnegative(),
+    tasks_reconciled: z.number().int().nonnegative(),
   })
   .pipe(
     z.object({
@@ -64,6 +65,7 @@ export const schedulePublishSummarySchema = z
       platform_links_added: z.number().int().nonnegative(),
       platform_links_updated: z.number().int().nonnegative(),
       platform_links_removed: z.number().int().nonnegative(),
+      tasks_reconciled: z.number().int().nonnegative(),
     }),
   );
 

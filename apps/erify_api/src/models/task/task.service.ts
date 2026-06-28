@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import type { Prisma, Task } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
@@ -354,6 +355,69 @@ export class TaskService extends BaseModelService {
       }
       throw error;
     }
+  }
+
+  @Transactional()
+  async reconcileTaskDueDates(
+    showId: bigint,
+    oldTimes: { startTime: Date; endTime: Date },
+    newTimes: { startTime: Date; endTime: Date },
+  ): Promise<number> {
+    const tasks = await this.taskRepository.findMany({
+      where: {
+        targets: {
+          some: {
+            showId,
+            targetType: 'SHOW',
+            deletedAt: null,
+          },
+        },
+        templateId: { not: null },
+        status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CLOSED] },
+      },
+    });
+
+    let count = 0;
+    const oldStart = oldTimes.startTime.getTime();
+    const oldEnd = oldTimes.endTime.getTime();
+
+    for (const task of tasks) {
+      if (!task.dueDate) {
+        continue;
+      }
+
+      let expectedTime: number;
+      if (task.type === TaskType.SETUP) {
+        expectedTime = oldStart - 60 * 60 * 1000;
+      } else if (task.type === TaskType.ACTIVE) {
+        expectedTime = oldEnd + 60 * 60 * 1000;
+      } else if (task.type === TaskType.CLOSURE) {
+        expectedTime = oldEnd + 6 * 60 * 60 * 1000;
+      } else {
+        expectedTime = oldStart;
+      }
+
+      if (task.dueDate.getTime() === expectedTime) {
+        let newDueDate: Date;
+        if (task.type === TaskType.SETUP) {
+          newDueDate = new Date(newTimes.startTime.getTime() - 60 * 60 * 1000);
+        } else if (task.type === TaskType.ACTIVE) {
+          newDueDate = new Date(newTimes.endTime.getTime() + 60 * 60 * 1000);
+        } else if (task.type === TaskType.CLOSURE) {
+          newDueDate = new Date(newTimes.endTime.getTime() + 6 * 60 * 60 * 1000);
+        } else {
+          newDueDate = newTimes.startTime;
+        }
+
+        await this.taskRepository.update(
+          { id: task.id },
+          { dueDate: newDueDate },
+        );
+        count++;
+      }
+    }
+
+    return count;
   }
 
   private resolveDueDateForShowTaskType(
