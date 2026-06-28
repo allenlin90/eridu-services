@@ -58,33 +58,34 @@ Post-production closure. Required records are confirmed for review, reporting, a
 
 **Gap**: No show-level completion checklist.
 
-## Transition: any → cancelled
+## Transition: confirmed/live → cancelled (Manager/Admin tier)
 
-Direct cancellation for shows that will not proceed.
-
-| Condition | Where checked today | Enforcement | Notes |
-|---|---|---|---|
-| Cancellation reason provided | Not captured | Not enforced | Phase 5 candidate |
-| No active downstream work | Schedule publish checks this automatically | Automatic (publish only) | If active tasks exist, publish sets `cancelled_pending_resolution` instead |
-
-## Transition: any → cancelled_pending_resolution
-
-Show cannot proceed but has operational consequences that need resolution.
+Manager/Admin cancels atomically — reason and final outcome chosen in the same call, never observably left pending. See `ShowCancellationGateService.resolveAtomic`.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| Reason category | Not captured | Not enforced | Candidate reasons: client conflict, creator missing, room unavailable, production failure |
-| Resolution owner assigned | Not captured | Not enforced | Phase 5 gap: no owner queue |
-| Affected records identified | Not tracked | Not enforced | Which tasks, creators, shifts are affected |
+| Cancellation reason provided | `cancel-with-resolution` request body | Enforced (required) | `reason_category` + `reason_note`, written to an `Audit` row |
+| No active downstream work | `TaskTargetRepository.countActiveByShowId` | Enforced (blocks `CANCELLED` outcome) | Excludes `COMPLETED`/`CLOSED` tasks; rejects with `ACTIVE_TASKS_REMAIN` + live count; same rule whether `from_status` was `CONFIRMED` or `LIVE` — no separate LIVE safeguard |
 
-## Transition: cancelled_pending_resolution → cancelled or completed
+## Transition: confirmed/live → cancelled_pending_resolution (Duty Manager tier, or schedule_publish_removal)
 
-Final disposition after resolution.
+Show cannot proceed but a final disposition isn't being chosen yet — flagged for a Manager to sign off later. See `ShowCancellationGateService.openPending`.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| All follow-up actions resolved | No follow-up model | Not enforced | Phase 5 gap |
-| Final disposition chosen | Manual status update | Not enforced | cancelled = no production credit, completed = partial production counts |
+| Reason category | `cancel-with-resolution` request body (Duty Manager) or system-generated (`schedule_publish_removal`) | Enforced (required) | No owner/assignee — authorization is the Duty Manager's currently active shift, re-checked per request |
+| Actor is the active Duty Manager, or none (system) | `ShowCancellationGateService.resolveActorTier` | Enforced server-side | `schedule_publish_removal` opens with a null actor (no human present) |
+| Affected records identified | `TaskTargetRepository.countActiveByShowId`, re-checked at resolve time | Enforced at resolve, not at open | Open never blocks; the active-task guard applies when signing off to `CANCELLED` |
+
+## Transition: cancelled_pending_resolution → cancelled, completed, or confirmed/live
+
+Final disposition after resolution — Manager/Admin only, regardless of who (or what) opened the gate. See `ShowCancellationGateService.resolvePending`.
+
+| Condition | Where checked today | Enforcement | Notes |
+|---|---|---|---|
+| Sign-off is Manager/Admin tier | `resolveShowCancellation` tier check | Enforced | Rejects with `SIGN_OFF_REQUIRES_MANAGER` for Duty Manager or no tier |
+| No concurrent double-resolve | `ShowRepository.updateStatusIfPending` guarded conditional update | Enforced | `Show` has no `version` column; loses the race → `SHOW_ALREADY_RESOLVED` |
+| Final disposition chosen | `resolve-cancellation` request body | Enforced | `cancelled` = no production credit, `completed` = partial production counts, `RESTORE_PREVIOUS` (`schedule_publish_removal` only) reverts to the captured prior status |
 
 ## Fact Extraction as Implicit State Signal
 

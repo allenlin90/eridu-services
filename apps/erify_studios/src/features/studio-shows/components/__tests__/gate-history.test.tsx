@@ -27,7 +27,7 @@ describe('gateHistory', () => {
     expect(screen.getByText(/CANCELLED/)).toBeInTheDocument();
   });
 
-  it('renders "System" for a null actor', () => {
+  it('renders "System" for a null actor (schedule-publish-triggered gate)', () => {
     render(
       <GateHistory
         history={[

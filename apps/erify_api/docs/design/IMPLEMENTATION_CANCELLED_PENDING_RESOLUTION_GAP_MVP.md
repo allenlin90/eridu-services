@@ -1,9 +1,28 @@
 # Implementation Plan: `cancelled_pending_resolution` Product Gap (MVP)
 
-> **TLDR**: Proposed studio-scoped resolution workflow for shows stuck in `cancelled_pending_resolution` after schedule publish. Target scope adds `POST /studios/:studioId/shows/:showId/resolve-cancellation`, plus FE queue, warning banners, and resolve CTA.
+> **TLDR**: The studio-scoped resolution backend this doc originally proposed (`POST /studios/:studioId/shows/:showId/resolve-cancellation`, active-task policy, LIVE safeguard, audit trail) **shipped**, but via a different, more general mechanism than specified here — see [Show Cancellation Gate](../SHOW_CANCELLATION_GATE.md). The `show.metadata` transition/resolution contract in the original §3.5/§4.3.1 below was **not** what shipped (the gate's audit trail uses the pre-existing `Audit` model instead, and authorization is a two-tier Manager/Duty-Manager split rather than studio-admin-only); that approach is superseded, not implemented. What remains open is frontend discovery/observability scope, listed under "Remaining Gap" below.
 
 > [!NOTE]
-> **Status: 📐 Planned follow-up** — `master` currently ships the publish-side status transition only. The endpoint, task-aware resolve policy, queue, warning UX, and metadata contract below are the remaining target scope.
+> **Status: 📐 Narrowed — backend shipped via the show cancellation gate; frontend discovery/observability gap remains.**
+
+## Remaining Gap
+
+These items from the original MVP scope were not delivered and remain open:
+
+1. **No dedicated pending-resolution queue route** (was §5.1). Discovery today is via the Shows list filtered to `show_status_name = Cancelled Pending Resolution` — workable, but not a purpose-built "shows stuck in pending resolution" queue with show-list context (client, schedule, room).
+2. **No member-facing task-page indicator** (was §5.2/§5.4) — a task whose linked show is `CANCELLED_PENDING_RESOLUTION` does not surface a distinct banner/chip on the assignee's own task views.
+3. **No structured observability** (was §4.4) — no counters/structured logs for resolve success/rejection rates beyond the pre-existing `publishSummary.shows_pending_resolution`/`shows_cancelled` publish-time tallies.
+
+## Decision Gates for Revisiting
+
+Pick this back up when any of:
+
+- A studio reports difficulty finding pending-resolution shows via the Shows-list filter.
+- Resolve rejection rates need monitoring (no current visibility into how often `ACTIVE_TASKS_REMAIN` blocks a resolve attempt).
+
+## Superseded Sections (preserved for context, not current contract)
+
+The sections below describe the original MVP proposal — the `show.metadata` transition contract, the `resolution_action` request shape, and the studio-admin-only authorization model. None of that is what shipped; see [Show Cancellation Gate](../SHOW_CANCELLATION_GATE.md) for the actual design and API contract. Kept here for historical context only.
 
 ## 1. Context and Gap Statement
 

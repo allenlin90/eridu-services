@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 
 import type {
+  AmendCancellationNoteInput,
   CancelShowWithResolutionInput,
   RequestCancellationResolutionInput,
   ResolveShowCancellationInput,
@@ -267,22 +268,58 @@ export class StudioShowManagementService {
     }
 
     const status = await this.showCancellationGateService.getCancellationStatus(show);
-    // Shows parked in CANCELLED_PENDING_RESOLUTION by schedule-publish (or any
-    // other pre-gate write) have no opening Audit row, so gateKind comes back
-    // null even though the show is genuinely pending. 'show_cancellation' is
-    // the only GateKind today — default to it instead of leaving these shows
-    // permanently stuck with no sign-off path.
-    const gateKind = status.gateKind ?? 'show_cancellation';
+    if (!status.isPending || !status.gateKind || !status.fromStatus) {
+      throw HttpError.notFound('ShowCancellationGate', showUid);
+    }
 
     await this.showCancellationGateService.resolvePending({
       show,
-      gateKind,
+      gateKind: status.gateKind,
+      fromStatusSystemKey: status.fromStatus,
       outcome: dto.outcome,
       resolutionNotes: dto.resolution_notes,
       actor: { id: actor.id, uid: actor.uid, name: actor.name },
     });
 
     return this.showService.getShowById(showUid, studioShowDetailInclude);
+  }
+
+  @Transactional()
+  async amendCancellationNote(
+    studioUid: string,
+    showUid: string,
+    dto: AmendCancellationNoteInput,
+    studioRole: string | undefined,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    if (show.showStatus?.systemKey !== 'CANCELLED_PENDING_RESOLUTION') {
+      throw HttpError.badRequest('SHOW_CANCELLATION_NOT_PENDING');
+    }
+
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    const tier = await this.showCancellationGateService.resolveActorTier(studioUid, studioRole, { id: actor.id });
+    if (tier !== 'duty_manager') {
+      throw HttpError.forbidden('NOTE_AMEND_REQUIRES_DUTY_MANAGER');
+    }
+
+    const status = await this.showCancellationGateService.getCancellationStatus(show);
+    if (!status.gateKind) {
+      throw HttpError.notFound('ShowCancellationGate', showUid);
+    }
+
+    await this.showCancellationGateService.amendPendingNote({
+      showId: show.id,
+      gateKind: status.gateKind,
+      reasonNote: dto.reason_note,
+      actor: { id: actor.id, uid: actor.uid, name: actor.name },
+    });
+
+    return this.showCancellationGateService.getCancellationStatus(show);
   }
 
   async getCancellationStatus(studioUid: string, showUid: string) {

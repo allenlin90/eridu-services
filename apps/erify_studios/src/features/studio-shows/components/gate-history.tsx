@@ -2,6 +2,7 @@ import type { CancellationHistoryEntry } from '@eridu/api-types/shows';
 
 const EVENT_LABEL: Record<CancellationHistoryEntry['event'], string> = {
   opened: 'Opened',
+  note_updated: 'Note updated',
   resolved: 'Resolved',
 };
 
