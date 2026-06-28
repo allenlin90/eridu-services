@@ -701,7 +701,6 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | Document                                                                                               | Status | Description                                                                    |
 | ------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](docs/design/AUTHORIZATION_GUIDE.md)                                              | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
-| [Pending-Resolution MVP](docs/design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)           | 📐      | Planned studio-scoped resolution follow-up for cancelled shows                 |
 | [Ad-hoc Task Ticketing](docs/design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
 | [Material Management](docs/design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for operations expansion                            |
 | [Data Warehouse Design](docs/design/DATA_WAREHOUSE_DESIGN.md)                                         | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
@@ -716,6 +715,7 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md)    | Implementing auth patterns and guard usage                     |
 | [Server-to-Server Auth](docs/design/AUTHORIZATION_GUIDE.md) | Adding service-to-service endpoints                            |
 | [Schedule Planning](docs/SCHEDULE_PLANNING.md)         | Working on schedule planning features                          |
+| [Show Cancellation Gate](docs/SHOW_CANCELLATION_GATE.md) | Working on show cancellation, pending-resolution sign-off, or cancellation history |
 | [Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md)       | Core foundation that is fully implemented                      |
 | [Phase 2 Roadmap](../../docs/roadmap/PHASE_2.md)       | Task-management foundation and remaining follow-up context     |
 | [Phase 3 Roadmap](../../docs/roadmap/PHASE_3.md)             | Current cross-app closure summary for Phase 3                  |

@@ -25,7 +25,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | 1   | [Current feature lifecycle alignment](#1-current-feature-lifecycle-alignment) — scope gate that locks the Phase 5 surface decisions and refined workstream list                    | —          | ✅ Done       |
 | 2   | [Creator roster onboarding and intake clarification](#2-creator-roster-onboarding-and-intake-clarification) — clarify `/creators` intake for add, reactivate, and create-new-to-roster | —          | ✅ Done       |
 | 3   | [Show status vocabulary alignment](#3-show-status-vocabulary-alignment) — align lifecycle status records, seed data, docs, and role vocabulary                                     | —          | ✅ Done       |
-| 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation into resolution workflow from non-draft, non-pending shows                   | 3          | 🔲 Planned    |
+| 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation and pending-resolution sign-off from show detail and duty-manager dashboard | 3          | ✅ Done       |
 | 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | 🔲 Planned    |
 | 6   | [Import platform performance data](#6-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                                     | —          | 🔲 Planned    |
 | 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate imported or extracted metrics with audit reason                            | 6          | 🔲 Planned    |
@@ -118,9 +118,17 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 
 ### 4. Cancel show with resolution workflow
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §4; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
+**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §4; [`Show Cancellation Gate`](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md); [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
 
-Allow managers to cancel a show into `cancelled_pending_resolution` without requiring the full lifecycle state machine. This action is available for non-draft shows that are not already pending resolution, so production, post-production, or other active downstream consequences can be captured for follow-up. Capture reason category, resolution owner, follow-up fields, and final disposition (`cancelled` or `completed`) as operational records for review and later export; do not hard-code a broader transition graph in this workstream.
+**Completion result**: PR [#233](https://github.com/allenlin90/eridu-services/pull/233) ships the focused cancellation gate without enabling the full lifecycle state machine. Studio Admin/Manager users can cancel directly from show detail with reason category, reason note, and final outcome. Active Duty Managers can open `cancelled_pending_resolution` from the dashboard with a reason-only request, and Admin/Manager users can later sign off the final outcome (`cancelled` or `completed`).
+
+**Acceptance closure**:
+
+- Cancellation history is backed by `Audit` rows and remains readable from show detail and dashboard status surfaces after final resolution.
+- The generic studio show-edit path no longer owns `cancelled` or `cancelled_pending_resolution` transitions; studio show-status lookups hide those gate-owned statuses.
+- `cancelled` outcomes require zero active tasks, using the shared active-task definition that excludes deleted task targets, deleted tasks, and finalized task statuses (`COMPLETED`, `CLOSED`).
+- Legacy shows already in `cancelled_pending_resolution` without a gate-opening audit row remain resolvable through the same `show_cancellation` gate.
+- Broader follow-up ownership, notifications, comments, and full lifecycle transition enforcement remain outside this item.
 
 ### 5. Schedule-change task reconciliation
 
@@ -182,7 +190,7 @@ Define a show-level post-production checklist for review, reporting, and later e
 
 **Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine
 
-**Blocked** — implement after creator roster intake, status vocabulary, advisory planning readiness, and advisory completion review contracts are stable. This work adds manager-driven lifecycle transition APIs and server-side transition validation for `draft → confirmed → live → completed`, plus `cancelled` and `cancelled_pending_resolution` paths. State gates remain separate in item 15.
+**Blocked** — implement after creator roster intake, status vocabulary, advisory planning readiness, and advisory completion review contracts are stable. This work adds manager-driven lifecycle transition APIs and server-side transition validation for `draft → confirmed → live → completed`. The focused cancellation gate from item 4 remains the existing cancellation path; state gates remain separate in item 15.
 
 ### 15. Lifecycle state-gate enforcement
 

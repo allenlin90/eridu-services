@@ -64,8 +64,8 @@ Direct cancellation for shows that will not proceed.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| Cancellation reason provided | Not captured | Not enforced | Phase 5 candidate |
-| No active downstream work | Schedule publish checks this automatically | Automatic (publish only) | If active tasks exist, publish sets `cancelled_pending_resolution` instead |
+| Cancellation reason provided | Cancellation gate | Required for manual cancellation | Admin/Manager direct cancel captures reason category and note |
+| No active downstream work | Schedule publish and cancellation gate | Automatic | If active tasks exist, publish sets `cancelled_pending_resolution`; manual `CANCELLED` outcome requires zero active tasks |
 
 ## Transition: any → cancelled_pending_resolution
 
@@ -73,8 +73,8 @@ Show cannot proceed but has operational consequences that need resolution.
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| Reason category | Not captured | Not enforced | Candidate reasons: client conflict, creator missing, room unavailable, production failure |
-| Resolution owner assigned | Not captured | Not enforced | Phase 5 gap: no owner queue |
+| Reason category | Cancellation gate | Required for manual open | Allowed categories are defined in `@eridu/api-types/shows` |
+| Resolution owner assigned | Dashboard duty-manager request path and Admin/Manager sign-off | Role-tiered workflow | Focused queue/discovery remains follow-up |
 | Affected records identified | Not tracked | Not enforced | Which tasks, creators, shifts are affected |
 
 ## Transition: cancelled_pending_resolution → cancelled or completed
@@ -84,7 +84,7 @@ Final disposition after resolution.
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
 | All follow-up actions resolved | No follow-up model | Not enforced | Phase 5 gap |
-| Final disposition chosen | Manual status update | Not enforced | cancelled = no production credit, completed = partial production counts |
+| Final disposition chosen | Cancellation gate | Required for sign-off | cancelled = no production credit, completed = partial production counts |
 
 ## Fact Extraction as Implicit State Signal
 

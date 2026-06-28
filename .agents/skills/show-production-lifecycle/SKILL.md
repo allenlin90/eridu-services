@@ -33,13 +33,13 @@ The show is the central operational record in eridu-services. Every schedule, cr
 | `live` | Show is actively running; onset production owns execution. | Production Manager (MANAGER access) |
 | `completed` | Required production and post-production records are complete for review/reporting. | Production Manager + Post-production review |
 | `cancelled` | Closed without production; no further resolution required. | Either manager role |
-| `cancelled_pending_resolution` | Cannot proceed or interrupted; operational consequences need resolution. | Resolution owner (assigned) |
+| `cancelled_pending_resolution` | Cannot proceed or interrupted; operational consequences need resolution. | Admin/Manager sign-off; active Duty Manager may open |
 
 ### Key state rules
 
 - `ShowStatus` is a **lookup table** (not a Prisma enum). Shows reference it via `showStatusId`. Status names are matched by `systemKey` or `name` in code.
 - The Phase 5 gap summary defines enforcement levels (off / warning / block) per studio, but enforcement configuration is deferred. Current transitions are manager-driven without hard gates.
-- `cancelled_pending_resolution` can be set automatically by schedule publish when active downstream work exists, or manually by managers for business reasons (creator missing, room unavailable, production failure).
+- `cancelled_pending_resolution` can be set automatically by schedule publish when active downstream work exists, by Admin/Manager users through show detail cancellation, or by the active Duty Manager from the dashboard request path.
 
 ## Entity Relationship Map
 
@@ -115,9 +115,9 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 - `cancelled_pending_resolution → cancelled`: Resolution complete, no production.
 - `cancelled_pending_resolution → completed`: Resolution complete, partial production counts.
 
-**Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Manual cancellation via show update.
+**Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Manual cancellation uses the cancellation gate: Admin/Manager users can cancel directly from show detail, active Duty Managers can open pending resolution from the dashboard, and Admin/Manager users resolve pending shows to `cancelled` or `completed`. Audit rows are the history source.
 
-**Gap (Phase 5)**: No reason categories, no owner queue, no follow-up fields, no resolution workflow.
+**Gap (Phase 5)**: The focused cancellation workflow is implemented. Remaining cancellation-adjacent gaps are focused pending-resolution queue/discovery, notifications, comments/follow-up ownership, and full lifecycle state enforcement.
 
 ## Readiness Conditions
 
@@ -134,8 +134,8 @@ These conditions are identified for lifecycle gates. Current enforcement is advi
 | Post-production tasks submitted/approved | live → completed | Task review exists, not enforced as gate |
 | Required performance facts present | live → completed | Fact extraction exists, not enforced |
 | No unresolved show-level blockers | live → completed | No issue model yet |
-| Cancellation reason provided | any → cancelled | Not captured |
-| Pending-resolution owner assigned | any → cancelled_pending_resolution | Not captured |
+| Cancellation reason provided | any → cancelled | Captured by cancellation gate |
+| Pending-resolution owner assigned | any → cancelled_pending_resolution | Duty Manager can open pending resolution; final sign-off remains Admin/Manager |
 
 For the full condition inventory and enforcement-level design, see [references/state-gates.md](references/state-gates.md).
 

@@ -1,9 +1,9 @@
 # Frontend Design and Implementation Plan: Schedule Continuity Support
 
-> **TLDR**: Planned frontend follow-up for the backend diff+upsert publish. Target changes add clearer `cancelled_pending_resolution` status handling, warning banners on affected show/task pages, and a studio-scoped resolution queue. Three phases: A (status compatibility), B (resolution UX), C (publish impact visibility).
+> **TLDR**: Frontend follow-up for schedule-continuity visibility now starts from the shipped cancellation gate. Status compatibility, show-detail cancellation/resolution dialogs, and the duty-manager dashboard entry exist; focused queue views, task-context warnings, and publish impact visibility remain follow-up scope.
 
 > [!NOTE]
-> **Status: 📐 Planned follow-up** — Core publish continuity is shipped, but the focused studio queue, resolve CTA, and task-context warning flow below are not yet implemented on `master`.
+> **Status: 📐 Follow-up design** — Core publish continuity and the role-tiered cancellation gate are shipped. The focused studio queue, task-context warning flow, and publish impact visibility below remain planned follow-up work.
 
 ## 1. Purpose
 
@@ -39,12 +39,12 @@ Out of scope:
 1. Studio operational pages for show/task management already exist.
 2. System schedule page exists (basic list/edit/delete/snapshots).
 3. No dedicated FE surface today for publish impact summary from Sheets path.
-4. No explicit resolution workflow UI for shows moved to `cancelled_pending_resolution`.
+4. Show detail exposes cancellation resolution, and the dashboard exposes the active Duty Manager request path; a focused pending-resolution queue and task-context warnings remain follow-up work.
 
 ## 3.1 Confirmed Gap from Current Rollout
 
-1. Studio admins can discover pending-resolution shows via status filter, but there is no focused queue and no explicit resolve action in studio scope.
-2. System admins can manually edit show status in `/system/shows`, creating role asymmetry for day-to-day studio operations.
+1. Studio admins can discover pending-resolution shows via status filter and show detail, but there is no focused queue.
+2. Studio show detail owns the explicit resolve action; remaining follow-up is discovery and task-context guidance.
 3. Studio member task pages do not always make cancellation/pending-resolution state obvious enough during execution.
 
 ---
@@ -88,11 +88,11 @@ FE depends on BE exposing:
 2. Publish summary metadata (created/updated/removed/pending-resolution/restored counts) — schema defined in `@eridu/api-types`.
 3. Stable status identity from API via `systemKey` (confirmed in BE design).
 4. Remove policy uses status-only transitions (not soft-delete) — shows remain queryable; filter by status, not `deletedAt`.
-5. Planned resolve-policy refinement:
+5. Shipped resolve-policy refinement:
    - task target not deleted
    - task not deleted
    - task status not in `COMPLETED`, `CLOSED`
-6. Planned cancellation context metadata in show payload (or derived field) for stronger warnings, especially when pre-transition status was `LIVE`.
+6. Cancellation context and history from the cancellation-status endpoint for stronger warnings.
 
 ---
 
@@ -159,7 +159,7 @@ If BE exposes publish summary in admin APIs:
 ## Phase B: Resolution UX
 
 1. Add warning banners and action hints on affected show/task screens.
-2. Add filtered pending-resolution queue as a first-class path (not optional).
+2. Add filtered pending-resolution queue as a first-class path.
 3. Add direct navigation from blocked resolve errors to the show's remaining active tasks.
 
 ## Phase C: Impact visibility (optional in first release)
@@ -248,7 +248,7 @@ Mitigations:
    - add persistent warning banner on show-task pages for pending/cancelled statuses.
    - add status chips in task list/detail surfaces where show context appears.
 4. Resolution UX:
-   - add explicit CTA(s) for admin resolution flow once BE action is exposed.
+   - extend the shipped show-detail and dashboard cancellation controls where discovery requires it.
    - preserve current assign/reassign/close flows to avoid regressions.
 5. Verification and docs:
    - regression-test status filters, badges, warning banners, and mobile dialogs.

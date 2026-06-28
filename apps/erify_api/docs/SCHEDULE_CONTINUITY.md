@@ -1,6 +1,6 @@
 # Schedule Continuity
 
-> **TLDR**: Schedule publish uses identity-preserving **diff + upsert** instead of delete/recreate. Shows keep a stable `external_id` across republishes. Missing shows are status-transitioned instead of deleted. Core publish continuity is shipped on `master`; the dedicated studio pending-resolution resolve workflow is still follow-up work.
+> **TLDR**: Schedule publish uses identity-preserving **diff + upsert** instead of delete/recreate. Shows keep a stable `external_id` across republishes. Missing shows are status-transitioned instead of deleted. Studio cancellation and pending-resolution sign-off are handled by the shipped cancellation gate.
 
 ## Overview
 
@@ -95,36 +95,22 @@ When an existing show is missing from the incoming payload:
 | No undeleted tasks  | Set status → `CANCELLED`                    |
 | Has undeleted tasks | Set status → `CANCELLED_PENDING_RESOLUTION` |
 
-### Current Shipped Task Check
+### Active Task Check
 
-Today the publish remove-path checks for any linked task target where:
+The publish remove-path and cancellation gate use the same active-task definition:
 
 1. `task_target.deleted_at IS NULL`
 2. `task.deleted_at IS NULL`
-
-`COMPLETED` and `CLOSED` tasks still count today because terminal-status exclusion has not landed on `master` yet.
+3. `task.status NOT IN ('COMPLETED', 'CLOSED')`
 
 - **No soft-delete**: `deletedAt` stays null. Status-only transitions avoid unique constraint collisions on `(client_id, external_id)`.
 - **Restore on reappearance**: If a cancelled show reappears in a future publish, it's matched → updated back to active, and tasks are resumed.
 - **Manual resolve interaction**: A manually cancelled show can still be restored to active if a later publish reintroduces the same `(client_id, external_id)`.
 - **Hard delete**: Privileged override only (not standard publish path). Cascades to tasks.
 
-### Pending-Resolution Follow-Up Contract
+### Cancellation Gate Interaction
 
-The pending-resolution MVP design proposes storing transition context in `show.metadata`:
-
-```json
-{
-  "cancellation_context": {
-    "previous_status": "confirmed",
-    "previous_status_system_key": "CONFIRMED",
-    "triggered_by": "schedule_publish",
-    "triggered_at": "2026-03-01T12:00:00.000Z"
-  }
-}
-```
-
-That metadata is not written by the current publish implementation on `master`; it remains part of the planned studio resolution follow-up.
+Studio Admin/Manager users resolve pending shows through the [Show Cancellation Gate](./SHOW_CANCELLATION_GATE.md). The gate stores cancellation history in `Audit`, not `show.metadata`, and treats legacy pending shows without an opening Audit row as resolvable `show_cancellation` gates.
 
 ---
 
@@ -150,7 +136,7 @@ That metadata is not written by the current publish implementation on `master`; 
 3. Removed shows with undeleted tasks enter `cancelled_pending_resolution` instead of being deleted
 4. Hard delete (privileged only) cascades to tasks — acceptable since it's an explicit, audited action
 5. Optimistic locking + advisory lock on schedule ID serializes concurrent publishes
-6. Dedicated studio resolution flows and `cancellation_context` metadata are planned follow-up work (see pending-resolution MVP implementation plan)
+6. Studio cancellation and pending-resolution sign-off use the [Show Cancellation Gate](./SHOW_CANCELLATION_GATE.md)
 
 ---
 
@@ -222,4 +208,4 @@ sequenceDiagram
 
 - [Schedule Planning](./SCHEDULE_PLANNING.md) — API design, data model, workflow
 - [Task Management](./TASK_MANAGEMENT_SUMMARY.md) — Task lifecycle and API
-- [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Planned studio-scoped resolution follow-up
+- [Show Cancellation Gate](./SHOW_CANCELLATION_GATE.md) — Studio-scoped cancellation, pending-resolution sign-off, and audit history

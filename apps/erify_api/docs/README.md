@@ -19,7 +19,7 @@
 | Document                                                                                             | Status       | Description                                                                                          |
 | ---------------------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------- |
 | [Schedule Planning](./SCHEDULE_PLANNING.md)                                                          | ✅ Phase 1    | JSON planning, snapshots, validation, publishing                                                     |
-| [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                                      | ✅ Core       | Identity-preserving diff+upsert publish; dedicated studio resolve workflow remains follow-up         |
+| [Schedule Continuity](./SCHEDULE_CONTINUITY.md)                                                      | ✅ Core       | Identity-preserving diff+upsert publish with cancellation gate handoff                                |
 | [Task Management Summary](./TASK_MANAGEMENT_SUMMARY.md)                                              | ✅            | Task-as-Form architecture, API surface, workflows                                                    |
 | [Studio Shift Schedule](./STUDIO_SHIFT_SCHEDULE.md)                                                  | ✅ Phase 3    | Shift CRUD, duty-manager coverage, calendar, alignment                                               |
 | [Studio Creator Roster](./STUDIO_CREATOR_ROSTER.md)                                                  | ✅ Phase 4    | Studio-scoped creator roster CRUD, compensation defaults, and inactive-roster assignment enforcement |
@@ -27,6 +27,7 @@
 | [Task Submission Reporting & Export](./TASK_SUBMISSION_REPORTING.md)                                 | ✅ Phase 4    | Studio-scoped submitted-task report definitions and batched query API                                |
 | [Studio Creator Onboarding](./STUDIO_CREATOR_ONBOARDING.md)                                          | ✅ Phase 4    | Studio-scoped creator creation and roster-first assignment enforcement                               |
 | [Studio Show Management](./STUDIO_SHOW_MANAGEMENT.md)                                                | ✅ Phase 4    | Studio-scoped show CRUD, operations actuals, actuals-state filtering, and lookup bundling             |
+| [Show Cancellation Gate](./SHOW_CANCELLATION_GATE.md)                                                | ✅ Phase 5    | Role-tiered cancellation, pending-resolution sign-off, active-task guard, and audit history            |
 | [Compensation Line Items + Actuals](./COMPENSATION_LINE_ITEMS.md)                                    | ✅ Phase 4    | Polymorphic cost adjustments, show/shift actuals, and override audit trail                           |
 | [Task-Input Fact Binding](./TASK_INPUT_FACT_BINDING.md)                                              | ✅ Phase 4    | Fact-key template bindings, target hydration, priority-gated extraction pipeline and auditing |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                                                | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries                              |
@@ -39,7 +40,6 @@
 | -------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
 | [Authorization Guide](./design/AUTHORIZATION_GUIDE.md)                                             | 📐      | Proposed JSONB-based RBAC (current auth: `isSystemAdmin` + `StudioMembership`) |
 | [Creator Availability Hardening Backend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) | 📐      | Planned strict availability enforcement and assignment errors                  |
-| [Pending-Resolution MVP](./design/IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md)          | 📐      | Planned studio-scoped resolution follow-up for cancelled shows                  |
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for the operations-expansion track                  |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |

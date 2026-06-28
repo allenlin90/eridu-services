@@ -6,11 +6,10 @@ Active design documents for planned and in-progress features. Once a feature shi
 
 1. [Authorization Guide](./AUTHORIZATION_GUIDE.md) — Proposed RBAC model
 2. [Creator Availability Hardening Backend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — Planned strict availability enforcement
-3. [Pending-Resolution MVP](./IMPLEMENTATION_CANCELLED_PENDING_RESOLUTION_GAP_MVP.md) — Planned follow-up execution plan
-4. [Material Management](./MATERIAL_MANAGEMENT_DESIGN.md) — Phase 5 candidate
-5. [Ad-hoc Task Ticketing](./AD_HOC_TASK_TICKETING.md) — Planned template-less task creation for pre-production tickets
-6. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
-7. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — Deferred Phase 5 (revisit for Client Portal)
+3. [Material Management](./MATERIAL_MANAGEMENT_DESIGN.md) — Phase 5 candidate
+4. [Ad-hoc Task Ticketing](./AD_HOC_TASK_TICKETING.md) — Planned template-less task creation for pre-production tickets
+5. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
+6. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — Deferred Phase 5 (revisit for Client Portal)
 
 ## Note
 
