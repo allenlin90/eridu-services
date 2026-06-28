@@ -290,6 +290,34 @@ describe('showCancellationGateService', () => {
       ).rejects.toThrow(/SHOW_STATUS_CHANGED/);
       expect(auditServiceMock.create).not.toHaveBeenCalled();
     });
+
+    it('writes a system-actor audit row (actorId null, no actor_uid/actor_name) when actor is null', async () => {
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.openPending({
+        show,
+        gateKind: 'schedule_publish_removal',
+        fromStatusSystemKey: 'CONFIRMED',
+        reasonCategory: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+        reasonNote: 'Removed from republished schedule; 2 active task(s) still attached',
+        actor: null,
+      });
+
+      expect(auditServiceMock.create).toHaveBeenCalledWith({
+        action: 'OVERRIDE',
+        actorId: null,
+        reason: 'Removed from republished schedule; 2 active task(s) still attached',
+        metadata: {
+          field: 'show_status',
+          event: 'opened',
+          gate_kind: 'schedule_publish_removal',
+          old_value: 'CONFIRMED',
+          new_value: 'CANCELLED_PENDING_RESOLUTION',
+          reason_category: 'REMOVED_FROM_REPUBLISHED_SCHEDULE',
+        },
+        targets: [{ targetType: 'SHOW', targetId: 1n }],
+      });
+    });
   });
 
   describe('resolveAtomic', () => {
@@ -393,11 +421,32 @@ describe('showCancellationGateService', () => {
         service.resolvePending({
           show,
           gateKind: 'show_cancellation',
+          fromStatusSystemKey: 'CONFIRMED',
           outcome: 'RESTORE_PREVIOUS',
           resolutionNotes: 'note',
           actor,
         }),
       ).rejects.toThrow(/OUTCOME_NOT_ALLOWED/);
+    });
+
+    it('resolves RESTORE_PREVIOUS by reverting to the captured from_status', async () => {
+      showRepositoryMock.updateStatusIfPending.mockResolvedValue(true);
+
+      await service.resolvePending({
+        show,
+        gateKind: 'schedule_publish_removal',
+        fromStatusSystemKey: 'CONFIRMED',
+        outcome: 'RESTORE_PREVIOUS',
+        resolutionNotes: 'Schedule sync error, resuming.',
+        actor,
+      });
+
+      expect(showRepositoryMock.updateStatusIfPending).toHaveBeenCalledWith(1n, 6n, 2n);
+      expect(auditServiceMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ event: 'resolved', old_value: 'CANCELLED_PENDING_RESOLUTION', new_value: 'CONFIRMED' }),
+        }),
+      );
     });
 
     it('throws SHOW_ALREADY_RESOLVED when the guarded write matches no rows', async () => {
@@ -407,6 +456,7 @@ describe('showCancellationGateService', () => {
         service.resolvePending({
           show,
           gateKind: 'show_cancellation',
+          fromStatusSystemKey: 'CONFIRMED',
           outcome: 'CANCELLED',
           resolutionNotes: 'note',
           actor,

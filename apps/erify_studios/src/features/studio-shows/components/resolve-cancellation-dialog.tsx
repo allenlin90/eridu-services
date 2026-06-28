@@ -25,6 +25,7 @@ import { ResponsiveDialog } from '@/components/responsive-dialog';
 const OUTCOME_LABEL: Record<string, string> = {
   CANCELLED: 'Cancelled',
   COMPLETED: 'Completed',
+  RESTORE_PREVIOUS: 'Resume Show',
 };
 
 type ResolveCancellationDialogProps = {

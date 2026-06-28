@@ -88,18 +88,23 @@ describe('resolveCancellationDialog', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders an outcome option per status.allowed_outcomes', async () => {
+  it('renders an outcome option per status.allowed_outcomes, with RESTORE_PREVIOUS labeled "Resume Show"', async () => {
     useCancellationTierMock.mockReturnValue({ tier: 'manager' });
     const user = userEvent.setup();
 
-    render(<ResolveCancellationDialog studioId="studio_1" show={show} status={pendingStatus} />);
+    render(
+      <ResolveCancellationDialog
+        studioId="studio_1"
+        show={show}
+        status={{ ...pendingStatus, allowed_outcomes: ['CANCELLED', 'RESTORE_PREVIOUS'] }}
+      />,
+    );
     await user.click(screen.getByRole('button', { name: /resolve/i }));
 
     const outcomeSelect = screen.getByLabelText(/^outcome$/i);
-    expect(screen.getByText('Cancelled')).toBeInTheDocument();
-    expect(screen.getByText('Completed')).toBeInTheDocument();
-    await user.selectOptions(outcomeSelect, 'COMPLETED');
-    expect((outcomeSelect as HTMLSelectElement).value).toBe('COMPLETED');
+    expect(screen.getByText('Resume Show')).toBeInTheDocument();
+    await user.selectOptions(outcomeSelect, 'RESTORE_PREVIOUS');
+    expect((outcomeSelect as HTMLSelectElement).value).toBe('RESTORE_PREVIOUS');
   });
 
   it('does not render final sign-off controls for a Duty Manager tier', async () => {

@@ -70,7 +70,8 @@ function getGateMetadata(audit: AuditWithTargets): GateAuditMetadata | null {
 
 /**
  * Owns the manual show cancellation gate. Show.status is the gate state,
- * Audit is the persistence/history source.
+ * Audit is the persistence/history source. `actor: null` is for
+ * system-generated gates (schedule-publish) where no human is present.
  */
 @Injectable()
 export class ShowCancellationGateService {
@@ -161,7 +162,7 @@ export class ShowCancellationGateService {
     fromStatusSystemKey: string;
     reasonCategory: string;
     reasonNote: string;
-    actor: { id: bigint; uid: string; name: string };
+    actor: { id: bigint; uid: string; name: string } | null;
   }): Promise<void> {
     const { show, gateKind, fromStatusSystemKey, reasonCategory, reasonNote, actor } = params;
     this.assertReasonCategoryAllowed(gateKind, reasonCategory);
@@ -227,17 +228,19 @@ export class ShowCancellationGateService {
   async resolvePending(params: {
     show: Show;
     gateKind: GateKind;
+    fromStatusSystemKey: string;
     outcome: string;
     resolutionNotes: string;
-    actor: { id: bigint; uid: string; name: string };
+    actor: { id: bigint; uid: string; name: string } | null;
   }): Promise<void> {
-    const { show, gateKind, outcome, resolutionNotes, actor } = params;
+    const { show, gateKind, fromStatusSystemKey, outcome, resolutionNotes, actor } = params;
     this.assertOutcomeAllowed(gateKind, outcome);
     await this.assertActiveTaskGuard(gateKind, outcome, show.id);
 
+    const targetSystemKey = outcome === 'RESTORE_PREVIOUS' ? fromStatusSystemKey : outcome;
     const [pendingStatus, targetStatus] = await Promise.all([
       this.requireShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION'),
-      this.requireShowStatusBySystemKey(outcome),
+      this.requireShowStatusBySystemKey(targetSystemKey),
     ]);
 
     const updated = await this.showRepository.updateStatusIfPending(show.id, pendingStatus.id, targetStatus.id);
@@ -250,7 +253,7 @@ export class ShowCancellationGateService {
       gateKind,
       event: 'resolved',
       oldValue: 'CANCELLED_PENDING_RESOLUTION',
-      newValue: outcome,
+      newValue: targetSystemKey,
       note: resolutionNotes,
       actor,
     });
@@ -297,11 +300,11 @@ export class ShowCancellationGateService {
     newValue: string | null;
     reasonCategory?: string;
     note: string;
-    actor: { id: bigint; uid: string; name: string };
+    actor: { id: bigint; uid: string; name: string } | null;
   }): Promise<void> {
     await this.auditService.create({
       action: 'OVERRIDE',
-      actorId: params.actor.id,
+      actorId: params.actor?.id ?? null,
       reason: params.note,
       metadata: {
         field: 'show_status',
@@ -310,8 +313,7 @@ export class ShowCancellationGateService {
         old_value: params.oldValue,
         new_value: params.newValue,
         ...(params.reasonCategory !== undefined && { reason_category: params.reasonCategory }),
-        actor_uid: params.actor.uid,
-        actor_name: params.actor.name,
+        ...(params.actor !== null && { actor_uid: params.actor.uid, actor_name: params.actor.name }),
       },
       targets: [{ targetType: 'SHOW', targetId: params.showId }],
     });
