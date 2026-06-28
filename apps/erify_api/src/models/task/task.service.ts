@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import type { Prisma, Task } from '@prisma/client';
 import { TaskStatus, TaskType } from '@prisma/client';
 
@@ -354,6 +355,81 @@ export class TaskService extends BaseModelService {
       }
       throw error;
     }
+  }
+
+  @Transactional()
+  async reconcileTaskDueDates(
+    showId: bigint,
+    oldTimes: { startTime: Date; endTime: Date },
+    newTimes: { startTime: Date; endTime: Date },
+  ): Promise<number> {
+    const tasks = await this.taskRepository.findMany({
+      where: {
+        targets: {
+          some: {
+            showId,
+            targetType: 'SHOW',
+            deletedAt: null,
+          },
+        },
+        templateId: { not: null },
+        status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CLOSED] },
+      },
+    });
+
+    const oldStart = oldTimes.startTime.getTime();
+    const oldEnd = oldTimes.endTime.getTime();
+
+    const reconciled = await Promise.all(
+      tasks.map(async (task) => {
+        if (!task.dueDate) {
+          return false;
+        }
+
+        let expectedTime: number;
+        if (task.type === TaskType.SETUP) {
+          expectedTime = oldStart - 60 * 60 * 1000;
+        } else if (task.type === TaskType.ACTIVE) {
+          expectedTime = oldEnd + 60 * 60 * 1000;
+        } else if (task.type === TaskType.CLOSURE) {
+          expectedTime = oldEnd + 6 * 60 * 60 * 1000;
+        } else {
+          expectedTime = oldStart;
+        }
+
+        if (task.dueDate.getTime() !== expectedTime) {
+          return false;
+        }
+
+        let newDueDate: Date;
+        if (task.type === TaskType.SETUP) {
+          newDueDate = new Date(newTimes.startTime.getTime() - 60 * 60 * 1000);
+        } else if (task.type === TaskType.ACTIVE) {
+          newDueDate = new Date(newTimes.endTime.getTime() + 60 * 60 * 1000);
+        } else if (task.type === TaskType.CLOSURE) {
+          newDueDate = new Date(newTimes.endTime.getTime() + 6 * 60 * 60 * 1000);
+        } else {
+          newDueDate = newTimes.startTime;
+        }
+
+        try {
+          await this.taskRepository.updateWithVersionCheck(
+            { id: task.id, version: task.version },
+            { dueDate: newDueDate, version: task.version + 1 },
+          );
+          return true;
+        } catch (error) {
+          // A concurrent user-visible edit changed the version since we read this
+          // task — skip rather than clobber it with a stale reconciliation write.
+          if (error instanceof VersionConflictError) {
+            return false;
+          }
+          throw error;
+        }
+      }),
+    );
+
+    return reconciled.filter(Boolean).length;
   }
 
   private resolveDueDateForShowTaskType(

@@ -194,6 +194,7 @@ describe('showOrchestrationService', () => {
           provide: TaskService,
           useValue: {
             hardDeleteByIds: jest.fn(),
+            reconcileTaskDueDates: jest.fn().mockResolvedValue(0),
           },
         },
         {

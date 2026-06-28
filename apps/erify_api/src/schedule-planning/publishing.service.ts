@@ -20,6 +20,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { TaskService } from '@/models/task/task.service';
 import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
@@ -35,6 +36,7 @@ export class PublishingService {
     private readonly relationSyncService: PublishingRelationSyncService,
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
+    private readonly taskService: TaskService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -272,6 +274,7 @@ export class PublishingService {
       platform_links_added: 0,
       platform_links_updated: 0,
       platform_links_removed: 0,
+      tasks_reconciled: 0,
     };
 
     const incomingByShowId = new Map<bigint, DiffIncomingShow>();
@@ -384,6 +387,8 @@ export class PublishingService {
         updateData.deletedAt = null;
       }
 
+      const timeChanged = updateData.startTime !== undefined || updateData.endTime !== undefined;
+
       if (Object.keys(updateData).length > 0) {
         await tx.show.update({
           where: { id: existing.id },
@@ -399,8 +404,19 @@ export class PublishingService {
       // wasCancelled: show was soft-cancelled via status — tasks are soft-deleted and can be resumed.
       // wasDeleted: show was manually deleted (pre-start) via studio CRUD — deleteShow hard-purges
       // tasks, so there is nothing to resume; the incoming payload starts a new lifecycle.
+      // This must run before reconciliation below: reconcileTaskDueDates only considers
+      // tasks/targets with deletedAt: null, so a still-cancelled task would be invisible to it.
       if (wasCancelled) {
         await this.resumeSoftDeletedTasksAndTargets(existing.id);
+      }
+
+      if (timeChanged) {
+        const count = await this.taskService.reconcileTaskDueDates(
+          existing.id,
+          { startTime: existing.startTime, endTime: existing.endTime },
+          { startTime: incomingStart, endTime: incomingEnd },
+        );
+        publishSummary.tasks_reconciled = (publishSummary.tasks_reconciled || 0) + count;
       }
     }
 
@@ -461,7 +477,7 @@ export class PublishingService {
     });
 
     this.logger.log(
-      `Diff publish summary schedule_uid=${schedule.uid} created=${publishSummary.shows_created} updated=${publishSummary.shows_updated} cancelled=${publishSummary.shows_cancelled} pending_resolution=${publishSummary.shows_pending_resolution} restored=${publishSummary.shows_restored}`,
+      `Diff publish summary schedule_uid=${schedule.uid} created=${publishSummary.shows_created} updated=${publishSummary.shows_updated} cancelled=${publishSummary.shows_cancelled} pending_resolution=${publishSummary.shows_pending_resolution} restored=${publishSummary.shows_restored} reconciled=${publishSummary.tasks_reconciled}`,
     );
 
     return {

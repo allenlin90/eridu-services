@@ -18,6 +18,7 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
@@ -102,6 +103,9 @@ describe('studioShowManagementService', () => {
   const showStatusServiceMock = {
     getShowStatusById: jest.fn(),
   };
+  const taskServiceMock = {
+    reconcileTaskDueDates: jest.fn().mockResolvedValue(0),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -133,6 +137,7 @@ describe('studioShowManagementService', () => {
         { provide: UserService, useValue: userServiceMock },
         { provide: ShowCancellationGateService, useValue: showCancellationGateServiceMock },
         { provide: ShowStatusService, useValue: showStatusServiceMock },
+        { provide: TaskService, useValue: taskServiceMock },
       ],
     }).compile();
 

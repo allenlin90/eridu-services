@@ -49,6 +49,42 @@ export class TaskRepository extends BaseRepository<
     return this.delegate.create({ data, ...(include && { include }) });
   }
 
+  // Overrides BaseRepository.findMany (which reads through the non-transactional
+  // model wrapper) so reads inside a transaction can see uncommitted writes made
+  // earlier in that same transaction.
+  async findMany(params: {
+    where?: Prisma.TaskWhereInput;
+    skip?: number;
+    take?: number;
+    orderBy?: Prisma.TaskOrderByWithRelationInput;
+    include?: Prisma.TaskInclude;
+    includeDeleted?: boolean;
+  }): Promise<Task[]> {
+    const where = params.includeDeleted
+      ? params.where
+      : { ...params.where, deletedAt: null };
+
+    return this.delegate.findMany({
+      where,
+      skip: params.skip,
+      take: params.take,
+      orderBy: params.orderBy,
+      ...(params.include && { include: params.include }),
+    });
+  }
+
+  async update(
+    where: Prisma.TaskWhereUniqueInput,
+    data: Prisma.TaskUpdateInput,
+    include?: Prisma.TaskInclude,
+  ): Promise<Task> {
+    return this.delegate.update({
+      where: { ...where, deletedAt: null },
+      data,
+      ...(include && { include }),
+    });
+  }
+
   async findByUid(
     uid: string,
     include?: Prisma.TaskInclude,

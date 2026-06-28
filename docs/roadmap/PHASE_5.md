@@ -26,7 +26,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | 2   | [Creator roster onboarding and intake clarification](#2-creator-roster-onboarding-and-intake-clarification) — clarify `/creators` intake for add, reactivate, and create-new-to-roster | —          | ✅ Done       |
 | 3   | [Show status vocabulary alignment](#3-show-status-vocabulary-alignment) — align lifecycle status records, seed data, docs, and role vocabulary                                     | —          | ✅ Done       |
 | 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation and pending-resolution sign-off from show detail and duty-manager dashboard | 3          | ✅ Done       |
-| 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | 🔲 Planned    |
+| 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | ✅ Done       |
 | 6   | [Import platform performance data](#6-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                                     | —          | 🔲 Planned    |
 | 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate imported or extracted metrics with audit reason                            | 6          | 🔲 Planned    |
 | 8   | [Show-level issue ownership](#8-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement               | —          | 🔲 Planned    |
@@ -137,9 +137,9 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 
 ### 5. Schedule-change task reconciliation
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1; [`schedule-publish-task-due-date-reconciliation.md`](../ideation/schedule-publish-task-due-date-reconciliation.md)
+**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1; `schedule-publish-task-due-date-reconciliation.md` (retired)
 
-When show timing changes through schedule publish or manager edit, generated task due dates should be reconciled to reflect the new timing. The first version applies to generated, non-terminal show-linked tasks whose due date still matches the old derived formula, so manual due-date overrides are preserved.
+**Completion result**: PR [#243](https://github.com/allenlin90/eridu-services/pull/243) automatically recalculates and shifts the due dates of eligible, generated, non-terminal show-linked tasks when a show's start or end time changes. Manual due-date overrides are preserved.
 
 ### 6. Import platform performance data
 

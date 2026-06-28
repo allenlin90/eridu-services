@@ -381,6 +381,7 @@ describe('schedulePlanningService', () => {
           platform_links_added: 0,
           platform_links_updated: 0,
           platform_links_removed: 0,
+          tasks_reconciled: 0,
         },
       };
 

@@ -11,6 +11,7 @@ import { ShowPlatformModule } from '@/models/show-platform/show-platform.module'
 import { ShowStatusModule } from '@/models/show-status/show-status.module';
 import { StudioModule } from '@/models/studio/studio.module';
 import { StudioRoomModule } from '@/models/studio-room/studio-room.module';
+import { TaskModule } from '@/models/task/task.module';
 import { UserModule } from '@/models/user/user.module';
 import { ShowOrchestrationModule } from '@/show-orchestration/show-orchestration.module';
 import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration.module';
@@ -28,6 +29,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     ShowPlatformModule,
     ClientMechanicModule,
     UserModule,
+    TaskModule,
   ],
   controllers: [StudioShowController],
   providers: [StudioShowManagementService],

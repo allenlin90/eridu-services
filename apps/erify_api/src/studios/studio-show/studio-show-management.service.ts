@@ -23,6 +23,7 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
+import { TaskService } from '@/models/task/task.service';
 import { UserService } from '@/models/user/user.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
@@ -45,6 +46,7 @@ export class StudioShowManagementService {
     private readonly userService: UserService,
     private readonly showCancellationGateService: ShowCancellationGateService,
     private readonly showStatusService: ShowStatusService,
+    private readonly taskService: TaskService,
   ) {}
 
   @Transactional()
@@ -143,7 +145,25 @@ export class StudioShowManagementService {
       { actualStartTime: dto.actualStartTime, actualEndTime: dto.actualEndTime },
     );
 
+    const oldStartTime = existingShow.startTime;
+    const oldEndTime = existingShow.endTime;
+
+    const newStartTime = dto.startTime ? new Date(dto.startTime) : oldStartTime;
+    const newEndTime = dto.endTime ? new Date(dto.endTime) : oldEndTime;
+
+    const timeChanged
+      = oldStartTime.getTime() !== newStartTime.getTime()
+      || oldEndTime.getTime() !== newEndTime.getTime();
+
     await this.showRepository.update({ uid: showUid }, this.buildUpdatePayload(dto));
+
+    if (timeChanged) {
+      await this.taskService.reconcileTaskDueDates(
+        existingShow.id,
+        { startTime: oldStartTime, endTime: oldEndTime },
+        { startTime: newStartTime, endTime: newEndTime },
+      );
+    }
 
     if (dto.platformIds !== undefined) {
       await this.replaceShowPlatforms(existingShow.id, dto.platformIds);
