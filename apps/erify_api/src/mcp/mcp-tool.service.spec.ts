@@ -147,6 +147,32 @@ describe('mcpToolService', () => {
     expect(result.total).toBe(1);
   });
 
+  it('resolves operational show dates before querying shows', async () => {
+    taskOrchestrationService.getStudioShowsWithTaskSummary.mockResolvedValue({ data: [rawShow()], total: 1 });
+
+    await createService().queryShows({
+      studio_id: 'std_123',
+      operational_date: '2026-06-28',
+      page: 1,
+      limit: 10,
+    });
+
+    expect(taskOrchestrationService.getStudioShowsWithTaskSummary).toHaveBeenCalledWith('std_123', expect.objectContaining({
+      date_from: '2026-06-27T23:00:00.000Z',
+      date_to: '2026-06-28T22:59:59.999Z',
+    }));
+  });
+
+  it('rejects ambiguous explicit and operational show date inputs', async () => {
+    await expect(createService().queryShows({
+      studio_id: 'std_123',
+      date_from: '2026-06-28T00:00:00Z',
+      date_preset: 'today',
+    })).rejects.toBeInstanceOf(ZodError);
+
+    expect(taskOrchestrationService.getStudioShowsWithTaskSummary).not.toHaveBeenCalled();
+  });
+
   it('queries tasks for a studio by completedAt/dueDate range and maps to taskWithRelationsDto', async () => {
     taskService.findTasksForMcp.mockResolvedValue([rawTask()]);
 

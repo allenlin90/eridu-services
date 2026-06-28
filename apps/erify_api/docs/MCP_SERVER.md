@@ -22,6 +22,7 @@ The first concrete target is OpenWebUI as an internal Railway service. Do not cr
 | Health checks | `GET /health` and `GET /health/ready` |
 | Initial network boundary | Private Railway service / in-cluster traffic only |
 | Initial auth boundary | Studio allowlist via `MCP_ALLOWED_STUDIO_IDS` |
+| Operational date default | GMT+7, 06:00 local time through 05:59:59.999 the next day |
 
 Run locally with `pnpm --filter erify_api dev:mcp`. Production uses `pnpm --filter erify_api start:prod:mcp` after the normal app build.
 
@@ -80,14 +81,23 @@ The registry exposes read-only record lookup and studio-scoped query tools:
 | --- | --- | --- | --- |
 | `erify_get_show` | Load a studio-scoped show by UID | `TaskOrchestrationService.getStudioShow` | `showDto` |
 | `erify_get_task` | Load a studio-scoped task by UID after confirming studio ownership | `TaskService.findOne`, then `TaskService.findByUidWithRelationsAdmin` | `taskWithRelationsDto` |
-| `erify_query_shows` | Paginated, studio-scoped show list with date-range, search, status, creator, and "needs attention" filters; reverse-chronological by default | `TaskOrchestrationService.getStudioShowsWithTaskSummary` | Already UID-shaped — see note below |
+| `erify_query_shows` | Paginated, studio-scoped show list with explicit ISO range or operational date filters, search, status, creator, and "needs attention" filters; reverse-chronological by default | `TaskOrchestrationService.getStudioShowsWithTaskSummary` | Already UID-shaped — see note below |
 | `erify_query_tasks` | Paginated, studio-scoped task/submission list filtered by `completedAt`/`dueDate` ranges, status, and/or type; reverse-chronological by default | `TaskService.findTasksForMcp` | `taskWithRelationsDto` |
 
 `erify_get_show`, `erify_get_task`, and `erify_query_tasks` parse the raw service result through the same Zod DTO used by the REST API before returning it to the MCP client — this strips internal `BigInt` database ids/foreign keys (which `JSON.stringify` cannot serialize) and maps the row to the public UID-based response shape. `erify_query_shows` does not re-parse through a DTO at the tool layer because `TaskOrchestrationService.getStudioShowsWithTaskSummary` already maps each row through `showDto` and UID-based fields internally before returning — the result reaching the MCP client is already clean.
 
 **Design-review note (this PR):** `erify_query_shows` and `erify_query_tasks` are the first list-shaped, studio-wide tools added past the original single-record lookup foundation. They were reviewed against the constraint below before merge: both stay read-only, both remain studio-scoped behind `McpStudioPolicy`, both are paginated and capped (default/explicit `limit`), and neither introduces a new auth boundary — they reuse the same allowlist gate as the existing tools. Mutation tools and any change to the auth boundary still require a separate design review before being added.
 
-Do not add report, mutation, or cross-studio tools without a new design review. The current foundation is deliberately small while OpenWebUI/LiteLLM integration details and auth hardening are still being discussed.
+### Operational Show Dates
+
+`erify_query_shows` supports two date modes:
+
+- Explicit ISO range: pass `date_from` and/or `date_to` when the caller already has exact boundaries.
+- Operational date: pass `date_preset` (`today`, `yesterday`, `tomorrow`) or `operational_date` (`YYYY-MM-DD`) for agent-facing natural language requests. The MCP server resolves the local operational day using `timezone_offset_minutes` (default `420`, GMT+7) and `operational_day_start_hour` (default `6`). For example, `operational_date=2026-06-28` resolves to `2026-06-27T23:00:00.000Z` through `2026-06-28T22:59:59.999Z`.
+
+Do not combine explicit ISO range fields with operational date fields in the same tool call.
+
+Do not add report, mutation, cross-studio, or higher-level business-answer tools without a new design review. Business-oriented MCP extensions should follow in a separate PR after the operational date/query contract is stable. The current foundation is deliberately small while OpenWebUI/LiteLLM integration details and auth hardening are still being discussed.
 
 ## Access Policy
 
