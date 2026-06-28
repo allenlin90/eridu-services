@@ -8,13 +8,22 @@ const STUDIO_UID_PREFIX = 'std_';
 export class McpStudioPolicy {
   private readonly allowedStudioIds: Set<string>;
 
-  constructor(allowedStudioIdsCsv = '') {
+  constructor(allowedStudioIdsCsv = '', nodeEnv = 'development') {
     this.allowedStudioIds = new Set(
       allowedStudioIdsCsv
         .split(',')
         .map((value) => value.trim())
         .filter(Boolean),
     );
+
+    // Fail closed: the `/mcp` endpoint has no caller authentication in this
+    // foundation phase, so an empty allowlist in production means unrestricted
+    // cross-studio read access for anyone who can reach the service.
+    if (nodeEnv === 'production' && this.allowedStudioIds.size === 0) {
+      throw new Error(
+        'MCP_ALLOWED_STUDIO_IDS must be configured with at least one studio UID in production.',
+      );
+    }
   }
 
   assertStudioAllowed(studioId: string): string {

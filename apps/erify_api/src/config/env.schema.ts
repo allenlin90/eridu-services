@@ -51,7 +51,8 @@ export const envSchema = z.object({
   BACKDOOR_ALLOWED_IPS: z.string().optional(),
 
   // MCP server entrypoint (private Railway service in phase 1)
-  // Empty means every studio is allowed; production should configure a narrow allowlist.
+  // Empty allows every studio in development/test. Required and enforced (fails
+  // app startup if unset) in production — see McpStudioPolicy.
   MCP_ALLOWED_STUDIO_IDS: z.string().optional(),
 
   // Authentication & Authorization (JWT/JWKS)

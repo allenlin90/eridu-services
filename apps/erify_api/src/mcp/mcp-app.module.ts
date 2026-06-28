@@ -68,7 +68,10 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
       provide: McpStudioPolicy,
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env>) =>
-        new McpStudioPolicy(config.get('MCP_ALLOWED_STUDIO_IDS') ?? ''),
+        new McpStudioPolicy(
+          config.get('MCP_ALLOWED_STUDIO_IDS') ?? '',
+          config.get('NODE_ENV'),
+        ),
     },
     McpToolService,
     McpServerFactory,

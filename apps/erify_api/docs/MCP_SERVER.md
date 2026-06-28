@@ -89,8 +89,8 @@ Do not add broad list, report, mutation, or cross-studio tools without a new des
 
 `McpStudioPolicy` validates that `studio_id` is a Studio UID and optionally checks it against `MCP_ALLOWED_STUDIO_IDS`.
 
-- Empty `MCP_ALLOWED_STUDIO_IDS` means every Studio UID is allowed. Use this only for local development or tightly private environments.
-- Production Railway deployments should configure a narrow comma-separated allowlist until the MCP server is connected to `eridu_auth`.
+- In `development`/`test`, an empty `MCP_ALLOWED_STUDIO_IDS` means every Studio UID is allowed.
+- In `production`, `MCP_ALLOWED_STUDIO_IDS` is **required**: the app fails to boot if it is unset or empty. The `/mcp` endpoint has no caller authentication in this foundation phase, so an empty allowlist would otherwise grant unrestricted cross-studio read access to anyone who can reach the service.
 - Future external access should move to `eridu_auth`/Better Auth API keys with rate limits rather than expanding this allowlist gate.
 - Future internal app-to-app access should authenticate OpenWebUI/LiteLLM as trusted internal clients instead of relying on network reachability alone.
 
