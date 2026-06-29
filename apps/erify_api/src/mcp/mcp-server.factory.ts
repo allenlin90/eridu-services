@@ -1,11 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Injectable } from '@nestjs/common';
-import { TaskStatus, TaskType } from '@prisma/client';
 import { z } from 'zod';
 
 import { toErrorToolResult, toJsonToolResult } from './mcp-result.util';
-import { McpToolService, queryShowsShape } from './mcp-tool.service';
+import { McpToolService, queryShowsShape, queryTasksShape } from './mcp-tool.service';
 
 @Injectable()
 export class McpServerFactory {
@@ -62,7 +61,7 @@ export class McpServerFactory {
       'erify_query_shows',
       {
         title: 'Query Studio Shows',
-        description: 'Query shows for a studio. For natural language dates like "today", prefer date_preset or operational_date so the server applies the studio operational day (default GMT+7, 06:00 to 05:59:59.999 next day). Use explicit ISO date_from/date_to only when the user provides exact boundaries. Returns latest records first (reverse chronological order) by default.',
+        description: 'Query shows for a studio. Accepts date_from and date_to as YYYY-MM-DD local operational dates (which resolve to local 06:00 to 05:59:59.999 next day) assuming UTC+7 timezone. Returns latest records first (reverse chronological order) by default.',
         inputSchema: queryShowsShape,
         annotations: {
           readOnlyHint: true,
@@ -76,18 +75,8 @@ export class McpServerFactory {
       'erify_query_tasks',
       {
         title: 'Query Studio Tasks',
-        description: 'Query tasks / submissions for a studio. ALWAYS prioritize providing a completed_at_from and completed_at_to date range to narrow down submissions. Returns latest records first (reverse chronological order) by default.',
-        inputSchema: {
-          studio_id: z.string().describe('The Studio UID (e.g., std_abc123).'),
-          completed_at_from: z.string().optional().describe('ISO-8601 date-time string (e.g., 2026-06-28T00:00:00+07:00). When user asks for relative dates (e.g., "today"), look at the user current time/timezone in their system prompt context (e.g., UTC+7), and calculate the start boundary of that day to convert to an ISO string before querying.'),
-          completed_at_to: z.string().optional().describe('ISO-8601 date-time string. Calculate the end boundary of the target relative day (e.g., 2026-06-28T23:59:59+07:00) using the user local timezone before querying.'),
-          due_date_from: z.string().optional().describe('ISO-8601 date-time string to query tasks due after.'),
-          due_date_to: z.string().optional().describe('ISO-8601 date-time string to query tasks due before.'),
-          status: z.union([z.nativeEnum(TaskStatus), z.array(z.nativeEnum(TaskStatus))]).optional().describe('Filter by task status(es) (e.g., COMPLETED, PENDING, REVIEW).'),
-          type: z.union([z.nativeEnum(TaskType), z.array(z.nativeEnum(TaskType))]).optional().describe('Filter by task type(s) (e.g., SETUP, ACTIVE, CLOSURE).'),
-          page: z.number().optional().describe('Page number for pagination (starts at 1).'),
-          limit: z.number().optional().describe('Maximum number of tasks to return (default 20).'),
-        },
+        description: 'Query tasks / submissions for a studio. Accepts completed_at_from/to and due_date_from/to as YYYY-MM-DD local calendar dates (which resolve to local 00:00:00 to 23:59:59.999) assuming UTC+7 timezone. Returns latest records first (reverse chronological order) by default.',
+        inputSchema: queryTasksShape,
         annotations: {
           readOnlyHint: true,
           openWorldHint: false,
