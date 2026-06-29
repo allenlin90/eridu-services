@@ -138,6 +138,32 @@ export const cancellationStatusResponseSchema = z.object({
   history: z.array(cancellationHistoryEntrySchema),
 });
 
+export const schedulePublishImpactKindSchema = z.enum([
+  'confirmed_future_updated',
+  'confirmed_future_pending_resolution',
+]);
+
+export const schedulePublishImpactRowSchema = z.object({
+  audit_id: z.string(),
+  impact_kind: schedulePublishImpactKindSchema,
+  schedule_id: z.string().nullable(),
+  external_id: z.string().nullable(),
+  changed_fields: z.array(z.string()),
+  relation_changes: z.record(z.string(), z.number().int().nonnegative()).default({}),
+  show: z.object({
+    id: z.string(),
+    name: z.string(),
+    external_id: z.string().nullable(),
+    start_time: z.iso.datetime(),
+    end_time: z.iso.datetime(),
+    status_name: z.string().nullable(),
+    status_system_key: z.string().nullable(),
+    client_id: z.string().nullable(),
+    client_name: z.string().nullable(),
+  }),
+  created_at: z.iso.datetime(),
+});
+
 /**
  * Show List Query Parameters Schema
  */

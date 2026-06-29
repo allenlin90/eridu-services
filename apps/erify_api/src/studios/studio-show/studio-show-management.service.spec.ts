@@ -8,6 +8,7 @@ import { ClsModule } from 'nestjs-cls';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
@@ -106,6 +107,9 @@ describe('studioShowManagementService', () => {
   const taskServiceMock = {
     reconcileTaskDueDates: jest.fn().mockResolvedValue(0),
   };
+  const auditServiceMock = {
+    findSchedulePublishImpactsForStudio: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -138,6 +142,7 @@ describe('studioShowManagementService', () => {
         { provide: ShowCancellationGateService, useValue: showCancellationGateServiceMock },
         { provide: ShowStatusService, useValue: showStatusServiceMock },
         { provide: TaskService, useValue: taskServiceMock },
+        { provide: AuditService, useValue: auditServiceMock },
       ],
     }).compile();
 
@@ -906,6 +911,79 @@ describe('studioShowManagementService', () => {
         outcome: 'CANCELLED',
         resolutionNotes: 'Confirmed no production happened',
         actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
+      });
+    });
+  });
+
+  describe('listSchedulePublishImpacts', () => {
+    it('maps schedule publish impact audits to manager queue rows', async () => {
+      const createdAt = new Date('2026-06-29T10:00:00.000Z');
+      const startDateFrom = '2026-07-01T00:00:00.000Z';
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({
+        total: 1,
+        items: [
+          {
+            targetId: BigInt(5),
+            audit: {
+              uid: 'aud_123',
+              metadata: {
+                event: 'schedule_publish_impact',
+                schedule_uid: 'schedule_123',
+                external_id: 'show_external_1',
+                impact_kind: 'confirmed_future_updated',
+                changed_fields: ['start_time'],
+                relation_changes: { creator_links_added: 1 },
+              },
+              createdAt,
+            },
+            show: {
+              uid: 'show_123',
+              externalId: 'show_external_1',
+              name: 'Confirmed Show',
+              startTime: new Date('2026-07-01T10:00:00.000Z'),
+              endTime: new Date('2026-07-01T12:00:00.000Z'),
+              showStatus: { name: 'confirmed', systemKey: 'CONFIRMED' },
+              client: { uid: 'client_123', name: 'Client' },
+            },
+          },
+        ],
+      });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {
+        page: 2,
+        limit: 25,
+        start_date_from: startDateFrom,
+      });
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        {
+          startDateFrom: new Date(startDateFrom),
+          startDateTo: undefined,
+          skip: 25,
+          take: 25,
+        },
+      );
+      expect(result.total).toBe(1);
+      expect(result.items[0]).toEqual({
+        audit_id: 'aud_123',
+        impact_kind: 'confirmed_future_updated',
+        schedule_id: 'schedule_123',
+        external_id: 'show_external_1',
+        changed_fields: ['start_time'],
+        relation_changes: { creator_links_added: 1 },
+        show: {
+          id: 'show_123',
+          name: 'Confirmed Show',
+          external_id: 'show_external_1',
+          start_time: '2026-07-01T10:00:00.000Z',
+          end_time: '2026-07-01T12:00:00.000Z',
+          status_name: 'confirmed',
+          status_system_key: 'CONFIRMED',
+          client_id: 'client_123',
+          client_name: 'Client',
+        },
+        created_at: '2026-06-29T10:00:00.000Z',
       });
     });
   });

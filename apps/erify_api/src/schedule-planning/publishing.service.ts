@@ -11,12 +11,14 @@ import type {
   DiffIncomingShow,
   ExistingShow,
   ScheduleWithRelations,
+  ShowRelationSyncChanges,
 } from './publishing.types';
 import { PublishingRelationSyncService } from './publishing-relation-sync.service';
 import { buildPublishingUidLookupMaps } from './publishing-uid-lookup';
 import { ValidationService } from './validation.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { AuditService } from '@/models/audit/audit.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
@@ -24,6 +26,21 @@ import { TaskService } from '@/models/task/task.service';
 import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
+
+const CONFIRMED_STATUS_KEY = 'CONFIRMED';
+const SCHEDULE_PUBLISH_IMPACT_EVENT = 'schedule_publish_impact';
+const SCHEDULE_INTEGRATION_TIME_ZONE = 'Asia/Bangkok';
+const PRESERVED_STATUS_KEYS = new Set([
+  'LIVE',
+  'COMPLETED',
+  'CANCELLED',
+  'CANCELLED_PENDING_RESOLUTION',
+]);
+const UPDATE_PRESERVED_STATUS_KEYS = new Set([
+  'LIVE',
+  'COMPLETED',
+  'CANCELLED_PENDING_RESOLUTION',
+]);
 
 @Injectable()
 export class PublishingService {
@@ -37,6 +54,7 @@ export class PublishingService {
     private readonly validationService: ValidationService,
     private readonly utilityService: UtilityService,
     private readonly taskService: TaskService,
+    private readonly auditService: AuditService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -107,6 +125,7 @@ export class PublishingService {
 
     const uidMaps = await buildPublishingUidLookupMaps(planDocument.shows, schedule, tx);
     const statusIds = await this.resolveRequiredStatusIds();
+    const publishStartedAt = new Date();
 
     const incomingShows = planDocument.shows.map((show): DiffIncomingShow => {
       const clientId = uidMaps.clients.get(show.clientId);
@@ -142,6 +161,9 @@ export class PublishingService {
       };
     });
     const incomingByKey = new Map(incomingShows.map((show) => [show.key, show]));
+    const incomingStatusKeyById = await this.resolveStatusSystemKeys(
+      Array.from(new Set(incomingShows.map((show) => show.showStatusId))),
+    );
 
     const currentScheduleShows = await tx.show.findMany({
       where: {
@@ -268,6 +290,10 @@ export class PublishingService {
       shows_cancelled: 0,
       shows_pending_resolution: 0,
       shows_restored: 0,
+      shows_preserved: 0,
+      confirmed_shows_updated: 0,
+      confirmed_shows_pending_resolution: 0,
+      publish_impacts_recorded: 0,
       creator_links_added: 0,
       creator_links_updated: 0,
       creator_links_removed: 0,
@@ -278,9 +304,23 @@ export class PublishingService {
     };
 
     const incomingByShowId = new Map<bigint, DiffIncomingShow>();
+    const confirmedFutureUpdates = new Map<bigint, {
+      existing: ExistingShow;
+      incoming: DiffIncomingShow;
+      changedFields: string[];
+    }>();
 
-    if (toCreate.length > 0) {
-      const createData = toCreate.map((show) => ({
+    const creatableShows = toCreate.filter((show) => {
+      const statusKey = incomingStatusKeyById.get(show.showStatusId) ?? null;
+      if (this.isIncomingPastOrDone(show, statusKey, publishStartedAt)) {
+        publishSummary.shows_preserved += 1;
+        return false;
+      }
+      return true;
+    });
+
+    if (creatableShows.length > 0) {
+      const createData = creatableShows.map((show) => ({
         uid: this.showService.generateShowUid(),
         externalId: show.source.externalId,
         name: show.source.name,
@@ -301,8 +341,8 @@ export class PublishingService {
       const createdShows = await tx.show.findMany({
         where: {
           scheduleId: schedule.id,
-          clientId: { in: Array.from(new Set(toCreate.map((s) => s.clientId))) },
-          externalId: { in: toCreate.map((s) => s.source.externalId) },
+          clientId: { in: Array.from(new Set(creatableShows.map((s) => s.clientId))) },
+          externalId: { in: creatableShows.map((s) => s.source.externalId) },
           deletedAt: null,
         },
         select: {
@@ -328,55 +368,73 @@ export class PublishingService {
 
     for (const pair of toUpdate) {
       const { incoming, existing } = pair;
+
+      if (this.isExistingPastOrDone(existing, publishStartedAt, UPDATE_PRESERVED_STATUS_KEYS)) {
+        publishSummary.shows_preserved += 1;
+        continue;
+      }
+
       incomingByShowId.set(existing.id, incoming);
 
       const updateData: Record<string, unknown> = {};
+      const changedFields: string[] = [];
 
       if (existing.name !== incoming.source.name) {
         updateData.name = incoming.source.name;
+        changedFields.push('name');
       }
 
       const incomingStart = new Date(incoming.source.startTime);
       if (existing.startTime.getTime() !== incomingStart.getTime()) {
         updateData.startTime = incomingStart;
+        changedFields.push('start_time');
       }
 
       const incomingEnd = new Date(incoming.source.endTime);
       if (existing.endTime.getTime() !== incomingEnd.getTime()) {
         updateData.endTime = incomingEnd;
+        changedFields.push('end_time');
       }
 
       if (existing.clientId !== incoming.clientId) {
         updateData.clientId = incoming.clientId;
+        changedFields.push('client_id');
       }
 
       if (existing.scheduleId !== schedule.id) {
         updateData.scheduleId = schedule.id;
+        changedFields.push('schedule_id');
       }
 
       if (existing.studioId !== incoming.studioId) {
         updateData.studioId = incoming.studioId;
+        changedFields.push('studio_id');
       }
 
       if (existing.studioRoomId !== incoming.studioRoomId) {
         updateData.studioRoomId = incoming.studioRoomId;
+        changedFields.push('studio_room_id');
       }
 
       if (existing.showTypeId !== incoming.showTypeId) {
         updateData.showTypeId = incoming.showTypeId;
+        changedFields.push('show_type_id');
       }
 
       if (existing.showStatusId !== incoming.showStatusId) {
         updateData.showStatusId = incoming.showStatusId;
+        changedFields.push('show_status_id');
       }
 
       if (existing.showStandardId !== incoming.showStandardId) {
         updateData.showStandardId = incoming.showStandardId;
+        changedFields.push('show_standard_id');
       }
 
       const incomingMetadata = incoming.source.metadata || {};
       if (JSON.stringify(existing.metadata || {}) !== JSON.stringify(incomingMetadata)) {
         updateData.metadata = incomingMetadata;
+        changedFields.push('metadata');
       }
 
       const wasDeleted = existing.deletedAt !== null;
@@ -385,6 +443,7 @@ export class PublishingService {
 
       if (wasDeleted) {
         updateData.deletedAt = null;
+        changedFields.push('deleted_at');
       }
 
       const timeChanged = updateData.startTime !== undefined || updateData.endTime !== undefined;
@@ -395,6 +454,10 @@ export class PublishingService {
           data: updateData,
         });
         publishSummary.shows_updated += 1;
+      }
+
+      if (this.isConfirmedFuture(existing, publishStartedAt)) {
+        confirmedFutureUpdates.set(existing.id, { existing, incoming, changedFields });
       }
 
       if (wasDeleted || wasCancelled) {
@@ -421,6 +484,36 @@ export class PublishingService {
     }
 
     for (const removed of toRemove) {
+      if (this.isExistingPastOrDone(removed, publishStartedAt)) {
+        publishSummary.shows_preserved += 1;
+        continue;
+      }
+
+      if (this.isConfirmedFuture(removed, publishStartedAt)) {
+        if (removed.showStatusId !== statusIds.cancelledPendingResolution) {
+          await tx.show.update({
+            where: { id: removed.id },
+            data: {
+              showStatusId: statusIds.cancelledPendingResolution,
+            },
+          });
+        }
+
+        publishSummary.shows_pending_resolution += 1;
+        publishSummary.confirmed_shows_pending_resolution += 1;
+        await this.recordSchedulePublishImpact({
+          schedule,
+          showId: removed.id,
+          actorId: userId,
+          externalId: removed.externalId,
+          impactKind: 'confirmed_future_pending_resolution',
+          changedFields: ['show_status_id'],
+          relationChanges: this.createEmptyRelationChanges(),
+        });
+        publishSummary.publish_impacts_recorded += 1;
+        continue;
+      }
+
       const hasActiveTaskTarget = await tx.taskTarget.findFirst({
         where: {
           showId: removed.id,
@@ -454,11 +547,33 @@ export class PublishingService {
       }
     }
 
-    await this.relationSyncService.syncShowRelations(
+    const relationChangesByShowId = await this.relationSyncService.syncShowRelations(
       incomingByShowId,
       uidMaps,
       publishSummary,
     );
+
+    for (const [showId, update] of confirmedFutureUpdates.entries()) {
+      const relationChanges = relationChangesByShowId.get(showId) ?? this.createEmptyRelationChanges();
+      const relationChangedFields = this.changedRelationFields(relationChanges);
+      const changedFields = [...update.changedFields, ...relationChangedFields];
+
+      if (changedFields.length === 0) {
+        continue;
+      }
+
+      await this.recordSchedulePublishImpact({
+        schedule,
+        showId,
+        actorId: userId,
+        externalId: update.incoming.source.externalId,
+        impactKind: 'confirmed_future_updated',
+        changedFields,
+        relationChanges,
+      });
+      publishSummary.confirmed_shows_updated += 1;
+      publishSummary.publish_impacts_recorded += 1;
+    }
 
     const updatedSchedule = await tx.schedule.update({
       where: { id: schedule.id },
@@ -477,7 +592,7 @@ export class PublishingService {
     });
 
     this.logger.log(
-      `Diff publish summary schedule_uid=${schedule.uid} created=${publishSummary.shows_created} updated=${publishSummary.shows_updated} cancelled=${publishSummary.shows_cancelled} pending_resolution=${publishSummary.shows_pending_resolution} restored=${publishSummary.shows_restored} reconciled=${publishSummary.tasks_reconciled}`,
+      `Diff publish summary schedule_uid=${schedule.uid} created=${publishSummary.shows_created} updated=${publishSummary.shows_updated} cancelled=${publishSummary.shows_cancelled} pending_resolution=${publishSummary.shows_pending_resolution} restored=${publishSummary.shows_restored} preserved=${publishSummary.shows_preserved} impacts=${publishSummary.publish_impacts_recorded} reconciled=${publishSummary.tasks_reconciled}`,
     );
 
     return {
@@ -523,6 +638,111 @@ export class PublishingService {
         deletedAt: null,
       },
     });
+  }
+
+  private async recordSchedulePublishImpact(params: {
+    schedule: ScheduleWithRelations;
+    showId: bigint;
+    actorId: bigint;
+    externalId: string | null;
+    impactKind: 'confirmed_future_updated' | 'confirmed_future_pending_resolution';
+    changedFields: string[];
+    relationChanges: ShowRelationSyncChanges;
+  }): Promise<void> {
+    await this.auditService.create({
+      action: 'UPDATE',
+      actorId: params.actorId,
+      reason: null,
+      metadata: {
+        event: SCHEDULE_PUBLISH_IMPACT_EVENT,
+        schedule_uid: params.schedule.uid,
+        external_id: params.externalId,
+        impact_kind: params.impactKind,
+        changed_fields: params.changedFields,
+        relation_changes: params.relationChanges,
+        source: 'google_sheets_schedule_publish',
+      },
+      targets: [
+        {
+          targetType: 'SHOW',
+          targetId: params.showId,
+        },
+      ],
+    });
+  }
+
+  private isExistingPastOrDone(
+    show: ExistingShow,
+    publishDate: Date,
+    preservedStatusKeys = PRESERVED_STATUS_KEYS,
+  ): boolean {
+    const statusKey = show.showStatus.systemKey;
+    return this.isBeforePublishDate(show.startTime, publishDate)
+      || (statusKey !== null && preservedStatusKeys.has(statusKey));
+  }
+
+  private isIncomingPastOrDone(
+    show: DiffIncomingShow,
+    statusKey: string | null,
+    publishDate: Date,
+  ): boolean {
+    return this.isBeforePublishDate(new Date(show.source.startTime), publishDate)
+      || (statusKey !== null && PRESERVED_STATUS_KEYS.has(statusKey));
+  }
+
+  private isConfirmedFuture(show: ExistingShow, publishDate: Date): boolean {
+    return show.showStatus.systemKey === CONFIRMED_STATUS_KEY
+      && !this.isBeforePublishDate(show.startTime, publishDate);
+  }
+
+  private isBeforePublishDate(showDate: Date, publishDate: Date): boolean {
+    return this.formatScheduleDate(showDate) < this.formatScheduleDate(publishDate);
+  }
+
+  private formatScheduleDate(date: Date): string {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: SCHEDULE_INTEGRATION_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const byType = new Map(parts.map((part) => [part.type, part.value]));
+    return `${byType.get('year')}-${byType.get('month')}-${byType.get('day')}`;
+  }
+
+  private createEmptyRelationChanges(): ShowRelationSyncChanges {
+    return {
+      creator_links_added: 0,
+      creator_links_updated: 0,
+      creator_links_removed: 0,
+      platform_links_added: 0,
+      platform_links_updated: 0,
+      platform_links_removed: 0,
+    };
+  }
+
+  private changedRelationFields(changes: ShowRelationSyncChanges): string[] {
+    return Object.entries(changes)
+      .filter(([, count]) => count > 0)
+      .map(([field]) => field);
+  }
+
+  private async resolveStatusSystemKeys(statusIds: bigint[]): Promise<Map<bigint, string | null>> {
+    if (statusIds.length === 0) {
+      return new Map();
+    }
+
+    const statuses = await this.txHost.tx.showStatus.findMany({
+      where: {
+        id: { in: statusIds },
+      },
+      select: {
+        id: true,
+        systemKey: true,
+      },
+    });
+
+    return new Map(statuses.map((status) => [status.id, status.systemKey ?? null]));
   }
 
   private async resolveRequiredStatusIds(): Promise<{

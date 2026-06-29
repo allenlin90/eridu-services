@@ -5,9 +5,12 @@ import type {
   CancelShowWithResolutionInput,
   RequestCancellationResolutionInput,
   ResolveShowCancellationInput,
+  SchedulePublishImpactRow,
 } from '@eridu/api-types/shows';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import type { SchedulePublishImpactAuditTarget } from '@/models/audit/audit.repository';
+import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
@@ -30,6 +33,12 @@ import { ShowOrchestrationService } from '@/show-orchestration/show-orchestratio
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
 type ShowUpdateData = Parameters<ShowRepository['update']>[1];
+type SchedulePublishImpactQuery = {
+  page?: number;
+  limit?: number;
+  start_date_from?: string;
+  start_date_to?: string;
+};
 
 @Injectable()
 export class StudioShowManagementService {
@@ -47,6 +56,7 @@ export class StudioShowManagementService {
     private readonly showCancellationGateService: ShowCancellationGateService,
     private readonly showStatusService: ShowStatusService,
     private readonly taskService: TaskService,
+    private readonly auditService: AuditService,
   ) {}
 
   @Transactional()
@@ -310,6 +320,28 @@ export class StudioShowManagementService {
     return this.showCancellationGateService.getCancellationStatus(show);
   }
 
+  async listSchedulePublishImpacts(
+    studioUid: string,
+    query: SchedulePublishImpactQuery,
+  ): Promise<{ items: SchedulePublishImpactRow[]; total: number }> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 25;
+    const { items, total } = await this.auditService.findSchedulePublishImpactsForStudio(
+      studioUid,
+      {
+        startDateFrom: query.start_date_from ? new Date(query.start_date_from) : new Date(),
+        startDateTo: query.start_date_to ? new Date(query.start_date_to) : undefined,
+        skip: (page - 1) * limit,
+        take: limit,
+      },
+    );
+
+    return {
+      items: items.map((item) => this.toSchedulePublishImpactRow(item)),
+      total,
+    };
+  }
+
   @Transactional()
   async deleteShow(studioUid: string, showUid: string): Promise<void> {
     const show = await this.findStudioShowOrThrow(studioUid, showUid);
@@ -336,6 +368,58 @@ export class StudioShowManagementService {
     }
 
     return show;
+  }
+
+  private toSchedulePublishImpactRow(
+    target: SchedulePublishImpactAuditTarget,
+  ): SchedulePublishImpactRow {
+    if (!target.show) {
+      throw HttpError.notFound('Show', String(target.targetId));
+    }
+
+    const metadata = this.asRecord(target.audit.metadata);
+    const changedFields = Array.isArray(metadata.changed_fields)
+      ? metadata.changed_fields.filter((field): field is string => typeof field === 'string')
+      : [];
+    const relationChanges = this.numberRecord(metadata.relation_changes);
+    const impactKind = metadata.impact_kind === 'confirmed_future_pending_resolution'
+      ? 'confirmed_future_pending_resolution'
+      : 'confirmed_future_updated';
+
+    return {
+      audit_id: target.audit.uid,
+      impact_kind: impactKind,
+      schedule_id: typeof metadata.schedule_uid === 'string' ? metadata.schedule_uid : null,
+      external_id: typeof metadata.external_id === 'string' ? metadata.external_id : null,
+      changed_fields: changedFields,
+      relation_changes: relationChanges,
+      show: {
+        id: target.show.uid,
+        name: target.show.name,
+        external_id: target.show.externalId,
+        start_time: target.show.startTime.toISOString(),
+        end_time: target.show.endTime.toISOString(),
+        status_name: target.show.showStatus.name,
+        status_system_key: target.show.showStatus.systemKey,
+        client_id: target.show.client.uid,
+        client_name: target.show.client.name,
+      },
+      created_at: target.audit.createdAt.toISOString(),
+    };
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  private numberRecord(value: unknown): Record<string, number> {
+    const record = this.asRecord(value);
+    return Object.fromEntries(
+      Object.entries(record).filter((entry): entry is [string, number] => typeof entry[1] === 'number'),
+    );
   }
 
   private async ensureStudioRoomBelongsToStudio(

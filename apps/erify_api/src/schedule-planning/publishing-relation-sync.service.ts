@@ -6,6 +6,7 @@ import type { PublishScheduleSummary } from './schemas/schedule-planning.schema'
 import type {
   DiffIncomingShow,
   PublishingUidMaps,
+  ShowRelationSyncChanges,
 } from './publishing.types';
 
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
@@ -23,12 +24,13 @@ export class PublishingRelationSyncService {
     incomingByShowId: Map<bigint, DiffIncomingShow>,
     uidMaps: PublishingUidMaps,
     summary: PublishScheduleSummary,
-  ): Promise<void> {
+  ): Promise<Map<bigint, ShowRelationSyncChanges>> {
     const tx = this.txHost.tx;
     const showIds = Array.from(incomingByShowId.keys());
+    const changesByShowId = new Map<bigint, ShowRelationSyncChanges>();
 
     if (showIds.length === 0) {
-      return;
+      return changesByShowId;
     }
 
     const existingShowCreators = await tx.showCreator.findMany({
@@ -71,11 +73,15 @@ export class PublishingRelationSyncService {
     });
 
     for (const [showId, incoming] of incomingByShowId.entries()) {
+      const showChanges = this.createEmptyChanges();
+      changesByShowId.set(showId, showChanges);
+
       await this.syncCreatorsForShow({
         showId,
         incoming,
         uidMaps,
         summary,
+        changes: showChanges,
         existingCreators: showCreatorByShowId.get(showId) || [],
       });
 
@@ -84,9 +90,12 @@ export class PublishingRelationSyncService {
         incoming,
         uidMaps,
         summary,
+        changes: showChanges,
         existingPlatforms: showPlatformByShowId.get(showId) || [],
       });
     }
+
+    return changesByShowId;
   }
 
   private async syncCreatorsForShow(params: {
@@ -94,6 +103,7 @@ export class PublishingRelationSyncService {
     incoming: DiffIncomingShow;
     uidMaps: PublishingUidMaps;
     summary: PublishScheduleSummary;
+    changes: ShowRelationSyncChanges;
     existingCreators: Array<{
       id: bigint;
       creatorId: bigint;
@@ -130,6 +140,7 @@ export class PublishingRelationSyncService {
           },
         });
         params.summary.creator_links_added += 1;
+        params.changes.creator_links_added += 1;
         continue;
       }
 
@@ -143,6 +154,7 @@ export class PublishingRelationSyncService {
           },
         });
         params.summary.creator_links_added += 1;
+        params.changes.creator_links_added += 1;
         continue;
       }
 
@@ -154,6 +166,7 @@ export class PublishingRelationSyncService {
           },
         });
         params.summary.creator_links_updated += 1;
+        params.changes.creator_links_updated += 1;
       }
     }
 
@@ -172,6 +185,7 @@ export class PublishingRelationSyncService {
         },
       });
       params.summary.creator_links_removed += staleCreatorIds.length;
+      params.changes.creator_links_removed += staleCreatorIds.length;
     }
   }
 
@@ -180,6 +194,7 @@ export class PublishingRelationSyncService {
     incoming: DiffIncomingShow;
     uidMaps: PublishingUidMaps;
     summary: PublishScheduleSummary;
+    changes: ShowRelationSyncChanges;
     existingPlatforms: Array<{
       id: bigint;
       platformId: bigint;
@@ -225,6 +240,7 @@ export class PublishingRelationSyncService {
           },
         });
         params.summary.platform_links_added += 1;
+        params.changes.platform_links_added += 1;
         continue;
       }
 
@@ -239,6 +255,7 @@ export class PublishingRelationSyncService {
           },
         });
         params.summary.platform_links_added += 1;
+        params.changes.platform_links_added += 1;
         continue;
       }
 
@@ -254,6 +271,7 @@ export class PublishingRelationSyncService {
           },
         });
         params.summary.platform_links_updated += 1;
+        params.changes.platform_links_updated += 1;
       }
     }
 
@@ -272,6 +290,18 @@ export class PublishingRelationSyncService {
         },
       });
       params.summary.platform_links_removed += stalePlatformIds.length;
+      params.changes.platform_links_removed += stalePlatformIds.length;
     }
+  }
+
+  private createEmptyChanges(): ShowRelationSyncChanges {
+    return {
+      creator_links_added: 0,
+      creator_links_updated: 0,
+      creator_links_removed: 0,
+      platform_links_added: 0,
+      platform_links_updated: 0,
+      platform_links_removed: 0,
+    };
   }
 }
