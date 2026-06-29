@@ -21,6 +21,7 @@ import {
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { useSchedulePublishImpactsQuery } from '@/features/shows/api/get-schedule-publish-impacts';
+import * as m from '@/paraglide/messages';
 
 const PAGE_SIZE = 25;
 
@@ -78,12 +79,12 @@ function SchedulePublishImpactsPage() {
     <StudioRouteGuard
       studioId={studioId}
       routeKey="schedulePublishImpacts"
-      deniedTitle="Schedule Impact Access Required"
-      deniedDescription="Only studio managers and admins can review schedule publish impacts."
+      deniedTitle={m.schedule_publish_impacts_denied_title()}
+      deniedDescription={m.schedule_publish_impacts_denied_desc()}
     >
       <PageLayout
-        title="Schedule Publish Impacts"
-        description="Review upcoming confirmed shows affected by Google Sheets schedule publishes."
+        title={m.schedule_publish_impacts_page_title()}
+        description={m.schedule_publish_impacts_page_desc()}
         actions={(
           <Button
             type="button"
@@ -91,7 +92,7 @@ function SchedulePublishImpactsPage() {
             size="icon"
             onClick={() => void refetch()}
             disabled={isFetching}
-            aria-label="Refresh schedule publish impacts"
+            aria-label={m.schedule_publish_impacts_refresh_label()}
           >
             <RefreshCw className={isFetching ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
           </Button>
@@ -99,9 +100,21 @@ function SchedulePublishImpactsPage() {
       >
         <div className="space-y-4 min-w-0 w-full overflow-hidden">
           <div className="grid gap-3 md:grid-cols-3">
-            <ImpactSummaryCard title="Upcoming impacts" value={total} description="Confirmed shows changed by publish" />
-            <ImpactSummaryCard title="Updated" value={updatedCount} description="Rows on this page with field or relation changes" />
-            <ImpactSummaryCard title="Pending resolution" value={pendingResolutionCount} description="Rows on this page missing from the sheet" />
+            <ImpactSummaryCard
+              title={m.schedule_publish_impacts_summary_upcoming_title()}
+              value={total}
+              description={m.schedule_publish_impacts_summary_upcoming_desc()}
+            />
+            <ImpactSummaryCard
+              title={m.schedule_publish_impacts_summary_updated_title()}
+              value={updatedCount}
+              description={m.schedule_publish_impacts_summary_updated_desc()}
+            />
+            <ImpactSummaryCard
+              title={m.schedule_publish_impacts_summary_pending_title()}
+              value={pendingResolutionCount}
+              description={m.schedule_publish_impacts_summary_pending_desc()}
+            />
           </div>
 
           <DataTable
@@ -109,7 +122,7 @@ function SchedulePublishImpactsPage() {
             columns={columns}
             isLoading={isLoading}
             isFetching={isFetching}
-            emptyMessage="No upcoming schedule publish impacts."
+            emptyMessage={m.schedule_publish_impacts_empty()}
             manualPagination
             pageCount={pageCount}
             paginationState={paginationState}
@@ -154,7 +167,7 @@ function createColumns(studioId: string): ColumnDef<SchedulePublishImpactRow>[] 
   return [
     {
       id: 'show',
-      header: 'Show',
+      header: m.schedule_publish_impacts_column_show(),
       cell: ({ row }) => (
         <div className="space-y-1">
           <Link
@@ -165,23 +178,25 @@ function createColumns(studioId: string): ColumnDef<SchedulePublishImpactRow>[] 
             {row.original.show.name}
           </Link>
           <div className="text-xs text-muted-foreground">
-            {row.original.external_id ?? row.original.show.external_id ?? 'No external ID'}
+            {row.original.external_id ?? row.original.show.external_id ?? m.schedule_publish_impacts_no_external_id()}
           </div>
         </div>
       ),
     },
     {
       id: 'impact',
-      header: 'Impact',
+      header: m.schedule_publish_impacts_column_impact(),
       cell: ({ row }) => (
         <Badge variant={row.original.impact_kind === 'confirmed_future_pending_resolution' ? 'destructive' : 'secondary'}>
-          {row.original.impact_kind === 'confirmed_future_pending_resolution' ? 'Pending resolution' : 'Updated'}
+          {row.original.impact_kind === 'confirmed_future_pending_resolution'
+            ? m.schedule_publish_impacts_badge_pending()
+            : m.schedule_publish_impacts_badge_updated()}
         </Badge>
       ),
     },
     {
       id: 'start_time',
-      header: 'Show Time',
+      header: m.schedule_publish_impacts_column_show_time(),
       cell: ({ row }) => (
         <div className="text-sm">
           {format(new Date(row.original.show.start_time), 'MMM d, yyyy')}
@@ -195,20 +210,24 @@ function createColumns(studioId: string): ColumnDef<SchedulePublishImpactRow>[] 
     },
     {
       id: 'status',
-      header: 'Status',
-      cell: ({ row }) => row.original.show.status_name ?? row.original.show.status_system_key ?? 'Unknown',
+      header: m.schedule_publish_impacts_column_status(),
+      cell: ({ row }) => (
+        row.original.show.status_name
+        ?? row.original.show.status_system_key
+        ?? m.schedule_publish_impacts_unknown_status()
+      ),
     },
     {
       id: 'changed_fields',
-      header: 'Changed',
+      header: m.schedule_publish_impacts_column_changed(),
       cell: ({ row }) => {
         const fields = row.original.changed_fields;
-        return fields.length > 0 ? fields.join(', ') : 'Relation change';
+        return fields.length > 0 ? fields.join(', ') : m.schedule_publish_impacts_relation_change();
       },
     },
     {
       id: 'created_at',
-      header: 'Recorded',
+      header: m.schedule_publish_impacts_column_recorded(),
       cell: ({ row }) => format(new Date(row.original.created_at), 'MMM d, h:mm a'),
     },
   ];
