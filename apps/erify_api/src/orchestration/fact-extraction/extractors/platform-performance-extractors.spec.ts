@@ -302,6 +302,28 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
 
       expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
     });
+
+    it('skips extraction when the metric has a MANAGER actuals_source recorded (manager override)', async () => {
+      const showPlatformService = buildShowPlatformService({
+        gmv: new Prisma.Decimal(1250.5),
+        metadata: {
+          actuals_source: {
+            show_platform_gmv: 'MANAGER',
+          },
+        },
+      });
+      const extractor = new PlatformGmvExtractor(showPlatformService);
+
+      const decision = await extractor.apply(factGmv, ctx);
+
+      expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
+      expect(decision).toEqual({
+        kind: 'skip',
+        action: 'SKIPPED_LOWER_PRIORITY',
+        skippedBy: 'MANAGER',
+        attemptedValue: '1250.5',
+      });
+    });
   });
 
   describe('platformViewCountExtractor', () => {

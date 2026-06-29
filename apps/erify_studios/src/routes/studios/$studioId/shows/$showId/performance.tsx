@@ -1,14 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router';
 import Big from 'big.js';
 import { BarChart3, ExternalLink, Eye, Globe, Percent, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui';
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '@eridu/ui';
 
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
+import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { usePerformanceLoopsQuery } from '@/features/studio-performance/api/get-performance-loops';
 import { ShowPerformanceLoopsGraph } from '@/features/studio-performance/components/show-performance-loops-graph';
+import { useCorrectShowPlatformPerformance } from '@/features/studio-shows/api/correct-show-platform-performance';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { toCurrencyDisplayString, toDecimalDisplayString } from '@/lib/decimal-format';
+import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/performance')({
   component: ShowPerformanceRouteComponent,
@@ -27,6 +32,8 @@ function StudioShowPerformanceTab() {
   const { studioId, showId } = Route.useParams();
   const { data: show } = useStudioShow({ studioId, showId });
   const { data: loopData, isLoading: isLoadingLoops } = usePerformanceLoopsQuery(studioId, showId);
+  const { role } = useStudioAccess(studioId);
+  const canCorrect = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
 
   if (!show) {
     return null;
@@ -219,18 +226,27 @@ function StudioShowPerformanceTab() {
                         </span>
                       )}
                     </div>
-                    {p.live_stream_link && (
-                      <a
-                        href={p.live_stream_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 rounded-md border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent focus:outline-none"
-                      >
-                        Stream Link
-                        {' '}
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {canCorrect && (
+                        <CorrectPlatformPerformanceDialog
+                          studioId={studioId}
+                          showId={showId}
+                          platform={p}
+                        />
+                      )}
+                      {p.live_stream_link && (
+                        <a
+                          href={p.live_stream_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent focus:outline-none"
+                        >
+                          Stream Link
+                          {' '}
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-4 flex-1">
@@ -275,5 +291,145 @@ function StudioShowPerformanceTab() {
         </div>
       </div>
     </div>
+  );
+}
+
+type CorrectPlatformPerformanceDialogProps = {
+  studioId: string;
+  showId: string;
+  platform: {
+    show_platform_uid: string;
+    name: string;
+    gmv: string | null;
+    viewer_count: number;
+    ctr: string | null;
+    cto: string | null;
+  };
+};
+
+function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: CorrectPlatformPerformanceDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [gmv, setGmv] = useState(platform.gmv ?? '');
+  const [viewerCount, setViewerCount] = useState(platform.viewer_count ? platform.viewer_count.toString() : '');
+  const [ctr, setCtr] = useState(platform.ctr ?? '');
+  const [cto, setCto] = useState(platform.cto ?? '');
+  const [reason, setReason] = useState('');
+
+  const correctMutation = useCorrectShowPlatformPerformance(studioId);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reason.trim())
+      return;
+
+    correctMutation.mutate(
+      {
+        showId,
+        showPlatformUid: platform.show_platform_uid,
+        data: {
+          gmv: gmv.trim() || undefined,
+          viewer_count: viewerCount.trim() ? Number.parseInt(viewerCount.trim(), 10) : undefined,
+          ctr: ctr.trim() || undefined,
+          cto: cto.trim() || undefined,
+          reason: reason.trim(),
+        },
+      },
+      {
+        onSuccess: () => {
+          setOpen(false);
+          setReason('');
+        },
+      },
+    );
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+        className="text-xs"
+      >
+        Correct Metrics
+      </Button>
+
+      <ResponsiveDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={`Correct Metrics: ${platform.name}`}
+        description="Directly correct missing or inaccurate performance metrics. This action is audited and overrides lower priority data sources."
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="gmv">GMV ($)</Label>
+              <Input
+                id="gmv"
+                placeholder="e.g. 1250.50"
+                value={gmv}
+                onChange={(e) => setGmv(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="views">Viewer Count</Label>
+              <Input
+                id="views"
+                type="number"
+                placeholder="e.g. 500"
+                value={viewerCount}
+                onChange={(e) => setViewerCount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ctr">CTR (%)</Label>
+              <Input
+                id="ctr"
+                placeholder="e.g. 5.25"
+                value={ctr}
+                onChange={(e) => setCtr(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cto">CTO (%)</Label>
+              <Input
+                id="cto"
+                placeholder="e.g. 12.30"
+                value={cto}
+                onChange={(e) => setCto(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="reason">Business Reason (Required)</Label>
+            <Textarea
+              id="reason"
+              placeholder="Provide a reason for this correction..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={correctMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={!reason.trim() || correctMutation.isPending}
+            >
+              {correctMutation.isPending ? 'Saving...' : 'Save Correction'}
+            </Button>
+          </div>
+        </form>
+      </ResponsiveDialog>
+    </>
   );
 }

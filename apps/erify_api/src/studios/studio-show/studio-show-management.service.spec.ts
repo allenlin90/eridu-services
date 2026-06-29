@@ -3,11 +3,13 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Prisma } from '@prisma/client';
 import { ClsModule } from 'nestjs-cls';
 
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
@@ -82,6 +84,8 @@ describe('studioShowManagementService', () => {
     restoreAndUpdateAssignment: jest.fn(),
     softDelete: jest.fn(),
     softDeleteByPlatformIds: jest.fn(),
+    findByUid: jest.fn(),
+    update: jest.fn(),
   };
   const showPlatformServiceMock = {
     generateShowPlatformUid: jest.fn(),
@@ -105,6 +109,9 @@ describe('studioShowManagementService', () => {
   };
   const taskServiceMock = {
     reconcileTaskDueDates: jest.fn().mockResolvedValue(0),
+  };
+  const auditServiceMock = {
+    create: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -138,6 +145,7 @@ describe('studioShowManagementService', () => {
         { provide: ShowCancellationGateService, useValue: showCancellationGateServiceMock },
         { provide: ShowStatusService, useValue: showStatusServiceMock },
         { provide: TaskService, useValue: taskServiceMock },
+        { provide: AuditService, useValue: auditServiceMock },
       ],
     }).compile();
 
@@ -906,6 +914,96 @@ describe('studioShowManagementService', () => {
         outcome: 'CANCELLED',
         resolutionNotes: 'Confirmed no production happened',
         actor: { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' },
+      });
+    });
+  });
+
+  describe('correctShowPlatformPerformance', () => {
+    const mockUser = { id: BigInt(5), uid: 'user_abc123', name: 'Jane Manager' };
+    const mockShow = { id: BigInt(100), uid: 'show_123', name: 'Livestream Show' };
+    const mockShowPlatform = {
+      id: BigInt(200),
+      uid: 'show_plt_123',
+      showId: BigInt(100),
+      deletedAt: null,
+      platformId: BigInt(300),
+      gmv: null,
+      ctr: null,
+      cto: null,
+      viewerCount: 0,
+      metadata: {},
+      platform: { name: 'TikTok' },
+    };
+
+    beforeEach(() => {
+      userServiceMock.getUserByExtId.mockResolvedValue(mockUser);
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue(mockShow);
+      showPlatformRepositoryMock.findByUid.mockResolvedValue(mockShowPlatform);
+      showServiceMock.getShowById.mockResolvedValue(mockShow);
+    });
+
+    it('correctly updates show platform metrics, records MANAGER actuals source, and writes override audit log', async () => {
+      await service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
+        gmv: '125.50',
+        viewerCount: 50,
+        reason: 'Correction request',
+      }, 'ext_5');
+
+      expect(showPlatformRepositoryMock.update).toHaveBeenCalledWith(
+        { id: mockShowPlatform.id },
+        expect.objectContaining({
+          gmv: new Prisma.Decimal('125.50'),
+          viewerCount: 50,
+          metadata: expect.objectContaining({
+            actuals_source: expect.objectContaining({
+              show_platform_gmv: 'MANAGER',
+              show_platform_view_count: 'MANAGER',
+            }),
+            performance_templates: expect.objectContaining({
+              show_platform_gmv: 'MANAGER',
+              show_platform_view_count: 'MANAGER',
+            }),
+          }),
+        }),
+      );
+
+      expect(auditServiceMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'OVERRIDE',
+          actorId: mockUser.id,
+          reason: 'Correction request',
+          targets: expect.arrayContaining([
+            { targetType: 'SHOW', targetId: mockShow.id },
+            { targetType: 'SHOW_PLATFORM', targetId: mockShowPlatform.id },
+          ]),
+        }),
+      );
+    });
+
+    it('throws if actor user is not found', async () => {
+      userServiceMock.getUserByExtId.mockResolvedValue(null);
+
+      await expect(
+        service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
+          gmv: '100.00',
+          reason: 'Reason',
+        }, 'ext_5'),
+      ).rejects.toMatchObject({
+        message: 'ACTOR_NOT_FOUND',
+      });
+    });
+
+    it('throws if show platform does not belong to the show', async () => {
+      const wrongShowPlatform = { ...mockShowPlatform, showId: BigInt(999) };
+      showPlatformRepositoryMock.findByUid.mockResolvedValue(wrongShowPlatform);
+
+      await expect(
+        service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
+          gmv: '100.00',
+          reason: 'Reason',
+        }, 'ext_5'),
+      ).rejects.toMatchObject({
+        message: 'ShowPlatform not found with id show_plt_123',
       });
     });
   });

@@ -398,3 +398,11 @@ export const showRunReviewSummarySchema = z.object({
     incomplete_tasks: z.array(showRunReviewIncompleteTaskSchema),
   }),
 });
+
+export const correctShowPlatformPerformanceInputSchema = z.object({
+  gmv: z.union([z.string(), z.number()]).nullable().optional(),
+  viewer_count: z.number().int().nonnegative().nullable().optional(),
+  ctr: z.union([z.string(), z.number()]).nullable().optional(),
+  cto: z.union([z.string(), z.number()]).nullable().optional(),
+  reason: z.string().min(1, 'Business reason is required'),
+});

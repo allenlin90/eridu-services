@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
+import { Prisma } from '@prisma/client';
 
 import type {
   CancelShowWithResolutionInput,
@@ -7,7 +8,10 @@ import type {
   ResolveShowCancellationInput,
 } from '@eridu/api-types/shows';
 
+import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
+
 import { HttpError } from '@/lib/errors/http-error.util';
+import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
@@ -47,6 +51,7 @@ export class StudioShowManagementService {
     private readonly showCancellationGateService: ShowCancellationGateService,
     private readonly showStatusService: ShowStatusService,
     private readonly taskService: TaskService,
+    private readonly auditService: AuditService,
   ) {}
 
   @Transactional()
@@ -572,5 +577,124 @@ export class StudioShowManagementService {
         }),
       ),
     ]);
+  }
+
+  @Transactional()
+  async correctShowPlatformPerformance(
+    studioUid: string,
+    showUid: string,
+    showPlatformUid: string,
+    dto: CorrectShowPlatformPerformanceDto,
+    actorExtId: string,
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    const showPlatform = await this.showPlatformRepository.findByUid(showPlatformUid, {
+      platform: true,
+    });
+    if (!showPlatform || showPlatform.showId !== show.id || showPlatform.deletedAt !== null) {
+      throw HttpError.notFound('ShowPlatform', showPlatformUid);
+    }
+
+    const changes: Array<{ field: string; old_value: string | null; new_value: string | null }> = [];
+    const updateData: Prisma.ShowPlatformUpdateInput = {};
+    const nextActualsSources: Record<string, string> = {};
+    const nextPerformanceTemplates: Record<string, string> = {};
+
+    const metadata = (showPlatform.metadata as Record<string, any> | null) ?? {};
+
+    const checkMetric = (
+      field: 'gmv' | 'ctr' | 'cto',
+      factKey: string,
+      newValue: string | number | null | undefined,
+      scale: number,
+      precision: number,
+    ) => {
+      if (newValue === undefined)
+        return;
+      const current = showPlatform[field];
+      let newDecimal: Prisma.Decimal | null = null;
+      if (newValue !== null) {
+        newDecimal = new Prisma.Decimal(newValue);
+        if (!newDecimal.isFinite()) {
+          throw HttpError.badRequest(`Invalid number for ${field}`);
+        }
+        newDecimal = newDecimal.toDecimalPlaces(scale, Prisma.Decimal.ROUND_HALF_UP);
+        const maxMagnitude = new Prisma.Decimal(10).pow(precision - scale);
+        if (newDecimal.abs().gte(maxMagnitude)) {
+          throw HttpError.badRequest(`${field} value out of range`);
+        }
+      }
+
+      const isChanged = current === null ? newDecimal !== null : (newDecimal === null || !newDecimal.equals(current as Prisma.Decimal));
+      if (isChanged) {
+        changes.push({
+          field,
+          old_value: current !== null ? (current as Prisma.Decimal).toString() : null,
+          new_value: newDecimal !== null ? newDecimal.toString() : null,
+        });
+        updateData[field] = newDecimal;
+        nextActualsSources[factKey] = 'MANAGER';
+        nextPerformanceTemplates[factKey] = 'MANAGER';
+      }
+    };
+
+    checkMetric('gmv', 'show_platform_gmv', dto.gmv, 2, 12);
+    checkMetric('ctr', 'show_platform_ctr', dto.ctr, 2, 5);
+    checkMetric('cto', 'show_platform_cto', dto.cto, 2, 5);
+
+    if (dto.viewerCount !== undefined) {
+      const current = showPlatform.viewerCount;
+      const isChanged = current !== dto.viewerCount;
+      if (isChanged) {
+        changes.push({
+          field: 'viewerCount',
+          old_value: current !== null ? String(current) : null,
+          new_value: dto.viewerCount !== null ? String(dto.viewerCount) : null,
+        });
+        updateData.viewerCount = dto.viewerCount ?? 0;
+        nextActualsSources.show_platform_view_count = 'MANAGER';
+        nextPerformanceTemplates.show_platform_view_count = 'MANAGER';
+      }
+    }
+
+    if (changes.length > 0) {
+      const mergedMetadata = {
+        ...metadata,
+        actuals_source: {
+          ...(metadata.actuals_source as Record<string, string> ?? {}),
+          ...nextActualsSources,
+        },
+        performance_templates: {
+          ...(metadata.performance_templates as Record<string, string> ?? {}),
+          ...nextPerformanceTemplates,
+        },
+      };
+
+      updateData.metadata = mergedMetadata;
+
+      await this.showPlatformRepository.update({ id: showPlatform.id }, updateData);
+
+      await this.auditService.create({
+        action: 'OVERRIDE',
+        actorId: actor.id,
+        reason: dto.reason,
+        metadata: {
+          corrected_metrics: changes,
+          platform_name: showPlatform.platform?.name ?? 'Unknown',
+          show_name: show.name,
+        },
+        targets: [
+          { targetType: 'SHOW', targetId: show.id },
+          { targetType: 'SHOW_PLATFORM', targetId: showPlatform.id },
+        ],
+      });
+    }
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
   }
 }
