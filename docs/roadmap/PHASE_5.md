@@ -12,7 +12,7 @@
 
 ## Goal
 
-Build a clear show lifecycle contract that explains what must be ready, who owns each step, what can be flexible by studio policy, and what happens when a show cannot continue normally. Phase 5 starts with **creator roster intake clarification, status vocabulary alignment, cancellation resolution, scheduling consistency, import/correction records, issue ownership, and advisory readiness/completion review**. Lifecycle state enforcement follows once current feature surfaces fit the lifecycle model and the advisory readiness/completion contracts are stable. Broader operational record export is deferred until the imported/corrected/issue-backed operational record is stable enough to export without immediate rework.
+Build a clear show lifecycle contract that explains what must be ready, who owns each step, what can be flexible by studio policy, and what happens when a show cannot continue normally. Phase 5 starts with **creator roster intake clarification, status vocabulary alignment, cancellation resolution, scheduling consistency, platform performance import, performance correction, issue ownership, and advisory readiness/completion review**. Lifecycle state enforcement follows once current feature surfaces fit the lifecycle model and the advisory readiness/completion contracts are stable. Broader operational record export is deferred until performance facts, import provenance, correction records, and issue-backed review records are stable enough to export without immediate rework.
 
 ## Workstream Items
 
@@ -28,7 +28,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation and pending-resolution sign-off from show detail and duty-manager dashboard | 3          | ✅ Done       |
 | 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | ✅ Done       |
 | 6   | [Import platform performance data](#6-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                                     | —          | 🔲 Planned    |
-| 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate imported or extracted metrics with audit reason                            | 6          | 🔲 Planned    |
+| 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate performance metrics from any source with audit reason                      | —          | 🔲 Planned    |
 | 8   | [Show-level issue ownership](#8-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement               | —          | 🔲 Planned    |
 | 9   | [Advisory planning readiness checklist](#9-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition             | 1, 2       | 🔲 Planned    |
 | 10  | [Post-production completion review checklist](#10-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records | 6, 7, 8    | 🔲 Planned    |
@@ -145,13 +145,13 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 
 **Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3
 
-Start with a controlled manual export/upload flow (CSV or spreadsheet) for importing platform-source performance data (GMV, views, CTR, CTO) before considering platform API integration. Keep financial revenue semantics separate (deferred to Phase 6). Imported platform data supports business comparison against operator-submitted facts and later post-production review.
+Start with a controlled manual export/upload flow (CSV or spreadsheet) for importing platform-source performance data (GMV, views, CTR, CTO) before considering platform API integration. Keep financial revenue semantics separate (deferred to Phase 6). Imported platform data feeds the same operational `ShowPlatform` performance facts as task extraction, adds external-system provenance, and supports business comparison against operator-submitted facts and later post-production review.
 
 ### 7. Show performance correction
 
 **Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
 
-Allow managers to directly correct missing or inaccurate performance metrics (GMV, views, CTR, CTO) with a business reason. Corrections should create audit records and follow the existing `MANAGER` priority level in the extraction pipeline's priority resolver. Corrections can feed review surfaces and later export without requiring lifecycle-state enforcement.
+Allow managers to directly correct missing or inaccurate `ShowPlatform` performance metrics (GMV, views, CTR, CTO) with a business reason, regardless of whether the current value came from task extraction, manual import, future platform sync, or backfill. Corrections should create audit records and follow the existing `MANAGER` priority level in the extraction pipeline's priority resolver. Corrections can feed review surfaces and later export without requiring lifecycle-state enforcement.
 
 ### 8. Show-level issue ownership
 
