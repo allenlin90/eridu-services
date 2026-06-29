@@ -46,6 +46,7 @@ These phrases almost always signal reasoning leakage. Cut or rewrite each one as
 - The current state as a clean statement.
 - Premises, constraints, and decisions written as positive assertions.
 - Open items only when they are real gaps a future reader needs to act on. Each open item names the action and who/when, not the history.
+- Deferred implementation work split by nature: `docs/tech-debt/` for real shipped/pre-existing gaps; `docs/ideation/` for future mechanisms, speculative seams, and designs blocked on larger product/architecture decisions.
 - File citations only when they specify *where the change lands* or *where a reader should look* — they help navigation, not justification.
 - Diagrams that explain structure, not diagrams that re-show the iteration sequence.
 - Production data snapshots when they ground a current decision (e.g., "the registry currently contains 96 suffixed entries"). Drop the date framing if it is not load-bearing.

@@ -25,7 +25,9 @@ NEVER loop over individual DB calls. Use `createMany` / `updateMany`.
 
 Use `@Transactional()` from `@nestjs-cls/transactional`. CLS propagates automatically — never pass `tx`. Apply on **Orchestration Services**, not repositories. Keep transactions short.
 
-**Anti-patterns:** Self-invocation bypasses proxy silently. Internal `try/catch` causes silent partial commit.
+**Anti-patterns:** Self-invocation bypasses proxy silently. Internal `try/catch` causes silent partial commit. Reading through a repository method bound to the raw `PrismaService` misses uncommitted writes made earlier in the same transaction.
+
+If a flow mutates rows and then immediately re-queries eligible rows in the same transaction, the read must use a transaction-aware delegate (`txHost.tx.<model>`). This especially matters for restore/resume paths: a raw-client read cannot see rows undeleted earlier in the transaction, so reconciliation logic can silently skip work.
 
 > 📖 [references/03-transactions.md](references/03-transactions.md)
 
@@ -46,6 +48,8 @@ Use `connect: { uid }` to link entities. Avoids extra reads.
 Use `version` integer field. Repository throws `VersionConflictError`. Service converts to `HttpError.conflict()`.
 
 **Bump `version` only on semantic user-visible mutations.** Do NOT bump for pre-submission bookkeeping (upload reservations, presign caches), async denormalized state, or self-referential metadata — bumping causes spurious 409s on the user's next legitimate write.
+
+When an orchestration performs best-effort reconciliation, use the same version-checked write path as user edits and decide the conflict behavior deliberately. A stale row should usually be skipped and excluded from success counts, not overwritten and not allowed to fail the whole publish/edit flow unless the workflow requires all rows to reconcile atomically.
 
 > 📖 [references/05-optimistic-locking.md](references/05-optimistic-locking.md)
 

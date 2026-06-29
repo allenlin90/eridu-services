@@ -44,6 +44,18 @@ Validate at API boundary, transform format:
 - Use Zod schemas and `createZodDto` at boundaries
 - For date/time fields, use `z.iso.datetime()` / `z.iso.date()`, not `z.coerce.date()`
 
+### Contract Propagation Check
+
+When adding a request field, trace it through every layer before calling the work done:
+
+```text
+schema/API type -> controller DTO/destructure -> service payload -> repository/write -> response DTO -> frontend form/mutation
+```
+
+The dangerous failure mode is a field that validates and renders in the UI but is silently dropped by a controller payload or service mapper. Add a controller or integration test at the boundary that asserts the new field is forwarded, not only a schema parse test.
+
+For non-HTTP protocol boundaries such as MCP, do not maintain parallel hand-written validation shapes. Extract one Zod object shape and reuse it at the protocol boundary and service boundary so type, limit, and date constraints cannot drift.
+
 ### Action Validation (Workflow Endpoints)
 Validate action intent explicitly: action enum, required reason/metadata for audited transitions, deterministic error payloads.
 
@@ -57,6 +69,8 @@ Validate action intent explicitly: action enum, required reason/metadata for aud
 
 - [ ] Validate all input at controller boundary with Zod schemas
 - [ ] Transform snake_case ↔ camelCase at boundary
+- [ ] New request fields are forwarded through controller, service payload, persistence, response DTO, and frontend mutation
+- [ ] Protocol-level schemas and service-level schemas share a shape instead of duplicating field definitions
 - [ ] Map `uid → id` in responses, hide database primary keys
 - [ ] Check UID format (prefix pattern)
 - [ ] Validate referenced entities exist

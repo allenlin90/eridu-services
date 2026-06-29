@@ -55,6 +55,18 @@ Do not duplicate the fact-key list in frontend or backend code. A v2 template ma
 6. **Non-deprecated APIs** — verify installed package version before using any API
 7. **Doc sync** — changes to `template-definition.schema.ts` must update all artifacts in task-templates feature doc
 
+## Cross-Layer Field Propagation
+
+Adding a field to an API schema is not complete until all consumers and producers preserve it:
+
+- Backend controller maps it from the parsed DTO into the service payload.
+- Service payload type includes it without exposing Prisma input types.
+- Repository/write path persists it or intentionally derives it.
+- Response DTO returns the canonical wire field.
+- Frontend form state and mutation payload send the persisted enum/value, not a display label.
+
+For a new enum or workflow field, add at least one test that starts at the public boundary most likely to drop the field (controller or frontend mutation), not only package-level schema coverage.
+
 ## Checklist
 
 - [ ] New API contract added to `@eridu/api-types` first
@@ -62,6 +74,7 @@ Do not duplicate the fact-key list in frontend or backend code. A v2 template ma
 - [ ] Exports: `schemas` (runtime) + `types` (static)
 - [ ] Wire format uses `snake_case`
 - [ ] Types inferred via `z.infer`
+- [ ] New fields have end-to-end propagation coverage across backend and frontend mutation paths
 - [ ] Consumers import from subpath, never barrel root
 - [ ] Only non-deprecated APIs used
 - [ ] Task-template `system_fact_key` consumers use the shared fact catalog, not local string arrays

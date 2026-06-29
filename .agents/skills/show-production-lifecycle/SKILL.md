@@ -117,6 +117,17 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Manual cancellation uses the cancellation gate: Admin/Manager users can cancel directly from show detail, active Duty Managers can open pending resolution from the dashboard, and Admin/Manager users resolve pending shows to `cancelled` or `completed`. Audit rows are the history source.
 
+### State-gate task invariants
+
+`STATE_GATE` tasks are system workflow records, not ordinary production tasks. Any endpoint or service that touches generic task assignment, claiming, completion, bulk reassignment, or task DTO serialization must prove whether state-gate tasks are included or explicitly excluded.
+
+- Claim routes must verify the task is a state gate before mutating assignment or writing gate history.
+- Generic task completion paths must not complete state gates; show status resolution must happen in the same backend transaction as the gate task completion.
+- Bulk assignment paths for ordinary show tasks must exclude `STATE_GATE` unless they route through the gate reassignment/audit flow.
+- Backend guards must enforce terminal-state rules even when the frontend hides an action; never rely on UI visibility to protect `completed` or other terminal records.
+- If a system task is snapshotless, every DTO/schema that serializes tasks must accept that shape intentionally, or the creation path must attach a valid snapshot.
+- Authorization must match the rendered action: if managers see a Claim/Resolve action, the backend route must allow that role or the UI must hide the action.
+
 **Gap (Phase 5)**: The focused cancellation workflow is implemented. Remaining cancellation-adjacent gaps are focused pending-resolution queue/discovery, notifications, comments/follow-up ownership, and full lifecycle state enforcement.
 
 ## Readiness Conditions
@@ -214,3 +225,4 @@ Do not duplicate guidance from these skills. Reference them for their owned doma
 8. **Platform metrics live on ShowPlatform.** `gmv`, `ctr`, `cto`, `viewerCount` are per-platform, not per-show. Aggregate in queries, not in schema.
 9. **Violations are append-only.** `ShowPlatformViolation` uses `supersededAt` for soft-history. Do not update or delete violation rows.
 10. **Compensation snapshots are downstream.** `CompensationLineItemTarget` connects shows and show-creators to the compensation system. Do not compute compensation in show services.
+11. **State gates are special task workflows.** Do not let `STATE_GATE` tasks flow through generic claim, complete, or bulk assignment paths without an explicit invariant check and audit behavior.

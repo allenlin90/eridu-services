@@ -50,11 +50,13 @@ Do NOT implement `findByUidOrThrow` in repositories. Controller calls `ensureRes
 
 Repositories return `null` for not-found. Never throw HTTP exceptions from the data layer.
 
-### 6. Route Writes Through the Transaction Host
+### 6. Route Transaction-Dependent Access Through the Transaction Host
 
-🔴 A repository write run inside an `@Transactional` service flow must go through `this.txHost.tx.<model>` (the canonical `task.repository` delegate), **not** the unbounded `PrismaService` — otherwise it escapes the ambient transaction and commits even when the flow rolls back. Inject `TransactionHost<TransactionalAdapterPrisma>` and route `create`/`update`/`delete`/`softDelete` through it; reads may stay on the base client.
+🔴 A repository operation that must see or mutate state inside an `@Transactional` service flow must go through `this.txHost.tx.<model>` (the canonical `task.repository` delegate), **not** the unbounded `PrismaService`. Writes otherwise escape the ambient transaction and commit even when the flow rolls back; reads otherwise miss uncommitted changes made earlier in the same transaction.
 
-⚠️ **Known gap:** `BaseRepository` binds `super(new PrismaModelWrapper(prisma.<model>))` to the *unbounded* client, so its **inherited** methods don't join a transaction. The canonical pattern works around this by overriding the write methods a repo actually uses in transactions; a lazy-delegate `BaseRepository` is the proper fix (deferred — see `docs/tech-debt/erify-api-refactor-residuals.md`).
+Inject `TransactionHost<TransactionalAdapterPrisma>` and route `create`/`update`/`delete`/`softDelete` through it. Also override inherited read helpers (`findMany`, custom list reads, count/read pairs) when the caller depends on transaction visibility, such as "resume soft-deleted rows, then immediately reconcile them" flows.
+
+⚠️ **Known gap:** `BaseRepository` binds `super(new PrismaModelWrapper(prisma.<model>))` to the *unbounded* client, so its **inherited** methods don't join a transaction. The canonical pattern works around this by overriding the methods a repo actually uses in transactions; a lazy-delegate `BaseRepository` is the proper fix (deferred — see `docs/tech-debt/erify-api-refactor-residuals.md`).
 
 ## Key Patterns
 
@@ -69,6 +71,8 @@ Accept domain-level parameters, build Prisma where clauses internally. Use `Prom
 
 ### Optimistic Locking
 Implement `updateWithVersionCheck()` for versioned entities. Throw `VersionConflictError` (domain error), not HTTP exceptions. Service converts to `HttpError.conflict()`.
+
+The conflict probe must understand every `where` shape the method accepts. If a new caller updates by `{ id, version }` but the repository only checks `where.uid`, a concurrent edit can surface as a raw Prisma not-found error or fail the whole orchestration instead of becoming a skippable version conflict. Either pass the UID into the version-checked path or make the probe handle the internal ID path explicitly.
 
 ### Raw SQL (`$executeRaw` / `$queryRaw`)
 Prisma applies **no** name mapping to raw queries — `Prisma.sql` strings hit the database verbatim. Always reference the `@@map`-ed table name and `@map`-ed column names (`"show_platforms"`, not the `ShowPlatform` model name). A model-name table reference compiles fine and only fails at runtime, where a swallowed extractor/approval error can hide it (silent no-op, nothing persisted). When a repository hand-writes raw SQL, add a regression test that asserts the literal table name in the generated SQL (e.g. `expect(sql.strings.join('')).toContain('UPDATE "show_platforms"')`).
@@ -89,10 +93,12 @@ When filtering through a soft-deletable join table, put `deletedAt: null` on the
 - [ ] 🔴 No `findByUidOrThrow` — controller handles 404
 - [ ] 🔴 Always filter `deletedAt: null`
 - [ ] 🔴 Never throw HTTP exceptions
+- [ ] 🔴 Transaction-dependent reads and writes go through `txHost.tx.<model>`, not inherited unbounded `BaseRepository` methods
 - [ ] 🔴 A relation-derived DTO field is `include`d at every call site that serializes it (create/update/findOne), not just the one you're touching
 - [ ] Accept domain-level parameters (not Prisma types) in public methods
 - [ ] `Promise.all` for pagination (count + data)
 - [ ] `VersionConflictError` for version conflicts
+- [ ] `updateWithVersionCheck()` conflict probe matches every supported `where` shape (`uid`, `id`, etc.)
 - [ ] Use `findFirst` when filtering by non-unique fields
 - [ ] Raw SQL uses `@@map`/`@map` names, with a test asserting the literal table name
 
