@@ -16,6 +16,35 @@ const AUDIT_WITH_TARGETS_INCLUDE = {
   targets: true,
 } as const satisfies Prisma.AuditInclude;
 
+const SCHEDULE_PUBLISH_IMPACT_INCLUDE = {
+  audit: true,
+  show: {
+    select: {
+      uid: true,
+      externalId: true,
+      name: true,
+      startTime: true,
+      endTime: true,
+      client: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+      showStatus: {
+        select: {
+          name: true,
+          systemKey: true,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.AuditTargetInclude;
+
+export type SchedulePublishImpactAuditTarget = Prisma.AuditTargetGetPayload<{
+  include: typeof SCHEDULE_PUBLISH_IMPACT_INCLUDE;
+}>;
+
 /**
  * Engineering decision: `AuditRepository` does NOT extend `BaseRepository`.
  *
@@ -109,6 +138,54 @@ export class AuditRepository {
       skip: opts?.skip,
       take: opts?.take,
     });
+  }
+
+  async findSchedulePublishImpactsForStudio(
+    studioUid: string,
+    opts: {
+      startDateFrom: Date;
+      startDateTo?: Date;
+      take: number;
+      skip: number;
+    },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    // Engineering decision: this is a purpose-built review queue query, not a
+    // generic `findMany`, because it must page AuditTarget rows joined through
+    // upcoming studio-scoped Shows while filtering Audit metadata by event.
+    const where: Prisma.AuditTargetWhereInput = {
+      targetType: 'SHOW',
+      show: {
+        studio: { uid: studioUid },
+        startTime: {
+          gte: opts.startDateFrom,
+          ...(opts.startDateTo ? { lte: opts.startDateTo } : {}),
+        },
+        deletedAt: null,
+      },
+      audit: {
+        metadata: {
+          path: ['event'],
+          equals: 'schedule_publish_impact',
+        },
+      },
+    };
+
+    const [total, items] = await Promise.all([
+      this.txHost.tx.auditTarget.count({ where }),
+      this.txHost.tx.auditTarget.findMany({
+        where,
+        include: SCHEDULE_PUBLISH_IMPACT_INCLUDE,
+        orderBy: {
+          audit: {
+            createdAt: 'desc',
+          },
+        },
+        skip: opts.skip,
+        take: opts.take,
+      }),
+    ]);
+
+    return { items, total };
   }
 
   private toTargetCreateInput(

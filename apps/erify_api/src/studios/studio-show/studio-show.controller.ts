@@ -15,6 +15,7 @@ import { z } from 'zod';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
+  schedulePublishImpactRowSchema,
   showRunReviewCreatorExceptionSchema,
   showRunReviewIncompleteTaskSchema,
   showRunReviewShowsRangeRowSchema,
@@ -189,6 +190,28 @@ const paginatedShowRunReviewQuerySchema = showRunReviewQuerySchema.extend({
 
 export class PaginatedShowRunReviewQueryDto extends createZodDto(paginatedShowRunReviewQuerySchema) {}
 
+const schedulePublishImpactQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).max(100).optional().default(25),
+    start_date_from: isoDateTimeSchema.optional(),
+    start_date_to: isoDateTimeSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.start_date_from || !data.start_date_to) {
+        return true;
+      }
+      return new Date(data.start_date_to) >= new Date(data.start_date_from);
+    },
+    {
+      message: 'start_date_to must be after or equal to start_date_from',
+      path: ['start_date_to'],
+    },
+  );
+
+export class SchedulePublishImpactQueryDto extends createZodDto(schedulePublishImpactQuerySchema) {}
+
 // `cancellationStatusResponseSchema` is snake_case with ISO date-time strings;
 // `ShowCancellationGateService.getCancellationStatus` returns camelCase with
 // `Date` objects. Map by hand here, the same way `show.schema.ts`'s
@@ -303,6 +326,18 @@ export class StudioShowController extends BaseStudioController {
     @Query() query: PaginatedShowRunReviewQueryDto,
   ) {
     const { items, total } = await this.showRunReviewService.getShowRunReviewShows(studioId, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @Get('schedule-publish-impacts')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  @ZodPaginatedResponse(schedulePublishImpactRowSchema)
+  async schedulePublishImpacts(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: SchedulePublishImpactQueryDto,
+  ) {
+    const { items, total } = await this.studioShowManagementService.listSchedulePublishImpacts(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 

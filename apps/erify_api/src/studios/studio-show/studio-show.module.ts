@@ -20,6 +20,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
 @Module({
   imports: [
     TaskOrchestrationModule,
+    AuditModule,
     ShowModule,
     ShowOrchestrationModule,
     ShowStatusModule,

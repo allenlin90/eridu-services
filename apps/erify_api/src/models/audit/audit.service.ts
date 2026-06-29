@@ -5,6 +5,7 @@ import type {
   AuditWithTargets,
   CreateAuditPayload,
 } from './schemas/audit.schema';
+import type { SchedulePublishImpactAuditTarget } from './audit.repository';
 import { AuditRepository } from './audit.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -53,5 +54,17 @@ export class AuditService extends BaseModelService {
     opts?: { take?: number; skip?: number },
   ): Promise<AuditWithTargets[]> {
     return this.auditRepository.findForTargets(filters, opts);
+  }
+
+  async findSchedulePublishImpactsForStudio(
+    studioUid: string,
+    opts: {
+      startDateFrom: Date;
+      startDateTo?: Date;
+      take: number;
+      skip: number;
+    },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    return this.auditRepository.findSchedulePublishImpactsForStudio(studioUid, opts);
   }
 }

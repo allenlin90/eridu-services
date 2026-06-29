@@ -12,6 +12,7 @@ import type { ScheduleWithRelations } from './publishing.types';
 import { PublishingRelationSyncService } from './publishing-relation-sync.service';
 import { ValidationService } from './validation.service';
 
+import { AuditService } from '@/models/audit/audit.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { ShowService } from '@/models/show/show.service';
@@ -63,6 +64,7 @@ describe('publishingService', () => {
   let showPlatformService: jest.Mocked<ShowPlatformService>;
   let validationService: jest.Mocked<ValidationService>;
   let taskService: jest.Mocked<TaskService>;
+  let auditService: jest.Mocked<AuditService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
@@ -298,6 +300,12 @@ describe('publishingService', () => {
             reconcileTaskDueDates: jest.fn().mockResolvedValue(0),
           },
         },
+        {
+          provide: AuditService,
+          useValue: {
+            create: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -309,6 +317,7 @@ describe('publishingService', () => {
     showPlatformService = module.get(ShowPlatformService);
     validationService = module.get(ValidationService);
     taskService = module.get(TaskService);
+    auditService = module.get(AuditService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -321,6 +330,11 @@ describe('publishingService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date('2023-12-31T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should be defined', () => {
@@ -508,6 +522,261 @@ describe('publishingService', () => {
       });
       expect(result.publishSummary.shows_restored).toBe(1);
       expect(result.publishSummary.shows_created).toBe(0);
+    });
+
+    it('should match by external_id only and not fall back to show name', async () => {
+      const sameNameDifferentExternalId = {
+        id: BigInt(77),
+        uid: 'show_existing',
+        externalId: 'different_external_id',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Test Show 1',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: null,
+        },
+      };
+
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([sameNameDifferentExternalId])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { id: BigInt(1), clientId: BigInt(1), externalId: 'show_temp_1' },
+        ]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.createMany).toHaveBeenCalledTimes(1);
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(77) },
+        data: {
+          showStatusId: BigInt(9001),
+        },
+      });
+      expect(result.publishSummary.shows_created).toBe(1);
+      expect(result.publishSummary.shows_cancelled).toBe(1);
+    });
+
+    it('should preserve payload rows before the publish date and skip relation sync', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const pastExistingShow = {
+        id: BigInt(88),
+        uid: 'show_past',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Past Show',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: null,
+        },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([pastExistingShow])
+        .mockResolvedValueOnce([pastExistingShow]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: BigInt(88) },
+      }));
+      expect(mockTransactionClient.showCreator.findMany).not.toHaveBeenCalled();
+      expect(mockTransactionClient.showPlatform.findMany).not.toHaveBeenCalled();
+      expect(result.publishSummary.shows_preserved).toBe(1);
+      expect(result.publishSummary.shows_updated).toBe(0);
+    });
+
+    it('should update a future confirmed show and write a publish impact audit', async () => {
+      const confirmedShow = {
+        id: BigInt(99),
+        uid: 'show_confirmed',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Confirmed Show',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: 'CONFIRMED',
+        },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([confirmedShow])
+        .mockResolvedValueOnce([confirmedShow]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(99) },
+        data: expect.objectContaining({
+          name: 'Test Show 1',
+        }),
+      });
+      expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'UPDATE',
+        actorId: userId,
+        metadata: expect.objectContaining({
+          event: 'schedule_publish_impact',
+          schedule_uid: mockSchedule.uid,
+          external_id: 'show_temp_1',
+          impact_kind: 'confirmed_future_updated',
+          changed_fields: expect.arrayContaining(['name']),
+        }),
+        targets: [{ targetType: 'SHOW', targetId: BigInt(99) }],
+      }));
+      expect(result.publishSummary.confirmed_shows_updated).toBe(1);
+      expect(result.publishSummary.publish_impacts_recorded).toBe(1);
+    });
+
+    it('should move a missing future confirmed show to pending resolution and write an impact audit', async () => {
+      const confirmedShow = {
+        id: BigInt(101),
+        uid: 'show_confirmed_missing',
+        externalId: 'show_missing',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Missing Confirmed Show',
+        startTime: new Date('2024-01-03T10:00:00Z'),
+        endTime: new Date('2024-01-03T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: 'CONFIRMED',
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue({
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [],
+        },
+      });
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([confirmedShow]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.taskTarget.findFirst).not.toHaveBeenCalled();
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(101) },
+        data: {
+          showStatusId: BigInt(9002),
+        },
+      });
+      expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+        metadata: expect.objectContaining({
+          impact_kind: 'confirmed_future_pending_resolution',
+          changed_fields: ['show_status_id'],
+        }),
+        targets: [{ targetType: 'SHOW', targetId: BigInt(101) }],
+      }));
+      expect(result.publishSummary.shows_pending_resolution).toBe(1);
+      expect(result.publishSummary.confirmed_shows_pending_resolution).toBe(1);
+      expect(result.publishSummary.publish_impacts_recorded).toBe(1);
+    });
+
+    it('should preserve live shows that are missing from the payload', async () => {
+      const liveShow = {
+        id: BigInt(102),
+        uid: 'show_live_missing',
+        externalId: 'show_live_missing',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Live Show',
+        startTime: new Date('2024-01-03T10:00:00Z'),
+        endTime: new Date('2024-01-03T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: 'LIVE',
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue({
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [],
+        },
+      });
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([liveShow]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: BigInt(102) },
+      }));
+      expect(result.publishSummary.shows_preserved).toBe(1);
+      expect(result.publishSummary.shows_cancelled).toBe(0);
+      expect(result.publishSummary.shows_pending_resolution).toBe(0);
     });
 
     it('should reject adopting a deleted show from a different studio', async () => {

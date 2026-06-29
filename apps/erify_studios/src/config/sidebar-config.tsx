@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import {
   BadgeCheck,
+  BellDot,
   Building2,
   CalendarDays,
   Clapperboard,
@@ -228,6 +229,14 @@ function getStudioOperationsItems(
       title: 'Show Run Review',
       url: `/studios/${studioId}/show-run-review`,
       icon: ShieldCheck,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'schedulePublishImpacts')) {
+    operationsItems.push({
+      title: 'Schedule Impacts',
+      url: `/studios/${studioId}/schedule-publish-impacts`,
+      icon: BellDot,
     });
   }
 
