@@ -127,8 +127,8 @@ describe('mcpToolService', () => {
 
     const result = await createService().queryShows({
       studio_id: 'std_123',
-      date_from: '2026-06-01T00:00:00Z',
-      date_to: '2026-06-30T00:00:00Z',
+      date_from: '2026-06-01',
+      date_to: '2026-06-30',
       page: 2,
       limit: 10,
     }) as any;
@@ -140,34 +140,18 @@ describe('mcpToolService', () => {
       take: 10,
       skip: 10,
       sort: 'desc',
-      date_from: '2026-06-01T00:00:00Z',
-      date_to: '2026-06-30T00:00:00Z',
+      date_from: '2026-05-31T23:00:00.000Z',
+      date_to: '2026-06-30T22:59:59.999Z',
     });
     expect(result.data).toHaveLength(1);
     expect(result.total).toBe(1);
   });
 
-  it('resolves operational show dates before querying shows', async () => {
-    taskOrchestrationService.getStudioShowsWithTaskSummary.mockResolvedValue({ data: [rawShow()], total: 1 });
-
-    await createService().queryShows({
-      studio_id: 'std_123',
-      operational_date: '2026-06-28',
-      page: 1,
-      limit: 10,
-    });
-
-    expect(taskOrchestrationService.getStudioShowsWithTaskSummary).toHaveBeenCalledWith('std_123', expect.objectContaining({
-      date_from: '2026-06-27T23:00:00.000Z',
-      date_to: '2026-06-28T22:59:59.999Z',
-    }));
-  });
-
-  it('rejects ambiguous explicit and operational show date inputs', async () => {
+  it('rejects invalid date range ordering for shows', async () => {
     await expect(createService().queryShows({
       studio_id: 'std_123',
-      date_from: '2026-06-28T00:00:00Z',
-      date_preset: 'today',
+      date_from: '2026-06-28',
+      date_to: '2026-06-27',
     })).rejects.toBeInstanceOf(ZodError);
 
     expect(taskOrchestrationService.getStudioShowsWithTaskSummary).not.toHaveBeenCalled();
@@ -178,8 +162,8 @@ describe('mcpToolService', () => {
 
     const result = await createService().queryTasks({
       studio_id: 'std_123',
-      completed_at_from: '2026-06-01T00:00:00Z',
-      completed_at_to: '2026-06-30T00:00:00Z',
+      completed_at_from: '2026-06-01',
+      completed_at_to: '2026-06-30',
       status: 'COMPLETED',
       type: ['SETUP'],
       page: 1,
@@ -188,8 +172,8 @@ describe('mcpToolService', () => {
 
     expect(policy.assertStudioAllowed).toHaveBeenCalledWith('std_123');
     expect(taskService.findTasksForMcp).toHaveBeenCalledWith('std_123', {
-      completedAtFrom: new Date('2026-06-01T00:00:00Z'),
-      completedAtTo: new Date('2026-06-30T00:00:00Z'),
+      completedAtFrom: new Date('2026-05-31T17:00:00.000Z'),
+      completedAtTo: new Date('2026-06-30T16:59:59.999Z'),
       dueDateFrom: undefined,
       dueDateTo: undefined,
       status: ['COMPLETED'],
