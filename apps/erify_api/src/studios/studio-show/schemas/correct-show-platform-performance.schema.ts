@@ -14,7 +14,7 @@ export const correctShowPlatformPerformanceTransformSchema = correctShowPlatform
 
 export class CorrectShowPlatformPerformanceDto extends createZodDto(correctShowPlatformPerformanceTransformSchema) {
   declare gmv: string | null | undefined;
-  declare viewerCount: number | null | undefined;
+  declare viewerCount: number | undefined;
   declare ctr: string | null | undefined;
   declare cto: string | null | undefined;
   declare reason: string;

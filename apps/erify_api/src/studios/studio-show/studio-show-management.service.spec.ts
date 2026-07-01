@@ -86,6 +86,7 @@ describe('studioShowManagementService', () => {
     softDeleteByPlatformIds: jest.fn(),
     findByUid: jest.fn(),
     update: jest.fn(),
+    updateCorrectedPerformanceMetrics: jest.fn(),
   };
   const showPlatformServiceMock = {
     generateShowPlatformUid: jest.fn(),
@@ -939,6 +940,7 @@ describe('studioShowManagementService', () => {
       userServiceMock.getUserByExtId.mockResolvedValue(mockUser);
       showRepositoryMock.findByUidAndStudioUid.mockResolvedValue(mockShow);
       showPlatformRepositoryMock.findByUid.mockResolvedValue(mockShowPlatform);
+      showPlatformRepositoryMock.updateCorrectedPerformanceMetrics.mockResolvedValue('updated');
       showServiceMock.getShowById.mockResolvedValue(mockShow);
     });
 
@@ -949,23 +951,25 @@ describe('studioShowManagementService', () => {
         reason: 'Correction request',
       }, 'ext_5');
 
-      expect(showPlatformRepositoryMock.update).toHaveBeenCalledWith(
-        { id: mockShowPlatform.id },
+      expect(showPlatformRepositoryMock.updateCorrectedPerformanceMetrics).toHaveBeenCalledWith(
         expect.objectContaining({
-          gmv: new Prisma.Decimal('125.50'),
-          viewerCount: 50,
-          metadata: expect.objectContaining({
-            actuals_source: expect.objectContaining({
-              show_platform_gmv: 'MANAGER',
-              show_platform_view_count: 'MANAGER',
-            }),
-            performance_templates: expect.objectContaining({
-              show_platform_gmv: 'MANAGER',
-              show_platform_view_count: 'MANAGER',
-            }),
-          }),
+          uid: 'show_plt_123',
+          showId: mockShow.id,
+          metrics: [
+            { column: 'gmv', value: new Prisma.Decimal('125.50') },
+            { column: 'viewer_count', value: 50 },
+          ],
+          actualsSources: {
+            show_platform_gmv: 'MANAGER',
+            show_platform_view_count: 'MANAGER',
+          },
+          performanceTemplates: {
+            show_platform_gmv: 'MANAGER',
+            show_platform_view_count: 'MANAGER',
+          },
         }),
       );
+      expect(showPlatformRepositoryMock.update).not.toHaveBeenCalled();
 
       expect(auditServiceMock.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1005,6 +1009,21 @@ describe('studioShowManagementService', () => {
       ).rejects.toMatchObject({
         message: 'ShowPlatform not found with id show_plt_123',
       });
+    });
+
+    it('does not audit if the guarded correction update finds a stale show platform', async () => {
+      showPlatformRepositoryMock.updateCorrectedPerformanceMetrics.mockResolvedValue('not_found');
+
+      await expect(
+        service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
+          gmv: '100.00',
+          reason: 'Reason',
+        }, 'ext_5'),
+      ).rejects.toMatchObject({
+        message: 'ShowPlatform not found with id show_plt_123',
+      });
+
+      expect(auditServiceMock.create).not.toHaveBeenCalled();
     });
   });
 });

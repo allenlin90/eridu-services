@@ -34,6 +34,7 @@ import { ShowOrchestrationService } from '@/show-orchestration/show-orchestratio
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
 type ShowUpdateData = Parameters<ShowRepository['update']>[1];
+type CorrectedMetricColumn = 'gmv' | 'viewer_count' | 'ctr' | 'cto';
 
 @Injectable()
 export class StudioShowManagementService {
@@ -601,14 +602,13 @@ export class StudioShowManagementService {
     }
 
     const changes: Array<{ field: string; old_value: string | null; new_value: string | null }> = [];
-    const updateData: Prisma.ShowPlatformUpdateInput = {};
+    const metrics: Array<{ column: CorrectedMetricColumn; value: Prisma.Decimal | number | null }> = [];
     const nextActualsSources: Record<string, string> = {};
     const nextPerformanceTemplates: Record<string, string> = {};
 
-    const metadata = (showPlatform.metadata as Record<string, any> | null) ?? {};
-
     const checkMetric = (
       field: 'gmv' | 'ctr' | 'cto',
+      column: CorrectedMetricColumn,
       factKey: string,
       newValue: string | number | null | undefined,
       scale: number,
@@ -637,15 +637,15 @@ export class StudioShowManagementService {
           old_value: current !== null ? (current as Prisma.Decimal).toString() : null,
           new_value: newDecimal !== null ? newDecimal.toString() : null,
         });
-        updateData[field] = newDecimal;
+        metrics.push({ column, value: newDecimal });
         nextActualsSources[factKey] = 'MANAGER';
         nextPerformanceTemplates[factKey] = 'MANAGER';
       }
     };
 
-    checkMetric('gmv', 'show_platform_gmv', dto.gmv, 2, 12);
-    checkMetric('ctr', 'show_platform_ctr', dto.ctr, 2, 5);
-    checkMetric('cto', 'show_platform_cto', dto.cto, 2, 5);
+    checkMetric('gmv', 'gmv', 'show_platform_gmv', dto.gmv, 2, 12);
+    checkMetric('ctr', 'ctr', 'show_platform_ctr', dto.ctr, 2, 5);
+    checkMetric('cto', 'cto', 'show_platform_cto', dto.cto, 2, 5);
 
     if (dto.viewerCount !== undefined) {
       const current = showPlatform.viewerCount;
@@ -653,31 +653,26 @@ export class StudioShowManagementService {
       if (isChanged) {
         changes.push({
           field: 'viewerCount',
-          old_value: current !== null ? String(current) : null,
-          new_value: dto.viewerCount !== null ? String(dto.viewerCount) : null,
+          old_value: String(current),
+          new_value: String(dto.viewerCount),
         });
-        updateData.viewerCount = dto.viewerCount ?? 0;
+        metrics.push({ column: 'viewer_count', value: dto.viewerCount });
         nextActualsSources.show_platform_view_count = 'MANAGER';
         nextPerformanceTemplates.show_platform_view_count = 'MANAGER';
       }
     }
 
     if (changes.length > 0) {
-      const mergedMetadata = {
-        ...metadata,
-        actuals_source: {
-          ...(metadata.actuals_source as Record<string, string> ?? {}),
-          ...nextActualsSources,
-        },
-        performance_templates: {
-          ...(metadata.performance_templates as Record<string, string> ?? {}),
-          ...nextPerformanceTemplates,
-        },
-      };
-
-      updateData.metadata = mergedMetadata;
-
-      await this.showPlatformRepository.update({ id: showPlatform.id }, updateData);
+      const updateResult = await this.showPlatformRepository.updateCorrectedPerformanceMetrics({
+        uid: showPlatformUid,
+        showId: show.id,
+        metrics,
+        actualsSources: nextActualsSources,
+        performanceTemplates: nextPerformanceTemplates,
+      });
+      if (updateResult === 'not_found') {
+        throw HttpError.notFound('ShowPlatform', showPlatformUid);
+      }
 
       await this.auditService.create({
         action: 'OVERRIDE',

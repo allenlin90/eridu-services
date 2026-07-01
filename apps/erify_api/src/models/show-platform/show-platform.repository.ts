@@ -16,6 +16,8 @@ export type PerformanceMetricUpdateResult =
   | 'blocked_by_higher_priority'
   | 'not_found';
 
+type CorrectedPerformanceMetricColumn = 'gmv' | 'viewer_count' | 'ctr' | 'cto';
+
 // Custom model wrapper that implements IBaseModel with ShowPlatformWhereInput
 
 @Injectable()
@@ -167,6 +169,52 @@ export class ShowPlatformRepository extends BaseRepository<
       && templateUid !== protectedTemplateUid
       ? 'blocked_by_higher_priority'
       : 'not_found';
+  }
+
+  /**
+   * Manager corrections can touch multiple metric columns in one audited
+   * action. Keep the write scoped to the active show-platform row and merge only
+   * the changed provenance keys so concurrent extraction writes to sibling
+   * metrics cannot be lost by a stale metadata replacement.
+   */
+  async updateCorrectedPerformanceMetrics(params: {
+    uid: string;
+    showId: bigint;
+    metrics: Array<{
+      column: CorrectedPerformanceMetricColumn;
+      value: Prisma.Decimal | number | null;
+    }>;
+    actualsSources: Record<string, string>;
+    performanceTemplates: Record<string, string>;
+  }): Promise<Exclude<PerformanceMetricUpdateResult, 'blocked_by_higher_priority'>> {
+    const { uid, showId, metrics, actualsSources, performanceTemplates } = params;
+    const metricAssignments = metrics.map((metric) =>
+      Prisma.sql`${Prisma.raw(`"${metric.column}"`)} = ${metric.value}`,
+    );
+    const actualsSourcesJson = JSON.stringify(actualsSources);
+    const performanceTemplatesJson = JSON.stringify(performanceTemplates);
+
+    const metadataAssignment = Prisma.sql`"metadata" = jsonb_set(
+      jsonb_set(
+        COALESCE("metadata", '{}'::jsonb),
+        '{actuals_source}',
+        COALESCE("metadata" #> '{actuals_source}', '{}'::jsonb) || ${actualsSourcesJson}::jsonb,
+        true
+      ),
+      '{performance_templates}',
+      COALESCE("metadata" #> '{performance_templates}', '{}'::jsonb) || ${performanceTemplatesJson}::jsonb,
+      true
+    )`;
+
+    const affected = await this.txHost.tx.$executeRaw(Prisma.sql`
+      UPDATE "show_platforms"
+      SET ${Prisma.join([...metricAssignments, metadataAssignment], ', ')}
+      WHERE "uid" = ${uid}
+        AND "show_id" = ${showId}
+        AND "deleted_at" IS NULL
+    `);
+
+    return affected > 0 ? 'updated' : 'not_found';
   }
 
   async softDelete(where: Prisma.ShowPlatformWhereUniqueInput): Promise<ShowPlatform> {
