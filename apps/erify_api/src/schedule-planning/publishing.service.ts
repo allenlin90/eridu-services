@@ -291,6 +291,7 @@ export class PublishingService {
       shows_pending_resolution: 0,
       shows_restored: 0,
       shows_preserved: 0,
+      shows_skipped: 0,
       confirmed_shows_updated: 0,
       confirmed_shows_pending_resolution: 0,
       publish_impacts_recorded: 0,
@@ -312,8 +313,10 @@ export class PublishingService {
 
     const creatableShows = toCreate.filter((show) => {
       const statusKey = incomingStatusKeyById.get(show.showStatusId) ?? null;
+      // Never existed, so nothing was "preserved" — track separately from
+      // shows_preserved (which counts existing rows left untouched).
       if (this.isIncomingPastOrDone(show, statusKey, publishStartedAt)) {
-        publishSummary.shows_preserved += 1;
+        publishSummary.shows_skipped += 1;
         return false;
       }
       return true;
@@ -592,7 +595,7 @@ export class PublishingService {
     });
 
     this.logger.log(
-      `Diff publish summary schedule_uid=${schedule.uid} created=${publishSummary.shows_created} updated=${publishSummary.shows_updated} cancelled=${publishSummary.shows_cancelled} pending_resolution=${publishSummary.shows_pending_resolution} restored=${publishSummary.shows_restored} preserved=${publishSummary.shows_preserved} impacts=${publishSummary.publish_impacts_recorded} reconciled=${publishSummary.tasks_reconciled}`,
+      `Diff publish summary schedule_uid=${schedule.uid} created=${publishSummary.shows_created} updated=${publishSummary.shows_updated} cancelled=${publishSummary.shows_cancelled} pending_resolution=${publishSummary.shows_pending_resolution} restored=${publishSummary.shows_restored} preserved=${publishSummary.shows_preserved} skipped=${publishSummary.shows_skipped} impacts=${publishSummary.publish_impacts_recorded} reconciled=${publishSummary.tasks_reconciled}`,
     );
 
     return {

@@ -90,6 +90,7 @@ function buildPublishNote(summary) {
 
   const impactCount = Number(summary.publish_impacts_recorded || 0);
   const preservedCount = Number(summary.shows_preserved || 0);
+  const skippedCount = Number(summary.shows_skipped || 0);
   const confirmedUpdated = Number(summary.confirmed_shows_updated || 0);
   const confirmedPending = Number(summary.confirmed_shows_pending_resolution || 0);
 
@@ -99,5 +100,6 @@ function buildPublishNote(summary) {
     `confirmed_updated=${confirmedUpdated}`,
     `confirmed_pending=${confirmedPending}`,
     `preserved=${preservedCount}`,
+    `skipped=${skippedCount}`,
   ].join('; ');
 }

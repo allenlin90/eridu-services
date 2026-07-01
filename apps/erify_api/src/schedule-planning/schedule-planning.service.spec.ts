@@ -376,6 +376,7 @@ describe('schedulePlanningService', () => {
           shows_pending_resolution: 0,
           shows_restored: 0,
           shows_preserved: 0,
+          shows_skipped: 0,
           confirmed_shows_updated: 0,
           confirmed_shows_pending_resolution: 0,
           publish_impacts_recorded: 0,

@@ -623,6 +623,30 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_updated).toBe(0);
     });
 
+    it('should skip (not preserve) a brand-new payload row with a past start time and never existed before', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([]) // current schedule shows
+        .mockResolvedValueOnce([]); // matching shows by external identity
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.createMany).not.toHaveBeenCalled();
+      expect(result.publishSummary.shows_created).toBe(0);
+      expect(result.publishSummary.shows_preserved).toBe(0);
+      expect(result.publishSummary.shows_skipped).toBe(1);
+    });
+
     it('should preserve overnight shows before the operational-day cutoff on publish day', async () => {
       jest.setSystemTime(new Date('2024-01-02T05:00:00.000Z')); // 12:00 Asia/Bangkok
       const overnightExistingShow = {

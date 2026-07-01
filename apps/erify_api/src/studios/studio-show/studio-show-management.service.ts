@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { Prisma, ShowPlatform } from '@prisma/client';
 
+import type { AuditTargetType } from '@eridu/api-types/audits';
 import type {
   CancelShowWithResolutionInput,
   RequestCancellationResolutionInput,
@@ -391,7 +392,7 @@ export class StudioShowManagementService {
               break;
           }
           return {
-            target_type: t.targetType as any,
+            target_type: t.targetType as AuditTargetType,
             target_uid: targetUid,
           };
         }),

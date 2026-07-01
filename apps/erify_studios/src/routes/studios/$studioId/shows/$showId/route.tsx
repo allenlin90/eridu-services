@@ -106,7 +106,7 @@ function StudioShowDetailLayout() {
               Submitted Tasks
             </Link>
           )}
-          {hasAccess('schedulePublishImpacts') && (
+          {hasAccess('showAudits') && (
             <Link
               to="/studios/$studioId/shows/$showId/audits"
               params={{ studioId, showId }}

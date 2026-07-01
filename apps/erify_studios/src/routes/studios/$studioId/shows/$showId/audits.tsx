@@ -67,7 +67,7 @@ function ShowAuditsPage() {
   };
 
   return (
-    <StudioRouteGuard studioId={studioId} routeKey="schedulePublishImpacts">
+    <StudioRouteGuard studioId={studioId} routeKey="showAudits">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-semibold">Audit Logs & History</h2>
