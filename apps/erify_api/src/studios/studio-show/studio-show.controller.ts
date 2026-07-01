@@ -591,7 +591,7 @@ export class StudioShowController extends BaseStudioController {
   }
 
   @Get(':id/audits')
-  @StudioProtected()
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
   @ReadBurstThrottle()
   @ZodPaginatedResponse(auditApiResponseSchema)
   async listShowAudits(

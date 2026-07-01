@@ -13,6 +13,7 @@ import {
   DataTablePagination,
 } from '@eridu/ui';
 
+import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { useShowAuditsQuery } from '@/features/studio-shows/api/get-show-audits';
 
 const PAGE_SIZE = 25;
@@ -66,44 +67,46 @@ function ShowAuditsPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-sm font-semibold">Audit Logs & History</h2>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => void refetch()}
-          disabled={isFetching}
-          aria-label="Refresh audits"
-        >
-          <RefreshCw className={isFetching ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-        </Button>
-      </div>
+    <StudioRouteGuard studioId={studioId} routeKey="schedulePublishImpacts">
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-sm font-semibold">Audit Logs & History</h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            aria-label="Refresh audits"
+          >
+            <RefreshCw className={isFetching ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+          </Button>
+        </div>
 
-      <DataTable
-        data={rows}
-        columns={columns}
-        isLoading={isLoading}
-        isFetching={isFetching}
-        emptyMessage="No audits recorded for this show."
-        manualPagination
-        pageCount={pageCount}
-        paginationState={paginationState}
-        onPaginationChange={handlePaginationChange}
-        renderFooter={() => (
-          <DataTablePagination
-            pagination={{
-              pageIndex: paginationState.pageIndex,
-              pageSize: paginationState.pageSize,
-              total,
-              pageCount,
-            }}
-            onPaginationChange={handlePaginationChange}
-          />
-        )}
-      />
-    </div>
+        <DataTable
+          data={rows}
+          columns={columns}
+          isLoading={isLoading}
+          isFetching={isFetching}
+          emptyMessage="No audits recorded for this show."
+          manualPagination
+          pageCount={pageCount}
+          paginationState={paginationState}
+          onPaginationChange={handlePaginationChange}
+          renderFooter={() => (
+            <DataTablePagination
+              pagination={{
+                pageIndex: paginationState.pageIndex,
+                pageSize: paginationState.pageSize,
+                total,
+                pageCount,
+              }}
+              onPaginationChange={handlePaginationChange}
+            />
+          )}
+        />
+      </div>
+    </StudioRouteGuard>
   );
 }
 

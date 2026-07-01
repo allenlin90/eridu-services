@@ -418,6 +418,14 @@ describe('studioShowController', () => {
       expect(result.data).toEqual(expected.items);
       expect(result.meta.total).toBe(1);
     });
+
+    it('restricts show audits to ADMIN and MANAGER', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.listShowAudits);
+      expect(roles).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+      ]);
+    });
   });
 
   describe('aCCOUNT_MANAGER money redaction', () => {

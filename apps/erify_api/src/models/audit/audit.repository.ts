@@ -115,22 +115,8 @@ export class AuditRepository {
       return [];
     }
 
-    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) => {
-      switch (f.targetType) {
-        case 'SHOW':
-          return { showId: f.targetId };
-        case 'SHOW_CREATOR':
-          return { showCreatorId: f.targetId };
-        case 'SHOW_PLATFORM':
-          return { showPlatformId: f.targetId };
-        case 'STUDIO_SHIFT':
-          return { studioShiftId: f.targetId };
-        default: {
-          const exhaustive: never = f.targetType;
-          throw new Error(`Unknown audit target type: ${exhaustive}`);
-        }
-      }
-    });
+    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) =>
+      this.toTargetWhereInput(f));
 
     return this.delegate.findMany({
       where: {
@@ -150,22 +136,8 @@ export class AuditRepository {
       return 0;
     }
 
-    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) => {
-      switch (f.targetType) {
-        case 'SHOW':
-          return { showId: f.targetId };
-        case 'SHOW_CREATOR':
-          return { showCreatorId: f.targetId };
-        case 'SHOW_PLATFORM':
-          return { showPlatformId: f.targetId };
-        case 'STUDIO_SHIFT':
-          return { studioShiftId: f.targetId };
-        default: {
-          const exhaustive: never = f.targetType;
-          throw new Error(`Unknown audit target type: ${exhaustive}`);
-        }
-      }
-    });
+    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) =>
+      this.toTargetWhereInput(f));
 
     return this.txHost.tx.audit.count({
       where: {
@@ -241,10 +213,25 @@ export class AuditRepository {
         return { ...base, showPlatform: { connect: { id: target.targetId } } };
       case 'STUDIO_SHIFT':
         return { ...base, studioShift: { connect: { id: target.targetId } } };
-      default: {
-        const exhaustive: never = target.targetType;
-        throw new Error(`Unknown audit target type: ${exhaustive}`);
-      }
+      default:
+        throw new Error(`Unknown audit target type: ${String(target.targetType)}`);
+    }
+  }
+
+  private toTargetWhereInput(
+    filter: AuditTargetFilter,
+  ): Prisma.AuditTargetWhereInput {
+    switch (filter.targetType) {
+      case 'SHOW':
+        return { showId: filter.targetId };
+      case 'SHOW_CREATOR':
+        return { showCreatorId: filter.targetId };
+      case 'SHOW_PLATFORM':
+        return { showPlatformId: filter.targetId };
+      case 'STUDIO_SHIFT':
+        return { studioShiftId: filter.targetId };
+      default:
+        throw new Error(`Unknown audit target type: ${String(filter.targetType)}`);
     }
   }
 }
