@@ -32,7 +32,6 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 
 import { BaseStudioController } from '../base-studio.controller';
 
-import { auditApiResponseSchema } from '@eridu/api-types/audits';
 import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
 import { ShowAuditQueryDto } from './schemas/studio-show-audit.schema';
 import {
