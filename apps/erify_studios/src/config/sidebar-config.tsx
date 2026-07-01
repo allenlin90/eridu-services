@@ -197,6 +197,14 @@ function getStudioPlanningItems(
     });
   }
 
+  if (hasStudioRouteAccess(role as StudioRole, 'schedulePublishImpacts')) {
+    planningItems.push({
+      title: m.schedule_publish_impacts_nav_title(),
+      url: `/studios/${studioId}/schedule-publish-impacts`,
+      icon: BellDot,
+    });
+  }
+
   return planningItems;
 }
 
@@ -233,13 +241,7 @@ function getStudioOperationsItems(
     });
   }
 
-  if (hasStudioRouteAccess(role as StudioRole, 'schedulePublishImpacts')) {
-    operationsItems.push({
-      title: m.schedule_publish_impacts_nav_title(),
-      url: `/studios/${studioId}/schedule-publish-impacts`,
-      icon: BellDot,
-    });
-  }
+
 
   if (hasStudioRouteAccess(role as StudioRole, 'taskReports')) {
     operationsItems.push({

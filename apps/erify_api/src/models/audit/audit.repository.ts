@@ -14,6 +14,11 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 const AUDIT_WITH_TARGETS_INCLUDE = {
   targets: true,
+  actor: {
+    select: {
+      uid: true,
+    },
+  },
 } as const satisfies Prisma.AuditInclude;
 
 const SCHEDULE_PUBLISH_IMPACT_INCLUDE = {
@@ -137,6 +142,37 @@ export class AuditRepository {
       orderBy: { createdAt: 'desc' },
       skip: opts?.skip,
       take: opts?.take,
+    });
+  }
+
+  async countForTargets(filters: AuditTargetFilter[]): Promise<number> {
+    if (filters.length === 0) {
+      return 0;
+    }
+
+    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) => {
+      switch (f.targetType) {
+        case 'SHOW':
+          return { showId: f.targetId };
+        case 'SHOW_CREATOR':
+          return { showCreatorId: f.targetId };
+        case 'SHOW_PLATFORM':
+          return { showPlatformId: f.targetId };
+        case 'STUDIO_SHIFT':
+          return { studioShiftId: f.targetId };
+        default: {
+          const exhaustive: never = f.targetType;
+          throw new Error(`Unknown audit target type: ${exhaustive}`);
+        }
+      }
+    });
+
+    return this.txHost.tx.audit.count({
+      where: {
+        targets: {
+          some: { OR: orConditions },
+        },
+      },
     });
   }
 

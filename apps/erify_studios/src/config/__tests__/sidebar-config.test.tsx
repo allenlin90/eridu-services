@@ -213,6 +213,10 @@ describe('useSidebarConfig', () => {
           title: 'Creator Mapping',
           url: '/studios/studio-1/creator-mapping',
         }),
+        expect.objectContaining({
+          title: 'Publish Audit',
+          url: '/studios/studio-1/schedule-publish-impacts',
+        }),
       ]),
     }));
 
@@ -229,10 +233,6 @@ describe('useSidebarConfig', () => {
         expect.objectContaining({
           title: 'Show Run Review',
           url: '/studios/studio-1/show-run-review',
-        }),
-        expect.objectContaining({
-          title: 'Schedule Impacts',
-          url: '/studios/studio-1/schedule-publish-impacts',
         }),
         expect.objectContaining({
           title: 'Task Review',

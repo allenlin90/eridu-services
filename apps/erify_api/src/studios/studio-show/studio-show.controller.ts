@@ -32,12 +32,14 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 import { BaseStudioController } from '../base-studio.controller';
 
 import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
+import { auditApiResponseSchema } from '@eridu/api-types/audits';
 import {
   cancellationStatusResponseDto,
   CancelShowWithResolutionDto,
   RequestCancellationResolutionDto,
   ResolveShowCancellationDto,
 } from './schemas/studio-show-cancellation.schema';
+import { ShowAuditQueryDto } from './schemas/studio-show-audit.schema';
 import {
   BulkAssignStudioShowCreatorsDto,
   bulkAssignStudioShowCreatorsResultSchema,
@@ -586,5 +588,18 @@ export class StudioShowController extends BaseStudioController {
       body,
       user.ext_id,
     );
+  }
+
+  @Get(':id/audits')
+  @StudioProtected()
+  @ReadBurstThrottle()
+  @ZodPaginatedResponse(auditApiResponseSchema)
+  async listShowAudits(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Query() query: ShowAuditQueryDto,
+  ) {
+    const { items, total } = await this.studioShowManagementService.listShowAudits(studioId, id, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 }

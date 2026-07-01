@@ -106,6 +106,15 @@ function StudioShowDetailLayout() {
               Submitted Tasks
             </Link>
           )}
+          <Link
+            to="/studios/$studioId/shows/$showId/audits"
+            params={{ studioId, showId }}
+            search={{ page: 1 }}
+            className={TAB_LINK_CLASS}
+            activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+          >
+            Publish Audit
+          </Link>
         </nav>
 
         <Outlet />

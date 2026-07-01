@@ -56,6 +56,10 @@ export class AuditService extends BaseModelService {
     return this.auditRepository.findForTargets(filters, opts);
   }
 
+  async countForTargets(filters: AuditTargetFilter[]): Promise<number> {
+    return this.auditRepository.countForTargets(filters);
+  }
+
   async findSchedulePublishImpactsForStudio(
     studioUid: string,
     opts: {

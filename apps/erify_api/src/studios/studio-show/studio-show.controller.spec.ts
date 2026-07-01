@@ -50,6 +50,7 @@ describe('studioShowController', () => {
     resolveShowCancellation: jest.fn(),
     getCancellationStatus: jest.fn(),
     listSchedulePublishImpacts: jest.fn(),
+    listShowAudits: jest.fn(),
   };
 
   const clientMechanicServiceMock = {
@@ -384,6 +385,38 @@ describe('studioShowController', () => {
         STUDIO_ROLE.ADMIN,
         STUDIO_ROLE.MANAGER,
       ]);
+    });
+  });
+
+  describe('listShowAudits', () => {
+    it('should list audits for a show', async () => {
+      const studioId = 'std_123';
+      const showId = 'show_123';
+      const query = { page: 1, limit: 25 };
+      const expected = {
+        items: [
+          {
+            id: 'aud_123',
+            action: 'UPDATE',
+            actor_uid: 'usr_123',
+            ip_address: null,
+            user_agent: null,
+            reason: null,
+            metadata: { event: 'schedule_publish_impact' },
+            targets: [{ target_type: 'SHOW', target_uid: 'show_123' }],
+            created_at: '2026-06-29T10:00:00.000Z',
+          },
+        ],
+        total: 1,
+      };
+
+      studioShowManagementServiceMock.listShowAudits.mockResolvedValue(expected);
+
+      const result = await controller.listShowAudits(studioId, showId, query as any);
+
+      expect(studioShowManagementServiceMock.listShowAudits).toHaveBeenCalledWith(studioId, showId, query);
+      expect(result.data).toEqual(expected.items);
+      expect(result.meta.total).toBe(1);
     });
   });
 

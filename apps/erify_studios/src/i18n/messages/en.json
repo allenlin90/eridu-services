@@ -14,7 +14,7 @@
   "task_type_admin": "Admin",
   "task_type_routine": "Routine",
   "task_type_other": "Other",
-  "schedule_publish_impacts_nav_title": "Schedule Impacts",
+  "schedule_publish_impacts_nav_title": "Publish Audit",
   "schedule_publish_impacts_denied_title": "Schedule Impact Access Required",
   "schedule_publish_impacts_denied_desc": "Only studio managers and admins can review schedule publish impacts.",
   "schedule_publish_impacts_page_title": "Schedule Publish Impacts",

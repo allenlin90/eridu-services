@@ -43,7 +43,7 @@ export type CreateAuditTargetPayload = {
 };
 
 /** `Audit` row with its `AuditTarget` rows eagerly included. */
-export type AuditWithTargets = Audit & { targets: AuditTarget[] };
+export type AuditWithTargets = Audit & { targets: AuditTarget[]; actor?: { uid: string } | null };
 
 /** Filter tuple consumed by `AuditRepository.findForTargets`. */
 export type AuditTargetFilter = {

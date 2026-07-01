@@ -346,6 +346,42 @@ export class StudioShowManagementService {
     };
   }
 
+  async listShowAudits(
+    studioUid: string,
+    showUid: string,
+    query: { page?: number; limit?: number },
+  ) {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 25;
+    const skip = (page - 1) * limit;
+
+    const filters = [{ targetType: 'SHOW' as const, targetId: show.id }];
+
+    const [total, items] = await Promise.all([
+      this.auditService.countForTargets(filters),
+      this.auditService.findForTargets(filters, { skip, take: limit }),
+    ]);
+
+    return {
+      items: items.map((item) => ({
+        id: item.uid,
+        action: item.action,
+        actor_uid: item.actor?.uid ?? null,
+        ip_address: item.ipAddress ?? null,
+        user_agent: item.userAgent ?? null,
+        reason: item.reason ?? null,
+        metadata: item.metadata,
+        targets: item.targets.map((t) => ({
+          target_type: t.targetType,
+          target_uid: t.targetType === 'SHOW' ? show.uid : t.targetId.toString(),
+        })),
+        created_at: item.createdAt.toISOString(),
+      })),
+      total,
+    };
+  }
+
   @Transactional()
   async deleteShow(studioUid: string, showUid: string): Promise<void> {
     const show = await this.findStudioShowOrThrow(studioUid, showUid);
