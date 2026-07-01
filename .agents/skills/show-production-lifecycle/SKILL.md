@@ -91,6 +91,8 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Fact extraction**: When tasks are approved, the fact-extraction pipeline writes actuals to Show/ShowCreator/ShowPlatform entities. Source priority: MANAGER (4) > PLATFORM (3) > CREATOR_INPUT (2) > OPERATOR (1) > PLANNED (0). See `fact-extraction-pipeline` skill.
 
+**Manager performance correction** (Phase 5): `POST /studios/:studioId/shows/:id/platforms/:showPlatformUid/correct-performance` (ADMIN/MANAGER). Sets `actuals_source` to MANAGER for each corrected metric — the highest extraction priority — and creates an `OVERRIDE` audit record with a required business reason. The extraction pipeline enforces MANAGER priority at both read time and write time (WHERE predicate), so a correction is not overwritten by a subsequent extraction run. See [show-performance-analytics.md](../../../docs/features/show-performance-analytics.md#performance-correction-phase-5).
+
 **Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`.
 
 **Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 8 and 16.

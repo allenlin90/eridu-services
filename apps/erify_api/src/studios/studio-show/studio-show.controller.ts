@@ -30,6 +30,7 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 
 import { BaseStudioController } from '../base-studio.controller';
 
+import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
 import {
   cancellationStatusResponseDto,
   CancelShowWithResolutionDto,
@@ -62,6 +63,7 @@ import {
 } from '@/models/show/schemas/show.schema';
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
+import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { StudioService } from '@/models/studio/studio.service';
 import {
   ListStudioShowsQueryDto,
@@ -530,5 +532,24 @@ export class StudioShowController extends BaseStudioController {
   ) {
     await this.taskOrchestrationService.getStudioShow(studioId, id);
     await this.showOrchestrationService.removeCreatorsFromShow(id, [creatorId]);
+  }
+
+  @Post(':id/platforms/:showPlatformUid/correct-performance')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ZodResponse(studioShowDetailDto)
+  async correctPerformance(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Param('showPlatformUid', new UidValidationPipe(ShowPlatformService.UID_PREFIX, 'ShowPlatform')) showPlatformUid: string,
+    @Body() body: CorrectShowPlatformPerformanceDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studioShowManagementService.correctShowPlatformPerformance(
+      studioId,
+      id,
+      showPlatformUid,
+      body,
+      user.ext_id,
+    );
   }
 }

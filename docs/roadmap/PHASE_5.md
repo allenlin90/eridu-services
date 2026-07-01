@@ -28,7 +28,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | 4   | [Cancel show with resolution workflow](#4-cancel-show-with-resolution-workflow) — guided cancellation and pending-resolution sign-off from show detail and duty-manager dashboard | 3          | ✅ Done       |
 | 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | ✅ Done       |
 | 6   | [Import platform performance data](#6-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                                     | —          | 🔲 Planned    |
-| 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate performance metrics from any source with audit reason                      | —          | 🔲 Planned    |
+| 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate performance metrics from any source with audit reason                      | —          | ✅ Done       |
 | 8   | [Show-level issue ownership](#8-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement               | —          | 🔲 Planned    |
 | 9   | [Advisory planning readiness checklist](#9-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition             | 1, 2       | 🔲 Planned    |
 | 10  | [Post-production completion review checklist](#10-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records | 6, 7, 8    | 🔲 Planned    |
@@ -149,9 +149,9 @@ Start with a controlled manual export/upload flow (CSV or spreadsheet) for impor
 
 ### 7. Show performance correction
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
+**Delivered**: PR #247 — `feat(shows): implement manager show performance correction`
 
-Allow managers to directly correct missing or inaccurate `ShowPlatform` performance metrics (GMV, views, CTR, CTO) with a business reason, regardless of whether the current value came from task extraction, manual import, future platform sync, or backfill. Corrections should create audit records and follow the existing `MANAGER` priority level in the extraction pipeline's priority resolver. Corrections can feed review surfaces and later export without requiring lifecycle-state enforcement.
+`POST /studios/:studioId/shows/:id/platforms/:showPlatformUid/correct-performance` — restricted to `ADMIN` and `MANAGER`. Accepts GMV, viewer count, CTR, CTO (all optional; only changed values write), plus a required business reason. Sets `actuals_source` to `MANAGER` for each corrected metric, protecting it from subsequent lower-priority extraction overwrites. Creates an `OVERRIDE` audit record. The extraction pipeline `BasePlatformPerformanceExtractor` now checks source priority at read time AND atomically enforces it at write time via a `WHERE actuals_source <> 'MANAGER'` predicate, closing the TOCTOU gap. See [feature doc](../features/show-performance-analytics.md#performance-correction-phase-5).
 
 ### 8. Show-level issue ownership
 

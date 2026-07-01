@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
+import { Prisma, ShowPlatform } from '@prisma/client';
 
 import type {
   CancelShowWithResolutionInput,
@@ -7,7 +8,10 @@ import type {
   ResolveShowCancellationInput,
 } from '@eridu/api-types/shows';
 
+import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
+
 import { HttpError } from '@/lib/errors/http-error.util';
+import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
@@ -30,6 +34,7 @@ import { ShowOrchestrationService } from '@/show-orchestration/show-orchestratio
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
 type ShowUpdateData = Parameters<ShowRepository['update']>[1];
+type CorrectedMetricColumn = 'gmv' | 'viewer_count' | 'ctr' | 'cto';
 
 @Injectable()
 export class StudioShowManagementService {
@@ -47,6 +52,7 @@ export class StudioShowManagementService {
     private readonly showCancellationGateService: ShowCancellationGateService,
     private readonly showStatusService: ShowStatusService,
     private readonly taskService: TaskService,
+    private readonly auditService: AuditService,
   ) {}
 
   @Transactional()
@@ -572,5 +578,143 @@ export class StudioShowManagementService {
         }),
       ),
     ]);
+  }
+
+  @Transactional()
+  async correctShowPlatformPerformance(
+    studioUid: string,
+    showUid: string,
+    showPlatformUid: string,
+    dto: CorrectShowPlatformPerformanceDto,
+    actorExtId: string,
+  ) {
+    const [show, actor] = await Promise.all([
+      this.findStudioShowOrThrow(studioUid, showUid),
+      this.userService.getUserByExtId(actorExtId),
+    ]);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    const showPlatform = (await this.showPlatformRepository.findByUid(showPlatformUid, {
+      platform: true,
+    })) as (ShowPlatform & { platform?: { name: string } | null }) | null;
+    if (!showPlatform || showPlatform.showId !== show.id || showPlatform.deletedAt !== null) {
+      throw HttpError.notFound('ShowPlatform', showPlatformUid);
+    }
+
+    const changes: Array<{ field: string; old_value: string | null; new_value: string | null }> = [];
+    const pinnedMetrics: Array<{ field: string; value: string | null }> = [];
+    const metrics: Array<{ column: CorrectedMetricColumn; value: Prisma.Decimal | number | null }> = [];
+    const nextActualsSources: Record<string, string> = {};
+    const nextPerformanceTemplates: Record<string, string> = {};
+    const metadata = (showPlatform.metadata as Record<string, any> | null) ?? {};
+    const currentActualsSources = (metadata.actuals_source as Record<string, string> | undefined) ?? {};
+
+    const checkMetric = (
+      field: 'gmv' | 'ctr' | 'cto',
+      column: CorrectedMetricColumn,
+      factKey: string,
+      newValue: string | number | null | undefined,
+      scale: number,
+      precision: number,
+    ) => {
+      if (newValue === undefined)
+        return;
+      const current = showPlatform[field];
+      let newDecimal: Prisma.Decimal | null = null;
+      if (newValue !== null) {
+        newDecimal = new Prisma.Decimal(newValue);
+        if (!newDecimal.isFinite()) {
+          throw HttpError.badRequest(`Invalid number for ${field}`);
+        }
+        newDecimal = newDecimal.toDecimalPlaces(scale, Prisma.Decimal.ROUND_HALF_UP);
+        const maxMagnitude = new Prisma.Decimal(10).pow(precision - scale);
+        if (newDecimal.abs().gte(maxMagnitude)) {
+          throw HttpError.badRequest(`${field} value out of range`);
+        }
+      }
+
+      const isChanged = current === null ? newDecimal !== null : (newDecimal === null || !newDecimal.equals(current as Prisma.Decimal));
+      if (isChanged) {
+        changes.push({
+          field,
+          old_value: current !== null ? (current as Prisma.Decimal).toString() : null,
+          new_value: newDecimal !== null ? newDecimal.toString() : null,
+        });
+        metrics.push({ column, value: newDecimal });
+      }
+      if (isChanged || currentActualsSources[factKey] !== 'MANAGER') {
+        nextActualsSources[factKey] = 'MANAGER';
+        nextPerformanceTemplates[factKey] = 'MANAGER';
+        if (!isChanged) {
+          pinnedMetrics.push({
+            field,
+            value: newDecimal !== null ? newDecimal.toString() : null,
+          });
+        }
+      }
+    };
+
+    checkMetric('gmv', 'gmv', 'show_platform_gmv', dto.gmv, 2, 12);
+    checkMetric('ctr', 'ctr', 'show_platform_ctr', dto.ctr, 2, 5);
+    checkMetric('cto', 'cto', 'show_platform_cto', dto.cto, 2, 5);
+
+    if (dto.viewerCount !== undefined) {
+      const current = showPlatform.viewerCount;
+      const isChanged = current !== dto.viewerCount;
+      if (isChanged) {
+        changes.push({
+          field: 'viewerCount',
+          old_value: String(current),
+          new_value: String(dto.viewerCount),
+        });
+        metrics.push({ column: 'viewer_count', value: dto.viewerCount });
+      }
+      if (isChanged || currentActualsSources.show_platform_view_count !== 'MANAGER') {
+        nextActualsSources.show_platform_view_count = 'MANAGER';
+        nextPerformanceTemplates.show_platform_view_count = 'MANAGER';
+        if (!isChanged) {
+          pinnedMetrics.push({
+            field: 'viewerCount',
+            value: String(dto.viewerCount),
+          });
+        }
+      }
+    }
+
+    if (changes.length > 0 || Object.keys(nextActualsSources).length > 0) {
+      const updateResult = await this.showPlatformRepository.updateCorrectedPerformanceMetrics({
+        uid: showPlatformUid,
+        showId: show.id,
+        metrics,
+        actualsSources: nextActualsSources,
+        performanceTemplates: nextPerformanceTemplates,
+      });
+      if (updateResult === 'not_found') {
+        throw HttpError.notFound('ShowPlatform', showPlatformUid);
+      }
+
+      await this.auditService.create({
+        action: 'OVERRIDE',
+        actorId: actor.id,
+        reason: dto.reason,
+        metadata: {
+          corrected_metrics: changes,
+          pinned_metrics: pinnedMetrics,
+          platform_name: showPlatform.platform?.name ?? 'Unknown',
+          show_name: show.name,
+          actor_uid: actor.uid,
+          show_uid: show.uid,
+          show_platform_uid: showPlatform.uid,
+        },
+        targets: [
+          { targetType: 'SHOW', targetId: show.id },
+          { targetType: 'SHOW_PLATFORM', targetId: showPlatform.id },
+        ],
+      });
+    }
+
+    return this.showService.getShowById(showUid, studioShowDetailInclude);
   }
 }

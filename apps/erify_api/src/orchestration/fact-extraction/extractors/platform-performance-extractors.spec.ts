@@ -85,6 +85,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         dbField: 'gmv',
         value: new Prisma.Decimal(1250.5),
         factKey: 'show_platform_gmv',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
@@ -115,6 +116,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         dbField: 'gmv',
         value: new Prisma.Decimal('1250.12'),
         factKey: 'show_platform_gmv',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
@@ -221,6 +223,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         dbField: 'gmv',
         value: new Prisma.Decimal(1600.0),
         factKey: 'show_platform_gmv',
+        source: 'OPERATOR',
         templateUid: POST_PRODUCTION_TEMPLATE_UID,
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
@@ -254,9 +257,44 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         dbField: 'gmv',
         value: new Prisma.Decimal(1300.0),
         factKey: 'show_platform_gmv',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
+      expect(decision).toEqual({
+        kind: 'skip',
+        action: 'SKIPPED_LOWER_PRIORITY',
+        skippedBy: 'OPERATOR',
+        attemptedValue: '1300',
+      });
+    });
+
+    it('skips a lower-priority write when manager provenance wins after the read', async () => {
+      const showPlatformService = buildShowPlatformService({
+        gmv: new Prisma.Decimal(1250.5),
+        metadata: {
+          actuals_source: {
+            show_platform_gmv: 'OPERATOR',
+          },
+          performance_templates: {
+            show_platform_gmv: 'ttpl_loop8',
+          },
+        },
+      });
+      (showPlatformService.updatePerformanceMetric as jest.Mock).mockResolvedValueOnce(
+        'blocked_by_higher_priority',
+      );
+      const extractor = new PlatformGmvExtractor(showPlatformService);
+
+      const decision = await extractor.apply({ ...factGmv, rawValue: 1300.0 }, ctx);
+
+      expect(showPlatformService.updatePerformanceMetric).toHaveBeenCalledWith(
+        expect.objectContaining({
+          factKey: 'show_platform_gmv',
+          source: 'OPERATOR',
+          value: new Prisma.Decimal(1300.0),
+        }),
+      );
       expect(decision).toEqual({
         kind: 'skip',
         action: 'SKIPPED_LOWER_PRIORITY',
@@ -302,6 +340,28 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
 
       expect(decision).toEqual({ kind: 'noop', reason: 'target_stale' });
     });
+
+    it('skips extraction when the metric has a MANAGER actuals_source recorded (manager override)', async () => {
+      const showPlatformService = buildShowPlatformService({
+        gmv: new Prisma.Decimal(1250.5),
+        metadata: {
+          actuals_source: {
+            show_platform_gmv: 'MANAGER',
+          },
+        },
+      });
+      const extractor = new PlatformGmvExtractor(showPlatformService);
+
+      const decision = await extractor.apply(factGmv, ctx);
+
+      expect(showPlatformService.updatePerformanceMetric).not.toHaveBeenCalled();
+      expect(decision).toEqual({
+        kind: 'skip',
+        action: 'SKIPPED_LOWER_PRIORITY',
+        skippedBy: 'MANAGER',
+        attemptedValue: '1250.5',
+      });
+    });
   });
 
   describe('platformViewCountExtractor', () => {
@@ -326,6 +386,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         dbField: 'viewerCount',
         value: 500,
         factKey: 'show_platform_view_count',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
@@ -387,6 +448,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         dbField: 'ctr',
         value: new Prisma.Decimal('5.25'),
         factKey: 'show_platform_ctr',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });
@@ -397,6 +459,7 @@ describe('basePlatformPerformanceExtractor & Subclasses', () => {
         dbField: 'cto',
         value: new Prisma.Decimal('2.45'),
         factKey: 'show_platform_cto',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });

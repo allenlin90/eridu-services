@@ -4,6 +4,7 @@ import type {
   cancellationHistoryEntrySchema,
   cancellationStatusResponseSchema,
   cancelShowWithResolutionSchema,
+  correctShowPlatformPerformanceInputSchema,
   createShowInputSchema,
   createStudioShowInputSchema,
   listShowsQuerySchema,
@@ -142,3 +143,4 @@ export type RequestCancellationResolutionInput = z.infer<typeof requestCancellat
 export type ResolveShowCancellationInput = z.infer<typeof resolveShowCancellationSchema>;
 export type CancellationHistoryEntry = z.infer<typeof cancellationHistoryEntrySchema>;
 export type CancellationStatusResponse = z.infer<typeof cancellationStatusResponseSchema>;
+export type CorrectShowPlatformPerformanceInput = z.infer<typeof correctShowPlatformPerformanceInputSchema>;

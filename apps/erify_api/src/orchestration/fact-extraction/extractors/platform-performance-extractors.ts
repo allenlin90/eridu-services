@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
+import type { ActualsSource } from '@eridu/api-types/audits';
 import type { SystemFactKey } from '@eridu/api-types/task-management';
+
+import { canResolverOverwrite } from '../source-priority';
 
 import type {
   ExtractedFact,
@@ -129,9 +132,23 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
     }
 
     // Precedence rule check:
+    // If a manager corrected this metric, it has MANAGER priority which blocks lower priority templates.
+    const metadata = (showPlatform.metadata as Record<string, any> | null) ?? {};
+    const recordedSource = metadata.actuals_source?.[this.factKey] as ActualsSource | undefined;
+    if (!canResolverOverwrite(ctx.source, recordedSource)) {
+      if (!recordedSource) {
+        throw new Error(`Missing recorded source for blocked ${this.factKey} write`);
+      }
+      return {
+        kind: 'skip',
+        action: 'SKIPPED_LOWER_PRIORITY',
+        skippedBy: recordedSource,
+        attemptedValue,
+      };
+    }
+
     // If the currently recorded template for this metric was the post-production check,
     // we only allow overrides from the post-production check itself.
-    const metadata = (showPlatform.metadata as Record<string, any> | null) ?? {};
     const recordedTemplate = metadata.performance_templates?.[this.factKey];
     if (
       recordedTemplate === POST_PRODUCTION_TEMPLATE_UID
@@ -168,6 +185,7 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
         dbField: this.dbField,
         value: isDecimal ? incomingDecimal! : incomingViewCount,
         factKey: this.factKey,
+        source: ctx.source,
         templateUid: ctx.templateUid ?? '',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });

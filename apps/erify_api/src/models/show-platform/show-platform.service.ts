@@ -220,6 +220,7 @@ export class ShowPlatformService extends BaseModelService {
     dbField: 'gmv' | 'viewerCount' | 'ctr' | 'cto';
     value: Prisma.Decimal | number;
     factKey: string;
+    source: string;
     templateUid: string;
     protectedTemplateUid: string;
   }): Promise<Exclude<PerformanceMetricUpdateResult, 'not_found'>> {
@@ -230,6 +231,7 @@ export class ShowPlatformService extends BaseModelService {
       column,
       value: payload.value,
       factKey: payload.factKey,
+      source: payload.source,
       templateUid: payload.templateUid,
       protectedTemplateUid: payload.protectedTemplateUid,
     });

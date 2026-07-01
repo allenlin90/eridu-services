@@ -398,3 +398,27 @@ export const showRunReviewSummarySchema = z.object({
     incomplete_tasks: z.array(showRunReviewIncompleteTaskSchema),
   }),
 });
+
+function optionalDecimalSchema(regex: RegExp) {
+  return z.union([z.string(), z.number(), z.null()])
+    .optional()
+    .transform((val) => {
+      if (val === null || val === undefined)
+        return val;
+      const str = String(val).trim();
+      return str === '' ? null : str;
+    })
+    .refine((val) => {
+      if (val === null || val === undefined)
+        return true;
+      return regex.test(val);
+    }, { message: 'Must be a valid positive decimal number' });
+}
+
+export const correctShowPlatformPerformanceInputSchema = z.object({
+  gmv: optionalDecimalSchema(/^\d{1,10}(?:\.\d{1,2})?$/),
+  viewer_count: z.number().int().nonnegative().max(2_147_483_647).optional(),
+  ctr: optionalDecimalSchema(/^\d{1,3}(?:\.\d{1,2})?$/),
+  cto: optionalDecimalSchema(/^\d{1,3}(?:\.\d{1,2})?$/),
+  reason: z.string().min(1, 'Business reason is required'),
+});

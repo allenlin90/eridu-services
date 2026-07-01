@@ -78,6 +78,26 @@ Studio managers lack visibility into post-show **performance analytics**. Busine
 - [x] Tab list header on show details route is responsive and supports touch-swipe horizontal scrolling on mobile viewports.
 - [x] Performance trend graph supports a By-Show x-axis mode plotting a client's shows (GMV / Views / peak CTR / peak CTO) via a dedicated `shows-series` endpoint; peak CTR/CTO are the max across the show's moderation loops × platforms.
 
+## Performance Correction (Phase 5)
+
+> **Status**: ✅ Shipped — Phase 5, Item 7 (PR #247)
+
+Extends the performance analytics surface with a manager correction flow: `POST /studios/:studioId/shows/:id/platforms/:showPlatformUid/correct-performance`.
+
+### What Was Delivered
+
+- **Correction endpoint** — Accepts GMV, viewer count, CTR, CTO (all optional), plus a required business reason. Only metrics that differ from the current DB value produce a write; no-op submissions return the current show detail without an audit record.
+- **MANAGER source ownership** — For each corrected metric the endpoint sets `metadata.actuals_source[factKey] = 'MANAGER'` and `metadata.performance_templates[factKey] = 'MANAGER'`, marking those fields as the highest extraction priority (rank 4).
+- **Audit trail** — Each correction creates an `OVERRIDE` audit record (via `AuditService`) linking the actor, business reason, old/new values, show, and show-platform targets.
+- **Pipeline hardening** — `BasePlatformPerformanceExtractor` now enforces MANAGER priority at both read time (pre-skip check via `canResolverOverwrite`) and write time (embedded `WHERE actuals_source <> 'MANAGER'` predicate in the UPDATE), closing a TOCTOU window where a concurrent extraction run could overwrite a correction that arrived after the extractor's initial read.
+- **Frontend dialog** — "Correct Metrics" button on each platform card in the show's Performance tab (ADMIN and MANAGER roles only). Responsive dialog with optional metric fields and a required business reason.
+
+### Key Design Decisions
+
+- **JSONB merge, not full-blob replace** — `updateCorrectedPerformanceMetrics` uses `jsonb_set(... || $newKeys::jsonb ...)` to merge only the corrected provenance sub-keys, so a concurrent extraction write to a sibling metric key is not overwritten. This required raw SQL; see `// Engineering decision:` comment in `show-platform.repository.ts`.
+- **Change detection before write** — The service only writes metrics that changed from their current DB value. Submitting the same value as the current DB value is a no-op and does NOT update `actuals_source` to MANAGER. This is intentional: a manager who wants to protect a value that the extractor already set must change it to trigger ownership, or wait for the extractor to be blocked by the embedded WHERE predicate if the value was previously corrected.
+- **Validation at API boundary** — Input schema `correctShowPlatformPerformanceInputSchema` uses signed-decimal patterns (positive-only regex) with precision bounds per metric. The service re-validates with `toDecimalPlaces` and magnitude checks before writing.
+
 ## Forward References
 
 - Backend database schema: `packages/api-types/src/performance/performance.schema.ts`
