@@ -70,3 +70,12 @@ REST endpoints enqueue jobs and return job tokens. Worker processors execute job
 ### Streaming as an alternative gate
 
 If the primary concern is large JSON response size (not generation time), consider `Transfer-Encoding: chunked` streaming for the inline response before adding full async generation infrastructure. This is a lighter-weight optimization that addresses bandwidth concerns without BullMQ.
+
+### Schedule Publishing as a Secondary Candidate
+
+The Google Sheets schedule publish operation (`POST /google-sheets/schedules/:id/publish`) is another strong candidate for BullMQ async processing. 
+
+#### Considerations:
+- **Payload & DB Workload**: The publishing flow executes a heavy diff+upsert across hundreds of shows, platform mappings, creator mappings, active task checks, and audit logging.
+- **Sync/Async Trade-off**: Apps Script currently blocks synchronously on the publish call to print execution stats onto the sheet. Implementing polling inside Apps Script is notoriously brittle and complex.
+- **Retirement Strategy**: Once schedule planning moves fully into the web app (retiring Google Sheets), the publish snapshot operation can be migrated to BullMQ async processing to improve API responsiveness.

@@ -67,7 +67,21 @@ describe('auditRepository', () => {
           studioShift: { connect: { id: BigInt(40) } },
         },
       ]);
-      expect(args.include).toEqual({ targets: true });
+      expect(args.include).toEqual({
+        targets: {
+          include: {
+            show: { select: { uid: true } },
+            showCreator: { select: { uid: true } },
+            showPlatform: { select: { uid: true } },
+            studioShift: { select: { uid: true } },
+          },
+        },
+        actor: {
+          select: {
+            uid: true,
+          },
+        },
+      });
     });
 
     it('connects the actor relation only when an actorId is supplied', async () => {
@@ -150,7 +164,21 @@ describe('auditRepository', () => {
       ]);
       expect(args.orderBy).toEqual({ createdAt: 'desc' });
       expect(args.take).toBe(50);
-      expect(args.include).toEqual({ targets: true });
+      expect(args.include).toEqual({
+        targets: {
+          include: {
+            show: { select: { uid: true } },
+            showCreator: { select: { uid: true } },
+            showPlatform: { select: { uid: true } },
+            studioShift: { select: { uid: true } },
+          },
+        },
+        actor: {
+          select: {
+            uid: true,
+          },
+        },
+      });
     });
   });
 
@@ -162,7 +190,21 @@ describe('auditRepository', () => {
 
       expect(txAuditDelegate.findUnique).toHaveBeenCalledWith({
         where: { uid: 'aud_lookup' },
-        include: { targets: true },
+        include: {
+          targets: {
+            include: {
+              show: { select: { uid: true } },
+              showCreator: { select: { uid: true } },
+              showPlatform: { select: { uid: true } },
+              studioShift: { select: { uid: true } },
+            },
+          },
+          actor: {
+            select: {
+              uid: true,
+            },
+          },
+        },
       });
     });
   });

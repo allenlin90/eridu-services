@@ -49,6 +49,8 @@ describe('studioShowController', () => {
     requestCancellationResolution: jest.fn(),
     resolveShowCancellation: jest.fn(),
     getCancellationStatus: jest.fn(),
+    listSchedulePublishImpacts: jest.fn(),
+    listShowAudits: jest.fn(),
   };
 
   const clientMechanicServiceMock = {
@@ -335,6 +337,94 @@ describe('studioShowController', () => {
 
       expect(showRunReviewServiceMock.getShowRunReviewSummary).toHaveBeenCalledWith(studioId, query);
       expect(result).toEqual(expectedSummary);
+    });
+  });
+
+  describe('schedulePublishImpacts', () => {
+    it('should list schedule publish impacts for managers', async () => {
+      const studioId = 'std_123';
+      const query = { page: 1, limit: 25 };
+      const expected = {
+        items: [
+          {
+            audit_id: 'aud_123',
+            impact_kind: 'confirmed_future_updated',
+            schedule_id: 'schedule_123',
+            external_id: 'show_external_1',
+            changed_fields: ['start_time'],
+            relation_changes: {},
+            show: {
+              id: 'show_123',
+              name: 'Show 123',
+              external_id: 'show_external_1',
+              start_time: '2026-07-01T10:00:00.000Z',
+              end_time: '2026-07-01T12:00:00.000Z',
+              status_name: 'confirmed',
+              status_system_key: 'CONFIRMED',
+              client_id: 'client_123',
+              client_name: 'Client',
+            },
+            created_at: '2026-06-29T10:00:00.000Z',
+          },
+        ],
+        total: 1,
+      };
+
+      studioShowManagementServiceMock.listSchedulePublishImpacts.mockResolvedValue(expected);
+
+      const result = await controller.schedulePublishImpacts(studioId, query as any);
+
+      expect(studioShowManagementServiceMock.listSchedulePublishImpacts).toHaveBeenCalledWith(studioId, query);
+      expect(result.data).toEqual(expected.items);
+      expect(result.meta.total).toBe(1);
+    });
+
+    it('restricts schedule publish impacts to ADMIN and MANAGER', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.schedulePublishImpacts);
+      expect(roles).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+      ]);
+    });
+  });
+
+  describe('listShowAudits', () => {
+    it('should list audits for a show', async () => {
+      const studioId = 'std_123';
+      const showId = 'show_123';
+      const query = { page: 1, limit: 25 };
+      const expected = {
+        items: [
+          {
+            id: 'aud_123',
+            action: 'UPDATE',
+            actor_uid: 'usr_123',
+            ip_address: null,
+            user_agent: null,
+            reason: null,
+            metadata: { event: 'schedule_publish_impact' },
+            targets: [{ target_type: 'SHOW', target_uid: 'show_123' }],
+            created_at: '2026-06-29T10:00:00.000Z',
+          },
+        ],
+        total: 1,
+      };
+
+      studioShowManagementServiceMock.listShowAudits.mockResolvedValue(expected);
+
+      const result = await controller.listShowAudits(studioId, showId, query as any);
+
+      expect(studioShowManagementServiceMock.listShowAudits).toHaveBeenCalledWith(studioId, showId, query);
+      expect(result.data).toEqual(expected.items);
+      expect(result.meta.total).toBe(1);
+    });
+
+    it('restricts show audits to ADMIN and MANAGER', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.listShowAudits);
+      expect(roles).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+      ]);
     });
   });
 

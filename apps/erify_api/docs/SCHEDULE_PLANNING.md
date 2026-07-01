@@ -55,7 +55,7 @@ erDiagram
 }
 ```
 
-**ShowPlanItem** fields: `tempId`, `external_id`, `name`, `startTime`, `endTime`, `clientUid`, `studioRoomUid`, `showTypeUid`, `showStatusUid`, `showStandardUid`, `mcs[]`, `platforms[]`.
+**ShowPlanItem** fields: `tempId`, `external_id`, `name`, `startTime`, `endTime`, `clientUid`, `studioRoomUid`, `showTypeUid`, `showStatusUid`, `showStandardUid`, `creators[]`, `platforms[]`.
 
 ### ScheduleSnapshot
 
@@ -203,7 +203,7 @@ sequenceDiagram
         GAS->>API: POST /publish
         API->>DB: Diff + upsert shows
         DB-->>API: Publish summary
-        API-->>GAS: Summary (created/updated/removed)
+        API-->>GAS: Summary (created/updated/removed/preserved/confirmed impacts)
     end
 
     GAS-->>GS: Display results

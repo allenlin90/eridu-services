@@ -51,3 +51,12 @@ export type PublishingUidMaps = {
   creators: Map<string, bigint>;
   platforms: Map<string, bigint>;
 };
+
+export type ShowRelationSyncChanges = {
+  creator_links_added: number;
+  creator_links_updated: number;
+  creator_links_removed: number;
+  platform_links_added: number;
+  platform_links_updated: number;
+  platform_links_removed: number;
+};

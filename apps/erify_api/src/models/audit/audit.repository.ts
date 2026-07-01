@@ -13,8 +13,49 @@ import type {
 import { PrismaService } from '@/prisma/prisma.service';
 
 const AUDIT_WITH_TARGETS_INCLUDE = {
-  targets: true,
+  targets: {
+    include: {
+      show: { select: { uid: true } },
+      showCreator: { select: { uid: true } },
+      showPlatform: { select: { uid: true } },
+      studioShift: { select: { uid: true } },
+    },
+  },
+  actor: {
+    select: {
+      uid: true,
+    },
+  },
 } as const satisfies Prisma.AuditInclude;
+
+const SCHEDULE_PUBLISH_IMPACT_INCLUDE = {
+  audit: true,
+  show: {
+    select: {
+      uid: true,
+      externalId: true,
+      name: true,
+      startTime: true,
+      endTime: true,
+      client: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+      showStatus: {
+        select: {
+          name: true,
+          systemKey: true,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.AuditTargetInclude;
+
+export type SchedulePublishImpactAuditTarget = Prisma.AuditTargetGetPayload<{
+  include: typeof SCHEDULE_PUBLISH_IMPACT_INCLUDE;
+}>;
 
 /**
  * Engineering decision: `AuditRepository` does NOT extend `BaseRepository`.
@@ -81,22 +122,8 @@ export class AuditRepository {
       return [];
     }
 
-    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) => {
-      switch (f.targetType) {
-        case 'SHOW':
-          return { showId: f.targetId };
-        case 'SHOW_CREATOR':
-          return { showCreatorId: f.targetId };
-        case 'SHOW_PLATFORM':
-          return { showPlatformId: f.targetId };
-        case 'STUDIO_SHIFT':
-          return { studioShiftId: f.targetId };
-        default: {
-          const exhaustive: never = f.targetType;
-          throw new Error(`Unknown audit target type: ${exhaustive}`);
-        }
-      }
-    });
+    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) =>
+      this.toTargetWhereInput(f));
 
     return this.delegate.findMany({
       where: {
@@ -109,6 +136,73 @@ export class AuditRepository {
       skip: opts?.skip,
       take: opts?.take,
     });
+  }
+
+  async countForTargets(filters: AuditTargetFilter[]): Promise<number> {
+    // Engineering decision: this abstracts the polymorphic target filtering mapping
+    // to Prisma where inputs, encapsulating database schema details within the repository.
+    if (filters.length === 0) {
+      return 0;
+    }
+
+    const orConditions: Prisma.AuditTargetWhereInput[] = filters.map((f) =>
+      this.toTargetWhereInput(f));
+
+    return this.txHost.tx.audit.count({
+      where: {
+        targets: {
+          some: { OR: orConditions },
+        },
+      },
+    });
+  }
+
+  async findSchedulePublishImpactsForStudio(
+    studioUid: string,
+    opts: {
+      startDateFrom: Date;
+      startDateTo?: Date;
+      take: number;
+      skip: number;
+    },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    // Engineering decision: this is a purpose-built review queue query, not a
+    // generic `findMany`, because it must page AuditTarget rows joined through
+    // upcoming studio-scoped Shows while filtering Audit metadata by event.
+    const where: Prisma.AuditTargetWhereInput = {
+      targetType: 'SHOW',
+      show: {
+        studio: { uid: studioUid },
+        startTime: {
+          gte: opts.startDateFrom,
+          ...(opts.startDateTo ? { lte: opts.startDateTo } : {}),
+        },
+        deletedAt: null,
+      },
+      audit: {
+        metadata: {
+          path: ['event'],
+          equals: 'schedule_publish_impact',
+        },
+      },
+    };
+
+    const [total, items] = await Promise.all([
+      this.txHost.tx.auditTarget.count({ where }),
+      this.txHost.tx.auditTarget.findMany({
+        where,
+        include: SCHEDULE_PUBLISH_IMPACT_INCLUDE,
+        orderBy: {
+          audit: {
+            createdAt: 'desc',
+          },
+        },
+        skip: opts.skip,
+        take: opts.take,
+      }),
+    ]);
+
+    return { items, total };
   }
 
   private toTargetCreateInput(
@@ -130,6 +224,25 @@ export class AuditRepository {
         return { ...base, studioShift: { connect: { id: target.targetId } } };
       default: {
         const exhaustive: never = target.targetType;
+        throw new Error(`Unknown audit target type: ${exhaustive}`);
+      }
+    }
+  }
+
+  private toTargetWhereInput(
+    filter: AuditTargetFilter,
+  ): Prisma.AuditTargetWhereInput {
+    switch (filter.targetType) {
+      case 'SHOW':
+        return { showId: filter.targetId };
+      case 'SHOW_CREATOR':
+        return { showCreatorId: filter.targetId };
+      case 'SHOW_PLATFORM':
+        return { showPlatformId: filter.targetId };
+      case 'STUDIO_SHIFT':
+        return { studioShiftId: filter.targetId };
+      default: {
+        const exhaustive: never = filter.targetType;
         throw new Error(`Unknown audit target type: ${exhaustive}`);
       }
     }

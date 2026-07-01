@@ -42,6 +42,14 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
+  schedulePublishImpacts: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
+  showAudits: [
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
   shifts: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,

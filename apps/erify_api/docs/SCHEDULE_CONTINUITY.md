@@ -1,10 +1,10 @@
 # Schedule Continuity
 
-> **TLDR**: Schedule publish uses identity-preserving **diff + upsert** instead of delete/recreate. Shows keep a stable `external_id` across republishes. Missing shows are status-transitioned instead of deleted. Studio cancellation and pending-resolution sign-off are handled by the shipped cancellation gate.
+> **TLDR**: Schedule publish uses identity-preserving **diff + upsert** instead of delete/recreate. Shows keep a stable `external_id` across republishes. Missing shows are status-transitioned instead of deleted. Future confirmed-show impacts are recorded for manager review, while past or done shows are preserved.
 
 ## Overview
 
-Planners update shows in Google Sheets. Apps Script syncs drafts to the API. When published, the system diffs incoming shows against existing ones by `(client_id, external_id)` and applies creates, updates, or status transitions — never deleting show records. This preserves task and assignment linkage across schedule updates.
+Planners update shows in Google Sheets. Apps Script syncs drafts to the API. When published, the system diffs incoming shows against existing ones by `(client_id, external_id)` and applies creates, updates, or status transitions — never deleting show records. `show.name` may mirror the sheet Show ID for display, but it is not used for identity matching. This preserves task and assignment linkage across schedule updates.
 
 ```mermaid
 flowchart TD
@@ -17,13 +17,19 @@ flowchart TD
     F --> G[Load existing shows]
     G --> H[Diff by client_id + external_id]
 
-    H --> I[Matched → Update in place]
+    H --> I{Matched?}
+    I -- Future draft --> I1[Update in place]
+    I -- Future confirmed --> I2[Update in place + Audit impact]
+    I -- Past or done --> I3[Preserve existing show]
     H --> J[New → Create]
     H --> K{Missing from payload?}
-    K -- No undeleted tasks → --> L[Status: CANCELLED]
-    K -- Has undeleted tasks → --> M[Status: CANCELLED_PENDING_RESOLUTION]
+    K -- Future confirmed --> L[Status: CANCELLED_PENDING_RESOLUTION + Audit impact]
+    K -- Future draft/no tasks --> M[Status: CANCELLED]
+    K -- Future draft/active tasks --> Q[Status: CANCELLED_PENDING_RESOLUTION]
+    K -- Past or done --> R[Preserve existing show]
 
-    I & J & L & M --> N[Sync MC/platform diffs]
+    I1 & I2 & J & L & M & Q --> N[Sync creator/platform diffs]
+    I3 & R --> O[Publish complete with summary]
     N --> O[Publish complete with summary]
     O --> P[Studio admin generates/assigns tasks]
 ```
@@ -38,7 +44,7 @@ Every show carries a stable `external_id` (generated in Google Sheets as `show_`
 | ---------------- | ---------------------------------------------------- |
 | Uniqueness scope | `client_id + external_id` (unique constraint)        |
 | Immutability     | Once associated, `external_id` cannot change         |
-| Publish matching | Diff algorithm matches by `(client_id, external_id)` |
+| Publish matching | Diff algorithm matches only by `(client_id, external_id)`; no `name` fallback |
 | Legacy rows      | `external_id` is nullable in DB for backward compat  |
 
 ### Data Model
@@ -70,13 +76,18 @@ Within a single transaction:
 4. Query all existing shows for this schedule (including cancelled) into `existingByKey` map
 5. Build `incomingByKey` map from payload
 6. Partition into **create** / **update** / **remove** sets
-7. Apply writes:
+7. Classify existing rows by publish date and lifecycle status:
+   - **Eligible**: future, non-locked shows
+   - **Confirmed future**: future existing shows with `CONFIRMED`
+   - **Past or done**: before publish date, `LIVE`, `COMPLETED`, `CANCELLED`, or `CANCELLED_PENDING_RESOLUTION`
+8. Apply writes:
    - **Create**: batch insert new shows
    - **Update**: update matched shows in place (changed fields only)
    - **Restore**: if previously cancelled show reappears → update status back to active, resume tasks
    - **Remove**: apply remove policy (status transitions only, never delete)
-8. Sync MC/platform relation diffs per show
-9. Return deterministic publish summary
+   - **Preserve**: skip past/done show field and relation writes
+9. Sync creator/platform relation diffs per writable show
+10. Return deterministic publish summary
 
 ### Validation Rules for `external_id`
 
@@ -90,10 +101,12 @@ Within a single transaction:
 
 When an existing show is missing from the incoming payload:
 
-| Condition        | Action                                      |
-| ---------------- | ------------------------------------------- |
-| No undeleted tasks  | Set status → `CANCELLED`                    |
-| Has undeleted tasks | Set status → `CANCELLED_PENDING_RESOLUTION` |
+| Condition | Action |
+| --------- | ------ |
+| Future draft, no undeleted tasks | Set status → `CANCELLED` |
+| Future draft, has undeleted tasks | Set status → `CANCELLED_PENDING_RESOLUTION` |
+| Future confirmed | Set status → `CANCELLED_PENDING_RESOLUTION` and write a schedule-publish impact Audit row |
+| Past/done | Preserve existing show fields and relations |
 
 ### Active Task Check
 
@@ -112,6 +125,18 @@ The publish remove-path and cancellation gate use the same active-task definitio
 
 Studio Admin/Manager users resolve pending shows through the [Show Cancellation Gate](./SHOW_CANCELLATION_GATE.md). The gate stores cancellation history in `Audit`, not `show.metadata`, and treats legacy pending shows without an opening Audit row as resolvable `show_cancellation` gates.
 
+## Confirmed Show Review Queue
+
+Future confirmed shows remain mutable from Google Sheets before show time, but every material impact is recorded for manager review. The publish flow writes `Audit` target rows against the affected `SHOW` with metadata:
+
+- `event: schedule_publish_impact`
+- `schedule_uid`
+- `external_id`
+- `impact_kind`: `confirmed_future_updated` or `confirmed_future_pending_resolution`
+- `changed_fields`
+
+Managers and admins read the queue through `GET /studios/:studioId/shows/schedule-publish-impacts`. The endpoint is studio-scoped and filters to upcoming shows by default. The backing `findSchedulePublishImpactsForStudio` repository method is intentionally purpose-built because it pages `AuditTarget` rows through upcoming studio-scoped shows while filtering Audit metadata by event.
+
 ---
 
 ## Conflict Policy
@@ -120,11 +145,11 @@ Studio Admin/Manager users resolve pending shows through the [Show Cancellation 
 
 | Field                                          | Publish Overwrites? | Web App Can Edit?                 | Notes                 |
 | ---------------------------------------------- | ------------------- | --------------------------------- | --------------------- |
-| `name`, `startTime`, `endTime`                 | Yes                 | Yes (overwritten on next publish) | GS is source of truth |
+| `name`, `startTime`, `endTime`                 | Future eligible/confirmed only | Yes (overwritten on next applicable publish) | GS is source of truth |
 | `clientId`                                     | Yes                 | No                                | GS is source of truth |
-| `studioId`, `studioRoomId`                     | Yes                 | Yes (overwritten on next publish) |                       |
-| `showTypeId`, `showStatusId`, `showStandardId` | Yes                 | Yes (overwritten on next publish) |                       |
-| MC/platform mappings                           | Yes                 | Yes (overwritten on next publish) |                       |
+| `studioId`, `studioRoomId`                     | Future eligible/confirmed only | Yes (overwritten on next applicable publish) |                       |
+| `showTypeId`, `showStatusId`, `showStandardId` | Future eligible/confirmed only | Yes (overwritten on next applicable publish) |                       |
+| Creator/platform mappings                      | Future eligible/confirmed only | Yes (overwritten on next applicable publish) |                       |
 | Task assignments                               | No                  | Yes                               | Studio admin owns     |
 
 ---
@@ -153,7 +178,7 @@ The publish uses the same 4 Google Sheets endpoints (no surface expansion):
 
 ### Publish Summary Response
 
-Includes counts for: `shows_created`, `shows_updated`, `shows_cancelled`, `shows_pending_resolution`, `shows_restored`, `mc_links_added/updated/removed`, `platform_links_added/updated/removed`.
+Includes counts for: `shows_created`, `shows_updated`, `shows_cancelled`, `shows_pending_resolution`, `shows_restored`, `shows_preserved` (existing rows left untouched because already past/done), `shows_skipped` (brand-new payload rows never created because already past/done), `confirmed_shows_updated`, `confirmed_shows_pending_resolution`, `publish_impacts_recorded`, `creator_links_added/updated/removed`, and `platform_links_added/updated/removed`.
 
 ---
 
@@ -193,7 +218,7 @@ sequenceDiagram
         API->>DB: Status → CANCELLED_PENDING_RESOLUTION
     end
 
-    API->>DB: Sync MC/platform diffs + audit
+    API->>DB: Sync creator/platform diffs + audit
     DB-->>API: Commit
     API-->>GAS: Publish summary
 

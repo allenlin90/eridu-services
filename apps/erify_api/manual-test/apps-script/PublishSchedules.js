@@ -64,7 +64,7 @@ function publishSchedules() {
       
       Logger.log(`Schedule ${scheduleId} PUBLISHED.`);
       statusCell.setValue('published');
-      noteCell.setValue(`Published at ${new Date().toLocaleTimeString()}`);
+      noteCell.setValue(buildPublishNote(result.publish_summary));
       stats.success++;
 
     } catch (e) {
@@ -80,4 +80,26 @@ function publishSchedules() {
   Logger.log(`Failed: ${stats.failed}`);
   Logger.log(`Skipped: ${stats.skipped}`);
   Logger.log('-----------------------');
+}
+
+function buildPublishNote(summary) {
+  const publishedAt = `Published at ${new Date().toLocaleTimeString()}`;
+  if (!summary) {
+    return publishedAt;
+  }
+
+  const impactCount = Number(summary.publish_impacts_recorded || 0);
+  const preservedCount = Number(summary.shows_preserved || 0);
+  const skippedCount = Number(summary.shows_skipped || 0);
+  const confirmedUpdated = Number(summary.confirmed_shows_updated || 0);
+  const confirmedPending = Number(summary.confirmed_shows_pending_resolution || 0);
+
+  return [
+    publishedAt,
+    `impacts=${impactCount}`,
+    `confirmed_updated=${confirmedUpdated}`,
+    `confirmed_pending=${confirmedPending}`,
+    `preserved=${preservedCount}`,
+    `skipped=${skippedCount}`,
+  ].join('; ');
 }

@@ -113,6 +113,9 @@ describe('studioShowManagementService', () => {
   };
   const auditServiceMock = {
     create: jest.fn(),
+    findSchedulePublishImpactsForStudio: jest.fn(),
+    countForTargets: jest.fn(),
+    findForTargets: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -1083,6 +1086,153 @@ describe('studioShowManagementService', () => {
       });
 
       expect(auditServiceMock.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listSchedulePublishImpacts', () => {
+    it('maps schedule publish impact audits to manager queue rows', async () => {
+      const createdAt = new Date('2026-06-29T10:00:00.000Z');
+      const startDateFrom = '2026-07-01T00:00:00.000Z';
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({
+        total: 1,
+        items: [
+          {
+            targetId: BigInt(5),
+            audit: {
+              uid: 'aud_123',
+              metadata: {
+                event: 'schedule_publish_impact',
+                schedule_uid: 'schedule_123',
+                external_id: 'show_external_1',
+                impact_kind: 'confirmed_future_updated',
+                changed_fields: ['start_time'],
+                relation_changes: { creator_links_added: 1 },
+              },
+              createdAt,
+            },
+            show: {
+              uid: 'show_123',
+              externalId: 'show_external_1',
+              name: 'Confirmed Show',
+              startTime: new Date('2026-07-01T10:00:00.000Z'),
+              endTime: new Date('2026-07-01T12:00:00.000Z'),
+              showStatus: { name: 'confirmed', systemKey: 'CONFIRMED' },
+              client: { uid: 'client_123', name: 'Client' },
+            },
+          },
+        ],
+      });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {
+        page: 2,
+        limit: 25,
+        start_date_from: startDateFrom,
+      });
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        {
+          startDateFrom: new Date(startDateFrom),
+          startDateTo: undefined,
+          skip: 25,
+          take: 25,
+        },
+      );
+      expect(result.total).toBe(1);
+      expect(result.items[0]).toEqual({
+        audit_id: 'aud_123',
+        impact_kind: 'confirmed_future_updated',
+        schedule_id: 'schedule_123',
+        external_id: 'show_external_1',
+        changed_fields: ['start_time'],
+        relation_changes: { creator_links_added: 1 },
+        show: {
+          id: 'show_123',
+          name: 'Confirmed Show',
+          external_id: 'show_external_1',
+          start_time: '2026-07-01T10:00:00.000Z',
+          end_time: '2026-07-01T12:00:00.000Z',
+          status_name: 'confirmed',
+          status_system_key: 'CONFIRMED',
+          client_id: 'client_123',
+          client_name: 'Client',
+        },
+        created_at: '2026-06-29T10:00:00.000Z',
+      });
+    });
+  });
+
+  describe('listShowAudits', () => {
+    it('returns paginated audits and maps target UIDs without leaking raw bigint database IDs', async () => {
+      const showUid = 'show_123';
+      const studioUid = 'std_123';
+
+      auditServiceMock.countForTargets.mockResolvedValue(1);
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          uid: 'aud_999',
+          action: 'UPDATE',
+          ipAddress: '127.0.0.1',
+          userAgent: 'Chrome',
+          reason: 'Test edit',
+          metadata: { field: 'value' },
+          createdAt: new Date('2026-06-29T10:00:00.000Z'),
+          actor: { uid: 'usr_777' },
+          targets: [
+            {
+              targetType: 'SHOW',
+              targetId: BigInt(100),
+              show: { uid: 'show_123' },
+            },
+            {
+              targetType: 'SHOW_PLATFORM',
+              targetId: BigInt(200),
+              showPlatform: { uid: 'shp_777' },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.listShowAudits(studioUid, showUid, { page: 1, limit: 10 });
+
+      expect(showRepositoryMock.findByUidAndStudioUid).toHaveBeenCalledWith(
+        showUid,
+        studioUid,
+        expect.any(Object),
+      );
+      expect(auditServiceMock.countForTargets).toHaveBeenCalledWith([
+        { targetType: 'SHOW', targetId: BigInt(100) },
+      ]);
+      expect(auditServiceMock.findForTargets).toHaveBeenCalledWith(
+        [{ targetType: 'SHOW', targetId: BigInt(100) }],
+        { skip: 0, take: 10 },
+      );
+
+      expect(result).toEqual({
+        total: 1,
+        items: [
+          {
+            id: 'aud_999',
+            action: 'UPDATE',
+            actor_uid: 'usr_777',
+            ip_address: '127.0.0.1',
+            user_agent: 'Chrome',
+            reason: 'Test edit',
+            metadata: { field: 'value' },
+            targets: [
+              {
+                target_type: 'SHOW',
+                target_uid: 'show_123',
+              },
+              {
+                target_type: 'SHOW_PLATFORM',
+                target_uid: 'shp_777',
+              },
+            ],
+            created_at: '2026-06-29T10:00:00.000Z',
+          },
+        ],
+      });
     });
   });
 });

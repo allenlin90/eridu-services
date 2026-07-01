@@ -6,6 +6,7 @@ import { useSidebarConfig } from '../sidebar-config';
 // Mock lucide-react icons
 vi.mock('lucide-react', () => ({
   BadgeCheck: vi.fn(),
+  BellDot: vi.fn(),
   Clapperboard: vi.fn(),
   ClipboardCheck: vi.fn(),
   Command: vi.fn(),
@@ -211,6 +212,10 @@ describe('useSidebarConfig', () => {
         expect.objectContaining({
           title: 'Creator Mapping',
           url: '/studios/studio-1/creator-mapping',
+        }),
+        expect.objectContaining({
+          title: 'Publish Audit',
+          url: '/studios/studio-1/schedule-publish-impacts',
         }),
       ]),
     }));

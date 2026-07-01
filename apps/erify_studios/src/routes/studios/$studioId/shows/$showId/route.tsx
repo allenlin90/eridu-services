@@ -16,7 +16,7 @@ const TAB_LINK_ACTIVE_CLASS = 'border-primary text-foreground';
 function StudioShowDetailLayout() {
   const { studioId, showId } = Route.useParams();
   const { data: show, isLoading, isError } = useStudioShow({ studioId, showId });
-  const { role } = useStudioAccess(studioId);
+  const { role, hasAccess } = useStudioAccess(studioId);
 
   if (isLoading) {
     return (
@@ -104,6 +104,17 @@ function StudioShowDetailLayout() {
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >
               Submitted Tasks
+            </Link>
+          )}
+          {hasAccess('showAudits') && (
+            <Link
+              to="/studios/$studioId/shows/$showId/audits"
+              params={{ studioId, showId }}
+              search={{ page: 1 }}
+              className={TAB_LINK_CLASS}
+              activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+            >
+              Publish Audit
             </Link>
           )}
         </nav>

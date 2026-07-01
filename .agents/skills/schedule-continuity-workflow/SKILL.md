@@ -21,6 +21,9 @@ Schedule continuity across `erify_api`, `erify_studios`, and Google Sheets integ
 3. Removed shows with active tasks → `cancelled_pending_resolution`
 4. Removed shows without active tasks → `cancelled`
 5. Reappearing shows (matched by `(client_id, external_id)`) restored in place
+6. Publish matches only by `(client_id, external_id)`; `show.name` is display data, not identity fallback
+7. Past or done shows are preserved during publish, including creator/platform relations
+8. Future confirmed show changes and missing-row pending transitions write `schedule_publish_impact` Audit rows for manager review
 
 **Current boundary**: diff+upsert, summary counters, and restore are shipped. Studio-scoped pending-resolution resolve endpoint/queue/CTA not fully shipped.
 
@@ -49,8 +52,12 @@ Show membership determined by **operational day**: if `startTime` local < 06:00,
 ## Checklist
 
 - [ ] Show identity preserved across republish
+- [ ] Publish matching uses `external_id` only within client scope; no `name` fallback
 - [ ] Task targets remain linked for matched shows
 - [ ] Removed shows: active tasks → `cancelled_pending_resolution`, else → `cancelled`
+- [ ] Future confirmed missing shows always enter `cancelled_pending_resolution` and record manager-review Audit impact
+- [ ] Future confirmed updates record manager-review Audit impact when material fields or relations changed
+- [ ] Past/done shows are preserved and relation sync is skipped
 - [ ] Reappearing shows restored in place
 - [ ] Same-studio CRUD not blocked by schedule status
 - [ ] Same-client schedule linkage preserved

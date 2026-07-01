@@ -10,6 +10,7 @@ import type {
   listShowsQuerySchema,
   requestCancellationResolutionSchema,
   resolveShowCancellationSchema,
+  schedulePublishImpactRowSchema,
   showApiResponseSchema,
   showListResponseSchema,
   showRunReviewSummarySchema,
@@ -144,3 +145,4 @@ export type ResolveShowCancellationInput = z.infer<typeof resolveShowCancellatio
 export type CancellationHistoryEntry = z.infer<typeof cancellationHistoryEntrySchema>;
 export type CancellationStatusResponse = z.infer<typeof cancellationStatusResponseSchema>;
 export type CorrectShowPlatformPerformanceInput = z.infer<typeof correctShowPlatformPerformanceInputSchema>;
+export type SchedulePublishImpactRow = z.infer<typeof schedulePublishImpactRowSchema>;

@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import {
   BadgeCheck,
+  BellDot,
   Building2,
   CalendarDays,
   Clapperboard,
@@ -39,6 +40,7 @@ import { authClient, type Session } from '@/lib/auth';
 import { hasStudioRouteAccess } from '@/lib/constants/studio-route-access';
 import { useIsSystemAdmin } from '@/lib/hooks/use-is-system-admin';
 import { useStudioTeams } from '@/lib/hooks/use-studio-teams';
+import * as m from '@/paraglide/messages';
 
 /**
  * System navigation configuration
@@ -192,6 +194,14 @@ function getStudioPlanningItems(
       title: 'Shift Schedule',
       url: `/studios/${studioId}/shifts`,
       icon: CalendarDays,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'schedulePublishImpacts')) {
+    planningItems.push({
+      title: m.schedule_publish_impacts_nav_title(),
+      url: `/studios/${studioId}/schedule-publish-impacts`,
+      icon: BellDot,
     });
   }
 

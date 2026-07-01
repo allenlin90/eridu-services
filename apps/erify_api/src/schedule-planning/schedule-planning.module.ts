@@ -6,6 +6,7 @@ import { SchedulePlanningService } from './schedule-planning.service';
 import { ScheduleRestorationProcessor } from './schedule-restoration-processor.service';
 import { ValidationService } from './validation.service';
 
+import { AuditModule } from '@/models/audit/audit.module';
 import { ScheduleModule } from '@/models/schedule/schedule.module';
 import { ScheduleSnapshotModule } from '@/models/schedule-snapshot/schedule-snapshot.module';
 import { ShowModule } from '@/models/show/show.module';
@@ -18,6 +19,7 @@ import { UtilityModule } from '@/utility/utility.module';
 @Module({
   imports: [
     PrismaModule,
+    AuditModule,
     ScheduleModule,
     ScheduleSnapshotModule,
     ShowModule,
