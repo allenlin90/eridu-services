@@ -336,15 +336,20 @@ function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: Correc
     if (!reason.trim())
       return;
 
+    const resolvedGmv = gmv.trim() === '' ? null : gmv.trim();
+    const resolvedCtr = ctr.trim() === '' ? null : ctr.trim();
+    const resolvedCto = cto.trim() === '' ? null : cto.trim();
+    const resolvedViewerCount = viewerCount.trim() ? Number.parseInt(viewerCount.trim(), 10) : undefined;
+
     correctMutation.mutate(
       {
         showId,
         showPlatformUid: platform.show_platform_uid,
         data: {
-          gmv: gmv.trim() === '' ? null : gmv.trim(),
-          viewer_count: viewerCount.trim() ? Number.parseInt(viewerCount.trim(), 10) : undefined,
-          ctr: ctr.trim() === '' ? null : ctr.trim(),
-          cto: cto.trim() === '' ? null : cto.trim(),
+          ...(resolvedGmv !== (platform.gmv ?? null) ? { gmv: resolvedGmv } : {}),
+          ...(resolvedCtr !== (platform.ctr ?? null) ? { ctr: resolvedCtr } : {}),
+          ...(resolvedCto !== (platform.cto ?? null) ? { cto: resolvedCto } : {}),
+          ...(resolvedViewerCount !== (platform.viewer_count ?? undefined) ? { viewer_count: resolvedViewerCount } : {}),
           reason: reason.trim(),
         },
       },

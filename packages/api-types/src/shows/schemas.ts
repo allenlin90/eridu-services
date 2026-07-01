@@ -417,7 +417,7 @@ function optionalDecimalSchema(regex: RegExp) {
 
 export const correctShowPlatformPerformanceInputSchema = z.object({
   gmv: optionalDecimalSchema(/^\d{1,10}(?:\.\d{1,2})?$/),
-  viewer_count: z.number().int().nonnegative().optional(),
+  viewer_count: z.number().int().nonnegative().max(2_147_483_647).optional(),
   ctr: optionalDecimalSchema(/^\d{1,3}(?:\.\d{1,2})?$/),
   cto: optionalDecimalSchema(/^\d{1,3}(?:\.\d{1,2})?$/),
   reason: z.string().min(1, 'Business reason is required'),
