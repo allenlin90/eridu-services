@@ -623,6 +623,59 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_updated).toBe(0);
     });
 
+    it('should preserve overnight shows before the operational-day cutoff on publish day', async () => {
+      jest.setSystemTime(new Date('2024-01-02T05:00:00.000Z')); // 12:00 Asia/Bangkok
+      const overnightExistingShow = {
+        id: BigInt(89),
+        uid: 'show_overnight',
+        externalId: 'show_overnight',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Overnight Show',
+        startTime: new Date('2024-01-01T22:00:00Z'), // 05:00 Asia/Bangkok on Jan 2
+        endTime: new Date('2024-01-02T00:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: 'CONFIRMED',
+        },
+      };
+      const overnightSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [{
+            ...mockPlanDocument.shows[0]!,
+            externalId: 'show_overnight',
+            name: 'Updated Overnight Show',
+            startTime: '2024-01-01T22:00:00Z',
+            endTime: '2024-01-02T00:00:00Z',
+          }],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(overnightSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([overnightExistingShow])
+        .mockResolvedValueOnce([overnightExistingShow]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: BigInt(89) },
+      }));
+      expect(auditService.create).not.toHaveBeenCalled();
+      expect(result.publishSummary.shows_preserved).toBe(1);
+      expect(result.publishSummary.shows_updated).toBe(0);
+      expect(result.publishSummary.publish_impacts_recorded).toBe(0);
+    });
+
     it('should update a future confirmed show and write a publish impact audit', async () => {
       const confirmedShow = {
         id: BigInt(99),

@@ -18,6 +18,7 @@ import { buildPublishingUidLookupMaps } from './publishing-uid-lookup';
 import { ValidationService } from './validation.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { OPERATIONAL_DAY_START_HOUR } from '@/lib/utils/operational-day.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ShowService } from '@/models/show/show.service';
@@ -695,18 +696,30 @@ export class PublishingService {
   }
 
   private isBeforePublishDate(showDate: Date, publishDate: Date): boolean {
-    return this.formatScheduleDate(showDate) < this.formatScheduleDate(publishDate);
+    return this.formatScheduleOperationalDate(showDate) < this.formatScheduleOperationalDate(publishDate);
   }
 
-  private formatScheduleDate(date: Date): string {
+  private formatScheduleOperationalDate(date: Date): string {
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: SCHEDULE_INTEGRATION_TIME_ZONE,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      hour: '2-digit',
+      hourCycle: 'h23',
     }).formatToParts(date);
     const byType = new Map(parts.map((part) => [part.type, part.value]));
-    return `${byType.get('year')}-${byType.get('month')}-${byType.get('day')}`;
+    const operationalDate = new Date(Date.UTC(
+      Number(byType.get('year')),
+      Number(byType.get('month')) - 1,
+      Number(byType.get('day')),
+    ));
+
+    if (Number(byType.get('hour')) < OPERATIONAL_DAY_START_HOUR) {
+      operationalDate.setUTCDate(operationalDate.getUTCDate() - 1);
+    }
+
+    return operationalDate.toISOString().slice(0, 10);
   }
 
   private createEmptyRelationChanges(): ShowRelationSyncChanges {
