@@ -310,12 +310,26 @@ type CorrectPlatformPerformanceDialogProps = {
 function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: CorrectPlatformPerformanceDialogProps) {
   const [open, setOpen] = useState(false);
   const [gmv, setGmv] = useState(platform.gmv ?? '');
-  const [viewerCount, setViewerCount] = useState(platform.viewer_count ? platform.viewer_count.toString() : '');
+  const [viewerCount, setViewerCount] = useState(platform.viewer_count != null ? platform.viewer_count.toString() : '');
   const [ctr, setCtr] = useState(platform.ctr ?? '');
   const [cto, setCto] = useState(platform.cto ?? '');
   const [reason, setReason] = useState('');
 
   const correctMutation = useCorrectShowPlatformPerformance(studioId);
+
+  const resetMetricFields = () => {
+    setGmv(platform.gmv ?? '');
+    setViewerCount(platform.viewer_count != null ? platform.viewer_count.toString() : '');
+    setCtr(platform.ctr ?? '');
+    setCto(platform.cto ?? '');
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      resetMetricFields();
+    }
+    setOpen(nextOpen);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -327,10 +341,10 @@ function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: Correc
         showId,
         showPlatformUid: platform.show_platform_uid,
         data: {
-          gmv: gmv.trim() || undefined,
+          gmv: gmv.trim() === '' ? null : gmv.trim(),
           viewer_count: viewerCount.trim() ? Number.parseInt(viewerCount.trim(), 10) : undefined,
-          ctr: ctr.trim() || undefined,
-          cto: cto.trim() || undefined,
+          ctr: ctr.trim() === '' ? null : ctr.trim(),
+          cto: cto.trim() === '' ? null : cto.trim(),
           reason: reason.trim(),
         },
       },
@@ -348,7 +362,7 @@ function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: Correc
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setOpen(true)}
+        onClick={() => handleOpenChange(true)}
         className="text-xs"
       >
         Correct Metrics
@@ -356,7 +370,7 @@ function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: Correc
 
       <ResponsiveDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         title={`Correct Metrics: ${platform.name}`}
         description="Directly correct missing or inaccurate performance metrics. This action is audited and overrides lower priority data sources."
       >

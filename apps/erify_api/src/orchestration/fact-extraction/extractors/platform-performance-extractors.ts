@@ -136,10 +136,13 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
     const metadata = (showPlatform.metadata as Record<string, any> | null) ?? {};
     const recordedSource = metadata.actuals_source?.[this.factKey] as ActualsSource | undefined;
     if (!canResolverOverwrite(ctx.source, recordedSource)) {
+      if (!recordedSource) {
+        throw new Error(`Missing recorded source for blocked ${this.factKey} write`);
+      }
       return {
         kind: 'skip',
         action: 'SKIPPED_LOWER_PRIORITY',
-        skippedBy: recordedSource!,
+        skippedBy: recordedSource,
         attemptedValue,
       };
     }
@@ -182,6 +185,7 @@ export abstract class BasePlatformPerformanceExtractor implements IngestionExtra
         dbField: this.dbField,
         value: isDecimal ? incomingDecimal! : incomingViewCount,
         factKey: this.factKey,
+        source: ctx.source,
         templateUid: ctx.templateUid ?? '',
         protectedTemplateUid: POST_PRODUCTION_TEMPLATE_UID,
       });

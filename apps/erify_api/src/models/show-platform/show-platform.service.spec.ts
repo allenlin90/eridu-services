@@ -327,6 +327,7 @@ describe('showPlatformService', () => {
         dbField: 'viewerCount',
         value: 500,
         factKey: 'show_platform_view_count',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: 'ttpl_post_production',
       });
@@ -337,6 +338,7 @@ describe('showPlatformService', () => {
         column: 'viewer_count',
         value: 500,
         factKey: 'show_platform_view_count',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: 'ttpl_post_production',
       });
@@ -354,6 +356,7 @@ describe('showPlatformService', () => {
         dbField: 'gmv',
         value: 1250,
         factKey: 'show_platform_gmv',
+        source: 'OPERATOR',
         templateUid: 'ttpl_loop8',
         protectedTemplateUid: 'ttpl_post_production',
       });
@@ -371,6 +374,7 @@ describe('showPlatformService', () => {
           dbField: 'gmv',
           value: 1250,
           factKey: 'show_platform_gmv',
+          source: 'OPERATOR',
           templateUid: 'ttpl_loop8',
           protectedTemplateUid: 'ttpl_post_production',
         }),

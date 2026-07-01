@@ -47,6 +47,7 @@ describe('showPlatformRepository', () => {
       column: 'gmv',
       value: 1250,
       factKey: 'show_platform_gmv',
+      source: 'OPERATOR',
       templateUid: 'ttpl_post_production',
       protectedTemplateUid: 'ttpl_post_production',
     });
@@ -58,6 +59,7 @@ describe('showPlatformRepository', () => {
     // fat-fingered column) must fail this test loudly rather than at runtime.
     expect(sql).toContain('UPDATE "show_platforms"');
     expect(sql).toContain('\'{performance_templates}\'');
+    expect(sql).toContain('\'actuals_source\'');
     expect(sql).toContain('"uid"');
     expect(sql).toContain('"show_id"');
     expect(sql).toContain('"deleted_at" IS NULL');
@@ -72,6 +74,7 @@ describe('showPlatformRepository', () => {
       column: 'viewer_count',
       value: 4200,
       factKey: 'show_platform_viewer_count',
+      source: 'OPERATOR',
       templateUid: 'ttpl_loop',
       protectedTemplateUid: 'ttpl_post_production',
     });
@@ -80,6 +83,41 @@ describe('showPlatformRepository', () => {
     // joined template strings must carry the quoted identifier verbatim.
     const sql = executeRaw.mock.calls[0][0].strings.join('');
     expect(sql).toContain('"viewer_count"');
+  });
+
+  it('rejects metric columns outside the runtime allowlist', async () => {
+    await expect(
+      repository.updatePerformanceMetric({
+        uid: 'show_plt_123',
+        showId: 10n,
+        column: 'gmv" = NULL; --' as any,
+        value: 1250,
+        factKey: 'show_platform_gmv',
+        source: 'OPERATOR',
+        templateUid: 'ttpl_loop',
+        protectedTemplateUid: 'ttpl_post_production',
+      }),
+    ).rejects.toThrow('Invalid performance metric column');
+
+    expect(executeRaw).not.toHaveBeenCalled();
+  });
+
+  it('returns blocked_by_higher_priority when manager provenance wins after the extractor read', async () => {
+    executeRaw.mockResolvedValue(0);
+    queryRaw.mockResolvedValue([{ recordedTemplate: null, recordedSource: 'MANAGER' }]);
+
+    const result = await repository.updatePerformanceMetric({
+      uid: 'show_plt_123',
+      showId: 10n,
+      column: 'gmv',
+      value: 1250,
+      factKey: 'show_platform_gmv',
+      source: 'OPERATOR',
+      templateUid: 'ttpl_loop',
+      protectedTemplateUid: 'ttpl_post_production',
+    });
+
+    expect(result).toBe('blocked_by_higher_priority');
   });
 
   it('writes manager corrections with scoped predicates and JSONB provenance merges', async () => {

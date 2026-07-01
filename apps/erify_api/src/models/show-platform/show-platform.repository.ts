@@ -18,6 +18,26 @@ export type PerformanceMetricUpdateResult =
 
 type CorrectedPerformanceMetricColumn = 'gmv' | 'viewer_count' | 'ctr' | 'cto';
 
+const PERFORMANCE_METRIC_COLUMN_IDENTIFIERS: Record<
+  CorrectedPerformanceMetricColumn,
+  Prisma.Sql
+> = {
+  gmv: Prisma.raw('"gmv"'),
+  viewer_count: Prisma.raw('"viewer_count"'),
+  ctr: Prisma.raw('"ctr"'),
+  cto: Prisma.raw('"cto"'),
+};
+
+function performanceMetricColumnIdentifier(
+  column: CorrectedPerformanceMetricColumn,
+): Prisma.Sql {
+  const identifier = PERFORMANCE_METRIC_COLUMN_IDENTIFIERS[column];
+  if (!identifier) {
+    throw new Error(`Invalid performance metric column: ${column}`);
+  }
+  return identifier;
+}
+
 // Custom model wrapper that implements IBaseModel with ShowPlatformWhereInput
 
 @Injectable()
@@ -125,13 +145,15 @@ export class ShowPlatformRepository extends BaseRepository<
     column: 'gmv' | 'viewer_count' | 'ctr' | 'cto';
     value: Prisma.Decimal | number;
     factKey: string;
+    source: string;
     templateUid: string;
     protectedTemplateUid: string;
   }): Promise<PerformanceMetricUpdateResult> {
-    const { uid, showId, column, value, factKey, templateUid, protectedTemplateUid } = params;
+    const { uid, showId, column, value, factKey, source, templateUid, protectedTemplateUid } = params;
+    const columnIdentifier = performanceMetricColumnIdentifier(column);
     const affected = await this.txHost.tx.$executeRaw(Prisma.sql`
       UPDATE "show_platforms"
-      SET ${Prisma.raw(`"${column}"`)} = ${value},
+      SET ${columnIdentifier} = ${value},
           "metadata" = jsonb_set(
             COALESCE("metadata", '{}'::jsonb),
             '{performance_templates}',
@@ -149,6 +171,13 @@ export class ShowPlatformRepository extends BaseRepository<
             ''
           ) <> ${protectedTemplateUid}::text
         )
+        AND (
+          ${source}::text = 'MANAGER'
+          OR COALESCE(
+            jsonb_extract_path_text("metadata", 'actuals_source', ${factKey}::text),
+            ''
+          ) <> 'MANAGER'
+        )
     `);
 
     if (affected > 0) {
@@ -157,16 +186,21 @@ export class ShowPlatformRepository extends BaseRepository<
 
     const [current] = await this.txHost.tx.$queryRaw<Array<{
       recordedTemplate: string | null;
+      recordedSource: string | null;
     }>>(Prisma.sql`
-      SELECT jsonb_extract_path_text("metadata", 'performance_templates', ${factKey}::text)
-        AS "recordedTemplate"
+      SELECT
+        jsonb_extract_path_text("metadata", 'performance_templates', ${factKey}::text)
+          AS "recordedTemplate",
+        jsonb_extract_path_text("metadata", 'actuals_source', ${factKey}::text)
+          AS "recordedSource"
       FROM "show_platforms"
       WHERE "uid" = ${uid} AND "show_id" = ${showId} AND "deleted_at" IS NULL
       LIMIT 1
     `);
 
-    return current?.recordedTemplate === protectedTemplateUid
-      && templateUid !== protectedTemplateUid
+    return (current?.recordedTemplate === protectedTemplateUid
+      && templateUid !== protectedTemplateUid)
+    || (current?.recordedSource === 'MANAGER' && source !== 'MANAGER')
       ? 'blocked_by_higher_priority'
       : 'not_found';
   }
@@ -189,7 +223,7 @@ export class ShowPlatformRepository extends BaseRepository<
   }): Promise<Exclude<PerformanceMetricUpdateResult, 'blocked_by_higher_priority'>> {
     const { uid, showId, metrics, actualsSources, performanceTemplates } = params;
     const metricAssignments = metrics.map((metric) =>
-      Prisma.sql`${Prisma.raw(`"${metric.column}"`)} = ${metric.value}`,
+      Prisma.sql`${performanceMetricColumnIdentifier(metric.column)} = ${metric.value}`,
     );
     const actualsSourcesJson = JSON.stringify(actualsSources);
     const performanceTemplatesJson = JSON.stringify(performanceTemplates);

@@ -948,6 +948,8 @@ describe('studioShowManagementService', () => {
       await service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
         gmv: '125.50',
         viewerCount: 50,
+        ctr: undefined,
+        cto: undefined,
         reason: 'Correction request',
       }, 'ext_5');
 
@@ -976,10 +978,58 @@ describe('studioShowManagementService', () => {
           action: 'OVERRIDE',
           actorId: mockUser.id,
           reason: 'Correction request',
+          metadata: expect.objectContaining({
+            actor_uid: mockUser.uid,
+            show_uid: mockShow.uid,
+            show_platform_uid: mockShowPlatform.uid,
+          }),
           targets: expect.arrayContaining([
             { targetType: 'SHOW', targetId: mockShow.id },
             { targetType: 'SHOW_PLATFORM', targetId: mockShowPlatform.id },
           ]),
+        }),
+      );
+    });
+
+    it('pins manager provenance when a submitted metric value is unchanged', async () => {
+      showPlatformRepositoryMock.findByUid.mockResolvedValue({
+        ...mockShowPlatform,
+        gmv: new Prisma.Decimal('100.00'),
+        metadata: {
+          actuals_source: {
+            show_platform_gmv: 'PLATFORM',
+          },
+        },
+      });
+
+      await service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
+        gmv: '100.00',
+        viewerCount: undefined,
+        ctr: undefined,
+        cto: undefined,
+        reason: 'Manager confirms platform total',
+      }, 'ext_5');
+
+      expect(showPlatformRepositoryMock.updateCorrectedPerformanceMetrics).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uid: 'show_plt_123',
+          showId: mockShow.id,
+          metrics: [],
+          actualsSources: {
+            show_platform_gmv: 'MANAGER',
+          },
+          performanceTemplates: {
+            show_platform_gmv: 'MANAGER',
+          },
+        }),
+      );
+      expect(auditServiceMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'OVERRIDE',
+          metadata: expect.objectContaining({
+            corrected_metrics: [],
+            pinned_metrics: [{ field: 'gmv', value: '100' }],
+          }),
         }),
       );
     });
@@ -990,6 +1040,9 @@ describe('studioShowManagementService', () => {
       await expect(
         service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
           gmv: '100.00',
+          viewerCount: undefined,
+          ctr: undefined,
+          cto: undefined,
           reason: 'Reason',
         }, 'ext_5'),
       ).rejects.toMatchObject({
@@ -1004,6 +1057,9 @@ describe('studioShowManagementService', () => {
       await expect(
         service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
           gmv: '100.00',
+          viewerCount: undefined,
+          ctr: undefined,
+          cto: undefined,
           reason: 'Reason',
         }, 'ext_5'),
       ).rejects.toMatchObject({
@@ -1017,6 +1073,9 @@ describe('studioShowManagementService', () => {
       await expect(
         service.correctShowPlatformPerformance('std_123', 'show_123', 'show_plt_123', {
           gmv: '100.00',
+          viewerCount: undefined,
+          ctr: undefined,
+          cto: undefined,
           reason: 'Reason',
         }, 'ext_5'),
       ).rejects.toMatchObject({

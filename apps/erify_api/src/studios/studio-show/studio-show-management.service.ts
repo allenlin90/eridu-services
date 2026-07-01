@@ -588,8 +588,10 @@ export class StudioShowManagementService {
     dto: CorrectShowPlatformPerformanceDto,
     actorExtId: string,
   ) {
-    const show = await this.findStudioShowOrThrow(studioUid, showUid);
-    const actor = await this.userService.getUserByExtId(actorExtId);
+    const [show, actor] = await Promise.all([
+      this.findStudioShowOrThrow(studioUid, showUid),
+      this.userService.getUserByExtId(actorExtId),
+    ]);
     if (!actor) {
       throw HttpError.unauthorized('ACTOR_NOT_FOUND');
     }
@@ -602,9 +604,12 @@ export class StudioShowManagementService {
     }
 
     const changes: Array<{ field: string; old_value: string | null; new_value: string | null }> = [];
+    const pinnedMetrics: Array<{ field: string; value: string | null }> = [];
     const metrics: Array<{ column: CorrectedMetricColumn; value: Prisma.Decimal | number | null }> = [];
     const nextActualsSources: Record<string, string> = {};
     const nextPerformanceTemplates: Record<string, string> = {};
+    const metadata = (showPlatform.metadata as Record<string, any> | null) ?? {};
+    const currentActualsSources = (metadata.actuals_source as Record<string, string> | undefined) ?? {};
 
     const checkMetric = (
       field: 'gmv' | 'ctr' | 'cto',
@@ -638,8 +643,16 @@ export class StudioShowManagementService {
           new_value: newDecimal !== null ? newDecimal.toString() : null,
         });
         metrics.push({ column, value: newDecimal });
+      }
+      if (isChanged || currentActualsSources[factKey] !== 'MANAGER') {
         nextActualsSources[factKey] = 'MANAGER';
         nextPerformanceTemplates[factKey] = 'MANAGER';
+        if (!isChanged) {
+          pinnedMetrics.push({
+            field,
+            value: newDecimal !== null ? newDecimal.toString() : null,
+          });
+        }
       }
     };
 
@@ -657,12 +670,20 @@ export class StudioShowManagementService {
           new_value: String(dto.viewerCount),
         });
         metrics.push({ column: 'viewer_count', value: dto.viewerCount });
+      }
+      if (isChanged || currentActualsSources.show_platform_view_count !== 'MANAGER') {
         nextActualsSources.show_platform_view_count = 'MANAGER';
         nextPerformanceTemplates.show_platform_view_count = 'MANAGER';
+        if (!isChanged) {
+          pinnedMetrics.push({
+            field: 'viewerCount',
+            value: String(dto.viewerCount),
+          });
+        }
       }
     }
 
-    if (changes.length > 0) {
+    if (changes.length > 0 || Object.keys(nextActualsSources).length > 0) {
       const updateResult = await this.showPlatformRepository.updateCorrectedPerformanceMetrics({
         uid: showPlatformUid,
         showId: show.id,
@@ -680,8 +701,12 @@ export class StudioShowManagementService {
         reason: dto.reason,
         metadata: {
           corrected_metrics: changes,
+          pinned_metrics: pinnedMetrics,
           platform_name: showPlatform.platform?.name ?? 'Unknown',
           show_name: show.name,
+          actor_uid: actor.uid,
+          show_uid: show.uid,
+          show_platform_uid: showPlatform.uid,
         },
         targets: [
           { targetType: 'SHOW', targetId: show.id },
