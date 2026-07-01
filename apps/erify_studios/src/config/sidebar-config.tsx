@@ -241,8 +241,6 @@ function getStudioOperationsItems(
     });
   }
 
-
-
   if (hasStudioRouteAccess(role as StudioRole, 'taskReports')) {
     operationsItems.push({
       title: 'Task Reports',

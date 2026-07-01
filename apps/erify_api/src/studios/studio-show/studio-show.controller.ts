@@ -13,6 +13,7 @@ import {
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
+import { auditApiResponseSchema } from '@eridu/api-types/audits';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
   schedulePublishImpactRowSchema,
@@ -31,15 +32,15 @@ import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decora
 
 import { BaseStudioController } from '../base-studio.controller';
 
-import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
 import { auditApiResponseSchema } from '@eridu/api-types/audits';
+import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
+import { ShowAuditQueryDto } from './schemas/studio-show-audit.schema';
 import {
   cancellationStatusResponseDto,
   CancelShowWithResolutionDto,
   RequestCancellationResolutionDto,
   ResolveShowCancellationDto,
 } from './schemas/studio-show-cancellation.schema';
-import { ShowAuditQueryDto } from './schemas/studio-show-audit.schema';
 import {
   BulkAssignStudioShowCreatorsDto,
   bulkAssignStudioShowCreatorsResultSchema,

@@ -115,9 +115,12 @@ function createColumns(studioId: string): ColumnDef<AuditApiResponse>[] {
       cell: ({ row }) => {
         const action = row.original.action;
         let variant: 'secondary' | 'destructive' | 'outline' | 'default' = 'outline';
-        if (action === 'CREATE') variant = 'default';
-        if (action === 'DELETE') variant = 'destructive';
-        if (action === 'OVERRIDE') variant = 'secondary';
+        if (action === 'CREATE')
+          variant = 'default';
+        if (action === 'DELETE')
+          variant = 'destructive';
+        if (action === 'OVERRIDE')
+          variant = 'secondary';
         return <Badge variant={variant}>{action}</Badge>;
       },
     },
@@ -133,12 +136,12 @@ function createColumns(studioId: string): ColumnDef<AuditApiResponse>[] {
           const impactKind = meta.impact_kind === 'confirmed_future_pending_resolution'
             ? 'Confirmed show removed from planning sheet (Pending Resolution)'
             : 'Confirmed show modified in planning sheet';
-          
+
           const changedFields = Array.isArray(meta.changed_fields) ? meta.changed_fields.join(', ') : '';
           const relationChanges = meta.relation_changes && typeof meta.relation_changes === 'object'
             ? meta.relation_changes
             : {};
-          
+
           const relationsList: string[] = [];
           Object.entries(relationChanges).forEach(([key, val]) => {
             if (typeof val === 'number' && val > 0) {
@@ -151,12 +154,16 @@ function createColumns(studioId: string): ColumnDef<AuditApiResponse>[] {
               <span className="font-medium text-foreground">{impactKind}</span>
               {changedFields && (
                 <div className="text-xs text-muted-foreground">
-                  <span className="font-medium">Fields:</span> {changedFields}
+                  <span className="font-medium">Fields:</span>
+                  {' '}
+                  {changedFields}
                 </div>
               )}
               {relationsList.length > 0 && (
                 <div className="text-xs text-muted-foreground">
-                  <span className="font-medium">Relation diffs:</span> {relationsList.join(', ')}
+                  <span className="font-medium">Relation diffs:</span>
+                  {' '}
+                  {relationsList.join(', ')}
                 </div>
               )}
               <Link
@@ -186,7 +193,13 @@ function createColumns(studioId: string): ColumnDef<AuditApiResponse>[] {
         if (!actorUid) {
           const meta = row.original.metadata;
           if (meta && typeof meta === 'object' && 'ingestion_source' in meta) {
-            return <span className="text-xs text-muted-foreground">System ({String(meta.ingestion_source)})</span>;
+            return (
+              <span className="text-xs text-muted-foreground">
+                System (
+                {String(meta.ingestion_source)}
+                )
+              </span>
+            );
           }
           return <span className="text-xs text-muted-foreground">System</span>;
         }
