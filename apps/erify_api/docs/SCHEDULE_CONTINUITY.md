@@ -178,7 +178,7 @@ The publish uses the same 4 Google Sheets endpoints (no surface expansion):
 
 ### Publish Summary Response
 
-Includes counts for: `shows_created`, `shows_updated`, `shows_cancelled`, `shows_pending_resolution`, `shows_restored`, `shows_preserved`, `confirmed_shows_updated`, `confirmed_shows_pending_resolution`, `publish_impacts_recorded`, `creator_links_added/updated/removed`, and `platform_links_added/updated/removed`.
+Includes counts for: `shows_created`, `shows_updated`, `shows_cancelled`, `shows_pending_resolution`, `shows_restored`, `shows_preserved` (existing rows left untouched because already past/done), `shows_skipped` (brand-new payload rows never created because already past/done), `confirmed_shows_updated`, `confirmed_shows_pending_resolution`, `publish_impacts_recorded`, `creator_links_added/updated/removed`, and `platform_links_added/updated/removed`.
 
 ---
 
