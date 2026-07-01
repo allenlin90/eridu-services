@@ -399,10 +399,25 @@ export const showRunReviewSummarySchema = z.object({
   }),
 });
 
+function optionalDecimalSchema(regex: RegExp) {
+  return z.union([z.string(), z.number(), z.null(), z.undefined()])
+    .transform((val) => {
+      if (val === null || val === undefined)
+        return val;
+      const str = String(val).trim();
+      return str === '' ? null : str;
+    })
+    .refine((val) => {
+      if (val === null || val === undefined)
+        return true;
+      return regex.test(val);
+    }, { message: 'Must be a valid positive decimal number' });
+}
+
 export const correctShowPlatformPerformanceInputSchema = z.object({
-  gmv: z.union([z.string(), z.number()]).nullable().optional(),
+  gmv: optionalDecimalSchema(/^\d{1,10}(?:\.\d{1,2})?$/),
   viewer_count: z.number().int().nonnegative().nullable().optional(),
-  ctr: z.union([z.string(), z.number()]).nullable().optional(),
-  cto: z.union([z.string(), z.number()]).nullable().optional(),
+  ctr: optionalDecimalSchema(/^\d{1,3}(?:\.\d{1,2})?$/),
+  cto: optionalDecimalSchema(/^\d{1,3}(?:\.\d{1,2})?$/),
   reason: z.string().min(1, 'Business reason is required'),
 });

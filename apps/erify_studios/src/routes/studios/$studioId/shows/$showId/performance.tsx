@@ -92,7 +92,7 @@ function StudioShowPerformanceTab() {
     );
   }
 
-  if (!hasMetrics) {
+  if (!hasMetrics && !canCorrect) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-4">

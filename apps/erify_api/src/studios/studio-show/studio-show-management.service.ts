@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
-import { Prisma } from '@prisma/client';
+import { Prisma, ShowPlatform } from '@prisma/client';
 
 import type {
   CancelShowWithResolutionInput,
@@ -593,9 +593,9 @@ export class StudioShowManagementService {
       throw HttpError.unauthorized('ACTOR_NOT_FOUND');
     }
 
-    const showPlatform = await this.showPlatformRepository.findByUid(showPlatformUid, {
+    const showPlatform = (await this.showPlatformRepository.findByUid(showPlatformUid, {
       platform: true,
-    });
+    })) as (ShowPlatform & { platform?: { name: string } | null }) | null;
     if (!showPlatform || showPlatform.showId !== show.id || showPlatform.deletedAt !== null) {
       throw HttpError.notFound('ShowPlatform', showPlatformUid);
     }
