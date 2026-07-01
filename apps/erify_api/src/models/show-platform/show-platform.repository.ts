@@ -205,12 +205,13 @@ export class ShowPlatformRepository extends BaseRepository<
       : 'not_found';
   }
 
-  /**
-   * Manager corrections can touch multiple metric columns in one audited
-   * action. Keep the write scoped to the active show-platform row and merge only
-   * the changed provenance keys so concurrent extraction writes to sibling
-   * metrics cannot be lost by a stale metadata replacement.
-   */
+  // Engineering decision: multi-column manager correction requires a single atomic
+  // UPDATE that (a) assigns several metric columns in one statement, (b) JSONB-merges
+  // only the changed provenance sub-keys so sibling metrics written by concurrent
+  // extractors are not overwritten, and (c) scopes the write to the active row via
+  // uid + showId + deletedAt. None of these constraints can be expressed via a standard
+  // Prisma ORM update without either multiple round-trips or a whole-blob metadata
+  // replacement that loses concurrent writes to sibling actuals_source keys.
   async updateCorrectedPerformanceMetrics(params: {
     uid: string;
     showId: bigint;
