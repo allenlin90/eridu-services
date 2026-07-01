@@ -400,7 +400,8 @@ export const showRunReviewSummarySchema = z.object({
 });
 
 function optionalDecimalSchema(regex: RegExp) {
-  return z.union([z.string(), z.number(), z.null(), z.undefined()])
+  return z.union([z.string(), z.number(), z.null()])
+    .optional()
     .transform((val) => {
       if (val === null || val === undefined)
         return val;
