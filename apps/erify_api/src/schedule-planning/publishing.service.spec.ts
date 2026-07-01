@@ -882,6 +882,59 @@ describe('publishingService', () => {
       );
     });
 
+    it('should restore a show with CANCELLED_PENDING_RESOLUTION status when it is republished', async () => {
+      const pendingResolutionShow = {
+        id: BigInt(78),
+        uid: 'show_pending_res',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: null,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(9002),
+        showStandardId: BigInt(1),
+        name: 'Test Show 1',
+        startTime: new Date('2024-01-01T08:00:00Z'),
+        endTime: new Date('2024-01-01T09:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        showStatus: {
+          systemKey: 'CANCELLED_PENDING_RESOLUTION',
+        },
+      };
+
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([pendingResolutionShow]);
+      mockTransactionClient.taskTarget.findMany.mockResolvedValue([
+        { taskId: BigInt(501) },
+      ]);
+      mockTransactionClient.show.update.mockResolvedValue({});
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(78) },
+        data: expect.objectContaining({
+          scheduleId: BigInt(1),
+          showStatusId: BigInt(1), // restored to statusIds.shst_test123 from incoming payload
+        }),
+      });
+      expect(result.publishSummary.shows_restored).toBe(1);
+      expect(result.publishSummary.shows_preserved).toBe(0);
+    });
+
     it('should create shows with MCs and Platforms', async () => {
       await service.publish(scheduleUid, version, userId);
 

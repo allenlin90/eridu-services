@@ -372,10 +372,29 @@ export class StudioShowManagementService {
         user_agent: item.userAgent ?? null,
         reason: item.reason ?? null,
         metadata: item.metadata,
-        targets: item.targets.map((t) => ({
-          target_type: t.targetType,
-          target_uid: t.targetType === 'SHOW' ? show.uid : t.targetId.toString(),
-        })),
+        targets: item.targets.map((t) => {
+          let targetUid = '';
+          switch (t.targetType) {
+            case 'SHOW':
+              targetUid = t.show?.uid ?? show.uid;
+              break;
+            case 'SHOW_CREATOR':
+              targetUid = t.showCreator?.uid ?? '';
+              break;
+            case 'SHOW_PLATFORM':
+              targetUid = t.showPlatform?.uid ?? '';
+              break;
+            case 'STUDIO_SHIFT':
+              targetUid = t.studioShift?.uid ?? '';
+              break;
+            default:
+              break;
+          }
+          return {
+            target_type: t.targetType as any,
+            target_uid: targetUid,
+          };
+        }),
         created_at: item.createdAt.toISOString(),
       })),
       total,

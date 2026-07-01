@@ -13,7 +13,14 @@ import type {
 import { PrismaService } from '@/prisma/prisma.service';
 
 const AUDIT_WITH_TARGETS_INCLUDE = {
-  targets: true,
+  targets: {
+    include: {
+      show: { select: { uid: true } },
+      showCreator: { select: { uid: true } },
+      showPlatform: { select: { uid: true } },
+      studioShift: { select: { uid: true } },
+    },
+  },
   actor: {
     select: {
       uid: true,
@@ -132,6 +139,8 @@ export class AuditRepository {
   }
 
   async countForTargets(filters: AuditTargetFilter[]): Promise<number> {
+    // Engineering decision: this abstracts the polymorphic target filtering mapping
+    // to Prisma where inputs, encapsulating database schema details within the repository.
     if (filters.length === 0) {
       return 0;
     }
@@ -213,8 +222,10 @@ export class AuditRepository {
         return { ...base, showPlatform: { connect: { id: target.targetId } } };
       case 'STUDIO_SHIFT':
         return { ...base, studioShift: { connect: { id: target.targetId } } };
-      default:
-        throw new Error(`Unknown audit target type: ${String(target.targetType)}`);
+      default: {
+        const exhaustive: never = target.targetType;
+        throw new Error(`Unknown audit target type: ${exhaustive}`);
+      }
     }
   }
 
@@ -230,8 +241,10 @@ export class AuditRepository {
         return { showPlatformId: filter.targetId };
       case 'STUDIO_SHIFT':
         return { studioShiftId: filter.targetId };
-      default:
-        throw new Error(`Unknown audit target type: ${String(filter.targetType)}`);
+      default: {
+        const exhaustive: never = filter.targetType;
+        throw new Error(`Unknown audit target type: ${exhaustive}`);
+      }
     }
   }
 }

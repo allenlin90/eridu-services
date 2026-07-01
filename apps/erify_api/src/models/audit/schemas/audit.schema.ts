@@ -42,8 +42,18 @@ export type CreateAuditTargetPayload = {
   targetId: bigint;
 };
 
+export type AuditTargetWithRelations = AuditTarget & {
+  show?: { uid: string } | null;
+  showCreator?: { uid: string } | null;
+  showPlatform?: { uid: string } | null;
+  studioShift?: { uid: string } | null;
+};
+
 /** `Audit` row with its `AuditTarget` rows eagerly included. */
-export type AuditWithTargets = Audit & { targets: AuditTarget[]; actor?: { uid: string } | null };
+export type AuditWithTargets = Audit & {
+  targets: AuditTargetWithRelations[];
+  actor?: { uid: string } | null;
+};
 
 /** Filter tuple consumed by `AuditRepository.findForTargets`. */
 export type AuditTargetFilter = {

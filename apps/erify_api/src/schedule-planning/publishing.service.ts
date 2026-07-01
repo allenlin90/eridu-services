@@ -39,7 +39,6 @@ const PRESERVED_STATUS_KEYS = new Set([
 const UPDATE_PRESERVED_STATUS_KEYS = new Set([
   'LIVE',
   'COMPLETED',
-  'CANCELLED_PENDING_RESOLUTION',
 ]);
 
 @Injectable()

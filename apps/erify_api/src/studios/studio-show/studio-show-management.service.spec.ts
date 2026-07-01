@@ -114,6 +114,8 @@ describe('studioShowManagementService', () => {
   const auditServiceMock = {
     create: jest.fn(),
     findSchedulePublishImpactsForStudio: jest.fn(),
+    countForTargets: jest.fn(),
+    findForTargets: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -1156,6 +1158,80 @@ describe('studioShowManagementService', () => {
           client_name: 'Client',
         },
         created_at: '2026-06-29T10:00:00.000Z',
+      });
+    });
+  });
+
+  describe('listShowAudits', () => {
+    it('returns paginated audits and maps target UIDs without leaking raw bigint database IDs', async () => {
+      const showUid = 'show_123';
+      const studioUid = 'std_123';
+
+      auditServiceMock.countForTargets.mockResolvedValue(1);
+      auditServiceMock.findForTargets.mockResolvedValue([
+        {
+          uid: 'aud_999',
+          action: 'UPDATE',
+          ipAddress: '127.0.0.1',
+          userAgent: 'Chrome',
+          reason: 'Test edit',
+          metadata: { field: 'value' },
+          createdAt: new Date('2026-06-29T10:00:00.000Z'),
+          actor: { uid: 'usr_777' },
+          targets: [
+            {
+              targetType: 'SHOW',
+              targetId: BigInt(100),
+              show: { uid: 'show_123' },
+            },
+            {
+              targetType: 'SHOW_PLATFORM',
+              targetId: BigInt(200),
+              showPlatform: { uid: 'shp_777' },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.listShowAudits(studioUid, showUid, { page: 1, limit: 10 });
+
+      expect(showRepositoryMock.findByUidAndStudioUid).toHaveBeenCalledWith(
+        showUid,
+        studioUid,
+        expect.any(Object),
+      );
+      expect(auditServiceMock.countForTargets).toHaveBeenCalledWith([
+        { targetType: 'SHOW', targetId: BigInt(100) },
+      ]);
+      expect(auditServiceMock.findForTargets).toHaveBeenCalledWith(
+        [{ targetType: 'SHOW', targetId: BigInt(100) }],
+        { skip: 0, take: 10 },
+      );
+
+      expect(result).toEqual({
+        total: 1,
+        items: [
+          {
+            id: 'aud_999',
+            action: 'UPDATE',
+            actor_uid: 'usr_777',
+            ip_address: '127.0.0.1',
+            user_agent: 'Chrome',
+            reason: 'Test edit',
+            metadata: { field: 'value' },
+            targets: [
+              {
+                target_type: 'SHOW',
+                target_uid: 'show_123',
+              },
+              {
+                target_type: 'SHOW_PLATFORM',
+                target_uid: 'shp_777',
+              },
+            ],
+            created_at: '2026-06-29T10:00:00.000Z',
+          },
+        ],
       });
     });
   });
