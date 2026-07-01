@@ -339,7 +339,10 @@ function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: Correc
     const resolvedGmv = gmv.trim() === '' ? null : gmv.trim();
     const resolvedCtr = ctr.trim() === '' ? null : ctr.trim();
     const resolvedCto = cto.trim() === '' ? null : cto.trim();
-    const resolvedViewerCount = viewerCount.trim() ? Number.parseInt(viewerCount.trim(), 10) : undefined;
+    const parsedViewerCount = Number(viewerCount.trim());
+    const resolvedViewerCount = viewerCount.trim() && Number.isFinite(parsedViewerCount)
+      ? Math.trunc(parsedViewerCount)
+      : undefined;
 
     correctMutation.mutate(
       {

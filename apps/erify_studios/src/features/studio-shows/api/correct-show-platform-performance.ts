@@ -6,6 +6,7 @@ import type { CorrectShowPlatformPerformanceInput, StudioShowDetail } from '@eri
 import { studioShowKeys } from './get-studio-show';
 import { studioShowsKeys } from './get-studio-shows';
 
+import { studioPerformanceKeys } from '@/features/studio-performance/api/get-performance-summary';
 import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
 import { apiClient } from '@/lib/api/client';
 
@@ -38,6 +39,7 @@ export function useCorrectShowPlatformPerformance(studioId: string) {
     onSuccess: async (show) => {
       queryClient.setQueryData(studioShowKeys.detail(studioId, show.id), show);
       queryClient.invalidateQueries({ queryKey: studioShowsKeys.listPrefix(studioId) });
+      queryClient.invalidateQueries({ queryKey: studioPerformanceKeys.all });
       toast.success('Performance metrics corrected');
     },
     onError: (error) => {
