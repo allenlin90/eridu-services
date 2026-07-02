@@ -25,9 +25,9 @@ Snapshot of `pnpm audit` + `pnpm outdated -r`. Vuln counts decay — re-run befo
 - **drizzle-orm**: 0.45.1→0.45.2 is a trivial patch that clears its HIGH advisory.
 - **samlify + node-forge** HIGHs come only via `@better-auth/sso` (SSO is currently disabled/commented in auth.ts) — lower real exposure; a better-auth 1.6.x bump likely pulls patched samlify.
 
-## Vite duplication collapse trick
-- Two vite installs: 7.2.4 (app-pinned ^7.2.4) and 7.3.1 (pulled by vitest@4.0.13 → @vitest/mocker). Tracked in docs/tech-debt/vite-plugin-type-version-mismatch.md.
-- Vite HIGH advisory patched at >=7.3.5. Bumping app pins to `^7.3.5` makes app vite AND mocker's vite both resolve to the same latest 7.x → **collapses the dup AND fixes the vite HIGH in one move**, while staying on the v7 major (vite 8.1.3 is a separate deferred major).
+## Vite duplication collapse trick (DONE)
+- Was: two vite installs, 7.2.4 (app-pinned) and 7.3.1 (pulled by vitest@4.0.13 → @vitest/mocker).
+- Fixed by bumping app pins + vitest to ^7.3.6 / ^4.1.9 workspace-wide (eridu_auth, erify_creators, erify_studios, @eridu/ui, @eridu/browser-upload) — both resolve to the same latest 7.x now, confirmed via `pnpm why vite` ("Found 1 version of vite"). Also cleared the vite HIGH and vitest CRITICAL. The `vite-plugin-type-version-mismatch.md` tech-debt doc (and its `erify_creators/vite.config.ts` cast workaround) is now deleted/removed — no override was even needed, a plain version bump collapsed the duplication.
 
 ## Framework-critical / major bumps to DEFER (need dedicated compat effort)
 - typescript 5.9.3 → **6.0.3** (major, workspace-wide, 10 workspaces)

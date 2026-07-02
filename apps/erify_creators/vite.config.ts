@@ -5,7 +5,6 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import type { Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import type { ViteUserConfig } from 'vitest/config';
 import { defineConfig } from 'vitest/config';
 
 // Plugin to exclude test files from build (only during build, not during tests)
@@ -39,10 +38,6 @@ function excludeTests(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  // `vitest/config`'s defineConfig resolves its own (newer) nested vite dependency, which
-  // structurally differs slightly from the app's directly pinned vite peer used by these
-  // plugins (pnpm installs two vite versions here — see docs/tech-debt/vite-plugin-type-version-mismatch.md).
-  // The cast is a type-level bridge only; both are the same plugins at runtime.
   plugins: [
     excludeTests(),
     tanstackRouter({
@@ -117,7 +112,7 @@ export default defineConfig({
         enabled: false,
       },
     }),
-  ] as ViteUserConfig['plugins'],
+  ],
   resolve: {
     preserveSymlinks: false, // Required for pnpm workspaces
     alias: {

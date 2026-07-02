@@ -47,7 +47,13 @@ export default defineConfig({
   ],
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      // @tailwindcss/vite has a broad peer range on `vite` (not pinned), so pnpm may hoist a
+      // different vite instance for it than the one astro bundles internally, producing a
+      // structural mismatch between two near-identical Plugin types (same plugin at runtime).
+      // @ts-expect-error see comment above
+      tailwindcss(),
+    ],
   },
 
   adapter: node({
