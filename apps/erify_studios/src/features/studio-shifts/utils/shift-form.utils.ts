@@ -22,9 +22,11 @@ export function toLocalTimeInputValue(value: string): string {
 }
 
 export function combineDateAndTime(date: string, time: string): string {
-  // Use a local-time ISO string construction so the result is consistent
-  // regardless of the browser's timezone. Both date ("YYYY-MM-DD") and time
-  // ("HH:MM") inputs are local values entered by the user.
+  // Parses date ("YYYY-MM-DD") and time ("HH:MM") as the browser's local
+  // wall-clock time, then serializes to the equivalent UTC instant. The
+  // resulting ISO string is NOT timezone-independent — round-tripping it
+  // back to a local value (e.g. via toLocalTimeInputValue) must happen in
+  // the same browser timezone that produced it.
   return new Date(`${date}T${time}:00`).toISOString();
 }
 

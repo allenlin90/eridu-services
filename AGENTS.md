@@ -241,6 +241,8 @@ pnpm --filter <workspace> build
 
 If cross-workspace changes were made, validate dependents too.
 
+For feature/refactor work, also run the refactor-parity checks in [`.agents/workflows/verification.md`](.agents/workflows/verification.md#steps) (loading/empty/data UI states, route/search-param contracts, pagination stack parity) in addition to the commands above.
+
 ### Useful Commands
 ```bash
 pnpm dev

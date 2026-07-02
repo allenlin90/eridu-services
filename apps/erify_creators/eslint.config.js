@@ -48,6 +48,13 @@ export default createConfig(
     },
   },
   {
+    // Test helper module: not part of the running app, so Fast Refresh doesn't apply
+    files: ['src/test/test-utils.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     // JSON files: ignore filename case for Paraglide required formats
     files: ['**/*.json'],
     rules: {
