@@ -4,6 +4,7 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { cors } from 'hono/cors';
 
+import { db } from '@/db';
 import env from '@/env';
 import { auth } from '@/lib/auth'; // path to your auth file
 import { createApp } from '@/lib/create-app';
@@ -76,7 +77,7 @@ if (env.NODE_ENV === 'production') {
   });
 }
 
-serve(
+const server = serve(
   {
     fetch: app.fetch,
     port: env.PORT,
@@ -87,4 +88,16 @@ serve(
   },
 );
 
-// TODO: graceful shutdown
+function gracefulShutdown(signal: string) {
+  console.warn(`Received ${signal}, shutting down gracefully...`);
+  server.close(async (err) => {
+    if (err) {
+      console.error('Error while closing server:', err);
+    }
+    await db.$client.end();
+    process.exit(err ? 1 : 0);
+  });
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

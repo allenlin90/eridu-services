@@ -17,7 +17,7 @@ Confirm before invoking:
 2. Local Postgres is running: `docker compose up -d database`.
 3. You can afford to lose current local DB state. If not, commit/stash work first or back up the local DB (`pg_dump $DATABASE_URL > backup.sql`).
 4. `.env` (gitignored) contains real values for `PROD_DATABASE_URL` and `PROD_ERIDU_AUTH_DATABASE_URL`. See `apps/erify_api/.env.example` for placeholders.
-5. Tooling prerequisites are installed (one-time): bash >= 4.3 and the Postgres client tools (`pg_dump`, `psql`) on PATH. See [skill prerequisites](../skills/prod-data-sync/SKILL.md#prerequisites-one-time).
+5. Tooling prerequisites are installed (one-time): bash >= 4.3 and the Postgres client tools (`pg_dump`, `psql`) on PATH. See [skill prerequisites](../skills/prod-data-sync/SKILL.md#prerequisites).
 
 ## 1. Sync
 

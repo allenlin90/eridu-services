@@ -20,6 +20,10 @@ Confirmed by running the correct invocation (`tsc -b tsconfig.app.json --noEmit`
 - Triage the ~192 errors surfaced once the script is fixed; many cluster around stale/missing `validateSearch` schemas on routes whose `<Link search>` types don't match (likely fixable in bulk), with a smaller set of genuine narrowing/typing bugs.
 - Land the script fix in a dedicated PR so the error backlog is visible and triaged deliberately, not silently introduced as a side effect of an unrelated feature PR.
 
+## Also Affects `erify_creators` and `eridu_auth`
+
+The same root-cause pattern — a solution-style root `tsconfig.json` (`files: []`, only `references`) paired with a plain `"typecheck": "tsc --noEmit"` script — also exists in `apps/erify_creators` and `apps/eridu_auth`. Confirmed by running `tsc -b tsconfig.app.json --noEmit` directly in each: both type-check zero files under the configured script and both surface real pre-existing errors once invoked correctly (unrelated route-search typing, stale test mocks, etc.), the same shape of gap described above for `erify_studios`. Treat all three as one fix when this item is picked up — the desired direction and triage approach below apply identically to each app's own `tsconfig.app.json`.
+
 ## Trigger To Fix
 
 Fix this before or during any PR that:

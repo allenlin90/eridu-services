@@ -4,6 +4,7 @@ import { useLocalStorage } from 'usehooks-ts';
 
 import type { ProfileResponse } from '@eridu/api-types/users';
 
+import { queryKeys } from '@/lib/api/query-keys';
 import { useUserProfile } from '@/lib/hooks/use-user';
 
 export type CreatorStudioCreator = NonNullable<
@@ -48,7 +49,7 @@ export function useActiveStudio() {
 
       // Invalidate shows list queries to ensure fresh data for the newly selected studio
       queryClient.invalidateQueries({
-        queryKey: ['me', 'shows'],
+        queryKey: queryKeys.shows.all,
       });
     },
     [queryClient, setActiveStudioId],

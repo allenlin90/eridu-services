@@ -15,7 +15,7 @@ import { ShowsTableToolbar } from './shows-table-toolbar';
 
 import * as m from '@/paraglide/messages.js';
 
-type ShowsTableProps<TData, TValue> = {
+type ShowsTableProps<TData extends { id: string }, TValue> = {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   totalCount: number;
@@ -33,7 +33,7 @@ type ShowsTableProps<TData, TValue> = {
   isFetching?: boolean;
 };
 
-export function ShowsTable<TData, TValue>({
+export function ShowsTable<TData extends { id: string }, TValue>({
   columns,
   data,
   totalCount,
@@ -70,7 +70,7 @@ export function ShowsTable<TData, TValue>({
       onRowClick={(row) => {
         navigate({
           to: '/shows/$showId',
-          params: { showId: (row as { id: string }).id },
+          params: { showId: row.id },
         });
       }}
       renderToolbar={(table) => <ShowsTableToolbar table={table} />}

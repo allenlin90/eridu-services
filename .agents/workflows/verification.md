@@ -6,6 +6,8 @@ description: Run lint, typecheck, and tests to verify code changes before markin
 
 Run this workflow after making code changes to ensure quality before marking work complete.
 
+> This workflow covers the refactor-parity checks (step 4). For the base lint/typecheck/test/build commands and when `build` is mandatory, see AGENTS.md § [Verification Checklist](../../AGENTS.md#verification-checklist-mandatory).
+>
 > For feature/refactor work, run **Knowledge Sync Workflow** (`.agents/workflows/knowledge-sync.md`) after verification so docs/skills/rules/memory stay current.
 
 ## Steps
@@ -28,6 +30,8 @@ pnpm --filter <app> test
 ```
 
 If a workspace does not define a `test` script, run the available verification commands and explicitly note that the workspace currently has no automated test command (for example `eridu_docs`).
+
+Also run `pnpm --filter <app> build` when any of the mandatory-build triggers in AGENTS.md apply (package/build wiring changed, dependencies changed, the workspace has stricter build-time checks than `typecheck`, or you would not be comfortable handing off without a build result).
 
 4. **Refactor parity checks (for feature/refactor work)**
    - Confirm loading/empty/data UI states still match expected behavior.
