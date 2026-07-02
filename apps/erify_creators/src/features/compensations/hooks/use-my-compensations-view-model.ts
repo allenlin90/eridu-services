@@ -38,6 +38,7 @@ export function useMyCompensationsViewModel() {
     }
 
     navigate({
+      from: '/compensations',
       search: (prev) => ({
         ...prev,
         dateFrom: range?.from?.toISOString(),

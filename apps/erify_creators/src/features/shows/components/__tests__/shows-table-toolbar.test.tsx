@@ -101,7 +101,7 @@ vi.mock('@/lib/api/query-keys', () => ({
 // Mock TanStack Table
 const mockGetColumn = vi.fn();
 const mockGetState = vi.fn(() => ({
-  columnFilters: [],
+  columnFilters: [] as { id: string; value: unknown }[],
 }));
 const mockResetColumnFilters = vi.fn();
 const mockSetFilterValue = vi.fn();

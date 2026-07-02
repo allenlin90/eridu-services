@@ -5,5 +5,5 @@ export const Route = createFileRoute('/')({
 });
 
 function IndexRedirect() {
-  return <Navigate to="/shows" />;
+  return <Navigate to="/shows" search={{ page: 1 }} />;
 }

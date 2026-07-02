@@ -11,7 +11,7 @@ import { getLocale as getAppLocale, setLocale as setAppLocale } from '../paragli
 
 export type { Locale };
 
-const ENGLISH_ONLY_LOCALE: Locale = 'en';
+const ENGLISH_ONLY_LOCALE = 'en';
 
 /**
  * Set the language tag for both shared and app-specific translations

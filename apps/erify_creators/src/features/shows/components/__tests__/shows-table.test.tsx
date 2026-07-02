@@ -31,8 +31,38 @@ vi.mock('@/paraglide/messages.js', () => ({
   'shows.refresh': () => 'Refresh',
 }));
 
+function buildMockShow(overrides: Partial<ShowApiResponse> = {}): ShowApiResponse {
+  return {
+    id: '1',
+    name: 'Test Show',
+    client_id: null,
+    client_name: null,
+    schedule_id: null,
+    schedule_name: null,
+    studio_id: null,
+    studio_name: null,
+    studio_room_id: null,
+    studio_room_name: null,
+    show_type_id: null,
+    show_type_name: null,
+    show_status_id: null,
+    show_status_name: null,
+    show_status_system_key: null,
+    show_standard_id: null,
+    show_standard_name: null,
+    start_time: '2024-01-01T10:00:00Z',
+    end_time: '2024-01-01T12:00:00Z',
+    actual_start_time: null,
+    actual_end_time: null,
+    metadata: {},
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
 const mockShows: ShowApiResponse[] = [
-  {
+  buildMockShow({
     id: '1',
     name: 'Test Show 1',
     client_name: 'Test Client',
@@ -41,9 +71,8 @@ const mockShows: ShowApiResponse[] = [
     end_time: '2024-01-01T12:00:00Z',
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-    metadata: {},
-  },
-  {
+  }),
+  buildMockShow({
     id: '2',
     name: 'Test Show 2',
     client_name: 'Test Client 2',
@@ -52,13 +81,13 @@ const mockShows: ShowApiResponse[] = [
     end_time: '2024-01-02T12:00:00Z',
     created_at: '2024-01-02T00:00:00Z',
     updated_at: '2024-01-02T00:00:00Z',
-    metadata: {},
-  },
+  }),
 ];
 
 const defaultProps = {
   columns,
   data: mockShows,
+  totalCount: mockShows.length,
   pageCount: 1,
   pagination: { pageIndex: 0, pageSize: 10 },
   onPaginationChange: () => {},
