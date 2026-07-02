@@ -1,5 +1,8 @@
 # Dependency Upgrade Strategist - Agent Memory
 
+## Topic files
+- [security-audit-baseline.md](security-audit-baseline.md) — 2026-07-02 workspace vuln+outdated audit: React on 19.2 now, all 3 criticals are dev-only, prod-runtime HIGHs (axios/hono/@hono/node-server/drizzle-orm/multer), vite-dup collapse trick, deferred majors list
+
 ## Package Dependency Graph (Auth Chain)
 - `eridu_auth` depends directly on: `better-auth`, `@better-auth/sso`, `drizzle-orm`, `drizzle-zod`, `drizzle-kit`
 - `@eridu/auth-sdk` depends directly on: `better-auth` (for types + client plugins)
