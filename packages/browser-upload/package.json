@@ -24,8 +24,8 @@
     "@eridu/typescript-config": "workspace:*",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
-    "happy-dom": "^20.0.11",
+    "happy-dom": "^20.10.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.13"
+    "vitest": "^4.1.9"
   }
 }
