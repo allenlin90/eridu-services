@@ -27,6 +27,7 @@ out/
 build
 dist
 storybook-static
+*.tsbuildinfo
 
 # Paraglide generated files
 **/paraglide/

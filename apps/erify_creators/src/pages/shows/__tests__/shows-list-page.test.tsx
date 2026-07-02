@@ -1,11 +1,48 @@
+import type { UseQueryResult } from '@tanstack/react-query';
 import { screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+
+import type { ShowApiResponse, ShowListResponse } from '@eridu/api-types/shows';
 
 import { useMyShows } from '../../../features/shows/api/shows.api';
 import { useShowsTableState } from '../../../features/shows/hooks/use-shows-table-state';
 import { renderWithQueryClient } from '../../../test/test-utils';
 import { ShowsListPage } from '../shows-list-page';
+
+function createMockShowsResult(
+  overrides: Partial<UseQueryResult<ShowListResponse, Error>> = {},
+): UseQueryResult<ShowListResponse, Error> {
+  return {
+    data: undefined,
+    isLoading: false,
+    error: null,
+    isError: false,
+    isPending: false,
+    isLoadingError: false,
+    isRefetchError: false,
+    isSuccess: true,
+    status: 'success',
+    fetchStatus: 'idle',
+    isFetched: true,
+    isFetchedAfterMount: true,
+    isFetching: false,
+    isRefetching: false,
+    isStale: false,
+    isPlaceholderData: false,
+    isInitialLoading: false,
+    isEnabled: true,
+    dataUpdatedAt: 0,
+    errorUpdatedAt: 0,
+    failureCount: 0,
+    failureReason: null,
+    errorUpdateCount: 0,
+    isPaused: false,
+    refetch: vi.fn(),
+    promise: Promise.resolve(undefined),
+    ...overrides,
+  } as UseQueryResult<ShowListResponse, Error>;
+}
 
 // Mock the hooks
 vi.mock('../../../features/shows/api/shows.api', () => ({
@@ -95,11 +132,9 @@ describe('showsListPage', () => {
     });
 
     // Reset mock to default state
-    vi.mocked(useMyShows).mockReturnValue({
-      data: { data: [], meta: { totalPages: 0 } },
-      isLoading: false,
-      error: null,
-    });
+    vi.mocked(useMyShows).mockReturnValue(createMockShowsResult({
+      data: { data: [] as ShowApiResponse[], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } },
+    }));
   });
 
   afterEach(() => {
@@ -121,11 +156,17 @@ describe('showsListPage', () => {
 
   it('renders loading page when loading', () => {
     // Mock loading state
-    vi.mocked(useMyShows).mockReturnValue({
-      data: null,
+    vi.mocked(useMyShows).mockReturnValue(createMockShowsResult({
+      data: undefined,
       isLoading: true,
-      error: null,
-    });
+      isPending: true,
+      isSuccess: false,
+      status: 'pending',
+      fetchStatus: 'fetching',
+      isFetched: false,
+      isFetchedAfterMount: false,
+      isFetching: true,
+    }));
 
     renderWithQueryClient(<ShowsListPage />);
 

@@ -167,9 +167,11 @@ describe('pwaRuntime', () => {
 
     onNeedRefreshHandler?.();
     expect(controllerChangeHandler).toBeTypeOf('function');
-    controllerChangeHandler?.();
+    // TS strictNullChecks narrows a `let` reassigned only inside a callback to `never` on read;
+    // the cast restores the declared type (known TS control-flow limitation, not a real type issue).
+    (controllerChangeHandler as (() => void) | null)?.();
     onNeedRefreshHandler?.();
-    controllerChangeHandler?.();
+    (controllerChangeHandler as (() => void) | null)?.();
 
     expect(triggerUpdate).toHaveBeenCalledTimes(1);
     expect(triggerUpdate).toHaveBeenCalledWith(true);
@@ -217,8 +219,9 @@ describe('pwaRuntime', () => {
     const { initializePwaShell } = await import('../pwa-runtime');
     initializePwaShell();
 
-    controllerChangeHandler?.();
-    controllerChangeHandler?.();
+    // See narrowing-limitation note above.
+    (controllerChangeHandler as (() => void) | null)?.();
+    (controllerChangeHandler as (() => void) | null)?.();
 
     expect(reloadSpy).not.toHaveBeenCalled();
   });

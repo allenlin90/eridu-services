@@ -30,16 +30,16 @@ export function ShowList({ shows, isLoading }: ShowListProps) {
           className="rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md"
         >
           <h3 className="text-lg font-semibold">{show.name}</h3>
-          {show.showTypeName && (
+          {show.show_type_name && (
             <p className="mt-2 text-sm text-gray-600">
               {m['shows.typeLabel']()}
               {' '}
-              {show.showTypeName}
+              {show.show_type_name}
             </p>
           )}
-          {show.startTime && (
+          {show.start_time && (
             <p className="mt-1 text-xs text-gray-500">
-              {new Date(show.startTime).toLocaleString()}
+              {new Date(show.start_time).toLocaleString()}
             </p>
           )}
         </div>

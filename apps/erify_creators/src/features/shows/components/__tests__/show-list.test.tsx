@@ -9,23 +9,48 @@ vi.mock('@/paraglide/messages.js', () => ({
   'shows.typeLabel': () => 'Type:',
 }));
 
+function buildMockShow(overrides: Partial<Show> = {}): Show {
+  return {
+    id: '1',
+    name: 'Test Show',
+    client_id: null,
+    client_name: null,
+    studio_id: null,
+    studio_name: null,
+    studio_room_id: null,
+    studio_room_name: null,
+    show_type_id: null,
+    show_type_name: null,
+    show_status_id: null,
+    show_status_name: null,
+    show_standard_id: null,
+    show_standard_name: null,
+    start_time: '2024-01-01T10:00:00Z',
+    end_time: '2024-01-01T11:00:00Z',
+    metadata: {},
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
 const mockShows: Show[] = [
-  {
+  buildMockShow({
     id: '1',
     name: 'Test Show 1',
-    showTypeName: 'Live',
-    startTime: '2024-01-01T10:00:00Z',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
-  },
-  {
+    show_type_name: 'Live',
+    start_time: '2024-01-01T10:00:00Z',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  }),
+  buildMockShow({
     id: '2',
     name: 'Test Show 2',
-    showTypeName: 'Recorded',
-    startTime: '2024-01-02T10:00:00Z',
-    createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-02T00:00:00Z',
-  },
+    show_type_name: 'Recorded',
+    start_time: '2024-01-02T10:00:00Z',
+    created_at: '2024-01-02T00:00:00Z',
+    updated_at: '2024-01-02T00:00:00Z',
+  }),
 ];
 
 describe('showList', () => {
@@ -58,17 +83,16 @@ describe('showList', () => {
   it('renders start time when available', () => {
     render(<ShowList shows={[mockShows[0]]} isLoading={false} />);
 
-    const startTime = new Date(mockShows[0].startTime!).toLocaleString();
+    const startTime = new Date(mockShows[0].start_time).toLocaleString();
     expect(screen.getByText(startTime)).toBeInTheDocument();
   });
 
   it('does not render show type when not available', () => {
-    const showWithoutType: Show = {
+    const showWithoutType = buildMockShow({
       id: '3',
       name: 'Show Without Type',
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    };
+      show_type_name: null,
+    });
 
     render(<ShowList shows={[showWithoutType]} isLoading={false} />);
 

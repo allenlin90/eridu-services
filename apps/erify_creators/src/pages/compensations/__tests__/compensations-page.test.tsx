@@ -1,6 +1,5 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { screen } from '@testing-library/react';
-import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CompensationsPage } from '../compensations-page';

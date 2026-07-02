@@ -10,14 +10,17 @@ import {
   toCanonicalShowsSearch,
 } from '@/features/shows/config/shows-search-schema';
 
-const SHOWS_ROUTE = '/shows/' as const;
+// useSearch's `from` matches the full route id (trailing slash); useNavigate's `from`
+// matches the normalized navigable path (no trailing slash) — TanStack Router types these differently.
+const SHOWS_SEARCH_ROUTE = '/shows/' as const;
+const SHOWS_NAVIGATE_ROUTE = '/shows' as const;
 
 export function useShowsTableState(): UseTableUrlStateReturn {
-  const search = useSearch({ from: SHOWS_ROUTE }) as ShowsSearch;
-  const navigate = useNavigate({ from: SHOWS_ROUTE });
+  const search = useSearch({ from: SHOWS_SEARCH_ROUTE }) as ShowsSearch;
+  const navigate = useNavigate({ from: SHOWS_NAVIGATE_ROUTE });
   const needsNormalization = shouldNormalizeShowsSearch(search);
   const tableState = useTableUrlState({
-    from: SHOWS_ROUTE,
+    from: SHOWS_SEARCH_ROUTE,
     searchColumnId: 'name',
     dateColumnId: 'start_time',
   });

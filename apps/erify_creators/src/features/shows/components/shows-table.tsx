@@ -7,7 +7,6 @@ import type {
   PaginationState,
   SortingState,
 } from '@tanstack/react-table';
-import * as React from 'react';
 
 import { DataTable, DataTablePagination } from '@eridu/ui';
 
@@ -15,8 +14,8 @@ import { ShowsTableToolbar } from './shows-table-toolbar';
 
 import * as m from '@/paraglide/messages.js';
 
-type ShowsTableProps<TData extends { id: string }, TValue> = {
-  columns: ColumnDef<TData, TValue>[];
+type ShowsTableProps<TData extends { id: string }> = {
+  columns: ColumnDef<TData>[];
   data: TData[];
   totalCount: number;
   pageCount: number;
@@ -33,7 +32,7 @@ type ShowsTableProps<TData extends { id: string }, TValue> = {
   isFetching?: boolean;
 };
 
-export function ShowsTable<TData extends { id: string }, TValue>({
+export function ShowsTable<TData extends { id: string }>({
   columns,
   data,
   totalCount,
@@ -46,7 +45,7 @@ export function ShowsTable<TData extends { id: string }, TValue>({
   onColumnFiltersChange,
   isLoading,
   isFetching,
-}: ShowsTableProps<TData, TValue>) {
+}: ShowsTableProps<TData>) {
   const navigate = useNavigate();
 
   return (
