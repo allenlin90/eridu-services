@@ -39,7 +39,7 @@
     "@tanstack/react-router-devtools": "^1.139.3",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.18",
-    "axios": "^1.13.2",
+    "axios": "^1.18.1",
     "big.js": "^7.0.1",
     "date-fns": "^4.1.0",
     "idb-keyval": "^6.2.2",
