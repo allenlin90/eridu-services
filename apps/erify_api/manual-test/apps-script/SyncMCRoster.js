@@ -42,12 +42,14 @@ function syncMCRoster() {
     Logger.log(`Successfully fetched ${roster.length} active MCs from server.`);
 
     // 3. Prepare data for 'mc_users' sheet
+    // Scoped to fields erify_api itself owns — role/email_verified/ban_reason/
+    // ban_expires live in eridu_auth's own schema and are not included.
     const headers = [
-      'ext_id', 'name', 'email', 'email_verified', 'image', 
-      'created_at', 'updated_at', 'role', 'banned', 'ban_reason', 
-      'ban_expires', 'mc_name', 'mc_id', 'user_id'
+      'ext_id', 'name', 'email', 'image',
+      'created_at', 'updated_at', 'banned',
+      'mc_name', 'mc_id', 'user_id'
     ];
-    
+
     const rows = [headers];
     const mcNames = [];
 
@@ -56,14 +58,10 @@ function syncMCRoster() {
         mc.ext_id,
         mc.name,
         mc.email,
-        mc.email_verified,
         mc.image,
         mc.created_at,
         mc.updated_at,
-        mc.role,
         mc.banned,
-        mc.ban_reason,
-        mc.ban_expires,
         mc.mc_name,
         mc.mc_id,
         mc.user_id

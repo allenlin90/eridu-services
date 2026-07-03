@@ -392,8 +392,8 @@ function getCreatorMap() {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return {};
 
-  // mc_users columns (see SyncMCRoster.js headers): ... mc_name (L/12), mc_id (M/13).
-  const rows = sheet.getRange(2, 12, lastRow - 1, 2).getValues();
+  // mc_users columns (see SyncMCRoster.js headers): ... mc_name (H/8), mc_id (I/9).
+  const rows = sheet.getRange(2, 8, lastRow - 1, 2).getValues();
 
   return rows.reduce((acc, [mcName, mcId]) => {
     if (mcId) acc[mcId] = mcName;

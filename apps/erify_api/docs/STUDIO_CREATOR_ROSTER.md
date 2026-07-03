@@ -168,7 +168,7 @@ This keeps the API aligned with the product rule that inactive creators cannot b
 - Uses the shared `google-sheets/*` API-key auth (`@GoogleSheets()` / `BaseGoogleSheetsController`), same as `GoogleSheetsScheduleController` — no JWT, no `@StudioProtected`.
 - `StudioCreatorService.listActiveRosterWithLinkedUsers(studioUid)` owns the mapping/business logic (camelCase payload); the controller only renames keys to the sheet's snake_case columns and formats dates. `StudioCreatorRepository.findActiveRosterWithUser(studioUid)` holds the query (active roster + non-deleted studio/creator, with the creator's linked `user`).
 - A soft-deleted linked `User` is nulled out in the service (not filterable at the query level — Prisma does not support `where` inside `include`/`select` for the to-one `Creator.user` relation), so their PII never reaches the sheet.
-- `role`, `email_verified`, `ban_reason`, `ban_expires` are read from `User.metadata` and stay `null` unless that JSON blob happens to carry those keys. **erify_api does not currently sync these fields from `eridu_auth`** (which is the actual source of truth for them) — only `banned` is backed by a real column (`User.isBanned`). Do not add fallback defaults for the unsynced fields; a missing key must mean `null`, not an assumed "verified"/"user" state.
+- The export is scoped to fields `erify_api` itself owns: `ext_id`, `name`, `email`, `image`, `created_at`, `updated_at`, `banned` (`User.isBanned`), `mc_name`, `mc_id`, `user_id`. `role`, `email_verified`, `ban_reason`, and `ban_expires` live in `eridu_auth`'s own schema — `erify_api` has no access to them, so they are intentionally not part of this contract rather than faked or read from `User.metadata` guesswork.
 
 ## Verification
 

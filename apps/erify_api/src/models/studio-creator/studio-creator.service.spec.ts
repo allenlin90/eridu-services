@@ -183,13 +183,10 @@ describe('studioCreatorService', () => {
       };
     }
 
-    it('maps a linked user, reading verification/role/ban details from metadata when present', async () => {
+    it('maps a linked user to the erify_api-owned fields', async () => {
       studioCreatorRepository.findActiveRosterWithUser.mockResolvedValue([
         buildActiveRosterRecord({
-          user: buildLinkedUser({
-            metadata: { email_verified: true, role: 'admin', ban_reason: 'spam', ban_expires: '2026-02-01T00:00:00.000Z' },
-            isBanned: true,
-          }),
+          user: buildLinkedUser({ isBanned: true }),
         }),
       ] as any);
 
@@ -201,34 +198,15 @@ describe('studioCreatorService', () => {
           extId: 'fjkO9i0gvXO43J47rYW0FzWeWcP45JgQ',
           name: 'ตอง',
           email: 'suvanun.tong1994@gmail.com',
-          emailVerified: true,
           image: 'http://example.com/tong.png',
           createdAt: new Date('2026-01-02T00:00:00.000Z'),
           updatedAt: new Date('2026-01-02T00:00:00.000Z'),
-          role: 'admin',
           banned: true,
-          banReason: 'spam',
-          banExpires: '2026-02-01T00:00:00.000Z',
           mcName: 'Tong',
           mcId: 'mc_creator01',
           userId: 'user_tong123',
         },
       ]);
-    });
-
-    it('does not fabricate email_verified=true or role="user" when metadata has neither key', async () => {
-      studioCreatorRepository.findActiveRosterWithUser.mockResolvedValue([
-        buildActiveRosterRecord({ user: buildLinkedUser({ metadata: {} }) }),
-      ] as any);
-
-      const [result] = await service.listActiveRosterWithLinkedUsers('std_1');
-
-      expect(result.emailVerified).toBeNull();
-      expect(result.role).toBeNull();
-      expect(result.banReason).toBeNull();
-      expect(result.banExpires).toBeNull();
-      // banned is backed by the real isBanned column, not metadata, so it still defaults to false.
-      expect(result.banned).toBe(false);
     });
 
     it('falls back to creator fields and nulls when there is no linked user', async () => {
@@ -242,14 +220,10 @@ describe('studioCreatorService', () => {
         extId: null,
         name: 'OnlyCreator',
         email: null,
-        emailVerified: null,
         image: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-        role: null,
         banned: false,
-        banReason: null,
-        banExpires: null,
         mcName: 'OnlyAlias',
         mcId: 'mc_creator02',
         userId: null,
