@@ -20,6 +20,19 @@ import { CreatorService } from '@/models/creator/creator.service';
 import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
+export type StudioCreatorRosterWithUserPayload = {
+  extId: string | null;
+  name: string;
+  email: string | null;
+  image: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  banned: boolean;
+  mcName: string;
+  mcId: string;
+  userId: string | null;
+};
+
 @Injectable()
 export class StudioCreatorService extends BaseModelService {
   static readonly UID_PREFIX = 'smc';
@@ -48,6 +61,33 @@ export class StudioCreatorService extends BaseModelService {
     return this.studioCreatorRepository.findByStudioUidPaginated(studioUid, {
       ...params,
       isActive: params.isActive ?? true,
+    });
+  }
+
+  async listActiveRosterWithLinkedUsers(studioUid: string): Promise<StudioCreatorRosterWithUserPayload[]> {
+    const roster = await this.studioCreatorRepository.findActiveRosterWithUser(studioUid);
+
+    return roster.map(({ creator }) => {
+      // A soft-deleted linked user must never surface through this roster
+      // export (see the Engineering decision note on findActiveRosterWithUser
+      // for why this can't be filtered at the query level).
+      const user = creator.user && !creator.user.deletedAt ? creator.user : null;
+
+      // Scoped to fields erify_api itself owns. role/emailVerified/banReason/
+      // banExpires live in eridu_auth's own schema, which this service has no
+      // access to — do not derive them from User.metadata guesswork.
+      return {
+        extId: user?.extId ?? null,
+        name: user?.name ?? creator.name,
+        email: user?.email ?? null,
+        image: user?.profileUrl ?? null,
+        createdAt: user?.createdAt ?? creator.createdAt,
+        updatedAt: user?.updatedAt ?? creator.updatedAt,
+        banned: user?.isBanned ?? false,
+        mcName: creator.aliasName,
+        mcId: creator.uid,
+        userId: user?.uid ?? null,
+      };
     });
   }
 

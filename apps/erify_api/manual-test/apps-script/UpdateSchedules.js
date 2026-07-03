@@ -158,11 +158,11 @@ function processSchedulesFromRows(rows, scheduleDefinitions, selectedScheduleIds
     // 1: schedule_id (Col B)
     const scheduleId = row[1] ? row[1].toString().trim() : '';
     if (!selectedScheduleIds.has(scheduleId)) return;
-    
+
     // Version Lookup
     const def = scheduleDefinitions[scheduleId];
     const sheetVersion = def ? def.version : null;
-    
+
     if (!groups[scheduleId]) {
       groups[scheduleId] = {
         scheduleId,
@@ -311,7 +311,7 @@ function parseShowFromRow(row, platformMap) {
   };
 
   const creatorList = parseList(creators).map(uid => ({ creatorId: uid }));
-  
+
   // Helper to resolve UID from Map (Name -> UID) or use raw if it looks like a UID
   const resolveValue = (raw, map, defaultUid) => {
     if (!raw) return defaultUid;
@@ -372,7 +372,7 @@ function parseShowFromRow(row, platformMap) {
 
 function getPlatformMap() {
   return Object.entries(PLATFORMS).reduce((acc, [uid, name]) => {
-    acc[name.toLowerCase()] = uid; 
+    acc[name.toLowerCase()] = uid;
     acc[name] = uid;
     return acc;
   }, {});

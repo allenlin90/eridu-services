@@ -84,6 +84,7 @@ describe('studioCreatorService', () => {
             createRosterEntry: jest.fn(),
             reactivateRosterEntry: jest.fn(),
             updateWithVersionCheck: jest.fn(),
+            findActiveRosterWithUser: jest.fn(),
           },
         },
         {
@@ -136,6 +137,114 @@ describe('studioCreatorService', () => {
       skip: 0,
       take: 20,
       isActive: true,
+    });
+  });
+
+  describe('listActiveRosterWithLinkedUsers', () => {
+    function buildActiveRosterRecord(creatorOverrides: Record<string, unknown> = {}) {
+      return {
+        uid: 'smc_roster01',
+        studioId: 1n,
+        creatorId: 1n,
+        isActive: true,
+        version: 1,
+        metadata: {},
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        deletedAt: null,
+        creator: {
+          id: 1n,
+          uid: 'mc_creator01',
+          name: 'Suvanun',
+          aliasName: 'Tong',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          deletedAt: null,
+          user: null,
+          ...creatorOverrides,
+        },
+      };
+    }
+
+    function buildLinkedUser(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 10n,
+        uid: 'user_tong123',
+        extId: 'fjkO9i0gvXO43J47rYW0FzWeWcP45JgQ',
+        email: 'suvanun.tong1994@gmail.com',
+        name: 'ตอง',
+        isBanned: false,
+        profileUrl: 'http://example.com/tong.png',
+        metadata: {},
+        createdAt: new Date('2026-01-02T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+        deletedAt: null,
+        ...overrides,
+      };
+    }
+
+    it('maps a linked user to the erify_api-owned fields', async () => {
+      studioCreatorRepository.findActiveRosterWithUser.mockResolvedValue([
+        buildActiveRosterRecord({
+          user: buildLinkedUser({ isBanned: true }),
+        }),
+      ] as any);
+
+      const result = await service.listActiveRosterWithLinkedUsers('std_1');
+
+      expect(studioCreatorRepository.findActiveRosterWithUser).toHaveBeenCalledWith('std_1');
+      expect(result).toEqual([
+        {
+          extId: 'fjkO9i0gvXO43J47rYW0FzWeWcP45JgQ',
+          name: 'ตอง',
+          email: 'suvanun.tong1994@gmail.com',
+          image: 'http://example.com/tong.png',
+          createdAt: new Date('2026-01-02T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+          banned: true,
+          mcName: 'Tong',
+          mcId: 'mc_creator01',
+          userId: 'user_tong123',
+        },
+      ]);
+    });
+
+    it('falls back to creator fields and nulls when there is no linked user', async () => {
+      studioCreatorRepository.findActiveRosterWithUser.mockResolvedValue([
+        buildActiveRosterRecord({ name: 'OnlyCreator', aliasName: 'OnlyAlias', uid: 'mc_creator02', user: null }),
+      ] as any);
+
+      const [result] = await service.listActiveRosterWithLinkedUsers('std_1');
+
+      expect(result).toEqual({
+        extId: null,
+        name: 'OnlyCreator',
+        email: null,
+        image: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        banned: false,
+        mcName: 'OnlyAlias',
+        mcId: 'mc_creator02',
+        userId: null,
+      });
+    });
+
+    it('treats a soft-deleted linked user as absent so their PII never leaks into the sheet', async () => {
+      studioCreatorRepository.findActiveRosterWithUser.mockResolvedValue([
+        buildActiveRosterRecord({
+          user: buildLinkedUser({ deletedAt: new Date('2026-01-05T00:00:00.000Z') }),
+        }),
+      ] as any);
+
+      const [result] = await service.listActiveRosterWithLinkedUsers('std_1');
+
+      expect(result.extId).toBeNull();
+      expect(result.email).toBeNull();
+      expect(result.image).toBeNull();
+      expect(result.userId).toBeNull();
+      // Name still falls back to the creator's own name, not the deleted user's.
+      expect(result.name).toBe('Suvanun');
     });
   });
 

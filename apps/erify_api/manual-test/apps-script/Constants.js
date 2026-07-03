@@ -7,6 +7,7 @@ const CONFIG_SELECTED_END_ROW_RANGE = 'J6';
 const CONFIG_SELECTED_COUNT_RANGE = 'J8';
 const SHEET_NAME = 'show_planning_integration';
 const TARGET_SHEET_NAME = 'show_planning'; // User facing sheet
+const MC_USERS_SHEET = 'mc_users';
 
 // Column Configurations
 const COLS = {
@@ -40,7 +41,9 @@ const ROUTES = {
   UPDATE_SCHEDULE: (scheduleId) => `/schedules/${scheduleId}`, 
   VALIDATE_SCHEDULE: (scheduleId) => `/schedules/${scheduleId}/validate`,
   PUBLISH_SCHEDULE: (scheduleId) => `/schedules/${scheduleId}/publish`,
+  GET_MC_ROSTER: (studioId) => `/studios/${studioId}/creators`,
 }
+
 
 const PLATFORMS = {
   'plt_Z9Flkouqz0V1idiKQiEh': 'tiktok',
