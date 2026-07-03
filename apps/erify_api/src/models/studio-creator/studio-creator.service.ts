@@ -20,6 +20,23 @@ import { CreatorService } from '@/models/creator/creator.service';
 import { UserService } from '@/models/user/user.service';
 import { UtilityService } from '@/utility/utility.service';
 
+export type StudioCreatorRosterWithUserPayload = {
+  extId: string | null;
+  name: string;
+  email: string | null;
+  emailVerified: boolean | null;
+  image: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  role: string | null;
+  banned: boolean;
+  banReason: string | null;
+  banExpires: string | null;
+  mcName: string;
+  mcId: string;
+  userId: string | null;
+};
+
 @Injectable()
 export class StudioCreatorService extends BaseModelService {
   static readonly UID_PREFIX = 'smc';
@@ -48,6 +65,51 @@ export class StudioCreatorService extends BaseModelService {
     return this.studioCreatorRepository.findByStudioUidPaginated(studioUid, {
       ...params,
       isActive: params.isActive ?? true,
+    });
+  }
+
+  async listActiveRosterWithLinkedUsers(studioUid: string): Promise<StudioCreatorRosterWithUserPayload[]> {
+    const roster = await this.studioCreatorRepository.findActiveRosterWithUser(studioUid);
+
+    return roster.map(({ creator }) => {
+      // A soft-deleted linked user must never surface through this roster
+      // export (see the Engineering decision note on findActiveRosterWithUser
+      // for why this can't be filtered at the query level).
+      const user = creator.user && !creator.user.deletedAt ? creator.user : null;
+      const userMetadata = (user?.metadata ?? {}) as Record<string, unknown>;
+
+      // erify_api does not sync role/email-verification/ban details from
+      // eridu_auth into User.metadata today, so these stay null unless a
+      // future sync populates them — never fabricate a "verified"/"user"
+      // default when the source data is simply absent.
+      return {
+        extId: user?.extId ?? null,
+        name: user?.name ?? creator.name,
+        email: user?.email ?? null,
+        emailVerified: user
+          ? ((userMetadata.email_verified as boolean | undefined)
+            ?? (userMetadata.emailVerified as boolean | undefined)
+            ?? null)
+          : null,
+        image: user?.profileUrl ?? null,
+        createdAt: user?.createdAt ?? creator.createdAt,
+        updatedAt: user?.updatedAt ?? creator.updatedAt,
+        role: user ? ((userMetadata.role as string | undefined) ?? null) : null,
+        banned: user?.isBanned ?? false,
+        banReason: user
+          ? ((userMetadata.ban_reason as string | undefined)
+            ?? (userMetadata.banReason as string | undefined)
+            ?? null)
+          : null,
+        banExpires: user
+          ? ((userMetadata.ban_expires as string | undefined)
+            ?? (userMetadata.banExpires as string | undefined)
+            ?? null)
+          : null,
+        mcName: creator.aliasName,
+        mcId: creator.uid,
+        userId: user?.uid ?? null,
+      };
     });
   }
 

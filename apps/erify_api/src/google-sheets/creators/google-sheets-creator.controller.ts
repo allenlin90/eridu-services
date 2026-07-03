@@ -9,7 +9,7 @@ import { BaseGoogleSheetsController } from '../base-google-sheets.controller';
 import { ApiZodResponse } from '@/lib/openapi/decorators';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 import { StudioService } from '@/models/studio/studio.service';
-import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
+import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 
 export const googleSheetsCreatorRosterItemSchema = z.object({
   ext_id: z.string().nullable(),
@@ -36,7 +36,7 @@ export class GoogleSheetsCreatorRosterItemDto extends createZodDto(googleSheetsC
 @SkipThrottle()
 export class GoogleSheetsCreatorController extends BaseGoogleSheetsController {
   constructor(
-    private readonly studioCreatorRepository: StudioCreatorRepository,
+    private readonly studioCreatorService: StudioCreatorService,
   ) {
     super();
   }
@@ -55,39 +55,23 @@ export class GoogleSheetsCreatorController extends BaseGoogleSheetsController {
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     studioId: string,
   ): Promise<GoogleSheetsCreatorRosterItem[]> {
-    const roster = await this.studioCreatorRepository.findActiveRosterWithUser(studioId);
+    const roster = await this.studioCreatorService.listActiveRosterWithLinkedUsers(studioId);
 
-    return roster.map((item) => {
-      const creator = item.creator;
-      const user = creator.user;
-
-      const userMetadata = (user?.metadata as Record<string, any>) ?? {};
-
-      // If email_verified is not explicitly in metadata, we fallback to true if the linked user exists
-      const emailVerified = user
-        ? (userMetadata.email_verified ?? userMetadata.emailVerified ?? true)
-        : null;
-
-      const role = user ? (userMetadata.role ?? 'user') : null;
-      const banReason = user ? (userMetadata.ban_reason ?? userMetadata.banReason ?? null) : null;
-      const banExpires = user ? (userMetadata.ban_expires ?? userMetadata.banExpires ?? null) : null;
-
-      return {
-        ext_id: user?.extId ?? null,
-        name: user?.name ?? creator.name,
-        email: user?.email ?? null,
-        email_verified: emailVerified,
-        image: user?.profileUrl ?? null,
-        created_at: (user?.createdAt ?? creator.createdAt).toISOString(),
-        updated_at: (user?.updatedAt ?? creator.updatedAt).toISOString(),
-        role,
-        banned: user?.isBanned ?? false,
-        ban_reason: banReason,
-        ban_expires: banExpires,
-        mc_name: creator.aliasName,
-        mc_id: creator.uid,
-        user_id: user?.uid ?? null,
-      };
-    });
+    return roster.map((entry) => ({
+      ext_id: entry.extId,
+      name: entry.name,
+      email: entry.email,
+      email_verified: entry.emailVerified,
+      image: entry.image,
+      created_at: entry.createdAt.toISOString(),
+      updated_at: entry.updatedAt.toISOString(),
+      role: entry.role,
+      banned: entry.banned,
+      ban_reason: entry.banReason,
+      ban_expires: entry.banExpires,
+      mc_name: entry.mcName,
+      mc_id: entry.mcId,
+      user_id: entry.userId,
+    }));
   }
 }

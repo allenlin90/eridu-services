@@ -244,6 +244,13 @@ export class StudioCreatorRepository extends BaseRepository<
     return updated;
   }
 
+  // Engineering decision: the studio/creator relation filters plus the nested
+  // creator->user include are not expressible via `findMany({ where })` at the
+  // call site, so this stays a named repository method. Note the `user`
+  // include is NOT filtered by `deletedAt` here — Prisma does not support
+  // `where` inside `include`/`select` for a to-one relation (Creator.user is
+  // the FK side of an optional 1:1). A soft-deleted linked user must be
+  // nulled out downstream by the caller instead of at the query level.
   async findActiveRosterWithUser(studioUid: string) {
     return this.delegate.findMany({
       where: {

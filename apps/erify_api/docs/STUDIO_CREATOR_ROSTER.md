@@ -162,6 +162,14 @@ This keeps the API aligned with the product rule that inactive creators cannot b
 - Re-adding a previously inactive creator should restore the existing roster association instead of creating a second row.
 - No compatibility alias is retained for `/creators/roster`.
 
+## Google Sheets Roster Sync (Read-Only Export)
+
+- `GET google-sheets/studios/:studioId/creators` (`src/google-sheets/creators/google-sheets-creator.controller.ts`) exports the active roster, one row per active `StudioCreator`, for the Apps Script `syncMCRoster()` job (`manual-test/apps-script/SyncMCRoster.js`) to write into the `mc_users` sheet tab and the `config` sheet's MC dropdown list.
+- Uses the shared `google-sheets/*` API-key auth (`@GoogleSheets()` / `BaseGoogleSheetsController`), same as `GoogleSheetsScheduleController` — no JWT, no `@StudioProtected`.
+- `StudioCreatorService.listActiveRosterWithLinkedUsers(studioUid)` owns the mapping/business logic (camelCase payload); the controller only renames keys to the sheet's snake_case columns and formats dates. `StudioCreatorRepository.findActiveRosterWithUser(studioUid)` holds the query (active roster + non-deleted studio/creator, with the creator's linked `user`).
+- A soft-deleted linked `User` is nulled out in the service (not filterable at the query level — Prisma does not support `where` inside `include`/`select` for the to-one `Creator.user` relation), so their PII never reaches the sheet.
+- `role`, `email_verified`, `ban_reason`, `ban_expires` are read from `User.metadata` and stay `null` unless that JSON blob happens to carry those keys. **erify_api does not currently sync these fields from `eridu_auth`** (which is the actual source of truth for them) — only `banned` is backed by a real column (`User.isBanned`). Do not add fallback defaults for the unsynced fields; a missing key must mean `null`, not an assumed "verified"/"user" state.
+
 ## Verification
 
 - `pnpm --filter erify_api lint`
