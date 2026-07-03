@@ -243,4 +243,30 @@ export class StudioCreatorRepository extends BaseRepository<
 
     return updated;
   }
+
+  async findActiveRosterWithUser(studioUid: string) {
+    return this.delegate.findMany({
+      where: {
+        deletedAt: null,
+        isActive: true,
+        studio: {
+          uid: studioUid,
+          deletedAt: null,
+        },
+        creator: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        creator: {
+          include: {
+            user: true,
+          },
+        },
+      },
+      orderBy: [
+        { creator: { name: 'asc' } },
+      ],
+    });
+  }
 }
