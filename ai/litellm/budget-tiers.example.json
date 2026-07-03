@@ -1,0 +1,27 @@
+{
+  "$schema": "./budget-tiers.schema.json",
+  "description": "Example LiteLLM budget tiers for Open WebUI users recorded as LiteLLM customers/end-users.",
+  "tiers": {
+    "light-user": {
+      "description": "General staff and low-frequency users.",
+      "max_budget": 10,
+      "budget_duration": "30d",
+      "rpm_limit": 10,
+      "tpm_limit": 30000
+    },
+    "standard-user": {
+      "description": "Managers and regular operational users.",
+      "max_budget": 30,
+      "budget_duration": "30d",
+      "rpm_limit": 30,
+      "tpm_limit": 80000
+    },
+    "power-user": {
+      "description": "Admins, engineering, and AI workspace maintainers.",
+      "max_budget": 100,
+      "budget_duration": "30d",
+      "rpm_limit": 60,
+      "tpm_limit": 200000
+    }
+  }
+}
