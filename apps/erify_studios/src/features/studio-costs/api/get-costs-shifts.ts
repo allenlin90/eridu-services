@@ -1,14 +1,24 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import type { CostsShiftsQuery, PaginatedShiftCostsResponse } from '@eridu/api-types/costs';
+import type { CostsShiftsQueryInput, PaginatedShiftCostsResponse } from '@eridu/api-types/costs';
 
 import { studioCostsKeys } from './get-costs-summary';
 
 import { apiClient } from '@/lib/api/client';
 
+// `CostsShiftsQueryInput` is the pre-transform (z.input) shape: `sort` is the
+// raw `<field>:<asc|desc>` query string the backend parses itself, and
+// `page`/`limit` are `z.coerce.number()` inputs (typed `unknown` before
+// coercion). Override both so callers pass what actually goes over the wire.
+export type CostsShiftsParams = Omit<CostsShiftsQueryInput, 'page' | 'limit' | 'sort'> & {
+  page?: number;
+  limit?: number;
+  sort?: string;
+};
+
 export async function getCostsShifts(
   studioId: string,
-  params: CostsShiftsQuery,
+  params: CostsShiftsParams,
   options?: { signal?: AbortSignal },
 ): Promise<PaginatedShiftCostsResponse> {
   const response = await apiClient.get<PaginatedShiftCostsResponse>(
@@ -23,7 +33,7 @@ export async function getCostsShifts(
 
 export function useCostsShiftsQuery(
   studioId: string,
-  params: CostsShiftsQuery,
+  params: CostsShiftsParams,
   options?: { enabled?: boolean },
 ) {
   return useQuery({

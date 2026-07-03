@@ -3,7 +3,6 @@ import { lazy, Suspense, useCallback, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 
-import { parseCostsShiftsSort, parseCostsShowsSort } from '@eridu/api-types/costs';
 import {
   Card,
   CardDescription,
@@ -162,7 +161,7 @@ function StudioCostsDashboard() {
     page: search.shows_page,
     limit: search.shows_limit,
     name: search.shows_name,
-    sort: search.shows_sort ? (parseCostsShowsSort(search.shows_sort) ?? undefined) : undefined,
+    sort: search.shows_sort,
   }, { enabled: activeTab === 'shows' });
 
   // Query shift costs detail — gated on the active tab for the same reason.
@@ -173,7 +172,7 @@ function StudioCostsDashboard() {
     member_name: search.shifts_name,
     ...toShiftRoleQueryParams(search.shifts_role),
     status: search.shifts_status as any,
-    sort: search.shifts_sort ? (parseCostsShiftsSort(search.shifts_sort) ?? undefined) : undefined,
+    sort: search.shifts_sort,
   }, { enabled: activeTab === 'shifts' });
 
   return (
