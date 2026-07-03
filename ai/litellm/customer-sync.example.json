@@ -1,0 +1,23 @@
+{
+  "$schema": "./customer-sync.schema.json",
+  "description": "Example mapping for syncing Better Auth or Open WebUI users into LiteLLM customers.",
+  "identity": {
+    "pilot_customer_id": "email",
+    "production_customer_id": "better_auth_user_id",
+    "email_metadata_field": "email"
+  },
+  "roleToBudgetTier": {
+    "admin": "power-user",
+    "engineering": "power-user",
+    "manager": "standard-user",
+    "operations": "standard-user",
+    "fulfillment": "standard-user",
+    "livestream": "standard-user",
+    "staff": "light-user",
+    "pending": "blocked"
+  },
+  "defaults": {
+    "unknownRole": "light-user",
+    "inactiveUser": "blocked"
+  }
+}
