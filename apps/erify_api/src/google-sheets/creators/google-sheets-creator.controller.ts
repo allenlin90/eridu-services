@@ -50,7 +50,7 @@ export class GoogleSheetsCreatorController extends BaseGoogleSheetsController {
     z.array(googleSheetsCreatorRosterItemSchema),
     'List of active creators with user information',
   )
-  @ZodSerializerDto(GoogleSheetsCreatorRosterItemDto)
+  @ZodSerializerDto([GoogleSheetsCreatorRosterItemDto])
   async getCreatorRoster(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio'))
     studioId: string,

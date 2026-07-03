@@ -1,7 +1,10 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { GoogleSheetsCreatorController } from './google-sheets-creator.controller';
+import {
+  GoogleSheetsCreatorController,
+  GoogleSheetsCreatorRosterItemDto,
+} from './google-sheets-creator.controller';
 
 import { StudioCreatorRepository } from '@/models/studio-creator/studio-creator.repository';
 
@@ -24,6 +27,15 @@ describe('googleSheetsCreatorController', () => {
 
     controller = module.get<GoogleSheetsCreatorController>(GoogleSheetsCreatorController);
     studioCreatorRepository = module.get(StudioCreatorRepository);
+  });
+
+  it('should serialize the roster response as an array', () => {
+    const serializerDto = Reflect.getMetadata(
+      'ZOD_SERIALIZER_DTO_OPTIONS',
+      GoogleSheetsCreatorController.prototype.getCreatorRoster,
+    );
+
+    expect(serializerDto).toEqual([GoogleSheetsCreatorRosterItemDto]);
   });
 
   it('should get and map active creators with linked user details', async () => {
