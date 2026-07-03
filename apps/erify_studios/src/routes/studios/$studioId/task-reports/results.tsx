@@ -78,7 +78,7 @@ function TaskReportResultsPage() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/studios/$studioId/task-reports" params={{ studioId }}>
+                  <Link to="/studios/$studioId/task-reports" params={{ studioId }} search={{ page: 1, limit: 10 }}>
                     Task Reports
                   </Link>
                 </BreadcrumbLink>

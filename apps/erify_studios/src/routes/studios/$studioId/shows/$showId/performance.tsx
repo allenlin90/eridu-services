@@ -42,10 +42,7 @@ function StudioShowPerformanceTab() {
   const platforms = show.platforms ?? [];
 
   // Compute aggregates
-  let totalGmv: Big | null = null;
   let totalViews = 0;
-  let sumCtr: Big | null = null;
-  let sumCto: Big | null = null;
   let platformsWithGmvCount = 0;
   let platformsWithViewsCount = 0;
   let platformsWithCtrCount = 0;
@@ -53,7 +50,6 @@ function StudioShowPerformanceTab() {
 
   platforms.forEach((p) => {
     if (p.gmv) {
-      totalGmv = (totalGmv ?? new Big(0)).add(new Big(p.gmv));
       platformsWithGmvCount++;
     }
     if (p.viewer_count > 0) {
@@ -61,14 +57,25 @@ function StudioShowPerformanceTab() {
       platformsWithViewsCount++;
     }
     if (p.ctr) {
-      sumCtr = (sumCtr ?? new Big(0)).add(new Big(p.ctr));
       platformsWithCtrCount++;
     }
     if (p.cto) {
-      sumCto = (sumCto ?? new Big(0)).add(new Big(p.cto));
       platformsWithCtoCount++;
     }
   });
+
+  const totalGmv = platforms.reduce<Big | null>(
+    (acc, p) => (p.gmv ? (acc ?? new Big(0)).add(new Big(p.gmv)) : acc),
+    null,
+  );
+  const sumCtr = platforms.reduce<Big | null>(
+    (acc, p) => (p.ctr ? (acc ?? new Big(0)).add(new Big(p.ctr)) : acc),
+    null,
+  );
+  const sumCto = platforms.reduce<Big | null>(
+    (acc, p) => (p.cto ? (acc ?? new Big(0)).add(new Big(p.cto)) : acc),
+    null,
+  );
 
   const hasMetrics
     = platformsWithGmvCount > 0
@@ -300,10 +307,10 @@ type CorrectPlatformPerformanceDialogProps = {
   platform: {
     show_platform_uid: string;
     name: string;
-    gmv: string | null;
+    gmv?: string | null;
     viewer_count: number;
-    ctr: string | null;
-    cto: string | null;
+    ctr?: string | null;
+    cto?: string | null;
   };
 };
 
@@ -349,10 +356,10 @@ function CorrectPlatformPerformanceDialog({ studioId, showId, platform }: Correc
         showId,
         showPlatformUid: platform.show_platform_uid,
         data: {
-          ...(resolvedGmv !== (platform.gmv ?? null) ? { gmv: resolvedGmv } : {}),
-          ...(resolvedCtr !== (platform.ctr ?? null) ? { ctr: resolvedCtr } : {}),
-          ...(resolvedCto !== (platform.cto ?? null) ? { cto: resolvedCto } : {}),
-          ...(resolvedViewerCount !== (platform.viewer_count ?? undefined) ? { viewer_count: resolvedViewerCount } : {}),
+          gmv: resolvedGmv !== (platform.gmv ?? null) ? resolvedGmv : undefined,
+          ctr: resolvedCtr !== (platform.ctr ?? null) ? resolvedCtr : undefined,
+          cto: resolvedCto !== (platform.cto ?? null) ? resolvedCto : undefined,
+          viewer_count: resolvedViewerCount !== (platform.viewer_count ?? undefined) ? resolvedViewerCount : undefined,
           reason: reason.trim(),
         },
       },

@@ -187,6 +187,7 @@ export function CreatorCompensationsView({
                       <Link
                         to="/studios/$studioId/shows/$showId/compensation"
                         params={{ studioId, showId: show.show_id }}
+                        search={{ page: 1, limit: 10 }}
                         aria-label={`Open show ${show.show_name}`}
                       >
                         <ArrowUpRight className="h-4 w-4" />

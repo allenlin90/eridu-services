@@ -178,7 +178,7 @@ function StudioTaskReviewPage() {
       onColumnFiltersChange(nextFilters);
       setRowSelection({});
     });
-    adapter(updaterOrValue);
+    adapter!(updaterOrValue);
   }, [columnFilters, onColumnFiltersChange]);
 
   // Compute selected task UIDs from selection state keys

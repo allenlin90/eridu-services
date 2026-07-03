@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import type { TaskAction, TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
+import type { TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import { getStudioTaskColumns } from '@/features/tasks/config/studio-task-columns';
 import { useStudioTasks } from '@/features/tasks/hooks/use-studio-tasks';
 import { useUpdateStudioTask } from '@/features/tasks/hooks/use-update-studio-task';
@@ -10,7 +11,7 @@ import { requiresTaskActionSheet } from '@/features/tasks/lib/task-action-sheet'
 
 type UseStudioTasksPageControllerProps = {
   studioId: string;
-  reviewTab?: string;
+  reviewTab?: TaskReviewActiveFilter;
 };
 
 type ActionDraft = {

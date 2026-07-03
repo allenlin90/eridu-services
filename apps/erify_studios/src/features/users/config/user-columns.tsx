@@ -1,9 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
-import type { UserApiResponse } from '@eridu/api-types/users';
+import type { AdminUserApiResponse } from '@eridu/api-types/users';
 import { CopyableText } from '@eridu/ui';
 
-export const userColumns: ColumnDef<UserApiResponse>[] = [
+export const userColumns: ColumnDef<AdminUserApiResponse>[] = [
   {
     accessorKey: 'id',
     header: 'ID',

@@ -11,7 +11,7 @@ import {
 } from '@eridu/api-types/task-management';
 import { useTableUrlState } from '@eridu/ui';
 
-import { adminTasksKeys, getAdminTasks } from '@/features/tasks/api/get-admin-tasks';
+import { adminTasksKeys, getAdminTasks, type GetAdminTasksParams } from '@/features/tasks/api/get-admin-tasks';
 
 const VALID_STATUS = new Set(Object.values(TASK_STATUS));
 const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
@@ -82,7 +82,7 @@ export function useAdminTasks<TRoute extends string>({
       ? false
       : undefined;
 
-  const params = {
+  const params: GetAdminTasksParams = {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search,

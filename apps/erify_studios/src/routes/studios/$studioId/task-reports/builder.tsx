@@ -36,8 +36,8 @@ import { buildTaskReportResultCacheKey } from '@/features/task-reports/lib/build
 export const Route = createFileRoute('/studios/$studioId/task-reports/builder')({
   component: TaskReportBuilderPage,
   validateSearch: (search) => parseTaskReportBuilderSearch(search),
-  loader: ({ context: { queryClient }, params: { studioId }, search }) => {
-    const normalizedSearch = parseTaskReportBuilderSearch(search);
+  loader: ({ context: { queryClient }, params: { studioId }, location }) => {
+    const normalizedSearch = parseTaskReportBuilderSearch(location.search);
 
     if (normalizedSearch.definition_id) {
       void queryClient.prefetchQuery({
@@ -168,6 +168,7 @@ function TaskReportBuilderPage() {
     void navigate({
       to: '/studios/$studioId/task-reports',
       params: { studioId },
+      search: { page: 1, limit: 10 },
     });
   };
 
@@ -238,14 +239,14 @@ function TaskReportBuilderPage() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/studios/$studioId/task-reports" params={{ studioId }}>
+                  <Link to="/studios/$studioId/task-reports" params={{ studioId }} search={{ page: 1, limit: 10 }}>
                     Task Reports
                   </Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>{isDefinitionLoaded ? definition.name : 'Builder'}</BreadcrumbPage>
+                <BreadcrumbPage>{isDefinitionLoaded && definition ? definition.name : 'Builder'}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

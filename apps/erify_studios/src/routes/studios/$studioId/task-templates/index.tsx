@@ -82,6 +82,7 @@ function TaskTemplatesPage() {
                   navigate({
                     to: '/studios/$studioId/task-templates/new',
                     params: { studioId },
+                    search: { page: 1, limit: 10 },
                   });
                 }}
                 size="sm"

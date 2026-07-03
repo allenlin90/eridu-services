@@ -250,6 +250,7 @@ export function ShowCostsTable({
             <Link
               to="/studios/$studioId/shows/$showId/compensation"
               params={{ studioId, showId: row.original.id }}
+              search={{ page: 1, limit: 10 }}
               className="font-semibold text-primary hover:underline truncate"
             >
               {row.original.name}

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
+  CreateStudioRoomInput,
   StudioRoomApiResponse,
   updateStudioRoomInputSchema,
 } from '@eridu/api-types/studio-rooms';
@@ -38,7 +39,7 @@ export const Route = createFileRoute(
 
 type StudioRoom = StudioRoomApiResponse;
 type UpdateStudioRoomFormData = z.infer<typeof updateStudioRoomInputSchema>;
-type CreateStudioRoomFormData = z.infer<typeof updateStudioRoomInputSchema>;
+type CreateStudioRoomFormData = CreateStudioRoomInput;
 
 export function StudioRoomsList() {
   const { studioId } = Route.useParams();
@@ -50,6 +51,7 @@ export function StudioRoomsList() {
     data,
     isLoading,
     isFetching,
+    pagination,
     onPaginationChange,
     columnFilters,
     onColumnFiltersChange,

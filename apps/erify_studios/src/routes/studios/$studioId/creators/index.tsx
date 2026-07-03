@@ -46,9 +46,9 @@ function StudioCreatorRosterPage() {
         canManageRoster={canManageRoster}
         canReviewCompensation={canReviewCompensation}
         pagination={pagination}
-        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)}
+        onPaginationChange={adaptPaginationChange(pagination, onPaginationChange)!}
         columnFilters={columnFilters}
-        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)}
+        onColumnFiltersChange={adaptColumnFiltersChange(columnFilters, onColumnFiltersChange)!}
         onRefresh={handleRefresh}
       />
     </PageLayout>

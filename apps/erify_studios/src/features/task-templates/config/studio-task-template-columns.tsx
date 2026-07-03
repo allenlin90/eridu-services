@@ -23,6 +23,7 @@ export function getStudioTaskTemplateColumns(
           <Link
             to="/studios/$studioId/task-templates/$templateId"
             params={{ studioId, templateId: row.original.id }}
+            search={{ page: 1, limit: 10 }}
             className="truncate font-medium hover:underline"
             title={row.original.name}
           >

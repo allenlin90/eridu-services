@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getFieldContentKey } from '@eridu/api-types/task-management';
+import { getFieldContentKey, type UiSchemaV2 } from '@eridu/api-types/task-management';
 
 import { resolveUiSchema } from '@/features/tasks/lib/resolve-ui-schema';
 
@@ -61,7 +61,7 @@ describe('resolveUiSchema', () => {
         required: false,
       }],
       metadata: {},
-    });
+    }) as UiSchemaV2 | null;
 
     expect(result).not.toBeNull();
     expect(result?.schema_engine).toBe('task_template_v2');

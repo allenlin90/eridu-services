@@ -120,6 +120,7 @@ export function TaskTemplateCard({ template, studioId }: TaskTemplateCardProps) 
             <Link
               to="/studios/$studioId/task-templates/$templateId"
               params={{ studioId, templateId: template.id }}
+              search={{ page: 1, limit: 10 }}
             >
               View Details
             </Link>

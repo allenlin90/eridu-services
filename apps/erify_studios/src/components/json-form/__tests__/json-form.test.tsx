@@ -53,6 +53,7 @@ describe('jsonForm', () => {
           key: 'live_title',
           type: 'select',
           label: 'Live title',
+          required: true,
           options: [
             { value: 'correct', label: 'Correct' },
             { value: 'not_correct', label: 'Not correct' },
@@ -84,6 +85,7 @@ describe('jsonForm', () => {
           key: 'live_title',
           type: 'select',
           label: 'Live title',
+          required: true,
           options: [
             { value: 'correct', label: 'Correct' },
             { value: 'not_correct', label: 'Not correct' },
@@ -121,6 +123,7 @@ describe('jsonForm', () => {
           key: 'show_date',
           type: 'date',
           label: 'Show date',
+          required: true,
           validation: {
             require_reason: [{ op, value: target }],
           },

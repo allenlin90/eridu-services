@@ -38,14 +38,18 @@ function createShow(overrides: Partial<StudioShow> = {}): StudioShow {
     updated_at: '2026-04-01T11:00:00.000Z',
     creators: [
       {
+        show_creator_id: 'show_mc_1',
         creator_id: 'creator_1',
         creator_name: 'Ari Creator',
         creator_alias_name: 'Ari',
+        compensation_type: null,
+        agreed_rate: null,
+        commission_rate: null,
       },
     ],
     platforms: [
-      { id: 'platform_1', name: 'YouTube' },
-      { id: 'platform_2', name: 'TikTok' },
+      { id: 'platform_1', name: 'YouTube', show_platform_uid: 'shpl_1', viewer_count: 0 },
+      { id: 'platform_2', name: 'TikTok', show_platform_uid: 'shpl_2', viewer_count: 0 },
     ],
     task_summary: {
       total: 3,

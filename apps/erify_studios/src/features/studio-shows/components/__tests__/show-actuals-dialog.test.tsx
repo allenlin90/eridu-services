@@ -15,7 +15,6 @@ vi.mock('../../api/update-studio-show', () => ({
 }));
 
 vi.mock('@eridu/ui', async () => {
-  const React = await import('react');
   return {
     Button: ({ children, onClick, disabled, type = 'button', ...rest }: any) => (
       <button type={type} onClick={onClick} disabled={disabled} {...rest}>

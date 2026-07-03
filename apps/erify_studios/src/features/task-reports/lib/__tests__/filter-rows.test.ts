@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import type { TaskReportSelectedColumn } from '@eridu/api-types/task-management';
+import type { TaskReportColumn } from '@eridu/api-types/task-management';
 
 import { filterRows } from '../filter-rows';
 
-const columns: TaskReportSelectedColumn[] = [
-  { key: 'show_name', label: 'Show' },
-  { key: 'client_name', label: 'Client' },
-  { key: 'studio_room_name', label: 'Room' },
+const columns: TaskReportColumn[] = [
+  { key: 'show_name', label: 'Show', type: 'text' },
+  { key: 'client_name', label: 'Client', type: 'text' },
+  { key: 'studio_room_name', label: 'Room', type: 'text' },
 ];
 
 describe('filterRows', () => {

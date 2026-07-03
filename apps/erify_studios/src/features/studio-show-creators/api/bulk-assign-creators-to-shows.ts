@@ -80,11 +80,12 @@ async function bulkAssignCreatorsToShows(
   };
 
   settledResults.forEach((item) => {
-    if ('result' in item) {
-      summary.created += item.result.assigned;
-      summary.skipped += item.result.skipped;
+    if ('result' in item && item.result) {
+      const { result } = item;
+      summary.created += result.assigned;
+      summary.skipped += result.skipped;
       summary.errors.push(
-        ...item.result.failed.map((failure) => ({
+        ...result.failed.map((failure) => ({
           show_id: item.showId,
           creator_id: failure.creator_id,
           reason: failure.reason,

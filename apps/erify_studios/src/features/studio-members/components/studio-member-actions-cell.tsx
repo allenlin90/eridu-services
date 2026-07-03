@@ -7,6 +7,8 @@ import { DataTableActions, DropdownMenuItem } from '@eridu/ui';
 
 import { RemoveMemberDialog } from './remove-member-dialog';
 
+import { defaultCompensationDateRange } from '@/features/studio-shifts/utils/shift-date.utils';
+
 type StudioMemberActionsCellProps = {
   member: StudioMemberResponse;
   studioId: string;
@@ -33,6 +35,7 @@ export function StudioMemberActionsCell({
               studioId,
               memberId: member.membership_id,
             }}
+            search={defaultCompensationDateRange()}
           >
             <ReceiptText className="mr-2 h-4 w-4" />
             View Compensations

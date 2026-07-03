@@ -24,6 +24,7 @@ describe('currentDutyManagerCard', () => {
           id: 'ssh_1',
           studio_id: 'std_1',
           user_id: 'user_1',
+          user_name: 'Alice',
           date: '2026-03-05',
           hourly_rate: '20.00',
           planned_cost: '60.00',

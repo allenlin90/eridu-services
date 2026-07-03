@@ -69,6 +69,7 @@ export function usePerformanceShowsColumns({
             <Link
               to="/studios/$studioId/shows/$showId/performance"
               params={{ studioId, showId: row.original.id }}
+              search={{ page: 1, limit: 10 }}
               className="font-semibold text-primary hover:underline"
             >
               {row.original.name}

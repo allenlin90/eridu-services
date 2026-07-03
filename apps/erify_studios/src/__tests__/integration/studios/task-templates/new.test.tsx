@@ -188,7 +188,7 @@ describe('taskTemplateBuilderPage', () => {
     vi.mocked(idb.get).mockResolvedValue(undefined);
 
     // Setup successful mutation
-    mockCreateTemplate.mockImplementation((data, onSuccess) => {
+    mockCreateTemplate.mockImplementation((_data, onSuccess) => {
       onSuccess();
     });
 
@@ -211,6 +211,7 @@ describe('taskTemplateBuilderPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith({
       to: '/studios/$studioId/task-templates',
       params: { studioId: 'test-studio-id' },
+      search: { page: 1, limit: 10 },
     });
   });
 
@@ -237,7 +238,7 @@ describe('taskTemplateBuilderPage', () => {
 
     // Setup failed mutation
     const error = new Error('API Failure');
-    mockCreateTemplate.mockImplementation((data, onSuccess, onError) => {
+    mockCreateTemplate.mockImplementation((_data, _onSuccess, onError) => {
       onError(error);
     });
 
@@ -263,7 +264,7 @@ describe('taskTemplateBuilderPage', () => {
     const user = userEvent.setup();
     vi.mocked(idb.get).mockResolvedValue(undefined);
 
-    mockCreateTemplate.mockImplementation((data, onSuccess) => {
+    mockCreateTemplate.mockImplementation((_data, onSuccess) => {
       onSuccess();
     });
 
@@ -299,6 +300,7 @@ describe('taskTemplateBuilderPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith({
       to: '/studios/$studioId/task-templates',
       params: { studioId: 'test-studio-id' },
+      search: { page: 1, limit: 10 },
     });
   });
 });

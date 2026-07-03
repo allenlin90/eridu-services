@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Clock } from 'lucide-react';
 
-import { SYSTEM_FACT_KEY_DEFINITIONS } from '@eridu/api-types/task-management';
+import { SYSTEM_FACT_KEY_DEFINITIONS, type SystemFactKey } from '@eridu/api-types/task-management';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui';
 
 import type { BuilderTemplateSchemaType } from './schema';
@@ -36,7 +36,7 @@ export function TaskTemplatePreview({ template, studioId }: TaskTemplatePreviewP
       {/* Top back navigation */}
       <div className="flex items-center justify-between border-b pb-4">
         <Button asChild variant="ghost" size="sm">
-          <Link to="/studios/$studioId/task-templates" params={{ studioId }}>
+          <Link to="/studios/$studioId/task-templates" params={{ studioId }} search={{ page: 1, limit: 10 }}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Templates
           </Link>
@@ -149,7 +149,7 @@ function FieldPreviewCard({ field, index }: { field: any; index: number }) {
   const sharedKey = field.shared_field_key || (field.standard === true ? field.key : undefined);
 
   // Get system fact definition
-  const systemFactKey = field.system_fact_key;
+  const systemFactKey = field.system_fact_key as SystemFactKey | undefined;
   const systemFactDefinition = systemFactKey ? SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey] : undefined;
 
   return (

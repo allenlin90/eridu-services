@@ -65,7 +65,7 @@ function toArrayParam(val: string | string[] | undefined): string[] | undefined 
 function StudioPerformanceDashboard() {
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: Route.fullPath });
 
   const updateSearch = useCallback(
     (nextSearch: Partial<PerformanceSearch>) => {

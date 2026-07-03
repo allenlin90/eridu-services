@@ -1,7 +1,18 @@
+import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
+
 export function addDays(base: Date, days: number): Date {
   const next = new Date(base);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+/** Default 30-day compensation window (today through +30 days), as local date-input strings. */
+export function defaultCompensationDateRange() {
+  const from = new Date();
+  return {
+    date_from: toLocalDateInputValue(from),
+    date_to: toLocalDateInputValue(addDays(from, 30)),
+  };
 }
 
 export const DEFAULT_OPERATIONAL_DAY_END_HOUR = 6;

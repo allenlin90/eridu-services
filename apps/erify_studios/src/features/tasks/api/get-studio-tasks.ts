@@ -1,6 +1,6 @@
 import type {
   ListMyTasksQuery,
-  TaskReviewStatsDto,
+  TaskReviewStats,
   TaskWithRelationsDto,
 } from '@eridu/api-types/task-management';
 
@@ -55,8 +55,8 @@ export async function getStudioTasksReviewStats(
   studioId: string,
   params: GetStudioTasksParams,
   options?: { signal?: AbortSignal },
-): Promise<TaskReviewStatsDto> {
-  const response = await apiClient.get<TaskReviewStatsDto>(`/studios/${studioId}/tasks/review-stats`, {
+): Promise<TaskReviewStats> {
+  const response = await apiClient.get<TaskReviewStats>(`/studios/${studioId}/tasks/review-stats`, {
     params,
     signal: options?.signal,
   });

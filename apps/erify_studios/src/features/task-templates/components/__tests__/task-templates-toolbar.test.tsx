@@ -81,6 +81,7 @@ describe('taskTemplatesToolbar', () => {
     expect(mockNavigate).toHaveBeenCalledWith({
       to: '/studios/$studioId/task-templates/new',
       params: { studioId: 'test-studio' },
+      search: { page: 1, limit: 10 },
     });
   });
 

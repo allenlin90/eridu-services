@@ -12,7 +12,7 @@ vi.mock('../../hooks/use-task-report-sources', () => ({
   useTaskReportSources: (...args: unknown[]) => mockUseTaskReportSources(...args),
 }));
 
-function buildTemplateSource(index: number) {
+function buildTemplateSource(index: number): TaskReportSourcesResponse['sources'][number] {
   const templateId = `ttpl_000000000000000000${String(index).padStart(2, '0')}`;
   return {
     template_id: templateId,
@@ -30,7 +30,7 @@ function buildTemplateSource(index: number) {
         standard: false,
       },
     ],
-  } as const;
+  };
 }
 
 function renderPicker(

@@ -73,6 +73,8 @@ const orphanShow: StudioShowDetail = {
   name: 'Orphan Show',
   start_time: '2026-05-01T10:00:00.000Z',
   end_time: '2026-05-01T12:00:00.000Z',
+  actual_start_time: null,
+  actual_end_time: null,
   client_id: 'client_abc123',
   client_name: 'Test Client',
   schedule_id: null,

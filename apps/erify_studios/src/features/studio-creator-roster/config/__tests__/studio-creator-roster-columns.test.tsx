@@ -67,7 +67,9 @@ describe('getStudioCreatorRosterColumns', () => {
 
     expect(typeof defaultRateColumn?.cell).toBe('function');
     expect(typeof commissionColumn?.cell).toBe('function');
-    expect(defaultRateColumn?.cell?.({ row: { original: creator } } as never)).toBe('$9007199254740993.01');
-    expect(commissionColumn?.cell?.({ row: { original: creator } } as never)).toBe('0.30%');
+    const renderDefaultRate = defaultRateColumn?.cell as ((context: unknown) => unknown) | undefined;
+    const renderCommission = commissionColumn?.cell as ((context: unknown) => unknown) | undefined;
+    expect(renderDefaultRate?.({ row: { original: creator } } as never)).toBe('$9007199254740993.01');
+    expect(renderCommission?.({ row: { original: creator } } as never)).toBe('0.30%');
   });
 });

@@ -40,7 +40,7 @@ export function CreatorProfileForm({ studioId, creator, canEdit }: CreatorProfil
   const queryClient = useQueryClient();
   const [defaultRate, setDefaultRate] = useState(creator.default_rate ?? '');
   const [defaultRateType, setDefaultRateType] = useState<StudioCreatorCompensationTypeOption>(
-    creator.default_rate_type ?? UNSET_COMPENSATION_TYPE,
+    (creator.default_rate_type as StudioCreatorCompensationTypeOption | null) ?? UNSET_COMPENSATION_TYPE,
   );
   const [defaultCommissionRate, setDefaultCommissionRate] = useState(creator.default_commission_rate ?? '');
   const [isActive, setIsActive] = useState(creator.is_active ? 'true' : 'false');

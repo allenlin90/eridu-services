@@ -97,7 +97,7 @@ export function ShiftToolbar({
                 <p className="text-sm font-medium leading-none">Shift Status</p>
                 <Select
                   value={searchParams.status ?? 'ALL'}
-                  onValueChange={(value) => onSearchChange({ status: value === 'ALL' ? undefined : value })}
+                  onValueChange={(value) => onSearchChange({ status: value === 'ALL' ? undefined : value as ShiftListStatus })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -115,7 +115,7 @@ export function ShiftToolbar({
                 <p className="text-sm font-medium leading-none">Duty Manager</p>
                 <Select
                   value={searchParams.duty ?? 'ALL'}
-                  onValueChange={(value) => onSearchChange({ duty: value === 'ALL' ? undefined : value })}
+                  onValueChange={(value) => onSearchChange({ duty: value === 'ALL' ? undefined : value as ShiftListDutyFilter })}
                 >
                   <SelectTrigger>
                     <SelectValue />

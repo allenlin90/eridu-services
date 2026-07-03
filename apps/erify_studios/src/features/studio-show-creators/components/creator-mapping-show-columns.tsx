@@ -20,6 +20,7 @@ function ShowNameCell({ show, isAccountManager }: { show: StudioShow; isAccountM
       <Link
         to={targetPath}
         params={{ studioId, showId: show.id }}
+        search={{ page: 1, limit: 10 }}
         className="flex items-center gap-1 font-medium hover:underline"
       >
         <span className="truncate" title={show.name}>{show.name}</span>

@@ -1,14 +1,20 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import type { PaginatedShowPerformanceResponse, PerformanceShowsQuery } from '@eridu/api-types/performance';
+import type { PaginatedShowPerformanceResponse, PerformanceShowsQueryInput } from '@eridu/api-types/performance';
 
 import { studioPerformanceKeys } from './get-performance-summary';
 
 import { apiClient } from '@/lib/api/client';
 
+export type PerformanceShowsParams = Omit<PerformanceShowsQueryInput, 'page' | 'limit' | 'sort'> & {
+  page?: number;
+  limit?: number;
+  sort?: string;
+};
+
 export async function getPerformanceShows(
   studioId: string,
-  params: PerformanceShowsQuery,
+  params: PerformanceShowsParams,
   options?: { signal?: AbortSignal },
 ): Promise<PaginatedShowPerformanceResponse> {
   const response = await apiClient.get<PaginatedShowPerformanceResponse>(
@@ -21,7 +27,7 @@ export async function getPerformanceShows(
   return response.data;
 }
 
-export function usePerformanceShowsQuery(studioId: string, params: PerformanceShowsQuery) {
+export function usePerformanceShowsQuery(studioId: string, params: PerformanceShowsParams) {
   return useQuery({
     queryKey: studioPerformanceKeys.shows(studioId, params),
     queryFn: ({ signal }) => getPerformanceShows(studioId, params, { signal }),

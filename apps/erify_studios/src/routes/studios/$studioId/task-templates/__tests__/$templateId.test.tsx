@@ -66,8 +66,9 @@ describe('EditTaskTemplatePage', () => {
   });
 
   const renderComponent = () => {
+    const PageComponent = Route.options.component as React.ComponentType;
     const rootRoute = createRootRoute({
-      component: () => <Route.options.component />,
+      component: () => <PageComponent />,
     });
 
     const router = createRouter({

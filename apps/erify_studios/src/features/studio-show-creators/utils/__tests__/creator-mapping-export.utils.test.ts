@@ -49,15 +49,15 @@ function createShow(overrides: Partial<StudioShow> = {}): StudioShow {
         show_creator_id: 'show_mc_2',
         creator_id: 'creator_2',
         creator_name: 'Bea Creator',
-        creator_alias_name: null,
+        creator_alias_name: '',
         compensation_type: 'FIXED',
         agreed_rate: '150.00',
         commission_rate: null,
       },
     ],
     platforms: [
-      { id: 'platform_1', name: 'YouTube' },
-      { id: 'platform_2', name: 'TikTok' },
+      { id: 'platform_1', name: 'YouTube', show_platform_uid: 'shpl_1', viewer_count: 0 },
+      { id: 'platform_2', name: 'TikTok', show_platform_uid: 'shpl_2', viewer_count: 0 },
     ],
     task_summary: {
       total: 3,

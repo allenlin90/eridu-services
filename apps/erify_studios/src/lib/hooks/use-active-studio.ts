@@ -60,6 +60,7 @@ export function useActiveStudio() {
       navigate({
         to: '/studios/$studioId/dashboard',
         params: { studioId },
+        search: { page: 1, limit: 10 },
       });
     },
     [navigate, queryClient, setActiveStudioId, activeStudioId],

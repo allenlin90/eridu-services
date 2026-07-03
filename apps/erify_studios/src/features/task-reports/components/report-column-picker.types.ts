@@ -33,7 +33,7 @@ export type SystemColumn = { key: string; label: string };
  * A per-loop column derived from a canonical shared field (e.g. `gmv_l1`); the
  * key is what the user actually selects, the canonical entry only groups them.
  */
-export type DerivedSharedColumn = { key: string; label: string; type: string; group?: string };
+export type DerivedSharedColumn = { key: string; label: string; type: TaskReportSelectedColumn['type']; group?: string };
 
 /** A shared field augmented with its derived per-loop columns (all + currently visible). */
 export type SharedFieldView = SharedFieldEntry & {

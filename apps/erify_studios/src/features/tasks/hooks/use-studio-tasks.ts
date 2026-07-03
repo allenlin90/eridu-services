@@ -10,7 +10,12 @@ import {
 } from '@eridu/api-types/task-management';
 import { useTableUrlState } from '@eridu/ui';
 
-import { getStudioTasks, studioTasksKeys } from '@/features/tasks/api/get-studio-tasks';
+import {
+  getStudioTasks,
+  type GetStudioTasksParams,
+  studioTasksKeys,
+} from '@/features/tasks/api/get-studio-tasks';
+import type { TaskReviewActiveFilter } from '@/features/tasks/components/studio-task-review-summary-panel';
 import {
   buildOperationalDayRangeFromPickerDates,
   isCurrentOperationalDay,
@@ -24,7 +29,7 @@ const VALID_TASK_TYPES = new Set(Object.values(TASK_TYPE));
 
 type UseStudioTasksProps = {
   studioId: string;
-  reviewTab?: string;
+  reviewTab?: TaskReviewActiveFilter;
 };
 
 export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
@@ -92,7 +97,7 @@ export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
       ? false
       : undefined;
 
-  const params = {
+  const params: GetStudioTasksParams = {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search,

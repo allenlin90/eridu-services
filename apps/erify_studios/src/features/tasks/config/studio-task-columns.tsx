@@ -153,7 +153,7 @@ function TaskIssueBadge({ issue }: { issue: string }) {
 
 export function getTaskIssues(task: TaskWithRelationsDto): string[] {
   const issues: string[] = [];
-  if ([TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED].includes(task.status)) {
+  if (([TASK_STATUS.COMPLETED, TASK_STATUS.CLOSED] as TaskStatus[]).includes(task.status)) {
     return issues;
   }
   if (!task.assignee) {
@@ -225,7 +225,7 @@ export function getStudioTaskColumns(
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected()
-            || (table.getIsSomePageRowsSelected() && 'indeterminate')
+            || table.getIsSomePageRowsSelected()
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
@@ -311,6 +311,7 @@ export function getStudioTaskColumns(
           <Link
             to="/studios/$studioId/shows/$showId/tasks"
             params={{ studioId, showId: show.id }}
+            search={{ page: 1, limit: 10 }}
             className="text-primary hover:underline font-medium"
           >
             {show.name}

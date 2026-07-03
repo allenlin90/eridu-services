@@ -213,9 +213,10 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
       return {};
     }
 
-    return uiSchema.items.reduce<Record<string, LoopProgress>>((acc, item) => {
+    const acc: Record<string, LoopProgress> = {};
+    for (const item of uiSchema.items) {
       if (!item.group) {
-        return acc;
+        continue;
       }
 
       if (!acc[item.group]) {
@@ -227,9 +228,8 @@ function TaskExecutionSheetInner({ task, onClose, enableAutosave }: TaskExecutio
       if (isFieldComplete(item.type, formValues[item.key])) {
         current.completed += 1;
       }
-
-      return acc;
-    }, {});
+    }
+    return acc;
   }, [uiSchema, formValues]);
   const activeLoopIndex = loopTabs.findIndex((loop) => loop.id === resolvedActiveGroup);
   const activeLoop = activeLoopIndex >= 0 ? loopTabs[activeLoopIndex] : undefined;

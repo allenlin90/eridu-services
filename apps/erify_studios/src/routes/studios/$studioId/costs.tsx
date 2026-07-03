@@ -75,7 +75,7 @@ function toArrayParam(val: string | string[] | undefined): string[] | undefined 
 function StudioCostsDashboard() {
   const { studioId } = Route.useParams();
   const search = Route.useSearch();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: '/studios/$studioId/costs' });
   const { activeStudio } = useActiveStudio();
 
   const updateSearch = useCallback(

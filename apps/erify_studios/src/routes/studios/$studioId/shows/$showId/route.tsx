@@ -51,6 +51,7 @@ function StudioShowDetailLayout() {
           <Link
             to="/studios/$studioId/shows/$showId"
             params={{ studioId, showId }}
+            search={{ page: 1, limit: 10 }}
             activeOptions={{ exact: true }}
             className={TAB_LINK_CLASS}
             activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
@@ -60,6 +61,7 @@ function StudioShowDetailLayout() {
           <Link
             to="/studios/$studioId/shows/$showId/actuals"
             params={{ studioId, showId }}
+            search={{ page: 1, limit: 10 }}
             className={TAB_LINK_CLASS}
             activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
           >
@@ -69,6 +71,7 @@ function StudioShowDetailLayout() {
             <Link
               to="/studios/$studioId/shows/$showId/performance"
               params={{ studioId, showId }}
+              search={{ page: 1, limit: 10 }}
               className={TAB_LINK_CLASS}
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >
@@ -79,6 +82,7 @@ function StudioShowDetailLayout() {
             <Link
               to="/studios/$studioId/shows/$showId/compensation"
               params={{ studioId, showId }}
+              search={{ page: 1, limit: 10 }}
               className={TAB_LINK_CLASS}
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >
@@ -100,6 +104,7 @@ function StudioShowDetailLayout() {
             <Link
               to="/studios/$studioId/shows/$showId/tasks"
               params={{ studioId, showId }}
+              search={{ page: 1, limit: 10 }}
               className={TAB_LINK_CLASS}
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >
@@ -110,7 +115,7 @@ function StudioShowDetailLayout() {
             <Link
               to="/studios/$studioId/shows/$showId/audits"
               params={{ studioId, showId }}
-              search={{ page: 1 }}
+              search={{ page: 1, limit: 10 }}
               className={TAB_LINK_CLASS}
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >

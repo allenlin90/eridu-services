@@ -173,6 +173,7 @@ function createColumns(studioId: string): ColumnDef<SchedulePublishImpactRow>[] 
           <Link
             to="/studios/$studioId/shows/$showId"
             params={{ studioId, showId: row.original.show.id }}
+            search={{ page: 1, limit: 10 }}
             className="font-medium text-primary hover:underline"
           >
             {row.original.show.name}

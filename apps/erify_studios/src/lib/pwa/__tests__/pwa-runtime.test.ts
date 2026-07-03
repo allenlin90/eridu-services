@@ -163,9 +163,9 @@ describe('pwaRuntime', () => {
 
     onNeedRefreshHandler?.();
     expect(controllerChangeHandler).toBeTypeOf('function');
-    controllerChangeHandler?.();
+    (controllerChangeHandler as (() => void) | null)?.();
     onNeedRefreshHandler?.();
-    controllerChangeHandler?.();
+    (controllerChangeHandler as (() => void) | null)?.();
 
     expect(triggerUpdate).toHaveBeenCalledTimes(1);
     expect(triggerUpdate).toHaveBeenCalledWith(true);
@@ -224,8 +224,8 @@ describe('pwaRuntime', () => {
     initializePwaShell();
 
     expect(controllerChangeHandler).toBeTypeOf('function');
-    controllerChangeHandler?.();
-    controllerChangeHandler?.();
+    (controllerChangeHandler as (() => void) | null)?.();
+    (controllerChangeHandler as (() => void) | null)?.();
 
     expect(reloadSpy).toHaveBeenCalledTimes(1);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
