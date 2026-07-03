@@ -309,6 +309,7 @@ export function ShowCreatorCompensationDialog({
       amount: normalizedAmount,
       item_type: itemType,
       reason: trimmedReason,
+      metadata: {},
     });
     toast.success('Compensation item created');
     resetForm();

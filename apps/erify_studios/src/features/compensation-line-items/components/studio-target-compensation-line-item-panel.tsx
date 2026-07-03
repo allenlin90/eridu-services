@@ -136,6 +136,7 @@ export function StudioTargetCompensationLineItemPanel({
       amount: normalizedAmount,
       item_type: itemType,
       reason: trimmedReason,
+      metadata: {},
     });
     resetForm();
   };

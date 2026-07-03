@@ -1,3 +1,4 @@
+import type { HistoryState } from '@tanstack/react-router';
 import { Link } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import { CalendarDays, CheckCircle2, Circle, ListTodo } from 'lucide-react';
@@ -117,6 +118,7 @@ export function StudioShowCard({ show, studioId, isSelected, onSelect }: StudioS
           <Link
             to="/studios/$studioId/shows/$showId/tasks"
             params={{ studioId, showId: show.id }}
+            search={{ page: 1, limit: 10 }}
             state={{
               show: {
                 id: show.id,
@@ -139,7 +141,7 @@ export function StudioShowCard({ show, studioId, isSelected, onSelect }: StudioS
                 created_at: show.created_at,
                 updated_at: show.updated_at,
               },
-            }}
+            } as HistoryState}
             className="text-xs font-medium text-primary hover:underline"
           >
             View Tasks →

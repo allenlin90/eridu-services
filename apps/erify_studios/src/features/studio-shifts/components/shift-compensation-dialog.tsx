@@ -263,7 +263,7 @@ export function ShiftCompensationView({
                 shiftId: shift.id,
                 blockId: block.id,
                 payload,
-              })}
+              }).then(() => {})}
           />
 
           <StudioTargetCompensationLineItemPanel

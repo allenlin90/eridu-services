@@ -44,7 +44,7 @@ const baseProps = {
   search: {
     page: 1,
     limit: 10,
-    has_performance: 'true',
+    has_performance: 'true' as const,
   },
   updateSearch: vi.fn(),
   onRefresh: vi.fn(),

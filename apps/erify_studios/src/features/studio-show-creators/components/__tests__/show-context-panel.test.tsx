@@ -32,8 +32,8 @@ function createShow(overrides: Partial<StudioShowDetail> = {}): StudioShowDetail
     created_at: '2026-03-01T00:00:00.000Z',
     updated_at: '2026-03-01T00:00:00.000Z',
     platforms: [
-      { id: 'platform_1', name: 'YouTube' },
-      { id: 'platform_2', name: 'TikTok' },
+      { id: 'platform_1', name: 'YouTube', show_platform_uid: 'shpl_1', viewer_count: 0 },
+      { id: 'platform_2', name: 'TikTok', show_platform_uid: 'shpl_2', viewer_count: 0 },
     ],
     ...overrides,
   };

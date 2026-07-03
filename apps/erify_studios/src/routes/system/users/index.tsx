@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 
 import type {
+  AdminUserApiResponse,
   createUserInputSchema,
   updateUserInputSchema,
-  UserApiResponse,
 } from '@eridu/api-types/users';
 import {
   adaptColumnFiltersChange,
@@ -35,7 +35,7 @@ export const Route = createFileRoute('/system/users/')({
   validateSearch: (search) => usersSearchSchema.parse(search),
 });
 
-type User = UserApiResponse;
+type User = AdminUserApiResponse;
 type UserFormData = z.infer<typeof createUserInputSchema>;
 type UpdateUserFormData = z.infer<typeof updateUserInputSchema>;
 

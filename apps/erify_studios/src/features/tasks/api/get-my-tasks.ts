@@ -25,9 +25,11 @@ export async function getMyTasks(
     show_start_to,
     search,
     sort,
-    page = 1,
-    limit = 20,
+    page,
+    limit,
   } = query;
+  const pageNumber = Number(page ?? 1);
+  const limitNumber = Number(limit ?? 20);
 
   const searchParams = new URLSearchParams();
   if (studio_id)
@@ -58,8 +60,8 @@ export async function getMyTasks(
     searchParams.append('search', search);
   if (sort)
     searchParams.append('sort', sort);
-  searchParams.append('page', page.toString());
-  searchParams.append('limit', limit.toString());
+  searchParams.append('page', pageNumber.toString());
+  searchParams.append('limit', limitNumber.toString());
 
   const response = await apiClient.get<MyTasksResponse>(`/me/tasks?${searchParams.toString()}`, {
     signal: options?.signal,

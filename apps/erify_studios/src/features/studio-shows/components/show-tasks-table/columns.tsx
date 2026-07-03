@@ -78,6 +78,7 @@ const STUDIO_REVIEW_ACTIONS: Partial<Record<TaskStatus, TaskAction[]>> = {
 
 const TASK_ACTION_LABELS: Record<TaskAction, string> = {
   [TASK_ACTION.START_WORK]: 'Start Work',
+  [TASK_ACTION.SAVE_CONTENT]: 'Save Content',
   [TASK_ACTION.SUBMIT_FOR_REVIEW]: 'Submit for Review',
   [TASK_ACTION.APPROVE_COMPLETED]: 'Approve as Completed',
   [TASK_ACTION.CONTINUE_EDITING]: 'Send Back to In Progress',

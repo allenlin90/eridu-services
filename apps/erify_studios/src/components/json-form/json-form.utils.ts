@@ -8,6 +8,7 @@ import {
   FILE_UPLOAD_USE_CASE,
   FILE_UPLOAD_USE_CASE_RULES,
   getImageCompressionTargetBytes,
+  type PresignUploadRequest,
 } from '@eridu/api-types/uploads';
 
 import type { PendingUpload } from './json-form.types';
@@ -21,7 +22,7 @@ const MATERIAL_ASSET_ALLOWED_MIME_TYPES = new Set(
   FILE_UPLOAD_USE_CASE_RULES[FILE_UPLOAD_USE_CASE.MATERIAL_ASSET].allowed_mime_types,
 );
 
-export function isSupportedUploadMimeType(value: string): boolean {
+export function isSupportedUploadMimeType(value: string): value is PresignUploadRequest['mime_type'] {
   return MATERIAL_ASSET_ALLOWED_MIME_TYPES.has(value);
 }
 

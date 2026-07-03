@@ -6,6 +6,7 @@ import { Badge, Button } from '@eridu/ui';
 
 import { useStudioCreatorRosterEntry } from '@/features/studio-creator-roster/api/studio-creator-roster';
 import { STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS } from '@/features/studio-creator-roster/lib/studio-creator-compensation';
+import { defaultCompensationDateRange } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toDecimalDisplayString } from '@/lib/decimal-format';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -19,7 +20,7 @@ const TAB_LINK_ACTIVE_CLASS = 'border-primary text-foreground';
 function BackToCreators({ studioId }: { studioId: string }) {
   return (
     <Button asChild variant="ghost" size="icon" className="h-8 w-8" aria-label="Back to creators">
-      <Link to="/studios/$studioId/creators" params={{ studioId }}>
+      <Link to="/studios/$studioId/creators" params={{ studioId }} search={{ page: 1, limit: 10, is_active: 'true' }}>
         <ArrowLeft className="h-4 w-4" />
       </Link>
     </Button>
@@ -133,6 +134,7 @@ function StudioCreatorDetailLayout() {
             <Link
               to="/studios/$studioId/creators/$creatorId/compensations"
               params={{ studioId, creatorId }}
+              search={defaultCompensationDateRange()}
               className={TAB_LINK_CLASS}
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >

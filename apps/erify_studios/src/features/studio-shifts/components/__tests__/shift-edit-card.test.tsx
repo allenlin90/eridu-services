@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ShiftEditCard } from '../shift-edit-card';
 
-const mockShiftFormFields = vi.fn(() => <div data-testid="mock-shift-form-fields" />);
+const mockShiftFormFields = vi.fn((_props: unknown) => <div data-testid="mock-shift-form-fields" />);
 
 vi.mock('@/features/studio-shifts/components/shift-form-fields', () => ({
   ShiftFormFields: (props: unknown) => mockShiftFormFields(props),

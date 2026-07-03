@@ -238,6 +238,7 @@ describe('shiftCompensationDialog', () => {
         amount: '12.35',
         item_type: 'BONUS',
         reason: 'Late handover',
+        metadata: {},
       });
     });
   });

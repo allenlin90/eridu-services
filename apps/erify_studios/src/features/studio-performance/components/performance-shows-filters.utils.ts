@@ -14,7 +14,7 @@ export type PerformanceSearch = {
   platform_id?: string | string[];
   show_standard_id?: string | string[];
   name?: string;
-  has_performance?: string;
+  has_performance?: 'all' | 'true' | 'false';
   sort?: string;
 };
 

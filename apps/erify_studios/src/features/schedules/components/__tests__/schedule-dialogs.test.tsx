@@ -87,6 +87,8 @@ describe('scheduleUpdateDialog', () => {
       id: 'schedule-1',
       name: 'Test Schedule',
       client_name: 'Test Client',
+      studio_id: 'studio-1',
+      studio_name: 'Test Studio',
       status: 'draft' as const,
       version: 1,
       start_date: '2024-01-01T00:00:00Z',

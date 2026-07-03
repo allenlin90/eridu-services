@@ -22,8 +22,6 @@ const showAuditsSearchSchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
 });
 
-type ShowAuditsSearch = z.infer<typeof showAuditsSearchSchema>;
-
 export const Route = createFileRoute('/studios/$studioId/shows/$showId/audits')({
   component: ShowAuditsPage,
   validateSearch: (search) => showAuditsSearchSchema.parse(search),
@@ -53,7 +51,7 @@ function ShowAuditsPage() {
     };
     const next = typeof updater === 'function' ? updater(current) : updater;
     void navigate({
-      search: (previous: ShowAuditsSearch) => ({
+      search: (previous) => ({
         ...previous,
         page: next.pageIndex + 1,
       }),
@@ -172,6 +170,7 @@ function createColumns(studioId: string): ColumnDef<AuditApiResponse>[] {
               <Link
                 to="/studios/$studioId/schedule-publish-impacts"
                 params={{ studioId }}
+                search={{ page: 1 }}
                 className="text-primary font-medium hover:underline text-xs block mt-1"
               >
                 View in Publish Audit list

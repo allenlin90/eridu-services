@@ -6,16 +6,8 @@ import { z } from 'zod';
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { useStudioMemberCompensations } from '@/features/studio-members/api/members';
 import { MemberCompensationsView } from '@/features/studio-members/components/member-compensations-view';
-import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
+import { addDays, defaultCompensationDateRange } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-
-function defaultDateRange() {
-  const from = new Date();
-  return {
-    date_from: toLocalDateInputValue(from),
-    date_to: toLocalDateInputValue(addDays(from, 30)),
-  };
-}
 
 const memberCompensationsSearchSchema = z
   .object({
@@ -23,7 +15,7 @@ const memberCompensationsSearchSchema = z
     date_to: z.iso.date().optional(),
   })
   .transform((search) => {
-    const fallback = defaultDateRange();
+    const fallback = defaultCompensationDateRange();
     return {
       date_from: search.date_from ?? fallback.date_from,
       date_to: search.date_to ?? fallback.date_to,

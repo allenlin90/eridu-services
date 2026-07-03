@@ -181,6 +181,7 @@ export function BulkCreatorAssignmentDialog({
               <Link
                 to="/studios/$studioId/creators"
                 params={{ studioId }}
+                search={{ page: 1, limit: 10, is_active: 'true' }}
                 className="inline-flex text-xs font-medium text-primary hover:underline"
               >
                 Go to creator roster onboarding
@@ -241,6 +242,7 @@ export function BulkCreatorAssignmentDialog({
                 <Link
                   to="/studios/$studioId/creators"
                   params={{ studioId }}
+                  search={{ page: 1, limit: 10, is_active: 'true' }}
                   className="inline-flex pt-1 font-medium text-primary hover:underline"
                 >
                   Onboard missing creators in roster

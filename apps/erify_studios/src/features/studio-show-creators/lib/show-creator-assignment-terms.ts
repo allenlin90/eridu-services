@@ -11,8 +11,8 @@ export type ShowCreatorCompensationTypeOption =
   | CreatorCompensationType;
 
 export const SHOW_CREATOR_COMPENSATION_TYPE_OPTIONS = [
-  { value: NO_COMPENSATION_TYPE, label: 'Not set' },
-  { value: CREATOR_COMPENSATION_TYPE.FIXED, label: 'Fixed' },
+  { value: NO_COMPENSATION_TYPE, label: 'Not set', disabled: false },
+  { value: CREATOR_COMPENSATION_TYPE.FIXED, label: 'Fixed', disabled: false },
   { value: CREATOR_COMPENSATION_TYPE.COMMISSION, label: 'Commission', disabled: true },
   { value: CREATOR_COMPENSATION_TYPE.HYBRID, label: 'Hybrid', disabled: true },
 ] as const;

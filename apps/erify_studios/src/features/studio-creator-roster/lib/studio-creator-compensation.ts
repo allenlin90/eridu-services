@@ -18,8 +18,8 @@ export type StudioCreatorCompensationTypeOption =
   | (typeof CREATOR_COMPENSATION_TYPE)[keyof typeof CREATOR_COMPENSATION_TYPE];
 
 export const STUDIO_CREATOR_COMPENSATION_TYPE_OPTIONS = [
-  { value: UNSET_COMPENSATION_TYPE, label: 'Not set' },
-  { value: CREATOR_COMPENSATION_TYPE.FIXED, label: 'Fixed' },
+  { value: UNSET_COMPENSATION_TYPE, label: 'Not set', disabled: false },
+  { value: CREATOR_COMPENSATION_TYPE.FIXED, label: 'Fixed', disabled: false },
   { value: CREATOR_COMPENSATION_TYPE.COMMISSION, label: 'Commission', disabled: true },
   { value: CREATOR_COMPENSATION_TYPE.HYBRID, label: 'Hybrid', disabled: true },
 ] as const;

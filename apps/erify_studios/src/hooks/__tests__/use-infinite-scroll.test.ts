@@ -5,8 +5,8 @@ import { useInfiniteScroll } from '../use-infinite-scroll';
 
 describe('useInfiniteScroll', () => {
   const mockFetchNextPage = vi.fn();
-  let mockObserve: ReturnType<typeof vi.fn>;
-  let mockDisconnect: ReturnType<typeof vi.fn>;
+  let mockObserve: ReturnType<typeof vi.fn<(target: Element) => void>>;
+  let mockDisconnect: ReturnType<typeof vi.fn<() => void>>;
 
   beforeEach(() => {
     vi.clearAllMocks();

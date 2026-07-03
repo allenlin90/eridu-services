@@ -161,7 +161,7 @@ export function ReportBuilder({
     && incompatibleColumns.length === 0
     && !isPending;
   const canRun = canPreflight
-    && Boolean(preflightData)
+    && preflightData !== null
     && preflightData.show_count > 0
     && preflightData.within_limit;
   const hasSelectedColumns = draftColumns.length > 0;

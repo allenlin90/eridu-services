@@ -113,6 +113,7 @@ export function getStudioShowManagementColumns(
               <Link
                 to="/studios/$studioId/shows/$showId/tasks"
                 params={{ studioId, showId: show.id }}
+                search={{ page: 1, limit: 10 }}
               >
                 <ArrowUpRight className="mr-2 h-4 w-4" />
                 Open Tasks

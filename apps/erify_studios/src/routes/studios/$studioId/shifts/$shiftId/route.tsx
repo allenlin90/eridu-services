@@ -45,6 +45,7 @@ function StudioShiftDetailLayout() {
           <Link
             to="/studios/$studioId/shifts/$shiftId"
             params={{ studioId, shiftId }}
+            search={{ view: 'calendar', page: 1, limit: 20 }}
             activeOptions={{ exact: true }}
             className={TAB_LINK_CLASS}
             activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
@@ -54,6 +55,7 @@ function StudioShiftDetailLayout() {
           <Link
             to="/studios/$studioId/shifts/$shiftId/compensation"
             params={{ studioId, shiftId }}
+            search={{ view: 'calendar', page: 1, limit: 20 }}
             className={TAB_LINK_CLASS}
             activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
           >

@@ -374,10 +374,12 @@ describe('studioShiftsTable', () => {
     expect(mockNavigate).toHaveBeenNthCalledWith(1, {
       to: '/studios/$studioId/shifts/$shiftId',
       params: { studioId: 'std_1', shiftId: 'ssh_1' },
+      search: { view: 'calendar', page: 1, limit: 20 },
     });
     expect(mockNavigate).toHaveBeenNthCalledWith(2, {
       to: '/studios/$studioId/shifts/$shiftId/compensation',
       params: { studioId: 'std_1', shiftId: 'ssh_1' },
+      search: { view: 'calendar', page: 1, limit: 20 },
     });
   });
 });

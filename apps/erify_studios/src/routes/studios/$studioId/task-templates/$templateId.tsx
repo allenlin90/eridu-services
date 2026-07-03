@@ -166,7 +166,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
       toast.success('Template updated', {
         description: 'Your task template has been updated successfully.',
       });
-      navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
+      navigate({ to: '/studios/$studioId/task-templates', params: { studioId }, search: { page: 1, limit: 10 } });
     },
     onError: (error) => {
       toast.error('Update failed', {
@@ -234,7 +234,7 @@ function TaskTemplateForm({ studioId, taskTemplate }: TaskTemplateFormProps) {
   }, [updateTemplate, taskTemplate.current_schema, taskTemplate.version]);
 
   const handleCancel = useCallback(() => {
-    navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
+    navigate({ to: '/studios/$studioId/task-templates', params: { studioId }, search: { page: 1, limit: 10 } });
   }, [navigate, studioId]);
 
   const handleTemplateChange = useCallback((data: BuilderTemplateSchemaType) => {

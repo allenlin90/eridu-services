@@ -75,7 +75,7 @@ vi.mock('@eridu/ui', () => ({
 describe('shiftFormFields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('block_new');
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('block_new' as `${string}-${string}-${string}-${string}-${string}`);
   });
 
   it('shows inline date-required error when block preview cannot resolve', () => {

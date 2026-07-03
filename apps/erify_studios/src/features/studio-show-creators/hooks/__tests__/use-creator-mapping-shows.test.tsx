@@ -67,7 +67,7 @@ describe('useCreatorMappingShows', () => {
     const queryOptions = mockUseQuery.mock.calls[0][0] as {
       queryKey: unknown[];
       placeholderData: unknown;
-      queryFn: () => Promise<unknown>;
+      queryFn: (context?: unknown) => Promise<unknown>;
     };
 
     expect(queryOptions.queryKey).toEqual([
@@ -120,7 +120,7 @@ describe('useCreatorMappingShows', () => {
     renderHook(() => useCreatorMappingShows({ studioId: 'std_1' }));
 
     const queryOptions = mockUseQuery.mock.calls[0][0] as {
-      queryFn: () => Promise<unknown>;
+      queryFn: (context?: unknown) => Promise<unknown>;
     };
     await queryOptions.queryFn({ signal: undefined } as never);
 

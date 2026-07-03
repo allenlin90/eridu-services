@@ -98,6 +98,7 @@ function StudioShowsPage() {
         void navigate({
           to: '/studios/$studioId/shows/$showId',
           params: { studioId, showId: show.id },
+          search: { page: 1, limit: 10 },
         });
       },
       onDelete: canDeleteShows

@@ -72,15 +72,15 @@ export function ShowUpdateForm({
         show_standard_id: show.show_standard_id || undefined,
         creators: getCreatorCollection(show).map((creator) => ({
           creator_id: getCreatorId(creator) || '',
-          note: creator.note,
-          metadata: creator.metadata,
+          note: creator.note ?? undefined,
+          metadata: creator.metadata ?? undefined,
         })) || [],
         platforms: (show.platforms as ShowPlatformAssignment[] | undefined)?.map((platform) => ({
           platform_id: platform.platform_id || platform.id || '',
           live_stream_link: platform.live_stream_link,
           platform_show_id: platform.platform_show_id,
-          viewer_count: platform.viewer_count,
-          metadata: platform.metadata,
+          viewer_count: platform.viewer_count ?? undefined,
+          metadata: platform.metadata ?? undefined,
         })) || [],
       });
     }

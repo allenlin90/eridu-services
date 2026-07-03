@@ -6,6 +6,7 @@ import { Badge, Button } from '@eridu/ui';
 
 import { useStudioMember } from '@/features/studio-members/api/members';
 import { ROLE_LABELS } from '@/features/studio-members/lib/roles';
+import { defaultCompensationDateRange } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toDecimalDisplayString } from '@/lib/decimal-format';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -19,7 +20,7 @@ const TAB_LINK_ACTIVE_CLASS = 'border-primary text-foreground';
 function BackToMembers({ studioId }: { studioId: string }) {
   return (
     <Button asChild variant="ghost" size="icon" className="h-8 w-8" aria-label="Back to members">
-      <Link to="/studios/$studioId/members" params={{ studioId }}>
+      <Link to="/studios/$studioId/members" params={{ studioId }} search={{ page: 1, limit: 10 }}>
         <ArrowLeft className="h-4 w-4" />
       </Link>
     </Button>
@@ -121,6 +122,7 @@ function StudioMemberDetailLayout() {
                 <Link
                   to="/studios/$studioId/members/$memberId/compensations"
                   params={{ studioId, memberId }}
+                  search={defaultCompensationDateRange()}
                   className={TAB_LINK_CLASS}
                   activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
                 >

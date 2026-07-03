@@ -54,11 +54,11 @@ function matchesExactFilter(filter: string | undefined, ...values: unknown[]): b
   return readStringValues(...values).includes(filter);
 }
 
-export function filterRows(
-  rows: Record<string, unknown>[],
+export function filterRows<T extends Record<string, unknown>>(
+  rows: T[],
   columns: TaskReportColumn[],
   filters: TaskReportViewFilters,
-): Record<string, unknown>[] {
+): T[] {
   if (!rows || rows.length === 0)
     return [];
 

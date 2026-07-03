@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import type { HistoryState } from '@tanstack/react-router';
 import { Link, useParams } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
@@ -22,6 +23,7 @@ function ShowNameCell({ show }: { show: StudioShow }) {
       <Link
         to="/studios/$studioId/shows/$showId/tasks"
         params={{ studioId: actualStudioId, showId: show.id }}
+        search={{ page: 1, limit: 10 }}
         state={{
           show: {
             id: show.id,
@@ -46,7 +48,7 @@ function ShowNameCell({ show }: { show: StudioShow }) {
             created_at: show.created_at,
             updated_at: show.updated_at,
           },
-        }}
+        } as HistoryState}
         className="font-medium hover:underline flex items-center gap-1"
       >
         {show.name}
@@ -71,6 +73,7 @@ function NoTasksGeneratedBadge({ show }: { show: StudioShow }) {
     <Link
       to="/studios/$studioId/shows/$showId/tasks"
       params={{ studioId: actualStudioId, showId: show.id }}
+      search={{ page: 1, limit: 10 }}
       aria-label="No tasks generated — click to generate tasks"
       title="No tasks have been generated for this show yet. Click to setup and generate tasks."
     >
@@ -93,6 +96,7 @@ function NoTaskAssigneeBadge({ show }: { show: StudioShow }) {
     <Link
       to="/studios/$studioId/shows/$showId/tasks"
       params={{ studioId: actualStudioId, showId: show.id }}
+      search={{ page: 1, limit: 10 }}
       aria-label="No task assignee — click to assign tasks"
       title="Tasks are generated but no assignee is on the hook. Click to assign tasks."
     >

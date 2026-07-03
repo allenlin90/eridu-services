@@ -37,7 +37,7 @@ export function TaskTemplateBuilderPage() {
       toast.error('Access Denied', {
         description: 'Account Managers are not allowed to create task templates.',
       });
-      navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
+      navigate({ to: '/studios/$studioId/task-templates', params: { studioId }, search: { page: 1, limit: 10 } });
     }
   }, [role, navigate, studioId]);
 
@@ -55,7 +55,7 @@ export function TaskTemplateBuilderPage() {
       toast.success('Template created', {
         description: 'Your new task template has been saved successfully.',
       });
-      navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
+      navigate({ to: '/studios/$studioId/task-templates', params: { studioId }, search: { page: 1, limit: 10 } });
     },
     onError: (error) => {
       toast.error('Error creating template', {
@@ -101,7 +101,7 @@ export function TaskTemplateBuilderPage() {
 
   const handleCancel = useCallback(async () => {
     await del(DRAFT_KEY);
-    navigate({ to: '/studios/$studioId/task-templates', params: { studioId } });
+    navigate({ to: '/studios/$studioId/task-templates', params: { studioId }, search: { page: 1, limit: 10 } });
   }, [navigate, studioId]);
 
   const handleTemplateChange = useCallback((data: BuilderTemplateSchemaType) => {

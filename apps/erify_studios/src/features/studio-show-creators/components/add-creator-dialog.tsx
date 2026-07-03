@@ -108,6 +108,7 @@ export function AddCreatorDialog({
             <Link
               to="/studios/$studioId/creators"
               params={{ studioId }}
+              search={{ page: 1, limit: 10, is_active: 'true' }}
               className="mt-1 inline-flex text-xs font-medium text-primary hover:underline"
             >
               Go to creator roster onboarding

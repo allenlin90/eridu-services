@@ -11,7 +11,7 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('generated_block');
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('generated_block' as `${string}-${string}-${string}-${string}-${string}`);
 });
 
 describe('combineDateAndTime', () => {
@@ -42,6 +42,7 @@ describe('getShiftWindowLabel', () => {
       id: 'shift-1',
       studio_id: 'studio-1',
       user_id: 'user-1',
+      user_name: 'Test User',
       date: '2026-03-05',
       hourly_rate: '10',
       planned_cost: '20',
@@ -65,6 +66,7 @@ describe('createEditFormState', () => {
       id: 'shift-1',
       studio_id: 'studio-1',
       user_id: 'user-1',
+      user_name: 'Test User',
       date: '2026-03-05',
       hourly_rate: '10',
       planned_cost: '20',
@@ -74,8 +76,8 @@ describe('createEditFormState', () => {
       status: 'COMPLETED',
       metadata: {},
       blocks: [
-        { id: 'b2', start_time: '2026-03-05T14:00:00.000Z', end_time: '2026-03-05T16:00:00.000Z', metadata: {}, created_at: '', updated_at: '' },
-        { id: 'b1', start_time: '2026-03-05T09:00:00.000Z', end_time: '2026-03-05T10:00:00.000Z', metadata: {}, created_at: '', updated_at: '' },
+        { id: 'b2', start_time: '2026-03-05T14:00:00.000Z', end_time: '2026-03-05T16:00:00.000Z', actual_start_time: null, actual_end_time: null, metadata: {}, created_at: '', updated_at: '' },
+        { id: 'b1', start_time: '2026-03-05T09:00:00.000Z', end_time: '2026-03-05T10:00:00.000Z', actual_start_time: null, actual_end_time: null, metadata: {}, created_at: '', updated_at: '' },
       ],
       created_at: '',
       updated_at: '',
@@ -93,6 +95,7 @@ describe('createEditFormState', () => {
       id: 'shift-1',
       studio_id: 'studio-1',
       user_id: 'user-1',
+      user_name: 'Test User',
       date: '2026-03-05',
       hourly_rate: '10',
       planned_cost: '20',
@@ -118,6 +121,7 @@ describe('getShiftDisplayDate', () => {
       id: 'shift-1',
       studio_id: 'studio-1',
       user_id: 'user-1',
+      user_name: 'Test User',
       date: '2026-03-01',
       hourly_rate: '10',
       planned_cost: '20',
@@ -127,7 +131,7 @@ describe('getShiftDisplayDate', () => {
       status: 'SCHEDULED',
       metadata: {},
       blocks: [
-        { id: 'b1', start_time: '2026-03-05T09:00:00.000Z', end_time: '2026-03-05T10:00:00.000Z', metadata: {}, created_at: '', updated_at: '' },
+        { id: 'b1', start_time: '2026-03-05T09:00:00.000Z', end_time: '2026-03-05T10:00:00.000Z', actual_start_time: null, actual_end_time: null, metadata: {}, created_at: '', updated_at: '' },
       ],
       created_at: '',
       updated_at: '',

@@ -185,6 +185,7 @@ describe('showCreatorCompensationDialog', () => {
         amount: '10.00',
         item_type: 'BONUS',
         reason: 'Extra prep',
+        metadata: {},
       });
     });
   });
@@ -362,6 +363,7 @@ describe('showCreatorCompensationDialog', () => {
         amount: '0.10',
         item_type: 'BONUS',
         reason: 'Penny',
+        metadata: {},
       });
     });
   });

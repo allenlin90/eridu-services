@@ -86,8 +86,8 @@ vi.mock('@eridu/ui', async () => {
       </table>
     ),
     DataTableToolbar: () => null,
-    adaptColumnFiltersChange: (value: any, cb: any) => cb,
-    adaptPaginationChange: (value: any, cb: any) => cb,
+    adaptColumnFiltersChange: (_value: any, cb: any) => cb,
+    adaptPaginationChange: (_value: any, cb: any) => cb,
     DataTableActions: ({ row, onEdit, onDelete }: any) => (
       <div>
         <button type="button" onClick={() => onEdit?.(row)}>Edit</button>

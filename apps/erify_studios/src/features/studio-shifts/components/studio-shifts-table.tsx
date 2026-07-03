@@ -194,6 +194,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     void navigate({
       to: '/studios/$studioId/shifts/$shiftId',
       params: { studioId, shiftId: shift.id },
+      search: { view: 'calendar', page: 1, limit: 20 },
     });
   }, [navigate, studioId]);
 
@@ -201,6 +202,7 @@ export function StudioShiftsTable({ studioId, isStudioAdmin, search, updateSearc
     void navigate({
       to: '/studios/$studioId/shifts/$shiftId/compensation',
       params: { studioId, shiftId: shift.id },
+      search: { view: 'calendar', page: 1, limit: 20 },
     });
   }, [navigate, studioId]);
 

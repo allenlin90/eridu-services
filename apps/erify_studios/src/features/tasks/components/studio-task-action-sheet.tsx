@@ -197,9 +197,10 @@ function StudioTaskActionSheetBody({
       return {};
     }
 
-    return schema.items.reduce<Record<string, LoopProgress>>((acc, item) => {
+    const acc: Record<string, LoopProgress> = {};
+    for (const item of schema.items) {
       if (!item.group) {
-        return acc;
+        continue;
       }
 
       if (!acc[item.group]) {
@@ -213,9 +214,8 @@ function StudioTaskActionSheetBody({
       if (isCompleted) {
         current.completed += 1;
       }
-
-      return acc;
-    }, {});
+    }
+    return acc;
   }, [content, schema]);
   const activeLoopIndex = loopTabs.findIndex((loop) => loop.id === resolvedActiveGroup);
   const activeLoop = activeLoopIndex >= 0 ? loopTabs[activeLoopIndex] : undefined;

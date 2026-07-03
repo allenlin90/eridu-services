@@ -52,6 +52,7 @@ export function StudioTaskTemplateTableActionsCell({
               studioId,
               templateId: row.id,
             },
+            search: { page: 1, limit: 10 },
           });
         }}
         onDelete={() => setShowDeleteDialog(true)}

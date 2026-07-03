@@ -144,7 +144,7 @@ export const ShowStudioRoomField = memo(({
           <FormLabel>Studio Room</FormLabel>
           <FormControl>
             <AsyncCombobox
-              value={field.value}
+              value={field.value ?? undefined}
               onChange={field.onChange}
               onSearch={setSearch}
               options={options}

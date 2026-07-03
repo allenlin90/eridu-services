@@ -69,13 +69,13 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
 
     const systemFactKey = getSystemFactKey(item);
     const systemFactDefinition = systemFactKey ? SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey] : undefined;
-    const updates: Partial<FieldItem> = {
+    const updates: Partial<FieldItem> & { system_fact_key?: SystemFactKey } = {
       type: newType as FieldType,
       default_value: '', // Reset default value to avoid type mismatches
     };
 
     // Reset validation rules that might be incompatible
-    const newValidation = { ...item.validation };
+    const newValidation: NonNullable<FieldItem['validation']> = { ...item.validation };
 
     // Clear numeric constraints
     if (newType !== 'number') {
@@ -109,7 +109,7 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
 
     const systemFactKey = value as SystemFactKey;
     const definition = SYSTEM_FACT_KEY_DEFINITIONS[systemFactKey];
-    const validation = { ...item.validation };
+    const validation: NonNullable<FieldItem['validation']> = { ...item.validation };
     delete validation.min;
     delete validation.max;
     if (EXPLANATION_REQUIRED_FACT_KEYS.has(systemFactKey)) {

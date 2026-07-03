@@ -6,16 +6,8 @@ import { z } from 'zod';
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { useStudioCreatorCompensations } from '@/features/studio-creator-roster/api/studio-creator-roster';
 import { CreatorCompensationsView } from '@/features/studio-creator-roster/components/creator-compensations-view';
-import { addDays } from '@/features/studio-shifts/utils/shift-date.utils';
+import { addDays, defaultCompensationDateRange } from '@/features/studio-shifts/utils/shift-date.utils';
 import { toLocalDateInputValue } from '@/features/studio-shifts/utils/shift-form.utils';
-
-function defaultDateRange() {
-  const from = new Date();
-  return {
-    date_from: toLocalDateInputValue(from),
-    date_to: toLocalDateInputValue(addDays(from, 30)),
-  };
-}
 
 const creatorCompensationsSearchSchema = z
   .object({
@@ -23,7 +15,7 @@ const creatorCompensationsSearchSchema = z
     date_to: z.iso.date().optional(),
   })
   .transform((search) => {
-    const fallback = defaultDateRange();
+    const fallback = defaultCompensationDateRange();
     return {
       date_from: search.date_from ?? fallback.date_from,
       date_to: search.date_to ?? fallback.date_to,

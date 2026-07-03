@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import type { UserApiResponse } from '@eridu/api-types/users';
+import type { AdminUserApiResponse } from '@eridu/api-types/users';
 import {
   createUserInputSchema,
   updateUserInputSchema,
@@ -11,7 +11,7 @@ import {
   DeleteConfirmDialog,
 } from '@/features/admin/components';
 
-type User = UserApiResponse;
+type User = AdminUserApiResponse;
 type UserFormData = z.infer<typeof createUserInputSchema>;
 type UpdateUserFormData = z.infer<typeof updateUserInputSchema>;
 

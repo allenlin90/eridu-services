@@ -16,6 +16,7 @@ describe('shiftCalendarCard', () => {
         shiftCount={2}
         calendarApp={{} as never}
         dateRange={{ date_from: '2026-03-05', date_to: '2026-03-12' }}
+        onRefresh={() => {}}
       />,
     );
 
@@ -31,6 +32,7 @@ describe('shiftCalendarCard', () => {
         shiftCount={0}
         calendarApp={null}
         dateRange={null}
+        onRefresh={() => {}}
       />,
     );
 
@@ -47,6 +49,7 @@ describe('shiftCalendarCard', () => {
         shiftCount={0}
         calendarApp={{} as never}
         dateRange={{ date_from: '2026-03-05', date_to: '2026-03-12' }}
+        onRefresh={() => {}}
       />,
     );
 
