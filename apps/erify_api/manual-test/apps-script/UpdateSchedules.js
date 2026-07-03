@@ -153,7 +153,6 @@ function processSingleSchedule(schedule, { targetSheet, schedulesSheet }) {
 function processSchedulesFromRows(rows, scheduleDefinitions, selectedScheduleIds) {
   const groups = {};
   const platformMap = getPlatformMap();
-  const creatorMap = getCreatorMap();
 
   rows.forEach((row, index) => {
     // 1: schedule_id (Col B)
@@ -176,10 +175,10 @@ function processSchedulesFromRows(rows, scheduleDefinitions, selectedScheduleIds
     groups[scheduleId].rows.push({ row, index });
   });
 
-  return Object.values(groups).map(group => buildSchedulePayload(group, platformMap, creatorMap, scheduleDefinitions));
+  return Object.values(groups).map(group => buildSchedulePayload(group, platformMap, scheduleDefinitions));
 }
 
-function buildSchedulePayload(group, platformMap, creatorMap, scheduleDefinitions) {
+function buildSchedulePayload(group, platformMap, scheduleDefinitions) {
   const { scheduleId, rows, rawVersion, client, rawDate } = group;
 
   // 1. Determine Version & Metadata from Source of Truth
@@ -217,7 +216,7 @@ function buildSchedulePayload(group, platformMap, creatorMap, scheduleDefinition
     // rowIndices will store 0-based index relative to the START of the data range (not the sheet)
     // The consumer (markRowsSuccess) adds the getStartRowOffset().
     rowIndices.push(index); // This is correct if getStartRowOffset() returns 2 and index 0 is Row 2.
-    const show = parseShowFromRow(row, platformMap, creatorMap);
+    const show = parseShowFromRow(row, platformMap);
 
     if (!show) return; // Should catch in validation, but safety check
 
@@ -274,7 +273,7 @@ function isValidDate(d) {
   return d && Object.prototype.toString.call(d) === "[object Date]" && !isNaN(d.getTime());
 }
 
-function parseShowFromRow(row, platformMap, creatorMap) {
+function parseShowFromRow(row, platformMap) {
   const [
     master_plan_id,
     schedule_id,
@@ -311,10 +310,7 @@ function parseShowFromRow(row, platformMap, creatorMap) {
     return str.toString().split(',').map(s => s.trim()).filter(Boolean);
   };
 
-  // The 'mcs' dropdown (config sheet, synced by SyncMCRoster.js) offers MC
-  // display names, not UIDs, so a raw dropdown selection must be resolved
-  // back to creatorId via the mc_users sheet before submission.
-  const creatorList = parseList(creators).map(raw => ({ creatorId: resolveCreatorId(raw, creatorMap) }));
+  const creatorList = parseList(creators).map(uid => ({ creatorId: uid }));
 
   // Helper to resolve UID from Map (Name -> UID) or use raw if it looks like a UID
   const resolveValue = (raw, map, defaultUid) => {
@@ -380,36 +376,6 @@ function getPlatformMap() {
     acc[name] = uid;
     return acc;
   }, {});
-}
-
-// Builds a { mc_id: mc_name } map from the mc_users sheet (populated by
-// SyncMCRoster.js) so creator dropdown selections (names) can be resolved
-// back to the UID the API expects.
-function getCreatorMap() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MC_USERS_SHEET);
-  if (!sheet) return {};
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return {};
-
-  // mc_users columns (see SyncMCRoster.js headers): ... mc_name (H/8), mc_id (I/9).
-  const rows = sheet.getRange(2, 8, lastRow - 1, 2).getValues();
-
-  return rows.reduce((acc, [mcName, mcId]) => {
-    if (mcId) acc[mcId] = mcName;
-    return acc;
-  }, {});
-}
-
-// Resolves a raw "creators" cell token (either an mc_name from the 'mcs'
-// dropdown, or an already-valid creatorId typed directly) to a creatorId.
-function resolveCreatorId(raw, creatorMap) {
-  const str = raw.toString().trim();
-  if (creatorMap[str] !== undefined) return str; // Already a UID key in the map.
-
-  const lower = str.toLowerCase();
-  const found = Object.entries(creatorMap).find(([, name]) => name && name.toString().toLowerCase() === lower);
-  return found ? found[0] : str; // Fall back to the raw value if unresolved.
 }
 
 function parseTimeRange(dateVal, startVal, endVal) {
