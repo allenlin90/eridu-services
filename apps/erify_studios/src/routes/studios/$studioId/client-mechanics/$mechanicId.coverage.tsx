@@ -37,7 +37,7 @@ const mechanicCoverageSearchSchema = z.object({
 
 type MechanicCoverageSearch = z.infer<typeof mechanicCoverageSearchSchema>;
 
-export function MechanicCoveragePage() {
+function MechanicCoveragePage() {
   const { studioId, mechanicId } = routeApi.useParams();
   const search = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
