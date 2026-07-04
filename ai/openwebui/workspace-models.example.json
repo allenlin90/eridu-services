@@ -1,71 +1,48 @@
 {
   "$schema": "./workspace-models.schema.json",
-  "description": "Example Open WebUI Workspace Model definitions. This file is a policy manifest, not an automatic import format yet.",
+  "description": "Example Open WebUI Workspace Model policy. Skill references point to canonical .agents skills or future exported adapters.",
   "models": [
     {
       "name": "Company Assistant",
-      "description": "Default internal assistant for general company work.",
       "litellmModel": "company-auto-balanced",
-      "skills": [
-        "company-writing-style",
-        "thai-english-ops-interpreter"
+      "canonicalSkillRefs": [
+        ".agents/skills/openwebui-assistant-adapter/SKILL.md"
       ],
-      "knowledge": [
-        "company-handbook",
-        "general-operations-docs"
-      ],
+      "openWebUISkillExport": "future: company-assistant-adapter",
+      "knowledge": ["company-handbook", "general-operations-docs"],
       "mcpTools": [],
-      "groups": [
-        "staff",
-        "operations",
-        "manager",
-        "admin"
-      ],
+      "groups": ["staff", "operations", "manager", "admin"],
       "riskLevel": "low"
     },
     {
       "name": "Operations Assistant",
-      "description": "Assistant for ecommerce, fulfillment, and livestream operations using the private erify_api MCP surface.",
       "litellmModel": "company-auto-balanced",
-      "skills": [
-        "thai-english-ops-interpreter",
-        "ecommerce-ops-assistant"
+      "canonicalSkillRefs": [
+        ".agents/skills/openwebui-assistant-adapter/SKILL.md",
+        ".agents/skills/show-production-lifecycle/SKILL.md",
+        ".agents/skills/operations-review-surface/SKILL.md",
+        ".agents/skills/table-view-pattern/SKILL.md"
       ],
-      "knowledge": [
-        "operations-sops",
-        "fulfillment-guides"
-      ],
+      "openWebUISkillExport": "future: operations-assistant-adapter",
+      "knowledge": ["operations-sops", "fulfillment-guides"],
       "mcpService": "erify_api_mcp",
-      "mcpTools": [
-        "erify_get_show",
-        "erify_get_task",
-        "erify_query_shows",
-        "erify_query_tasks"
-      ],
-      "groups": [
-        "operations",
-        "fulfillment",
-        "livestream",
-        "manager",
-        "admin"
-      ],
+      "mcpTools": ["erify_get_show", "erify_get_task", "erify_query_shows", "erify_query_tasks"],
+      "groups": ["operations", "fulfillment", "livestream", "manager", "admin"],
       "riskLevel": "medium-read-only"
     },
     {
       "name": "Engineering Assistant",
-      "description": "Assistant for code review, architecture discussion, and repo documentation.",
       "litellmModel": "company-auto-strong",
-      "skills": [
-        "engineering-code-review"
+      "canonicalSkillRefs": [
+        ".agents/skills/openwebui-assistant-adapter/SKILL.md",
+        ".agents/skills/engineering-best-practices-enforcer/SKILL.md",
+        ".agents/skills/agent-instruction-maintenance/SKILL.md",
+        ".agents/skills/monorepo-doc-layering/SKILL.md"
       ],
-      "knowledge": [
-        "engineering-docs"
-      ],
+      "openWebUISkillExport": "future: engineering-assistant-adapter",
+      "knowledge": ["engineering-docs"],
       "mcpTools": [],
-      "groups": [
-        "engineering",
-        "admin"
-      ],
+      "groups": ["engineering", "admin"],
       "riskLevel": "medium-read-only"
     }
   ]
