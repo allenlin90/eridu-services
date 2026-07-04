@@ -1,8 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ClientMechanicsPage } from '@/routes/studios/$studioId/client-mechanics/index';
+import { Route } from '@/routes/studios/$studioId/client-mechanics/index';
+
+// The route's page component is intentionally not a named export (so
+// TanStack Router's autoCodeSplitting wraps it in `lazyRouteComponent` and
+// splits it into its own lazy chunk instead of bundling it into the app's
+// eager entry) — access it via the route's own `component` option, the
+// same lazy reference the real router renders, wrapped in `Suspense` below
+// like the real `<Outlet>` does.
+const ClientMechanicsPage = (Route as any).component;
 
 // --- Mocks ---
 
@@ -22,24 +31,32 @@ const mockNavigate = vi.fn();
 const mockParams = { studioId: 'studio_123' };
 const mockSearch = { client_id: 'client_abc' };
 
-vi.mock('@tanstack/react-router', () => ({
-  createFileRoute: () => (options: any) => ({
-    ...options,
+vi.mock('@tanstack/react-router', async () => {
+  const React = await import('react');
+  return {
+    createFileRoute: () => (options: any) => ({
+      ...options,
+      useParams: () => mockParams,
+      useSearch: () => mockSearch,
+      useNavigate: () => mockNavigate,
+    }),
     useParams: () => mockParams,
     useSearch: () => mockSearch,
     useNavigate: () => mockNavigate,
-  }),
-  useParams: () => mockParams,
-  useSearch: () => mockSearch,
-  useNavigate: () => mockNavigate,
-  getRouteApi: () => ({
-    useParams: () => mockParams,
-    useSearch: () => mockSearch,
-    useNavigate: () => mockNavigate,
-  }),
-  lazyRouteComponent: vi.fn(),
-  Outlet: () => null,
-}));
+    getRouteApi: () => ({
+      useParams: () => mockParams,
+      useSearch: () => mockSearch,
+      useNavigate: () => mockNavigate,
+    }),
+    // Real autoCodeSplitting wraps the route's component in this exact
+    // helper; mirror it with `React.lazy` so the component under test
+    // exercises the same lazy/Suspense path the real router uses instead
+    // of a stubbed no-op that would render `undefined`.
+    lazyRouteComponent: (importer: () => Promise<any>, exportName = 'default') =>
+      React.lazy(async () => ({ default: (await importer())[exportName] })),
+    Outlet: () => null,
+  };
+});
 
 const mockClients = [
   { id: 'client_abc', name: 'Client ABC' },
@@ -121,7 +138,7 @@ vi.mock('@/features/client-mechanics/hooks/use-client-mechanics', () => ({
 }));
 
 async function openRowMenu(user: ReturnType<typeof userEvent.setup>, rowIndex: number) {
-  const triggers = screen.getAllByRole('button', { name: /open menu/i });
+  const triggers = await screen.findAllByRole('button', { name: /open menu/i }, { timeout: 5000 });
   await user.click(triggers[rowIndex]);
 }
 
@@ -131,18 +148,18 @@ describe('clientMechanicsPage', () => {
   });
 
   it('renders client select options and page headers', async () => {
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
 
-    expect(screen.getByText('Client Mechanics')).toBeInTheDocument();
+    expect(await screen.findByText('Client Mechanics', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText('Select Client')).toBeInTheDocument();
     expect(screen.getByText('Client ABC')).toBeInTheDocument();
   });
 
   it('renders mechanics data in table', async () => {
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
 
     // Table rows
-    expect(screen.getByText('Speaking Rule 1')).toBeInTheDocument();
+    expect(await screen.findByText('Speaking Rule 1', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText('Speaking Rule 2')).toBeInTheDocument();
     expect(screen.getByText('Product Promo A')).toBeInTheDocument();
 
@@ -157,9 +174,9 @@ describe('clientMechanicsPage', () => {
 
   it('opens create dialog on button click and submits new mechanic', async () => {
     const user = userEvent.setup();
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
 
-    const createBtn = screen.getByRole('button', { name: /create mechanic/i });
+    const createBtn = await screen.findByRole('button', { name: /create mechanic/i }, { timeout: 5000 });
     await user.click(createBtn);
 
     // Dialog is visible, with the active client named in the title so it
@@ -188,7 +205,7 @@ describe('clientMechanicsPage', () => {
 
   it('opens update dialog on edit action and submits changes', async () => {
     const user = userEvent.setup();
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
 
     // Edit action on row 1
     await openRowMenu(user, 0);
@@ -221,7 +238,7 @@ describe('clientMechanicsPage', () => {
 
   it('opens retire dialog on archive action and confirms', async () => {
     const user = userEvent.setup();
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
 
     // Retire active row
     await openRowMenu(user, 0);
@@ -246,7 +263,7 @@ describe('clientMechanicsPage', () => {
     mockUseStudioAccess.mockReturnValueOnce({ role: 'account_manager', hasAccess: () => true });
     const user = userEvent.setup();
 
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
     await openRowMenu(user, 0);
 
     expect(screen.queryByRole('menuitem', { name: /delete/i })).not.toBeInTheDocument();
@@ -256,7 +273,7 @@ describe('clientMechanicsPage', () => {
 
   it('opens delete dialog on trash action and confirms', async () => {
     const user = userEvent.setup();
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
 
     // Delete row
     await openRowMenu(user, 0);
@@ -273,7 +290,7 @@ describe('clientMechanicsPage', () => {
 
   it('calls update mutation to reactivate retired mechanic', async () => {
     const user = userEvent.setup();
-    render(<ClientMechanicsPage />);
+    render(<Suspense fallback={null}><ClientMechanicsPage /></Suspense>);
 
     // Reactivate retired row (row 1 is the retired mechanic)
     await openRowMenu(user, 1);

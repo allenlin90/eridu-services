@@ -48,7 +48,7 @@ const clientMechanicsSearchSchema = z.object({
 
 type Mechanic = ClientMechanicApiResponse;
 
-export function ClientMechanicsPage() {
+function ClientMechanicsPage() {
   const { studioId } = clientMechanicsRouteApi.useParams();
   const search = clientMechanicsRouteApi.useSearch();
   const navigate = clientMechanicsRouteApi.useNavigate();
