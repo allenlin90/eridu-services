@@ -1,64 +1,49 @@
-# Example LiteLLM router config.
-# This is a template only. Keep real provider keys in Railway environment variables.
+# Reference LiteLLM model + access-group taxonomy for the company AI workspace.
+#
+# NOT applied as config.yaml on Railway today. The Railway deployment does not
+# conveniently expose config.yaml, so models, provider credentials, and aliases are
+# managed through the LiteLLM Admin UI with "Store Model in DB" enabled. Treat this
+# file as a reference for what to configure in that UI (or for a future repo-managed
+# config path), not as an actively-loaded config.
+#
+# Company model aliases (stable, provider-agnostic names staff and assistants use):
+#   company-fast       -> everyday, low-latency, low-cost chat
+#   company-balanced   -> default general-purpose model
+#   company-reasoning  -> harder reasoning and analysis
+#   company-coding     -> code-focused tasks
+#
+# Access groups bundle aliases for team virtual keys:
+#   company-general -> company-fast, company-balanced
+#   company-power   -> company-reasoning, company-coding
+#   company-admin   -> all aliases
+#
+# Keep real provider keys in Railway environment variables. Do not commit real keys.
 
 model_list:
-  - model_name: company-auto-balanced
+  - model_name: company-fast
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      access_groups: ["company-general", "company-admin"]
+
+  - model_name: company-balanced
     litellm_params:
       model: openai/gpt-4o-mini
       api_key: os.environ/OPENAI_API_KEY
-      rpm: 300
-      tpm: 200000
-      weight: 1
     model_info:
-      provider: openai
-      purpose: balanced-general
+      access_groups: ["company-general", "company-admin"]
 
-  - model_name: company-auto-balanced
-    litellm_params:
-      model: gemini/gemini-2.5-flash
-      api_key: os.environ/GEMINI_API_KEY
-      rpm: 500
-      tpm: 300000
-      weight: 2
-    model_info:
-      provider: gemini
-      purpose: balanced-general
-
-  - model_name: company-auto-cheap
-    litellm_params:
-      model: gemini/gemini-2.5-flash
-      api_key: os.environ/GEMINI_API_KEY
-      rpm: 500
-      tpm: 300000
-      weight: 3
-    model_info:
-      provider: gemini
-      purpose: low-cost-default
-
-  - model_name: company-auto-strong
+  - model_name: company-reasoning
     litellm_params:
       model: anthropic/claude-3-5-sonnet-latest
       api_key: os.environ/ANTHROPIC_API_KEY
-      rpm: 100
-      tpm: 100000
-      weight: 1
     model_info:
-      provider: anthropic
-      purpose: stronger-reasoning
+      access_groups: ["company-power", "company-admin"]
 
-router_settings:
-  routing_strategy: simple-shuffle
-  enable_pre_call_check: true
-  redis_host: os.environ/REDIS_HOST
-  redis_port: os.environ/REDIS_PORT
-  redis_password: os.environ/REDIS_PASSWORD
-  cooldown_time: 60
-
-litellm_settings:
-  num_retries: 2
-  request_timeout: 60
-  allowed_fails: 2
-  cooldown_time: 60
-
-general_settings:
-  master_key: os.environ/LITELLM_MASTER_KEY
+  - model_name: company-coding
+    litellm_params:
+      model: openrouter/anthropic/claude-3.5-sonnet
+      api_key: os.environ/OPENROUTER_API_KEY
+    model_info:
+      access_groups: ["company-power", "company-admin"]

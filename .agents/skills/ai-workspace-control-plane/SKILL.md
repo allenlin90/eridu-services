@@ -20,7 +20,7 @@ Keep Open WebUI, LiteLLM, Better Auth, MCP services, and repo policy aligned as 
 | LiteLLM | LLM gateway, model aliases, provider routing, virtual keys, customer budgets, RPM/TPM limits |
 | `erify_api` MCP | Existing private operational MCP surface for read-only studio-scoped tools |
 | `.agents/skills/` | Canonical agent skills and repo implementation guidance |
-| `ai/` | Workspace policy manifests, import/export notes, LiteLLM templates, sync scaffolds |
+| `ai/` | Workspace policy manifests, import/export notes, LiteLLM references, budget-governance scaffolds |
 
 ## Required source check
 
@@ -39,8 +39,12 @@ Before editing AI workspace files, read the relevant existing source:
 - Do not treat Open WebUI, LiteLLM, and MCP as unrelated manual UI settings.
 - Keep durable policy in Git; use deployed UIs for monitoring, debugging, and pilot-only changes.
 - Use Better Auth as the identity source of truth.
-- Use one LiteLLM virtual key for Open WebUI, then forward the Open WebUI user identity as the LiteLLM customer/end-user ID.
+- Use one LiteLLM virtual key for Open WebUI (never the master key), then forward the Open WebUI user identity as the LiteLLM customer/end-user ID via Open WebUI's global user-info header-forwarding env vars (`ENABLE_FORWARD_USER_INFO_HEADERS` + `FORWARD_USER_INFO_HEADER_USER_ID=x-litellm-customer-id`). Connection-level custom headers are unreliable on this Railway setup; do not rely on them.
+- Treat usage tracking as automatic: LiteLLM records forwarded users as customers as requests arrive, with no pre-provisioning or sync step. Budget-tier assignment is a separate, later governance step.
 - Apply per-user budget/rate policy at the LiteLLM customer/end-user layer.
+- On this Railway deployment, manage LiteLLM models, provider credentials, and company model aliases through the LiteLLM Admin UI ("Store Model in DB"); `config.yaml` is not conveniently exposed. Treat repo `ai/litellm/` files as reference/policy for that UI (or a future repo-managed config path), not an actively-applied config.
+- Use the stable company model aliases (`company-fast`, `company-balanced`, `company-reasoning`, `company-coding`) grouped into access groups (`company-general`, `company-power`, `company-admin`); do not invent a parallel alias taxonomy.
+- Verify LiteLLM/Open WebUI capabilities against the deployed versions (LiteLLM `1.89.3`, Open WebUI `0.9.6`) before presenting them as feasible; do not assume latest-docs behavior applies.
 - Keep provider API keys in Railway environment variables, not repo files.
 - Use the existing `erify_api` MCP entrypoint for operational MCP before proposing a separate MCP app.
 - Keep operational MCP tools read-only unless auth, audit, idempotency, and rate-limit behavior are designed.
@@ -50,9 +54,9 @@ Before editing AI workspace files, read the relevant existing source:
 When changing LiteLLM policy:
 
 1. Decide whether the change is model routing, key policy, customer budget, provider budget, or observability.
-2. Put durable examples/templates under `ai/litellm/`.
+2. Put durable examples/templates under `ai/litellm/` as reference for the Admin UI.
 3. Keep secrets as `os.environ/...` references.
-4. For Railway, prefer repo-managed config or env-generated config over manual container edits.
+4. For this Railway deployment, apply model/alias/credential changes in the LiteLLM Admin UI ("Store Model in DB"); `config.yaml` is not conveniently exposed. Repo files stay as reference until a repo-managed config path exists.
 5. Preserve the distinction between:
    - virtual key limits = whole Open WebUI integration or team/app limit;
    - customer/end-user limits = individual Open WebUI user limit.

@@ -3,6 +3,11 @@
  *
  * This script is intentionally lightweight. It can be expanded into a CI or scheduled
  * check after the deployment contracts are finalized.
+ *
+ * Set the *_BASE_URL env vars to whatever the runner can actually reach. Railway
+ * private URLs (http://<service>.railway.internal:4000) only resolve from inside
+ * the Railway project network; from a laptop or external CI, point these at the
+ * public LiteLLM / Open WebUI / MCP URLs instead.
  */
 
 type CheckResult = {

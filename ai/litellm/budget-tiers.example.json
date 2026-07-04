@@ -1,6 +1,5 @@
 {
-  "$schema": "./budget-tiers.schema.json",
-  "description": "Example LiteLLM budget tiers for Open WebUI users recorded as LiteLLM customers/end-users.",
+  "description": "Example LiteLLM budget tiers for Open WebUI users recorded as LiteLLM customers/end-users. Assigning a tier to a customer is a later governance step; it is not required for LiteLLM to record customer usage.",
   "tiers": {
     "light-user": {
       "description": "General staff and low-frequency users.",

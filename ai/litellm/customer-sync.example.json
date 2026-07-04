@@ -1,10 +1,10 @@
 {
-  "$schema": "./customer-sync.schema.json",
-  "description": "Example mapping for syncing Better Auth or Open WebUI users into LiteLLM customers.",
+  "description": "Example role-to-budget-tier mapping for assigning LiteLLM budget tiers to known Open WebUI users (recorded as LiteLLM customers). This is a later governance step and is NOT required for usage tracking, which happens automatically as Open WebUI forwards the user identity per request.",
   "identity": {
-    "pilot_customer_id": "email",
-    "production_customer_id": "better_auth_user_id",
-    "email_metadata_field": "email"
+    "default_customer_id": "uuid",
+    "rollout_customer_id": "email",
+    "email_metadata_field": "email",
+    "note": "Open WebUI forwards this value as x-litellm-customer-id via its global user-info header-forwarding env vars. The UUID is the Open WebUI user id and is the governance-grade default; email mode is only for readable names in the LiteLLM UI during rollout, at the cost of email-in-logs. Only one mode is active at a time."
   },
   "roleToBudgetTier": {
     "admin": "power-user",
@@ -13,11 +13,10 @@
     "operations": "standard-user",
     "fulfillment": "standard-user",
     "livestream": "standard-user",
-    "staff": "light-user",
-    "pending": "blocked"
+    "staff": "light-user"
   },
+  "skipRoles": ["pending"],
   "defaults": {
-    "unknownRole": "light-user",
-    "inactiveUser": "blocked"
+    "unknownRole": "light-user"
   }
 }

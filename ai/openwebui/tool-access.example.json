@@ -1,5 +1,4 @@
 {
-  "$schema": "./tool-access.schema.json",
   "description": "Example MCP tool access policy for Open WebUI assistants and groups. Current operational tools are provided by the existing erify_api MCP entrypoint.",
   "defaultPolicy": "deny",
   "services": {

@@ -1,10 +1,9 @@
 {
-  "$schema": "./workspace-models.schema.json",
   "description": "Example Open WebUI Workspace Model policy. Skill references point to canonical .agents skills or future exported adapters.",
   "models": [
     {
       "name": "Company Assistant",
-      "litellmModel": "company-auto-balanced",
+      "litellmModel": "company-balanced",
       "canonicalSkillRefs": [
         ".agents/skills/openwebui-assistant-adapter/SKILL.md"
       ],
@@ -16,7 +15,7 @@
     },
     {
       "name": "Operations Assistant",
-      "litellmModel": "company-auto-balanced",
+      "litellmModel": "company-balanced",
       "canonicalSkillRefs": [
         ".agents/skills/openwebui-assistant-adapter/SKILL.md",
         ".agents/skills/show-production-lifecycle/SKILL.md",
@@ -32,7 +31,7 @@
     },
     {
       "name": "Engineering Assistant",
-      "litellmModel": "company-auto-strong",
+      "litellmModel": "company-reasoning",
       "canonicalSkillRefs": [
         ".agents/skills/openwebui-assistant-adapter/SKILL.md",
         ".agents/skills/engineering-best-practices-enforcer/SKILL.md",
