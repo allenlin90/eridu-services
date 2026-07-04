@@ -1,0 +1,64 @@
+# Example LiteLLM router config.
+# This is a template only. Keep real provider keys in Railway environment variables.
+
+model_list:
+  - model_name: company-auto-balanced
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+      rpm: 300
+      tpm: 200000
+      weight: 1
+    model_info:
+      provider: openai
+      purpose: balanced-general
+
+  - model_name: company-auto-balanced
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 500
+      tpm: 300000
+      weight: 2
+    model_info:
+      provider: gemini
+      purpose: balanced-general
+
+  - model_name: company-auto-cheap
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 500
+      tpm: 300000
+      weight: 3
+    model_info:
+      provider: gemini
+      purpose: low-cost-default
+
+  - model_name: company-auto-strong
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-latest
+      api_key: os.environ/ANTHROPIC_API_KEY
+      rpm: 100
+      tpm: 100000
+      weight: 1
+    model_info:
+      provider: anthropic
+      purpose: stronger-reasoning
+
+router_settings:
+  routing_strategy: simple-shuffle
+  enable_pre_call_check: true
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+  redis_password: os.environ/REDIS_PASSWORD
+  cooldown_time: 60
+
+litellm_settings:
+  num_retries: 2
+  request_timeout: 60
+  allowed_fails: 2
+  cooldown_time: 60
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
