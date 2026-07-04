@@ -101,6 +101,15 @@ Studios internal-read traffic policy (2026-03-22):
 - Navigation-heavy reads must forward TanStack Query `signal` to Axios fetchers so abandoned route transitions cancel in-flight requests.
 - Backend protection stays enabled; high-frequency internal GET endpoints should opt into `@ReadBurstThrottle()` instead of bypassing rate limiting by `Origin`.
 
+## AI Workspace Control Plane Scaffold (2026-07-04)
+
+Repo-owned policy/manifests for governing Open WebUI, LiteLLM, and Better Auth SSO as one platform, plus the existing `erify_api` MCP surface, now live under `ai/`. Reconciled against the real deployed baseline (Open WebUI `0.9.6`, LiteLLM `1.89.3` on Railway): per-user usage tracking is automatic via Open WebUI's global header-forwarding env vars (not a sync script), and the LiteLLM Admin UI is the primary management surface on this deployment, not a repo-managed `config.yaml`.
+
+Source of truth:
+- `.agents/skills/ai-workspace-control-plane/SKILL.md`
+- `.agents/skills/openwebui-assistant-adapter/SKILL.md`
+- `ai/README.md`
+
 ## Critical Skills Clarifications
 
 ### service-pattern-nestjs (PRIMARY)

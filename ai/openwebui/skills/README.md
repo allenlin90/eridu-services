@@ -1,0 +1,32 @@
+# Open WebUI Skill Exports
+
+This directory is intentionally export-only for now.
+
+Do not put canonical agent skills here. Actual agent skills must live in:
+
+```text
+.agents/skills/
+```
+
+## Current canonical AI workspace skills
+
+- `.agents/skills/ai-workspace-control-plane/SKILL.md`
+- `.agents/skills/openwebui-assistant-adapter/SKILL.md`
+
+## Existing related repo skills
+
+Open WebUI assistants should also reference existing domain skills when relevant:
+
+| Existing skill | Why it matters for Open WebUI |
+|---|---|
+| `.agents/skills/operations-review-surface/SKILL.md` | Operational-day review surfaces and read-only review model rules. |
+| `.agents/skills/show-production-lifecycle/SKILL.md` | Show lifecycle, statuses, readiness, cancellation, roles, and lifecycle boundaries. |
+| `.agents/skills/table-view-pattern/SKILL.md` | Table, pagination, filtering, export, and dense view conventions. |
+| `.agents/skills/engineering-best-practices-enforcer/SKILL.md` | Engineering quality gate for implementation work. |
+| `.agents/skills/agent-instruction-maintenance/SKILL.md` | Maintenance rules for agent instructions and skill updates. |
+
+## Export rule
+
+If Open WebUI needs an imported skill, generate it from the canonical `.agents/skills/` source or create a thin adapter that clearly links back to the canonical skill.
+
+Do not create standalone Open WebUI instruction files here that diverge from `.agents/skills/`.

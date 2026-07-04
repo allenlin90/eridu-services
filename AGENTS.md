@@ -207,6 +207,7 @@ Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and des
 - **Architecture** — shared API types, design patterns, SOLID, domain refactoring, data compatibility, environment config, package extraction
 - **Feature-specific** — admin/studio list patterns, task templates, schedule continuity, shift schedules, show production lifecycle, file uploads, spreadsheets, and more
 - **Meta and tooling** — agent instruction maintenance, code quality, doc hygiene, engineering best practices, database CLI, Playwright, security, skill creation
+- **AI workspace / platform ops** — Open WebUI + LiteLLM + Better Auth SSO governance, MCP exposure and tool access policy, files under `ai/` and `scripts/ai/`
 
 ### Standard Task Workflow
 1. Identify impacted workspace(s).

@@ -1,0 +1,39 @@
+{
+  "description": "Example MCP tool access policy for Open WebUI assistants and groups. Current operational tools are provided by the existing erify_api MCP entrypoint.",
+  "defaultPolicy": "deny",
+  "services": {
+    "erify_api_mcp": {
+      "endpointPattern": "http://<mcp-service-name>.railway.internal:${PORT}/mcp",
+      "docs": "apps/erify_api/docs/MCP_SERVER.md",
+      "networkPosture": "private-railway-service"
+    }
+  },
+  "tools": {
+    "erify_get_show": {
+      "service": "erify_api_mcp",
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["operations", "livestream", "manager", "admin"]
+    },
+    "erify_get_task": {
+      "service": "erify_api_mcp",
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["operations", "fulfillment", "manager", "admin"]
+    },
+    "erify_query_shows": {
+      "service": "erify_api_mcp",
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["operations", "livestream", "manager", "admin"]
+    },
+    "erify_query_tasks": {
+      "service": "erify_api_mcp",
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["operations", "fulfillment", "manager", "admin"]
+    }
+  },
+  "notes": [
+    "The existing erify_api MCP tools are read-only and studio-scoped.",
+    "Require a separate approval and audit design before enabling write tools.",
+    "Do not expose the private Railway MCP endpoint publicly without the public access-control design.",
+    "Business data access should be logged by the MCP service itself."
+  ]
+}

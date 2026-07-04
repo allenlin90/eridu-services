@@ -1,0 +1,48 @@
+{
+  "description": "Example Open WebUI Workspace Model policy. Skill references point to canonical .agents skills or future exported adapters.",
+  "models": [
+    {
+      "name": "Company Assistant",
+      "litellmModel": "company-balanced",
+      "canonicalSkillRefs": [
+        ".agents/skills/openwebui-assistant-adapter/SKILL.md"
+      ],
+      "openWebUISkillExport": "future: company-assistant-adapter",
+      "knowledge": ["company-handbook", "general-operations-docs"],
+      "mcpTools": [],
+      "groups": ["staff", "operations", "manager", "admin"],
+      "riskLevel": "low"
+    },
+    {
+      "name": "Operations Assistant",
+      "litellmModel": "company-balanced",
+      "canonicalSkillRefs": [
+        ".agents/skills/openwebui-assistant-adapter/SKILL.md",
+        ".agents/skills/show-production-lifecycle/SKILL.md",
+        ".agents/skills/operations-review-surface/SKILL.md",
+        ".agents/skills/table-view-pattern/SKILL.md"
+      ],
+      "openWebUISkillExport": "future: operations-assistant-adapter",
+      "knowledge": ["operations-sops", "fulfillment-guides"],
+      "mcpService": "erify_api_mcp",
+      "mcpTools": ["erify_get_show", "erify_get_task", "erify_query_shows", "erify_query_tasks"],
+      "groups": ["operations", "fulfillment", "livestream", "manager", "admin"],
+      "riskLevel": "medium-read-only"
+    },
+    {
+      "name": "Engineering Assistant",
+      "litellmModel": "company-reasoning",
+      "canonicalSkillRefs": [
+        ".agents/skills/openwebui-assistant-adapter/SKILL.md",
+        ".agents/skills/engineering-best-practices-enforcer/SKILL.md",
+        ".agents/skills/agent-instruction-maintenance/SKILL.md",
+        ".agents/skills/monorepo-doc-layering/SKILL.md"
+      ],
+      "openWebUISkillExport": "future: engineering-assistant-adapter",
+      "knowledge": ["engineering-docs"],
+      "mcpTools": [],
+      "groups": ["engineering", "admin"],
+      "riskLevel": "medium-read-only"
+    }
+  ]
+}

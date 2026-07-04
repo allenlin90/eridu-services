@@ -46,6 +46,7 @@ graph TB
 
 ## Documentation
 
+- AI workspace control-plane scaffold: [`ai/README.md`](ai/README.md)
 - Monorepo roadmap and product references: [`docs/README.md`](docs/README.md)
 - App-specific implementation docs:
   - [`apps/erify_api/docs/README.md`](apps/erify_api/docs/README.md)
