@@ -59,14 +59,14 @@ Open WebUI then sends `x-litellm-customer-id: <Open WebUI user UUID>` on every r
 
 ## Budgets and rate limits
 
-Basic tracking (above) comes first. Budgets and per-customer rate limits are a later maturity step (curated aliases -> fallback models -> team budgets -> per-customer budgets/rate limits -> spend analytics -> observability). Assigning a budget tier to a known customer via LiteLLM's customer admin API is a legitimate future step, separate from tracking — see `scripts/ai/assign-litellm-budget-tiers.ts`.
+Basic tracking (above) comes first. Budgets and per-customer rate limits are a later maturity step (curated aliases -> fallback models -> team budgets -> per-customer budgets/rate limits -> spend analytics -> observability). Assign budget tiers to known customers by hand in the LiteLLM Admin UI (Customers/Budgets) using the role-to-tier policy below as reference — no automation script for this; it's low-volume, admin-only work.
 
 ## Files
 
 | File | Purpose |
 |---|---|
 | `budget-tiers.example.json` | Example budget and rate-limit tiers for users. |
-| `customer-sync.example.json` | Example role-to-budget-tier mapping for the budget-tier assignment step (not required for tracking). |
+| `customer-sync.example.json` | Example role-to-budget-tier policy reference for manually assigning tiers in the LiteLLM Admin UI (not required for usage tracking). |
 | `model-groups.example.yaml` | Reference model + access-group taxonomy for the Admin UI (or a future repo-managed config). |
 
 ## Version sensitivity

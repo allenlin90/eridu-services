@@ -2,7 +2,7 @@
 
 This directory contains repo-owned policy and manifests for the company AI workspace around Open WebUI, LiteLLM, Better Auth, and the existing `erify_api` MCP foundation.
 
-Actual agent skills live in `.agents/skills/`. Files under `ai/` are policy manifests, deployment references, budget-governance scaffolds, and Open WebUI export notes.
+Actual agent skills live in `.agents/skills/`. Files under `ai/` are policy manifests, deployment references, budget-tier policy tables, and Open WebUI export notes.
 
 ## Deployed baseline
 
@@ -33,7 +33,7 @@ Use these actual agent skills before changing AI workspace files:
 | LiteLLM | LLM gateway, provider abstraction, virtual keys, user/customer budgets, and rate limits. |
 | `erify_api` MCP | Existing private Railway MCP service for read-only, studio-scoped operational tools. |
 | `.agents/skills/` | Canonical project skills and agent behavior. |
-| `ai/` | Workspace policy, Open WebUI manifests, LiteLLM templates, and sync scripts. |
+| `ai/` | Workspace policy, Open WebUI manifests, and LiteLLM templates. |
 
 ## Design principles
 

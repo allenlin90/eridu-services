@@ -20,7 +20,7 @@ Keep Open WebUI, LiteLLM, Better Auth, MCP services, and repo policy aligned as 
 | LiteLLM | LLM gateway, model aliases, provider routing, virtual keys, customer budgets, RPM/TPM limits |
 | `erify_api` MCP | Existing private operational MCP surface for read-only studio-scoped tools |
 | `.agents/skills/` | Canonical agent skills and repo implementation guidance |
-| `ai/` | Workspace policy manifests, import/export notes, LiteLLM references, budget-governance scaffolds |
+| `ai/` | Workspace policy manifests, import/export notes, LiteLLM references, budget-tier policy tables |
 
 ## Required source check
 
