@@ -1,6 +1,6 @@
 # AI Workspace Control Plane
 
-This directory is the repo-owned source of truth for the company AI workspace around Open WebUI, LiteLLM, Better Auth, and MCP services.
+This directory is the repo-owned source of truth for the company AI workspace around Open WebUI, LiteLLM, Better Auth, and the existing `erify_api` MCP foundation.
 
 The goal is to avoid configuring each deployed tool as a separate black box. Open WebUI and LiteLLM can still be used through their UIs for monitoring and pilot changes, but durable policy should live here, be reviewed in Git, and be pushed or synchronized into the deployed services.
 
@@ -11,16 +11,19 @@ Better Auth / eridu_auth
   -> company SSO and user source of truth
 
 Open WebUI
-  -> user-facing AI workspace, assistants, skills, knowledge, and MCP tool UX
+  -> user-facing AI workspace, assistants, skill adapters, knowledge, and MCP tool UX
 
 LiteLLM
   -> LLM gateway, provider abstraction, virtual keys, cost tracking, user/customer budgets, and rate limits
 
-MCP services
-  -> controlled access to company data and operational APIs
+erify_api MCP
+  -> existing private Railway MCP service for read-only, studio-scoped operational tools
 
-This monorepo
-  -> versioned AI policy, assistant definitions, skills, routing templates, budget tiers, and sync scripts
+.agents/skills
+  -> canonical project skills and engineering/operations guidance
+
+This ai/ directory
+  -> AI workspace policy, Open WebUI adapters, LiteLLM templates, and sync scripts
 ```
 
 ## Design principles
@@ -29,9 +32,11 @@ This monorepo
 2. Treat Open WebUI users as LiteLLM customers/end-users for spend and rate governance.
 3. Use one LiteLLM virtual key for the Open WebUI backend, then forward the Open WebUI user identity on every LiteLLM request.
 4. Keep LiteLLM model routing, budget tiers, and customer sync policy in Git.
-5. Keep Open WebUI skills and assistant definitions in Git before importing/syncing them into Open WebUI.
-6. Start MCP tools as read-only; add write actions only after audit and approval workflows are defined.
-7. Log business-data access in the MCP service, not only in Open WebUI.
+5. Treat `.agents/skills/` as the canonical repo skill source of truth.
+6. Keep `ai/openwebui/skills/` as Open WebUI-importable adapters over canonical skills, not a competing skill system.
+7. Use the existing `erify_api` MCP entrypoint as the first operational MCP surface.
+8. Start MCP tools as read-only; add write actions only after audit and approval workflows are defined.
+9. Log business-data access in the MCP service, not only in Open WebUI.
 
 ## Directory map
 
@@ -49,6 +54,7 @@ ai/
 │  ├─ workspace-models.example.json
 │  ├─ tool-access.example.json
 │  └─ skills/
+│     ├─ README.md
 │     ├─ company-writing-style.md
 │     ├─ ecommerce-ops-assistant.md
 │     ├─ engineering-code-review.md
@@ -61,6 +67,17 @@ scripts/ai/
 └─ verify-ai-stack.ts
 ```
 
+## Existing canonical sources
+
+Before changing AI workspace policy, check these existing sources:
+
+- `.claude/memory/skills-integration.md`
+- `.agents/skills/operations-review-surface/SKILL.md`
+- `.agents/skills/show-production-lifecycle/SKILL.md`
+- `.agents/skills/table-view-pattern/SKILL.md`
+- `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
+- `apps/erify_api/docs/MCP_SERVER.md`
+
 ## Implementation phases
 
 ### Phase 1: Document and stabilize
@@ -69,8 +86,8 @@ scripts/ai/
 - Open WebUI connects to LiteLLM with one virtual key.
 - Open WebUI forwards user email or stable ID as the LiteLLM customer/end-user ID.
 - LiteLLM customers and budgets are created manually or by the scaffolded sync script.
-- MCP service is connected to Open WebUI over the Railway private network.
-- Skills are stored in this repo and imported into Open WebUI.
+- Open WebUI connects to the existing `erify_api` MCP Railway service over the private network.
+- Open WebUI skills are stored as adapters in this repo and aligned with `.agents/skills/`.
 
 ### Phase 2: Config as code
 
