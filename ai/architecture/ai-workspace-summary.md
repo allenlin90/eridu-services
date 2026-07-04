@@ -1,6 +1,6 @@
 # AI Workspace Architecture Summary
 
-This document summarizes the intended integration between the Eridu monorepo, Open WebUI, LiteLLM, Better Auth, and MCP services.
+This document summarizes the intended integration between the Eridu monorepo, Open WebUI, LiteLLM, Better Auth, and the existing `erify_api` MCP foundation.
 
 ## Purpose
 
@@ -13,7 +13,7 @@ The company AI workspace should become more than a general chatbot. It should pr
 | Better Auth / `eridu_auth` | Company SSO and identity source of truth. |
 | Open WebUI | User-facing AI workspace, assistants, skills, knowledge, tools, groups, and permissions. |
 | LiteLLM | LLM gateway, model aliases, provider abstraction, cost tracking, customer budgets, and rate limits. |
-| MCP services | Controlled tool layer for company data access. Start with read-only tools. |
+| `erify_api` MCP | Existing private operational MCP surface for read-only, studio-scoped lookup tools. |
 | Monorepo | Source of truth for AI policy, assistant definitions, skills, routing templates, and sync scripts. |
 
 ## Identity model
@@ -39,18 +39,27 @@ Each assistant should define its base LiteLLM model alias, required skills, know
 
 ## MCP model
 
-MCP services should start as read-only. Early tools should retrieve operational context instead of mutating production data.
+The first operational MCP surface already lives in `erify_api`:
 
-Suggested first tools:
+- docs: `apps/erify_api/docs/MCP_SERVER.md`
+- entrypoint: `apps/erify_api/src/main.mcp.ts`
+- tool registry: `apps/erify_api/src/mcp/mcp-server.factory.ts`
+- Railway config: `.railway/erify_api_mcp.json`
+- transport: Streamable HTTP `POST /mcp`
+- health checks: `GET /health`, `GET /health/ready`
 
-- `get_current_user_context`
-- `search_company_docs`
-- `get_show_schedule`
-- `get_task_status`
-- `get_creator_info`
-- `get_order_or_fulfillment_status`
+The current tool surface is read-only and studio-scoped:
 
-All MCP tool calls should log user identity, tool name, argument summary, result status, duration, and request ID.
+- `erify_get_show`
+- `erify_get_task`
+- `erify_query_shows`
+- `erify_query_tasks`
+
+The Open WebUI rollout should connect to this private Railway service before introducing a separate MCP app. A future split may still be useful for public partner tools, documentation-only tools, or stronger read/write isolation.
+
+## Audit model
+
+All operational MCP tool calls should log user identity when Open WebUI forwards it, the studio scope, tool name, argument summary, result status, duration, and request ID.
 
 ## Source of truth rule
 
