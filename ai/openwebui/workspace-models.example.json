@@ -14,9 +14,7 @@
         "company-handbook",
         "general-operations-docs"
       ],
-      "mcpTools": [
-        "search_company_docs"
-      ],
+      "mcpTools": [],
       "groups": [
         "staff",
         "operations",
@@ -27,7 +25,7 @@
     },
     {
       "name": "Operations Assistant",
-      "description": "Assistant for ecommerce, fulfillment, and livestream operations.",
+      "description": "Assistant for ecommerce, fulfillment, and livestream operations using the private erify_api MCP surface.",
       "litellmModel": "company-auto-balanced",
       "skills": [
         "thai-english-ops-interpreter",
@@ -37,10 +35,12 @@
         "operations-sops",
         "fulfillment-guides"
       ],
+      "mcpService": "erify_api_mcp",
       "mcpTools": [
-        "get_show_schedule",
-        "get_task_status",
-        "get_creator_info"
+        "erify_get_show",
+        "erify_get_task",
+        "erify_query_shows",
+        "erify_query_tasks"
       ],
       "groups": [
         "operations",
@@ -61,9 +61,7 @@
       "knowledge": [
         "engineering-docs"
       ],
-      "mcpTools": [
-        "search_company_docs"
-      ],
+      "mcpTools": [],
       "groups": [
         "engineering",
         "admin"
