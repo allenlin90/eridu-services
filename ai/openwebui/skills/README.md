@@ -1,43 +1,32 @@
-# Open WebUI Skill Adapters
+# Open WebUI Skill Exports
 
-This directory is for Open WebUI-importable skill adapters, not the primary project skill source of truth.
+This directory is intentionally export-only for now.
 
-## Canonical source of truth
-
-The canonical repo skill system already lives in:
+Do not put canonical agent skills here. Actual agent skills must live in:
 
 ```text
 .agents/skills/
 ```
 
-The existing skills integration guide states the hierarchy:
+## Current canonical AI workspace skills
 
-```text
-1. .agents/skills/        PRIMARY
-2. .claude/memory/*.md    SECONDARY
-3. Codebase examples      VALIDATION
-```
-
-Therefore, Open WebUI skills in this directory should either:
-
-1. wrap an existing `.agents/skills/*/SKILL.md` skill for non-developer workspace use,
-2. summarize several existing repo skills into an operational assistant instruction,
-3. add company/user-facing behavior that is not appropriate for developer-agent skills, or
-4. identify a gap and propose a new `.agents/skills/*` skill before becoming canonical.
+- `.agents/skills/ai-workspace-control-plane/SKILL.md`
+- `.agents/skills/openwebui-assistant-adapter/SKILL.md`
 
 ## Existing related repo skills
 
-Relevant existing skills discovered during this scaffold pass:
+Open WebUI assistants should also reference existing domain skills when relevant:
 
 | Existing skill | Why it matters for Open WebUI |
 |---|---|
-| `.agents/skills/operations-review-surface/SKILL.md` | Operational-day review surfaces, read-only review model, lazy paginated sub-resources, export behavior, and operational-day date rules. |
-| `.agents/skills/show-production-lifecycle/SKILL.md` | Show lifecycle, central operational record, statuses, readiness, cancellation, roles, and cross-skill references. |
-| `.agents/skills/table-view-pattern/SKILL.md` | DataTable, URL state, pagination, filtering, export, and dense table UX conventions. |
+| `.agents/skills/operations-review-surface/SKILL.md` | Operational-day review surfaces and read-only review model rules. |
+| `.agents/skills/show-production-lifecycle/SKILL.md` | Show lifecycle, statuses, readiness, cancellation, roles, and lifecycle boundaries. |
+| `.agents/skills/table-view-pattern/SKILL.md` | Table, pagination, filtering, export, and dense view conventions. |
 | `.agents/skills/engineering-best-practices-enforcer/SKILL.md` | Engineering quality gate for implementation work. |
 | `.agents/skills/agent-instruction-maintenance/SKILL.md` | Maintenance rules for agent instructions and skill updates. |
-| `.agents/skills/write-a-skill/SKILL.md` / `.agents/skills/skill-creator/SKILL.md` | Existing skill authoring guidance. |
 
-## Rule for future updates
+## Export rule
 
-Before adding a new Open WebUI skill here, search `.agents/skills/` first. If a matching skill exists, create an adapter that references it instead of duplicating the canonical behavior.
+If Open WebUI needs an imported skill, generate it from the canonical `.agents/skills/` source or create a thin adapter that clearly links back to the canonical skill.
+
+Do not create standalone Open WebUI instruction files here that diverge from `.agents/skills/`.
