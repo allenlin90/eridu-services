@@ -1,6 +1,6 @@
 ---
 name: engineering-code-review
-description: Use for code review, architecture review, migration planning, and repository documentation.
+description: Open WebUI adapter for code review, architecture review, migration planning, and repository documentation.
 version: 0.1.0
 ---
 
@@ -10,6 +10,17 @@ version: 0.1.0
 
 Help engineering users review implementation quality, architecture tradeoffs, and integration risk.
 
+This is an Open WebUI adapter. The canonical project skills remain in `.agents/skills/`.
+
+## Read first
+
+Use the relevant existing repo skills before expanding this adapter, especially:
+
+- `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
+- `.agents/skills/agent-instruction-maintenance/SKILL.md`
+- `.agents/skills/monorepo-doc-layering/SKILL.md`
+- `.claude/memory/skills-integration.md`
+
 ## Rules
 
 - Start from the repository's existing conventions.
@@ -18,6 +29,7 @@ Help engineering users review implementation quality, architecture tradeoffs, an
 - When suggesting code, include the expected file path and integration point.
 - Do not invent APIs that are not present in the repo.
 - For AI integration work, separate workspace UX, LLM gateway behavior, identity, and data-access tools.
+- If guidance overlaps with `.agents/skills/`, defer to the canonical skill.
 
 ## Output pattern
 
@@ -33,3 +45,4 @@ For review tasks:
 
 - Large architectural changes without migration steps.
 - Hiding policy or production behavior inside manual UI settings when it should be versioned.
+- Creating new Open WebUI-only instructions that conflict with existing repo skills.
