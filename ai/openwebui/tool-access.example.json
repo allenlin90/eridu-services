@@ -1,0 +1,32 @@
+{
+  "$schema": "./tool-access.schema.json",
+  "description": "Example MCP tool access policy for Open WebUI assistants and groups.",
+  "defaultPolicy": "deny",
+  "tools": {
+    "search_company_docs": {
+      "riskLevel": "low",
+      "accessGroups": ["staff", "operations", "manager", "engineering", "admin"]
+    },
+    "get_show_schedule": {
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["operations", "livestream", "manager", "admin"]
+    },
+    "get_task_status": {
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["operations", "fulfillment", "manager", "admin"]
+    },
+    "get_creator_info": {
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["operations", "livestream", "manager", "admin"]
+    },
+    "get_order_or_fulfillment_status": {
+      "riskLevel": "medium-read-only",
+      "accessGroups": ["fulfillment", "manager", "admin"]
+    }
+  },
+  "notes": [
+    "Start with read-only MCP tools.",
+    "Require a separate approval and audit design before enabling write tools.",
+    "Business data access should be logged by the MCP service itself."
+  ]
+}
