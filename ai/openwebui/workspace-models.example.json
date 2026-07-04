@@ -1,0 +1,74 @@
+{
+  "$schema": "./workspace-models.schema.json",
+  "description": "Example Open WebUI Workspace Model definitions. This file is a policy manifest, not an automatic import format yet.",
+  "models": [
+    {
+      "name": "Company Assistant",
+      "description": "Default internal assistant for general company work.",
+      "litellmModel": "company-auto-balanced",
+      "skills": [
+        "company-writing-style",
+        "thai-english-ops-interpreter"
+      ],
+      "knowledge": [
+        "company-handbook",
+        "general-operations-docs"
+      ],
+      "mcpTools": [
+        "search_company_docs"
+      ],
+      "groups": [
+        "staff",
+        "operations",
+        "manager",
+        "admin"
+      ],
+      "riskLevel": "low"
+    },
+    {
+      "name": "Operations Assistant",
+      "description": "Assistant for ecommerce, fulfillment, and livestream operations.",
+      "litellmModel": "company-auto-balanced",
+      "skills": [
+        "thai-english-ops-interpreter",
+        "ecommerce-ops-assistant"
+      ],
+      "knowledge": [
+        "operations-sops",
+        "fulfillment-guides"
+      ],
+      "mcpTools": [
+        "get_show_schedule",
+        "get_task_status",
+        "get_creator_info"
+      ],
+      "groups": [
+        "operations",
+        "fulfillment",
+        "livestream",
+        "manager",
+        "admin"
+      ],
+      "riskLevel": "medium-read-only"
+    },
+    {
+      "name": "Engineering Assistant",
+      "description": "Assistant for code review, architecture discussion, and repo documentation.",
+      "litellmModel": "company-auto-strong",
+      "skills": [
+        "engineering-code-review"
+      ],
+      "knowledge": [
+        "engineering-docs"
+      ],
+      "mcpTools": [
+        "search_company_docs"
+      ],
+      "groups": [
+        "engineering",
+        "admin"
+      ],
+      "riskLevel": "medium-read-only"
+    }
+  ]
+}
