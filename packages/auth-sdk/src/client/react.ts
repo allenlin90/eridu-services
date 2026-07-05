@@ -1,8 +1,14 @@
 import type { BetterAuthClientOptions } from 'better-auth';
 import { jwtClient } from 'better-auth/client/plugins';
-import { createAuthClient as createBetterAuthClient } from 'better-auth/react';
+import { createAuthClient as createBetterAuthClient, type ReactAuthClient } from 'better-auth/react';
 
-export function createAuthClient(options: BetterAuthClientOptions) {
+type WithJwtClient<Option extends BetterAuthClientOptions> = Option & {
+  plugins: [ReturnType<typeof jwtClient>];
+};
+
+export function createAuthClient<Option extends BetterAuthClientOptions>(
+  options: Option,
+): { client: ReactAuthClient<WithJwtClient<Option>>; redirectToLogin: (returnUrl?: string) => void } {
   /**
    * Redirects to the login page with the current URL as the return destination.
    * Handles edge cases like query parameters, hash fragments, and prevents redirect loops.

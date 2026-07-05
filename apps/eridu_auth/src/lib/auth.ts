@@ -1,4 +1,6 @@
 import { apiKey } from '@better-auth/api-key';
+// import { sso } from '@better-auth/sso'; // Disabled for Phase 1
+import { oauthProvider } from '@better-auth/oauth-provider';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import {
@@ -12,7 +14,6 @@ import {
 } from 'better-auth/plugins';
 
 import { db } from '@/db';
-// import { sso } from '@better-auth/sso'; // Disabled for Phase 1
 import env from '@/env';
 import type { ExtendedUser } from '@/lib/types';
 import packageJson from '$/package.json' with { type: 'json' };
@@ -85,6 +86,13 @@ export const auth = betterAuth({
     admin(),
     apiKey(),
     bearer(),
+    // NOTE: better-auth's own docs recommend `disableSettingJwtHeader: true` here once an
+    // oauth-provider plugin is present, plus `disabledPaths: ['/token']` on the root config.
+    // Do NOT add those yet: erify_studios/erify_creators cache the session JWT from the
+    // `set-auth-jwt` response header, and @eridu/auth-sdk (eridu_docs SSR, erify_api) fetches
+    // it from GET /api/auth/token. oauthProvider mounts its own OAuth2 endpoints under
+    // /oauth2/*, so there's no route collision - only add the OAuth-compliance hardening above
+    // once those consumers migrate to the OAuth2 flow.
     jwt({
       jwt: {
         expirationTime: '15m',
@@ -122,6 +130,10 @@ export const auth = betterAuth({
         maximumTeams: 10,
         allowRemovingAllTeams: false,
       },
+    }),
+    oauthProvider({
+      loginPage: '/sign-in',
+      consentPage: '/consent',
     }),
     // SSO plugin disabled for Phase 1 - email/password only
     // Uncomment and configure when ready for OIDC/SAML
