@@ -1,4 +1,6 @@
 import { apiKey } from '@better-auth/api-key';
+// import { sso } from '@better-auth/sso'; // Disabled for Phase 1
+import { oauthProvider } from '@better-auth/oauth-provider'; // Disabled for Phase 1
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import {
@@ -12,7 +14,6 @@ import {
 } from 'better-auth/plugins';
 
 import { db } from '@/db';
-// import { sso } from '@better-auth/sso'; // Disabled for Phase 1
 import env from '@/env';
 import type { ExtendedUser } from '@/lib/types';
 import packageJson from '$/package.json' with { type: 'json' };
@@ -122,6 +123,10 @@ export const auth = betterAuth({
         maximumTeams: 10,
         allowRemovingAllTeams: false,
       },
+    }),
+    oauthProvider({
+      loginPage: '',
+      consentPage: '',
     }),
     // SSO plugin disabled for Phase 1 - email/password only
     // Uncomment and configure when ready for OIDC/SAML

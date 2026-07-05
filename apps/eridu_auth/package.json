@@ -26,12 +26,13 @@
     "studio": "npx drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.5.0",
-    "@better-auth/sso": "^1.5.0",
+    "@better-auth/api-key": "^1.6.23",
+    "@better-auth/oauth-provider": "^1.6.23",
+    "@better-auth/sso": "^1.6.23",
     "@eridu/ui": "workspace:*",
     "@hono/node-server": "^1.19.14",
     "@hookform/resolvers": "^5.2.2",
-    "better-auth": "^1.5.0",
+    "better-auth": "^1.6.23",
     "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
     "deepmerge": "^4.3.1",
