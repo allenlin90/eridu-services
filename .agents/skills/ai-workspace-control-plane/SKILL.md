@@ -89,3 +89,7 @@ When changing MCP policy:
 - [ ] Existing `erify_api` MCP surface is respected.
 - [ ] `.agents/skills/` remains canonical for agent behavior.
 - [ ] Open WebUI adapter docs do not contradict existing repo skills.
+
+## Related Skills
+
+- [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — implementation details for eridu_auth acting as the OAuth2/OIDC identity server that Open WebUI (and future consumers) authenticate against
