@@ -1,6 +1,6 @@
 # Setup Guide
 
-> **TLDR**: Email/password auth is live (Phase 1). Set the required env vars, run `pnpm db:migrate`, seed test users with `pnpm seed`, and use the API endpoints below. SSO providers (Google, LINE) are configured but not yet enabled.
+> **TLDR**: Email/password auth, JWT/JWKS API auth, and OAuth/OIDC provider support are live. Set the required env vars, run `pnpm db:migrate`, seed test users with `pnpm seed`, and use the API endpoints below. Upstream Google/LINE login remains future work.
 
 ## Quick Start
 
@@ -33,9 +33,9 @@ pnpm dev                      # Start on http://localhost:3000
 |----------|-------------|---------|
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment | `development` |
-| `CORS_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:5173,http://localhost:5174` |
+| `ALLOWED_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:3000,http://localhost:5173` |
 
-### Optional (SSO — disabled in Phase 1)
+### Optional Upstream SSO
 
 | Variable | Description | When Needed |
 |----------|-------------|-------------|
@@ -51,7 +51,7 @@ pnpm dev                      # Start on http://localhost:3000
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/eridu_auth
 BETTER_AUTH_SECRET=dev-secret-key-minimum-32-characters-long
 BETTER_AUTH_URL=http://localhost:3000
-CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
 **Production:**
@@ -59,7 +59,8 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 DATABASE_URL=postgresql://user:password@prod-host:5432/eridu_auth
 BETTER_AUTH_SECRET=<generated-secret-64-chars>
 BETTER_AUTH_URL=https://auth.example.com
-CORS_ORIGINS=https://creators.example.com,https://studios.example.com
+ALLOWED_ORIGINS=https://auth.example.com,https://studios.example.com,https://openwebui.example.com
+COOKIE_DOMAIN=.example.com
 ```
 
 > [!CAUTION]
@@ -96,6 +97,7 @@ sequenceDiagram
 | Session management | ✅ |
 | Password reset | ✅ (disabled by default) |
 | Email verification | ✅ (disabled by default) |
+| OAuth/OIDC provider for Open WebUI | ✅ |
 | Google SSO | ⏳ Configured, not enabled |
 | LINE SSO | ⏳ Configured, not enabled |
 
@@ -109,6 +111,8 @@ sequenceDiagram
 | `POST` | `/api/auth/sign-out` | Sign out |
 | `GET` | `/api/auth/jwks` | Get JWKS (for token verification) |
 | `GET` | `/api/auth/user/profile` | Get user profile |
+| `GET` | `/.well-known/openid-configuration` | OIDC discovery for OAuth clients |
+| `GET/POST` | `/api/auth/oauth2/*` | OAuth/OIDC provider endpoints |
 
 ---
 

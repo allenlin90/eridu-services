@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@better-auth/api-key": "^1.5.0",
+    "@better-auth/oauth-provider": "1.5.0",
     "@better-auth/sso": "^1.5.0",
     "@eridu/ui": "workspace:*",
     "@hono/node-server": "^1.19.14",

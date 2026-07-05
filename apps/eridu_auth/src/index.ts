@@ -1,5 +1,9 @@
 import path from 'node:path';
 
+import {
+  oauthProviderAuthServerMetadata,
+  oauthProviderOpenIdConfigMetadata,
+} from '@better-auth/oauth-provider';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { cors } from 'hono/cors';
@@ -10,6 +14,8 @@ import { auth } from '@/lib/auth'; // path to your auth file
 import { createApp } from '@/lib/create-app';
 
 const app = createApp();
+const openIdConfigHandler = oauthProviderOpenIdConfigMetadata(auth);
+const authServerMetadataHandler = oauthProviderAuthServerMetadata(auth);
 
 app.use(
   '*',
@@ -41,6 +47,20 @@ app.use('*', async (c, next) => {
 // Auth API routes - must be registered before static file serving
 app.use('/api/auth/*', (c) => {
   return auth.handler(c.req.raw);
+});
+
+// OAuth/OIDC discovery metadata is exposed from the issuer root for clients
+// that do not know the Better Auth base path ahead of time.
+app.get('/.well-known/openid-configuration', (c) => {
+  return openIdConfigHandler(c.req.raw);
+});
+
+app.get('/.well-known/oauth-authorization-server', (c) => {
+  return authServerMetadataHandler(c.req.raw);
+});
+
+app.get('/.well-known/oauth-authorization-server/api/auth', (c) => {
+  return authServerMetadataHandler(c.req.raw);
 });
 
 // Serve static files from frontend build in production

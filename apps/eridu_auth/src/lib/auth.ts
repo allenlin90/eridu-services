@@ -1,4 +1,5 @@
 import { apiKey } from '@better-auth/api-key';
+import { oauthProvider } from '@better-auth/oauth-provider';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import {
@@ -25,7 +26,9 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
   secret: env.BETTER_AUTH_SECRET,
-  session: {},
+  session: {
+    storeSessionInDatabase: true,
+  },
   trustedOrigins: env.ALLOWED_ORIGINS,
   account: {
     accountLinking: {
@@ -99,6 +102,15 @@ export const auth = betterAuth({
             impersonatedBy: session.impersonatedBy,
           };
         },
+      },
+    }),
+    oauthProvider({
+      loginPage: '/sign-in',
+      consentPage: '/oauth/consent',
+      scopes: ['openid', 'profile', 'email', 'offline_access'],
+      silenceWarnings: {
+        oauthAuthServerConfig: true,
+        openidConfig: true,
       },
     }),
     magicLink({

@@ -43,6 +43,13 @@
       "when": 1741046400000,
       "tag": "0005_drop_apikey_userid",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783217340756,
+      "tag": "0006_oauth_provider_foundation",
+      "breakpoints": true
     }
   ]
 }
