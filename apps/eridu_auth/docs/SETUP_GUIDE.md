@@ -1,6 +1,6 @@
 # Setup Guide
 
-> **TLDR**: Email/password auth is live (Phase 1). Set the required env vars, run `pnpm db:migrate`, seed test users with `pnpm seed`, and use the API endpoints below. SSO providers (Google, LINE) are configured but not yet enabled.
+> **TLDR**: Email/password auth is live (Phase 1). Set the required env vars, run `pnpm db:migrate`, seed test users with `pnpm seed`, and use the API endpoints below. An OAuth/OIDC provider is available for downstream clients such as Open WebUI. SSO providers (Google, LINE) are configured but not yet enabled.
 
 ## Quick Start
 
@@ -33,7 +33,8 @@ pnpm dev                      # Start on http://localhost:3000
 |----------|-------------|---------|
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment | `development` |
-| `CORS_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:5173,http://localhost:5174` |
+| `ALLOWED_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:5173,http://localhost:5174` |
+| `COOKIE_DOMAIN` | Shared parent domain for cross-subdomain session cookies | `.example.com` |
 
 ### Optional (SSO — disabled in Phase 1)
 
@@ -51,7 +52,7 @@ pnpm dev                      # Start on http://localhost:3000
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/eridu_auth
 BETTER_AUTH_SECRET=dev-secret-key-minimum-32-characters-long
 BETTER_AUTH_URL=http://localhost:3000
-CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
 ```
 
 **Production:**
@@ -59,7 +60,8 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 DATABASE_URL=postgresql://user:password@prod-host:5432/eridu_auth
 BETTER_AUTH_SECRET=<generated-secret-64-chars>
 BETTER_AUTH_URL=https://auth.example.com
-CORS_ORIGINS=https://creators.example.com,https://studios.example.com
+ALLOWED_ORIGINS=https://creators.example.com,https://studios.example.com,https://openwebui.example.com
+COOKIE_DOMAIN=.example.com
 ```
 
 > [!CAUTION]
@@ -96,6 +98,7 @@ sequenceDiagram
 | Session management | ✅ |
 | Password reset | ✅ (disabled by default) |
 | Email verification | ✅ (disabled by default) |
+| OAuth/OIDC provider (Open WebUI and other downstream clients) | ✅ |
 | Google SSO | ⏳ Configured, not enabled |
 | LINE SSO | ⏳ Configured, not enabled |
 
@@ -109,8 +112,38 @@ sequenceDiagram
 | `POST` | `/api/auth/sign-out` | Sign out |
 | `GET` | `/api/auth/jwks` | Get JWKS (for token verification) |
 | `GET` | `/api/auth/user/profile` | Get user profile |
+| `GET` | `/api/auth/.well-known/openid-configuration` | OIDC discovery metadata |
+| `GET` | `/api/auth/.well-known/oauth-authorization-server` | OAuth 2.0 authorization server metadata (RFC 8414) |
+| `GET/POST` | `/api/auth/oauth2/*` | OAuth/OIDC provider endpoints (`authorize`, `token`, `userinfo`, `consent`, client management) |
 
 ---
+
+## OAuth/OIDC Provider (Open WebUI and other downstream clients)
+
+`eridu_auth` can act as the OIDC identity provider for other services in the same deployment (e.g. Open WebUI), instead of those services maintaining their own user/password system.
+
+### Configuring a client (e.g. Open WebUI)
+
+Open WebUI's generic OIDC integration takes a literal discovery document URL — it does not need the document hosted at the domain root — so no extra reverse-proxy routing is required:
+
+```env
+OAUTH_CLIENT_ID=<created-below>
+OAUTH_CLIENT_SECRET=<created-below>
+OPENID_PROVIDER_URL=https://auth.example.com/api/auth/.well-known/openid-configuration
+OPENID_REDIRECT_URI=https://openwebui.example.com/oauth/oidc/callback
+OAUTH_SCOPES=openid email profile
+ENABLE_OAUTH_SIGNUP=true
+```
+
+Add the consumer's public origin (e.g. `https://openwebui.example.com`) to `ALLOWED_ORIGINS`, and keep `COOKIE_DOMAIN` set to the shared parent domain.
+
+### Creating an OAuth client record
+
+There is no admin UI for this yet. Create the client record as an authenticated admin via the `oauth2.createClient` action (`@better-auth/oauth-provider/client`'s `oauthProviderClient()` plugin), or call `POST /api/auth/oauth2/create-client` directly, with the consumer's `redirect_uris` (e.g. `https://openwebui.example.com/oauth/oidc/callback`). Store the returned `client_id`/`client_secret` in the consumer's environment (e.g. Railway variables), not in this repo.
+
+### Consent
+
+Users approve or deny the requested scopes at the `/consent` page (`apps/eridu_auth/src/frontend/routes/consent.tsx`) before an authorization code is issued.
 
 ## Seeding Test Users
 

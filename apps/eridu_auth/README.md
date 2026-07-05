@@ -1,6 +1,6 @@
 # eridu_auth
 
-> **TLDR**: SSO authentication service built on [Better Auth](https://better-auth.com/) with PostgreSQL. Provides email/password login, JWT issuance (EdDSA/Ed25519), and a JWKS endpoint. SSO providers (Google, LINE) are configured but not yet enabled. See [docs/](./docs/) for detailed guides.
+> **TLDR**: SSO authentication service built on [Better Auth](https://better-auth.com/) with PostgreSQL. Provides email/password login, JWT issuance (EdDSA/Ed25519), a JWKS endpoint, and an OAuth/OIDC provider for downstream clients such as Open WebUI. SSO providers (Google, LINE) are configured but not yet enabled. See [docs/](./docs/) for detailed guides.
 
 **Current Status**: Phase 1 ✅ - Email/password authentication with JWT tokens
 
@@ -71,6 +71,7 @@ curl -X GET http://localhost:3000/api/auth/session \
 - ✅ **Organization Management**: Team and organization support
 - ✅ **API Key Management**: Service-to-service authentication
 - ✅ **User Portal**: Central hub for session management and logout
+- ✅ **OAuth/OIDC Provider**: Downstream client login foundation (schema, plugin, consent UI) for clients such as Open WebUI; OAuth client records are created per-consumer as a deploy step
 
 **Planned**:
 - ⏳ **Google OAuth 2.0**: (Phase 2) Google authentication with profile and email access
@@ -106,6 +107,9 @@ The portal serves as a central hub for authenticated users and will be expanded 
 | `/api/auth/send-verification` | POST   | Resend verification email           |
 | `/api/auth/verify-email`      | POST   | Verify email with token             |
 | `/api/auth/reference`         | GET    | Interactive API docs                |
+| `/api/auth/.well-known/openid-configuration` | GET | OIDC discovery metadata for OAuth clients |
+| `/api/auth/.well-known/oauth-authorization-server` | GET | OAuth 2.0 authorization server metadata (RFC 8414) |
+| `/api/auth/oauth2/*`          | GET/POST | OAuth/OIDC provider endpoints (authorize, token, userinfo, consent, client management) |
 
 ## Environment Variables
 
