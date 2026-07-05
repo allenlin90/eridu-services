@@ -66,3 +66,4 @@ Extend `definePayload` in eridu_auth → JWT carries roles → `extractUser()` m
 
 - [erify-authorization](../erify-authorization/SKILL.md) — Guard/role patterns (NestJS)
 - [frontend-api-layer](../frontend-api-layer/SKILL.md) — Token lifecycle (SPA)
+- [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — eridu_auth's separate OAuth2/OIDC provider role (for third-party clients like Open WebUI); this JWKS/JWT-cookie bridge must keep working alongside it

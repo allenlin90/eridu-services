@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { Button } from '@eridu/ui';
 
+import { AdminOAuthClientManagement } from './admin-oauth-client-management';
 import { AdminUserManagement } from './admin-user-management';
 
 import { authClient } from '@/frontend/features/auth/api/auth-client';
@@ -175,7 +176,10 @@ export function Dashboard() {
 
         {/* Admin Tools Section - Only visible to admins */}
         {hasRole(user as ExtendedUser, 'admin') && (
-          <AdminUserManagement currentUser={user as ExtendedUser} />
+          <>
+            <AdminUserManagement currentUser={user as ExtendedUser} />
+            <AdminOAuthClientManagement currentUser={user as ExtendedUser} />
+          </>
         )}
 
         {/* Actions */}
