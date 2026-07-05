@@ -133,7 +133,6 @@ export const auth = betterAuth({
     }),
     oauthProvider({
       loginPage: '/sign-in',
-      // TODO: build the consent UI (Phase 2); route is reserved so the config is valid now.
       consentPage: '/consent',
     }),
     // SSO plugin disabled for Phase 1 - email/password only
