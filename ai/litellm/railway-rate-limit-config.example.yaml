@@ -1,0 +1,71 @@
+# Store this whole file as Railway variable: LITELLM_CONFIG_YAML
+# Write it to disk before LiteLLM starts, then run: litellm --config /app/config.yaml
+
+model_list:
+  - model_name: company-auto-balanced
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 300
+      tpm: 200000
+      weight: 2
+    model_info:
+      provider: gemini
+      purpose: balanced-default
+
+  - model_name: company-auto-balanced
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+      rpm: 200
+      tpm: 120000
+      weight: 1
+    model_info:
+      provider: openai
+      purpose: balanced-default
+
+  - model_name: company-auto-cheap
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 300
+      tpm: 200000
+      weight: 1
+    model_info:
+      provider: gemini
+      purpose: low-cost-default
+
+  - model_name: company-auto-strong
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-latest
+      api_key: os.environ/ANTHROPIC_API_KEY
+      rpm: 60
+      tpm: 80000
+      weight: 1
+    model_info:
+      provider: anthropic
+      purpose: stronger-reasoning
+
+router_settings:
+  routing_strategy: simple-shuffle
+  enable_pre_call_check: true
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+  redis_password: os.environ/REDIS_PASSWORD
+  enable_weighted_failover: true
+
+litellm_settings:
+  max_end_user_budget_id: openwebui-default-user
+  num_retries: 2
+  request_timeout: 60
+  set_verbose: false
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+
+  # Optional only if Open WebUI sends a non-standard user header.
+  # Standard x-litellm-customer-id, x-litellm-end-user-id, and request body user need no mapping.
+  # user_header_mappings:
+  #   - header_name: x-openwebui-user-email
+  #     litellm_user_role: customer
