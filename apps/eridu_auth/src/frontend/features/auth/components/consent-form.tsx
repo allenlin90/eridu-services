@@ -112,7 +112,7 @@ export function ConsentForm() {
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="min-w-0 flex-1"
               disabled={submitting}
               onClick={() => handleDecision(false)}
             >
@@ -120,7 +120,7 @@ export function ConsentForm() {
             </Button>
             <Button
               type="button"
-              className="w-full"
+              className="min-w-0 flex-1"
               disabled={submitting}
               onClick={() => handleDecision(true)}
             >
