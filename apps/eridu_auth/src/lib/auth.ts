@@ -134,6 +134,11 @@ export const auth = betterAuth({
     oauthProvider({
       loginPage: '/sign-in',
       consentPage: '/consent',
+      // OAuth clients (Open WebUI, etc.) are shared platform infrastructure, not owned by
+      // whichever admin happened to create them, so every client shares one reference id
+      // and any admin can list/update/rotate/delete any client.
+      clientReference: () => 'platform',
+      clientPrivileges: ({ user }) => (user as ExtendedUser | undefined)?.role === 'admin',
     }),
     // SSO plugin disabled for Phase 1 - email/password only
     // Uncomment and configure when ready for OIDC/SAML
