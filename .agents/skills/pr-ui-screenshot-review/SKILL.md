@@ -1,11 +1,15 @@
 ---
 name: pr-ui-screenshot-review
-description: Capture UI-state screenshots with Playwright as visual review evidence for a PR, and embed them in the PR description without committing them to the repo. Use when a PR touches UI and the reviewer needs to see it working — pairs with /pr-ready as an evidence step, not a replacement for it.
+description: Capture UI-state screenshots with Playwright as visual review evidence for a PR, and embed them in the PR description without committing them to the repo. Use only when the PR's diff touches rendered frontend code — erify_studios, erify_creators, an app's own frontend (e.g. apps/eridu_auth/src/frontend), or packages/ui components. Do not use for backend-only (erify_api, eridu_auth's server-side src/lib and src/db), schema/migration-only, or docs/skill/workflow-only PRs — there is no rendered UI to capture. Pairs with /pr-ready as an evidence step, not a replacement for it.
 ---
 
 # PR UI Screenshot Review
 
 Screenshots are PR-review evidence, not repo content. They must never land in git history — only in the PR description (or a PR comment).
+
+## Scope Check (Do This First)
+
+Run `git diff --name-only origin/master...HEAD` (or the PR's actual base). Only proceed if the diff includes paths under `apps/erify_studios/src/`, `apps/erify_creators/src/`, `apps/*/src/frontend/`, or `packages/ui/`. If the diff is backend-only (`apps/erify_api/src/`, an app's `src/lib`/`src/db`), schema/migration-only, or docs/skill/workflow-only, **do not** run this skill — there is nothing rendered to screenshot, and offering to "capture UI evidence" for a non-UI PR is noise, not review value.
 
 ## Workflow
 
