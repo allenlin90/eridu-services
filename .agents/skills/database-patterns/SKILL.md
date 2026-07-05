@@ -99,6 +99,8 @@ When in doubt, default to Audit. Migrating a critical signal *out* of `metadata`
 
 New migrations from official tooling only (`prisma migrate dev`, `drizzle generate`). Custom SQL in generated files with `-- CUSTOM SQL START/END` comments. Never rewrite deployed migrations.
 
+**Never hand-set a Drizzle migration's `meta/_journal.json` "when" timestamp.** Drizzle's Postgres migrator doesn't track per-migration applied state by hash — it compares each journal entry's `"when"` against only the single most-recent `__drizzle_migrations.created_at` (which is itself just the previous migration's `"when"`, not real apply time). A hand-authored `"when"` that's older than an already-applied later migration gets **silently skipped** on any database that's past that point — no error, nothing logged — and a subsequent migration assuming the skipped one's schema change exists then fails with a plain "column does not exist" error. Fresh databases never show this (an empty migrations table applies every entry unconditionally on the first run), so it only surfaces against an already-migrated shared environment. Always let `drizzle-kit generate` stamp the timestamp.
+
 **Name migrations by purpose, not by plan.** The `--name` describes the schema change in domain terms (`client_mechanic_foundation`, `add_performance_metrics_to_show_platform`). Do NOT bake PR numbers, roadmap rows, ticket IDs, phase labels, or implementation/plan specifics into the name (`pr_20_1_*`, `phase4_*`, `JIRA_123_*`) — that noise outlives the plan and means nothing once merged. The folder name is permanent and shared; keep it a stable, purpose-only description.
 
 > 📖 For data-only backfills: choose migration SQL OR operational script, not both.
