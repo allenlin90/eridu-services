@@ -58,6 +58,13 @@ Use the app-level API client refresh flow (`apps/erify_studios/src/lib/api/clien
 
 Use `apiRequest` / `apiClient` from the app API layer. Do not create feature-local Axios clients.
 
+## eridu_auth
+
+`eridu_auth` (Hono + better-auth, not NestJS) plays two distinct auth roles — don't conflate them:
+
+- **IDP for SSR/JWKS consumers** (`eridu_docs`, and the JWT bridge `erify_studios`/`erify_creators`/`erify_api` depend on): see [ssr-auth-integration](../ssr-auth-integration/SKILL.md).
+- **OAuth2/OIDC provider for third-party clients** (Open WebUI, etc.): see [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — plugin config, consent page, admin client-management UI, and why the two roles must keep coexisting rather than one being "migrated" into the other.
+
 ## Common Mistakes
 
 1. ❌ Trusting user ID from request body → ✅ Use `@CurrentUser()` from validated token
@@ -85,3 +92,5 @@ Use `apiRequest` / `apiClient` from the app API layer. Do not create feature-loc
 - [erify-authorization](../erify-authorization/SKILL.md) — erify_api-specific guards and roles
 - [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Protected endpoints
 - [Data Validation](../data-validation/SKILL.md) — Input validation
+- [ssr-auth-integration](../ssr-auth-integration/SKILL.md) — eridu_auth as IDP for SSR/JWKS consumers
+- [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — eridu_auth as OAuth2/OIDC provider for third-party clients
