@@ -230,6 +230,7 @@ Only once §1–§3 are done is the verdict **ready to merge**.
 - [ ] Summary matches what was actually delivered — no references to deleted files or stale paths.
 - [ ] Docs section lists canonical paths (not `design/` paths for promoted docs).
 - [ ] Validation section reflects current pass/fail state for all affected workspaces.
+- [ ] If the PR touches UI (Frontend gate or eridu_auth frontend), consider attaching before/after or state-by-state screenshots per `.agents/skills/pr-ui-screenshot-review/SKILL.md` — evidence only, never committed to the repo.
 
 ---
 
