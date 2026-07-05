@@ -139,7 +139,9 @@ Add the consumer's public origin (e.g. `https://openwebui.example.com`) to `ALLO
 
 ### Creating an OAuth client record
 
-There is no admin UI for this yet. Create the client record as an authenticated admin via the `oauth2.createClient` action (`@better-auth/oauth-provider/client`'s `oauthProviderClient()` plugin), or call `POST /api/auth/oauth2/create-client` directly, with the consumer's `redirect_uris` (e.g. `https://openwebui.example.com/oauth/oidc/callback`). Store the returned `client_id`/`client_secret` in the consumer's environment (e.g. Railway variables), not in this repo.
+Sign in as an admin and use the "OAuth Clients" section on the portal dashboard (`/`) to create, list, edit, rotate the secret for, or delete clients. Store the returned `client_id`/`client_secret` in the consumer's environment (e.g. Railway variables), not in this repo.
+
+Client management is intentionally internal-admin-only — there is no self-service/dynamic client registration (`allowDynamicClientRegistration` is left disabled). Revisit only if an external party actually needs to self-register a client.
 
 ### Consent
 

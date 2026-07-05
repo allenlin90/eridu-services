@@ -139,6 +139,11 @@ export const auth = betterAuth({
       // and any admin can list/update/rotate/delete any client.
       clientReference: () => 'platform',
       clientPrivileges: ({ user }) => (user as ExtendedUser | undefined)?.role === 'admin',
+      // Intentionally NOT setting allowDynamicClientRegistration /
+      // allowUnauthenticatedClientRegistration. Clients are internal infrastructure
+      // provisioned only by admins through the portal's OAuth Clients UI, not a
+      // self-service surface for external parties. Revisit only if an external party
+      // actually needs to self-register a client.
     }),
     // SSO plugin disabled for Phase 1 - email/password only
     // Uncomment and configure when ready for OIDC/SAML
