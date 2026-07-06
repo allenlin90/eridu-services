@@ -8,6 +8,7 @@ import { db } from '@/db';
 import env from '@/env';
 import { auth } from '@/lib/auth'; // path to your auth file
 import { createApp } from '@/lib/create-app';
+import { oauthClientsRoutes } from '@/routes/oauth-clients';
 
 const app = createApp();
 
@@ -42,6 +43,8 @@ app.use('*', async (c, next) => {
 app.use('/api/auth/*', (c) => {
   return auth.handler(c.req.raw);
 });
+
+app.route('/api/admin/oauth-clients', oauthClientsRoutes);
 
 // Serve static files from frontend build in production
 if (env.NODE_ENV === 'production') {

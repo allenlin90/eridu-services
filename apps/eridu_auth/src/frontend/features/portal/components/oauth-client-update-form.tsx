@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import {
   Button,
+  Checkbox,
   DialogFooter,
   Form,
   FormControl,
@@ -18,11 +19,13 @@ import {
 } from '@eridu/ui';
 
 import { authClient } from '@/frontend/features/auth/api/auth-client';
+import env from '@/frontend/utils/env';
 
 const updateClientSchema = z.object({
   clientName: z.string().min(1, 'Name is required'),
   redirectUris: z.string().min(1, 'At least one redirect URI is required'),
   scope: z.string().min(1, 'At least one scope is required'),
+  requirePkce: z.boolean(),
 });
 
 type UpdateClientFormValues = z.infer<typeof updateClientSchema>;
@@ -40,6 +43,7 @@ export function OAuthClientUpdateForm({ client, onCancel, onSuccess }: OAuthClie
       clientName: client.client_name || '',
       redirectUris: client.redirect_uris.join('\n'),
       scope: client.scope || '',
+      requirePkce: client.require_pkce ?? true,
     },
   });
 
@@ -62,6 +66,25 @@ export function OAuthClientUpdateForm({ client, onCancel, onSuccess }: OAuthClie
       if (updateError) {
         form.setError('root', { message: updateError.message || 'Failed to update client' });
         return;
+      }
+
+      // require_pkce isn't supported by better-auth's oauth2.updateClient (see
+      // eridu-auth-oauth-provider skill); it's updated through this app's own admin route.
+      if (values.requirePkce !== (client.require_pkce ?? true)) {
+        const pkceRes = await fetch(
+          `${env.VITE_BETTER_AUTH_URL || window.location.origin}/api/admin/oauth-clients/${client.client_id}/require-pkce`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ requirePkce: values.requirePkce }),
+          },
+        );
+
+        if (!pkceRes.ok) {
+          form.setError('root', { message: 'Failed to update PKCE requirement' });
+          return;
+        }
       }
 
       onSuccess();
@@ -122,6 +145,25 @@ export function OAuthClientUpdateForm({ client, onCancel, onSuccess }: OAuthClie
               </FormControl>
               <FormDescription>Space-separated.</FormDescription>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="requirePkce"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+              <FormControl>
+                <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Require PKCE</FormLabel>
+                <FormDescription>
+                  Disable only if the client's OAuth library does not support PKCE (e.g. some generic OIDC
+                  integrations, such as Open WebUI). Enabled by default per OAuth 2.1 best practice.
+                </FormDescription>
+              </div>
             </FormItem>
           )}
         />
