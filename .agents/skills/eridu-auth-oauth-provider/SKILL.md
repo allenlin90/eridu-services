@@ -13,6 +13,7 @@ description: Patterns for eridu_auth acting as an OAuth2/OIDC provider (identity
 | Shared frontend auth client | `apps/eridu_auth/src/frontend/features/auth/api/auth-client.ts` (`oauthProviderClient()`) |
 | Consent route/page/form | `apps/eridu_auth/src/frontend/routes/consent.tsx`, `pages/consent-page.tsx`, `features/auth/components/consent-form.tsx` |
 | Admin client-management UI | `apps/eridu_auth/src/frontend/features/portal/components/admin-oauth-client-*.tsx`, `oauth-client-*-dialog.tsx`, `oauth-client-update-form.tsx`, `hooks/use-oauth-clients.ts` |
+| Custom admin server route (PKCE toggle) | `apps/eridu_auth/src/routes/oauth-clients.ts`, mounted at `/api/admin/oauth-clients` in `src/index.ts` |
 | Setup docs | `apps/eridu_auth/docs/SETUP_GUIDE.md` — "OAuth/OIDC Provider" section |
 
 ## Two Independent Auth Mechanisms Coexist — Don't Conflate Them
@@ -66,6 +67,20 @@ Mirrors `admin-user-management.tsx` (tab shell: list / create) — reuse that st
 
 Give the consumer the literal discovery URL: `OPENID_PROVIDER_URL=https://<host>/api/auth/.well-known/openid-configuration`. Open WebUI (and most generic-OIDC client configs) take this as a literal URL, not an issuer root to derive `.well-known` from. **Do not** add extra root-level `/.well-known/*` routing just to satisfy better-auth's own startup warning about `basePath !== '/'` — that warning targets spec-purist auto-discovering clients (RFC 8414 well-known insertion), not this consumer. Silence it with `oauthProvider({ silenceWarnings: { oauthAuthServerConfig: true, openidConfig: true } })` only if the log noise matters, or ignore it.
 
+A client's registered `scope` (set at creation, default `openid profile email offline_access` in the Create form) is the actual allow-list checked against what the consumer requests — **not** the provider's global `scopes` array in `auth.ts`. The consumer's requested scope string must match the client's registered scope exactly, including spelling: `offline_access`, not `offline`. A mismatch is rejected with `invalid_scope`, which some consumers (Open WebUI included) surface to the end user as a generic, misleading "email or password incorrect" error instead of the real OAuth error — check the consumer's server logs for the actual `error`/`error_description` query params on its callback redirect before assuming a credentials problem.
+
+For Open WebUI specifically, working values are `OAUTH_SCOPES="openid email profile"` (no `offline_access` — see PKCE note below) and, if the same email may already exist as a local Open WebUI account, `OAUTH_MERGE_ACCOUNTS_BY_EMAIL=true`. Open WebUI's docs call merge-by-email unsafe in general (an IdP that doesn't verify emails could allow account takeover), but it's safe here because eridu_auth's `emailAndPassword.requireEmailVerification: true` guarantees a verified email before any session — including the OAuth flow — is issued.
+
+## PKCE Is Required By Default — No Endpoint To Change It Post-Creation
+
+better-auth's oauth-provider defaults every client to `require_pkce: true`, and separately **always** requires PKCE when a request includes the `offline_access` scope, regardless of that setting. Neither the plain client SDK (`authClient.oauth2.createClient` / `updateClient`) nor even the `SERVER_ONLY` admin endpoints (`/admin/oauth2/create-client`, `/admin/oauth2/update-client`) expose `require_pkce` for anything except client *creation* — there is no supported way to change it on an existing client through better-auth itself.
+
+Consumers whose OAuth library doesn't implement PKCE (confirmed for Open WebUI's built-in authlib-based OIDC client, as of the version tested) will fail every login with `invalid_request: pkce is required for this client` until this is turned off for that specific client.
+
+`apps/eridu_auth/src/routes/oauth-clients.ts` fills this gap: a small admin-only Hono route (`PATCH /api/admin/oauth-clients/:clientId/require-pkce`, mounted in `src/index.ts`) that updates the `oauthClient.requirePKCE` column directly through the app's own Drizzle connection, gated by `hasRole(user, 'admin')`. It's wired to a "Require PKCE" checkbox in `oauth-client-update-form.tsx`. This is the only way to flip this flag after a client already exists — if better-auth ever adds a real update endpoint for it, prefer that over the custom route.
+
+Don't request `offline_access` for a consumer that can't do PKCE — there's no way to satisfy the offline_access-forces-PKCE rule short of implementing PKCE in the consumer, so just omit the scope (see Open WebUI scopes above).
+
 ## Verifying Non-Obvious better-auth Client Typings
 
 better-auth's docs for a given version are frequently incomplete or stale for exact client method names and payload shapes. Don't guess — probe the compiled types instead of trusting docs:
@@ -84,6 +99,8 @@ Run `tsc --noEmit --noErrorTruncation -p tsconfig.app.json` and read the resulti
 - [ ] Give the consumer its `client_id`/`client_secret` via its own environment (e.g. Railway variables) — never commit them to this repo
 - [ ] Add the consumer's public origin to `ALLOWED_ORIGINS`; confirm `COOKIE_DOMAIN` covers the shared parent domain
 - [ ] Point the consumer's OIDC config at `/api/auth/.well-known/openid-configuration`, not a bare issuer root
+- [ ] Set the consumer's requested scopes to exactly match the client's registered scope string (`offline_access`, not `offline`)
+- [ ] Confirm whether the consumer's OAuth library implements PKCE; if not, uncheck "Require PKCE" for that client (Portal → OAuth Clients → Edit) and don't request `offline_access`
 - [ ] Do not touch `disabledPaths`/`disableSettingJwtHeader` on the `jwt()` plugin for this
 
 ## Related Skills

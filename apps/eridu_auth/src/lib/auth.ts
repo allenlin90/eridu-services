@@ -144,6 +144,7 @@ export const auth = betterAuth({
       // provisioned only by admins through the portal's OAuth Clients UI, not a
       // self-service surface for external parties. Revisit only if an external party
       // actually needs to self-register a client.
+      scopes: ['openid', 'profile', 'email', 'offline_access', 'offline'],
     }),
     // SSO plugin disabled for Phase 1 - email/password only
     // Uncomment and configure when ready for OIDC/SAML

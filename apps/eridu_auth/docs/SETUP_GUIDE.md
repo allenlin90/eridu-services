@@ -137,11 +137,17 @@ ENABLE_OAUTH_SIGNUP=true
 
 Add the consumer's public origin (e.g. `https://openwebui.example.com`) to `ALLOWED_ORIGINS`, and keep `COOKIE_DOMAIN` set to the shared parent domain.
 
+If the consumer already has local accounts (e.g. an existing Open WebUI admin created before SSO was set up) with the same email as their eridu_auth account, also set `OAUTH_MERGE_ACCOUNTS_BY_EMAIL=true` on the consumer so SSO login merges into the existing account instead of erroring or creating a duplicate. This is safe here because `emailAndPassword.requireEmailVerification: true` guarantees eridu_auth only issues sessions for verified emails — the exact condition Open WebUI's docs require before enabling merge-by-email.
+
+Requested scopes must match the client's registered scope string exactly (`offline_access`, not `offline`) — a mismatch fails with `invalid_scope`, which some consumers (Open WebUI included) surface to end users as a generic "email or password incorrect" error. Check the consumer's own logs for the real `error`/`error_description` on its OAuth callback before assuming a credentials problem.
+
 ### Creating an OAuth client record
 
 Sign in as an admin and use the "OAuth Clients" section on the portal dashboard (`/`) to create, list, edit, rotate the secret for, or delete clients. Store the returned `client_id`/`client_secret` in the consumer's environment (e.g. Railway variables), not in this repo.
 
 Client management is intentionally internal-admin-only — there is no self-service/dynamic client registration (`allowDynamicClientRegistration` is left disabled). Revisit only if an external party actually needs to self-register a client.
+
+Every client requires PKCE by default, and better-auth also forces PKCE whenever `offline_access` is requested, with no exceptions. If the consumer's OAuth library doesn't implement PKCE (Open WebUI's built-in OIDC client does not, as of the version tested), uncheck "Require PKCE" on the client via Edit, and don't request `offline_access` for that consumer. better-auth exposes no endpoint to change `require_pkce` after a client is created — the Edit form's toggle calls a custom admin route (`apps/eridu_auth/src/routes/oauth-clients.ts`) that updates it directly.
 
 ### Consent
 
