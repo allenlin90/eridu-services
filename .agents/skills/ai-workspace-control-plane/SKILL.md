@@ -80,6 +80,7 @@ When changing MCP policy:
 3. Keep private Railway MCP private-only unless a public access-control plan is implemented.
 4. Preserve studio scoping and UID-shaped responses.
 5. Log business-data access in the MCP service, not only in Open WebUI.
+6. To actually register the MCP server as an Open WebUI tool-server connection and wire group access, use [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) and [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — this skill governs the policy, those cover the API mechanics.
 
 ## Verification checklist
 
@@ -93,3 +94,6 @@ When changing MCP policy:
 ## Related Skills
 
 - [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — implementation details for eridu_auth acting as the OAuth2/OIDC identity server that Open WebUI (and future consumers) authenticate against
+- [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — endpoint reference and call mechanics for scripting Open WebUI configuration changes that this skill governs
+- [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — groups/permissions/access-grant mechanics
+- [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — MCP/tool-server registration mechanics

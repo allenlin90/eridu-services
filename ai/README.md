@@ -23,6 +23,9 @@ Use these actual agent skills before changing AI workspace files:
 
 - `.agents/skills/ai-workspace-control-plane/SKILL.md`
 - `.agents/skills/openwebui-assistant-adapter/SKILL.md`
+- `.agents/skills/openwebui-rest-api/SKILL.md`
+- `.agents/skills/openwebui-groups-permissions/SKILL.md`
+- `.agents/skills/openwebui-mcp-tool-integration/SKILL.md`
 
 ## Component map
 
@@ -53,7 +56,15 @@ Use these actual agent skills before changing AI workspace files:
 .agents/skills/
 ├─ ai-workspace-control-plane/
 │  └─ SKILL.md
-└─ openwebui-assistant-adapter/
+├─ openwebui-assistant-adapter/
+│  └─ SKILL.md
+├─ openwebui-rest-api/
+│  ├─ SKILL.md
+│  └─ references/
+│     └─ endpoints.md
+├─ openwebui-groups-permissions/
+│  └─ SKILL.md
+└─ openwebui-mcp-tool-integration/
    └─ SKILL.md
 
 ai/

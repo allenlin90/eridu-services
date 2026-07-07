@@ -66,3 +66,9 @@ Engineering assistants:
 - [ ] Tool access is minimum necessary.
 - [ ] Operational tools are read-only unless separately approved.
 - [ ] Model alias is stable and provider-agnostic.
+
+## Related Skills
+
+- [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — call mechanics and endpoint reference for applying a manifest via the Open WebUI API instead of the admin UI
+- [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — implements a manifest's "allowed groups" field
+- [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — implements a manifest's "MCP tools" field
