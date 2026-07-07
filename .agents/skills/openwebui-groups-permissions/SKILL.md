@@ -59,16 +59,27 @@ Open WebUI stores per-resource sharing as normalized grants, not as a field on t
   models/knowledge/tools CRUD paths themselves — this skill only covers the access-control layer on
   top of them.
 
+**Don't confuse workspace Tools with Tool Server connections.** `POST /api/v1/tools/id/{id}/access/update`
+grants a single custom-code Tool per group/user — genuinely per-tool. An MCP or OpenAPI **Tool
+Server connection** (`/api/v1/configs/tool_servers`) is gated as one unit instead: a group grant
+covers every function that connection exposes, not individual discovered functions. See
+[openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) for how to get
+per-group tool subsets out of an MCP connection anyway (multiple filtered connections, not per-tool grants).
+
 ## Mapping repo policy to API calls
 
 `ai/mcp/README.md` already defines the target group→tool mapping (`operations`, `fulfillment`,
 `livestream`, `manager`, `admin`, `staff`) for the erify_api MCP tools. To implement that policy:
 
 1. Create any missing groups first (group workflow step 1).
-2. Register the MCP tool server before granting access to it — tools can't be access-granted before
-   the server exists (see `openwebui-mcp-tool-integration`).
-3. Grant each group read access to the specific tool IDs it's allowed, per the table in
-   `ai/mcp/README.md` / `ai/openwebui/tool-access.example.json`.
+2. Register the MCP tool server connection(s) before granting access to them — a group's grant
+   targets a whole tool-server *connection* (`server:mcp:<id>`), not an individual MCP-discovered
+   tool. Since the policy table gives disjoint tool subsets to different groups, this means
+   registering one filtered connection per subset (`function_name_filter_list`), not one connection
+   per MCP server — see [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md)
+   for the connection-splitting workflow. Connections can't be access-granted before they exist.
+3. Grant each group access to the connection(s) whose filtered tool subset matches what it's allowed,
+   per the table in `ai/mcp/README.md` / `ai/openwebui/tool-access.example.json`.
 4. Leave `staff` with no grants (default-deny) rather than an explicit empty grant.
 
 ## Quality gate

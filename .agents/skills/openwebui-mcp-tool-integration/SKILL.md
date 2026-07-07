@@ -41,11 +41,15 @@ Connection object shape:
   "path": "openapi.json",
   "auth_type": "none",
   "key": "",
-  "config": { "enable": true },
+  "config": {
+    "enable": true,
+    "function_name_filter_list": "erify_get_show,erify_query_shows",
+    "access_control": {}
+  },
   "info": {
-    "id": "erify_api_mcp",
-    "name": "erify_api MCP",
-    "description": "Studio-scoped read-only operational tools."
+    "id": "erify_api_mcp_livestream",
+    "name": "erify_api MCP (livestream)",
+    "description": "Studio-scoped read-only show tools."
   }
 }
 ```
@@ -55,24 +59,48 @@ Connection object shape:
 - `auth_type` — `none` for the current private-Railway-network `erify_api` MCP (no caller auth yet,
   per `MCP_SERVER.md`); revisit once that foundation adds authentication.
 - `info.id` becomes the server ID referenced in chat completions as `tool_ids: ["server:mcp:<info.id>"]`.
+- `config.function_name_filter_list` — comma-separated allow-list restricting which functions from
+  this connection are exposed. This is the only way to narrow an MCP connection's tool surface.
+- `config.access_control` — access grants for this **connection as a whole**. There is no per-function
+  grant for MCP-discovered tools: granting a group access to a connection exposes every function that
+  connection's `function_name_filter_list` allows through, not a subset chosen per group.
+
+### Access granularity: connection-level, not per-tool
+
+Open WebUI access-controls a native MCP connection as one unit (`server:mcp:<info.id>`). It does
+**not** support granting individual discovered MCP functions to different groups within a single
+connection. If the target policy needs disjoint tool subsets per group — as `ai/mcp/README.md`
+does (`fulfillment` gets only `erify_get_task`/`erify_query_tasks`; `livestream` gets only
+`erify_get_show`/`erify_query_shows`) — register **multiple connections against the same MCP URL**,
+each with a `function_name_filter_list` scoped to one subset, and grant each connection to the
+group(s) that need exactly that subset. Do not try to implement disjoint per-group tool access with
+a single connection and per-tool grants; that endpoint doesn't exist for MCP tool servers.
 
 ## Workflow: wiring in the erify_api MCP
 
-1. `POST /api/v1/configs/tool_servers/verify` with the connection object above to confirm Open WebUI
-   can reach `http://erify-api-mcp.railway.internal:<PORT>/mcp` and see the current tool list
+The `ai/mcp/README.md` policy needs two disjoint tool subsets (task tools, show tools) plus a
+superset for `operations`/`manager`/`admin`. Register one connection per subset against the same
+underlying MCP URL:
+
+1. `POST /api/v1/configs/tool_servers/verify` with a candidate connection object to confirm Open
+   WebUI can reach `http://erify-api-mcp.railway.internal:<PORT>/mcp` and see the current tool list
    (`erify_get_show`, `erify_get_task`, `erify_query_shows`, `erify_query_tasks`).
-2. `GET` the existing `tool_servers` config, append the new connection, and `POST` the full list back.
-3. Grant groups access per `ai/openwebui/tool-access.example.json` — see
-   [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md).
-4. Reference the server in a chat completion or Workspace Model with `tool_ids: ["server:mcp:erify_api_mcp"]`.
+2. Decide the connection split from the policy table, e.g.:
+   - `erify_api_mcp_tasks` — `function_name_filter_list: "erify_get_task,erify_query_tasks"` → grant to `fulfillment`, `operations`, `manager`, `admin`.
+   - `erify_api_mcp_shows` — `function_name_filter_list: "erify_get_show,erify_query_shows"` → grant to `livestream`, `operations`, `manager`, `admin`.
+3. `GET` the existing `tool_servers` config, append the new connection(s), and `POST` the full list back.
+4. Grant each connection to its groups — see [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md).
+5. Reference a connection in a chat completion or Workspace Model with `tool_ids: ["server:mcp:erify_api_mcp_tasks"]` (or `_shows`), not a single catch-all ID, if the caller should only see that subset.
 
 ## Core rules
 
 - Keep the connection `url` on Railway private networking (`*.railway.internal`) — do not point
   Open WebUI at a public MCP domain until `apps/erify_api/docs/MCP_SERVER.md`'s public-access design
   is implemented.
-- New tools added to `erify_api`'s MCP registry need a matching access-grant update; don't assume a
-  newly added tool inherits the old access list.
+- New tools added to `erify_api`'s MCP registry need a matching update to every connection's
+  `function_name_filter_list` and access grants; don't assume a newly added tool inherits the old
+  access list, and don't assume it's automatically excluded from existing filtered connections either
+  — an unlisted-but-unfiltered connection exposes everything the server offers.
 - If a tool server's exposed tool list changes (tools added/removed on the `erify_api` side),
   re-verify the connection — Open WebUI caches the discovered spec.
 - Out of scope: Open WebUI's separate "Pipelines" plugin framework (custom filter/pipe/action
@@ -82,8 +110,11 @@ Connection object shape:
 
 ## Quality gate
 
-- [ ] Connection verified (`tool_servers/verify`) before persisting it.
+- [ ] Connection(s) verified (`tool_servers/verify`) before persisting.
 - [ ] `url` stays on Railway private networking unless a public-access design is signed off.
+- [ ] If the policy needs disjoint tool subsets per group, that's implemented as separate filtered
+      connections (`function_name_filter_list` + per-connection grant) — not a single connection with
+      an assumed per-tool grant.
 - [ ] Group access grants updated to match `ai/mcp/README.md` policy, not left at default-deny or default-open by accident.
 - [ ] Registration performed with an admin key.
 
