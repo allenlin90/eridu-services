@@ -23,10 +23,5 @@
   "packageManager": "pnpm@10.32.1",
   "engines": {
     "node": ">=22"
-  },
-  "pnpm": {
-    "overrides": {
-      "multer": ">=2.2.0"
-    }
   }
 }

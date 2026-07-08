@@ -15,7 +15,6 @@ Use this register for accepted risk, consistency gaps, migration cleanup, and re
 
 | Issue | Area | Trigger To Fix | Related Context |
 | --- | --- | --- | --- |
-| [Root `pnpm.overrides.multer` is a stopgap for NestJS lagging upstream](./multer-override-pending-nestjs-upstream.md) | `erify_api` — `@nestjs/platform-express` pins `multer@2.1.1` even at latest 11.1.x; two DoS advisories need `>=2.2.0` | `@nestjs/platform-express` ships `multer >=2.2.0` natively | — |
 | [Admin Route Business Logic Bypass](./admin-route-business-logic-bypass.md) | `erify_api` admin mutations | Any admin mutation touches finance, assignment snapshots, actuals, lifecycle transitions, or cross-domain side effects | [Economics cost model](../domain/economics-cost-model.md), [Phase 4 remaining-work tracker](../roadmap/PHASE_4.md) |
 | [`fact-extraction.service.ts` exceeds the file-size trigger](./fact-extraction-service-size.md) | `erify_api` fact-extraction pipeline | A fourth paired/hydrated extractor scope is added, or the file crosses ~1300 LOC | [fact-extraction-pipeline skill](../../.agents/skills/fact-extraction-pipeline/SKILL.md), [Phase 4 tracker](../roadmap/PHASE_4.md) |
 | [Show-detail performance fields exposed to all members](./show-detail-performance-fields-all-members.md) | `erify_api` show detail authorization | Show-detail authz changes, more revenue facts added to detail, or product confirms whether per-platform GMV is manager-only | [AUTHORIZATION_GUIDE.md](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md), [PHASE_4.md](../roadmap/PHASE_4.md) |
