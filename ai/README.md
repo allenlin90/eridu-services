@@ -13,7 +13,7 @@ Company users -> Open WebUI -> [OpenAI-compatible API] -> LiteLLM -> providers (
 ```
 
 - Open WebUI reaches LiteLLM over Railway private networking (`http://<litellm-service>.railway.internal:4000/v1`); public LiteLLM URLs are for the admin UI and external testing only.
-- LiteLLM models, provider credentials, and company model aliases are managed through the LiteLLM Admin UI ("Store Model in DB"), not a repo-managed `config.yaml` — the Railway deployment does not conveniently expose `config.yaml`. See [`litellm/README.md`](litellm/README.md).
+- LiteLLM models, provider credentials, and company model aliases are managed through the LiteLLM Admin UI ("Store Model in DB") or its equivalent Management API, not a repo-managed `config.yaml` — the Railway deployment does not conveniently expose `config.yaml`. See [`litellm/README.md`](litellm/README.md) and [`litellm-admin-api`](../.agents/skills/litellm-admin-api/SKILL.md).
 - Per-user usage tracking is automatic: Open WebUI forwards each user's identity to LiteLLM via global env vars, so no pre-provisioning or sync step is required to record customer usage.
 - Version-sensitive: verify any LiteLLM/Open WebUI capability against `1.89.3` / `0.9.6` before relying on it; do not assume latest-docs behavior applies.
 
@@ -26,6 +26,7 @@ Use these actual agent skills before changing AI workspace files:
 - `.agents/skills/openwebui-rest-api/SKILL.md`
 - `.agents/skills/openwebui-groups-permissions/SKILL.md`
 - `.agents/skills/openwebui-mcp-tool-integration/SKILL.md`
+- `.agents/skills/litellm-admin-api/SKILL.md`
 
 ## Component map
 
@@ -43,7 +44,7 @@ Use these actual agent skills before changing AI workspace files:
 1. Treat Better Auth users as the canonical company identities.
 2. Treat Open WebUI users as LiteLLM customers/end-users for spend and rate governance.
 3. Use one LiteLLM virtual key for the Open WebUI backend, then forward the Open WebUI user identity on every LiteLLM request via Open WebUI's global user-info header-forwarding env vars (not connection-level custom headers, which are unreliable on this Railway setup).
-4. Keep LiteLLM model routing, budget tiers, and budget-tier assignment policy in Git as reference for the Admin UI.
+4. Keep LiteLLM model routing, budget tiers, and budget-tier assignment policy in Git as reference; apply it via the Admin UI or the Management API (`litellm-admin-api`).
 5. Treat `.agents/skills/` as the canonical repo skill source of truth.
 6. Treat `ai/openwebui/skills/` as export-only; do not put canonical skills there.
 7. Use the existing `erify_api` MCP entrypoint as the first operational MCP surface.
@@ -64,13 +65,18 @@ Use these actual agent skills before changing AI workspace files:
 │     └─ endpoints.md
 ├─ openwebui-groups-permissions/
 │  └─ SKILL.md
-└─ openwebui-mcp-tool-integration/
-   └─ SKILL.md
+├─ openwebui-mcp-tool-integration/
+│  └─ SKILL.md
+└─ litellm-admin-api/
+   ├─ SKILL.md
+   └─ references/
+      └─ endpoints.md
 
 ai/
 ├─ architecture/
 │  └─ ai-workspace-summary.md
 ├─ litellm/
+│  ├─ .env.example
 │  ├─ budget-tiers.example.json
 │  ├─ customer-sync.example.json
 │  ├─ model-groups.example.yaml

@@ -1,6 +1,6 @@
 # LiteLLM Policy Scaffold
 
-This directory contains reference templates for LiteLLM model routing, budget tiers, and budget-tier assignment.
+This directory contains reference templates for LiteLLM model routing, budget tiers, and budget-tier assignment. To actually apply these via API instead of the Admin UI, see [`litellm-admin-api`](../../.agents/skills/litellm-admin-api/SKILL.md).
 
 ## Deployed baseline
 
@@ -14,19 +14,20 @@ Public LiteLLM URLs are for the admin UI and external testing only.
 
 ### Management surface
 
-The Railway deployment does not conveniently expose `config.yaml`, so the **LiteLLM Admin UI is the primary management surface**:
+The Railway deployment does not conveniently expose `config.yaml`, so models/credentials/aliases live in the DB-backed store ("Store Model in DB"), reachable two ways:
 
-- Enable "Store Model in DB".
-- Add provider credentials via the UI (LLM Credentials), not committed files.
-- Define stable company model aliases in the UI, not raw provider IDs.
+- **LiteLLM Admin UI** — manual, visual, good for one-off/pilot changes and monitoring.
+- **Management API** — scriptable equivalent of the same DB-backed store (`/model/new`, `/team/new`, `/key/generate`, `/customer/new`, etc.); see [`litellm-admin-api`](../../.agents/skills/litellm-admin-api/SKILL.md) for the endpoint catalog. Prefer this for anything repeatable.
 
-Treat `model-groups.example.yaml` as a reference for what to configure in that UI (or for a future repo-managed config path), not as an actively-applied config.
+Either way: define stable company model aliases, not raw provider IDs, and add provider credentials as `os.environ/...` references, not committed files.
+
+Treat `model-groups.example.yaml` as a reference for what to configure (or for a future repo-managed config path), not as an actively-applied config.
 
 ### Key env vars (LiteLLM service)
 
 `DATABASE_URL`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `UI_USERNAME`, `UI_PASSWORD`.
 
-`LITELLM_MASTER_KEY` must never be given to Open WebUI. Open WebUI connects with a LiteLLM **virtual key** instead (Open WebUI: Admin Settings -> Connections -> OpenAI -> Add Connection, using the internal Railway URL + the virtual key).
+`LITELLM_MASTER_KEY` must never be given to Open WebUI. Open WebUI connects with a LiteLLM **virtual key** instead (Open WebUI: Admin Settings -> Connections -> OpenAI -> Add Connection, using the internal Railway URL + the virtual key). For scripting management-API calls from this repo, a separate scoped key (`LITELLM_ADMIN_KEY`, restricted to `management_routes` — no inference access) plus `LITELLM_HOST` live in `ai/litellm/.env` (gitignored; see `.env.example`). Never put the real `LITELLM_MASTER_KEY` in that file.
 
 ## Model aliases and access groups
 
@@ -59,7 +60,7 @@ Open WebUI then sends `x-litellm-customer-id: <Open WebUI user UUID>` on every r
 
 ## Budgets and rate limits
 
-Basic tracking (above) comes first. Budgets and per-customer rate limits are a later maturity step (curated aliases -> fallback models -> team budgets -> per-customer budgets/rate limits -> spend analytics -> observability). Assign budget tiers to known customers by hand in the LiteLLM Admin UI (Customers/Budgets) using the role-to-tier policy below as reference — no automation script for this; it's low-volume, admin-only work.
+Basic tracking (above) comes first. Budgets and per-customer rate limits are a later maturity step (curated aliases -> fallback models -> team budgets -> per-customer budgets/rate limits -> spend analytics -> observability). Assign budget tiers to known customers using the role-to-tier policy below as reference, either by hand in the LiteLLM Admin UI (Customers/Budgets) or via `/customer/new` / `/customer/update` per [`litellm-admin-api`](../../.agents/skills/litellm-admin-api/SKILL.md) — still low-volume, admin-only work either way.
 
 ## Files
 
