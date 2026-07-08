@@ -43,6 +43,7 @@ Validate at API boundary, transform format:
 - Check required fields, format, references
 - Use Zod schemas and `createZodDto` at boundaries
 - For date/time fields, use `z.iso.datetime()` / `z.iso.date()`, not `z.coerce.date()`
+- For boolean query params, use `booleanQueryParamSchema` from `@eridu/api-types/pagination`, not `z.coerce.boolean()` — `z.coerce.boolean()` uses JS truthiness, so `?flag=false` parses as `true`
 
 ### Contract Propagation Check
 
