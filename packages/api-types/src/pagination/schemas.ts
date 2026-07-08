@@ -19,6 +19,10 @@ export const paginationBaseSchema = z.object({
   limit: z.coerce.number().int().min(1).optional().default(10),
 });
 
+export const booleanQueryParamSchema = z
+  .union([z.boolean(), z.enum(['true', 'false'])])
+  .transform((value) => (typeof value === 'string' ? value === 'true' : value));
+
 /**
  * Base pagination transformation logic
  */

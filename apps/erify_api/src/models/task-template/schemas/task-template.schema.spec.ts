@@ -22,7 +22,7 @@ describe('taskTemplateQuerySchema', () => {
       name: 'moderation',
       task_type: 'ACTIVE',
       template_kind: 'moderation',
-      is_active: 'true',
+      is_active: 'false',
       include_deleted: 'false',
       sort: 'name:asc',
     });
@@ -35,7 +35,7 @@ describe('taskTemplateQuerySchema', () => {
       name: 'moderation',
       taskType: 'ACTIVE',
       templateKind: 'moderation',
-      isActive: true,
+      isActive: false,
       includeDeleted: false,
       sort: 'name:asc',
     });

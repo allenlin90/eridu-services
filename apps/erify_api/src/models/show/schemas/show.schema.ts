@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 import {
   createStudioShowInputSchema,
   showApiResponseSchema,
@@ -433,7 +434,7 @@ export const listShowsFilterSchema = z.object({
     .enum(['created_at', 'updated_at', 'start_time', 'end_time'])
     .default('created_at'),
   order_direction: z.enum(['asc', 'desc']).default('desc'),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
   id: z.string().optional(),
   show_standard_name: z.string().optional(),
   show_status_name: z.string().optional(),

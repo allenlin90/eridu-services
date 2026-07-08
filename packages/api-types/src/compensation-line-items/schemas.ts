@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
 import {
+  booleanQueryParamSchema,
   createPaginatedResponseSchema,
   paginationBaseSchema,
   paginationQuerySchema,
@@ -71,11 +72,7 @@ export const listCompensationLineItemsQuerySchema = paginationQuerySchema
       created_by_uid: z.string().startsWith(UID_PREFIXES.USER).optional(),
       from: z.iso.datetime().optional(),
       to: z.iso.datetime().optional(),
-      include_deleted: z
-        .union([z.boolean(), z.enum(['true', 'false'])])
-        .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-        .optional()
-        .default(false),
+      include_deleted: booleanQueryParamSchema.optional().default(false),
     }),
   )
   .transform((data) => ({
@@ -107,11 +104,7 @@ export const listStudioCompensationLineItemsQuerySchema = paginationBaseSchema
     item_type: compensationItemTypeSchema.optional(),
     from: z.iso.datetime().optional(),
     to: z.iso.datetime().optional(),
-    include_deleted: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional()
-      .default(false),
+    include_deleted: booleanQueryParamSchema.optional().default(false),
   })
   .strict()
   .transform(transformPagination)

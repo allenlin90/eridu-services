@@ -1,6 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 import {
   createShowStandardInputSchema,
   showStandardApiResponseSchema,
@@ -76,7 +77,7 @@ export class ShowStandardDto extends createZodDto(showStandardDto) {}
 export const listShowStandardsFilterSchema = z.object({
   name: z.string().optional(),
   id: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 export const listShowStandardsQuerySchema = paginationQuerySchema

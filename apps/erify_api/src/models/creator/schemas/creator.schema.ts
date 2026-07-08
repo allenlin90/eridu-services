@@ -11,6 +11,7 @@ import {
   creatorApiResponseSchema,
   updateCreatorInputSchema,
 } from '@eridu/api-types/creators';
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { decimalToString } from '@/lib/utils/decimal-to-string.util';
@@ -142,7 +143,7 @@ export const listCreatorsFilterSchema = z.object({
   name: z.string().optional(),
   alias_name: z.string().optional(),
   id: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 export const listCreatorsQuerySchema = paginationQuerySchema

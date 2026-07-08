@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
-import { createPaginatedResponseSchema } from '../pagination/schemas.js';
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from '../pagination/schemas.js';
 
 /**
  * Common Query parameters for Costs Dashboard
@@ -138,10 +138,7 @@ export const costsShiftsQuerySchema = costsQuerySchema.extend({
   role: z.string().optional(),
   // Shift-level duty-manager flag (`StudioShift.isDutyManager`), orthogonal to
   // the operator's membership role.
-  is_duty_manager: z
-    .union([z.boolean(), z.enum(['true', 'false'])])
-    .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-    .optional(),
+  is_duty_manager: booleanQueryParamSchema.optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
   sort: costsShiftsSortSchema.optional(),
 });

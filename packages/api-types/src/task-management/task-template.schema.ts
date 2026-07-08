@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
 import {
+  booleanQueryParamSchema,
   paginationBaseSchema,
   transformPagination,
 } from '../pagination/index.js';
@@ -125,14 +126,8 @@ export const listTaskTemplatesFilterSchema = z.object({
   task_type: z.nativeEnum(TASK_TYPE).optional(),
   template_kind: taskTemplateKindSchema.optional(),
   client_id: z.string().startsWith(UID_PREFIXES.CLIENT).optional().nullable(),
-  is_active: z
-    .union([z.boolean(), z.enum(['true', 'false'])])
-    .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-    .optional(),
-  include_deleted: z
-    .union([z.boolean(), z.enum(['true', 'false'])])
-    .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-    .default(false),
+  is_active: booleanQueryParamSchema.optional(),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 export type ListTaskTemplatesFilter = z.infer<typeof listTaskTemplatesFilterSchema>;
@@ -194,11 +189,8 @@ export const listAdminTaskTemplatesQuerySchema = paginationBaseSchema
     studio_id: z.string().startsWith(UID_PREFIXES.STUDIO).optional(),
     studio_name: z.string().trim().min(1).optional(),
     task_type: z.nativeEnum(TASK_TYPE).optional(),
-    is_active: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional(),
-    include_deleted: z.coerce.boolean().default(false),
+    is_active: booleanQueryParamSchema.optional(),
+    include_deleted: booleanQueryParamSchema.default(false),
     sort: z.enum(['updated_at:desc', 'updated_at:asc', 'last_used_at:desc', 'last_used_at:asc']).default('updated_at:desc'),
   })
   .transform(transformPagination);
@@ -271,7 +263,7 @@ export const listAdminTaskTemplateBindingsQuerySchema = paginationBaseSchema
     status: z.union([z.nativeEnum(TASK_STATUS), z.array(z.nativeEnum(TASK_STATUS))]).optional(),
     show_start_from: z.iso.datetime().optional(),
     show_start_to: z.iso.datetime().optional(),
-    include_deleted: z.coerce.boolean().default(false),
+    include_deleted: booleanQueryParamSchema.default(false),
     sort: z.enum(['asc', 'desc']).optional().default('desc'),
   })
   .transform(transformPagination);

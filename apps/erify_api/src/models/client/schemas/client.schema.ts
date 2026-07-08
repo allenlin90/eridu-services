@@ -12,6 +12,7 @@ import {
   createClientInputSchema,
   updateClientInputSchema,
 } from '@eridu/api-types/clients';
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
 import { ClientService } from '@/models/client/client.service';
@@ -63,7 +64,7 @@ export class ClientDto extends createZodDto(clientDto) {}
 export const listClientsFilterSchema = z.object({
   name: z.string().optional(),
   id: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 export const listClientsQuerySchema = paginationQuerySchema

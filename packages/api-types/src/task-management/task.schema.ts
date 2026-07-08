@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { clientApiResponseSchema } from '../clients/index.js';
 import { UID_PREFIXES } from '../constants.js';
 import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
-import { paginationBaseSchema, transformPagination } from '../pagination/index.js';
+import { booleanQueryParamSchema, paginationBaseSchema, transformPagination } from '../pagination/index.js';
 import { platformApiResponseSchema } from '../platforms/index.js';
 import { scheduleApiResponseSchema } from '../schedules/index.js';
 import { showStandardApiResponseSchema } from '../show-standards/index.js';
@@ -405,22 +405,10 @@ export const listStudioShowsQuerySchema = paginationBaseSchema
     planning_date_from: z.iso.date().optional(),
     planning_date_to: z.iso.date().optional(),
     actuals_state: z.enum(['missing', 'complete']).optional(),
-    has_tasks: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional(),
-    has_creators: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional(),
-    needs_attention: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional(),
-    has_schedule: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional(),
+    has_tasks: booleanQueryParamSchema.optional(),
+    has_creators: booleanQueryParamSchema.optional(),
+    needs_attention: booleanQueryParamSchema.optional(),
+    has_schedule: booleanQueryParamSchema.optional(),
     show_uids: z
       .union([z.string(), z.array(z.string())])
       .transform((value) => (Array.isArray(value) ? value : [value]))
@@ -463,14 +451,8 @@ export const listMyTasksQuerySchema = paginationBaseSchema
   .extend({
     status: z.union([z.nativeEnum(TASK_STATUS), z.array(z.nativeEnum(TASK_STATUS))]).optional(),
     task_type: z.union([z.nativeEnum(TASK_TYPE), z.array(z.nativeEnum(TASK_TYPE))]).optional(),
-    has_assignee: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional(),
-    has_due_date: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-      .optional(),
+    has_assignee: booleanQueryParamSchema.optional(),
+    has_due_date: booleanQueryParamSchema.optional(),
     due_date_from: z.iso.datetime().optional(),
     due_date_to: z.iso.datetime().optional(),
     show_start_from: z.iso.datetime().optional(),

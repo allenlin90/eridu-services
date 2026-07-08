@@ -5,7 +5,7 @@ import {
   CREATOR_COMPENSATION_TYPE,
   CREATOR_TYPE,
 } from '../creators/schemas.js';
-import { createPaginatedResponseSchema } from '../pagination/schemas.js';
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from '../pagination/schemas.js';
 
 export const STUDIO_CREATOR_ROSTER_ERROR = {
   CREATOR_NOT_FOUND: 'CREATOR_NOT_FOUND',
@@ -176,8 +176,8 @@ export const studioCreatorCatalogItemSchema = z.object({
 
 export const studioCreatorCatalogQuerySchema = z.object({
   search: z.string().optional(),
-  include_rostered: z.coerce.boolean().default(false),
-  exclude_active_rostered: z.coerce.boolean().default(false),
+  include_rostered: booleanQueryParamSchema.default(false),
+  exclude_active_rostered: booleanQueryParamSchema.default(false),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 
@@ -229,7 +229,7 @@ export const studioCreatorRosterListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).optional().default(20),
   search: z.string().optional(),
-  is_active: z.coerce.boolean().optional(),
+  is_active: booleanQueryParamSchema.optional(),
   default_rate_type: creatorCompensationTypeSchema.nullable().optional(),
 });
 

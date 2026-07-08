@@ -13,6 +13,7 @@ import {
   updateMembershipInputSchema,
   updateStudioMemberRequestSchema,
 } from '@eridu/api-types/memberships';
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 
 import {
   paginationBaseSchema,
@@ -241,7 +242,7 @@ export const listStudioMembershipsFilterSchema = z.object({
   name: z.string().optional(),
   id: z.string().optional(),
   studio_id: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 export const listStudioMembershipsQuerySchema = paginationQuerySchema
