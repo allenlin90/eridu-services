@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
-import { createPaginatedResponseSchema } from '../pagination/schemas.js';
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from '../pagination/schemas.js';
 
 /**
  * Schedule API Response Schema (snake_case - matches backend API output)
@@ -175,6 +175,6 @@ export const listSchedulesQuerySchema = z.object({
     .enum(['created_at', 'updated_at', 'start_date', 'end_date'])
     .default('created_at'),
   order_direction: z.enum(['asc', 'desc']).default('desc'),
-  include_plan_document: z.coerce.boolean().default(false),
-  include_deleted: z.coerce.boolean().default(false),
+  include_plan_document: booleanQueryParamSchema.default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });

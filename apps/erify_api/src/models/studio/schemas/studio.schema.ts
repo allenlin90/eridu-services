@@ -1,6 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 import {
   createStudioInputSchema,
   studioApiResponseSchema,
@@ -83,7 +84,7 @@ export class SharedFieldsResponseDto extends createZodDto(sharedFieldsSettingsRe
 export const listStudiosFilterSchema = z.object({
   name: z.string().optional(),
   id: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 export const listStudiosQuerySchema = paginationQuerySchema

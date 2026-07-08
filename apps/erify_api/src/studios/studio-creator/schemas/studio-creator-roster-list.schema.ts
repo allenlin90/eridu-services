@@ -3,6 +3,7 @@ import z from 'zod';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
 import { CREATOR_COMPENSATION_TYPE } from '@eridu/api-types/creators';
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 import { studioCreatorRosterItemSchema as studioCreatorRosterItemApiSchema } from '@eridu/api-types/studio-creators';
 
 import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
@@ -47,7 +48,7 @@ const studioCreatorRosterListQuerySchema = paginationQuerySchema
   .and(
     z.object({
       search: z.string().optional(),
-      is_active: z.coerce.boolean().optional(),
+      is_active: booleanQueryParamSchema.optional(),
       default_rate_type: z
         .enum(Object.values(CREATOR_COMPENSATION_TYPE) as [string, ...string[]])
         .nullable()

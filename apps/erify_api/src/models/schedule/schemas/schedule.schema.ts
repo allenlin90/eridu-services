@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 import {
   createScheduleInputSchema,
   scheduleApiResponseSchema,
@@ -242,8 +243,8 @@ export const listSchedulesFilterSchema = z.object({
     .enum(['created_at', 'updated_at', 'start_date', 'end_date'])
     .default('created_at'),
   order_direction: z.enum(['asc', 'desc']).default('desc'),
-  include_plan_document: z.coerce.boolean().default(false),
-  include_deleted: z.coerce.boolean().default(false),
+  include_plan_document: booleanQueryParamSchema.default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
   client_name: z.string().optional(),
   id: z.string().optional(),
 });
@@ -266,7 +267,7 @@ export const monthlyOverviewQuerySchema = z.object({
   end_date: z.string(),
   client_ids: z.array(z.string()).optional(),
   status: z.string().optional(),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 // Monthly overview response schema

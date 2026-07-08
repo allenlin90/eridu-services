@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { UID_PREFIXES } from '../constants.js';
 import { CREATOR_COMPENSATION_TYPE } from '../creators/schemas.js';
-import { createPaginatedResponseSchema } from '../pagination/schemas.js';
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from '../pagination/schemas.js';
 import {
   defaultCommissionRateInputSchema,
   defaultRateInputSchema,
@@ -187,7 +187,7 @@ export const listShowsQuerySchema = z.object({
     .enum(['created_at', 'updated_at', 'start_time', 'end_time'])
     .default('created_at'),
   order_direction: z.enum(['asc', 'desc']).default('desc'),
-  include_deleted: z.coerce.boolean().default(false),
+  include_deleted: booleanQueryParamSchema.default(false),
 });
 
 /**
