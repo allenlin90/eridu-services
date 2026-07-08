@@ -1,0 +1,989 @@
+[
+  {
+    "id": "production-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Erify - Production Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Erify Production team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "content-management",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "b134eb16-2d75-41f6-8e21-af365c25e901",
+        "resource_type": "model",
+        "resource_id": "production-assistant",
+        "principal_type": "group",
+        "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+        "permission": "read",
+        "created_at": 1783440913
+      },
+      {
+        "id": "83ef290d-0b3c-4a39-833f-7c9e6539374a",
+        "resource_type": "model",
+        "resource_id": "production-assistant",
+        "principal_type": "group",
+        "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+        "permission": "read",
+        "created_at": 1783440913
+      },
+      {
+        "id": "b1a7f595-4016-461b-818e-5dabad0c23f5",
+        "resource_type": "model",
+        "resource_id": "production-assistant",
+        "principal_type": "group",
+        "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+        "permission": "read",
+        "created_at": 1783440913
+      },
+      {
+        "id": "9e01df7c-3667-47af-ba1d-0f6bb8193bf5",
+        "resource_type": "model",
+        "resource_id": "production-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783440913
+      },
+      {
+        "id": "86804be6-241b-401d-9bf9-a4a43e725532",
+        "resource_type": "model",
+        "resource_id": "production-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783440913
+      },
+      {
+        "id": "cd7686f0-97b1-466e-ad0a-94ea051e20de",
+        "resource_type": "model",
+        "resource_id": "production-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783440913
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783440913,
+    "created_at": 1783423712
+  },
+  {
+    "id": "management-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Eridu - Finance Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Eridu Management team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "org-chart",
+        "financial-guardrails",
+        "finance-ops",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      },
+      "knowledge": [
+        {
+          "id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+          "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+          "name": "Eridu CMD",
+          "description": "Company CMD",
+          "meta": null,
+          "access_grants": [
+            {
+              "id": "9022395e-76c1-4bc5-ad3a-d5bcd32b01ab",
+              "resource_type": "knowledge",
+              "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+              "principal_type": "user",
+              "principal_id": "*",
+              "permission": "read",
+              "created_at": 1781609002
+            }
+          ],
+          "created_at": 1781609002,
+          "updated_at": 1781609002,
+          "user": {
+            "id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+            "name": "Allen",
+            "role": "admin",
+            "email": "ht016746@gmail.com"
+          },
+          "write_access": true,
+          "type": "collection"
+        }
+      ]
+    },
+    "access_grants": [
+      {
+        "id": "af448d39-f731-4bf8-ba11-d4433ab9ccc2",
+        "resource_type": "model",
+        "resource_id": "management-assistant",
+        "principal_type": "group",
+        "principal_id": "39cc7eb7-37ab-4f75-add7-113e97b88fa0",
+        "permission": "read",
+        "created_at": 1783440919
+      },
+      {
+        "id": "92a7123d-b090-425e-bb5d-196cb6175c8f",
+        "resource_type": "model",
+        "resource_id": "management-assistant",
+        "principal_type": "group",
+        "principal_id": "061b2897-f788-4ff7-b42a-dd05fbe9f137",
+        "permission": "read",
+        "created_at": 1783440919
+      },
+      {
+        "id": "b2305272-a530-4218-854e-e0500e26ae8d",
+        "resource_type": "model",
+        "resource_id": "management-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783440919
+      },
+      {
+        "id": "6dbe8370-1ef4-407b-8e92-3daa639cc223",
+        "resource_type": "model",
+        "resource_id": "management-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783440919
+      },
+      {
+        "id": "4a45eb3e-b845-4e22-a571-fc472773771a",
+        "resource_type": "model",
+        "resource_id": "management-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783440919
+      },
+      {
+        "id": "c9825af8-9b16-4de2-b9c6-3f3eb516c9c6",
+        "resource_type": "model",
+        "resource_id": "management-assistant",
+        "principal_type": "group",
+        "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
+        "permission": "read",
+        "created_at": 1783440919
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783440919,
+    "created_at": 1783424729
+  },
+  {
+    "id": "performance-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Erify - Performance Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Erify Performance team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "0002",
+        "content-management",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "0640c209-e127-40ec-b9f8-8790f410ee56",
+        "resource_type": "model",
+        "resource_id": "performance-assistant",
+        "principal_type": "group",
+        "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+        "permission": "read",
+        "created_at": 1783441930
+      },
+      {
+        "id": "cee527ce-0a98-4f28-8a45-2124d7cd6565",
+        "resource_type": "model",
+        "resource_id": "performance-assistant",
+        "principal_type": "group",
+        "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+        "permission": "read",
+        "created_at": 1783441930
+      },
+      {
+        "id": "edf473d4-60bd-4f4f-ad2f-ab85d7bc1946",
+        "resource_type": "model",
+        "resource_id": "performance-assistant",
+        "principal_type": "group",
+        "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+        "permission": "read",
+        "created_at": 1783441930
+      },
+      {
+        "id": "81d58783-3e0f-4724-854f-271872bd18d5",
+        "resource_type": "model",
+        "resource_id": "performance-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783441930
+      },
+      {
+        "id": "2afee70d-283e-459a-9ffa-1c00eef581a7",
+        "resource_type": "model",
+        "resource_id": "performance-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783441930
+      },
+      {
+        "id": "125c135d-82c0-4e44-b5a8-95ed2e566e4a",
+        "resource_type": "model",
+        "resource_id": "performance-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783441930
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783441930,
+    "created_at": 1783441930
+  },
+  {
+    "id": "commerce-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Commerce - Operations Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Commerce Operations team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "commerce",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "a59082ed-148e-4699-8763-bd3401f1decb",
+        "resource_type": "model",
+        "resource_id": "commerce-assistant",
+        "principal_type": "group",
+        "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+        "permission": "read",
+        "created_at": 1783441939
+      },
+      {
+        "id": "4bc85d71-8088-4e14-8630-5894c5472a03",
+        "resource_type": "model",
+        "resource_id": "commerce-assistant",
+        "principal_type": "group",
+        "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+        "permission": "read",
+        "created_at": 1783441939
+      },
+      {
+        "id": "7ceca118-3c4f-428e-90a9-c2f39dc9b090",
+        "resource_type": "model",
+        "resource_id": "commerce-assistant",
+        "principal_type": "group",
+        "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+        "permission": "read",
+        "created_at": 1783441939
+      },
+      {
+        "id": "58090a73-9c49-4feb-b863-d1d05cedacb8",
+        "resource_type": "model",
+        "resource_id": "commerce-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783441939
+      },
+      {
+        "id": "87a8ba26-8f19-4496-a571-a7e8178d2d09",
+        "resource_type": "model",
+        "resource_id": "commerce-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783441939
+      },
+      {
+        "id": "9374b084-3605-47a9-9c25-84f30d4f97c7",
+        "resource_type": "model",
+        "resource_id": "commerce-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783441939
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783441939,
+    "created_at": 1783441939
+  },
+  {
+    "id": "eridu-hr-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Eridu - HR Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Eridu HR team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "org-chart",
+        "talent-development-framework",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "ea8463f8-e691-4482-bd7b-c3009de81428",
+        "resource_type": "model",
+        "resource_id": "eridu-hr-assistant",
+        "principal_type": "group",
+        "principal_id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
+        "permission": "read",
+        "created_at": 1783441941
+      },
+      {
+        "id": "8c8e4bc0-2b3e-49ee-b1b3-adda8d243641",
+        "resource_type": "model",
+        "resource_id": "eridu-hr-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783441941
+      },
+      {
+        "id": "b992099b-20ec-4b3e-86c9-41482053b7bc",
+        "resource_type": "model",
+        "resource_id": "eridu-hr-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783441941
+      },
+      {
+        "id": "05eb1332-6b25-493c-8da2-e78bd3560ce6",
+        "resource_type": "model",
+        "resource_id": "eridu-hr-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783441941
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783441941,
+    "created_at": 1783441940
+  },
+  {
+    "id": "scheduling-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Erify - Scheduling Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Erify Scheduling team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "content-management",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "fbbf75f5-645f-4e19-a6ea-98846720296f",
+        "resource_type": "model",
+        "resource_id": "scheduling-assistant",
+        "principal_type": "group",
+        "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+        "permission": "read",
+        "created_at": 1783441942
+      },
+      {
+        "id": "85686e50-a882-4172-8495-f0d86172d405",
+        "resource_type": "model",
+        "resource_id": "scheduling-assistant",
+        "principal_type": "group",
+        "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+        "permission": "read",
+        "created_at": 1783441942
+      },
+      {
+        "id": "9a1fe961-6bf1-4160-b127-d8b0218604e8",
+        "resource_type": "model",
+        "resource_id": "scheduling-assistant",
+        "principal_type": "group",
+        "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+        "permission": "read",
+        "created_at": 1783441942
+      },
+      {
+        "id": "2a8ceb6d-bf77-40e4-8366-c3ce5930cf57",
+        "resource_type": "model",
+        "resource_id": "scheduling-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783441942
+      },
+      {
+        "id": "aa57247e-8153-4170-8c44-4302f9fc9bc2",
+        "resource_type": "model",
+        "resource_id": "scheduling-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783441942
+      },
+      {
+        "id": "70d5ed69-595a-4287-a547-8592edc7aa51",
+        "resource_type": "model",
+        "resource_id": "scheduling-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783441942
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783441942,
+    "created_at": 1783441942
+  },
+  {
+    "id": "erisa-adp-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Erisa - ADP Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Erisa ADP team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "creator-management",
+        "affiliate-management-",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "127d696e-6bab-41b6-9629-e5f680d71824",
+        "resource_type": "model",
+        "resource_id": "erisa-adp-assistant",
+        "principal_type": "group",
+        "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+        "permission": "read",
+        "created_at": 1783441944
+      },
+      {
+        "id": "b0fe06f4-d4b7-4a11-b9a2-645825e28aae",
+        "resource_type": "model",
+        "resource_id": "erisa-adp-assistant",
+        "principal_type": "group",
+        "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+        "permission": "read",
+        "created_at": 1783441944
+      },
+      {
+        "id": "d7022871-6d72-4f0b-9554-da8fc917f567",
+        "resource_type": "model",
+        "resource_id": "erisa-adp-assistant",
+        "principal_type": "group",
+        "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
+        "permission": "read",
+        "created_at": 1783441944
+      },
+      {
+        "id": "cef44dfc-85ef-4f40-8810-73ea2341267a",
+        "resource_type": "model",
+        "resource_id": "erisa-adp-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783441944
+      },
+      {
+        "id": "0aca5f1d-ce0d-4df4-a458-af693c4c4363",
+        "resource_type": "model",
+        "resource_id": "erisa-adp-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783441944
+      },
+      {
+        "id": "0ae4ee45-6a2f-467c-8186-0ab92d14d708",
+        "resource_type": "model",
+        "resource_id": "erisa-adp-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783441944
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783441944,
+    "created_at": 1783441943
+  },
+  {
+    "id": "creator-service-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Erisa - Creator Service Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Erisa Creator Service team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "creator-management",
+        "governance-ops"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "e61f74a7-e084-47e4-95ea-af007d25ae46",
+        "resource_type": "model",
+        "resource_id": "creator-service-assistant",
+        "principal_type": "group",
+        "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+        "permission": "read",
+        "created_at": 1783441945
+      },
+      {
+        "id": "f7e7ee5f-1903-4752-813e-30e3697ca301",
+        "resource_type": "model",
+        "resource_id": "creator-service-assistant",
+        "principal_type": "group",
+        "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+        "permission": "read",
+        "created_at": 1783441945
+      },
+      {
+        "id": "9a8da208-c353-44f3-8167-90c573a3702e",
+        "resource_type": "model",
+        "resource_id": "creator-service-assistant",
+        "principal_type": "group",
+        "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
+        "permission": "read",
+        "created_at": 1783441945
+      },
+      {
+        "id": "e46ef369-7e9a-43bf-8b5b-67288e880463",
+        "resource_type": "model",
+        "resource_id": "creator-service-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783441945
+      },
+      {
+        "id": "4186506d-9e25-48fe-8c53-7e98228a60ec",
+        "resource_type": "model",
+        "resource_id": "creator-service-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783441945
+      },
+      {
+        "id": "27add75e-58d9-4a64-bd43-1511d65c15d7",
+        "resource_type": "model",
+        "resource_id": "creator-service-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783441945
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783441945,
+    "created_at": 1783441944
+  },
+  {
+    "id": "commerce-sales-assistant",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Commerce - Sales Assistant",
+    "params": {},
+    "meta": {
+      "profile_image_url": null,
+      "description": "Assistant for the Commerce Sales team",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": false,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "builtin_tools": true
+      },
+      "skillIds": [
+        "core-principles",
+        "governance-ops",
+        "commerce",
+        "sales"
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "15d4a5a0-054d-42d5-ae94-2c7cbdf690d1",
+        "resource_type": "model",
+        "resource_id": "commerce-sales-assistant",
+        "principal_type": "group",
+        "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+        "permission": "read",
+        "created_at": 1783442036
+      },
+      {
+        "id": "706ecae3-10d0-41f9-a5db-22747cbf1571",
+        "resource_type": "model",
+        "resource_id": "commerce-sales-assistant",
+        "principal_type": "group",
+        "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+        "permission": "read",
+        "created_at": 1783442036
+      },
+      {
+        "id": "d9c7d56a-c179-4b73-a357-094a38f904ca",
+        "resource_type": "model",
+        "resource_id": "commerce-sales-assistant",
+        "principal_type": "group",
+        "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+        "permission": "read",
+        "created_at": 1783442036
+      },
+      {
+        "id": "230327d0-2126-4387-a280-c37a7c974c77",
+        "resource_type": "model",
+        "resource_id": "commerce-sales-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783442036
+      },
+      {
+        "id": "b9a2bce2-bc28-4190-9559-9775bc616533",
+        "resource_type": "model",
+        "resource_id": "commerce-sales-assistant",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783442036
+      },
+      {
+        "id": "d0c25fd6-e186-44dd-a18d-b60b99781e47",
+        "resource_type": "model",
+        "resource_id": "commerce-sales-assistant",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783442036
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783442036,
+    "created_at": 1783442036
+  },
+  {
+    "id": "eridu-brain",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "base_model_id": "MiniMax-M3",
+    "name": "Eridu Brain",
+    "params": {
+      "system": "You are operating with the ERIDU Company Brain \u2014 a structured knowledge base for ERIDU, a content commerce enabler in Thailand.\n\n## Project history\n\nThis brain was designed and built across multiple sessions between the Founder and Claude. Here's the journey:\n\n**Session 1 \u2014 Architecture design:**\n- Started from a design summary document the Founder had prepared from a prior brainstorming session\n- Pressure-tested the two-layer architecture (principles + operations)\n- Added key refinements: decision routing layer, constraints vs authorities separation, graduated escalation model (act / notify / propose / escalate), \"what we don't do\" section, conflict resolution rule\n- Founder approved all changes except adding client management as a separate domain (stays under Commerce)\n\n**Session 2 \u2014 Layer 1 built:**\n- Drafted CLAUDE.md (Layer 0), core-principles.md, financial-guardrails.md\n- Founder provided company context: ERIDU is a content commerce enabler (not a marketing agency), three pillars (Commerce, Erify, ERISA), GMV is the north star metric, TikTok Shop and Shopee are primary platforms\n- Captured founder intent through Q&A: \"Own it fully. Drive results pragmatically.\"\n- Sensitive financial data (cash position, opex breakdown) moved to confidential layer\n- Finance items consolidated from core-principles into financial-guardrails (single source of truth)\n- Added governance-ops.md (communication, documentation, meetings, reviews, post-mortems) \u2014 split from core-principles to manage word count\n- Core principles landed at ~2,000 words in the sweet spot\n\n**Session 3 \u2014 Layer 2 operational skills:**\n- creator-management.md: Full ERISA operational skill including three revenue models (paid packages #1 now, fee-sharing #1 long-term potential, ADP #3 growing), complete ADP playbook (SPCC, vendor requirements, brand evaluation, recruit lists A-D, review cadence), Superstar vs Everyone Else model (20 human-serviced VVIPs, rest bot-serviced), fee-sharing table with actual percentages, renewal SLA (60-day process), AMP description\n- content-management.md: Erify operations including standard vs premium livestream definitions (SpatialStream), 14 studios (S/M/L), MC management (Standard/Flexible/Campaign types, all contractors), scheduling constraints (<250 THB/hour, dual-MC <1%, campaign MC <5%), peak hours and campaign days\n- commerce.md: Account management, 4 growth drivers (livestream, short video, affiliate, shopping center), 12-month growth roadmap, product sourcing, Soi Bear Fulfilment (inactive)\n- sales.md: Sales playbook, deal pipeline matching CRM stages, commission structure (1% fee, 2% retention, 1% incremental GMV)\n\n**Session 4 \u2014 Finance, HR, Legal + Confidential layer:**\n- finance-ops.md: Comprehensive finance calendar (date-by-date), monthly close timeline (14-day process), detailed reconciliation processes (MC, creator, Shopee SLP with 1-day turnaround windows), tax compliance verified against Thai law (WHT by 15th e-filing, VAT by 23rd, SSO by 15th), petty cash policy (10K float, 2K per transaction)\n- hr-ops.md: Thai Labor Protection Act compliance (LPA Amendment 2025 \u2014 maternity 120 days/60 days paid, paternity 15 days), probation (119 days contract / 90 days internal with monthly evaluation), PIP process (verbal \u2192 written \u2192 30-60 day PIP \u2192 termination), promotion/bonus/incentive guidelines, attendance and tardiness escalation\n- legal-process.md: Contract review workflow and SLAs, PDPA compliance checklist, platform TOS compliance, dispute resolution, document retention\n- finance-confidential.md: Cash position (~1 month reserve, TIGHT status), opex breakdown (400K MC + 200K creator + 900K fixed), credit terms (client/vendor/contractor), P&L review process (separate EF, EA, Overall reviews), cash conversion cycle framework, internal audit schedule\n- hr-confidential.md: Salary bands, incentive structure, bonus pool, promotion guidelines, contractor rate cards (all with TBD placeholders)\n\n**Session 4 continued \u2014 Quality check and packaging:**\n- Cross-file consistency check across all 13 files \u2014 found and fixed: 1 conflict (monthly close timeline vs reconciliation timing), 2 inconsistencies (diamond approval chain, 30K vs 50K threshold clarification)\n- Packaged as Claude Code plugin with YAML frontmatter on all SKILL.md files\n- Created plugin.json manifest, README, and project custom instruction for Claude.ai\n\n**Key design decisions made along the way:**\n- Revenue model determines fee structure, not creator type (critical ERISA insight)\n- Short video owned by Erify, temporarily outsourced to ERISA\n- Never entice managed creators FROM TikTok TO Shopee (but TO TikTok is fine)\n- Confidential information never shared between competing platforms\n- Commerce/Client Success always owns the client relationship, even when Erify or ERISA leads delivery\n- Platform partners can also be clients (when they commission services)\n- All MCs are contractors, not employees\n- Finance prepares P&L but doesn't participate in review meetings\n- Separate P&L reviews: EF (Head of Content + CM), EA (Head of Creator + CM), Overall (CM + Founder)\n\n**Outstanding items:**\n- Employee handbook (standalone, Thai language required)\n- Org chart document\n- Employment contract templates\n- AMP detailed playbook (from Head of Creator)\n- Paid package on-time SLA targets (from Head of Creator)\n- Erify scheduling steps and turnaround times\n- Client onboarding detailed process\n- Fill [TBD] placeholders in hr-confidential.md (salary bands, rates, bonus pool)\n- Fill [TBD] placeholders in finance-confidential.md (credit limits by tier)\n- Phase 2: build agents (one per domain = principles layer + operational skill + agent persona)\n\n## How to use the brain\n\nThe brain has layers. Follow this loading priority:\n\n**Always reference (Layer 0 + Layer 1):**\n- CLAUDE.md \u2014 identity, routing rules, conflict resolution. Read this first for any request.\n- core-principles.md \u2014 business model, boundaries, authorities, escalation, founder intent\n- financial-guardrails.md \u2014 spend tiers, payment terms, P&L triggers\n- governance-ops.md \u2014 communication, documentation, meetings, reviews, post-mortems\n\n**Reference when relevant (Layer 2 \u2014 by domain):**\n- creator-management.md \u2014 when the request involves creators, affiliates, MCN, campaigns (ADP/AMP), ERISA\n- content-management.md \u2014 when the request involves livestream, short video, MCs, studio, Erify\n- commerce.md \u2014 when the request involves enablement, account management, key accounts, growth roadmap\n- sales.md \u2014 when the request involves pipeline, deals, proposals, quotations, commissions\n- finance-ops.md \u2014 when the request involves invoicing, payments, tax filing, reconciliation, monthly close\n- hr-ops.md \u2014 when the request involves hiring, onboarding, payroll, leave, attendance, HR policies\n- legal-process.md \u2014 when the request involves contracts, PDPA, compliance, disputes\n\n**Reference when relevant (Confidential layer):**\n- finance-confidential.md \u2014 when the request involves cash position, cost breakdown, credit terms, P&L review process, cash conversion cycle, or audit\n- hr-confidential.md \u2014 when the request involves salary bands, incentive structures, bonus allocation, promotion guidelines, or contractor rate cards\n\n**Important:** This project contains confidential financial and HR data. Do not share outputs from this project that reference specific numbers from the confidential files.\n\n## Rules\n\n1. Layer 1 always wins. If an operational skill conflicts with core principles or financial guardrails, follow the principles layer.\n2. Follow the decision routing rules in CLAUDE.md to determine which operational skill applies.\n3. When a request spans multiple domains, reference multiple operational skills. Principles break any tie.\n4. Do not invent policies or numbers not documented in the brain. If the brain doesn't cover something, say so.\n5. Write for decisions, not documentation. Be direct, pragmatic, results-oriented \u2014 matching ERIDU's tone.\n6. When referencing Thai law compliance (labor, tax, PDPA), note that the brain was verified against regulations as of March 2026. Recommend confirming with external counsel for any legal decisions.\n7. When using Eridu MCP, default studio ID is std_OBXMKm0gW4IGQUNQzp4E\n8. User default timezone is UTC+7"
+    },
+    "meta": {
+      "profile_image_url": "/static/favicon.png",
+      "description": "Central Eridu Brain",
+      "capabilities": {
+        "file_context": true,
+        "vision": false,
+        "file_upload": false,
+        "web_search": true,
+        "image_generation": false,
+        "code_interpreter": false,
+        "terminal": false,
+        "citations": true,
+        "status_updates": true,
+        "usage": true,
+        "builtin_tools": true
+      },
+      "suggestion_prompts": null,
+      "tags": [
+        {
+          "name": "eridu-brain"
+        }
+      ],
+      "skillIds": [
+        "org-chart",
+        "00010",
+        "sales",
+        "legal-process",
+        "hr-ops",
+        "governance-ops",
+        "financial-guardrails",
+        "finance-ops",
+        "0002",
+        "decisionlog",
+        "creator-management",
+        "core-principles",
+        "content-management",
+        "commerce",
+        "talent-development-framework",
+        "openwebui-litellm-railway-integration-guide",
+        "affiliate-management-"
+      ],
+      "defaultFeatureIds": [
+        "web_search"
+      ],
+      "knowledge": [
+        {
+          "id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+          "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+          "name": "Eridu CMD",
+          "description": "Company CMD",
+          "meta": null,
+          "access_grants": [
+            {
+              "id": "9022395e-76c1-4bc5-ad3a-d5bcd32b01ab",
+              "resource_type": "knowledge",
+              "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+              "principal_type": "user",
+              "principal_id": "*",
+              "permission": "read",
+              "created_at": 1781609002
+            }
+          ],
+          "created_at": 1781609002,
+          "updated_at": 1781609002,
+          "user": {
+            "id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+            "name": "Allen",
+            "role": "admin",
+            "email": "ht016746@gmail.com"
+          },
+          "write_access": true,
+          "type": "collection"
+        }
+      ],
+      "toolIds": [
+        "server:mcp:eridu_mcp"
+      ],
+      "builtinTools": {
+        "code_interpreter": false,
+        "image_generation": false
+      }
+    },
+    "access_grants": [
+      {
+        "id": "9bb5acbd-6360-4309-91c0-97d63ee58548",
+        "resource_type": "model",
+        "resource_id": "eridu-brain",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1783444946
+      },
+      {
+        "id": "57669f8c-a262-4e4e-a6a3-212153dbf895",
+        "resource_type": "model",
+        "resource_id": "eridu-brain",
+        "principal_type": "group",
+        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "permission": "read",
+        "created_at": 1783444946
+      },
+      {
+        "id": "39c314b6-91a7-40c2-8e04-d24119978220",
+        "resource_type": "model",
+        "resource_id": "eridu-brain",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1783444946
+      }
+    ],
+    "is_active": true,
+    "updated_at": 1783444946,
+    "created_at": 1781707840
+  }
+]

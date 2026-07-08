@@ -1,0 +1,66 @@
+# Open WebUI Live Config Knowledge Base
+
+Pulled directly from the deployed Open WebUI instance via its REST API (admin key, read-only calls per `openwebui-rest-api`/`openwebui-groups-permissions`/`openwebui-mcp-tool-integration` skills). No remote state was changed by the pull itself.
+
+This directory is the durable, git-tracked record of **what's actually configured on the live instance** — design, config, and setup for Open WebUI (and, by extension, the LiteLLM-backed assistants it serves). The example manifests one level up (`workspace-models.example.json`, `tool-access.example.json`) are illustrative templates and had drifted from live reality (live has 9 real assistants across Commerce/Erify/Erisa/Eridu-corporate; the examples show 3 generic ones) — treat this directory, not those templates, as the current source of truth for the live setup.
+
+## Files
+
+| File | Source endpoint | Contents |
+|---|---|---|
+| `models.json` | `GET /api/v1/models/export` | All 10 Workspace Models (assistants) as configured live, including `skillIds`, `toolIds`, `knowledge`, and `access_grants` (group UUIDs) |
+| `groups.json` | `GET /api/v1/groups/` | All 13 groups with full `permissions` objects |
+| `tool-servers.json` | `GET /api/v1/configs/tool_servers` | The single registered MCP tool-server connection (`eridu_mcp`) and its group access grants |
+| `default-permissions.json` | `GET /api/v1/users/default/permissions` | Instance-wide default `UserPermissions` baseline |
+| `skills/*.md` | `GET /api/v1/skills/export` | Full content of all 19 Open WebUI Skills (the "Eridu Brain"), one file per skill ID, verbatim including YAML frontmatter |
+
+## Groups roster (id → name)
+
+| Group ID | Name |
+|---|---|
+| `7b35c753-4d87-46c3-896c-d43fb188da9f` | Commerce - Manager |
+| `8a37f184-4ac5-4226-9852-50b88029b181` | Erify - Member |
+| `5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85` | Commerce - Team-Lead |
+| `06a13d90-8f63-40ac-9371-b202eefd1f22` | Erify - Team-Lead |
+| `4c0e8df2-0dc7-44ef-a7ed-a7abae84956f` | Erify - Manager |
+| `b62ac290-77f4-4eef-921d-b5f4341f7528` | Finance - Manager |
+| `072d90e6-b38c-4a75-ac28-ef7c69a7535c` | HR - Manager |
+| `4fb7717c-fb34-44ee-bf67-a14033664ec8` | Erisa - Team-Lead |
+| `02ec2465-b5f3-4e9f-93b5-ca87b46f0936` | Erisa - Member |
+| `d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81` | Erisa - Manager |
+| `fdfc0f31-8adf-4fa3-8d69-e907c5541894` | Commerce - Member |
+| `3728dd04-6c44-41d0-9836-49c70593af45` | Org - General |
+| `17e06578-d8e0-4134-81e3-a859c5f158b1` | Admins |
+
+## Assistants (Workspace Models) roster
+
+| Assistant ID | Display name | Skill IDs | Groups granted access |
+|---|---|---|---|
+| `production-assistant` | Erify - Production Assistant | core-principles, content-management, governance-ops | Erify - Team-Lead, Admins, Org - General, Erify - Manager, Erify - Member |
+| `management-assistant` | Eridu - Finance Assistant | core-principles, org-chart, financial-guardrails, finance-ops, governance-ops | 061b2897-f788-4ff7-b42a-dd05fbe9f137, Admins, Org - General, 39cc7eb7-37ab-4f75-add7-113e97b88fa0, Finance - Manager |
+| `performance-assistant` | Erify - Performance Assistant | core-principles, 0002, content-management, governance-ops | Erify - Team-Lead, Admins, Org - General, Erify - Manager, Erify - Member |
+| `commerce-assistant` | Commerce - Operations Assistant | core-principles, commerce, governance-ops | Admins, Org - General, Commerce - Team-Lead, Commerce - Manager, Commerce - Member |
+| `eridu-hr-assistant` | Eridu - HR Assistant | core-principles, org-chart, talent-development-framework, governance-ops | HR - Manager, Admins, Org - General |
+| `scheduling-assistant` | Erify - Scheduling Assistant | core-principles, content-management, governance-ops | Erify - Team-Lead, Admins, Org - General, Erify - Manager, Erify - Member |
+| `erisa-adp-assistant` | Erisa - ADP Assistant | core-principles, creator-management, affiliate-management-, governance-ops | Erisa - Member, Admins, Org - General, Erisa - Team-Lead, Erisa - Manager |
+| `creator-service-assistant` | Erisa - Creator Service Assistant | core-principles, creator-management, governance-ops | Erisa - Member, Admins, Org - General, Erisa - Team-Lead, Erisa - Manager |
+| `commerce-sales-assistant` | Commerce - Sales Assistant | core-principles, governance-ops, commerce, sales | Admins, Org - General, Commerce - Team-Lead, Commerce - Manager, Commerce - Member |
+| `eridu-brain` | Eridu Brain | org-chart, 00010, sales, legal-process, hr-ops, governance-ops, financial-guardrails, finance-ops, 0002, decisionlog, creator-management, core-principles, content-management, commerce, talent-development-framework, openwebui-litellm-railway-integration-guide, affiliate-management- | Admins, Org - General |
+
+## Notes for cross-checking `../skills-import-test-plan.md`
+
+- All assistant IDs referenced in the test plan (`commerce-assistant`, `commerce-sales-assistant`, `performance-assistant`, `production-assistant`, `scheduling-assistant`, `erisa-adp-assistant`) exist live and match this roster.
+- The org is three pillars — **Commerce**, **Erify**, **Erisa** — each with Manager/Team-Lead/Member groups, plus cross-cutting `Finance - Manager`, `HR - Manager`, `Org - General`, and `Admins`. This matches the test plan's "Business Unit Managers" framing.
+- `ai/openwebui/README.md`, `workspace-models.example.json`, and `tool-access.example.json` describe a *generic* 3-assistant example and do not yet reflect this live 9-assistant / 3-pillar structure — treat those as stale templates until someone folds this real structure back into canonical docs (a decision for the user, not made here).
+
+## Known live-config gaps (found during review)
+
+These are discrepancies in the **live** Open WebUI/MCP config itself, observed while building this knowledge base. Fixing them requires a remote config change (registering filtered tool-server connections, editing access grants, re-granting assistants to current groups) — none of that was done here, since this pull is read-only by design. Flagging so they're not silently hidden behind "this is the source of truth now."
+
+- **`tool-servers.json`: the `eridu_mcp` connection has an empty `function_name_filter_list` and is access-granted to all 13 groups**, including every Member-level group across Commerce/Erify/Erisa and `Org - General`. That exposes every current and future MCP function (including the studio-scoped `erify_get_show`/`erify_get_task`/`erify_query_shows`/`erify_query_tasks` tools) to staff who, per `ai/mcp/README.md`'s documented group→tool policy (default-deny for `staff`, disjoint subsets for `fulfillment`/`livestream`), shouldn't have any operational MCP access. To close this per `openwebui-mcp-tool-integration`: split into filtered connections per group's allowed tool subset and scope `access_grants` accordingly — a remote change that needs sign-off first.
+- **`models.json`: the `management-assistant` (Eridu - Finance Assistant) has `access_grants` referencing two group IDs (`39cc7eb7-37ab-4f75-add7-113e97b88fa0`, `061b2897-f788-4ff7-b42a-dd05fbe9f137`) that don't exist in the current `groups.json`** — orphaned grants, most likely from groups that were since renamed or deleted (the live roster only has `Finance - Manager`, `Admins`, and `Org - General` as real finance-relevant groups). Harmless today (grants to a nonexistent principal just don't resolve to anyone), but if a Finance team-lead/member role is supposed to have access, it isn't currently getting it and needs a fresh grant to a real group.
+- **Skill id `affiliate-management-` carries a trailing hyphen** (and its display name `Affiliate management ` a trailing space) at the source. `erisa-adp-assistant` and `eridu-brain` both reference the id exactly as `affiliate-management-`, so the synced file is named `skills/affiliate-management-.md` to match byte-for-byte — don't "clean up" the filename without also fixing the id in Open WebUI, or the assistant's `skillIds` reference breaks.
+
+## Handling
+- **Committed to git as the design/config/setup knowledge base for Open WebUI + LiteLLM.** This includes live internal group UUIDs and the full text of company operating docs (finance guardrails, HR policy, sales playbook, etc.) pulled from the "Eridu Brain" skills — kept intentionally, by decision, rather than redacted or excluded.
+- This is a **point-in-time pull, not a live sync.** Re-run the same read-only API calls (see `openwebui-rest-api`, `openwebui-groups-permissions`, `openwebui-mcp-tool-integration` skills) and overwrite these files whenever live config changes materially (new/changed assistant, group, tool-server connection, or skill content) so this knowledge base doesn't silently go stale.
