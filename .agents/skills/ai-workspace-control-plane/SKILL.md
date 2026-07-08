@@ -42,7 +42,7 @@ Before editing AI workspace files, read the relevant existing source:
 - Use one LiteLLM virtual key for Open WebUI (never the master key), then forward the Open WebUI user identity as the LiteLLM customer/end-user ID via Open WebUI's global user-info header-forwarding env vars (`ENABLE_FORWARD_USER_INFO_HEADERS` + `FORWARD_USER_INFO_HEADER_USER_ID=x-litellm-customer-id`). Connection-level custom headers are unreliable on this Railway setup; do not rely on them.
 - Treat usage tracking as automatic: LiteLLM records forwarded users as customers as requests arrive, with no pre-provisioning or sync step. Budget-tier assignment is a separate, later governance step.
 - Apply per-user budget/rate policy at the LiteLLM customer/end-user layer.
-- On this Railway deployment, manage LiteLLM models, provider credentials, and company model aliases through the LiteLLM Admin UI ("Store Model in DB"); `config.yaml` is not conveniently exposed. Treat repo `ai/litellm/` files as reference/policy for that UI (or a future repo-managed config path), not an actively-applied config.
+- On this Railway deployment, manage LiteLLM models, provider credentials, and company model aliases through the LiteLLM Admin UI ("Store Model in DB") or its equivalent Management API (see [litellm-admin-api](../litellm-admin-api/SKILL.md)); `config.yaml` is not conveniently exposed either way. Treat repo `ai/litellm/` files as reference/policy for that surface (or a future repo-managed config path), not an actively-applied config.
 - Use the stable company model aliases (`company-fast`, `company-balanced`, `company-reasoning`, `company-coding`) grouped into access groups (`company-general`, `company-power`, `company-admin`); do not invent a parallel alias taxonomy.
 - Verify LiteLLM/Open WebUI capabilities against the deployed versions (LiteLLM `1.89.3`, Open WebUI `0.9.6`) before presenting them as feasible; do not assume latest-docs behavior applies.
 - Keep provider API keys in Railway environment variables, not repo files.
@@ -54,12 +54,13 @@ Before editing AI workspace files, read the relevant existing source:
 When changing LiteLLM policy:
 
 1. Decide whether the change is model routing, key policy, customer budget, provider budget, or observability.
-2. Put durable examples/templates under `ai/litellm/` as reference for the Admin UI.
+2. Put durable examples/templates under `ai/litellm/` as reference for the Admin UI / Management API.
 3. Keep secrets as `os.environ/...` references.
 4. For this Railway deployment, apply model/alias/credential changes in the LiteLLM Admin UI ("Store Model in DB"); `config.yaml` is not conveniently exposed. Repo files stay as reference until a repo-managed config path exists.
 5. Preserve the distinction between:
    - virtual key limits = whole Open WebUI integration or team/app limit;
    - customer/end-user limits = individual Open WebUI user limit.
+6. To actually call the LiteLLM Management API — create/update models, keys, teams, customers, or budgets — use [litellm-admin-api](../litellm-admin-api/SKILL.md); this skill governs the policy, that one covers the API mechanics.
 
 ## Open WebUI decision path
 
@@ -97,3 +98,4 @@ When changing MCP policy:
 - [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — endpoint reference and call mechanics for scripting Open WebUI configuration changes that this skill governs
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — groups/permissions/access-grant mechanics
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — MCP/tool-server registration mechanics
+- [litellm-admin-api](../litellm-admin-api/SKILL.md) — LiteLLM Management API endpoint reference and call mechanics for models, keys, teams, customers, and budgets that this skill governs
