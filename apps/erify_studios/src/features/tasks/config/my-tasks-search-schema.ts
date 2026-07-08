@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { booleanQueryParamSchema } from '@eridu/api-types/pagination';
 import { TASK_STATUS, TASK_TYPE } from '@eridu/api-types/task-management';
 
 export const DEFAULT_STATUS_FILTERS = [
@@ -35,11 +36,7 @@ export const myTasksSearchSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   limit: z.union([z.literal(20), z.literal(50), z.literal(100)]).catch(DEFAULT_LIMIT),
   show_start_date: z.string().optional().catch(undefined),
-  overdue_only: z
-    .union([z.boolean(), z.enum(['true', 'false'])])
-    .transform((value) => (typeof value === 'string' ? value === 'true' : value))
-    .optional()
-    .catch(false),
+  overdue_only: booleanQueryParamSchema.optional().catch(false),
   status: statusFilterSchema.catch([...DEFAULT_STATUS_FILTERS]),
   task_type: taskTypeFilterSchema.catch([]),
   search: z.string().optional().catch(undefined),
