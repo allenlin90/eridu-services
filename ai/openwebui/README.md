@@ -13,6 +13,7 @@ Open WebUI should be the user-facing AI workspace. It should provide a small set
 | `workspace-models.example.json` | Example assistant definitions for Workspace Models. |
 | `tool-access.example.json` | Example MCP tool access policy by group. |
 | `skills/` | Open WebUI-importable skill adapters and workspace-facing instructions. |
+| `synced/` | Git-tracked knowledge base of the **live** Open WebUI config (assistants, groups, tool-server connections, default permissions, and full skill content), pulled read-only via the API. Treat this as the current source of truth for the live setup — the example files above are illustrative templates and may drift from it. |
 
 ## Existing repo skill hierarchy
 
