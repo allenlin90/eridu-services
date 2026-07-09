@@ -34,4 +34,4 @@ Do **not** parallelize these writes with `Promise.all` inside the existing `@Tra
 
 ## Related Context
 
-Identified during PR #246 review (`schedule-publish-impact-review` branch). See also [`schedule-publish-removal-no-audit.md`](./schedule-publish-removal-no-audit.md) and [`schedule-publish-active-task-check-mismatch.md`](./schedule-publish-active-task-check-mismatch.md) for other open items in this same code path.
+Identified during PR #246 review (`schedule-publish-impact-review` branch). See also [`schedule-publish-removal-no-audit.md`](./schedule-publish-removal-no-audit.md) for another open item in this same code path.
