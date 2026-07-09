@@ -205,6 +205,42 @@ export class AuditRepository {
     return { items, total };
   }
 
+  /**
+   * The most recent schedule-publish-impact Audit row for a show, filtered to
+   * `impact_kind: 'stale_conflict'`. Since only one conflict can be
+   * unresolved per show at a time (enforced by the showId advisory lock in
+   * `ScheduleConflictService`), the newest row alone tells the caller whether
+   * a conflict is currently pending: `lifecycle: 'opened'` means pending,
+   * `lifecycle: 'resolved'` or no row at all means not pending.
+   */
+  async findLatestScheduleConflictForShow(showId: bigint): Promise<AuditWithTargets | null> {
+    const target = await this.txHost.tx.auditTarget.findFirst({
+      where: {
+        targetType: 'SHOW',
+        showId,
+        audit: {
+          metadata: {
+            path: ['event'],
+            equals: 'schedule_publish_impact',
+          },
+        },
+      },
+      include: { audit: { include: AUDIT_WITH_TARGETS_INCLUDE } },
+      orderBy: { audit: { createdAt: 'desc' } },
+    });
+
+    if (!target) {
+      return null;
+    }
+
+    const metadata = target.audit.metadata as { impact_kind?: string } | null;
+    if (metadata?.impact_kind !== 'stale_conflict') {
+      return null;
+    }
+
+    return target.audit;
+  }
+
   private toTargetCreateInput(
     target: CreateAuditTargetPayload,
   ): Prisma.AuditTargetCreateWithoutAuditInput {
