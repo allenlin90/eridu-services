@@ -141,7 +141,73 @@ export const cancellationStatusResponseSchema = z.object({
 export const schedulePublishImpactKindSchema = z.enum([
   'confirmed_future_updated',
   'confirmed_future_pending_resolution',
+  'stale_conflict',
 ]);
+
+export const scheduleConflictTypeSchema = z.enum(['update_held_back', 'removal_held_back']);
+
+export const scheduleConflictResolutionStatusSchema = z.enum([
+  'pending',
+  'applied',
+  'dismissed',
+  'superseded',
+  'auto_resolved_no_longer_conflicting',
+]);
+
+const heldBackFkRefSchema = z.object({
+  uid: z.string(),
+  name: z.string(),
+});
+
+const heldBackFieldValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+  heldBackFkRefSchema,
+]);
+
+const heldBackShowFieldsSchema = z.object({
+  changed_fields: z.array(z.string()),
+  old: z.record(z.string(), heldBackFieldValueSchema),
+  new: z.record(z.string(), heldBackFieldValueSchema),
+}).nullable();
+
+const heldBackCreatorEntrySchema = z.object({
+  creator_uid: z.string(),
+  action: z.enum(['update', 'remove']),
+  old_note: z.string().nullable(),
+  new_note: z.string().nullable(),
+});
+
+const heldBackPlatformFieldsSchema = z.object({
+  live_stream_link: z.string().nullable(),
+  platform_show_id: z.string().nullable(),
+});
+
+const heldBackPlatformEntrySchema = z.object({
+  platform_uid: z.string(),
+  action: z.enum(['update', 'remove']),
+  old: heldBackPlatformFieldsSchema,
+  new: heldBackPlatformFieldsSchema,
+});
+
+const proposedStatusTransitionSchema = z.object({
+  from: z.string(),
+  to: z.enum(['CANCELLED', 'CANCELLED_PENDING_RESOLUTION']),
+}).nullable();
+
+export const heldBackPayloadSchema = z.object({
+  show_fields: heldBackShowFieldsSchema,
+  show_creators: z.array(heldBackCreatorEntrySchema),
+  show_platforms: z.array(heldBackPlatformEntrySchema),
+  proposed_status_transition: proposedStatusTransitionSchema,
+});
+
+export const resolveScheduleConflictSchema = z.object({
+  action: z.enum(['apply', 'dismiss']),
+  reason: z.string().min(1),
+});
 
 export const schedulePublishImpactRowSchema = z.object({
   audit_id: z.string(),
@@ -150,6 +216,10 @@ export const schedulePublishImpactRowSchema = z.object({
   external_id: z.string().nullable(),
   changed_fields: z.array(z.string()),
   relation_changes: z.record(z.string(), z.number().int().nonnegative()).default({}),
+  conflict_uid: z.string().nullable(),
+  conflict_type: scheduleConflictTypeSchema.nullable(),
+  resolution_status: scheduleConflictResolutionStatusSchema.nullable(),
+  held_back: heldBackPayloadSchema.nullable(),
   show: z.object({
     id: z.string(),
     name: z.string(),

@@ -7,9 +7,13 @@ import type {
   correctShowPlatformPerformanceInputSchema,
   createShowInputSchema,
   createStudioShowInputSchema,
+  heldBackPayloadSchema,
   listShowsQuerySchema,
   requestCancellationResolutionSchema,
+  resolveScheduleConflictSchema,
   resolveShowCancellationSchema,
+  scheduleConflictResolutionStatusSchema,
+  scheduleConflictTypeSchema,
   schedulePublishImpactRowSchema,
   showApiResponseSchema,
   showListResponseSchema,
@@ -146,3 +150,7 @@ export type CancellationHistoryEntry = z.infer<typeof cancellationHistoryEntrySc
 export type CancellationStatusResponse = z.infer<typeof cancellationStatusResponseSchema>;
 export type CorrectShowPlatformPerformanceInput = z.infer<typeof correctShowPlatformPerformanceInputSchema>;
 export type SchedulePublishImpactRow = z.infer<typeof schedulePublishImpactRowSchema>;
+export type ScheduleConflictType = z.infer<typeof scheduleConflictTypeSchema>;
+export type ScheduleConflictResolutionStatus = z.infer<typeof scheduleConflictResolutionStatusSchema>;
+export type HeldBackPayload = z.infer<typeof heldBackPayloadSchema>;
+export type ResolveScheduleConflictInput = z.infer<typeof resolveScheduleConflictSchema>;
