@@ -1148,6 +1148,90 @@ describe('studioShowManagementService', () => {
       );
     });
 
+    /**
+     * Finding 1 (final-review fix): `toShowUpdateData` used to only translate
+     * `name`/`start_time`/`end_time` from a held-back diff's `new` values —
+     * `metadata` (a plain scalar, not FK-backed) was silently never written,
+     * even though `resolution_status: 'applied'` was returned to the caller.
+     * This asserts the write actually happens with the parsed metadata
+     * object, not merely that resolution succeeds.
+     */
+    it('applies a held-back metadata diff to the show record on successful apply', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+        metadata: { note: 'old' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: {
+            show_fields: {
+              changed_fields: ['metadata'],
+              old: { metadata: JSON.stringify({ note: 'old' }) },
+              new: { metadata: JSON.stringify({ note: 'new', tag: 'backfilled' }) },
+            },
+            show_creators: [],
+            show_platforms: [],
+            proposed_status_transition: null,
+          },
+        },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'backfill metadata' }, actorExtId);
+
+      expect(showRepositoryMock.update).toHaveBeenCalledWith(
+        { id: BigInt(1) },
+        expect.objectContaining({ metadata: { note: 'new', tag: 'backfilled' } }),
+      );
+    });
+
+    /**
+     * Finding 2 (final-review fix): the drift check must compare against a
+     * show read AFTER the showId advisory lock is held (inside
+     * applyEligibleScheduleConflict's `loadCurrentState` callback passed to
+     * ScheduleConflictService.applyConflict), not the snapshot
+     * resolveScheduleConflict read before any lock was ever taken. This
+     * seeds two different `findByUidAndStudioUid` reads — a stale first read
+     * and a different "fresh" read for every subsequent call — and proves
+     * the callback captured for the lock-protected re-read reflects the
+     * fresh value, not the pre-lock snapshot.
+     */
+    it('rebuilds currentFieldValues from a show read after the lock is held, not the pre-lock snapshot', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid
+        .mockResolvedValueOnce({
+          id: BigInt(1),
+          uid: 'show_1',
+          showStatus: { systemKey: 'DRAFT' },
+          name: 'Stale Name (pre-lock snapshot)',
+        } as any)
+        .mockResolvedValue({
+          id: BigInt(1),
+          uid: 'show_1',
+          showStatus: { systemKey: 'DRAFT' },
+          name: 'Fresh Name (post-lock read)',
+        } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: { show_fields: { changed_fields: ['name'], old: { name: 'Original' }, new: { name: 'Planner Edit' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'x' }, actorExtId);
+
+      expect(scheduleConflictServiceMock.applyConflict).toHaveBeenCalledTimes(1);
+      const passedParams = scheduleConflictServiceMock.applyConflict.mock.calls[0][0];
+      expect(passedParams.loadCurrentState).toEqual(expect.any(Function));
+
+      const freshState = await passedParams.loadCurrentState();
+      expect(freshState.currentFieldValues.name).toBe('Fresh Name (post-lock read)');
+      expect(freshState.currentFieldValues.name).not.toBe('Stale Name (pre-lock snapshot)');
+    });
+
     it('applies a held-back creator removal by resolving creator_uid to the underlying row and soft-deleting it', async () => {
       scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
       showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({

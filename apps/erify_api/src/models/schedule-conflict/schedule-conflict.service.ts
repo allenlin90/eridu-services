@@ -135,13 +135,18 @@ export class ScheduleConflictService {
     await this.lockShow(params.showId);
     const pending = await this.requirePendingConflict(params.showId, params.conflictUid);
 
-    if (isNoLongerEligible(pending.conflict_type, params.currentShowStatus)) {
+    // Loaded only now, after the showId advisory lock is held — see
+    // `ApplyConflictParams.loadCurrentState` — so the checks below compare
+    // against fresh state, not a pre-lock snapshot.
+    const { currentShowStatus, currentFieldValues } = await params.loadCurrentState();
+
+    if (isNoLongerEligible(pending.conflict_type, currentShowStatus)) {
       throw HttpError.conflict('SHOW_NO_LONGER_ELIGIBLE');
     }
 
     const snapshotOld = pending.held_back.show_fields?.old ?? {};
     const drifted = Object.entries(snapshotOld).some(([field, value]) => {
-      return JSON.stringify(params.currentFieldValues[field] ?? null) !== JSON.stringify(this.unwrapForCompare(value));
+      return JSON.stringify(currentFieldValues[field] ?? null) !== JSON.stringify(this.unwrapForCompare(value));
     });
     if (drifted) {
       throw HttpError.conflict('CONFLICT_STATE_CHANGED');

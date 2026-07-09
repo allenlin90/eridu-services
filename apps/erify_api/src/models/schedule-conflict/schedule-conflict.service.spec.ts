@@ -247,8 +247,7 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'planner override',
-        currentShowStatus: 'DRAFT',
-        currentFieldValues: { name: 'A' },
+        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
       });
 
       expect(result.outcome).toBe('applied');
@@ -265,8 +264,7 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'x',
-        currentShowStatus: 'DRAFT',
-        currentFieldValues: { name: 'SOMETHING ELSE' },
+        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'SOMETHING ELSE' } }),
       })).rejects.toThrow('CONFLICT_STATE_CHANGED');
     });
 
@@ -278,8 +276,7 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'x',
-        currentShowStatus: 'DRAFT',
-        currentFieldValues: { name: 'A' },
+        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
       })).rejects.toThrow('CONFLICT_ALREADY_RESOLVED');
     });
 
@@ -303,11 +300,36 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'x',
-        currentShowStatus: 'COMPLETED',
-        currentFieldValues: { name: 'A' },
+        loadCurrentState: async () => ({ currentShowStatus: 'COMPLETED', currentFieldValues: { name: 'A' } }),
       })).rejects.toThrow('SHOW_NO_LONGER_ELIGIBLE');
 
       expect(auditService.create).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Finding 2 (final-review fix): the eligibility/drift checks must compare
+     * against state read after the showId advisory lock is acquired, not a
+     * value the caller captured before ever entering a transaction.
+     * `loadCurrentState` is a callback for exactly this reason — this test
+     * proves `applyConflict` actually invokes it (rather than, say, only
+     * calling it lazily/never) and uses whatever it returns for the drift
+     * check, by having the callback return values that disagree with what a
+     * hypothetical pre-lock snapshot would have held.
+     */
+    it('invokes loadCurrentState (not a pre-supplied snapshot) and uses its fresh values for the drift check', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+      const loadCurrentState = jest.fn().mockResolvedValue({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } });
+
+      const result = await service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'planner override',
+        loadCurrentState,
+      });
+
+      expect(loadCurrentState).toHaveBeenCalledTimes(1);
+      expect(result.outcome).toBe('applied');
     });
   });
 
@@ -482,8 +504,7 @@ describe('scheduleConflictService', () => {
           conflictUid: 'conflict_1',
           actorId: BigInt(10),
           reason: 'second caller',
-          currentShowStatus: 'DRAFT',
-          currentFieldValues: { name: 'A' },
+          loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
         }),
       ]);
 
@@ -533,8 +554,7 @@ describe('scheduleConflictService', () => {
           conflictUid: 'conflict_1',
           actorId: BigInt(10),
           reason: 'planner applies the deferred diff',
-          currentShowStatus: 'DRAFT',
-          currentFieldValues: { name: 'A' },
+          loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
         }),
       ]);
 

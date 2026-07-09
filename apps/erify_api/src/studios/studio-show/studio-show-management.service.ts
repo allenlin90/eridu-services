@@ -376,14 +376,12 @@ export class StudioShowManagementService {
       const changedFields = heldBack?.show_fields?.changed_fields ?? [];
       const conflictType = metadata.conflict_type as 'update_held_back' | 'removal_held_back' | undefined;
 
-      const currentFieldValues = await this.buildCurrentFieldValues(show, changedFields);
-
       await this.applyEligibleScheduleConflict({
         show,
+        studioUid,
         conflictUid,
         actorId: actor.id,
         reason: dto.reason,
-        currentFieldValues,
         conflictType,
         changedFields,
         heldBack,
@@ -416,23 +414,31 @@ export class StudioShowManagementService {
   @Transactional()
   private async applyEligibleScheduleConflict(params: {
     show: ShowWithPayload<typeof studioShowDetailInclude>;
+    studioUid: string;
     conflictUid: string;
     actorId: bigint;
     reason: string;
-    currentFieldValues: Record<string, unknown>;
     conflictType: 'update_held_back' | 'removal_held_back' | undefined;
     changedFields: string[];
     heldBack: HeldBackPayload | undefined;
   }): Promise<void> {
-    const { show, conflictUid, actorId, reason, currentFieldValues, conflictType, changedFields, heldBack } = params;
+    const { show, studioUid, conflictUid, actorId, reason, conflictType, changedFields, heldBack } = params;
 
     await this.scheduleConflictService.applyConflict({
       showId: show.id,
       conflictUid,
       actorId,
       reason,
-      currentShowStatus: show.showStatus?.systemKey ?? '',
-      currentFieldValues,
+      // Invoked by applyConflict only after it holds the showId advisory
+      // lock, so this re-reads the show fresh instead of reusing the
+      // snapshot resolveScheduleConflict read before any lock was taken.
+      loadCurrentState: async () => {
+        const freshShow = await this.findStudioShowOrThrow(studioUid, show.uid);
+        return {
+          currentShowStatus: freshShow.showStatus?.systemKey ?? '',
+          currentFieldValues: await this.buildCurrentFieldValues(freshShow, changedFields),
+        };
+      },
     });
 
     if (conflictType === 'update_held_back' && (changedFields.includes('start_time') || changedFields.includes('end_time'))) {
@@ -526,7 +532,8 @@ export class StudioShowManagementService {
    * fully applied via `applyHeldBackRelations` below — this gap only covers
    * the six FK-backed `show_fields` entries, not relations. If FK-field
    * apply is needed later, resolve `{uid,name}` back to an internal id here
-   * before writing.
+   * before writing. `metadata` is a plain scalar (JSON, not FK-backed), so
+   * it is applied here like `name`/`start_time`/`end_time`.
    */
   private toShowUpdateData(showFields: { new: Record<string, unknown> }): ShowUpdateData {
     const data: ShowUpdateData = {};
@@ -536,6 +543,13 @@ export class StudioShowManagementService {
       data.startTime = new Date(showFields.new.start_time);
     if (typeof showFields.new.end_time === 'string')
       data.endTime = new Date(showFields.new.end_time);
+    if (typeof showFields.new.metadata === 'string') {
+      try {
+        data.metadata = JSON.parse(showFields.new.metadata);
+      } catch {
+        // Leave metadata untouched if the stored string somehow isn't valid JSON.
+      }
+    }
     return data;
   }
 

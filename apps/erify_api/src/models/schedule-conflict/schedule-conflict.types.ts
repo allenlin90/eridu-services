@@ -49,10 +49,19 @@ export type DismissConflictParams = {
 };
 
 export type ApplyConflictParams = DismissConflictParams & {
-  /** Current live show status system key, for the terminal-status eligibility recheck. */
-  currentShowStatus: string;
-  /** Current DB values for every field in the snapshot's `show_fields.changed_fields`, keyed the same way. Empty object for a `removal_held_back` conflict with no field diff. */
-  currentFieldValues: Record<string, unknown>;
+  /**
+   * Supplies the live show status and current DB values for every field in
+   * the snapshot's `show_fields.changed_fields` (keyed the same way; empty
+   * object for a `removal_held_back` conflict with no field diff).
+   * `applyConflict` invokes this only after it has acquired the showId
+   * advisory lock, so the eligibility recheck and drift check compare
+   * against fresh, lock-protected state — never a snapshot read before the
+   * caller entered a transaction.
+   */
+  loadCurrentState: () => Promise<{
+    currentShowStatus: string;
+    currentFieldValues: Record<string, unknown>;
+  }>;
 };
 
 export type CheckEligibilityParams = {
