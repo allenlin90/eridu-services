@@ -27,6 +27,7 @@ import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { UtilityService } from '@/utility/utility.service';
 
 let mockTx: {
   creator: { findFirst: jest.Mock };
@@ -129,6 +130,7 @@ describe('studioShowManagementService', () => {
     findLatestScheduleConflictForShow: jest.fn(),
   };
   const scheduleConflictServiceMock = {
+    checkEligibility: jest.fn(),
     applyConflict: jest.fn(),
     dismissConflict: jest.fn(),
   };
@@ -1120,6 +1122,7 @@ describe('studioShowManagementService', () => {
   describe('resolveScheduleConflict', () => {
     beforeEach(() => {
       userServiceMock.getUserByExtId.mockResolvedValue({ id: BigInt(9), uid: 'user_1', name: 'Actor' });
+      scheduleConflictServiceMock.checkEligibility.mockResolvedValue({ eligible: true });
     });
 
     it('calls reconcileTaskDueDates with the snapshot old/new times when applying a start_time/end_time diff', async () => {
@@ -1212,6 +1215,183 @@ describe('studioShowManagementService', () => {
         response: expect.objectContaining({ message: 'ACTOR_NOT_FOUND' }),
       });
       expect(scheduleConflictServiceMock.dismissConflict).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Regression test for the rollback-swallows-write bug: resolveScheduleConflict
+     * must resolve checkEligibility() to completion (its transaction already
+     * committed) BEFORE it throws SHOW_NO_LONGER_ELIGIBLE, and must never call
+     * applyConflict (or any downstream show/task write) for an ineligible show.
+     * If this were still one @Transactional() method write-then-throwing in a
+     * single transaction, checkEligibility wouldn't exist as a separate call at
+     * all — this asserts the call is genuinely separate and precedes the throw.
+     */
+    it('rejects with SHOW_NO_LONGER_ELIGIBLE via checkEligibility — a call already resolved before the throw — without ever calling applyConflict', async () => {
+      scheduleConflictServiceMock.checkEligibility.mockResolvedValue({ eligible: false });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'COMPLETED' },
+      } as any);
+
+      await expect(
+        service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'x' }, actorExtId),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'SHOW_NO_LONGER_ELIGIBLE' }),
+      });
+
+      expect(scheduleConflictServiceMock.checkEligibility).toHaveBeenCalledWith({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        currentShowStatus: 'COMPLETED',
+      });
+      expect(scheduleConflictServiceMock.applyConflict).not.toHaveBeenCalled();
+      expect(taskServiceMock.reconcileTaskDueDates).not.toHaveBeenCalled();
+      expect(showRepositoryMock.update).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * End-to-end regression test for the actual bug: reproduces the real call
+   * shape (StudioShowManagementService.resolveScheduleConflict calling into
+   * the REAL ScheduleConflictService, not a jest.fn() mock) against a
+   * $transaction mock that genuinely simulates Prisma's commit-on-resolve /
+   * rollback-on-throw semantics — unlike the always-committing passthrough
+   * (`jest.fn(async (cb) => cb(mockTx))`) used everywhere else in this file,
+   * which cannot distinguish a durable write from one that got rolled back.
+   *
+   * Before the fix, resolveScheduleConflict was @Transactional() and called
+   * the (undecorated) applyConflict directly — CLS Propagation.Required
+   * reused that single ambient transaction, so applyConflict's write-then-throw
+   * for SHOW_NO_LONGER_ELIGIBLE got rolled back along with the throw, and the
+   * audit write never landed. This test proves the write now survives.
+   */
+  describe('resolveScheduleConflict transaction integrity (regression: auto-resolve write must survive the SHOW_NO_LONGER_ELIGIBLE throw)', () => {
+    let integrationService: StudioShowManagementService;
+    let durableAuditRows: Array<{ uid: string; metadata: any; actorId: bigint | null; reason: string | null }>;
+
+    beforeEach(async () => {
+      durableAuditRows = [];
+      let currentBuffer: typeof durableAuditRows | null = null;
+
+      const mockTxWithLock = { $executeRaw: jest.fn().mockResolvedValue(undefined) };
+
+      const transactionalPrismaMock = {
+        // Simulates real Prisma $transaction semantics: writes made during the
+        // callback are only visible durably if the callback resolves; if it
+        // throws, they're discarded (never flushed). Nested @Transactional()
+        // calls under CLS Propagation.Required don't call $transaction again —
+        // they reuse the ambient transaction/buffer, exactly like real Prisma.
+        $transaction: jest.fn(async (callback: any) => {
+          const isOutermost = currentBuffer === null;
+          const buffer = isOutermost ? [] : currentBuffer!;
+          const previous = currentBuffer;
+          currentBuffer = buffer;
+          try {
+            const result = await callback(mockTxWithLock);
+            if (isOutermost) {
+              durableAuditRows.push(...buffer);
+            }
+            return result;
+          } finally {
+            currentBuffer = previous;
+          }
+        }),
+      };
+
+      const fakeAuditService = {
+        create: jest.fn(async (payload: any) => {
+          const row = { uid: `aud_new_${durableAuditRows.length}`, metadata: payload.metadata, actorId: payload.actorId ?? null, reason: payload.reason ?? null };
+          (currentBuffer ?? durableAuditRows).push(row);
+          return row;
+        }),
+        findLatestScheduleConflictForShow: jest.fn(async () => {
+          const rows = [...durableAuditRows, ...(currentBuffer ?? [])];
+          return rows.length > 0 ? (rows[rows.length - 1] as any) : null;
+        }),
+      };
+
+      @Module({
+        providers: [{ provide: PrismaService, useValue: transactionalPrismaMock }],
+        exports: [PrismaService],
+      })
+      class IntegrationPrismaModule {}
+
+      const module: TestingModule = await Test.createTestingModule({
+        imports: [
+          ClsModule.forRoot({
+            global: true,
+            middleware: { mount: false },
+            plugins: [
+              new ClsPluginTransactional({
+                imports: [IntegrationPrismaModule],
+                adapter: new TransactionalAdapterPrisma({ prismaInjectionToken: PrismaService }),
+              }),
+            ],
+          }),
+        ],
+        providers: [
+          StudioShowManagementService,
+          ScheduleConflictService,
+          { provide: UtilityService, useValue: { generateBrandedId: jest.fn().mockReturnValue('conflict_fresh') } },
+          { provide: StudioService, useValue: studioServiceMock },
+          { provide: StudioRoomService, useValue: studioRoomServiceMock },
+          { provide: ScheduleService, useValue: scheduleServiceMock },
+          { provide: ShowService, useValue: showServiceMock },
+          { provide: ShowRepository, useValue: showRepositoryMock },
+          { provide: PlatformRepository, useValue: platformRepositoryMock },
+          { provide: ShowPlatformRepository, useValue: showPlatformRepositoryMock },
+          { provide: ShowPlatformService, useValue: showPlatformServiceMock },
+          { provide: ShowOrchestrationService, useValue: showOrchestrationServiceMock },
+          { provide: UserService, useValue: userServiceMock },
+          { provide: ShowCancellationGateService, useValue: showCancellationGateServiceMock },
+          { provide: ShowStatusService, useValue: showStatusServiceMock },
+          { provide: TaskService, useValue: taskServiceMock },
+          { provide: AuditService, useValue: fakeAuditService },
+          { provide: TaskTargetService, useValue: taskTargetServiceMock },
+        ],
+      }).compile();
+
+      integrationService = module.get(StudioShowManagementService);
+
+      userServiceMock.getUserByExtId.mockResolvedValue({ id: BigInt(9), uid: 'user_1', name: 'Actor' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'COMPLETED' },
+      } as any);
+
+      durableAuditRows.push({
+        uid: 'aud_old',
+        metadata: {
+          event: 'schedule_publish_impact',
+          impact_kind: 'stale_conflict',
+          lifecycle: 'opened',
+          conflict_uid: 'conflict_1',
+          conflict_type: 'update_held_back',
+          schedule_uid: 'schedule_1',
+          external_id: 'EXT-1',
+          held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+          source: 'google_sheets_schedule_publish',
+        },
+        actorId: null,
+        reason: null,
+      });
+    });
+
+    it('durably commits the auto-resolve audit write even though the request is ultimately rejected with SHOW_NO_LONGER_ELIGIBLE', async () => {
+      await expect(
+        integrationService.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'planner override' }, actorExtId),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'SHOW_NO_LONGER_ELIGIBLE' }),
+      });
+
+      const latest = durableAuditRows[durableAuditRows.length - 1];
+      expect(latest.metadata).toMatchObject({
+        lifecycle: 'resolved',
+        outcome: 'auto_resolved_no_longer_conflicting',
+        resolves_conflict_uid: 'conflict_1',
+      });
     });
   });
 

@@ -4,6 +4,8 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 
 import type {
   ApplyConflictParams,
+  CheckEligibilityParams,
+  CheckEligibilityResult,
   DismissConflictParams,
   HeldBackFieldValue,
   ReconcileShowConflictParams,
@@ -86,6 +88,7 @@ export class ScheduleConflictService {
     return { recorded: true };
   }
 
+  @Transactional()
   async dismissConflict(params: DismissConflictParams): Promise<ResolveConflictResult> {
     await this.lockShow(params.showId);
     const pending = await this.requirePendingConflict(params.showId, params.conflictUid);
@@ -94,12 +97,45 @@ export class ScheduleConflictService {
     return { outcome: 'dismissed' };
   }
 
-  async applyConflict(params: ApplyConflictParams): Promise<ResolveConflictResult> {
+  /**
+   * Determines whether a show is still eligible to have its pending conflict
+   * applied and, if not, auto-resolves it on the spot. Must be invoked
+   * directly by the caller (never nested inside another `@Transactional()`
+   * call) so this method's transaction commits independently of whatever the
+   * caller does next: a single transaction can't both durably write the
+   * auto-resolve audit row AND propagate a `SHOW_NO_LONGER_ELIGIBLE` throw to
+   * the caller, since Prisma rolls back the whole transaction on any throw.
+   * The caller is expected to throw `SHOW_NO_LONGER_ELIGIBLE` itself once
+   * this call returns `{ eligible: false }` and no transaction is open.
+   */
+  @Transactional()
+  async checkEligibility(params: CheckEligibilityParams): Promise<CheckEligibilityResult> {
     await this.lockShow(params.showId);
     const pending = await this.requirePendingConflict(params.showId, params.conflictUid);
 
     if (isNoLongerEligible(pending.conflict_type, params.currentShowStatus)) {
       await this.writeResolved(params.showId, pending, 'auto_resolved_no_longer_conflicting', null);
+      return { eligible: false };
+    }
+    return { eligible: true };
+  }
+
+  /**
+   * Applies an already-eligibility-checked conflict. Re-acquires the
+   * showId advisory lock (released when `checkEligibility`'s transaction
+   * committed) and re-verifies the pending conflict, plus defensively
+   * re-checks eligibility for the narrow race window between that call and
+   * this one. If the show has become ineligible in that window, this simply
+   * throws — nothing has been written yet in this transaction, so rollback
+   * is safe; the conflict stays open and is picked up by the caller's next
+   * resolve attempt or by schedule-publish reconciliation.
+   */
+  @Transactional()
+  async applyConflict(params: ApplyConflictParams): Promise<ResolveConflictResult> {
+    await this.lockShow(params.showId);
+    const pending = await this.requirePendingConflict(params.showId, params.conflictUid);
+
+    if (isNoLongerEligible(pending.conflict_type, params.currentShowStatus)) {
       throw HttpError.conflict('SHOW_NO_LONGER_ELIGIBLE');
     }
 

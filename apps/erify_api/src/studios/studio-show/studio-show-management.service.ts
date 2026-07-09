@@ -328,7 +328,16 @@ export class StudioShowManagementService {
     return this.showService.getShowById(showUid, studioShowDetailInclude);
   }
 
-  @Transactional()
+  /**
+   * Deliberately NOT `@Transactional()`. The apply branch's eligibility
+   * check (and its conditional auto-resolve write) and the eventual apply
+   * writes must land in two genuinely separate, independently-committing
+   * transactions — see `ScheduleConflictService.checkEligibility` for why a
+   * single ambient transaction can't both durably write the auto-resolve
+   * audit row and propagate the `SHOW_NO_LONGER_ELIGIBLE` throw to the
+   * caller. This method orchestrates those two calls with a throw in
+   * between, at a point where no transaction is open.
+   */
   async resolveScheduleConflict(
     studioUid: string,
     showUid: string,
@@ -350,6 +359,17 @@ export class StudioShowManagementService {
         reason: dto.reason,
       });
     } else {
+      const eligibility = await this.scheduleConflictService.checkEligibility({
+        showId: show.id,
+        conflictUid,
+        currentShowStatus: show.showStatus?.systemKey ?? '',
+      });
+      if (!eligibility.eligible) {
+        // No transaction is open here — checkEligibility's transaction has
+        // already committed its auto-resolve write, so this throw is safe.
+        throw HttpError.conflict('SHOW_NO_LONGER_ELIGIBLE');
+      }
+
       const latest = await this.auditService.findLatestScheduleConflictForShow(show.id);
       const metadata = this.asRecord(latest?.metadata);
       const heldBack = metadata.held_back as HeldBackPayload | undefined;
@@ -358,44 +378,16 @@ export class StudioShowManagementService {
 
       const currentFieldValues = await this.buildCurrentFieldValues(show, changedFields);
 
-      await this.scheduleConflictService.applyConflict({
-        showId: show.id,
+      await this.applyEligibleScheduleConflict({
+        show,
         conflictUid,
         actorId: actor.id,
         reason: dto.reason,
-        currentShowStatus: show.showStatus?.systemKey ?? '',
         currentFieldValues,
+        conflictType,
+        changedFields,
+        heldBack,
       });
-
-      if (conflictType === 'update_held_back' && (changedFields.includes('start_time') || changedFields.includes('end_time'))) {
-        const showFields = heldBack?.show_fields;
-        if (showFields) {
-          const oldStart = this.toDiffDate(showFields.old.start_time, show.startTime);
-          const oldEnd = this.toDiffDate(showFields.old.end_time, show.endTime);
-          const newStart = this.toDiffDate(showFields.new.start_time, oldStart);
-          const newEnd = this.toDiffDate(showFields.new.end_time, oldEnd);
-          await this.taskService.reconcileTaskDueDates(
-            show.id,
-            { startTime: oldStart, endTime: oldEnd },
-            { startTime: newStart, endTime: newEnd },
-          );
-        }
-      }
-
-      if (conflictType === 'removal_held_back') {
-        const activeTaskCount = await this.taskTargetService.countActiveByShowId(show.id);
-        const targetStatus = await this.showStatusService.getShowStatusBySystemKey(
-          activeTaskCount > 0 ? 'CANCELLED_PENDING_RESOLUTION' : 'CANCELLED',
-        );
-        if (targetStatus) {
-          await this.showRepository.update({ id: show.id }, { showStatus: { connect: { id: targetStatus.id } } });
-        }
-      } else {
-        if (heldBack?.show_fields) {
-          await this.showRepository.update({ id: show.id }, this.toShowUpdateData(heldBack.show_fields));
-        }
-        await this.applyHeldBackRelations(show.id, heldBack);
-      }
     }
 
     const updatedAudit = await this.auditService.findLatestScheduleConflictForShow(show.id);
@@ -408,6 +400,70 @@ export class StudioShowManagementService {
       audit: updatedAudit,
       show: refreshedShow,
     } as unknown as SchedulePublishImpactAuditTarget);
+  }
+
+  /**
+   * The apply flow's second transaction, run only after
+   * `resolveScheduleConflict` has confirmed eligibility in its own,
+   * already-committed transaction. `ScheduleConflictService.applyConflict`
+   * re-acquires the showId advisory lock and re-verifies the pending
+   * conflict, then this method's own writes (task due-date reconciliation,
+   * show field updates, held-back relation sync) land in the same
+   * transaction. Safe to throw freely here (`CONFLICT_STATE_CHANGED`, or the
+   * narrow-race `SHOW_NO_LONGER_ELIGIBLE`) since nothing is written until
+   * `applyConflict`'s own resolved-audit write.
+   */
+  @Transactional()
+  private async applyEligibleScheduleConflict(params: {
+    show: ShowWithPayload<typeof studioShowDetailInclude>;
+    conflictUid: string;
+    actorId: bigint;
+    reason: string;
+    currentFieldValues: Record<string, unknown>;
+    conflictType: 'update_held_back' | 'removal_held_back' | undefined;
+    changedFields: string[];
+    heldBack: HeldBackPayload | undefined;
+  }): Promise<void> {
+    const { show, conflictUid, actorId, reason, currentFieldValues, conflictType, changedFields, heldBack } = params;
+
+    await this.scheduleConflictService.applyConflict({
+      showId: show.id,
+      conflictUid,
+      actorId,
+      reason,
+      currentShowStatus: show.showStatus?.systemKey ?? '',
+      currentFieldValues,
+    });
+
+    if (conflictType === 'update_held_back' && (changedFields.includes('start_time') || changedFields.includes('end_time'))) {
+      const showFields = heldBack?.show_fields;
+      if (showFields) {
+        const oldStart = this.toDiffDate(showFields.old.start_time, show.startTime);
+        const oldEnd = this.toDiffDate(showFields.old.end_time, show.endTime);
+        const newStart = this.toDiffDate(showFields.new.start_time, oldStart);
+        const newEnd = this.toDiffDate(showFields.new.end_time, oldEnd);
+        await this.taskService.reconcileTaskDueDates(
+          show.id,
+          { startTime: oldStart, endTime: oldEnd },
+          { startTime: newStart, endTime: newEnd },
+        );
+      }
+    }
+
+    if (conflictType === 'removal_held_back') {
+      const activeTaskCount = await this.taskTargetService.countActiveByShowId(show.id);
+      const targetStatus = await this.showStatusService.getShowStatusBySystemKey(
+        activeTaskCount > 0 ? 'CANCELLED_PENDING_RESOLUTION' : 'CANCELLED',
+      );
+      if (targetStatus) {
+        await this.showRepository.update({ id: show.id }, { showStatus: { connect: { id: targetStatus.id } } });
+      }
+    } else {
+      if (heldBack?.show_fields) {
+        await this.showRepository.update({ id: show.id }, this.toShowUpdateData(heldBack.show_fields));
+      }
+      await this.applyHeldBackRelations(show.id, heldBack);
+    }
   }
 
   /** Parses a snapshot field value into a `Date`, falling back to `fallback` when the field wasn't part of the diff (or, defensively, a live show row missing that field). */

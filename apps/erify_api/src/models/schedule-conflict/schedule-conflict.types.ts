@@ -55,6 +55,17 @@ export type ApplyConflictParams = DismissConflictParams & {
   currentFieldValues: Record<string, unknown>;
 };
 
+export type CheckEligibilityParams = {
+  showId: bigint;
+  conflictUid: string;
+  /** Current live show status system key, for the terminal-status eligibility check. */
+  currentShowStatus: string;
+};
+
+export type CheckEligibilityResult = {
+  eligible: boolean;
+};
+
 export type ResolveConflictResult = {
   outcome: 'applied' | 'dismissed';
 };

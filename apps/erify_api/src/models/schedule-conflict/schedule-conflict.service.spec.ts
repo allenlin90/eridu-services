@@ -270,25 +270,6 @@ describe('scheduleConflictService', () => {
       })).rejects.toThrow('CONFLICT_STATE_CHANGED');
     });
 
-    it('apply rejects with SHOW_NO_LONGER_ELIGIBLE and auto-resolves when the show has left scope', async () => {
-      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
-
-      await expect(service.applyConflict({
-        showId: BigInt(1),
-        conflictUid: 'conflict_1',
-        actorId: BigInt(9),
-        reason: 'x',
-        currentShowStatus: 'COMPLETED',
-        currentFieldValues: { name: 'A' },
-      })).rejects.toThrow('SHOW_NO_LONGER_ELIGIBLE');
-
-      expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
-        metadata: expect.objectContaining({ outcome: 'auto_resolved_no_longer_conflicting' }),
-        actorId: null,
-        reason: null,
-      }));
-    });
-
     it('apply throws CONFLICT_ALREADY_RESOLVED when the conflict_uid no longer matches the pending one (double-resolve)', async () => {
       auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit({ conflict_uid: 'conflict_DIFFERENT' }) as any);
 
@@ -300,6 +281,89 @@ describe('scheduleConflictService', () => {
         currentShowStatus: 'DRAFT',
         currentFieldValues: { name: 'A' },
       })).rejects.toThrow('CONFLICT_ALREADY_RESOLVED');
+    });
+
+    /**
+     * Regression coverage for the schedule-publish rollback bug: applyConflict
+     * used to write the auto-resolve audit row AND throw SHOW_NO_LONGER_ELIGIBLE
+     * in the same call, which — when invoked from within the caller's own
+     * @Transactional() ambient transaction (the real-world call shape, via
+     * StudioShowManagementService.resolveScheduleConflict) — meant Prisma
+     * rolled back the whole transaction on the throw, silently discarding the
+     * write. The fix splits this into two independently-committing calls:
+     * checkEligibility (writes + returns normally) and applyConflict (only
+     * throws, never writes, for the ineligible case). applyConflict must
+     * never again perform a write in its ineligible branch.
+     */
+    it('apply (phase 2) throws SHOW_NO_LONGER_ELIGIBLE WITHOUT writing when the show has left scope — eligibility + its write belong to checkEligibility, not here', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+
+      await expect(service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'x',
+        currentShowStatus: 'COMPLETED',
+        currentFieldValues: { name: 'A' },
+      })).rejects.toThrow('SHOW_NO_LONGER_ELIGIBLE');
+
+      expect(auditService.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkEligibility', () => {
+    const pendingAudit = (overrides: Partial<any> = {}) => ({
+      uid: 'aud_old',
+      createdAt: new Date(),
+      metadata: {
+        event: 'schedule_publish_impact',
+        impact_kind: 'stale_conflict',
+        lifecycle: 'opened',
+        conflict_uid: 'conflict_1',
+        conflict_type: 'update_held_back',
+        schedule_uid: 'schedule_1',
+        external_id: 'EXT-1',
+        held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        source: 'google_sheets_schedule_publish',
+        ...overrides,
+      },
+    });
+
+    it('resolves { eligible: true } and writes nothing when the show is still eligible', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+
+      const result = await service.checkEligibility({ showId: BigInt(1), conflictUid: 'conflict_1', currentShowStatus: 'DRAFT' });
+
+      expect(result).toEqual({ eligible: true });
+      expect(auditService.create).not.toHaveBeenCalled();
+    });
+
+    /**
+     * This is the core fix: unlike the old combined applyConflict, this
+     * ineligible branch RETURNS NORMALLY (never throws) after writing the
+     * auto-resolve row — so when checkEligibility is invoked directly (not
+     * nested inside another @Transactional() call), its own transaction
+     * commits the write, regardless of what the caller does afterward.
+     */
+    it('writes the auto-resolve row and resolves { eligible: false } (does not throw) when the show has left scope', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+
+      const result = await service.checkEligibility({ showId: BigInt(1), conflictUid: 'conflict_1', currentShowStatus: 'COMPLETED' });
+
+      expect(result).toEqual({ eligible: false });
+      expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+        metadata: expect.objectContaining({ lifecycle: 'resolved', outcome: 'auto_resolved_no_longer_conflicting', resolves_conflict_uid: 'conflict_1' }),
+        actorId: null,
+        reason: null,
+      }));
+    });
+
+    it('throws CONFLICT_ALREADY_RESOLVED when the conflict_uid no longer matches the pending one', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit({ conflict_uid: 'conflict_DIFFERENT' }) as any);
+
+      await expect(service.checkEligibility({ showId: BigInt(1), conflictUid: 'conflict_1', currentShowStatus: 'DRAFT' }))
+        .rejects
+        .toThrow('CONFLICT_ALREADY_RESOLVED');
     });
   });
 });
